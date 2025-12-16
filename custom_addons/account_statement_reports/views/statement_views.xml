@@ -122,11 +122,14 @@
                             <field name="move"/>
                             <field name="reference"/>
                             <field name="due_date"/>
-                            <field name="debit" sum="Total Debit"/>
-                            <field name="credit" sum="Total Credit"/>
-                            <field name="balance"/>
+                            <field name="debit" sum="Total Debit"  widget="monetary"
+                                options="{'display_currency': company_id.currency_id}"/>
+                            <field name="credit" sum="Total Credit"  widget="monetary"
+                                 options="{'display_currency': company_id.currency_id}"/>
+                            <field name="balance"  widget="monetary"
+                                 options="{'display_currency': company_id.currency_id}"/>
                         </list>
-                    </field>
+                    </field> 
 
                     <!-- TOTALS -->
                     <group col="3" style="margin-top:20px; font-weight:bold;">
@@ -173,9 +176,12 @@
                             <field name="move"/>
                             <field name="reference"/>
                             <field name="due_date"/>
-                            <field name="debit" sum="Total Debit"/>
-                            <field name="credit" sum="Total Credit"/>
-                            <field name="balance"/>
+                            <field name="debit" sum="Total Debit"  widget="monetary"
+       options="{'display_currency': company_id.currency_id}"/>
+                            <field name="credit" sum="Total Credit"  widget="monetary"
+       options="{'display_currency': company_id.currency_id}"/>
+                            <field name="balance"  widget="monetary"
+       options="{'display_currency': company_id.currency_id}"/>
                         </list>
                     </field>
 
