@@ -96,7 +96,7 @@ class CustomerStatement(models.Model):
         sheet.write(1, 1, f"{self.date_from or '-'} → {self.date_to or '-'}")
 
         # Table headers
-        headers = ["Date", "Move", "Journal", "Due Date", "Debit", "Credit", "Balance"]
+        headers = ["Date", "Move", "Reference", "Due Date", "Debit", "Credit", "Balance"]
         for col, h in enumerate(headers):
             sheet.write(3, col, h, bold)
 
@@ -105,7 +105,7 @@ class CustomerStatement(models.Model):
         for line in self.line_ids:
             sheet.write(row, 0, str(line.date or ""))
             sheet.write(row, 1, line.move or "")
-            sheet.write(row, 2, line.journal or "")
+            sheet.write(row, 2, line.reference or "")
             sheet.write(row, 3, str(line.due_date) if line.due_date else "")
             sheet.write_number(row, 4, line.debit or 0, money)
             sheet.write_number(row, 5, line.credit or 0, money)
