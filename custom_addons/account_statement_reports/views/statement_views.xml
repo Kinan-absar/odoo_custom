@@ -117,7 +117,7 @@
 
                     <!-- TABLE -->
                     <field name="line_ids">
-                        <list create="false" edit="false" delete="false" show_totals="true" string="Statement Lines">
+                        <list create="false" edit="false" delete="false" string="Statement Lines">
                             <field name="date"/>
                             <field name="move"/>
                             <field name="reference"/>
@@ -168,7 +168,7 @@
 
                     <!-- TABLE -->
                     <field name="line_ids">
-                        <list create="false" edit="false" delete="false" show_totals="true" string="Statement Lines">
+                        <list create="false" edit="false" delete="false" string="Statement Lines">
                             <field name="date"/>
                             <field name="move"/>
                             <field name="reference"/>
