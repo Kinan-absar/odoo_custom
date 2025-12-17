@@ -11,7 +11,12 @@ class CustomerStatementLine(models.Model):
         ondelete="cascade",
         required=True,
     )
-
+    currency_id = fields.Many2one(
+            "res.currency",
+            related="statement_id.company_id.currency_id",
+            store=True,
+            readonly=True,
+    )
     date = fields.Date()
     move = fields.Char()
     reference = fields.Char()
