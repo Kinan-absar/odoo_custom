@@ -75,20 +75,10 @@ class StatementMixin(models.AbstractModel):
 
             move = line.move_id
 
-            # -----------------------------------------
-            # Reference logic (FINAL & SIMPLE)
-            # -----------------------------------------
-            if move.move_type in ("in_payment", "out_payment"):
-                # Any payment → use journal entry reference
-                reference = move.ref or ""
+            if move.move_type == "out_invoice":
+                reference = move.payment_reference or ""
             else:
-                # Invoice / Bill
-                if account_type == "asset_receivable":
-                    # Customer invoice
-                    reference = move.payment_reference or ""
-                else:
-                    # Vendor bill
-                    reference = move.ref or ""
+                reference = move.ref or ""
 
             results.append({
                 "date": line.date,
@@ -99,11 +89,6 @@ class StatementMixin(models.AbstractModel):
                 "credit": credit,
                 "balance": running_balance,
             })
-
-        return results
-
-
-
     # ------------------------------------------------------
     # TOTALS (we don't use them in UI, but kept for compatibility)
     # ------------------------------------------------------
