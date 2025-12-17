@@ -22,6 +22,15 @@ class VendorStatementLine(models.Model):
     move = fields.Char()
     reference = fields.Char()
     due_date = fields.Date()
-    debit = fields.Float()
-    credit = fields.Float()
-    balance = fields.Float()
+    debit = fields.Monetary(
+        currency_field="currency_id",
+        readonly=True,
+    )
+    credit = fields.Monetary(
+        currency_field="currency_id",
+        readonly=True,
+    )
+    balance = fields.Monetary(
+        currency_field="currency_id",
+        readonly=True,
+    )
