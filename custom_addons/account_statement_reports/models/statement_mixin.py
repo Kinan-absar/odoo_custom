@@ -75,9 +75,14 @@ class StatementMixin(models.AbstractModel):
 
             move = line.move_id
 
+            # -----------------------------------------
+            # Reference logic (FINAL & SIMPLE)
+            # -----------------------------------------
             if move.move_type == "out_invoice":
+                # Customer invoice ONLY
                 reference = move.payment_reference or ""
             else:
+                # Customer payment, vendor bill, vendor payment, everything else
                 reference = move.ref or ""
 
             results.append({
@@ -89,6 +94,11 @@ class StatementMixin(models.AbstractModel):
                 "credit": credit,
                 "balance": running_balance,
             })
+
+        return results
+
+
+
     # ------------------------------------------------------
     # TOTALS (we don't use them in UI, but kept for compatibility)
     # ------------------------------------------------------
