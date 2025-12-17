@@ -118,6 +118,8 @@
                     <!-- TABLE -->
                     <field name="line_ids">
                         <list create="false" edit="false" delete="false" string="Statement Lines">
+                            <!-- REQUIRED: load currency field -->
+                            <field name="currency_id" invisible="1"/>
                             <field name="date"/>
                             <field name="move"/>
                             <field name="reference"/>
@@ -179,6 +181,8 @@
                     <!-- TABLE -->
                     <field name="line_ids">
                         <list create="false" edit="false" delete="false" string="Statement Lines">
+                            <!-- REQUIRED: load currency field -->
+                            <field name="currency_id" invisible="1"/>
                             <field name="date"/>
                             <field name="move"/>
                             <field name="reference"/>
