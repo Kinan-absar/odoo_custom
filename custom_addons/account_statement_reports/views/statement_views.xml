@@ -122,12 +122,19 @@
                             <field name="move"/>
                             <field name="reference"/>
                             <field name="due_date"/>
-                            <field name="debit" sum="Total Debit"  widget="monetary"
-                                options="{'display_currency': company_id.currency_id}"/>
-                            <field name="credit" sum="Total Credit"  widget="monetary"
-                                 options="{'display_currency': company_id.currency_id}"/>
-                            <field name="balance"  widget="monetary"
-                                 options="{'display_currency': company_id.currency_id}"/>
+                           <field name="debit"
+                                widget="monetary"
+                                sum="Total Debit"
+                                options="{'display_currency': currency_id}"/>
+
+                            <field name="credit"
+                                widget="monetary"
+                                sum="Total Credit"
+                                options="{'display_currency': currency_id}"/>
+
+                            <field name="balance"
+                                widget="monetary"
+                                options="{'display_currency': currency_id}"/>
                         </list>
                     </field> 
 
@@ -176,12 +183,19 @@
                             <field name="move"/>
                             <field name="reference"/>
                             <field name="due_date"/>
-                            <field name="debit" sum="Total Debit"  widget="monetary"
-       options="{'display_currency': company_id.currency_id}"/>
-                            <field name="credit" sum="Total Credit"  widget="monetary"
-       options="{'display_currency': company_id.currency_id}"/>
-                            <field name="balance"  widget="monetary"
-       options="{'display_currency': company_id.currency_id}"/>
+                            <field name="debit"
+                                widget="monetary"
+                                sum="Total Debit"
+                                options="{'display_currency': currency_id}"/>
+
+                            <field name="credit"
+                                widget="monetary"
+                                sum="Total Credit"
+                                options="{'display_currency': currency_id}"/>
+
+                            <field name="balance"
+                                widget="monetary"
+                                options="{'display_currency': currency_id}"/>
                         </list>
                     </field>
 
