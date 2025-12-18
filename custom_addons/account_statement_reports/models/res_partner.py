@@ -4,7 +4,6 @@ from odoo import models, fields
 class ResPartner(models.Model):
     _inherit = "res.partner"
 
-    # Statement balance shown on smart button
     statement_balance = fields.Monetary(
         string="Statement Balance",
         compute="_compute_statement_balance",
@@ -40,9 +39,7 @@ class ResPartner(models.Model):
             "res_model": "customer.statement.wizard",
             "view_mode": "form",
             "target": "new",
-            "context": {
-                "default_partner_id": self.id,
-            },
+            "context": {"default_partner_id": self.id},
         }
 
     def action_open_vendor_statement_wizard(self):
@@ -53,7 +50,5 @@ class ResPartner(models.Model):
             "res_model": "vendor.statement.wizard",
             "view_mode": "form",
             "target": "new",
-            "context": {
-                "default_partner_id": self.id,
-            },
+            "context": {"default_partner_id": self.id},
         }
