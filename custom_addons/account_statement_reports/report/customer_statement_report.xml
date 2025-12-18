@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<odoo>
-
-    <!-- Account Report record -->
-    <record id="customer_statement_report" model="account.report">
-        <field name="name">Customer Statement</field>
-    </record>
-
-</odoo>
