@@ -8,14 +8,12 @@
     <record id="action_customer_statement_report" model="ir.actions.client">
         <field name="name">Customer Statement</field>
         <field name="tag">account_report</field>
-        <field name="params">
+        <field name="context">
             {
-                "report_name": "account_statement_reports.customer_statement_report"
+                "report_id": ref("customer_statement_report")
             }
         </field>
     </record>
-
-
 
     <menuitem id="menu_customer_statement_report"
               name="Customer Statement"
