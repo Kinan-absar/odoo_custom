@@ -5,10 +5,8 @@ from datetime import timedelta
 
 
 class CustomerStatementReport(models.Model):
-    _name = "account.customer.statement.report"
     _inherit = "account.report"
-    _description = "Customer Statement"
-
+    
     # ------------------------------------------------------------
     # REPORT METADATA
     # ------------------------------------------------------------
