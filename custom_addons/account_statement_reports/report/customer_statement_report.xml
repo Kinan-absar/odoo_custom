@@ -4,11 +4,14 @@
     <!-- Customer Statement report record -->
     <record id="customer_statement_report" model="account.report">
         <field name="name">Customer Statement</field>
+
+        <!-- Filters -->
         <field name="filter_date">True</field>
-        <field name="filter_partner">True</field>
-        <field name="filter_journal">True</field>
-        <field name="filter_posted">True</field>
+        <field name="filter_partners">True</field>
+        <field name="filter_journals">True</field>
+        <field name="filter_unposted">True</field>
     </record>
+
 
     <!-- Action to open it -->
     <record id="action_customer_statement_report" model="ir.actions.client">
