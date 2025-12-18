@@ -2,7 +2,7 @@
 <odoo>
     <template id="asr_vendor_statement">
 
-        <t t-call="web.external_layout_standard">
+        <t t-call="web.external_layout">
             <t t-foreach="docs" t-as="doc">
 
                 <t t-set="company" t-value="doc.company_id"/>
@@ -68,17 +68,21 @@
                                 <tr style="font-weight:bold; background:#f2f2f2;">
                                     <td colspan="4" class="text-end">Totals</td>
 
-                                    <td class="text-end">
-                                        <t t-esc="sum(doc.line_ids.mapped('debit'))"/>
+                                     <td class="text-end">
+                            <span t-esc="sum(doc.line_ids.mapped('debit'))"
+                                t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
+                                     </td>
+
+                                      <td class="text-end">
+                            <span t-esc="sum(doc.line_ids.mapped('credit'))"
+                                t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
+                                       </td>
+
+                                   <td class="text-end">
+                            <span t-field="doc.final_balance"
+                                t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
                                     </td>
 
-                                    <td class="text-end">
-                                        <t t-esc="sum(doc.line_ids.mapped('credit'))"/>
-                                    </td>
-
-                                    <td class="text-end">
-                                        <t t-esc="doc.final_balance"/>
-                                    </td>
                                 </tr>
                             </tfoot>
                         </table>

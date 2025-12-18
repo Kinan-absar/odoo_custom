@@ -126,7 +126,7 @@
                             <field name="credit" sum="Total Credit"/>
                             <field name="balance"/>
                         </list>
-                    </field>
+                    </field> 
 
                     <!-- TOTALS -->
                     <group col="3" style="margin-top:20px; font-weight:bold;">

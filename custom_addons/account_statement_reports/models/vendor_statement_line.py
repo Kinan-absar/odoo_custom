@@ -12,7 +12,7 @@ class VendorStatementLine(models.Model):
         required=True,
         readonly=True,
     )
-
+    
     date = fields.Date()
     move = fields.Char()
     reference = fields.Char()
