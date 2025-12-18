@@ -10,10 +10,11 @@
         <field name="tag">account_report</field>
         <field name="context">
             {
-                "report_id": ref("customer_statement_report")
+                "report_id": "account_statement_reports.customer_statement_report"
             }
         </field>
     </record>
+
 
     <menuitem id="menu_customer_statement_report"
               name="Customer Statement"
