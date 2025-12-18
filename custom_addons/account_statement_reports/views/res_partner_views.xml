@@ -16,7 +16,10 @@
                         icon="fa-file-text-o"
                         invisible="customer_rank == 0">
                     <div class="o_stat_info">
-                        <span class="o_stat_text">Customer Statement</span>
+                        <field
+                    name="statement_balance"
+                    widget="monetary"
+                    string="Statement"/>
                     </div>
                 </button>
 
@@ -27,7 +30,10 @@
                         icon="fa-file-text"
                         invisible="supplier_rank == 0">
                     <div class="o_stat_info">
-                        <span class="o_stat_text">Vendor Statement</span>
+                        <field
+                    name="statement_balance"
+                    widget="monetary"
+                    string="Statement"/>
                     </div>
                 </button>
 
