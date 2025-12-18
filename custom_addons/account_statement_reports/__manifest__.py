@@ -24,6 +24,7 @@
         # Views (menus, wizards, statement forms)
         "views/statement_views.xml",
         "views/statement_line_views.xml",
+        'views/res_partner_views.xml'
 
         # Reports
         "report/reports.xml",
