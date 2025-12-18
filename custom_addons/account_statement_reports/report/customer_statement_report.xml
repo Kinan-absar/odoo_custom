@@ -1,19 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <!-- Customer Statement report record -->
     <record id="customer_statement_report" model="account.report">
         <field name="name">Customer Statement</field>
-
-        <!-- Filters -->
-        <field name="filter_date">True</field>
-        <field name="filter_partners">True</field>
-        <field name="filter_journals">True</field>
-        <field name="filter_unposted">True</field>
     </record>
 
-
-    <!-- Action to open it -->
     <record id="action_customer_statement_report" model="ir.actions.client">
         <field name="name">Customer Statement</field>
         <field name="tag">account_report</field>
@@ -24,7 +15,6 @@
         </field>
     </record>
 
-    <!-- Menu -->
     <menuitem id="menu_customer_statement_report"
               name="Customer Statement"
               parent="account.account_reports_partners_reports_menu"
