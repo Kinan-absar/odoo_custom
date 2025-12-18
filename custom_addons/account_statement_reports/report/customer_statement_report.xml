@@ -10,7 +10,7 @@
         <field name="tag">account_report</field>
         <field name="params">
             {
-                "report_id": "account_statement_reports.customer_statement_report"
+                "report_name": "account_statement_reports.customer_statement_report"
             }
         </field>
     </record>
