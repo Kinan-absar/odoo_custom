@@ -1,17 +1,16 @@
-from odoo import models
+from odoo import models, fields
 
 
 class ResPartner(models.Model):
     _inherit = "res.partner"
 
-# 🔽 ADD THIS FIELD
+    # Statement balance shown on smart button
     statement_balance = fields.Monetary(
         string="Statement Balance",
         compute="_compute_statement_balance",
         currency_field="currency_id",
     )
 
-    # 🔽 ADD THIS METHOD
     def _compute_statement_balance(self):
         for partner in self:
             balance = 0.0
