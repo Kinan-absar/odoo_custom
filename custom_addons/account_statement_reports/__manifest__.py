@@ -30,7 +30,7 @@
         "report/reports.xml",
         "report/customer_statement.xml",
         "report/vendor_statement.xml",
-        "report/customer_statement_report",
+        "report/customer_statement_report.xml",
     ],
 
     "installable": True,
