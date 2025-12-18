@@ -1,26 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <!-- Account Report -->
+    <!-- Account Report record -->
     <record id="customer_statement_report" model="account.report">
         <field name="name">Customer Statement</field>
     </record>
-
-    <!-- Client Action -->
-    <record id="action_customer_statement_report" model="ir.actions.client">
-        <field name="name">Customer Statement</field>
-        <field name="tag">account_report</field>
-        <field name="context" eval="True">
-            {
-                "report_id": ref("customer_statement_report")
-            }
-        </field>
-    </record>
-
-    <!-- Menu -->
-    <menuitem id="menu_customer_statement_report"
-              name="Customer Statement"
-              parent="account.account_reports_partners_reports_menu"
-              action="action_customer_statement_report"/>
 
 </odoo>
