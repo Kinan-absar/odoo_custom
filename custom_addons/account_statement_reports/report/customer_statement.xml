@@ -85,17 +85,17 @@
                         </div>
 
                         <table class="statement-table">
-                            <thead>
-                                <tr>
-                                    <th class="col-date">Date</th>
-                                    <th class="col-move">Move</th>
-                                    <th class="col-ref">Reference</th>
-                                    <th class="col-due">Due Date</th>
-                                    <th class="text-end col-amt">Debit</th>
-                                    <th class="text-end col-amt">Credit</th>
-                                    <th class="text-end col-amt">Balance</th>
-                                </tr>
-                            </thead>
+                                <thead>
+                                    <tr>
+                                        <th class="col-date">Date</th>
+                                        <th class="col-move">Move</th>
+                                        <th class="col-ref">Reference</th>
+                                        <th class="col-due">Due Date</th>
+                                        <th class="text-end col-amt">Debit</th>
+                                        <th class="text-end col-amt">Credit</th>
+                                        <th class="text-end col-amt">Balance</th>
+                                    </tr>
+                                </thead>
 
                             <tbody>
                                 <t t-foreach="doc.line_ids" t-as="l">
