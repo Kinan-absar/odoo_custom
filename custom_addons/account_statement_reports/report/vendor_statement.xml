@@ -60,7 +60,7 @@
 
             <t t-foreach="docs" t-as="doc">
 
-                <t t-set="company" t-value="doc.company_id"/>
+            <t t-set="company" t-value="doc.company_id"/>
 
                 <main>
                     <div class="page">
