@@ -4,14 +4,59 @@
 
         <t t-call="web.external_layout">
             <style>
-            .page {
-                font-size: 9px;
-            }
-            .header-block .header-line {
-                font-size: 13px;
-                margin-bottom: 3px;
-            }
-        </style>
+                .page {
+                    font-size: 9px;
+                }
+
+                .header-block .header-line {
+                    font-size: 13px;
+                    margin-bottom: 3px;
+                }
+
+                /* ===== Statement Table ===== */
+                table.statement-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 10px;
+                }
+
+                table.statement-table thead th {
+                    background: #f0f0f0;
+                    font-weight: 600;
+                    font-size: 9px;
+                    padding: 6px 5px;
+                    border: 1px solid #cfcfcf;
+                    white-space: nowrap;
+                }
+
+                table.statement-table tbody td {
+                    padding: 5px 5px;
+                    border: 1px solid #e0e0e0;
+                    vertical-align: middle;
+                }
+
+                table.statement-table tbody tr:nth-child(even) {
+                    background: #fafafa;
+                }
+
+                table.statement-table tfoot td {
+                    padding: 6px 5px;
+                    border: 1px solid #cfcfcf;
+                    font-weight: bold;
+                    background: #f5f5f5;
+                }
+
+                .text-end {
+                    text-align: right;
+                    white-space: nowrap;
+                }
+
+                .col-date { width: 10%; }
+                .col-move { width: 16%; }
+                .col-ref  { width: 20%; }
+                .col-due  { width: 10%; }
+                .col-amt  { width: 11%; }
+            </style>
             <t t-foreach="docs" t-as="doc">
 
                 <t t-set="company" t-value="doc.company_id"/>
@@ -39,16 +84,16 @@
 
                         </div>
 
-                        <table class="table table-bordered table-sm">
+                        <table class="statement-table">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Move</th>
-                                    <th>Reference</th>
-                                    <th>Due Date</th>
-                                    <th class="text-end">Debit</th>
-                                    <th class="text-end">Credit</th>
-                                    <th class="text-end">Balance</th>
+                                    <th class="col-date">Date</th>
+                                    <th class="col-move">Move</th>
+                                    <th class="col-ref">Reference</th>
+                                    <th class="col-due">Due Date</th>
+                                    <th class="text-end col-amt">Debit</th>
+                                    <th class="text-end col-amt">Credit</th>
+                                    <th class="text-end col-amt">Balance</th>
                                 </tr>
                             </thead>
 
