@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- Add hidden technical fields: signature_state + revision -->
+    <record id="po_add_signature_state_field" model="ir.ui.view">
+        <field name="name">purchase.order.add.signature_state</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <field name="signature_state" invisible="1"/>
+                <field name="revision" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+
+    <!-- SMART BUTTON: Send to Sign -->
+    <record id="view_po_form_send_to_sign" model="ir.ui.view">
+        <field name="name">purchase.order.form.send.to.sign</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_send_to_sign"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-pencil-square-o"
+                        invisible="state != 'purchase' or signature_state != 'draft'">
+                    <div>Send to Sign</div>
+                </button>
+            </xpath>
+
+        </field>
+    </record>
+
+
+    <!-- Show Revision next to PO number inside Form View Header (read-only) -->
+    <record id="po_add_revision_display" model="ir.ui.view">
+        <field name="name">purchase.order.revision.display</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Insert after the PO number in the header -->
+            <xpath expr="//h1" position="after">
+                <field name="revision"
+                       class="ms-2"
+                       readonly="1"
+                       string="Revision"
+                       modifiers="{'invisible': [['revision','=',0]]}"/>
+            </xpath>
+
+        </field>
+    </record>
+
+
+    <!-- LIST VIEW: Show Signature Status -->
+    <record id="purchase_order_list_view_inherit_sign" model="ir.ui.view">
+        <field name="name">purchase.order.list.inherit.sign.state</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_view_tree"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//list/field[@name='state']" position="after">
+                <field name="signature_state"
+                       widget="badge"
+                       options="{'classes':{
+                            'director_pending':'bg-warning text-dark',
+                            'ceo_pending':'bg-info text-dark',
+                            'signed':'bg-success text-white',
+                            'rejected':'bg-danger text-white'
+                       }}"/>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>
