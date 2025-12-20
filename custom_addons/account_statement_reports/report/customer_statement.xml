@@ -3,6 +3,15 @@
     <template id="asr_customer_statement">
 
         <t t-call="web.external_layout">
+            <style>
+            .page {
+                font-size: 9px;
+            }
+            .header-block .header-line {
+                font-size: 13px;
+                margin-bottom: 3px;
+            }
+        </style>
             <t t-foreach="docs" t-as="doc">
 
                 <t t-set="company" t-value="doc.company_id"/>
@@ -12,17 +21,22 @@
 
                         <!-- Header -->
                         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                            <div>
+                            <div class="header-block" style="margin-bottom:12px;">
                                 <h2>Customer Statement</h2>
-                                <strong>Customer:</strong>
-                                <span t-esc="doc.partner_id.name"/>
+                            
+                                <div class="header-line">
+                                    <strong>Customer:</strong>
+                                    <span t-esc="doc.partner_id.name"/>
+                                </div>
+                            
+                                <div class="header-line">
+                                    <strong>Period:</strong>
+                                    <span t-esc="doc.date_from"/> —
+                                    <span t-esc="doc.date_to"/>
+                                </div>
                             </div>
 
-                            <div style="text-align:right;">
-                                <strong>Period:</strong><br/>
-                                <span t-esc="doc.date_from"/> —
-                                <span t-esc="doc.date_to"/>
-                            </div>
+
                         </div>
 
                         <table class="table table-bordered table-sm">
