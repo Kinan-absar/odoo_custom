@@ -1,0 +1,31 @@
+<odoo>
+
+    <!-- =======================
+         Vendor Portal Group
+       ======================= -->
+    <record id="group_vendor_portal" model="res.groups">
+        <field name="name">Vendor Portal</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+
+    <!-- =======================
+         Vendor Access to Own Invoices
+       ======================= -->
+    <record id="vendor_invoice_portal_rule" model="ir.rule">
+        <field name="name">Vendor Access to Own Invoices</field>
+        <field name="model_id" ref="model_portal_vendor_invoice"/>
+        <field name="groups" eval="[(4, ref('customer_vendor_portal.group_vendor_portal'))]"/>
+        <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+    </record>
+
+    <!-- =======================
+         Internal Users Full Access
+       ======================= -->
+    <record id="vendor_invoice_internal_rule" model="ir.rule">
+        <field name="name">Internal Users Full Access to Vendor Invoices</field>
+        <field name="model_id" ref="model_portal_vendor_invoice"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+</odoo>
