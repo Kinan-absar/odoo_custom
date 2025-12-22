@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="material_request_pdf_template">
+        <t t-name="employee_portal_suite.material_request_pdf_template">
+
+            <!-- Standard Odoo Layout -->
+            <t t-call="web.external_layout">
+
+                <!-- records -->
+                <t t-foreach="docs" t-as="o">
+
+                    <!-- REQUIRED MAIN WRAPPER -->
+                    <main class="mt32 mb32">
+
+                        <div class="page">
+                            <h2>Material Request</h2>
+
+                            <!-- BASIC INFO -->
+                            <table class="table table-sm mt-3">
+                                <tr>
+                                    <th>Request Number:</th>
+                                    <td><t t-esc="o.name"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Employee:</th>
+                                    <td><t t-esc="o.employee_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Worksite:</th>
+                                    <td><t t-esc="o.worksite"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Delivery Date:</th>
+                                    <td><t t-esc="o.delivery_date"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Date:</th>
+                                    <td><t t-esc="o.request_date"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Status:</th>
+                                    <td><t t-esc="o.state"/></td>
+                                </tr>
+                            </table>
+
+                            <!-- MATERIAL LINES -->
+                            <h4 class="mt-4">Requested Materials</h4>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Qty</th>
+                                        <th>UoM</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.line_ids" t-as="line">
+                                        <tr>
+                                            <td><t t-esc="line.item_name"/></td>
+                                            <td><t t-esc="line.qty_required"/></td>
+                                            <td><t t-esc="line.uom_id.name"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <!-- APPROVAL TIMELINE -->
+                            <h4 class="mt-4">Approval Timeline</h4>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Stage</th>
+                                        <th>Approved By</th>
+                                        <th>Date</th>
+                                        <th>Comment</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                    <tr>
+                                        <td>Purchase Representative</td>
+                                        <td><t t-esc="o.purchase_approved_by.name or ''"/></td>
+                                        <td><t t-esc="o.purchase_approved_date or ''"/></td>
+                                        <td><t t-esc="o.purchase_comment or ''"/></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Store Manager</td>
+                                        <td><t t-esc="o.store_approved_by.name or ''"/></td>
+                                        <td><t t-esc="o.store_approved_date or ''"/></td>
+                                        <td><t t-esc="o.store_comment or ''"/></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Project Manager</td>
+                                        <td><t t-esc="o.project_manager_approved_by.name or ''"/></td>
+                                        <td><t t-esc="o.project_manager_approved_date or ''"/></td>
+                                        <td><t t-esc="o.project_manager_comment or ''"/></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Director</td>
+                                        <td><t t-esc="o.director_approved_by.name or ''"/></td>
+                                        <td><t t-esc="o.director_approved_date or ''"/></td>
+                                        <td><t t-esc="o.director_comment or ''"/></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>CEO</td>
+                                        <td><t t-esc="o.ceo_approved_by.name or ''"/></td>
+                                        <td><t t-esc="o.ceo_approved_date or ''"/></td>
+                                        <td><t t-esc="o.ceo_comment or ''"/></td>
+                                    </tr>
+
+                                    <!-- Rejection -->
+                                    <t t-if="o.state == 'rejected'">
+                                        <tr style="color: red;">
+                                            <td><strong>Rejected At:</strong></td>
+                                            <td><t t-esc="o.state_before_reject"/></td>
+                                            <td><t t-esc="o.write_date"/></td>
+                                            <td>
+                                                <t t-esc="
+                                                    o.purchase_comment if o.state_before_reject == 'purchase' else
+                                                    o.store_comment if o.state_before_reject == 'store' else
+                                                    o.project_manager_comment if o.state_before_reject == 'project_manager' else
+                                                    o.director_comment if o.state_before_reject == 'director' else
+                                                    o.ceo_comment
+                                                "/>
+                                            </td>
+                                        </tr>
+                                    </t>
+
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </main>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

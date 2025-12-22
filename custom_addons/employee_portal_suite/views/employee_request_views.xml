@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ========================================================= -->
+    <!-- FORM VIEW                                                  -->
+    <!-- ========================================================= -->
+    <record id="view_employee_request_form" model="ir.ui.view">
+        <field name="name">employee.request.form</field>
+        <field name="model">employee.request</field>
+        <field name="arch" type="xml">
+
+            <form string="Employee Request" create="1" edit="1">
+                <header>
+                        <button type="object" name="action_submit"
+                                string="Submit"
+                                class="oe_stat_button"
+                                invisible="state != 'draft'"/>
+
+                        <button type="object" name="action_manager_approve"
+                                string="Manager Approve"
+                                class="oe_stat_button"
+                                invisible="state != 'manager'"/>
+
+                        <button type="object" name="action_hr_approve"
+                                string="HR Approve"
+                                class="oe_stat_button"
+                                invisible="state != 'hr'"/>
+
+                        <button type="object" name="action_finance_approve"
+                                string="Finance Approve"
+                                class="oe_stat_button"
+                                invisible="state != 'finance'"/>
+
+                        <button type="object" name="action_ceo_approve"
+                                string="CEO Approve"
+                                class="oe_stat_button"
+                                invisible="state != 'ceo'"/>
+
+                        <button type="object" name="action_reject"
+                                string="Reject"
+                                class="oe_stat_button btn-danger"
+                                invisible="state == 'approved'"/>
+                                <!-- NEW PRINT BUTTON -->
+                        <button name="%(employee_portal_suite.employee_request_pdf)d"
+                                type="action"
+                                class="btn-primary"
+                                icon="fa-print"
+                                string="Print PDF"/>
+                </header>
+                <sheet>
+
+                    <!-- TITLE + STATUS -->
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                        <label for="state" class="oe_inline"/>
+                        <div class="oe_inline">
+                            <field name="state" widget="statusbar"
+                                   statusbar_visible="draft,manager,hr,finance,ceo,approved,rejected"/>
+                        </div>
+                    </div>
+
+                    <!-- NOTEBOOK -->
+                    <notebook>
+
+                        <page string="Request Details">
+                            <group>
+                                <group>
+                                    <!-- Readonly for normal portal employees -->
+                                    <field name="employee_id"
+                                        readonly="1"
+                                        groups="employee_portal_suite.group_employee_portal_employee"/>
+
+                                    <!-- Editable ONLY for Portal Admins -->
+                                    <field name="employee_id"
+                                        groups="employee_portal_suite.group_employee_portal_admin"/>
+
+                                    <field name="manager_id" readonly="1"/>
+                                    <field name="request_type"/>
+                                </group>
+                                <group>
+                                    <field name="request_date"/>
+                                    <field name="description"/>
+                                </group>
+                                <group invisible="request_type != 'leave'">
+                                    <group string="Leave Period">
+                                        <label for="leave_from" string="From"/>
+                                        <div class="o_row">
+                                            <field name="leave_from" class="oe_inline"/>
+                                            <label for="leave_to" string="To" class="oe_inline" style="margin-left: 20px;"/>
+                                            <field name="leave_to" class="oe_inline"/>
+                                        </div>
+                                    </group>
+                                </group>
+
+
+                            </group>
+                        </page>
+
+                        <page string="Approval Timeline">
+
+                            <group string="Manager Approval">
+                                <field name="manager_approved_by" readonly="1"/>
+                                <field name="manager_approved_date" readonly="1"/>
+                                <field name="manager_comment"/>
+                            </group>
+
+                            <group string="HR Approval">
+                                <field name="hr_approved_by" readonly="1"/>
+                                <field name="hr_approved_date" readonly="1"/>
+                                <field name="hr_comment"/>
+                            </group>
+
+                            <group string="Finance Approval">
+                                <field name="finance_approved_by" readonly="1"/>
+                                <field name="finance_approved_date" readonly="1"/>
+                                <field name="finance_comment"/>
+                            </group>
+
+                            <group string="CEO Approval">
+                                <field name="ceo_approved_by" readonly="1"/>
+                                <field name="ceo_approved_date" readonly="1"/>
+                                <field name="ceo_comment"/>
+                            </group>
+
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+                <chatter/>
+            </form>
+
+        </field>
+    </record>
+
+    <!-- ========================================================= -->
+    <!-- LIST VIEW                                                  -->
+    <!-- ========================================================= -->
+    <record id="view_employee_request_list" model="ir.ui.view">
+        <field name="name">employee.request.list</field>
+        <field name="model">employee.request</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="request_type"/>
+                <field name="state"/>
+                <field name="request_date"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ========================================================= -->
+    <!-- SEARCH VIEW                                                -->
+    <!-- ========================================================= -->
+    <record id="view_employee_request_search" model="ir.ui.view">
+        <field name="name">employee.request.search</field>
+        <field name="model">employee.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="manager_id"/>
+                <field name="request_type"/>
+                <field name="state"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ========================================================= -->
+    <!-- WINDOW ACTION  (important!)                                -->
+    <!-- ========================================================= -->
+    <record id="action_employee_request" model="ir.actions.act_window">
+        <field name="name">Employee Requests</field>
+        <field name="res_model">employee.request</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

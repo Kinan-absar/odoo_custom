@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="portal_material_approvals_list" name="Material Approvals Page">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+
+            <div class="container mt-4">
+                
+                <h3 class="mt-4">Material Requests Approval</h3>
+
+                <!-- Filter Dropdown -->
+                <div class="mt-3 mb-3">
+                    <label><strong>Show:</strong></label>
+                    <select id="approvalFilter" class="form-select d-inline-block" style="width:auto;">
+                        <option value="all" t-att-selected="current_filter == 'all'">All</option>
+                        <option value="pending" t-att-selected="current_filter == 'pending'">Pending</option>
+                        <option value="approved" t-att-selected="current_filter == 'approved'">Approved</option>
+                        <option value="rejected" t-att-selected="current_filter == 'rejected'">Rejected</option>
+                    </select>
+                </div>
+
+                <!-- Table -->
+                <table class="table table-striped mt-3">
+                    <thead>
+                        <tr>
+                            <th>Request #</th>
+                            <th>Employee</th>
+                            <th>Worksite</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <t t-if="shown_reqs">
+                            <t t-foreach="shown_reqs" t-as="req">
+                                <tr>
+                                    <td><t t-esc="req.name"/></td>
+                                    <td><t t-esc="req.employee_id.name"/></td>
+                                    <td><t t-esc="req.worksite"/></td>
+                                    <td><t t-raw="status_badge(req)"/></td>
+                                    <td><t t-esc="req.request_date"/></td>
+                                    <td>
+                                        <a t-att-href="'/my/employee/material/approvals/%s' % req.id"
+                                           class="btn btn-primary btn-sm">Review</a>
+                                    </td>
+                                </tr>
+                            </t>
+                        </t>
+
+                        <t t-if="not shown_reqs">
+                            <tr>
+                                <td colspan="6" class="text-center">No Requests Found.</td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+            </div>
+
+            <!-- FILTERING JS -->
+            <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const filter = document.getElementById("approvalFilter");
+                if (!filter) return;
+                filter.addEventListener("change", function() {
+                    const value = this.value;
+                    const url = new URL(window.location.href);
+                    url.searchParams.set("filter", value);
+                    window.location.href = url.toString();
+                });
+            });
+            </script>
+
+        </t>
+    </template>
+
+</odoo>

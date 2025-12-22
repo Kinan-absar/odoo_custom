@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <!-- =============================== -->
+        <!--       EMPLOYEE REQUEST PDF      -->
+        <!-- =============================== -->
+        <record id="employee_request_pdf" model="ir.actions.report">
+            <field name="name">Employee Request PDF</field>
+            <field name="model">employee.request</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">employee_portal_suite.report_employee_request_document</field>
+            <field name="print_report_name">'Employee Request - %s' % (object.name)</field>
+        </record>
+
+        <!-- =============================== -->
+        <!--      MATERIAL REQUEST PDF       -->
+        <!-- =============================== -->
+        <record id="material_request_pdf" model="ir.actions.report">
+            <field name="name">Material Request PDF</field>
+            <field name="model">material.request</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">employee_portal_suite.material_request_pdf_template</field>
+            <field name="print_report_name">'Material Request - %s' % (object.name)</field>
+        </record>
+
+    </data>
+</odoo>

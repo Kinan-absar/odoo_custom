@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- Main Root Menu -->
+    <menuitem id="menu_employee_portal_root"
+              name="Employee Portal"
+              sequence="10"
+              web_icon="employee_portal_suite,static/description/icon.png"/>
+
+    <!-- DIRECT: Employee Requests -->
+    <menuitem id="menu_employee_request_items"
+              name="Employee Requests"
+              parent="menu_employee_portal_root"
+              action="action_employee_request"
+              sequence="10"/>
+
+    <!-- DIRECT: Material Requests -->
+    <menuitem id="menu_material_request_items"
+              name="Material Requests"
+              parent="menu_employee_portal_root"
+              action="action_material_request"
+              sequence="20"/>
+
+</odoo>

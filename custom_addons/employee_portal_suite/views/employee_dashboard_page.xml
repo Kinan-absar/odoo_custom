@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="employee_portal_dashboard" name="Employee Dashboard">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+
+            <div class="row mt-4">
+
+                    <!-- Employee Requests -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card shadow-sm p-3">
+                            <h5>My Employee Requests</h5>
+                            <p>Count: <t t-esc="my_request_count"/></p>
+                            <a href="/my/employee/requests" class="btn btn-primary  btn-sm" style="width:180px;">View</a>
+                        </div>
+                    </div>
+
+                    <!-- Material Requests -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card shadow-sm p-3">
+                            <h5>My Material Requests</h5>
+                            <p>Count: <t t-esc="my_material_count"/></p>
+                            <a href="/my/employee/material" class="btn btn-primary  btn-sm" style="width:180px;">View</a>
+                        </div>
+                    </div>
+
+
+                <!-- EMPLOYEE REQUEST APPROVALS -->
+                <t t-if="
+                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                ">
+                    <div class="col-md-6 mb-3">
+                        <div class="card shadow-sm p-3">
+                            <h5>Employee Approvals</h5>
+                            <p>Pending: <t t-esc="employee_pending_count"/></p>
+
+                            <a href="/my/employee/approvals"
+                            class="btn btn-warning btn-sm"
+                            style="width:180px;">
+                                Review (<t t-esc="employee_pending_count"/>)
+                            </a>
+                        </div>
+                    </div>
+                </t>
+
+
+                <!-- MATERIAL REQUEST APPROVALS -->
+                <t t-if="
+                    request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                ">
+                    <div class="col-md-6 mb-3">
+                        <div class="card shadow-sm p-3">
+                            <h5>Material Approvals</h5>
+                            <p>Pending: <t t-esc="material_pending_count"/></p>
+
+                            <a href="/my/employee/material/approvals"
+                            class="btn btn-warning btn-sm"
+                            style="width:180px;">
+                                Review (<t t-esc="material_pending_count"/>)
+                            </a>
+                        </div>
+                    </div>
+                </t>
+                <!-- Documents to Sign -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card shadow-sm p-3">
+                            <h5>Documents to Sign</h5>
+
+                            <p>Pending: <t t-esc="pending_sign_count"/></p>
+
+                            <a href="/my/employee/sign"
+                            class="btn btn-primary btn-sm"
+                            style="width:180px;">
+                                View (<t t-esc="pending_sign_count"/>)
+                            </a>
+                        </div>
+                    </div>
+
+
+            </div>
+
+
+        </t>
+    </template>
+
+</odoo>
