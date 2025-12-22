@@ -59,6 +59,7 @@
 
         # --- DATA / SEQUENCES ---
         'data/request_sequence.xml',
+        'views/hr_employee_user_domain.xml',
 
         # --------------------------------------------------
         # REPORTS
