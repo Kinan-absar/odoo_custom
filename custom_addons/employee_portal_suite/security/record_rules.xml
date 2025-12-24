@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- EMPLOYEE REQUEST: Employee can only see their own -->
+    <record id="employee_request_portal_rule" model="ir.rule">
+        <field name="name">Employee Request: Portal User Own Records</field>
+        <field name="model_id" ref="model_employee_request"/>
+        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_employee'))]"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+    </record>
+
+    <!-- MATERIAL REQUEST: Employee can only see their own -->
+    <record id="material_request_portal_rule" model="ir.rule">
+        <field name="name">Material Request: Portal User Own Records</field>
+        <field name="model_id" ref="model_material_request"/>
+        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_employee'))]"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+    </record>
+
+ <!-- Employee Request: Manager Can See Subordinates -->
+    <record id="employee_request_manager_rule" model="ir.rule">
+        <field name="name">Employee Request: Manager Can See Subordinates</field>
+        <field name="model_id" ref="employee_portal_suite.model_employee_request"/>
+        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_manager'))]"/>
+        <field name="domain_force">
+            ['|',
+                ('manager_id.user_id', '=', user.id),
+                ('employee_id.user_id', '=', user.id)
+            ]
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="employee_requests_page" name="Employee Requests Page">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+
+            <div class="container my-4">
+                <h2>My Requests</h2>
+
+                <t t-if="requests">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Request</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="requests" t-as="req">
+                                <tr>
+                                    <td><t t-esc="req.name"/></td>
+                                    <td><t t-esc="req.get_request_type_display()"/></td>
+                                    <td><t t-esc="req.get_readable_status()"/></td>
+                                    <td><t t-esc="req.request_date"/></td>
+                                    <td>
+                                        <a t-att-href="'/my/employee/requests/%s' % req.id" class="btn btn-secondary btn-sm">View</a>
+                                    </td>
+                                </tr>
+
+                            </t>
+                        </tbody>
+                    </table>
+                </t>
+
+                <t t-if="not requests">
+                    <p>No requests found.</p>
+                </t>
+
+                <a class="btn btn-success mt-3" href="/my/employee/requests/new">Create New Request</a>
+            </div>
+
+        </t>
+    </template>
+
+</odoo>

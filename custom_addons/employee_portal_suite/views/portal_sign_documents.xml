@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+<template id="portal_sign_documents_page">
+    <t t-call="employee_portal_suite.employee_portal_layout">
+
+        <div class="container mt-4">
+
+            <h3>Documents to Sign</h3>
+
+            <!-- FILTER BUTTONS -->
+            <div class="btn-group mt-3 mb-3">
+                <a href="/my/employee/sign?filter=pending"
+                   t-att-class="'btn btn-sm ' + ('btn-primary' if current_filter=='pending' else 'btn-outline-primary')">
+                    Pending
+                </a>
+                <a href="/my/employee/sign?filter=signed"
+                   t-att-class="'btn btn-sm ' + ('btn-success' if current_filter=='signed' else 'btn-outline-success')">
+                    Signed
+                </a>
+                <a href="/my/employee/sign?filter=rejected"
+                   t-att-class="'btn btn-sm ' + ('btn-danger' if current_filter=='rejected' else 'btn-outline-danger')">
+                    Rejected
+                </a>
+            </div>
+
+            <!-- EMPTY STATE -->
+            <t t-if="not documents">
+                <p>No documents found.</p>
+            </t>
+
+            <!-- TABLE -->
+            <t t-if="documents">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Filename</th>
+                            <th>Date</th>
+                            <th>Your Status</th>
+                            <th>Workflow</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <t t-foreach="documents" t-as="doc">
+
+                            <t t-set="item" t-value="doc['item']"/>
+                            <t t-set="filename" t-value="doc['filename']"/>
+                            <t t-set="date" t-value="doc['date']"/>
+                            <t t-set="your_status" t-value="doc['your_status']"/>
+                            <t t-set="workflow_status" t-value="doc['workflow_status']"/>
+                            
+
+                            <tr>
+
+                                <!-- FILE -->
+                                <td>
+                                    <t t-esc="filename"/>
+                                </td>
+
+                                <!-- DATE -->
+                                <td>
+                                    <t t-esc="date"/>
+                                </td>
+
+                                <!-- YOUR STATUS BADGE -->
+                                <td>
+                                    <t t-if="'🟢' in your_status">
+                                        <span class="badge bg-success">Signed</span>
+                                    </t>
+                                    <t t-elif="'🟡' in your_status">
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    </t>
+                                    <t t-elif="'🔴' in your_status">
+                                        <span class="badge bg-danger">Rejected</span>
+                                    </t>
+                                </td>
+
+                                <!-- WORKFLOW -->
+                                <td>
+                                    <t t-esc="workflow_status"/>
+                                </td>
+
+                                <!-- ACTIONS -->
+                                <td class="text-end">
+
+                                  <!-- REJECTED -->
+                                    <t t-if="'🔴' in workflow_status">
+                                        <span class="badge bg-danger">Rejected</span>
+                                    </t>
+
+                                    <!-- PENDING -->
+                                    <t t-elif="'🟡' in your_status">
+                                        <a class="btn btn-sm btn-primary"
+                                           t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1"
+                                        target="_blank">
+                                            Sign
+                                        </a>
+                                    </t>
+
+                                    <!-- SIGNED -->
+                                    <t t-else="">
+                                        <a class="btn btn-sm btn-primary"
+                                        t-attf-href="/my/signature/{{ item.id }}?access_token={{ doc['access_token'] }}"
+                                        target="_blank">
+                                            View
+                                        </a>
+                                    </t>
+                                    <!-- DOWNLOAD FINAL PDF (FIXED TOKEN!) -->
+                                    <t t-if="item.sign_request_id.state == 'signed'">
+                                        <a class="btn btn-sm btn-outline-secondary ms-1"
+                                           t-attf-href="/sign/download/{{ item.sign_request_id.id }}/{{ item.sign_request_id.access_token }}/completed"
+                                           target="_blank">
+                                            Download
+                                        </a>
+                                    </t>
+
+                                </td>
+
+                            </tr>
+                        </t>
+
+                    </tbody>
+                </table>
+            </t>
+        </div>
+    </t>
+</template>
+
+</odoo>

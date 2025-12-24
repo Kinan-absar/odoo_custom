@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="portal_manager_request_detail" name="Manager Approval Detail">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+
+            <div class="container mt-4">
+
+                <h2>Review Employee Request</h2>
+                <!-- DOWNLOAD PDF BUTTON -->
+                <t t-if="request_rec.state in ['approved', 'rejected']">
+                    <a t-att-href="'/report/pdf/employee_portal_suite.report_employee_request_document/%s' % request_rec.id"
+                    class="btn btn-outline-primary mb-3" target="_blank">
+                        Download PDF
+                    </a>
+                </t>
+
+                <div class="card p-4 mt-3">
+                    <h4 class="mb-3">Request Information</h4>
+
+                    <p><strong>Request #:</strong> <t t-esc="request_rec.name"/></p>
+                    <p><strong>Employee:</strong> <t t-esc="request_rec.employee_id.name"/></p>
+                    <p><strong>Type:</strong> <t t-esc="request_rec.request_type"/></p>
+                    <p><strong>Date:</strong> <t t-esc="request_rec.request_date"/></p>
+                    <p><strong>Description:</strong> <t t-esc="request_rec.description"/></p>
+                    <p><strong>Status:</strong> <t t-raw="status_badge(request_rec)"/></p>
+
+                    <t t-if="request_rec.request_type == 'leave'">
+                        <p><strong>Leave From:</strong> <t t-esc="request_rec.leave_from"/></p>
+                        <p><strong>Leave To:</strong> <t t-esc="request_rec.leave_to"/></p>
+                    </t>
+                </div>
+
+
+                <!-- APPROVAL TIMELINE UI -->
+                <div class="card p-3 mt-4">
+                    <h4 class="mb-3">Approval Timeline</h4>
+
+                    <t t-if="request_rec.get_portal_timeline()">
+                        <ul class="timeline">
+                            <t t-foreach="request_rec.get_portal_timeline()" t-as="ev">
+                                <li class="timeline-item">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h5 class="timeline-title"><t t-esc="ev['stage']"/></h5>
+
+                                        <t t-if="ev['approved_by']">
+                                            <p><strong>By:</strong> <t t-esc="ev['approved_by']"/></p>
+                                        </t>
+
+                                        <p><strong>Date:</strong> <t t-esc="ev['date']"/></p>
+
+                                        <t t-if="ev['comment']">
+                                            <p><strong>Comment:</strong> <t t-esc="ev['comment']"/></p>
+                                        </t>
+                                    </div>
+                                </li>
+                            </t>
+                        </ul>
+                    </t>
+
+                    <t t-if="not request_rec.get_portal_timeline()">
+                        <p>No approval activity yet.</p>
+                    </t>
+                </div>
+
+
+                <!-- APPROVE / REJECT -->
+                <t t-if="request_rec.state not in ['approved', 'rejected']">
+
+                    <form action="/my/employee/requests/approve" method="post" class="mt-4">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
+                        <div class="mb-3">
+                            <label class="form-label">Comment (optional)</label>
+                            <textarea name="comment" class="form-control"></textarea>
+                        </div>
+                        <button type="submit" formmethod="post" class="btn btn-success">Approve</button>
+                    </form>
+
+                    <form action="/my/employee/requests/reject" method="post" class="mt-3">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
+                        <div class="mb-3">
+                            <label class="form-label">Rejection Comment</label>
+                            <textarea name="comment" class="form-control mb-3" placeholder="Reason for rejection" required="required"></textarea>
+                        </div>
+                        <button type="submit" formmethod="post" class="btn btn-danger">Reject</button>
+                    </form>
+
+                </t>
+
+                <a href="/my/employee/approvals" class="btn btn-secondary mt-4">Back</a>
+
+            </div>
+
+            <!-- ========================= -->
+            <!-- TIMELINE CSS              -->
+            <!-- ========================= -->
+            <style>
+                .timeline {
+                    list-style: none;
+                    padding-left: 20px;
+                    position: relative;
+                    margin-left: 10px;
+                }
+
+                .timeline:before {
+                    content: "";
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    width: 2px;
+                    background: #c5c5c5;
+                    left: 8px;
+                }
+
+                .timeline-item {
+                    position: relative;
+                    margin-bottom: 20px;
+                }
+
+                .timeline-marker {
+                    position: absolute;
+                    width: 16px;
+                    height: 16px;
+                    background: #0d6efd;
+                    border-radius: 50%;
+                    left: 0px;
+                    top: 5px;
+                }
+
+                .timeline-content {
+                    margin-left: 30px;
+                    padding: 10px 15px;
+                    background: #f8f9fa;
+                    border-radius: 5px;
+                    border: 1px solid #dee2e6;
+                }
+
+                .timeline-title {
+                    margin: 0 0 5px 0;
+                    font-size: 16px;
+                    font-weight: 600;
+                }
+            </style>
+
+        </t>
+    </template>
+
+</odoo>

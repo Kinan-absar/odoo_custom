@@ -16,7 +16,11 @@ class PurchaseOrder(models.Model):
     ], default="draft", tracking=True)
 
     revision = fields.Integer(default=0, tracking=True)
-
+    #adding Project field
+    project_id = fields.Many2one(
+        'project.project',
+        string='Project'
+    )
     # ---------------------------------------------------------------------
     # WRITE OVERRIDE – Reset signature workflow when PO is modified
     # ---------------------------------------------------------------------
@@ -77,7 +81,14 @@ class PurchaseOrder(models.Model):
         pdf_b64 = base64.b64encode(pdf_content)
 
         # Filename includes revision if exists
-        filename = f"{self.name}"
+        filename_parts = [
+            self.name,                               # PO number
+            self.partner_id.name,                   # Vendor
+            self.material_request_id.name if self.material_request_id else None,  # MR
+            self.project_id.name if self.project_id else None,  # Project
+        ]
+
+        filename = " - ".join(p for p in filename_parts if p)
         if self.revision > 0:
             filename += f"_R{self.revision}"
         filename += ".pdf"
@@ -92,7 +103,7 @@ class PurchaseOrder(models.Model):
 
         # Create Sign Template
         template = self.env['sign.template'].create({
-            'name': f"PO {self.name}",
+            'name': f"PO - {filename.replace('.pdf', '')}",
             'attachment_id': attachment.id,
         })
 

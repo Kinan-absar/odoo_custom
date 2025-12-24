@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ============================= -->
+    <!-- EMPLOYEE PORTAL GROUPS        -->
+    <!-- ============================= -->
+
+    <record id="group_employee_portal" model="res.groups">
+        <field name="name">Employee Portal</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
+    <record id="group_employee_portal_employee" model="res.groups">
+        <field name="name">Employee Portal: Employee</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
+    <record id="group_employee_portal_manager" model="res.groups">
+        <field name="name">Employee Portal: Manager</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
+    <record id="group_employee_portal_hr" model="res.groups">
+        <field name="name">Employee Portal: HR</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
+    <record id="group_employee_portal_finance" model="res.groups">
+        <field name="name">Employee Portal: Finance</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
+    <record id="group_employee_portal_ceo" model="res.groups">
+        <field name="name">Employee Portal: CEO</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
+    <record id="group_employee_portal_admin" model="res.groups">
+        <field name="name">Employee Portal: Administrator</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
+
+    <!-- ============================= -->
+    <!-- MATERIAL REQUEST APPROVER ROLES -->
+    <!-- ============================= -->
+
+    <record id="group_mr_purchase_rep" model="res.groups">
+        <field name="name">Material Request: Purchase Representative</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
+    <record id="group_mr_store_manager" model="res.groups">
+        <field name="name">Material Request: Store Manager</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
+    <record id="group_mr_project_manager" model="res.groups">
+        <field name="name">Material Request: Project Manager</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
+    <record id="group_mr_projects_director" model="res.groups">
+        <field name="name">Material Request: Projects Director</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
+</odoo>

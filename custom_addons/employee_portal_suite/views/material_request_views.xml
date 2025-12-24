@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ========================================================= -->
+    <!-- MATERIAL REQUEST FORM VIEW                                -->
+    <!-- ========================================================= -->
+    <record id="view_material_request_form" model="ir.ui.view">
+        <field name="name">material.request.form</field>
+        <field name="model">material.request</field>
+
+        <field name="arch" type="xml">
+            <form string="Material Request">
+                    <header>
+                        <button name="action_submit" type="object"
+                                string="Submit"
+                                class="oe_stat_button"
+                                invisible="state != 'draft'"/>
+
+                        <button name="action_purchase" type="object"
+                                string="Purchase Rep Approve"
+                                class="oe_stat_button"
+                                invisible="state != 'purchase'"/>
+
+                        <button name="action_store" type="object"
+                                string="Store Approve"
+                                class="oe_stat_button"
+                                invisible="state != 'store'"/>
+
+                        <button name="action_project_manager" type="object"
+                                string="PM Approve"
+                                class="oe_stat_button"
+                                invisible="state != 'project_manager'"/>
+
+                        <button name="action_director" type="object"
+                                string="Director Approve"
+                                class="oe_stat_button"
+                                invisible="state != 'director'"/>
+
+                        <button name="action_ceo" type="object"
+                                string="CEO Approve"
+                                class="oe_stat_button"
+                                invisible="state != 'ceo'"/>
+
+                        <button name="action_reject" type="object"
+                                string="Reject"
+                                class="oe_stat_button btn-danger"
+                                invisible="state == 'approved'"/>
+                        <button name="%(employee_portal_suite.material_request_pdf)d"
+                                type="action"
+                                class="btn-primary"
+                                icon="fa-print"
+                                string="Print PDF"/>
+                        <button name="action_create_po"
+                                type="object"
+                                string="Create Purchase Order"
+                                class="btn btn-primary"
+                                invisible="not can_create_po"/>
+                        
+
+                    </header>
+                <sheet>
+                    <field name="can_create_po" invisible="1"/>
+
+                    <!-- 🔥 SMART BUTTON BOX -->
+                   <div class="oe_button_box" name="button_box">
+
+                        <!-- OPEN PO BUTTON -->
+                        <button name="action_open_po"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-external-link"
+                                invisible="po_name == False">
+
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">PO</span>
+                                <span class="o_stat_value">
+                                    <field name="po_name"/>
+                                </span>
+                            </div>
+                        </button>
+
+                        <!-- PO STATUS BADGE AS NON-CLICKABLE SMART BUTTON -->
+                        <button class="oe_stat_button"
+                                invisible="po_status == False"
+                                disabled="1"
+                                style="cursor: default;">
+
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">
+                                    <field name="po_status" widget="badge"/>
+                                </span>
+                            </div>
+
+                        </button>
+
+                    </div>
+
+                     <!-- TITLE + STATUS -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+
+                        <label for="state" class="oe_inline"/>
+                        <div class="oe_inline">
+                            <field name="state" widget="statusbar"
+                                   statusbar_visible="draft,purchase,store,project_manager,director,ceo,approved,rejected"/>
+                        </div>
+                    </div>
+
+                    
+                    <!-- NOTEBOOK -->
+                    <notebook>
+
+                        <!-- DETAILS TAB -->
+                        <page string="Request Details">
+                            <group>
+                                <group>
+                                    <!-- Readonly for normal portal employees -->
+                                    <field name="employee_id"
+                                        readonly="1"
+                                        groups="employee_portal_suite.group_employee_portal_employee"/>
+
+                                    <!-- Editable ONLY for Portal Admins -->
+                                    <field name="employee_id"
+                                        groups="employee_portal_suite.group_employee_portal_admin"/>
+                                    <field name="request_date"/>
+                                    <field name="worksite"/>
+                                    <field name="delivery_date"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- MATERIAL LINES TAB -->
+                        <page string="Materials">
+                            <field name="line_ids">
+                                <list editable="bottom" class="o_list_view o_list_no_column_border">
+
+                                    <!-- MATERIAL NAME -->
+                                    <field name="item_name"
+                                        string="Material"
+                                        class="fw-bold"
+                                        required="1"
+                                        style="width:60%"/>
+
+                                    <!-- QTY -->
+                                    <field name="qty_required"
+                                        string="Qty"
+                                        class="text-center"
+                                        required="1"
+                                        style="width:15%; text-align:center"/>
+
+                                    <!-- UOM -->
+                                    <field name="uom_id"
+                                        string="UoM"
+                                        options="{'no_create': True}"
+                                        style="width:15%"/>
+
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- APPROVAL TIMELINE TAB -->
+                        <page string="Approval Timeline">
+
+                            <group string="Purchase Representative">
+                                <field name="purchase_approved_by" readonly="1"/>
+                                <field name="purchase_approved_date" readonly="1"/>
+                                <field name="purchase_comment"/>
+                            </group>
+
+                            <group string="Store Manager">
+                                <field name="store_approved_by" readonly="1"/>
+                                <field name="store_approved_date" readonly="1"/>
+                                <field name="store_comment"/>
+                            </group>
+
+                            <group string="Project Manager">
+                                <field name="project_manager_approved_by" readonly="1"/>
+                                <field name="project_manager_approved_date" readonly="1"/>
+                                <field name="project_manager_comment"/>
+                            </group>
+
+                            <group string="Projects Director">
+                                <field name="director_approved_by" readonly="1"/>
+                                <field name="director_approved_date" readonly="1"/>
+                                <field name="director_comment"/>
+                            </group>
+
+                            <group string="CEO">
+                                <field name="ceo_approved_by" readonly="1"/>
+                                <field name="ceo_approved_date" readonly="1"/>
+                                <field name="ceo_comment"/>
+                            </group>
+
+
+                        </page>
+
+                    </notebook>
+                </sheet> 
+                <chatter/>
+            </form>
+        </field>
+
+    </record>
+
+    <!-- ========================================================= -->
+    <!-- LIST VIEW                                                  -->
+    <!-- ========================================================= -->
+    <record id="view_material_request_list" model="ir.ui.view">
+        <field name="name">material.request.list</field>
+        <field name="model">material.request</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="request_date"/>
+                <field name="worksite"/>
+                <field name="delivery_date"/>
+                <field name="state"
+                     widget="badge"
+                        decoration-info="state in ('draft','purchase','store','project_manager','director','ceo')"
+                        decoration-success="state == 'approved'"
+                        decoration-danger="state == 'rejected'"
+                     string="Status"
+                     class="fw-bold"/>
+                <!-- CLICKABLE PO ICON - visible ONLY if po_name has something -->
+                <button name="action_open_po"
+                        type="object"
+                        string="Open PO"
+                        icon="fa-external-link"
+                        class="text-primary fw-bold"
+                        invisible="po_name == False"/>
+                        
+                <field name="po_name" string="Purchase Order"/>
+                <field name="po_status"
+                   widget="badge"
+                    decoration-info="po_status in ('draft', 'sent')"
+                    decoration-warning="po_status == 'to approve'"
+                    decoration-success="po_status in ('purchase', 'done')"
+                    decoration-danger="po_status == 'cancel'"
+                   string="PO Status"
+                   invisible="po_status == False"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ========================================================= -->
+    <!-- SEARCH VIEW                                                -->
+    <!-- ========================================================= -->
+    <record id="view_material_request_search" model="ir.ui.view">
+        <field name="name">material.request.search</field>
+        <field name="model">material.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="worksite"/>
+                <field name="state"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ========================================================= -->
+    <!-- WINDOW ACTION                                              -->
+    <!-- ========================================================= -->
+    <record id="action_material_request" model="ir.actions.act_window">
+        <field name="name">Material Requests</field>
+        <field name="res_model">material.request</field>
+        <field name="view_mode">list,form</field>
+
+    </record>
+
+</odoo>
