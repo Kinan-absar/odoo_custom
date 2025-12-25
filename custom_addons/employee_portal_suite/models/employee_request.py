@@ -192,6 +192,15 @@ class EmployeeRequest(models.Model):
                         "Approval Needed",
                         f"Please review request {rec.name}."
                     )
+                    #helper
+    def _check_approval(self, required_state, required_group):
+        self.ensure_one()
+
+        if self.state != required_state:
+            raise UserError(_("This action is not allowed in the current state."))
+
+        if not self.env.user.has_group(required_group):
+            raise UserError(_("You are not allowed to approve at this stage."))
 
     # ---------------------------------------------------------
     # USER ACTIONS
@@ -218,37 +227,58 @@ class EmployeeRequest(models.Model):
                 )
 
     def action_manager_approve(self):
-        self._advance_state(
-            new_state='hr',
-            group_xmlid='employee_portal_suite.group_employee_portal_hr',
-            approved_user_field='manager_approved_by',
-            approved_date_field='manager_approved_date'
-        )
+        for rec in self:
+            rec._check_approval(
+                required_state="manager",
+                required_group="employee_portal_suite.group_employee_portal_manager"
+            )
+
+            rec._advance_state(
+                new_state="hr",
+                group_xmlid="employee_portal_suite.group_employee_portal_hr",
+                approved_user_field="manager_approved_by",
+                approved_date_field="manager_approved_date"
+            )
 
     def action_hr_approve(self):
-        self._advance_state(
-            new_state='finance',
-            group_xmlid='employee_portal_suite.group_employee_portal_finance',
-            approved_user_field='hr_approved_by',
-            approved_date_field='hr_approved_date'
-        )
+        for rec in self:
+            rec._check_approval(
+                required_state="hr",
+                required_group="employee_portal_suite.group_employee_portal_hr"
+            )
+
+            rec._advance_state(
+                new_state="finance",
+                group_xmlid="employee_portal_suite.group_employee_portal_finance",
+                approved_user_field="hr_approved_by",
+                approved_date_field="hr_approved_date"
+            )
 
     def action_finance_approve(self):
-        self._advance_state(
-            new_state='ceo',
-            group_xmlid='employee_portal_suite.group_employee_portal_ceo',
-            approved_user_field='finance_approved_by',
-            approved_date_field='finance_approved_date'
-        )
+        for rec in self:
+            rec._check_approval(
+                required_state="finance",
+                required_group="employee_portal_suite.group_employee_portal_finance"
+            )
+
+            rec._advance_state(
+                new_state="ceo",
+                group_xmlid="employee_portal_suite.group_employee_portal_ceo",
+                approved_user_field="finance_approved_by",
+                approved_date_field="finance_approved_date"
+            )
 
     def action_ceo_approve(self):
         for rec in self:
-            if rec.state != 'ceo':
-                raise UserError(_("Request is not in CEO approval stage."))
+            rec._check_approval(
+                required_state="ceo",
+                required_group="employee_portal_suite.group_employee_portal_ceo"
+            )
 
             rec.ceo_approved_by = self.env.user.id
             rec.ceo_approved_date = fields.Datetime.now()
             rec.state = 'approved'
+
             rec.message_post(body="Request fully approved.")
             rec._close_activities()
 
@@ -264,15 +294,24 @@ class EmployeeRequest(models.Model):
     # ---------------------------------------------------------
     def action_reject(self):
         for rec in self:
+            stage_group_map = {
+                "manager": "employee_portal_suite.group_employee_portal_manager",
+                "hr": "employee_portal_suite.group_employee_portal_hr",
+                "finance": "employee_portal_suite.group_employee_portal_finance",
+                "ceo": "employee_portal_suite.group_employee_portal_ceo",
+            }
 
-            if rec.state == 'approved':
-                raise UserError(_("Approved requests cannot be rejected."))
+            required_group = stage_group_map.get(rec.state)
+            if not required_group:
+                raise UserError(_("This request cannot be rejected at this stage."))
 
-            # Store rejection source stage & user
+            if not self.env.user.has_group(required_group):
+                raise UserError(_("You are not allowed to reject this request."))
+
             rec.state_before_reject = rec.state
-            rec.rejected_by = rec.env.user.id
-
+            rec.rejected_by = self.env.user.id
             rec.state = 'rejected'
+
             rec.message_post(body="Request rejected.")
             rec._close_activities()
 

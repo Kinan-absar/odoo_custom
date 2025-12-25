@@ -204,6 +204,9 @@ class MaterialRequest(models.Model):
         for rec in self:
             if rec.state != "draft":
                 raise UserError("Only draft requests can be submitted.")
+            # 🔴 REQUIRED: at least one material line
+            if not rec.line_ids:
+                raise UserError(_("You must add at least one material line before submitting the request."))
 
             rec.state = "purchase"
             rec.message_post(body="Material Request submitted.")
