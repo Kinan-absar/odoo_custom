@@ -122,6 +122,13 @@ class EmployeeRequest(models.Model):
     def create(self, vals):
         if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('employee.request.seq') or _('New')
+             # 🔑 FORCE employee ownership (internal = portal)
+        if not vals.get('employee_id'):
+            employee = self.env.user.employee_id
+            if not employee:
+                raise UserError(_("Your user is not linked to an employee."))
+            vals['employee_id'] = employee.id
+
         return super().create(vals)
 
     # ---------------------------------------------------------
