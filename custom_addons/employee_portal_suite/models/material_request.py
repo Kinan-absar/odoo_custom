@@ -119,7 +119,7 @@ class MaterialRequest(models.Model):
                 # Reset delivery date so portal doesn't crash
                 self.delivery_date = False
                 return {'warning': warning}
-                
+
     #employee autofilled
     @api.model
     def default_get(self, fields_list):
@@ -187,6 +187,15 @@ class MaterialRequest(models.Model):
             summary=summary,
             note=note
         )
+        #helper
+    def _check_approval(self, required_state, required_group):
+        self.ensure_one()
+
+        if self.state != required_state:
+            raise UserError(_("This action is not allowed in the current state."))
+
+        if not self.env.user.has_group(required_group):
+            raise UserError(_("You are not allowed to approve at this stage."))
 
     # ---------------------------------------------------------
     # ACTIONS
@@ -216,41 +225,68 @@ class MaterialRequest(models.Model):
                     )
 
     def action_purchase(self):
-        self._advance_state(
-            "store",
-            "employee_portal_suite.group_mr_store_manager",
-            "purchase_approved_by",
-            "purchase_approved_date"
-        )
+        for rec in self:
+            rec._check_approval(
+                required_state="purchase",
+                required_group="employee_portal_suite.group_mr_purchase_rep"
+            )
+
+            rec._advance_state(
+                "store",
+                "employee_portal_suite.group_mr_store_manager",
+                "purchase_approved_by",
+                "purchase_approved_date"
+            )
 
     def action_store(self):
-        self._advance_state(
-            "project_manager",
-            "employee_portal_suite.group_mr_project_manager",
-            "store_approved_by",
-            "store_approved_date"
-        )
+        for rec in self:
+            rec._check_approval(
+                required_state="store",
+                required_group="employee_portal_suite.group_mr_store_manager"
+            )
+
+            rec._advance_state(
+                "project_manager",
+                "employee_portal_suite.group_mr_project_manager",
+                "store_approved_by",
+                "store_approved_date"
+            )
 
     def action_project_manager(self):
-        self._advance_state(
-            "director",
-            "employee_portal_suite.group_mr_projects_director",
-            "project_manager_approved_by",
-            "project_manager_approved_date"
-        )
+        for rec in self:
+            rec._check_approval(
+                required_state="project_manager",
+                required_group="employee_portal_suite.group_mr_project_manager"
+            )
+
+            rec._advance_state(
+                "director",
+                "employee_portal_suite.group_mr_projects_director",
+                "project_manager_approved_by",
+                "project_manager_approved_date"
+            )
 
     def action_director(self):
-        self._advance_state(
-            "ceo",
-            "employee_portal_suite.group_employee_portal_ceo",
-            "director_approved_by",
-            "director_approved_date"
-        )
+        for rec in self:
+            rec._check_approval(
+                required_state="director",
+                required_group="employee_portal_suite.group_mr_projects_director"
+            )
+
+            rec._advance_state(
+                "ceo",
+                "employee_portal_suite.group_employee_portal_ceo",
+                "director_approved_by",
+                "director_approved_date"
+            )
+
 
     def action_ceo(self):
         for rec in self:
-            if rec.state != "ceo":
-                raise UserError("Request is not in CEO stage.")
+            rec._check_approval(
+                required_state="ceo",
+                required_group="employee_portal_suite.group_employee_portal_ceo"
+            )
 
             rec.ceo_approved_by = self.env.user.id
             rec.ceo_approved_date = fields.Datetime.now()
@@ -266,14 +302,28 @@ class MaterialRequest(models.Model):
                     f"Your Material Request {rec.name} has been approved."
                 )
 
+
     def action_reject(self):
         for rec in self:
-            if rec.state == "approved":
-                raise UserError("Approved requests cannot be rejected.")
+            stage_group_map = {
+                "purchase": "employee_portal_suite.group_mr_purchase_rep",
+                "store": "employee_portal_suite.group_mr_store_manager",
+                "project_manager": "employee_portal_suite.group_mr_project_manager",
+                "director": "employee_portal_suite.group_mr_projects_director",
+                "ceo": "employee_portal_suite.group_employee_portal_ceo",
+            }
+
+            required_group = stage_group_map.get(rec.state)
+            if not required_group:
+                raise UserError(_("This request cannot be rejected at this stage."))
+
+            if not self.env.user.has_group(required_group):
+                raise UserError(_("You are not allowed to reject this request."))
 
             rec.state_before_reject = rec.state
-            rec.rejected_by = rec.env.user.id
+            rec.rejected_by = self.env.user.id
             rec.state = "rejected"
+
             rec.message_post(body="Material Request rejected.")
             rec.activity_ids.action_done()
 
@@ -283,6 +333,7 @@ class MaterialRequest(models.Model):
                     "Material Request Rejected",
                     f"Your Material Request {rec.name} has been rejected."
                 )
+
     def get_rejection_reason(self):
         self.ensure_one()
         comments = {
