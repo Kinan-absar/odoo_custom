@@ -114,7 +114,17 @@ class EmployeeRequest(models.Model):
     def _compute_manager(self):
         for rec in self:
             rec.manager_id = rec.employee_id.parent_id
-
+   
+   #employee autofilled
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        if 'employee_id' in fields_list:
+            employee = self.env.user.employee_id
+            if not employee:
+                raise UserError(_("Your user is not linked to an employee."))
+            res['employee_id'] = employee.id
+        return res
     # ---------------------------------------------------------
     # SEQUENCE ASSIGN
     # ---------------------------------------------------------
@@ -122,13 +132,6 @@ class EmployeeRequest(models.Model):
     def create(self, vals):
         if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('employee.request.seq') or _('New')
-             # 🔑 FORCE employee ownership (internal = portal)
-        if not vals.get('employee_id'):
-            employee = self.env.user.employee_id
-            if not employee:
-                raise UserError(_("Your user is not linked to an employee."))
-            vals['employee_id'] = employee.id
-
         return super().create(vals)
 
     # ---------------------------------------------------------
