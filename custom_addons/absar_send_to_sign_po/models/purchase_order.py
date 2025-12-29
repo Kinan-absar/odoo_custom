@@ -109,11 +109,7 @@ class PurchaseOrder(models.Model):
         # -------------------------------------------------
         # CREATE sign.request EXPLICITLY (REQUIRED)
         # -------------------------------------------------
-        sign_request = self.env['sign.request'].create_from_template(
-            template.id,
-            signer=self.env.user.partner_id.id
-        )
-
+        sign_request = template._create_request()
         # -------------------------------------------------
         # ATTACH PO CHATTER ATTACHMENTS (QUOTATIONS)
         # -------------------------------------------------
