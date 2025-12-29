@@ -76,6 +76,18 @@
 
         </field>
     </record>
+    
+    <record id="purchase_order_form_remove_project_group" model="ir.ui.view">
+        <field name="name">purchase.order.form.project.remove.group</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='project_id']" position="attributes">
+                <attribute name="groups"></attribute>
+            </xpath>
+        </field>
+    </record>
+
   <!-- LIST VIEW EXTENSION -->
     <record id="view_purchase_order_kpis_tree_inherit_project" model="ir.ui.view">
         <field name="name">purchase.order.kpis.tree.project.link</field>
