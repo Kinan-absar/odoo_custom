@@ -148,11 +148,14 @@ class PurchaseOrder(models.Model):
         self.message_post(body="PO sent for Director Signature.")
 
         # Final correct Sign URL
-        return {
-            "type": "ir.actions.act_url",
-            "url": f'/odoo/sign/{template.id}/action-sign.Template?id={template.id}&name=Template%20"PO%20{self.name}"',
-            "target": "self",
+       return {
+            "type": "ir.actions.act_window",
+            "res_model": "sign.request",
+            "res_id": sign_request.id,
+            "view_mode": "form",
+            "target": "current",
         }
+
 
     # ---------------------------------------------------------------------
     # CRON SYNC STATUS (Director → CEO → Completed → Rejected)
