@@ -148,7 +148,7 @@ class PurchaseOrder(models.Model):
         self.message_post(body="PO sent for Director Signature.")
 
         # Final correct Sign URL
-       return {
+        return {
             "type": "ir.actions.act_window",
             "res_model": "sign.request",
             "res_id": sign_request.id,
