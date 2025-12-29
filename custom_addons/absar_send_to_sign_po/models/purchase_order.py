@@ -107,25 +107,30 @@ class PurchaseOrder(models.Model):
             'attachment_id': attachment.id,
         })
         # -------------------------------------------------
-        # Attach chatter quotations to Sign Template
+        # Attach PO chatter attachments to latest sign request
         # -------------------------------------------------
-        chatter_attachments = self.env['ir.attachment'].search([
-            ('res_model', '=', 'purchase.order'),
-            ('res_id', '=', self.id),
-            ('type', '=', 'binary'),
-            ('mimetype', 'in', [
-                'application/pdf',
-                'image/png',
-                'image/jpeg',
-            ]),
-            ('id', '!=', attachment.id),  # avoid duplicating PO PDF
-        ])
+        request = self.env['sign.request'].search(
+            [('template_id', '=', template.id)],
+            order="id desc",
+            limit=1
+        )
 
-        if chatter_attachments:
+        if request:
+            chatter_attachments = self.env['ir.attachment'].search([
+                ('res_model', '=', 'purchase.order'),
+                ('res_id', '=', self.id),
+                ('type', '=', 'binary'),
+                ('mimetype', 'in', ['application/pdf', 'image/png', 'image/jpeg']),
+            ])
+
             chatter_attachments.write({'public': True})
-            template.write({
-                'attachment_ids': [(4, att.id) for att in chatter_attachments]
-            })
+
+            for att in chatter_attachments:
+                self.env['sign.request.item'].create({
+                    'sign_request_id': request.id,
+                    'attachment_id': att.id,
+                })
+
 
         self.sign_template_id = template.id
         self.signature_state = "director_pending"
