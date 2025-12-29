@@ -106,6 +106,26 @@ class PurchaseOrder(models.Model):
             'name': f"PO - {filename.replace('.pdf', '')}",
             'attachment_id': attachment.id,
         })
+        # -------------------------------------------------
+        # Attach chatter quotations to Sign Template
+        # -------------------------------------------------
+        chatter_attachments = self.env['ir.attachment'].search([
+            ('res_model', '=', 'purchase.order'),
+            ('res_id', '=', self.id),
+            ('type', '=', 'binary'),
+            ('mimetype', 'in', [
+                'application/pdf',
+                'image/png',
+                'image/jpeg',
+            ]),
+            ('id', '!=', attachment.id),  # avoid duplicating PO PDF
+        ])
+
+        if chatter_attachments:
+            chatter_attachments.write({'public': True})
+            template.write({
+                'attachment_ids': [(4, att.id) for att in chatter_attachments]
+            })
 
         self.sign_template_id = template.id
         self.signature_state = "director_pending"
