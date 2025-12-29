@@ -77,19 +77,17 @@
         </field>
     </record>
 
-    <record id="purchase_order_form_inherit_project" model="ir.ui.view">
-        <field name="name">purchase.order.form.project.link</field>
+    <record id="purchase_order_form_remove_project_group" model="ir.ui.view">
+        <field name="name">purchase.order.form.remove.project.group</field>
         <field name="model">purchase.order</field>
-        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="inherit_id" ref="project_purchase.view_order_form_inherit_project_purchase"/>
         <field name="arch" type="xml">
-
-            <!-- Project directly after Vendor Reference -->
-            <xpath expr="//field[@name='partner_ref']" position="after">
-                <field name="project_id"/>
+            <xpath expr="//field[@name='project_id']" position="attributes">
+                <attribute name="groups"/>
             </xpath>
-
         </field>
     </record>
+    
         <!-- LIST VIEW EXTENSION -->
     <record id="view_purchase_order_kpis_tree_inherit_project" model="ir.ui.view">
         <field name="name">purchase.order.kpis.tree.project.link</field>
