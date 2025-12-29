@@ -109,22 +109,11 @@ class PurchaseOrder(models.Model):
         # -------------------------------------------------
         # CREATE sign.request EXPLICITLY (REQUIRED)
         # -------------------------------------------------
-        sign_request = self.env['sign.request'].create({
-            'template_id': template.id,
-            'reference': f"PO {self.name}",
-        })
-        # -------------------------------------------------
-        # REQUIRED: create signer item for PO document
-        # -------------------------------------------------
-        director_partner = self.env.user.partner_id  # TEMP: current user
-        # Replace later with actual Director partner if needed
+        sign_request = self.env['sign.request'].create_from_template(
+            template.id,
+            signer=self.env.user.partner_id.id
+        )
 
-        self.env['sign.request.item'].create({
-            'sign_request_id': sign_request.id,
-            'partner_id': director_partner.id,
-            'role_id': self.env.ref('sign.sign_role_signer').id,
-            'mail_sent_order': 1,
-        })
         # -------------------------------------------------
         # ATTACH PO CHATTER ATTACHMENTS (QUOTATIONS)
         # -------------------------------------------------
