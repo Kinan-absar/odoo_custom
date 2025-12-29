@@ -107,30 +107,30 @@ class PurchaseOrder(models.Model):
             'attachment_id': attachment.id,
         })
         # -------------------------------------------------
-        # Attach PO chatter attachments to latest sign request
+        # CREATE sign.request EXPLICITLY (REQUIRED)
         # -------------------------------------------------
-        request = self.env['sign.request'].search(
-            [('template_id', '=', template.id)],
-            order="id desc",
-            limit=1
-        )
+        sign_request = self.env['sign.request'].create({
+            'template_id': template.id,
+            'reference': f"PO {self.name}",
+        })
 
-        if request:
-            chatter_attachments = self.env['ir.attachment'].search([
-                ('res_model', '=', 'purchase.order'),
-                ('res_id', '=', self.id),
-                ('type', '=', 'binary'),
-                ('mimetype', 'in', ['application/pdf', 'image/png', 'image/jpeg']),
-            ])
+        # -------------------------------------------------
+        # ATTACH PO CHATTER ATTACHMENTS (QUOTATIONS)
+        # -------------------------------------------------
+        chatter_attachments = self.env['ir.attachment'].search([
+            ('res_model', '=', 'purchase.order'),
+            ('res_id', '=', self.id),
+            ('type', '=', 'binary'),
+            ('mimetype', 'in', ['application/pdf', 'image/png', 'image/jpeg']),
+        ])
 
-            chatter_attachments.write({'public': True})
+        chatter_attachments.write({'public': True})
 
-            for att in chatter_attachments:
-                self.env['sign.request.item'].create({
-                    'sign_request_id': request.id,
-                    'attachment_id': att.id,
-                })
-
+        for att in chatter_attachments:
+            self.env['sign.request.item'].create({
+                'sign_request_id': sign_request.id,
+                'attachment_id': att.id,
+            })
 
         self.sign_template_id = template.id
         self.signature_state = "director_pending"
