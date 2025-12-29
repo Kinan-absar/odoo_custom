@@ -106,27 +106,6 @@ class PurchaseOrder(models.Model):
             'name': f"PO - {filename.replace('.pdf', '')}",
             'attachment_id': attachment.id,
         })
-        # -------------------------------------------------
-        # CREATE sign.request EXPLICITLY (REQUIRED)
-        # -------------------------------------------------
-        sign_request = template._create_request()
-        # -------------------------------------------------
-        # ATTACH PO CHATTER ATTACHMENTS (QUOTATIONS)
-        # -------------------------------------------------
-        chatter_attachments = self.env['ir.attachment'].search([
-            ('res_model', '=', 'purchase.order'),
-            ('res_id', '=', self.id),
-            ('type', '=', 'binary'),
-            ('mimetype', 'in', ['application/pdf', 'image/png', 'image/jpeg']),
-        ])
-
-        chatter_attachments.write({'public': True})
-
-        for att in chatter_attachments:
-            self.env['sign.request.item'].create({
-                'sign_request_id': sign_request.id,
-                'attachment_id': att.id,
-            })
 
         self.sign_template_id = template.id
         self.signature_state = "director_pending"
@@ -134,13 +113,10 @@ class PurchaseOrder(models.Model):
 
         # Final correct Sign URL
         return {
-            "type": "ir.actions.act_window",
-            "res_model": "sign.request",
-            "res_id": sign_request.id,
-            "view_mode": "form",
-            "target": "current",
+            "type": "ir.actions.act_url",
+            "url": f'/odoo/sign/{template.id}/action-sign.Template?id={template.id}&name=Template%20"PO%20{self.name}"',
+            "target": "self",
         }
-
 
     # ---------------------------------------------------------------------
     # CRON SYNC STATUS (Director → CEO → Completed → Rejected)
