@@ -25,7 +25,7 @@
     "website": "https://absar-alomran.com",
     "category": "Purchases",
     "license": "LGPL-3",
-    "depends": ["purchase", "sign", "mail", "purchase_project"],
+    "depends": ["purchase", "sign", "mail", "project"],
     "data": [
         "data/cron.xml",
         "views/purchase_order_view.xml",
