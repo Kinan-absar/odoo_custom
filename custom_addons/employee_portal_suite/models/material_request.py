@@ -3,6 +3,7 @@ from odoo.exceptions import UserError
 from datetime import timedelta
 from odoo.exceptions import ValidationError
 from odoo.tools import html2plaintext
+import re
 
 class MaterialRequest(models.Model):
     _name = 'material.request'
@@ -157,10 +158,29 @@ class MaterialRequest(models.Model):
             msg = Message.search([
                 ("model", "=", "material.request"),
                 ("res_id", "=", rec.id),
-                ("message_type", "=", "comment"),   # log notes
+                ("message_type", "=", "comment"),
             ], order="date desc", limit=1)
 
-            rec.last_log_note = html2plaintext(msg.body) if msg else False
+            if not msg:
+                rec.last_log_note = False
+                continue
+
+            text = html2plaintext(msg.body or "")
+
+            # -------------------------------------------------
+            # REMOVE FOOTNOTE REFERENCES LIKE [1], [2], etc.
+            # -------------------------------------------------
+            text = re.sub(r"\[\d+\]", "", text)
+
+            # -------------------------------------------------
+            # REMOVE TRAILING URL LINES
+            # -------------------------------------------------
+            lines = [
+                line for line in text.splitlines()
+                if not line.strip().startswith("/")
+            ]
+
+            rec.last_log_note = " ".join(lines).strip()
 
 
         # ---------------------------------------------------------

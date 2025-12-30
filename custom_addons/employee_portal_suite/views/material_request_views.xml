@@ -241,7 +241,7 @@
                     decoration-danger="po_status == 'cancel'"
                    string="PO Status"
                    invisible="po_status == False"/>
-                <field name="last_log_note" widget="text" optional="hide"/>
+                <field name="last_log_note" optional="hide"/>
 
             </list>
         </field>
