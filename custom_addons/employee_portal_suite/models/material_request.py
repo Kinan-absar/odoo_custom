@@ -77,6 +77,11 @@ class MaterialRequest(models.Model):
         store=True,
         readonly=True
     )
+    last_log_note = fields.Text(
+        string="Last Log Note",
+        compute="_compute_last_log_note",
+        store=True,
+    )
 
     # ---------------------------------------------------------
     # STATE MACHINE
@@ -136,20 +141,25 @@ class MaterialRequest(models.Model):
             else:
                 rec.work_location_id = False
                 rec.project_id = False
-
-    @api.constrains("project_id")
-    def _check_project_assigned(self):
-        for rec in self:
-            if not rec.project_id:
-                raise ValidationError(
-                    _("Your work location is not linked to a project. Please contact administration.")
-                )            
+          
     @api.depends("project_id")
     def _compute_project_approvers(self):
         for rec in self:
             project = rec.project_id
             rec.store_manager_user_id = project.store_manager_user_id if project else False
             rec.project_manager_user_id = project.project_manager_user_id if project else False
+            
+    @api.depends("message_ids")
+    def _compute_last_log_note(self):
+        Message = self.env["mail.message"]
+        for rec in self:
+            msg = Message.search([
+                ("model", "=", "material.request"),
+                ("res_id", "=", rec.id),
+                ("message_type", "=", "comment"),   # log notes
+            ], order="date desc", limit=1)
+
+            rec.last_log_note = msg.body if msg else False
 
         # ---------------------------------------------------------
     # COMPUTE MANAGER
