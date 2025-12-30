@@ -62,6 +62,22 @@ class MaterialRequest(models.Model):
         store=True,
         tracking=True
     )
+    store_manager_user_id = fields.Many2one(
+        "res.users",
+        string="Store Manager (Project)",
+        compute="_compute_project_approvers",
+        store=True,
+        readonly=True
+    )
+
+    project_manager_user_id = fields.Many2one(
+        "res.users",
+        string="Project Manager (Project)",
+        compute="_compute_project_approvers",
+        store=True,
+        readonly=True
+    )
+
     # ---------------------------------------------------------
     # STATE MACHINE
     # ---------------------------------------------------------
@@ -120,7 +136,7 @@ class MaterialRequest(models.Model):
             else:
                 rec.work_location_id = False
                 rec.project_id = False
-                
+
     @api.constrains("project_id")
     def _check_project_assigned(self):
         for rec in self:
@@ -128,8 +144,14 @@ class MaterialRequest(models.Model):
                 raise ValidationError(
                     _("Your work location is not linked to a project. Please contact administration.")
                 )            
+    @api.depends("project_id")
+    def _compute_project_approvers(self):
+        for rec in self:
+            project = rec.project_id
+            rec.store_manager_user_id = project.store_manager_user_id if project else False
+            rec.project_manager_user_id = project.project_manager_user_id if project else False
 
-    # ---------------------------------------------------------
+        # ---------------------------------------------------------
     # COMPUTE MANAGER
     # ---------------------------------------------------------
     @api.depends("employee_id")
