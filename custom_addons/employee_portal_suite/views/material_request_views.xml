@@ -221,12 +221,12 @@
                     widget="badge"
                     string="Status"
                     class="fw-bold"
-                    decoration-secondary="state == 'draft'"
-                    decoration-info="state in ('purchase','director')"
-                    decoration-primary="state == 'store'"
-                    decoration-warning="state == 'project_manager'"
-                    decoration-success="state in ('approved','ceo')"
-                    decoration-danger="state == 'rejected'"/>
+                        decoration-muted="state == 'draft'"
+                        decoration-info="state in ('purchase','director')"
+                        decoration-primary="state == 'store'"
+                        decoration-warning="state == 'project_manager'"
+                        decoration-success="state in ('approved','ceo')"
+                        decoration-danger="state == 'rejected'"/>
                 <!-- CLICKABLE PO ICON - visible ONLY if po_name has something -->
                 <button name="action_open_po"
                         type="object"
