@@ -192,17 +192,40 @@ class EmployeePortalMaterialRequests(http.Controller):
         # ---------------------------------------------------------
         pending_list = []
 
-        stage_group_map = {
-            "purchase": "employee_portal_suite.group_mr_purchase_rep",
-            "store": "employee_portal_suite.group_mr_store_manager",
-            "project_manager": "employee_portal_suite.group_mr_project_manager",
-            "director": "employee_portal_suite.group_mr_projects_director",
-            "ceo": "employee_portal_suite.group_employee_portal_ceo",
-        }
+        for rec in Material.search([
+            ("state", "in", ["purchase", "store", "project_manager", "director", "ceo"])
+        ]):
 
-        for rec in Material.search([("state", "in", list(stage_group_map.keys()))]):
-            g = stage_group_map.get(rec.state)
-            if g and user.has_group(g):
+            # -------------------------------
+            # STORE MANAGER (project-based)
+            # -------------------------------
+            if rec.state == "store":
+                if user == rec.store_manager_user_id:
+                    pending_list.append(rec)
+
+            # -------------------------------
+            # PROJECT MANAGER (project-based)
+            # -------------------------------
+            elif rec.state == "project_manager":
+                if user == rec.project_manager_user_id:
+                    pending_list.append(rec)
+
+            # -------------------------------
+            # GLOBAL STAGES (group-based)
+            # -------------------------------
+            elif rec.state == "purchase" and user.has_group(
+                "employee_portal_suite.group_mr_purchase_rep"
+            ):
+                pending_list.append(rec)
+
+            elif rec.state == "director" and user.has_group(
+                "employee_portal_suite.group_mr_projects_director"
+            ):
+                pending_list.append(rec)
+
+            elif rec.state == "ceo" and user.has_group(
+                "employee_portal_suite.group_employee_portal_ceo"
+            ):
                 pending_list.append(rec)
 
         # ---------------------------------------------------------
