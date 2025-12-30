@@ -48,7 +48,20 @@ class MaterialRequest(models.Model):
         'request_id',
         string="Materials"
     )
+    work_location_id = fields.Many2one(
+        "hr.work.location",
+        string="Work Location",
+        readonly=True,
+        tracking=True
+    )
 
+    project_id = fields.Many2one(
+        "project.project",
+        string="Project",
+        compute="_compute_project_from_employee",
+        store=True,
+        tracking=True
+    )
     # ---------------------------------------------------------
     # STATE MACHINE
     # ---------------------------------------------------------
@@ -96,6 +109,25 @@ class MaterialRequest(models.Model):
     # Rejection info
     state_before_reject = fields.Char()
     rejected_by = fields.Many2one('res.users')
+    #new
+    @api.depends("employee_id")
+    def _compute_project_from_employee(self):
+        for rec in self:
+            employee = rec.employee_id
+            if employee and employee.work_location_id:
+                rec.work_location_id = employee.work_location_id
+                rec.project_id = employee.work_location_id.project_id
+            else:
+                rec.work_location_id = False
+                rec.project_id = False
+                
+    @api.constrains("project_id")
+    def _check_project_assigned(self):
+        for rec in self:
+            if not rec.project_id:
+                raise ValidationError(
+                    _("Your work location is not linked to a project. Please contact administration.")
+                )            
 
     # ---------------------------------------------------------
     # COMPUTE MANAGER
