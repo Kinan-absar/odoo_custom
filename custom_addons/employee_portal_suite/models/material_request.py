@@ -2,6 +2,8 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from datetime import timedelta
 from odoo.exceptions import ValidationError
+from odoo.tools import html2plaintext
+import re
 
 class MaterialRequest(models.Model):
     _name = 'material.request'
@@ -77,6 +79,11 @@ class MaterialRequest(models.Model):
         store=True,
         readonly=True
     )
+    last_log_note = fields.Text(
+        string="Last Log Note",
+        compute="_compute_last_log_note",
+        store=True,
+    )
 
     # ---------------------------------------------------------
     # STATE MACHINE
@@ -143,6 +150,43 @@ class MaterialRequest(models.Model):
             project = rec.project_id
             rec.store_manager_user_id = project.store_manager_user_id if project else False
             rec.project_manager_user_id = project.project_manager_user_id if project else False
+            
+    @api.depends("message_ids")
+    def _compute_last_log_note(self):
+        Message = self.env["mail.message"]
+        for rec in self:
+            msg = Message.search([
+                ("model", "=", "material.request"),
+                ("res_id", "=", rec.id),
+                ("message_type", "=", "comment"),
+            ], order="date desc", limit=1)
+
+            if not msg:
+                rec.last_log_note = False
+                continue
+
+            text = html2plaintext(msg.body or "")
+
+            # -------------------------------------------------
+            # REMOVE FOOTNOTE REFERENCES LIKE [1], [2], etc.
+            # -------------------------------------------------
+            text = re.sub(r"\[\d+\]", "", text)
+
+            # -------------------------------------------------
+            # REMOVE TRAILING URL LINES
+            # -------------------------------------------------
+            lines = [
+                line for line in text.splitlines()
+                if not line.strip().startswith("/")
+            ]
+
+            clean_text = " ".join(lines).strip()
+
+            MAX_LEN = 50
+            if len(clean_text) > MAX_LEN:
+                clean_text = clean_text[:MAX_LEN].rstrip() + "…"
+
+            rec.last_log_note = clean_text        
     # ---------------------------------------------------------
     # COMPUTE MANAGER
     # ---------------------------------------------------------
