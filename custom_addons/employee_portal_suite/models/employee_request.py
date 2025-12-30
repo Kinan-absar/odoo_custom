@@ -114,7 +114,16 @@ class EmployeeRequest(models.Model):
     def _compute_manager(self):
         for rec in self:
             rec.manager_id = rec.employee_id.parent_id
-
+     #employee autofilled
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        if 'employee_id' in fields_list:
+            employee = self.env.user.employee_id
+            if not employee:
+                raise UserError(_("Your user is not linked to an employee."))
+            res['employee_id'] = employee.id
+        return res
     # ---------------------------------------------------------
     # SEQUENCE ASSIGN
     # ---------------------------------------------------------
