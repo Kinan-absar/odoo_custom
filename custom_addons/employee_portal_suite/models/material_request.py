@@ -182,7 +182,7 @@ class MaterialRequest(models.Model):
 
             clean_text = " ".join(lines).strip()
 
-            MAX_LEN = 30
+            MAX_LEN = 50
             if len(clean_text) > MAX_LEN:
                 clean_text = clean_text[:MAX_LEN].rstrip() + "…"
 
