@@ -56,22 +56,42 @@ class EmployeePortalMain(CustomerPortal):
                 employee_pending_count += 1
 
         # ------------------------------------------------------
-        # 4. Material Pending Approvals
+        # 4. Material Pending Approvals (PROJECT-AWARE)
         # ------------------------------------------------------
-        if user.has_group('employee_portal_suite.group_mr_purchase_rep'):
-            stage_domain = [('state', '=', 'purchase')]
-        elif user.has_group('employee_portal_suite.group_mr_store_manager'):
-            stage_domain = [('state', '=', 'store')]
-        elif user.has_group('employee_portal_suite.group_mr_project_manager'):
-            stage_domain = [('state', '=', 'project_manager')]
-        elif user.has_group('employee_portal_suite.group_mr_projects_director'):
-            stage_domain = [('state', '=', 'director')]
-        elif user.has_group('employee_portal_suite.group_employee_portal_ceo'):
-            stage_domain = [('state', '=', 'ceo')]
-        else:
-            stage_domain = [('id', '=', 0)]  # this user has no MR approval role
+        material_pending_count = 0
+        Material = request.env['material.request'].sudo()
 
-        material_pending_count = request.env['material.request'].sudo().search_count(stage_domain)
+        pending_recs = Material.search([
+            ('state', 'in', ['purchase', 'store', 'project_manager', 'director', 'ceo'])
+        ])
+
+        for rec in pending_recs:
+
+            # Purchase (group-based)
+            if rec.state == 'purchase' and user.has_group(
+                'employee_portal_suite.group_mr_purchase_rep'
+            ):
+                material_pending_count += 1
+
+            # Store Manager (project-based)
+            elif rec.state == 'store' and rec.store_manager_user_id == user:
+                material_pending_count += 1
+
+            # Project Manager (project-based)
+            elif rec.state == 'project_manager' and rec.project_manager_user_id == user:
+                material_pending_count += 1
+
+            # Director (group-based)
+            elif rec.state == 'director' and user.has_group(
+                'employee_portal_suite.group_mr_projects_director'
+            ):
+                material_pending_count += 1
+
+            # CEO (group-based)
+            elif rec.state == 'ceo' and user.has_group(
+                'employee_portal_suite.group_employee_portal_ceo'
+            ):
+                material_pending_count += 1
         # -------------------------------
         # 4. Documents to Sign
         # -------------------------------

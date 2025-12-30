@@ -48,6 +48,35 @@ class MaterialRequest(models.Model):
         'request_id',
         string="Materials"
     )
+    work_location_id = fields.Many2one(
+            "hr.work.location",
+            string="Work Location",
+            readonly=True,
+            tracking=True
+        )
+
+        project_id = fields.Many2one(
+            "project.project",
+            string="Project",
+            compute="_compute_project_from_employee",
+            store=True,
+            tracking=True
+        )
+        store_manager_user_id = fields.Many2one(
+            "res.users",
+            string="Store Manager (Project)",
+            compute="_compute_project_approvers",
+            store=True,
+            readonly=True
+        )
+
+        project_manager_user_id = fields.Many2one(
+            "res.users",
+            string="Project Manager (Project)",
+            compute="_compute_project_approvers",
+            store=True,
+            readonly=True
+        )
 
     # ---------------------------------------------------------
     # STATE MACHINE
@@ -96,7 +125,31 @@ class MaterialRequest(models.Model):
     # Rejection info
     state_before_reject = fields.Char()
     rejected_by = fields.Many2one('res.users')
+    #new
+    @api.depends("employee_id")
+    def _compute_project_from_employee(self):
+        for rec in self:
+            employee = rec.employee_id
+            if employee and employee.work_location_id:
+                rec.work_location_id = employee.work_location_id
+                rec.project_id = employee.work_location_id.project_id
+            else:
+                rec.work_location_id = False
+                rec.project_id = False
 
+    @api.constrains("project_id")
+    def _check_project_assigned(self):
+        for rec in self:
+            if not rec.project_id:
+                raise ValidationError(
+                    _("Your work location is not linked to a project. Please contact administration.")
+                )            
+    @api.depends("project_id")
+    def _compute_project_approvers(self):
+        for rec in self:
+            project = rec.project_id
+            rec.store_manager_user_id = project.store_manager_user_id if project else False
+            rec.project_manager_user_id = project.project_manager_user_id if project else False
     # ---------------------------------------------------------
     # COMPUTE MANAGER
     # ---------------------------------------------------------
@@ -144,14 +197,51 @@ class MaterialRequest(models.Model):
     # ---------------------------------------------------------
     def _advance_state(self, new_state, group_xmlid, approved_user_field, approved_date_field):
         for rec in self:
+            # Save approval info
             rec[approved_user_field] = self.env.user.id
             rec[approved_date_field] = fields.Datetime.now()
-
             rec.state = new_state
-            rec.message_post(body=f"{new_state.capitalize()} stage approved.")
+
+            rec.message_post(body=f"{new_state.replace('_', ' ').title()} stage approved.")
             rec.activity_ids.action_done()
 
-            # Notify the next approval group
+            # -------------------------------------------------
+            # PROJECT-SCOPED NOTIFICATIONS
+            # -------------------------------------------------
+
+            # Store Manager stage
+            if new_state == "store" and rec.store_manager_user_id:
+                user = rec.store_manager_user_id
+                rec._notify_user(
+                    user,
+                    f"Material Request {rec.name} requires your approval",
+                    f"Material Request {rec.name} is waiting for your action."
+                )
+                rec._schedule_activity(
+                    user,
+                    "Approval Needed",
+                    f"Please review Material Request {rec.name}."
+                )
+                return
+
+            # Project Manager stage
+            if new_state == "project_manager" and rec.project_manager_user_id:
+                user = rec.project_manager_user_id
+                rec._notify_user(
+                    user,
+                    f"Material Request {rec.name} requires your approval",
+                    f"Material Request {rec.name} is waiting for your action."
+                )
+                rec._schedule_activity(
+                    user,
+                    "Approval Needed",
+                    f"Please review Material Request {rec.name}."
+                )
+                return
+
+            # -------------------------------------------------
+            # GLOBAL STAGES (PURCHASE / DIRECTOR / CEO)
+            # -------------------------------------------------
             group = self.env.ref(group_xmlid, raise_if_not_found=False)
             if group:
                 for user in group.users:
@@ -165,7 +255,6 @@ class MaterialRequest(models.Model):
                         "Approval Needed",
                         f"Please review Material Request {rec.name}."
                     )
-
     # ---------------------------------------------------------
     # NOTIFY / ACTIVITY HELPERS
     # ---------------------------------------------------------
@@ -191,11 +280,29 @@ class MaterialRequest(models.Model):
     def _check_approval(self, required_state, required_group):
         self.ensure_one()
 
+       # State check
         if self.state != required_state:
             raise UserError(_("This action is not allowed in the current state."))
 
-        if not self.env.user.has_group(required_group):
-            raise UserError(_("You are not allowed to approve at this stage."))
+        user = self.env.user
+
+        # -------------------------------------------------
+        # PROJECT-SCOPED STAGES
+        # -------------------------------------------------
+        if required_state == "store":
+            if user != self.store_manager_user_id:
+                raise UserError(_("You are not allowed to approve this request."))
+
+        elif required_state == "project_manager":
+            if user != self.project_manager_user_id:
+                raise UserError(_("You are not allowed to approve this request."))
+
+        # -------------------------------------------------
+        # GLOBAL STAGES
+        # -------------------------------------------------
+        else:
+            if not user.has_group(required_group):
+                raise UserError(_("You are not allowed to approve at this stage."))
 
     # ---------------------------------------------------------
     # ACTIONS

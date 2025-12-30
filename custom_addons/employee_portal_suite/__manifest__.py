@@ -101,6 +101,8 @@
         'views/portal_sign_documents.xml',
         'views/purchase_order_views.xml',
         'views/sign_portal_clean.xml',
+        'views/hr_work_location_views.xml',
+        'views/project_project_views.xml',
 
     ],
 
