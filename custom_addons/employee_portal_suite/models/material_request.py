@@ -180,8 +180,13 @@ class MaterialRequest(models.Model):
                 if not line.strip().startswith("/")
             ]
 
-            rec.last_log_note = " ".join(lines).strip()
+            clean_text = " ".join(lines).strip()
 
+            MAX_LEN = 30
+            if len(clean_text) > MAX_LEN:
+                clean_text = clean_text[:MAX_LEN].rstrip() + "…"
+
+            rec.last_log_note = clean_text
 
         # ---------------------------------------------------------
     # COMPUTE MANAGER
