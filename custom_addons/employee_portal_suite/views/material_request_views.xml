@@ -211,12 +211,7 @@
         <field name="name">material.request.list</field>
         <field name="model">material.request</field>
         <field name="arch" type="xml">
-            <list
-                decoration-info="state in ('draft','purchase')"
-                decoration-warning="state in ('store','project_manager')"
-                decoration-primary="state == 'director'"
-                decoration-success="state in ('approved','ceo')"
-                decoration-danger="state == 'rejected'">
+            <list>
                 <field name="name"/>
                 <field name="employee_id"/>
                 <field name="request_date"/>
@@ -224,6 +219,9 @@
                 <field name="delivery_date"/>
                 <field name="state"
                      widget="badge"
+                        decoration-info="state in ('draft','purchase','store','project_manager','director','ceo')"
+                        decoration-success="state == 'approved'"
+                        decoration-danger="state == 'rejected'"
                      string="Status"
                      class="fw-bold"/>
                 <!-- CLICKABLE PO ICON - visible ONLY if po_name has something -->
