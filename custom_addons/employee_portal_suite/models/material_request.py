@@ -136,14 +136,7 @@ class MaterialRequest(models.Model):
             else:
                 rec.work_location_id = False
                 rec.project_id = False
-
-    @api.constrains("project_id")
-    def _check_project_assigned(self):
-        for rec in self:
-            if not rec.project_id:
-                raise ValidationError(
-                    _("Your work location is not linked to a project. Please contact administration.")
-                )            
+           
     @api.depends("project_id")
     def _compute_project_approvers(self):
         for rec in self:
