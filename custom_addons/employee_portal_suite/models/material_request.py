@@ -173,6 +173,16 @@ class MaterialRequest(models.Model):
                 # Reset delivery date so portal doesn't crash
                 self.delivery_date = False
                 return {'warning': warning}
+                 #employee autofilled
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        if 'employee_id' in fields_list:
+            employee = self.env.user.employee_id
+            if not employee:
+                raise UserError(_("Your user is not linked to an employee."))
+            res['employee_id'] = employee.id
+        return res
 
     # ---------------------------------------------------------
     # CREATE SEQUENCE
