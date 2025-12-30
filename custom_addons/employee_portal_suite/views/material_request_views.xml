@@ -218,12 +218,15 @@
                 <field name="worksite"/>
                 <field name="delivery_date"/>
                 <field name="state"
-                     widget="badge"
-                        decoration-info="state in ('draft','purchase','store','project_manager','director','ceo')"
-                        decoration-success="state == 'approved'"
-                        decoration-danger="state == 'rejected'"
-                     string="Status"
-                     class="fw-bold"/>
+                    widget="badge"
+                    string="Status"
+                    class="fw-bold"
+                        decoration-muted="state == 'draft'"
+                        decoration-info="state in ('purchase','director')"
+                        decoration-primary="state == 'store'"
+                        decoration-warning="state == 'project_manager'"
+                        decoration-success="state in ('approved','ceo')"
+                        decoration-danger="state == 'rejected'"/>
                 <!-- CLICKABLE PO ICON - visible ONLY if po_name has something -->
                 <button name="action_open_po"
                         type="object"
