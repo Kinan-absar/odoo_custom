@@ -2,6 +2,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from datetime import timedelta
 from odoo.exceptions import ValidationError
+from odoo.tools import html2plaintext
 
 class MaterialRequest(models.Model):
     _name = 'material.request'
@@ -148,7 +149,7 @@ class MaterialRequest(models.Model):
             project = rec.project_id
             rec.store_manager_user_id = project.store_manager_user_id if project else False
             rec.project_manager_user_id = project.project_manager_user_id if project else False
-            
+
     @api.depends("message_ids")
     def _compute_last_log_note(self):
         Message = self.env["mail.message"]
@@ -159,7 +160,8 @@ class MaterialRequest(models.Model):
                 ("message_type", "=", "comment"),   # log notes
             ], order="date desc", limit=1)
 
-            rec.last_log_note = msg.body if msg else False
+            rec.last_log_note = html2plaintext(msg.body) if msg else False
+
 
         # ---------------------------------------------------------
     # COMPUTE MANAGER
