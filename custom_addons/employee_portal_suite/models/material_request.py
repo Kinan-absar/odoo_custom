@@ -53,30 +53,30 @@ class MaterialRequest(models.Model):
             string="Work Location",
             readonly=True,
             tracking=True
-        )
+    )
 
-        project_id = fields.Many2one(
-            "project.project",
-            string="Project",
-            compute="_compute_project_from_employee",
-            store=True,
-            tracking=True
-        )
-        store_manager_user_id = fields.Many2one(
-            "res.users",
-            string="Store Manager (Project)",
-            compute="_compute_project_approvers",
-            store=True,
-            readonly=True
-        )
+    project_id = fields.Many2one(
+        "project.project",
+        string="Project",
+        compute="_compute_project_from_employee",
+        store=True,
+        tracking=True
+    )
+    store_manager_user_id = fields.Many2one(
+        "res.users",
+        string="Store Manager (Project)",
+        compute="_compute_project_approvers",
+        store=True,
+        readonly=True
+    )
 
-        project_manager_user_id = fields.Many2one(
-            "res.users",
-            string="Project Manager (Project)",
-            compute="_compute_project_approvers",
-            store=True,
-            readonly=True
-        )
+    project_manager_user_id = fields.Many2one(
+        "res.users",
+        string="Project Manager (Project)",
+        compute="_compute_project_approvers",
+        store=True,
+        readonly=True
+    )
 
     # ---------------------------------------------------------
     # STATE MACHINE
