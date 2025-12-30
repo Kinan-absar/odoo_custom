@@ -278,6 +278,32 @@ class MaterialRequest(models.Model):
             summary=summary,
             note=note
         )
+    def _check_approval(self, required_state, required_group):
+        self.ensure_one()
+
+        # State check
+        if self.state != required_state:
+            raise UserError(_("This action is not allowed in the current state."))
+
+        user = self.env.user
+
+        # -------------------------------------------------
+        # PROJECT-SCOPED STAGES
+        # -------------------------------------------------
+        if required_state == "store":
+            if user != self.store_manager_user_id:
+                raise UserError(_("You are not allowed to approve this request."))
+
+        elif required_state == "project_manager":
+            if user != self.project_manager_user_id:
+                raise UserError(_("You are not allowed to approve this request."))
+
+        # -------------------------------------------------
+        # GLOBAL STAGES
+        # -------------------------------------------------
+        else:
+            if not user.has_group(required_group):
+                raise UserError(_("You are not allowed to approve at this stage."))
 
     # ---------------------------------------------------------
     # ACTIONS
