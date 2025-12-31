@@ -84,6 +84,12 @@ class MaterialRequest(models.Model):
         compute="_compute_last_log_note",
         store=True,
     )
+    expense_account_id = fields.Many2one(
+        "account.account",
+        string="Expense Account",
+        domain="[('account_type', '=', 'expense')]",
+        tracking=True,
+    )
 
     # ---------------------------------------------------------
     # STATE MACHINE
