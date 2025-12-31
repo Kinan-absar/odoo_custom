@@ -87,7 +87,7 @@ class MaterialRequest(models.Model):
     expense_account_id = fields.Many2one(
         "account.account",
         string="Expense Account",
-        domain="[('account_type', '=', 'expense')]",
+        domain="[('account_type', 'in', ('expense','expense_direct_cost'))]",
         tracking=True,
     )
 
