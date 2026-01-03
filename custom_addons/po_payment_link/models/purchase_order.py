@@ -22,7 +22,7 @@ class PurchaseOrder(models.Model):
         compute="_compute_payment_status",
     )
 
-   @api.depends("amount_total")
+    @api.depends("amount_total")
     def _compute_payment_status(self):
         for po in self:
             paid = 0.0
