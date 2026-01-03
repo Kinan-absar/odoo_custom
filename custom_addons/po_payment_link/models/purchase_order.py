@@ -22,21 +22,20 @@ class PurchaseOrder(models.Model):
         compute="_compute_payment_status",
     )
 
-    @api.depends("amount_total")
+   @api.depends("amount_total")
     def _compute_payment_status(self):
         for po in self:
             paid = 0.0
 
-            payments = self.env["account.payment"].search([
-                ("state", "=", "posted"),
-                ("purchase_id", "=", po.id),
+            move_lines = self.env["account.move.line"].search([
+                ("move_id.state", "=", "posted"),
+                ("account_id.internal_type", "=", "payable"),
+                ("move_id.purchase_id", "=", po.id),
+                ("company_id", "=", po.company_id.id),
             ])
 
-            for payment in payments:
-                # 🔑 THIS IS THE IMPORTANT PART
-                for line in payment.move_id.line_ids:
-                    if line.account_id.internal_type == "payable":
-                        paid += abs(line.balance)
+            for line in move_lines:
+                paid += abs(line.balance)
 
             po.paid_amount = paid
             po.remaining_amount = po.amount_total - paid
