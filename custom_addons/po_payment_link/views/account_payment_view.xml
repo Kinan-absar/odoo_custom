@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="po_payment_link_account_payment_form" model="ir.ui.view">
+        <field name="name">po.payment.link.account.payment.form</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="purchase_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

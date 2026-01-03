@@ -8,7 +8,7 @@
         "account",
     ],
     "data": [
-        "views/account_move_view.xml",
+        "views/account_payment_view.xml",
         "views/purchase_order_view.xml",
     ],
     "installable": True,
