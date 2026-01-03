@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- PO Form -->
+    <record id="purchase_order_form_po_payment" model="ir.ui.view">
+        <field name="name">purchase.order.form.po.payment</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/notebook" position="before">
+                <group string="Payment Summary" col="4">
+                    <field name="paid_amount" readonly="1"/>
+                    <field name="remaining_amount" readonly="1"/>
+                    <field name="payment_status" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- PO List -->
+    <record id="purchase_order_tree_po_payment" model="ir.ui.view">
+        <field name="name">purchase.order.tree.po.payment</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amount_total']" position="after">
+                <field name="paid_amount"/>
+                <field name="remaining_amount"/>
+                <field name="payment_status"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
