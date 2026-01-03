@@ -29,7 +29,7 @@ class PurchaseOrder(models.Model):
 
             move_lines = self.env["account.move.line"].search([
                 ("move_id.state", "=", "posted"),
-                ("account_id.internal_type", "=", "payable"),
+                ("account_id.account_type", "=", "liability_payable"),
                 ("move_id.purchase_id", "=", po.id),
                 ("company_id", "=", po.company_id.id),
             ])
