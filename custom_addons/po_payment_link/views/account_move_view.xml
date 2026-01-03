@@ -5,11 +5,13 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//group[@name='group_top_right']" position="after">
-                <group invisible="move_type != 'outbound'">
-                    <field name="purchase_id"/>
-                </group>
+
+            <!-- Add Related PO after Vendor -->
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="purchase_id"
+                       invisible="move_type != 'outbound'"/>
             </xpath>
+
         </field>
     </record>
 </odoo>
