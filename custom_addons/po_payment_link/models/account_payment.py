@@ -9,20 +9,6 @@ class AccountMove(models.Model):
         string="Related Purchase Order",
     )
 
-    def _post(self, soft=True):
-        """
-        This is the REAL posting method used by Odoo for payments.
-        We must propagate the PO here, not in account.payment.action_post().
-        """
-        res = super()._post(soft=soft)
-
-        for move in self:
-            # Only for vendor payments created from account.payment
-            if move.payment_id and move.payment_id.purchase_id:
-                move.purchase_id = move.payment_id.purchase_id
-
-        return res
-
 
 class AccountPayment(models.Model):
     _inherit = "account.payment"
@@ -32,3 +18,16 @@ class AccountPayment(models.Model):
         string="Related Purchase Order",
         domain="[('partner_id', '=', partner_id), ('state', 'in', ('purchase','done'))]",
     )
+
+    def action_post(self):
+        res = super().action_post()
+
+        for payment in self:
+            if payment.purchase_id and payment.move_id:
+                # ✅ THIS IS THE KEY LINE
+                payment.move_id.purchase_id = payment.purchase_id
+
+                # Optional but helpful: force recompute
+                payment.purchase_id.invalidate_recordset()
+
+        return res
