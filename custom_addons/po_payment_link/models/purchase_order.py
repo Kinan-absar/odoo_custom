@@ -5,13 +5,17 @@ class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
 
     paid_amount = fields.Monetary(
+        string="Paid Amount",
         compute="_compute_payment_status",
         store=True,
+        currency_field="currency_id",
     )
 
     remaining_amount = fields.Monetary(
+        string="Remaining Amount",
         compute="_compute_payment_status",
         store=True,
+        currency_field="currency_id",
     )
 
     payment_status = fields.Selection(
@@ -20,17 +24,21 @@ class PurchaseOrder(models.Model):
             ("partial", "Partially Paid"),
             ("paid", "Paid"),
         ],
+        string="Payment Status",
         compute="_compute_payment_status",
         store=True,
     )
 
-
     @api.depends("amount_total")
     def _compute_payment_status(self):
+        """
+        Compute PO payment status from ACCOUNTING TRUTH ONLY:
+        account.move.line (payable lines) linked to this PO.
+        """
         for po in self:
             paid = 0.0
 
-            move_lines = self.env["account.move.line"].search([
+            move_lines = self.env["account.move.line"].sudo().search([
                 ("move_id.state", "=", "posted"),
                 ("account_id.account_type", "=", "liability_payable"),
                 ("move_id.purchase_id", "=", po.id),
