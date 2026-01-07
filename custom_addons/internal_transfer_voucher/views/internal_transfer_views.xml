@@ -30,6 +30,10 @@
                             type="object"
                             class="btn-primary"
                             invisible="state != 'draft'"/>
+                    <button name="action_reset_to_draft"
+                            string="Reset to Draft"
+                            type="object"
+                            invisible="state != 'cancel'"/>        
                     <button name="action_cancel"
                             string="Cancel"
                             type="object"

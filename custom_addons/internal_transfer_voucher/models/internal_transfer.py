@@ -185,7 +185,18 @@ class AccountInternalTransfer(models.Model):
             if rec.move_id and rec.move_id.state == 'posted':
                 rec.move_id.button_draft()
                 rec.move_id.button_cancel()
+            rec.move_id = False
             rec.state = 'cancel'
+
+
+    def action_reset_to_draft(self):
+        for rec in self:
+            if rec.move_id:
+                raise UserError(
+                    _("You cannot reset to draft while a journal entry exists. "
+                    "Cancel or reverse it first.")
+                )
+            rec.state = 'draft'
 
     @api.model
     def create(self, vals):
@@ -194,7 +205,7 @@ class AccountInternalTransfer(models.Model):
                 'internal.transfer'
             ) or 'New'
         return super().create(vals)
-        
+
     @api.constrains('has_bank_fees', 'analytic_distribution')
     def _check_analytic_required(self):
         for rec in self:
