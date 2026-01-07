@@ -23,7 +23,7 @@
         <field name="name">account.internal.transfer.form</field>
         <field name="model">account.internal.transfer</field>
         <field name="arch" type="xml">
-            <form>
+            <form context="{'analytic_precision': analytic_precision}">
                 <header>
                     <button name="action_post"
                             string="Post"
@@ -66,9 +66,8 @@
                     <!-- Analytic (ONLY ADDITION) -->
                     <group string="Analytic">
                         <field name="analytic_distribution"
-                                widget="analytic_distribution"
-                                options="{'force_applicability': 'optional'}"
-                                context="{'analytic_precision': 2}"/>
+               widget="analytic_distribution"
+               options="{'force_applicability': 'optional'}"/>
 
                     </group>
 
