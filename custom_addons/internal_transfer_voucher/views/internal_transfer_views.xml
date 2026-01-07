@@ -66,8 +66,10 @@
                     <!-- Analytic (ONLY ADDITION) -->
                     <group string="Analytic">
                         <field name="analytic_distribution"
-                               widget="analytic_distribution"
-                               options="{'force_applicability': 'optional'}"/>
+                                widget="analytic_distribution"
+                                options="{'force_applicability': 'optional'}"
+                                context="{'analytic_precision': 2}"/>
+
                     </group>
 
                     <group>
