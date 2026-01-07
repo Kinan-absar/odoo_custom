@@ -191,12 +191,17 @@ class AccountInternalTransfer(models.Model):
 
     def action_reset_to_draft(self):
         for rec in self:
+            if rec.state != 'posted':
+                continue
+
             if rec.move_id:
-                raise UserError(
-                    _("You cannot reset to draft while a journal entry exists. "
-                    "Cancel or reverse it first.")
-                )
+                # DELETE the journal entry (like invoices do)
+                rec.move_id.button_draft()
+                rec.move_id.unlink()
+
+            rec.move_id = False
             rec.state = 'draft'
+
 
     @api.model
     def create(self, vals):
