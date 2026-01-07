@@ -79,22 +79,28 @@
                     </table>
 
                     <!-- SIGNATURES -->
-                    <table class="table mt48" style="border:none;">
-                        <tr style="height:80px;">
-                            <td width="33%" style="border:none; vertical-align:bottom;">
-                                Prepared By<br/><br/>
+                    <table class="table mt48" style="border:1px solid #000;">
+                        <tr>
+                            <td width="33%" style="border:none; padding-top:15px;">
+                                <strong>Prepared By</strong>
+                                <div style="min-height:90px;"></div>
                                 __________________________
                             </td>
-                            <td width="33%" style="border:none; vertical-align:bottom;">
-                                Approved By<br/><br/>
+
+                            <td width="33%" style="border:none; padding-top:15px;">
+                                <strong>Approved By</strong>
+                                <div style="min-height:90px;"></div>
                                 __________________________
                             </td>
-                            <td width="33%" style="border:none; vertical-align:bottom;">
-                                Received By<br/><br/>
+
+                            <td width="33%" style="border:none; padding-top:15px;">
+                                <strong>Received By</strong>
+                                <div style="min-height:90px;"></div>
                                 __________________________
                             </td>
                         </tr>
                     </table>
+
 
 
                 </div>
