@@ -167,7 +167,6 @@ class AccountInternalTransfer(models.Model):
                 'account_id': rec.destination_journal_id.default_account_id.id,
                 'debit': net_amount,
                 'name': rec.name,
-                **analytic_vals,
             }))
 
             move = self.env['account.move'].create({
