@@ -34,7 +34,6 @@
                     <button name="action_cancel"
                             string="Cancel"
                             type="object"
-                            class="btn-secondary"
                             invisible="state != 'posted'"/>
 
                     <field name="state" widget="statusbar"/>
@@ -45,11 +44,12 @@
                         <field name="name"/>
                     </h1>
 
+                    <!-- Transfer Info -->
                     <group>
                         <group>
                             <field name="date"/>
                             <field name="amount"/>
-                            <field name="currency_id"/>
+                            <field name="currency_id" groups="base.group_multi_currency"/>
                         </group>
                         <group>
                             <field name="source_journal_id"/>
@@ -57,9 +57,23 @@
                         </group>
                     </group>
 
+                    <!-- Bank Fees -->
+                    <group string="Bank Fees">
+                        <field name="has_bank_fees"/>
+
+                        <group invisible="not has_bank_fees">
+                            <field name="fee_amount"/>
+                            <field name="fee_account_id"/>
+                            <field name="fee_tax_id"/>
+                            <field name="fee_tax_amount" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Journal Entry -->
                     <group>
                         <field name="move_id" readonly="1"/>
                     </group>
+
                 </sheet>
 
                 <chatter/>
