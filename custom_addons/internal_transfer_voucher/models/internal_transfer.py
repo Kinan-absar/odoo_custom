@@ -36,10 +36,10 @@ class AccountInternalTransfer(models.Model):
     )
 
     fee_line_ids = fields.One2many(
-        'account.move.line',
-        'internal_transfer_id',
-        string="Bank Fees / Expenses"
+        'account.internal.transfer.line',
+        'transfer_id'
     )
+
 
     move_id = fields.Many2one('account.move', readonly=True, copy=False)
 
