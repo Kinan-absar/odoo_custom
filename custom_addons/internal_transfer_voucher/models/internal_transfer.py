@@ -89,25 +89,6 @@ class AccountInternalTransfer(models.Model):
         domain="[('type_tax_use','=','purchase')]"
     )
 
-    fee_tax_amount = fields.Monetary(
-        string="VAT Amount",
-        compute="_compute_fee_tax",
-        store=True
-    )
-
-    # --------------------------------------------------
-    # Computations
-    # --------------------------------------------------
-
-    @api.depends('fee_amount', 'fee_tax_id')
-    def _compute_fee_tax(self):
-        for rec in self:
-            if rec.has_bank_fees and rec.fee_tax_id and rec.fee_amount:
-                rec.fee_tax_amount = (
-                    rec.fee_amount * rec.fee_tax_id.amount / 100
-                )
-            else:
-                rec.fee_tax_amount = 0.0
 
     # --------------------------------------------------
     # Constraints
@@ -146,46 +127,41 @@ class AccountInternalTransfer(models.Model):
             lines = []
             net_amount = rec.amount
 
-            # 1️⃣ Credit source journal (bank / cash) – GROSS amount
+            # 1️⃣ Credit bank (gross)
             lines.append((0, 0, {
                 'account_id': rec.source_journal_id.default_account_id.id,
                 'credit': rec.amount,
-                'currency_id': rec.currency_id.id,
             }))
 
-            # 2️⃣ Bank fee expense
+            # 2️⃣ Bank fee (with VAT via tax_ids)
             if rec.has_bank_fees:
-                lines.append((0, 0, {
+                if not rec.fee_account_id:
+                    raise UserError(_("Please set a bank fee account."))
+
+                fee_line = {
                     'account_id': rec.fee_account_id.id,
                     'debit': rec.fee_amount,
-                    'currency_id': rec.currency_id.id,
-                }))
-                net_amount -= rec.fee_amount
+                    'tax_ids': [(6, 0, rec.fee_tax_id.ids)] if rec.fee_tax_id else [],
+                }
+                lines.append((0, 0, fee_line))
 
-                # 3️⃣ VAT on bank fee (input VAT)
-                if rec.fee_tax_id and rec.fee_tax_amount:
-                    tax_vals = rec.fee_tax_id._prepare_tax_line_vals(
-                        rec.fee_tax_amount,
+                # net = gross - fee - VAT (Odoo will compute VAT)
+                tax_amount = sum(
+                    rec.fee_tax_id.compute_all(
                         rec.fee_amount,
-                        rec.currency_id,
-                        rec.company_id
-                    )
-                    tax_vals.update({
-                        'debit': rec.fee_tax_amount,
-                        'credit': 0.0,
-                    })
-                    lines.append((0, 0, tax_vals))
-                    net_amount -= rec.fee_tax_amount
+                        currency=rec.currency_id
+                    )['taxes'][i]['amount']
+                    for i in range(len(rec.fee_tax_id.ids))
+                ) if rec.fee_tax_id else 0.0
 
-            if net_amount <= 0:
-                raise UserError(_("Net transferred amount must be greater than zero."))
+                net_amount -= (rec.fee_amount + tax_amount)
 
-            # 4️⃣ Debit destination journal (petty cash / bank) – NET amount
+            # 3️⃣ Debit destination (net)
             lines.append((0, 0, {
                 'account_id': rec.destination_journal_id.default_account_id.id,
                 'debit': net_amount,
-                'currency_id': rec.currency_id.id,
             }))
+
 
             move = self.env['account.move'].create({
                 'date': rec.date,
