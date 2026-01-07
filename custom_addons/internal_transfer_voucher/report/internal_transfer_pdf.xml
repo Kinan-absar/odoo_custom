@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <template id="internal_transfer_pdf">
-        <t t-call="web.external_layout">
+<template id="internal_transfer_pdf">
+    <t t-call="web.external_layout">
+        <main>
             <t t-foreach="docs" t-as="o">
                 <div class="page">
 
@@ -110,8 +111,8 @@
 
                 </div>
             </t>
-        </t>
-    </template>
-
+        </main>
+    </t>
+</template>
 
 </odoo>
