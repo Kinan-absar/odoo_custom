@@ -38,42 +38,64 @@
                 </header>
 
                 <sheet>
-                    <h1><field name="name"/></h1>
+                    <!-- Title -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
 
+                    <!-- MAIN INFO -->
                     <group>
-                        <group>
+                        <group string="Transfer Information">
                             <field name="date"/>
                             <field name="amount"/>
                             <field name="currency_id"
-                                   groups="base.group_multi_currency"/>
+                                groups="base.group_multi_currency"/>
                         </group>
-                        <group>
+
+                        <group string="Journals">
                             <field name="source_journal_id"/>
                             <field name="destination_journal_id"/>
                         </group>
                     </group>
 
-                    <!-- Bank Fees -->
-                    <group string="Bank Fees">
-                        <field name="has_bank_fees"/>
-                        <group invisible="not has_bank_fees">
-                            <field name="fee_amount"/>
-                            <field name="fee_account_id"/>
-                            <field name="fee_tax_id"/>
+                    <separator string="Fees & Analytics"/>
+
+                    <!-- BANK FEES -->
+                    <group>
+                        <group string="Bank Fees">
+                            <field name="has_bank_fees"/>
+
+                            <field name="fee_amount"
+                                invisible="not has_bank_fees"/>
+
+                            <field name="fee_account_id"
+                                invisible="not has_bank_fees"/>
+
+                            <field name="fee_tax_id"
+                                invisible="not has_bank_fees"/>
+                        </group>
+
+                        <!-- ANALYTIC -->
+                        <group string="Analytic"
+                            groups="analytic.group_analytic_accounting">
+                            <field name="analytic_distribution"
+                                widget="analytic_distribution"
+                                options="{'force_applicability': 'optional'}"/>
                         </group>
                     </group>
 
-                    <!-- Analytic (ONLY ADDITION) -->
-                    <group string="Analytic">
-                        <field name="analytic_distribution"
-               widget="analytic_distribution"
-               options="{'force_applicability': 'optional'}"/>
+                    <separator string="Accounting"/>
 
-                    </group>
-
+                    <!-- MOVE -->
                     <group>
-                        <field name="move_id" readonly="1"/>
+                        <field name="move_id"
+                            readonly="1"
+                            widget="many2one"
+                            options="{'no_open': False}"/>
                     </group>
+
                 </sheet>
 
                 <chatter/>
