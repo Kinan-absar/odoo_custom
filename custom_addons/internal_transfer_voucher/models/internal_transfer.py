@@ -182,20 +182,16 @@ class AccountInternalTransfer(models.Model):
 
     def action_cancel(self):
         for rec in self:
-            if rec.move_id and rec.move_id.state == 'posted':
-                rec.move_id.button_draft()
-                rec.move_id.button_cancel()
-            rec.move_id = False
+            if rec.state == 'posted':
+                raise UserError(_("Reset to draft before cancelling."))
             rec.state = 'cancel'
-
 
     def action_reset_to_draft(self):
         for rec in self:
-            if rec.state != 'posted':
+            if rec.state not in ('posted', 'cancel'):
                 continue
 
             if rec.move_id:
-                # DELETE the journal entry (like invoices do)
                 rec.move_id.button_draft()
                 rec.move_id.unlink()
 

@@ -24,6 +24,8 @@ Features:
         "views/menus.xml",
         "report/internal_transfer_report.xml",
         "report/internal_transfer_pdf.xml",
+        "report/payment_voucher_report.xml",
+        "report/payment_voucher_pdf.xml",
     ],
     "installable": True,
     "application": True,

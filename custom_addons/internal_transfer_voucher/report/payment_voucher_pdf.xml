@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+<template id="payment_voucher_pdf">
+    <t t-call="web.external_layout">
+        <main>
+            <t t-foreach="docs" t-as="o">
+                <div class="page">
+
+                    <!-- TITLE -->
+                    <h2 style="text-align:center;">
+                        Payment Voucher
+                    </h2>
+
+                    <!-- HEADER -->
+                    <table class="table table-sm mt16">
+                        <tr>
+                            <td><strong>Voucher No</strong></td>
+                            <td><span t-esc="o.name"/></td>
+                            <td><strong>Date</strong></td>
+                            <td><span t-esc="o.date"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Partner</strong></td>
+                            <td colspan="3">
+                                <span t-esc="o.partner_id.display_name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Journal</strong></td>
+                            <td>
+                                <span t-esc="o.journal_id.name"/>
+                            </td>
+                            <td><strong>Amount</strong></td>
+                            <td>
+                                <span t-esc="o.amount"/>
+                                <span t-esc="o.currency_id.symbol"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- ACCOUNTING -->
+                    <h4 class="mt16">Accounting Entry</h4>
+
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Account</th>
+                            <th>Partner</th>
+                            <th>Debit</th>
+                            <th>Credit</th>
+                        </tr>
+
+                        <t t-foreach="o.move_id.line_ids" t-as="line">
+                            <tr>
+                                <td>
+                                    <span t-esc="line.account_id.display_name"/>
+                                </td>
+                                <td>
+                                    <span t-esc="line.partner_id.display_name"/>
+                                </td>
+                                <td>
+                                    <t t-if="line.debit">
+                                        <span t-esc="line.debit"/>
+                                    </t>
+                                </td>
+                                <td>
+                                    <t t-if="line.credit">
+                                        <span t-esc="line.credit"/>
+                                    </t>
+                                </td>
+                            </tr>
+                        </t>
+                    </table>
+
+                    <!-- FOOTER -->
+                    <table class="table table-sm mt32">
+                        <tr>
+                            <td width="33%"><strong>Prepared By</strong></td>
+                            <td width="33%"><strong>Reviewed By</strong></td>
+                            <td width="33%"><strong>Approved By</strong></td>
+                        </tr>
+                        <tr style="height:40px;">
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </table>
+
+                </div>
+            </t>
+        </main>
+    </t>
+</template>
+
+</odoo>
