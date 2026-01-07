@@ -8,17 +8,18 @@
                 <div class="page">
 
                     <!-- TITLE -->
-                    <h2 style="text-align:center;">
-                        Internal Transfer Voucher
+                    <h2 style="text-align:center; margin-bottom:10px;">
+                        INTERNAL TRANSFER VOUCHER
                     </h2>
+                    <hr/>
 
                     <!-- HEADER INFO -->
                     <table class="table table-sm mt16">
                         <tr>
-                            <td><strong>Reference</strong></td>
-                            <td><span t-esc="o.name"/></td>
-                            <td><strong>Date</strong></td>
-                            <td><span t-esc="o.date"/></td>
+                            <td width="25%"><strong>Transfer No</strong></td>
+                            <td width="25%"><span t-esc="o.name"/></td>
+                            <td width="25%"><strong>Date</strong></td>
+                            <td width="25%"><span t-esc="o.date"/></td>
                         </tr>
                         <tr>
                             <td><strong>Source Journal</strong></td>
@@ -29,64 +30,67 @@
                     </table>
 
                     <!-- AMOUNT -->
-                    <table class="table table-sm mt16">
+                    <table class="table table-bordered mt16">
                         <tr>
-                            <td width="50%"><strong>Transfer Amount</strong></td>
-                            <td width="50%">
-                                <span t-esc="o.amount"/>
-                                <span t-esc="o.currency_id.symbol"/>
-                            </td>
+                            <th>Total Transfer Amount</th>
+                            <th class="text-right">
+                                <span t-field="o.amount"
+                                      t-options="{'widget': 'monetary', 'currency_field': 'currency_id'}"/>
+                            </th>
                         </tr>
                     </table>
 
-                    <!-- BANK FEES -->
-                    <t t-if="o.has_bank_fees">
-                        <h4 class="mt16">Bank Fees</h4>
-                        <table class="table table-sm">
-                            <tr>
-                                <th>Account</th>
-                                <th>Amount</th>
-                                <th>Tax</th>
-                            </tr>
-                            <tr>
-                                <td><span t-esc="o.fee_account_id.display_name"/></td>
-                                <td>
-                                    <span t-esc="o.fee_amount"/>
-                                    <span t-esc="o.currency_id.symbol"/>
-                                </td>
-                                <td>
-                                    <span t-esc="o.fee_tax_id.name"/>
-                                </td>
-                            </tr>
-                        </table>
-                    </t>
+                    <!-- JOURNAL ENTRY -->
+                    <h4 class="mt16">Accounting Entry</h4>
 
-                    <!-- ACCOUNTING ENTRY -->
-                    <t t-if="o.move_id">
-                        <h4 class="mt16">Accounting Entry</h4>
-                        <table class="table table-sm">
+                    <table class="table table-sm table-bordered">
+                        <thead>
                             <tr>
                                 <th>Account</th>
-                                <th>Debit</th>
-                                <th>Credit</th>
+                                <th>Label</th>
+                                <th class="text-right">Debit</th>
+                                <th class="text-right">Credit</th>
                             </tr>
+                        </thead>
+                        <tbody>
                             <t t-foreach="o.move_id.line_ids" t-as="line">
                                 <tr>
                                     <td><span t-esc="line.account_id.display_name"/></td>
-                                    <td>
+                                    <td><span t-esc="line.name"/></td>
+                                    <td class="text-right">
                                         <t t-if="line.debit">
-                                            <span t-esc="line.debit"/>
+                                            <span t-field="line.debit"
+                                                  t-options="{'widget': 'monetary', 'currency_field': 'currency_id'}"/>
                                         </t>
                                     </td>
-                                    <td>
+                                    <td class="text-right">
                                         <t t-if="line.credit">
-                                            <span t-esc="line.credit"/>
+                                            <span t-field="line.credit"
+                                                  t-options="{'widget': 'monetary', 'currency_field': 'currency_id'}"/>
                                         </t>
                                     </td>
                                 </tr>
                             </t>
-                        </table>
-                    </t>
+                        </tbody>
+                    </table>
+
+                    <!-- SIGNATURES -->
+                    <table class="table mt32" style="border:none;">
+                        <tr>
+                            <td width="33%" style="border:none;">
+                                Prepared By<br/><br/>
+                                ____________________
+                            </td>
+                            <td width="33%" style="border:none;">
+                                Reviewed By<br/><br/>
+                                ____________________
+                            </td>
+                            <td width="33%" style="border:none;">
+                                Approved By<br/><br/>
+                                ____________________
+                            </td>
+                        </tr>
+                    </table>
 
                 </div>
             </t>
