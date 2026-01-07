@@ -62,6 +62,7 @@
                             <field name="date"/>
                             <field name="partner_id"/>
                             <field name="amount"/>
+                            <field name="description" placeholder="Add any notes or description..."/>
                             <field name="currency_id"
                                    groups="base.group_multi_currency"/>
                         </group>

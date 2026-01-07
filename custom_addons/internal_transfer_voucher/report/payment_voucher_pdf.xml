@@ -37,6 +37,14 @@
                             </td>
                         </tr>
                     </table>
+                    <t t-if="o.description">
+                        <div class="mt16">
+                            <strong>Notes</strong>
+                            <div style="min-height:40px; padding-top:4px;">
+                                <span t-esc="o.description"/>
+                            </div>
+                        </div>
+                    </t>
 
                     <!-- ACCOUNTING ENTRY -->
                     <h4 class="mt16">Accounting Entry</h4>
@@ -71,22 +79,23 @@
                     </table>
 
                     <!-- SIGNATURES -->
-                    <table class="table mt32" style="border:none;">
-                        <tr>
-                            <td width="33%" style="border:none;">
+                    <table class="table mt48" style="border:none;">
+                        <tr style="height:80px;">
+                            <td width="33%" style="border:none; vertical-align:bottom;">
                                 Prepared By<br/><br/>
-                                ____________________
+                                __________________________
                             </td>
-                            <td width="33%" style="border:none;">
+                            <td width="33%" style="border:none; vertical-align:bottom;">
                                 Approved By<br/><br/>
-                                ____________________
+                                __________________________
                             </td>
-                            <td width="33%" style="border:none;">
+                            <td width="33%" style="border:none; vertical-align:bottom;">
                                 Received By<br/><br/>
-                                ____________________
+                                __________________________
                             </td>
                         </tr>
                     </table>
+
 
                 </div>
             </t>

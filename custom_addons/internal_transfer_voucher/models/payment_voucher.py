@@ -74,7 +74,7 @@ class AccountPaymentVoucher(models.Model):
         default='draft',
         tracking=True
     )
-
+    description = fields.Text(string="Notes")
     # -------------------------
     # Actions
     # -------------------------
