@@ -194,3 +194,9 @@ class AccountInternalTransfer(models.Model):
                 'internal.transfer'
             ) or 'New'
         return super().create(vals)
+        
+    @api.constrains('has_bank_fees', 'analytic_distribution')
+    def _check_analytic_required(self):
+        for rec in self:
+            if rec.has_bank_fees and not rec.analytic_distribution:
+                raise UserError(_("Please set Analytic Distribution for bank fees."))
