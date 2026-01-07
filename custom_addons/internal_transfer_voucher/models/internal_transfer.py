@@ -8,33 +8,14 @@ class AccountInternalTransfer(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'date desc, id desc'
 
-    # --------------------------------------------------
-    # Basic Fields
-    # --------------------------------------------------
-
-    name = fields.Char(
-        default='New',
-        copy=False,
-        readonly=True
-    )
-
-    date = fields.Date(
-        default=fields.Date.context_today,
-        required=True
-    )
-
-    amount = fields.Monetary(
-        string="Transfer Amount",
-        required=True,
-        tracking=True
-    )
-
+    name = fields.Char(default='New', copy=False, readonly=True)
+    date = fields.Date(default=fields.Date.context_today, required=True)
+    amount = fields.Monetary(string="Transfer Amount", required=True)
     currency_id = fields.Many2one(
         'res.currency',
         default=lambda self: self.env.company.currency_id,
         required=True
     )
-
     company_id = fields.Many2one(
         'res.company',
         default=lambda self: self.env.company,
@@ -43,68 +24,30 @@ class AccountInternalTransfer(models.Model):
 
     source_journal_id = fields.Many2one(
         'account.journal',
-        string='Source Journal',
+        string="Source Journal",
         domain="[('type','in',('bank','cash'))]",
         required=True
     )
-
     destination_journal_id = fields.Many2one(
         'account.journal',
-        string='Destination Journal',
+        string="Destination Journal",
         domain="[('type','in',('bank','cash'))]",
         required=True
     )
 
-    move_id = fields.Many2one(
-        'account.move',
-        readonly=True,
-        copy=False
+    fee_line_ids = fields.One2many(
+        'account.move.line',
+        'internal_transfer_id',
+        string="Bank Fees / Expenses"
     )
 
-    state = fields.Selection([
-        ('draft', 'Draft'),
-        ('posted', 'Posted'),
-        ('cancel', 'Cancelled')
-    ], default='draft', tracking=True)
+    move_id = fields.Many2one('account.move', readonly=True, copy=False)
 
-    # --------------------------------------------------
-    # Bank Fees + VAT
-    # --------------------------------------------------
-
-    has_bank_fees = fields.Boolean(string="Bank Fees")
-
-    fee_amount = fields.Monetary(
-        string="Bank Fee Amount"
+    state = fields.Selection(
+        [('draft', 'Draft'), ('posted', 'Posted'), ('cancel', 'Cancelled')],
+        default='draft',
+        tracking=True
     )
-
-    fee_account_id = fields.Many2one(
-        'account.account',
-        string="Bank Fee Account",
-        domain="[('deprecated','=',False)]"
-    )
-
-    fee_tax_id = fields.Many2one(
-        'account.tax',
-        string="VAT on Bank Fee",
-        domain="[('type_tax_use','=','purchase')]"
-    )
-
-
-    # --------------------------------------------------
-    # Constraints
-    # --------------------------------------------------
-
-    @api.constrains('source_journal_id', 'destination_journal_id')
-    def _check_journals(self):
-        for rec in self:
-            if rec.source_journal_id == rec.destination_journal_id:
-                raise UserError(_("Source and destination journals must be different."))
-
-    @api.constrains('fee_amount')
-    def _check_fee_amount(self):
-        for rec in self:
-            if rec.has_bank_fees and rec.fee_amount <= 0:
-                raise UserError(_("Bank fee amount must be greater than zero."))
 
     # --------------------------------------------------
     # Actions
@@ -117,51 +60,52 @@ class AccountInternalTransfer(models.Model):
 
             if not rec.source_journal_id.default_account_id:
                 raise UserError(_("Source journal has no default account."))
-
             if not rec.destination_journal_id.default_account_id:
                 raise UserError(_("Destination journal has no default account."))
-
-            if rec.has_bank_fees and not rec.fee_account_id:
-                raise UserError(_("Please set a bank fee account."))
 
             lines = []
             net_amount = rec.amount
 
-            # 1️⃣ Credit bank (gross)
+            # 1️⃣ Credit source journal (bank)
             lines.append((0, 0, {
                 'account_id': rec.source_journal_id.default_account_id.id,
                 'credit': rec.amount,
+                'name': rec.name,
             }))
 
-            # 2️⃣ Bank fee (with VAT via tax_ids)
-            if rec.has_bank_fees:
-                if not rec.fee_account_id:
-                    raise UserError(_("Please set a bank fee account."))
+            # 2️⃣ Copy fee / expense lines EXACTLY as entered
+            for fee in rec.fee_line_ids:
+                if not fee.account_id:
+                    raise UserError(_("Fee line must have an account."))
 
-                fee_line = {
-                    'account_id': rec.fee_account_id.id,
-                    'debit': rec.fee_amount,
-                    'tax_ids': [(6, 0, rec.fee_tax_id.ids)] if rec.fee_tax_id else [],
+                line_vals = {
+                    'account_id': fee.account_id.id,
+                    'debit': fee.debit,
+                    'tax_ids': [(6, 0, fee.tax_ids.ids)],
+                    'analytic_distribution': fee.analytic_distribution,
+                    'name': fee.name,
                 }
-                lines.append((0, 0, fee_line))
+                lines.append((0, 0, line_vals))
 
-                # net = gross - fee - VAT (Odoo will compute VAT)
+                # reduce net by fee + VAT (computed by Odoo)
                 tax_amount = sum(
-                    rec.fee_tax_id.compute_all(
-                        rec.fee_amount,
+                    tax['amount']
+                    for tax in fee.tax_ids.compute_all(
+                        fee.debit,
                         currency=rec.currency_id
-                    )['taxes'][i]['amount']
-                    for i in range(len(rec.fee_tax_id.ids))
-                ) if rec.fee_tax_id else 0.0
+                    )['taxes']
+                )
+                net_amount -= (fee.debit + tax_amount)
 
-                net_amount -= (rec.fee_amount + tax_amount)
+            if net_amount <= 0:
+                raise UserError(_("Net transferred amount must be greater than zero."))
 
-            # 3️⃣ Debit destination (net)
+            # 3️⃣ Debit destination journal (petty cash)
             lines.append((0, 0, {
                 'account_id': rec.destination_journal_id.default_account_id.id,
                 'debit': net_amount,
+                'name': rec.name,
             }))
-
 
             move = self.env['account.move'].create({
                 'date': rec.date,
@@ -171,7 +115,6 @@ class AccountInternalTransfer(models.Model):
             })
 
             move.action_post()
-
             rec.move_id = move.id
             rec.state = 'posted'
 
@@ -181,10 +124,6 @@ class AccountInternalTransfer(models.Model):
                 rec.move_id.button_draft()
                 rec.move_id.button_cancel()
             rec.state = 'cancel'
-
-    # --------------------------------------------------
-    # Sequence
-    # --------------------------------------------------
 
     @api.model
     def create(self, vals):
