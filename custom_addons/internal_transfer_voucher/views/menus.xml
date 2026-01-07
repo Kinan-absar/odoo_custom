@@ -16,4 +16,18 @@
               parent="menu_internal_transfer"
               action="action_internal_transfer"/>
 
+    <menuitem id="menu_payment_voucher"
+              name="Payment Vouchers"
+              parent="account.menu_finance_entries"
+              sequence="60"/>
+
+    <record id="action_payment_voucher" model="ir.actions.act_window">
+        <field name="name">Payment Vouchers</field>
+        <field name="res_model">account.payment.voucher</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_payment_voucher_action"
+              parent="menu_payment_voucher"
+              action="action_payment_voucher"/>
 </odoo>
