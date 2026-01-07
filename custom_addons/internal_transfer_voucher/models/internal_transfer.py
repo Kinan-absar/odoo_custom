@@ -75,9 +75,11 @@ class AccountInternalTransfer(models.Model):
     # Analytic (THE ONLY ADDITION)
     # --------------------------------------------------
 
-    analytic_distribution = fields.Json(
-        string="Analytic Distribution"
+    analytic_precision = fields.Integer(
+        default=2,
+        readonly=True
     )
+
 
     # --------------------------------------------------
     # Technical
