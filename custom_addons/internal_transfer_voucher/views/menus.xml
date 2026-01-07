@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <odoo>
-
-    <menuitem id="menu_internal_transfer_root"
-              name="Internal Transfers"
-              parent="account.menu_finance"
-              sequence="60"/>
 
     <menuitem id="menu_internal_transfer"
               name="Internal Transfers"
-              parent="menu_internal_transfer_root"
+              parent="account.menu_finance_entries"
+              sequence="50"/>
+
+    <record id="action_internal_transfer" model="ir.actions.act_window">
+        <field name="name">Internal Transfers</field>
+        <field name="res_model">account.internal.transfer</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_internal_transfer_action"
+              parent="menu_internal_transfer"
               action="action_internal_transfer"/>
 
 </odoo>
