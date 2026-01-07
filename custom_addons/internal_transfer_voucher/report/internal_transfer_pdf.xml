@@ -61,27 +61,6 @@
                         </table>
                     </t>
 
-                    <!-- ANALYTIC -->
-                    <t t-if="o.analytic_distribution">
-                        <h4 class="mt16">Analytic Distribution</h4>
-                        <table class="table table-sm">
-                            <tr>
-                                <th>Analytic Account</th>
-                                <th>Percentage</th>
-                            </tr>
-                            <t t-foreach="o.analytic_distribution.items()" t-as="ad">
-                                <tr>
-                                    <td>
-                                        <span t-esc="env['account.analytic.account'].browse(int(ad[0])).name"/>
-                                    </td>
-                                    <td>
-                                        <span t-esc="ad[1]"/>%
-                                    </td>
-                                </tr>
-                            </t>
-                        </table>
-                    </t>
-
                     <!-- ACCOUNTING ENTRY -->
                     <t t-if="o.move_id">
                         <h4 class="mt16">Accounting Entry</h4>

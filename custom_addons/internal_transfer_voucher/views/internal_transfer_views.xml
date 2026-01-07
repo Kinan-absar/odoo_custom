@@ -33,7 +33,7 @@
                     <button name="action_reset_to_draft"
                             string="Reset to Draft"
                             type="object"
-                            invisible="state != 'posted','cancel'"/>      
+                            invisible="state != 'posted'"/>      
                     <button name="action_cancel"
                             string="Cancel"
                             type="object"

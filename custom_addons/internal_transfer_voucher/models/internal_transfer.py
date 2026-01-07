@@ -191,7 +191,7 @@ class AccountInternalTransfer(models.Model):
 
     def action_reset_to_draft(self):
         for rec in self:
-            if rec.state != ('posted', 'cancel'):
+            if rec.state != 'posted':
                 continue
 
             if rec.move_id:
