@@ -1,118 +1,117 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-<template id="internal_transfer_pdf">
-    <t t-call="web.external_layout">
-        <t t-set="o" t-value="doc"/>
+    <template id="internal_transfer_pdf">
+        <t t-call="web.external_layout">
+            <t t-foreach="docs" t-as="o">
+                <div class="page">
 
-        <!-- TITLE -->
-        <div class="page">
-            <h2 style="text-align:center;">
-                Internal Transfer Voucher
-            </h2>
+                    <!-- TITLE -->
+                    <h2 style="text-align:center;">
+                        Internal Transfer Voucher
+                    </h2>
 
-            <table class="table table-sm mt16">
-                <tr>
-                    <td><strong>Reference</strong></td>
-                    <td><span t-esc="o.name"/></td>
-                    <td><strong>Date</strong></td>
-                    <td><span t-esc="o.date"/></td>
-                </tr>
-                <tr>
-                    <td><strong>Source Journal</strong></td>
-                    <td><span t-esc="o.source_journal_id.name"/></td>
-                    <td><strong>Destination Journal</strong></td>
-                    <td><span t-esc="o.destination_journal_id.name"/></td>
-                </tr>
-            </table>
-
-            <!-- AMOUNT -->
-            <table class="table table-sm mt16">
-                <tr>
-                    <td width="50%"><strong>Transfer Amount</strong></td>
-                    <td width="50%">
-                        <span t-esc="o.amount"/>
-                        <span t-esc="o.currency_id.symbol"/>
-                    </td>
-                </tr>
-            </table>
-
-            <!-- BANK FEES -->
-            <t t-if="o.has_bank_fees">
-                <h4 class="mt16">Bank Fees</h4>
-
-                <table class="table table-sm">
-                    <tr>
-                        <th>Account</th>
-                        <th>Amount</th>
-                        <th>Tax</th>
-                    </tr>
-                    <tr>
-                        <td><span t-esc="o.fee_account_id.display_name"/></td>
-                        <td>
-                            <span t-esc="o.fee_amount"/>
-                            <span t-esc="o.currency_id.symbol"/>
-                        </td>
-                        <td>
-                            <span t-esc="o.fee_tax_id.name"/>
-                        </td>
-                    </tr>
-                </table>
-            </t>
-
-            <!-- ANALYTIC -->
-            <t t-if="o.analytic_distribution">
-                <h4 class="mt16">Analytic Distribution</h4>
-
-                <table class="table table-sm">
-                    <tr>
-                        <th>Analytic Account</th>
-                        <th>Percentage</th>
-                    </tr>
-                    <t t-foreach="o.analytic_distribution.items()" t-as="ad">
+                    <!-- HEADER INFO -->
+                    <table class="table table-sm mt16">
                         <tr>
-                            <td>
-                                <span t-esc="env['account.analytic.account'].browse(int(ad[0])).name"/>
-                            </td>
-                            <td>
-                                <span t-esc="ad[1]"/>%
+                            <td><strong>Reference</strong></td>
+                            <td><span t-esc="o.name"/></td>
+                            <td><strong>Date</strong></td>
+                            <td><span t-esc="o.date"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Source Journal</strong></td>
+                            <td><span t-esc="o.source_journal_id.name"/></td>
+                            <td><strong>Destination Journal</strong></td>
+                            <td><span t-esc="o.destination_journal_id.name"/></td>
+                        </tr>
+                    </table>
+
+                    <!-- AMOUNT -->
+                    <table class="table table-sm mt16">
+                        <tr>
+                            <td width="50%"><strong>Transfer Amount</strong></td>
+                            <td width="50%">
+                                <span t-esc="o.amount"/>
+                                <span t-esc="o.currency_id.symbol"/>
                             </td>
                         </tr>
+                    </table>
+
+                    <!-- BANK FEES -->
+                    <t t-if="o.has_bank_fees">
+                        <h4 class="mt16">Bank Fees</h4>
+                        <table class="table table-sm">
+                            <tr>
+                                <th>Account</th>
+                                <th>Amount</th>
+                                <th>Tax</th>
+                            </tr>
+                            <tr>
+                                <td><span t-esc="o.fee_account_id.display_name"/></td>
+                                <td>
+                                    <span t-esc="o.fee_amount"/>
+                                    <span t-esc="o.currency_id.symbol"/>
+                                </td>
+                                <td>
+                                    <span t-esc="o.fee_tax_id.name"/>
+                                </td>
+                            </tr>
+                        </table>
                     </t>
-                </table>
-            </t>
 
-            <!-- ACCOUNTING -->
-            <t t-if="o.move_id">
-                <h4 class="mt16">Accounting Entry</h4>
-
-                <table class="table table-sm">
-                    <tr>
-                        <th>Account</th>
-                        <th>Debit</th>
-                        <th>Credit</th>
-                    </tr>
-
-                    <t t-foreach="o.move_id.line_ids" t-as="line">
-                        <tr>
-                            <td><span t-esc="line.account_id.display_name"/></td>
-                            <td>
-                                <t t-if="line.debit">
-                                    <span t-esc="line.debit"/>
-                                </t>
-                            </td>
-                            <td>
-                                <t t-if="line.credit">
-                                    <span t-esc="line.credit"/>
-                                </t>
-                            </td>
-                        </tr>
+                    <!-- ANALYTIC -->
+                    <t t-if="o.analytic_distribution">
+                        <h4 class="mt16">Analytic Distribution</h4>
+                        <table class="table table-sm">
+                            <tr>
+                                <th>Analytic Account</th>
+                                <th>Percentage</th>
+                            </tr>
+                            <t t-foreach="o.analytic_distribution.items()" t-as="ad">
+                                <tr>
+                                    <td>
+                                        <span t-esc="env['account.analytic.account'].browse(int(ad[0])).name"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="ad[1]"/>%
+                                    </td>
+                                </tr>
+                            </t>
+                        </table>
                     </t>
-                </table>
-            </t>
 
-        </div>
-    </t>
-</template>
+                    <!-- ACCOUNTING ENTRY -->
+                    <t t-if="o.move_id">
+                        <h4 class="mt16">Accounting Entry</h4>
+                        <table class="table table-sm">
+                            <tr>
+                                <th>Account</th>
+                                <th>Debit</th>
+                                <th>Credit</th>
+                            </tr>
+                            <t t-foreach="o.move_id.line_ids" t-as="line">
+                                <tr>
+                                    <td><span t-esc="line.account_id.display_name"/></td>
+                                    <td>
+                                        <t t-if="line.debit">
+                                            <span t-esc="line.debit"/>
+                                        </t>
+                                    </td>
+                                    <td>
+                                        <t t-if="line.credit">
+                                            <span t-esc="line.credit"/>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </t>
+                        </table>
+                    </t>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
 
 </odoo>
