@@ -21,6 +21,8 @@ Features:
         "data/sequence.xml",
         "views/internal_transfer_views.xml",
         "views/menus.xml",
+        "report/internal_transfer_report.xml",
+        "report/internal_transfer_pdf.xml",
     ],
     "installable": True,
     "application": True,
