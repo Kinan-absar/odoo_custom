@@ -85,7 +85,6 @@
         <field name="name">Internal Transfers</field>
         <field name="res_model">account.internal.transfer</field>
         <field name="view_mode">list,form</field>
-        <field name="view_id" ref="view_internal_transfer_tree"/>
     </record>
 
 </odoo>

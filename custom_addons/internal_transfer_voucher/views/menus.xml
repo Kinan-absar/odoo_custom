@@ -9,7 +9,7 @@
     <record id="action_internal_transfer" model="ir.actions.act_window">
         <field name="name">Internal Transfers</field>
         <field name="res_model">account.internal.transfer</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <menuitem id="menu_internal_transfer_action"
