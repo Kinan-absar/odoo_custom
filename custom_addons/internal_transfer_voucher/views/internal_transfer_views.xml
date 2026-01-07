@@ -33,11 +33,11 @@
                     <button name="action_reset_to_draft"
                             string="Reset to Draft"
                             type="object"
-                            invisible="state != 'cancel'"/>        
+                            invisible="state != 'posted'"/>      
                     <button name="action_cancel"
                             string="Cancel"
                             type="object"
-                            invisible="state != 'posted'"/>
+                            invisible="state != 'draft'"/>
                     <field name="state" widget="statusbar"/>
                 </header>
 
