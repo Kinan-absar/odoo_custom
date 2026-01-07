@@ -76,8 +76,8 @@
                     <table class="table table-sm mt32">
                         <tr>
                             <td width="33%"><strong>Prepared By</strong></td>
-                            <td width="33%"><strong>Reviewed By</strong></td>
                             <td width="33%"><strong>Approved By</strong></td>
+                            <td width="33%"><strong>Received By</strong></td>
                         </tr>
                         <tr style="height:40px;">
                             <td></td>
