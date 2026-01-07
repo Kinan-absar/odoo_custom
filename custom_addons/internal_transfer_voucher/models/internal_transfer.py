@@ -8,14 +8,29 @@ class AccountInternalTransfer(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'date desc, id desc'
 
+    # --------------------------------------------------
+    # Basic Fields
+    # --------------------------------------------------
+
     name = fields.Char(default='New', copy=False, readonly=True)
-    date = fields.Date(default=fields.Date.context_today, required=True)
-    amount = fields.Monetary(string="Transfer Amount", required=True)
+
+    date = fields.Date(
+        default=fields.Date.context_today,
+        required=True
+    )
+
+    amount = fields.Monetary(
+        string="Transfer Amount",
+        required=True,
+        tracking=True
+    )
+
     currency_id = fields.Many2one(
         'res.currency',
         default=lambda self: self.env.company.currency_id,
         required=True
     )
+
     company_id = fields.Many2one(
         'res.company',
         default=lambda self: self.env.company,
@@ -28,6 +43,7 @@ class AccountInternalTransfer(models.Model):
         domain="[('type','in',('bank','cash'))]",
         required=True
     )
+
     destination_journal_id = fields.Many2one(
         'account.journal',
         string="Destination Journal",
@@ -35,11 +51,37 @@ class AccountInternalTransfer(models.Model):
         required=True
     )
 
-    fee_line_ids = fields.One2many(
-        'account.internal.transfer.line',
-        'transfer_id'
+    # --------------------------------------------------
+    # Bank Fees
+    # --------------------------------------------------
+
+    has_bank_fees = fields.Boolean(string="Bank Fees")
+
+    fee_amount = fields.Monetary(string="Bank Fee Amount")
+
+    fee_account_id = fields.Many2one(
+        'account.account',
+        string="Bank Fee Account",
+        domain="[('deprecated','=',False)]"
     )
 
+    fee_tax_id = fields.Many2one(
+        'account.tax',
+        string="VAT on Bank Fee",
+        domain="[('type_tax_use','=','purchase')]"
+    )
+
+    # --------------------------------------------------
+    # Analytic (THE ONLY ADDITION)
+    # --------------------------------------------------
+
+    analytic_distribution = fields.Json(
+        string="Analytic Distribution"
+    )
+
+    # --------------------------------------------------
+    # Technical
+    # --------------------------------------------------
 
     move_id = fields.Many2one('account.move', readonly=True, copy=False)
 
@@ -48,6 +90,16 @@ class AccountInternalTransfer(models.Model):
         default='draft',
         tracking=True
     )
+
+    # --------------------------------------------------
+    # Constraints
+    # --------------------------------------------------
+
+    @api.constrains('source_journal_id', 'destination_journal_id')
+    def _check_journals(self):
+        for rec in self:
+            if rec.source_journal_id == rec.destination_journal_id:
+                raise UserError(_("Source and destination journals must be different."))
 
     # --------------------------------------------------
     # Actions
@@ -60,51 +112,56 @@ class AccountInternalTransfer(models.Model):
 
             if not rec.source_journal_id.default_account_id:
                 raise UserError(_("Source journal has no default account."))
+
             if not rec.destination_journal_id.default_account_id:
                 raise UserError(_("Destination journal has no default account."))
+
+            if rec.has_bank_fees and not rec.fee_account_id:
+                raise UserError(_("Please set a bank fee account."))
 
             lines = []
             net_amount = rec.amount
 
-            # 1️⃣ Credit source journal (bank)
+            analytic_vals = {}
+            if rec.analytic_distribution:
+                analytic_vals['analytic_distribution'] = rec.analytic_distribution
+
+            # 1️⃣ Credit source journal (bank) – NO analytic
             lines.append((0, 0, {
                 'account_id': rec.source_journal_id.default_account_id.id,
                 'credit': rec.amount,
                 'name': rec.name,
             }))
 
-            # 2️⃣ Copy fee / expense lines EXACTLY as entered
-            for fee in rec.fee_line_ids:
-                if not fee.account_id:
-                    raise UserError(_("Fee line must have an account."))
+            # 2️⃣ Bank fee (expense) – WITH analytic
+            if rec.has_bank_fees and rec.fee_amount:
+                lines.append((0, 0, {
+                    'account_id': rec.fee_account_id.id,
+                    'debit': rec.fee_amount,
+                    'tax_ids': [(6, 0, rec.fee_tax_id.ids)] if rec.fee_tax_id else [],
+                    'name': _('Bank Fees'),
+                    **analytic_vals,
+                }))
 
-                line_vals = {
-                    'account_id': fee.account_id.id,
-                    'debit': fee.debit,
-                    'tax_ids': [(6, 0, fee.tax_ids.ids)],
-                    'analytic_distribution': fee.analytic_distribution,
-                    'name': fee.name,
-                }
-                lines.append((0, 0, line_vals))
-
-                # reduce net by fee + VAT (computed by Odoo)
                 tax_amount = sum(
                     tax['amount']
-                    for tax in fee.tax_ids.compute_all(
-                        fee.debit,
+                    for tax in rec.fee_tax_id.compute_all(
+                        rec.fee_amount,
                         currency=rec.currency_id
                     )['taxes']
-                )
-                net_amount -= (fee.debit + tax_amount)
+                ) if rec.fee_tax_id else 0.0
+
+                net_amount -= (rec.fee_amount + tax_amount)
 
             if net_amount <= 0:
                 raise UserError(_("Net transferred amount must be greater than zero."))
 
-            # 3️⃣ Debit destination journal (petty cash)
+            # 3️⃣ Debit destination journal (petty cash) – WITH analytic
             lines.append((0, 0, {
                 'account_id': rec.destination_journal_id.default_account_id.id,
                 'debit': net_amount,
                 'name': rec.name,
+                **analytic_vals,
             }))
 
             move = self.env['account.move'].create({

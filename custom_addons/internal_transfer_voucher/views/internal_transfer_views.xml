@@ -19,7 +19,7 @@
     </record>
 
     <!-- Form View -->
-     <record id="view_internal_transfer_form" model="ir.ui.view">
+    <record id="view_internal_transfer_form" model="ir.ui.view">
         <field name="name">account.internal.transfer.form</field>
         <field name="model">account.internal.transfer</field>
         <field name="arch" type="xml">
@@ -44,7 +44,8 @@
                         <group>
                             <field name="date"/>
                             <field name="amount"/>
-                            <field name="currency_id" groups="base.group_multi_currency"/>
+                            <field name="currency_id"
+                                   groups="base.group_multi_currency"/>
                         </group>
                         <group>
                             <field name="source_journal_id"/>
@@ -52,22 +53,21 @@
                         </group>
                     </group>
 
-                    <!-- THIS IS THE KEY PART -->
-                    <group string="Bank Fees / Expenses">
-                        <field name="fee_line_ids"
-                               context="{
-                                   'default_partner_id': False,
-                                   'default_move_id': False
-                               }">
-                            <list editable="bottom">
-                                <field name="account_id"/>
-                                <field name="debit"/>
-                                <field name="tax_ids"/>
-                                <field name="analytic_distribution"
-                                       widget="analytic_distribution"/>
-                                <field name="name"/>
-                            </list>
-                        </field>
+                    <!-- Bank Fees -->
+                    <group string="Bank Fees">
+                        <field name="has_bank_fees"/>
+                        <group invisible="not has_bank_fees">
+                            <field name="fee_amount"/>
+                            <field name="fee_account_id"/>
+                            <field name="fee_tax_id"/>
+                        </group>
+                    </group>
+
+                    <!-- Analytic (ONLY ADDITION) -->
+                    <group string="Analytic">
+                        <field name="analytic_distribution"
+                               widget="analytic_distribution"
+                               options="{'force_applicability': 'optional'}"/>
                     </group>
 
                     <group>
@@ -79,6 +79,7 @@
             </form>
         </field>
     </record>
+
 
     <!-- Action -->
     <record id="action_internal_transfer" model="ir.actions.act_window">
