@@ -48,8 +48,10 @@
         'views/menus.xml',                # <-- menu referencing action (must load last)
         'wizard/petty_cash_import_wizard_views.xml',
     ],
-    'images': ['static/description/icon.png'],   # <-- App icon
-    'license': 'LGPL-3',
+    'images': ['images/main_screenshot.png'],
+    'license': 'OPL-1',
+    'price': 24.99,
+    'currency': 'USD',
     'installable': True,
     'application': True,
 }

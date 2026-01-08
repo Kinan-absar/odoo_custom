@@ -47,6 +47,8 @@ Fully compatible with Odoo 18.
     "author": "Kinan",
     "website": "https://absar-alomran.com",
     "license": "OPL-1",
+    "price": 14.99,
+    "currency": "USD",
     "depends": ["account"],
     "data": [
         "security/ir.model.access.csv",
