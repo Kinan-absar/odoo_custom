@@ -75,6 +75,21 @@ class AccountPaymentVoucher(models.Model):
         tracking=True
     )
     description = fields.Text(string="Notes")
+
+    amount_in_words_ar = fields.Char(
+        string="Amount in Words (Arabic)",
+        compute="_compute_amount_in_words_ar"
+    )
+
+    def _compute_amount_in_words_ar(self):
+        for rec in self:
+            if rec.amount and rec.currency_id:
+                rec.amount_in_words_ar = rec.currency_id.with_context(
+                    lang='ar_001'
+                ).amount_to_text(rec.amount)
+            else:
+                rec.amount_in_words_ar = ''
+
     # -------------------------
     # Actions
     # -------------------------

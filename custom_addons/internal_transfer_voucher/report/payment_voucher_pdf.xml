@@ -7,101 +7,104 @@
             <t t-foreach="docs" t-as="o">
                 <div class="page">
 
-                    <!-- TITLE -->
-                    <h2 style="text-align:center; margin-bottom:10px;">
-                        PAYMENT VOUCHER
-                    </h2>
-                    <hr/>
+                    <!-- ================= HEADER ================= -->
+                    <table width="100%" style="margin-bottom:20px;">
+                        <tr>
+                            <td width="40%" style="text-align:center;">
+                                <img t-if="o.company_id.logo"
+                                     t-att-src="image_data_uri(o.company_id.logo)"
+                                     style="max-height:70px;"/>
+                                <h3 style="margin:5px 0;">Payment Voucher</h3>
+                                <h3 style="margin:0;">سند صرف</h3>
+                            </td>
+                        </tr>
+                    </table>
 
-                    <!-- HEADER INFO -->
-                    <table class="table table-sm mt16">
+                    <!-- ================= MAIN INFO ================= -->
+                    <table class="table table-bordered" style="font-size:12px;">
                         <tr>
                             <td width="25%"><strong>Voucher No</strong></td>
                             <td width="25%"><span t-esc="o.name"/></td>
-                            <td width="25%"><strong>Date</strong></td>
-                            <td width="25%"><span t-esc="o.date"/></td>
+                            <td width="25%" style="text-align:right;"><strong>رقم السند</strong></td>
+                            <td width="25%" style="text-align:right;"><span t-esc="o.name"/></td>
                         </tr>
+
                         <tr>
-                            <td><strong>Partner</strong></td>
+                            <td><strong>Date</strong></td>
+                            <td><span t-esc="o.date"/></td>
+                            <td style="text-align:right;"><strong>التاريخ</strong></td>
+                            <td style="text-align:right;"><span t-esc="o.date"/></td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>Paid To</strong></td>
                             <td colspan="3">
                                 <span t-esc="o.partner_id.display_name"/>
                             </td>
                         </tr>
+
                         <tr>
-                            <td><strong>Journal</strong></td>
-                            <td><span t-esc="o.journal_id.name"/></td>
                             <td><strong>Amount</strong></td>
-                            <td class="text-right">
+                            <td>
                                 <span t-field="o.amount"
-                                      t-options="{'widget': 'monetary', 'currency_field': 'currency_id'}"/>
+                                      t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
+                            </td>
+                            <td style="text-align:right;"><strong>المبلغ</strong></td>
+                            <td style="text-align:right;">
+                                <span t-field="o.amount"
+                                      t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
                             </td>
                         </tr>
+                        <tr>
+                            <td><strong>Amount in Words</strong></td>
+                            <td colspan="3" style="text-align:right;">
+                                <span t-esc="o.amount_in_words_ar"/> فقط لا غير
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>Payment Method</strong></td>
+                            <td><span t-esc="o.journal_id.name"/></td>
+                            <td style="text-align:right;"><strong>طريقة الدفع</strong></td>
+                            <td style="text-align:right;"><span t-esc="o.journal_id.name"/></td>
+                        </tr>
                     </table>
+
+                    <!-- ================= NOTES ================= -->
                     <t t-if="o.description">
-                        <div class="mt16">
-                            <strong>Notes</strong>
-                            <div style="min-height:40px; padding-top:4px;">
+                        <div class="mt16" style="font-size:12px;">
+                            <strong>Description / البيان</strong>
+                            <div style="min-height:50px; border-bottom:1px dotted #000; margin-top:5px;">
                                 <span t-esc="o.description"/>
                             </div>
                         </div>
                     </t>
 
-                    <!-- ACCOUNTING ENTRY -->
-                    <h4 class="mt16">Accounting Entry</h4>
-
-                    <table class="table table-sm table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Account</th>
-                                <th class="text-right">Debit</th>
-                                <th class="text-right">Credit</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <t t-foreach="o.move_id.line_ids" t-as="line">
-                                <tr>
-                                    <td><span t-esc="line.account_id.display_name"/></td>
-                                    <td class="text-right">
-                                        <t t-if="line.debit">
-                                            <span t-field="line.debit"
-                                                  t-options="{'widget': 'monetary', 'currency_field': 'currency_id'}"/>
-                                        </t>
-                                    </td>
-                                    <td class="text-right">
-                                        <t t-if="line.credit">
-                                            <span t-field="line.credit"
-                                                  t-options="{'widget': 'monetary', 'currency_field': 'currency_id'}"/>
-                                        </t>
-                                    </td>
-                                </tr>
-                            </t>
-                        </tbody>
-                    </table>
-
-                    <!-- SIGNATURES -->
+                    <!-- ================= SIGNATURES ================= -->
                     <table class="table mt48" style="border:1px solid #000;">
                         <tr>
-                            <td width="33%" style="border:none; padding-top:15px;">
-                                <strong>Prepared By</strong>
+                            <td width="33%" style="padding:15px;">
+                                Prepared By<br/>
                                 <div style="min-height:90px;"></div>
-                                __________________________
+                                ______________________<br/>
+                                المحاسب
                             </td>
 
-                            <td width="33%" style="border:none; padding-top:15px;">
-                                <strong>Approved By</strong>
+                            <td width="33%" style="padding:15px;">
+                                Approved By<br/>
                                 <div style="min-height:90px;"></div>
-                                __________________________
+                                ______________________<br/>
+                                المدير
                             </td>
 
-                            <td width="33%" style="border:none; padding-top:15px;">
-                                <strong>Received By</strong>
+                            <td width="33%" style="padding:15px;">
+                                Received By<br/>
                                 <div style="min-height:90px;"></div>
-                                __________________________
+                                ______________________<br/>
+                                المستلم
                             </td>
                         </tr>
                     </table>
-
-
 
                 </div>
             </t>
