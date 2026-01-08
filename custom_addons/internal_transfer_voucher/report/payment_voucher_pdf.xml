@@ -5,111 +5,78 @@
     <t t-call="web.external_layout">
         <main>
             <t t-foreach="docs" t-as="o">
-                <div class="page" style="font-size:12px;">
+                <div class="page">
 
                     <!-- ================= TITLE ================= -->
                     <div style="text-align:center; margin-bottom:20px;">
-                        <h2 style="margin:0;">PAYMENT VOUCHER</h2>
-                        <h3 style="margin:0;">سند صرف</h3>
+                        <h2>PAYMENT VOUCHER</h2>
+                        <h3 style="margin-top:-5px;">سند صرف</h3>
                     </div>
-                    <div style="width:30%; float:right; margin-bottom:20px;">
-                        <table width="100%" class="table table-bordered">
+
+                    <!-- ================= TOP STRIP ================= -->
+                    <div style="width:65%; float:left;">
+                        <table class="table table-bordered" style="font-size:12px;">
                             <tr>
-                                <td style="text-align:center; padding:25px; font-size:18px;">
+                                <td width="25%"><strong>Voucher No</strong></td>
+                                <td width="25%" style="text-align:center;">
+                                    <span t-esc="o.name"/>
+                                </td>
+                                <td width="25%" style="text-align:right;"><strong>رقم السند</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Date</strong></td>
+                                <td style="text-align:center;">
+                                    <span t-esc="o.date"/>
+                                </td>
+                                <td style="text-align:right;"><strong>التاريخ</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- AMOUNT BOX -->
+                    <div style="width:30%; float:right;">
+                        <table class="table table-bordered">
+                            <tr>
+                                <td style="text-align:center; padding:30px; font-size:20px;">
                                     <strong>
                                         <span t-field="o.amount"
-                                            t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
+                                              t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
                                     </strong>
                                 </td>
                             </tr>
                         </table>
                     </div>
-<div style="width:65%; float:left; margin-bottom:30px;">
 
-<table width="100%" class="table table-bordered" style="font-size:12px;">
+                    <div style="clear:both;"></div>
 
-    <tr>
-        <td width="20%"><strong>Voucher No</strong></td>
-        <td width="30%" style="text-align:center;">
-            <span t-esc="o.name"/>
-        </td>
-        <td width="20%" style="text-align:right;"><strong>التاريخ</strong></td>
-        <td width="30%" style="text-align:center;">
-            <span t-esc="o.date"/>
-        </td>
-    </tr>
+                    <!-- ================= MAIN INFO TABLE ================= -->
+                    <table class="table table-bordered" style="margin-top:25px; font-size:12px;">
 
-    <tr>
-        <td><strong>Paid To</strong></td>
-        <td style="text-align:center;">
-            <span t-esc="o.partner_id.display_name"/>
-        </td>
-        <td style="text-align:right;"><strong>طريقة الدفع</strong></td>
-        <td style="text-align:center;">
-            <t t-if="o.payment_method == 'cash'">Cash</t>
-            <t t-if="o.payment_method == 'cheque'">Cheque</t>
-        </td>
-    </tr>
-
-    <tr>
-        <td><strong>Amount in Words</strong></td>
-        <td colspan="3" style="text-align:center; direction:rtl;">
-            <span t-esc="o.amount_in_words_ar"/> فقط لا غير
-        </td>
-    </tr>
-
-    <tr>
-        <td><strong>Paid For</strong></td>
-        <td colspan="3" style="text-align:center;">
-            <span t-esc="o.description"/>
-        </td>
-    </tr>
-
-</table>
-
-</div>
-
-<div style="clear:both;"></div>
-
-                    <!-- ================= AMOUNT BOX (RIGHT) ================= -->
-                    <div style="width:30%; float:right; text-align:center;
-                                border:1px solid #000; padding:20px; font-size:16px;">
-                        <strong>
-                            <span t-field="o.amount"
-                                  t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
-                        </strong>
-                    </div>
-
-                    <!-- ================= MAIN INFO ================= -->
-                   <table width="100%" class="table table-bordered" style="font-size:12px;">
-
-                        <!-- Row 1: Voucher No | Date -->
                         <tr>
-                            <!-- Left group -->
-                            <td width="15%"><strong>Voucher No</strong></td>
-                            <td width="25%" style="text-align:center;">
-                                <span t-esc="o.name"/>
-                            </td>
-                            <td width="15%" style="text-align:right;"><strong>رقم السند</strong></td>
-
-                            <!-- Right group -->
-                            <td width="15%"><strong>Date</strong></td>
-                            <td width="25%" style="text-align:center;">
-                                <span t-esc="o.date"/>
-                            </td>
-                            <td width="15%" style="text-align:right;"><strong>التاريخ</strong></td>
-                        </tr>
-
-                        <!-- Row 2: Paid To | Payment Method -->
-                        <tr>
-                            <!-- Left group -->
-                            <td><strong>Paid To</strong></td>
-                            <td style="text-align:center;">
+                            <td width="25%"><strong>Paid To</strong></td>
+                            <td width="50%" style="text-align:center;">
                                 <span t-esc="o.partner_id.display_name"/>
                             </td>
-                            <td style="text-align:right;"><strong>تصرف إلى</strong></td>
+                            <td width="25%" style="text-align:right;"><strong>تصرف إلى</strong></td>
+                        </tr>
 
-                            <!-- Right group -->
+                        <tr>
+                            <td><strong>Amount in Words</strong></td>
+                            <td style="text-align:center; direction:rtl;">
+                                <span t-esc="o.amount_in_words_ar"/> فقط لا غير
+                            </td>
+                            <td style="text-align:right;"><strong>المبلغ كتابةً</strong></td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>Paid For</strong></td>
+                            <td style="text-align:center;">
+                                <span t-esc="o.description"/>
+                            </td>
+                            <td style="text-align:right;"><strong>وذلك مقابل</strong></td>
+                        </tr>
+
+                        <tr>
                             <td><strong>Payment Method</strong></td>
                             <td style="text-align:center;">
                                 <t t-if="o.payment_method == 'cash'">Cash</t>
@@ -118,42 +85,23 @@
                             <td style="text-align:right;"><strong>طريقة الدفع</strong></td>
                         </tr>
 
-                        <!-- Row 3: Amount in Words (LEFT ONLY) -->
-                        <tr>
-                            <td><strong>Amount in Words</strong></td>
-                            <td colspan="4" style="text-align:center; direction:rtl;">
-                                <span t-esc="o.amount_in_words_ar"/> فقط لا غير
-                            </td>
-                            <td style="text-align:right;"><strong>المبلغ كتابةً</strong></td>
-                        </tr>
-
-                        <!-- Row 4: Paid For (LEFT ONLY) -->
-                        <tr>
-                            <td><strong>Paid For</strong></td>
-                            <td colspan="4" style="text-align:center;">
-                                <span t-esc="o.description"/>
-                            </td>
-                            <td style="text-align:right;"><strong>وذلك مقابل</strong></td>
-                        </tr>
-
                     </table>
-                                
 
                     <!-- ================= SIGNATURES ================= -->
-                    <div style="margin-top:70px;">
+                    <div style="margin-top:60px;">
 
                         <div style="width:45%; float:left; text-align:center;">
-                            <br/><br/>
-                            <div style="min-height:70px;"></div>
-                            __________________________<br/>
-                            <strong>Paid By</strong> 
+                            <br/>
+                            <div style="min-height:80px;"></div>
+                            ________________________<br/>
+                           <strong>Paid By</strong>
                         </div>
 
                         <div style="width:45%; float:right; text-align:center;">
-                            <br/><br/>
-                            <div style="min-height:70px;"></div>
-                            __________________________<br/>
-                            <strong>Received By</strong>
+                            <br/>
+                            <div style="min-height:80px;"></div>
+                            ________________________<br/>
+                           <strong>Received By</strong>
                         </div>
 
                         <div style="clear:both;"></div>
