@@ -68,6 +68,7 @@
                         </group>
 
                         <group string="Accounting">
+                            <field name="payment_method"/>
                             <field name="journal_id"/>
                             <field name="account_id"/>
                         </group>

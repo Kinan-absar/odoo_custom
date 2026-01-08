@@ -76,6 +76,16 @@ class AccountPaymentVoucher(models.Model):
     )
     description = fields.Text(string="Notes")
 
+    payment_method = fields.Selection(
+        [
+            ('cash', 'Cash'),
+            ('cheque', 'Cheque'),
+        ],
+        string="Payment Method",
+        required=True,
+        default='cash'
+    )
+
     amount_in_words_ar = fields.Char(
         string="Amount in Words (Arabic)",
         compute="_compute_amount_in_words_ar"
