@@ -4,7 +4,8 @@
 <template id="payment_voucher_pdf">
     <t t-call="web.external_layout">
         <main>
-        <style>
+
+<style>
 
 /* ===== Page Base ===== */
 .page {
@@ -29,7 +30,7 @@
     margin: 3px 0 0 0;
 }
 
-/* ===== Tables General ===== */
+/* ===== Tables ===== */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -42,7 +43,7 @@ table {
     vertical-align: middle;
 }
 
-/* ===== Small Header Table ===== */
+/* ===== Header Table ===== */
 .pv-header-table td {
     font-size: 10px;
 }
@@ -52,6 +53,7 @@ table {
     font-size: 18px;
     font-weight: bold;
     padding: 28px 10px;
+    text-align: center;
 }
 
 /* ===== Main Info Table ===== */
@@ -63,11 +65,13 @@ table {
     background-color: #fafafa;
 }
 
-/* ===== Arabic Alignment ===== */
-.ar {
+/* ===== Arabic (right column only) ===== */
+.pv-header-table td:last-child,
+.pv-main-table td:last-child {
     text-align: right;
     direction: rtl;
     white-space: nowrap;
+    font-weight: 600;
 }
 
 /* ===== Signatures ===== */
@@ -104,109 +108,108 @@ table {
 
 </style>
 
-            <t t-foreach="docs" t-as="o">
-                <div class="page">
+<t t-foreach="docs" t-as="o">
+<div class="page">
 
-                    <!-- ================= TITLE ================= -->
-                    <div class="pv-title">
-                        <h2>PAYMENT VOUCHER</h2>
-                        <h3>سند صرف</h3>
-                    </div>
+    <!-- ================= TITLE ================= -->
+    <div class="pv-title">
+        <h2>PAYMENT VOUCHER</h2>
+        <h3>سند صرف</h3>
+    </div>
 
-                    <!-- ================= TOP STRIP ================= -->
-                    <div style="width:65%; float:left;">
-                        <table class="table-bordered pv-header-table">
-                            <tr>
-                                <td width="25%"><strong>Voucher No</strong></td>
-                                <td width="25%" style="text-align:center;">
-                                    <span t-esc="o.name"/>
-                                </td>
-                                <td width="25%" style="text-align:right;"><strong>رقم السند</strong></td>
-                            </tr>
-                            <tr>
-                                <td><strong>Date</strong></td>
-                                <td style="text-align:center;">
-                                    <span t-esc="o.date"/>
-                                </td>
-                                <td style="text-align:right;"><strong>التاريخ</strong></td>
-                            </tr>
-                        </table>
-                    </div>
+    <!-- ================= TOP STRIP ================= -->
 
-                    <!-- AMOUNT BOX -->
-                    <table class="table-bordered amount-box">
-                        <table class="table table-bordered">
-                            <tr>
-                                <td style="text-align:center; padding:30px; font-size:20px;">
-                                    <strong>
-                                        <span t-field="o.amount"
-                                              t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
-                                    </strong>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
+    <!-- Left: Voucher / Date -->
+    <div style="width:65%; float:left;">
+        <table class="table-bordered pv-header-table">
+            <tr>
+                <td width="30%"><strong>Voucher No</strong></td>
+                <td width="40%" style="text-align:center;">
+                    <span t-esc="o.name"/>
+                </td>
+                <td width="30%"><strong>رقم السند</strong></td>
+            </tr>
+            <tr>
+                <td><strong>Date</strong></td>
+                <td style="text-align:center;">
+                    <span t-esc="o.date"/>
+                </td>
+                <td><strong>التاريخ</strong></td>
+            </tr>
+        </table>
+    </div>
 
-                    <div style="clear:both;"></div>
+    <!-- Right: Amount Box -->
+    <div style="width:30%; float:right;">
+        <table class="table-bordered amount-box">
+            <tr>
+                <td>
+                    <span t-field="o.amount"
+                          t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
+                </td>
+            </tr>
+        </table>
+    </div>
 
-                    <!-- ================= MAIN INFO TABLE ================= -->
-                    <table class="table-bordered pv-main-table">
+    <div class="clearfix"></div>
 
-                        <tr>
-                            <td width="25%"><strong>Paid To</strong></td>
-                            <td width="50%" style="text-align:center;">
-                                <span t-esc="o.partner_id.display_name"/>
-                            </td>
-                            <td class="ar"><strong>تصرف إلى</strong></td>
-                        </tr>
+    <!-- ================= MAIN INFO ================= -->
+    <table class="table-bordered pv-main-table" style="margin-top:25px;">
 
-                        <tr>
-                            <td><strong>Amount in Words</strong></td>
-                            <td style="text-align:center; direction:rtl;">
-                                <span t-esc="o.amount_in_words_ar"/> فقط لا غير
-                            </td>
-                            <td style="text-align:right;"><strong>المبلغ كتابةً</strong></td>
-                        </tr>
+        <tr>
+            <td width="25%"><strong>Paid To</strong></td>
+            <td width="50%" style="text-align:center;">
+                <span t-esc="o.partner_id.display_name"/>
+            </td>
+            <td width="25%"><strong>تصرف إلى</strong></td>
+        </tr>
 
-                        <tr>
-                            <td><strong>Paid For</strong></td>
-                            <td style="text-align:center;">
-                                <span t-esc="o.description"/>
-                            </td>
-                            <td style="text-align:right;"><strong>وذلك مقابل</strong></td>
-                        </tr>
+        <tr>
+            <td><strong>Amount in Words</strong></td>
+            <td style="text-align:center; direction:rtl;">
+                <span t-esc="o.amount_in_words_ar"/> فقط لا غير
+            </td>
+            <td><strong>المبلغ كتابةً</strong></td>
+        </tr>
 
-                        <tr>
-                            <td><strong>Payment Method</strong></td>
-                            <td style="text-align:center;">
-                                <t t-if="o.payment_method == 'cash'">Cash</t>
-                                <t t-if="o.payment_method == 'cheque'">Cheque</t>
-                            </td>
-                            <td style="text-align:right;"><strong>طريقة الدفع</strong></td>
-                        </tr>
+        <tr>
+            <td><strong>Paid For</strong></td>
+            <td style="text-align:center;">
+                <span t-esc="o.description"/>
+            </td>
+            <td><strong>وذلك مقابل</strong></td>
+        </tr>
 
-                    </table>
+        <tr>
+            <td><strong>Payment Method</strong></td>
+            <td style="text-align:center;">
+                <t t-if="o.payment_method == 'cash'">Cash</t>
+                <t t-if="o.payment_method == 'cheque'">Cheque</t>
+            </td>
+            <td><strong>طريقة الدفع</strong></td>
+        </tr>
 
-                    <!-- ================= SIGNATURES ================= -->
-                    <div class="signature-block">
-                        <div class="signature">
-                            
-                            <div class="line"></div>
-                            <div class="signature-label">Paid By</div>
-                        </div>
+    </table>
 
-                        <div class="signature right">
-                            
-                            <div class="line"></div>
-                            <div class="signature-label">Received By</div>
-                        </div>
+    <!-- ================= SIGNATURES ================= -->
+    <div class="signature-block">
 
-                        <div class="clearfix"></div>
-                    </div>
+        <div class="signature">
+            <div class="line"></div>
+            <div class="signature-label">Paid By</div>
+        </div>
 
+        <div class="signature right">
+            <div class="line"></div>
+            <div class="signature-label">Received By</div>
+        </div>
 
-                </div>
-            </t>
+        <div class="clearfix"></div>
+    </div>
+
+</div>
+</t>
+
         </main>
     </t>
 </template>
