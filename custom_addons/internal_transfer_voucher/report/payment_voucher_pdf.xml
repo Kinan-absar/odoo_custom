@@ -12,6 +12,64 @@
                         <h2 style="margin:0;">PAYMENT VOUCHER</h2>
                         <h3 style="margin:0;">سند صرف</h3>
                     </div>
+                    <div style="width:30%; float:right; margin-bottom:20px;">
+                        <table width="100%" class="table table-bordered">
+                            <tr>
+                                <td style="text-align:center; padding:25px; font-size:18px;">
+                                    <strong>
+                                        <span t-field="o.amount"
+                                            t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
+                                    </strong>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+<div style="width:65%; float:left; margin-bottom:30px;">
+
+<table width="100%" class="table table-bordered" style="font-size:12px;">
+
+    <tr>
+        <td width="20%"><strong>Voucher No</strong></td>
+        <td width="30%" style="text-align:center;">
+            <span t-esc="o.name"/>
+        </td>
+        <td width="20%" style="text-align:right;"><strong>التاريخ</strong></td>
+        <td width="30%" style="text-align:center;">
+            <span t-esc="o.date"/>
+        </td>
+    </tr>
+
+    <tr>
+        <td><strong>Paid To</strong></td>
+        <td style="text-align:center;">
+            <span t-esc="o.partner_id.display_name"/>
+        </td>
+        <td style="text-align:right;"><strong>طريقة الدفع</strong></td>
+        <td style="text-align:center;">
+            <t t-if="o.payment_method == 'cash'">Cash</t>
+            <t t-if="o.payment_method == 'cheque'">Cheque</t>
+        </td>
+    </tr>
+
+    <tr>
+        <td><strong>Amount in Words</strong></td>
+        <td colspan="3" style="text-align:center; direction:rtl;">
+            <span t-esc="o.amount_in_words_ar"/> فقط لا غير
+        </td>
+    </tr>
+
+    <tr>
+        <td><strong>Paid For</strong></td>
+        <td colspan="3" style="text-align:center;">
+            <span t-esc="o.description"/>
+        </td>
+    </tr>
+
+</table>
+
+</div>
+
+<div style="clear:both;"></div>
 
                     <!-- ================= AMOUNT BOX (RIGHT) ================= -->
                     <div style="width:30%; float:right; text-align:center;
@@ -23,79 +81,79 @@
                     </div>
 
                     <!-- ================= MAIN INFO ================= -->
-                    <div style="width:65%; float:left;">
+                   <table width="100%" class="table table-bordered" style="font-size:12px;">
 
-                        <table width="100%" style="border-collapse:collapse;">
-                            <tr>
-                                <td width="30%"><strong>Voucher No</strong></td>
-                                <td width="70%" style="border-bottom:1px solid #000;">
-                                    <span t-esc="o.name"/>
-                                </td>
-                            </tr>
+                        <!-- Row 1: Voucher No | Date -->
+                        <tr>
+                            <!-- Left group -->
+                            <td width="15%"><strong>Voucher No</strong></td>
+                            <td width="25%" style="text-align:center;">
+                                <span t-esc="o.name"/>
+                            </td>
+                            <td width="15%" style="text-align:right;"><strong>رقم السند</strong></td>
 
-                            <tr>
-                                <td><strong>Paid To</strong></td>
-                                <td style="border-bottom:1px solid #000;">
-                                    <span t-esc="o.partner_id.display_name"/>
-                                </td>
-                            </tr>
+                            <!-- Right group -->
+                            <td width="15%"><strong>Date</strong></td>
+                            <td width="25%" style="text-align:center;">
+                                <span t-esc="o.date"/>
+                            </td>
+                            <td width="15%" style="text-align:right;"><strong>التاريخ</strong></td>
+                        </tr>
 
-                            <tr>
-                                <td><strong>Amount in Words</strong></td>
-                                <td style="border-bottom:1px solid #000; direction:rtl;">
-                                    <span t-esc="o.amount_in_words_ar"/> فقط لا غير
-                                </td>
-                            </tr>
+                        <!-- Row 2: Paid To | Payment Method -->
+                        <tr>
+                            <!-- Left group -->
+                            <td><strong>Paid To</strong></td>
+                            <td style="text-align:center;">
+                                <span t-esc="o.partner_id.display_name"/>
+                            </td>
+                            <td style="text-align:right;"><strong>تصرف إلى</strong></td>
 
-                            <tr>
-                                <td><strong>Paid For</strong></td>
-                                <td style="border-bottom:1px solid #000;">
-                                    <span t-esc="o.description"/>
-                                </td>
-                            </tr>
-                        </table>
+                            <!-- Right group -->
+                            <td><strong>Payment Method</strong></td>
+                            <td style="text-align:center;">
+                                <t t-if="o.payment_method == 'cash'">Cash</t>
+                                <t t-if="o.payment_method == 'cheque'">Cheque</t>
+                            </td>
+                            <td style="text-align:right;"><strong>طريقة الدفع</strong></td>
+                        </tr>
 
-                    </div>
+                        <!-- Row 3: Amount in Words (LEFT ONLY) -->
+                        <tr>
+                            <td><strong>Amount in Words</strong></td>
+                            <td colspan="4" style="text-align:center; direction:rtl;">
+                                <span t-esc="o.amount_in_words_ar"/> فقط لا غير
+                            </td>
+                            <td style="text-align:right;"><strong>المبلغ كتابةً</strong></td>
+                        </tr>
 
-                    <div style="clear:both;"></div>
+                        <!-- Row 4: Paid For (LEFT ONLY) -->
+                        <tr>
+                            <td><strong>Paid For</strong></td>
+                            <td colspan="4" style="text-align:center;">
+                                <span t-esc="o.description"/>
+                            </td>
+                            <td style="text-align:right;"><strong>وذلك مقابل</strong></td>
+                        </tr>
 
-                    <!-- ================= RIGHT INFO (DATE + PAYMENT METHOD) ================= -->
-                    <div style="margin-top:20px; width:65%; float:left;">
-                        <table width="100%" style="border-collapse:collapse;">
-                            <tr>
-                                <td width="30%"><strong>Date</strong></td>
-                                <td width="70%" style="border-bottom:1px solid #000;">
-                                    <span t-esc="o.date"/>
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td><strong>Payment Method</strong></td>
-                                <td style="border-bottom:1px solid #000;">
-                                    <t t-if="o.payment_method == 'cash'">Cash</t>
-                                    <t t-if="o.payment_method == 'cheque'">Cheque</t>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-
-                    <div style="clear:both;"></div>
+                    </table>
+                                
 
                     <!-- ================= SIGNATURES ================= -->
                     <div style="margin-top:70px;">
 
                         <div style="width:45%; float:left; text-align:center;">
-                            <strong>Paid By</strong><br/><br/>
+                            <br/><br/>
                             <div style="min-height:70px;"></div>
                             __________________________<br/>
-                            دقع من 
+                            <strong>Paid By</strong> 
                         </div>
 
                         <div style="width:45%; float:right; text-align:center;">
-                            <strong>Received By</strong><br/><br/>
+                            <br/><br/>
                             <div style="min-height:70px;"></div>
                             __________________________<br/>
-                            المستلم
+                            <strong>Received By</strong>
                         </div>
 
                         <div style="clear:both;"></div>
