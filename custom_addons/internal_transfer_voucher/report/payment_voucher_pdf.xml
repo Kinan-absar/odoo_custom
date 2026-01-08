@@ -4,18 +4,118 @@
 <template id="payment_voucher_pdf">
     <t t-call="web.external_layout">
         <main>
+        <style>
+
+/* ===== Page Base ===== */
+.page {
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+/* ===== Title ===== */
+.pv-title {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.pv-title h2 {
+    font-size: 18px;
+    margin: 0;
+    letter-spacing: 1px;
+}
+
+.pv-title h3 {
+    font-size: 14px;
+    margin: 3px 0 0 0;
+}
+
+/* ===== Tables General ===== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-bordered td,
+.table-bordered th {
+    border: 1px solid #000;
+    padding: 6px 8px;
+    vertical-align: middle;
+}
+
+/* ===== Small Header Table ===== */
+.pv-header-table td {
+    font-size: 10px;
+}
+
+/* ===== Amount Box ===== */
+.amount-box td {
+    font-size: 18px;
+    font-weight: bold;
+    padding: 28px 10px;
+}
+
+/* ===== Main Info Table ===== */
+.pv-main-table td {
+    font-size: 10px;
+}
+
+.pv-main-table tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+/* ===== Arabic Alignment ===== */
+.ar {
+    text-align: right;
+    direction: rtl;
+    white-space: nowrap;
+}
+
+/* ===== Signatures ===== */
+.signature-block {
+    margin-top: 60px;
+}
+
+.signature {
+    width: 45%;
+    text-align: center;
+    float: left;
+}
+
+.signature.right {
+    float: right;
+}
+
+.signature .line {
+    margin-top: 60px;
+    border-top: 1px solid #000;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.signature-label {
+    margin-top: 5px;
+    font-size: 10px;
+}
+
+.clearfix {
+    clear: both;
+}
+
+</style>
+
             <t t-foreach="docs" t-as="o">
                 <div class="page">
 
                     <!-- ================= TITLE ================= -->
-                    <div style="text-align:center; margin-bottom:20px;">
+                    <div class="pv-title">
                         <h2>PAYMENT VOUCHER</h2>
-                        <h3 style="margin-top:-5px;">سند صرف</h3>
+                        <h3>سند صرف</h3>
                     </div>
 
                     <!-- ================= TOP STRIP ================= -->
                     <div style="width:65%; float:left;">
-                        <table class="table table-bordered" style="font-size:12px;">
+                        <table class="table-bordered pv-header-table">
                             <tr>
                                 <td width="25%"><strong>Voucher No</strong></td>
                                 <td width="25%" style="text-align:center;">
@@ -34,7 +134,7 @@
                     </div>
 
                     <!-- AMOUNT BOX -->
-                    <div style="width:30%; float:right;">
+                    <table class="table-bordered amount-box">
                         <table class="table table-bordered">
                             <tr>
                                 <td style="text-align:center; padding:30px; font-size:20px;">
@@ -50,14 +150,14 @@
                     <div style="clear:both;"></div>
 
                     <!-- ================= MAIN INFO TABLE ================= -->
-                    <table class="table table-bordered" style="margin-top:25px; font-size:12px;">
+                    <table class="table-bordered pv-main-table">
 
                         <tr>
                             <td width="25%"><strong>Paid To</strong></td>
                             <td width="50%" style="text-align:center;">
                                 <span t-esc="o.partner_id.display_name"/>
                             </td>
-                            <td width="25%" style="text-align:right;"><strong>تصرف إلى</strong></td>
+                            <td class="ar"><strong>تصرف إلى</strong></td>
                         </tr>
 
                         <tr>
@@ -88,24 +188,22 @@
                     </table>
 
                     <!-- ================= SIGNATURES ================= -->
-                    <div style="margin-top:60px;">
-
-                        <div style="width:45%; float:left; text-align:center;">
-                            <br/>
-                            <div style="min-height:80px;"></div>
-                            ________________________<br/>
-                           <strong>Paid By</strong>
+                    <div class="signature-block">
+                        <div class="signature">
+                            
+                            <div class="line"></div>
+                            <div class="signature-label">Paid By</div>
                         </div>
 
-                        <div style="width:45%; float:right; text-align:center;">
-                            <br/>
-                            <div style="min-height:80px;"></div>
-                            ________________________<br/>
-                           <strong>Received By</strong>
+                        <div class="signature right">
+                            
+                            <div class="line"></div>
+                            <div class="signature-label">Received By</div>
                         </div>
 
-                        <div style="clear:both;"></div>
+                        <div class="clearfix"></div>
                     </div>
+
 
                 </div>
             </t>
