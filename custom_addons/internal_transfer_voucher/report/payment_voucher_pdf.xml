@@ -10,7 +10,7 @@
                     <!-- ================= HEADER ================= -->
                     
                         <tr>
-                        <td>
+                        <td width="40%" style="text-align:center;">
                                 <h3 style="margin:5px 0;">Payment Voucher</h3>
                                 <h3 style="margin:0;">سند صرف</h3>
                             </td>
@@ -18,119 +18,97 @@
                     
 
                     <!-- ================= MAIN INFO ================= -->
-                    <table class="table table-bordered" style="font-size:12px;">
+                   <table width="100%" style="font-size:12px; border-collapse:collapse;">
+
+                        <!-- Voucher No -->
                         <tr>
-                            <td><strong>Voucher No</strong></td>
-                            <td style="text-align:center;"><span t-esc="o.name"/></td>
-                            <td style="text-align:right;"><strong>رقم السند</strong></td>
+                            <td width="25%"><strong>Voucher No</strong></td>
+                            <td width="50%" style="text-align:center; border-bottom:1px solid #000;">
+                                <span t-esc="o.name"/>
+                            </td>
+                            <td width="25%" style="text-align:right;"><strong>رقم السند</strong></td>
                         </tr>
 
-
+                        <!-- Date -->
                         <tr>
                             <td><strong>Date</strong></td>
-                            <td style="text-align:center;"><span t-esc="o.date"/></td>
+                            <td style="text-align:center; border-bottom:1px solid #000;">
+                                <span t-esc="o.date"/>
+                            </td>
                             <td style="text-align:right;"><strong>التاريخ</strong></td>
                         </tr>
 
-
+                        <!-- Paid To -->
                         <tr>
                             <td><strong>Paid To</strong></td>
-                            <td style="text-align:center;"><span t-esc="o.partner_id.display_name"/></td>
+                            <td style="text-align:center; border-bottom:1px solid #000;">
+                                <span t-esc="o.partner_id.display_name"/>
+                            </td>
                             <td style="text-align:right;"><strong>تصرف إلى</strong></td>
                         </tr>
 
-
+                        <!-- Amount -->
                         <tr>
-                            <!-- English label -->
-                            <td width="25%">
-                                <strong>Amount</strong>
-                            </td>
-
-                            <!-- Shared value (center) -->
-                            <td width="50%" style="text-align:center;">
+                            <td><strong>Amount</strong></td>
+                            <td style="text-align:center; border-bottom:1px solid #000;">
                                 <span t-field="o.amount"
                                     t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
                             </td>
-
-                            <!-- Arabic label -->
-                            <td width="25%" style="text-align:right;">
-                                <strong>المبلغ</strong>
-                            </td>
+                            <td style="text-align:right;"><strong>المبلغ</strong></td>
                         </tr>
 
+                        <!-- Amount in Words -->
                         <tr>
-                            <td width="25%">
-                                <strong>Amount in Words</strong>
-                            </td>
-
-                            <td width="50%" style="text-align:center; direction:rtl;">
+                            <td><strong>Amount in Words</strong></td>
+                            <td style="text-align:center; border-bottom:1px solid #000; direction:rtl;">
                                 <span t-esc="o.amount_in_words_ar"/> فقط لا غير
                             </td>
-
-                            <td width="25%" style="text-align:right;">
-                                <strong>المبلغ كتابةً</strong>
-                            </td>
+                            <td style="text-align:right;"><strong>المبلغ كتابةً</strong></td>
                         </tr>
-                        <tr>
-                            <td width="25%">
-                                <strong>Paid For</strong>
-                            </td>
 
-                            <td width="50%" style="text-align:center;">
+                        <!-- Paid For -->
+                        <tr>
+                            <td><strong>Paid For</strong></td>
+                            <td style="text-align:center; border-bottom:1px solid #000;">
                                 <span t-esc="o.description"/>
                             </td>
-
-                            <td width="25%" style="text-align:right;">
-                                <strong>وذلك مقابل</strong>
-                            </td>
+                            <td style="text-align:right;"><strong>وذلك مقابل</strong></td>
                         </tr>
 
+                        <!-- Payment Method -->
                         <tr>
-                            <!-- English label -->
-                            <td width="25%">
-                                <strong>Payment Method</strong>
-                            </td>
-
-                            <!-- Shared value -->
-                            <td width="50%" style="text-align:center;">
+                            <td><strong>Payment Method</strong></td>
+                            <td style="text-align:center; border-bottom:1px solid #000;">
                                 <t t-if="o.payment_method == 'cash'">Cash</t>
                                 <t t-if="o.payment_method == 'cheque'">Cheque</t>
                             </td>
-
-                            <!-- Arabic label -->
-                            <td width="25%" style="text-align:right;">
-                                <strong>طريقة الدفع</strong>
-                            </td>
+                            <td style="text-align:right;"><strong>طريقة الدفع</strong></td>
                         </tr>
 
                     </table>
+
 
 
                     <!-- ================= SIGNATURES ================= -->
-                    <table class="table mt48" style="border:1px solid #000;">
-                        <tr>
-                            <td width="33%" style="padding:15px;">
-                                Prepared By<br/>
-                                <div style="min-height:90px;"></div>
-                                ______________________<br/>
-                                المحاسب
-                            </td>
+                    <div style="margin-top:60px; font-size:12px;">
 
-                            <td width="33%" style="padding:15px;">
-                                Approved By<br/>
-                                <div style="min-height:90px;"></div>
-                                ______________________<br/>
-                                المدير
-                            </td>
+                        <div style="width:45%; float:left; text-align:center;">
+                            <strong>Paid By</strong><br/>
+                            <div style="min-height:80px;"></div>
+                            __________________________<br/>
+                            دفع من
+                        </div>
 
-                            <td width="33%" style="padding:15px;">
-                                Received By<br/>
-                                <div style="min-height:90px;"></div>
-                                ______________________<br/>
-                                المستلم
-                            </td>
-                        </tr>
-                    </table>
+                        <div style="width:45%; float:right; text-align:center;">
+                            <strong>Received By</strong><br/>
+                            <div style="min-height:80px;"></div>
+                            __________________________<br/>
+                            المستلم
+                        </div>
+
+                        <div style="clear:both;"></div>
+                    </div>
+
 
                 </div>
             </t>
