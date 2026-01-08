@@ -45,7 +45,7 @@ table {
 
 /* ===== Header Table ===== */
 .pv-header-table td {
-    font-size: 10px;
+    font-size: 12px;
 }
 
 /* ===== Amount Box ===== */
@@ -61,7 +61,7 @@ table {
 
 /* ===== Main Info Table ===== */
 .pv-main-table td {
-    font-size: 10px;
+    font-size: 12px;
 }
 
 .pv-main-table tr:nth-child(even) {
