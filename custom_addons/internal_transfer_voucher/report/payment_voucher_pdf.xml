@@ -16,7 +16,7 @@
 /* ===== Title ===== */
 .pv-title {
     text-align: center;
-    margin-bottom: 25px;
+    margin-bottom: 45px;
 }
 
 .pv-title h2 {
@@ -54,7 +54,10 @@ table {
     font-weight: bold;
     padding: 28px 10px;
     text-align: center;
+    background-color: #f3f6f9;   /* soft grey-blue */
+    border: 2px solid #637fa9ff;   /* calm corporate blue */
 }
+
 
 /* ===== Main Info Table ===== */
 .pv-main-table td {
@@ -66,13 +69,20 @@ table {
 }
 
 /* ===== Arabic (right column only) ===== */
-.pv-header-table td:last-child,
-.pv-main-table td:last-child {
-    text-align: right;
-    direction: rtl;
-    white-space: nowrap;
+/* Labels alignment – keep them visually centered */
+.pv-header-table td:first-child,
+.pv-main-table td:first-child {
+    text-align: center;
     font-weight: 600;
 }
+
+.pv-header-table td:last-child,
+.pv-main-table td:last-child {
+    text-align: center;
+    direction: rtl;
+    font-weight: 600;
+}
+
 
 /* ===== Signatures ===== */
 .signature-block {
