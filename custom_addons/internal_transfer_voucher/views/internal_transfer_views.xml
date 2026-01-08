@@ -23,7 +23,7 @@
         <field name="name">account.internal.transfer.form</field>
         <field name="model">account.internal.transfer</field>
         <field name="arch" type="xml">
-            <form context="{'analytic_precision': analytic_precision}">
+            <form>
                 <header>
                     <button name="action_post"
                             string="Post"
