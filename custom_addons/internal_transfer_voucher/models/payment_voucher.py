@@ -48,7 +48,7 @@ class AccountPaymentVoucher(models.Model):
 
     journal_id = fields.Many2one(
         'account.journal',
-        domain="[('default_account_id', '!=', False)]"
+        domain="[('default_account_id', '!=', False)]",
         required=True
     )
 

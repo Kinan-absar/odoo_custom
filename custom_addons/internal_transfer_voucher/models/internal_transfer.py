@@ -40,14 +40,14 @@ class AccountInternalTransfer(models.Model):
     source_journal_id = fields.Many2one(
         'account.journal',
         string="Source Journal",
-        domain="[('default_account_id', '!=', False)]"
+        domain="[('default_account_id', '!=', False)]",
         required=True
     )
 
     destination_journal_id = fields.Many2one(
         'account.journal',
         string="Destination Journal",
-        domain="[('default_account_id', '!=', False)]"
+        domain="[('default_account_id', '!=', False)]",
         required=True
     )
 
