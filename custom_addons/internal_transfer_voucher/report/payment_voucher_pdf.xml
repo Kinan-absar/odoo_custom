@@ -27,7 +27,6 @@
 
 
                         <tr>
-                        <tr>
                             <td><strong>Date</strong></td>
                             <td style="text-align:center;"><span t-esc="o.date"/></td>
                             <td style="text-align:right;"><strong>التاريخ</strong></td>
