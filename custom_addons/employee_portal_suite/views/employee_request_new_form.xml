@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+<template id="employee_request_new_form" name="New Employee Request Form">
+<t t-call="employee_portal_suite.employee_portal_layout">
+
+<div class="container my-4">
+    <h2 class="text-center mb-4">Employee Request</h2>
+
+    <!-- Language Toggle -->
+    <div class="text-end mb-3">
+        <button id="btn-en" class="btn btn-primary btn-sm">🇬🇧 English</button>
+        <button id="btn-ar" class="btn btn-light btn-sm">🇸🇦 العربية</button>
+    </div>
+
+    <!-- ===================== ENGLISH FORM ===================== -->
+    <form id="form-en" method="post" action="/my/employee/requests/create" style="display:block;">
+        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+        <!-- Request Date -->
+        <div class="form-group mt-3">
+            <label>Request Date</label>
+            <input type="date" name="request_date" id="req_date_en" class="form-control" readonly="readonly"/>
+        </div>
+
+        <!-- Request Type -->
+        <div class="form-group mt-3">
+            <label>Request Type <span class="text-danger">*</span></label>
+            <select name="request_type" id="req_type_en" class="form-control" required="1">
+                <option value="">Select...</option>
+                <option value="leave">Leave Request</option>
+                <option value="housing">Housing Allowance</option>
+                <option value="advance">Salary Advance</option>
+                <option value="travel">Business Trip</option>
+                <option value="training">Training Request</option>
+                <option value="medical">Medical Reimbursement</option>
+                <option value="vacation_settlement">Vacation Settlement</option>
+                <option value="asset">Asset / Equipment Request</option>
+                <option value="letter">Letter Request</option>
+                <option value="bank">Change Bank Account</option>
+                <option value="transfer">Position Transfer</option>
+                <option value="exit">End of Service</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+
+        <!-- Leave Fields -->
+        <div id="leave_en" class="row mt-3" style="display:none;">
+            <div class="col-md-6">
+                <label>Leave From <span class="text-danger">*</span></label>
+                <input type="date" id="leave_from_en" name="leave_from" class="form-control"/>
+            </div>
+            <div class="col-md-6">
+                <label>Leave To <span class="text-danger">*</span></label>
+                <input type="date" id="leave_to_en" name="leave_to" class="form-control"/>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group mt-3">
+            <label>Description <span class="text-danger">*</span></label>
+            <textarea name="description" class="form-control" rows="4" required="1"></textarea>
+        </div>
+    
+        <button type="submit" class="btn btn-primary mt-4">Submit</button>
+    </form>
+
+    <!-- ===================== ARABIC FORM ===================== -->
+    <form id="form-ar" method="post" action="/my/employee/requests/create" style="display:none; direction:rtl; text-align:right;">
+        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+        <!-- Request Date -->
+        <div class="form-group mt-3">
+            <label>تاريخ الطلب</label>
+            <input type="date" name="request_date" id="req_date_ar" class="form-control" readonly="readonly"/>
+        </div>
+
+        <!-- Request Type -->
+        <div class="form-group mt-3">
+            <label>نوع الطلب <span class="text-danger">*</span></label>
+            <select name="request_type" id="req_type_ar" class="form-control" required="1">
+                <option value="">اختر...</option>
+                <option value="leave">طلب إجازة</option>
+                <option value="housing">بدل سكن</option>
+                <option value="advance">سلفة راتب</option>
+                <option value="travel">رحلة عمل</option>
+                <option value="training">طلب تدريب</option>
+                <option value="medical">تعويض طبي</option>
+                <option value="vacation_settlement">تصفية إجازة</option>
+                <option value="asset">طلب معدات</option>
+                <option value="letter">طلب خطاب</option>
+                <option value="bank">تغيير حساب بنكي</option>
+                <option value="transfer">طلب نقل</option>
+                <option value="exit">إنهاء خدمة</option>
+                <option value="other">أخرى</option>
+            </select>
+        </div>
+
+        <!-- Leave Fields -->
+        <div id="leave_ar" class="row mt-3" style="display:none;">
+            <div class="col-md-6">
+                <label>من تاريخ <span class="text-danger">*</span></label>
+                <input type="date" id="leave_from_ar" name="leave_from" class="form-control"/>
+            </div>
+            <div class="col-md-6">
+                <label>إلى تاريخ <span class="text-danger">*</span></label>
+                <input type="date" id="leave_to_ar" name="leave_to" class="form-control"/>
+            </div>
+        </div>
+
+        <div class="form-group mt-3">
+            <label>الوصف <span class="text-danger">*</span></label>
+            <textarea name="description" class="form-control" rows="4" required="1"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-4">إرسال</button>
+    </form>
+
+</div>
+
+<!-- ===================== JS ===================== -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* ---------------- LANGUAGE TOGGLE ---------------- */
+    document.getElementById("btn-en").onclick = function () {
+        document.getElementById("form-en").style.display = "block";
+        document.getElementById("form-ar").style.display = "none";
+    }
+
+    document.getElementById("btn-ar").onclick = function () {
+        document.getElementById("form-en").style.display = "none";
+        document.getElementById("form-ar").style.display = "block";
+    }
+
+    /* ---------------- SET TODAY DATE ---------------- */
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("req_date_en").value = today;
+    document.getElementById("req_date_ar").value = today;
+
+    /* ---------------- LEAVE LOGIC ---------------- */
+
+    function setupLeave(typeSelectId, leaveBoxId, fromId, toId) {
+
+        const type = document.getElementById(typeSelectId);
+        const box = document.getElementById(leaveBoxId);
+        const fromInput = document.getElementById(fromId);
+        const toInput = document.getElementById(toId);
+
+        type.addEventListener("change", function () {
+            if (this.value === "leave") {
+                box.style.display = "flex";
+
+                // Minimum leave_from = today + 10 days
+                const minDate = new Date();
+                minDate.setDate(minDate.getDate() + 10);
+
+                const minStr = minDate.toISOString().split("T")[0];
+                fromInput.min = minStr;
+                fromInput.value = minStr;
+
+                // leave_to cannot be earlier than leave_from
+                toInput.min = minStr;
+                toInput.value = minStr;
+
+                fromInput.onchange = function () {
+                    toInput.min = fromInput.value;
+                };
+
+            } else {
+                box.style.display = "none";
+                fromInput.value = "";
+                toInput.value = "";
+            }
+        });
+    }
+
+    setupLeave("req_type_en", "leave_en", "leave_from_en", "leave_to_en");
+    setupLeave("req_type_ar", "leave_ar", "leave_from_ar", "leave_to_ar");
+
+});
+</script>
+
+</t>
+</template>
+
+</odoo>

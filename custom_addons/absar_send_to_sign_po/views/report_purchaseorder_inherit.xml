@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="report_po_revision_inherit"
+              inherit_id="purchase.report_purchaseorder_document">
+
+        <!-- Add Revision right after the PO number -->
+        <xpath expr="//t[@t-set='layout_document_title']/t[2]" position="after">
+            <span t-if="o.revision &gt; 0">
+                <t t-esc="' '"/>(R-<t t-esc="o.revision"/>)
+            </span>
+        </xpath>
+
+    </template>
+</odoo>

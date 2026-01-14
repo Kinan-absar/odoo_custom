@@ -1,0 +1,124 @@
+<odoo>
+
+    <!-- ===========================================================
+         BACKEND FORM VIEW — Vendor Invoice Management Form
+         =========================================================== -->
+    <record id="view_vendor_invoice_form" model="ir.ui.view">
+        <field name="name">portal.vendor.invoice.form</field>
+        <field name="model">portal.vendor.invoice</field>
+        <field name="arch" type="xml">
+            <form string="Vendor Invoice" version="7.0">
+                <sheet>
+
+                    <group>
+                        <field name="name" readonly="1"/>
+                        <field name="vendor_invoice_number"/> <!-- 🔥 NEW FIELD -->
+                        <field name="partner_id" readonly="1"/>
+                        <field name="po_id" readonly="1"/>
+                        <field name="invoice_date" readonly="1"/>
+                        <field name="amount_total" readonly="1"/>
+                        <field name="attachment_id" invisible="1"/>
+                        <button name="action_download_attachment"
+                                string="Download Invoice File"
+                                type="object"
+                                class="btn btn-primary"
+                                modifiers="{
+                                    'invisible': [['has_attachment', '=', False]]
+                                }"/>
+                        <field name="state"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Vendor Notes" name="vendor_notes">
+                            <field name="notes" readonly="1" nolabel="1"/>
+                        </page>
+
+                        <page string="Internal Notes" name="internal_notes">
+                            <field name="internal_notes" nolabel="1"/>
+                        </page>
+
+                        <page string="Chatter">
+                            <field name="message_follower_ids"/>
+                            <field name="message_ids" readonly="1"/>
+                        </page>
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===========================================================
+         BACKEND TREE VIEW
+         =========================================================== -->
+    <record id="view_vendor_invoice_list" model="ir.ui.view">
+        <field name="name">portal.vendor.invoice.tree</field>
+        <field name="model">portal.vendor.invoice</field>
+        <field name="arch" type="xml">
+            <list string="Vendor Invoices">
+                <field name="name"/>
+                <field name="vendor_invoice_number"/> <!-- 🔥 NEW FIELD -->
+                <field name="partner_id"/>
+                <field name="po_id"/>
+                <field name="invoice_date"/>
+                <field name="amount_total"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+    <record id="extend_vendor_invoice_tree" model="ir.ui.view">
+        <field name="name">extend.vendor.invoice.tree.color</field>
+        <field name="model">portal.vendor.invoice</field>
+        <field name="inherit_id" ref="customer_vendor_portal.view_vendor_invoice_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="replace">
+                <field name="state"
+                    widget="badge"
+                    decoration-info="state == 'submitted'"
+                    decoration-success="state == 'approved'"
+                    decoration-danger="state == 'rejected'"
+                    decoration-warning="state == 'review'"/>
+            </xpath>
+        </field>
+    </record>
+
+
+    <!-- ===========================================================
+         BACKEND SEARCH VIEW
+         =========================================================== -->
+    <record id="view_vendor_invoice_search" model="ir.ui.view">
+        <field name="name">portal.vendor.invoice.search</field>
+        <field name="model">portal.vendor.invoice</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="po_id"/>
+                <field name="state"/>
+                <filter string="Submitted" name="filter_submitted" domain="[('state','=','submitted')]"/>
+                <filter string="Under Review" name="filter_review" domain="[('state','=','review')]"/>
+                <filter string="Approved" name="filter_approved" domain="[('state','=','approved')]"/>
+                <filter string="Rejected" name="filter_rejected" domain="[('state','=','rejected')]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ===========================================================
+         BACKEND ACTION
+         =========================================================== -->
+    <record id="action_vendor_invoice" model="ir.actions.act_window">
+        <field name="name">Vendor Invoices</field>
+        <field name="res_model">portal.vendor.invoice</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ===========================================================
+         MENU ITEM (under Purchase)
+         =========================================================== -->
+    <menuitem id="menu_vendor_invoice_root"
+              name="Vendor Invoices"
+              parent="purchase.menu_purchase_root"
+              action="action_vendor_invoice"
+              sequence="95"/>
+
+</odoo>

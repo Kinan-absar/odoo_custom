@@ -1,0 +1,18 @@
+<odoo>
+
+    <!-- ===========================================================
+         SEQUENCE FOR VENDOR PORTAL INVOICES
+         Code must match: next_by_code('portal.vendor.invoice')
+         =========================================================== -->
+
+    <record id="seq_vendor_portal_invoice" model="ir.sequence">
+        <field name="name">Vendor Portal Invoice</field>
+        <field name="code">portal.vendor.invoice</field>
+        <field name="prefix">VEND/INV/</field>
+        <field name="padding">4</field>
+        <field name="implementation">standard</field>
+        <field name="number_next">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+<template id="employee_material_requests_page">
+    <t t-call="employee_portal_suite.employee_portal_layout">
+        <t t-set="page_name">material_requests</t>
+
+        <div class="container mt-4">
+            <h3>Material Requests</h3>
+
+            <a href="/my/employee/material/new" class="btn btn-primary mb-3">
+                New Material Request
+            </a>
+
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Request #</th>
+                        <th>Date</th>
+                        <th>Worksite</th>
+                        <th>Delivery Date</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="requests" t-as="req">
+                        <tr>
+                            <td><t t-esc="req.name"/></td>
+                            <td><t t-esc="req.request_date"/></td>
+                            <td><t t-esc="req.worksite"/></td>
+                            <td><t t-esc="req.delivery_date"/></td>
+                            <td><t t-raw="status_badge(req)"/></td>
+                            <td>
+                                <a t-att-href="'/my/employee/material/%s' % req.id"
+                                   class="btn btn-secondary btn-sm">View</a>
+                            </td>
+                        </tr>
+                    </t>
+                </tbody>
+            </table>
+        </div>
+
+    </t>
+</template>
+
+</odoo>

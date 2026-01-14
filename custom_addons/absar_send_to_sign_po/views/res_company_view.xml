@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_company_form_send_to_sign" model="ir.ui.view">
+        <field name="name">res.company.form.send.to.sign.po</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Insert a new tab AFTER General Information -->
+            <xpath expr="//notebook/page[@name='general_info']" position="after">
+                <page name="po_signers" string="PO Signers">
+                    <group>
+                        <field name="project_director_partner_id"/>
+                        <field name="ceo_partner_id"/>
+                    </group>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

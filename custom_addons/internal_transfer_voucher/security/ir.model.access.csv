@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_internal_transfer,internal.transfer,model_account_internal_transfer,account.group_account_user,1,1,1,1
+access_payment_voucher_user,access.payment.voucher.user,model_account_payment_voucher,account.group_account_user,1,1,1,1

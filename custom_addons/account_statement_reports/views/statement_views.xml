@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ========================================================= -->
+    <!--                          MENUS                             -->
+    <!-- ========================================================= -->
+
+    <!-- Customer Wizard Menu -->
+    <record id="action_customer_statement_wizard" model="ir.actions.act_window">
+        <field name="name">Customer Statement</field>
+        <field name="res_model">customer.statement.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_customer_statement_wizard"
+              name="Customer Statement"
+              parent="account.account_reports_partners_reports_menu"
+              action="action_customer_statement_wizard"
+              sequence="50"/>
+
+    <!-- Vendor Wizard Menu -->
+    <record id="action_vendor_statement_wizard" model="ir.actions.act_window">
+        <field name="name">Vendor Statement</field>
+        <field name="res_model">vendor.statement.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_vendor_statement_wizard"
+              name="Vendor Statement"
+              parent="account.account_reports_partners_reports_menu"
+              action="action_vendor_statement_wizard"
+              sequence="60"/>
+
+
+
+    <!-- ========================================================= -->
+    <!--                          WIZARDS                           -->
+    <!-- ========================================================= -->
+
+    <!-- Customer Wizard -->
+    <record id="customer_statement_wizard_form" model="ir.ui.view">
+        <field name="name">customer.statement.wizard.form</field>
+        <field name="model">customer.statement.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Customer Statement Wizard">
+                <sheet>
+                    <group>
+                        <field name="partner_id"/>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                    <footer>
+                        <button string="Show Statement" type="object"
+                                name="action_show_statement" class="btn-primary"/>
+                        <button string="Print PDF" type="object"
+                                name="action_print_pdf" class="btn-secondary"/>
+                        <button string="Cancel" special="cancel" class="btn-link"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vendor Wizard -->
+    <record id="vendor_statement_wizard_form" model="ir.ui.view">
+        <field name="name">vendor.statement.wizard.form</field>
+        <field name="model">vendor.statement.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Vendor Statement Wizard">
+                <sheet>
+                    <group>
+                        <field name="partner_id"/>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                    <footer>
+                        <button string="Show Statement" type="object"
+                                name="action_show_statement" class="btn-primary"/>
+                        <button string="Print PDF" type="object"
+                                name="action_print_pdf" class="btn-secondary"/>
+                        <button string="Cancel" special="cancel" class="btn-link"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+
+    <!-- ========================================================= -->
+    <!--                  CUSTOMER STATEMENT FORM                  -->
+    <!-- ========================================================= -->
+
+    <record id="customer_statement_form" model="ir.ui.view">
+        <field name="name">customer.statement.form</field>
+        <field name="model">customer.statement</field>
+        <field name="arch" type="xml">
+            <form string="Customer Statement">
+
+                <header>
+                    <button name="action_print_pdf" type="object"
+                            string="Print PDF" class="btn-primary"/>
+                    <button name="action_export_excel" type="object"
+                            string="Export Excel" class="btn-secondary"/>
+                </header>
+
+                <sheet>
+
+                    <group col="4" style="padding-bottom:20px;">
+                        <field name="partner_id" readonly="1"/>
+                        <field name="date_from" readonly="1"/>
+                        <field name="date_to" readonly="1"/>
+                        <field name="company_id" readonly="1"/>
+                    </group>
+
+                    <!-- TABLE -->
+                    <field name="line_ids">
+                        <list create="false" edit="false" delete="false" string="Statement Lines">
+                            <field name="date"/>
+                            <field name="move"/>
+                            <field name="reference"/>
+                            <field name="due_date"/>
+                            <field name="debit" sum="Total Debit"/>
+                            <field name="credit" sum="Total Credit"/>
+                            <field name="balance"/>
+                        </list>
+                    </field> 
+
+                    <!-- TOTALS -->
+                    <group col="3" style="margin-top:20px; font-weight:bold;">
+                        <field name="final_balance" readonly="1"/>
+                    </group>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+
+    <!-- ========================================================= -->
+    <!--                   VENDOR STATEMENT FORM                   -->
+    <!-- ========================================================= -->
+
+    <record id="vendor_statement_form" model="ir.ui.view">
+        <field name="name">vendor.statement.form</field>
+        <field name="model">vendor.statement</field>
+        <field name="arch" type="xml">
+            <form string="Vendor Statement">
+
+                <header>
+                    <button name="action_print_pdf" type="object"
+                            string="Print PDF" class="btn-primary"/>
+                    <button name="action_export_excel" type="object"
+                            string="Export Excel" class="btn-secondary"/>
+                </header>
+
+                <sheet>
+
+                    <group col="4" style="padding-bottom:20px;">
+                        <field name="partner_id" readonly="1"/>
+                        <field name="date_from" readonly="1"/>
+                        <field name="date_to" readonly="1"/>
+                        <field name="company_id" readonly="1"/>
+                    </group>
+
+                    <!-- TABLE -->
+                    <field name="line_ids">
+                        <list create="false" edit="false" delete="false" string="Statement Lines">
+                            <field name="date"/>
+                            <field name="move"/>
+                            <field name="reference"/>
+                            <field name="due_date"/>
+                            <field name="debit" sum="Total Debit"/>
+                            <field name="credit" sum="Total Credit"/>
+                            <field name="balance"/>
+                        </list>
+                    </field>
+
+                    <!-- TOTALS -->
+                    <group col="3" style="margin-top:20px; font-weight:bold;">
+                        <field name="final_balance" readonly="1"/>
+                    </group>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

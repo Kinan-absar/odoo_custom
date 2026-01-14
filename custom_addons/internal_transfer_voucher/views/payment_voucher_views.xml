@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- LIST -->
+    <record id="view_payment_voucher_list" model="ir.ui.view">
+        <field name="name">account.payment.voucher.list</field>
+        <field name="model">account.payment.voucher</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="date"/>
+                <field name="partner_id"/>
+                <field name="amount"/>
+                <field name="journal_id"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- FORM -->
+    <record id="view_payment_voucher_form" model="ir.ui.view">
+        <field name="name">account.payment.voucher.form</field>
+        <field name="model">account.payment.voucher</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_post"
+                            string="Post"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+
+                    <button name="action_reset_to_draft"
+                            string="Reset to Draft"
+                            type="object"
+                            invisible="state not in ('posted','cancel')"/>
+
+                    <button name="action_cancel"
+                            string="Cancel"
+                            type="object"
+                            invisible="state != 'draft'"/>
+                    <button name="%(action_payment_voucher_pdf)d"
+                            string="Print"
+                            type="action"
+                            class="btn-secondary"
+                            invisible="state != 'posted'"/>
+
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="draft,posted,cancel"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Payment Information">
+                            <field name="date"/>
+                            <field name="partner_id"/>
+                            <field name="amount"/>
+                            <field name="description" placeholder="Add any notes or description..."/>
+                            <field name="currency_id"
+                                   groups="base.group_multi_currency"/>
+                        </group>
+
+                        <group string="Accounting">
+                            <field name="payment_method"/>
+                            <field name="journal_id"/>
+                            <field name="account_id"/>
+                        </group>
+                    </group>
+
+                    <separator string="Journal Entry"/>
+
+                    <group>
+                        <field name="move_id" readonly="1"/>
+                    </group>
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_payment_voucher" model="ir.actions.act_window">
+        <field name="name">Payment Vouchers</field>
+        <field name="res_model">account.payment.voucher</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

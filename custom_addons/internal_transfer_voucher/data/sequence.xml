@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<odoo>
+    <record id="seq_internal_transfer" model="ir.sequence">
+        <field name="name">Internal Transfer</field>
+        <field name="code">internal.transfer</field>
+        <field name="prefix">IT/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
+
+    <record id="seq_payment_voucher" model="ir.sequence">
+        <field name="name">Payment Voucher</field>
+        <field name="code">payment.voucher</field>
+        <field name="prefix">PV/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
+</odoo>
