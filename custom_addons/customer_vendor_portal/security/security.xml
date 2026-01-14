@@ -5,7 +5,6 @@
        ======================= -->
     <record id="group_vendor_portal" model="res.groups">
         <field name="name">Vendor Portal</field>
-        <field name="category_id" ref="base.module_category_hidden"/>
     </record>
 
     <!-- =======================
