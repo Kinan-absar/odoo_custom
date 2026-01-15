@@ -25,7 +25,15 @@
                             <td><strong>Source Journal</strong></td>
                             <td><span t-esc="o.source_journal_id.name"/></td>
                             <td><strong>Destination Journal</strong></td>
-                            <td><span t-esc="o.destination_journal_id.name"/></td>
+                            <td>
+                                <t t-foreach="o.line_ids" t-as="line">
+                                    <div>
+                                        <span t-esc="line.journal_id.name"/>
+                                        —
+                                        <span t-esc="line.amount"/>
+                                    </div>
+                                </t>
+                            </td>
                         </tr>
                     </table>
 
@@ -93,7 +101,7 @@
                                 ____________________
                             </td>
                             <td width="33%" style="border:none;">
-                                Approved By<br/><br/>
+                                Received By<br/><br/>
                                 ____________________
                             </td>
                         </tr>

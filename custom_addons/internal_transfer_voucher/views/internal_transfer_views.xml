@@ -65,9 +65,18 @@
                             <field name="description" placeholder="Add any notes or description..."/>
                         </group>
 
-                        <group string="Journals">
+                        <group>
                             <field name="source_journal_id"/>
-                            <field name="destination_journal_id"/>
+                            <field name="amount"/>
+                        </group>
+
+                        <group string="Destinations">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="journal_id"/>
+                                    <field name="amount"/>
+                                </list>
+                            </field>
                         </group>
                     </group>
 
