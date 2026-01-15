@@ -218,6 +218,19 @@ class AccountInternalTransfer(models.Model):
             if rec.has_bank_fees and not rec.analytic_distribution:
                 raise UserError(_("Please set Analytic Distribution for bank fees."))
 
+    def write(self, vals):
+        for rec in self:
+            if rec.state == 'posted':
+                # Allow only state change back to draft
+                if set(vals.keys()) != {'state'}:
+                    raise UserError(_("You cannot modify a posted internal transfer."))
+        return super().write(vals)
+    def unlink(self):
+        for rec in self:
+            if rec.state == 'posted':
+                raise UserError(_("You cannot delete a posted internal transfer."))
+        return super().unlink()
+
 class AccountInternalTransferLine(models.Model):
     _name = 'account.internal.transfer.line'
     _description = 'Internal Transfer Destination'
@@ -240,3 +253,22 @@ class AccountInternalTransferLine(models.Model):
         related='transfer_id.currency_id',
         store=True
     )
+    def create(self, vals):
+        transfer = self.env['account.internal.transfer'].browse(vals.get('transfer_id'))
+        if transfer.state == 'posted':
+            raise UserError(_("You cannot add destination lines to a posted transfer."))
+        return super().create(vals)
+
+
+    def write(self, vals):
+        for line in self:
+            if line.transfer_id.state == 'posted':
+                raise UserError(_("You cannot modify destination lines of a posted transfer."))
+        return super().write(vals)
+
+
+    def unlink(self):
+        for line in self:
+            if line.transfer_id.state == 'posted':
+                raise UserError(_("You cannot delete destination lines of a posted transfer."))
+        return super().unlink()

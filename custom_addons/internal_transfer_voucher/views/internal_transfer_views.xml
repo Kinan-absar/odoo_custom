@@ -46,7 +46,7 @@
                     <field name="state" widget="statusbar"/>
                 </header>
 
-                <sheet readonly="state == 'posted'">
+                <sheet>
 
                     <!-- TITLE -->
                     <div class="oe_title">
@@ -75,8 +75,7 @@
                     <!-- DESTINATIONS (FOCUS AREA) -->
                     <group string="Destination Journals" colspan="4">
                         <field name="line_ids"
-                            nolabel="1"
-                            readonly="state == 'posted'">
+                            nolabel="1">
                             <list editable="bottom" create="1" delete="1">
                                 <field name="journal_id"/>
                                 <field name="amount"/>
@@ -91,7 +90,7 @@
 
                     <!-- FEES + ANALYTICS (SIDE BY SIDE, COMPACT) -->
                     <group>
-                        <group string="Bank Fees" readonly="state == 'posted'">
+                        <group string="Bank Fees">
                             <field name="has_bank_fees"/>
 
                             <field name="fee_amount"
@@ -105,7 +104,7 @@
                         </group>
 
                         <group string="Analytic"
-                            groups="analytic.group_analytic_accounting" readonly="state == 'posted'">
+                            groups="analytic.group_analytic_accounting">
                             <field name="analytic_distribution"
                                 widget="analytic_distribution"
                                 options="{'force_applicability': 'optional'}"/>
