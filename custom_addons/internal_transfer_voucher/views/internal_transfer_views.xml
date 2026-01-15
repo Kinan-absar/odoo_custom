@@ -46,48 +46,50 @@
                     <field name="state" widget="statusbar"/>
                 </header>
 
-                <sheet>
-                    <!-- Title -->
+              <sheet>
+                    <!-- TITLE -->
                     <div class="oe_title">
                         <h1>
                             <field name="name"/>
                         </h1>
                     </div>
 
-                    <!-- MAIN INFO -->
-                    <!-- MAIN INFO -->
-                <group>
-                    <!-- LEFT COLUMN -->
-                    <group string="Transfer Information">
-                        <field name="date"/>
-                        <field name="amount"/>
-                        <field name="currency_id"
-                            groups="base.group_multi_currency"/>
-                        <field name="description"
-                            placeholder="Add any notes or description..."/>
-                    </group>
-
-                    <!-- RIGHT COLUMN -->
-                    <group string="Accounting">
-                        <field name="source_journal_id"/>
-                        <field name="state" readonly="1"/>
-                    </group>
-                </group>
-
-                <!-- DESTINATIONS -->
-                <group string="Destination Journals" colspan="4">
-                    <field name="line_ids">
-                        <list editable="bottom">
-                            <field name="journal_id"/>
-                            <field name="amount"/>
-                        </list>
-                    </field>
-                </group>
-
-                    <separator string="Fees And Analytics"/>
-
-                    <!-- BANK FEES -->
+                    <!-- BASIC INFO -->
                     <group>
+                        <!-- LEFT -->
+                        <group string="Transfer Information">
+                            <field name="date"/>
+                            <field name="amount"/>
+                            <field name="currency_id"
+                                groups="base.group_multi_currency"/>
+                            <field name="description"
+                                placeholder="Add any notes or description..."/>
+                        </group>
+
+                        <!-- RIGHT -->
+                        <group string="Accounting">
+                            <field name="source_journal_id"/>
+                            <field name="state" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- DESTINATIONS (PRIMARY SECTION) -->
+                    <group string="Destination Journals" colspan="4">
+                        <field name="line_ids" nolabel="1">
+                            <list editable="bottom">
+                                <field name="journal_id"/>
+                                <field name="amount"/>
+                            </list>
+                        </field>
+                        <label string="Total of destination amounts must equal the transfer amount"
+                            class="text-muted"/>
+                    </group>
+
+                    <separator string="Fees and Analytics"/>
+
+                    <!-- FEES + ANALYTIC -->
+                    <group>
+                        <!-- BANK FEES -->
                         <group string="Bank Fees">
                             <field name="has_bank_fees"/>
 
@@ -110,7 +112,7 @@
                         </group>
                     </group>
 
-                    <separator string="Accounting"/>
+                    <separator string="Generated Accounting Entry"/>
 
                     <!-- MOVE -->
                     <group>
@@ -119,8 +121,8 @@
                             widget="many2one"
                             options="{'no_open': False}"/>
                     </group>
-
                 </sheet>
+
 
                 <chatter/>
             </form>
