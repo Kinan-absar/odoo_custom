@@ -181,14 +181,15 @@ class AccountPaymentVoucher(models.Model):
                 'payment.voucher'
             ) or 'New'
         return super().create(vals)
-        
+
     def write(self, vals):
         for rec in self:
             if rec.state == 'posted':
-                # allow only reset to draft
-                if set(vals.keys()) != {'state'}:
+                allowed_fields = {'state', 'move_id'}
+                if not set(vals.keys()).issubset(allowed_fields):
                     raise UserError(_("You cannot modify a posted payment voucher."))
         return super().write(vals)
+
 
 
     def unlink(self):

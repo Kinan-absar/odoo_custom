@@ -261,10 +261,13 @@ class AccountInternalTransferLine(models.Model):
 
 
     def write(self, vals):
-        for line in self:
-            if line.transfer_id.state == 'posted':
-                raise UserError(_("You cannot modify destination lines of a posted transfer."))
+        for rec in self:
+            if rec.state == 'posted':
+                allowed_fields = {'state', 'move_id'}
+                if not set(vals.keys()).issubset(allowed_fields):
+                    raise UserError(_("You cannot modify a posted internal transfer."))
         return super().write(vals)
+
 
 
     def unlink(self):
