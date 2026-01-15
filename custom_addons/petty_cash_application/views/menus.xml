@@ -23,7 +23,6 @@
         <field name="name">Petty Cash Settings</field>
         <field name="res_model">res.config.settings</field>
         <field name="view_mode">form</field>
-        <field name="target">inline</field>
     </record>
 
     <record id="action_petty_cash_config_wizard" model="ir.actions.act_window">
