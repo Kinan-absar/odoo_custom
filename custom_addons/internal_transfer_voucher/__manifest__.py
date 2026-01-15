@@ -62,6 +62,6 @@ Fully compatible with Odoo 18.
         "report/payment_voucher_pdf.xml",
     ],
     "images": ["images/main_screenshot.png"],
-    "installable": True,
+    "installable": False,
     "application": False,
 }
