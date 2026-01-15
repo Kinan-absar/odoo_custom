@@ -2,7 +2,7 @@
     "name": "Internal Transfer & Payment Voucher",
     "version": "18.0.1.0.0",
     "category": "Accounting",
-    "summary": "Internal journal transfers and payment vouchers for Odoo 18",
+    "summary": "Internal  journal transfers and payment vouchers for Odoo 18",
     "description": """
 Internal Transfers & Payment Vouchers
 =====================================
