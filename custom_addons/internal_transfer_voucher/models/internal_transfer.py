@@ -221,8 +221,8 @@ class AccountInternalTransfer(models.Model):
     def write(self, vals):
         for rec in self:
             if rec.state == 'posted':
-                # Allow only state change back to draft
-                if set(vals.keys()) != {'state'}:
+                allowed_fields = {'state', 'move_id'}
+                if not set(vals.keys()).issubset(allowed_fields):
                     raise UserError(_("You cannot modify a posted internal transfer."))
         return super().write(vals)
     def unlink(self):

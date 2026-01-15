@@ -72,21 +72,29 @@
                         </group>
                     </group>
 
-                    <!-- DESTINATIONS (FOCUS AREA) -->
+                    <!-- DESTINATION JOURNALS -->
                     <group string="Destination Journals" colspan="4">
-                        <field name="line_ids"
-                            nolabel="1">
-                            <list editable="bottom" create="1" delete="1">
-                                <field name="journal_id"/>
-                                <field name="amount"/>
-                            </list>
-                        </field>
 
-                        <div class="text-muted mt8">
-                            Split the transfer amount across one or more destination journals.
-                            The total must equal the transfer amount.
-                        </div>
+                        <!-- TABLE -->
+                        <group colspan="4">
+                            <field name="line_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="journal_id"/>
+                                    <field name="amount"/>
+                                </list>
+                            </field>
+                        </group>
+
+                        <!-- HELPER TEXT (BELOW, NOT SIDE) -->
+                        <group colspan="4">
+                            <div class="text-muted">
+                                Split the transfer amount across one or more destination journals.
+                                The total must equal the transfer amount.
+                            </div>
+                        </group>
+
                     </group>
+
 
                     <!-- FEES + ANALYTICS (SIDE BY SIDE, COMPACT) -->
                     <group>
