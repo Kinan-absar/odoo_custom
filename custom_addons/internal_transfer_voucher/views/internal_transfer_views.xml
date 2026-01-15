@@ -46,7 +46,8 @@
                     <field name="state" widget="statusbar"/>
                 </header>
 
-              <sheet>
+                <sheet readonly="state == 'posted'">
+
                     <!-- TITLE -->
                     <div class="oe_title">
                         <h1>
@@ -54,9 +55,8 @@
                         </h1>
                     </div>
 
-                    <!-- BASIC INFO -->
+                    <!-- TOP INFO (COMPACT) -->
                     <group>
-                        <!-- LEFT -->
                         <group string="Transfer Information">
                             <field name="date"/>
                             <field name="amount"/>
@@ -66,32 +66,32 @@
                                 placeholder="Add any notes or description..."/>
                         </group>
 
-                        <!-- RIGHT -->
                         <group string="Accounting">
                             <field name="source_journal_id"/>
                             <field name="state" readonly="1"/>
                         </group>
                     </group>
 
-                    <!-- DESTINATIONS (PRIMARY SECTION) -->
+                    <!-- DESTINATIONS (FOCUS AREA) -->
                     <group string="Destination Journals" colspan="4">
-                        <field name="line_ids" nolabel="1">
-                            <list editable="bottom">
+                        <field name="line_ids"
+                            nolabel="1"
+                            readonly="state == 'posted'">
+                            <list editable="bottom" create="1" delete="1">
                                 <field name="journal_id"/>
                                 <field name="amount"/>
                             </list>
                         </field>
-                        <div class="text-muted">
-                            Total of destination amounts must equal the transfer amount
+
+                        <div class="text-muted mt8">
+                            Split the transfer amount across one or more destination journals.
+                            The total must equal the transfer amount.
                         </div>
                     </group>
 
-                    <separator string="Fees and Analytics"/>
-
-                    <!-- FEES + ANALYTIC -->
+                    <!-- FEES + ANALYTICS (SIDE BY SIDE, COMPACT) -->
                     <group>
-                        <!-- BANK FEES -->
-                        <group string="Bank Fees">
+                        <group string="Bank Fees" readonly="state == 'posted'">
                             <field name="has_bank_fees"/>
 
                             <field name="fee_amount"
@@ -104,24 +104,22 @@
                                 invisible="not has_bank_fees"/>
                         </group>
 
-                        <!-- ANALYTIC -->
                         <group string="Analytic"
-                            groups="analytic.group_analytic_accounting">
+                            groups="analytic.group_analytic_accounting" readonly="state == 'posted'">
                             <field name="analytic_distribution"
                                 widget="analytic_distribution"
                                 options="{'force_applicability': 'optional'}"/>
                         </group>
                     </group>
 
-                    <separator string="Generated Accounting Entry"/>
-
-                    <!-- MOVE -->
-                    <group>
+                    <!-- GENERATED MOVE (COLLAPSED FEEL) -->
+                    <group string="Generated Accounting Entry">
                         <field name="move_id"
                             readonly="1"
                             widget="many2one"
                             options="{'no_open': False}"/>
                     </group>
+
                 </sheet>
 
 
