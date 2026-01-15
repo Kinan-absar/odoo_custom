@@ -81,8 +81,9 @@
                                 <field name="amount"/>
                             </list>
                         </field>
-                        <label string="Total of destination amounts must equal the transfer amount"
-                            class="text-muted"/>
+                        <div class="text-muted">
+                            Total of destination amounts must equal the transfer amount
+                        </div>
                     </group>
 
                     <separator string="Fees and Analytics"/>
