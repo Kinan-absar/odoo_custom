@@ -55,29 +55,34 @@
                     </div>
 
                     <!-- MAIN INFO -->
-                    <group>
-                        <group string="Transfer Information">
-                            <field name="date"/>
-                            <field name="amount"/>
-                            <field name="currency_id"
-                                groups="base.group_multi_currency"/>
-                            <field name="description" placeholder="Add any notes or description..."/>
-                        </group>
-
-                        <group>
-                            <field name="source_journal_id"/>
-                            <field name="amount"/>
-                        </group>
-
-                        <group string="Destinations">
-                            <field name="line_ids">
-                                <list editable="bottom">
-                                    <field name="journal_id"/>
-                                    <field name="amount"/>
-                                </list>
-                            </field>
-                        </group>
+                    <!-- MAIN INFO -->
+                <group>
+                    <!-- LEFT COLUMN -->
+                    <group string="Transfer Information">
+                        <field name="date"/>
+                        <field name="amount"/>
+                        <field name="currency_id"
+                            groups="base.group_multi_currency"/>
+                        <field name="description"
+                            placeholder="Add any notes or description..."/>
                     </group>
+
+                    <!-- RIGHT COLUMN -->
+                    <group string="Accounting">
+                        <field name="source_journal_id"/>
+                        <field name="state" readonly="1"/>
+                    </group>
+                </group>
+
+                <!-- DESTINATIONS -->
+                <group string="Destination Journals" colspan="4">
+                    <field name="line_ids">
+                        <list editable="bottom">
+                            <field name="journal_id"/>
+                            <field name="amount"/>
+                        </list>
+                    </field>
+                </group>
 
                     <separator string="Fees And Analytics"/>
 
