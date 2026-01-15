@@ -2,7 +2,7 @@
     "name": "Internal Transfer & Payment Voucher",
     "version": "18.0.1.0.0",
     "category": "Accounting",
-    "summary": "Internal journal transfers and payment vouchers for Odoo 18",
+    "summary": "Internal  journal transfers and payment vouchers for Odoo 18",
     "description": """
 Internal Transfers & Payment Vouchers
 =====================================
@@ -53,15 +53,16 @@ Fully compatible with Odoo 18.
     "data": [
         "security/ir.model.access.csv",
         "data/sequence.xml",
-        "views/internal_transfer_views.xml",
-        "views/payment_voucher_views.xml",
-        "views/menus.xml",
         "report/internal_transfer_report.xml",
         "report/internal_transfer_pdf.xml",
         "report/payment_voucher_report.xml",
         "report/payment_voucher_pdf.xml",
+        "views/internal_transfer_views.xml",
+        "views/payment_voucher_views.xml",
+        "views/menus.xml",
+
     ],
     "images": ["images/main_screenshot.png"],
-    "installable": False,
+    "installable": True,
     "application": False,
 }

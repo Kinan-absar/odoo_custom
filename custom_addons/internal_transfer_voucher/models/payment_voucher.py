@@ -48,7 +48,7 @@ class AccountPaymentVoucher(models.Model):
 
     journal_id = fields.Many2one(
         'account.journal',
-        domain="[('type','in',('bank','cash'))]",
+        domain="[('default_account_id', '!=', False)]",
         required=True
     )
 
@@ -125,14 +125,14 @@ class AccountPaymentVoucher(models.Model):
                         'account_id': rec.account_id.id,
                         'partner_id': rec.partner_id.id,
                         'debit': rec.amount,
-                        'name': rec.name,
+                        'name': rec.description or rec.name,
                     }),
                     # Credit bank / cash
                     (0, 0, {
                         'account_id': rec.journal_id.default_account_id.id,
                         'partner_id': rec.partner_id.id,
                         'credit': rec.amount,
-                        'name': rec.name,
+                        'name': rec.description or rec.name,
                     }),
                 ],
             })
@@ -181,3 +181,19 @@ class AccountPaymentVoucher(models.Model):
                 'payment.voucher'
             ) or 'New'
         return super().create(vals)
+
+    def write(self, vals):
+        for rec in self:
+            if rec.state == 'posted':
+                allowed_fields = {'state', 'move_id'}
+                if not set(vals.keys()).issubset(allowed_fields):
+                    raise UserError(_("You cannot modify a posted payment voucher."))
+        return super().write(vals)
+
+
+
+    def unlink(self):
+        for rec in self:
+            if rec.state == 'posted':
+                raise UserError(_("You cannot delete a posted payment voucher."))
+        return super().unlink()
