@@ -24,7 +24,9 @@
     "author": "Kinan",
     "website": "https://absar-alomran.com",
     "category": "Purchases",
-    "license": "LGPL-3",
+    "license": "OPL-1",
+    "price": 14.99,
+    "currency": "USD",
     "depends": ["purchase", "sign", "mail", "project"],
     "data": [
         "data/cron.xml",
@@ -32,6 +34,7 @@
         "views/res_company_view.xml",
         "views/report_purchaseorder_inherit.xml",
     ],
+    "images": ["images/main_screenshot.png"],
     "installable": True,
     "application": False,
 }

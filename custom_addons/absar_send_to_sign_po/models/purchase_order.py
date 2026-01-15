@@ -16,11 +16,14 @@ class PurchaseOrder(models.Model):
     ], default="draft", tracking=True)
 
     revision = fields.Integer(default=0, tracking=True)
-    #adding Project field
+
     project_id = fields.Many2one(
         'project.project',
-        string='Project'
+        string='Project',
+        tracking=True,
+        groups=False
     )
+
     # ---------------------------------------------------------------------
     # WRITE OVERRIDE – Reset signature workflow when PO is modified
     # ---------------------------------------------------------------------
