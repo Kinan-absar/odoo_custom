@@ -39,7 +39,14 @@
                             </th>
                         </tr>
                     </table>
-
+                    <table class="table table-bordered mt16">
+                        <tr>
+                            <th>Description</th>
+                            <th class="text-right">
+                                <span t-field="o.description"/>
+                            </th>
+                        </tr>
+                    </table>
                     <!-- JOURNAL ENTRY -->
                     <h4 class="mt16">Accounting Entry</h4>
 

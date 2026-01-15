@@ -125,14 +125,14 @@ class AccountPaymentVoucher(models.Model):
                         'account_id': rec.account_id.id,
                         'partner_id': rec.partner_id.id,
                         'debit': rec.amount,
-                        'name': rec.name,
+                        'name': rec.description or rec.name,
                     }),
                     # Credit bank / cash
                     (0, 0, {
                         'account_id': rec.journal_id.default_account_id.id,
                         'partner_id': rec.partner_id.id,
                         'credit': rec.amount,
-                        'name': rec.name,
+                        'name': rec.description or rec.name,
                     }),
                 ],
             })
