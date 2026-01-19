@@ -253,25 +253,32 @@ class AccountInternalTransferLine(models.Model):
         related='transfer_id.currency_id',
         store=True
     )
-    def create(self, vals):
-        transfer = self.env['account.internal.transfer'].browse(vals.get('transfer_id'))
-        if transfer.state == 'posted':
-            raise UserError(_("You cannot add destination lines to a posted transfer."))
-        return super().create(vals)
 
+    # ✅ CORRECT multi-create override
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            transfer_id = vals.get('transfer_id')
+            if transfer_id:
+                transfer = self.env['account.internal.transfer'].browse(transfer_id)
+                if transfer.state == 'posted':
+                    raise UserError(
+                        _("You cannot add destination lines to a posted transfer.")
+                    )
+        return super().create(vals_list)
 
     def write(self, vals):
-        for rec in self:
-            if rec.state == 'posted':
-                allowed_fields = {'state', 'move_id'}
-                if not set(vals.keys()).issubset(allowed_fields):
-                    raise UserError(_("You cannot modify a posted internal transfer."))
+        for line in self:
+            if line.transfer_id.state == 'posted':
+                raise UserError(
+                    _("You cannot modify destination lines of a posted transfer.")
+                )
         return super().write(vals)
-
-
 
     def unlink(self):
         for line in self:
             if line.transfer_id.state == 'posted':
-                raise UserError(_("You cannot delete destination lines of a posted transfer."))
+                raise UserError(
+                    _("You cannot delete destination lines of a posted transfer.")
+                )
         return super().unlink()
