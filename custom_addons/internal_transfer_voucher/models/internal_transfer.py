@@ -100,12 +100,40 @@ class AccountInternalTransfer(models.Model):
     # Constraints
     # --------------------------------------------------
 
-    @api.constrains('line_ids', 'amount')
+    @api.constrains(
+        'line_ids',
+        'amount',
+        'has_bank_fees',
+        'fee_amount',
+        'fee_tax_id'
+    )
     def _check_destination_total(self):
         for rec in self:
-            total = sum(rec.line_ids.mapped('amount'))
-            if total != rec.amount:
-                raise UserError(_("Destination total must equal transfer amount."))
+            if not rec.line_ids:
+                continue
+
+            destination_total = sum(rec.line_ids.mapped('amount'))
+
+            expected_amount = rec.amount
+
+            if rec.has_bank_fees and rec.fee_amount:
+                tax_amount = 0.0
+                if rec.fee_tax_id:
+                    tax_amount = sum(
+                        tax['amount']
+                        for tax in rec.fee_tax_id.compute_all(
+                            rec.fee_amount,
+                            currency=rec.currency_id
+                        )['taxes']
+                    )
+                expected_amount -= (rec.fee_amount + tax_amount)
+
+            # Avoid float precision issues
+            if not rec.currency_id.is_zero(destination_total - expected_amount):
+                raise UserError(_(
+                    "Destination total (%s) must equal net transfer amount (%s)."
+                ) % (destination_total, expected_amount))
+
 
 
     # --------------------------------------------------
