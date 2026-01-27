@@ -19,8 +19,7 @@ class EmployeePortalMobileAuth(http.Controller):
             uid = request.env["res.users"].sudo().authenticate(
                 request.env.cr.dbname,
                 email,
-                password,
-                {}
+                password
             )
         except AccessDenied:
             return {"error": "Invalid email or password"}
@@ -30,7 +29,6 @@ class EmployeePortalMobileAuth(http.Controller):
 
         user = request.env["res.users"].sudo().browse(uid)
 
-        # Only portal users allowed
         if not user.has_group("base.group_portal"):
             return {"error": "Access denied"}
 
