@@ -11,7 +11,12 @@ class EmployeePortalMobileAuth(http.Controller):
         auth="none",
         csrf=False
     )
-    def mobile_login(self, email=None, password=None):
+    def mobile_login(self):
+        params = request.jsonrequest.get("params", {})
+
+        email = params.get("email")
+        password = params.get("password")
+
         if not email or not password:
             return {"error": "Missing credentials"}
 
