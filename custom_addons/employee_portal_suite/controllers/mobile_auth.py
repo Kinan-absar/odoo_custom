@@ -1,5 +1,6 @@
 from odoo import http
 from odoo.http import request
+from odoo.exceptions import AccessDenied
 
 
 class EmployeePortalMobileAuth(http.Controller):
@@ -14,18 +15,22 @@ class EmployeePortalMobileAuth(http.Controller):
         if not email or not password:
             return {"error": "Missing credentials"}
 
-        uid = request.session.authenticate(
-            request.env.cr.dbname,
-            email,
-            password,
-            {}
-        )
+        try:
+            uid = request.env["res.users"].sudo().authenticate(
+                request.env.cr.dbname,
+                email,
+                password,
+                {}
+            )
+        except AccessDenied:
+            return {"error": "Invalid email or password"}
 
         if not uid:
             return {"error": "Invalid email or password"}
 
         user = request.env["res.users"].sudo().browse(uid)
 
+        # Only portal users allowed
         if not user.has_group("base.group_portal"):
             return {"error": "Access denied"}
 
