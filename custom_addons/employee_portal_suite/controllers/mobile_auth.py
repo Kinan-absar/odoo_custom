@@ -15,7 +15,10 @@ class EmployeePortalMobileAuth(http.Controller):
             return {"error": "Missing credentials"}
 
         uid = request.session.authenticate(
-            request.db, email, password
+            request.env.cr.dbname,
+            email,
+            password,
+            {}
         )
 
         if not uid:
@@ -23,28 +26,23 @@ class EmployeePortalMobileAuth(http.Controller):
 
         user = request.env["res.users"].sudo().browse(uid)
 
-        # SAFETY: allow portal users only
         if not user.has_group("base.group_portal"):
             return {"error": "Access denied"}
 
-        # Link to employee
         employee = request.env["hr.employee"].sudo().search(
             [("user_id", "=", user.id)],
             limit=1
         )
 
         if not employee:
-            return {"error": "No employee linked to user"}
+            return {"error": "No employee linked"}
 
-        # TEMP: fake token (safe for staging)
         role = "employee"
-
-        # If you already have a manager group in your module, use it
         if user.has_group("employee_portal_suite.group_portal_manager"):
             role = "manager"
 
         return {
-            "token": "fake-token-staging",
+            "token": "fake-token-dev",
             "role": role,
             "employee_id": employee.id,
         }
