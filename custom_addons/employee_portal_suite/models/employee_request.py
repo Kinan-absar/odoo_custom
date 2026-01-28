@@ -419,7 +419,7 @@ class EmployeeRequest(models.Model):
         })
 
         # --------------------------------------------------
-        # 2) Collect recipients
+        # 2) Collect users / emails
         # --------------------------------------------------
         partners = set()
         emails = set()
@@ -452,14 +452,27 @@ class EmployeeRequest(models.Model):
                 _add_user(getattr(self, field))
 
         # --------------------------------------------------
-        # 3) Post message → email + internal notification
+        # 3) INTERNAL notification (Inbox + chatter)
         # --------------------------------------------------
-        self.message_post(
-            subject=subject,
-            body=body,
-            partner_ids=list(partners),
-            email_to=",".join(emails),
-            attachment_ids=[attachment.id],
-            message_type="notification",
-            mail_notify=True,
-        )
+        if partners:
+            self.message_post(
+                subject=subject,
+                body=body,
+                partner_ids=list(partners),
+                attachment_ids=[attachment.id],
+                message_type="notification",
+            )
+
+        # --------------------------------------------------
+        # 4) EMAIL (SMTP) with PDF
+        # --------------------------------------------------
+        if emails:
+            mail = self.env['mail.mail'].sudo().create({
+                'subject': subject,
+                'body_html': f"<p>{body}</p>",
+                'email_to': ",".join(emails),
+                'attachment_ids': [(4, attachment.id)],
+                'author_id': self.env.user.partner_id.id,
+            })
+            mail.send()
+
