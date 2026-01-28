@@ -16,7 +16,11 @@ class EmployeePortalMobileAuth(http.Controller):
         if not email or not password:
             return {"error": "Missing credentials"}
 
-        uid = request.session.authenticate(email, password)
+        uid = request.session.authenticate(
+            request.env.cr.dbname,
+            email,
+            password
+        )
 
         if not uid:
             return {"error": "Invalid email or password"}
