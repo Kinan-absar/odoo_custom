@@ -4,6 +4,7 @@ from datetime import timedelta
 from odoo.exceptions import ValidationError
 from odoo.tools import html2plaintext
 import re
+import base64
 
 class MaterialRequest(models.Model):
     _name = 'material.request'

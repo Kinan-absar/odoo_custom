@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+import base64
 
 
 class EmployeeRequest(models.Model):
