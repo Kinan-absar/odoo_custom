@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+import base64
 
 
 class EmployeeRequest(models.Model):
@@ -75,12 +76,6 @@ class EmployeeRequest(models.Model):
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
     ], string='Status', default='draft', tracking=True)
-
-    # Tracking who approved which stage
-    manager_approved_by = fields.Many2one("res.users", string="Manager Approved By")
-    hr_approved_by = fields.Many2one("res.users", string="HR Approved By")
-    finance_approved_by = fields.Many2one("res.users", string="Finance Approved By")
-    ceo_approved_by = fields.Many2one("res.users", string="CEO Approved By")
 
     # ---------------------------------------------------------
     # APPROVAL METADATA
@@ -256,13 +251,6 @@ class EmployeeRequest(models.Model):
             rec.message_post(body="Request fully approved.")
             rec._close_activities()
 
-            if rec.employee_id.user_id:
-                rec._notify_user(
-                    rec.employee_id.user_id,
-                    "Request Approved",
-                    f"Your request {rec.name} has been approved."
-                )
-
 
     # ---------------------------------------------------------
     # REJECTION ACTION — FIXED
@@ -279,19 +267,13 @@ class EmployeeRequest(models.Model):
 
             rec.state = 'rejected'
             rec._send_final_pdf_to_all(
-                report_xmlid="employee_portal_suite.employee_request_pdf"
-                subject=f"Material Request {rec.name} – Rejected",
-                body=f"Material Request {rec.name} has been rejected. Please review the attached document."
+                report_xmlid="employee_portal_suite.employee_request_pdf",
+                subject=f"Request {rec.name} – Rejected",
+                body=f"Request {rec.name} has been rejected. Please review the attached document."
             )
+
             rec.message_post(body="Request rejected.")
             rec._close_activities()
-
-            if rec.employee_id.user_id:
-                rec._notify_user(
-                    rec.employee_id.user_id,
-                    "Request Rejected",
-                    f"Your request {rec.name} has been rejected."
-                )
 
     # ---------------------------------------------------------
     # PORTAL TIMELINE
@@ -391,10 +373,6 @@ class EmployeeRequest(models.Model):
             'hr_approved_by',
             'finance_approved_by',
             'ceo_approved_by',
-            'purchase_approved_by',
-            'store_approved_by',
-            'project_manager_approved_by',
-            'director_approved_by',
         ]
 
         for field in approver_fields:

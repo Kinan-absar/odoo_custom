@@ -4,6 +4,7 @@ from datetime import timedelta
 from odoo.exceptions import ValidationError
 from odoo.tools import html2plaintext
 import re
+import base64
 
 class MaterialRequest(models.Model):
     _name = 'material.request'
@@ -103,13 +104,6 @@ class MaterialRequest(models.Model):
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
     ], default='draft', tracking=True)
-
-    # Tracking who approved each stage
-    purchase_approved_by = fields.Many2one("res.users", string="Purchase Approved By")
-    store_approved_by = fields.Many2one("res.users", string="Store Manager Approved By")
-    project_manager_approved_by = fields.Many2one("res.users", string="PM Approved By")
-    director_approved_by = fields.Many2one("res.users", string="Director Approved By")
-    ceo_approved_by = fields.Many2one("res.users", string="CEO Approved By")
 
     # ---------------------------------------------------------
     # APPROVAL METADATA (same pattern as employee.request)
@@ -453,12 +447,6 @@ class MaterialRequest(models.Model):
             rec.message_post(body="Material Request fully approved.")
             rec.activity_ids.action_done()
 
-            if rec.employee_id.user_id:
-                rec._notify_user(
-                    rec.employee_id.user_id,
-                    "Material Request Approved",
-                    f"Your Material Request {rec.name} has been approved."
-                )
     def action_reject(self):
         for rec in self:
             stage_group_map = {
@@ -488,13 +476,6 @@ class MaterialRequest(models.Model):
 
             rec.message_post(body="Material Request rejected.")
             rec.activity_ids.action_done()
-
-            if rec.employee_id.user_id:
-                rec._notify_user(
-                    rec.employee_id.user_id,
-                    "Material Request Rejected",
-                    f"Your Material Request {rec.name} has been rejected."
-                )
     def get_rejection_reason(self):
         self.ensure_one()
         comments = {
@@ -709,9 +690,6 @@ class MaterialRequest(models.Model):
 
         # Approvers (dynamic & safe)
         approver_fields = [
-            'manager_approved_by',
-            'hr_approved_by',
-            'finance_approved_by',
             'ceo_approved_by',
             'purchase_approved_by',
             'store_approved_by',
