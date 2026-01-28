@@ -11,7 +11,9 @@ class EmployeePortalMobileAuth(http.Controller):
         auth="none",
         csrf=False
     )
-    def mobile_login(self, **params):
+    def mobile_login(self, **kw):
+        params = kw.get("params", {})
+
         email = params.get("email")
         password = params.get("password")
 
