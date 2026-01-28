@@ -20,12 +20,7 @@ class EmployeePortalMobileAuth(http.Controller):
                 {"error": "Missing credentials"}, 400
             )
 
-        uid = request.session.authenticate(
-            request.env.cr.dbname,
-            email,
-            password
-        )
-
+        uid = request.session.authenticate(email, password)
 
         if not uid:
             return request.make_json_response(
@@ -40,7 +35,8 @@ class EmployeePortalMobileAuth(http.Controller):
             )
 
         employee = request.env["hr.employee"].sudo().search(
-            [("user_id", "=", user.id)], limit=1
+            [("user_id", "=", user.id)],
+            limit=1
         )
 
         if not employee:
@@ -48,9 +44,11 @@ class EmployeePortalMobileAuth(http.Controller):
                 {"error": "No employee linked"}, 404
             )
 
-        role = "manager" if user.has_group(
-            "employee_portal_suite.group_portal_manager"
-        ) else "employee"
+        role = (
+            "manager"
+            if user.has_group("employee_portal_suite.group_portal_manager")
+            else "employee"
+        )
 
         return request.make_json_response({
             "token": "fake-token-dev",
