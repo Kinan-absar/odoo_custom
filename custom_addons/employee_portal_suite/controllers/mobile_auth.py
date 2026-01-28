@@ -21,8 +21,11 @@ class EmployeePortalMobileAuth(http.Controller):
             )
 
         uid = request.session.authenticate(
-            request.db, email, password
+            request.env.cr.dbname,
+            email,
+            password
         )
+
 
         if not uid:
             return request.make_json_response(
