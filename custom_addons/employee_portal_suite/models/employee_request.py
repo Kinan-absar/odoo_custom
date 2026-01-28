@@ -176,7 +176,6 @@ class EmployeeRequest(models.Model):
             rec[approved_date_field] = fields.Datetime.now()
 
             rec.state = new_state
-            rec.message_post(body=f"{new_state.capitalize()} stage approved.")
             rec._close_activities()
 
             # Notify next group

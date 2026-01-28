@@ -246,7 +246,6 @@ class MaterialRequest(models.Model):
             rec[approved_date_field] = fields.Datetime.now()
             rec.state = new_state
 
-            rec.message_post(body=f"{new_state.replace('_', ' ').title()} stage approved.")
             rec.activity_ids.action_done()
 
             # -------------------------------------------------
