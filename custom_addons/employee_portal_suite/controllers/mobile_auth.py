@@ -6,44 +6,51 @@ class EmployeePortalMobileAuth(http.Controller):
 
     @http.route(
         "/api/mobile/login",
-        type="json",
+        type="http",
         auth="none",
-        csrf=False
+        csrf=False,
+        methods=["POST"]
     )
-    def mobile_login(self, email, password):
-        # 👆 IMPORTANT: explicit arguments
+    def mobile_login(self, **kwargs):
+        email = kwargs.get("email")
+        password = kwargs.get("password")
 
         if not email or not password:
-            return {"error": "Missing credentials"}
+            return request.make_json_response(
+                {"error": "Missing credentials"}, 400
+            )
 
         uid = request.session.authenticate(
-            request.env.cr.dbname,
-            email,
-            password
+            request.db, email, password
         )
 
         if not uid:
-            return {"error": "Invalid email or password"}
+            return request.make_json_response(
+                {"error": "Invalid email or password"}, 401
+            )
 
         user = request.env["res.users"].sudo().browse(uid)
 
         if not user.has_group("base.group_portal"):
-            return {"error": "Access denied"}
+            return request.make_json_response(
+                {"error": "Access denied"}, 403
+            )
 
         employee = request.env["hr.employee"].sudo().search(
-            [("user_id", "=", user.id)],
-            limit=1
+            [("user_id", "=", user.id)], limit=1
         )
 
         if not employee:
-            return {"error": "No employee linked"}
+            return request.make_json_response(
+                {"error": "No employee linked"}, 404
+            )
 
-        role = "employee"
-        if user.has_group("employee_portal_suite.group_portal_manager"):
-            role = "manager"
+        role = "manager" if user.has_group(
+            "employee_portal_suite.group_portal_manager"
+        ) else "employee"
 
-        return {
+        return request.make_json_response({
             "token": "fake-token-dev",
             "role": role,
             "employee_id": employee.id,
-        }
+        })
