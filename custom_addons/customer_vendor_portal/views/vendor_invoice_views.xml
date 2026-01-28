@@ -37,13 +37,10 @@
                             <field name="internal_notes" nolabel="1"/>
                         </page>
 
-                        <page string="Chatter">
-                            <field name="message_follower_ids"/>
-                            <field name="message_ids" readonly="1"/>
-                        </page>
                     </notebook>
 
                 </sheet>
+                </chatter>
             </form>
         </field>
     </record>
