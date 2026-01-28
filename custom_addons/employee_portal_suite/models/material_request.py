@@ -444,6 +444,11 @@ class MaterialRequest(models.Model):
             rec.ceo_approved_by = self.env.user.id
             rec.ceo_approved_date = fields.Datetime.now()
             rec.state = "approved"
+            rec._send_final_pdf_to_all(
+                report_xmlid="employee_portal_suite.material_request_pdf",
+                subject=f"Material Request {rec.name} – Approved",
+                body=f"Material Request {rec.name} has been fully approved. PDF attached."
+            )
 
             rec.message_post(body="Material Request fully approved.")
             rec.activity_ids.action_done()
@@ -454,8 +459,6 @@ class MaterialRequest(models.Model):
                     "Material Request Approved",
                     f"Your Material Request {rec.name} has been approved."
                 )
-
-
     def action_reject(self):
         for rec in self:
             stage_group_map = {
@@ -476,6 +479,12 @@ class MaterialRequest(models.Model):
             rec.state_before_reject = rec.state
             rec.rejected_by = self.env.user.id
             rec.state = "rejected"
+            rec._send_final_pdf_to_all(
+                report_xmlid="employee_portal_suite.material_request_pdf",
+                subject=f"Material Request {rec.name} – Rejected",
+                body=f"Material Request {rec.name} has been rejected. Please review the attached document."
+            )
+
 
             rec.message_post(body="Material Request rejected.")
             rec.activity_ids.action_done()
@@ -670,6 +679,65 @@ class MaterialRequest(models.Model):
             "target": "current",
         }
 
+    def _send_final_pdf_to_all(self, report_xmlid, subject, body):
+        self.ensure_one()
+
+        Report = self.env['ir.actions.report'].sudo()
+        report_action = self.env.ref(report_xmlid)
+
+        # 1) Render PDF
+        pdf_content, _ = Report._render_qweb_pdf(
+            report_action.id, [self.id]
+        )
+
+        # 2) Create attachment
+        attachment = self.env['ir.attachment'].sudo().create({
+            'name': f"{self.name}.pdf",
+            'type': 'binary',
+            'datas': base64.b64encode(pdf_content),
+            'res_model': self._name,
+            'res_id': self.id,
+            'mimetype': 'application/pdf',
+        })
+
+        # 3) Collect recipients
+        partners = set()
+
+        # Employee
+        if self.employee_id.user_id and self.employee_id.user_id.partner_id.email:
+            partners.add(self.employee_id.user_id.partner_id.id)
+
+        # Approvers (dynamic & safe)
+        approver_fields = [
+            'manager_approved_by',
+            'hr_approved_by',
+            'finance_approved_by',
+            'ceo_approved_by',
+            'purchase_approved_by',
+            'store_approved_by',
+            'project_manager_approved_by',
+            'director_approved_by',
+        ]
+
+        for field in approver_fields:
+            if field in self._fields:
+                user = getattr(self, field)
+                if user and user.partner_id.email:
+                    partners.add(user.partner_id.id)
+
+        if not partners:
+            return
+
+        # 4) Send email
+        mail = self.env['mail.mail'].sudo().create({
+            'subject': subject,
+            'body_html': f"<p>{body}</p>",
+            'recipient_ids': [(6, 0, list(partners))],
+            'attachment_ids': [(4, attachment.id)],
+            'author_id': self.env.user.partner_id.id,
+        })
+
+        mail.send()
         
 from odoo import models, api
 
