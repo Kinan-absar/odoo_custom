@@ -12,7 +12,8 @@ class EmployeePortalMobileAuth(http.Controller):
         csrf=False
     )
     def mobile_login(self, **kw):
-        params = kw.get("params", {})
+        # Handle both JSON-RPC shapes safely
+        params = kw.get("params", kw)
 
         email = params.get("email")
         password = params.get("password")
