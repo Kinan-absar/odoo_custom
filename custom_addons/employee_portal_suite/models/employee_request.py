@@ -1,6 +1,5 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
-import base64
 
 
 class EmployeeRequest(models.Model):
@@ -77,6 +76,12 @@ class EmployeeRequest(models.Model):
         ('rejected', 'Rejected'),
     ], string='Status', default='draft', tracking=True)
 
+    # Tracking who approved which stage
+    manager_approved_by = fields.Many2one("res.users", string="Manager Approved By")
+    hr_approved_by = fields.Many2one("res.users", string="HR Approved By")
+    finance_approved_by = fields.Many2one("res.users", string="Finance Approved By")
+    ceo_approved_by = fields.Many2one("res.users", string="CEO Approved By")
+
     # ---------------------------------------------------------
     # APPROVAL METADATA
     # ---------------------------------------------------------
@@ -109,7 +114,8 @@ class EmployeeRequest(models.Model):
     def _compute_manager(self):
         for rec in self:
             rec.manager_id = rec.employee_id.parent_id
-     #employee autofilled
+   
+   #employee autofilled
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
@@ -186,6 +192,15 @@ class EmployeeRequest(models.Model):
                         "Approval Needed",
                         f"Please review request {rec.name}."
                     )
+                    #helper
+    def _check_approval(self, required_state, required_group):
+        self.ensure_one()
+
+        if self.state != required_state:
+            raise UserError(_("This action is not allowed in the current state."))
+
+        if not self.env.user.has_group(required_group):
+            raise UserError(_("You are not allowed to approve at this stage."))
 
     # ---------------------------------------------------------
     # USER ACTIONS
@@ -212,68 +227,111 @@ class EmployeeRequest(models.Model):
                 )
 
     def action_manager_approve(self):
-        self._advance_state(
-            new_state='hr',
-            group_xmlid='employee_portal_suite.group_employee_portal_hr',
-            approved_user_field='manager_approved_by',
-            approved_date_field='manager_approved_date'
-        )
+        for rec in self:
+            rec._check_approval(
+                required_state="manager",
+                required_group="employee_portal_suite.group_employee_portal_manager"
+            )
+
+            rec._advance_state(
+                new_state="hr",
+                group_xmlid="employee_portal_suite.group_employee_portal_hr",
+                approved_user_field="manager_approved_by",
+                approved_date_field="manager_approved_date"
+            )
 
     def action_hr_approve(self):
-        self._advance_state(
-            new_state='finance',
-            group_xmlid='employee_portal_suite.group_employee_portal_finance',
-            approved_user_field='hr_approved_by',
-            approved_date_field='hr_approved_date'
-        )
+        for rec in self:
+            rec._check_approval(
+                required_state="hr",
+                required_group="employee_portal_suite.group_employee_portal_hr"
+            )
+
+            rec._advance_state(
+                new_state="finance",
+                group_xmlid="employee_portal_suite.group_employee_portal_finance",
+                approved_user_field="hr_approved_by",
+                approved_date_field="hr_approved_date"
+            )
 
     def action_finance_approve(self):
-        self._advance_state(
-            new_state='ceo',
-            group_xmlid='employee_portal_suite.group_employee_portal_ceo',
-            approved_user_field='finance_approved_by',
-            approved_date_field='finance_approved_date'
-        )
+        for rec in self:
+            rec._check_approval(
+                required_state="finance",
+                required_group="employee_portal_suite.group_employee_portal_finance"
+            )
+
+            rec._advance_state(
+                new_state="ceo",
+                group_xmlid="employee_portal_suite.group_employee_portal_ceo",
+                approved_user_field="finance_approved_by",
+                approved_date_field="finance_approved_date"
+            )
 
     def action_ceo_approve(self):
         for rec in self:
-            if rec.state != 'ceo':
-                raise UserError(_("Request is not in CEO approval stage."))
+            rec._check_approval(
+                required_state="ceo",
+                required_group="employee_portal_suite.group_employee_portal_ceo"
+            )
 
             rec.ceo_approved_by = self.env.user.id
             rec.ceo_approved_date = fields.Datetime.now()
             rec.state = 'approved'
-            rec._send_final_pdf_to_all(
+            rec._send_final_pdf_and_notify_all(
                 report_xmlid="employee_portal_suite.employee_request_pdf",
                 subject=f"Request {rec.name} – Fully Approved",
                 body=f"Request {rec.name} has been fully approved. Please find the attached document."
             )
+
             rec.message_post(body="Request fully approved.")
             rec._close_activities()
 
+            if rec.employee_id.user_id:
+                rec._notify_user(
+                    rec.employee_id.user_id,
+                    "Request Approved",
+                    f"Your request {rec.name} has been approved."
+                )
 
     # ---------------------------------------------------------
     # REJECTION ACTION — FIXED
     # ---------------------------------------------------------
     def action_reject(self):
         for rec in self:
+            stage_group_map = {
+                "manager": "employee_portal_suite.group_employee_portal_manager",
+                "hr": "employee_portal_suite.group_employee_portal_hr",
+                "finance": "employee_portal_suite.group_employee_portal_finance",
+                "ceo": "employee_portal_suite.group_employee_portal_ceo",
+            }
 
-            if rec.state == 'approved':
-                raise UserError(_("Approved requests cannot be rejected."))
+            required_group = stage_group_map.get(rec.state)
+            if not required_group:
+                raise UserError(_("This request cannot be rejected at this stage."))
 
-            # Store rejection source stage & user
+            if not self.env.user.has_group(required_group):
+                raise UserError(_("You are not allowed to reject this request."))
+
             rec.state_before_reject = rec.state
-            rec.rejected_by = rec.env.user.id
-
+            rec.rejected_by = self.env.user.id
             rec.state = 'rejected'
-            rec._send_final_pdf_to_all(
+            rec._send_final_pdf_and_notify_all(
                 report_xmlid="employee_portal_suite.employee_request_pdf",
                 subject=f"Request {rec.name} – Rejected",
-                body=f"Request {rec.name} has been rejected. Please review the attached document."
+                body=f"Request {rec.name} has been rejected. Please find the attached document."
             )
+
 
             rec.message_post(body="Request rejected.")
             rec._close_activities()
+
+            if rec.employee_id.user_id:
+                rec._notify_user(
+                    rec.employee_id.user_id,
+                    "Request Rejected",
+                    f"Your request {rec.name} has been rejected."
+                )
 
     # ---------------------------------------------------------
     # PORTAL TIMELINE
@@ -338,19 +396,18 @@ class EmployeeRequest(models.Model):
             "rejected": "Rejected",
         }
         return mapping.get(self.state, "Unknown")
-        
-    def _send_final_pdf_to_all(self, report_xmlid, subject, body):
+
+    def _send_final_pdf_and_notify_all(self, report_xmlid, subject, body):
         self.ensure_one()
 
-        Report = self.env['ir.actions.report'].sudo()
-        report_action = self.env.ref(report_xmlid)
-
+        # --------------------------------------------------
         # 1) Render PDF
-        pdf_content, _ = Report._render_qweb_pdf(
-            report_action.id, [self.id]
+        # --------------------------------------------------
+        report = self.env.ref(report_xmlid)
+        pdf_content, _ = self.env['ir.actions.report']._render_qweb_pdf(
+            report.id, [self.id]
         )
 
-        # 2) Create attachment
         attachment = self.env['ir.attachment'].sudo().create({
             'name': f"{self.name}.pdf",
             'type': 'binary',
@@ -360,37 +417,48 @@ class EmployeeRequest(models.Model):
             'mimetype': 'application/pdf',
         })
 
-        # 3) Collect recipients
+        # --------------------------------------------------
+        # 2) Collect recipients
+        # --------------------------------------------------
         partners = set()
+        emails = set()
 
-        # Employee
-        if self.employee_id.user_id and self.employee_id.user_id.partner_id.email:
-            partners.add(self.employee_id.user_id.partner_id.id)
+        def _add_user(user):
+            if not user or not user.partner_id:
+                return
+            partners.add(user.partner_id.id)
+            if user.partner_id.email:
+                emails.add(user.partner_id.email)
 
-        # Approvers (dynamic & safe)
+        # Requester
+        if self.employee_id.user_id:
+            _add_user(self.employee_id.user_id)
+
+        # Approvers
         approver_fields = [
             'manager_approved_by',
             'hr_approved_by',
             'finance_approved_by',
+            'purchase_approved_by',
+            'store_approved_by',
+            'project_manager_approved_by',
+            'director_approved_by',
             'ceo_approved_by',
         ]
 
         for field in approver_fields:
             if field in self._fields:
-                user = getattr(self, field)
-                if user and user.partner_id.email:
-                    partners.add(user.partner_id.id)
+                _add_user(getattr(self, field))
 
-        if not partners:
-            return
-
-        # 4) Send email
-        mail = self.env['mail.mail'].sudo().create({
-            'subject': subject,
-            'body_html': f"<p>{body}</p>",
-            'recipient_ids': [(6, 0, list(partners))],
-            'attachment_ids': [(4, attachment.id)],
-            'author_id': self.env.user.partner_id.id,
-        })
-
-        mail.send()
+        # --------------------------------------------------
+        # 3) Post message → email + internal notification
+        # --------------------------------------------------
+        self.message_post(
+            subject=subject,
+            body=body,
+            partner_ids=list(partners),
+            email_to=",".join(emails),
+            attachment_ids=[attachment.id],
+            message_type="notification",
+            mail_notify=True,
+        )

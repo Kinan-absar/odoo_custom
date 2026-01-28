@@ -4,7 +4,6 @@ from datetime import timedelta
 from odoo.exceptions import ValidationError
 from odoo.tools import html2plaintext
 import re
-import base64
 
 class MaterialRequest(models.Model):
     _name = 'material.request'
@@ -52,10 +51,10 @@ class MaterialRequest(models.Model):
         string="Materials"
     )
     work_location_id = fields.Many2one(
-        "hr.work.location",
-        string="Work Location",
-        readonly=True,
-        tracking=True
+            "hr.work.location",
+            string="Work Location",
+            readonly=True,
+            tracking=True
     )
 
     project_id = fields.Many2one(
@@ -88,9 +87,10 @@ class MaterialRequest(models.Model):
     expense_account_id = fields.Many2one(
         "account.account",
         string="Expense Account",
-        domain="[('account_type', '=', 'expense')]",
+        domain="[('account_type', 'in', ('expense','expense_direct_cost'))]",
         tracking=True,
     )
+
     # ---------------------------------------------------------
     # STATE MACHINE
     # ---------------------------------------------------------
@@ -104,6 +104,13 @@ class MaterialRequest(models.Model):
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
     ], default='draft', tracking=True)
+
+    # Tracking who approved each stage
+    purchase_approved_by = fields.Many2one("res.users", string="Purchase Approved By")
+    store_approved_by = fields.Many2one("res.users", string="Store Manager Approved By")
+    project_manager_approved_by = fields.Many2one("res.users", string="PM Approved By")
+    director_approved_by = fields.Many2one("res.users", string="Director Approved By")
+    ceo_approved_by = fields.Many2one("res.users", string="CEO Approved By")
 
     # ---------------------------------------------------------
     # APPROVAL METADATA (same pattern as employee.request)
@@ -142,14 +149,14 @@ class MaterialRequest(models.Model):
             else:
                 rec.work_location_id = False
                 rec.project_id = False
-          
+           
     @api.depends("project_id")
     def _compute_project_approvers(self):
         for rec in self:
             project = rec.project_id
             rec.store_manager_user_id = project.store_manager_user_id if project else False
             rec.project_manager_user_id = project.project_manager_user_id if project else False
-
+            
     @api.depends("message_ids")
     def _compute_last_log_note(self):
         Message = self.env["mail.message"]
@@ -185,9 +192,8 @@ class MaterialRequest(models.Model):
             if len(clean_text) > MAX_LEN:
                 clean_text = clean_text[:MAX_LEN].rstrip() + "…"
 
-            rec.last_log_note = clean_text
-
-        # ---------------------------------------------------------
+            rec.last_log_note = clean_text        
+    # ---------------------------------------------------------
     # COMPUTE MANAGER
     # ---------------------------------------------------------
     @api.depends("employee_id")
@@ -209,7 +215,8 @@ class MaterialRequest(models.Model):
                 # Reset delivery date so portal doesn't crash
                 self.delivery_date = False
                 return {'warning': warning}
-                 #employee autofilled
+
+    #employee autofilled
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
@@ -219,7 +226,6 @@ class MaterialRequest(models.Model):
                 raise UserError(_("Your user is not linked to an employee."))
             res['employee_id'] = employee.id
         return res
-
     # ---------------------------------------------------------
     # CREATE SEQUENCE
     # ---------------------------------------------------------
@@ -292,7 +298,6 @@ class MaterialRequest(models.Model):
                         "Approval Needed",
                         f"Please review Material Request {rec.name}."
                     )
-
     # ---------------------------------------------------------
     # NOTIFY / ACTIVITY HELPERS
     # ---------------------------------------------------------
@@ -314,10 +319,11 @@ class MaterialRequest(models.Model):
             summary=summary,
             note=note
         )
+        #helper
     def _check_approval(self, required_state, required_group):
         self.ensure_one()
 
-        # State check
+       # State check
         if self.state != required_state:
             raise UserError(_("This action is not allowed in the current state."))
 
@@ -438,14 +444,23 @@ class MaterialRequest(models.Model):
             rec.ceo_approved_by = self.env.user.id
             rec.ceo_approved_date = fields.Datetime.now()
             rec.state = "approved"
-            rec._send_final_pdf_to_all(
+            rec._send_final_pdf_and_notify_all(
                 report_xmlid="employee_portal_suite.material_request_pdf",
                 subject=f"Material Request {rec.name} – Approved",
-                body=f"Material Request {rec.name} has been fully approved. PDF attached."
+                body=f"Material Request {rec.name} has been fully approved. Please find the attached document."
             )
+
 
             rec.message_post(body="Material Request fully approved.")
             rec.activity_ids.action_done()
+
+            if rec.employee_id.user_id:
+                rec._notify_user(
+                    rec.employee_id.user_id,
+                    "Material Request Approved",
+                    f"Your Material Request {rec.name} has been approved."
+                )
+
 
     def action_reject(self):
         for rec in self:
@@ -467,15 +482,23 @@ class MaterialRequest(models.Model):
             rec.state_before_reject = rec.state
             rec.rejected_by = self.env.user.id
             rec.state = "rejected"
-            rec._send_final_pdf_to_all(
+            rec._send_final_pdf_and_notify_all(
                 report_xmlid="employee_portal_suite.material_request_pdf",
                 subject=f"Material Request {rec.name} – Rejected",
-                body=f"Material Request {rec.name} has been rejected. Please review the attached document."
+                body=f"Material Request {rec.name} has been rejected. Please find the attached document."
             )
 
 
             rec.message_post(body="Material Request rejected.")
             rec.activity_ids.action_done()
+
+            if rec.employee_id.user_id:
+                rec._notify_user(
+                    rec.employee_id.user_id,
+                    "Material Request Rejected",
+                    f"Your Material Request {rec.name} has been rejected."
+                )
+
     def get_rejection_reason(self):
         self.ensure_one()
         comments = {
@@ -659,19 +682,17 @@ class MaterialRequest(models.Model):
             "view_mode": "list,form",
             "target": "current",
         }
-
-    def _send_final_pdf_to_all(self, report_xmlid, subject, body):
+    def _send_final_pdf_and_notify_all(self, report_xmlid, subject, body):
         self.ensure_one()
 
-        Report = self.env['ir.actions.report'].sudo()
-        report_action = self.env.ref(report_xmlid)
-
+        # --------------------------------------------------
         # 1) Render PDF
-        pdf_content, _ = Report._render_qweb_pdf(
-            report_action.id, [self.id]
+        # --------------------------------------------------
+        report = self.env.ref(report_xmlid)
+        pdf_content, _ = self.env['ir.actions.report']._render_qweb_pdf(
+            report.id, [self.id]
         )
 
-        # 2) Create attachment
         attachment = self.env['ir.attachment'].sudo().create({
             'name': f"{self.name}.pdf",
             'type': 'binary',
@@ -681,41 +702,52 @@ class MaterialRequest(models.Model):
             'mimetype': 'application/pdf',
         })
 
-        # 3) Collect recipients
+        # --------------------------------------------------
+        # 2) Collect recipients
+        # --------------------------------------------------
         partners = set()
+        emails = set()
 
-        # Employee
-        if self.employee_id.user_id and self.employee_id.user_id.partner_id.email:
-            partners.add(self.employee_id.user_id.partner_id.id)
+        def _add_user(user):
+            if not user or not user.partner_id:
+                return
+            partners.add(user.partner_id.id)
+            if user.partner_id.email:
+                emails.add(user.partner_id.email)
 
-        # Approvers (dynamic & safe)
+        # Requester
+        if self.employee_id.user_id:
+            _add_user(self.employee_id.user_id)
+
+        # Approvers
         approver_fields = [
-            'ceo_approved_by',
+            'manager_approved_by',
+            'hr_approved_by',
+            'finance_approved_by',
             'purchase_approved_by',
             'store_approved_by',
             'project_manager_approved_by',
             'director_approved_by',
+            'ceo_approved_by',
         ]
 
         for field in approver_fields:
             if field in self._fields:
-                user = getattr(self, field)
-                if user and user.partner_id.email:
-                    partners.add(user.partner_id.id)
+                _add_user(getattr(self, field))
 
-        if not partners:
-            return
+        # --------------------------------------------------
+        # 3) Post message → email + internal notification
+        # --------------------------------------------------
+        self.message_post(
+            subject=subject,
+            body=body,
+            partner_ids=list(partners),
+            email_to=",".join(emails),
+            attachment_ids=[attachment.id],
+            message_type="notification",
+            mail_notify=True,
+        )
 
-        # 4) Send email
-        mail = self.env['mail.mail'].sudo().create({
-            'subject': subject,
-            'body_html': f"<p>{body}</p>",
-            'recipient_ids': [(6, 0, list(partners))],
-            'attachment_ids': [(4, attachment.id)],
-            'author_id': self.env.user.partner_id.id,
-        })
-
-        mail.send()
         
 from odoo import models, api
 
