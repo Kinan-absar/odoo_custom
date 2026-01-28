@@ -11,24 +11,18 @@ class EmployeePortalMobileAuth(http.Controller):
         auth="none",
         csrf=False
     )
-    def mobile_login(self, **kw):
-        # Handle both JSON-RPC shapes safely
-        params = kw.get("params", kw)
-
+    def mobile_login(self, **params):
         email = params.get("email")
         password = params.get("password")
 
         if not email or not password:
             return {"error": "Missing credentials"}
 
-        try:
-            uid = request.env["res.users"].sudo().authenticate(
-                request.env.cr.dbname,
-                email,
-                password
-            )
-        except AccessDenied:
-            return {"error": "Invalid email or password"}
+        uid = request.session.authenticate(
+            request.env.cr.dbname,
+            email,
+            password
+        )
 
         if not uid:
             return {"error": "Invalid email or password"}
