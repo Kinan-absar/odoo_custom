@@ -455,14 +455,6 @@ class MaterialRequest(models.Model):
             rec.message_post(body="Material Request fully approved.")
             rec.activity_ids.action_done()
 
-            if rec.employee_id.user_id:
-                rec._notify_user(
-                    rec.employee_id.user_id,
-                    "Material Request Approved",
-                    f"Your Material Request {rec.name} has been approved."
-                )
-
-
     def action_reject(self):
         for rec in self:
             stage_group_map = {
@@ -492,13 +484,6 @@ class MaterialRequest(models.Model):
 
             rec.message_post(body="Material Request rejected.")
             rec.activity_ids.action_done()
-
-            if rec.employee_id.user_id:
-                rec._notify_user(
-                    rec.employee_id.user_id,
-                    "Material Request Rejected",
-                    f"Your Material Request {rec.name} has been rejected."
-                )
 
     def get_rejection_reason(self):
         self.ensure_one()
@@ -735,18 +720,6 @@ class MaterialRequest(models.Model):
         for field in approver_fields:
             if field in self._fields:
                 _add_user(getattr(self, field))
-
-        # --------------------------------------------------
-        # 3) INTERNAL notification (Inbox + chatter)
-        # --------------------------------------------------
-        if partners:
-            self.message_post(
-                subject=subject,
-                body=body,
-                partner_ids=list(partners),
-                attachment_ids=[attachment.id],
-                message_type="notification",
-            )
 
         # --------------------------------------------------
         # 4) EMAIL (SMTP) with PDF

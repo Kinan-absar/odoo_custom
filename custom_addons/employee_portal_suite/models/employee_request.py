@@ -288,13 +288,6 @@ class EmployeeRequest(models.Model):
             rec.message_post(body="Request fully approved.")
             rec._close_activities()
 
-            if rec.employee_id.user_id:
-                rec._notify_user(
-                    rec.employee_id.user_id,
-                    "Request Approved",
-                    f"Your request {rec.name} has been approved."
-                )
-
     # ---------------------------------------------------------
     # REJECTION ACTION — FIXED
     # ---------------------------------------------------------
@@ -327,12 +320,6 @@ class EmployeeRequest(models.Model):
             rec.message_post(body="Request rejected.")
             rec._close_activities()
 
-            if rec.employee_id.user_id:
-                rec._notify_user(
-                    rec.employee_id.user_id,
-                    "Request Rejected",
-                    f"Your request {rec.name} has been rejected."
-                )
 
     # ---------------------------------------------------------
     # PORTAL TIMELINE
@@ -450,18 +437,6 @@ class EmployeeRequest(models.Model):
         for field in approver_fields:
             if field in self._fields:
                 _add_user(getattr(self, field))
-
-        # --------------------------------------------------
-        # 3) INTERNAL notification (Inbox + chatter)
-        # --------------------------------------------------
-        if partners:
-            self.message_post(
-                subject=subject,
-                body=body,
-                partner_ids=list(partners),
-                attachment_ids=[attachment.id],
-                message_type="notification",
-            )
 
         # --------------------------------------------------
         # 4) EMAIL (SMTP) with PDF
