@@ -1,6 +1,7 @@
 from odoo import http
 from odoo.http import request
 
+
 class EmployeePortalMobileAuth(http.Controller):
 
     @http.route(
@@ -9,9 +10,8 @@ class EmployeePortalMobileAuth(http.Controller):
         auth="none",
         csrf=False
     )
-    def mobile_login(self, **params):
-        email = params.get("email")
-        password = params.get("password")
+    def mobile_login(self, email, password):
+        # 👆 IMPORTANT: explicit arguments
 
         if not email or not password:
             return {"error": "Missing credentials"}
