@@ -4,6 +4,7 @@ from datetime import timedelta
 from odoo.exceptions import ValidationError
 from odoo.tools import html2plaintext
 import re
+import base64
 
 class MaterialRequest(models.Model):
     _name = 'material.request'
@@ -245,7 +246,6 @@ class MaterialRequest(models.Model):
             rec[approved_date_field] = fields.Datetime.now()
             rec.state = new_state
 
-            rec.message_post(body=f"{new_state.replace('_', ' ').title()} stage approved.")
             rec.activity_ids.action_done()
 
             # -------------------------------------------------
@@ -444,17 +444,15 @@ class MaterialRequest(models.Model):
             rec.ceo_approved_by = self.env.user.id
             rec.ceo_approved_date = fields.Datetime.now()
             rec.state = "approved"
+            rec._send_final_pdf_and_notify_all(
+                report_xmlid="employee_portal_suite.material_request_pdf",
+                subject=f"Material Request {rec.name} – Approved",
+                body=f"Material Request {rec.name} has been fully approved. Please find the attached document."
+            )
+
 
             rec.message_post(body="Material Request fully approved.")
             rec.activity_ids.action_done()
-
-            if rec.employee_id.user_id:
-                rec._notify_user(
-                    rec.employee_id.user_id,
-                    "Material Request Approved",
-                    f"Your Material Request {rec.name} has been approved."
-                )
-
 
     def action_reject(self):
         for rec in self:
@@ -476,16 +474,15 @@ class MaterialRequest(models.Model):
             rec.state_before_reject = rec.state
             rec.rejected_by = self.env.user.id
             rec.state = "rejected"
+            rec._send_final_pdf_and_notify_all(
+                report_xmlid="employee_portal_suite.material_request_pdf",
+                subject=f"Material Request {rec.name} – Rejected",
+                body=f"Material Request {rec.name} has been rejected. Please find the attached document."
+            )
+
 
             rec.message_post(body="Material Request rejected.")
             rec.activity_ids.action_done()
-
-            if rec.employee_id.user_id:
-                rec._notify_user(
-                    rec.employee_id.user_id,
-                    "Material Request Rejected",
-                    f"Your Material Request {rec.name} has been rejected."
-                )
 
     def get_rejection_reason(self):
         self.ensure_one()
@@ -670,6 +667,73 @@ class MaterialRequest(models.Model):
             "view_mode": "list,form",
             "target": "current",
         }
+    def _send_final_pdf_and_notify_all(self, report_xmlid, subject, body):
+        self.ensure_one()
+
+        # --------------------------------------------------
+        # 1) Render PDF
+        # --------------------------------------------------
+        report = self.env.ref(report_xmlid)
+        pdf_content, _ = self.env['ir.actions.report']._render_qweb_pdf(
+            report.id, [self.id]
+        )
+
+        attachment = self.env['ir.attachment'].sudo().create({
+            'name': f"{self.name}.pdf",
+            'type': 'binary',
+            'datas': base64.b64encode(pdf_content),
+            'res_model': self._name,
+            'res_id': self.id,
+            'mimetype': 'application/pdf',
+        })
+
+        # --------------------------------------------------
+        # 2) Collect users / emails
+        # --------------------------------------------------
+        partners = set()
+        emails = set()
+
+        def _add_user(user):
+            if not user or not user.partner_id:
+                return
+            partners.add(user.partner_id.id)
+            if user.partner_id.email:
+                emails.add(user.partner_id.email)
+
+        # Requester
+        if self.employee_id.user_id:
+            _add_user(self.employee_id.user_id)
+
+        # Approvers
+        approver_fields = [
+            'manager_approved_by',
+            'hr_approved_by',
+            'finance_approved_by',
+            'purchase_approved_by',
+            'store_approved_by',
+            'project_manager_approved_by',
+            'director_approved_by',
+            'ceo_approved_by',
+        ]
+
+        for field in approver_fields:
+            if field in self._fields:
+                _add_user(getattr(self, field))
+
+        # --------------------------------------------------
+        # 4) EMAIL (SMTP) with PDF
+        # --------------------------------------------------
+        if emails:
+            mail = self.env['mail.mail'].sudo().create({
+                'subject': subject,
+                'body_html': f"<p>{body}</p>",
+                'email_to': ",".join(emails),
+                'attachment_ids': [(4, attachment.id)],
+                'author_id': self.env.user.partner_id.id,
+            })
+            mail.send()
+
+
 
         
 from odoo import models, api
