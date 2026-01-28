@@ -95,6 +95,9 @@ class VendorInvoice(models.Model):
         if not self.attachment_id:
             raise UserError(_("No attachment found to download."))
 
+        # 🔥 MAKE ATTACHMENT PUBLIC
+        self.attachment_id.public = True
+        
         return {
             'type': 'ir.actions.act_url',
             'target': 'self',
