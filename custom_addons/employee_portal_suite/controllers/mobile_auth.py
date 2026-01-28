@@ -5,7 +5,7 @@ from odoo.exceptions import AccessDenied
 
 class EmployeePortalMobileAuth(http.Controller):
 
-   @http.route(
+    @http.route(
         "/api/mobile/login",
         type="json",
         auth="none",
@@ -45,3 +45,4 @@ class EmployeePortalMobileAuth(http.Controller):
             "role": role,
             "employee_id": employee.id,
         }
+
