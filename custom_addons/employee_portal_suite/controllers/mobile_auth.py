@@ -1,5 +1,6 @@
 from odoo import http
 from odoo.http import request
+from odoo.exceptions import AccessDenied
 
 
 class EmployeePortalMobileAuth(http.Controller):
@@ -20,7 +21,12 @@ class EmployeePortalMobileAuth(http.Controller):
                 {"error": "Missing credentials"}, 400
             )
 
-        uid = request.session.authenticate(email, password)
+        try:
+            uid = request.session.authenticate(email, password)
+        except AccessDenied:
+            return request.make_json_response(
+                {"error": "Invalid email or password"}, 401
+            )
 
         if not uid:
             return request.make_json_response(
