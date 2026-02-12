@@ -1,7 +1,8 @@
 from odoo import http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal
-
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 class EmployeePortalRedirect(CustomerPortal):
 
@@ -30,3 +31,40 @@ class EmployeePortalRedirect(CustomerPortal):
         # Normal customers/vendors → default portal home
         return super().account(**kw)
     
+class EmployeePortalAttendance(http.Controller):
+
+    @http.route(['/my/attendance'], type='http', auth='user', website=True)
+    def portal_attendance(self, **kwargs):
+
+        employee = request.env.user.employee_id
+
+        today = datetime.today().date()
+
+        # Today's attendance
+        today_attendance = request.env['hr.attendance'].sudo().search([
+            ('employee_id', '=', employee.id),
+            ('check_in', '>=', today),
+        ], limit=1)
+
+        # Monthly hours
+        first_day_month = today.replace(day=1)
+
+        monthly_records = request.env['hr.attendance'].sudo().search([
+            ('employee_id', '=', employee.id),
+            ('check_in', '>=', first_day_month),
+        ])
+
+        total_hours = 0
+        for rec in monthly_records:
+            if rec.check_out:
+                total_hours += rec.worked_hours
+
+        values = {
+            'today_attendance': today_attendance,
+            'monthly_hours': round(total_hours, 2),
+        }
+
+        return request.render(
+            'employee_portal_suite.portal_attendance_page',
+            values
+        )

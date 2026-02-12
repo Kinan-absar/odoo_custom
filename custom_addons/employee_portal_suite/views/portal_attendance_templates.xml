@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="portal_attendance_page" name="Portal Attendance Page">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+
+            <div class="card shadow-sm p-4">
+
+                <h3 class="mb-3">My Attendance</h3>
+
+                <!-- Today Status -->
+                <div class="mb-3">
+                    <strong>Today Status:</strong>
+                    <span t-if="today_attendance">Checked In</span>
+                    <span t-if="not today_attendance">Not Checked In</span>
+                </div>
+
+                <!-- Total Hours This Month -->
+                <div class="mb-3">
+                    <strong>Total Hours This Month:</strong>
+                    <span t-out="monthly_hours or 0"/> hours
+                </div>
+
+                <hr/>
+
+                <!-- Open PWA -->
+                <a href="https://attendpro-neon.vercel.app"
+                   class="btn btn-primary"
+                   target="_blank">
+                    Open Smart Check-In App
+                </a>
+
+                <a href="/my/attendance/history"
+                   class="btn btn-outline-secondary ms-2">
+                    View Attendance History
+                </a>
+
+            </div>
+
+        </t>
+    </template>
+
+</odoo>
