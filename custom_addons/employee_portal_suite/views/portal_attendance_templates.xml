@@ -3,36 +3,51 @@
 
     <template id="portal_attendance_page" name="Portal Attendance Page">
         <t t-call="employee_portal_suite.employee_portal_layout">
+<style>
+/* ===== ATTENDANCE LAUNCH STYLE ===== */
 
-            <div class="card shadow-sm p-4">
+.attendance-launch {
+    text-decoration: none;
+    color: #1F2937;
+    transition: 0.2s;
+}
 
-                <h3 class="mb-3">My Attendance</h3>
+.attendance-icon {
+    width: 120px;
+    height: 120px;
+    background: #a08a8aff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: auto;
+    transition: 0.3s;
+}
 
-                <!-- Today Status -->
-                <div class="mb-3">
-                    <strong>Today Status:</strong>
-                    <span t-if="today_attendance">Checked In</span>
-                    <span t-if="not today_attendance">Not Checked In</span>
-                </div>
+.attendance-icon i {
+    font-size: 48px;
+    color: white;
+}
 
-                <!-- Total Hours This Month -->
-                <div class="mb-3">
-                    <strong>Total Hours This Month:</strong>
-                    <span t-out="monthly_hours or 0"/> hours
-                </div>
+.attendance-launch:hover .attendance-icon {
+    background: #8d5353ff;
+    transform: scale(1.05);
+}
 
-                <hr/>
+</style>
+            <div class="d-flex justify-content-center align-items-center"
+                 style="min-height: 60vh;">
 
-                <!-- Open PWA -->
                 <a href="https://attendpro-neon.vercel.app"
-                   class="btn btn-primary"
-                   target="_blank">
-                    Open Smart Check-In App
-                </a>
+                   target="_blank"
+                   class="attendance-launch text-center">
 
-                <a href="/my/attendance/history"
-                   class="btn btn-outline-secondary ms-2">
-                    View Attendance History
+                    <div class="attendance-icon mb-3">
+                        <i class="fa fa-clock-o"></i>
+                    </div>
+
+                    <h4>Open Attendance</h4>
+
                 </a>
 
             </div>
