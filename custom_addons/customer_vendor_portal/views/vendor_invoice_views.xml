@@ -113,11 +113,13 @@
     <!-- ===========================================================
          MENU ITEM (under Purchase)
          =========================================================== -->
-    <menuitem id="menu_vendor_invoice_root"
-              name="Vendor Invoices"
-              parent="purchase.menu_purchase_root"
-              action="action_vendor_invoice"
-              sequence="95"
-              web_icon="customer_vendor_portal,static/description/icon.png"/>
+    <record id="menu_vendor_invoice_root" model="ir.ui.menu">
+        <field name="name">Vendor Invoices</field>
+        <field name="parent_id" ref="purchase.menu_purchase_root"/>
+        <field name="action" ref="action_vendor_invoice"/>
+        <field name="sequence">95</field>
+        <field name="web_icon">customer_vendor_portal,static/description/icon.png</field>
+    </record>
+
 
 </odoo>
