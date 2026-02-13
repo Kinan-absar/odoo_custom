@@ -117,6 +117,7 @@
               name="Vendor Invoices"
               parent="purchase.menu_purchase_root"
               action="action_vendor_invoice"
-              sequence="95"/>
+              sequence="95"
+              web_icon="customer_vendor_portal,static/description/icon.png"/>
 
 </odoo>
