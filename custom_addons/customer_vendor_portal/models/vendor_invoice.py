@@ -110,4 +110,20 @@ class VendorInvoice(models.Model):
     def create(self, vals):
         if vals.get('name', '/') == '/':
             vals['name'] = self.env['ir.sequence'].next_by_code('portal.vendor.invoice') or '/'
-        return super(VendorInvoice, self).create(vals)
+
+        record = super().create(vals)
+
+        group = self.env.ref(
+            'customer_vendor_portal.group_vendor_invoice_reviewer',
+            raise_if_not_found=False
+        )
+        if group:
+            for user in group.users.filtered(lambda u: u.active):
+                record.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    user_id=user.id,
+                    summary=_("New Vendor Invoice Submitted"),
+                    note=_("A new vendor invoice has been uploaded and requires review."),
+                )
+
+        return record

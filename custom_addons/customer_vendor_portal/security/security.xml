@@ -27,5 +27,9 @@
         <field name="groups" eval="[(4, ref('base.group_user'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
+    <record id="group_vendor_invoice_reviewer" model="res.groups">
+        <field name="name">Vendor Invoice Reviewer</field>
+        <field name="category_id" ref="base.module_category_accounting"/>
+    </record>
 
 </odoo>
