@@ -94,9 +94,6 @@ class VendorInvoice(models.Model):
         self.ensure_one()
         if not self.attachment_id:
             raise UserError(_("No attachment found to download."))
-
-        # 🔥 MAKE ATTACHMENT PUBLIC
-        self.attachment_id.public = True
         
         return {
             'type': 'ir.actions.act_url',
@@ -113,6 +110,12 @@ class VendorInvoice(models.Model):
 
         record = super().create(vals)
 
+            # 🔐 Properly link attachment to record
+        if record.attachment_id:
+            record.attachment_id.write({
+                'res_model': record._name,
+                'res_id': record.id,
+            })
         group = self.env.ref(
             'customer_vendor_portal.group_vendor_invoice_reviewer',
             raise_if_not_found=False
