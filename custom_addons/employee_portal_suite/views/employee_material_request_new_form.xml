@@ -10,69 +10,84 @@
 
     <!-- Language Toggle -->
     <div class="text-end mb-3">
-        <button id="btn-en" class="btn btn-primary btn-sm">🇬🇧 English</button>
-        <button id="btn-ar" class="btn btn-light btn-sm">🇸🇦 العربية</button>
+        <button type="button" id="btn-en" class="btn btn-primary btn-sm">🇬🇧 English</button>
+        <button type="button" id="btn-ar" class="btn btn-light btn-sm">🇸🇦 العربية</button>
     </div>
 
     <!-- ===================== ENGLISH FORM ===================== -->
-    <form id="form-en" method="post" action="/my/employee/material/create" enctype="multipart/form-data" style="display:block;">
+    <form id="form-en" method="post" action="/my/employee/material/create"
+          enctype="multipart/form-data" style="display:block;">
         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
-        <!-- Worksite -->
         <div class="form-group mt-3">
             <label>Worksite <span class="text-danger">*</span></label>
             <input type="text" name="worksite" class="form-control" required="1"/>
         </div>
 
-        <!-- Delivery Date -->
         <t t-set="min_delivery" t-value="(datetime.date.today() + datetime.timedelta(days=3)).isoformat()" />
 
         <div class="form-group mt-3">
             <label>Delivery Date <span class="text-danger">*</span></label>
-
-            <input type="date"
-                name="delivery_date"
-                class="form-control"
-                required="1"
-                t-att-min="min_delivery"/>
+            <input type="date" name="delivery_date" class="form-control"
+                   required="1" t-att-min="min_delivery"/>
         </div>
 
-
-        <!-- MATERIAL TABLE -->
         <h4 class="mt-4">Materials</h4>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Required Quantity</th>
-                    <th>UoM</th>
-                </tr>
-            </thead>
-            <tbody>
-                <t t-foreach="range(0,10)" t-as="i">
+
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
                     <tr>
-                        <td><input type="text" class="form-control" t-att-name="'item_name_%s' % i"/></td>
-                        <td><input type="number" class="form-control" t-att-name="'qty_required_%s' % i"/></td>
+                        <th style="width:50px;">#</th>
+                        <th>Item</th>
+                        <th style="width:150px;">Qty</th>
+                        <th style="width:180px;">UoM</th>
+                        <th style="width:120px;" class="text-center">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody id="material-lines-en">
+                    <tr draggable="true">
+                        <td class="line-number text-center">1</td>
                         <td>
-                            <select class="form-control" t-att-name="'uom_id_%s' % i">
+                            <input type="text" class="form-control item-name"
+                                   name="item_name_0" required="1"/>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control qty"
+                                   name="qty_required_0" min="0"/>
+                        </td>
+                        <td>
+                            <select name="uom_id_0" class="form-control uom">
                                 <option value="">Select…</option>
                                 <t t-foreach="uoms" t-as="u">
-                                    <option t-att-value="u.id"><t t-esc="u.name"/></option>
+                                    <option t-att-value="u.id">
+                                        <t t-esc="u.name"/>
+                                    </option>
                                 </t>
                             </select>
                         </td>
+                        <td class="text-center">
+                            <button type="button"
+                                    class="btn btn-secondary btn-sm copy-line">⎘</button>
+                            <button type="button"
+                                    class="btn btn-danger btn-sm remove-line">×</button>
+                        </td>
                     </tr>
-                </t>
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
 
-        <!-- ========================= -->
-        <!-- ATTACHMENT UPLOAD PANEL  -->
-        <!-- ========================= -->
+        <button type="button" id="add-line-en"
+                class="btn btn-success btn-sm mt-2">
+            + Add Line
+        </button>
+
+        <!-- Attachments -->
         <h4 class="mt-4">Attachments</h4>
 
-        <!-- Tag picker -->
-        <select name="attachment_tag" class="form-select mb-2" style="max-width:250px;">
+        <select name="attachment_tag"
+                class="form-select mb-2" style="max-width:250px;">
             <option value="General">General</option>
             <option value="BOQ">BOQ</option>
             <option value="Quotation">Quotation</option>
@@ -80,65 +95,101 @@
             <option value="Receipt">Receipt</option>
         </select>
 
-        <!-- Drag & Drop -->
-        <div id="dropzone" class="border rounded p-4 text-center bg-light" style="cursor:pointer;">
-            <p class="text-muted mb-0">Drag and drop files here, or click to upload</p>
-            <input type="file" name="attachments" id="fileInput" class="d-none" multiple="multiple"/>
+        <div id="dropzone"
+             class="border rounded p-4 text-center bg-light"
+             style="cursor:pointer;">
+            <p class="text-muted mb-0">
+                Drag and drop files here, or click to upload
+            </p>
+            <input type="file" name="attachments"
+                   id="fileInput" class="d-none" multiple="multiple"/>
         </div>
 
-        <!-- Preview -->
         <div id="previewArea" class="mt-3"></div>
 
-        <button type="submit" class="btn btn-primary mt-4">Submit</button>
+        <button type="submit" class="btn btn-primary mt-4">
+            Submit
+        </button>
     </form>
 
     <!-- ===================== ARABIC FORM ===================== -->
-    <form id="form-ar" method="post" action="/my/employee/material/create"
+    <form id="form-ar" method="post"
+          action="/my/employee/material/create"
           enctype="multipart/form-data"
           style="display:none; direction:rtl; text-align:right;">
-        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+        <input type="hidden" name="csrf_token"
+               t-att-value="request.csrf_token()"/>
 
         <div class="form-group mt-3">
-            <input type="text" name="worksite" class="form-control" required="1"/>
+            <label>الموقع <span class="text-danger">*</span></label>
+            <input type="text" name="worksite"
+                   class="form-control" required="1"/>
         </div>
 
         <div class="form-group mt-3">
             <label>تاريخ التسليم <span class="text-danger">*</span></label>
-            <input type="date" name="delivery_date" class="form-control" required="1"/>
+            <input type="date" name="delivery_date"
+                   class="form-control" required="1"/>
         </div>
 
         <h4 class="mt-4">المواد المطلوبة</h4>
 
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>الصنف</th>
-                    <th>الكمية المطلوبة</th>
-                    <th>الوحدة</th>
-                </tr>
-            </thead>
-            <tbody>
-                <t t-foreach="range(0,10)" t-as="i">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
                     <tr>
-                        <td><input type="text" class="form-control" name="item_name_{{i}}"/></td>
-                        <td><input type="number" class="form-control" name="qty_required_{{i}}"/></td>
+                        <th style="width:50px;">#</th>
+                        <th>الصنف</th>
+                        <th style="width:150px;">الكمية</th>
+                        <th style="width:180px;">الوحدة</th>
+                        <th style="width:120px;" class="text-center">إجراءات</th>
+                    </tr>
+                </thead>
+
+                <tbody id="material-lines-ar">
+                    <tr draggable="true">
+                        <td class="line-number text-center">1</td>
                         <td>
-                            <select name="uom_id_{{i}}" class="form-control">
+                            <input type="text" class="form-control item-name"
+                                   name="item_name_0" required="1"/>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control qty"
+                                   name="qty_required_0" min="0"/>
+                        </td>
+                        <td>
+                            <select name="uom_id_0"
+                                    class="form-control uom">
                                 <option value="">اختر…</option>
                                 <t t-foreach="uoms" t-as="u">
-                                    <option t-att-value="u.id"><t t-esc="u.name"/></option>
+                                    <option t-att-value="u.id">
+                                        <t t-esc="u.name"/>
+                                    </option>
                                 </t>
                             </select>
                         </td>
+                        <td class="text-center">
+                            <button type="button"
+                                    class="btn btn-secondary btn-sm copy-line">⎘</button>
+                            <button type="button"
+                                    class="btn btn-danger btn-sm remove-line">×</button>
+                        </td>
                     </tr>
-                </t>
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
 
-        <!-- AR Attachments -->
+        <button type="button" id="add-line-ar"
+                class="btn btn-success btn-sm mt-2">
+            + إضافة سطر
+        </button>
+
+        <!-- Attachments AR -->
         <h4 class="mt-4">المرفقات</h4>
 
-        <select name="attachment_tag" class="form-select mb-2" style="max-width:250px;">
+        <select name="attachment_tag"
+                class="form-select mb-2"
+                style="max-width:250px;">
             <option value="General">عام</option>
             <option value="BOQ">كميات</option>
             <option value="Quotation">عرض سعر</option>
@@ -146,14 +197,23 @@
             <option value="Receipt">فاتورة</option>
         </select>
 
-        <div id="dropzone-ar" class="border rounded p-4 text-center bg-light" style="cursor:pointer;">
-            <p class="text-muted mb-0">اسحب الملفات هنا أو اضغط للرفع</p>
-            <input type="file" name="attachments" id="fileInput-ar" class="d-none" multiple="multiple"/>
+        <div id="dropzone-ar"
+             class="border rounded p-4 text-center bg-light"
+             style="cursor:pointer;">
+            <p class="text-muted mb-0">
+                اسحب الملفات هنا أو اضغط للرفع
+            </p>
+            <input type="file" name="attachments"
+                   id="fileInput-ar"
+                   class="d-none" multiple="multiple"/>
         </div>
 
         <div id="previewArea-ar" class="mt-3"></div>
 
-        <button type="submit" class="btn btn-primary mt-4">إرسال</button>
+        <button type="submit"
+                class="btn btn-primary mt-4">
+            إرسال
+        </button>
     </form>
 
 </div>
@@ -162,78 +222,135 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
+    // =====================
     // LANGUAGE SWITCH
-    document.getElementById("btn-en").onclick = function () {
-        document.getElementById("form-en").style.display = "block";
-        document.getElementById("form-ar").style.display = "none";
-    }
+    // =====================
+    btn_en.onclick = () => {
+        form_en.style.display = "block";
+        form_ar.style.display = "none";
+    };
+    btn_ar.onclick = () => {
+        form_en.style.display = "none";
+        form_ar.style.display = "block";
+    };
 
-    document.getElementById("btn-ar").onclick = function () {
-        document.getElementById("form-en").style.display = "none";
-        document.getElementById("form-ar").style.display = "block";
-    }
+    setupEnterprise("material-lines-en","add-line-en","form-en");
+    setupEnterprise("material-lines-ar","add-line-ar","form-ar");
 
-    // Drag and Drop Logic (English)
-    setupDropzone("dropzone", "fileInput", "previewArea");
+    function setupEnterprise(tbodyId, btnId, formId) {
 
-    // Drag and Drop Logic (Arabic)
-    setupDropzone("dropzone-ar", "fileInput-ar", "previewArea-ar");
+        const tbody = document.getElementById(tbodyId);
+        const addBtn = document.getElementById(btnId);
+        const form = document.getElementById(formId);
+        if (!tbody) return;
 
-    function setupDropzone(zoneId, inputId, previewId) {
-        const dropzone = document.getElementById(zoneId);
-        const fileInput = document.getElementById(inputId);
-        const previewArea = document.getElementById(previewId);
+        addBtn.addEventListener("click", () => {
+            const first = tbody.querySelector("tr");
+            const clone = first.cloneNode(true);
+            clone.querySelectorAll("input").forEach(i => i.value="");
+            clone.querySelector("select").value="";
+            tbody.appendChild(clone);
+            renumber();
+        });
 
-        if (!dropzone || !fileInput) return;
+        tbody.addEventListener("click", e => {
+            if (e.target.classList.contains("remove-line")) {
+                if (tbody.querySelectorAll("tr").length===1){
+                    alert("At least one line is required.");
+                    return;
+                }
+                e.target.closest("tr").remove();
+                renumber();
+            }
 
-        dropzone.addEventListener("click", () => fileInput.click());
+            if (e.target.classList.contains("copy-line")) {
+                const row = e.target.closest("tr");
+                const clone = row.cloneNode(true);
+                tbody.insertBefore(clone,row.nextSibling);
+                renumber();
+            }
+        });
 
-        dropzone.addEventListener("dragover", (e) => {
+        // Drag
+        let dragged;
+        tbody.addEventListener("dragstart", e=>{
+            dragged = e.target.closest("tr");
+        });
+        tbody.addEventListener("dragover", e=>{
             e.preventDefault();
-            dropzone.classList.add("bg-warning");
+            const after = [...tbody.children]
+                .find(row => e.clientY < row.getBoundingClientRect().top + row.offsetHeight/2);
+            if (after) tbody.insertBefore(dragged,after);
+            else tbody.appendChild(dragged);
         });
+        tbody.addEventListener("drop", renumber);
 
-        dropzone.addEventListener("dragleave", () => {
-            dropzone.classList.remove("bg-warning");
-        });
+        function renumber(){
+            [...tbody.querySelectorAll("tr")].forEach((row,i)=>{
+                row.querySelector(".line-number").innerText=i+1;
+                row.querySelector(".item-name").name=`item_name_${i}`;
+                row.querySelector(".qty").name=`qty_required_${i}`;
+                row.querySelector(".uom").name=`uom_id_${i}`;
+            });
+        }
 
-        dropzone.addEventListener("drop", (e) => {
-            e.preventDefault();
-            dropzone.classList.remove("bg-warning");
-            fileInput.files = e.dataTransfer.files;
-            previewFiles(fileInput.files, previewArea);
-        });
-
-        fileInput.addEventListener("change", () => {
-            previewFiles(fileInput.files, previewArea);
+        form.addEventListener("submit", e=>{
+            const names=[...tbody.querySelectorAll(".item-name")];
+            const valid=names.some(n=>n.value.trim()!=="");
+            if(!valid){
+                e.preventDefault();
+                alert("You must enter at least one material line.");
+            }
+            renumber();
         });
     }
 
-    function previewFiles(files, previewArea) {
-        previewArea.innerHTML = "";
+    // =====================
+    // ATTACHMENT PREVIEW
+    // =====================
+    setupDropzone("dropzone","fileInput","previewArea");
+    setupDropzone("dropzone-ar","fileInput-ar","previewArea-ar");
 
-        for (let file of files) {
-            let div = document.createElement("div");
-            div.className = "mt-2";
+    function setupDropzone(zoneId,inputId,previewId){
+        const zone=document.getElementById(zoneId);
+        const input=document.getElementById(inputId);
+        const preview=document.getElementById(previewId);
+        if(!zone)return;
 
-            if (file.type.startsWith("image/")) {
-                let reader = new FileReader();
-                reader.onload = (e) => {
-                    div.innerHTML = `
-                        <img src="${e.target.result}" class="img-thumbnail" style="max-width:120px;"/>
-                        <p>${file.name}</p>
-                    `;
+        zone.onclick=()=>input.click();
+
+        input.onchange=()=>previewFiles(input.files,preview);
+
+        zone.ondragover=e=>{
+            e.preventDefault();
+            zone.classList.add("bg-warning");
+        };
+        zone.ondragleave=()=>zone.classList.remove("bg-warning");
+        zone.ondrop=e=>{
+            e.preventDefault();
+            zone.classList.remove("bg-warning");
+            input.files=e.dataTransfer.files;
+            previewFiles(input.files,preview);
+        };
+    }
+
+    function previewFiles(files,preview){
+        preview.innerHTML="";
+        for(let file of files){
+            let div=document.createElement("div");
+            div.className="mt-2";
+            if(file.type.startsWith("image/")){
+                let reader=new FileReader();
+                reader.onload=e=>{
+                    div.innerHTML=`<img src="${e.target.result}"
+                    class="img-thumbnail"
+                    style="max-width:120px;"/><p>${file.name}</p>`;
                 };
                 reader.readAsDataURL(file);
+            }else{
+                div.innerHTML=`<p>📎 ${file.name}</p>`;
             }
-            else if (file.type === "application/pdf") {
-                div.innerHTML = `<p>📄 PDF: ${file.name}</p>`;
-            }
-            else {
-                div.innerHTML = `<p>📎 ${file.name}</p>`;
-            }
-
-            previewArea.appendChild(div);
+            preview.appendChild(div);
         }
     }
 

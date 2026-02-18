@@ -128,20 +128,26 @@ class EmployeePortalMaterialRequests(http.Controller):
         })
 
         # Lines
-        for i in range(20):
+        i = 0
+        while True:
             name = post.get(f"item_name_{i}")
-            qty  = post.get(f"qty_required_{i}")
-            uom  = post.get(f"uom_id_{i}")
+            if name is None:
+                break
 
-            if not name:
-                continue
+            if name.strip():
+                qty = post.get(f"qty_required_{i}")
+                uom = post.get(f"uom_id_{i}")
 
-            request.env["material.request.line"].sudo().create({
-                "request_id": rec.id,
-                "item_name": name,
-                "qty_required": qty or 0,
-                "uom_id": int(uom) if uom else False,
-            })
+                request.env["material.request.line"].sudo().create({
+                    "request_id": rec.id,
+                    "item_name": name,
+                    "qty_required": qty or 0,
+                    "uom_id": int(uom) if uom else False,
+                })
+
+            i += 1
+
+
 
         rec.sudo().action_submit()
         # --- SAVE ATTACHMENTS FROM NEW FORM ---
