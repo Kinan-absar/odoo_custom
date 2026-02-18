@@ -79,7 +79,8 @@ class EmployeePortalMaterialRequests(http.Controller):
     @http.route("/my/employee/material/<int:req_id>", type="http", auth="user", website=True)
     def material_detail(self, req_id, **kw):
         emp = self._employee()
-        rec = request.env["material.request"].sudo().browse(req_id)
+        rec = request.env["material.request"].browse(req_id)
+
 
         if not rec.exists() or rec.employee_id != emp:
             return request.redirect("/my")
@@ -373,7 +374,8 @@ class EmployeePortalMaterialRequests(http.Controller):
     @http.route("/my/employee/material/pdf/<int:req_id>", type="http", auth="user", website=True)
     def portal_material_request_pdf(self, req_id, **kw):
 
-        rec = request.env["material.request"].sudo().browse(req_id)
+        rec = request.env["material.request"].browse(req_id)
+
         if not rec.exists():
             return request.not_found()
 
@@ -416,7 +418,8 @@ class EmployeePortalMaterialRequests(http.Controller):
         req_id = int(kw.get("req_id", 0))
         tag = kw.get("attachment_tag", "General")
 
-        rec = request.env["material.request"].sudo().browse(req_id)
+        rec = request.env["material.request"].browse(req_id)
+
         if not rec.exists():
             return request.not_found()
 
