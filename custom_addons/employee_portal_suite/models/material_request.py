@@ -91,6 +91,10 @@ class MaterialRequest(models.Model):
         domain="[('account_type', 'in', ('expense','expense_direct_cost'))]",
         tracking=True,
     )
+    needs_clarification = fields.Boolean(
+        string="Needs Clarification",
+        default=False
+    )
 
     # ---------------------------------------------------------
     # STATE MACHINE

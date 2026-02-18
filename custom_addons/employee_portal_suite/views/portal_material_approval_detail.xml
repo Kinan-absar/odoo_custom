@@ -181,6 +181,21 @@
                 </form>
 
             </t>
+                <form method="post"
+                    action="/my/employee/material/requests/toggle_clarification">
+
+                    <input type="hidden"
+                        name="csrf_token"
+                        t-att-value="request.csrf_token()"/>
+                    <input type="hidden"
+                        name="req_id"
+                        t-att-value="request_rec.id"/>
+
+                    <button type="submit"
+                            class="btn btn-outline-warning">
+                        🚩 Toggle Clarification
+                    </button>
+                </form>
 
             <a href="/my/employee/material/approvals" class="btn btn-secondary mt-4">Back</a>
 

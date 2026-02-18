@@ -467,3 +467,21 @@ class EmployeePortalMaterialRequests(http.Controller):
             return request.redirect(f"/my/employee/material/approvals/{req_id}")
         else:
             return request.redirect(f"/my/employee/material/{req_id}")
+
+    @http.route(
+        "/my/employee/material/requests/toggle_clarification",
+        type="http",
+        auth="user",
+        website=True,
+        csrf=True
+    )
+    def toggle_clarification(self, **post):
+
+        rec = request.env["material.request"].sudo().browse(
+            int(post.get("req_id"))
+        )
+
+        if rec.exists():
+            rec.needs_clarification = not rec.needs_clarification
+
+        return request.redirect(request.httprequest.referrer or "/my")
