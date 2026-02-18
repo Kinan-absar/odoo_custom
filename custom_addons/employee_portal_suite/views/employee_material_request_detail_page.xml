@@ -188,6 +188,15 @@
                         <p>No approval activity yet.</p>
                     </t>
                 </div>
+                <!-- ========================= -->
+                <!-- PORTAL CHATTER           -->
+                <!-- ========================= -->
+
+                <h4 class="mt-5">Discussion</h4>
+
+                <t t-call="portal.message_thread">
+                    <t t-set="object" t-value="request_rec"/>
+                </t>
 
                 <a href="/my/employee/material" class="btn btn-secondary mt-4">Back</a>
             </div>
