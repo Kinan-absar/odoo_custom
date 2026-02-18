@@ -219,43 +219,54 @@
 </div>
 
 <!-- ===================== JS ===================== -->
-<script>
+<script type="text/javascript">
+<![CDATA[
 document.addEventListener("DOMContentLoaded", function () {
 
-    // =====================
-    // LANGUAGE SWITCH
-    // =====================
-    btn_en.onclick = () => {
-        form_en.style.display = "block";
-        form_ar.style.display = "none";
-    };
-    btn_ar.onclick = () => {
-        form_en.style.display = "none";
-        form_ar.style.display = "block";
-    };
+    var btn_en = document.getElementById("btn-en");
+    var btn_ar = document.getElementById("btn-ar");
+    var form_en = document.getElementById("form-en");
+    var form_ar = document.getElementById("form-ar");
+
+    if (btn_en && btn_ar) {
+        btn_en.onclick = function () {
+            form_en.style.display = "block";
+            form_ar.style.display = "none";
+        };
+        btn_ar.onclick = function () {
+            form_en.style.display = "none";
+            form_ar.style.display = "block";
+        };
+    }
 
     setupEnterprise("material-lines-en","add-line-en","form-en");
     setupEnterprise("material-lines-ar","add-line-ar","form-ar");
 
     function setupEnterprise(tbodyId, btnId, formId) {
 
-        const tbody = document.getElementById(tbodyId);
-        const addBtn = document.getElementById(btnId);
-        const form = document.getElementById(formId);
-        if (!tbody) return;
+        var tbody = document.getElementById(tbodyId);
+        var addBtn = document.getElementById(btnId);
+        var form = document.getElementById(formId);
+        if (!tbody || !addBtn || !form) return;
 
-        addBtn.addEventListener("click", () => {
-            const first = tbody.querySelector("tr");
-            const clone = first.cloneNode(true);
-            clone.querySelectorAll("input").forEach(i => i.value="");
-            clone.querySelector("select").value="";
+        addBtn.addEventListener("click", function () {
+            var first = tbody.querySelector("tr");
+            var clone = first.cloneNode(true);
+
+            var inputs = clone.querySelectorAll("input");
+            for (var i = 0; i < inputs.length; i++) {
+                inputs[i].value = "";
+            }
+
+            clone.querySelector("select").value = "";
             tbody.appendChild(clone);
             renumber();
         });
 
-        tbody.addEventListener("click", e => {
+        tbody.addEventListener("click", function(e){
+
             if (e.target.classList.contains("remove-line")) {
-                if (tbody.querySelectorAll("tr").length===1){
+                if (tbody.querySelectorAll("tr").length === 1){
                     alert("At least one line is required.");
                     return;
                 }
@@ -264,43 +275,72 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             if (e.target.classList.contains("copy-line")) {
-                const row = e.target.closest("tr");
-                const clone = row.cloneNode(true);
+                var row = e.target.closest("tr");
+                var clone = row.cloneNode(true);
                 tbody.insertBefore(clone,row.nextSibling);
                 renumber();
             }
         });
 
-        // Drag
-        let dragged;
-        tbody.addEventListener("dragstart", e=>{
+        // DRAG
+        var dragged;
+
+        tbody.addEventListener("dragstart", function(e){
             dragged = e.target.closest("tr");
         });
-        tbody.addEventListener("dragover", e=>{
+
+        tbody.addEventListener("dragover", function(e){
             e.preventDefault();
-            const after = [...tbody.children]
-                .find(row => e.clientY < row.getBoundingClientRect().top + row.offsetHeight/2);
-            if (after) tbody.insertBefore(dragged,after);
-            else tbody.appendChild(dragged);
+
+            var rows = tbody.children;
+            var after = null;
+
+            for (var i = 0; i < rows.length; i++) {
+                var rect = rows[i].getBoundingClientRect();
+                if (e.clientY < rect.top + rect.height/2) {
+                    after = rows[i];
+                    break;
+                }
+            }
+
+            if (after) {
+                tbody.insertBefore(dragged, after);
+            } else {
+                tbody.appendChild(dragged);
+            }
         });
-        tbody.addEventListener("drop", renumber);
+
+        tbody.addEventListener("drop", function(){
+            renumber();
+        });
 
         function renumber(){
-            [...tbody.querySelectorAll("tr")].forEach((row,i)=>{
-                row.querySelector(".line-number").innerText=i+1;
-                row.querySelector(".item-name").name=`item_name_${i}`;
-                row.querySelector(".qty").name=`qty_required_${i}`;
-                row.querySelector(".uom").name=`uom_id_${i}`;
-            });
+            var rows = tbody.querySelectorAll("tr");
+            for (var i = 0; i < rows.length; i++) {
+
+                rows[i].querySelector(".line-number").innerText = i + 1;
+                rows[i].querySelector(".item-name").name = "item_name_" + i;
+                rows[i].querySelector(".qty").name = "qty_required_" + i;
+                rows[i].querySelector(".uom").name = "uom_id_" + i;
+            }
         }
 
-        form.addEventListener("submit", e=>{
-            const names=[...tbody.querySelectorAll(".item-name")];
-            const valid=names.some(n=>n.value.trim()!=="");
-            if(!valid){
+        form.addEventListener("submit", function(e){
+
+            var names = tbody.querySelectorAll(".item-name");
+            var valid = false;
+
+            for (var i = 0; i < names.length; i++) {
+                if (names[i].value.trim() !== "") {
+                    valid = true;
+                }
+            }
+
+            if (!valid){
                 e.preventDefault();
                 alert("You must enter at least one material line.");
             }
+
             renumber();
         });
     }
@@ -308,25 +348,32 @@ document.addEventListener("DOMContentLoaded", function () {
     // =====================
     // ATTACHMENT PREVIEW
     // =====================
+
     setupDropzone("dropzone","fileInput","previewArea");
     setupDropzone("dropzone-ar","fileInput-ar","previewArea-ar");
 
     function setupDropzone(zoneId,inputId,previewId){
-        const zone=document.getElementById(zoneId);
-        const input=document.getElementById(inputId);
-        const preview=document.getElementById(previewId);
-        if(!zone)return;
+        var zone=document.getElementById(zoneId);
+        var input=document.getElementById(inputId);
+        var preview=document.getElementById(previewId);
+        if(!zone || !input)return;
 
-        zone.onclick=()=>input.click();
+        zone.onclick=function(){ input.click(); };
 
-        input.onchange=()=>previewFiles(input.files,preview);
+        input.onchange=function(){
+            previewFiles(input.files,preview);
+        };
 
-        zone.ondragover=e=>{
+        zone.ondragover=function(e){
             e.preventDefault();
             zone.classList.add("bg-warning");
         };
-        zone.ondragleave=()=>zone.classList.remove("bg-warning");
-        zone.ondrop=e=>{
+
+        zone.ondragleave=function(){
+            zone.classList.remove("bg-warning");
+        };
+
+        zone.ondrop=function(e){
             e.preventDefault();
             zone.classList.remove("bg-warning");
             input.files=e.dataTransfer.files;
@@ -336,26 +383,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function previewFiles(files,preview){
         preview.innerHTML="";
-        for(let file of files){
-            let div=document.createElement("div");
+        for(var i=0;i<files.length;i++){
+            var file=files[i];
+            var div=document.createElement("div");
             div.className="mt-2";
-            if(file.type.startsWith("image/")){
-                let reader=new FileReader();
-                reader.onload=e=>{
-                    div.innerHTML=`<img src="${e.target.result}"
-                    class="img-thumbnail"
-                    style="max-width:120px;"/><p>${file.name}</p>`;
+
+            if(file.type.indexOf("image/")===0){
+                var reader=new FileReader();
+                reader.onload=function(e){
+                    div.innerHTML='<img src="'+e.target.result+
+                    '" class="img-thumbnail" style="max-width:120px;"/><p>'+file.name+'</p>';
                 };
                 reader.readAsDataURL(file);
             }else{
-                div.innerHTML=`<p>📎 ${file.name}</p>`;
+                div.innerHTML="<p>📎 "+file.name+"</p>";
             }
             preview.appendChild(div);
         }
     }
 
 });
+]]>
 </script>
+
 
 </t>
 </template>
