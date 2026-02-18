@@ -286,7 +286,7 @@ class EmployeePortalMaterialRequests(http.Controller):
     # ---------------------------------------------------------
     @http.route("/my/employee/material/approvals/<int:req_id>", type="http", auth="user", website=True)
     def material_approval_detail(self, req_id, **kw):
-        rec = request.env["material.request"].sudo().browse(req_id)
+        rec = request.env["material.request"].browse(req_id)
 
         if not rec.exists():
             return request.redirect("/my")
