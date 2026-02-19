@@ -97,6 +97,33 @@ class MaterialRequest(models.Model):
         selection=lambda self: self._fields['state'].selection,
         string="Clarification Stage"
     )
+    # ---------------------------------------------------------
+    # DISPLAY STATE (UI OVERRIDE FOR CLARIFICATION)
+    # ---------------------------------------------------------
+
+    display_state = fields.Selection(
+        selection=[
+            ('draft', 'Draft'),
+            ('purchase', 'Purchase Representative'),
+            ('store', 'Store Manager'),
+            ('project_manager', 'Project Manager'),
+            ('director', 'Projects Director'),
+            ('ceo', 'CEO Approval'),
+            ('approved', 'Approved'),
+            ('rejected', 'Rejected'),
+            ('clarification', 'Needs Clarification'),
+        ],
+        compute="_compute_display_state",
+        store=False
+    )
+
+    @api.depends("state", "needs_clarification")
+    def _compute_display_state(self):
+        for rec in self:
+            if rec.needs_clarification:
+                rec.display_state = 'clarification'
+            else:
+                rec.display_state = rec.state
 
     # ---------------------------------------------------------
     # STATE MACHINE
