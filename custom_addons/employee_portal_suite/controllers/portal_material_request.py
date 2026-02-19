@@ -30,6 +30,17 @@ def _mr_status_badge(rec):
         reason = reasons.get(rec.state_before_reject) or "No reason"
 
         return f'<span class="badge bg-danger">Rejected — {lbl} Stage ({reason})</span>'
+        # CLARIFICATION OVERRIDE
+    if rec.needs_clarification and rec.clarification_stage:
+        stage_labels = {
+            'purchase': 'Purchase Rep',
+            'store': 'Store Manager',
+            'project_manager': 'Project Manager',
+            'director': 'Director',
+            'ceo': 'CEO',
+        }
+        clar_label = stage_labels.get(rec.clarification_stage, rec.clarification_stage)
+        return f'<span class="badge bg-info text-dark">🚩 Clarification — {clar_label}</span>'
 
     # PENDING STAGE BADGES
     stage_badges = {
@@ -400,6 +411,35 @@ class EmployeePortalMaterialRequests(http.Controller):
         ]
 
         return request.make_response(pdf_content, headers=headers)
+
+    @http.route(
+        "/my/employee/material/requests/set_clarification",
+        type="http",
+        auth="user",
+        website=True,
+        csrf=True,
+    )
+    def set_clarification(self, **post):
+
+        rec = request.env["material.request"].sudo().browse(int(post.get("req_id")))
+
+        if not rec.exists():
+            return request.redirect("/my")
+
+        # Security
+        if not rec._can_toggle_clarification():
+            return request.redirect(
+                request.httprequest.referrer + "?clarify_error=1"
+            )
+
+        is_flagged = post.get("flag") == "on"
+
+        rec.write({
+            "needs_clarification": is_flagged,
+            "clarification_stage": rec.state if is_flagged else False,
+        })
+
+        return request.redirect(request.httprequest.referrer)
 
     # Attachment
     import base64

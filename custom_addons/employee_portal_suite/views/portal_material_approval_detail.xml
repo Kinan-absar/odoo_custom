@@ -22,6 +22,18 @@
                     <t t-esc="request_rec.get_rejection_reason()"/>
                 </div>
             </t>
+            <t t-if="request_rec.needs_clarification and request_rec.clarification_stage">
+                <div class="alert alert-warning">
+                    🚩 
+                    <strong>
+                        Clarification requested by 
+                        <t t-esc="dict(request_rec._fields['state'].selection).get(request_rec.clarification_stage)"/>.
+                    </strong>
+                    <br/>
+                    Please review the request and provide the required information to proceed with the approval process.
+                </div>
+            </t>
+
 
 
             <!-- BASIC INFO (UPDATED, MINIMAL, CORRECT) -->
@@ -165,6 +177,38 @@
 
             <!-- ACTION FOR CURRENT APPROVER (UNCHANGED) -->
             <t t-if="request_rec.state in ['purchase','store','project_manager','director','ceo']">
+                <t t-if="request_rec.can_toggle_clarification">
+                    <form method="post"
+                        action="/my/employee/material/requests/set_clarification"
+                        class="mt-3">
+
+                        <input type="hidden"
+                            name="csrf_token"
+                            t-att-value="request.csrf_token()"/>
+
+                        <input type="hidden"
+                            name="req_id"
+                            t-att-value="request_rec.id"/>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input"
+                                type="checkbox"
+                                name="flag"
+                                id="clarifySwitch"
+                                onchange="this.form.submit()"
+                                t-att-checked="request_rec.needs_clarification and 'checked' or None"/>
+
+                            <label class="form-check-label"
+                                for="clarifySwitch">
+                                🚩 Needs Clarification
+                                <span class="text-muted small">
+                                    (requires additional information before approval)
+                                </span>
+                            </label>
+                        </div>
+
+                    </form>
+                </t>
 
                 <form action="/my/employee/material/requests/approve" method="post" class="mt-4">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>

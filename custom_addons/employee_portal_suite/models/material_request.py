@@ -91,6 +91,89 @@ class MaterialRequest(models.Model):
         domain="[('account_type', 'in', ('expense','expense_direct_cost'))]",
         tracking=True,
     )
+    # ---------------------------------------------------------
+    # CLARIFICATION
+    # ---------------------------------------------------------
+    needs_clarification = fields.Boolean(default=False)
+
+    clarification_stage = fields.Selection(
+        selection=lambda self: self._fields['state'].selection,
+        string="Clarification Stage"
+    )
+
+    can_toggle_clarification = fields.Boolean(
+        compute="_compute_can_toggle_clarification"
+    )
+
+    def _compute_can_toggle_clarification(self):
+        for rec in self:
+            rec.can_toggle_clarification = rec._can_toggle_clarification()
+
+
+    def _can_toggle_clarification(self):
+        self.ensure_one()
+        user = self.env.user
+
+        # Cannot toggle in these states
+        if self.state in ("draft", "approved", "rejected"):
+            return False
+
+        # Project based stages
+        if self.state == "store":
+            return user == self.store_manager_user_id
+
+        if self.state == "project_manager":
+            return user == self.project_manager_user_id
+
+        # Group based stages
+        stage_group_map = {
+            "purchase": "employee_portal_suite.group_mr_purchase_rep",
+            "director": "employee_portal_suite.group_mr_projects_director",
+            "ceo": "employee_portal_suite.group_employee_portal_ceo",
+        }
+
+        group = stage_group_map.get(self.state)
+        if group:
+            return user.has_group(group)
+
+        return False
+
+    def write(self, vals):
+
+        if "needs_clarification" in vals:
+            for rec in self:
+
+                if not rec._can_toggle_clarification():
+                    raise UserError(_("You are not allowed to toggle clarification at this stage."))
+
+                # When turning ON → remember stage
+                if vals.get("needs_clarification"):
+                    vals["clarification_stage"] = rec.state
+
+                # When turning OFF → clear stage
+                else:
+                    vals["clarification_stage"] = False
+
+        return super().write(vals)
+
+    display_state = fields.Char(
+        string="Display Status",
+        compute="_compute_display_state",
+        store=False
+    )
+
+    @api.depends("state", "needs_clarification", "clarification_stage")
+    def _compute_display_state(self):
+        stage_labels = dict(self._fields['state'].selection)
+
+        for rec in self:
+            if rec.needs_clarification and rec.clarification_stage:
+                stage_name = stage_labels.get(rec.clarification_stage, "")
+                rec.display_state = f"🚩 Clarification — {stage_name}"
+            else:
+                rec.display_state = stage_labels.get(rec.state, "")
+
+
 
     # ---------------------------------------------------------
     # STATE MACHINE

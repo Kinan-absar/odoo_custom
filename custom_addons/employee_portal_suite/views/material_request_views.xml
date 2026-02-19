@@ -105,6 +105,19 @@
                         <div class="oe_inline">
                             <field name="state" widget="statusbar"
                                    statusbar_visible="draft,purchase,store,project_manager,director,ceo,approved,rejected"/>
+                                <div class="oe_inline ms-3 d-flex align-items-center"
+                                    invisible="not can_toggle_clarification">
+
+                                    <span class="me-2 text-warning fw-semibold">
+                                        🚩 Needs Clarification
+                                    </span>
+
+                                    <field name="needs_clarification"
+                                        widget="boolean_toggle"
+                                        nolabel="1"/>
+
+                                </div>
+
                         </div>
                     </div>
 
@@ -221,17 +234,17 @@
                 <field name="request_date"/>
                 <field name="worksite"/>
                 <field name="delivery_date"/>
-                <field name="state"
-                    widget="badge"
-                    string="Status"
-                    class="fw-bold"
+                <field name="display_state"
+                        string="Status"
+                        widget="badge"
+                        decoration-warning="needs_clarification or state == 'project_manager'"
                         decoration-muted="state == 'draft'"
                         decoration-info="state in ('purchase','director')"
                         decoration-primary="state == 'store'"
-                        decoration-warning="state == 'project_manager'"
                         decoration-success="state in ('approved','ceo')"
                         decoration-danger="state == 'rejected'"/>
-                <!-- CLICKABLE PO ICON - visible ONLY if po_name has something -->
+
+                <!-- CLICKABLE PO ICON - visible ONLYif po_name has something -->
                 <button name="action_open_po"
                         type="object"
                         string="Open PO"
