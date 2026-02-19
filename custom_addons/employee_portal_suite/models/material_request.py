@@ -156,29 +156,23 @@ class MaterialRequest(models.Model):
 
         return super().write(vals)
 
-    display_state = fields.Selection(
-        selection=[
-            ('draft', 'Draft'),
-            ('purchase', 'Purchase Representative'),
-            ('store', 'Store Manager'),
-            ('project_manager', 'Project Manager'),
-            ('director', 'Projects Director'),
-            ('ceo', 'CEO Approval'),
-            ('approved', 'Approved'),
-            ('rejected', 'Rejected'),
-            ('clarification', 'Needs Clarification'),
-        ],
+    display_state = fields.Char(
+        string="Display Status",
         compute="_compute_display_state",
-        store=True
+        store=False
     )
 
-    @api.depends("state", "needs_clarification")
+    @api.depends("state", "needs_clarification", "clarification_stage")
     def _compute_display_state(self):
+        stage_labels = dict(self._fields['state'].selection)
+
         for rec in self:
-            if rec.needs_clarification:
-                rec.display_state = 'clarification'
+            if rec.needs_clarification and rec.clarification_stage:
+                stage_name = stage_labels.get(rec.clarification_stage, "")
+                rec.display_state = f"🚩 Clarification — {stage_name}"
             else:
-                rec.display_state = rec.state
+                rec.display_state = stage_labels.get(rec.state, "")
+
 
 
     # ---------------------------------------------------------

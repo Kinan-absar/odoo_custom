@@ -105,18 +105,19 @@
                         <div class="oe_inline">
                             <field name="state" widget="statusbar"
                                    statusbar_visible="draft,purchase,store,project_manager,director,ceo,approved,rejected"/>
-                                <div class="oe_inline ms-3 d-flex align-items-center">
+                                <div class="oe_inline ms-3 d-flex align-items-center"
+                                    invisible="not can_toggle_clarification">
 
-                            <span class="me-2 text-warning fw-semibold">
-                                🚩 Needs Clarification
-                            </span>
+                                    <span class="me-2 text-warning fw-semibold">
+                                        🚩 Needs Clarification
+                                    </span>
 
-                            <field name="needs_clarification"
-                                widget="boolean_toggle"
-                                nolabel="1"
-                                invisible="not can_toggle_clarification"/>
+                                    <field name="needs_clarification"
+                                        widget="boolean_toggle"
+                                        nolabel="1"/>
 
-                        </div>
+                                </div>
+
                         </div>
                     </div>
 
@@ -234,15 +235,15 @@
                 <field name="worksite"/>
                 <field name="delivery_date"/>
                 <field name="display_state"
-                        widget="badge"
                         string="Status"
-                        class="fw-bold"
-                        decoration-muted="display_state == 'draft'"
-                        decoration-info="display_state in ('purchase','director','clarification')"
-                        decoration-primary="display_state == 'store'"
-                        decoration-warning="display_state == 'project_manager'"
-                        decoration-success="display_state in ('approved','ceo')"
-                        decoration-danger="display_state == 'rejected'"/>
+                        widget="badge"
+                        decoration-warning="needs_clarification or state == 'project_manager'"
+                        decoration-muted="state == 'draft'"
+                        decoration-info="state in ('purchase','director')"
+                        decoration-primary="state == 'store'"
+                        decoration-success="state in ('approved','ceo')"
+                        decoration-danger="state == 'rejected'"/>
+
                 <!-- CLICKABLE PO ICON - visible ONLYif po_name has something -->
                 <button name="action_open_po"
                         type="object"
