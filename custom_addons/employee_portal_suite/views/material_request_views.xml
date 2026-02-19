@@ -106,13 +106,19 @@
                             <field name="state" widget="statusbar"
                                    statusbar_visible="draft,purchase,store,project_manager,director,ceo,approved,rejected,clarification"/>
                         </div>
-                        <div class="oe_inline ms-3"
-                            invisible="not can_toggle_clarification">
+                       <div class="oe_inline ms-3 d-flex align-items-center">
+
+                            <span class="me-2 text-warning fw-semibold">
+                                🚩 Needs Clarification
+                            </span>
+
                             <field name="needs_clarification"
-                                widget="boolean_toggle"/>
+                                widget="boolean_toggle"
+                                nolabel="1"
+                                invisible="not can_toggle_clarification"/>
+
                         </div>
 
-                    </div>
 
                     
                     <!-- NOTEBOOK -->
