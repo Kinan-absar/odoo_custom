@@ -104,7 +104,7 @@
                         <label for="state" class="oe_inline"/>
                         <div class="oe_inline">
                             <field name="state" widget="statusbar"
-                                   statusbar_visible="draft,purchase,store,project_manager,director,ceo,approved,rejected,clarification"/>
+                                   statusbar_visible="draft,purchase,store,project_manager,director,ceo,approved,rejected"/>
                                 <div class="oe_inline ms-3 d-flex align-items-center">
 
                             <span class="me-2 text-warning fw-semibold">
@@ -233,17 +233,17 @@
                 <field name="request_date"/>
                 <field name="worksite"/>
                 <field name="delivery_date"/>
-                <field name="state"
-                    widget="badge"
-                    string="Status"
-                    class="fw-bold"
+                <field name="display_state"
+                        widget="badge"
+                        string="Status"
+                        class="fw-bold"
                         decoration-warning="display_state == 'clarification'"
-                        decoration-muted="state == 'draft'"
-                        decoration-info="state in ('purchase','director')"
-                        decoration-primary="state == 'store'"
-                        decoration-warning="state == 'project_manager'"
-                        decoration-success="state in ('approved','ceo')"
-                        decoration-danger="state == 'rejected'"/>
+                        decoration-muted="display_state == 'draft'"
+                        decoration-info="display_state in ('purchase','director')"
+                        decoration-primary="display_state == 'store'"
+                        decoration-warning="display_state == 'project_manager'"
+                        decoration-success="display_state in ('approved','ceo')"
+                        decoration-danger="display_state == 'rejected'"/>
                 <!-- CLICKABLE PO ICON - visible ONLY if po_name has something -->
                 <button name="action_open_po"
                         type="object"

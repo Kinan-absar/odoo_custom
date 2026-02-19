@@ -155,15 +155,23 @@ class MaterialRequest(models.Model):
                     vals["clarification_stage"] = False
 
         return super().write(vals)
+
     display_state = fields.Selection(
-        selection=lambda self: self._get_display_state_selection(),
+        selection=[
+            ('draft', 'Draft'),
+            ('purchase', 'Purchase Representative'),
+            ('store', 'Store Manager'),
+            ('project_manager', 'Project Manager'),
+            ('director', 'Projects Director'),
+            ('ceo', 'CEO Approval'),
+            ('approved', 'Approved'),
+            ('rejected', 'Rejected'),
+            ('clarification', 'Needs Clarification'),
+        ],
         compute="_compute_display_state",
         store=True
     )
-    def _get_display_state_selection(self):
-        return self._fields['state'].selection + [
-            ('clarification', 'Needs Clarification')
-        ]
+
     @api.depends("state", "needs_clarification")
     def _compute_display_state(self):
         for rec in self:
@@ -171,6 +179,7 @@ class MaterialRequest(models.Model):
                 rec.display_state = 'clarification'
             else:
                 rec.display_state = rec.state
+
 
     # ---------------------------------------------------------
     # STATE MACHINE
