@@ -243,7 +243,7 @@
                         decoration-warning="display_state == 'project_manager'"
                         decoration-success="display_state in ('approved','ceo')"
                         decoration-danger="display_state == 'rejected'"/>
-                <!-- CLICKABLE PO ICON - visible ONLY if po_name has something -->
+                <!-- CLICKABLE PO ICON - visible ONLYif po_name has something -->
                 <button name="action_open_po"
                         type="object"
                         string="Open PO"
