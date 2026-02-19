@@ -92,7 +92,6 @@ class EmployeePortalMain(CustomerPortal):
                 'employee_portal_suite.group_employee_portal_ceo'
             ):
                 material_pending_count += 1
-
         # -------------------------------
         # 4. Documents to Sign
         # -------------------------------

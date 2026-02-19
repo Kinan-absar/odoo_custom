@@ -1,6 +1,6 @@
 {
     'name': 'Employee Portal Suite',
-    'version': '1.0.0',
+    'version': '1.0',
     'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
 
     'description': """
@@ -11,7 +11,7 @@
     ✔ Employee Portal (/my/employee)
     ✔ Clean custom portal layout and navigation
     ✔ Employee Requests workflow (Employee → Manager → HR → Finance → CEO)
-    ✔ Material Requests workflow (Employee → Purchase Rep → Store Manager → Project Manager → Director →  CEO)
+    ✔ Material Requests workflow (Employee → Purchase Rep → Store Manager → Project Manager → Director → CEO)
     ✔ Full approval timeline visible in backend + portal
     ✔ Manager Approvals Center with tabs (Employee / Material)
     ✔ Dynamic Request Submission Forms
@@ -105,7 +105,6 @@
         'views/sign_portal_clean.xml',
         'views/hr_work_location_views.xml',
         'views/project_project_views.xml',
-        'views/portal_attendance_templates.xml',
 
     ],
 

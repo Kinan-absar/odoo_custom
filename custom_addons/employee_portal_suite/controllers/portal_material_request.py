@@ -5,24 +5,19 @@ import base64
 def _mr_status_badge(rec):
     state = rec.state
 
-    stage_labels = {
-        'purchase': 'Purchase Rep',
-        'store': 'Store Manager',
-        'project_manager': 'Project Manager',
-        'director': 'Director',
-        'ceo': 'CEO',
-    }
-
-    # ------------------------
-    # APPROVED
-    # ------------------------
+    # FULLY APPROVED
     if state == "approved":
         return '<span class="badge bg-success">Fully Approved</span>'
 
-    # ------------------------
     # REJECTED
-    # ------------------------
     if state == "rejected":
+        stage_labels = {
+            'purchase': 'Purchase Rep',
+            'store': 'Store Manager',
+            'project_manager': 'Project Manager',
+            'director': 'Director',
+            'ceo': 'CEO',
+        }
         lbl = stage_labels.get(rec.state_before_reject, "Unknown Stage")
 
         reasons = {
@@ -34,18 +29,9 @@ def _mr_status_badge(rec):
         }
         reason = reasons.get(rec.state_before_reject) or "No reason"
 
-        return f'<span class="badge bg-danger">Rejected — {lbl} ({reason})</span>'
+        return f'<span class="badge bg-danger">Rejected — {lbl} Stage ({reason})</span>'
 
-    # ------------------------
-    # 🚩 CLARIFICATION OVERRIDES PENDING
-    # ------------------------
-    if rec.needs_clarification and rec.clarification_stage:
-        clar_label = stage_labels.get(rec.clarification_stage, rec.clarification_stage)
-        return f'<span class="badge bg-info text-dark">🚩 Clarification — {clar_label}</span>'
-
-    # ------------------------
-    # NORMAL PENDING
-    # ------------------------
+    # PENDING STAGE BADGES
     stage_badges = {
         'purchase': 'Pending Purchase Rep',
         'store': 'Pending Store Manager',
@@ -58,8 +44,6 @@ def _mr_status_badge(rec):
         return f'<span class="badge bg-warning text-dark">{stage_badges[state]}</span>'
 
     return '<span class="badge bg-secondary">Unknown</span>'
-
-
 
 class EmployeePortalMaterialRequests(http.Controller):
 
@@ -483,34 +467,3 @@ class EmployeePortalMaterialRequests(http.Controller):
             return request.redirect(f"/my/employee/material/approvals/{req_id}")
         else:
             return request.redirect(f"/my/employee/material/{req_id}")
-
-    @http.route(
-        "/my/employee/material/requests/set_clarification",
-        type="http",
-        auth="user",
-        website=True,
-        csrf=True
-    )
-    def set_clarification(self, **post):
-
-        rec = request.env["material.request"].sudo().browse(
-            int(post.get("req_id"))
-        )
-
-        if rec.exists():
-            is_flagged = post.get("flag") == "on"
-
-            if is_flagged:
-                rec.write({
-                    "needs_clarification": True,
-                    "clarification_stage": rec.state,
-                })
-            else:
-                rec.write({
-                    "needs_clarification": False,
-                    "clarification_stage": False,
-                })
-
-
-        return request.redirect(request.httprequest.referrer or "/my")
-
