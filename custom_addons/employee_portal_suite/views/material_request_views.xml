@@ -114,8 +114,7 @@
 
                             <field name="needs_clarification"
                                 widget="boolean_toggle"
-                                nolabel="1"
-                                invisible="not can_toggle_clarification"/>
+                                nolabel="1"/>
 
                         </div>
                     </div>
