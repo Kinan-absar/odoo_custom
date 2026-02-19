@@ -389,24 +389,29 @@ class MaterialRequest(models.Model):
         return False
     def write(self, vals):
 
+        # Only block if the user is ACTUALLY trying to change the value
         if "needs_clarification" in vals:
 
-            # Skip protection if called via sudo (portal attachment case)
-            if not self.env.su:
-                for rec in self:
+            for rec in self:
+
+                # Only protect if value is changing
+                if rec.needs_clarification != vals.get("needs_clarification"):
+
                     if not rec._can_toggle_clarification():
                         raise UserError(
                             _("You are not allowed to toggle clarification at this stage.")
                         )
 
-            vals = dict(vals)
-
-            if vals.get("needs_clarification"):
-                vals["clarification_stage"] = self.state
-            else:
-                vals["clarification_stage"] = False
+                    # Set clarification stage properly
+                    if vals.get("needs_clarification"):
+                        vals = dict(vals)
+                        vals["clarification_stage"] = rec.state
+                    else:
+                        vals = dict(vals)
+                        vals["clarification_stage"] = False
 
         return super().write(vals)
+
 
 
         #helper
