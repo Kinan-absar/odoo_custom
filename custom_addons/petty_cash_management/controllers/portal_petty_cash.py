@@ -101,7 +101,7 @@ class PettyCashPortal(http.Controller):
                 'categories': categories,
             }
         )
-   @http.route('/my/petty-cash/<int:report_id>/add-line',
+    @http.route('/my/petty-cash/<int:report_id>/add-line',
                 type='http', auth='user', website=True, methods=['POST'])
     def portal_add_line_post(self, report_id, **post):
 
@@ -145,4 +145,3 @@ class PettyCashPortal(http.Controller):
             })
 
         return request.redirect('/my/petty-cash/%s' % report.id)
-
