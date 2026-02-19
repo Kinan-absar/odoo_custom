@@ -189,6 +189,9 @@
                         <label class="form-check-label"
                             for="clarifySwitch">
                             🚩 Needs Clarification
+                            <span class="text-muted small">
+                                (requires additional information before approval)
+                            </span>
                         </label>
 
                     </div>
