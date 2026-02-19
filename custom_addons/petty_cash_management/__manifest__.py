@@ -9,7 +9,7 @@
         Petty Cash Management Module
         ============================
 
-        A complete petty cash management solution designed for internal accounting teams.
+        A complete petty cash management  solution designed for internal accounting teams.
         This module provides a structured workflow for recording petty cash expenses, 
         submitting them for approval, validating them by accountants, and generating 
         draft journal entries directly into the accounting system.
