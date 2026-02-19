@@ -101,16 +101,22 @@ class PettyCashPortal(http.Controller):
                 'categories': categories,
             }
         )
-    @http.route('/my/petty-cash/<int:report_id>/add-line',
+   @http.route('/my/petty-cash/<int:report_id>/add-line',
                 type='http', auth='user', website=True, methods=['POST'])
     def portal_add_line_post(self, report_id, **post):
 
-        report = request.env['petty.cash'].sudo().browse(report_id)
+        report = request.env['petty.cash'].browse(report_id)
 
-        if report.user_id != request.env.user:
+        if not report or report.user_id != request.env.user:
             return request.redirect('/my')
 
         if report.state != 'draft':
+            return request.redirect('/my/petty-cash/%s' % report_id)
+
+        category_id = post.get('category_id')
+        amount = post.get('amount_before_vat')
+
+        if not category_id or not amount:
             return request.redirect('/my/petty-cash/%s' % report_id)
 
         line_vals = {
@@ -122,14 +128,13 @@ class PettyCashPortal(http.Controller):
             'mr_number': post.get('mr_number'),
             'zone': post.get('zone'),
             'description': post.get('description'),
-            'category_id': int(post.get('category_id')),
-            'amount_before_vat': float(post.get('amount_before_vat')),
+            'category_id': int(category_id),
+            'amount_before_vat': float(amount),
             'vat_applicable': True if post.get('vat_applicable') else False,
         }
 
         line = request.env['petty.cash.line'].sudo().create(line_vals)
 
-        # Handle attachment
         attachment = post.get('attachment')
         if attachment:
             request.env['ir.attachment'].sudo().create({
@@ -140,3 +145,4 @@ class PettyCashPortal(http.Controller):
             })
 
         return request.redirect('/my/petty-cash/%s' % report.id)
+
