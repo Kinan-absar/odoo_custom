@@ -104,15 +104,19 @@
                         <label for="state" class="oe_inline"/>
                         <div class="oe_inline">
                             <field name="state" widget="statusbar"
-                                   statusbar_visible="draft,purchase,store,project_manager,director,ceo,approved,rejected"/>
-                                   <field name="can_toggle_clarification" invisible="1"/>
+                                   statusbar_visible="draft,purchase,store,project_manager,director,ceo,approved,rejected,clarification"/>
+                                <div class="oe_inline ms-3 d-flex align-items-center">
 
-                            <div class="ms-3">
-                                <label for="needs_clarification" string="Needs Clarification"/>
-                                <field name="needs_clarification"
-                                    widget="boolean_toggle"
-                                    invisible="not can_toggle_clarification"/>
-                            </div>
+                            <span class="me-2 text-warning fw-semibold">
+                                🚩 Needs Clarification
+                            </span>
+
+                            <field name="needs_clarification"
+                                widget="boolean_toggle"
+                                nolabel="1"
+                                invisible="not can_toggle_clarification"/>
+
+                        </div>
                         </div>
                     </div>
 
@@ -233,6 +237,7 @@
                     widget="badge"
                     string="Status"
                     class="fw-bold"
+                        decoration-warning="display_state == 'clarification'"
                         decoration-muted="state == 'draft'"
                         decoration-info="state in ('purchase','director')"
                         decoration-primary="state == 'store'"
