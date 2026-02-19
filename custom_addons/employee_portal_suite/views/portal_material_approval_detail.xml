@@ -38,7 +38,8 @@
             </t>
             <t t-if="request_rec.needs_clarification">
                         <div class="alert alert-warning">
-                            🚩 This request has been flagged for clarification.
+                            🚩 <strong>This request has been flagged for clarification.</strong><br/>
+        Please contact the responsible department to review and provide the required information.
                         </div>
                     </t>
 
