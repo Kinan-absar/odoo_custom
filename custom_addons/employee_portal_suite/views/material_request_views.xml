@@ -105,6 +105,14 @@
                         <div class="oe_inline">
                             <field name="state" widget="statusbar"
                                    statusbar_visible="draft,purchase,store,project_manager,director,ceo,approved,rejected"/>
+                                   <field name="can_toggle_clarification" invisible="1"/>
+
+                            <div class="ms-3">
+                                <label for="needs_clarification" string="Needs Clarification"/>
+                                <field name="needs_clarification"
+                                    widget="boolean_toggle"
+                                    invisible="not can_toggle_clarification"/>
+                            </div>
                         </div>
                     </div>
 

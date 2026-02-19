@@ -138,6 +138,23 @@ class MaterialRequest(models.Model):
 
         return False
 
+    def write(self, vals):
+
+        if "needs_clarification" in vals:
+            for rec in self:
+
+                if not rec._can_toggle_clarification():
+                    raise UserError(_("You are not allowed to toggle clarification at this stage."))
+
+                # When turning ON → remember stage
+                if vals.get("needs_clarification"):
+                    vals["clarification_stage"] = rec.state
+
+                # When turning OFF → clear stage
+                else:
+                    vals["clarification_stage"] = False
+
+        return super().write(vals)
 
     # ---------------------------------------------------------
     # STATE MACHINE
