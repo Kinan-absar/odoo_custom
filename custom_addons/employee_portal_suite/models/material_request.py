@@ -388,18 +388,26 @@ class MaterialRequest(models.Model):
 
         return False
     def write(self, vals):
-        if "needs_clarification" in vals:
-            for rec in self:
-                if not rec._can_toggle_clarification():
-                    raise UserError(_("You are not allowed to toggle clarification at this stage."))
 
-                # Auto-set stage when turning ON
-                if vals.get("needs_clarification"):
-                    vals["clarification_stage"] = rec.state
-                else:
-                    vals["clarification_stage"] = False
+        if "needs_clarification" in vals:
+
+            # Skip protection if called via sudo (portal attachment case)
+            if not self.env.su:
+                for rec in self:
+                    if not rec._can_toggle_clarification():
+                        raise UserError(
+                            _("You are not allowed to toggle clarification at this stage.")
+                        )
+
+            vals = dict(vals)
+
+            if vals.get("needs_clarification"):
+                vals["clarification_stage"] = self.state
+            else:
+                vals["clarification_stage"] = False
 
         return super().write(vals)
+
 
         #helper
     def _check_approval(self, required_state, required_group):
