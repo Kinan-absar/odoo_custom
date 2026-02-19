@@ -376,7 +376,7 @@
             });
 
             function hideNotice() {
-                localStorage.setItem("mr_update_v1", "seen");
+                localStorage.setItem(noticeKey, "seen");
                 document.getElementById("updateNotice").classList.add("d-none");
             }
             </script>
