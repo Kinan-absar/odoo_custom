@@ -50,12 +50,24 @@ class PettyCashPortal(http.Controller):
     @http.route('/my/petty-cash/create', type='http', auth='user', website=True, methods=['POST'])
     def portal_petty_cash_create(self, **post):
 
-        petty_cash = request.env['petty.cash'].sudo().create({
+        PettyCash = request.env['petty.cash'].sudo()
+
+        vals = PettyCash.default_get([
+            'petty_cash_account_id',
+            'input_vat_account_id',
+            'journal_id',
+            'currency_id',
+        ])
+
+        vals.update({
             'user_id': request.env.user.id,
             'date': post.get('date'),
         })
 
+        petty_cash = PettyCash.create(vals)
+
         return request.redirect(f'/my/petty-cash/{petty_cash.id}')
+
     @http.route('/my/petty-cash/<int:report_id>', type='http', auth='user', website=True)
     def portal_petty_cash_detail(self, report_id, **kw):
 
