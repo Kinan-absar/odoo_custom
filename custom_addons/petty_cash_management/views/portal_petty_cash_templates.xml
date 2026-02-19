@@ -77,19 +77,21 @@
 
             <form action="/my/petty-cash/create" method="post">
 
+                <input type="hidden"
+                    name="csrf_token"
+                    t-att-value="request.csrf_token()"/>
+
                 <div class="mb-3">
                     <label>Date</label>
-                    <input type="date" name="date"
-                           class="form-control"
-                           required="required"/>
+                    <input type="date" name="date" class="form-control"/>
                 </div>
 
-                <button type="submit"
-                        class="btn btn-success">
+                <button type="submit" class="btn btn-primary">
                     Create
                 </button>
 
             </form>
+
 
         </div>
 
