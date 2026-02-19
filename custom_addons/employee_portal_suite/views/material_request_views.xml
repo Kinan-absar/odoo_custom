@@ -107,9 +107,9 @@
                                    statusbar_visible="draft,purchase,store,project_manager,director,ceo,approved,rejected,clarification"/>
                         </div>
                         <div class="oe_inline ms-3"
-                            invisible="state in ('draft','approved','rejected')">
-                            <field name="needs_clarification"
-                                widget="boolean_toggle"/>
+                             name="needs_clarification"
+                            widget="boolean_toggle"
+                            invisible="not can_toggle_clarification"/>
                         </div>
 
                     </div>

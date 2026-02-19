@@ -97,6 +97,14 @@ class MaterialRequest(models.Model):
         selection=lambda self: self._fields['state'].selection,
         string="Clarification Stage"
     )
+    can_toggle_clarification = fields.Boolean(
+    compute="_compute_can_toggle_clarification"
+    )
+
+    def _compute_can_toggle_clarification(self):
+        for rec in self:
+            rec.can_toggle_clarification = rec._can_toggle_clarification()
+
     # ---------------------------------------------------------
     # DISPLAY STATE (UI OVERRIDE FOR CLARIFICATION)
     # ---------------------------------------------------------
@@ -352,6 +360,47 @@ class MaterialRequest(models.Model):
             summary=summary,
             note=note
         )
+    def _can_toggle_clarification(self):
+        self.ensure_one()
+        user = self.env.user
+
+        # Draft / approved / rejected cannot toggle
+        if self.state in ("draft", "approved", "rejected"):
+            return False
+
+        # Stage-based check
+        if self.state == "store":
+            return user == self.store_manager_user_id
+
+        if self.state == "project_manager":
+            return user == self.project_manager_user_id
+
+        # Global group-based stages
+        stage_group_map = {
+            "purchase": "employee_portal_suite.group_mr_purchase_rep",
+            "director": "employee_portal_suite.group_mr_projects_director",
+            "ceo": "employee_portal_suite.group_employee_portal_ceo",
+        }
+
+        group = stage_group_map.get(self.state)
+        if group:
+            return user.has_group(group)
+
+        return False
+    def write(self, vals):
+        if "needs_clarification" in vals:
+            for rec in self:
+                if not rec._can_toggle_clarification():
+                    raise UserError(_("You are not allowed to toggle clarification at this stage."))
+
+                # Auto-set stage when turning ON
+                if vals.get("needs_clarification"):
+                    vals["clarification_stage"] = rec.state
+                else:
+                    vals["clarification_stage"] = False
+
+        return super().write(vals)
+
         #helper
     def _check_approval(self, required_state, required_group):
         self.ensure_one()
