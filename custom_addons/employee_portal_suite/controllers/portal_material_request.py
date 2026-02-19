@@ -489,28 +489,28 @@ class EmployeePortalMaterialRequests(http.Controller):
         type="http",
         auth="user",
         website=True,
-        csrf=True
+        csrf=True,
     )
     def set_clarification(self, **post):
 
-        rec = request.env["material.request"].sudo().browse(
-            int(post.get("req_id"))
-        )
+        rec = request.env["material.request"].sudo().browse(int(post.get("req_id")))
 
-        if rec.exists():
-            is_flagged = post.get("flag") == "on"
+        if not rec.exists():
+            return request.redirect("/my")
 
-            if is_flagged:
-                rec.write({
-                    "needs_clarification": True,
-                    "clarification_stage": rec.state,
-                })
-            else:
-                rec.write({
-                    "needs_clarification": False,
-                    "clarification_stage": False,
-                })
+        # SECURITY CHECK
+        if not rec._can_toggle_clarification():
+            return request.redirect(
+                request.httprequest.referrer + "?clarify_error=1"
+            )
 
+        is_flagged = post.get("flag") == "on"
 
-        return request.redirect(request.httprequest.referrer or "/my")
+        rec.write({
+            "needs_clarification": is_flagged,
+            "clarification_stage": rec.state if is_flagged else False,
+        })
+
+        return request.redirect(request.httprequest.referrer)
+
 
