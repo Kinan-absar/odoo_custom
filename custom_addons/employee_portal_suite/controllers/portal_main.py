@@ -111,3 +111,27 @@ class EmployeePortalMain(CustomerPortal):
             "material_pending_count": material_pending_count,
             "pending_sign_count": pending_sign_count,
         })
+        @http.route("/my/petty-cash", type="http", auth="user", website=True)
+        def portal_petty_cash_list(self, **kw):
+
+            user = request.env.user
+
+            if not user.has_group("petty_cash_management.group_portal_petty_cash_user"):
+                return request.redirect("/my")
+
+            records = request.env["petty.cash"].search([
+                ("user_id", "=", user.id)
+            ])
+
+            return request.render("employee_portal_suite.portal_petty_cash_list", {
+                "records": records,
+            })
+        @http.route("/my/petty-cash/new", type="http", auth="user", website=True)
+        def portal_petty_cash_new(self, **kw):
+
+            if not request.env.user.has_group(
+                "petty_cash_management.group_portal_petty_cash_user"
+            ):
+                return request.redirect("/my")
+
+            return request.render("employee_portal_suite.portal_petty_cash_new")

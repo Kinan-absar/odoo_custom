@@ -47,6 +47,7 @@
         'views/res_config_settings_views.xml',
         'views/menus.xml',                # <-- menu referencing action (must load last)
         'wizard/petty_cash_import_wizard_views.xml',
+        'views/portal_petty_cash_templates.xml',
     ],
     'images': ['images/main_screenshot.png'],
     'license': 'OPL-1',

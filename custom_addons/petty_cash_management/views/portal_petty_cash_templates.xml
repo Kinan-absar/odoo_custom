@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+<template id="portal_petty_cash_list" name="Petty Cash List">
+    <t t-call="portal.portal_layout">
+        <div class="container mt-4">
+            <h2>My Petty Cash Reports</h2>
+
+            <table class="table table-striped mt-3">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="reports" t-as="report">
+                        <tr>
+                            <td>
+                                <a t-att-href="'/my/petty-cash/%s' % report.id">
+                                    <t t-esc="report.name"/>
+                                </a>
+                            </td>
+                            <td><t t-esc="report.date"/></td>
+                            <td><t t-esc="report.amount_total"/></td>
+                            <td><t t-esc="report.state"/></td>
+                        </tr>
+                    </t>
+                </tbody>
+            </table>
+        </div>
+    </t>
+</template>
+<template id="portal_petty_cash_detail" name="Petty Cash Detail">
+    <t t-call="portal.portal_layout">
+        <div class="container mt-4">
+            <h2>
+                <t t-esc="report.name"/>
+            </h2>
+
+            <p><strong>Date:</strong> <t t-esc="report.date"/></p>
+            <p><strong>Status:</strong> <t t-esc="report.state"/></p>
+
+            <h4 class="mt-4">Expense Lines</h4>
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="report.line_ids" t-as="line">
+                        <tr>
+                            <td><t t-esc="line.label"/></td>
+                            <td><t t-esc="line.category_id.name"/></td>
+                            <td><t t-esc="line.amount_total"/></td>
+                        </tr>
+                    </t>
+                </tbody>
+            </table>
+        </div>
+    </t>
+</template>
+
+
+</odoo>
