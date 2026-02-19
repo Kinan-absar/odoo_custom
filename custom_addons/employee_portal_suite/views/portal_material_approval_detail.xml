@@ -358,7 +358,7 @@
                         });
                         document.addEventListener("DOMContentLoaded", function () {
 
-                const noticeKey = "mr_update_v1";  // change version when new update
+                const noticeKey = "mr_update_v2";  // change version when new update
 
                 if (!localStorage.getItem(noticeKey)) {
                     document.getElementById("updateNotice").classList.remove("d-none");
