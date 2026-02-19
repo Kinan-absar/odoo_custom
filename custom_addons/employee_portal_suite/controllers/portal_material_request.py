@@ -4,22 +4,25 @@ import base64
 
 def _mr_status_badge(rec):
     state = rec.state
- # 🚩 Clarification flag overrides visually
-    if rec.needs_clarification:
-        return '<span class="badge bg-warning text-dark">🚩 Needs Clarification</span>'
-    # FULLY APPROVED
+
+    stage_labels = {
+        'purchase': 'Purchase Rep',
+        'store': 'Store Manager',
+        'project_manager': 'Project Manager',
+        'director': 'Director',
+        'ceo': 'CEO',
+    }
+
+    # ------------------------
+    # APPROVED
+    # ------------------------
     if state == "approved":
         return '<span class="badge bg-success">Fully Approved</span>'
 
+    # ------------------------
     # REJECTED
+    # ------------------------
     if state == "rejected":
-        stage_labels = {
-            'purchase': 'Purchase Rep',
-            'store': 'Store Manager',
-            'project_manager': 'Project Manager',
-            'director': 'Director',
-            'ceo': 'CEO',
-        }
         lbl = stage_labels.get(rec.state_before_reject, "Unknown Stage")
 
         reasons = {
@@ -33,7 +36,9 @@ def _mr_status_badge(rec):
 
         return f'<span class="badge bg-danger">Rejected — {lbl} Stage ({reason})</span>'
 
-    # PENDING STAGE BADGES
+    # ------------------------
+    # PENDING STAGES
+    # ------------------------
     stage_badges = {
         'purchase': 'Pending Purchase Rep',
         'store': 'Pending Store Manager',
@@ -42,10 +47,25 @@ def _mr_status_badge(rec):
         'ceo': 'Pending CEO',
     }
 
-    if state in stage_badges:
-        return f'<span class="badge bg-warning text-dark">{stage_badges[state]}</span>'
+    badge_html = ""
 
-    return '<span class="badge bg-secondary">Unknown</span>'
+    if state in stage_badges:
+        badge_html = f'<span class="badge bg-warning text-dark">{stage_badges[state]}</span>'
+
+    # ------------------------
+    # 🚩 CLARIFICATION (ADD, DON'T OVERRIDE)
+    # ------------------------
+    if rec.needs_clarification and rec.clarification_stage:
+        clar_label = stage_labels.get(rec.clarification_stage, rec.clarification_stage)
+
+        badge_html += (
+            f' <span class="badge bg-danger">'
+            f'🚩 Clarification ({clar_label})'
+            f'</span>'
+        )
+
+    return badge_html or '<span class="badge bg-secondary">Unknown</span>'
+
 
 class EmployeePortalMaterialRequests(http.Controller):
 
@@ -489,18 +509,14 @@ class EmployeePortalMaterialRequests(http.Controller):
             if is_flagged:
                 rec.write({
                     "needs_clarification": True,
-                    "clarification_by": request.env.user.id,
-                    "clarification_date": fields.Datetime.now(),
                     "clarification_stage": rec.state,
-
                 })
             else:
                 rec.write({
                     "needs_clarification": False,
-                    "clarification_by": False,
-                    "clarification_date": False,
                     "clarification_stage": False,
                 })
+
 
         return request.redirect(request.httprequest.referrer or "/my")
 

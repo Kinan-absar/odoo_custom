@@ -25,17 +25,10 @@
                         </div>
                     </t>
                     <t t-if="request_rec.needs_clarification">
-                        <div class="alert alert-warning mt-3">
-                            <strong>🚩 Clarification Requested</strong><br/>
-                            Requested by:
-                            <t t-esc="request_rec.clarification_by.name"/>
-                            <t t-esc="dict(request_rec._fields['state'].selection).get(request_rec.clarification_stage)"/>
-                            <br/>
-                            On:
-                            <t t-esc="request_rec.clarification_date"/>
+                        <div class="alert alert-warning">
+                            🚩 This request has been flagged for clarification.
                         </div>
                     </t>
-
 
                 <!-- ========================= -->
                 <!-- BASIC REQUEST INFO -->

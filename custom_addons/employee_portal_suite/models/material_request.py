@@ -91,19 +91,12 @@ class MaterialRequest(models.Model):
         domain="[('account_type', 'in', ('expense','expense_direct_cost'))]",
         tracking=True,
     )
-    needs_clarification = fields.Boolean(
-        string="Needs Clarification",
-        default=False
-    )
-    clarification_by = fields.Many2one(
-    'res.users',
-    string="Clarification Requested By"
-    )
+    needs_clarification = fields.Boolean(default=False)
 
-    clarification_date = fields.Datetime(
-        string="Clarification Date"
+    clarification_stage = fields.Selection(
+        selection=lambda self: self._fields['state'].selection,
+        string="Clarification Stage"
     )
-    clarification_stage = fields.Char()
 
     # ---------------------------------------------------------
     # STATE MACHINE
