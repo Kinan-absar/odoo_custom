@@ -34,10 +34,17 @@ def _mr_status_badge(rec):
         }
         reason = reasons.get(rec.state_before_reject) or "No reason"
 
-        return f'<span class="badge bg-danger">Rejected — {lbl} Stage ({reason})</span>'
+        return f'<span class="badge bg-danger">Rejected — {lbl} ({reason})</span>'
 
     # ------------------------
-    # PENDING STAGES
+    # 🚩 CLARIFICATION OVERRIDES PENDING
+    # ------------------------
+    if rec.needs_clarification and rec.clarification_stage:
+        clar_label = stage_labels.get(rec.clarification_stage, rec.clarification_stage)
+        return f'<span class="badge bg-danger">🚩 Clarification — {clar_label}</span>'
+
+    # ------------------------
+    # NORMAL PENDING
     # ------------------------
     stage_badges = {
         'purchase': 'Pending Purchase Rep',
@@ -47,24 +54,11 @@ def _mr_status_badge(rec):
         'ceo': 'Pending CEO',
     }
 
-    badge_html = ""
-
     if state in stage_badges:
-        badge_html = f'<span class="badge bg-warning text-dark">{stage_badges[state]}</span>'
+        return f'<span class="badge bg-warning text-dark">{stage_badges[state]}</span>'
 
-    # ------------------------
-    # 🚩 CLARIFICATION (ADD, DON'T OVERRIDE)
-    # ------------------------
-    if rec.needs_clarification and rec.clarification_stage:
-        clar_label = stage_labels.get(rec.clarification_stage, rec.clarification_stage)
+    return '<span class="badge bg-secondary">Unknown</span>'
 
-        badge_html += (
-            f' <span class="badge bg-danger">'
-            f'🚩 Clarification ({clar_label})'
-            f'</span>'
-        )
-
-    return badge_html or '<span class="badge bg-secondary">Unknown</span>'
 
 
 class EmployeePortalMaterialRequests(http.Controller):
