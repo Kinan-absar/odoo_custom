@@ -1,122 +1,243 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-<template id="portal_petty_cash_list" name="Petty Cash List">
-    <t t-call="portal.portal_layout">
-        <div class="container mt-4">
-            <h2>My Petty Cash Reports</h2>
-            <a href="/my/petty-cash/new"
-            class="btn btn-primary mb-3">
-                + New Petty Cash Report
-            </a>
 
-            <table class="table table-striped mt-3">
-                <thead>
-                    <tr>
-                        <th>Reference</th>
-                        <th>Date</th>
-                        <th>Total</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <t t-foreach="reports" t-as="report">
+    <!-- ========================================= -->
+    <!-- LIST VIEW -->
+    <!-- ========================================= -->
+    <template id="portal_petty_cash_list" name="Petty Cash List">
+        <t t-call="portal.portal_layout">
+            <div class="container mt-4">
+
+                <h2>My Petty Cash Reports</h2>
+
+                <a href="/my/petty-cash/new"
+                   class="btn btn-primary mb-3">
+                    + New Petty Cash Report
+                </a>
+
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <td>
-                                <a t-att-href="'/my/petty-cash/%s' % report.id">
-                                    <t t-esc="report.name"/>
-                                </a>
-                            </td>
-                            <td><t t-esc="report.date"/></td>
-                            <td><t t-esc="report.amount_total"/></td>
-                            <td><t t-esc="report.state"/></td>
+                            <th>Reference</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Status</th>
                         </tr>
-                    </t>
-                </tbody>
-            </table>
-        </div>
-    </t>
-</template>
-<template id="portal_petty_cash_detail" name="Petty Cash Detail">
-    <t t-call="portal.portal_layout">
-        <div class="container mt-4">
-            <h2>
-                <t t-esc="report.name"/>
-            </h2>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="reports" t-as="report">
+                            <tr>
+                                <td>
+                                    <a t-att-href="'/my/petty-cash/%s' % report.id">
+                                        <t t-esc="report.name"/>
+                                    </a>
+                                </td>
+                                <td><t t-esc="report.date"/></td>
+                                <td><t t-esc="report.amount_total"/></td>
+                                <td>
+                                    <span class="badge"
+                                          t-att-class="'bg-secondary' if report.state == 'draft' else
+                                                       'bg-warning' if report.state == 'submitted' else
+                                                       'bg-success' if report.state == 'approved' else
+                                                       'bg-danger'">
+                                        <t t-esc="report.state"/>
+                                    </span>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
 
-            <p><strong>Date:</strong> <t t-esc="report.date"/></p>
-            <p><strong>Status:</strong> <t t-esc="report.state"/></p>
+            </div>
+        </t>
+    </template>
 
-            <h4 class="mt-4">Expense Lines</h4>
 
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Description</th>
-                        <th>Category</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <t t-foreach="report.line_ids" t-as="line">
+    <!-- ========================================= -->
+    <!-- CREATE REPORT -->
+    <!-- ========================================= -->
+    <template id="portal_petty_cash_form" name="Portal Petty Cash Form">
+        <t t-call="portal.portal_layout">
+
+            <div class="container mt-4">
+
+                <h2>Create Petty Cash Report</h2>
+
+                <form action="/my/petty-cash/create" method="post">
+
+                    <input type="hidden"
+                           name="csrf_token"
+                           t-att-value="request.csrf_token()"/>
+
+                    <div class="mb-3">
+                        <label>Date</label>
+                        <input type="date"
+                               name="date"
+                               class="form-control"
+                               required="required"/>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        Create
+                    </button>
+
+                </form>
+
+            </div>
+
+        </t>
+    </template>
+
+
+    <!-- ========================================= -->
+    <!-- DETAIL VIEW -->
+    <!-- ========================================= -->
+    <template id="portal_petty_cash_detail" name="Petty Cash Detail">
+        <t t-call="portal.portal_layout">
+
+            <div class="container mt-4">
+
+                <h2>
+                    Petty Cash Report
+                    <t t-esc="report.name"/>
+                </h2>
+
+                <p>
+                    <strong>Date:</strong>
+                    <t t-esc="report.date"/>
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    <span class="badge"
+                          t-att-class="'bg-secondary' if report.state == 'draft' else
+                                       'bg-warning' if report.state == 'submitted' else
+                                       'bg-success' if report.state == 'approved' else
+                                       'bg-danger'">
+                        <t t-esc="report.state"/>
+                    </span>
+                </p>
+
+                <p>
+                    <strong>Total:</strong>
+                    <t t-esc="report.amount_total"/>
+                </p>
+
+                <!-- Add Line Button -->
+                <t t-if="report.state == 'draft'">
+                    <a t-att-href="'/my/petty-cash/%s/add-line' % report.id"
+                       class="btn btn-primary mb-3">
+                        + Add Expense Line
+                    </a>
+                </t>
+
+                <!-- Expense Lines -->
+                <h4 class="mt-4">Expense Lines</h4>
+
+                <table class="table table-bordered">
+                    <thead>
                         <tr>
-                            <td><t t-esc="line.label"/></td>
-                            <td><t t-esc="line.category_id.name"/></td>
-                            <td><t t-esc="line.amount_total"/></td>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Untaxed</th>
+                            <th>VAT</th>
+                            <th>Total</th>
                         </tr>
-                    </t>
-                </tbody>
-            </table>
-        </div>
-    </t>
-</template>
-<template id="portal_petty_cash_form" name="Portal Petty Cash Form">
-    <t t-call="portal.portal_layout">
+                    </thead>
+                    <tbody>
+                        <t t-foreach="report.line_ids" t-as="line">
+                            <tr>
+                                <td><t t-esc="line.date"/></td>
+                                <td><t t-esc="line.label"/></td>
+                                <td><t t-esc="line.category_id.name"/></td>
+                                <td><t t-esc="line.amount_before_vat"/></td>
+                                <td><t t-esc="line.vat_amount"/></td>
+                                <td><t t-esc="line.amount_total"/></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
 
-        <div class="container mt-4">
-            <h2>Create Petty Cash Report</h2>
+            </div>
 
-            <form action="/my/petty-cash/create" method="post">
-
-                <input type="hidden"
-                    name="csrf_token"
-                    t-att-value="request.csrf_token()"/>
-
-                <div class="mb-3">
-                    <label>Date</label>
-                    <input type="date" name="date" class="form-control"/>
-                </div>
-
-                <button type="submit" class="btn btn-primary">
-                    Create
-                </button>
-
-            </form>
+        </t>
+    </template>
 
 
-        </div>
+    <!-- ========================================= -->
+    <!-- ADD EXPENSE LINE FORM -->
+    <!-- ========================================= -->
+    <template id="portal_petty_cash_add_line" name="Portal Add Petty Cash Line">
+        <t t-call="portal.portal_layout">
 
-    </t>
-</template>
-<template id="portal_petty_cash_detail" name="Portal Petty Cash Detail">
-    <t t-call="portal.portal_layout">
+            <div class="container mt-4">
 
-        <div class="container mt-4">
-            <h2>Petty Cash Report <t t-esc="report.name"/></h2>
+                <h2>Add Expense Line</h2>
 
-            <p>Status:
-                <span class="badge bg-secondary">
-                    <t t-esc="report.state"/>
-                </span>
-            </p>
+                <form t-att-action="'/my/petty-cash/%s/add-line' % report.id"
+                      method="post"
+                      enctype="multipart/form-data">
 
-            <p>Total:
-                <t t-esc="report.amount_total"/>
-            </p>
+                    <input type="hidden"
+                           name="csrf_token"
+                           t-att-value="request.csrf_token()"/>
 
-        </div>
+                    <div class="mb-3">
+                        <label>Date</label>
+                        <input type="date" name="date" class="form-control" required="required"/>
+                    </div>
 
-    </t>
-</template>
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control"></textarea>
+                    </div>
 
+                    <div class="mb-3">
+                        <label>Category</label>
+                        <select name="category_id" class="form-control" required="required">
+                            <t t-foreach="categories" t-as="cat">
+                                <option t-att-value="cat.id">
+                                    <t t-esc="cat.name"/>
+                                </option>
+                            </t>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Amount Before VAT</label>
+                        <input type="number" step="0.01"
+                               name="amount_before_vat"
+                               class="form-control"
+                               required="required"/>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>
+                            <input type="checkbox"
+                                   name="vat_applicable"
+                                   checked="checked"/>
+                            VAT 15%
+                        </label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Attachment</label>
+                        <input type="file"
+                               name="attachment"
+                               class="form-control"/>
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-success">
+                        Save Line
+                    </button>
+
+                </form>
+
+            </div>
+
+        </t>
+    </template>
 
 </odoo>

@@ -1,7 +1,7 @@
 from odoo import http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal
-
+import base64
 
 class PortalPettyCash(CustomerPortal):
 
@@ -80,3 +80,63 @@ class PettyCashPortal(http.Controller):
             'petty_cash_management.portal_petty_cash_detail',
             {'report': report}
         )
+    @http.route('/my/petty-cash/<int:report_id>/add-line',
+                type='http', auth='user', website=True)
+    def portal_add_line(self, report_id, **kw):
+
+        report = request.env['petty.cash'].sudo().browse(report_id)
+
+        if report.user_id != request.env.user:
+            return request.redirect('/my')
+
+        if report.state != 'draft':
+            return request.redirect('/my/petty-cash/%s' % report_id)
+
+        categories = request.env['petty.cash.category'].sudo().search([])
+
+        return request.render(
+            'petty_cash_management.portal_petty_cash_add_line',
+            {
+                'report': report,
+                'categories': categories,
+            }
+        )
+    @http.route('/my/petty-cash/<int:report_id>/add-line',
+                type='http', auth='user', website=True, methods=['POST'])
+    def portal_add_line_post(self, report_id, **post):
+
+        report = request.env['petty.cash'].sudo().browse(report_id)
+
+        if report.user_id != request.env.user:
+            return request.redirect('/my')
+
+        if report.state != 'draft':
+            return request.redirect('/my/petty-cash/%s' % report_id)
+
+        line_vals = {
+            'petty_cash_id': report.id,
+            'date': post.get('date'),
+            'supplier': post.get('supplier'),
+            'invoice_number': post.get('invoice_number'),
+            'po_number': post.get('po_number'),
+            'mr_number': post.get('mr_number'),
+            'zone': post.get('zone'),
+            'description': post.get('description'),
+            'category_id': int(post.get('category_id')),
+            'amount_before_vat': float(post.get('amount_before_vat')),
+            'vat_applicable': True if post.get('vat_applicable') else False,
+        }
+
+        line = request.env['petty.cash.line'].sudo().create(line_vals)
+
+        # Handle attachment
+        attachment = post.get('attachment')
+        if attachment:
+            request.env['ir.attachment'].sudo().create({
+                'name': attachment.filename,
+                'datas': base64.b64encode(attachment.read()),
+                'res_model': 'petty.cash.line',
+                'res_id': line.id,
+            })
+
+        return request.redirect('/my/petty-cash/%s' % report.id)
