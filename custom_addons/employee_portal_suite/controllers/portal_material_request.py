@@ -484,7 +484,20 @@ class EmployeePortalMaterialRequests(http.Controller):
         )
 
         if rec.exists():
-            rec.needs_clarification = post.get("flag") == "on"
+            is_flagged = post.get("flag") == "on"
+
+            if is_flagged:
+                rec.write({
+                    "needs_clarification": True,
+                    "clarification_by": request.env.user.id,
+                    "clarification_date": fields.Datetime.now(),
+                })
+            else:
+                rec.write({
+                    "needs_clarification": False,
+                    "clarification_by": False,
+                    "clarification_date": False,
+                })
 
         return request.redirect(request.httprequest.referrer or "/my")
 

@@ -95,7 +95,14 @@ class MaterialRequest(models.Model):
         string="Needs Clarification",
         default=False
     )
+    clarification_by = fields.Many2one(
+    'res.users',
+    string="Clarification Requested By"
+    )
 
+    clarification_date = fields.Datetime(
+        string="Clarification Date"
+    )
     # ---------------------------------------------------------
     # STATE MACHINE
     # ---------------------------------------------------------
