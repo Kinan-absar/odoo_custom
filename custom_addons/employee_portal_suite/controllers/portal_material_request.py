@@ -4,7 +4,9 @@ import base64
 
 def _mr_status_badge(rec):
     state = rec.state
-
+ # 🚩 Clarification flag overrides visually
+    if rec.needs_clarification:
+        return '<span class="badge bg-warning text-dark">🚩 Needs Clarification</span>'
     # FULLY APPROVED
     if state == "approved":
         return '<span class="badge bg-success">Fully Approved</span>'
