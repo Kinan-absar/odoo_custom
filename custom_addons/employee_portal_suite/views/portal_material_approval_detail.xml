@@ -11,7 +11,9 @@
 
                     <strong>New Update:</strong>
                     You can now flag requests as "Needs Clarification".
-
+                    <div class="small text-muted mt-2">
+                            If you’ve read this update, feel free to close this notice.
+                        </div>
                     <button type="button"
                             class="btn-close"
                             aria-label="Close"
