@@ -165,22 +165,6 @@
 
             <!-- ACTION FOR CURRENT APPROVER (UNCHANGED) -->
             <t t-if="request_rec.state in ['purchase','store','project_manager','director','ceo']">
-
-                <form action="/my/employee/material/requests/approve" method="post" class="mt-4">
-                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                    <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
-                    <textarea class="form-control mb-3" name="comment" placeholder="Comment (optional)"></textarea>
-                    <button type="submit" class="btn btn-success">Approve</button>
-                </form>
-
-                <form action="/my/employee/material/requests/reject" method="post" class="mt-3">
-                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                    <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
-                    <textarea name="comment" class="form-control mb-3" placeholder="Reason for rejection" required="required"></textarea>
-                    <button type="submit" class="btn btn-danger">Reject</button>
-                </form>
-
-            </t>
                 <form method="post"
                     action="/my/employee/material/requests/set_clarification"
                     class="mt-3">
@@ -210,6 +194,22 @@
                     </div>
 
                 </form>
+                <form action="/my/employee/material/requests/approve" method="post" class="mt-4">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
+                    <textarea class="form-control mb-3" name="comment" placeholder="Comment (optional)"></textarea>
+                    <button type="submit" class="btn btn-success">Approve</button>
+                </form>
+
+                <form action="/my/employee/material/requests/reject" method="post" class="mt-3">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
+                    <textarea name="comment" class="form-control mb-3" placeholder="Reason for rejection" required="required"></textarea>
+                    <button type="submit" class="btn btn-danger">Reject</button>
+                </form>
+
+            </t>
+                
 
 
             <a href="/my/employee/material/approvals" class="btn btn-secondary mt-4">Back</a>
