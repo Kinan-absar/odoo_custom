@@ -33,7 +33,7 @@
         - Security groups for Users and Accountants
         - Footer totals for untaxed amount, VAT, and total amount
         """,
-    'depends': ['base', 'account', 'mail', 'web'],
+    'depends': ['portal', 'website', 'base', 'account', 'mail', 'web'],
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
