@@ -387,31 +387,6 @@ class MaterialRequest(models.Model):
             return user.has_group(group)
 
         return False
-    def write(self, vals):
-
-        # Only block if the user is ACTUALLY trying to change the value
-        if "needs_clarification" in vals:
-
-            for rec in self:
-
-                # Only protect if value is changing
-                if rec.needs_clarification != vals.get("needs_clarification"):
-
-                    if not rec._can_toggle_clarification():
-                        raise UserError(
-                            _("You are not allowed to toggle clarification at this stage.")
-                        )
-
-                    # Set clarification stage properly
-                    if vals.get("needs_clarification"):
-                        vals = dict(vals)
-                        vals["clarification_stage"] = rec.state
-                    else:
-                        vals = dict(vals)
-                        vals["clarification_stage"] = False
-
-        return super().write(vals)
-
 
 
         #helper
