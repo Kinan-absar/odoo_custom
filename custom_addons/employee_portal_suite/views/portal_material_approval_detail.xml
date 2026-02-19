@@ -363,22 +363,19 @@
             }
 
             document.addEventListener("DOMContentLoaded", function () {
-                            setupDropzone("dropzone-detail", "fileInput-detail", "previewArea-detail");
-                        });
-                        document.addEventListener("DOMContentLoaded", function () {
 
-                const noticeKey = "mr_update_v2";  // change version when new update
+                const noticeKey = "mr_update_v2";
 
                 if (!localStorage.getItem(noticeKey)) {
                     document.getElementById("updateNotice").classList.remove("d-none");
                 }
 
-            });
+                window.hideNotice = function () {
+                    localStorage.setItem(noticeKey, "seen");
+                    document.getElementById("updateNotice").classList.add("d-none");
+                };
 
-            function hideNotice() {
-                localStorage.setItem(noticeKey, "seen");
-                document.getElementById("updateNotice").classList.add("d-none");
-            }
+            });
             </script>
     </t>
 </template>
