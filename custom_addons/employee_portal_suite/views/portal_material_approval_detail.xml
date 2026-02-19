@@ -5,6 +5,18 @@
     <t t-call="employee_portal_suite.employee_portal_layout">
 
         <div class="container mt-4">
+                <div id="updateNotice"
+                    class="alert alert-info alert-dismissible fade show d-none"
+                    role="alert">
+
+                    <strong>New Update:</strong>
+                    You can now flag requests as "Needs Clarification".
+
+                    <button type="button"
+                            class="btn-close"
+                            aria-label="Close"
+                            onclick="hideNotice()"></button>
+                </div>
 
             <h2>Material Request Details</h2>
 
@@ -336,8 +348,22 @@
             }
 
             document.addEventListener("DOMContentLoaded", function () {
-                setupDropzone("dropzone-detail", "fileInput-detail", "previewArea-detail");
+                            setupDropzone("dropzone-detail", "fileInput-detail", "previewArea-detail");
+                        });
+                        document.addEventListener("DOMContentLoaded", function () {
+
+                const noticeKey = "mr_update_v1";  // change version when new update
+
+                if (!localStorage.getItem(noticeKey)) {
+                    document.getElementById("updateNotice").classList.remove("d-none");
+                }
+
             });
+
+            function hideNotice() {
+                localStorage.setItem("mr_update_v1", "seen");
+                document.getElementById("updateNotice").classList.add("d-none");
+            }
             </script>
     </t>
 </template>
