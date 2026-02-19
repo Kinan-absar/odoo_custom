@@ -41,7 +41,7 @@ def _mr_status_badge(rec):
     # ------------------------
     if rec.needs_clarification and rec.clarification_stage:
         clar_label = stage_labels.get(rec.clarification_stage, rec.clarification_stage)
-        return f'<span class="badge bg-danger">🚩 Clarification — {clar_label}</span>'
+        return f'<span class="badge bg-info text-dark">🚩 Clarification — {clar_label}</span>'
 
     # ------------------------
     # NORMAL PENDING
