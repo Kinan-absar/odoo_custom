@@ -491,12 +491,15 @@ class EmployeePortalMaterialRequests(http.Controller):
                     "needs_clarification": True,
                     "clarification_by": request.env.user.id,
                     "clarification_date": fields.Datetime.now(),
+                    "clarification_stage": rec.state,
+
                 })
             else:
                 rec.write({
                     "needs_clarification": False,
                     "clarification_by": False,
                     "clarification_date": False,
+                    "clarification_stage": False,
                 })
 
         return request.redirect(request.httprequest.referrer or "/my")

@@ -29,6 +29,7 @@
                             <strong>🚩 Clarification Requested</strong><br/>
                             Requested by:
                             <t t-esc="request_rec.clarification_by.name"/>
+                            <t t-esc="dict(request_rec._fields['state'].selection).get(request_rec.clarification_stage)"/>
                             <br/>
                             On:
                             <t t-esc="request_rec.clarification_date"/>

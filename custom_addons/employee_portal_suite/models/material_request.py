@@ -103,6 +103,8 @@ class MaterialRequest(models.Model):
     clarification_date = fields.Datetime(
         string="Clarification Date"
     )
+    clarification_stage = fields.Char()
+
     # ---------------------------------------------------------
     # STATE MACHINE
     # ---------------------------------------------------------
