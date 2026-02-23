@@ -173,10 +173,11 @@
                                             name="csrf_token"
                                             t-att-value="request.csrf_token()"/>
 
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline-danger"
-                                                title="Delete attachment">
-                                            🗑
+                                         <button type="submit"
+                                                class="border-0 bg-transparent text-danger fw-bold"
+                                                style="font-size: 18px;"
+                                                title="Delete">
+                                            ×
                                         </button>
 
                                     </form>
