@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <template id="portal_layout_mobile_viewport" inherit_id="web.layout">
-        <xpath expr="//meta[@name='viewport']" position="replace">
-            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-        </xpath>
-    </template>
-
     <template id="employee_portal_layout">
+
+    <xpath expr="//meta[@name='viewport']" position="replace">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+
+    </xpath>
         <t t-call="web.layout">
             <style>
                 :root {
