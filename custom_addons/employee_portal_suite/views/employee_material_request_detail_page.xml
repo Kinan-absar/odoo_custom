@@ -5,11 +5,13 @@
 <t t-call="employee_portal_suite.employee_portal_layout">
 
 <div class="container mt-3 employee-req-detail">
-    <a href="/my/employee/material"
-    class="text-decoration-none mb-3 d-inline-block"
-    style="color: var(--app-primary); font-weight: 500;">
-        ← Back
+    <div class="mb-4">
+    <a href="/my/employee/material" class="app-back-btn">
+        <i class="fa fa-arrow-left"></i>
+        <span>Back</span>
     </a>
+</div>
+
 
     <!-- ========================= -->
     <!-- PAGE HEADER -->
