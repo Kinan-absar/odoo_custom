@@ -217,6 +217,27 @@
                     transform: scale(0.92);
                     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
                 }
+                .mobile-search {
+                    border-radius: 14px;
+                    padding: 8px 38px 8px 14px;
+                    border: 1px solid #e5e7eb;
+                    font-size: 14px;
+                }
+
+                .mobile-search:focus {
+                    border-color: var(--app-primary);
+                    box-shadow: 0 0 0 3px rgba(113,75,103,0.1);
+                }
+
+                .search-btn {
+                    position: absolute;
+                    right: 10px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    background: none;
+                    border: none;
+                    color: #9ca3af;
+                }
 
 
             </style>

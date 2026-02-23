@@ -73,15 +73,28 @@ class EmployeePortalMaterialRequests(http.Controller):
         if not emp:
             return request.redirect("/my")
 
-        records = request.env["material.request"].sudo().search([
-            ("employee_id", "=", emp.id)
-        ])
+        search = kw.get("search")
 
-        # Pass the same badge renderer used in approver views
-        return request.render("employee_portal_suite.employee_material_requests_page", {
-            "requests": records,
-            "status_badge": _mr_status_badge,
-        })
+        domain = [("employee_id", "=", emp.id)]
+
+        # If user typed something in search bar
+        if search:
+            domain += ["|",
+                ("name", "ilike", search),
+                ("worksite", "ilike", search),
+            ]
+
+        records = request.env["material.request"].sudo().search(domain, order="id desc")
+
+        return request.render(
+            "employee_portal_suite.employee_material_requests_page",
+            {
+                "requests": records,
+                "status_badge": _mr_status_badge,
+                "search": search,   # VERY IMPORTANT
+            },
+        )
+
 
 
     # ---------------------------------------------------------
