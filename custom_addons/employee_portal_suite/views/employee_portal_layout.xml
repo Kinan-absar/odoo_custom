@@ -1,165 +1,175 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-<template id="employee_portal_layout">
-    <t t-call="web.layout">
-        <style>
-            :root {
-                --odoo-primary: #714B67;
-                --app-bg: #F8F9FA;
-                --nav-white: #ffffff;
-            }
+    <template id="portal_layout_mobile_viewport" inherit_id="web.layout">
+        <xpath expr="//meta[@name='viewport']" position="replace">
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+        </xpath>
+    </template>
 
-            /* --- THE "TRUE APP" FIX --- */
-            /* Forces everything to look big on mobile without crashing the server */
-            @media (max-width: 768px) {
-                html { font-size: 110% !important; } 
-                body { background-color: var(--app-bg) !important; padding-bottom: 80px !important; }
-                .container { max-width: 100% !important; padding: 12px !important; }
-                
-                /* Force Dashboard Cards to be Full Width */
-                .row > div { width: 100% !important; flex: 0 0 100% !important; max-width: 100% !important; margin-bottom: 12px; }
-                
-                /* App Cards */
-                .card { 
-                    border: none !important; border-radius: 16px !important; 
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important; 
+    <template id="employee_portal_layout">
+        <t t-call="web.layout">
+            <style>
+                :root {
+                    --app-primary: #714B67;
+                    --app-bg: #F8F9FA;
+                    --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
                 }
-                
-                .ep-navbar { display: none !important; }
-            }
 
-            /* --- DESKTOP NAVBAR --- */
-            @media (min-width: 769px) {
-                .ep-navbar {
-                    background: var(--nav-white); padding: 0 30px; height: 70px;
-                    display: flex; align-items: center; justify-content: space-between;
-                    border-bottom: 1px solid #E5E7EB; position: sticky; top: 0; z-index: 1000;
+                body { background-color: var(--app-bg) !important; font-family: 'Inter', sans-serif; }
+
+                /* ================= DESKTOP STYLING (Professional) ================= */
+                @media (min-width: 769px) {
+                    .ep-navbar {
+                        display: flex; align-items: center; justify-content: space-between;
+                        padding: 0 2rem; height: 70px; background: #fff;
+                        border-bottom: 1px solid #E5E7EB; position: sticky; top: 0; z-index: 1000;
+                    }
+                    .mobile-only { display: none !important; }
                 }
-                .mobile-header, .ep-bottom-nav { display: none !important; }
-            }
 
-            .ep-nav-links { display: flex; align-items: center; gap: 10px; }
-            .ep-link, .ep-dropdown-toggle {
-                background: transparent; border: none; padding: 10px 15px;
-                border-radius: 8px; font-size: 15px; font-weight: 500;
-                color: #1F2937; cursor: pointer; text-decoration: none !important;
-            }
-            .ep-link:hover, .ep-dropdown-toggle:hover { background: #F3F4F6; color: var(--odoo-primary); }
-            
-            /* Dropdowns */
-            .ep-dropdown { position: relative; }
-            .ep-dropdown-menu {
-                display: none; position: absolute; top: 48px; left: 0;
-                min-width: 240px; background: white; border-radius: 12px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #eee; z-index: 2000; padding: 8px;
-            }
-            .ep-sub-link { display: block; padding: 10px 15px; color: #1F2937; text-decoration: none !important; border-radius: 6px; }
-            .ep-sub-link:hover { background: #F8F9FA; color: var(--odoo-primary); }
+                .ep-nav-links { display: flex; align-items: center; gap: 8px; }
+                .ep-link, .ep-dropdown-toggle {
+                    background: transparent; border: none; padding: 10px 16px;
+                    border-radius: 8px; font-size: 15px; font-weight: 500;
+                    color: #1F2937; cursor: pointer; text-decoration: none !important;
+                }
+                .ep-link:hover, .ep-dropdown-toggle:hover { background: #EBECF0; color: var(--app-primary); }
 
-            /* --- MOBILE BOTTOM NAV --- */
-            .ep-bottom-nav {
-                position: fixed; bottom: 0; left: 0; right: 0;
-                height: 75px; background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-                display: flex; justify-content: space-around; align-items: center;
-                border-top: 1px solid #eee; z-index: 2000;
-                padding-bottom: env(safe-area-inset-bottom);
-            }
-            .nav-item { color: #9CA3AF; text-align: center; text-decoration: none !important; flex: 1; }
-            .nav-item.active { color: var(--odoo-primary); }
-            .nav-item i { font-size: 24px; display: block; }
-            .nav-item span { font-size: 10px; font-weight: 600; }
-            
-            .fab-button {
-                background: var(--odoo-primary); width: 56px; height: 56px;
-                border-radius: 50%; display: flex; align-items: center; justify-content: center;
-                margin-top: -45px; border: 5px solid var(--app-bg); color: white !important;
-                box-shadow: 0 4px 15px rgba(113, 75, 103, 0.4);
-            }
-        </style>
+                /* Desktop Dropdowns */
+                .ep-dropdown { position: relative; }
+                .ep-dropdown-menu {
+                    display: none; position: absolute; top: 45px; left: 0;
+                    min-width: 240px; background: white; border: 1px solid #E2E8F0;
+                    border-radius: 10px; padding: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 2000;
+                }
+                .ep-sub-link { display: block; padding: 10px 16px; color: #1F2937; text-decoration: none !important; font-size: 14px; border-radius: 6px; }
+                .ep-sub-link:hover { background: #F3F4F6; }
 
-        <t t-call-assets="web.assets_frontend"/>
+                /* ================= MOBILE STYLING (True App Design) ================= */
+                @media (max-width: 768px) {
+                    .ep-navbar { display: none !important; }
+                    
+                    /* Force cards to be app-tiles */
+                    .container { max-width: 100% !important; padding: 16px !important; }
+                    .row > div { width: 100% !important; flex: 0 0 100% !important; max-width: 100% !important; padding: 0 !important; }
+                    
+                    .card {
+                        border: none !important; border-radius: 16px !important;
+                        box-shadow: var(--card-shadow) !important; margin-bottom: 16px !important;
+                    }
 
-        <nav class="ep-navbar">
-            <div class="ep-nav-links">
-                <a href="/my" class="ep-link">Dashboard</a>
-                
-                <div class="ep-dropdown">
-                    <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests ▾</button>
-                    <div id="req-d" class="ep-dropdown-menu">
-                        <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
-                        <a href="/my/employee/requests/new" class="ep-sub-link text-primary">+ New Employee Request</a>
-                        <hr class="my-1"/>
-                        <a href="/my/employee/material" class="ep-sub-link">Material Requests</a>
-                        <a href="/my/employee/material/new" class="ep-sub-link text-primary">+ New Material Request</a>
-                    </div>
-                </div>
+                    .mobile-app-header {
+                        display: flex; justify-content: space-between; align-items: center;
+                        padding: 15px 20px; background: #fff; border-bottom: 1px solid #eee;
+                    }
 
-                <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo') or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')">
+                    .ep-bottom-nav {
+                        position: fixed; bottom: 0; left: 0; right: 0;
+                        height: 75px; background: rgba(255, 255, 255, 0.95);
+                        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                        display: flex; justify-content: space-around; align-items: center;
+                        border-top: 1px solid #eee; z-index: 2000;
+                        padding-bottom: env(safe-area-inset-bottom);
+                    }
+                    .nav-btn { color: #9CA3AF; text-align: center; text-decoration: none !important; flex: 1; }
+                    .nav-btn.active { color: var(--app-primary); }
+                    .nav-btn i { font-size: 24px; display: block; margin-bottom: 2px; }
+                    .nav-btn span { font-size: 10px; font-weight: 600; }
+                    
+                    .fab-plus {
+                        background: var(--app-primary); width: 56px; height: 56px;
+                        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                        margin-top: -45px; border: 5px solid var(--app-bg); color: white !important;
+                        box-shadow: 0 4px 15px rgba(113, 75, 103, 0.4);
+                    }
+                }
+            </style>
+
+            <t t-call-assets="web.assets_frontend"/>
+
+            <nav class="ep-navbar">
+                <div class="ep-nav-links">
+                    <a href="/my" class="ep-link">Dashboard</a>
                     <div class="ep-dropdown">
-                        <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals ▾</button>
-                        <div id="app-d" class="ep-dropdown-menu">
-                            <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
-                                <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
-                            </t>
-                            <t t-if="request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or request.env.user.has_group('employee_portal_suite.group_mr_projects_director') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
-                                <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
-                            </t>
+                        <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests ▾</button>
+                        <div id="req-d" class="ep-dropdown-menu">
+                            <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
+                            <a href="/my/employee/requests/new" class="ep-sub-link text-primary">+ New Employee Request</a>
+                            <hr class="my-1"/>
+                            <a href="/my/employee/material" class="ep-sub-link">Material Requests</a>
+                            <a href="/my/employee/material/new" class="ep-sub-link text-primary">+ New Material Request</a>
                         </div>
                     </div>
-                </t>
-                
-                <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
-                    <a href="/my/petty-cash" class="ep-link">Petty Cash</a>
-                </t>
-            </div>
 
-            <div class="d-flex align-items-center gap-3">
-                <div class="text-end d-none d-lg-block">
-                    <h6 class="mb-0 fw-bold" t-out="request.env.user.partner_id.name"/>
-                    <p class="mb-0 text-muted small" t-out="request.env.user.partner_id.company_name"/>
+                    <t t-if="any(request.env.user.has_group(g) for g in [
+                        'employee_portal_suite.group_employee_portal_manager',
+                        'employee_portal_suite.group_employee_portal_hr',
+                        'employee_portal_suite.group_employee_portal_finance',
+                        'employee_portal_suite.group_employee_portal_ceo',
+                        'employee_portal_suite.group_mr_purchase_rep',
+                        'employee_portal_suite.group_mr_store_manager',
+                        'employee_portal_suite.group_mr_project_manager',
+                        'employee_portal_suite.group_mr_projects_director'
+                    ])">
+                        <div class="ep-dropdown">
+                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals ▾</button>
+                            <div id="app-d" class="ep-dropdown-menu">
+                                <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
+                                <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
+                            </div>
+                        </div>
+                    </t>
+                    
+                    <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                        <a href="/my/petty-cash" class="ep-link">Petty Cash</a>
+                    </t>
                 </div>
-                <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="rounded-circle" width="40" height="40"/>
-                <a class="btn btn-sm btn-outline-danger ms-2" href="/web/session/logout">Logout</a>
+
+                <div class="d-flex align-items-center gap-3">
+                    <div class="text-end d-none d-lg-block">
+                        <h6 class="mb-0 fw-bold" t-out="request.env.user.partner_id.name"/>
+                        <p class="mb-0 text-muted small" t-out="request.env.user.partner_id.company_name"/>
+                    </div>
+                    <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="rounded-circle border" width="40" height="40"/>
+                    <a href="/web/session/logout" class="btn btn-sm btn-outline-danger ms-2">Logout</a>
+                </div>
+            </nav>
+
+            <div class="mobile-app-header mobile-only">
+                <span class="fw-bold fs-4" style="color: var(--app-primary)">Portal</span>
+                <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="rounded-circle" width="36" height="36"/>
             </div>
-        </nav>
 
-        <div class="mobile-header d-flex justify-content-between align-items-center p-3 bg-white border-bottom">
-            <span class="fw-bold fs-4" style="color: var(--odoo-primary)">Portal</span>
-            <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="rounded-circle" width="36" height="36"/>
-        </div>
+            <main>
+                <div id="wrap" class="container mt-3 mb-5">
+                    <t t-raw="0"/>
+                </div>
+            </main>
 
-        <main>
-            <div id="wrap" class="container mt-2">
-                <t t-raw="0"/>
-            </div>
-        </main>
+            <nav class="ep-bottom-nav mobile-only">
+                <a href="/my" class="nav-btn active"><i class="fa fa-home"></i><span>Home</span></a>
+                <a href="/my/employee/requests" class="nav-btn"><i class="fa fa-file-text-o"></i><span>Requests</span></a>
+                <a href="/my/employee/requests/new" class="nav-btn">
+                    <div class="fab-plus"><i class="fa fa-plus" style="margin:0"></i></div>
+                </a>
+                <a href="/my/employee/approvals" class="nav-btn"><i class="fa fa-check-circle-o"></i><span>Approvals</span></a>
+                <a href="/web/session/logout" class="nav-btn"><i class="fa fa-sign-out"></i><span>Exit</span></a>
+            </nav>
 
-        <nav class="ep-bottom-nav">
-            <a href="/my" class="nav-item active"><i class="fa fa-home"></i><span>Home</span></a>
-            <a href="/my/employee/requests" class="nav-item"><i class="fa fa-file-text-o"></i><span>Requests</span></a>
-            <a href="/my/employee/requests/new" class="nav-item">
-                <div class="fab-button"><i class="fa fa-plus" style="margin:0"></i></div>
-            </a>
-            <a href="/my/employee/approvals" class="nav-item"><i class="fa fa-check-circle-o"></i><span>Approvals</span></a>
-            <a href="/web/session/logout" class="nav-item"><i class="fa fa-sign-out"></i><span>Exit</span></a>
-        </nav>
-
-        <script>
-            function toggleDropdown(event, id) {
-                event.stopPropagation();
-                document.querySelectorAll('.ep-dropdown-menu').forEach(m => {
-                    if (m.id !== id) m.style.display = 'none';
+            <script>
+                function toggleDropdown(event, id) {
+                    event.stopPropagation();
+                    document.querySelectorAll('.ep-dropdown-menu').forEach(m => {
+                        if (m.id !== id) m.style.display = 'none';
+                    });
+                    let menu = document.getElementById(id);
+                    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+                }
+                document.addEventListener('click', () => {
+                    document.querySelectorAll('.ep-dropdown-menu').forEach(m => m.style.display = 'none');
                 });
-                let menu = document.getElementById(id);
-                menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
-            }
-            document.addEventListener('click', () => {
-                document.querySelectorAll('.ep-dropdown-menu').forEach(m => m.style.display = 'none');
-            });
-        </script>
-    </t>
-</template>
-
+            </script>
+        </t>
+    </template>
 </odoo>
