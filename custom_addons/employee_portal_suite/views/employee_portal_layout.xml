@@ -108,6 +108,57 @@
                     }
 
                 }
+                /* ===================== */
+                /* APP-LIKE BOTTOM NAV   */
+                /* ===================== */
+
+                /* Smooth transition */
+                .ep-bottom-nav .nav-btn {
+                    transition: 
+                        transform 0.12s ease,
+                        color 0.2s ease,
+                        background 0.25s ease;
+                }
+
+                /* Press (tap) effect */
+                .ep-bottom-nav .nav-btn:active {
+                    transform: scale(0.88);
+                }
+
+                /* Active state */
+                .ep-bottom-nav .nav-btn.active {
+                    color: var(--app-primary);
+                    position: relative;
+                    background: rgba(113, 75, 103, 0.08);
+                    border-radius: 16px;
+                }
+
+                /* Active dot indicator */
+                .ep-bottom-nav .nav-btn.active::after {
+                    content: "";
+                    position: absolute;
+                    bottom: -6px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 6px;
+                    height: 6px;
+                    background: var(--app-primary);
+                    border-radius: 50%;
+                    transition: all 0.3s ease;
+                }
+
+                /* Icon animation when active */
+                .ep-bottom-nav .nav-btn.active i {
+                    animation: navPop 0.25s ease;
+                }
+
+                /* Pop animation */
+                @keyframes navPop {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.2); }
+                    100% { transform: scale(1); }
+                }
+
             </style>
 
             <t t-call-assets="web.assets_frontend"/>
