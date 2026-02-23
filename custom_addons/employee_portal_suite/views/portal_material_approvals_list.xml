@@ -3,7 +3,56 @@
 
     <template id="portal_material_approvals_list" name="Material Approvals Page">
         <t t-call="employee_portal_suite.employee_portal_layout">
+<style>
+/* =============================== */
+/* MOBILE MATERIAL APPROVAL CARDS */
+/* =============================== */
 
+.mobile-approval-card {
+    display: block;
+    background: white;
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 14px;
+    text-decoration: none !important;
+    color: inherit;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.mobile-approval-card:active {
+    transform: scale(0.97);
+}
+
+.mobile-approval-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.mobile-approval-id {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.mobile-approval-employee {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.mobile-approval-body {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.mobile-approval-body .label {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+</style>
             <div class="container mt-4">
 
     <div class="card shadow-sm border-0">
@@ -27,7 +76,8 @@
             </div>
 
             <!-- Table -->
-            <div class="table-responsive">
+            <!-- DESKTOP TABLE -->
+            <div class="table-responsive d-none d-md-block">
                 <table class="table table-hover table-sm align-middle mb-0">
 
                     <thead class="table-light">
@@ -65,7 +115,7 @@
 
                                     <td class="text-end">
                                         <a t-att-href="'/my/employee/material/approvals/%s' % req.id"
-                                           class="btn btn-outline-primary btn-sm">
+                                        class="btn btn-outline-primary btn-sm">
                                             Review
                                         </a>
                                     </td>
@@ -84,6 +134,60 @@
                     </tbody>
                 </table>
             </div>
+            <!-- MOBILE CARD LIST -->
+            <div class="d-md-none">
+
+                <t t-if="shown_reqs">
+                    <t t-foreach="shown_reqs" t-as="req">
+
+                        <a t-att-href="'/my/employee/material/approvals/%s' % req.id"
+                        class="mobile-approval-card">
+
+                            <div class="mobile-approval-top">
+
+                                <div>
+                                    <div class="mobile-approval-id">
+                                        <t t-esc="req.name"/>
+                                    </div>
+
+                                    <div class="mobile-approval-employee">
+                                        <t t-esc="req.employee_id.name"/>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <t t-raw="status_badge(req)"/>
+                                </div>
+
+                            </div>
+
+                            <div class="mobile-approval-body">
+
+                                <div>
+                                    <span class="label">Worksite</span>
+                                    <div><t t-esc="req.worksite"/></div>
+                                </div>
+
+                                <div>
+                                    <span class="label">Date</span>
+                                    <div><t t-esc="req.request_date"/></div>
+                                </div>
+
+                            </div>
+
+                        </a>
+
+                    </t>
+                </t>
+
+                <t t-if="not shown_reqs">
+                    <div class="text-center text-muted py-4">
+                        No Requests Found.
+                    </div>
+                </t>
+
+            </div>
+
 
         </div>
     </div>
