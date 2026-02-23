@@ -22,14 +22,26 @@
                     <!-- Employee Requests -->
                     <div class="col-6 col-md-6">
                         <a href="/my/employee/requests" class="text-decoration-none">
-                            <div class="card dashboard-card h-100 text-center p-3">
-                                <h6 class="mb-2 text-muted">Employee Requests</h6>
-                                <h3 class="fw-bold mb-0">
-                                    <t t-esc="my_request_count"/>
-                                </h3>
+                            <div class="card dashboard-card h-100 p-3 d-flex flex-column justify-content-between">
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="tile-icon bg-primary-soft">
+                                        <i class="fa fa-file-text-o"></i>
+                                    </div>
+                                    <span class="tile-label">Employee</span>
+                                </div>
+
+                                <div class="mt-3">
+                                    <h2 class="fw-bold mb-0 tile-number">
+                                        <t t-esc="my_request_count"/>
+                                    </h2>
+                                    <small class="text-muted">Requests</small>
+                                </div>
+
                             </div>
                         </a>
                     </div>
+
 
                     <!-- Material Requests -->
                     <div class="col-6 col-md-6">
