@@ -158,7 +158,8 @@
 
                                 <div>
                                     📎 
-                                   <a t-att-href="'/my/petty-cash/attachment/%s' % att.id">
+                                   <a t-att-href="'/web/content/%s' % att.id"
+                                    target="_blank">
                                         <t t-esc="att.name"/>
                                     </a>
                                 </div>

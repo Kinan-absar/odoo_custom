@@ -154,6 +154,7 @@ class PortalPettyCash(CustomerPortal):
                 'datas': base64.b64encode(file.read()),
                 'res_model': 'petty.cash',
                 'res_id': report.id,
+                'public': True,   # ← THIS IS THE MAGIC FIX
             })
 
             # 🔥 IMPORTANT
@@ -161,19 +162,3 @@ class PortalPettyCash(CustomerPortal):
 
         return request.redirect(f'/my/petty-cash/{report_id}?success=uploaded')
 
-    @http.route('/my/petty-cash/attachment/<int:attachment_id>',
-            type='http', auth='user', website=True)
-    def portal_download_attachment(self, attachment_id, **kw):
-
-        attachment = request.env['ir.attachment'].sudo().browse(attachment_id)
-
-        if not attachment:
-            return request.redirect('/my')
-
-        # Check attachment belongs to user's report
-        report = request.env['petty.cash'].sudo().browse(attachment.res_id)
-
-        if not report or report.user_id != request.env.user:
-            return request.redirect('/my')
-
-        return request.redirect(f'/web/content/{attachment.id}?download=true')
