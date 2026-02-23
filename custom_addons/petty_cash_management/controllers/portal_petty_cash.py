@@ -149,11 +149,15 @@ class PortalPettyCash(CustomerPortal):
         file = post.get('attachment')
 
         if file:
-            request.env['ir.attachment'].sudo().create({
+            attachment = request.env['ir.attachment'].sudo().create({
                 'name': file.filename,
                 'datas': base64.b64encode(file.read()),
                 'res_model': 'petty.cash',
                 'res_id': report.id,
             })
 
-        return request.redirect(f'/my/petty-cash/{report_id}')
+            # 🔥 IMPORTANT
+            report.attachment_ids = [(4, attachment.id)]
+
+        return request.redirect(f'/my/petty-cash/{report_id}?success=uploaded')
+
