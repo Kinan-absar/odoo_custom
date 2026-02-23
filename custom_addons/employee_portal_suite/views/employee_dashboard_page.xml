@@ -2,7 +2,8 @@
 <odoo>
 
 <template id="employee_portal_dashboard" name="Employee Dashboard">
-<t t-call="employee_portal_suite.employee_portal_layout">
+<t t-call="employee_portal_suite.employee_portal_app_shell">
+
 
 <style>
 /* ===============================

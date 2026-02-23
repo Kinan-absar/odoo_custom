@@ -1,433 +1,330 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-<template id="employee_portal_layout">
-<t t-call="web.layout">
-
+<template id="employee_portal_app_shell">
 <t t-call-assets="web.assets_frontend"/>
 
 <style>
 
-/* ===============================
-   GLOBAL SYSTEM
-================================ */
+/* ==============================
+   APP ROOT
+============================== */
 
-:root{
-    --ep-primary:#4f46e5;
-    --ep-primary-light:#eef2ff;
-    --ep-border:#e5e7eb;
-    --ep-muted:#64748b;
-    --ep-bg:#f8fafc;
+html, body {
+    height:100%;
+    margin:0;
+    background:#f5f7fb;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-body{
-    background:var(--ep-bg);
-}
-
-/* ===============================
-   NAVBAR
-================================ */
-
-.ep-navbar{
-    position:sticky;
-    top:0;
-    z-index:1000;
-    background:rgba(255,255,255,0.9);
-    backdrop-filter:blur(10px);
-    border-bottom:1px solid var(--ep-border);
-}
-
-.nav-container{
+.ep-app {
     display:flex;
-    align-items:center;
-    justify-content:space-between;
-    height:72px;
+    min-height:100vh;
 }
 
-/* LEFT AREA */
-.ep-left{
+/* ==============================
+   SIDEBAR (DESKTOP)
+============================== */
+
+.ep-sidebar {
+    width:260px;
+    background:white;
+    border-right:1px solid #e5e7eb;
+    padding:30px 20px;
     display:flex;
-    align-items:center;
-    gap:30px;
+    flex-direction:column;
 }
 
-/* LOGO */
-.ep-logo{
+.ep-logo {
+    font-weight:700;
+    font-size:20px;
+    margin-bottom:40px;
     display:flex;
     align-items:center;
     gap:10px;
-    font-weight:700;
-    font-size:20px;
-    text-decoration:none;
-    color:#111827;
 }
 
-.ep-logo-box{
+.ep-logo-box {
     width:36px;
     height:36px;
-    background:var(--ep-primary);
+    background:#4f46e5;
+    border-radius:10px;
     color:white;
     display:flex;
     align-items:center;
     justify-content:center;
-    border-radius:10px;
     font-weight:700;
 }
 
-/* NAV LINKS */
-.ep-nav-links{
-    display:flex;
-    align-items:center;
-    gap:8px;
-}
-
-.ep-link,
-.ep-dropdown-toggle{
-    padding:8px 16px;
+.ep-nav a {
+    display:block;
+    padding:10px 14px;
     border-radius:10px;
-    background:transparent;
-    border:none;
     text-decoration:none;
-    font-weight:500;
     color:#374151;
+    font-weight:500;
+    margin-bottom:6px;
     transition:0.2s;
-    cursor:pointer;
 }
 
-.ep-link:hover,
-.ep-dropdown-toggle:hover{
-    background:var(--ep-primary-light);
-    color:var(--ep-primary);
+.ep-nav a:hover {
+    background:#eef2ff;
+    color:#4f46e5;
 }
 
-.ep-link.active{
-    background:var(--ep-primary-light);
-    color:var(--ep-primary);
+.ep-nav a.active {
+    background:#eef2ff;
+    color:#4f46e5;
     font-weight:600;
 }
 
-/* DROPDOWN */
-.ep-dropdown{
-    position:relative;
+/* ==============================
+   MAIN AREA
+============================== */
+
+.ep-main {
+    flex:1;
+    display:flex;
+    flex-direction:column;
 }
 
-.ep-dropdown-menu{
-    display:none;
-    position:absolute;
-    top:48px;
-    left:0;
-    min-width:240px;
+/* HEADER */
+
+.ep-header {
+    height:70px;
     background:white;
-    border-radius:16px;
-    border:1px solid var(--ep-border);
-    box-shadow:0 10px 30px rgba(0,0,0,0.08);
-    padding:8px 0;
-}
-
-.ep-sub-link{
-    display:block;
-    padding:10px 18px;
-    text-decoration:none;
-    color:#374151;
-    font-size:14px;
-    transition:0.2s;
-}
-
-.ep-sub-link:hover{
-    background:var(--ep-primary-light);
-    color:var(--ep-primary);
-}
-
-.ep-divider{
-    border-top:1px solid var(--ep-border);
-    margin:6px 0;
-}
-
-/* USER INFO RIGHT */
-.ep-right{
+    border-bottom:1px solid #e5e7eb;
     display:flex;
     align-items:center;
-    gap:20px;
+    justify-content:space-between;
+    padding:0 30px;
 }
 
-.ep-user-pill{
+.ep-user {
     display:flex;
     align-items:center;
     gap:12px;
-    padding:6px 16px;
-    border-radius:999px;
-    background:#f1f5f9;
-    border:1px solid var(--ep-border);
 }
 
-.ep-user-pill img{
-    width:34px;
-    height:34px;
+.ep-user img {
+    width:36px;
+    height:36px;
     border-radius:50%;
     object-fit:cover;
 }
 
-.ep-user-info{
-    display:flex;
-    flex-direction:column;
-    line-height:1.1;
+.ep-content {
+    padding:40px;
+    flex:1;
 }
 
-.ep-user-info h5{
-    font-size:14px;
-    margin:0;
-}
+/* ==============================
+   MOBILE
+============================== */
 
-.ep-user-info small{
-    font-size:11px;
-    font-weight:700;
-    text-transform:uppercase;
-    color:var(--ep-muted);
-    letter-spacing:.5px;
-}
-
-.ep-logout{
-    font-size:20px;
-    color:#9ca3af;
-    text-decoration:none;
-    transition:0.2s;
-}
-
-.ep-logout:hover{
-    color:#ef4444;
-}
-
-/* MOBILE */
-.ep-nav-toggle{
+.ep-mobile-header {
     display:none;
-    background:none;
-    border:none;
-    font-size:24px;
 }
 
-@media(max-width:992px){
+.ep-bottom-nav {
+    display:none;
+}
 
-    .ep-nav-toggle{
-        display:block;
+@media (max-width:992px) {
+
+    .ep-sidebar {
+        display:none;
     }
 
-@media(max-width:992px){
+    .ep-header {
+        display:none;
+    }
 
-    .ep-nav-links{
-        position:fixed;
-        top:0;
-        left:-280px;
-        width:280px;
-        height:100%;
+    .ep-mobile-header {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:18px 20px;
         background:white;
-        flex-direction:column;
-        padding:90px 20px 20px 20px;
-        transition:0.3s ease;
-        z-index:2000;
-        box-shadow:4px 0 30px rgba(0,0,0,0.12);
-    }
-
-    .ep-nav-links.open{
-        left:0;
-    }
-
-    /* DARK OVERLAY */
-    .ep-overlay{
-        position:fixed;
+        border-bottom:1px solid #e5e7eb;
+        position:sticky;
         top:0;
+        z-index:1000;
+    }
+
+    .ep-content {
+        padding:20px;
+        padding-bottom:90px;
+    }
+
+    .ep-bottom-nav {
+        display:flex;
+        position:fixed;
+        bottom:0;
         left:0;
         width:100%;
-        height:100%;
-        background:rgba(0,0,0,0.4);
-        z-index:1500;
-        display:none;
+        background:white;
+        border-top:1px solid #e5e7eb;
+        justify-content:space-around;
+        padding:10px 0;
     }
 
-    .ep-overlay.active{
-        display:block;
+    .ep-bottom-nav a {
+        text-decoration:none;
+        font-size:12px;
+        color:#6b7280;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
     }
 
+    .ep-bottom-nav a.active {
+        color:#4f46e5;
+        font-weight:600;
+    }
 }
-
-
-    .ep-right{
-        display:none;
-    }
-
-    .ep-dropdown-menu{
-        position:relative;
-        top:0;
-        left:0;
-        box-shadow:none;
-        border:none;
-    }
-    }
-    /* FULL APP MODE */
-    .ep-main{
-        padding:20px;
-        max-width:1200px;
-        margin:0 auto;
-    }
-
-    /* MOBILE APP MODE */
-    @media(max-width:768px){
-
-        .ep-main{
-            padding:20px 16px;
-            max-width:100%;
-        }
-
-    }
-
 
 </style>
 
-<!-- NAVBAR -->
-<nav class="ep-navbar">
-<div class="container nav-container">
+<div class="ep-app">
 
-    <div class="ep-left">
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="ep-sidebar">
 
-        <button class="ep-nav-toggle" onclick="toggleMenu()">☰</button>
+        <div class="ep-logo">
+            <div class="ep-logo-box">E</div>
+            Enterprise
+        </div>
 
-        <a href="/my" class="ep-logo">
-            <div class="ep-logo-box">O</div>
-            <span>Portal</span>
-        </a>
-
-        <div class="ep-nav-links" id="epMenu">
+       <nav class="ep-nav">
 
             <!-- Dashboard -->
             <a href="/my"
-               t-att-class="'ep-link active' if request.httprequest.path == '/my' else 'ep-link'">
+            t-att-class="'active' if request.httprequest.path == '/my' else ''">
                 Dashboard
             </a>
 
-            <!-- Requests Dropdown -->
-            <div class="ep-dropdown">
-                <button class="ep-dropdown-toggle"
-                        onclick="toggleDropdown(event,'requests-menu')">
-                    Requests ▾
-                </button>
+            <!-- Requests -->
+            <a href="/my/employee/requests"
+            t-att-class="'active' if request.httprequest.path.startswith('/my/employee/requests') else ''">
+                Employee Requests
+            </a>
 
-                <div id="requests-menu" class="ep-dropdown-menu">
-                    <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
-                    <a href="/my/employee/requests/new" class="ep-sub-link">New Employee Request</a>
-                    <hr class="ep-divider"/>
-                    <a href="/my/employee/material" class="ep-sub-link">Material Requests</a>
-                    <a href="/my/employee/material/new" class="ep-sub-link">New Material Request</a>
-                </div>
-            </div>
+            <a href="/my/employee/material"
+            t-att-class="'active' if request.httprequest.path.startswith('/my/employee/material') else ''">
+                Material Requests
+            </a>
 
-            <!-- Approvals Dropdown (ALL YOUR GROUP LOGIC PRESERVED) -->
+            <!-- =========================
+                APPROVALS SECTION
+            ========================== -->
+
             <t t-if="
                 request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
                 or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
                 or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
                 or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+            ">
+                <a href="/my/employee/approvals"
+                t-att-class="'active' if request.httprequest.path.startswith('/my/employee/approvals') else ''">
+                    Employee Approvals
+                </a>
+            </t>
+
+            <t t-if="
+                request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
                 or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
                 or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
                 or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
             ">
-                <div class="ep-dropdown">
-                    <button class="ep-dropdown-toggle"
-                            onclick="toggleDropdown(event,'approvals-menu')">
-                        Approvals ▾
-                    </button>
-
-                    <div id="approvals-menu" class="ep-dropdown-menu">
-
-                        <t t-if="
-                            request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                        ">
-                            <a href="/my/employee/approvals" class="ep-sub-link">
-                                Employee Approvals
-                            </a>
-                        </t>
-
-                        <t t-if="
-                            request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                        ">
-                            <a href="/my/employee/material/approvals" class="ep-sub-link">
-                                Material Approvals
-                            </a>
-                        </t>
-
-                    </div>
-                </div>
+                <a href="/my/employee/material/approvals"
+                t-att-class="'active' if request.httprequest.path.startswith('/my/employee/material/approvals') else ''">
+                    Material Approvals
+                </a>
             </t>
 
             <!-- Petty Cash -->
             <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
                 <a href="/my/petty-cash"
-                   t-att-class="'ep-link active' if request.httprequest.path.startswith('/my/petty-cash') else 'ep-link'">
+                t-att-class="'active' if request.httprequest.path.startswith('/my/petty-cash') else ''">
                     Petty Cash
                 </a>
             </t>
 
-        </div>
-    </div>
+        </nav>
 
-    <!-- RIGHT SIDE USER -->
-    <div class="ep-right">
-        <div class="ep-user-pill">
-            <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_1024)"/>
-            <div class="ep-user-info">
-                <h5 t-out="request.env.user.partner_id.name"/>
-                <small t-out="request.env.user.partner_id.company_name"/>
+
+    </aside>
+
+    <!-- MAIN -->
+    <div class="ep-main">
+
+        <!-- DESKTOP HEADER -->
+        <div class="ep-header">
+            <h4>Portal</h4>
+
+            <div class="ep-user">
+                <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_1024)"/>
+                <span t-out="request.env.user.partner_id.name"/>
+                <a href="/web/session/logout" style="margin-left:15px;">Logout</a>
             </div>
         </div>
 
-        <a href="/web/session/logout" class="ep-logout" title="Logout">
-            <i class="fa fa-sign-out"></i>
-        </a>
+        <!-- MOBILE HEADER -->
+        <div class="ep-mobile-header">
+            <strong>Portal</strong>
+            <span t-out="request.env.user.partner_id.name"/>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="ep-content">
+            <t t-raw="0"/>
+        </div>
+
     </div>
 
 </div>
-<div class="ep-overlay" id="epOverlay" onclick="toggleMenu()"></div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="ep-bottom-nav">
+
+    <a href="/my"
+       t-att-class="'active' if request.httprequest.path == '/my' else ''">
+        Dashboard
+    </a>
+
+    <a href="/my/employee/requests"
+       t-att-class="'active' if request.httprequest.path.startswith('/my/employee/requests') else ''">
+        Requests
+    </a>
+
+    <!-- Only show Approvals tab if user has ANY approval group -->
+    <t t-if="
+        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+        or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+    ">
+        <a href="/my/employee/approvals">
+            Approvals
+        </a>
+    </t>
+
+    <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+        <a href="/my/petty-cash"
+           t-att-class="'active' if request.httprequest.path.startswith('/my/petty-cash') else ''">
+            Petty Cash
+        </a>
+    </t>
 
 </nav>
 
-<!-- PAGE CONTENT -->
-<main class="ep-main">
-    <t t-raw="0"/>
-</main>
-
-
-
-</t>
-
-<script>
-function toggleDropdown(event,id){
-    event.stopPropagation();
-    document.querySelectorAll('.ep-dropdown-menu').forEach(m=>{
-        if(m.id!==id) m.style.display='none';
-    });
-    let menu=document.getElementById(id);
-    menu.style.display=(menu.style.display==='block')?'none':'block';
-}
-
-document.addEventListener('click',function(){
-    document.querySelectorAll('.ep-dropdown-menu')
-        .forEach(m=>m.style.display='none');
-});
-
-function toggleMenu(){
-    const menu = document.getElementById("epMenu");
-    const overlay = document.getElementById("epOverlay");
-
-    menu.classList.toggle("open");
-    overlay.classList.toggle("active");
-}
-</script>
 
 </template>
+
 </odoo>
