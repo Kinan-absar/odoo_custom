@@ -162,3 +162,29 @@ class PortalPettyCash(CustomerPortal):
 
         return request.redirect(f'/my/petty-cash/{report_id}?success=uploaded')
 
+    @http.route('/my/petty-cash/attachment/<int:attachment_id>/delete',
+            type='http', auth='user', website=True)
+    def portal_delete_attachment(self, attachment_id, **kw):
+
+        attachment = request.env['ir.attachment'].sudo().browse(attachment_id)
+
+        if not attachment:
+            return request.redirect('/my')
+
+        # Ensure attachment belongs to petty cash
+        if attachment.res_model != 'petty.cash':
+            return request.redirect('/my')
+
+        report = request.env['petty.cash'].sudo().browse(attachment.res_id)
+
+        # Security check
+        if not report or report.user_id != request.env.user:
+            return request.redirect('/my')
+
+        # Only allow delete in draft
+        if report.state != 'draft':
+            return request.redirect(f'/my/petty-cash/{report.id}')
+
+        attachment.unlink()
+
+        return request.redirect(f'/my/petty-cash/{report.id}')

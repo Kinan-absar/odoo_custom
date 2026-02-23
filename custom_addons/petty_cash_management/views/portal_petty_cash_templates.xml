@@ -163,11 +163,24 @@
                                         <t t-esc="att.name"/>
                                     </a>
                                 </div>
+                                                <!-- Delete Button (Draft Only) -->
+                                <t t-if="report.state == 'draft'">
+                                    <form t-att-action="'/my/petty-cash/attachment/%s/delete' % att.id"
+                                        method="post"
+                                        class="d-inline">
 
-                                <small class="text-muted">
-                                    Uploaded by you
-                                </small>
+                                        <input type="hidden"
+                                            name="csrf_token"
+                                            t-att-value="request.csrf_token()"/>
 
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger"
+                                                title="Delete attachment">
+                                            🗑
+                                        </button>
+
+                                    </form>
+                                </t>
                             </li>
                         </t>
                     </ul>
