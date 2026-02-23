@@ -6,13 +6,22 @@
         <t t-set="page_name">material_requests</t>
 
         <div class="container mt-4">
-            <h3>Material Requests</h3>
 
-            <a href="/my/employee/material/new" class="btn btn-primary mb-3">
-                New Material Request
-            </a>
+    <div class="card shadow-sm border-0">
 
-            <table class="table table-striped">
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0 fw-semibold">Material Requests</h4>
+
+                <a href="/my/employee/material/new"
+                   class="btn btn-primary btn-sm">
+                    + New Material Request
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle mb-0">
                 <thead>
                     <tr>
                         <th>Request #</th>
@@ -38,8 +47,14 @@
                         </tr>
                     </t>
                 </tbody>
-            </table>
+                            </table>
+            </div>
+
         </div>
+    </div>
+
+</div>
+
 
     </t>
 </template>
