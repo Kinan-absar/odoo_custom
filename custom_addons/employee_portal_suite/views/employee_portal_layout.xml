@@ -240,7 +240,32 @@ body{
         box-shadow:none;
         border:none;
     }
-}
+    }
+    /* FULL WIDTH PAGE SYSTEM */
+
+    .ep-page{
+        padding-top:30px;
+        padding-bottom:50px;
+    }
+
+    .ep-page-wrapper{
+        width:100%;
+        max-width:1200px;
+        margin:0 auto;
+        padding-left:20px;
+        padding-right:20px;
+    }
+
+    /* MOBILE FIX */
+    @media(max-width:768px){
+
+        .ep-page-wrapper{
+            max-width:100%;
+            padding-left:16px;
+            padding-right:16px;
+        }
+
+    }
 
 </style>
 
@@ -357,11 +382,12 @@ body{
 </nav>
 
 <!-- PAGE CONTENT -->
-<main class="py-5">
-<div class="container">
-<t t-raw="0"/>
-</div>
+<main class="ep-page">
+    <div class="ep-page-wrapper">
+        <t t-raw="0"/>
+    </div>
 </main>
+
 
 </t>
 
