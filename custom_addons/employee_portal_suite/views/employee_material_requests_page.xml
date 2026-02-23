@@ -116,6 +116,7 @@
                 <form method="get" class="material-search-form">
                     <div class="position-relative">
                         <input type="text"
+                                id="materialSearchInput"
                             name="search"
                             t-att-value="search or ''"
                             placeholder="Search request # or worksite"
@@ -211,6 +212,23 @@
     </div>
 
 </div>
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+
+            const input = document.getElementById("materialSearchInput");
+            if (!input) return;
+
+            input.addEventListener("input", function() {
+
+                // If user cleared search
+                if (this.value.trim() === "") {
+                    window.location.href = "/my/employee/material";
+                }
+
+            });
+
+        });
+        </script>
 
 
     </t>
