@@ -4,42 +4,87 @@
     <template id="employee_requests_page" name="Employee Requests Page">
         <t t-call="employee_portal_suite.employee_portal_layout">
 
-            <div class="container my-4">
-                <h2>My Requests</h2>
+            <div class="container mt-4">
 
-                <t t-if="requests">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Request</th>
-                                <th>Type</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <t t-foreach="requests" t-as="req">
-                                <tr>
-                                    <td><t t-esc="req.name"/></td>
-                                    <td><t t-esc="req.get_request_type_display()"/></td>
-                                    <td><t t-esc="req.get_readable_status()"/></td>
-                                    <td><t t-esc="req.request_date"/></td>
-                                    <td>
-                                        <a t-att-href="'/my/employee/requests/%s' % req.id" class="btn btn-secondary btn-sm">View</a>
-                                    </td>
-                                </tr>
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
 
-                            </t>
-                        </tbody>
-                    </table>
-                </t>
+                        <!-- Header -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="mb-0 fw-semibold">My Requests</h4>
 
-                <t t-if="not requests">
-                    <p>No requests found.</p>
-                </t>
+                            <a class="btn btn-primary btn-sm"
+                               href="/my/employee/requests/new">
+                                + Create New Request
+                            </a>
+                        </div>
 
-                <a class="btn btn-success mt-3" href="/my/employee/requests/new">Create New Request</a>
+                        <!-- Requests Table -->
+                        <t t-if="requests">
+
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm align-middle mb-0">
+
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Request</th>
+                                            <th>Type</th>
+                                            <th>Status</th>
+                                            <th>Date</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        <t t-foreach="requests" t-as="req">
+                                            <tr>
+
+                                                <td class="fw-semibold">
+                                                    <t t-esc="req.name"/>
+                                                </td>
+
+                                                <td>
+                                                    <t t-esc="req.get_request_type_display()"/>
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge bg-light text-dark border">
+                                                        <t t-esc="req.get_readable_status()"/>
+                                                    </span>
+                                                </td>
+
+                                                <td>
+                                                    <small class="text-muted">
+                                                        <t t-esc="req.request_date"/>
+                                                    </small>
+                                                </td>
+
+                                                <td class="text-end">
+                                                    <a t-att-href="'/my/employee/requests/%s' % req.id"
+                                                       class="btn btn-outline-primary btn-sm">
+                                                        View
+                                                    </a>
+                                                </td>
+
+                                            </tr>
+                                        </t>
+                                    </tbody>
+
+                                </table>
+                            </div>
+
+                        </t>
+
+                        <!-- Empty State -->
+                        <t t-if="not requests">
+                            <div class="text-center text-muted py-4">
+                                No requests found.
+                            </div>
+                        </t>
+
+                    </div>
+                </div>
+
             </div>
 
         </t>
