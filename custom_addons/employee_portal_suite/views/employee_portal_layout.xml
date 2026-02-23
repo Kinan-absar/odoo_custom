@@ -263,7 +263,7 @@
 
                 document.addEventListener('click', function(e){
                     const menu = document.getElementById('fabMenu');
-                    if (!e.target.closest('.fab-plus') && !e.target.closest('.fab-menu')) {
+                    if (!e.target.closest('.fab-plus') &amp; !e.target.closest('.fab-menu')) {
                         menu.classList.remove('show');
                     }
                 });
