@@ -4,20 +4,34 @@
     <template id="employee_portal_dashboard" name="Employee Dashboard">
         <t t-call="employee_portal_suite.employee_portal_layout">
             <style>
+            .dashboard-link {
+                text-decoration: none !important;
+            }
+
             .dashboard-card {
-                border: none !important;
-                border-radius: 22px !important;
                 background: white;
+                border-radius: 24px;
+                padding: 18px;
+                height: 140px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
                 box-shadow: 0 8px 25px rgba(0,0,0,0.05);
                 transition: all 0.25s ease;
             }
 
             .dashboard-card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+                transform: translateY(-6px);
+                box-shadow: 0 18px 40px rgba(0,0,0,0.08);
             }
 
-            .tile-icon {
+            .card-top {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .card-icon {
                 width: 42px;
                 height: 42px;
                 border-radius: 14px;
@@ -27,20 +41,42 @@
                 font-size: 18px;
             }
 
-            .bg-primary-soft {
-                background: rgba(113, 75, 103, 0.1);
-                color: #714B67;
+            .bg-warning-soft {
+                background: rgba(245, 158, 11, 0.12);
+                color: #F59E0B;
             }
 
-            .tile-number {
-                font-size: 28px;
-                letter-spacing: -1px;
-            }
-
-            .tile-label {
-                font-size: 13px;
+            .card-title {
                 font-weight: 600;
-                color: #6B7280;
+                font-size: 14px;
+                color: #374151;
+            }
+
+            .card-number {
+                font-size: 32px;
+                font-weight: 700;
+                letter-spacing: -1px;
+                color: #111827;
+            }
+
+            .card-bottom {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .badge-pulse {
+                width: 10px;
+                height: 10px;
+                background: #F59E0B;
+                border-radius: 50%;
+                animation: pulse 1.5s infinite;
+            }
+
+            @keyframes pulse {
+                0% { box-shadow: 0 0 0 0 rgba(245,158,11,0.6); }
+                70% { box-shadow: 0 0 0 10px rgba(245,158,11,0); }
+                100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
             }
 
 
@@ -73,15 +109,30 @@
 
                     <!-- Material Requests -->
                     <div class="col-6 col-md-6">
-                        <a href="/my/employee/material" class="text-decoration-none">
-                            <div class="card dashboard-card h-100 text-center p-3">
-                                <h6 class="mb-2 text-muted">Material Requests</h6>
-                                <h3 class="fw-bold mb-0">
-                                    <t t-esc="my_material_count"/>
-                                </h3>
+                        <a href="/my/employee/material/approvals" class="dashboard-link">
+                            <div class="dashboard-card">
+
+                                <div class="card-top">
+                                    <div class="card-icon bg-warning-soft">
+                                        <i class="fa fa-cubes"></i>
+                                    </div>
+                                    <span class="card-title">Material Approvals</span>
+                                </div>
+
+                                <div class="card-bottom">
+                                    <span class="card-number">
+                                        <t t-esc="material_pending_count"/>
+                                    </span>
+
+                                    <t t-if="material_pending_count &gt; 0">
+                                        <span class="badge-pulse"></span>
+                                    </t>
+                                </div>
+
                             </div>
                         </a>
                     </div>
+
 
                     <!-- Employee Approvals -->
                     <t t-if="
