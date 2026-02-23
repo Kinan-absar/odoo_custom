@@ -192,7 +192,7 @@
                     <a href="/web/session/logout" class="btn btn-sm btn-outline-danger ms-2">Logout</a>
                 </div>
             </nav>
-
+            <t t-if="request.httprequest.path == '/my'">
             <div class="mobile-app-header mobile-only">
                 <div>
                     <div class="fw-bold" style="font-size:14px; color:#6b7280;">
@@ -208,7 +208,7 @@
                     width="36"
                     height="36"/>
             </div>
-
+            </t>
 
             <main>
                 <div id="wrap" class="container mt-3 mb-5">
@@ -219,8 +219,12 @@
             <nav class="ep-bottom-nav mobile-only">
 
                 <!-- HOME -->
-                <a href="/my"
-                t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my') and not request.httprequest.path.startswith('/my/employee') and not request.httprequest.path.startswith('/my/petty') else 'nav-btn'">
+                <a href="/my/employee"
+                t-att-class="
+                    'nav-btn active'
+                    if request.httprequest.path == '/my/employee'
+                    else 'nav-btn'
+                ">
                     <i class="fa fa-home"></i>
                     <span>Home</span>
                 </a>
