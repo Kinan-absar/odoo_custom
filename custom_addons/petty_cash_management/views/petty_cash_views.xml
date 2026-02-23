@@ -100,7 +100,7 @@
                     widget="badge"
                     decoration-success="state == 'approved'"
                     decoration-warning="state == 'submitted'"
-                    decoration-danger="state == 'rejected'"
+                    decoration-danger="state == 'refused'"
                     decoration-muted="state == 'draft'"/>
             </list>
         </field>

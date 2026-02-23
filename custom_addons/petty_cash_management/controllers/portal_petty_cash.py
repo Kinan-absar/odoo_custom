@@ -9,7 +9,7 @@ def _petty_status_badge(rec):
     if rec.state == "approved":
         return '<span class="badge bg-success">Approved</span>'
 
-    if rec.state == "rejected":
+    if rec.state == "refused":
         return '<span class="badge bg-danger">Rejected</span>'
 
     if rec.state == "submitted":
