@@ -4,7 +4,56 @@
 <template id="employee_material_requests_page">
     <t t-call="employee_portal_suite.employee_portal_layout">
         <t t-set="page_name">material_requests</t>
+<style>
+/* ========================= */
+/* MOBILE REQUEST LIST STYLE */
+/* ========================= */
 
+.mobile-request-card {
+    display: block;
+    background: white;
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 14px;
+    text-decoration: none !important;
+    color: inherit;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.mobile-request-card:active {
+    transform: scale(0.97);
+}
+
+.mobile-request-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.mobile-request-id {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.mobile-request-date {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.mobile-request-body {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.mobile-request-body .label {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+</style>
         <div class="container mt-4">
 
     <div class="card shadow-sm border-0">
@@ -20,35 +69,75 @@
                 </a>
             </div>
 
-            <div class="table-responsive">
+                        <!-- DESKTOP TABLE -->
+            <div class="table-responsive d-none d-md-block">
                 <table class="table table-hover table-sm align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Request #</th>
-                        <th>Date</th>
-                        <th>Worksite</th>
-                        <th>Delivery Date</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <t t-foreach="requests" t-as="req">
+                    <thead>
                         <tr>
-                            <td><t t-esc="req.name"/></td>
-                            <td><t t-esc="req.request_date"/></td>
-                            <td><t t-esc="req.worksite"/></td>
-                            <td><t t-esc="req.delivery_date"/></td>
-                            <td><t t-raw="status_badge(req)"/></td>
-                            <td>
-                                <a t-att-href="'/my/employee/material/%s' % req.id"
-                                   class="btn btn-secondary btn-sm">View</a>
-                            </td>
+                            <th>Request #</th>
+                            <th>Date</th>
+                            <th>Worksite</th>
+                            <th>Delivery Date</th>
+                            <th>Status</th>
+                            <th></th>
                         </tr>
-                    </t>
-                </tbody>
-                            </table>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="requests" t-as="req">
+                            <tr>
+                                <td><t t-esc="req.name"/></td>
+                                <td><t t-esc="req.request_date"/></td>
+                                <td><t t-esc="req.worksite"/></td>
+                                <td><t t-esc="req.delivery_date"/></td>
+                                <td><t t-raw="status_badge(req)"/></td>
+                                <td>
+                                    <a t-att-href="'/my/employee/material/%s' % req.id"
+                                    class="btn btn-secondary btn-sm">View</a>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
             </div>
+
+
+            <!-- MOBILE CARD LIST -->
+            <div class="d-md-none">
+                <t t-foreach="requests" t-as="req">
+                    <a t-att-href="'/my/employee/material/%s' % req.id"
+                    class="mobile-request-card">
+
+                        <div class="mobile-request-top">
+                            <div>
+                                <div class="mobile-request-id">
+                                    <t t-esc="req.name"/>
+                                </div>
+                                <div class="mobile-request-date">
+                                    <t t-esc="req.request_date"/>
+                                </div>
+                            </div>
+
+                            <div>
+                                <t t-raw="status_badge(req)"/>
+                            </div>
+                        </div>
+
+                        <div class="mobile-request-body">
+                            <div>
+                                <span class="label">Worksite</span>
+                                <div><t t-esc="req.worksite"/></div>
+                            </div>
+
+                            <div>
+                                <span class="label">Delivery</span>
+                                <div><t t-esc="req.delivery_date"/></div>
+                            </div>
+                        </div>
+
+                    </a>
+                </t>
+            </div>
+
 
         </div>
     </div>
