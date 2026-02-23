@@ -190,39 +190,34 @@
                 /* CENTER PLUS UPGRADE     */
                 /* ======================= */
 
+                /* ============================= */
+                /* BALANCED CENTER PLUS BUTTON  */
+                /* ============================= */
+
                 .ep-bottom-nav .fab-plus {
-                    width: 60px;
-                    height: 60px;
-                    background: linear-gradient(135deg, #5B7CFA, #3B5BDB);
-                    border-radius: 20px;
+                    width: 52px;
+                    height: 52px;
+                    background: var(--app-primary);
+                    border-radius: 50%;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    margin-top: -30px;   /* lifts it above nav */
-                    box-shadow: 0 15px 35px rgba(59,91,219,0.35);
+                    margin-top: -22px;
+                    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
                     transition: transform 0.15s ease, box-shadow 0.2s ease;
                 }
 
                 .ep-bottom-nav .fab-plus i {
-                    font-size: 26px;
+                    font-size: 22px;
                     color: white;
                 }
 
-                /* Press effect for plus */
+                /* Soft press */
                 .ep-bottom-nav .nav-btn:active .fab-plus {
-                    transform: scale(0.9);
-                    box-shadow: 0 8px 20px rgba(59,91,219,0.25);
+                    transform: scale(0.92);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
                 }
 
-                /* Make middle button not shrink like others */
-                .ep-bottom-nav .nav-btn:active .fab-plus {
-                    transform: scale(0.9);
-                }
-
-                /* Space adjustment for better symmetry */
-                .ep-bottom-nav {
-                    height: 85px;
-                }
 
             </style>
 
