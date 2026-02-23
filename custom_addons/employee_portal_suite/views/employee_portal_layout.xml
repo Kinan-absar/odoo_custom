@@ -359,12 +359,13 @@
 
                 var app = document.getElementById('approvalMenu');
                 if (app) {
-                    if (!e.target.closest('.nav-btn')) {
-                        if (!e.target.closest('#approvalMenu')) {
+                    if (!e.target.closest('#approvalMenu')) {
+                        if (!e.target.closest('[onclick="toggleApprovalMenu()"]')) {
                             app.classList.remove('show');
                         }
                     }
                 }
+
 
             });
         </script>
