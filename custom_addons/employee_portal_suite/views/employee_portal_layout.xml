@@ -212,14 +212,15 @@
                     or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
                 ">
 
-                    <a href="javascript:void(0);"
-                    t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'"
-                    onclick="toggleApprovalMenu()">
+                    <div id="approvalBtn"
+                        t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'"
+                        onclick="toggleApprovalMenu()">
 
                         <i class="fa fa-check-circle-o"></i>
                         <span>Approvals</span>
 
-                    </a>
+                    </div>
+
 
                     <div id="approvalMenu" class="fab-menu">
 
@@ -271,32 +272,19 @@
                 </a>
 
             </nav>
-            <!-- MOBILE FAB -->
-            <div class="mobile-only">
+            
+            <!-- FAB MENU (Single Instance) -->
+            <div id="fabMenu" class="fab-menu mobile-only">
 
-                <!-- Floating Button -->
-                <a href="javascript:void(0);"
-                class="nav-btn"
-                onclick="toggleFabMenu()">
-                    <div class="fab-plus">
-                        <i class="fa fa-plus"></i>
-                    </div>
+                <a href="/my/employee/requests/new" class="fab-item">
+                    <i class="fa fa-file-text-o"></i>
+                    <span>New Employee Request</span>
                 </a>
 
-                <!-- FAB MENU -->
-                <div id="fabMenu" class="fab-menu">
-
-                    <a href="/my/employee/requests/new" class="fab-item">
-                        <i class="fa fa-file-text-o"></i>
-                        <span>New Employee Request</span>
-                    </a>
-
-                    <a href="/my/employee/material/new" class="fab-item">
-                        <i class="fa fa-cubes"></i>
-                        <span>New Material Request</span>
-                    </a>
-
-                </div>
+                <a href="/my/employee/material/new" class="fab-item">
+                    <i class="fa fa-cubes"></i>
+                    <span>New Material Request</span>
+                </a>
 
             </div>
 
@@ -360,7 +348,7 @@
                 var app = document.getElementById('approvalMenu');
                 if (app) {
                     if (!e.target.closest('#approvalMenu')) {
-                        if (!e.target.closest('[onclick="toggleApprovalMenu()"]')) {
+                        if (!e.target.closest('#approvalBtn')) {
                             app.classList.remove('show');
                         }
                     }
