@@ -144,7 +144,11 @@
                 <field name="name"/>
                 <field name="employee_id"/>
                 <field name="request_type"/>
-                <field name="state"/>
+                <field name="state" widget="badge"
+                decoration-muted="state == 'draft'"
+                decoration-info="state in ('manager','hr','finance','ceo')"
+                decoration-success="state == 'approved'"
+                decoration-danger="state == 'rejected'"/>
                 <field name="request_date"/>
             </list>
         </field>
