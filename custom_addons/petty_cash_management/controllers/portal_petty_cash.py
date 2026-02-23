@@ -4,6 +4,21 @@ from odoo.addons.portal.controllers.portal import CustomerPortal
 import base64
 from odoo import fields
 
+def _petty_status_badge(rec):
+
+    if rec.state == "approved":
+        return '<span class="badge bg-success">Approved</span>'
+
+    if rec.state == "rejected":
+        return '<span class="badge bg-danger">Rejected</span>'
+
+    if rec.state == "submitted":
+        return '<span class="badge bg-warning text-dark">Submitted</span>'
+
+    if rec.state == "draft":
+        return '<span class="badge bg-light text-dark border">Draft</span>'
+
+    return '<span class="badge bg-secondary">Unknown</span>'
 
 class PortalPettyCash(CustomerPortal):
 
@@ -22,6 +37,7 @@ class PortalPettyCash(CustomerPortal):
             {
                 'reports': reports,
                 'page_name': 'petty_cash',
+                'status_badge': _petty_status_badge,
             }
         )
 
@@ -43,6 +59,7 @@ class PortalPettyCash(CustomerPortal):
             {
                 'report': report,
                 'categories': categories,   # 🔥 THIS WAS MISSING
+                'status_badge': _petty_status_badge,
             }
         )
 

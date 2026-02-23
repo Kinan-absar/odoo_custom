@@ -96,7 +96,12 @@
                 <field name="user_id"/>
                 <field name="date"/>
                 <field name="amount_total"/>
-                <field name="state"/>
+                <field name="state" 
+                    widget="badge"
+                    decoration-success="state == 'approved'"
+                    decoration-warning="state == 'submitted'"
+                    decoration-danger="state == 'rejected'"
+                    decoration-muted="state == 'draft'"/>
             </list>
         </field>
     </record>
