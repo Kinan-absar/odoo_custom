@@ -1,129 +1,115 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<odoo>
 <template id="employee_portal_layout">
+    <xpath expr="//meta[@name='viewport']" position="replace">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+    </xpath>
+
     <t t-call="web.layout">
         <style>
-            /* --- APP SHELL ARCHITECTURE --- */
             :root {
-                --app-primary: #714B67; 
-                --app-bg: #F2F2F7; /* iOS System Gray */
-                --card-bg: #FFFFFF;
-                --header-height: 60px;
-                --footer-height: 75px;
+                --app-primary: #714B67;
+                --app-bg: #F8F9FA;
+                --card-shadow: 0 2px 8px rgba(0,0,0,0.06);
             }
 
-            body, html {
-                margin: 0; padding: 0;
-                height: 100%; overflow: hidden; /* Prevent body scroll */
-                background-color: var(--app-bg);
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica;
+            /* 2. REMOVE BROWSER FEEL */
+            body {
+                background-color: var(--app-bg) !important;
+                font-size: 16px !important; /* Prevents auto-zoom on inputs */
+                overflow-x: hidden;
             }
 
-            /* --- FIXED HEADER --- */
-            .app-header {
-                height: var(--header-height);
-                background: #fff;
+            /* 3. FULL WIDTH CONTAINER */
+            .container {
+                max-width: 100% !important;
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+            }
+
+            /* 4. APP-STYLE CARDS (Stacking instead of Grids) */
+            .o_portal_category {
+                display: flex !important;
+                flex-direction: column !important; /* Stack vertically on mobile */
+                gap: 12px;
+                margin-top: 10px;
+            }
+
+            /* Target the cards in your screenshot */
+            .card, .list-group-item {
+                border: none !important;
+                border-radius: 12px !important;
+                box-shadow: var(--card-shadow);
+                width: 100% !important; /* Take up the whole screen width */
+                margin-bottom: 8px;
+            }
+
+            /* 5. BIG "TAPABLE" BUTTONS */
+            .btn {
+                height: 48px !important; /* Native app button height */
                 display: flex;
                 align-items: center;
+                justify-content: center;
+                font-weight: 600 !important;
+                border-radius: 10px !important;
+                font-size: 15px !important;
+            }
+
+            /* 6. FIXED HEADER IMPROVEMENT */
+            .app-header {
+                background: #fff;
+                padding: 12px 16px;
+                border-bottom: 1px solid #eee;
+                position: sticky;
+                top: 0;
+                z-index: 1000;
+                display: flex;
                 justify-content: space-between;
-                padding: 0 20px;
-                border-bottom: 1px solid #d1d1d6;
-                position: fixed; top: 0; width: 100%; z-index: 1000;
-            }
-
-            /* --- SCROLLABLE CONTENT AREA --- */
-            .app-content {
-                position: absolute;
-                top: var(--header-height);
-                bottom: var(--footer-height);
-                left: 0; right: 0;
-                overflow-y: auto; /* Only this scrolls */
-                -webkit-overflow-scrolling: touch;
-                padding: 15px;
-            }
-
-            /* --- APP-STYLE BOTTOM NAV --- */
-            .app-nav {
-                height: var(--footer-height);
-                background: rgba(255, 255, 255, 0.9);
-                backdrop-filter: blur(10px); /* iPhone glass effect */
-                position: fixed; bottom: 0; width: 100%;
-                display: flex; justify-content: space-around;
                 align-items: center;
-                border-top: 1px solid #d1d1d6;
-                padding-bottom: env(safe-area-inset-bottom); /* Fix for iPhone Notch */
             }
 
-            .nav-btn {
-                text-decoration: none !important;
-                color: #8E8E93;
-                display: flex; flex-direction: column;
-                align-items: center; transition: 0.2s;
-            }
-
-            .nav-btn.active { color: var(--app-primary); }
-            .nav-btn i { font-size: 22px; margin-bottom: 4px; }
-            .nav-btn span { font-size: 11px; font-weight: 500; }
-
-            /* --- FLOATING ACTION BUTTON (FAB) --- */
-            .fab-btn {
-                width: 56px; height: 56px;
-                background: var(--app-primary);
-                border-radius: 50%;
-                display: flex; align-items: center; justify-content: center;
-                color: white !important;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                margin-top: -40px; /* Pull it up out of the nav */
-                border: 4px solid var(--app-bg);
-            }
-
-            /* --- HIDE DESKTOP ELEMENTS ON MOBILE --- */
-            @media (min-width: 992px) {
-                .app-nav { display: none; }
-                .app-content { bottom: 0; }
-                body { overflow: auto; }
+            /* 7. THE BOTTOM NAV (AS SHOWN IN YOUR SCREENSHOT) */
+            .app-nav {
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                height: 70px;
+                background: #fff;
+                border-top: 1px solid #ddd;
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                padding-bottom: env(safe-area-inset-bottom);
+                z-index: 1050;
             }
         </style>
 
-        <t t-call-assets="web.assets_frontend"/>
-
-        <header class="app-header">
-            <h5 class="m-0 fw-bold" style="letter-spacing: -0.5px;">Portal</h5>
-            <div class="d-flex align-items-center">
-                <a href="/my/account" class="me-3 text-dark"><i class="fa fa-bell-o fa-lg"></i></a>
-                <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" 
-                     class="rounded-circle" width="32" height="32" 
-                     onclick="document.getElementById('side-menu').style.transform = 'translateX(0)'"/>
+        <div class="app-header">
+            <span class="fw-bold fs-4">Portal</span>
+            <div class="d-flex align-items-center gap-3">
+                <i class="fa fa-bell-o fs-5 text-muted"></i>
+                <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="rounded-circle" width="34"/>
             </div>
-        </header>
-
-        <div class="app-content">
-            <t t-raw="0"/>
         </div>
 
-        <nav class="app-nav">
-            <a href="/my" class="nav-btn active">
-                <i class="fa fa-home"></i>
-                <span>Home</span>
-            </a>
-            <a href="/my/employee/requests" class="nav-btn">
-                <i class="fa fa-list-ul"></i>
-                <span>Requests</span>
-            </a>
-            
-            <a href="/my/employee/requests/new" class="nav-btn fab-btn">
-                <i class="fa fa-plus"></i>
-            </a>
+        <main class="app-content mt-2">
+            <div class="container">
+                <t t-raw="0"/>
+            </div>
+        </main>
 
-            <a href="/my/employee/approvals" class="nav-btn">
-                <i class="fa fa-check-circle-o"></i>
-                <span>Approvals</span>
+        <nav class="app-nav">
+             <a href="/my" class="text-decoration-none text-center">
+                <i class="fa fa-home d-block fs-4 text-primary"></i>
+                <span style="font-size: 10px;" class="text-primary">Home</span>
             </a>
-            <a href="/web/session/logout" class="nav-btn">
-                <i class="fa fa-sign-out"></i>
-                <span>Exit</span>
+            <div class="fab-placeholder" style="margin-top: -40px;">
+                 <a href="/new" class="btn btn-primary rounded-circle" style="width: 56px; height: 56px;">
+                    <i class="fa fa-plus"></i>
+                 </a>
+            </div>
+            <a href="/my/approvals" class="text-decoration-none text-center text-muted">
+                <i class="fa fa-check-circle-o d-block fs-4"></i>
+                <span style="font-size: 10px;">Approvals</span>
             </a>
         </nav>
     </t>
 </template>
-</odoo>
