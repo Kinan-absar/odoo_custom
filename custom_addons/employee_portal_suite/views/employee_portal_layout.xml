@@ -126,23 +126,44 @@
                         </div>
                     </div>
 
-                    <t t-if="any(request.env.user.has_group(g) for g in [
-                        'employee_portal_suite.group_employee_portal_manager',
-                        'employee_portal_suite.group_employee_portal_hr',
-                        'employee_portal_suite.group_employee_portal_finance',
-                        'employee_portal_suite.group_employee_portal_ceo',
-                        'employee_portal_suite.group_mr_purchase_rep',
-                        'employee_portal_suite.group_mr_store_manager',
-                        'employee_portal_suite.group_mr_project_manager',
-                        'employee_portal_suite.group_mr_projects_director'
-                    ])">
-                        <div class="ep-dropdown">
-                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals ▾</button>
-                            <div id="app-d" class="ep-dropdown-menu">
-                                <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
-                                <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
+                    <t t-if="
+                            request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                        ">
+
+                        <div id="app-d" class="ep-dropdown-menu">
+
+                                <t t-if="
+                                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                                ">
+                                    <a href="/my/employee/approvals" class="ep-sub-link">
+                                        Employee Approvals
+                                    </a>
+                                </t>
+
+                                <t t-if="
+                                    request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                                ">
+                                    <a href="/my/employee/material/approvals" class="ep-sub-link">
+                                        Material Approvals
+                                    </a>
+                                </t>
+
                             </div>
-                        </div>
+
                     </t>
                     
                     <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
@@ -161,9 +182,21 @@
             </nav>
 
             <div class="mobile-app-header mobile-only">
-                <span class="fw-bold fs-4" style="color: var(--app-primary)">Portal</span>
-                <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="rounded-circle" width="36" height="36"/>
+                <div>
+                    <div class="fw-bold" style="font-size:14px; color:#6b7280;">
+                        Welcome back,
+                    </div>
+                    <div class="fw-bold fs-5" style="color: var(--app-primary);">
+                        <t t-esc="request.env.user.partner_id.name.split(' ')[0]"/>
+                    </div>
+                </div>
+
+                <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"
+                    class="rounded-circle"
+                    width="36"
+                    height="36"/>
             </div>
+
 
             <main>
                 <div id="wrap" class="container mt-3 mb-5">
@@ -175,10 +208,11 @@
 
                 <!-- HOME -->
                 <a href="/my"
-                t-att-class="'nav-btn active' if request.httprequest.path == '/my' else 'nav-btn'">
+                t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my') and not request.httprequest.path.startswith('/my/employee') and not request.httprequest.path.startswith('/my/petty') else 'nav-btn'">
                     <i class="fa fa-home"></i>
                     <span>Home</span>
                 </a>
+
 
                 <!-- EMPLOYEE REQUESTS -->
                 <a href="/my/employee/requests"
