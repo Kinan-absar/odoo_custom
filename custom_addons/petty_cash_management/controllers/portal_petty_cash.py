@@ -119,7 +119,7 @@ class PortalPettyCash(CustomerPortal):
         return request.redirect('/my/petty-cash/%s' % report.id)
         
     @http.route('/my/petty-cash/<int:report_id>/submit',
-                type='http', auth='user', website=True, methods=['POST'])
+            type='http', auth='user', website=True, methods=['POST'])
     def portal_submit_report(self, report_id, **post):
 
         report = request.env['petty.cash'].sudo().browse(report_id)
@@ -127,9 +127,13 @@ class PortalPettyCash(CustomerPortal):
         if not report or report.user_id != request.env.user:
             return request.redirect('/my')
 
+        if not report.line_ids:
+            return request.redirect(f'/my/petty-cash/{report_id}?error=no_lines')
+
         if report.state != 'draft':
             return request.redirect(f'/my/petty-cash/{report_id}')
 
         report.action_submit()
 
         return request.redirect(f'/my/petty-cash/{report_id}')
+
