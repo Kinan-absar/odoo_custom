@@ -52,7 +52,7 @@
                     
                     /* Force cards to be app-tiles */
                     .container { max-width: 100% !important; padding: 16px !important; }
-                    .row > div { width: 100% !important; flex: 0 0 100% !important; max-width: 100% !important; padding: 0 !important; }
+                    
                     
                     .card {
                         border: none !important; border-radius: 16px !important;
