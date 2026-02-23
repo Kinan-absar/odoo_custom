@@ -1,118 +1,201 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-<template id="employee_portal_layout">
-    <xpath expr="//meta[@name='viewport']" position="replace">
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-    </xpath>
-
+    <template id="portal_layout_mobile_scaling" inherit_id="web.layout">
+        <xpath expr="//meta[@name='viewport']" position="replace">
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+        </xpath>
+    </template>
+    <template id="employee_portal_layout">
     <t t-call="web.layout">
         <style>
             :root {
-                --app-primary: #714B67;
+                --odoo-primary: #714B67;
                 --app-bg: #F8F9FA;
-                --card-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                --text-dark: #1F2937;
             }
 
-            /* 2. REMOVE BROWSER FEEL */
-            body {
-                background-color: var(--app-bg) !important;
-                font-size: 16px !important; /* Prevents auto-zoom on inputs */
-                overflow-x: hidden;
+            body { background-color: var(--app-bg) !important; font-family: 'Inter', sans-serif; }
+
+            /* ================= DESKTOP NAVIGATION ================= */
+            .ep-navbar {
+                display: flex; align-items: center; justify-content: space-between;
+                padding: 0 2rem; height: 70px; background: #fff;
+                border-bottom: 1px solid #E5E7EB; position: sticky; top: 0; z-index: 1000;
+            }
+            .ep-nav-links { display: flex; align-items: center; gap: 8px; }
+            .ep-link, .ep-dropdown-toggle {
+                background: transparent; border: none; padding: 10px 16px;
+                border-radius: 8px; font-size: 15px; font-weight: 500;
+                color: var(--text-dark); cursor: pointer; text-decoration: none !important;
+                transition: 0.2s;
+            }
+            .ep-link:hover, .ep-dropdown-toggle:hover { background: #F3F4F6; color: var(--odoo-primary); }
+            .ep-link.active { background: #F3F4F6; color: var(--odoo-primary); font-weight: 600; }
+
+            /* Desktop Dropdowns */
+            .ep-dropdown { position: relative; }
+            .ep-dropdown-menu {
+                display: none; position: absolute; top: 48px; left: 0;
+                min-width: 250px; background: white; border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #eee; z-index: 2000;
+                padding: 8px;
+            }
+            .ep-sub-link { 
+                display: block; padding: 12px 16px; color: var(--text-dark); 
+                text-decoration: none !important; font-size: 14px; border-radius: 6px;
+            }
+            .ep-sub-link:hover { background: #F8F9FA; color: var(--odoo-primary); }
+
+            /* ================= MOBILE APP UI ================= */
+            @media (max-width: 768px) {
+                .ep-navbar { display: none !important; } /* Kill desktop nav on mobile */
+                
+                .mobile-app-bar {
+                    display: flex; justify-content: space-between; align-items: center;
+                    padding: 15px 20px; background: #fff; border-bottom: 1px solid #eee;
+                    position: sticky; top: 0; z-index: 1000;
+                }
+
+                /* Layout adjustments to make it feel like an App */
+                .container { padding: 16px !important; }
+                .row > div { width: 100% !important; flex: 0 0 100% !important; max-width: 100% !important; }
+                .card { 
+                    border: none !important; border-radius: 20px !important; 
+                    box-shadow: 0 5px 20px rgba(0,0,0,0.05) !important; margin-bottom: 16px !important; 
+                }
+
+                .ep-bottom-nav {
+                    position: fixed; bottom: 0; left: 0; right: 0;
+                    height: 75px; background: rgba(255,255,255,0.92);
+                    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+                    display: flex; justify-content: space-around; align-items: center;
+                    border-top: 1px solid #eee; z-index: 2000;
+                    padding-bottom: env(safe-area-inset-bottom);
+                }
+                .nav-btn { color: #9CA3AF; text-align: center; text-decoration: none !important; flex: 1; }
+                .nav-btn.active { color: var(--odoo-primary); }
+                .nav-btn i { font-size: 24px; display: block; margin-bottom: 2px; }
+                .nav-btn span { font-size: 10px; font-weight: 600; }
+                
+                .fab-plus {
+                    background: var(--odoo-primary); width: 56px; height: 56px;
+                    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                    margin-top: -45px; border: 5px solid var(--app-bg); color: white !important;
+                    box-shadow: 0 5px 15px rgba(113, 75, 103, 0.4);
+                }
             }
 
-            /* 3. FULL WIDTH CONTAINER */
-            .container {
-                max-width: 100% !important;
-                padding-left: 16px !important;
-                padding-right: 16px !important;
-            }
-
-            /* 4. APP-STYLE CARDS (Stacking instead of Grids) */
-            .o_portal_category {
-                display: flex !important;
-                flex-direction: column !important; /* Stack vertically on mobile */
-                gap: 12px;
-                margin-top: 10px;
-            }
-
-            /* Target the cards in your screenshot */
-            .card, .list-group-item {
-                border: none !important;
-                border-radius: 12px !important;
-                box-shadow: var(--card-shadow);
-                width: 100% !important; /* Take up the whole screen width */
-                margin-bottom: 8px;
-            }
-
-            /* 5. BIG "TAPABLE" BUTTONS */
-            .btn {
-                height: 48px !important; /* Native app button height */
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 600 !important;
-                border-radius: 10px !important;
-                font-size: 15px !important;
-            }
-
-            /* 6. FIXED HEADER IMPROVEMENT */
-            .app-header {
-                background: #fff;
-                padding: 12px 16px;
-                border-bottom: 1px solid #eee;
-                position: sticky;
-                top: 0;
-                z-index: 1000;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            /* 7. THE BOTTOM NAV (AS SHOWN IN YOUR SCREENSHOT) */
-            .app-nav {
-                position: fixed;
-                bottom: 0;
-                width: 100%;
-                height: 70px;
-                background: #fff;
-                border-top: 1px solid #ddd;
-                display: flex;
-                justify-content: space-around;
-                align-items: center;
-                padding-bottom: env(safe-area-inset-bottom);
-                z-index: 1050;
+            @media (min-width: 769px) {
+                .mobile-app-bar, .ep-bottom-nav { display: none !important; }
             }
         </style>
 
-        <div class="app-header">
-            <span class="fw-bold fs-4">Portal</span>
+        <t t-call-assets="web.assets_frontend"/>
+
+        <header class="ep-navbar">
+            <div class="ep-nav-links">
+                <a href="/my" class="ep-link">Dashboard</a>
+                
+                <div class="ep-dropdown">
+                    <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-menu')">Requests ▾</button>
+                    <div id="req-menu" class="ep-dropdown-menu">
+                        <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
+                        <a href="/my/employee/requests/new" class="ep-sub-link text-primary fw-bold">+ New Employee Request</a>
+                        <hr class="my-1"/>
+                        <a href="/my/employee/material" class="ep-sub-link">Material Requests</a>
+                        <a href="/my/employee/material/new" class="ep-sub-link text-primary fw-bold">+ New Material Request</a>
+                    </div>
+                </div>
+
+                <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or 
+                         request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or 
+                         request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or 
+                         request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo') or 
+                         request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or 
+                         request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or 
+                         request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or 
+                         request.env.user.has_group('employee_portal_suite.group_mr_projects_director')">
+                    
+                    <div class="ep-dropdown">
+                        <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-menu')">Approvals ▾</button>
+                        <div id="app-menu" class="ep-dropdown-menu">
+                            <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or 
+                                     request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or 
+                                     request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or 
+                                     request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
+                                <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
+                            </t>
+                            <t t-if="request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or 
+                                     request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or 
+                                     request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or 
+                                     request.env.user.has_group('employee_portal_suite.group_mr_projects_director') or 
+                                     request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
+                                <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
+                            </t>
+                        </div>
+                    </div>
+                </t>
+
+                <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                    <a href="/my/petty-cash" t-att-class="'ep-link active' if request.httprequest.path.startswith('/my/petty-cash') else 'ep-link'">Petty Cash</a>
+                </t>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end d-none d-md-block">
+                    <h6 class="mb-0 fw-bold" t-out="request.env.user.partner_id.name"/>
+                    <p class="mb-0 text-muted small" t-out="request.env.user.partner_id.company_name"/>
+                </div>
+                <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="rounded-circle border" width="42" height="42"/>
+                <a class="btn btn-sm btn-outline-danger" href="/web/session/logout">Logout</a>
+            </div>
+        </header>
+
+        <div class="mobile-app-bar">
+            <span class="fw-bold fs-4" style="color: var(--odoo-primary); letter-spacing: -1px;">Portal</span>
             <div class="d-flex align-items-center gap-3">
                 <i class="fa fa-bell-o fs-5 text-muted"></i>
-                <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="rounded-circle" width="34"/>
+                <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="rounded-circle" width="34" height="34"/>
             </div>
         </div>
 
-        <main class="app-content mt-2">
-            <div class="container">
+        <main>
+            <div id="wrap" class="container mt-3 mb-5">
                 <t t-raw="0"/>
             </div>
         </main>
 
-        <nav class="app-nav">
-             <a href="/my" class="text-decoration-none text-center">
-                <i class="fa fa-home d-block fs-4 text-primary"></i>
-                <span style="font-size: 10px;" class="text-primary">Home</span>
+        <nav class="ep-bottom-nav">
+            <a href="/my" t-attf-class="nav-btn #{'active' if request.httprequest.path == '/my' else ''}">
+                <i class="fa fa-home"></i><span>Home</span>
             </a>
-            <div class="fab-placeholder" style="margin-top: -40px;">
-                 <a href="/new" class="btn btn-primary rounded-circle" style="width: 56px; height: 56px;">
-                    <i class="fa fa-plus"></i>
-                 </a>
-            </div>
-            <a href="/my/approvals" class="text-decoration-none text-center text-muted">
-                <i class="fa fa-check-circle-o d-block fs-4"></i>
-                <span style="font-size: 10px;">Approvals</span>
+            <a href="/my/employee/requests" class="nav-btn">
+                <i class="fa fa-file-text-o"></i><span>Requests</span>
+            </a>
+            <a href="/my/employee/requests/new" class="nav-btn">
+                <div class="fab-plus"><i class="fa fa-plus" style="margin:0"></i></div>
+            </a>
+            <a href="/my/employee/approvals" class="nav-btn">
+                <i class="fa fa-check-square-o"></i><span>Approvals</span>
+            </a>
+            <a href="/web/session/logout" class="nav-btn">
+                <i class="fa fa-power-off"></i><span>Logout</span>
             </a>
         </nav>
+
+        <script>
+            function toggleDropdown(event, id) {
+                event.stopPropagation();
+                document.querySelectorAll('.ep-dropdown-menu').forEach(menu => {
+                    if (menu.id !== id) menu.style.display = 'none';
+                });
+                let menu = document.getElementById(id);
+                menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+            }
+            document.addEventListener('click', function() {
+                document.querySelectorAll('.ep-dropdown-menu').forEach(m => m.style.display = 'none');
+            });
+        </script>
     </t>
 </template>
 </odoo>
