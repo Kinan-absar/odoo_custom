@@ -60,47 +60,47 @@
                         'border-left: 4px solid #ffc107;'">
                     <div class="card-body">
 
-                        <div class="row mb-2">
-                            <div class="col-md-3 text-muted">Request Number</div>
-                            <div class="col-md-9 fw-semibold">
-                                <t t-esc="request_rec.name"/>
-                            </div>
-                        </div>
+                         <div class="row">
 
-                        <div class="row mb-2">
-                            <div class="col-md-3 text-muted">Employee</div>
-                            <div class="col-md-9">
-                                <t t-esc="request_rec.employee_id.name"/>
-                            </div>
-                        </div>
+                                <!-- LEFT COLUMN -->
+                                <div class="col-md-6">
 
-                        <div class="row mb-2">
-                            <div class="col-md-3 text-muted">Worksite</div>
-                            <div class="col-md-9">
-                                <t t-esc="request_rec.worksite"/>
-                            </div>
-                        </div>
+                                    <div class="mb-3">
+                                        <div class="text-muted small">Employee</div>
+                                        <div class="fw-semibold">
+                                            <t t-esc="request_rec.employee_id.name"/>
+                                        </div>
+                                    </div>
 
-                        <div class="row mb-2">
-                            <div class="col-md-3 text-muted">Delivery Date</div>
-                            <div class="col-md-9">
-                                <t t-esc="request_rec.delivery_date"/>
-                            </div>
-                        </div>
+                                    <div>
+                                        <div class="text-muted small">Worksite</div>
+                                        <div class="fw-semibold">
+                                            <t t-esc="request_rec.worksite"/>
+                                        </div>
+                                    </div>
 
-                        <div class="row mb-2">
-                            <div class="col-md-3 text-muted">Status</div>
-                            <div class="col-md-9">
-                                <t t-raw="status_badge(request_rec)"/>
-                            </div>
-                        </div>
+                                </div>
 
-                        <div class="row">
-                            <div class="col-md-3 text-muted">Request Date</div>
-                            <div class="col-md-9">
-                                <t t-esc="request_rec.request_date"/>
+                                <!-- RIGHT COLUMN -->
+                                <div class="col-md-6">
+
+                                    <div class="mb-3">
+                                        <div class="text-muted small">Delivery Date</div>
+                                        <div class="fw-semibold">
+                                            <t t-esc="request_rec.delivery_date"/>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div class="text-muted small">Request Date</div>
+                                        <div class="fw-semibold">
+                                            <t t-esc="request_rec.request_date"/>
+                                        </div>
+                                    </div>
+
+                                </div>
+
                             </div>
-                        </div>
 
                     </div>
                 </div>
