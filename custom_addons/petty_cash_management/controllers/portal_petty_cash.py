@@ -2,6 +2,7 @@ from odoo import http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal
 import base64
+from odoo import fields
 
 
 class PortalPettyCash(CustomerPortal):
@@ -62,7 +63,7 @@ class PortalPettyCash(CustomerPortal):
 
         vals.update({
             'user_id': request.env.user.id,
-            'date': Date.today(),
+            'date': fields.Date.today(),
         })
 
         petty_cash = PettyCash.create(vals)
