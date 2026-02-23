@@ -137,3 +137,23 @@ class PortalPettyCash(CustomerPortal):
 
         return request.redirect(f'/my/petty-cash/{report_id}')
 
+    @http.route('/my/petty-cash/<int:report_id>/upload-attachment',
+            type='http', auth='user', website=True, methods=['POST'])
+    def portal_upload_attachment(self, report_id, **post):
+
+        report = request.env['petty.cash'].sudo().browse(report_id)
+
+        if not report or report.user_id != request.env.user:
+            return request.redirect('/my')
+
+        file = post.get('attachment')
+
+        if file:
+            request.env['ir.attachment'].sudo().create({
+                'name': file.filename,
+                'datas': base64.b64encode(file.read()),
+                'res_model': 'petty.cash',
+                'res_id': report.id,
+            })
+
+        return request.redirect(f'/my/petty-cash/{report_id}')

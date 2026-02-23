@@ -71,6 +71,14 @@ class PettyCash(models.Model):
     )
     can_edit = fields.Boolean(compute="_compute_can_edit")
 
+    attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'petty_cash_attachment_rel',
+        'petty_cash_id',
+        'attachment_id',
+        string='Attachments'
+    )
+
     def _compute_can_edit(self):
         for rec in self:
             rec.can_edit = (

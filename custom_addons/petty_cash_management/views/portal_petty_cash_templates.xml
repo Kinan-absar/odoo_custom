@@ -98,11 +98,13 @@
                 <p>
                     <strong>Status:</strong>
                     <span class="badge"
-                          t-att-class="'bg-secondary' if report.state == 'draft' else
-                                       'bg-warning' if report.state == 'submitted' else
-                                       'bg-success' if report.state == 'approved' else
-                                       'bg-danger'">
-                        <t t-esc="report.state"/>
+                           t-att-class="{
+                            'bg-light text-dark border': report.state == 'draft',
+                            'bg-warning text-dark': report.state == 'submitted',
+                            'bg-success': report.state == 'approved',
+                            'bg-danger': report.state == 'rejected'
+                        }">
+                        <t t-esc="report.state.capitalize()"/>
                     </span>
                 </p>
 
@@ -112,6 +114,44 @@
                 </p>
 
                 <h4 class="mt-4">Expense Lines</h4>
+                <t t-if="report.state == 'draft'">
+
+                    <h5 class="mt-4">Report Attachments</h5>
+
+                    <form t-att-action="'/my/petty-cash/%s/upload-attachment' % report.id"
+                        method="post"
+                        enctype="multipart/form-data"
+                        class="mb-3">
+
+                        <input type="hidden"
+                            name="csrf_token"
+                            t-att-value="request.csrf_token()"/>
+
+                        <div class="input-group">
+                            <input type="file"
+                                name="attachment"
+                                class="form-control"
+                                required="required"/>
+                            <button type="submit"
+                                    class="btn btn-outline-primary">
+                                Upload
+                            </button>
+                        </div>
+
+                    </form>
+
+                </t>
+                <t t-if="report.attachment_ids">
+                    <ul class="list-group mb-3">
+                        <t t-foreach="report.attachment_ids" t-as="att">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a t-att-href="'/web/content/%s?download=true' % att.id">
+                                    <t t-esc="att.name"/>
+                                </a>
+                            </li>
+                        </t>
+                    </ul>
+                </t>
 
                 <!-- Expense Lines Table -->
                 <form t-att-action="'/my/petty-cash/%s/add-line' % report.id"
