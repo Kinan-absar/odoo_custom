@@ -77,12 +77,36 @@
                     .nav-btn i { font-size: 24px; display: block; margin-bottom: 2px; }
                     .nav-btn span { font-size: 10px; font-weight: 600; }
                     
-                    .fab-plus {
-                        background: var(--app-primary); width: 56px; height: 56px;
-                        border-radius: 50%; display: flex; align-items: center; justify-content: center;
-                        margin-top: -45px; border: 5px solid var(--app-bg); color: white !important;
-                        box-shadow: 0 4px 15px rgba(113, 75, 103, 0.4);
+                    .fab-menu {
+                        position: fixed;
+                        bottom: 90px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: white;
+                        border-radius: 16px;
+                        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+                        padding: 10px 0;
+                        display: none;
+                        width: 250px;
+                        z-index: 2100;
                     }
+
+                    .fab-menu.show {
+                        display: block;
+                    }
+
+                    .fab-item {
+                        display: block;
+                        padding: 12px 16px;
+                        text-decoration: none !important;
+                        color: #1F2937;
+                        font-weight: 500;
+                    }
+
+                    .fab-item:hover {
+                        background: #F3F4F6;
+                    }
+
                 }
             </style>
 
@@ -148,14 +172,78 @@
             </main>
 
             <nav class="ep-bottom-nav mobile-only">
-                <a href="/my" class="nav-btn active"><i class="fa fa-home"></i><span>Home</span></a>
-                <a href="/my/employee/requests" class="nav-btn"><i class="fa fa-file-text-o"></i><span>Requests</span></a>
-                <a href="/my/employee/requests/new" class="nav-btn">
-                    <div class="fab-plus"><i class="fa fa-plus" style="margin:0"></i></div>
+
+                <!-- HOME -->
+                <a href="/my"
+                t-att-class="'nav-btn active' if request.httprequest.path == '/my' else 'nav-btn'">
+                    <i class="fa fa-home"></i>
+                    <span>Home</span>
                 </a>
-                <a href="/my/employee/approvals" class="nav-btn"><i class="fa fa-check-circle-o"></i><span>Approvals</span></a>
-                <a href="/web/session/logout" class="nav-btn"><i class="fa fa-sign-out"></i><span>Exit</span></a>
+
+                <!-- EMPLOYEE REQUESTS -->
+                <a href="/my/employee/requests"
+                t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/requests') else 'nav-btn'">
+                    <i class="fa fa-file-text-o"></i>
+                    <span>Employee</span>
+                </a>
+
+                <!-- MATERIAL REQUESTS -->
+                <a href="/my/employee/material"
+                t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') and not request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
+                    <i class="fa fa-cubes"></i>
+                    <span>Material</span>
+                </a>
+
+                <!-- PLUS BUTTON (New Menu Toggle) -->
+                <div class="nav-btn" onclick="toggleFabMenu()">
+                    <div class="fab-plus">
+                        <i class="fa fa-plus" style="margin:0"></i>
+                    </div>
+                </div>
+
+                <!-- APPROVALS (GROUP CONTROLLED) -->
+                <t t-if="
+                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                ">
+                    <a href="/my/employee/approvals"
+                    t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
+                        <i class="fa fa-check-circle-o"></i>
+                        <span>Approvals</span>
+                    </a>
+                </t>
+
+                <!-- PETTY CASH (GROUP CONTROLLED) -->
+                <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                    <a href="/my/petty-cash"
+                    t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/petty-cash') else 'nav-btn'">
+                        <i class="fa fa-money"></i>
+                        <span>Cash</span>
+                    </a>
+                </t>
+
+                <!-- LOGOUT -->
+                <a href="/web/session/logout" class="nav-btn">
+                    <i class="fa fa-sign-out"></i>
+                    <span>Exit</span>
+                </a>
+
             </nav>
+            <div id="fabMenu" class="fab-menu">
+                <a href="/my/employee/requests/new" class="fab-item">
+                    <i class="fa fa-file-text-o"></i> New Employee Request
+                </a>
+                <a href="/my/employee/material/new" class="fab-item">
+                    <i class="fa fa-cubes"></i> New Material Request
+                </a>
+            </div>
+
 
             <script>
                 function toggleDropdown(event, id) {
@@ -169,6 +257,17 @@
                 document.addEventListener('click', () => {
                     document.querySelectorAll('.ep-dropdown-menu').forEach(m => m.style.display = 'none');
                 });
+                function toggleFabMenu() {
+                    document.getElementById('fabMenu').classList.toggle('show');
+                }
+
+                document.addEventListener('click', function(e){
+                    const menu = document.getElementById('fabMenu');
+                    if (!e.target.closest('.fab-plus') && !e.target.closest('.fab-menu')) {
+                        menu.classList.remove('show');
+                    }
+                });
+
             </script>
         </t>
     </template>
