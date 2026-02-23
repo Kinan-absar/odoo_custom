@@ -3,88 +3,99 @@
 
     <template id="employee_portal_dashboard" name="Employee Dashboard">
         <t t-call="employee_portal_suite.employee_portal_layout">
+            <style>
+            .dashboard-card {
+                border: none !important;
+                border-radius: 18px !important;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.06) !important;
+                transition: all 0.2s ease;
+            }
 
-            <div class="row mt-4">
+            .dashboard-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 25px rgba(0,0,0,0.08) !important;
+            }
+
+            </style>
+            <div class="row mt-4 g-3">
 
                     <!-- Employee Requests -->
-                    <div class="col-md-6 mb-3">
-                        <div class="card shadow-sm p-3">
-                            <h5>My Employee Requests</h5>
-                            <p>Count: <t t-esc="my_request_count"/></p>
-                            <a href="/my/employee/requests" class="btn btn-primary  btn-sm" style="width:180px;">View</a>
-                        </div>
+                    <div class="col-6 col-md-6">
+                        <a href="/my/employee/requests" class="text-decoration-none">
+                            <div class="card dashboard-card h-100 text-center p-3">
+                                <h6 class="mb-2 text-muted">Employee Requests</h6>
+                                <h3 class="fw-bold mb-0">
+                                    <t t-esc="my_request_count"/>
+                                </h3>
+                            </div>
+                        </a>
                     </div>
 
                     <!-- Material Requests -->
-                    <div class="col-md-6 mb-3">
-                        <div class="card shadow-sm p-3">
-                            <h5>My Material Requests</h5>
-                            <p>Count: <t t-esc="my_material_count"/></p>
-                            <a href="/my/employee/material" class="btn btn-primary  btn-sm" style="width:180px;">View</a>
-                        </div>
+                    <div class="col-6 col-md-6">
+                        <a href="/my/employee/material" class="text-decoration-none">
+                            <div class="card dashboard-card h-100 text-center p-3">
+                                <h6 class="mb-2 text-muted">Material Requests</h6>
+                                <h3 class="fw-bold mb-0">
+                                    <t t-esc="my_material_count"/>
+                                </h3>
+                            </div>
+                        </a>
                     </div>
 
-
-                <!-- EMPLOYEE REQUEST APPROVALS -->
-                <t t-if="
-                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                ">
-                    <div class="col-md-6 mb-3">
-                        <div class="card shadow-sm p-3">
-                            <h5>Employee Approvals</h5>
-                            <p>Pending: <t t-esc="employee_pending_count"/></p>
-
-                            <a href="/my/employee/approvals"
-                            class="btn btn-warning btn-sm"
-                            style="width:180px;">
-                                Review (<t t-esc="employee_pending_count"/>)
+                    <!-- Employee Approvals -->
+                    <t t-if="
+                        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                    ">
+                        <div class="col-6 col-md-6">
+                            <a href="/my/employee/approvals" class="text-decoration-none">
+                                <div class="card dashboard-card h-100 text-center p-3">
+                                    <h6 class="mb-2 text-warning">Employee Approvals</h6>
+                                    <h3 class="fw-bold mb-0 text-warning">
+                                        <t t-esc="employee_pending_count"/>
+                                    </h3>
+                                </div>
                             </a>
                         </div>
-                    </div>
-                </t>
+                    </t>
 
-
-                <!-- MATERIAL REQUEST APPROVALS -->
-                <t t-if="
-                    request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                ">
-                    <div class="col-md-6 mb-3">
-                        <div class="card shadow-sm p-3">
-                            <h5>Material Approvals</h5>
-                            <p>Pending: <t t-esc="material_pending_count"/></p>
-
-                            <a href="/my/employee/material/approvals"
-                            class="btn btn-warning btn-sm"
-                            style="width:180px;">
-                                Review (<t t-esc="material_pending_count"/>)
+                    <!-- Material Approvals -->
+                    <t t-if="
+                        request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                    ">
+                        <div class="col-6 col-md-6">
+                            <a href="/my/employee/material/approvals" class="text-decoration-none">
+                                <div class="card dashboard-card h-100 text-center p-3">
+                                    <h6 class="mb-2 text-warning">Material Approvals</h6>
+                                    <h3 class="fw-bold mb-0 text-warning">
+                                        <t t-esc="material_pending_count"/>
+                                    </h3>
+                                </div>
                             </a>
                         </div>
-                    </div>
-                </t>
-                <!-- Documents to Sign -->
-                    <div class="col-md-6 mb-3">
-                        <div class="card shadow-sm p-3">
-                            <h5>Documents to Sign</h5>
+                    </t>
 
-                            <p>Pending: <t t-esc="pending_sign_count"/></p>
-
-                            <a href="/my/employee/sign"
-                            class="btn btn-primary btn-sm"
-                            style="width:180px;">
-                                View (<t t-esc="pending_sign_count"/>)
-                            </a>
-                        </div>
+                    <!-- Documents to Sign -->
+                    <div class="col-6 col-md-6">
+                        <a href="/my/employee/sign" class="text-decoration-none">
+                            <div class="card dashboard-card h-100 text-center p-3">
+                                <h6 class="mb-2 text-muted">Documents to Sign</h6>
+                                <h3 class="fw-bold mb-0">
+                                    <t t-esc="pending_sign_count"/>
+                                </h3>
+                            </div>
+                        </a>
                     </div>
 
+                </div>
 
-            </div>
 
 
         </t>
