@@ -142,6 +142,9 @@
                                 Upload
                             </button>
                         </div>
+                        <small class="text-muted d-block mt-1">
+                            Please upload all invoices combined in one PDF file.
+                        </small>
 
                     </form>
 
@@ -155,7 +158,7 @@
 
                                 <div>
                                     📎 
-                                    <a t-att-href="'/web/content/%s?download=true' % att.id">
+                                   <a t-att-href="'/my/petty-cash/attachment/%s' % att.id">
                                         <t t-esc="att.name"/>
                                     </a>
                                 </div>
