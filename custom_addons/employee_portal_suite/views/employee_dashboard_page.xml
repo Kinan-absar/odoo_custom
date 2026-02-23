@@ -1,93 +1,200 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <template id="employee_portal_dashboard" name="Employee Dashboard">
-        <t t-call="employee_portal_suite.employee_portal_layout">
+<template id="employee_portal_dashboard" name="Employee Dashboard">
+<t t-call="employee_portal_suite.employee_portal_layout">
 
-            <div class="row mt-4">
+<style>
+/* ===============================
+   DASHBOARD SYSTEM
+================================ */
 
-                    <!-- Employee Requests -->
-                    <div class="col-md-6 mb-3">
-                        <div class="card shadow-sm p-3">
-                            <h5>My Employee Requests</h5>
-                            <p>Count: <t t-esc="my_request_count"/></p>
-                            <a href="/my/employee/requests" class="btn btn-primary  btn-sm" style="width:180px;">View</a>
-                        </div>
-                    </div>
+.ep-dashboard-header h1{
+    font-size:32px;
+    font-weight:700;
+    margin-bottom:6px;
+}
 
-                    <!-- Material Requests -->
-                    <div class="col-md-6 mb-3">
-                        <div class="card shadow-sm p-3">
-                            <h5>My Material Requests</h5>
-                            <p>Count: <t t-esc="my_material_count"/></p>
-                            <a href="/my/employee/material" class="btn btn-primary  btn-sm" style="width:180px;">View</a>
-                        </div>
-                    </div>
+.ep-dashboard-header p{
+    color:#64748b;
+    font-size:16px;
+    margin-bottom:30px;
+}
 
+/* STAT CARDS */
+.ep-stat-card{
+    background:white;
+    border-radius:18px;
+    border:1px solid #e5e7eb;
+    padding:22px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.04);
+    height:100%;
+    transition:0.2s;
+}
 
-                <!-- EMPLOYEE REQUEST APPROVALS -->
-                <t t-if="
-                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                ">
-                    <div class="col-md-6 mb-3">
-                        <div class="card shadow-sm p-3">
-                            <h5>Employee Approvals</h5>
-                            <p>Pending: <t t-esc="employee_pending_count"/></p>
+.ep-stat-card:hover{
+    transform:translateY(-3px);
+}
 
-                            <a href="/my/employee/approvals"
-                            class="btn btn-warning btn-sm"
-                            style="width:180px;">
-                                Review (<t t-esc="employee_pending_count"/>)
-                            </a>
-                        </div>
-                    </div>
-                </t>
+.ep-stat-title{
+    font-size:14px;
+    font-weight:600;
+    color:#64748b;
+    margin-bottom:6px;
+}
 
+.ep-stat-value{
+    font-size:28px;
+    font-weight:700;
+}
 
-                <!-- MATERIAL REQUEST APPROVALS -->
-                <t t-if="
-                    request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                ">
-                    <div class="col-md-6 mb-3">
-                        <div class="card shadow-sm p-3">
-                            <h5>Material Approvals</h5>
-                            <p>Pending: <t t-esc="material_pending_count"/></p>
+.ep-stat-btn{
+    margin-top:14px;
+}
 
-                            <a href="/my/employee/material/approvals"
-                            class="btn btn-warning btn-sm"
-                            style="width:180px;">
-                                Review (<t t-esc="material_pending_count"/>)
-                            </a>
-                        </div>
-                    </div>
-                </t>
-                <!-- Documents to Sign -->
-                    <div class="col-md-6 mb-3">
-                        <div class="card shadow-sm p-3">
-                            <h5>Documents to Sign</h5>
+/* GRADIENT CARD */
+.ep-gradient-card{
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:white;
+    border-radius:18px;
+    padding:24px;
+    box-shadow:0 8px 25px rgba(79,70,229,0.25);
+    height:100%;
+}
 
-                            <p>Pending: <t t-esc="pending_sign_count"/></p>
+.ep-gradient-card h5{
+    font-weight:600;
+    opacity:.85;
+}
 
-                            <a href="/my/employee/sign"
-                            class="btn btn-primary btn-sm"
-                            style="width:180px;">
-                                View (<t t-esc="pending_sign_count"/>)
-                            </a>
-                        </div>
-                    </div>
+.ep-gradient-card .ep-stat-value{
+    font-size:32px;
+}
 
+.ep-gradient-card .btn{
+    background:white;
+    color:#4f46e5;
+    font-weight:600;
+    border-radius:12px;
+}
 
+</style>
+
+<div class="container py-4">
+
+    <!-- HEADER -->
+    <div class="ep-dashboard-header">
+        <h1>Dashboard</h1>
+        <p>
+            Welcome back,
+            <t t-esc="request.env.user.partner_id.name"/>.
+            Here's what's happening today.
+        </p>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- MY EMPLOYEE REQUESTS -->
+        <div class="col-lg-3 col-md-6">
+            <div class="ep-stat-card">
+                <div class="ep-stat-title">My Employee Requests</div>
+                <div class="ep-stat-value">
+                    <t t-esc="my_request_count"/>
+                </div>
+                <a href="/my/employee/requests"
+                   class="btn btn-outline-primary btn-sm ep-stat-btn">
+                    View
+                </a>
             </div>
+        </div>
 
+        <!-- MY MATERIAL REQUESTS -->
+        <div class="col-lg-3 col-md-6">
+            <div class="ep-stat-card">
+                <div class="ep-stat-title">My Material Requests</div>
+                <div class="ep-stat-value">
+                    <t t-esc="my_material_count"/>
+                </div>
+                <a href="/my/employee/material"
+                   class="btn btn-outline-primary btn-sm ep-stat-btn">
+                    View
+                </a>
+            </div>
+        </div>
 
+        <!-- DOCUMENTS TO SIGN -->
+        <div class="col-lg-3 col-md-6">
+            <div class="ep-stat-card">
+                <div class="ep-stat-title">Documents to Sign</div>
+                <div class="ep-stat-value">
+                    <t t-esc="pending_sign_count"/>
+                </div>
+                <a href="/my/employee/sign"
+                   class="btn btn-outline-primary btn-sm ep-stat-btn">
+                    View
+                </a>
+            </div>
+        </div>
+
+        <!-- PETTY CASH (IF YOU WANT FUTURE COUNT HERE) -->
+        <div class="col-lg-3 col-md-6">
+            <div class="ep-gradient-card">
+                <h5>Approvals</h5>
+                <div class="ep-stat-value">
+                    <t t-esc="employee_pending_count + material_pending_count"/>
+                </div>
+                <p class="mb-3">Total Pending</p>
+            </div>
+        </div>
+
+        <!-- EMPLOYEE APPROVALS -->
+        <t t-if="
+            request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+            or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+            or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+        ">
+            <div class="col-lg-6 col-md-6">
+                <div class="ep-stat-card">
+                    <div class="ep-stat-title">Employee Approvals</div>
+                    <div class="ep-stat-value text-warning">
+                        <t t-esc="employee_pending_count"/>
+                    </div>
+                    <a href="/my/employee/approvals"
+                       class="btn btn-warning btn-sm ep-stat-btn">
+                        Review (<t t-esc="employee_pending_count"/>)
+                    </a>
+                </div>
+            </div>
         </t>
-    </template>
+
+        <!-- MATERIAL APPROVALS -->
+        <t t-if="
+            request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+            or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+            or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+            or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+        ">
+            <div class="col-lg-6 col-md-6">
+                <div class="ep-stat-card">
+                    <div class="ep-stat-title">Material Approvals</div>
+                    <div class="ep-stat-value text-warning">
+                        <t t-esc="material_pending_count"/>
+                    </div>
+                    <a href="/my/employee/material/approvals"
+                       class="btn btn-warning btn-sm ep-stat-btn">
+                        Review (<t t-esc="material_pending_count"/>)
+                    </a>
+                </div>
+            </div>
+        </t>
+
+    </div>
+
+</div>
+
+</t>
+</template>
 
 </odoo>
