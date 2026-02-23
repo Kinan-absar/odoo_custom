@@ -62,7 +62,7 @@ class PortalPettyCash(CustomerPortal):
 
         vals.update({
             'user_id': request.env.user.id,
-            'date': Date.today(),
+            'date': fields.Date.today(),
         })
 
         petty_cash = PettyCash.create(vals)
@@ -116,7 +116,7 @@ class PortalPettyCash(CustomerPortal):
             })
 
         return request.redirect('/my/petty-cash/%s' % report.id)
-        
+
     @http.route('/my/petty-cash/<int:report_id>/submit',
                 type='http', auth='user', website=True, methods=['POST'])
     def portal_submit_report(self, report_id, **post):

@@ -7,13 +7,7 @@
     <template id="portal_petty_cash_list" name="Petty Cash List">
         <t t-call="portal.portal_layout">
             <div class="container mt-4">
-           
-            <a href="/my/petty-cash"
-            class="btn btn-secondary mb-3">
-                ← Back
-            </a>
-
-                <h2>My Petty Cash Reports</h2>
+            <h2>My Petty Cash Reports</h2>
 
                 <form action="/my/petty-cash/create"
                     method="post"
@@ -75,7 +69,10 @@
         <t t-call="portal.portal_layout">
 
             <div class="container mt-4">
-
+            <a href="/my/petty-cash"
+                        class="btn btn-secondary mb-3">
+                            ← Back
+            </a>
                 <h2>
                     Petty Cash Report
                     <t t-esc="report.name"/>
