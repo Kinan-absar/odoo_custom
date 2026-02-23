@@ -63,24 +63,13 @@
 
                 <h2>Create Petty Cash Report</h2>
 
-                <form action="/my/petty-cash/create" method="post">
-
+                <form action="/my/petty-cash/create" method="post" class="d-inline">
                     <input type="hidden"
-                           name="csrf_token"
-                           t-att-value="request.csrf_token()"/>
-
-                    <div class="mb-3">
-                        <label>Date</label>
-                        <input type="date"
-                               name="date"
-                               class="form-control"
-                               required="required"/>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">
-                        Create
+                        name="csrf_token"
+                        t-att-value="request.csrf_token()"/>
+                    <button type="submit" class="btn btn-primary mb-3">
+                        + New Petty Cash Report
                     </button>
-
                 </form>
 
             </div>
