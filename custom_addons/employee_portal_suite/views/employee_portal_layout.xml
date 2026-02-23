@@ -192,7 +192,7 @@
                     <a href="/web/session/logout" class="btn btn-sm btn-outline-danger ms-2">Logout</a>
                 </div>
             </nav>
-            <t t-if="request.httprequest.path == '/my'">
+            <t t-if="request.httprequest.path == '/my/employee'">
             <div class="mobile-app-header mobile-only">
                 <div>
                     <div class="fw-bold" style="font-size:14px; color:#6b7280;">
