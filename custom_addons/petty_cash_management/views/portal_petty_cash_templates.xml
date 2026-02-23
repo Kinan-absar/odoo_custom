@@ -51,15 +51,19 @@
                                             <t t-esc="report.amount_total"/>
                                         </td>
                                         <td>
-                                            <span class="badge rounded-pill"
-                                                  t-att-class="{
-                                                    'bg-light text-dark border': report.state == 'draft',
-                                                    'bg-warning text-dark': report.state == 'submitted',
-                                                    'bg-success': report.state == 'approved',
-                                                    'bg-danger': report.state == 'rejected'
-                                                }">
+                                            <div class="d-inline-flex align-items-center">
+                                            <span class="me-2 text-muted small">Status</span>
+                                            <span class="o_badge"
+                                                t-att-class="{
+                                                    'o_badge_secondary': report.state == 'draft',
+                                                    'o_badge_warning': report.state == 'submitted',
+                                                    'o_badge_success': report.state == 'approved',
+                                                    'o_badge_danger': report.state == 'rejected'
+                                                }"
+                                                style="font-weight:500; padding:6px 16px; border-radius:20px;">
                                                 <t t-esc="report.state.capitalize()"/>
                                             </span>
+                                        </div>
                                         </td>
                                     </tr>
                                 </t>
@@ -108,15 +112,20 @@
                                 <t t-esc="report.name"/>
                             </h3>
 
-                            <span class="badge rounded-pill"
-                                  t-att-class="{
-                                    'bg-light text-dark border': report.state == 'draft',
-                                    'bg-warning text-dark': report.state == 'submitted',
-                                    'bg-success': report.state == 'approved',
-                                    'bg-danger': report.state == 'rejected'
-                                }">
-                                <t t-esc="report.state.capitalize()"/>
-                            </span>
+                            <div class="d-inline-flex align-items-center">
+                                <span class="me-2 text-muted small">Status</span>
+                                <span class="o_badge"
+                                    t-att-class="{
+                                        'o_badge_secondary': report.state == 'draft',
+                                        'o_badge_warning': report.state == 'submitted',
+                                        'o_badge_success': report.state == 'approved',
+                                        'o_badge_danger': report.state == 'rejected'
+                                    }"
+                                    style="font-weight:500; padding:6px 16px; border-radius:20px;">
+                                    <t t-esc="report.state.capitalize()"/>
+                                </span>
+                            </div>
+
                         </div>
 
                         <div class="row mt-3 small">
