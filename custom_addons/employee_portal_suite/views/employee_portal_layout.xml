@@ -201,8 +201,7 @@
                     </div>
                 </div>
 
-                <!-- APPROVALS (GROUP CONTROLLED) -->
-                <t t-if="
+          <t t-if="
                     request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
                     or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
                     or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
@@ -212,12 +211,49 @@
                     or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
                     or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
                 ">
-                    <a href="/my/employee/approvals"
-                    t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
+
+                    <a href="javascript:void(0);"
+                    t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'"
+                    onclick="toggleApprovalMenu()">
+
                         <i class="fa fa-check-circle-o"></i>
                         <span>Approvals</span>
+
                     </a>
+
+                    <div id="approvalMenu" class="fab-menu">
+
+                        <!-- Employee Approvals -->
+                        <t t-if="
+                            request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                        ">
+                            <a href="/my/employee/approvals" class="fab-item">
+                                <i class="fa fa-user"></i>
+                                <span>Employee Approvals</span>
+                            </a>
+                        </t>
+
+                        <!-- Material Approvals -->
+                        <t t-if="
+                            request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                        ">
+                            <a href="/my/employee/material/approvals" class="fab-item">
+                                <i class="fa fa-cubes"></i>
+                                <span>Material Approvals</span>
+                            </a>
+                        </t>
+
+                    </div>
+
                 </t>
+
 
                 <!-- PETTY CASH (GROUP CONTROLLED) -->
                 <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
@@ -235,40 +271,104 @@
                 </a>
 
             </nav>
-            <div id="fabMenu" class="fab-menu">
-                <a href="/my/employee/requests/new" class="fab-item">
-                    <i class="fa fa-file-text-o"></i> New Employee Request
+            <!-- MOBILE FAB -->
+            <div class="mobile-only">
+
+                <!-- Floating Button -->
+                <a href="javascript:void(0);"
+                class="nav-btn"
+                onclick="toggleFabMenu()">
+                    <div class="fab-plus">
+                        <i class="fa fa-plus"></i>
+                    </div>
                 </a>
-                <a href="/my/employee/material/new" class="fab-item">
-                    <i class="fa fa-cubes"></i> New Material Request
-                </a>
+
+                <!-- FAB MENU -->
+                <div id="fabMenu" class="fab-menu">
+
+                    <a href="/my/employee/requests/new" class="fab-item">
+                        <i class="fa fa-file-text-o"></i>
+                        <span>New Employee Request</span>
+                    </a>
+
+                    <a href="/my/employee/material/new" class="fab-item">
+                        <i class="fa fa-cubes"></i>
+                        <span>New Material Request</span>
+                    </a>
+
+                </div>
+
             </div>
 
 
-            <script>
-                function toggleDropdown(event, id) {
-                    event.stopPropagation();
-                    document.querySelectorAll('.ep-dropdown-menu').forEach(m => {
-                        if (m.id !== id) m.style.display = 'none';
-                    });
-                    let menu = document.getElementById(id);
-                    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
-                }
-                document.addEventListener('click', () => {
-                    document.querySelectorAll('.ep-dropdown-menu').forEach(m => m.style.display = 'none');
-                });
-                function toggleFabMenu() {
-                    document.getElementById('fabMenu').classList.toggle('show');
-                }
 
-                document.addEventListener('click', function(e){
-                    const menu = document.getElementById('fabMenu');
-                    if (!e.target.closest('.fab-plus') &amp; !e.target.closest('.fab-menu')) {
-                        menu.classList.remove('show');
+        <script>
+            function toggleDropdown(event, id) {
+                event.stopPropagation();
+                document.querySelectorAll('.ep-dropdown-menu').forEach(function(m){
+                    if (m.id !== id) m.style.display = 'none';
+                });
+
+                var menu = document.getElementById(id);
+                if (menu) {
+                    if (menu.style.display === 'block') {
+                        menu.style.display = 'none';
+                    } else {
+                        menu.style.display = 'block';
                     }
+                }
+            }
+
+            function toggleFabMenu() {
+                var menu = document.getElementById('fabMenu');
+                if (menu) {
+                    if (menu.classList.contains('show')) {
+                        menu.classList.remove('show');
+                    } else {
+                        menu.classList.add('show');
+                    }
+                }
+            }
+
+            function toggleApprovalMenu() {
+                var menu = document.getElementById('approvalMenu');
+                if (menu) {
+                    if (menu.classList.contains('show')) {
+                        menu.classList.remove('show');
+                    } else {
+                        menu.classList.add('show');
+                    }
+                }
+            }
+
+            document.addEventListener('click', function(e){
+
+                // Close dropdown menus
+                document.querySelectorAll('.ep-dropdown-menu').forEach(function(m){
+                    m.style.display = 'none';
                 });
 
-            </script>
+                var fab = document.getElementById('fabMenu');
+                if (fab) {
+                    if (!e.target.closest('.fab-plus')) {
+                        if (!e.target.closest('#fabMenu')) {
+                            fab.classList.remove('show');
+                        }
+                    }
+                }
+
+                var app = document.getElementById('approvalMenu');
+                if (app) {
+                    if (!e.target.closest('.nav-btn')) {
+                        if (!e.target.closest('#approvalMenu')) {
+                            app.classList.remove('show');
+                        }
+                    }
+                }
+
+            });
+        </script>
+
         </t>
     </template>
 </odoo>
