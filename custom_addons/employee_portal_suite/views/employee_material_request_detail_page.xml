@@ -13,15 +13,7 @@
 
                     <div>
                         <h2 class="mb-1">Material Request</h2>
-                        <div class="text-muted small">
-                            <t t-esc="request_rec.name"/>
-                        </div>
-                    </div>
-
-                    <div>
-                        <t t-raw="status_badge(request_rec)"/>
-                    </div>
-
+                      
                 </div>
 
                     <t t-if="request_rec.state in ['approved', 'rejected']">
