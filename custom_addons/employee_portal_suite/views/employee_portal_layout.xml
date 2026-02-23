@@ -281,10 +281,15 @@
                         </div>
                     </div>
                 </t>
-                    <a href="/my/petty-cash"
-                    t-att-class="'ep-link active' if request.httprequest.path.startswith('/my/petty-cash') else 'ep-link'">
-                    Petty Cash
-                    </a>
+                    <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+
+                        <a href="/my/petty-cash"
+                        t-att-class="'ep-link active' if request.httprequest.path.startswith('/my/petty-cash') else 'ep-link'">
+                            Petty Cash
+                        </a>
+
+                    </t>
+
 
             </div>
             <div class="ep-user-info d-flex align-items-center gap-3">
