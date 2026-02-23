@@ -62,7 +62,7 @@ class PortalPettyCash(CustomerPortal):
 
         vals.update({
             'user_id': request.env.user.id,
-            'date': post.get('date'),
+            'date': Date.today(),
         })
 
         petty_cash = PettyCash.create(vals)
@@ -116,3 +116,19 @@ class PortalPettyCash(CustomerPortal):
             })
 
         return request.redirect('/my/petty-cash/%s' % report.id)
+        
+    @http.route('/my/petty-cash/<int:report_id>/submit',
+                type='http', auth='user', website=True, methods=['POST'])
+    def portal_submit_report(self, report_id, **post):
+
+        report = request.env['petty.cash'].sudo().browse(report_id)
+
+        if not report or report.user_id != request.env.user:
+            return request.redirect('/my')
+
+        if report.state != 'draft':
+            return request.redirect(f'/my/petty-cash/{report_id}')
+
+        report.action_submit()
+
+        return request.redirect(f'/my/petty-cash/{report_id}')
