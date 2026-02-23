@@ -10,10 +10,21 @@
 
                 <h2>My Petty Cash Reports</h2>
 
-                <a href="/my/petty-cash/new"
-                   class="btn btn-primary mb-3">
-                    + New Petty Cash Report
-                </a>
+                <form action="/my/petty-cash/create"
+                    method="post"
+                    class="mb-3">
+
+                    <input type="hidden"
+                        name="csrf_token"
+                        t-att-value="request.csrf_token()"/>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        + New Petty Cash Report
+                    </button>
+
+                </form>
+
 
                 <table class="table table-striped">
                     <thead>
@@ -51,32 +62,6 @@
             </div>
         </t>
     </template>
-
-
-    <!-- ========================================= -->
-    <!-- CREATE REPORT -->
-    <!-- ========================================= -->
-    <template id="portal_petty_cash_form" name="Portal Petty Cash Form">
-        <t t-call="portal.portal_layout">
-
-            <div class="container mt-4">
-
-                <h2>Create Petty Cash Report</h2>
-
-                <form action="/my/petty-cash/create" method="post" class="d-inline">
-                    <input type="hidden"
-                        name="csrf_token"
-                        t-att-value="request.csrf_token()"/>
-                    <button type="submit" class="btn btn-primary mb-3">
-                        + New Petty Cash Report
-                    </button>
-                </form>
-
-            </div>
-
-        </t>
-    </template>
-
 
     <!-- ========================================= -->
     <!-- DETAIL VIEW -->
