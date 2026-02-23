@@ -1,182 +1,367 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <template id="employee_portal_layout">
-        <t t-call="web.layout">
-            <style>
-                :root {
-                    --odoo-primary: #714B67; /* Standard Odoo Purple */
-                    --nav-bg: #ffffff;
-                    --body-bg: #f8f9fa;
-                }
 
-                body {
-                    background-color: var(--body-bg);
-                    font-family: 'Inter', sans-serif;
-                    padding-bottom: 70px; /* Space for bottom nav */
-                }
+<template id="employee_portal_layout">
 
-                /* ================= DESKTOP SIDEBAR / TOPBAR ================= */
-                .ep-header {
-                    background: var(--nav-bg);
-                    height: 60px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 0 20px;
-                    border-bottom: 1px solid #dee2e6;
-                    position: sticky;
-                    top: 0;
-                    z-index: 1000;
-                }
+<t t-call="web.layout">
 
-                /* ================= MOBILE BOTTOM NAV ================= */
-                .ep-bottom-nav {
-                    display: none;
-                    position: fixed;
-                    bottom: 0;
-                    left: 0;
-                    right: 0;
-                    background: #fff;
-                    height: 65px;
-                    border-top: 1px solid #eee;
-                    display: flex;
-                    justify-content: space-around;
-                    align-items: center;
-                    z-index: 1050;
-                    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-                }
+    <style>
 
-                .nav-item {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    color: #6c757d;
-                    text-decoration: none;
-                    font-size: 11px;
-                    flex: 1;
-                }
+/* =======================================
+   ODOO ENTERPRISE STYLE NAVIGATION
+   ======================================= */
 
-                .nav-item i { font-size: 20px; margin-bottom: 4px; }
-                .nav-item.active { color: var(--odoo-primary); font-weight: bold; }
+/* BASE NAVBAR */
+.ep-navbar {
+    background: #F6F7F9;  /* Odoo light grey */
+    padding: 14px 0;
+    border-bottom: 1px solid #E5E7EB;
+    font-family: 'Inter', sans-serif;
+    position: relative;
+    z-index: 1000;
+}
 
-                /* ================= USER SIDEBAR (DRAWER) ================= */
-                .ep-drawer {
-                    position: fixed;
-                    top: 0;
-                    right: -300px;
-                    width: 300px;
-                    height: 100%;
-                    background: white;
-                    z-index: 2000;
-                    transition: 0.3s;
-                    box-shadow: -5px 0 15px rgba(0,0,0,0.1);
-                    padding: 20px;
-                }
-                .ep-drawer.open { right: 0; }
-                .drawer-overlay {
-                    display: none;
-                    position: fixed;
-                    inset: 0;
-                    background: rgba(0,0,0,0.4);
-                    z-index: 1999;
-                }
-                .drawer-overlay.show { display: block; }
+/* NAV CONTAINER */
+.nav-container {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: nowrap;
+}
 
-                /* ================= RESPONSIVE ADJUSTMENTS ================= */
-                @media (max-width: 768px) {
-                    .ep-bottom-nav { display: flex; }
-                    .ep-header .desktop-links { display: none; }
-                    .ep-user-info-desktop { display: none; }
-                }
+/* NAV LINKS ROW */
+.ep-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
-                @media (min-width: 769px) {
-                    .ep-bottom-nav { display: none; }
-                    body { padding-bottom: 0; }
-                }
-                
-                .badge-notify {
-                    background: #ff3b30;
-                    color: white;
-                    border-radius: 50%;
-                    padding: 2px 6px;
-                    font-size: 10px;
-                    position: absolute;
-                    top: 10px;
-                }
-            </style>
+/* ====== MAIN NAV BUTTONS ====== */
+.ep-link,
+.ep-dropdown-toggle {
+    background: transparent;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #1F2937;
+    cursor: pointer;
+    transition: 0.2s;
+}
 
-            <t t-call-assets="web.assets_frontend"/>
+/* Hover effect (soft highlight) */
+.ep-link:hover,
+.ep-dropdown-toggle:hover {
+    background: #EBECF0;  /* light Odoo grey hover */
+}
 
-            <header class="ep-header">
-                <div class="d-flex align-items-center">
-                    <img src="/web/binary/company_logo" style="height: 35px;" alt="Logo"/>
-                    <div class="desktop-links ms-4 d-none d-md-flex gap-3">
-                        <a href="/my" class="btn btn-link text-dark fw-bold">Dashboard</a>
-                        <div class="dropdown">
-                            <button class="btn btn-link text-dark dropdown-toggle" data-bs-toggle="dropdown">Requests</button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="/my/employee/requests">Employee Requests</a></li>
-                                <li><a class="dropdown-item" href="/my/employee/material">Material Requests</a></li>
-                            </ul>
-                        </div>
+/* Active state */
+.ep-link.active {
+    background: #E1E2E5;
+    font-weight: 600;
+}
+
+/* ========== DROPDOWN MENUS ========== */
+.ep-dropdown {
+    position: relative;
+}
+
+.ep-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 42px;
+    left: 0;
+    min-width: 220px;
+    background: white;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 8px 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    z-index: 2000;
+}
+
+/* Dropdown items */
+.ep-sub-link {
+    display: block;
+    padding: 10px 16px;
+    color: #1F2937;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.ep-sub-link:hover {
+    background: #EBECF0;
+}
+
+/* Divider */
+.ep-divider {
+    border-top: 1px solid #E5E7EB;
+    margin: 6px 0;
+}
+
+/* Odoo primary button style for Logout */
+.ep-logout {
+    margin-left: 0 !important; /* remove extra spacing */
+    background: #a08a8aff; /* Odoo primary button */
+    padding: 8px 18px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.ep-logout:hover {
+    background: #8d5353ff;
+}
+/* ===== USER INFO IN NAVBAR ===== */
+.ep-user-info {
+    margin-left: auto;
+    margin-right: 8px; /* reduce the huge spacing */
+    display: flex;
+    align-items: center;
+    gap: 6px; /* smaller spacing between avatar / text */
+}
+
+.ep-user-info img {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50%;
+}
+
+.ep-user-info h5 {
+    font-size: 14px;
+    margin: 0;
+}
+
+.ep-user-info p {
+    font-size: 12px;
+    margin: 0;
+    line-height: 1.2;
+}
+
+/* ========== MOBILE BEHAVIOR ========== */
+
+/* Mobile burger hidden on desktop */
+.ep-nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #1F2937;
+    cursor: pointer;
+}
+
+/* DESKTOP FORCE FIX */
+@media (min-width: 769px) {
+    .ep-nav-links {
+        display: flex !important;
+        flex-direction: row !important;
+        width: auto !important;
+    }
+    .ep-nav-toggle {
+        display: none !important;
+    }
+}
+
+/* MOBILE LAYOUT */
+@media (max-width: 768px) {
+
+    .ep-nav-toggle {
+        display: block !important;
+    }
+
+    .ep-nav-links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        background: #E6F4FF;
+        padding: 10px 0;
+        border-top: 1px solid #B8D8FF;
+    }
+
+    body.nav-open .ep-nav-links {
+        display: flex !important;
+    }
+
+    .ep-dropdown-menu {
+        position: relative !important;
+        top: 0 !important;
+        left: 0 !important;
+        min-width: 100% !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    .ep-sub-link,
+    .ep-dropdown-toggle,
+    .ep-link {
+        width: 100%;
+        text-align: center;
+    }
+
+    .ep-logout {
+        width: 100%;
+        margin-left: 0 !important;
+        text-align: center;
+    }
+
+}
+
+
+    </style>
+
+    <t t-call-assets="web.assets_frontend"/>
+
+    <!-- ===== NAVIGATION BAR ===== -->
+    <nav class="ep-navbar">
+        <div class="container nav-container">
+
+            <!-- MOBILE BURGER -->
+            <button class="ep-nav-toggle" onclick="document.body.classList.toggle('nav-open')">☰</button>
+
+            <!-- NAV LINKS -->
+            <div class="ep-nav-links">
+
+                <a href="/my" class="ep-link">Dashboard</a>
+
+                <!-- REQUESTS DROPDOWN -->
+                <div class="ep-dropdown">
+                    <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'requests-menu')">Requests ▾</button>
+
+                    <div id="requests-menu" class="ep-dropdown-menu">
+                        <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
+                        <a href="/my/employee/requests/new" class="ep-sub-link">New Employee Request</a>
+
+                        <hr class="ep-divider"/>
+
+                        <a href="/my/employee/material" class="ep-sub-link">Material Requests</a>
+                        <a href="/my/employee/material/new" class="ep-sub-link">New Material Request</a>
                     </div>
                 </div>
 
-                <div class="ep-user-trigger cursor-pointer" onclick="toggleDrawer()">
-                    <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="rounded-circle" width="35" height="35"/>
-                </div>
-            </header>
+                <!-- ===== DROPDOWN: APPROVALS ===== -->
+                <t t-if="
+                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                ">
+                    <div class="ep-dropdown">
+                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'approvals-menu')">Approvals ▾</button>
 
-            <div class="drawer-overlay" id="overlay" onclick="toggleDrawer()"></div>
-            <div class="ep-drawer" id="userDrawer">
-                <div class="text-center mb-4">
-                    <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_256)" class="rounded-circle mb-2" width="80"/>
-                    <h5 t-out="request.env.user.partner_id.name"/>
-                    <p class="text-muted small" t-out="request.env.user.partner_id.email"/>
-                </div>
-                <hr/>
-                <div class="list-group list-group-flush">
-                    <a href="/my/account" class="list-group-item list-group-item-action border-0"><i class="fa fa-user-circle me-2"></i> My Profile</a>
+                            <div id="approvals-menu" class="ep-dropdown-menu">
+
+                            <!-- Employee Approvals -->
+                            <t t-if="
+                                request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                                or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                                or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                                or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                            ">
+                                <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
+                            </t>
+
+                            <!-- Material Approvals -->
+                            <t t-if="
+                                request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                                or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                                or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                                or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                                or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                            ">
+                                <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
+                            </t>
+
+                        </div>
+                    </div>
+                </t>
                     <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
-                        <a href="/my/petty-cash" class="list-group-item list-group-item-action border-0"><i class="fa fa-money me-2"></i> Petty Cash</a>
-                    </t>
-                    <a href="/web/session/logout" class="list-group-item list-group-item-action border-0 text-danger"><i class="fa fa-sign-out me-2"></i> Logout</a>
+
+                    <a href="/my/petty-cash"
+                    t-att-class="'ep-link active' if request.httprequest.path.startswith('/my/petty-cash') else 'ep-link'">
+                        Petty Cash
+                    </a>
+
+                </t>
+
+
+            </div>
+            <div class="ep-user-info d-flex align-items-center gap-3">
+
+                <!-- Avatar -->
+                <img class="o_portal_contact_img rounded"
+                    width="48"
+                    t-att-src="image_data_uri(request.env.user.partner_id.avatar_1024)"
+                    alt="User"/>
+
+                <!-- Name + Company + Contact -->
+                <div class="d-flex flex-column">
+
+                    <!-- Name -->
+                    <h5 class="mb-0" t-out="request.env.user.partner_id.name"/>
+
+                    <!-- Company -->
+                    <p class="mb-0 text-muted small"
+                    t-out="request.env.user.partner_id.company_name"/>
+
+                    <!-- Email -->
+                    <p class="mb-0 text-muted small d-flex align-items-center">
+                        <i class="fa fa-envelope me-1"></i>
+                        <span t-out="request.env.user.partner_id.email"/>
+                    </p>
+
+                    <!-- Phone -->
+                    <p class="mb-0 text-muted small d-flex align-items-center"
+                    t-if="request.env.user.partner_id.phone">
+                        <i class="fa fa-phone me-1"></i>
+                        <span t-out="request.env.user.partner_id.phone"/>
+                    </p>
+
                 </div>
+
             </div>
 
-            <main>
-                <div id="wrap" class="container mt-3">
-                    <t t-raw="0"/>
-                </div>
-            </main>
+            <!-- LOGOUT BUTTON -->
+            <a class="ep-logout" href="/web/session/logout">Logout</a>
 
-            <nav class="ep-bottom-nav">
-                <a href="/my" t-attf-class="nav-item #{'active' if request.httprequest.path == '/my' else ''}">
-                    <i class="fa fa-th-large"></i>
-                    <span>Home</span>
-                </a>
-                <a href="/my/employee/requests" class="nav-item">
-                    <i class="fa fa-paper-plane"></i>
-                    <span>Requests</span>
-                </a>
-                <t t-if="any(request.env.user.has_group(g) for g in ['employee_portal_suite.group_employee_portal_manager', 'employee_portal_suite.group_mr_project_manager'])">
-                    <a href="/my/employee/approvals" class="nav-item">
-                        <i class="fa fa-check-square"></i>
-                        <span>Approvals</span>
-                    </a>
-                </t>
-                <a href="javascript:void(0)" onclick="toggleDrawer()" class="nav-item">
-                    <i class="fa fa-bars"></i>
-                    <span>More</span>
-                </a>
-            </nav>
+        </div>
+    </nav>
 
-            <script>
-                function toggleDrawer() {
-                    document.getElementById('userDrawer').classList.toggle('open');
-                    document.getElementById('overlay').classList.toggle('show');
-                }
-            </script>
-        </t>
-    </template>
+    <!-- PAGE CONTENT -->
+    <main>
+        <div id="wrap" class="container mt-4 mb-5">
+            <t t-raw="0"/>
+        </div>
+    </main>
+
+
+</t>
+<script>
+function toggleDropdown(event, id) {
+    event.stopPropagation();
+
+    // Close all dropdowns first
+    document.querySelectorAll('.ep-dropdown-menu').forEach(menu => {
+        if (menu.id !== id) menu.style.display = 'none';
+    });
+
+    let menu = document.getElementById(id);
+    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+}
+
+document.addEventListener('click', function() {
+    document.querySelectorAll('.ep-dropdown-menu').forEach(menu => {
+        menu.style.display = 'none';
+    });
+});
+</script>
+
+</template>
+
 </odoo>
