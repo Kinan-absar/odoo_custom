@@ -127,18 +127,26 @@
                     </div>
 
                     <t t-if="
-                            request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                        ">
+                        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                    ">
 
-                        <div id="app-d" class="ep-dropdown-menu">
+                        <div class="ep-dropdown">
 
+                            <button class="ep-dropdown-toggle"
+                                    onclick="toggleDropdown(event, 'app-d')">
+                                Approvals ▾
+                            </button>
+
+                            <div id="app-d" class="ep-dropdown-menu">
+
+                                <!-- Employee Approvals -->
                                 <t t-if="
                                     request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
                                     or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
@@ -150,6 +158,7 @@
                                     </a>
                                 </t>
 
+                                <!-- Material Approvals -->
                                 <t t-if="
                                     request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
                                     or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
@@ -164,7 +173,10 @@
 
                             </div>
 
+                        </div>
+
                     </t>
+
                     
                     <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
                         <a href="/my/petty-cash" class="ep-link">Petty Cash</a>
