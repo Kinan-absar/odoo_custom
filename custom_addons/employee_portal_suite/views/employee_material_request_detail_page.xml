@@ -55,9 +55,10 @@
                 <!-- ========================= -->
                 <<div class="card mb-4"
                     t-att-style="
-                        'border-left: 4px solid #28a745;' if request_rec.state == 'approved' else
-                        'border-left: 4px solid #dc3545;' if request_rec.state == 'rejected' else
-                        'border-left: 4px solid #ffc107;'">
+                            request_rec.state == 'approved' and 'border-left:4px solid #28a745;' or
+                            request_rec.state == 'rejected' and 'border-left:4px solid #dc3545;' or
+                            'border-left:4px solid #ffc107;'
+                        ">
                     <div class="card-body">
 
                         <div class="row mb-2">
