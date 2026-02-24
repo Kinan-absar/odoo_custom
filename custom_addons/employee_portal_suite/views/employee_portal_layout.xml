@@ -152,7 +152,7 @@
 
                     display: flex;
                     justify-content: space-around;
-                    align-items: flex-end;
+                    align-items: center;
 
                     background: rgba(255,255,255,0.97);
                     backdrop-filter: blur(18px);
@@ -185,7 +185,7 @@
                 .ep-bottom-nav .nav-btn i {
                     display: block;
                     font-size: 22px;
-                    margin-bottom: 5px;
+                    margin-bottom: 3px;
                     transition: transform 0.2s ease;
                 }
 
@@ -231,6 +231,15 @@
                 .ep-bottom-nav .nav-btn:active .fab-plus {
                     transform: scale(0.9);
                 }
+                /* Lift icons slightly */
+                .ep-bottom-nav .nav-btn {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 6px;   /* 🔥 this lifts everything up */
+                }
+
 
 
             </style>
