@@ -170,15 +170,24 @@
                                         <i class="fa fa-download"></i>
                                 </a>
 
-                                <a t-att-href="'/my/employee/material/attachment/delete/%s/%s' % (att.id, request_rec.id)"
-                                class="attachment-icon-btn text-danger"
-                                title="Delete"
-                                onclick="return confirm('Delete this attachment?');">
-                                    <i class="fa fa-times"></i>
-                                </a>
+                                <a href="#"
+                                    class="attachment-icon-btn text-danger delete-trigger"
+                                    data-url="/my/employee/material/attachment/delete/%s/%s"
+                                    t-att-data-url="'/my/employee/material/attachment/delete/%s/%s' % (att.id, request_rec.id)"
+                                    title="Delete">
+                                        <i class="fa fa-times"></i>
+                                    </a>
+
 
 
                             </div>
+                        <div class="delete-confirmation d-none mt-2">
+                            <span class="text-muted small">Delete this attachment?</span>
+                            <div class="d-inline-flex gap-2 ms-2">
+                                <a href="#" class="btn btn-sm btn-danger confirm-delete">Yes</a>
+                                <button type="button" class="btn btn-sm btn-light cancel-delete">Cancel</button>
+                            </div>
+                        </div>
 
                         </div>
                     </t>
@@ -364,6 +373,37 @@
             document.addEventListener("DOMContentLoaded", function () {
                 setupDropzone("dropzone-detail", "fileInput-detail", "previewArea-detail");
             });
+            document.addEventListener("DOMContentLoaded", function () {
+
+            document.querySelectorAll(".delete-trigger").forEach(btn => {
+
+                btn.addEventListener("click", function (e) {
+                    e.preventDefault();
+
+                    const container = this.closest(".list-group-item");
+                    const confirmBox = container.querySelector(".delete-confirmation");
+
+                    confirmBox.classList.remove("d-none");
+                });
+
+            });
+
+            document.querySelectorAll(".cancel-delete").forEach(btn => {
+                btn.addEventListener("click", function () {
+                    this.closest(".delete-confirmation").classList.add("d-none");
+                });
+            });
+
+            document.querySelectorAll(".confirm-delete").forEach(btn => {
+                btn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    const trigger = this.closest(".list-group-item")
+                                        .querySelector(".delete-trigger");
+                    window.location.href = trigger.dataset.url;
+                });
+            });
+
+        });
             </script>
 
 
