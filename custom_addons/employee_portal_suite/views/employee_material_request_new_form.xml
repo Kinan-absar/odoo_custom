@@ -3,7 +3,43 @@
 
 <template id="employee_material_request_new_form" name="New Material Request Form">
 <t t-call="employee_portal_suite.employee_portal_layout">
+<style>
+/* =============================== */
+/* MOBILE MATERIAL LINE CARDS     */
+/* =============================== */
 
+@media (max-width: 768px) {
+
+    .mobile-line-card {
+        background: white;
+        border-radius: 18px;
+        padding: 16px;
+        margin-bottom: 14px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+    }
+
+    .mobile-line-header {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 12px;
+    }
+
+    .mobile-label {
+        font-size: 11px;
+        color: #9ca3af;
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    .mobile-line-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+}
+
+</style>
 <div class="container my-4">
 
     <h2 class="text-center mb-4">Material Request</h2>
@@ -34,7 +70,7 @@
 
         <h4 class="mt-4">Materials</h4>
 
-        <div class="table-responsive">
+        <div class="table-responsive d-none d-md-block">
             <table class="table table-bordered align-middle">
                 <thead class="table-light">
                     <tr>
@@ -82,6 +118,61 @@
                 class="btn btn-success btn-sm mt-2">
             + Add Line
         </button>
+        <!-- MOBILE MATERIAL LINES -->
+<div class="d-md-none" id="mobile-material-lines-en">
+
+    <div class="mobile-line-card" data-index="0">
+        <div class="mobile-line-header">
+            <span class="mobile-line-number">Line 1</span>
+        </div>
+
+        <div class="mb-2">
+            <label class="mobile-label">Item</label>
+            <input type="text"
+                   class="form-control item-name"
+                   name="item_name_0"
+                   required="1"/>
+        </div>
+
+        <div class="row g-2">
+            <div class="col-6">
+                <label class="mobile-label">Qty</label>
+                <input type="number"
+                       class="form-control qty"
+                       name="qty_required_0"
+                       min="0"/>
+            </div>
+
+            <div class="col-6">
+                <label class="mobile-label">UoM</label>
+                <select name="uom_id_0"
+                        class="form-control uom">
+                    <option value="">Select…</option>
+                    <t t-foreach="uoms" t-as="u">
+                        <option t-att-value="u.id">
+                            <t t-esc="u.name"/>
+                        </option>
+                    </t>
+                </select>
+            </div>
+        </div>
+
+        <div class="mobile-line-actions mt-3">
+            <button type="button"
+                    class="btn btn-outline-secondary btn-sm copy-line">Copy</button>
+
+            <button type="button"
+                    class="btn btn-outline-danger btn-sm remove-line">Remove</button>
+        </div>
+    </div>
+
+</div>
+
+<button type="button"
+        id="add-line-mobile-en"
+        class="btn btn-success btn-sm mt-3 d-md-none">
+    + Add Line
+</button>
 
         <!-- Attachments -->
         <h4 class="mt-4">Attachments</h4>
