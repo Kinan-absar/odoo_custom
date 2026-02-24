@@ -9,7 +9,9 @@
             }
 
             .dashboard-card {
-                background: white;
+                background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+                border: 1px solid rgba(0,0,0,0.04);
+
                 border-radius: 24px;
                 padding: 18px;
                 height: 140px;
@@ -24,6 +26,11 @@
                 transform: translateY(-6px);
                 box-shadow: 0 18px 40px rgba(0,0,0,0.08);
             }
+            .dashboard-card {
+                transition: transform 0.25s cubic-bezier(.34,1.56,.64,1),
+                            box-shadow 0.25s ease;
+            }
+
 
             .card-top {
                 display: flex;
@@ -102,9 +109,116 @@
             .badge-pulse.bg-success {
                 background: #10B981;
             }
+            .dashboard-hero {
+                background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+                color: white;
+                border-radius: 26px;
+                padding: 22px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 20px 40px rgba(79,70,229,0.25);
+            }
+
+            .hero-title {
+                font-size: 18px;
+                font-weight: 700;
+                letter-spacing: -0.02em;
+            }
+
+            .hero-sub {
+                font-size: 13px;
+                opacity: 0.9;
+                margin-top: 4px;
+            }
+
+            .hero-stat {
+                text-align: right;
+            }
+
+            .hero-stat-number {
+                font-size: 28px;
+                font-weight: 800;
+                display: block;
+            }
+
+            .hero-stat-label {
+                font-size: 11px;
+                opacity: 0.8;
+            }
+            .section-title {
+                font-weight: 700;
+                font-size: 14px;
+                letter-spacing: -0.02em;
+                color: var(--text-primary);
+            }
+
+            .recent-activity {
+                background: var(--surface);
+                border-radius: 22px;
+                padding: 18px;
+                box-shadow: var(--shadow-sm);
+            }
+
+            .activity-card {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 10px 0;
+                border-bottom: 1px solid var(--border-light);
+            }
+
+            .activity-card:last-child {
+                border-bottom: none;
+            }
+
+            .activity-card i {
+                width: 36px;
+                height: 36px;
+                background: rgba(79,70,229,0.1);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--app-primary);
+                font-size: 14px;
+            }
+
+            .activity-title {
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+            .activity-time {
+                font-size: 11px;
+                color: var(--text-muted);
+            }
+
+
 
             </style>
             <div class="row mt-4 g-3">
+                <div class="dashboard-hero mb-4">
+
+                <div class="hero-left">
+                    <div class="hero-title">Your Workspace</div>
+                    <div class="hero-sub">
+                        You have 
+                        <strong><t t-esc="employee_pending_count + material_pending_count"/></strong>
+                        pending actions today.
+                    </div>
+                </div>
+
+                <div class="hero-right">
+                    <div class="hero-stat">
+                        <span class="hero-stat-number">
+                            <t t-esc="my_request_count + my_material_count"/>
+                        </span>
+                        <span class="hero-stat-label">Total Requests</span>
+                    </div>
+                </div>
+
+            </div>
 
                 <!-- EMPLOYEE REQUESTS -->
                 <div class="col-6 col-md-6">
@@ -224,6 +338,27 @@
                             </div>
                         </div>
                     </a>
+                </div>
+
+            </div>
+            <div class="recent-activity mt-4">
+
+                <div class="section-title mb-2">Recent Activity</div>
+
+                <div class="activity-card">
+                    <i class="fa fa-file-text-o"></i>
+                    <div>
+                        <div class="activity-title">Material Request MR-2024-008</div>
+                        <div class="activity-time">Submitted 2 hours ago</div>
+                    </div>
+                </div>
+
+                <div class="activity-card">
+                    <i class="fa fa-check-circle-o text-success"></i>
+                    <div>
+                        <div class="activity-title">Employee Request Approved</div>
+                        <div class="activity-time">Yesterday</div>
+                    </div>
                 </div>
 
             </div>
