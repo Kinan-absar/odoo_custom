@@ -10,28 +10,43 @@
                     <div class="card-body">
 
                         <!-- Header -->
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                            <h4 class="mb-0 fw-semibold">My Requests</h4>
-                            <form method="get" class="mt-2 mt-md-0">
+                        <div class="material-header">
+
+                            <!-- Top Row -->
+                            <div class="material-header-top">
+                                <h4 class="mb-0 fw-semibold">My Requests</h4>
+
+                                <a href="/my/employee/requests/new"
+                                class="btn btn-primary btn-sm">
+                                    + Create New Request
+                                </a>
+                            </div>
+
+                            <!-- Search Below -->
+                            <form method="get" class="material-search-form">
                                 <div class="position-relative">
                                     <input type="text"
+                                        id="employeeSearchInput"
                                         name="search"
                                         t-att-value="search or ''"
-                                        placeholder="Search request..."
-                                        class="form-control form-control-sm mobile-search"/>
+                                        placeholder="Search request #"
+                                        class="form-control mobile-search"/>
 
-                                    <button type="submit"
-                                            class="search-btn">
+                                    <button type="submit" class="search-btn">
                                         <i class="fa fa-search"></i>
                                     </button>
+
+                                    <t t-if="search">
+                                        <a href="/my/employee/requests"
+                                        class="clear-search">
+                                            <i class="fa fa-times"></i>
+                                        </a>
+                                    </t>
                                 </div>
                             </form>
 
-                            <a class="btn btn-primary btn-sm"
-                               href="/my/employee/requests/new">
-                                + Create New Request
-                            </a>
                         </div>
+
 
                         <!-- Requests Table -->
                         <t t-if="requests">
@@ -122,6 +137,7 @@
                                 </t>
                             </div>
 
+
                         </t>
 
                         <!-- Empty State -->
@@ -135,6 +151,20 @@
                 </div>
 
             </div>
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+
+            const input = document.getElementById("employeeSearchInput");
+            if (!input) return;
+
+            input.addEventListener("input", function() {
+                if (this.value.trim() === "") {
+                    window.location.href = "/my/employee/requests";
+                }
+            });
+
+        });
+        </script>
 
         </t>
     </template>
