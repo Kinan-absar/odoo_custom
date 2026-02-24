@@ -125,97 +125,90 @@
         </div>
     </div>
 
-    <!-- ========================= -->
-    <!-- ATTACHMENTS -->
-    <!-- ========================= -->
+ <!-- ========================= -->
+            <!-- ATTACHMENTS -->
+            <!-- ========================= -->
+            <div class="card mb-3 rounded-4 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                    <span class="fw-semibold">Attachments</span>
+                    <span class="badge bg-light text-dark">
+                        <t t-esc="len(attachments)"/>
+                    </span>
+                </div>
 
-    <div class="card mb-3 rounded-4 shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center bg-white">
-            <span class="fw-semibold">Attachments</span>
-            <span class="badge bg-light text-dark">
-                <t t-esc="len(attachments)"/>
-            </span>
-        </div>
+                <div class="card-body p-0">
 
-        <div class="card-body p-0">
+                    <t t-if="attachments">
+                        <div class="list-group list-group-flush small">
+                            <t t-foreach="attachments" t-as="att">
+                                <div class="list-group-item">
 
-            <t t-if="attachments">
-                <div class="list-group list-group-flush small">
+                                    <div class="d-flex justify-content-between align-items-center">
 
-                    <t t-foreach="attachments" t-as="att">
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div class="overflow-hidden">
+                                            <div class="fw-semibold text-truncate">
+                                                <t t-esc="att.name"/>
+                                            </div>
+                                            <div class="text-muted small">
+                                                <t t-esc="att.description or 'General'"/>
+                                            </div>
+                                        </div>
 
-                            <div class="overflow-hidden">
-                                <div class="fw-semibold text-truncate">
-                                    <t t-esc="att.name"/>
+                                        <div class="d-flex gap-2">
+
+                                            <a t-att-href="'/web/content/%s' % att.id"
+                                            target="_blank"
+                                            class="attachment-icon-btn text-primary">
+                                                <i class="fa fa-eye"></i>
+                                            </a>
+
+                                            <a t-att-href="'/web/content/%s?download=true' % att.id"
+                                            target="_blank"
+                                            class="attachment-icon-btn text-secondary">
+                                                <i class="fa fa-download"></i>
+                                            </a>
+
+                                            <a href="#"
+                                            class="attachment-icon-btn text-danger delete-trigger"
+                                            t-att-data-url="'/my/employee/material/attachment/delete/%s/%s' % (att.id, request_rec.id)">
+                                                <i class="fa fa-times"></i>
+                                            </a>
+
+                                        </div>
+                                    </div>
+
+                                    <!-- Delete Confirmation -->
+                                    <div class="delete-confirmation d-none mt-3">
+                                        <div class="confirm-box p-3 rounded-3">
+                                            <div class="small mb-2 text-muted">
+                                                Delete this attachment?
+                                            </div>
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                <button type="button"
+                                                        class="btn btn-sm btn-light cancel-delete">
+                                                    Cancel
+                                                </button>
+                                                <a href="#"
+                                                class="btn btn-sm btn-danger confirm-delete">
+                                                    Delete
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                 </div>
-                                <div class="text-muted small">
-                                    <t t-esc="att.description or 'General'"/>
-                                </div>
-                            </div>
-
-                            <div class="d-flex gap-2">
-
-                                <a t-att-href="'/web/content/%s' % att.id"
-                                   target="_blank"
-                                   class="attachment-icon-btn text-primary"
-                                    title="View">
-                                        <i class="fa fa-eye"></i>
-                                </a>
-
-                                <a t-att-href="'/web/content/%s?download=true' % att.id"
-                                   target="_blank"
-                                    class="attachment-icon-btn text-secondary"
-                                    title="Download">
-                                        <i class="fa fa-download"></i>
-                                </a>
-
-                                <a href="#"
-                                    class="attachment-icon-btn text-danger delete-trigger"
-                                    data-url="/my/employee/material/attachment/delete/%s/%s"
-                                    t-att-data-url="'/my/employee/material/attachment/delete/%s/%s' % (att.id, request_rec.id)"
-                                    title="Delete">
-                                        <i class="fa fa-times"></i>
-                                    </a>
-
-
-
-                            </div>
-                        <div class="delete-confirmation d-none mt-3">
-                            <div class="confirm-box p-3 rounded-3">
-                                <div class="small mb-2 text-muted">
-                                    Delete this attachment?
-                                </div>
-
-                                <div class="d-flex gap-2 justify-content-end">
-                                    <button type="button"
-                                            class="btn btn-sm btn-light cancel-delete">
-                                        Cancel
-                                    </button>
-
-                                    <a href="#"
-                                    class="btn btn-sm btn-danger confirm-delete">
-                                        Delete
-                                    </a>
-                                </div>
-                            </div>
+                            </t>
                         </div>
+                    </t>
 
-
+                    <t t-else="">
+                        <div class="p-3 text-muted small">
+                            No attachments uploaded.
                         </div>
                     </t>
 
                 </div>
-            </t>
-
-            <t t-else="">
-                <div class="p-3 text-muted small">
-                    No attachments uploaded.
-                </div>
-            </t>
-
-        </div>
-    </div>
+            </div>
 
     <!-- ========================= -->
     <!-- UPLOAD SECTION -->
