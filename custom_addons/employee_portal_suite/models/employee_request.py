@@ -319,6 +319,15 @@ class EmployeeRequest(models.Model):
             rec.message_post(body="Request rejected.")
             rec._close_activities()
 
+    def get_rejection_reason(self):
+        self.ensure_one()
+        comments = {
+            "manager": self.manager_comment,
+            "hr": self.hr_comment,
+            "finance": self.finance_comment,
+            "ceo": self.ceo_comment,
+        }
+        return comments.get(self.state_before_reject) or ""
 
     # ---------------------------------------------------------
     # PORTAL TIMELINE
