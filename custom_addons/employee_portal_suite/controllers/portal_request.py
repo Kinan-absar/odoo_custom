@@ -156,6 +156,7 @@ class EmployeePortalRequests(http.Controller):
 
         emp = user.employee_id
         current_filter = kw.get("filter", "pending")
+        search = kw.get("search")
 
         # ---------------------------------------------------------
         # 1) PENDING LIST — requests waiting for THIS user
@@ -212,6 +213,11 @@ class EmployeePortalRequests(http.Controller):
             "rejected": rejected_list,
             "all": all_reqs,
         }.get(current_filter, pending_list)
+        # ---------------------------------------------------------
+        # 6) APPLY SEARCH (by request number only)
+        # ---------------------------------------------------------
+        if search:
+            shown_reqs = [r for r in shown_reqs if search.lower() in (r.name or "").lower()]
 
         return request.render("employee_portal_suite.portal_employee_approvals_list", {
             "pending_reqs": pending_list,
@@ -221,6 +227,7 @@ class EmployeePortalRequests(http.Controller):
             "shown_reqs": shown_reqs,
             "current_filter": current_filter,
             "status_badge": _er_status_badge,
+            "search": search,   # 👈 ADD THIS
         })
 
 

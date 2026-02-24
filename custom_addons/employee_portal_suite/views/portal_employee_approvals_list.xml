@@ -9,25 +9,55 @@
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
 
-                        <!-- Header + Filter -->
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                            <h4 class="mb-0 fw-semibold">Employee Requests Approval</h4>
+                        <!-- HEADER -->
+                        <div class="material-header">
 
-                            <div class="d-flex align-items-center gap-2">
-                                <label class="mb-0 fw-semibold small text-muted">Show:</label>
-                                <select id="approvalFilter"
-                                        class="form-select form-select-sm"
-                                        style="width:auto;">
-                                    <option value="all" t-att-selected="current_filter == 'all'">All</option>
-                                    <option value="pending" t-att-selected="current_filter == 'pending'">Pending</option>
-                                    <option value="approved" t-att-selected="current_filter == 'approved'">Approved</option>
-                                    <option value="rejected" t-att-selected="current_filter == 'rejected'">Rejected</option>
-                                </select>
+                            <div class="material-header-top">
+                                <h4 class="mb-0 fw-semibold">Employee Requests Approval</h4>
+
+                                <div class="d-flex align-items-center gap-2">
+                                    <label class="mb-0 fw-semibold small text-muted">Show:</label>
+                                    <select id="approvalFilter"
+                                            class="form-select form-select-sm"
+                                            style="width:auto;">
+                                        <option value="all" t-att-selected="current_filter == 'all'">All</option>
+                                        <option value="pending" t-att-selected="current_filter == 'pending'">Pending</option>
+                                        <option value="approved" t-att-selected="current_filter == 'approved'">Approved</option>
+                                        <option value="rejected" t-att-selected="current_filter == 'rejected'">Rejected</option>
+                                    </select>
+                                </div>
                             </div>
+
+                            <!-- SEARCH -->
+                            <form method="get" class="material-search-form">
+                                <input type="hidden" name="filter" t-att-value="current_filter"/>
+
+                                <div class="position-relative">
+                                    <input type="text"
+                                        id="employeeApprovalSearchInput"
+                                        name="search"
+                                        t-att-value="search or ''"
+                                        placeholder="Search request #"
+                                        class="form-control mobile-search"/>
+
+                                    <button type="submit" class="search-btn">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+
+                                    <t t-if="search">
+                                        <a t-att-href="'/my/employee/approvals?filter=%s' % current_filter"
+                                        class="clear-search">
+                                            <i class="fa fa-times"></i>
+                                        </a>
+                                    </t>
+                                </div>
+                            </form>
+
                         </div>
 
-                        <!-- Table -->
-                        <div class="table-responsive">
+
+                        <!-- DESKTOP TABLE -->
+                        <div class="table-responsive d-none d-md-block">
                             <table class="table table-hover table-sm align-middle mb-0">
 
                                 <thead class="table-light">
@@ -46,22 +76,14 @@
                                     <t t-if="shown_reqs">
                                         <t t-foreach="shown_reqs" t-as="req">
                                             <tr>
-
                                                 <td class="fw-semibold">
                                                     <t t-esc="req.name"/>
                                                 </td>
 
-                                                <td>
-                                                    <t t-esc="req.employee_id.name"/>
-                                                </td>
+                                                <td><t t-esc="req.employee_id.name"/></td>
+                                                <td><t t-esc="req.get_request_type_display()"/></td>
 
-                                                <td>
-                                                    <t t-esc="req.get_request_type_display()"/>
-                                                </td>
-
-                                                <td>
-                                                    <t t-raw="status_badge(req)"/>
-                                                </td>
+                                                <td><t t-raw="status_badge(req)"/></td>
 
                                                 <td>
                                                     <small class="text-muted">
@@ -71,11 +93,10 @@
 
                                                 <td class="text-end">
                                                     <a t-att-href="'/my/employee/approvals/%s' % req.id"
-                                                       class="btn btn-outline-primary btn-sm">
+                                                    class="btn btn-outline-primary btn-sm">
                                                         Review
                                                     </a>
                                                 </td>
-
                                             </tr>
                                         </t>
                                     </t>
@@ -93,7 +114,66 @@
                             </table>
                         </div>
 
-                    </div>
+
+                        <!-- MOBILE CARDS -->
+                        <div class="d-md-none">
+
+                            <t t-if="shown_reqs">
+                                <t t-foreach="shown_reqs" t-as="req">
+
+                                    <a t-att-href="'/my/employee/approvals/%s' % req.id"
+                                    class="mobile-request-card">
+
+                                        <div class="mobile-request-top">
+
+                                            <div>
+                                                <div class="mobile-request-id">
+                                                    <t t-esc="req.name"/>
+                                                </div>
+
+                                                <div class="mobile-request-date">
+                                                    <t t-esc="req.employee_id.name"/>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <t t-raw="status_badge(req)"/>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="mobile-request-body">
+
+                                            <div>
+                                                <span class="label">Type</span>
+                                                <div>
+                                                    <t t-esc="req.get_request_type_display()"/>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <span class="label">Date</span>
+                                                <div>
+                                                    <t t-esc="req.request_date"/>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                    </a>
+
+                                </t>
+                            </t>
+
+                            <t t-if="not shown_reqs">
+                                <div class="text-center text-muted py-4">
+                                    No Requests Found.
+                                </div>
+                            </t>
+
+                    </div> <!-- CLOSE d-md-none -->
+
+                    </div> <!-- CLOSE card-body -->
                 </div>
 
             </div>
@@ -110,6 +190,20 @@
                     window.location.href = url.toString();
                 });
             });
+            document.addEventListener("DOMContentLoaded", function() {
+
+                const input = document.getElementById("employeeApprovalSearchInput");
+                if (!input) return;
+
+                input.addEventListener("input", function() {
+                    if (this.value.trim() === "") {
+                        const filter = new URLSearchParams(window.location.search).get('filter') || 'all';
+                        window.location.href = "/my/employee/approvals?filter=" + filter;
+                    }
+                });
+
+            });
+
             </script>
 
         </t>
