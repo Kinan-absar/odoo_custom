@@ -23,6 +23,28 @@
                     Rejected
                 </a>
             </div>
+            <form method="get"
+                action="/my/employee/sign"
+                class="mb-3">
+
+                <input type="hidden" name="filter" t-att-value="current_filter"/>
+
+                <div class="input-group">
+
+                    <input type="text"
+                        id="signSearchInput"
+                        name="search"
+                        class="form-control"
+                        placeholder="Search by document name..."
+                        t-att-value="search"/>
+
+                    <button class="btn btn-outline-secondary" type="submit">
+                        <i class="fa fa-search"></i>
+                    </button>
+
+                </div>
+
+            </form>
 
             <!-- EMPTY STATE -->
             <t t-if="not documents">
@@ -214,6 +236,29 @@
 
             </t>
         </div>
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+
+            const input = document.getElementById("signSearchInput");
+            if (!input) return;
+
+            input.addEventListener("input", function() {
+
+                if (this.value.trim() === "") {
+
+                    const filter = new URLSearchParams(window.location.search)
+                        .get('filter') || 'pending';
+
+                    window.location.href =
+                        "/my/employee/sign?filter=" + filter;
+                }
+
+            });
+
+        });
+        </script>
+
+
     </t>
 </template>
 

@@ -56,12 +56,12 @@ class EmployeePortalSignDocs(CustomerPortal):
     # Main route
     # -------------------------------
     @http.route('/my/employee/sign', type='http', auth='user', website=True)
-    def portal_employee_sign_docs(self, filter="pending", **kwargs):
+    def portal_employee_sign_docs(self, filter="pending", search=None, **kwargs):
+
         user = request.env.user
         partner = user.partner_id
         SignItem = request.env["sign.request.item"].sudo()
 
-        # retrieve only items that belong to this user
         my_items = SignItem.search([("partner_id", "=", partner.id)])
 
         documents = []
@@ -69,41 +69,62 @@ class EmployeePortalSignDocs(CustomerPortal):
         for item in my_items:
             req = item.sign_request_id
 
-            # sorted order by mail_sent_order
-            items_sorted = req.request_item_ids.sorted(lambda x: x.mail_sent_order or 0)
+            # -------------------------
+            # SEARCH FILTER (by reference)
+            # -------------------------
+            if search:
+                if not req.reference or search.lower() not in req.reference.lower():
+                    continue
 
-            # first signer that must act (pending)
+            # -------------------------
+            # SIGNING ORDER LOGIC
+            # -------------------------
+            items_sorted = req.request_item_ids.sorted(
+                lambda x: x.mail_sent_order or 0
+            )
+
             first_pending = next((
                 it for it in items_sorted
                 if it.state not in ("completed", "canceled")
             ), None)
 
+            # -------------------------
             # FILTER LOGIC
+            # -------------------------
             if filter == "pending":
-                # user ONLY sees docs when it's their turn
                 if not first_pending or first_pending.id != item.id:
                     continue
 
-            if filter == "signed" and item.state != "completed":
-                continue
+            elif filter == "signed":
+                if item.state != "completed":
+                    continue
 
-            if filter == "rejected" and item.state != "canceled":
-                continue
+            elif filter == "rejected":
+                if item.state != "canceled":
+                    continue
 
-            # build document row
+            # -------------------------
+            # BUILD DOCUMENT ENTRY
+            # -------------------------
             documents.append({
                 "item": item,
                 "filename": req.reference,
                 "date": req.create_date.date(),
                 "your_status": self._compute_personal_status(item),
                 "workflow_status": self._compute_workflow_status(req),
-                "sign_url": item._get_share_url(),  # Odoo official signer URL
-                "access_token": item.access_token,   # NECESSARY for summary
+                "sign_url": item._get_share_url(),
+                "access_token": item.access_token,
             })
+
         # Sort newest → oldest
         documents = sorted(documents, key=lambda d: d["date"], reverse=True)
 
-        return request.render("employee_portal_suite.portal_sign_documents_page", {
-            "documents": documents,
-            "current_filter": filter,
-        })
+        return request.render(
+            "employee_portal_suite.portal_sign_documents_page",
+            {
+                "documents": documents,
+                "current_filter": filter,
+                "search": search or "",
+            }
+        )
+
