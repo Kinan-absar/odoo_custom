@@ -151,7 +151,6 @@
                     padding: 14px 12px calc(14px + env(safe-area-inset-bottom));
 
                     display: flex;
-                    justify-content: space-between;
                     align-items: center;
 
                     background: rgba(255,255,255,0.97);
@@ -163,7 +162,10 @@
 
                     box-shadow: 0 -10px 35px rgba(0,0,0,0.08);
                     z-index: 3000;
+
+                    position: fixed;
                 }
+
 
                 /* Prevent content hiding under nav */
                 main {
@@ -172,14 +174,15 @@
 
                 /* Nav items */
                 .ep-bottom-nav .nav-btn {
-                    flex: 1;
+                    flex: 1 1 0;
                     text-align: center;
-                    text-decoration: none !important;
-                    font-size: 11px;
-                    font-weight: 500;
-                    color: #9CA3AF;
-                    transition: all 0.2s ease;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 6px;
                 }
+
 
                 /* Icons */
                 .ep-bottom-nav .nav-btn i {
@@ -217,8 +220,7 @@
                     align-items: center;
                     justify-content: center;
 
-                    margin-top: -35px;
-
+                    
                     box-shadow: 0 12px 30px rgba(0,0,0,0.18);
                     transition: all 0.2s ease;
                 }
@@ -239,18 +241,16 @@
                     justify-content: center;
                     margin-bottom: 6px;   /* 🔥 this lifts everything up */
                 }
-                /* REMOVE CENTER FROM FLEX CALCULATION */
                 .ep-bottom-nav .nav-center {
-                    flex: 0 !important;
+                    flex: 0 0 80px;   /* fixed width center slot */
                     position: relative;
                 }
 
-                /* ABSOLUTE CENTER THE PLUS */
                 .ep-bottom-nav .nav-center .fab-plus {
                     position: absolute;
                     left: 50%;
                     transform: translateX(-50%);
-                    margin-top: -35px;
+                    top: -35px;
                 }
 
                 /* ========================= */
