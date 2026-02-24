@@ -151,7 +151,9 @@
                     padding: 14px 12px calc(14px + env(safe-area-inset-bottom));
 
                     display: grid;
-                    grid-template-columns: repeat(7, 1fr);
+                    grid-auto-flow: column;
+                    grid-auto-columns: 1fr;
+
                     align-items: center;
 
                     background: rgba(255,255,255,0.97);
@@ -163,6 +165,7 @@
 
                     box-shadow: 0 -10px 35px rgba(0,0,0,0.08);
                     z-index: 3000;
+                    position: relative; /* ADD THIS */
                 }
 
                 /* Prevent content hiding under nav */
@@ -228,22 +231,24 @@
 
                 /* Lock PLUS to true center column */
                 .ep-bottom-nav .nav-center {
-                    grid-column: 4;
-                    position: relative;
+                    position: static;
                 }
 
-                .ep-bottom-nav .nav-center .fab-plus {
+                .ep-bottom-nav .fab-plus {
                     position: absolute;
                     left: 50%;
                     transform: translateX(-50%);
                     top: -35px;
                 }
 
+
                 /* Optional: Plus press animation */
                 .ep-bottom-nav .nav-center:active .fab-plus {
                     transform: translateX(-50%) scale(0.92);
                 }
-
+                .ep-bottom-nav .nav-center {
+                    width: 0;
+                }
 
                 /* ========================= */
                 /* MOBILE REQUEST LIST STYLE */
