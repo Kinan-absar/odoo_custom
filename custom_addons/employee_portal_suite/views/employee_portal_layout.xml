@@ -4,168 +4,326 @@
     <template id="employee_portal_layout">
 
     <xpath expr="//meta[@name='viewport']" position="replace">
-
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-
     </xpath>
+
         <t t-call="web.layout">
             <style>
+                /* ================================================================
+                   EMPLOYEE PORTAL — PREMIUM REDESIGN
+                   Color: Deep Indigo × Warm Slate × Gold accent
+                   ================================================================ */
+
+                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
                 :root {
-                    --app-primary: #714B67;
-                    --app-bg: #F8F9FA;
-                    --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                    /* ── Brand Palette ── */
+                    --app-primary:        #4F46E5;
+                    --app-primary-light:  #6366F1;
+                    --app-primary-dark:   #3730A3;
+                    --app-accent:         #F59E0B;
+                    --app-accent-soft:    #FEF3C7;
+
+                    /* ── Surface ── */
+                    --app-bg:             #F1F2F6;
+                    --surface:            #FFFFFF;
+                    --surface-2:          #F8F8FB;
+                    --border-light:       rgba(0,0,0,0.06);
+
+                    /* ── Text ── */
+                    --text-primary:       #1A1B2E;
+                    --text-secondary:     #6B7280;
+                    --text-muted:         #9CA3AF;
+
+                    /* ── Shadows ── */
+                    --shadow-xs:   0 1px 3px rgba(26,27,46,0.06);
+                    --shadow-sm:   0 4px 12px rgba(26,27,46,0.08);
+                    --shadow-md:   0 8px 24px rgba(26,27,46,0.10);
+                    --shadow-lg:   0 16px 40px rgba(26,27,46,0.12);
+                    --shadow-fab:  0 10px 30px rgba(79,70,229,0.40), 0 3px 8px rgba(79,70,229,0.20);
+
+                    /* ── Radius ── */
+                    --radius-sm:   8px;
+                    --radius-md:   14px;
+                    --radius-lg:   20px;
+                    --radius-xl:   28px;
+
+                    /* ── Motion ── */
+                    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+                    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+                    --dur-fast:    150ms;
+                    --dur-base:    220ms;
+                    --dur-slow:    350ms;
+
+                    /* ── Nav ── */
+                    --nav-height:  76px;
+
+                    /* ── Legacy ── */
+                    --card-shadow: var(--shadow-sm);
                 }
 
-                body { background-color: var(--app-bg) !important; font-family: 'Inter', sans-serif; }
+                /* ================================================================
+                   BASE
+                   ================================================================ */
 
-                /* ================= DESKTOP STYLING (Professional) ================= */
+                *, *::before, *::after { box-sizing: border-box; }
+
+                body {
+                    background-color: var(--app-bg) !important;
+                    font-family: 'DM Sans', sans-serif !important;
+                    color: var(--text-primary);
+                    -webkit-font-smoothing: antialiased;
+                    -moz-osx-font-smoothing: grayscale;
+                }
+
+                main {
+                    padding-bottom: calc(var(--nav-height) + 40px);
+                }
+
+                h1, h2, h3, h4, h5, h6 {
+                    font-family: 'DM Sans', sans-serif;
+                    font-weight: 700;
+                    letter-spacing: -0.02em;
+                    color: var(--text-primary);
+                }
+
+                /* ================================================================
+                   DESKTOP NAVBAR
+                   ================================================================ */
+
                 @media (min-width: 769px) {
                     .ep-navbar {
-                        display: flex; align-items: center; justify-content: space-between;
-                        padding: 0 2rem; height: 70px; background: #fff;
-                        border-bottom: 1px solid #E5E7EB; position: sticky; top: 0; z-index: 1000;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding: 0 2.5rem;
+                        height: 68px;
+                        background: var(--surface);
+                        border-bottom: 1px solid var(--border-light);
+                        position: sticky;
+                        top: 0;
+                        z-index: 1000;
+                        box-shadow: var(--shadow-xs);
                     }
                     .mobile-only { display: none !important; }
                 }
 
-                .ep-nav-links { display: flex; align-items: center; gap: 8px; }
+                .ep-nav-links { display: flex; align-items: center; gap: 4px; }
+
                 .ep-link, .ep-dropdown-toggle {
-                    background: transparent; border: none; padding: 10px 16px;
-                    border-radius: 8px; font-size: 15px; font-weight: 500;
-                    color: #1F2937; cursor: pointer; text-decoration: none !important;
+                    background: transparent;
+                    border: none;
+                    padding: 9px 15px;
+                    border-radius: var(--radius-sm);
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: var(--text-secondary);
+                    cursor: pointer;
+                    text-decoration: none !important;
+                    transition: background var(--dur-fast) var(--ease-smooth),
+                                color var(--dur-fast) var(--ease-smooth);
+                    letter-spacing: -0.01em;
+                    font-family: 'DM Sans', sans-serif;
                 }
-                .ep-link:hover, .ep-dropdown-toggle:hover { background: #EBECF0; color: var(--app-primary); }
+
+                .ep-link:hover, .ep-dropdown-toggle:hover {
+                    background: rgba(79,70,229,0.07);
+                    color: var(--app-primary);
+                }
 
                 /* Desktop Dropdowns */
                 .ep-dropdown { position: relative; }
-                .ep-dropdown-menu {
-                    display: none; position: absolute; top: 45px; left: 0;
-                    min-width: 240px; background: white; border: 1px solid #E2E8F0;
-                    border-radius: 10px; padding: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 2000;
-                }
-                .ep-sub-link { display: block; padding: 10px 16px; color: #1F2937; text-decoration: none !important; font-size: 14px; border-radius: 6px; }
-                .ep-sub-link:hover { background: #F3F4F6; }
 
-                /* ================= MOBILE STYLING (True App Design) ================= */
+                .ep-dropdown-menu {
+                    display: none;
+                    position: absolute;
+                    top: calc(100% + 8px);
+                    left: 0;
+                    min-width: 220px;
+                    background: var(--surface);
+                    border: 1px solid var(--border-light);
+                    border-radius: var(--radius-md);
+                    padding: 6px;
+                    box-shadow: var(--shadow-lg);
+                    z-index: 2000;
+                }
+
+                .ep-sub-link {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 9px 13px;
+                    color: var(--text-primary);
+                    text-decoration: none !important;
+                    font-size: 13.5px;
+                    font-weight: 500;
+                    border-radius: var(--radius-sm);
+                    transition: background var(--dur-fast);
+                }
+
+                .ep-sub-link:hover {
+                    background: var(--surface-2);
+                    color: var(--app-primary);
+                }
+
+                /* ================================================================
+                   MOBILE BASE
+                   ================================================================ */
+
                 @media (max-width: 768px) {
                     .ep-navbar { display: none !important; }
-                    
-                    /* Force cards to be app-tiles */
-                    .container { max-width: 100% !important; padding: 16px !important; }
-                    
-                    
+
+                    .container {
+                        max-width: 100% !important;
+                        padding: 16px !important;
+                    }
+
                     .card {
-                        border: none !important; border-radius: 16px !important;
-                        box-shadow: var(--card-shadow) !important; margin-bottom: 16px !important;
+                        border: none !important;
+                        border-radius: var(--radius-lg) !important;
+                        box-shadow: var(--shadow-sm) !important;
+                        margin-bottom: 14px !important;
+                        background: var(--surface) !important;
+                        overflow: hidden;
                     }
 
                     .mobile-app-header {
-                        display: flex; justify-content: space-between; align-items: center;
-                        padding: 15px 20px; background: #fff; border-bottom: 1px solid #eee;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 20px 20px 16px;
+                        background: var(--surface);
+                        border-bottom: 1px solid var(--border-light);
                     }
 
-                    
-                    .nav-btn { color: #9CA3AF; text-align: center; text-decoration: none !important; flex: 1; }
+                    /* nav-btn base (mobile override) */
+                    .nav-btn {
+                        color: var(--text-muted);
+                        text-align: center;
+                        text-decoration: none !important;
+                        flex: 1;
+                    }
                     .nav-btn.active { color: var(--app-primary); }
-                    .nav-btn i { font-size: 24px; display: block; margin-bottom: 2px; }
+                    .nav-btn i { font-size: 20px; display: block; margin-bottom: 2px; }
                     .nav-btn span { font-size: 10px; font-weight: 600; }
-                    
+
+                    /* ── FAB popup menu ── */
                     .fab-menu {
                         position: fixed;
-                        bottom: 90px;
+                        bottom: calc(var(--nav-height) + 24px);
                         left: 50%;
-                        transform: translateX(-50%);
-                        background: white;
-                        border-radius: 16px;
-                        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-                        padding: 10px 0;
-                        display: none;
-                        width: 250px;
+                        transform: translateX(-50%) translateY(12px);
+                        background: var(--surface);
+                        border-radius: var(--radius-lg);
+                        box-shadow: var(--shadow-lg);
+                        padding: 8px;
+                        opacity: 0;
+                        pointer-events: none;
+                        width: 260px;
                         z-index: 2100;
+                        border: 1px solid var(--border-light);
+                        transition: opacity var(--dur-base) var(--ease-smooth),
+                                    transform var(--dur-base) var(--ease-spring);
                     }
 
                     .fab-menu.show {
-                        display: block;
+                        opacity: 1;
+                        pointer-events: all;
+                        transform: translateX(-50%) translateY(0);
                     }
 
                     .fab-item {
-                        display: block;
-                        padding: 12px 16px;
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 13px 14px;
                         text-decoration: none !important;
-                        color: #1F2937;
+                        color: var(--text-primary);
                         font-weight: 500;
+                        font-size: 14px;
+                        border-radius: var(--radius-md);
+                        transition: background var(--dur-fast);
+                        cursor: pointer;
                     }
 
-                    .fab-item:hover {
-                        background: #F3F4F6;
+                    .fab-item i {
+                        width: 34px;
+                        height: 34px;
+                        background: rgba(79,70,229,0.08);
+                        color: var(--app-primary);
+                        border-radius: var(--radius-sm);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 14px;
+                        flex-shrink: 0;
                     }
 
+                    .fab-item:hover { background: var(--surface-2); }
                 }
-                
 
-                /* Pop animation */
-                @keyframes navPop {
-                    0% { transform: scale(1); }
-                    50% { transform: scale(1.2); }
-                    100% { transform: scale(1); }
-                }
-                
+                /* ================================================================
+                   SEARCH
+                   ================================================================ */
 
-                /* ======================= */
-                /* CENTER PLUS UPGRADE     */
-                /* ======================= */
-
-                
                 .mobile-search {
-                    border-radius: 14px;
-                    padding: 8px 38px 8px 14px;
-                    border: 1px solid #e5e7eb;
+                    border-radius: var(--radius-md);
+                    padding: 10px 40px 10px 16px;
+                    border: 1.5px solid var(--border-light);
                     font-size: 14px;
+                    font-family: 'DM Sans', sans-serif;
+                    background: var(--surface);
+                    color: var(--text-primary);
+                    transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+                    width: 100%;
                 }
 
                 .mobile-search:focus {
-                    border-color: var(--app-primary);
-                    box-shadow: 0 0 0 3px rgba(113,75,103,0.1);
+                    outline: none;
+                    border-color: var(--app-primary-light);
+                    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
                 }
+
+                .mobile-search::placeholder { color: var(--text-muted); }
 
                 .search-btn {
                     position: absolute;
-                    right: 10px;
+                    right: 12px;
                     top: 50%;
                     transform: translateY(-50%);
                     background: none;
                     border: none;
-                    color: #9ca3af;
+                    color: var(--text-muted);
+                    cursor: pointer;
                 }
-               /* =============================== */
-                /* PREMIUM BOTTOM NAV - FIXED FAB  */
-                /* =============================== */
 
-                main {
-                    padding-bottom: 110px;
-                }
+                /* ================================================================
+                   PREMIUM BOTTOM NAV
+                   ================================================================ */
 
                 .ep-bottom-nav {
                     position: fixed;
-                    bottom: 0;
-                    left: 0;
-                    right: 0;
-                    height: 80px;
-                    padding-bottom: env(safe-area-inset-bottom);
-                    background: #fff;
-                    border-top: 1px solid rgba(0,0,0,0.06);
-                    border-top-left-radius: 24px;
-                    border-top-right-radius: 24px;
-                    box-shadow: 0 -4px 30px rgba(0,0,0,0.08);
+                    bottom: max(8px, env(safe-area-inset-bottom));
+                    left: 10px;
+                    right: 10px;
+                    height: var(--nav-height);
+                    background: rgba(255,255,255,0.96);
+                    backdrop-filter: blur(24px);
+                    -webkit-backdrop-filter: blur(24px);
+                    border: 1px solid rgba(255,255,255,0.9);
+                    border-radius: var(--radius-xl);
+                    box-shadow:
+                        0 -2px 0 rgba(79,70,229,0.06),
+                        var(--shadow-lg),
+                        inset 0 1px 0 rgba(255,255,255,1);
                     z-index: 3000;
-
-                    /* Two equal halves, FAB floats in the middle */
                     display: flex;
                     align-items: center;
                     justify-content: space-around;
+                    padding: 0 4px;
                 }
 
-                /* Left group and Right group each take equal space */
+                /* Left & Right groups */
                 .ep-nav-left,
                 .ep-nav-right {
                     display: flex;
@@ -175,11 +333,10 @@
                     height: 100%;
                 }
 
-                /* Leave space in the center for FAB */
-                .ep-nav-left  { padding-right: 40px; }
-                .ep-nav-right { padding-left: 40px; }
+                .ep-nav-left  { padding-right: 34px; }
+                .ep-nav-right { padding-left: 34px; }
 
-                /* ---- NAV ITEMS ---- */
+                /* ── Nav Buttons ── */
                 .ep-bottom-nav .nav-btn {
                     flex: 1;
                     display: flex;
@@ -188,73 +345,81 @@
                     justify-content: center;
                     height: 100%;
                     text-decoration: none !important;
-                    color: #B0B7C3;
+                    color: var(--text-muted);
                     font-size: 10px;
                     font-weight: 600;
-                    letter-spacing: 0.3px;
-                    gap: 4px;
+                    letter-spacing: 0.2px;
+                    gap: 5px;
                     cursor: pointer;
                     border: none;
                     background: transparent;
                     position: relative;
-                    transition: color 0.2s ease;
+                    transition: color var(--dur-base) var(--ease-smooth);
                     -webkit-tap-highlight-color: transparent;
+                    padding: 0;
                 }
 
                 .ep-bottom-nav .nav-btn i {
-                    font-size: 20px;
+                    font-size: 19px;
                     line-height: 1;
-                    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+                    transition: transform var(--dur-slow) var(--ease-spring),
+                                color var(--dur-base) var(--ease-smooth);
                 }
 
                 /* Tap ripple */
                 .ep-bottom-nav .nav-btn::after {
                     content: '';
                     position: absolute;
-                    width: 40px;
-                    height: 40px;
+                    width: 44px;
+                    height: 44px;
                     border-radius: 50%;
                     background: var(--app-primary);
                     opacity: 0;
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%) scale(0);
-                    transition: transform 0.3s ease, opacity 0.3s ease;
+                    transition: transform 0.4s var(--ease-smooth), opacity 0.4s ease;
                     pointer-events: none;
                 }
 
                 .ep-bottom-nav .nav-btn:active::after {
-                    opacity: 0.08;
-                    transform: translate(-50%, -50%) scale(1.4);
+                    opacity: 0.07;
+                    transform: translate(-50%, -50%) scale(1.5);
                 }
 
-                /* ---- ACTIVE STATE ---- */
+                /* ── Active State ── */
                 .ep-bottom-nav .nav-btn.active {
                     color: var(--app-primary);
                 }
 
                 .ep-bottom-nav .nav-btn.active i {
-                    transform: translateY(-2px) scale(1.15);
+                    transform: translateY(-3px) scale(1.18);
                 }
 
+                /* Active pill indicator at top */
                 .ep-bottom-nav .nav-btn.active::before {
                     content: '';
                     position: absolute;
                     top: 0;
                     left: 50%;
                     transform: translateX(-50%);
-                    width: 28px;
+                    width: 24px;
                     height: 3px;
-                    background: var(--app-primary);
-                    border-radius: 0 0 4px 4px;
+                    background: linear-gradient(90deg, var(--app-primary-light), var(--app-primary));
+                    border-radius: 0 0 6px 6px;
                 }
 
-                /* ---- CENTER FAB - ALWAYS CENTERED ABSOLUTELY ---- */
+                .ep-bottom-nav .nav-btn.active span {
+                    color: var(--app-primary);
+                    font-weight: 700;
+                }
+
+                /* ── Center FAB — Always Absolutely Centered ── */
                 .ep-fab-center {
                     position: absolute;
                     left: 50%;
                     transform: translateX(-50%);
-                    top: -28px;            /* floats above the nav bar */
+                    top: -26px;
                     z-index: 10;
                     cursor: pointer;
                     -webkit-tap-highlight-color: transparent;
@@ -264,60 +429,88 @@
                 }
 
                 .ep-fab-center .fab-plus {
-                    width: 58px;
-                    height: 58px;
-                    background: linear-gradient(135deg, #8B5E7A 0%, var(--app-primary) 60%, #5A3650 100%);
+                    width: 56px;
+                    height: 56px;
+                    background: linear-gradient(145deg, #6366F1 0%, #4F46E5 50%, #3730A3 100%);
                     border-radius: 18px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    box-shadow:
-                        0 8px 20px rgba(113,75,103,0.45),
-                        0 2px 6px rgba(113,75,103,0.2);
+                    box-shadow: var(--shadow-fab);
                     transition:
-                        transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-                        box-shadow 0.2s ease;
+                        transform var(--dur-base) var(--ease-spring),
+                        box-shadow var(--dur-base) var(--ease-smooth);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                /* Shine shimmer on FAB */
+                .ep-fab-center .fab-plus::before {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: 0; right: 0;
+                    height: 50%;
+                    background: linear-gradient(180deg, rgba(255,255,255,0.20) 0%, transparent 100%);
+                    border-radius: 18px 18px 0 0;
+                    pointer-events: none;
                 }
 
                 .ep-fab-center .fab-plus i {
                     font-size: 22px;
                     color: #fff;
-                    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                    transition: transform var(--dur-slow) var(--ease-spring);
                     margin: 0;
+                    position: relative;
+                    z-index: 1;
                 }
 
                 .ep-fab-center:hover .fab-plus {
-                    transform: translateY(-3px);
-                    box-shadow:
-                        0 14px 28px rgba(113,75,103,0.5),
-                        0 4px 10px rgba(113,75,103,0.25);
+                    transform: translateY(-4px);
+                    box-shadow: 0 16px 36px rgba(79,70,229,0.50), 0 4px 12px rgba(79,70,229,0.25);
                 }
 
                 .ep-fab-center:active .fab-plus {
-                    transform: scale(0.91);
+                    transform: scale(0.90);
+                    box-shadow: 0 4px 14px rgba(79,70,229,0.35);
                 }
 
                 .ep-fab-center.fab-open .fab-plus i {
                     transform: rotate(45deg);
-}
-                /* ========================= */
-                /* MOBILE REQUEST LIST STYLE */
-                /* ========================= */
+                }
+
+                /* ================================================================
+                   MOBILE REQUEST CARDS
+                   ================================================================ */
 
                 .mobile-request-card {
                     display: block;
-                    background: white;
-                    border-radius: 18px;
-                    padding: 16px;
-                    margin-bottom: 14px;
+                    background: var(--surface);
+                    border-radius: var(--radius-lg);
+                    padding: 18px 18px 18px 22px;
+                    margin-bottom: 10px;
                     text-decoration: none !important;
                     color: inherit;
-                    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
-                    transition: transform 0.15s ease, box-shadow 0.2s ease;
+                    box-shadow: var(--shadow-sm);
+                    border: 1px solid var(--border-light);
+                    transition: transform var(--dur-fast) var(--ease-smooth),
+                                box-shadow var(--dur-fast) var(--ease-smooth);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                /* Left accent bar */
+                .mobile-request-card::before {
+                    content: '';
+                    position: absolute;
+                    left: 0; top: 16px; bottom: 16px;
+                    width: 3px;
+                    background: linear-gradient(180deg, var(--app-primary-light), var(--app-primary-dark));
+                    border-radius: 0 3px 3px 0;
                 }
 
                 .mobile-request-card:active {
-                    transform: scale(0.97);
+                    transform: scale(0.975);
+                    box-shadow: var(--shadow-xs);
                 }
 
                 .mobile-request-top {
@@ -328,32 +521,40 @@
                 }
 
                 .mobile-request-id {
-                    font-weight: 600;
-                    font-size: 15px;
+                    font-weight: 700;
+                    font-size: 14.5px;
+                    color: var(--text-primary);
+                    letter-spacing: -0.02em;
                 }
 
                 .mobile-request-date {
-                    font-size: 12px;
-                    color: #6b7280;
+                    font-size: 11px;
+                    color: var(--text-muted);
+                    font-weight: 500;
                 }
 
                 .mobile-request-body {
                     display: flex;
                     justify-content: space-between;
-                    font-size: 14px;
+                    font-size: 13.5px;
+                    color: var(--text-secondary);
                 }
 
                 .mobile-request-body .label {
-                    font-size: 11px;
-                    color: #9ca3af;
+                    font-size: 10px;
+                    color: var(--text-muted);
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.06em;
+                    margin-bottom: 3px;
+                    display: block;
                 }
-                /* ========================= */
-                /* MATERIAL HEADER LAYOUT   */
-                /* ========================= */
 
-                .material-header {
-                    margin-bottom: 20px;
-                }
+                /* ================================================================
+                   MATERIAL HEADER
+                   ================================================================ */
+
+                .material-header { margin-bottom: 22px; }
 
                 .material-header-top {
                     display: flex;
@@ -363,18 +564,16 @@
                     flex-wrap: wrap;
                 }
 
-                .material-search-form {
-                    margin-top: 12px;
-                }
+                .material-search-form { margin-top: 14px; }
 
                 .clear-search {
                     position: absolute;
-                    right: 38px;
+                    right: 40px;
                     top: 50%;
                     transform: translateY(-50%);
-                    color: #9ca3af;
+                    color: var(--text-muted);
                     text-decoration: none;
-                    font-size: 14px;
+                    font-size: 13px;
                 }
 
                 @media (max-width: 768px) {
@@ -382,93 +581,138 @@
                         flex-direction: column;
                         align-items: flex-start;
                     }
+                    .material-header-top .btn { width: 100%; }
+                }
 
-                    .material-header-top .btn {
-                        width: 100%;
-                    }
-                }
-                /* ========================= */
-                /* TIMELINE CSS              */
-                /* ========================= */
-                .employee-req-detail {
-                    font-size: 14px;
-                }
-                .employee-req-detail .card {
-                    border: none;
-                }
+                /* ================================================================
+                   TIMELINE
+                   ================================================================ */
+
+                .employee-req-detail { font-size: 14px; }
+                .employee-req-detail .card { border: none; }
+
                 .employee-req-detail .timeline {
                     list-style: none;
-                    padding-left: 20px;
+                    padding-left: 22px;
                     position: relative;
                 }
-                .employee-req-detail .timeline:before {
-                    content: "";
+
+                .employee-req-detail .timeline::before {
+                    content: '';
                     position: absolute;
-                    top: 0;
-                    bottom: 0;
+                    top: 6px; bottom: 0;
                     width: 2px;
-                    background: #e5e5e5;
+                    background: linear-gradient(180deg, var(--app-primary-light), var(--border-light));
                     left: 8px;
+                    border-radius: 2px;
                 }
+
                 .employee-req-detail .timeline-marker {
                     position: absolute;
                     width: 14px;
                     height: 14px;
-                    background: #0d6efd;
+                    background: linear-gradient(135deg, var(--app-primary-light), var(--app-primary-dark));
                     border-radius: 50%;
                     left: 1px;
                     top: 6px;
+                    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
                 }
-                .employee-req-detail .timeline-content {
-                    margin-left: 25px;
-                }
-                /* ========================= */
-                /* attachment                */
-                /* ========================= */
+
+                .employee-req-detail .timeline-content { margin-left: 26px; }
+
+                /* ================================================================
+                   ATTACHMENTS
+                   ================================================================ */
+
                 .attachment-icon-btn {
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 8px;
-                    border: 1px solid #e5e7eb;
-                    background: white;
+                    width: 34px;
+                    height: 34px;
+                    border-radius: var(--radius-sm);
+                    border: 1.5px solid var(--border-light);
+                    background: var(--surface);
                     text-decoration: none !important;
-                    transition: all 0.15s ease;
+                    transition: all var(--dur-fast) var(--ease-smooth);
+                    color: var(--text-secondary);
                 }
 
-                .attachment-icon-btn i {
-                    font-size: 14px;
-                    line-height: 1;
-                }
+                .attachment-icon-btn i { font-size: 14px; line-height: 1; }
 
                 .attachment-icon-btn:hover {
-                    background: #f3f4f6;
+                    background: rgba(79,70,229,0.06);
+                    border-color: var(--app-primary-light);
+                    color: var(--app-primary);
                 }
+
+                /* ================================================================
+                   DELETE CONFIRMATION
+                   ================================================================ */
+
                 .delete-confirmation .confirm-box {
-                    background: #fff5f5;
-                    border: 1px solid #fecaca;
+                    background: #FFF5F5;
+                    border: 1px solid #FECACA;
+                    border-radius: var(--radius-md);
                 }
 
                 .delete-confirmation .btn-danger {
-                    background: #dc2626;
+                    background: linear-gradient(135deg, #EF4444, #DC2626);
                     border: none;
+                    border-radius: var(--radius-sm);
+                    font-weight: 600;
                 }
 
                 .delete-confirmation .btn-light {
-                    background: #f3f4f6;
-                    border: none;
+                    background: var(--surface-2);
+                    border: 1.5px solid var(--border-light);
+                    border-radius: var(--radius-sm);
+                    font-weight: 600;
+                    color: var(--text-secondary);
                 }
 
+                /* ================================================================
+                   BUTTONS
+                   ================================================================ */
+
+                .btn-primary {
+                    background: linear-gradient(135deg, var(--app-primary-light), var(--app-primary-dark)) !important;
+                    border: none !important;
+                    border-radius: var(--radius-sm) !important;
+                    font-weight: 600 !important;
+                    font-family: 'DM Sans', sans-serif !important;
+                    letter-spacing: -0.01em !important;
+                    box-shadow: 0 4px 14px rgba(79,70,229,0.30) !important;
+                    transition: transform var(--dur-fast), box-shadow var(--dur-fast) !important;
+                }
+
+                .btn-primary:hover {
+                    transform: translateY(-1px) !important;
+                    box-shadow: 0 6px 20px rgba(79,70,229,0.40) !important;
+                }
+
+                .btn-primary:active { transform: scale(0.97) !important; }
+
+                /* ================================================================
+                   SCROLLBAR
+                   ================================================================ */
+
+                ::-webkit-scrollbar { width: 5px; height: 5px; }
+                ::-webkit-scrollbar-track { background: transparent; }
+                ::-webkit-scrollbar-thumb { background: rgba(79,70,229,0.2); border-radius: 10px; }
+                ::-webkit-scrollbar-thumb:hover { background: rgba(79,70,229,0.4); }
 
             </style>
 
             <t t-call-assets="web.assets_frontend"/>
 
+            <!-- ================================================================
+                 DESKTOP NAVBAR
+                 ================================================================ -->
             <nav class="ep-navbar">
                 <div class="ep-nav-links">
                     <a href="/my" class="ep-link">Dashboard</a>
+
                     <div class="ep-dropdown">
                         <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests ▾</button>
                         <div id="req-d" class="ep-dropdown-menu">
@@ -490,29 +734,19 @@
                         or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
                         or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
                     ">
-
                         <div class="ep-dropdown">
-
-                            <button class="ep-dropdown-toggle"
-                                    onclick="toggleDropdown(event, 'app-d')">
-                                Approvals ▾
-                            </button>
-
+                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals ▾</button>
                             <div id="app-d" class="ep-dropdown-menu">
 
-                                <!-- Employee Approvals -->
                                 <t t-if="
                                     request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
                                     or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
                                     or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
                                     or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
                                 ">
-                                    <a href="/my/employee/approvals" class="ep-sub-link">
-                                        Employee Approvals
-                                    </a>
+                                    <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
                                 </t>
 
-                                <!-- Material Approvals -->
                                 <t t-if="
                                     request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
                                     or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
@@ -520,18 +754,13 @@
                                     or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
                                     or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
                                 ">
-                                    <a href="/my/employee/material/approvals" class="ep-sub-link">
-                                        Material Approvals
-                                    </a>
+                                    <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
                                 </t>
 
                             </div>
-
                         </div>
-
                     </t>
 
-                    
                     <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
                         <a href="/my/petty-cash" class="ep-link">Petty Cash</a>
                     </t>
@@ -546,209 +775,199 @@
                     <a href="/web/session/logout" class="btn btn-sm btn-outline-danger ms-2">Logout</a>
                 </div>
             </nav>
-            <t t-if="request.httprequest.path == '/my/employee'">
-            <div class="mobile-app-header mobile-only">
-                <div>
-                    <div class="fw-bold" style="font-size:14px; color:#6b7280;">
-                        Welcome back,
-                    </div>
-                    <div class="fw-bold fs-5" style="color: var(--app-primary);">
-                        <t t-esc="request.env.user.partner_id.name.split(' ')[0]"/>
-                    </div>
-                </div>
 
-                <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"
-                    class="rounded-circle"
-                    width="36"
-                    height="36"/>
-            </div>
+            <!-- ================================================================
+                 MOBILE APP HEADER (home page only)
+                 ================================================================ -->
+            <t t-if="request.httprequest.path == '/my/employee'">
+                <div class="mobile-app-header mobile-only">
+                    <div>
+                        <div style="font-size:12px; color:var(--text-muted); font-weight:500; margin-bottom:3px;">
+                            Welcome back 👋
+                        </div>
+                        <div style="font-size:20px; font-weight:700; color:var(--text-primary); letter-spacing:-0.03em;">
+                            <t t-esc="request.env.user.partner_id.name.split(' ')[0]"/>
+                            <span style="color:var(--app-primary);">!</span>
+                        </div>
+                    </div>
+                    <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"
+                        style="width:42px;height:42px;border-radius:14px;box-shadow:0 4px 12px rgba(79,70,229,0.30);object-fit:cover;"/>
+                </div>
             </t>
 
+            <!-- ================================================================
+                 MAIN CONTENT
+                 ================================================================ -->
             <main>
                 <div id="wrap" class="container mt-3 mb-5">
                     <t t-raw="0"/>
                 </div>
             </main>
 
-                <nav class="ep-bottom-nav mobile-only">
+            <!-- ================================================================
+                 MOBILE BOTTOM NAV
+                 ================================================================ -->
+            <nav class="ep-bottom-nav mobile-only">
 
-                    <!-- LEFT SIDE ITEMS -->
-                    <div class="ep-nav-left">
+                <!-- LEFT SIDE -->
+                <div class="ep-nav-left">
 
-                        <a href="/my/employee"
-                            t-att-class="'nav-btn active' if request.httprequest.path == '/my/employee' else 'nav-btn'">
-                            <i class="fa fa-home"></i>
-                            <span>Home</span>
-                        </a>
+                    <a href="/my/employee"
+                        t-att-class="'nav-btn active' if request.httprequest.path == '/my/employee' else 'nav-btn'">
+                        <i class="fa fa-home"></i>
+                        <span>Home</span>
+                    </a>
 
-                        <a href="/my/employee/requests"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/requests') else 'nav-btn'">
-                            <i class="fa fa-file-text-o"></i>
-                            <span>Employee</span>
-                        </a>
+                    <a href="/my/employee/requests"
+                        t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/requests') else 'nav-btn'">
+                        <i class="fa fa-file-text-o"></i>
+                        <span>Employee</span>
+                    </a>
 
-                        <a href="/my/employee/material"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') and not request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
-                            <i class="fa fa-cubes"></i>
-                            <span>Material</span>
-                        </a>
+                    <a href="/my/employee/material"
+                        t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') and not request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
+                        <i class="fa fa-cubes"></i>
+                        <span>Material</span>
+                    </a>
 
+                </div>
+
+                <!-- CENTER FAB — always absolutely centered regardless of item count -->
+                <div class="ep-fab-center" id="fabCenterBtn" onclick="toggleFabMenu()">
+                    <div class="fab-plus">
+                        <i class="fa fa-plus"></i>
                     </div>
+                </div>
 
-                    <!-- CENTER FAB (always centered absolutely) -->
-                    <div class="ep-fab-center" id="fabCenterBtn" onclick="toggleFabMenu()">
-                        <div class="fab-plus">
-                            <i class="fa fa-plus"></i>
+                <!-- RIGHT SIDE -->
+                <div class="ep-nav-right">
+
+                    <t t-if="
+                        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                    ">
+                        <div id="approvalBtn"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'"
+                            onclick="toggleApprovalMenu()">
+                            <i class="fa fa-check-circle-o"></i>
+                            <span>Approvals</span>
                         </div>
-                    </div>
 
-                    <!-- RIGHT SIDE ITEMS -->
-                    <div class="ep-nav-right">
+                        <div id="approvalMenu" class="fab-menu">
 
-                        <t t-if="
-                            request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                        ">
-                            <div id="approvalBtn"
-                                t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'"
-                                onclick="toggleApprovalMenu()">
-                                <i class="fa fa-check-circle-o"></i>
-                                <span>Approvals</span>
-                            </div>
+                            <t t-if="
+                                request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                                or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                                or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                                or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                            ">
+                                <a href="/my/employee/approvals" class="fab-item">
+                                    <i class="fa fa-user"></i>
+                                    <span>Employee Approvals</span>
+                                </a>
+                            </t>
 
-                            <div id="approvalMenu" class="fab-menu">
+                            <t t-if="
+                                request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                                or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                                or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                                or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                                or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                            ">
+                                <a href="/my/employee/material/approvals" class="fab-item">
+                                    <i class="fa fa-cubes"></i>
+                                    <span>Material Approvals</span>
+                                </a>
+                            </t>
 
-                                <t t-if="
-                                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                                ">
-                                    <a href="/my/employee/approvals" class="fab-item">
-                                        <i class="fa fa-user"></i>
-                                        <span>Employee Approvals</span>
-                                    </a>
-                                </t>
+                        </div>
+                    </t>
 
-                                <t t-if="
-                                    request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                                ">
-                                    <a href="/my/employee/material/approvals" class="fab-item">
-                                        <i class="fa fa-cubes"></i>
-                                        <span>Material Approvals</span>
-                                    </a>
-                                </t>
-
-                            </div>
-                        </t>
-
-                        <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
-                            <a href="/my/petty-cash"
-                                t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/petty-cash') else 'nav-btn'">
-                                <i class="fa fa-money"></i>
-                                <span>Cash</span>
-                            </a>
-                        </t>
-
-                        <a href="/web/session/logout" class="nav-btn">
-                            <i class="fa fa-sign-out"></i>
-                            <span>Exit</span>
+                    <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                        <a href="/my/petty-cash"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/petty-cash') else 'nav-btn'">
+                            <i class="fa fa-money"></i>
+                            <span>Cash</span>
                         </a>
+                    </t>
 
-                    </div>
+                    <a href="/web/session/logout" class="nav-btn">
+                        <i class="fa fa-sign-out"></i>
+                        <span>Exit</span>
+                    </a>
 
-                </nav>
-            
-            <!-- FAB MENU (Single Instance) -->
+                </div>
+
+            </nav>
+
+            <!-- ================================================================
+                 FAB POPUP MENU (New Request)
+                 ================================================================ -->
             <div id="fabMenu" class="fab-menu mobile-only">
-
                 <a href="/my/employee/requests/new" class="fab-item">
                     <i class="fa fa-file-text-o"></i>
                     <span>New Employee Request</span>
                 </a>
-
                 <a href="/my/employee/material/new" class="fab-item">
                     <i class="fa fa-cubes"></i>
                     <span>New Material Request</span>
                 </a>
-
             </div>
 
-
-
-        <script>
-            function toggleDropdown(event, id) {
-                event.stopPropagation();
-                document.querySelectorAll('.ep-dropdown-menu').forEach(function(m){
-                    if (m.id !== id) m.style.display = 'none';
-                });
-
-                var menu = document.getElementById(id);
-                if (menu) {
-                    if (menu.style.display === 'block') {
-                        menu.style.display = 'none';
-                    } else {
-                        menu.style.display = 'block';
+            <!-- ================================================================
+                 JAVASCRIPT
+                 ================================================================ -->
+            <script>
+                function toggleDropdown(event, id) {
+                    event.stopPropagation();
+                    document.querySelectorAll('.ep-dropdown-menu').forEach(function(m){
+                        if (m.id !== id) m.style.display = 'none';
+                    });
+                    var menu = document.getElementById(id);
+                    if (menu) {
+                        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
                     }
                 }
-            }
 
-            function toggleFabMenu() {
+                function toggleFabMenu() {
                     var menu = document.getElementById('fabMenu');
-                    var btn = document.getElementById('fabCenterBtn');
+                    var btn  = document.getElementById('fabCenterBtn');
                     if (menu) menu.classList.toggle('show');
-                    if (btn) btn.classList.toggle('fab-open');
+                    if (btn)  btn.classList.toggle('fab-open');
                 }
 
-            function toggleApprovalMenu() {
-                var menu = document.getElementById('approvalMenu');
-                if (menu) {
-                    if (menu.classList.contains('show')) {
-                        menu.classList.remove('show');
-                    } else {
-                        menu.classList.add('show');
+                function toggleApprovalMenu() {
+                    var menu = document.getElementById('approvalMenu');
+                    if (menu) menu.classList.toggle('show');
+                }
+
+                document.addEventListener('click', function(e) {
+                    // Close desktop dropdowns
+                    document.querySelectorAll('.ep-dropdown-menu').forEach(function(m){
+                        m.style.display = 'none';
+                    });
+
+                    // Close FAB menu
+                    var fab = document.getElementById('fabMenu');
+                    var btn = document.getElementById('fabCenterBtn');
+                    if (fab &amp;&amp; !e.target.closest('#fabCenterBtn') &amp;&amp; !e.target.closest('#fabMenu')) {
+                        fab.classList.remove('show');
+                        if (btn) btn.classList.remove('fab-open');
                     }
-                }
-            }
 
-            document.addEventListener('click', function(e){
-
-                // Close dropdown menus
-                document.querySelectorAll('.ep-dropdown-menu').forEach(function(m){
-                    m.style.display = 'none';
+                    // Close approval menu
+                    var app = document.getElementById('approvalMenu');
+                    if (app &amp;&amp; !e.target.closest('#approvalMenu') &amp;&amp; !e.target.closest('#approvalBtn')) {
+                        app.classList.remove('show');
+                    }
                 });
-
-                var fab = document.getElementById('fabMenu');
-                if (fab) {
-                    if (!e.target.closest('.fab-plus')) {
-                        if (!e.target.closest('#fabMenu')) {
-                            fab.classList.remove('show');
-                        }
-                    }
-                }
-
-                var app = document.getElementById('approvalMenu');
-                if (app) {
-                    if (!e.target.closest('#approvalMenu')) {
-                        if (!e.target.closest('#approvalBtn')) {
-                            app.classList.remove('show');
-                        }
-                    }
-                }
-
-
-            });
-        </script>
+            </script>
 
         </t>
     </template>
