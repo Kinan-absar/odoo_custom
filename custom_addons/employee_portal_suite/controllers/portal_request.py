@@ -44,13 +44,26 @@ class EmployeePortalRequests(http.Controller):
         if not emp:
             return request.redirect('/my')
 
-        requests = request.env['employee.request'].sudo().search([
+        search = kw.get('search', '').strip()
+
+        domain = [
             ('employee_id', '=', emp.id)
-        ])
+        ]
+
+        if search:
+            domain.append(('name', 'ilike', search))
+
+        requests = request.env['employee.request'].sudo().search(
+            domain,
+            order="create_date desc"
+        )
 
         return request.render("employee_portal_suite.employee_requests_page", {
             "requests": requests,
+            "search": search,
         })
+
+
 
     # ---------------------------------------------------------
     # EMPLOYEE — VIEW SINGLE REQUEST
