@@ -3,69 +3,54 @@
 
     <template id="employee_portal_layout">
 
-    <xpath expr="//meta[@name='viewport']" position="replace">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-    </xpath>
+        <xpath expr="//meta[@name='viewport']" position="replace">
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+        </xpath>
+
+        <t t-call="web.layout">
+
             <link rel="preconnect" href="https://fonts.googleapis.com"/>
             <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
             <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;display=swap" rel="stylesheet"/>
 
             <t t-call-assets="web.assets_frontend"/>
+
             <style>
                 /* ================================================================
-                   EMPLOYEE PORTAL — PREMIUM REDESIGN
-                   Color: Deep Indigo × Warm Slate × Gold accent
+                   EMPLOYEE PORTAL - PREMIUM REDESIGN
+                   Color: Deep Indigo x Warm Slate x Gold accent
                    ================================================================ */
 
                 :root {
-                    /* ── Brand Palette ── */
                     --app-primary:        #4F46E5;
                     --app-primary-light:  #6366F1;
                     --app-primary-dark:   #3730A3;
                     --app-accent:         #F59E0B;
                     --app-accent-soft:    #FEF3C7;
-
-                    /* ── Surface ── */
                     --app-bg:             #F1F2F6;
                     --surface:            #FFFFFF;
                     --surface-2:          #F8F8FB;
                     --border-light:       rgba(0,0,0,0.06);
-
-                    /* ── Text ── */
                     --text-primary:       #1A1B2E;
                     --text-secondary:     #6B7280;
                     --text-muted:         #9CA3AF;
-
-                    /* ── Shadows ── */
                     --shadow-xs:   0 1px 3px rgba(26,27,46,0.06);
                     --shadow-sm:   0 4px 12px rgba(26,27,46,0.08);
                     --shadow-md:   0 8px 24px rgba(26,27,46,0.10);
                     --shadow-lg:   0 16px 40px rgba(26,27,46,0.12);
                     --shadow-fab:  0 10px 30px rgba(79,70,229,0.40), 0 3px 8px rgba(79,70,229,0.20);
-
-                    /* ── Radius ── */
                     --radius-sm:   8px;
                     --radius-md:   14px;
                     --radius-lg:   20px;
                     --radius-xl:   28px;
-
-                    /* ── Motion ── */
                     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
                     --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
                     --dur-fast:    150ms;
                     --dur-base:    220ms;
                     --dur-slow:    350ms;
-
-                    /* ── Nav ── */
                     --nav-height:  76px;
-
-                    /* ── Legacy ── */
                     --card-shadow: var(--shadow-sm);
                 }
-
-                /* ================================================================
-                   BASE
-                   ================================================================ */
 
                 *, *::before, *::after { box-sizing: border-box; }
 
@@ -132,7 +117,6 @@
                     color: var(--app-primary);
                 }
 
-                /* Desktop Dropdowns */
                 .ep-dropdown { position: relative; }
 
                 .ep-dropdown-menu {
@@ -197,7 +181,6 @@
                         border-bottom: 1px solid var(--border-light);
                     }
 
-                    /* nav-btn base (mobile override) */
                     .nav-btn {
                         color: var(--text-muted);
                         text-align: center;
@@ -208,7 +191,6 @@
                     .nav-btn i { font-size: 20px; display: block; margin-bottom: 2px; }
                     .nav-btn span { font-size: 10px; font-weight: 600; }
 
-                    /* ── FAB popup menu ── */
                     .fab-menu {
                         position: fixed;
                         bottom: calc(var(--nav-height) + 24px);
@@ -324,7 +306,6 @@
                     padding: 0 4px;
                 }
 
-                /* Left and Right groups */
                 .ep-nav-left,
                 .ep-nav-right {
                     display: flex;
@@ -337,7 +318,6 @@
                 .ep-nav-left  { padding-right: 34px; }
                 .ep-nav-right { padding-left: 34px; }
 
-                /* ── Nav Buttons ── */
                 .ep-bottom-nav .nav-btn {
                     flex: 1;
                     display: flex;
@@ -367,7 +347,6 @@
                                 color var(--dur-base) var(--ease-smooth);
                 }
 
-                /* Tap ripple */
                 .ep-bottom-nav .nav-btn::after {
                     content: '';
                     position: absolute;
@@ -388,7 +367,6 @@
                     transform: translate(-50%, -50%) scale(1.5);
                 }
 
-                /* ── Active State ── */
                 .ep-bottom-nav .nav-btn.active {
                     color: var(--app-primary);
                 }
@@ -397,7 +375,6 @@
                     transform: translateY(-3px) scale(1.18);
                 }
 
-                /* Active pill indicator at top */
                 .ep-bottom-nav .nav-btn.active::before {
                     content: '';
                     position: absolute;
@@ -415,7 +392,6 @@
                     font-weight: 700;
                 }
 
-                /* ── Center FAB — Always Absolutely Centered ── */
                 .ep-fab-center {
                     position: absolute;
                     left: 50%;
@@ -445,7 +421,6 @@
                     overflow: hidden;
                 }
 
-                /* Shine shimmer on FAB */
                 .ep-fab-center .fab-plus::before {
                     content: '';
                     position: absolute;
@@ -499,7 +474,6 @@
                     overflow: hidden;
                 }
 
-                /* Left accent bar */
                 .mobile-request-card::before {
                     content: '';
                     position: absolute;
@@ -705,8 +679,6 @@
 
             </style>
 
-            <t t-call-assets="web.assets_frontend"/>
-
             <!-- ================================================================
                  DESKTOP NAVBAR
                  ================================================================ -->
@@ -715,7 +687,7 @@
                     <a href="/my" class="ep-link">Dashboard</a>
 
                     <div class="ep-dropdown">
-                        <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests ▾</button>
+                        <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests &#9662;</button>
                         <div id="req-d" class="ep-dropdown-menu">
                             <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
                             <a href="/my/employee/requests/new" class="ep-sub-link text-primary">+ New Employee Request</a>
@@ -736,7 +708,7 @@
                         or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
                     ">
                         <div class="ep-dropdown">
-                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals ▾</button>
+                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals &#9662;</button>
                             <div id="app-d" class="ep-dropdown-menu">
 
                                 <t t-if="
@@ -784,7 +756,7 @@
                 <div class="mobile-app-header mobile-only">
                     <div>
                         <div style="font-size:12px; color:var(--text-muted); font-weight:500; margin-bottom:3px;">
-                            Welcome back 👋
+                            Welcome back
                         </div>
                         <div style="font-size:20px; font-weight:700; color:var(--text-primary); letter-spacing:-0.03em;">
                             <t t-esc="request.env.user.partner_id.name.split(' ')[0]"/>
@@ -810,7 +782,6 @@
                  ================================================================ -->
             <nav class="ep-bottom-nav mobile-only">
 
-                <!-- LEFT SIDE -->
                 <div class="ep-nav-left">
 
                     <a href="/my/employee"
@@ -833,14 +804,12 @@
 
                 </div>
 
-                <!-- CENTER FAB — always absolutely centered regardless of item count -->
                 <div class="ep-fab-center" id="fabCenterBtn" onclick="toggleFabMenu()">
                     <div class="fab-plus">
                         <i class="fa fa-plus"></i>
                     </div>
                 </div>
 
-                <!-- RIGHT SIDE -->
                 <div class="ep-nav-right">
 
                     <t t-if="
@@ -908,7 +877,7 @@
             </nav>
 
             <!-- ================================================================
-                 FAB POPUP MENU (New Request)
+                 FAB POPUP MENU
                  ================================================================ -->
             <div id="fabMenu" class="fab-menu mobile-only">
                 <a href="/my/employee/requests/new" class="fab-item">
@@ -949,12 +918,10 @@
                 }
 
                 document.addEventListener('click', function(e) {
-                    // Close desktop dropdowns
                     document.querySelectorAll('.ep-dropdown-menu').forEach(function(m){
                         m.style.display = 'none';
                     });
 
-                    // Close FAB menu
                     var fab = document.getElementById('fabMenu');
                     var btn = document.getElementById('fabCenterBtn');
                     if (fab &amp;&amp; !e.target.closest('#fabCenterBtn') &amp;&amp; !e.target.closest('#fabMenu')) {
@@ -962,7 +929,6 @@
                         if (btn) btn.classList.remove('fab-open');
                     }
 
-                    // Close approval menu
                     var app = document.getElementById('approvalMenu');
                     if (app &amp;&amp; !e.target.closest('#approvalMenu') &amp;&amp; !e.target.closest('#approvalBtn')) {
                         app.classList.remove('show');
