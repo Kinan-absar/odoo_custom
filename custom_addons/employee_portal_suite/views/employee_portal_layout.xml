@@ -6,15 +6,16 @@
     <xpath expr="//meta[@name='viewport']" position="replace">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
     </xpath>
+            <link rel="preconnect" href="https://fonts.googleapis.com"/>
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+            <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;display=swap" rel="stylesheet"/>
 
-        <t t-call="web.layout">
+            <t t-call-assets="web.assets_frontend"/>
             <style>
                 /* ================================================================
                    EMPLOYEE PORTAL — PREMIUM REDESIGN
                    Color: Deep Indigo × Warm Slate × Gold accent
                    ================================================================ */
-
-                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
                 :root {
                     /* ── Brand Palette ── */
