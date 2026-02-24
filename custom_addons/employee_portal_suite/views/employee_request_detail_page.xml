@@ -24,9 +24,7 @@
                     </div>
 
                     <div>
-                        <span class="badge bg-light text-dark border">
-                            <t t-esc="request_rec.get_readable_status()"/>
-                        </span>
+                        <t t-raw="status_badge(request_rec)"/>
                     </div>
                 </div>
 

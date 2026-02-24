@@ -61,6 +61,7 @@ class EmployeePortalRequests(http.Controller):
         return request.render("employee_portal_suite.employee_requests_page", {
             "requests": requests,
             "search": search,
+            "status_badge": _er_status_badge,
         })
 
 
@@ -78,6 +79,7 @@ class EmployeePortalRequests(http.Controller):
 
         return request.render("employee_portal_suite.employee_request_detail_page", {
             "request_rec": rec,
+            "status_badge": _er_status_badge,
         })
 
     # ---------------------------------------------------------
