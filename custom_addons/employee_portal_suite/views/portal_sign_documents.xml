@@ -23,28 +23,32 @@
                     Rejected
                 </a>
             </div>
-            <form method="get"
-                action="/my/employee/sign"
-                class="mb-3">
-
+            <form method="get" class="sign-search-form">
                 <input type="hidden" name="filter" t-att-value="current_filter"/>
 
-                <div class="input-group">
+                <div class="position-relative">
 
                     <input type="text"
                         id="signSearchInput"
                         name="search"
-                        class="form-control"
-                        placeholder="Search by document name..."
-                        t-att-value="search"/>
+                        t-att-value="search or ''"
+                        placeholder="Search document..."
+                        class="form-control mobile-search"/>
 
-                    <button class="btn btn-outline-secondary" type="submit">
+                    <button type="submit" class="search-btn">
                         <i class="fa fa-search"></i>
                     </button>
 
-                </div>
+                    <t t-if="search">
+                        <a t-att-href="'/my/employee/sign?filter=%s' % current_filter"
+                        class="clear-search">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </t>
 
+                </div>
             </form>
+
 
             <!-- EMPTY STATE -->
             <t t-if="not documents">
