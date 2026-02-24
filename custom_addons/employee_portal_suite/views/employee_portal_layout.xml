@@ -239,6 +239,20 @@
                     justify-content: center;
                     margin-bottom: 6px;   /* 🔥 this lifts everything up */
                 }
+                /* REMOVE CENTER FROM FLEX CALCULATION */
+                .ep-bottom-nav .nav-center {
+                    flex: 0 !important;
+                    position: relative;
+                }
+
+                /* ABSOLUTE CENTER THE PLUS */
+                .ep-bottom-nav .nav-center .fab-plus {
+                    position: absolute;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    margin-top: -35px;
+                }
+
                 /* ========================= */
                 /* MOBILE REQUEST LIST STYLE */
                 /* ========================= */
@@ -538,7 +552,7 @@
                 </a>
 
                 <!-- PLUS BUTTON (New Menu Toggle) -->
-                <div class="nav-btn" onclick="toggleFabMenu()">
+                <div class="nav-btn nav-center" onclick="toggleFabMenu()">
                     <div class="fab-plus">
                         <i class="fa fa-plus" style="margin:0"></i>
                     </div>
