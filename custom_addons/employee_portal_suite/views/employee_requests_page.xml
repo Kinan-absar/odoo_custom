@@ -14,7 +14,7 @@
 
                             <!-- Top Row -->
                             <div class="material-header-top">
-                                <h4 class="mb-0 fw-semibold">My Requests</h4>
+                                <h4 class="mb-0 fw-semibold">Employee Requests</h4>
 
                                 <a href="/my/employee/requests/new"
                                 class="btn btn-primary btn-sm">

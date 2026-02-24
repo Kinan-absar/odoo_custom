@@ -239,6 +239,93 @@
                     justify-content: center;
                     margin-bottom: 6px;   /* 🔥 this lifts everything up */
                 }
+                /* ========================= */
+                /* MOBILE REQUEST LIST STYLE */
+                /* ========================= */
+
+                .mobile-request-card {
+                    display: block;
+                    background: white;
+                    border-radius: 18px;
+                    padding: 16px;
+                    margin-bottom: 14px;
+                    text-decoration: none !important;
+                    color: inherit;
+                    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+                    transition: transform 0.15s ease, box-shadow 0.2s ease;
+                }
+
+                .mobile-request-card:active {
+                    transform: scale(0.97);
+                }
+
+                .mobile-request-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                }
+
+                .mobile-request-id {
+                    font-weight: 600;
+                    font-size: 15px;
+                }
+
+                .mobile-request-date {
+                    font-size: 12px;
+                    color: #6b7280;
+                }
+
+                .mobile-request-body {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 14px;
+                }
+
+                .mobile-request-body .label {
+                    font-size: 11px;
+                    color: #9ca3af;
+                }
+                /* ========================= */
+                /* MATERIAL HEADER LAYOUT   */
+                /* ========================= */
+
+                .material-header {
+                    margin-bottom: 20px;
+                }
+
+                .material-header-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                }
+
+                .material-search-form {
+                    margin-top: 12px;
+                }
+
+                .clear-search {
+                    position: absolute;
+                    right: 38px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #9ca3af;
+                    text-decoration: none;
+                    font-size: 14px;
+                }
+
+                @media (max-width: 768px) {
+                    .material-header-top {
+                        flex-direction: column;
+                        align-items: flex-start;
+                    }
+
+                    .material-header-top .btn {
+                        width: 100%;
+                    }
+                }
 
 
 
