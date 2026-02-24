@@ -138,10 +138,9 @@
                     color: #9ca3af;
                 }
                /* =============================== */
-                /* PREMIUM BOTTOM NAV - REDESIGNED */
+                /* PREMIUM BOTTOM NAV - FIXED FAB  */
                 /* =============================== */
 
-                /* Prevent content hiding under nav */
                 main {
                     padding-bottom: 110px;
                 }
@@ -160,11 +159,25 @@
                     box-shadow: 0 -4px 30px rgba(0,0,0,0.08);
                     z-index: 3000;
 
+                    /* Two equal halves, FAB floats in the middle */
                     display: flex;
                     align-items: center;
                     justify-content: space-around;
-                    padding-top: 0;
                 }
+
+                /* Left group and Right group each take equal space */
+                .ep-nav-left,
+                .ep-nav-right {
+                    display: flex;
+                    flex: 1;
+                    align-items: center;
+                    justify-content: space-around;
+                    height: 100%;
+                }
+
+                /* Leave space in the center for FAB */
+                .ep-nav-left  { padding-right: 40px; }
+                .ep-nav-right { padding-left: 40px; }
 
                 /* ---- NAV ITEMS ---- */
                 .ep-bottom-nav .nav-btn {
@@ -194,7 +207,7 @@
                     transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
                 }
 
-                /* Tap ripple effect */
+                /* Tap ripple */
                 .ep-bottom-nav .nav-btn::after {
                     content: '';
                     position: absolute;
@@ -207,6 +220,7 @@
                     left: 50%;
                     transform: translate(-50%, -50%) scale(0);
                     transition: transform 0.3s ease, opacity 0.3s ease;
+                    pointer-events: none;
                 }
 
                 .ep-bottom-nav .nav-btn:active::after {
@@ -214,7 +228,7 @@
                     transform: translate(-50%, -50%) scale(1.4);
                 }
 
-                /* ---- ACTIVE STATE - Pill indicator ---- */
+                /* ---- ACTIVE STATE ---- */
                 .ep-bottom-nav .nav-btn.active {
                     color: var(--app-primary);
                 }
@@ -223,7 +237,6 @@
                     transform: translateY(-2px) scale(1.15);
                 }
 
-                /* Active top pill indicator */
                 .ep-bottom-nav .nav-btn.active::before {
                     content: '';
                     position: absolute;
@@ -236,36 +249,21 @@
                     border-radius: 0 0 4px 4px;
                 }
 
-                /* ---- CENTER FAB BUTTON ---- */
-                .ep-bottom-nav .nav-center {
-                    flex: 1;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100%;
-                    position: relative;
-                    cursor: pointer;
-                    -webkit-tap-highlight-color: transparent;
-                    background: transparent;
-                    border: none;
-                }
-
-                /* Notch dip behind FAB */
-                .ep-bottom-nav .nav-center::before {
-                    content: '';
+                /* ---- CENTER FAB - ALWAYS CENTERED ABSOLUTELY ---- */
+                .ep-fab-center {
                     position: absolute;
-                    top: -22px;
                     left: 50%;
                     transform: translateX(-50%);
-                    width: 72px;
-                    height: 44px;
-                    background: #fff;
-                    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-                    box-shadow: 0 -6px 0 #fff;
-                    z-index: -1;
+                    top: -28px;            /* floats above the nav bar */
+                    z-index: 10;
+                    cursor: pointer;
+                    -webkit-tap-highlight-color: transparent;
+                    background: none;
+                    border: none;
+                    padding: 0;
                 }
 
-                .ep-bottom-nav .fab-plus {
+                .ep-fab-center .fab-plus {
                     width: 58px;
                     height: 58px;
                     background: linear-gradient(135deg, #8B5E7A 0%, var(--app-primary) 60%, #5A3650 100%);
@@ -279,36 +277,29 @@
                     transition:
                         transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
                         box-shadow 0.2s ease;
-                    position: absolute;
-                    top: -28px;
                 }
 
-                .ep-bottom-nav .fab-plus i {
+                .ep-fab-center .fab-plus i {
                     font-size: 22px;
                     color: #fff;
                     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                    margin: 0;
                 }
 
-                /* FAB hover/active states */
-                .ep-bottom-nav .nav-center:hover .fab-plus {
+                .ep-fab-center:hover .fab-plus {
                     transform: translateY(-3px);
                     box-shadow:
                         0 14px 28px rgba(113,75,103,0.5),
                         0 4px 10px rgba(113,75,103,0.25);
                 }
 
-                .ep-bottom-nav .nav-center:active .fab-plus {
+                .ep-fab-center:active .fab-plus {
                     transform: scale(0.91);
-                    box-shadow:
-                        0 4px 12px rgba(113,75,103,0.35),
-                        0 2px 4px rgba(113,75,103,0.2);
                 }
 
-                /* Rotate plus icon when FAB menu is open */
-                .ep-bottom-nav .nav-center.fab-open .fab-plus i {
+                .ep-fab-center.fab-open .fab-plus i {
                     transform: rotate(45deg);
-                }
-
+}
                 /* ========================= */
                 /* MOBILE REQUEST LIST STYLE */
                 /* ========================= */
@@ -579,112 +570,104 @@
                 </div>
             </main>
 
-            <nav class="ep-bottom-nav mobile-only">
+                <nav class="ep-bottom-nav mobile-only">
 
-                <!-- HOME -->
-                <a href="/my/employee"
-                t-att-class="
-                    'nav-btn active'
-                    if request.httprequest.path == '/my/employee'
-                    else 'nav-btn'
-                ">
-                    <i class="fa fa-home"></i>
-                    <span>Home</span>
-                </a>
+                    <!-- LEFT SIDE ITEMS -->
+                    <div class="ep-nav-left">
 
+                        <a href="/my/employee"
+                            t-att-class="'nav-btn active' if request.httprequest.path == '/my/employee' else 'nav-btn'">
+                            <i class="fa fa-home"></i>
+                            <span>Home</span>
+                        </a>
 
-                <!-- EMPLOYEE REQUESTS -->
-                <a href="/my/employee/requests"
-                t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/requests') else 'nav-btn'">
-                    <i class="fa fa-file-text-o"></i>
-                    <span>Employee</span>
-                </a>
+                        <a href="/my/employee/requests"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/requests') else 'nav-btn'">
+                            <i class="fa fa-file-text-o"></i>
+                            <span>Employee</span>
+                        </a>
 
-                <!-- MATERIAL REQUESTS -->
-                <a href="/my/employee/material"
-                t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') and not request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
-                    <i class="fa fa-cubes"></i>
-                    <span>Material</span>
-                </a>
-
-                <!-- PLUS BUTTON (New Menu Toggle) -->
-                <div class="nav-btn nav-center" onclick="toggleFabMenu()">
-                    <div class="fab-plus">
-                        <i class="fa fa-plus" style="margin:0"></i>
-                    </div>
-                </div>
-
-          <t t-if="
-                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                ">
-
-                    <div id="approvalBtn"
-                        t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'"
-                        onclick="toggleApprovalMenu()">
-
-                        <i class="fa fa-check-circle-o"></i>
-                        <span>Approvals</span>
+                        <a href="/my/employee/material"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') and not request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
+                            <i class="fa fa-cubes"></i>
+                            <span>Material</span>
+                        </a>
 
                     </div>
 
+                    <!-- CENTER FAB (always centered absolutely) -->
+                    <div class="ep-fab-center" id="fabCenterBtn" onclick="toggleFabMenu()">
+                        <div class="fab-plus">
+                            <i class="fa fa-plus"></i>
+                        </div>
+                    </div>
 
-                    <div id="approvalMenu" class="fab-menu">
+                    <!-- RIGHT SIDE ITEMS -->
+                    <div class="ep-nav-right">
 
-                        <!-- Employee Approvals -->
                         <t t-if="
                             request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
                             or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
                             or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
                             or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                        ">
-                            <a href="/my/employee/approvals" class="fab-item">
-                                <i class="fa fa-user"></i>
-                                <span>Employee Approvals</span>
-                            </a>
-                        </t>
-
-                        <!-- Material Approvals -->
-                        <t t-if="
-                            request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
                             or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
                             or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
                             or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
                         ">
-                            <a href="/my/employee/material/approvals" class="fab-item">
-                                <i class="fa fa-cubes"></i>
-                                <span>Material Approvals</span>
+                            <div id="approvalBtn"
+                                t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'"
+                                onclick="toggleApprovalMenu()">
+                                <i class="fa fa-check-circle-o"></i>
+                                <span>Approvals</span>
+                            </div>
+
+                            <div id="approvalMenu" class="fab-menu">
+
+                                <t t-if="
+                                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                                ">
+                                    <a href="/my/employee/approvals" class="fab-item">
+                                        <i class="fa fa-user"></i>
+                                        <span>Employee Approvals</span>
+                                    </a>
+                                </t>
+
+                                <t t-if="
+                                    request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                                ">
+                                    <a href="/my/employee/material/approvals" class="fab-item">
+                                        <i class="fa fa-cubes"></i>
+                                        <span>Material Approvals</span>
+                                    </a>
+                                </t>
+
+                            </div>
+                        </t>
+
+                        <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                            <a href="/my/petty-cash"
+                                t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/petty-cash') else 'nav-btn'">
+                                <i class="fa fa-money"></i>
+                                <span>Cash</span>
                             </a>
                         </t>
 
+                        <a href="/web/session/logout" class="nav-btn">
+                            <i class="fa fa-sign-out"></i>
+                            <span>Exit</span>
+                        </a>
+
                     </div>
 
-                </t>
-
-
-                <!-- PETTY CASH (GROUP CONTROLLED) -->
-                <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
-                    <a href="/my/petty-cash"
-                    t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/petty-cash') else 'nav-btn'">
-                        <i class="fa fa-money"></i>
-                        <span>Cash</span>
-                    </a>
-                </t>
-
-                <!-- LOGOUT -->
-                <a href="/web/session/logout" class="nav-btn">
-                    <i class="fa fa-sign-out"></i>
-                    <span>Exit</span>
-                </a>
-
-            </nav>
+                </nav>
             
             <!-- FAB MENU (Single Instance) -->
             <div id="fabMenu" class="fab-menu mobile-only">
@@ -721,13 +704,11 @@
             }
 
             function toggleFabMenu() {
-                var menu = document.getElementById('fabMenu');
-                var centerBtn = document.querySelector('.nav-center');
-                if (menu) {
-                    menu.classList.toggle('show');
-                    if (centerBtn) centerBtn.classList.toggle('fab-open');
+                    var menu = document.getElementById('fabMenu');
+                    var btn = document.getElementById('fabCenterBtn');
+                    if (menu) menu.classList.toggle('show');
+                    if (btn) btn.classList.toggle('fab-open');
                 }
-            }
 
             function toggleApprovalMenu() {
                 var menu = document.getElementById('approvalMenu');
