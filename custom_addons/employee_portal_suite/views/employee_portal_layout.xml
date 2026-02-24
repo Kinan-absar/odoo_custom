@@ -64,14 +64,7 @@
                         padding: 15px 20px; background: #fff; border-bottom: 1px solid #eee;
                     }
 
-                    .ep-bottom-nav {
-                        position: fixed; bottom: 0; left: 0; right: 0;
-                        height: 75px; background: rgba(255, 255, 255, 0.95);
-                        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                        display: flex; justify-content: space-around; align-items: center;
-                        border-top: 1px solid #eee; z-index: 2000;
-                        padding-bottom: env(safe-area-inset-bottom);
-                    }
+                    
                     .nav-btn { color: #9CA3AF; text-align: center; text-decoration: none !important; flex: 1; }
                     .nav-btn.active { color: var(--app-primary); }
                     .nav-btn i { font-size: 24px; display: block; margin-bottom: 2px; }
@@ -108,49 +101,7 @@
                     }
 
                 }
-                /* ===================== */
-                /* APP-LIKE BOTTOM NAV   */
-                /* ===================== */
-
-                /* Smooth transition */
-                .ep-bottom-nav .nav-btn {
-                    transition: 
-                        transform 0.12s ease,
-                        color 0.2s ease,
-                        background 0.25s ease;
-                }
-
-                /* Press (tap) effect */
-                .ep-bottom-nav .nav-btn:active {
-                    transform: scale(0.88);
-                }
-
-                /* Active state */
-                .ep-bottom-nav .nav-btn.active {
-                    color: var(--app-primary);
-                    position: relative;
-                    background: rgba(113, 75, 103, 0.08);
-                    border-radius: 16px;
-                }
-
-                /* Active dot indicator */
-                .ep-bottom-nav .nav-btn.active::after {
-                    content: "";
-                    position: absolute;
-                    bottom: -6px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    width: 6px;
-                    height: 6px;
-                    background: var(--app-primary);
-                    border-radius: 50%;
-                    transition: all 0.3s ease;
-                }
-
-                /* Icon animation when active */
-                .ep-bottom-nav .nav-btn.active i {
-                    animation: navPop 0.25s ease;
-                }
+                
 
                 /* Pop animation */
                 @keyframes navPop {
@@ -158,65 +109,13 @@
                     50% { transform: scale(1.2); }
                     100% { transform: scale(1); }
                 }
-                /* ================================== */
-                /* ULTRA PREMIUM BOTTOM NAV DESIGN   */
-                /* ================================== */
-
-                /* Make nav look modern */
-                .ep-bottom-nav {
-                    border-top: none;
-                    box-shadow: 0 -5px 30px rgba(0,0,0,0.08);
-                    border-radius: 22px 22px 0 0;
-                    padding-top: 8px;
-                }
-
-                /* Improve icon spacing */
-                .ep-bottom-nav .nav-btn {
-                    position: relative;
-                    transition: transform 0.15s ease, color 0.2s ease;
-                }
-
-                /* Press animation */
-                .ep-bottom-nav .nav-btn:active {
-                    transform: scale(0.85);
-                }
-
-                /* Active style upgrade */
-                .ep-bottom-nav .nav-btn.active {
-                    color: var(--app-primary);
-                }
+                
 
                 /* ======================= */
                 /* CENTER PLUS UPGRADE     */
                 /* ======================= */
 
-                /* ============================= */
-                /* BALANCED CENTER PLUS BUTTON  */
-                /* ============================= */
-
-                .ep-bottom-nav .fab-plus {
-                    width: 52px;
-                    height: 52px;
-                    background: var(--app-primary);
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin-top: -22px;
-                    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-                    transition: transform 0.15s ease, box-shadow 0.2s ease;
-                }
-
-                .ep-bottom-nav .fab-plus i {
-                    font-size: 22px;
-                    color: white;
-                }
-
-                /* Soft press */
-                .ep-bottom-nav .nav-btn:active .fab-plus {
-                    transform: scale(0.92);
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                }
+                
                 .mobile-search {
                     border-radius: 14px;
                     padding: 8px 38px 8px 14px;
@@ -237,6 +136,100 @@
                     background: none;
                     border: none;
                     color: #9ca3af;
+                }
+                /* =============================== */
+                /* CLEAN PREMIUM FLOATING NAV     */
+                /* =============================== */
+
+                .ep-bottom-nav {
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+
+                    height: 92px;
+                    padding: 14px 12px calc(14px + env(safe-area-inset-bottom));
+
+                    display: flex;
+                    justify-content: space-around;
+                    align-items: flex-end;
+
+                    background: rgba(255,255,255,0.97);
+                    backdrop-filter: blur(18px);
+                    -webkit-backdrop-filter: blur(18px);
+
+                    border-top-left-radius: 26px;
+                    border-top-right-radius: 26px;
+
+                    box-shadow: 0 -10px 35px rgba(0,0,0,0.08);
+                    z-index: 3000;
+                }
+
+                /* Prevent content hiding under nav */
+                main {
+                    padding-bottom: 130px;
+                }
+
+                /* Nav items */
+                .ep-bottom-nav .nav-btn {
+                    flex: 1;
+                    text-align: center;
+                    text-decoration: none !important;
+                    font-size: 11px;
+                    font-weight: 500;
+                    color: #9CA3AF;
+                    transition: all 0.2s ease;
+                }
+
+                /* Icons */
+                .ep-bottom-nav .nav-btn i {
+                    display: block;
+                    font-size: 22px;
+                    margin-bottom: 5px;
+                    transition: transform 0.2s ease;
+                }
+
+                /* Press animation */
+                .ep-bottom-nav .nav-btn:active {
+                    transform: scale(0.9);
+                }
+
+                /* Active */
+                .ep-bottom-nav .nav-btn.active {
+                    color: var(--app-primary);
+                }
+
+                .ep-bottom-nav .nav-btn.active i {
+                    transform: translateY(-3px);
+                }
+
+                /* ================= */
+                /* CENTER PLUS CLEAN */
+                /* ================= */
+
+                .ep-bottom-nav .fab-plus {
+                    width: 60px;
+                    height: 60px;
+                    background: var(--app-primary);
+                    border-radius: 50%;
+
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    margin-top: -35px;
+
+                    box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+                    transition: all 0.2s ease;
+                }
+
+                .ep-bottom-nav .fab-plus i {
+                    font-size: 24px;
+                    color: white;
+                }
+
+                .ep-bottom-nav .nav-btn:active .fab-plus {
+                    transform: scale(0.9);
                 }
 
 
