@@ -115,7 +115,7 @@
         </div>
 
         <button type="button" id="add-line-en"
-                class="btn btn-success btn-sm mt-2">
+                class="btn btn-success btn-sm mt-2 d-none d-md-block">
             + Add Line
         </button>
         <!-- MOBILE MATERIAL LINES -->
