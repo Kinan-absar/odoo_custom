@@ -31,6 +31,11 @@
 
             <!-- TABLE -->
             <t t-if="documents">
+                <!-- ========================= -->
+                <!-- DESKTOP TABLE (UNCHANGED) -->
+                <!-- ========================= -->
+
+                <div class="d-none d-md-block">
                 <table class="table table-hover">
                     <thead>
                         <tr>
@@ -124,6 +129,89 @@
 
                     </tbody>
                 </table>
+                 </div>
+                  <!-- ========================= -->
+    <!-- MOBILE CARDS -->
+    <!-- ========================= -->
+
+    <div class="d-md-none">
+
+        <t t-foreach="documents" t-as="doc">
+
+            <t t-set="item" t-value="doc['item']"/>
+            <t t-set="filename" t-value="doc['filename']"/>
+            <t t-set="date" t-value="doc['date']"/>
+            <t t-set="your_status" t-value="doc['your_status']"/>
+            <t t-set="workflow_status" t-value="doc['workflow_status']"/>
+
+            <div class="card mb-3 rounded-4 shadow-sm">
+                <div class="card-body small">
+
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="fw-semibold">
+                            <t t-esc="filename"/>
+                        </div>
+
+                        <div>
+                            <t t-if="'🟢' in your_status">
+                                <span class="badge bg-success">Signed</span>
+                            </t>
+                            <t t-elif="'🟡' in your_status">
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            </t>
+                            <t t-elif="'🔴' in your_status">
+                                <span class="badge bg-danger">Rejected</span>
+                            </t>
+                        </div>
+                    </div>
+
+                    <div class="text-muted small mb-2">
+                        <t t-esc="date"/>
+                    </div>
+
+                    <div class="text-muted small mb-3">
+                        <t t-esc="workflow_status"/>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+
+                        <t t-if="'🔴' in workflow_status">
+                            <span class="badge bg-danger">Rejected</span>
+                        </t>
+
+                        <t t-elif="'🟡' in your_status">
+                            <a class="btn btn-sm btn-primary"
+                               t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1"
+                               target="_blank">
+                                Sign
+                            </a>
+                        </t>
+
+                        <t t-else="">
+                            <a class="btn btn-sm btn-outline-primary"
+                               t-attf-href="/my/signature/{{ item.id }}?access_token={{ doc['access_token'] }}"
+                               target="_blank">
+                                View
+                            </a>
+                        </t>
+
+                        <t t-if="item.sign_request_id.state == 'signed'">
+                            <a class="btn btn-sm btn-outline-secondary"
+                               t-attf-href="/sign/download/{{ item.sign_request_id.id }}/{{ item.sign_request_id.access_token }}/completed"
+                               target="_blank">
+                                Download
+                            </a>
+                        </t>
+
+                    </div>
+
+                </div>
+            </div>
+
+        </t>
+
+    </div>
+
             </t>
         </div>
     </t>
