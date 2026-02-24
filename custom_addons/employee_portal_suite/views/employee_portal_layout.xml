@@ -324,7 +324,7 @@
                     padding: 0 4px;
                 }
 
-                /* Left & Right groups */
+                /* Left and Right groups */
                 .ep-nav-left,
                 .ep-nav-right {
                     display: flex;
