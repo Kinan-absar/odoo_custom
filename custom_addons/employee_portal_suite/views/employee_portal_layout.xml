@@ -137,107 +137,177 @@
                     border: none;
                     color: #9ca3af;
                 }
+               /* =============================== */
+                /* PREMIUM BOTTOM NAV - REDESIGNED */
                 /* =============================== */
-                /* CLEAN PREMIUM FLOATING NAV     */
-                /* =============================== */
+
+                /* Prevent content hiding under nav */
+                main {
+                    padding-bottom: 110px;
+                }
 
                 .ep-bottom-nav {
                     position: fixed;
                     bottom: 0;
                     left: 0;
                     right: 0;
-
-                    height: 92px;
-                    padding: 14px 12px calc(14px + env(safe-area-inset-bottom));
-
-                    display: grid;
-                    grid-template-columns: repeat(7, 1fr);
-                    align-items: center;
-
-                    background: rgba(255,255,255,0.97);
-                    backdrop-filter: blur(18px);
-                    -webkit-backdrop-filter: blur(18px);
-
-                    border-top-left-radius: 26px;
-                    border-top-right-radius: 26px;
-
-                    box-shadow: 0 -10px 35px rgba(0,0,0,0.08);
+                    height: 80px;
+                    padding-bottom: env(safe-area-inset-bottom);
+                    background: #fff;
+                    border-top: 1px solid rgba(0,0,0,0.06);
+                    border-top-left-radius: 24px;
+                    border-top-right-radius: 24px;
+                    box-shadow: 0 -4px 30px rgba(0,0,0,0.08);
                     z-index: 3000;
+
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-around;
+                    padding-top: 0;
                 }
 
-                /* Prevent content hiding under nav */
-                main {
-                    padding-bottom: 130px;
-                }
-
-                /* Nav items */
+                /* ---- NAV ITEMS ---- */
                 .ep-bottom-nav .nav-btn {
-                    text-align: center;
+                    flex: 1;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    margin-bottom: 6px;
-                    transition: transform 0.15s ease;
+                    height: 100%;
+                    text-decoration: none !important;
+                    color: #B0B7C3;
+                    font-size: 10px;
+                    font-weight: 600;
+                    letter-spacing: 0.3px;
+                    gap: 4px;
+                    cursor: pointer;
+                    border: none;
+                    background: transparent;
+                    position: relative;
+                    transition: color 0.2s ease;
+                    -webkit-tap-highlight-color: transparent;
                 }
 
-                /* Icons */
                 .ep-bottom-nav .nav-btn i {
-                    display: block;
-                    font-size: 22px;
-                    margin-bottom: 3px;
-                    transition: transform 0.2s ease;
+                    font-size: 20px;
+                    line-height: 1;
+                    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
                 }
 
-                /* Press animation (exclude center) */
-                .ep-bottom-nav .nav-btn:not(.nav-center):active {
-                    transform: scale(0.9);
+                /* Tap ripple effect */
+                .ep-bottom-nav .nav-btn::after {
+                    content: '';
+                    position: absolute;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: var(--app-primary);
+                    opacity: 0;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%) scale(0);
+                    transition: transform 0.3s ease, opacity 0.3s ease;
                 }
 
-                /* Active */
+                .ep-bottom-nav .nav-btn:active::after {
+                    opacity: 0.08;
+                    transform: translate(-50%, -50%) scale(1.4);
+                }
+
+                /* ---- ACTIVE STATE - Pill indicator ---- */
                 .ep-bottom-nav .nav-btn.active {
                     color: var(--app-primary);
                 }
 
                 .ep-bottom-nav .nav-btn.active i {
-                    transform: translateY(-3px);
+                    transform: translateY(-2px) scale(1.15);
                 }
 
-                /* ================= */
-                /* CENTER PLUS CLEAN */
-                /* ================= */
-
-                .ep-bottom-nav .nav-center {
-                    grid-column: 4;
-                    position: relative;
-                }
-
-                .ep-bottom-nav .fab-plus {
-                    width: 60px;
-                    height: 60px;
+                /* Active top pill indicator */
+                .ep-bottom-nav .nav-btn.active::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 28px;
+                    height: 3px;
                     background: var(--app-primary);
-                    border-radius: 50%;
+                    border-radius: 0 0 4px 4px;
+                }
 
+                /* ---- CENTER FAB BUTTON ---- */
+                .ep-bottom-nav .nav-center {
+                    flex: 1;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-
-                    box-shadow: 0 12px 30px rgba(0,0,0,0.18);
-                    transition: transform 0.15s ease;
+                    height: 100%;
+                    position: relative;
+                    cursor: pointer;
+                    -webkit-tap-highlight-color: transparent;
+                    background: transparent;
+                    border: none;
                 }
 
-                .ep-bottom-nav .nav-center .fab-plus {
+                /* Notch dip behind FAB */
+                .ep-bottom-nav .nav-center::before {
+                    content: '';
                     position: absolute;
+                    top: -22px;
                     left: 50%;
                     transform: translateX(-50%);
-                    top: -35px;
+                    width: 72px;
+                    height: 44px;
+                    background: #fff;
+                    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+                    box-shadow: 0 -6px 0 #fff;
+                    z-index: -1;
                 }
 
-                /* Optional: plus press animation */
+                .ep-bottom-nav .fab-plus {
+                    width: 58px;
+                    height: 58px;
+                    background: linear-gradient(135deg, #8B5E7A 0%, var(--app-primary) 60%, #5A3650 100%);
+                    border-radius: 18px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow:
+                        0 8px 20px rgba(113,75,103,0.45),
+                        0 2px 6px rgba(113,75,103,0.2);
+                    transition:
+                        transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        box-shadow 0.2s ease;
+                    position: absolute;
+                    top: -28px;
+                }
+
+                .ep-bottom-nav .fab-plus i {
+                    font-size: 22px;
+                    color: #fff;
+                    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+
+                /* FAB hover/active states */
+                .ep-bottom-nav .nav-center:hover .fab-plus {
+                    transform: translateY(-3px);
+                    box-shadow:
+                        0 14px 28px rgba(113,75,103,0.5),
+                        0 4px 10px rgba(113,75,103,0.25);
+                }
+
                 .ep-bottom-nav .nav-center:active .fab-plus {
-                    transform: translateX(-50%) scale(0.92);
+                    transform: scale(0.91);
+                    box-shadow:
+                        0 4px 12px rgba(113,75,103,0.35),
+                        0 2px 4px rgba(113,75,103,0.2);
                 }
 
+                /* Rotate plus icon when FAB menu is open */
+                .ep-bottom-nav .nav-center.fab-open .fab-plus i {
+                    transform: rotate(45deg);
+                }
 
                 /* ========================= */
                 /* MOBILE REQUEST LIST STYLE */
@@ -652,12 +722,10 @@
 
             function toggleFabMenu() {
                 var menu = document.getElementById('fabMenu');
+                var centerBtn = document.querySelector('.nav-center');
                 if (menu) {
-                    if (menu.classList.contains('show')) {
-                        menu.classList.remove('show');
-                    } else {
-                        menu.classList.add('show');
-                    }
+                    menu.classList.toggle('show');
+                    if (centerBtn) centerBtn.classList.toggle('fab-open');
                 }
             }
 
