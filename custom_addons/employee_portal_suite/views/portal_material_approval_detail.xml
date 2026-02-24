@@ -205,10 +205,59 @@
 
                 </div>
             </div>
+            <!-- ========================= -->
+                <!-- UPLOAD SECTION -->
+                <!-- ========================= -->
 
+                <div class="card mb-3 rounded-4 shadow-sm">
+                    <div class="card-header bg-white fw-semibold">
+                        Upload New Attachments
+                    </div>
+
+                    <div class="card-body small">
+
+                        <form method="post"
+                            action="/my/employee/material/attachment/upload"
+                            enctype="multipart/form-data">
+
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
+
+                            <select name="attachment_tag" class="form-select mb-3">
+                                <option value="General">General</option>
+                                <option value="BOQ">BOQ</option>
+                                <option value="Quotation">Quotation</option>
+                                <option value="Image">Image</option>
+                                <option value="Receipt">Receipt</option>
+                            </select>
+
+                            <div id="dropzone-detail"
+                                class="border rounded-4 p-4 text-center bg-light mb-3"
+                                style="cursor:pointer;">
+                                <div class="text-muted small">
+                                    Drag files here or click to upload
+                                </div>
+                                <input type="file"
+                                    name="attachments"
+                                    id="fileInput-detail"
+                                    class="d-none"
+                                    multiple="multiple"/>
+                            </div>
+
+                            <div id="previewArea-detail"></div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                Upload
+                            </button>
+
+                        </form>
+
+                    </div>
+                </div>
             <!-- ========================= -->
             <!-- APPROVAL ACTION -->
             <!-- ========================= -->
+
             <t t-if="request_rec.state in ['purchase','store','project_manager','director','ceo']">
 
                 <div class="card mb-3 rounded-4 shadow-sm">
@@ -218,11 +267,12 @@
 
                     <div class="card-body small">
 
-                        <!-- Clarification -->
+                        <!-- Clarification Switch -->
                         <t t-if="request_rec.can_toggle_clarification">
                             <form method="post"
                                 action="/my/employee/material/requests/set_clarification"
                                 class="mb-4">
+
                                 <input type="hidden" name="csrf_token"
                                     t-att-value="request.csrf_token()"/>
                                 <input type="hidden" name="req_id"
@@ -241,48 +291,54 @@
                             </form>
                         </t>
 
-                        <!-- Approve -->
-                        <form action="/my/employee/material/requests/approve"
-                            method="post"
-                            class="mb-3">
-                            <input type="hidden" name="csrf_token"
-                                t-att-value="request.csrf_token()"/>
-                            <input type="hidden" name="req_id"
-                                t-att-value="request_rec.id"/>
+                        <!-- Comment -->
+                        <textarea class="form-control mb-3"
+                                name="comment"
+                                form="approveForm"
+                                placeholder="Add comment (optional)"></textarea>
 
-                            <textarea class="form-control mb-3"
-                                    name="comment"
-                                    placeholder="Comment (optional)"></textarea>
+                        <!-- Buttons Row -->
+                        <div class="d-flex gap-2 justify-content-end">
 
-                            <button type="submit"
-                                    class="btn btn-success w-100">
-                                Approve
-                            </button>
-                        </form>
+                            <form id="rejectForm"
+                                action="/my/employee/material/requests/reject"
+                                method="post"
+                                class="m-0">
 
-                        <!-- Reject -->
-                        <form action="/my/employee/material/requests/reject"
-                            method="post">
-                            <input type="hidden" name="csrf_token"
-                                t-att-value="request.csrf_token()"/>
-                            <input type="hidden" name="req_id"
-                                t-att-value="request_rec.id"/>
+                                <input type="hidden" name="csrf_token"
+                                    t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="req_id"
+                                    t-att-value="request_rec.id"/>
 
-                            <textarea name="comment"
-                                    class="form-control mb-3"
-                                    placeholder="Reason for rejection"
-                                    required="required"></textarea>
+                                <button type="submit"
+                                        class="btn btn-outline-danger px-4">
+                                    Reject
+                                </button>
+                            </form>
 
-                            <button type="submit"
-                                    class="btn btn-danger w-100">
-                                Reject
-                            </button>
-                        </form>
+                            <form id="approveForm"
+                                action="/my/employee/material/requests/approve"
+                                method="post"
+                                class="m-0">
+
+                                <input type="hidden" name="csrf_token"
+                                    t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="req_id"
+                                    t-att-value="request_rec.id"/>
+
+                                <button type="submit"
+                                        class="btn btn-success px-4">
+                                    Approve
+                                </button>
+                            </form>
+
+                        </div>
 
                     </div>
                 </div>
 
             </t>
+
 
             <!-- ========================= -->
             <!-- TIMELINE -->
