@@ -171,11 +171,12 @@
                                 </a>
 
                                 <a t-att-href="'/my/employee/material/attachment/delete/%s/%s' % (att.id, request_rec.id)"
-                                   class="text-danger fw-bold"
-                                   style="font-size:18px;"
-                                   onclick="return confirm('Delete this attachment?');">
-                                    ×
+                                class="attachment-icon-btn text-danger"
+                                title="Delete"
+                                onclick="return confirm('Delete this attachment?');">
+                                    <i class="fa fa-times"></i>
                                 </a>
+
 
                             </div>
 

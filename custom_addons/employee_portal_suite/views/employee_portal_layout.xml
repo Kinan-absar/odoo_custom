@@ -361,7 +361,30 @@
                 .employee-req-detail .timeline-content {
                     margin-left: 25px;
                 }
+                /* ========================= */
+                /* attachment                */
+                /* ========================= */
+                .attachment-icon-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
+                    border: 1px solid #e5e7eb;
+                    background: white;
+                    text-decoration: none !important;
+                    transition: all 0.15s ease;
+                }
 
+                .attachment-icon-btn i {
+                    font-size: 14px;
+                    line-height: 1;
+                }
+
+                .attachment-icon-btn:hover {
+                    background: #f3f4f6;
+                }
 
             </style>
 
