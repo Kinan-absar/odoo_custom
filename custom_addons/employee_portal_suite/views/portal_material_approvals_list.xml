@@ -3,77 +3,61 @@
 
     <template id="portal_material_approvals_list" name="Material Approvals Page">
         <t t-call="employee_portal_suite.employee_portal_layout">
-<style>
-/* =============================== */
-/* MOBILE MATERIAL APPROVAL CARDS */
-/* =============================== */
 
-.mobile-approval-card {
-    display: block;
-    background: white;
-    border-radius: 18px;
-    padding: 16px;
-    margin-bottom: 14px;
-    text-decoration: none !important;
-    color: inherit;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
-    transition: transform 0.15s ease, box-shadow 0.2s ease;
-}
-
-.mobile-approval-card:active {
-    transform: scale(0.97);
-}
-
-.mobile-approval-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-}
-
-.mobile-approval-id {
-    font-weight: 600;
-    font-size: 15px;
-}
-
-.mobile-approval-employee {
-    font-size: 13px;
-    color: #6b7280;
-}
-
-.mobile-approval-body {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-}
-
-.mobile-approval-body .label {
-    font-size: 11px;
-    color: #9ca3af;
-}
-
-</style>
             <div class="container mt-4">
 
     <div class="card shadow-sm border-0">
         <div class="card-body">
 
             <!-- Header + Filter -->
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                <h4 class="mb-0 fw-semibold">Material Requests Approval</h4>
+            <div class="material-header">
 
-                <div class="d-flex align-items-center gap-2">
-                    <label class="mb-0 fw-semibold small text-muted">Show:</label>
-                    <select id="approvalFilter"
-                            class="form-select form-select-sm"
-                            style="width:auto;">
-                        <option value="all" t-att-selected="current_filter == 'all'">All</option>
-                        <option value="pending" t-att-selected="current_filter == 'pending'">Pending</option>
-                        <option value="approved" t-att-selected="current_filter == 'approved'">Approved</option>
-                        <option value="rejected" t-att-selected="current_filter == 'rejected'">Rejected</option>
-                    </select>
+                <!-- Top Row -->
+                <div class="material-header-top">
+                    <h4 class="mb-0 fw-semibold">Material Requests Approval</h4>
+
+                    <!-- Filter Dropdown -->
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="mb-0 fw-semibold small text-muted">Show:</label>
+
+                        <select id="approvalFilter"
+                                class="form-select form-select-sm"
+                                style="width:auto;">
+                            <option value="all" t-att-selected="current_filter == 'all'">All</option>
+                            <option value="pending" t-att-selected="current_filter == 'pending'">Pending</option>
+                            <option value="approved" t-att-selected="current_filter == 'approved'">Approved</option>
+                            <option value="rejected" t-att-selected="current_filter == 'rejected'">Rejected</option>
+                        </select>
+                    </div>
                 </div>
+
+                <!-- Search Below -->
+                <form method="get" class="material-search-form">
+                    <input type="hidden" name="filter" t-att-value="current_filter"/>
+
+                    <div class="position-relative">
+                        <input type="text"
+                            id="materialApprovalSearchInput"
+                            name="search"
+                            t-att-value="search or ''"
+                            placeholder="Search request #"
+                            class="form-control mobile-search"/>
+
+                        <button type="submit" class="search-btn">
+                            <i class="fa fa-search"></i>
+                        </button>
+
+                        <t t-if="search">
+                            <a t-att-href="'/my/employee/material/approvals?filter=%s' % current_filter"
+                            class="clear-search">
+                                <i class="fa fa-times"></i>
+                            </a>
+                        </t>
+                    </div>
+                </form>
+
             </div>
+
 
             <!-- Table -->
             <!-- DESKTOP TABLE -->
@@ -206,6 +190,19 @@
                     url.searchParams.set("filter", value);
                     window.location.href = url.toString();
                 });
+            });
+            document.addEventListener("DOMContentLoaded", function() {
+
+                const input = document.getElementById("materialApprovalSearchInput");
+                if (!input) return;
+
+                input.addEventListener("input", function() {
+                    if (this.value.trim() === "") {
+                        const filter = new URLSearchParams(window.location.search).get('filter') || 'all';
+                        window.location.href = "/my/employee/material/approvals?filter=" + filter;
+                    }
+                });
+
             });
             </script>
 

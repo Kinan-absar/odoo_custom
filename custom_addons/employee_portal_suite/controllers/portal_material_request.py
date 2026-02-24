@@ -216,6 +216,7 @@ class EmployeePortalMaterialRequests(http.Controller):
             return request.redirect('/my')
 
         current_filter = kw.get("filter", "pending")
+        search = (kw.get("search") or "").strip()
 
         # ---------------------------------------------------------
         # 1) PENDING LIST — currently waiting for THIS user
@@ -292,6 +293,11 @@ class EmployeePortalMaterialRequests(http.Controller):
             "rejected": rejected_list,
             "all": all_reqs,
         }.get(current_filter, pending_list)
+        # -----------------------------
+        # SEARCH FILTER (by name only)
+        # -----------------------------
+        if search:
+            shown_reqs = [r for r in shown_reqs if search.lower() in (r.name or "").lower()]
 
         return request.render("employee_portal_suite.portal_material_approvals_list", {
             "pending_reqs": pending_list,
@@ -300,6 +306,7 @@ class EmployeePortalMaterialRequests(http.Controller):
             "all_reqs": all_reqs,
             "shown_reqs": shown_reqs,
             "current_filter": current_filter,
+            "search": search,  # <-- ADD THIS
             "status_badge": _mr_status_badge,  # <= pass badge renderer
         })
 
