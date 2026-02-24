@@ -151,7 +151,7 @@
                     padding: 14px 12px calc(14px + env(safe-area-inset-bottom));
 
                     display: flex;
-                    justify-content: space-around;
+                    justify-content: space-between;
                     align-items: center;
 
                     background: rgba(255,255,255,0.97);

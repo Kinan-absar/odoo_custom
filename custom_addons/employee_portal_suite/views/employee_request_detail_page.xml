@@ -28,16 +28,15 @@
                     </div>
                 </div>
 
-                <!-- DOWNLOAD PDF -->
-                <t t-if="request_rec.state in ['approved', 'rejected']">
-                    <div class="mb-3">
-                        <a t-att-href="'/report/pdf/employee_portal_suite.report_employee_request_document/%s' % request_rec.id"
-                        class="btn btn-outline-primary btn-sm"
-                        target="_blank">
-                            Download PDF
-                        </a>
+                <t t-if="request_rec.state == 'rejected'">
+                    <div class="alert alert-danger small">
+                        <strong>Rejected at:</strong>
+                        <t t-esc="request_rec.state_before_reject"/> —
+                        <strong>Reason:</strong>
+                        <t t-esc="request_rec.get_rejection_reason()"/>
                     </div>
                 </t>
+
 
                 <!-- OVERVIEW CARD -->
                 <div class="card mb-3 rounded-4 shadow-sm">

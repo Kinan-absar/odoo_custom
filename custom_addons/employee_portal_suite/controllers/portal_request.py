@@ -8,10 +8,18 @@ def _er_status_badge(rec):
     if state == "approved":
         return '<span class="badge bg-success">Fully Approved</span>'
 
-    # REJECTED
+    # REJECTED WITH STAGE
     if state == "rejected":
-        return '<span class="badge bg-danger">Rejected</span>'
+        stage_labels = {
+            'manager': 'Manager',
+            'hr': 'HR',
+            'finance': 'Finance',
+            'ceo': 'CEO',
+        }
 
+        lbl = stage_labels.get(rec.state_before_reject, "Unknown Stage")
+
+        return f'<span class="badge bg-danger">Rejected — {lbl} Stage</span>'
     # PENDING STAGES
     stage_labels = {
         'manager': 'Pending Manager',

@@ -14,6 +14,15 @@
                         Download PDF
                     </a>
                 </t>
+                <t t-if="request_rec.state == 'rejected'">
+                    <div class="alert alert-danger small">
+                        <strong>Rejected at:</strong>
+                        <t t-esc="request_rec.state_before_reject"/> —
+                        <strong>Reason:</strong>
+                        <t t-esc="request_rec.get_rejection_reason()"/>
+                    </div>
+                </t>
+
 
                 <div class="card p-4 mt-3">
                     <h4 class="mb-3">Request Information</h4>
