@@ -341,27 +341,58 @@
                 </div>
 
             </div>
-            <div class="recent-activity mt-4">
+           <div class="recent-activity mt-4">
 
-                <div class="section-title mb-2">Recent Activity</div>
+                <div class="section-title mb-3">Recent Activity</div>
 
-                <div class="activity-card">
-                    <i class="fa fa-file-text-o"></i>
-                    <div>
-                        <div class="activity-title">Material Request MR-2024-008</div>
-                        <div class="activity-time">Submitted 2 hours ago</div>
+                <t t-if="recent_activities">
+                    <t t-foreach="recent_activities" t-as="act">
+
+                        <div class="activity-card">
+
+                            <!-- ICON -->
+                            <t t-if="act._name == 'employee.request'">
+                                <i class="fa fa-file-text-o"></i>
+                            </t>
+                            <t t-if="act._name == 'material.request'">
+                                <i class="fa fa-cubes"></i>
+                            </t>
+
+                            <div style="flex:1;">
+                                <div class="activity-title">
+                                    <t t-if="act._name == 'employee.request'">
+                                        Employee Request
+                                    </t>
+                                    <t t-if="act._name == 'material.request'">
+                                        Material Request
+                                    </t>
+                                    <strong><t t-esc="act.name"/></strong>
+                                </div>
+
+                                <div class="activity-time">
+                                    <t t-esc="act.create_date.strftime('%d %b %Y - %H:%M')"/>
+                                </div>
+                            </div>
+
+                            <!-- STATUS BADGE -->
+                            <span class="activity-status"
+                                t-att-class="'status-' + act.state">
+                                <t t-esc="act.state.replace('_',' ').title()"/>
+                            </span>
+
+                        </div>
+
+                    </t>
+                </t>
+
+                <t t-if="not recent_activities">
+                    <div class="text-muted small">
+                        No recent activity yet.
                     </div>
-                </div>
-
-                <div class="activity-card">
-                    <i class="fa fa-check-circle-o text-success"></i>
-                    <div>
-                        <div class="activity-title">Employee Request Approved</div>
-                        <div class="activity-time">Yesterday</div>
-                    </div>
-                </div>
+                </t>
 
             </div>
+
 
 
 
