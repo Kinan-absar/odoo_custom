@@ -293,40 +293,6 @@
 
 </div>
 
-<style>
-.employee-req-detail {
-    font-size: 14px;
-}
-.employee-req-detail .card {
-    border: none;
-}
-.employee-req-detail .timeline {
-    list-style: none;
-    padding-left: 20px;
-    position: relative;
-}
-.employee-req-detail .timeline:before {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: #e5e5e5;
-    left: 8px;
-}
-.employee-req-detail .timeline-marker {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    background: #0d6efd;
-    border-radius: 50%;
-    left: 1px;
-    top: 6px;
-}
-.employee-req-detail .timeline-content {
-    margin-left: 25px;
-}
-</style>
 
             <script>
             function setupDropzone(zoneId, inputId, previewId) {
