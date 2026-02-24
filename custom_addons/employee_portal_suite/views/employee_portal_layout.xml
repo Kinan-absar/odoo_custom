@@ -150,7 +150,8 @@
                     height: 92px;
                     padding: 14px 12px calc(14px + env(safe-area-inset-bottom));
 
-                    display: flex;
+                    display: grid;
+                    grid-template-columns: repeat(7, 1fr);
                     align-items: center;
 
                     background: rgba(255,255,255,0.97);
@@ -162,10 +163,7 @@
 
                     box-shadow: 0 -10px 35px rgba(0,0,0,0.08);
                     z-index: 3000;
-
-                    position: fixed;
                 }
-
 
                 /* Prevent content hiding under nav */
                 main {
@@ -174,15 +172,14 @@
 
                 /* Nav items */
                 .ep-bottom-nav .nav-btn {
-                    flex: 1 1 0;
                     text-align: center;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
                     margin-bottom: 6px;
+                    transition: transform 0.15s ease;
                 }
-
 
                 /* Icons */
                 .ep-bottom-nav .nav-btn i {
@@ -192,8 +189,8 @@
                     transition: transform 0.2s ease;
                 }
 
-                /* Press animation */
-                .ep-bottom-nav .nav-btn:active {
+                /* Press animation (EXCLUDE CENTER) */
+                .ep-bottom-nav .nav-btn:not(.nav-center):active {
                     transform: scale(0.9);
                 }
 
@@ -220,9 +217,8 @@
                     align-items: center;
                     justify-content: center;
 
-                    
                     box-shadow: 0 12px 30px rgba(0,0,0,0.18);
-                    transition: all 0.2s ease;
+                    transition: transform 0.15s ease;
                 }
 
                 .ep-bottom-nav .fab-plus i {
@@ -230,19 +226,9 @@
                     color: white;
                 }
 
-                .ep-bottom-nav .nav-btn:active .fab-plus {
-                    transform: scale(0.9);
-                }
-                /* Lift icons slightly */
-                .ep-bottom-nav .nav-btn {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    margin-bottom: 6px;   /* 🔥 this lifts everything up */
-                }
+                /* Lock PLUS to true center column */
                 .ep-bottom-nav .nav-center {
-                    flex: 0 0 80px;   /* fixed width center slot */
+                    grid-column: 4;
                     position: relative;
                 }
 
@@ -252,6 +238,12 @@
                     transform: translateX(-50%);
                     top: -35px;
                 }
+
+                /* Optional: Plus press animation */
+                .ep-bottom-nav .nav-center:active .fab-plus {
+                    transform: translateX(-50%) scale(0.92);
+                }
+
 
                 /* ========================= */
                 /* MOBILE REQUEST LIST STYLE */
