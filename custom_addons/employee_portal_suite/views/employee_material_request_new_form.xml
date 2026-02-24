@@ -332,6 +332,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     setupEnterprise("material-lines-en","add-line-en","form-en");
     setupEnterprise("material-lines-ar","add-line-ar","form-ar");
+    setupEnterprise("mobile-material-lines-en","add-line-mobile-en","form-en");
 
     function setupEnterprise(tbodyId, btnId, formId) {
 
@@ -341,7 +342,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!tbody || !addBtn || !form) return;
 
         addBtn.addEventListener("click", function () {
-            var first = tbody.querySelector("tr");
+            var first = tbody.children[0];
             var clone = first.cloneNode(true);
 
             var inputs = clone.querySelectorAll("input");
@@ -406,10 +407,15 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         function renumber(){
-            var rows = tbody.querySelectorAll("tr");
+            var rows = tbody.children;
             for (var i = 0; i < rows.length; i++) {
 
-                rows[i].querySelector(".line-number").innerText = i + 1;
+                var numberEl = rows[i].querySelector(".line-number, .mobile-line-number");
+                if (numberEl) {
+                    numberEl.innerText = rows[i].classList.contains("mobile-line-card")
+                        ? "Line " + (i + 1)
+                        : i + 1;
+                }
                 rows[i].querySelector(".item-name").name = "item_name_" + i;
                 rows[i].querySelector(".qty").name = "qty_required_" + i;
                 rows[i].querySelector(".uom").name = "uom_id_" + i;
