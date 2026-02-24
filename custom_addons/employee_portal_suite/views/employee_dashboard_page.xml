@@ -153,6 +153,10 @@
                 color: var(--text-primary);
             }
 
+            /* ================================================================
+            RECENT ACTIVITY - PREMIUM INTERACTIVE STYLE
+            ================================================================ */
+
             .recent-activity {
                 background: var(--surface);
                 border-radius: 22px;
@@ -160,28 +164,88 @@
                 box-shadow: var(--shadow-sm);
             }
 
+            /* Clickable Activity Card */
             .activity-card {
                 display: flex;
                 align-items: center;
-                gap: 12px;
-                padding: 10px 0;
-                border-bottom: 1px solid var(--border-light);
+                gap: 14px;
+                padding: 12px 14px;
+                border-radius: 16px;
+
+                text-decoration: none !important;
+                color: inherit !important;
+
+                position: relative;
+                cursor: pointer;
+
+                transition:
+                    background 0.2s ease,
+                    transform 0.12s ease,
+                    box-shadow 0.2s ease;
             }
 
-            .activity-card:last-child {
-                border-bottom: none;
+            /* Remove underline in all states */
+            .activity-card,
+            .activity-card:hover,
+            .activity-card:focus,
+            .activity-card:active {
+                text-decoration: none !important;
+                color: inherit !important;
             }
 
+            /* Space between cards */
+            .activity-card + .activity-card {
+                margin-top: 8px;
+            }
+
+            /* Hover (Desktop) */
+            .activity-card:hover {
+                background: rgba(79,70,229,0.06);
+                box-shadow: 0 8px 22px rgba(79,70,229,0.08);
+                transform: translateY(-2px);
+            }
+
+            /* Active (Mobile press feel) */
+            .activity-card:active {
+                transform: scale(0.97);
+                background: rgba(79,70,229,0.12);
+            }
+
+            /* Left accent indicator */
+            .activity-card::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 10px;
+                bottom: 10px;
+                width: 3px;
+                border-radius: 4px;
+                background: var(--app-primary);
+                opacity: 0;
+                transition: opacity 0.2s ease;
+            }
+
+            .activity-card:hover::before {
+                opacity: 1;
+            }
+
+            /* Icon */
             .activity-card i {
                 width: 36px;
                 height: 36px;
                 background: rgba(79,70,229,0.1);
-                border-radius: 10px;
+                border-radius: 12px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 color: var(--app-primary);
                 font-size: 14px;
+                flex-shrink: 0;
+            }
+
+            /* Content */
+            .activity-content {
+                flex: 1;
             }
 
             .activity-title {
@@ -193,9 +257,8 @@
                 font-size: 11px;
                 color: var(--text-muted);
             }
-            .activity-content {
-                flex: 1;
-            }
+
+            /* Status badge */
             .activity-status {
                 font-size: 10px;
                 padding: 5px 10px;
@@ -204,6 +267,7 @@
                 background: rgba(0,0,0,0.05);
                 color: var(--text-secondary);
             }
+
 
 
             </style>
