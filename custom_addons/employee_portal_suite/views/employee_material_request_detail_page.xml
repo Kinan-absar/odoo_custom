@@ -258,9 +258,12 @@
 
                 <div id="previewArea-detail"></div>
 
-                <button type="submit" class="btn btn-primary w-100">
-                    Upload
-                </button>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary px-4">
+                        Upload
+                    </button>
+                </div>
+
 
             </form>
 

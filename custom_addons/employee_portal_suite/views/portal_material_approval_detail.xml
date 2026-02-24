@@ -246,9 +246,11 @@
 
                             <div id="previewArea-detail"></div>
 
-                            <button type="submit" class="btn btn-primary w-100">
-                                Upload
-                            </button>
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary px-4">
+                                    Upload
+                                </button>
+                            </div>
 
                         </form>
 
@@ -291,53 +293,65 @@
                             </form>
                         </t>
 
-                        <!-- Comment -->
-                        <textarea class="form-control mb-3"
-                                name="comment"
-                                form="approveForm"
-                                placeholder="Add comment (optional)"></textarea>
+                        <!-- APPROVE FORM -->
+                        <form action="/my/employee/material/requests/approve"
+                            method="post"
+                            class="mb-4">
 
-                        <!-- Buttons Row -->
-                        <div class="d-flex gap-2 justify-content-end">
+                            <input type="hidden" name="csrf_token"
+                                t-att-value="request.csrf_token()"/>
+                            <input type="hidden" name="req_id"
+                                t-att-value="request_rec.id"/>
 
-                            <form id="rejectForm"
-                                action="/my/employee/material/requests/reject"
-                                method="post"
-                                class="m-0">
+                            <label class="form-label fw-semibold small">
+                                Approval Comment (optional)
+                            </label>
 
-                                <input type="hidden" name="csrf_token"
-                                    t-att-value="request.csrf_token()"/>
-                                <input type="hidden" name="req_id"
-                                    t-att-value="request_rec.id"/>
+                            <textarea class="form-control mb-3"
+                                    name="comment"
+                                    placeholder="Add comment..."></textarea>
 
-                                <button type="submit"
-                                        class="btn btn-outline-danger px-4">
-                                    Reject
-                                </button>
-                            </form>
-
-                            <form id="approveForm"
-                                action="/my/employee/material/requests/approve"
-                                method="post"
-                                class="m-0">
-
-                                <input type="hidden" name="csrf_token"
-                                    t-att-value="request.csrf_token()"/>
-                                <input type="hidden" name="req_id"
-                                    t-att-value="request_rec.id"/>
-
+                            <div class="d-flex justify-content-end">
                                 <button type="submit"
                                         class="btn btn-success px-4">
                                     Approve
                                 </button>
-                            </form>
+                            </div>
+                        </form>
 
-                        </div>
+                        <hr/>
+
+                        <!-- REJECT FORM -->
+                        <form action="/my/employee/material/requests/reject"
+                            method="post">
+
+                            <input type="hidden" name="csrf_token"
+                                t-att-value="request.csrf_token()"/>
+                            <input type="hidden" name="req_id"
+                                t-att-value="request_rec.id"/>
+
+                            <label class="form-label fw-semibold small text-danger">
+                                Rejection Reason (required)
+                            </label>
+
+                            <textarea name="comment"
+                                    class="form-control mb-3"
+                                    placeholder="Explain why you are rejecting..."
+                                    required="required"></textarea>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="submit"
+                                        class="btn btn-outline-danger px-4">
+                                    Reject
+                                </button>
+                            </div>
+                        </form>
 
                     </div>
                 </div>
 
             </t>
+
 
 
             <!-- ========================= -->
@@ -499,6 +513,37 @@
 
             document.addEventListener("DOMContentLoaded", function () {
                 setupDropzone("dropzone-detail", "fileInput-detail", "previewArea-detail");
+            });
+                document.addEventListener("DOMContentLoaded", function () {
+
+                document.querySelectorAll(".delete-trigger").forEach(btn => {
+
+                    btn.addEventListener("click", function (e) {
+                        e.preventDefault();
+
+                        const container = this.closest(".list-group-item");
+                        const confirmBox = container.querySelector(".delete-confirmation");
+
+                        confirmBox.classList.remove("d-none");
+                    });
+
+                });
+
+                document.querySelectorAll(".cancel-delete").forEach(btn => {
+                    btn.addEventListener("click", function () {
+                        this.closest(".delete-confirmation").classList.add("d-none");
+                    });
+                });
+
+                document.querySelectorAll(".confirm-delete").forEach(btn => {
+                    btn.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        const trigger = this.closest(".list-group-item")
+                                            .querySelector(".delete-trigger");
+                        window.location.href = trigger.dataset.url;
+                    });
+                });
+
             });
             </script>
     </t>
