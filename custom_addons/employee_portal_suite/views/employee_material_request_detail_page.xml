@@ -158,14 +158,16 @@
 
                                 <a t-att-href="'/web/content/%s' % att.id"
                                    target="_blank"
-                                   class="btn btn-sm btn-outline-primary">
-                                    View
+                                   class="attachment-icon-btn text-primary"
+                                    title="View">
+                                        <i class="fa fa-eye"></i>
                                 </a>
 
                                 <a t-att-href="'/web/content/%s?download=true' % att.id"
                                    target="_blank"
-                                   class="btn btn-sm btn-outline-secondary">
-                                    Download
+                                    class="attachment-icon-btn text-secondary"
+                                    title="Download">
+                                        <i class="fa fa-download"></i>
                                 </a>
 
                                 <a t-att-href="'/my/employee/material/attachment/delete/%s/%s' % (att.id, request_rec.id)"
