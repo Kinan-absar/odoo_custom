@@ -385,6 +385,21 @@
                 .attachment-icon-btn:hover {
                     background: #f3f4f6;
                 }
+                .delete-confirmation .confirm-box {
+                    background: #fff5f5;
+                    border: 1px solid #fecaca;
+                }
+
+                .delete-confirmation .btn-danger {
+                    background: #dc2626;
+                    border: none;
+                }
+
+                .delete-confirmation .btn-light {
+                    background: #f3f4f6;
+                    border: none;
+                }
+
 
             </style>
 
