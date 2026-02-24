@@ -125,16 +125,16 @@
                     <t t-foreach="shown_reqs" t-as="req">
 
                         <a t-att-href="'/my/employee/material/approvals/%s' % req.id"
-                        class="mobile-approval-card">
+                        class="mobile-request-card">
 
-                            <div class="mobile-approval-top">
+                            <div class="mobile-request-top">
 
                                 <div>
-                                    <div class="mobile-approval-id">
+                                    <div class="mobile-request-id">
                                         <t t-esc="req.name"/>
                                     </div>
 
-                                    <div class="mobile-approval-employee">
+                                    <div class="mobile-request-date">
                                         <t t-esc="req.employee_id.name"/>
                                     </div>
                                 </div>
@@ -145,7 +145,7 @@
 
                             </div>
 
-                            <div class="mobile-approval-body">
+                            <div class="mobile-request-body">
 
                                 <div>
                                     <span class="label">Worksite</span>
@@ -171,6 +171,7 @@
                 </t>
 
             </div>
+
 
 
         </div>
