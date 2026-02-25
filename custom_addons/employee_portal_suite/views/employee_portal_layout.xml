@@ -786,6 +786,18 @@
                     padding: 16px 16px 16px 22px;
                 }
             }
+            /* ================================================================
+            RTL FIX - KEEP BOTTOM NAV STRUCTURE STABLE
+            ================================================================ */
+
+            [dir="rtl"] .ep-bottom-nav {
+                direction: ltr;
+            }
+
+            [dir="rtl"] .ep-bottom-nav .nav-btn span {
+                direction: rtl;
+            }
+
 
 
             </style>
