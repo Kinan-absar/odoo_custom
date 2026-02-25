@@ -73,6 +73,7 @@
         # --- BACKEND VIEWS ---
         'views/employee_request_views.xml',
         'views/material_request_views.xml',
+        'views/portal_announcement_views.xml',
         'views/menus.xml',
         
         # --------------------------------------------------

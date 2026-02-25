@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+        <!-- ===================================================== -->
+        <!-- LIST VIEW -->
+        <!-- ===================================================== -->
+        <template id="portal_petty_cash_list" name="Petty Cash List">
+            <t t-call="employee_portal_suite.employee_portal_layout">
+
+                <div class="container py-4">
+
+                    <!-- HEADER -->
+                    <div class="material-header">
+                        <div class="material-header-top">
+                            <h2 class="mb-0 fw-semibold">My Petty Cash Reports</h2>
+
+                            <form action="/my/employee/petty-cash/create" method="post">
+                                <input type="hidden"
+                                    name="csrf_token"
+                                    t-att-value="request.csrf_token()"/>
+                                <button type="submit"
+                                        class="btn btn-primary rounded-pill px-4">
+                                    + New Report
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- ================= DESKTOP TABLE ================= -->
+                    <div class="card shadow-sm border-0 rounded-4 d-none d-md-block">
+                        <div class="card-body p-0">
+
+                            <table class="table table-hover table-sm mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">Reference</th>
+                                        <th>Date</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="reports" t-as="report">
+                                        <tr>
+                                            <td class="ps-4">
+                                                <a class="fw-semibold text-decoration-none"
+                                                t-att-href="'/my/employee/petty-cash/%s' % report.id">
+                                                    <t t-esc="report.name"/>
+                                                </a>
+                                            </td>
+                                            <td><t t-esc="report.date"/></td>
+                                            <td class="fw-semibold">
+                                                <t t-esc="report.amount_total"/>
+                                            </td>
+                                            <td>
+                                                <t t-raw="status_badge(report)"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </div>
+
+                    <!-- ================= MOBILE CARDS ================= -->
+                    <div class="d-md-none">
+
+                        <t t-foreach="reports" t-as="report">
+
+                            <a t-att-href="'/my/employee/petty-cash/%s' % report.id"
+                            class="mobile-request-card">
+
+                                <!-- TOP -->
+                                <div class="mobile-request-top">
+                                    <div>
+                                        <div class="mobile-request-id">
+                                            <t t-esc="report.name"/>
+                                        </div>
+                                        <div class="mobile-request-date">
+                                            <t t-esc="report.date"/>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <t t-raw="status_badge(report)"/>
+                                    </div>
+                                </div>
+
+                                <!-- BODY -->
+                                <div class="mobile-request-body">
+                                    <div>
+                                        <span class="label">Total</span>
+                                        <span class="fw-semibold">
+                                            <t t-esc="report.amount_total"/>
+                                        </span>
+                                    </div>
+                                </div>
+
+                            </a>
+
+                        </t>
+
+                    </div>
+
+                </div>
+            <style>
+@media (max-width: 768px) {
+
+    .mobile-request-card {
+        display: block;
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        padding: 18px 18px 18px 22px;
+        margin-bottom: 10px;
+        text-decoration: none !important;
+        color: inherit;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-light);
+        transition: transform var(--dur-fast) var(--ease-smooth),
+                    box-shadow var(--dur-fast) var(--ease-smooth);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .mobile-request-card::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 16px; bottom: 16px;
+        width: 3px;
+        background: linear-gradient(180deg, var(--app-primary-light), var(--app-primary-dark));
+        border-radius: 0 3px 3px 0;
+    }
+
+    .mobile-request-card:active {
+        transform: scale(0.975);
+        box-shadow: var(--shadow-xs);
+    }
+
+    .mobile-request-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .mobile-request-id {
+        font-weight: 700;
+        font-size: 14.5px;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+    }
+
+    .mobile-request-date {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .mobile-request-body {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13.5px;
+        color: var(--text-secondary);
+    }
+
+    .mobile-request-body .label {
+        font-size: 10px;
+        color: var(--text-muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 3px;
+        display: block;
+    }
+}
+</style>
+
+            </t>
+        </template>
+
+
+
+
+    <!-- ===================================================== -->
+    <!-- DETAIL VIEW -->
+    <!-- ===================================================== -->
+    <template id="portal_petty_cash_detail" name="Petty Cash Detail">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+
+            <div class="container py-4">
+
+                <a href="/my/employee/petty-cash"
+                   class="text-decoration-none small text-muted">
+                    ← Back
+                </a>
+
+                <t t-if="request.params.get('error') == 'no_lines'">
+                    <div class="alert alert-danger mt-3 rounded-3">
+                        You cannot submit a petty cash report without expense lines.
+                    </div>
+                </t>
+
+                <t t-if="request.params.get('success') == 'uploaded'">
+                    <div class="alert alert-success mt-3 rounded-3">
+                        Attachment uploaded successfully.
+                    </div>
+                </t>
+
+                <!-- Header Card -->
+                <div class="card shadow-sm border-0 rounded-4 mt-3 mb-4">
+                    <div class="card-body">
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="fw-semibold mb-0">
+                                <t t-esc="report.name"/>
+                            </h3>
+
+                            <t t-raw="status_badge(report)"/>
+                        </div>
+
+                        <div class="row mt-3 small">
+                            <div class="col-md-4">
+                                <strong>Date:</strong><br/>
+                                <t t-esc="report.date"/>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Total:</strong><br/>
+                                <span class="fw-semibold">
+                                    <t t-esc="report.amount_total"/>
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <!-- Attachments -->
+                <t t-if="report.state == 'draft'">
+                    <div class="card shadow-sm border-0 rounded-4 mb-4 table-responsive-mobile">
+                        <div class="card-body">
+
+                            <h6 class="fw-semibold mb-3">Report Attachments</h6>
+
+                            <form t-att-action="'/my/employee/petty-cash/%s/upload-attachment' % report.id"
+                                  method="post"
+                                  enctype="multipart/form-data">
+
+                                <input type="hidden"
+                                       name="csrf_token"
+                                       t-att-value="request.csrf_token()"/>
+
+                                <div class="input-group">
+                                    <input type="file"
+                                           name="attachment"
+                                           class="form-control form-control-sm"
+                                           required="required"/>
+                                    <button type="submit"
+                                            class="btn btn-outline-primary btn-sm">
+                                        Upload
+                                    </button>
+                                </div>
+
+                                <small class="text-muted d-block mt-2">
+                                    Please upload all invoices combined in one PDF file.
+                                </small>
+
+                            </form>
+
+                        </div>
+                    </div>
+                </t>
+
+                <t t-if="report.attachment_ids">
+                    <div class="card shadow-sm border-0 rounded-4 mb-4 table-responsive-mobile">
+                        <div class="card-body">
+
+                            <h6 class="fw-semibold mb-3">Uploaded Attachments</h6>
+
+                            <ul class="list-group list-group-flush">
+                                <t t-foreach="report.attachment_ids" t-as="att">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+
+                                        <a class="text-decoration-none"
+                                           t-att-href="'/web/content/%s' % att.id"
+                                           target="_blank">
+                                            📎 <t t-esc="att.name"/>
+                                        </a>
+
+                                        <t t-if="report.state == 'draft'">
+                                            <form t-att-action="'/my/employee/petty-cash/attachment/%s/delete' % att.id"
+                                                  method="post"
+                                                  class="d-inline">
+
+                                                <input type="hidden"
+                                                       name="csrf_token"
+                                                       t-att-value="request.csrf_token()"/>
+
+                                                <button type="submit"
+                                                        class="border-0 bg-transparent text-danger"
+                                                        style="font-size:16px;"
+                                                        title="Delete">
+                                                    ×
+                                                </button>
+                                            </form>
+                                        </t>
+
+                                    </li>
+                                </t>
+                            </ul>
+
+                        </div>
+                    </div>
+                </t>
+
+
+                <!-- Expense Lines -->
+                <div class="card shadow-sm border-0 rounded-4 mb-4 table-responsive-mobile">
+                    <div class="card-body">
+
+                        <h6 class="fw-semibold mb-3">Expense Lines</h6>
+
+                        <form t-att-action="'/my/employee/petty-cash/%s/add-line' % report.id"
+                              method="post"
+                              enctype="multipart/form-data">
+
+                            <input type="hidden"
+                                   name="csrf_token"
+                                   t-att-value="request.csrf_token()"/>
+
+                            <table class="table table-sm table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Details</th>
+                                        <th>Category</th>
+                                        <th>Untaxed</th>
+                                        <th>VAT</th>
+                                        <th>Total</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    <t t-foreach="report.line_ids" t-as="line">
+                                        <tr>
+                                            <td><t t-esc="line.date"/></td>
+                                            <td>
+                                                <strong><t t-esc="line.description"/></strong><br/>
+                                                <small class="text-muted">
+                                                    <t t-esc="line.supplier or '-'"/> |
+                                                    <t t-esc="line.invoice_number or '-'"/> |
+                                                    <t t-esc="line.po_number or '-'"/> |
+                                                    <t t-esc="line.mr_number or '-'"/> |
+                                                    <t t-esc="line.zone or '-'"/>
+                                                </small>
+                                            </td>
+                                            <td><t t-esc="line.category_id.name"/></td>
+                                            <td><t t-esc="line.amount_before_vat"/></td>
+                                            <td><t t-esc="line.vat_amount"/></td>
+                                            <td class="fw-semibold"><t t-esc="line.amount_total"/></td>
+                                            <td></td>
+                                        </tr>
+                                    </t>
+
+                                    <t t-if="report.state == 'draft'">
+                                        <tr>
+                                            <td>
+                                                <input type="date"
+                                                       name="date"
+                                                       class="form-control form-control-sm"
+                                                       required="required"/>
+                                            </td>
+                                            <td>
+                                                <input type="text" name="description" class="form-control form-control-sm mb-1" placeholder="Description"/>
+                                                <input type="text" name="supplier" class="form-control form-control-sm mb-1" placeholder="Supplier"/>
+                                                <input type="text" name="invoice_number" class="form-control form-control-sm mb-1" placeholder="Invoice No"/>
+                                                <input type="text" name="po_number" class="form-control form-control-sm mb-1" placeholder="PO No"/>
+                                                <input type="text" name="mr_number" class="form-control form-control-sm mb-1" placeholder="MR No"/>
+                                                <input type="text" name="zone" class="form-control form-control-sm" placeholder="Zone"/>
+                                            </td>
+                                            <td>
+                                                <select name="category_id"
+                                                        class="form-control form-control-sm"
+                                                        required="required">
+                                                    <t t-foreach="categories" t-as="cat">
+                                                        <option t-att-value="cat.id">
+                                                            <t t-esc="cat.name"/>
+                                                        </option>
+                                                    </t>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input type="number"
+                                                       step="0.01"
+                                                       name="amount_before_vat"
+                                                       class="form-control form-control-sm"
+                                                       required="required"/>
+                                            </td>
+                                            <td class="text-center">
+                                                <input type="checkbox" name="vat_applicable" checked="checked"/>
+                                            </td>
+                                            <td>-</td>
+                                            <td>
+                                                <button type="submit"
+                                                        class="btn btn-success btn-sm rounded-pill px-3">
+                                                    Add
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </t>
+
+                                </tbody>
+                            </table>
+
+                        </form>
+
+                    </div>
+                </div>
+
+                <t t-if="report.state == 'draft'">
+                    <form t-att-action="'/my/employee/petty-cash/%s/submit' % report.id"
+                          method="post"
+                          class="text-end">
+
+                        <input type="hidden"
+                               name="csrf_token"
+                               t-att-value="request.csrf_token()"/>
+
+                        <button type="submit"
+                                class="btn btn-warning rounded-pill px-4">
+                            Submit Report
+                        </button>
+                    </form>
+                </t>
+
+            </div>
+            <style>
+@media (max-width: 768px) {
+
+    /* Expense lines table becomes stacked */
+    .table-responsive-mobile table,
+    .table-responsive-mobile thead,
+    .table-responsive-mobile tbody,
+    .table-responsive-mobile th,
+    .table-responsive-mobile td,
+    .table-responsive-mobile tr {
+        display: block;
+        width: 100%;
+    }
+
+    .table-responsive-mobile thead {
+        display: none;
+    }
+
+    .table-responsive-mobile tr {
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+
+    .table-responsive-mobile td {
+        padding: 6px 0;
+        border: none;
+    }
+
+    /* Add button full width only on mobile */
+    .table-responsive-mobile .btn-success {
+        width: 100%;
+        margin-top: 8px;
+    }
+
+}
+</style>
+
+        </t>
+    </template>
+
+</odoo>

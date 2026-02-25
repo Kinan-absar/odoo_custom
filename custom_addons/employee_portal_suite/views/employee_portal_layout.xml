@@ -1,273 +1,1007 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-<template id="employee_portal_layout">
+    <template id="employee_portal_layout">
 
-<t t-call="web.layout">
+        <xpath expr="//meta[@name='viewport']" position="replace">
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+        </xpath>
 
-    <style>
+        <t t-call="web.layout">
 
-/* =======================================
-   ODOO ENTERPRISE STYLE NAVIGATION
-   ======================================= */
+            <link rel="preconnect" href="https://fonts.googleapis.com"/>
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+            <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;display=swap" rel="stylesheet"/>
 
-/* BASE NAVBAR */
-.ep-navbar {
-    background: #F6F7F9;  /* Odoo light grey */
-    padding: 14px 0;
-    border-bottom: 1px solid #E5E7EB;
-    font-family: 'Inter', sans-serif;
-    position: relative;
-    z-index: 1000;
-}
+            <t t-call-assets="web.assets_frontend"/>
 
-/* NAV CONTAINER */
-.nav-container {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    flex-wrap: nowrap;
-}
+            <style>
+                /* ================================================================
+                   EMPLOYEE PORTAL - PREMIUM REDESIGN
+                   Color: Deep Indigo x Warm Slate x Gold accent
+                   ================================================================ */
 
-/* NAV LINKS ROW */
-.ep-nav-links {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+                :root {
+                    --app-primary:        #4F46E5;
+                    --app-primary-light:  #6366F1;
+                    --app-primary-dark:   #3730A3;
+                    --app-accent:         #F59E0B;
+                    --app-accent-soft:    #FEF3C7;
+                    --app-bg:             #F1F2F6;
+                    --surface:            #FFFFFF;
+                    --surface-2:          #F8F8FB;
+                    --border-light:       rgba(0,0,0,0.06);
+                    --text-primary:       #1A1B2E;
+                    --text-secondary:     #6B7280;
+                    --text-muted:         #9CA3AF;
+                    --shadow-xs:   0 1px 3px rgba(26,27,46,0.06);
+                    --shadow-sm:   0 4px 12px rgba(26,27,46,0.08);
+                    --shadow-md:   0 8px 24px rgba(26,27,46,0.10);
+                    --shadow-lg:   0 16px 40px rgba(26,27,46,0.12);
+                    --shadow-fab:  0 10px 30px rgba(79,70,229,0.40), 0 3px 8px rgba(79,70,229,0.20);
+                    --radius-sm:   8px;
+                    --radius-md:   14px;
+                    --radius-lg:   20px;
+                    --radius-xl:   28px;
+                    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+                    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+                    --dur-fast:    150ms;
+                    --dur-base:    220ms;
+                    --dur-slow:    350ms;
+                    --nav-height:  76px;
+                    --card-shadow: var(--shadow-sm);
+                }
 
-/* ====== MAIN NAV BUTTONS ====== */
-.ep-link,
-.ep-dropdown-toggle {
-    background: transparent;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: 500;
-    color: #1F2937;
-    cursor: pointer;
-    transition: 0.2s;
-}
+                *, *::before, *::after { box-sizing: border-box; }
 
-/* Hover effect (soft highlight) */
-.ep-link:hover,
-.ep-dropdown-toggle:hover {
-    background: #EBECF0;  /* light Odoo grey hover */
-}
+                body {
+                    background-color: var(--app-bg) !important;
+                    font-family: 'DM Sans', sans-serif !important;
+                    color: var(--text-primary);
+                    -webkit-font-smoothing: antialiased;
+                    -moz-osx-font-smoothing: grayscale;
+                }
 
-/* Active state */
-.ep-link.active {
-    background: #E1E2E5;
-    font-weight: 600;
-}
+                main {
+                    padding-bottom: calc(var(--nav-height) + 40px);
+                }
 
-/* ========== DROPDOWN MENUS ========== */
-.ep-dropdown {
-    position: relative;
-}
+                h1, h2, h3, h4, h5, h6 {
+                    font-family: 'DM Sans', sans-serif;
+                    font-weight: 700;
+                    letter-spacing: -0.02em;
+                    color: var(--text-primary);
+                }
 
-.ep-dropdown-menu {
-    display: none;
-    position: absolute;
-    top: 42px;
-    left: 0;
-    min-width: 220px;
-    background: white;
-    border: 1px solid #E2E8F0;
-    border-radius: 8px;
-    padding: 8px 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    z-index: 2000;
-}
+                /* ================================================================
+                   DESKTOP NAVBAR
+                   ================================================================ */
 
-/* Dropdown items */
-.ep-sub-link {
-    display: block;
-    padding: 10px 16px;
-    color: #1F2937;
-    text-decoration: none;
-    font-size: 14px;
-}
+                @media (min-width: 769px) {
+                    .ep-navbar {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding: 0 2.5rem;
+                        height: 68px;
+                        background: var(--surface);
+                        border-bottom: 1px solid var(--border-light);
+                        position: sticky;
+                        top: 0;
+                        z-index: 1000;
+                        box-shadow: var(--shadow-xs);
+                    }
+                    .mobile-only { display: none !important; }
+                }
 
-.ep-sub-link:hover {
-    background: #EBECF0;
-}
+                .ep-nav-links { display: flex; align-items: center; gap: 4px; }
 
-/* Divider */
-.ep-divider {
-    border-top: 1px solid #E5E7EB;
-    margin: 6px 0;
-}
+                .ep-link, .ep-dropdown-toggle {
+                    background: transparent;
+                    border: none;
+                    padding: 9px 15px;
+                    border-radius: var(--radius-sm);
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: var(--text-secondary);
+                    cursor: pointer;
+                    text-decoration: none !important;
+                    transition: background var(--dur-fast) var(--ease-smooth),
+                                color var(--dur-fast) var(--ease-smooth);
+                    letter-spacing: -0.01em;
+                    font-family: 'DM Sans', sans-serif;
+                }
 
-/* Odoo primary button style for Logout */
-.ep-logout {
-    margin-left: 0 !important; /* remove extra spacing */
-    background: #a08a8aff; /* Odoo primary button */
-    padding: 8px 18px;
-    border-radius: 6px;
-    color: white;
-    font-weight: 600;
-    text-decoration: none;
-    transition: 0.2s;
-}
+                .ep-link:hover, .ep-dropdown-toggle:hover {
+                    background: rgba(79,70,229,0.07);
+                    color: var(--app-primary);
+                }
 
-.ep-logout:hover {
-    background: #8d5353ff;
-}
-/* ===== USER INFO IN NAVBAR ===== */
-.ep-user-info {
-    margin-left: auto;
-    margin-right: 8px; /* reduce the huge spacing */
-    display: flex;
-    align-items: center;
-    gap: 6px; /* smaller spacing between avatar / text */
-}
+                .ep-dropdown { position: relative; }
 
-.ep-user-info img {
-    width: 32px !important;
-    height: 32px !important;
-    border-radius: 50%;
-}
+                .ep-dropdown-menu {
+                    display: none;
+                    position: absolute;
+                    top: calc(100% + 8px);
+                    left: 0;
+                    min-width: 220px;
+                    background: var(--surface);
+                    border: 1px solid var(--border-light);
+                    border-radius: var(--radius-md);
+                    padding: 6px;
+                    box-shadow: var(--shadow-lg);
+                    z-index: 2000;
+                }
 
-.ep-user-info h5 {
-    font-size: 14px;
-    margin: 0;
-}
+                .ep-sub-link {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 9px 13px;
+                    color: var(--text-primary);
+                    text-decoration: none !important;
+                    font-size: 13.5px;
+                    font-weight: 500;
+                    border-radius: var(--radius-sm);
+                    transition: background var(--dur-fast);
+                }
 
-.ep-user-info p {
-    font-size: 12px;
-    margin: 0;
-    line-height: 1.2;
-}
+                .ep-sub-link:hover {
+                    background: var(--surface-2);
+                    color: var(--app-primary);
+                }
 
-/* ========== MOBILE BEHAVIOR ========== */
+                /* ================================================================
+                   MOBILE BASE
+                   ================================================================ */
 
-/* Mobile burger hidden on desktop */
-.ep-nav-toggle {
-    display: none;
-    background: none;
-    border: none;
-    font-size: 28px;
-    color: #1F2937;
-    cursor: pointer;
-}
+                @media (max-width: 768px) {
+                    .ep-navbar { display: none !important; }
 
-/* DESKTOP FORCE FIX */
-@media (min-width: 769px) {
-    .ep-nav-links {
-        display: flex !important;
-        flex-direction: row !important;
-        width: auto !important;
-    }
-    .ep-nav-toggle {
-        display: none !important;
-    }
-}
+                    .container {
+                        max-width: 100% !important;
+                        padding: 16px !important;
+                    }
 
-/* MOBILE LAYOUT */
-@media (max-width: 768px) {
+                    .card {
+                        border: none !important;
+                        border-radius: var(--radius-lg) !important;
+                        box-shadow: var(--shadow-sm) !important;
+                        margin-bottom: 14px !important;
+                        background: var(--surface) !important;
+                        overflow: hidden;
+                    }
 
-    .ep-nav-toggle {
-        display: block !important;
-    }
+                    .mobile-app-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 20px 20px 16px;
+                        background: var(--surface);
+                        border-bottom: 1px solid var(--border-light);
+                    }
 
-    .ep-nav-links {
-        display: none;
-        flex-direction: column;
-        width: 100%;
-        background: #E6F4FF;
-        padding: 10px 0;
-        border-top: 1px solid #B8D8FF;
-    }
+                    .nav-btn {
+                        color: var(--text-muted);
+                        text-align: center;
+                        text-decoration: none !important;
+                        flex: 1;
+                    }
+                    .nav-btn.active { color: var(--app-primary); }
+                    .nav-btn i { font-size: 20px; display: block; margin-bottom: 2px; }
+                    .nav-btn span { font-size: 10px; font-weight: 600; }
 
-    body.nav-open .ep-nav-links {
-        display: flex !important;
-    }
+                    .fab-menu {
+                        position: fixed;
+                        bottom: calc(var(--nav-height) + 24px);
+                        left: 50%;
+                        transform: translateX(-50%) translateY(12px);
+                        background: var(--surface);
+                        border-radius: var(--radius-lg);
+                        box-shadow: var(--shadow-lg);
+                        padding: 8px;
+                        opacity: 0;
+                        pointer-events: none;
+                        width: 260px;
+                        z-index: 2100;
+                        border: 1px solid var(--border-light);
+                        transition: opacity var(--dur-base) var(--ease-smooth),
+                                    transform var(--dur-base) var(--ease-spring);
+                    }
 
-    .ep-dropdown-menu {
-        position: relative !important;
-        top: 0 !important;
-        left: 0 !important;
-        min-width: 100% !important;
-        box-shadow: none !important;
-        border: none !important;
-    }
+                    .fab-menu.show {
+                        opacity: 1;
+                        pointer-events: all;
+                        transform: translateX(-50%) translateY(0);
+                    }
 
-    .ep-sub-link,
-    .ep-dropdown-toggle,
-    .ep-link {
-        width: 100%;
-        text-align: center;
-    }
+                    .fab-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 13px 14px;
+                        text-decoration: none !important;
+                        color: var(--text-primary);
+                        font-weight: 500;
+                        font-size: 14px;
+                        border-radius: var(--radius-md);
+                        transition: background var(--dur-fast);
+                        cursor: pointer;
+                    }
 
-    .ep-logout {
-        width: 100%;
-        margin-left: 0 !important;
-        text-align: center;
-    }
+                    .fab-item i {
+                        width: 34px;
+                        height: 34px;
+                        background: rgba(79,70,229,0.08);
+                        color: var(--app-primary);
+                        border-radius: var(--radius-sm);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 14px;
+                        flex-shrink: 0;
+                    }
 
-}
+                    .fab-item:hover { background: var(--surface-2); }
+                }
+
+                /* ================================================================
+                   SEARCH
+                   ================================================================ */
+
+                .mobile-search {
+                    border-radius: var(--radius-md);
+                    padding: 10px 40px 10px 16px;
+                    border: 1.5px solid var(--border-light);
+                    font-size: 14px;
+                    font-family: 'DM Sans', sans-serif;
+                    background: var(--surface);
+                    color: var(--text-primary);
+                    transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+                    width: 100%;
+                }
+
+                .mobile-search:focus {
+                    outline: none;
+                    border-color: var(--app-primary-light);
+                    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+                }
+
+                .mobile-search::placeholder { color: var(--text-muted); }
+
+                .search-btn {
+                    position: absolute;
+                    right: 12px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    background: none;
+                    border: none;
+                    color: var(--text-muted);
+                    cursor: pointer;
+                }
+
+                /* ================================================================
+                   PREMIUM BOTTOM NAV
+                   ================================================================ */
+
+                .ep-bottom-nav {
+                    position: fixed;
+                    bottom: max(8px, env(safe-area-inset-bottom));
+                    left: 10px;
+                    right: 10px;
+                    height: var(--nav-height);
+                    background: rgba(255,255,255,0.96);
+                    backdrop-filter: blur(24px);
+                    -webkit-backdrop-filter: blur(24px);
+                    border: 1px solid rgba(255,255,255,0.9);
+                    border-radius: var(--radius-xl);
+                    box-shadow:
+                        0 -2px 0 rgba(79,70,229,0.06),
+                        var(--shadow-lg),
+                        inset 0 1px 0 rgba(255,255,255,1);
+                    z-index: 3000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-around;
+                    padding: 0 4px;
+                }
+
+                .ep-nav-left,
+                .ep-nav-right {
+                    display: flex;
+                    flex: 1;
+                    align-items: center;
+                    justify-content: space-around;
+                    height: 100%;
+                }
+
+                .ep-nav-left  { padding-right: 34px; }
+                .ep-nav-right { padding-left: 34px; }
+
+                .ep-bottom-nav .nav-btn {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    text-decoration: none !important;
+                    color: var(--text-muted);
+                    font-size: 10px;
+                    font-weight: 600;
+                    letter-spacing: 0.2px;
+                    gap: 5px;
+                    cursor: pointer;
+                    border: none;
+                    background: transparent;
+                    position: relative;
+                    transition: color var(--dur-base) var(--ease-smooth);
+                    -webkit-tap-highlight-color: transparent;
+                    padding: 0;
+                }
+
+                .ep-bottom-nav .nav-btn i {
+                    font-size: 19px;
+                    line-height: 1;
+                    transition: transform var(--dur-slow) var(--ease-spring),
+                                color var(--dur-base) var(--ease-smooth);
+                }
+
+                .ep-bottom-nav .nav-btn::after {
+                    content: '';
+                    position: absolute;
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 50%;
+                    background: var(--app-primary);
+                    opacity: 0;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%) scale(0);
+                    transition: transform 0.4s var(--ease-smooth), opacity 0.4s ease;
+                    pointer-events: none;
+                }
+
+                .ep-bottom-nav .nav-btn:active::after {
+                    opacity: 0.07;
+                    transform: translate(-50%, -50%) scale(1.5);
+                }
+
+                .ep-bottom-nav .nav-btn.active {
+                    color: var(--app-primary);
+                }
+
+                .ep-bottom-nav .nav-btn.active i {
+                    transform: translateY(-3px) scale(1.18);
+                }
+
+                .ep-bottom-nav .nav-btn.active::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 24px;
+                    height: 3px;
+                    background: linear-gradient(90deg, var(--app-primary-light), var(--app-primary));
+                    border-radius: 0 0 6px 6px;
+                }
+
+                .ep-bottom-nav .nav-btn.active span {
+                    color: var(--app-primary);
+                    font-weight: 700;
+                }
+
+                .ep-fab-center {
+                    position: absolute;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    top: -26px;
+                    z-index: 10;
+                    cursor: pointer;
+                    -webkit-tap-highlight-color: transparent;
+                    background: none;
+                    border: none;
+                    padding: 0;
+                }
+
+                .ep-fab-center .fab-plus {
+                    width: 56px;
+                    height: 56px;
+                    background: linear-gradient(145deg, #6366F1 0%, #4F46E5 50%, #3730A3 100%);
+                    border-radius: 18px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: var(--shadow-fab);
+                    transition:
+                        transform var(--dur-base) var(--ease-spring),
+                        box-shadow var(--dur-base) var(--ease-smooth);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .ep-fab-center .fab-plus::before {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: 0; right: 0;
+                    height: 50%;
+                    background: linear-gradient(180deg, rgba(255,255,255,0.20) 0%, transparent 100%);
+                    border-radius: 18px 18px 0 0;
+                    pointer-events: none;
+                }
+
+                .ep-fab-center .fab-plus i {
+                    font-size: 22px;
+                    color: #fff;
+                    transition: transform var(--dur-slow) var(--ease-spring);
+                    margin: 0;
+                    position: relative;
+                    z-index: 1;
+                }
+
+                .ep-fab-center:hover .fab-plus {
+                    transform: translateY(-4px);
+                    box-shadow: 0 16px 36px rgba(79,70,229,0.50), 0 4px 12px rgba(79,70,229,0.25);
+                }
+
+                .ep-fab-center:active .fab-plus {
+                    transform: scale(0.90);
+                    box-shadow: 0 4px 14px rgba(79,70,229,0.35);
+                }
+
+                .ep-fab-center.fab-open .fab-plus i {
+                    transform: rotate(45deg);
+                }
+                /* ================================================================
+                BASIC MODE (4 buttons total)
+                ================================================================ */
+
+                .ep-bottom-nav.basic-nav .ep-nav-left,
+                .ep-bottom-nav.basic-nav .ep-nav-right {
+                    justify-content: space-evenly;
+                }
+
+                /* Slightly bigger icons for 4-button layout */
+                .ep-bottom-nav.basic-nav .nav-btn i {
+                    font-size: 20px;
+                }
+
+                .ep-bottom-nav.basic-nav .nav-btn span {
+                    font-size: 11px;
+                }
+
+                /* ================================================================
+                EXTENDED MODE (6 buttons total)
+                ================================================================ */
+
+                .ep-bottom-nav.extended-nav .ep-nav-left,
+                .ep-bottom-nav.extended-nav .ep-nav-right {
+                    justify-content: space-around;
+                }
 
 
-    </style>
+                /* ================================================================
+                   MOBILE REQUEST CARDS
+                   ================================================================ */
 
-    <t t-call-assets="web.assets_frontend"/>
+                .mobile-request-card {
+                    display: block;
+                    background: var(--surface);
+                    border-radius: var(--radius-lg);
+                    padding: 18px 18px 18px 22px;
+                    margin-bottom: 10px;
+                    text-decoration: none !important;
+                    color: inherit;
+                    box-shadow: var(--shadow-sm);
+                    border: 1px solid var(--border-light);
+                    transition: transform var(--dur-fast) var(--ease-smooth),
+                                box-shadow var(--dur-fast) var(--ease-smooth);
+                    position: relative;
+                    overflow: hidden;
+                }
 
-    <!-- ===== NAVIGATION BAR ===== -->
-    <nav class="ep-navbar">
-        <div class="container nav-container">
+                .mobile-request-card::before {
+                    content: '';
+                    position: absolute;
+                    left: 0; top: 16px; bottom: 16px;
+                    width: 3px;
+                    background: linear-gradient(180deg, var(--app-primary-light), var(--app-primary-dark));
+                    border-radius: 0 3px 3px 0;
+                }
 
-            <!-- MOBILE BURGER -->
-            <button class="ep-nav-toggle" onclick="document.body.classList.toggle('nav-open')">☰</button>
+                .mobile-request-card:active {
+                    transform: scale(0.975);
+                    box-shadow: var(--shadow-xs);
+                }
 
-            <!-- NAV LINKS -->
-            <div class="ep-nav-links">
+                .mobile-request-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                }
 
-                <a href="/my" class="ep-link">Dashboard</a>
+                .mobile-request-id {
+                    font-weight: 700;
+                    font-size: 14.5px;
+                    color: var(--text-primary);
+                    letter-spacing: -0.02em;
+                }
 
-                <!-- REQUESTS DROPDOWN -->
-                <div class="ep-dropdown">
-                    <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'requests-menu')">Requests ▾</button>
+                .mobile-request-date {
+                    font-size: 11px;
+                    color: var(--text-muted);
+                    font-weight: 500;
+                }
 
-                    <div id="requests-menu" class="ep-dropdown-menu">
-                        <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
-                        <a href="/my/employee/requests/new" class="ep-sub-link">New Employee Request</a>
+                .mobile-request-body {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 13.5px;
+                    color: var(--text-secondary);
+                }
 
-                        <hr class="ep-divider"/>
+                .mobile-request-body .label {
+                    font-size: 10px;
+                    color: var(--text-muted);
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.06em;
+                    margin-bottom: 3px;
+                    display: block;
+                }
 
-                        <a href="/my/employee/material" class="ep-sub-link">Material Requests</a>
-                        <a href="/my/employee/material/new" class="ep-sub-link">New Material Request</a>
+                /* ================================================================
+                   MATERIAL HEADER
+                   ================================================================ */
+
+                .material-header { margin-bottom: 22px; }
+
+                .material-header-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                }
+
+                .material-search-form { margin-top: 14px; }
+
+                .clear-search {
+                    position: absolute;
+                    right: 40px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: var(--text-muted);
+                    text-decoration: none;
+                    font-size: 13px;
+                }
+
+                @media (max-width: 768px) {
+                    .material-header-top {
+                        flex-direction: column;
+                        align-items: flex-start;
+                    }
+                    .material-header-top .btn { width: 100%; }
+                }
+
+                /* ================================================================
+                   TIMELINE
+                   ================================================================ */
+
+                .employee-req-detail { font-size: 14px; }
+                .employee-req-detail .card { border: none; }
+
+                .employee-req-detail .timeline {
+                    list-style: none;
+                    padding-left: 22px;
+                    position: relative;
+                }
+
+                .employee-req-detail .timeline::before {
+                    content: '';
+                    position: absolute;
+                    top: 6px; bottom: 0;
+                    width: 2px;
+                    background: linear-gradient(180deg, var(--app-primary-light), var(--border-light));
+                    left: 8px;
+                    border-radius: 2px;
+                }
+
+                .employee-req-detail .timeline-marker {
+                    position: absolute;
+                    width: 14px;
+                    height: 14px;
+                    background: linear-gradient(135deg, var(--app-primary-light), var(--app-primary-dark));
+                    border-radius: 50%;
+                    left: 1px;
+                    top: 6px;
+                    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+                }
+
+                .employee-req-detail .timeline-content { margin-left: 26px; }
+
+                /* ================================================================
+                   ATTACHMENTS
+                   ================================================================ */
+
+                .attachment-icon-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 34px;
+                    height: 34px;
+                    border-radius: var(--radius-sm);
+                    border: 1.5px solid var(--border-light);
+                    background: var(--surface);
+                    text-decoration: none !important;
+                    transition: all var(--dur-fast) var(--ease-smooth);
+                    color: var(--text-secondary);
+                }
+
+                .attachment-icon-btn i { font-size: 14px; line-height: 1; }
+
+                .attachment-icon-btn:hover {
+                    background: rgba(79,70,229,0.06);
+                    border-color: var(--app-primary-light);
+                    color: var(--app-primary);
+                }
+
+                /* ================================================================
+                   DELETE CONFIRMATION
+                   ================================================================ */
+
+                .delete-confirmation .confirm-box {
+                    background: #FFF5F5;
+                    border: 1px solid #FECACA;
+                    border-radius: var(--radius-md);
+                }
+
+                .delete-confirmation .btn-danger {
+                    background: linear-gradient(135deg, #EF4444, #DC2626);
+                    border: none;
+                    border-radius: var(--radius-sm);
+                    font-weight: 600;
+                }
+
+                .delete-confirmation .btn-light {
+                    background: var(--surface-2);
+                    border: 1.5px solid var(--border-light);
+                    border-radius: var(--radius-sm);
+                    font-weight: 600;
+                    color: var(--text-secondary);
+                }
+
+                /* ================================================================
+                   BUTTONS
+                   ================================================================ */
+
+                .btn-primary {
+                    background: linear-gradient(135deg, var(--app-primary-light), var(--app-primary-dark)) !important;
+                    border: none !important;
+                    border-radius: var(--radius-sm) !important;
+                    font-weight: 600 !important;
+                    font-family: 'DM Sans', sans-serif !important;
+                    letter-spacing: -0.01em !important;
+                    box-shadow: 0 4px 14px rgba(79,70,229,0.30) !important;
+                    transition: transform var(--dur-fast), box-shadow var(--dur-fast) !important;
+                }
+
+                .btn-primary:hover {
+                    transform: translateY(-1px) !important;
+                    box-shadow: 0 6px 20px rgba(79,70,229,0.40) !important;
+                }
+
+                .btn-primary:active { transform: scale(0.97) !important; }
+
+                /* ================================================================
+                   SCROLLBAR
+                   ================================================================ */
+
+                ::-webkit-scrollbar { width: 5px; height: 5px; }
+                ::-webkit-scrollbar-track { background: transparent; }
+                ::-webkit-scrollbar-thumb { background: rgba(79,70,229,0.2); border-radius: 10px; }
+                ::-webkit-scrollbar-thumb:hover { background: rgba(79,70,229,0.4); }
+            /* ================================================================
+            PORTAL ANNOUNCEMENT - PREMIUM RESPONSIVE
+            ================================================================ */
+
+            .portal-announcement-wrapper {
+                max-width: 1100px;
+                margin: 20px auto 10px auto;
+                padding: 0 16px;
+            }
+
+            .portal-announcement {
+                position: relative;
+                background: var(--surface);
+                border-radius: var(--radius-lg);
+                padding: 18px 20px 18px 24px;
+                margin-bottom: 12px;
+                box-shadow: var(--shadow-sm);
+                border: 1px solid var(--border-light);
+                overflow: hidden;
+                transition: transform var(--dur-fast) var(--ease-smooth),
+                            box-shadow var(--dur-fast) var(--ease-smooth);
+            }
+
+            .portal-announcement:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-md);
+            }
+
+            /* Accent left bar */
+            .portal-announcement::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 16px;
+                bottom: 16px;
+                width: 4px;
+                border-radius: 0 4px 4px 0;
+            }
+
+            /* Color Variants */
+            .portal-announcement-primary::before {
+                background: linear-gradient(180deg, var(--app-primary-light), var(--app-primary-dark));
+            }
+
+            .portal-announcement-success::before {
+                background: linear-gradient(180deg, #34D399, #059669);
+            }
+
+            .portal-announcement-warning::before {
+                background: linear-gradient(180deg, #FBBF24, #D97706);
+            }
+
+            .portal-announcement-danger::before {
+                background: linear-gradient(180deg, #F87171, #DC2626);
+            }
+
+            /* Content */
+            .portal-announcement-title {
+                font-weight: 700;
+                font-size: 14.5px;
+                margin-bottom: 6px;
+                letter-spacing: -0.02em;
+                color: var(--text-primary);
+            }
+
+            .portal-announcement-message {
+                font-size: 13.5px;
+                color: var(--text-secondary);
+                line-height: 1.5;
+            }
+
+            /* Mobile optimization */
+            @media (max-width: 768px) {
+                .portal-announcement-wrapper {
+                    margin: 14px 0 6px 0;
+                    padding: 0 16px;
+                }
+
+                .portal-announcement {
+                    border-radius: var(--radius-lg);
+                    padding: 16px 16px 16px 22px;
+                }
+            }
+
+
+            </style>
+
+            <!-- ================================================================
+                 DESKTOP NAVBAR
+                 ================================================================ -->
+            <nav class="ep-navbar">
+                <div class="ep-nav-links">
+                    <a href="/my" class="ep-link">Dashboard</a>
+
+                    <div class="ep-dropdown">
+                        <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests &#9662;</button>
+                        <div id="req-d" class="ep-dropdown-menu">
+                            <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
+                            <a href="/my/employee/requests/new" class="ep-sub-link text-primary">+ New Employee Request</a>
+                            <hr class="my-1"/>
+                            <a href="/my/employee/material" class="ep-sub-link">Material Requests</a>
+                            <a href="/my/employee/material/new" class="ep-sub-link text-primary">+ New Material Request</a>
+                        </div>
+                    </div>
+
+                    <t t-if="
+                        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                    ">
+                        <div class="ep-dropdown">
+                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals &#9662;</button>
+                            <div id="app-d" class="ep-dropdown-menu">
+
+                                <t t-if="
+                                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                                ">
+                                    <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
+                                </t>
+
+                                <t t-if="
+                                    request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                                ">
+                                    <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
+                                </t>
+
+                            </div>
+                        </div>
+                    </t>
+
+                    <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                        <a href="/my/employee/petty-cash" class="ep-link">Petty Cash</a>
+                    </t>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <div class="text-end d-none d-lg-block">
+                        <h6 class="mb-0 fw-bold" t-out="request.env.user.partner_id.name"/>
+                        <p class="mb-0 text-muted small" t-out="request.env.user.partner_id.company_name"/>
+                    </div>
+                    <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="rounded-circle border" width="40" height="40"/>
+                    <a href="/web/session/logout" class="btn btn-sm btn-outline-danger ms-2">Logout</a>
+                </div>
+            </nav>
+
+            <!-- ================================================================
+                 MOBILE APP HEADER (home page only)
+                 ================================================================ -->
+            <t t-if="request.httprequest.path == '/my/employee'">
+                <div class="mobile-app-header mobile-only">
+                    <div>
+                        <div style="font-size:12px; color:var(--text-muted); font-weight:500; margin-bottom:3px;">
+                            Welcome back
+                        </div>
+                        <div style="font-size:20px; font-weight:700; color:var(--text-primary); letter-spacing:-0.03em;">
+                            <t t-esc="request.env.user.partner_id.name.split(' ')[0]"/>
+                            <span style="color:var(--app-primary);">!</span>
+                        </div>
+                    </div>
+                    <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"
+                        style="width:42px;height:42px;border-radius:14px;box-shadow:0 4px 12px rgba(79,70,229,0.30);object-fit:cover;"/>
+                </div>
+            </t>
+
+            <t t-set="portal_announcements"
+                t-value="request.env['portal.announcement'].sudo().search([
+                        ('active', '=', True)
+                ])"/>
+
+            <t t-if="portal_announcements">
+                <div class="portal-announcement-wrapper">
+                    <t t-foreach="portal_announcements" t-as="ann">
+
+                        <t t-if="not ann.group_ids or request.env.user.groups_id &amp; ann.group_ids">
+                            <div t-attf-class="portal-announcement alert alert-#{ann.color}">
+                                <div class="fw-bold mb-1">
+                                    <t t-esc="ann.name"/>
+                                </div>
+                                <div>
+                                    <t t-raw="ann.message"/>
+                                </div>
+                            </div>
+                        </t>
+
+                    </t>
+                </div>
+            </t>
+
+            <!-- ================================================================
+                 MAIN CONTENT
+                 ================================================================ -->
+            <main>
+                <div id="wrap" class="container mt-3 mb-5">
+                    <t t-raw="0"/>
+                </div>
+            </main>
+
+            <!-- ================================================================
+                 MOBILE BOTTOM NAV
+                 ================================================================ -->
+                 <t t-set="has_extended_nav"
+   t-value="
+       request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+       or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+       or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+       or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+       or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+       or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+       or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+       or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+       or request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')
+   "/>
+
+            <nav t-att-class="'ep-bottom-nav mobile-only ' + ('extended-nav' if has_extended_nav else 'basic-nav')">
+
+                <div class="ep-nav-left">
+
+                    <a href="/my/employee"
+                        t-att-class="'nav-btn active' if request.httprequest.path == '/my/employee' else 'nav-btn'">
+                        <i class="fa fa-home"></i>
+                        <span>Home</span>
+                    </a>
+
+                    <a href="/my/employee/requests"
+                        t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/requests') else 'nav-btn'">
+                        <i class="fa fa-file-text-o"></i>
+                        <span>Employee</span>
+                    </a>
+                    
+                        <!-- ONLY if extended -->
+                    <t t-if="has_extended_nav">
+                        <a href="/my/employee/material"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') and not request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
+                            <i class="fa fa-cubes"></i>
+                            <span>Material</span>
+                        </a>
+                    </t>
+
+                </div>
+
+                <div class="ep-fab-center" id="fabCenterBtn" onclick="toggleFabMenu()">
+                    <div class="fab-plus">
+                        <i class="fa fa-plus"></i>
                     </div>
                 </div>
 
-                <!-- ===== DROPDOWN: APPROVALS ===== -->
-                <t t-if="
-                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                ">
-                    <div class="ep-dropdown">
-                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'approvals-menu')">Approvals ▾</button>
+                <div class="ep-nav-right">
+                    <!-- BASIC MODE: Material moves here -->
+                    <t t-if="not has_extended_nav">
+                        <a href="/my/employee/material"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') else 'nav-btn'">
+                            <i class="fa fa-cubes"></i>
+                            <span>Material</span>
+                        </a>
+                    </t>
+                     <t t-if="has_extended_nav">
+                    <t t-if="
+                        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                    ">
+                        <div id="approvalBtn"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'"
+                            onclick="toggleApprovalMenu()">
+                            <i class="fa fa-check-circle-o"></i>
+                            <span>Approvals</span>
+                        </div>
 
-                            <div id="approvals-menu" class="ep-dropdown-menu">
+                        <div id="approvalMenu" class="fab-menu">
 
-                            <!-- Employee Approvals -->
                             <t t-if="
                                 request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
                                 or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
                                 or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
                                 or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
                             ">
-                                <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
+                                <a href="/my/employee/approvals" class="fab-item">
+                                    <i class="fa fa-user"></i>
+                                    <span>Employee Approvals</span>
+                                </a>
                             </t>
 
-                            <!-- Material Approvals -->
                             <t t-if="
                                 request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
                                 or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
@@ -275,84 +1009,92 @@
                                 or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
                                 or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
                             ">
-                                <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
+                                <a href="/my/employee/material/approvals" class="fab-item">
+                                    <i class="fa fa-cubes"></i>
+                                    <span>Material Approvals</span>
+                                </a>
                             </t>
 
                         </div>
-                    </div>
-                </t>
+                    </t>
 
-            </div>
-            <div class="ep-user-info d-flex align-items-center gap-3">
-
-                <!-- Avatar -->
-                <img class="o_portal_contact_img rounded"
-                    width="48"
-                    t-att-src="image_data_uri(request.env.user.partner_id.avatar_1024)"
-                    alt="User"/>
-
-                <!-- Name + Company + Contact -->
-                <div class="d-flex flex-column">
-
-                    <!-- Name -->
-                    <h5 class="mb-0" t-out="request.env.user.partner_id.name"/>
-
-                    <!-- Company -->
-                    <p class="mb-0 text-muted small"
-                    t-out="request.env.user.partner_id.company_name"/>
-
-                    <!-- Email -->
-                    <p class="mb-0 text-muted small d-flex align-items-center">
-                        <i class="fa fa-envelope me-1"></i>
-                        <span t-out="request.env.user.partner_id.email"/>
-                    </p>
-
-                    <!-- Phone -->
-                    <p class="mb-0 text-muted small d-flex align-items-center"
-                    t-if="request.env.user.partner_id.phone">
-                        <i class="fa fa-phone me-1"></i>
-                        <span t-out="request.env.user.partner_id.phone"/>
-                    </p>
+                    <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                        <a href="/my/employee/petty-cash"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/petty-cash') else 'nav-btn'">
+                            <i class="fa fa-money"></i>
+                            <span>Cash</span>
+                        </a>
+                    </t>
+                       </t>
+                    <a href="/web/session/logout" class="nav-btn">
+                        <i class="fa fa-sign-out"></i>
+                        <span>Exit</span>
+                    </a>
 
                 </div>
 
+            </nav>
+
+            <!-- ================================================================
+                 FAB POPUP MENU
+                 ================================================================ -->
+            <div id="fabMenu" class="fab-menu mobile-only">
+                <a href="/my/employee/requests/new" class="fab-item">
+                    <i class="fa fa-file-text-o"></i>
+                    <span>New Employee Request</span>
+                </a>
+                <a href="/my/employee/material/new" class="fab-item">
+                    <i class="fa fa-cubes"></i>
+                    <span>New Material Request</span>
+                </a>
             </div>
 
-            <!-- LOGOUT BUTTON -->
-            <a class="ep-logout" href="/web/session/logout">Logout</a>
+            <!-- ================================================================
+                 JAVASCRIPT
+                 ================================================================ -->
+            <script>
+                function toggleDropdown(event, id) {
+                    event.stopPropagation();
+                    document.querySelectorAll('.ep-dropdown-menu').forEach(function(m){
+                        if (m.id !== id) m.style.display = 'none';
+                    });
+                    var menu = document.getElementById(id);
+                    if (menu) {
+                        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+                    }
+                }
 
-        </div>
-    </nav>
+                function toggleFabMenu() {
+                    var menu = document.getElementById('fabMenu');
+                    var btn  = document.getElementById('fabCenterBtn');
+                    if (menu) menu.classList.toggle('show');
+                    if (btn)  btn.classList.toggle('fab-open');
+                }
 
-    <!-- PAGE CONTENT -->
-    <main>
-        <div id="wrap" class="container mt-4 mb-5">
-            <t t-raw="0"/>
-        </div>
-    </main>
+                function toggleApprovalMenu() {
+                    var menu = document.getElementById('approvalMenu');
+                    if (menu) menu.classList.toggle('show');
+                }
 
+                document.addEventListener('click', function(e) {
+                    document.querySelectorAll('.ep-dropdown-menu').forEach(function(m){
+                        m.style.display = 'none';
+                    });
 
-</t>
-<script>
-function toggleDropdown(event, id) {
-    event.stopPropagation();
+                    var fab = document.getElementById('fabMenu');
+                    var btn = document.getElementById('fabCenterBtn');
+                    if (fab &amp;&amp; !e.target.closest('#fabCenterBtn') &amp;&amp; !e.target.closest('#fabMenu')) {
+                        fab.classList.remove('show');
+                        if (btn) btn.classList.remove('fab-open');
+                    }
 
-    // Close all dropdowns first
-    document.querySelectorAll('.ep-dropdown-menu').forEach(menu => {
-        if (menu.id !== id) menu.style.display = 'none';
-    });
+                    var app = document.getElementById('approvalMenu');
+                    if (app &amp;&amp; !e.target.closest('#approvalMenu') &amp;&amp; !e.target.closest('#approvalBtn')) {
+                        app.classList.remove('show');
+                    }
+                });
+            </script>
 
-    let menu = document.getElementById(id);
-    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
-}
-
-document.addEventListener('click', function() {
-    document.querySelectorAll('.ep-dropdown-menu').forEach(menu => {
-        menu.style.display = 'none';
-    });
-});
-</script>
-
-</template>
-
+        </t>
+    </template>
 </odoo>

@@ -9,7 +9,7 @@
         Petty Cash Management Module
         ============================
 
-        A complete petty cash management solution designed for internal accounting teams.
+        A complete petty cash management  solution designed for internal accounting teams.
         This module provides a structured workflow for recording petty cash expenses, 
         submitting them for approval, validating them by accountants, and generating 
         draft journal entries directly into the accounting system.
@@ -33,7 +33,7 @@
         - Security groups for Users and Accountants
         - Footer totals for untaxed amount, VAT, and total amount
         """,
-    'depends': ['base', 'account', 'mail', 'web'],
+    'depends': ['portal', 'website', 'base', 'account', 'mail', 'web'],
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
@@ -47,9 +47,12 @@
         'views/res_config_settings_views.xml',
         'views/menus.xml',                # <-- menu referencing action (must load last)
         'wizard/petty_cash_import_wizard_views.xml',
+        'views/portal_petty_cash_templates.xml',
     ],
-    'images': ['static/description/icon.png'],   # <-- App icon
-    'license': 'LGPL-3',
+    'images': ['images/main_screenshot.png'],
+    'license': 'OPL-1',
+    'price': 24.99,
+    'currency': 'USD',
     'installable': True,
     'application': True,
 }

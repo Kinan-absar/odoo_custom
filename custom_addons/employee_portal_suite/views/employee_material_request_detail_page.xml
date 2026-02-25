@@ -1,147 +1,234 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <template id="employee_material_request_detail_page" name="Material Request Detail">
-        <t t-call="employee_portal_suite.employee_portal_layout">
+<template id="employee_material_request_detail_page" name="Material Request Detail">
+<t t-call="employee_portal_suite.employee_portal_layout">
 
-            <div class="container mt-4 employee-req-detail">
+<div class="container mt-3 employee-req-detail">
+    <div class="mb-4">
+    <a href="/my/employee/material" class="app-back-btn">
+        <i class="fa fa-arrow-left"></i>
+        <span>Back</span>
+    </a>
+</div>
 
-                <!-- ========================= -->
-                <!-- PAGE TITLE -->
-                <!-- ========================= -->
-                <h2 class="mb-4">Material Request Details</h2>
-                    <t t-if="request_rec.state in ['approved', 'rejected']">
-                        <a t-att-href="'/my/employee/material/pdf/%s' % request_rec.id"
-                        class="btn btn-outline-primary mb-3">
-                            Download PDF
-                        </a>
-                    </t>
-                    <t t-if="request_rec.state == 'rejected'">
-                        <div class="alert alert-danger">
-                            <strong>Rejected at stage:</strong>
-                            <t t-esc="request_rec.state_before_reject"/> —
-                            <strong>Reason:</strong>
-                            <t t-esc="request_rec.get_rejection_reason()"/>
+
+    <!-- ========================= -->
+    <!-- PAGE HEADER -->
+    <!-- ========================= -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0 fw-bold">Material Request</h4>
+            <div class="text-muted small">
+                <t t-esc="request_rec.name"/>
+            </div>
+        </div>
+
+        <div>
+            <t t-raw="status_badge(request_rec)"/>
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- ALERTS -->
+    <!-- ========================= -->
+
+    <t t-if="request_rec.state == 'rejected'">
+        <div class="alert alert-danger small">
+            <strong>Rejected at:</strong>
+            <t t-esc="request_rec.state_before_reject"/> —
+            <strong>Reason:</strong>
+            <t t-esc="request_rec.get_rejection_reason()"/>
+        </div>
+    </t>
+
+    <t t-if="request_rec.needs_clarification and request_rec.clarification_stage">
+        <div class="alert alert-warning small">
+            <strong>Clarification requested by 
+                <t t-esc="dict(request_rec._fields['state'].selection).get(request_rec.clarification_stage)"/>.
+            </strong>
+        </div>
+    </t>
+
+    <!-- ========================= -->
+    <!-- REQUEST OVERVIEW CARD -->
+    <!-- ========================= -->
+
+    <div class="card mb-3 rounded-4 shadow-sm">
+        <div class="card-body small">
+
+            <div class="row g-3">
+
+                <div class="col-6">
+                    <div class="text-muted">Employee</div>
+                    <div class="fw-semibold">
+                        <t t-esc="request_rec.employee_id.name"/>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="text-muted">Worksite</div>
+                    <div class="fw-semibold">
+                        <t t-esc="request_rec.worksite"/>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="text-muted">Request Date</div>
+                    <div class="fw-semibold">
+                        <t t-esc="request_rec.request_date"/>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="text-muted">Delivery Date</div>
+                    <div class="fw-semibold">
+                        <t t-esc="request_rec.delivery_date"/>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- MATERIAL LIST (MOBILE STYLE) -->
+    <!-- ========================= -->
+
+    <div class="card mb-3 rounded-4 shadow-sm">
+        <div class="card-header bg-white fw-semibold">
+            Requested Materials
+        </div>
+
+        <div class="list-group list-group-flush small">
+
+            <t t-foreach="request_rec.line_ids" t-as="line">
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+
+                    <div>
+                        <div class="fw-semibold">
+                            <t t-esc="line.item_name"/>
                         </div>
-                    </t>
-                    <t t-if="request_rec.needs_clarification and request_rec.clarification_stage">
-                <div class="alert alert-warning">
-                    🚩 
-                    <strong>
-                        Clarification requested by 
-                        <t t-esc="dict(request_rec._fields['state'].selection).get(request_rec.clarification_stage)"/>.
-                    </strong>
-                    <br/>
-                    Please review the request and provide the required information to proceed with the approval process.
+                        <div class="text-muted small">
+                            <t t-esc="line.uom_id.name"/>
+                        </div>
+                    </div>
+
+                    <div class="fw-bold fs-6">
+                        <t t-esc="line.qty_required"/>
+                    </div>
+
                 </div>
             </t>
 
-                <!-- ========================= -->
-                <!-- BASIC REQUEST INFO -->
-                <!-- ========================= -->
-                <table class="table table-bordered" style="background: #fff;">
-                    <tr>
-                        <th style="width: 180px;">Request Number</th>
-                        <td><t t-esc="request_rec.name"/></td>
-                    </tr>
-                    <tr>
-                        <th>Employee</th>
-                        <td><t t-esc="request_rec.employee_id.name"/></td>
-                    </tr>
-                    <tr>
-                        <th>Worksite</th>
-                        <td><t t-esc="request_rec.worksite"/></td>
-                    </tr>
-                    <tr>
-                        <th>Delivery Date</th>
-                        <td><t t-esc="request_rec.delivery_date"/></td>
-                    </tr>
-                    <tr>
-                        <th>Status</th>
-                        <td><t t-raw="status_badge(request_rec)"/></td>
-                    </tr>
-                    <tr>
-                        <th>Date</th>
-                        <td><t t-esc="request_rec.request_date"/></td>
-                    </tr>
-                </table>
+        </div>
+    </div>
 
-                <!-- ========================= -->
-                <!-- MATERIAL LINES -->
-                <!-- ========================= -->
-                <h4 class="mt-4">Requested Materials</h4>
-                <table class="table table-striped table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Item</th>
-                            <th>Required Quantity</th>
-                            <th>Unit of Measure</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <t t-foreach="request_rec.line_ids" t-as="line">
-                            <tr>
-                                <td><t t-esc="line.item_name"/></td>
-                                <td><t t-esc="line.qty_required"/></td>
-                                <td><t t-esc="line.uom_id.name"/></td>
-                            </tr>
-                        </t>
-                    </tbody>
-                </table>
+ <!-- ========================= -->
+            <!-- ATTACHMENTS -->
             <!-- ========================= -->
-            <!-- ATTACHMENT LIST (NEW)    -->
-            <!-- ========================= -->
-            <h4 class="mt-4">Attachments</h4>
+            <div class="card mb-3 rounded-4 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                    <span class="fw-semibold">Attachments</span>
+                    <span class="badge bg-light text-dark">
+                        <t t-esc="len(attachments)"/>
+                    </span>
+                </div>
 
-            <t t-if="attachments">
-                <ul class="list-group">
-                    <t t-foreach="attachments" t-as="att">
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span class="ms-2">
-                                <t t-esc="att.name"/> 
-                                (<t t-esc="att.description or 'General'"/>)
-                            </span>
+                <div class="card-body p-0">
 
-                            <!-- DOWNLOAD -->
-                            <a t-att-href="'/web/content/%s?download=true' % att.id"
-                            class="btn btn-sm btn-outline-secondary"
-                            target="_blank">
-                                Download
-                            </a>
+                    <t t-if="attachments">
+                        <div class="list-group list-group-flush small">
+                            <t t-foreach="attachments" t-as="att">
+                                <div class="list-group-item">
 
-                            <!-- VIEW -->
-                            <a t-att-href="'/web/content/%s' % att.id"
-                            class="btn btn-sm btn-outline-primary"
-                            target="_blank">
-                                View
-                            </a>
+                                    <div class="d-flex justify-content-between align-items-center">
 
-                            <a t-att-href="'/my/employee/material/attachment/delete/%s/%s' % (att.id, request_rec.id)"
-                            class="text-danger small"
-                            onclick="return confirm('Delete this attachment?');">
-                                ✖
-                            </a>
+                                        <div class="overflow-hidden">
+                                            <div class="fw-semibold text-truncate">
+                                                <t t-esc="att.name"/>
+                                            </div>
+                                            <div class="text-muted small">
+                                                <t t-esc="att.description or 'General'"/>
+                                            </div>
+                                        </div>
 
-                        </li>
+                                        <div class="d-flex gap-2">
+
+                                            <a t-att-href="'/web/content/%s' % att.id"
+                                            target="_blank"
+                                            class="attachment-icon-btn text-primary">
+                                                <i class="fa fa-eye"></i>
+                                            </a>
+
+                                            <a t-att-href="'/web/content/%s?download=true' % att.id"
+                                            target="_blank"
+                                            class="attachment-icon-btn text-secondary">
+                                                <i class="fa fa-download"></i>
+                                            </a>
+
+                                            <a href="#"
+                                            class="attachment-icon-btn text-danger delete-trigger"
+                                            t-att-data-url="'/my/employee/material/attachment/delete/%s/%s' % (att.id, request_rec.id)">
+                                                <i class="fa fa-times"></i>
+                                            </a>
+
+                                        </div>
+                                    </div>
+
+                                    <!-- Delete Confirmation -->
+                                    <div class="delete-confirmation d-none mt-3">
+                                        <div class="confirm-box p-3 rounded-3">
+                                            <div class="small mb-2 text-muted">
+                                                Delete this attachment?
+                                            </div>
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                <button type="button"
+                                                        class="btn btn-sm btn-light cancel-delete">
+                                                    Cancel
+                                                </button>
+                                                <a href="#"
+                                                class="btn btn-sm btn-danger confirm-delete">
+                                                    Delete
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </t>
+                        </div>
                     </t>
-                </ul>
-            </t>
 
-            <t t-else="">
-                <p>No attachments uploaded.</p>
-            </t>
-            <!-- ========================= -->
-            <!-- ATTACHMENT UPLOADER (NEW) -->
-            <!-- ========================= -->
-            <h4 class="mt-4">Upload New Attachments</h4>
+                    <t t-else="">
+                        <div class="p-3 text-muted small">
+                            No attachments uploaded.
+                        </div>
+                    </t>
 
-            <form method="post" action="/my/employee/material/attachment/upload"
-                enctype="multipart/form-data">
+                </div>
+            </div>
+
+    <!-- ========================= -->
+    <!-- UPLOAD SECTION -->
+    <!-- ========================= -->
+
+    <div class="card mb-3 rounded-4 shadow-sm">
+        <div class="card-header bg-white fw-semibold">
+            Upload New Attachments
+        </div>
+
+        <div class="card-body small">
+
+            <form method="post"
+                  action="/my/employee/material/attachment/upload"
+                  enctype="multipart/form-data">
 
                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                 <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
 
-                <select name="attachment_tag" class="form-select mb-2" style="max-width:250px;">
+                <select name="attachment_tag" class="form-select mb-3">
                     <option value="General">General</option>
                     <option value="BOQ">BOQ</option>
                     <option value="Quotation">Quotation</option>
@@ -150,108 +237,83 @@
                 </select>
 
                 <div id="dropzone-detail"
-                    class="border rounded p-4 text-center bg-light"
-                    style="cursor:pointer;">
-                    <p class="text-muted mb-0">Drag and drop files here, or click to upload</p>
-                    <input type="file" name="attachments"
-                        id="fileInput-detail"
-                        class="d-none"
-                        multiple="multiple"/>
+                     class="border rounded-4 p-4 text-center bg-light mb-3"
+                     style="cursor:pointer;">
+                    <div class="text-muted small">
+                        Drag files here or click to upload
+                    </div>
+                    <input type="file"
+                           name="attachments"
+                           id="fileInput-detail"
+                           class="d-none"
+                           multiple="multiple"/>
                 </div>
 
-                <div id="previewArea-detail" class="mt-3"></div>
+                <div id="previewArea-detail"></div>
 
-                <button type="submit" class="btn btn-primary mt-3">Upload</button>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary px-4">
+                        Upload
+                    </button>
+                </div>
+
+
             </form>
 
-                <!-- ========================= -->
-                <!-- APPROVAL TIMELINE UI     -->
-                <!-- ========================= -->
-                <div class="card p-3 mt-4">
-                    <h4 class="mb-3">Approval Timeline</h4>
+        </div>
+    </div>
 
-                    <t t-if="request_rec.get_portal_timeline()">
-                        <ul class="timeline">
-                            <t t-foreach="request_rec.get_portal_timeline()" t-as="ev">
-                                <li class="timeline-item">
-                                    <div class="timeline-marker"></div>
-                                    <div class="timeline-content">
-                                        <h5 class="timeline-title">
-                                            <t t-esc="ev['stage']"/>
-                                        </h5>
+    <!-- ========================= -->
+    <!-- TIMELINE -->
+    <!-- ========================= -->
 
-                                        <t t-if="ev['approved_by']">
-                                            <p><strong>By:</strong> <t t-esc="ev['approved_by']"/></p>
-                                        </t>
+    <div class="card mb-3 rounded-4 shadow-sm">
+        <div class="card-header bg-white fw-semibold">
+            Approval Timeline
+        </div>
 
-                                        <p><strong>Date:</strong> <t t-esc="ev['date']"/></p>
+        <div class="card-body small">
 
-                                        <t t-if="ev['comment']">
-                                            <p><strong>Comment:</strong> <t t-esc="ev['comment']"/></p>
-                                        </t>
+            <t t-if="request_rec.get_portal_timeline()">
+                <ul class="timeline">
+
+                    <t t-foreach="request_rec.get_portal_timeline()" t-as="ev">
+                        <li class="timeline-item">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <div class="fw-semibold">
+                                    <t t-esc="ev['stage']"/>
+                                </div>
+
+                                <div class="text-muted small">
+                                    <t t-esc="ev['date']"/>
+                                </div>
+
+                                <t t-if="ev['comment']">
+                                    <div class="small mt-1">
+                                        <t t-esc="ev['comment']"/>
                                     </div>
-                                </li>
-                            </t>
-                        </ul>
+                                </t>
+                            </div>
+                        </li>
                     </t>
 
-                    <t t-if="not request_rec.get_portal_timeline()">
-                        <p>No approval activity yet.</p>
-                    </t>
+                </ul>
+            </t>
+
+            <t t-if="not request_rec.get_portal_timeline()">
+                <div class="text-muted small">
+                    No approval activity yet.
                 </div>
+            </t>
 
-                <a href="/my/employee/material" class="btn btn-secondary mt-4">Back</a>
-            </div>
-                <!-- ========================= -->
-                <!-- TIMELINE CSS              -->
-                <!-- ========================= -->
-                <style>
-                    .timeline {
-                        list-style: none;
-                        padding-left: 20px;
-                        position: relative;
-                        margin-left: 10px;
-                    }
+        </div>
+    </div>
 
-                    .timeline:before {
-                        content: "";
-                        position: absolute;
-                        top: 0;
-                        bottom: 0;
-                        width: 2px;
-                        background: #c5c5c5;
-                        left: 8px;
-                    }
+    
 
-                    .timeline-item {
-                        position: relative;
-                        margin-bottom: 20px;
-                    }
+</div>
 
-                    .timeline-marker {
-                        position: absolute;
-                        width: 16px;
-                        height: 16px;
-                        background: #0d6efd;
-                        border-radius: 50%;
-                        left: 0px;
-                        top: 5px;
-                    }
-
-                    .timeline-content {
-                        margin-left: 30px;
-                        padding: 10px 15px;
-                        background: #f8f9fa;
-                        border-radius: 5px;
-                        border: 1px solid #dee2e6;
-                    }
-
-                    .timeline-title {
-                        margin: 0 0 5px 0;
-                        font-size: 16px;
-                        font-weight: 600;
-                    }
-                </style>
 
             <script>
             function setupDropzone(zoneId, inputId, previewId) {
@@ -320,6 +382,37 @@
             document.addEventListener("DOMContentLoaded", function () {
                 setupDropzone("dropzone-detail", "fileInput-detail", "previewArea-detail");
             });
+            document.addEventListener("DOMContentLoaded", function () {
+
+            document.querySelectorAll(".delete-trigger").forEach(btn => {
+
+                btn.addEventListener("click", function (e) {
+                    e.preventDefault();
+
+                    const container = this.closest(".list-group-item");
+                    const confirmBox = container.querySelector(".delete-confirmation");
+
+                    confirmBox.classList.remove("d-none");
+                });
+
+            });
+
+            document.querySelectorAll(".cancel-delete").forEach(btn => {
+                btn.addEventListener("click", function () {
+                    this.closest(".delete-confirmation").classList.add("d-none");
+                });
+            });
+
+            document.querySelectorAll(".confirm-delete").forEach(btn => {
+                btn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    const trigger = this.closest(".list-group-item")
+                                        .querySelector(".delete-trigger");
+                    window.location.href = trigger.dataset.url;
+                });
+            });
+
+        });
             </script>
 
 

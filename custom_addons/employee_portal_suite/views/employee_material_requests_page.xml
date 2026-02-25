@@ -6,40 +6,141 @@
         <t t-set="page_name">material_requests</t>
 
         <div class="container mt-4">
-            <h3>Material Requests</h3>
 
-            <a href="/my/employee/material/new" class="btn btn-primary mb-3">
-                New Material Request
-            </a>
+    <div class="card shadow-sm border-0">
 
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Request #</th>
-                        <th>Date</th>
-                        <th>Worksite</th>
-                        <th>Delivery Date</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <t t-foreach="requests" t-as="req">
+        <div class="card-body">
+
+            <div class="material-header">
+
+                <!-- Top Row -->
+                <div class="material-header-top">
+                    <h4 class="mb-0 fw-semibold">Material Requests</h4>
+
+                    <a href="/my/employee/material/new"
+                    class="btn btn-primary btn-sm">
+                        + New Material Request
+                    </a>
+                </div>
+
+                <!-- Search Below -->
+                <form method="get" class="material-search-form">
+                    <div class="position-relative">
+                        <input type="text"
+                                id="materialSearchInput"
+                            name="search"
+                            t-att-value="search or ''"
+                            placeholder="Search request # or worksite"
+                            class="form-control mobile-search"/>
+
+                        <button type="submit" class="search-btn">
+                            <i class="fa fa-search"></i>
+                        </button>
+
+                        <t t-if="search">
+                            <a href="/my/employee/material"
+                            class="clear-search">
+                                <i class="fa fa-times"></i>
+                            </a>
+                        </t>
+                    </div>
+                </form>
+
+            </div>
+
+
+                        <!-- DESKTOP TABLE -->
+            <div class="table-responsive d-none d-md-block">
+                <table class="table table-hover table-sm align-middle mb-0">
+                    <thead>
                         <tr>
-                            <td><t t-esc="req.name"/></td>
-                            <td><t t-esc="req.request_date"/></td>
-                            <td><t t-esc="req.worksite"/></td>
-                            <td><t t-esc="req.delivery_date"/></td>
-                            <td><t t-raw="status_badge(req)"/></td>
-                            <td>
-                                <a t-att-href="'/my/employee/material/%s' % req.id"
-                                   class="btn btn-secondary btn-sm">View</a>
-                            </td>
+                            <th>Request #</th>
+                            <th>Date</th>
+                            <th>Worksite</th>
+                            <th>Delivery Date</th>
+                            <th>Status</th>
+                            <th></th>
                         </tr>
-                    </t>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="requests" t-as="req">
+                            <tr>
+                                <td><t t-esc="req.name"/></td>
+                                <td><t t-esc="req.request_date"/></td>
+                                <td><t t-esc="req.worksite"/></td>
+                                <td><t t-esc="req.delivery_date"/></td>
+                                <td><t t-raw="status_badge(req)"/></td>
+                                <td>
+                                    <a t-att-href="'/my/employee/material/%s' % req.id"
+                                    class="btn btn-secondary btn-sm">View</a>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
+
+            <!-- MOBILE CARD LIST -->
+            <div class="d-md-none">
+                <t t-foreach="requests" t-as="req">
+                    <a t-att-href="'/my/employee/material/%s' % req.id"
+                    class="mobile-request-card">
+
+                        <div class="mobile-request-top">
+                            <div>
+                                <div class="mobile-request-id">
+                                    <t t-esc="req.name"/>
+                                </div>
+                                <div class="mobile-request-date">
+                                    <t t-esc="req.request_date"/>
+                                </div>
+                            </div>
+
+                            <div>
+                                <t t-raw="status_badge(req)"/>
+                            </div>
+                        </div>
+
+                        <div class="mobile-request-body">
+                            <div>
+                                <span class="label">Worksite</span>
+                                <div><t t-esc="req.worksite"/></div>
+                            </div>
+
+                            <div>
+                                <span class="label">Delivery</span>
+                                <div><t t-esc="req.delivery_date"/></div>
+                            </div>
+                        </div>
+
+                    </a>
+                </t>
+            </div>
+
+
         </div>
+    </div>
+
+</div>
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+
+            const input = document.getElementById("materialSearchInput");
+            if (!input) return;
+
+            input.addEventListener("input", function() {
+
+                // If user cleared search
+                if (this.value.trim() === "") {
+                    window.location.href = "/my/employee/material";
+                }
+
+            });
+
+        });
+        </script>
+
 
     </t>
 </template>

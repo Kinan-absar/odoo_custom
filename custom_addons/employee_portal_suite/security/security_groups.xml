@@ -64,5 +64,10 @@
         <field name="name">Material Request: Projects Director</field>
         <field name="category_id" ref="base.module_category_human_resources"/>
     </record>
+    <record id="group_employee_portal_announcement_manager" model="res.groups">
+        <field name="name">Employee Portal: Announcement Manager</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
 
 </odoo>

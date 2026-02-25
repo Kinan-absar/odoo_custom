@@ -102,6 +102,34 @@ class EmployeePortalMain(CustomerPortal):
                 ('state', '=', 'sent')
             ])
         # ------------------------------------------------------
+        # 5. Recent Activities (Employee + Material)
+        # ------------------------------------------------------
+        from itertools import chain
+
+        EmployeeRequest = request.env['employee.request'].sudo()
+        MaterialRequest = request.env['material.request'].sudo()
+
+        recent_employee = EmployeeRequest.search(
+            [('employee_id', '=', employee.id)],
+            order='create_date desc',
+            limit=5
+        )
+
+        recent_material = MaterialRequest.search(
+            [('employee_id.user_id', '=', user.id)],
+            order='create_date desc',
+            limit=5
+        )
+
+        # Merge and sort
+        recent_activities = list(chain(recent_employee, recent_material))
+        recent_activities = sorted(
+            recent_activities,
+            key=lambda r: r.create_date or r.write_date,
+            reverse=True
+        )[:6]
+
+        # ------------------------------------------------------
         # Render
         # ------------------------------------------------------
         return request.render("employee_portal_suite.employee_portal_dashboard", {
@@ -110,4 +138,29 @@ class EmployeePortalMain(CustomerPortal):
             "employee_pending_count": employee_pending_count,
             "material_pending_count": material_pending_count,
             "pending_sign_count": pending_sign_count,
+            "recent_activities": recent_activities,  # 👈 ADD THIS
         })
+        @http.route("/my/employee/petty-cash", type="http", auth="user", website=True)
+        def portal_petty_cash_list(self, **kw):
+
+            user = request.env.user
+
+            if not user.has_group("petty_cash_management.group_portal_petty_cash_user"):
+                return request.redirect("/my")
+
+            records = request.env["petty.cash"].search([
+                ("user_id", "=", user.id)
+            ])
+
+            return request.render("employee_portal_suite.portal_petty_cash_list", {
+                "records": records,
+            })
+        @http.route("/my/employee/petty-cash/new", type="http", auth="user", website=True)
+        def portal_petty_cash_new(self, **kw):
+
+            if not request.env.user.has_group(
+                "petty_cash_management.group_portal_petty_cash_user"
+            ):
+                return request.redirect("/my")
+
+            return request.render("employee_portal_suite.portal_petty_cash_new")

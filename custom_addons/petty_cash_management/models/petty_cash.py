@@ -69,6 +69,22 @@ class PettyCash(models.Model):
         string="Journal Entry",
         readonly=True
     )
+    can_edit = fields.Boolean(compute="_compute_can_edit")
+
+    attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'petty_cash_attachment_rel',
+        'petty_cash_id',
+        'attachment_id',
+        string='Attachments'
+    )
+
+    def _compute_can_edit(self):
+        for rec in self:
+            rec.can_edit = (
+                rec.state == 'draft'
+                and rec.user_id == self.env.user
+            )
 
     # ------- COMPUTE TOTALS --------
     @api.depends('line_ids.amount_before_vat', 'line_ids.vat_amount', 'line_ids.amount_total')
@@ -90,7 +106,10 @@ class PettyCash(models.Model):
                 raise UserError("Only drafts can be submitted.")
             rec.state = 'submitted'
             rec.message_post(body="Petty Cash Report submitted for approval.")
-            if not self.env.user.has_group('petty_cash_management.group_petty_cash_user'):
+            if not (
+                self.env.user.has_group('petty_cash_management.group_petty_cash_user')
+                or self.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')
+            ):
                 raise UserError("You do not have permission to submit petty cash reports.")
 
     def action_approve(self):
