@@ -703,6 +703,90 @@
                 ::-webkit-scrollbar-track { background: transparent; }
                 ::-webkit-scrollbar-thumb { background: rgba(79,70,229,0.2); border-radius: 10px; }
                 ::-webkit-scrollbar-thumb:hover { background: rgba(79,70,229,0.4); }
+            /* ================================================================
+            PORTAL ANNOUNCEMENT - PREMIUM RESPONSIVE
+            ================================================================ */
+
+            .portal-announcement-wrapper {
+                max-width: 1100px;
+                margin: 20px auto 10px auto;
+                padding: 0 16px;
+            }
+
+            .portal-announcement {
+                position: relative;
+                background: var(--surface);
+                border-radius: var(--radius-lg);
+                padding: 18px 20px 18px 24px;
+                margin-bottom: 12px;
+                box-shadow: var(--shadow-sm);
+                border: 1px solid var(--border-light);
+                overflow: hidden;
+                transition: transform var(--dur-fast) var(--ease-smooth),
+                            box-shadow var(--dur-fast) var(--ease-smooth);
+            }
+
+            .portal-announcement:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-md);
+            }
+
+            /* Accent left bar */
+            .portal-announcement::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 16px;
+                bottom: 16px;
+                width: 4px;
+                border-radius: 0 4px 4px 0;
+            }
+
+            /* Color Variants */
+            .portal-announcement-primary::before {
+                background: linear-gradient(180deg, var(--app-primary-light), var(--app-primary-dark));
+            }
+
+            .portal-announcement-success::before {
+                background: linear-gradient(180deg, #34D399, #059669);
+            }
+
+            .portal-announcement-warning::before {
+                background: linear-gradient(180deg, #FBBF24, #D97706);
+            }
+
+            .portal-announcement-danger::before {
+                background: linear-gradient(180deg, #F87171, #DC2626);
+            }
+
+            /* Content */
+            .portal-announcement-title {
+                font-weight: 700;
+                font-size: 14.5px;
+                margin-bottom: 6px;
+                letter-spacing: -0.02em;
+                color: var(--text-primary);
+            }
+
+            .portal-announcement-message {
+                font-size: 13.5px;
+                color: var(--text-secondary);
+                line-height: 1.5;
+            }
+
+            /* Mobile optimization */
+            @media (max-width: 768px) {
+                .portal-announcement-wrapper {
+                    margin: 14px 0 6px 0;
+                    padding: 0 16px;
+                }
+
+                .portal-announcement {
+                    border-radius: var(--radius-lg);
+                    padding: 16px 16px 16px 22px;
+                }
+            }
+
 
             </style>
 
@@ -801,7 +885,7 @@
                 ])"/>
 
             <t t-if="portal_announcements">
-                <div class="portal-announcement-wrapper mobile-only">
+                <div class="portal-announcement-wrapper">
                     <t t-foreach="portal_announcements" t-as="ann">
 
                         <t t-if="not ann.group_ids or request.env.user.groups_id &amp; ann.group_ids">
