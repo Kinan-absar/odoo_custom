@@ -10,26 +10,28 @@
                 <div class="container py-4">
 
                     <!-- HEADER -->
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="mb-0 fw-semibold">My Petty Cash Reports</h2>
+                    <div class="material-header">
+                        <div class="material-header-top">
+                            <h2 class="mb-0 fw-semibold">My Petty Cash Reports</h2>
 
-                        <form action="/my/employee/petty-cash/create" method="post">
-                            <input type="hidden"
-                                name="csrf_token"
-                                t-att-value="request.csrf_token()"/>
-                            <button type="submit"
-                                    class="btn btn-primary rounded-pill px-4">
-                                + New Report
-                            </button>
-                        </form>
+                            <form action="/my/employee/petty-cash/create" method="post">
+                                <input type="hidden"
+                                    name="csrf_token"
+                                    t-att-value="request.csrf_token()"/>
+                                <button type="submit"
+                                        class="btn btn-primary rounded-pill px-4">
+                                    + New Report
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
-                    <!-- TABLE / MOBILE CARDS -->
-                    <div class="card shadow-sm border-0 rounded-4">
+                    <!-- ================= DESKTOP TABLE ================= -->
+                    <div class="card shadow-sm border-0 rounded-4 d-none d-md-block">
                         <div class="card-body p-0">
 
-                            <table class="table table-hover table-sm mb-0 align-middle petty-table">
-                                <thead class="table-light d-none d-md-table-header-group">
+                            <table class="table table-hover table-sm mb-0 align-middle">
+                                <thead class="table-light">
                                     <tr>
                                         <th class="ps-4">Reference</th>
                                         <th>Date</th>
@@ -37,115 +39,142 @@
                                         <th>Status</th>
                                     </tr>
                                 </thead>
-
                                 <tbody>
                                     <t t-foreach="reports" t-as="report">
-                                        <tr class="petty-row">
-
-                                            <!-- REFERENCE -->
+                                        <tr>
                                             <td class="ps-4">
-                                                <a class="fw-semibold petty-link"
+                                                <a class="fw-semibold text-decoration-none"
                                                 t-att-href="'/my/employee/petty-cash/%s' % report.id">
                                                     <t t-esc="report.name"/>
                                                 </a>
                                             </td>
-
-                                            <!-- DATE -->
-                                            <td data-label="Date">
-                                                <t t-esc="report.date"/>
-                                            </td>
-
-                                            <!-- TOTAL -->
-                                            <td data-label="Total" class="fw-semibold">
+                                            <td><t t-esc="report.date"/></td>
+                                            <td class="fw-semibold">
                                                 <t t-esc="report.amount_total"/>
                                             </td>
-
-                                            <!-- STATUS -->
-                                            <td data-label="Status">
+                                            <td>
                                                 <t t-raw="status_badge(report)"/>
                                             </td>
-
                                         </tr>
                                     </t>
                                 </tbody>
-
                             </table>
 
                         </div>
                     </div>
 
+                    <!-- ================= MOBILE CARDS ================= -->
+                    <div class="d-md-none">
+
+                        <t t-foreach="reports" t-as="report">
+
+                            <a t-att-href="'/my/employee/petty-cash/%s' % report.id"
+                            class="mobile-request-card">
+
+                                <!-- TOP -->
+                                <div class="mobile-request-top">
+                                    <div>
+                                        <div class="mobile-request-id">
+                                            <t t-esc="report.name"/>
+                                        </div>
+                                        <div class="mobile-request-date">
+                                            <t t-esc="report.date"/>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <t t-raw="status_badge(report)"/>
+                                    </div>
+                                </div>
+
+                                <!-- BODY -->
+                                <div class="mobile-request-body">
+                                    <div>
+                                        <span class="label">Total</span>
+                                        <span class="fw-semibold">
+                                            <t t-esc="report.amount_total"/>
+                                        </span>
+                                    </div>
+                                </div>
+
+                            </a>
+
+                        </t>
+
+                    </div>
+
                 </div>
+            <style>
+@media (max-width: 768px) {
 
-                <!-- ================= MOBILE STYLE ================= -->
-                <style>
-                @media (max-width: 768px) {
+    .mobile-request-card {
+        display: block;
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        padding: 18px 18px 18px 22px;
+        margin-bottom: 10px;
+        text-decoration: none !important;
+        color: inherit;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-light);
+        transition: transform var(--dur-fast) var(--ease-smooth),
+                    box-shadow var(--dur-fast) var(--ease-smooth);
+        position: relative;
+        overflow: hidden;
+    }
 
-                    /* Hide header */
-                    .petty-table thead {
-                        display: none;
-                    }
+    .mobile-request-card::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 16px; bottom: 16px;
+        width: 3px;
+        background: linear-gradient(180deg, var(--app-primary-light), var(--app-primary-dark));
+        border-radius: 0 3px 3px 0;
+    }
 
-                    /* Row becomes card */
-                    .petty-row {
-                        display: block;
-                        background: #ffffff;
-                        border-radius: 22px;
-                        padding: 18px;
-                        margin: 12px;
-                        box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-                        border-left: 4px solid #6366F1;
-                    }
+    .mobile-request-card:active {
+        transform: scale(0.975);
+        box-shadow: var(--shadow-xs);
+    }
 
-                    /* Remove table borders */
-                    .petty-row td {
-                        display: flex;
-                        justify-content: space-between;
-                        border: none !important;
-                        padding: 6px 0;
-                    }
+    .mobile-request-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
 
-                    /* First cell (Reference) styling */
-                    .petty-row td:first-child {
-                        display: block;
-                        font-size: 16px;
-                        font-weight: 700;
-                        padding-bottom: 10px;
-                    }
+    .mobile-request-id {
+        font-weight: 700;
+        font-size: 14.5px;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+    }
 
-                    .petty-row td:first-child::before {
-                        content: "";
-                    }
+    .mobile-request-date {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
 
-                    /* Data label */
-                    .petty-row td::before {
-                        content: attr(data-label);
-                        font-size: 11px;
-                        font-weight: 600;
-                        color: #9CA3AF;
-                        letter-spacing: 0.05em;
-                    }
+    .mobile-request-body {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13.5px;
+        color: var(--text-secondary);
+    }
 
-                    /* Remove underline */
-                    .petty-link {
-                        text-decoration: none !important;
-                        color: #111827 !important;
-                    }
-
-                    /* Status badge improvement */
-                    .petty-row .badge {
-                        border-radius: 20px;
-                        padding: 6px 12px;
-                        font-size: 12px;
-                    }
-
-                    /* Press effect */
-                    .petty-row:active {
-                        transform: scale(0.98);
-                        transition: 0.1s ease;
-                    }
-
-                }
-                </style>
+    .mobile-request-body .label {
+        font-size: 10px;
+        color: var(--text-muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 3px;
+        display: block;
+    }
+}
+</style>
 
             </t>
         </template>
