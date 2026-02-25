@@ -6,18 +6,15 @@
     <!-- ===================================================== -->
     <template id="portal_petty_cash_list" name="Petty Cash List">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container py-4">
+            <div class="container py-4 petty-mobile">
 
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2 class="mb-0 fw-semibold">My Petty Cash Reports</h2>
 
-                    <form action="/my/employee/petty-cash/create"
-                          method="post">
-
+                    <form action="/my/employee/petty-cash/create" method="post">
                         <input type="hidden"
-                               name="csrf_token"
-                               t-att-value="request.csrf_token()"/>
-
+                            name="csrf_token"
+                            t-att-value="request.csrf_token()"/>
                         <button type="submit"
                                 class="btn btn-primary rounded-pill px-4">
                             + New Report
@@ -28,7 +25,7 @@
                 <div class="card shadow-sm border-0 rounded-4">
                     <div class="card-body p-0">
 
-                        <table class="table table-hover table-sm mb-0 align-middle">
+                        <table class="table table-hover table-sm mb-0 align-middle petty-table">
                             <thead class="table-light">
                                 <tr>
                                     <th class="ps-4">Reference</th>
@@ -39,19 +36,21 @@
                             </thead>
                             <tbody>
                                 <t t-foreach="reports" t-as="report">
-                                    <tr>
+                                    <tr class="petty-row">
                                         <td class="ps-4">
                                             <a class="fw-semibold text-decoration-none"
-                                               t-att-href="'/my/employee/petty-cash/%s' % report.id">
+                                            t-att-href="'/my/employee/petty-cash/%s' % report.id">
                                                 <t t-esc="report.name"/>
                                             </a>
                                         </td>
-                                        <td><t t-esc="report.date"/></td>
-                                        <td class="fw-semibold">
+                                        <td data-label="Date">
+                                            <t t-esc="report.date"/>
+                                        </td>
+                                        <td data-label="Total" class="fw-semibold">
                                             <t t-esc="report.amount_total"/>
                                         </td>
-                                        <td>
-                                           <t t-raw="status_badge(report)"/>
+                                        <td data-label="Status">
+                                            <t t-raw="status_badge(report)"/>
                                         </td>
                                     </tr>
                                 </t>
@@ -62,8 +61,50 @@
                 </div>
 
             </div>
+
+            <!-- MOBILE CSS -->
+            <style>
+            @media (max-width: 768px) {
+
+                .petty-table thead {
+                    display: none;
+                }
+
+                .petty-table tr.petty-row {
+                    display: block;
+                    border-bottom: 1px solid #eee;
+                    padding: 12px;
+                }
+
+                .petty-table tr.petty-row td {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 6px 0;
+                    border: none;
+                }
+
+                .petty-table tr.petty-row td:first-child {
+                    font-size: 15px;
+                    font-weight: 600;
+                    padding-bottom: 10px;
+                }
+
+                .petty-table tr.petty-row td::before {
+                    content: attr(data-label);
+                    font-weight: 500;
+                    color: #6c757d;
+                    font-size: 12px;
+                }
+
+                .petty-table tr.petty-row td:first-child::before {
+                    content: "";
+                }
+            }
+            </style>
+
         </t>
     </template>
+
 
 
     <!-- ===================================================== -->
@@ -122,7 +163,7 @@
 
                 <!-- Attachments -->
                 <t t-if="report.state == 'draft'">
-                    <div class="card shadow-sm border-0 rounded-4 mb-4">
+                    <div class="card shadow-sm border-0 rounded-4 mb-4 table-responsive-mobile">
                         <div class="card-body">
 
                             <h6 class="fw-semibold mb-3">Report Attachments</h6>
@@ -321,6 +362,44 @@
                 </t>
 
             </div>
+            <style>
+@media (max-width: 768px) {
+
+    /* Expense lines table becomes stacked */
+    .table-responsive-mobile table,
+    .table-responsive-mobile thead,
+    .table-responsive-mobile tbody,
+    .table-responsive-mobile th,
+    .table-responsive-mobile td,
+    .table-responsive-mobile tr {
+        display: block;
+        width: 100%;
+    }
+
+    .table-responsive-mobile thead {
+        display: none;
+    }
+
+    .table-responsive-mobile tr {
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+
+    .table-responsive-mobile td {
+        padding: 6px 0;
+        border: none;
+    }
+
+    /* Add button full width only on mobile */
+    .table-responsive-mobile .btn-success {
+        width: 100%;
+        margin-top: 8px;
+    }
+
+}
+</style>
+
         </t>
     </template>
 
