@@ -1,177 +1,155 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <!-- ===================================================== -->
-    <!-- LIST VIEW -->
-    <!-- ===================================================== -->
-    <template id="portal_petty_cash_list" name="Petty Cash List">
-        <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container py-4 petty-mobile">
+        <!-- ===================================================== -->
+        <!-- LIST VIEW -->
+        <!-- ===================================================== -->
+        <template id="portal_petty_cash_list" name="Petty Cash List">
+            <t t-call="employee_portal_suite.employee_portal_layout">
 
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="mb-0 fw-semibold">My Petty Cash Reports</h2>
+                <div class="container py-4">
 
-                    <form action="/my/employee/petty-cash/create" method="post">
-                        <input type="hidden"
-                            name="csrf_token"
-                            t-att-value="request.csrf_token()"/>
-                        <button type="submit"
-                                class="btn btn-primary rounded-pill px-4">
-                            + New Report
-                        </button>
-                    </form>
-                </div>
+                    <!-- HEADER -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="mb-0 fw-semibold">My Petty Cash Reports</h2>
 
-                <div class="card shadow-sm border-0 rounded-4">
-                    <div class="card-body p-0">
-
-                        <table class="table table-hover table-sm mb-0 align-middle petty-table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="ps-4">Reference</th>
-                                    <th>Date</th>
-                                    <th>Total</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="d-none d-md-table-row-group">
-                            <t t-foreach="reports" t-as="report">
-                                <tr>
-                                    <td class="ps-4">
-                                        <a class="fw-semibold text-decoration-none"
-                                        t-att-href="'/my/employee/petty-cash/%s' % report.id">
-                                            <t t-esc="report.name"/>
-                                        </a>
-                                    </td>
-                                    <td><t t-esc="report.date"/></td>
-                                    <td class="fw-semibold">
-                                        <t t-esc="report.amount_total"/>
-                                    </td>
-                                    <td>
-                                    <t t-raw="status_badge(report)"/>
-                                    </td>
-                                </tr>
-                            </t>
-                        </tbody>
-
-                        </table>
-                        <!-- MOBILE CARD LIST -->
-                        <div class="d-md-none petty-mobile-list">
-                            <t t-foreach="reports" t-as="report">
-                                <a t-att-href="'/my/employee/petty-cash/%s' % report.id"
-                                class="petty-card-link">
-
-                                    <div class="petty-card">
-
-                                        <div class="petty-card-top">
-                                            <div>
-                                                <div class="petty-ref">
-                                                    <t t-esc="report.name"/>
-                                                </div>
-                                                <div class="petty-date">
-                                                    <t t-esc="report.date"/>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <t t-raw="status_badge(report)"/>
-                                            </div>
-                                        </div>
-
-                                        <div class="petty-card-bottom">
-                                            <div>
-                                                <div class="petty-label">TOTAL</div>
-                                                <div class="petty-total">
-                                                    <t t-esc="report.amount_total"/>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </a>
-                            </t>
-                        </div>
-
-
+                        <form action="/my/employee/petty-cash/create" method="post">
+                            <input type="hidden"
+                                name="csrf_token"
+                                t-att-value="request.csrf_token()"/>
+                            <button type="submit"
+                                    class="btn btn-primary rounded-pill px-4">
+                                + New Report
+                            </button>
+                        </form>
                     </div>
+
+                    <!-- TABLE / MOBILE CARDS -->
+                    <div class="card shadow-sm border-0 rounded-4">
+                        <div class="card-body p-0">
+
+                            <table class="table table-hover table-sm mb-0 align-middle petty-table">
+                                <thead class="table-light d-none d-md-table-header-group">
+                                    <tr>
+                                        <th class="ps-4">Reference</th>
+                                        <th>Date</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <t t-foreach="reports" t-as="report">
+                                        <tr class="petty-row">
+
+                                            <!-- REFERENCE -->
+                                            <td class="ps-4">
+                                                <a class="fw-semibold petty-link"
+                                                t-att-href="'/my/employee/petty-cash/%s' % report.id">
+                                                    <t t-esc="report.name"/>
+                                                </a>
+                                            </td>
+
+                                            <!-- DATE -->
+                                            <td data-label="Date">
+                                                <t t-esc="report.date"/>
+                                            </td>
+
+                                            <!-- TOTAL -->
+                                            <td data-label="Total" class="fw-semibold">
+                                                <t t-esc="report.amount_total"/>
+                                            </td>
+
+                                            <!-- STATUS -->
+                                            <td data-label="Status">
+                                                <t t-raw="status_badge(report)"/>
+                                            </td>
+
+                                        </tr>
+                                    </t>
+                                </tbody>
+
+                            </table>
+
+                        </div>
+                    </div>
+
                 </div>
 
-            </div>
+                <!-- ================= MOBILE STYLE ================= -->
+                <style>
+                @media (max-width: 768px) {
 
-            <style>
-/* ===== MOBILE PETTY CARDS ===== */
+                    /* Hide header */
+                    .petty-table thead {
+                        display: none;
+                    }
 
-@media (max-width: 768px) {
+                    /* Row becomes card */
+                    .petty-row {
+                        display: block;
+                        background: #ffffff;
+                        border-radius: 22px;
+                        padding: 18px;
+                        margin: 12px;
+                        box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+                        border-left: 4px solid #6366F1;
+                    }
 
-    .petty-card-link {
-        text-decoration: none !important;
-        color: inherit !important;
-    }
+                    /* Remove table borders */
+                    .petty-row td {
+                        display: flex;
+                        justify-content: space-between;
+                        border: none !important;
+                        padding: 6px 0;
+                    }
 
-    .petty-card {
-        background: #ffffff;
-        border-radius: 22px;
-        padding: 18px;
-        margin-bottom: 14px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-        border-left: 4px solid #6366F1;
-        transition: all 0.2s ease;
-    }
+                    /* First cell (Reference) styling */
+                    .petty-row td:first-child {
+                        display: block;
+                        font-size: 16px;
+                        font-weight: 700;
+                        padding-bottom: 10px;
+                    }
 
-    .petty-card:active {
-        transform: scale(0.98);
-    }
+                    .petty-row td:first-child::before {
+                        content: "";
+                    }
 
-    .petty-card-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-    }
+                    /* Data label */
+                    .petty-row td::before {
+                        content: attr(data-label);
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: #9CA3AF;
+                        letter-spacing: 0.05em;
+                    }
 
-    .petty-ref {
-        font-size: 16px;
-        font-weight: 700;
-        color: #111827;
-    }
+                    /* Remove underline */
+                    .petty-link {
+                        text-decoration: none !important;
+                        color: #111827 !important;
+                    }
 
-    .petty-date {
-        font-size: 12px;
-        color: #6B7280;
-        margin-top: 4px;
-    }
+                    /* Status badge improvement */
+                    .petty-row .badge {
+                        border-radius: 20px;
+                        padding: 6px 12px;
+                        font-size: 12px;
+                    }
 
-    .petty-card-bottom {
-        margin-top: 16px;
-        display: flex;
-        justify-content: space-between;
-    }
+                    /* Press effect */
+                    .petty-row:active {
+                        transform: scale(0.98);
+                        transition: 0.1s ease;
+                    }
 
-    .petty-label {
-        font-size: 11px;
-        letter-spacing: 0.05em;
-        color: #9CA3AF;
-    }
+                }
+                </style>
 
-    .petty-total {
-        font-size: 18px;
-        font-weight: 700;
-        margin-top: 4px;
-        color: #111827;
-    }
+            </t>
+        </template>
 
-    /* Improve status badge look */
-    .petty-card .badge {
-        border-radius: 20px;
-        padding: 6px 12px;
-        font-size: 12px;
-    }
-
-}
-</style>
-
-
-        </t>
-    </template>
 
 
 
