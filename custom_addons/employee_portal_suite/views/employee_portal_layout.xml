@@ -735,7 +735,7 @@
                     </t>
 
                     <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
-                        <a href="/my/petty-cash" class="ep-link">Petty Cash</a>
+                        <a href="/my/employee/petty-cash" class="ep-link">Petty Cash</a>
                     </t>
                 </div>
 
@@ -860,8 +860,8 @@
                     </t>
 
                     <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
-                        <a href="/my/petty-cash"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/petty-cash') else 'nav-btn'">
+                        <a href="/my/employee/petty-cash"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/petty-cash') else 'nav-btn'">
                             <i class="fa fa-money"></i>
                             <span>Cash</span>
                         </a>
