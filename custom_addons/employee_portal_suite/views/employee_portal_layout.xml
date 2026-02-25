@@ -453,6 +453,33 @@
                 .ep-fab-center.fab-open .fab-plus i {
                     transform: rotate(45deg);
                 }
+                /* ================================================================
+                BASIC MODE (4 buttons total)
+                ================================================================ */
+
+                .ep-bottom-nav.basic-nav .ep-nav-left,
+                .ep-bottom-nav.basic-nav .ep-nav-right {
+                    justify-content: space-evenly;
+                }
+
+                /* Slightly bigger icons for 4-button layout */
+                .ep-bottom-nav.basic-nav .nav-btn i {
+                    font-size: 20px;
+                }
+
+                .ep-bottom-nav.basic-nav .nav-btn span {
+                    font-size: 11px;
+                }
+
+                /* ================================================================
+                EXTENDED MODE (6 buttons total)
+                ================================================================ */
+
+                .ep-bottom-nav.extended-nav .ep-nav-left,
+                .ep-bottom-nav.extended-nav .ep-nav-right {
+                    justify-content: space-around;
+                }
+
 
                 /* ================================================================
                    MOBILE REQUEST CARDS
@@ -780,7 +807,20 @@
             <!-- ================================================================
                  MOBILE BOTTOM NAV
                  ================================================================ -->
-            <nav class="ep-bottom-nav mobile-only">
+                 <t t-set="has_extended_nav"
+   t-value="
+       request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+       or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+       or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+       or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+       or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+       or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+       or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+       or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+       or request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')
+   "/>
+
+            <nav t-att-class="'ep-bottom-nav mobile-only ' + ('extended-nav' if has_extended_nav else 'basic-nav')">
 
                 <div class="ep-nav-left">
 
@@ -795,12 +835,15 @@
                         <i class="fa fa-file-text-o"></i>
                         <span>Employee</span>
                     </a>
-
-                    <a href="/my/employee/material"
-                        t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') and not request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
-                        <i class="fa fa-cubes"></i>
-                        <span>Material</span>
-                    </a>
+                    
+                        <!-- ONLY if extended -->
+                    <t t-if="has_extended_nav">
+                        <a href="/my/employee/material"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') and not request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
+                            <i class="fa fa-cubes"></i>
+                            <span>Material</span>
+                        </a>
+                    </t>
 
                 </div>
 
@@ -811,7 +854,15 @@
                 </div>
 
                 <div class="ep-nav-right">
-
+                    <!-- BASIC MODE: Material moves here -->
+                    <t t-if="not has_extended_nav">
+                        <a href="/my/employee/material"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') else 'nav-btn'">
+                            <i class="fa fa-cubes"></i>
+                            <span>Material</span>
+                        </a>
+                    </t>
+                     <t t-if="has_extended_nav">
                     <t t-if="
                         request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
                         or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
@@ -866,7 +917,7 @@
                             <span>Cash</span>
                         </a>
                     </t>
-
+                       </t>
                     <a href="/web/session/logout" class="nav-btn">
                         <i class="fa fa-sign-out"></i>
                         <span>Exit</span>
