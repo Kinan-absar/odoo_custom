@@ -34,73 +34,141 @@
                                     <th>Status</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <t t-foreach="reports" t-as="report">
-                                    <tr class="petty-row">
-                                        <td class="ps-4">
-                                            <a class="fw-semibold text-decoration-none"
-                                            t-att-href="'/my/employee/petty-cash/%s' % report.id">
-                                                <t t-esc="report.name"/>
-                                            </a>
-                                        </td>
-                                        <td data-label="Date">
-                                            <t t-esc="report.date"/>
-                                        </td>
-                                        <td data-label="Total" class="fw-semibold">
-                                            <t t-esc="report.amount_total"/>
-                                        </td>
-                                        <td data-label="Status">
-                                            <t t-raw="status_badge(report)"/>
-                                        </td>
-                                    </tr>
-                                </t>
-                            </tbody>
+                            <tbody class="d-none d-md-table-row-group">
+                            <t t-foreach="reports" t-as="report">
+                                <tr>
+                                    <td class="ps-4">
+                                        <a class="fw-semibold text-decoration-none"
+                                        t-att-href="'/my/employee/petty-cash/%s' % report.id">
+                                            <t t-esc="report.name"/>
+                                        </a>
+                                    </td>
+                                    <td><t t-esc="report.date"/></td>
+                                    <td class="fw-semibold">
+                                        <t t-esc="report.amount_total"/>
+                                    </td>
+                                    <td>
+                                    <t t-raw="status_badge(report)"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+
                         </table>
+                        <!-- MOBILE CARD LIST -->
+                        <div class="d-md-none petty-mobile-list">
+                            <t t-foreach="reports" t-as="report">
+                                <a t-att-href="'/my/employee/petty-cash/%s' % report.id"
+                                class="petty-card-link">
+
+                                    <div class="petty-card">
+
+                                        <div class="petty-card-top">
+                                            <div>
+                                                <div class="petty-ref">
+                                                    <t t-esc="report.name"/>
+                                                </div>
+                                                <div class="petty-date">
+                                                    <t t-esc="report.date"/>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <t t-raw="status_badge(report)"/>
+                                            </div>
+                                        </div>
+
+                                        <div class="petty-card-bottom">
+                                            <div>
+                                                <div class="petty-label">TOTAL</div>
+                                                <div class="petty-total">
+                                                    <t t-esc="report.amount_total"/>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </a>
+                            </t>
+                        </div>
+
 
                     </div>
                 </div>
 
             </div>
 
-            <!-- MOBILE CSS -->
             <style>
-            @media (max-width: 768px) {
+/* ===== MOBILE PETTY CARDS ===== */
 
-                .petty-table thead {
-                    display: none;
-                }
+@media (max-width: 768px) {
 
-                .petty-table tr.petty-row {
-                    display: block;
-                    border-bottom: 1px solid #eee;
-                    padding: 12px;
-                }
+    .petty-card-link {
+        text-decoration: none !important;
+        color: inherit !important;
+    }
 
-                .petty-table tr.petty-row td {
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 6px 0;
-                    border: none;
-                }
+    .petty-card {
+        background: #ffffff;
+        border-radius: 22px;
+        padding: 18px;
+        margin-bottom: 14px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+        border-left: 4px solid #6366F1;
+        transition: all 0.2s ease;
+    }
 
-                .petty-table tr.petty-row td:first-child {
-                    font-size: 15px;
-                    font-weight: 600;
-                    padding-bottom: 10px;
-                }
+    .petty-card:active {
+        transform: scale(0.98);
+    }
 
-                .petty-table tr.petty-row td::before {
-                    content: attr(data-label);
-                    font-weight: 500;
-                    color: #6c757d;
-                    font-size: 12px;
-                }
+    .petty-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
 
-                .petty-table tr.petty-row td:first-child::before {
-                    content: "";
-                }
-            }
-            </style>
+    .petty-ref {
+        font-size: 16px;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .petty-date {
+        font-size: 12px;
+        color: #6B7280;
+        margin-top: 4px;
+    }
+
+    .petty-card-bottom {
+        margin-top: 16px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .petty-label {
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        color: #9CA3AF;
+    }
+
+    .petty-total {
+        font-size: 18px;
+        font-weight: 700;
+        margin-top: 4px;
+        color: #111827;
+    }
+
+    /* Improve status badge look */
+    .petty-card .badge {
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+}
+</style>
+
 
         </t>
     </template>
