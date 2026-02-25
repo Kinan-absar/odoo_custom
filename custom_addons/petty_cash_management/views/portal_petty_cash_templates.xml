@@ -11,7 +11,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2 class="mb-0 fw-semibold">My Petty Cash Reports</h2>
 
-                    <form action="/my/petty-cash/create"
+                    <form action="/my/employee/petty-cash/create"
                           method="post">
 
                         <input type="hidden"
@@ -42,7 +42,7 @@
                                     <tr>
                                         <td class="ps-4">
                                             <a class="fw-semibold text-decoration-none"
-                                               t-att-href="'/my/petty-cash/%s' % report.id">
+                                               t-att-href="'/my/employee/petty-cash/%s' % report.id">
                                                 <t t-esc="report.name"/>
                                             </a>
                                         </td>
@@ -74,7 +74,7 @@
 
             <div class="container py-4">
 
-                <a href="/my/petty-cash"
+                <a href="/my/employee/petty-cash"
                    class="text-decoration-none small text-muted">
                     ← Back
                 </a>
@@ -127,7 +127,7 @@
 
                             <h6 class="fw-semibold mb-3">Report Attachments</h6>
 
-                            <form t-att-action="'/my/petty-cash/%s/upload-attachment' % report.id"
+                            <form t-att-action="'/my/employee/petty-cash/%s/upload-attachment' % report.id"
                                   method="post"
                                   enctype="multipart/form-data">
 
@@ -173,7 +173,7 @@
                                         </a>
 
                                         <t t-if="report.state == 'draft'">
-                                            <form t-att-action="'/my/petty-cash/attachment/%s/delete' % att.id"
+                                            <form t-att-action="'/my/employee/petty-cash/attachment/%s/delete' % att.id"
                                                   method="post"
                                                   class="d-inline">
 
@@ -205,7 +205,7 @@
 
                         <h6 class="fw-semibold mb-3">Expense Lines</h6>
 
-                        <form t-att-action="'/my/petty-cash/%s/add-line' % report.id"
+                        <form t-att-action="'/my/employee/petty-cash/%s/add-line' % report.id"
                               method="post"
                               enctype="multipart/form-data">
 
@@ -305,7 +305,7 @@
                 </div>
 
                 <t t-if="report.state == 'draft'">
-                    <form t-att-action="'/my/petty-cash/%s/submit' % report.id"
+                    <form t-att-action="'/my/employee/petty-cash/%s/submit' % report.id"
                           method="post"
                           class="text-end">
 

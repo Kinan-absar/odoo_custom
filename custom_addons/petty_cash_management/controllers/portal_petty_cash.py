@@ -1,8 +1,8 @@
-from odoo import http
+from odoo import http, fields
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal
 import base64
-from odoo import fields
+
 
 def _petty_status_badge(rec):
 
@@ -20,12 +20,13 @@ def _petty_status_badge(rec):
 
     return '<span class="badge bg-secondary">Unknown</span>'
 
+
 class PortalPettyCash(CustomerPortal):
 
     # -------------------------------
     # LIST
     # -------------------------------
-    @http.route(['/my/petty-cash'], type='http', auth="user", website=True)
+    @http.route(['/my/employee/petty-cash'], type='http', auth="user", website=True)
     def portal_my_petty_cash(self, **kwargs):
 
         reports = request.env['petty.cash'].sudo().search([
@@ -42,15 +43,15 @@ class PortalPettyCash(CustomerPortal):
         )
 
     # -------------------------------
-    # DETAIL (WITH CATEGORIES)
+    # DETAIL
     # -------------------------------
-    @http.route(['/my/petty-cash/<int:report_id>'], type='http', auth="user", website=True)
+    @http.route(['/my/employee/petty-cash/<int:report_id>'], type='http', auth="user", website=True)
     def portal_petty_cash_detail(self, report_id, **kwargs):
 
         report = request.env['petty.cash'].sudo().browse(report_id)
 
         if not report or report.user_id != request.env.user:
-            return request.redirect('/my')
+            return request.redirect('/my/employee')
 
         categories = request.env['petty.cash.category'].sudo().search([])
 
@@ -58,7 +59,7 @@ class PortalPettyCash(CustomerPortal):
             'petty_cash_management.portal_petty_cash_detail',
             {
                 'report': report,
-                'categories': categories,   # 🔥 THIS WAS MISSING
+                'categories': categories,
                 'status_badge': _petty_status_badge,
             }
         )
@@ -66,7 +67,7 @@ class PortalPettyCash(CustomerPortal):
     # -------------------------------
     # CREATE REPORT
     # -------------------------------
-    @http.route('/my/petty-cash/create', type='http', auth='user', website=True, methods=['POST'])
+    @http.route('/my/employee/petty-cash/create', type='http', auth='user', website=True, methods=['POST'])
     def portal_petty_cash_create(self, **post):
 
         PettyCash = request.env['petty.cash'].sudo()
@@ -85,28 +86,28 @@ class PortalPettyCash(CustomerPortal):
 
         petty_cash = PettyCash.create(vals)
 
-        return request.redirect(f'/my/petty-cash/{petty_cash.id}')
+        return request.redirect(f'/my/employee/petty-cash/{petty_cash.id}')
 
     # -------------------------------
-    # ADD LINE (INLINE)
+    # ADD LINE
     # -------------------------------
-    @http.route('/my/petty-cash/<int:report_id>/add-line',
+    @http.route('/my/employee/petty-cash/<int:report_id>/add-line',
                 type='http', auth='user', website=True, methods=['POST'])
     def portal_add_line_post(self, report_id, **post):
 
         report = request.env['petty.cash'].sudo().browse(report_id)
 
         if not report or report.user_id != request.env.user:
-            return request.redirect('/my')
+            return request.redirect('/my/employee')
 
         if report.state != 'draft':
-            return request.redirect('/my/petty-cash/%s' % report_id)
+            return request.redirect(f'/my/employee/petty-cash/{report_id}')
 
         category_id = post.get('category_id')
         amount = post.get('amount_before_vat')
 
         if not category_id or not amount:
-            return request.redirect('/my/petty-cash/%s' % report_id)
+            return request.redirect(f'/my/employee/petty-cash/{report_id}')
 
         line_vals = {
             'petty_cash_id': report.id,
@@ -133,35 +134,41 @@ class PortalPettyCash(CustomerPortal):
                 'res_id': line.id,
             })
 
-        return request.redirect('/my/petty-cash/%s' % report.id)
-        
-    @http.route('/my/petty-cash/<int:report_id>/submit',
-            type='http', auth='user', website=True, methods=['POST'])
+        return request.redirect(f'/my/employee/petty-cash/{report.id}')
+
+    # -------------------------------
+    # SUBMIT
+    # -------------------------------
+    @http.route('/my/employee/petty-cash/<int:report_id>/submit',
+                type='http', auth='user', website=True, methods=['POST'])
     def portal_submit_report(self, report_id, **post):
 
         report = request.env['petty.cash'].sudo().browse(report_id)
 
         if not report or report.user_id != request.env.user:
-            return request.redirect('/my')
+            return request.redirect('/my/employee')
 
         if not report.line_ids:
-            return request.redirect(f'/my/petty-cash/{report_id}?error=no_lines')
+            return request.redirect(f'/my/employee/petty-cash/{report_id}?error=no_lines')
 
         if report.state != 'draft':
-            return request.redirect(f'/my/petty-cash/{report_id}')
+            return request.redirect(f'/my/employee/petty-cash/{report_id}')
 
         report.action_submit()
 
-        return request.redirect(f'/my/petty-cash/{report_id}')
+        return request.redirect(f'/my/employee/petty-cash/{report_id}')
 
-    @http.route('/my/petty-cash/<int:report_id>/upload-attachment',
-            type='http', auth='user', website=True, methods=['POST'])
+    # -------------------------------
+    # UPLOAD ATTACHMENT
+    # -------------------------------
+    @http.route('/my/employee/petty-cash/<int:report_id>/upload-attachment',
+                type='http', auth='user', website=True, methods=['POST'])
     def portal_upload_attachment(self, report_id, **post):
 
         report = request.env['petty.cash'].sudo().browse(report_id)
 
         if not report or report.user_id != request.env.user:
-            return request.redirect('/my')
+            return request.redirect('/my/employee')
 
         file = post.get('attachment')
 
@@ -171,37 +178,33 @@ class PortalPettyCash(CustomerPortal):
                 'datas': base64.b64encode(file.read()),
                 'res_model': 'petty.cash',
                 'res_id': report.id,
-                'public': True,   # ← THIS IS THE MAGIC FIX
+                'public': True,
             })
 
-            # 🔥 IMPORTANT
             report.attachment_ids = [(4, attachment.id)]
 
-        return request.redirect(f'/my/petty-cash/{report_id}?success=uploaded')
+        return request.redirect(f'/my/employee/petty-cash/{report_id}?success=uploaded')
 
-    @http.route('/my/petty-cash/attachment/<int:attachment_id>/delete',
-            type='http', auth='user', website=True)
+    # -------------------------------
+    # DELETE ATTACHMENT
+    # -------------------------------
+    @http.route('/my/employee/petty-cash/attachment/<int:attachment_id>/delete',
+                type='http', auth='user', website=True)
     def portal_delete_attachment(self, attachment_id, **kw):
 
         attachment = request.env['ir.attachment'].sudo().browse(attachment_id)
 
-        if not attachment:
-            return request.redirect('/my')
-
-        # Ensure attachment belongs to petty cash
-        if attachment.res_model != 'petty.cash':
-            return request.redirect('/my')
+        if not attachment or attachment.res_model != 'petty.cash':
+            return request.redirect('/my/employee')
 
         report = request.env['petty.cash'].sudo().browse(attachment.res_id)
 
-        # Security check
         if not report or report.user_id != request.env.user:
-            return request.redirect('/my')
+            return request.redirect('/my/employee')
 
-        # Only allow delete in draft
         if report.state != 'draft':
-            return request.redirect(f'/my/petty-cash/{report.id}')
+            return request.redirect(f'/my/employee/petty-cash/{report.id}')
 
         attachment.unlink()
 
-        return request.redirect(f'/my/petty-cash/{report.id}')
+        return request.redirect(f'/my/employee/petty-cash/{report.id}')

@@ -140,7 +140,7 @@ class EmployeePortalMain(CustomerPortal):
             "pending_sign_count": pending_sign_count,
             "recent_activities": recent_activities,  # 👈 ADD THIS
         })
-        @http.route("/my/petty-cash", type="http", auth="user", website=True)
+        @http.route("/my/employee/petty-cash", type="http", auth="user", website=True)
         def portal_petty_cash_list(self, **kw):
 
             user = request.env.user
@@ -155,7 +155,7 @@ class EmployeePortalMain(CustomerPortal):
             return request.render("employee_portal_suite.portal_petty_cash_list", {
                 "records": records,
             })
-        @http.route("/my/petty-cash/new", type="http", auth="user", website=True)
+        @http.route("/my/employee/petty-cash/new", type="http", auth="user", website=True)
         def portal_petty_cash_new(self, **kw):
 
             if not request.env.user.has_group(
