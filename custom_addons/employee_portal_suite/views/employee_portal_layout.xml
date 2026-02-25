@@ -795,6 +795,33 @@
                 </div>
             </t>
 
+            <t t-set="today" t-value="context_today()"/>
+
+                <t t-set="portal_announcements"
+                t-value="request.env['portal.announcement'].sudo().search([
+                        ('active', '=', True),
+                        '|', ('start_date', '=', False), ('start_date', '&lt;=', today),
+                        '|', ('end_date', '=', False), ('end_date', '&gt;=', today),
+                ])"/>
+            <t t-if="portal_announcements">
+                <div class="portal-announcement-wrapper mobile-only">
+                    <t t-foreach="portal_announcements" t-as="ann">
+
+                        <t t-if="not ann.group_ids or request.env.user.groups_id &amp; ann.group_ids">
+                            <div t-attf-class="portal-announcement alert alert-#{ann.color}">
+                                <div class="fw-bold mb-1">
+                                    <t t-esc="ann.name"/>
+                                </div>
+                                <div>
+                                    <t t-raw="ann.message"/>
+                                </div>
+                            </div>
+                        </t>
+
+                    </t>
+                </div>
+            </t>
+
             <!-- ================================================================
                  MAIN CONTENT
                  ================================================================ -->
