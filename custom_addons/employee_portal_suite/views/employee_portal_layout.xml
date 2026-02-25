@@ -795,14 +795,11 @@
                 </div>
             </t>
 
-            <t t-set="today" t-value="context_today()"/>
-
-                <t t-set="portal_announcements"
+            <t t-set="portal_announcements"
                 t-value="request.env['portal.announcement'].sudo().search([
-                        ('active', '=', True),
-                        '|', ('start_date', '=', False), ('start_date', '&lt;=', today),
-                        '|', ('end_date', '=', False), ('end_date', '&gt;=', today),
+                        ('active', '=', True)
                 ])"/>
+
             <t t-if="portal_announcements">
                 <div class="portal-announcement-wrapper mobile-only">
                     <t t-foreach="portal_announcements" t-as="ann">
