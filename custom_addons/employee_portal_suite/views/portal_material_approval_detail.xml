@@ -395,30 +395,25 @@
 
                 </div>
             </div>
-<div class="mt-4">
-    <h5>Communication</h5>
-
-    <!-- Messages -->
-    <t t-foreach="request.message_ids" t-as="msg">
-        <div class="border p-2 mb-2">
-            <strong><t t-esc="msg.author_id.name"/></strong>
-            <small class="text-muted">
-                <t t-esc="msg.date"/>
-            </small>
-            <div>
-                <t t-raw="msg.body"/>
-            </div>
+<t t-foreach="request_rec.message_ids.filtered(lambda m: m.message_type == 'comment')" t-as="msg">
+    <div class="border p-2 mb-2">
+        <strong><t t-esc="msg.author_id.name or 'Unknown'"/></strong>
+        <small class="text-muted ms-2">
+            <t t-esc="msg.date"/>
+        </small>
+        <div class="mt-1">
+            <t t-raw="msg.body"/>
         </div>
-    </t>
+    </div>
+</t>
 
-    <!-- Post Form -->
-    <form t-att-action="'/my/material/%s/message' % request.id" method="post">
-        <textarea name="message" class="form-control" placeholder="Write something..." required="1"/>
-        <button type="submit" class="btn btn-primary mt-2">
-            Send
-        </button>
-    </form>
-</div>
+<form t-att-action="'/my/employee/material/%s/message' % request_rec.id" method="post">
+    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+    <textarea name="message" class="form-control" placeholder="Write something..." required="1"></textarea>
+    <button type="submit" class="btn btn-primary mt-2">
+        Send
+    </button>
+</form>
         </div>
         
 
