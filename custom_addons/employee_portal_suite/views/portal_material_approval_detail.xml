@@ -395,9 +395,32 @@
 
                 </div>
             </div>
+<div class="mt-4">
+    <h5>Communication</h5>
 
+    <!-- Messages -->
+    <t t-foreach="request.message_ids" t-as="msg">
+        <div class="border p-2 mb-2">
+            <strong><t t-esc="msg.author_id.name"/></strong>
+            <small class="text-muted">
+                <t t-esc="msg.date"/>
+            </small>
+            <div>
+                <t t-raw="msg.body"/>
+            </div>
         </div>
+    </t>
 
+    <!-- Post Form -->
+    <form t-att-action="'/my/material/%s/message' % request.id" method="post">
+        <textarea name="message" class="form-control" placeholder="Write something..." required="1"/>
+        <button type="submit" class="btn btn-primary mt-2">
+            Send
+        </button>
+    </form>
+</div>
+        </div>
+        
 
         <!-- TIMELINE CSS (ADDED) -->
         <style>

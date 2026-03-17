@@ -527,3 +527,18 @@ class EmployeePortalMaterialRequests(http.Controller):
             return request.redirect(f"/my/employee/material/approvals/{req_id}")
         else:
             return request.redirect(f"/my/employee/material/{req_id}")
+
+    @http.route(['/my/material/<int:request_id>/message'], type='http', auth='user', website=True, methods=['POST'])
+    def post_message(self, request_id, **post):
+        record = request.env['material.request'].sudo().browse(request_id)
+
+        message = post.get('message')
+
+        if message:
+            record.message_post(
+                body=message,
+                message_type='comment',
+                subtype_xmlid='mail.mt_comment'
+            )
+
+        return request.redirect(f'/my/material/{request_id}')
