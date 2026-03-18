@@ -49,7 +49,7 @@ class ConstructionMeasurement(models.Model):
 
     def action_reset_to_draft(self):
         self.state = 'draft'
-        
+
     def action_load_boq_lines(self):
         for rec in self:
             if rec.state != 'draft':
@@ -62,13 +62,12 @@ class ConstructionMeasurement(models.Model):
 
             lines = []
             for boq in rec.contract_id.boq_line_ids:
-
                 last_line = self.env['construction.measurement.line'].search([
                     ('boq_line_id', '=', boq.id),
                     ('measurement_id.contract_id', '=', rec.contract_id.id),
                     ('measurement_id.state', '=', 'approved'),
-                    ('measurement_id.id', '!=', rec.id),
-                ], order='measurement_id.date desc, measurement_id.id desc', limit=1)
+                    ('measurement_id', '!=', rec.id),
+                ], order='id desc', limit=1)
 
                 previous_qty = last_line.cumulative_qty if last_line else 0.0
 
@@ -80,12 +79,17 @@ class ConstructionMeasurement(models.Model):
 
             rec.line_ids = lines
 
+
 class ConstructionMeasurementLine(models.Model):
     _name = 'construction.measurement.line'
     _description = 'Construction Measurement Line'
 
     measurement_id = fields.Many2one('construction.measurement', required=True, ondelete='cascade')
-    boq_line_id = fields.Many2one('construction.contract.boq.line', required=True, domain="[('contract_id', '=', parent.contract_id)]")
+    boq_line_id = fields.Many2one(
+        'construction.contract.boq.line',
+        required=True,
+        domain="[('contract_id', '=', parent.contract_id)]",
+    )
     description = fields.Text(related='boq_line_id.description', store=True)
     unit_rate = fields.Monetary(related='boq_line_id.unit_rate', store=True)
     currency_id = fields.Many2one(related='measurement_id.contract_id.currency_id', store=True)
@@ -105,5 +109,3 @@ class ConstructionMeasurementLine(models.Model):
         for rec in self:
             if rec.current_qty < 0:
                 raise ValidationError('Current quantity cannot be negative.')
-    
-    
