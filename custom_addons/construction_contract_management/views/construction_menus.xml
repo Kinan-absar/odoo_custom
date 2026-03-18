@@ -1,0 +1,26 @@
+<odoo>
+
+    <menuitem id="menu_construction_root"
+              name="Construction Contracts"
+              sequence="10"
+              groups="construction_contract_management.group_construction_user"/>
+
+    <menuitem id="menu_construction_contracts"
+              name="Contracts"
+              parent="menu_construction_root"
+              action="action_construction_contract"
+              sequence="10"/>
+
+    <menuitem id="menu_construction_measurements"
+              name="Measurements"
+              parent="menu_construction_root"
+              action="action_construction_measurement"
+              sequence="20"/>
+
+    <menuitem id="menu_construction_ipcs"
+              name="IPCs"
+              parent="menu_construction_root"
+              action="action_construction_ipc"
+              sequence="30"/>
+
+</odoo>

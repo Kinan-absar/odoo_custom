@@ -1,0 +1,115 @@
+<odoo>
+
+    <!-- List View -->
+    <record id="view_construction_measurement_list" model="ir.ui.view">
+        <field name="name">construction.measurement.list</field>
+        <field name="model">construction.measurement</field>
+        <field name="arch" type="xml">
+            <list string="Measurements" default_order="id desc">
+                <field name="name"/>
+                <field name="contract_id"/>
+                <field name="project_id"/>
+                <field name="date"/>
+                <field name="period_from"/>
+                <field name="period_to"/>
+                <field name="prepared_by"/>
+                <field name="checked_by"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_construction_measurement_form" model="ir.ui.view">
+        <field name="name">construction.measurement.form</field>
+        <field name="model">construction.measurement</field>
+        <field name="arch" type="xml">
+            <form string="Measurement">
+                <header>
+                    <button name="action_submit" string="Submit" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_check" string="Check" type="object" class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_approve" string="Approve" type="object" class="btn-primary" invisible="state != 'checked'"/>
+                    <button name="action_reject" string="Reject" type="object" invisible="state not in ['submitted','checked']"/>
+                    <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state == 'draft'"/>
+                    <button name="action_load_boq_lines" string="Load BOQ Lines" type="object" class="btn-secondary" invisible="state != 'draft'"/>
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,checked,approved,rejected"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="contract_id"/>
+                            <field name="project_id" readonly="1"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="period_from"/>
+                            <field name="period_to"/>
+                            <field name="prepared_by"/>
+                            <field name="checked_by"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Measurement Lines">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="boq_line_id"/>
+                                    <field name="description" readonly="1"/>
+                                    <field name="previous_qty"/>
+                                    <field name="current_qty"/>
+                                    <field name="cumulative_qty" readonly="1"/>
+                                    <field name="remarks"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Chatter">
+                            <field name="message_follower_ids"/>
+                            <field name="activity_ids"/>
+                            <field name="message_ids"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_construction_measurement_search" model="ir.ui.view">
+        <field name="name">construction.measurement.search</field>
+        <field name="model">construction.measurement</field>
+        <field name="arch" type="xml">
+            <search string="Search Measurements">
+                <field name="name"/>
+                <field name="contract_id"/>
+                <field name="project_id"/>
+
+                <filter string="Draft" name="filter_draft" domain="[('state','=','draft')]"/>
+                <filter string="Approved" name="filter_approved" domain="[('state','=','approved')]"/>
+
+                <group expand="0" string="Group By">
+                    <filter string="Contract" name="group_contract" context="{'group_by': 'contract_id'}"/>
+                    <filter string="Project" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_construction_measurement" model="ir.actions.act_window">
+        <field name="name">Measurements</field>
+        <field name="res_model">construction.measurement</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_construction_measurement_search"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,95 @@
+from odoo import api, fields, models
+from odoo.exceptions import ValidationError
+
+
+class ConstructionMeasurement(models.Model):
+    _name = 'construction.measurement'
+    _description = 'Construction Measurement'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _order = 'id desc'
+
+    name = fields.Char(required=True, copy=False, default='New')
+    contract_id = fields.Many2one('construction.contract', required=True, ondelete='cascade', tracking=True)
+    project_id = fields.Many2one(related='contract_id.project_id', store=True)
+    company_id = fields.Many2one(related='contract_id.company_id', store=True)
+
+    date = fields.Date(default=fields.Date.context_today, tracking=True)
+    period_from = fields.Date()
+    period_to = fields.Date()
+    prepared_by = fields.Many2one('res.users', string='Prepared By', default=lambda self: self.env.user)
+    checked_by = fields.Many2one('res.users', string='Checked By')
+
+    line_ids = fields.One2many('construction.measurement.line', 'measurement_id', string='Measurement Lines')
+
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted'),
+        ('checked', 'Checked'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ], default='draft', tracking=True)
+
+    @api.model
+    def create(self, vals):
+        if vals.get('name', 'New') == 'New':
+            vals['name'] = self.env['ir.sequence'].next_by_code('construction.measurement') or 'New'
+        return super().create(vals)
+
+    def action_submit(self):
+        self.state = 'submitted'
+
+    def action_check(self):
+        self.state = 'checked'
+
+    def action_approve(self):
+        self.state = 'approved'
+
+    def action_reject(self):
+        self.state = 'rejected'
+
+    def action_reset_to_draft(self):
+        self.state = 'draft'
+
+
+class ConstructionMeasurementLine(models.Model):
+    _name = 'construction.measurement.line'
+    _description = 'Construction Measurement Line'
+
+    measurement_id = fields.Many2one('construction.measurement', required=True, ondelete='cascade')
+    boq_line_id = fields.Many2one('construction.contract.boq.line', required=True, domain="[('contract_id', '=', parent.contract_id)]")
+    description = fields.Text(related='boq_line_id.description', store=True)
+    unit_rate = fields.Monetary(related='boq_line_id.unit_rate', store=True)
+    currency_id = fields.Many2one(related='measurement_id.contract_id.currency_id', store=True)
+
+    previous_qty = fields.Float(string='Previous Qty')
+    current_qty = fields.Float(string='Current Qty')
+    cumulative_qty = fields.Float(string='Cumulative Qty', compute='_compute_cumulative_qty', store=True)
+    remarks = fields.Char()
+
+    @api.depends('previous_qty', 'current_qty')
+    def _compute_cumulative_qty(self):
+        for rec in self:
+            rec.cumulative_qty = rec.previous_qty + rec.current_qty
+
+    @api.constrains('current_qty')
+    def _check_current_qty(self):
+        for rec in self:
+            if rec.current_qty < 0:
+                raise ValidationError('Current quantity cannot be negative.')
+    
+    def action_load_boq_lines(self):
+        for rec in self:
+            if not rec.contract_id:
+                continue
+
+            rec.line_ids.unlink()
+
+            lines = []
+            for boq in rec.contract_id.boq_line_ids:
+                lines.append((0, 0, {
+                    'boq_line_id': boq.id,
+                    'previous_qty': boq.certified_qty,
+                    'current_qty': 0.0,
+                }))
+
+            rec.line_ids = lines

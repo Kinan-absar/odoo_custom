@@ -1,0 +1,22 @@
+<odoo>
+    <record id="seq_construction_contract" model="ir.sequence">
+        <field name="name">Construction Contract</field>
+        <field name="code">construction.contract</field>
+        <field name="prefix">CC/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
+
+    <record id="seq_construction_measurement" model="ir.sequence">
+        <field name="name">Construction Measurement</field>
+        <field name="code">construction.measurement</field>
+        <field name="prefix">MS/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
+
+    <record id="seq_construction_ipc" model="ir.sequence">
+        <field name="name">Construction IPC</field>
+        <field name="code">construction.ipc</field>
+        <field name="prefix">IPC/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
+</odoo>
