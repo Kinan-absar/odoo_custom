@@ -49,9 +49,12 @@ class ConstructionMeasurement(models.Model):
 
     def action_reset_to_draft(self):
         self.state = 'draft'
-        
+
     def action_load_boq_lines(self):
         for rec in self:
+            if rec.state != 'draft':
+                continue
+
             if not rec.contract_id:
                 continue
 
@@ -59,9 +62,19 @@ class ConstructionMeasurement(models.Model):
 
             lines = []
             for boq in rec.contract_id.boq_line_ids:
+
+                last_line = self.env['construction.measurement.line'].search([
+                    ('boq_line_id', '=', boq.id),
+                    ('measurement_id.contract_id', '=', rec.contract_id.id),
+                    ('measurement_id.state', '=', 'approved'),
+                    ('measurement_id.id', '!=', rec.id),
+                ], order='measurement_id.date desc, measurement_id.id desc', limit=1)
+
+                previous_qty = last_line.cumulative_qty if last_line else 0.0
+
                 lines.append((0, 0, {
                     'boq_line_id': boq.id,
-                    'previous_qty': boq.certified_qty,
+                    'previous_qty': previous_qty,
                     'current_qty': 0.0,
                 }))
 

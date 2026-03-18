@@ -44,3 +44,10 @@ class ConstructionContractBoqLine(models.Model):
             rec.measured_qty = sum(measurement_lines.mapped('current_qty'))
             rec.certified_qty = sum(ipc_lines.mapped('current_qty'))
             rec.remaining_qty = rec.contract_qty - rec.certified_qty
+            
+    def name_get(self):
+    result = []
+    for rec in self:
+        name = f"{rec.item_code or ''} - {rec.description or ''}"
+        result.append((rec.id, name))
+    return result
