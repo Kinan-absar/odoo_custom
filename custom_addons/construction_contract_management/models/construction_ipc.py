@@ -28,7 +28,7 @@ class ConstructionIPC(models.Model):
     advance_recovery_amount = fields.Monetary(currency_field='currency_id', default=0.0)
     deduction_amount = fields.Monetary(currency_field='currency_id', default=0.0)
     net_amount = fields.Monetary(currency_field='currency_id', compute='_compute_amounts', store=True)
-
+    advance_recovery_posted = fields.Boolean(default=False)
     state = fields.Selection([
         ('draft', 'Draft'),
         ('under_review', 'Under Review'),
@@ -37,21 +37,54 @@ class ConstructionIPC(models.Model):
         ('cancelled', 'Cancelled'),
     ], default='draft', tracking=True)
 
-    @api.depends('line_ids.current_value', 'line_ids.cumulative_value', 'contract_id.retention_percent', 'advance_recovery_amount', 'deduction_amount')
+    @api.depends(
+        'line_ids.current_value',
+        'line_ids.cumulative_value',
+        'contract_id.retention_percent',
+        'contract_id.advance_percent',
+        'contract_id.advance_amount',
+        'contract_id.advance_recovered',
+        'contract_id.vat_percent',
+        'deduction_amount',
+    )
     def _compute_amounts(self):
         for rec in self:
+            current_work = sum(rec.line_ids.mapped('current_value'))
+
             previous_ipcs = self.env['construction.ipc'].search([
                 ('contract_id', '=', rec.contract_id.id),
                 ('id', '!=', rec.id),
                 ('state', 'in', ['approved', 'done'])
             ])
 
-            rec.previous_certified_value = sum(previous_ipcs.mapped('current_work_value'))
-            rec.current_work_value = sum(rec.line_ids.mapped('current_value'))
-            rec.cumulative_certified_value = sum(rec.line_ids.mapped('cumulative_value'))
-            rec.retention_amount = rec.current_work_value * (rec.contract_id.retention_percent / 100.0)
-            rec.net_amount = rec.current_work_value - rec.retention_amount - rec.advance_recovery_amount - rec.deduction_amount
+            previous_certified_value = sum(previous_ipcs.mapped('current_work_value'))
 
+            cumulative_certified_value = previous_certified_value + current_work
+
+            advance_percent = (rec.contract_id.advance_percent or 0.0) / 100.0
+            retention_percent = (rec.contract_id.retention_percent or 0.0) / 100.0
+            vat_percent = (rec.contract_id.vat_percent or 0.0) / 100.0
+
+            proposed_recovery = current_work * advance_percent
+            remaining_advance = max(
+                (rec.contract_id.advance_amount or 0.0) - (rec.contract_id.advance_recovered or 0.0),
+                0.0
+            )
+            actual_recovery = min(proposed_recovery, remaining_advance)
+
+            taxable_base = current_work - actual_recovery
+            vat_amount = taxable_base * vat_percent
+            gross_with_vat = taxable_base + vat_amount
+
+            retention = current_work * retention_percent
+            net = gross_with_vat - retention - (rec.deduction_amount or 0.0)
+
+            rec.previous_certified_value = previous_certified_value
+            rec.current_work_value = current_work
+            rec.cumulative_certified_value = cumulative_certified_value
+            rec.advance_recovery_amount = actual_recovery
+            rec.retention_amount = retention
+            rec.net_amount = net
     @api.model
     def create(self, vals):
         if vals.get('name', 'New') == 'New':
@@ -108,7 +141,16 @@ class ConstructionIPC(models.Model):
 
             rec.line_ids = lines_vals
 
+    def action_approve(self):
+        for rec in self:
+            if rec.state != 'under_review':
+                continue
 
+            rec.state = 'approved'
+
+            if not rec.advance_recovery_posted:
+                rec.contract_id.advance_recovered += rec.advance_recovery_amount
+                rec.advance_recovery_posted = True
 class ConstructionIPCLine(models.Model):
     _name = 'construction.ipc.line'
     _description = 'Construction IPC Line'

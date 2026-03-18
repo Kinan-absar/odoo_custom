@@ -26,6 +26,18 @@ class ConstructionContract(models.Model):
     revised_amount = fields.Monetary(string='Revised Amount', currency_field='currency_id', compute='_compute_revised_amount', store=True)
     retention_percent = fields.Float(string='Retention %')
     advance_percent = fields.Float(string='Advance %')
+    advance_amount = fields.Monetary(
+        compute='_compute_advance_amount',
+        store=True
+    )
+
+    advance_recovered = fields.Monetary(default=0.0)
+
+    advance_balance = fields.Monetary(
+        compute='_compute_advance_balance',
+        store=True
+    )
+    vat_percent = fields.Float(default=15.0)
     notes = fields.Text(string='Internal Notes')
 
     boq_line_ids = fields.One2many('construction.contract.boq.line', 'contract_id', string='BOQ Lines')
