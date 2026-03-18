@@ -9,6 +9,7 @@ Construction Contract Management
 - BOQ
 - Measurements
 - IPC
+- Variations
 - Construction workflow engine
     """,
     'category': 'Construction',
@@ -24,12 +25,11 @@ Construction Contract Management
     'data': [
         'security/construction_security.xml',
         'security/ir.model.access.csv',
-
         'views/construction_sequence.xml',
-
         'views/construction_contract_views.xml',
         'views/construction_measurement_views.xml',
         'views/construction_ipc_views.xml',
+        'views/construction_variation_views.xml',
         'views/construction_menus.xml',
     ],
     'application': True,

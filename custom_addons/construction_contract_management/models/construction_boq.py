@@ -15,9 +15,17 @@ class ConstructionContractBoqLine(models.Model):
     item_code = fields.Char(string='Item Code')
     description = fields.Text(string='Description', required=True)
     uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
+
     contract_qty = fields.Float(string='Contract Qty', required=True, default=1.0)
     unit_rate = fields.Monetary(string='Unit Rate', currency_field='currency_id', required=True, default=0.0)
-    total_amount = fields.Monetary(string='Total Amount', currency_field='currency_id', compute='_compute_amounts', store=True)
+    total_amount = fields.Monetary(string='Original Amount', currency_field='currency_id', compute='_compute_amounts', store=True)
+
+    variation_qty_increase = fields.Float(string='Variation Increase Qty', compute='_compute_variation_fields', store=True)
+    variation_qty_decrease = fields.Float(string='Variation Decrease Qty', compute='_compute_variation_fields', store=True)
+    revised_qty = fields.Float(string='Revised Qty', compute='_compute_variation_fields', store=True)
+    revised_unit_rate = fields.Monetary(string='Revised Unit Rate', currency_field='currency_id', compute='_compute_variation_fields', store=True)
+    revised_amount = fields.Monetary(string='Revised Amount', currency_field='currency_id', compute='_compute_variation_fields', store=True)
+    is_omitted = fields.Boolean(string='Omitted', compute='_compute_variation_fields', store=True)
 
     measured_qty = fields.Float(string='Measured Qty', compute='_compute_progress_fields', store=True)
     certified_qty = fields.Float(string='Certified Qty', compute='_compute_progress_fields', store=True)
@@ -28,7 +36,43 @@ class ConstructionContractBoqLine(models.Model):
         for rec in self:
             rec.total_amount = rec.contract_qty * rec.unit_rate
 
-    @api.depends('contract_qty')
+    @api.depends('contract_qty', 'unit_rate')
+    def _compute_variation_fields(self):
+        VariationLine = self.env['construction.variation.line']
+        for rec in self:
+            approved_lines = VariationLine.search([
+                ('variation_id.contract_id', '=', rec.contract_id.id),
+                ('variation_id.state', '=', 'approved'),
+                ('boq_line_id', '=', rec.id),
+            ])
+
+            increase_qty = 0.0
+            decrease_qty = 0.0
+            revised_unit_rate = rec.unit_rate
+            is_omitted = False
+
+            for line in approved_lines:
+                if line.type == 'increase':
+                    increase_qty += line.variation_qty
+                elif line.type == 'decrease':
+                    decrease_qty += line.variation_qty
+                elif line.type == 'omit':
+                    is_omitted = True
+                elif line.type == 'rate':
+                    revised_unit_rate = line.unit_rate or revised_unit_rate
+
+            revised_qty = rec.contract_qty + increase_qty - decrease_qty
+            if is_omitted:
+                revised_qty = 0.0
+
+            rec.variation_qty_increase = increase_qty
+            rec.variation_qty_decrease = decrease_qty
+            rec.revised_qty = revised_qty
+            rec.revised_unit_rate = revised_unit_rate
+            rec.revised_amount = revised_qty * revised_unit_rate
+            rec.is_omitted = is_omitted
+
+    @api.depends('contract_qty', 'revised_qty')
     def _compute_progress_fields(self):
         for rec in self:
             measurement_lines = self.env['construction.measurement.line'].search([
@@ -43,11 +87,17 @@ class ConstructionContractBoqLine(models.Model):
 
             rec.measured_qty = sum(measurement_lines.mapped('current_qty'))
             rec.certified_qty = sum(ipc_lines.mapped('current_qty'))
-            rec.remaining_qty = rec.contract_qty - rec.certified_qty
+            allowed_qty = rec.revised_qty or rec.contract_qty
+            rec.remaining_qty = allowed_qty - rec.certified_qty
 
     def name_get(self):
         result = []
         for rec in self:
-            name = f"{rec.item_code or ''} - {rec.description or ''}"
+            parts = []
+            if rec.item_code:
+                parts.append(rec.item_code)
+            if rec.description:
+                parts.append(rec.description)
+            name = ' - '.join(parts) if parts else f'BOQ {rec.id}'
             result.append((rec.id, name))
         return result

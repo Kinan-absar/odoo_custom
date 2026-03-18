@@ -19,4 +19,10 @@
         <field name="prefix">IPC/%(year)s/</field>
         <field name="padding">4</field>
     </record>
+    <record id="seq_construction_variation" model="ir.sequence">
+        <field name="name">Construction Variation</field>
+        <field name="code">construction.variation</field>
+        <field name="prefix">VAR/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
 </odoo>

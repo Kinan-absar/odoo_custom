@@ -22,5 +22,10 @@
               parent="menu_construction_root"
               action="action_construction_ipc"
               sequence="30"/>
+    <menuitem id="menu_construction_variation"
+            name="Variations"
+            parent="menu_construction_root"
+            action="action_construction_variation"
+            sequence="40"/>
 
 </odoo>

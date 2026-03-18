@@ -78,10 +78,13 @@ class ConstructionContract(models.Model):
         ('cancelled', 'Cancelled'),
     ], default='draft', tracking=True)
 
-    @api.depends('original_amount')
+    @api.depends('boq_line_ids.revised_amount')
     def _compute_revised_amount(self):
         for rec in self:
-            rec.revised_amount = rec.original_amount
+            if rec.boq_line_ids:
+                rec.revised_amount = sum(rec.boq_line_ids.mapped('revised_amount'))
+            else:
+                rec.revised_amount = rec.original_amount
 
     def _compute_counts(self):
         for rec in self:
@@ -139,6 +142,24 @@ class ConstructionContract(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'IPCs',
             'res_model': 'construction.ipc',
+            'view_mode': 'list,form',
+            'domain': [('contract_id', '=', self.id)],
+            'context': {'default_contract_id': self.id},
+        }
+    variation_count = fields.Integer(compute='_compute_variation_count')
+
+    def _compute_variation_count(self):
+        for rec in self:
+            rec.variation_count = self.env['construction.variation'].search_count([
+                ('contract_id', '=', rec.id)
+            ])
+
+
+    def action_view_variations(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Variations',
+            'res_model': 'construction.variation',
             'view_mode': 'list,form',
             'domain': [('contract_id', '=', self.id)],
             'context': {'default_contract_id': self.id},
