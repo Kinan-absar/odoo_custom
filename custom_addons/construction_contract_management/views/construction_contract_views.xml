@@ -97,9 +97,26 @@
                                     <field name="item_code"/>
                                     <field name="description"/>
                                     <field name="uom_id"/>
+
+                                    <!-- ORIGINAL -->
                                     <field name="contract_qty"/>
+
+                                    <!-- VARIATION IMPACT -->
+                                    <field name="variation_qty_increase" readonly="1"/>
+                                    <field name="variation_qty_decrease" readonly="1"/>
+
+                                    <!-- FINAL (IMPORTANT) -->
+                                    <field name="revised_qty" readonly="1"/>
+
+                                    <!-- RATES -->
                                     <field name="unit_rate"/>
+                                    <field name="revised_unit_rate" readonly="1"/>
+
+                                    <!-- AMOUNTS -->
                                     <field name="total_amount" readonly="1"/>
+                                    <field name="revised_amount" readonly="1"/>
+
+                                    <!-- PROGRESS -->
                                     <field name="measured_qty" readonly="1"/>
                                     <field name="certified_qty" readonly="1"/>
                                     <field name="remaining_qty" readonly="1"/>
