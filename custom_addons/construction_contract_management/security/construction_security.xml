@@ -1,12 +1,18 @@
 <odoo>
+    <record id="module_category_construction_contract" model="ir.module.category">
+        <field name="name">Construction</field>
+        <field name="description">Construction Contract Management</field>
+        <field name="sequence">25</field>
+    </record>
+
     <record id="group_construction_user" model="res.groups">
         <field name="name">Construction User</field>
-        <field name="category_id" ref="base.module_category_project_management"/>
+        <field name="category_id" ref="construction_contract_management.module_category_construction_contract"/>
     </record>
 
     <record id="group_construction_manager" model="res.groups">
         <field name="name">Construction Manager</field>
-        <field name="category_id" ref="base.module_category_project_management"/>
-        <field name="implied_ids" eval="[(4, ref('group_construction_user'))]"/>
+        <field name="category_id" ref="construction_contract_management.module_category_construction_contract"/>
+        <field name="implied_ids" eval="[(4, ref('construction_contract_management.group_construction_user'))]"/>
     </record>
 </odoo>
