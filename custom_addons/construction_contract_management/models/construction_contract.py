@@ -26,18 +26,38 @@ class ConstructionContract(models.Model):
     revised_amount = fields.Monetary(string='Revised Amount', currency_field='currency_id', compute='_compute_revised_amount', store=True)
     retention_percent = fields.Float(string='Retention %')
     advance_percent = fields.Float(string='Advance %')
+    vat_percent = fields.Float(string='VAT %', default=15.0)
+
     advance_amount = fields.Monetary(
+        string='Advance Amount',
+        currency_field='currency_id',
         compute='_compute_advance_amount',
-        store=True
+        store=True,
     )
 
-    advance_recovered = fields.Monetary(default=0.0)
+    advance_recovered = fields.Monetary(
+        string='Advance Recovered',
+        currency_field='currency_id',
+        default=0.0,
+        tracking=True,
+    )
 
     advance_balance = fields.Monetary(
+        string='Advance Balance',
+        currency_field='currency_id',
         compute='_compute_advance_balance',
-        store=True
+        store=True,
     )
-    vat_percent = fields.Float(default=15.0)
+
+    @api.depends('original_amount', 'advance_percent')
+    def _compute_advance_amount(self):
+        for rec in self:
+            rec.advance_amount = (rec.original_amount or 0.0) * ((rec.advance_percent or 0.0) / 100.0)
+
+    @api.depends('advance_amount', 'advance_recovered')
+    def _compute_advance_balance(self):
+        for rec in self:
+            rec.advance_balance = (rec.advance_amount or 0.0) - (rec.advance_recovered or 0.0)
     notes = fields.Text(string='Internal Notes')
 
     boq_line_ids = fields.One2many('construction.contract.boq.line', 'contract_id', string='BOQ Lines')
