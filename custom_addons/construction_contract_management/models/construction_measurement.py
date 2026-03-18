@@ -49,7 +49,7 @@ class ConstructionMeasurement(models.Model):
 
     def action_reset_to_draft(self):
         self.state = 'draft'
-
+        
     def action_load_boq_lines(self):
         for rec in self:
             if rec.state != 'draft':
