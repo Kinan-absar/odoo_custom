@@ -151,6 +151,7 @@ class ConstructionIPC(models.Model):
             if not rec.advance_recovery_posted:
                 rec.contract_id.advance_recovered += rec.advance_recovery_amount
                 rec.advance_recovery_posted = True
+                
 class ConstructionIPCLine(models.Model):
     _name = 'construction.ipc.line'
     _description = 'Construction IPC Line'
