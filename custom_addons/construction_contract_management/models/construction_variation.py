@@ -42,17 +42,27 @@ class ConstructionVariation(models.Model):
         for rec in self:
             rec.total_amount = sum(rec.line_ids.mapped('amount'))
 
+    def _refresh_contract_boq(self):
+        for rec in self:
+            boq_lines = rec.contract_id.boq_line_ids
+            boq_lines._compute_variation_fields()
+            boq_lines._compute_progress_fields()
+            rec.contract_id._compute_revised_amount()
+
     def action_submit(self):
         self.state = 'submitted'
 
     def action_approve(self):
         self.state = 'approved'
+        self._refresh_contract_boq()
 
     def action_reject(self):
         self.state = 'rejected'
+        self._refresh_contract_boq()
 
     def action_reset_to_draft(self):
         self.state = 'draft'
+        self._refresh_contract_boq()
 
 
 class ConstructionVariationLine(models.Model):

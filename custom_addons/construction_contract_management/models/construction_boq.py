@@ -18,27 +18,71 @@ class ConstructionContractBoqLine(models.Model):
 
     contract_qty = fields.Float(string='Contract Qty', required=True, default=1.0)
     unit_rate = fields.Monetary(string='Unit Rate', currency_field='currency_id', required=True, default=0.0)
-    total_amount = fields.Monetary(string='Original Amount', currency_field='currency_id', compute='_compute_amounts', store=True)
+    total_amount = fields.Monetary(
+        string='Original Amount',
+        currency_field='currency_id',
+        compute='_compute_amounts',
+        store=True,
+    )
 
-    variation_qty_increase = fields.Float(string='Variation Increase Qty', compute='_compute_variation_fields', store=True)
-    variation_qty_decrease = fields.Float(string='Variation Decrease Qty', compute='_compute_variation_fields', store=True)
-    revised_qty = fields.Float(string='Revised Qty', compute='_compute_variation_fields', store=True)
-    revised_unit_rate = fields.Monetary(string='Revised Unit Rate', currency_field='currency_id', compute='_compute_variation_fields', store=True)
-    revised_amount = fields.Monetary(string='Revised Amount', currency_field='currency_id', compute='_compute_variation_fields', store=True)
-    is_omitted = fields.Boolean(string='Omitted', compute='_compute_variation_fields', store=True)
+    variation_qty_increase = fields.Float(
+        string='Variation Increase Qty',
+        compute='_compute_variation_fields',
+        store=True,
+    )
+    variation_qty_decrease = fields.Float(
+        string='Variation Decrease Qty',
+        compute='_compute_variation_fields',
+        store=True,
+    )
+    revised_qty = fields.Float(
+        string='Revised Qty',
+        compute='_compute_variation_fields',
+        store=True,
+    )
+    revised_unit_rate = fields.Monetary(
+        string='Revised Unit Rate',
+        currency_field='currency_id',
+        compute='_compute_variation_fields',
+        store=True,
+    )
+    revised_amount = fields.Monetary(
+        string='Revised Amount',
+        currency_field='currency_id',
+        compute='_compute_variation_fields',
+        store=True,
+    )
+    is_omitted = fields.Boolean(
+        string='Omitted',
+        compute='_compute_variation_fields',
+        store=True,
+    )
 
-    measured_qty = fields.Float(string='Measured Qty', compute='_compute_progress_fields', store=True)
-    certified_qty = fields.Float(string='Certified Qty', compute='_compute_progress_fields', store=True)
-    remaining_qty = fields.Float(string='Remaining Qty', compute='_compute_progress_fields', store=True)
+    measured_qty = fields.Float(
+        string='Measured Qty',
+        compute='_compute_progress_fields',
+        store=True,
+    )
+    certified_qty = fields.Float(
+        string='Certified Qty',
+        compute='_compute_progress_fields',
+        store=True,
+    )
+    remaining_qty = fields.Float(
+        string='Remaining Qty',
+        compute='_compute_progress_fields',
+        store=True,
+    )
 
     @api.depends('contract_qty', 'unit_rate')
     def _compute_amounts(self):
         for rec in self:
             rec.total_amount = rec.contract_qty * rec.unit_rate
 
-    @api.depends('contract_qty', 'unit_rate')
+    @api.depends('contract_qty', 'unit_rate', 'contract_id')
     def _compute_variation_fields(self):
         VariationLine = self.env['construction.variation.line']
+
         for rec in self:
             approved_lines = VariationLine.search([
                 ('variation_id.contract_id', '=', rec.contract_id.id),
@@ -62,6 +106,7 @@ class ConstructionContractBoqLine(models.Model):
                     revised_unit_rate = line.unit_rate or revised_unit_rate
 
             revised_qty = rec.contract_qty + increase_qty - decrease_qty
+
             if is_omitted:
                 revised_qty = 0.0
 
@@ -77,16 +122,17 @@ class ConstructionContractBoqLine(models.Model):
         for rec in self:
             measurement_lines = self.env['construction.measurement.line'].search([
                 ('boq_line_id', '=', rec.id),
-                ('measurement_id.state', '=', 'approved')
+                ('measurement_id.state', '=', 'approved'),
             ])
 
             ipc_lines = self.env['construction.ipc.line'].search([
                 ('boq_line_id', '=', rec.id),
-                ('ipc_id.state', 'in', ['approved', 'done'])
+                ('ipc_id.state', 'in', ['approved', 'done']),
             ])
 
             rec.measured_qty = sum(measurement_lines.mapped('current_qty'))
             rec.certified_qty = sum(ipc_lines.mapped('current_qty'))
+
             allowed_qty = rec.revised_qty or rec.contract_qty
             rec.remaining_qty = allowed_qty - rec.certified_qty
 
