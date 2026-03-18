@@ -97,6 +97,8 @@ class ConstructionMeasurementLine(models.Model):
     previous_qty = fields.Float(string='Previous Qty')
     current_qty = fields.Float(string='Current Qty')
     cumulative_qty = fields.Float(string='Cumulative Qty', compute='_compute_cumulative_qty', store=True)
+    allowed_qty = fields.Float(string='Allowed Qty', compute='_compute_allowed_qty', store=True)
+    remaining_qty = fields.Float(string='Remaining Qty', compute='_compute_remaining_qty', store=True)
     remarks = fields.Char()
 
     @api.depends('previous_qty', 'current_qty')
@@ -104,8 +106,30 @@ class ConstructionMeasurementLine(models.Model):
         for rec in self:
             rec.cumulative_qty = rec.previous_qty + rec.current_qty
 
-    @api.constrains('current_qty')
+    @api.depends('boq_line_id.revised_qty', 'boq_line_id.contract_qty')
+    def _compute_allowed_qty(self):
+        for rec in self:
+            rec.allowed_qty = rec.boq_line_id.revised_qty or rec.boq_line_id.contract_qty
+
+    @api.depends('allowed_qty', 'cumulative_qty')
+    def _compute_remaining_qty(self):
+        for rec in self:
+            rec.remaining_qty = rec.allowed_qty - rec.cumulative_qty
+
+    @api.constrains('current_qty', 'previous_qty', 'boq_line_id')
     def _check_current_qty(self):
         for rec in self:
             if rec.current_qty < 0:
                 raise ValidationError('Current quantity cannot be negative.')
+
+            allowed_qty = rec.boq_line_id.revised_qty or rec.boq_line_id.contract_qty
+            cumulative_qty = rec.previous_qty + rec.current_qty
+
+            if cumulative_qty > allowed_qty:
+                raise ValidationError(
+                    f'Measured quantity exceeds allowed BOQ quantity.\n'
+                    f'Allowed Qty: {allowed_qty}\n'
+                    f'Previous Qty: {rec.previous_qty}\n'
+                    f'Current Qty: {rec.current_qty}\n'
+                    f'Cumulative Qty: {cumulative_qty}'
+                )

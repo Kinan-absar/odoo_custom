@@ -66,6 +66,8 @@
                                     <field name="previous_qty"/>
                                     <field name="current_qty"/>
                                     <field name="cumulative_qty" readonly="1"/>
+                                    <field name="allowed_qty" readonly="1"/>
+                                    <field name="remaining_qty" readonly="1"/>
                                     <field name="remarks"/>
                                 </list>
                             </field>

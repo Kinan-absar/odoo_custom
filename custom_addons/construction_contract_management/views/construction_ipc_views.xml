@@ -63,10 +63,13 @@
                             <field name="line_ids">
                                 <list editable="bottom">
                                     <field name="boq_line_id"/>
+                                    <field name="measurement_line_id" optional="hide"/>
                                     <field name="description" readonly="1"/>
                                     <field name="previous_qty"/>
                                     <field name="current_qty"/>
                                     <field name="cumulative_qty"/>
+                                    <field name="allowed_qty" readonly="1"/>
+                                    <field name="remaining_qty" readonly="1"/>
                                     <field name="unit_rate"/>
                                     <field name="current_value" readonly="1"/>
                                     <field name="cumulative_value" readonly="1"/>
@@ -82,8 +85,10 @@
                                     <field name="cumulative_certified_value" readonly="1"/>
                                 </group>
                                 <group>
+                                    <field name="advance_recovery_amount" readonly="1"/>
+                                    <field name="vat_amount" readonly="1"/>
+                                    <field name="gross_with_vat" readonly="1"/>
                                     <field name="retention_amount" readonly="1"/>
-                                    <field name="advance_recovery_amount"/>
                                     <field name="deduction_amount"/>
                                     <field name="net_amount" readonly="1"/>
                                 </group>
