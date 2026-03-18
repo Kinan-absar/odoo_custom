@@ -49,7 +49,23 @@ class ConstructionMeasurement(models.Model):
 
     def action_reset_to_draft(self):
         self.state = 'draft'
+        
+    def action_load_boq_lines(self):
+        for rec in self:
+            if not rec.contract_id:
+                continue
 
+            rec.line_ids.unlink()
+
+            lines = []
+            for boq in rec.contract_id.boq_line_ids:
+                lines.append((0, 0, {
+                    'boq_line_id': boq.id,
+                    'previous_qty': boq.certified_qty,
+                    'current_qty': 0.0,
+                }))
+
+            rec.line_ids = lines
 
 class ConstructionMeasurementLine(models.Model):
     _name = 'construction.measurement.line'
@@ -77,19 +93,4 @@ class ConstructionMeasurementLine(models.Model):
             if rec.current_qty < 0:
                 raise ValidationError('Current quantity cannot be negative.')
     
-    def action_load_boq_lines(self):
-        for rec in self:
-            if not rec.contract_id:
-                continue
-
-            rec.line_ids.unlink()
-
-            lines = []
-            for boq in rec.contract_id.boq_line_ids:
-                lines.append((0, 0, {
-                    'boq_line_id': boq.id,
-                    'previous_qty': boq.certified_qty,
-                    'current_qty': 0.0,
-                }))
-
-            rec.line_ids = lines
+    
