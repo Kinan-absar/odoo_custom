@@ -26,20 +26,11 @@
         <field name="target">inline</field>
     </record>
 
-    <record id="action_petty_cash_config_wizard" model="ir.actions.act_window">
-        <field name="name">Configuration</field>
-        <field name="res_model">petty.cash.config.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="groups_id"
-            eval="[(4, ref('petty_cash_management.group_petty_cash_accountant'))]"/>
-    </record>
-
-    <menuitem id="menu_petty_cash_config"
-            name="Configuration"
-            parent="petty_cash_main_app"
-            action="action_petty_cash_config_wizard"
-            groups="petty_cash_management.group_petty_cash_accountant"/>
+   <menuitem id="menu_petty_cash_config"
+          name="Configuration"
+          parent="petty_cash_main_app"
+          action="action_petty_cash_user_config"
+          groups="petty_cash_management.group_petty_cash_accountant"/>
 
 
 </odoo>

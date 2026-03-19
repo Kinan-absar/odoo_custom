@@ -272,23 +272,21 @@ class PettyCash(models.Model):
 
 
     @api.model
-    def default_get(self, fields):
-        res = super().default_get(fields)
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
 
-        params = self.env['ir.config_parameter'].sudo()
+        user = self.env.user
+        config = self.env['petty.cash.user.config'].search([
+            ('partner_id', '=', user.partner_id.id),
+            ('company_id', '=', self.env.company.id),
+        ], limit=1)
 
-        petty_account = params.get_param('petty_cash_management.petty_cash_account_id')
-        vat_account = params.get_param('petty_cash_management.input_vat_account_id')
-        journal = params.get_param('petty_cash_management.petty_cash_journal_id')
-
-        if petty_account:
-            res['petty_cash_account_id'] = int(petty_account)
-
-        if vat_account:
-            res['input_vat_account_id'] = int(vat_account)
-
-        if journal:
-            res['journal_id'] = int(journal)
+        if config:
+            res.update({
+                'petty_cash_account_id': config.petty_cash_account_id.id,
+                'input_vat_account_id': config.input_vat_account_id.id,
+                'journal_id': config.petty_cash_journal_id.id,
+            })
 
         return res
     #reference
