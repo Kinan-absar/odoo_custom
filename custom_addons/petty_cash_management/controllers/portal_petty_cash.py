@@ -205,3 +205,26 @@ class PortalPettyCash(CustomerPortal):
         attachment.unlink()
 
         return request.redirect(f'/my/employee/petty-cash/{report.id}')
+        
+    @http.route(
+        ['/my/employee/petty-cash/<int:report_id>/print'],
+        type='http',
+        auth='user',
+        website=True
+    )
+    def portal_print_petty_cash_report(self, report_id, **kwargs):
+        report = request.env['petty.cash'].sudo().browse(report_id)
+
+        if not report.exists() or report.user_id != request.env.user:
+            return request.redirect('/my')
+
+        pdf, _ = request.env.ref(
+            'petty_cash_management.petty_cash_report_action'
+        ).sudo()._render_qweb_pdf(report.ids)
+
+        pdfhttpheaders = [
+            ('Content-Type', 'application/pdf'),
+            ('Content-Length', len(pdf)),
+            ('Content-Disposition', content_disposition('%s.pdf' % report.name)),
+        ]
+        return request.make_response(pdf, headers=pdfhttpheaders)

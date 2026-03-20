@@ -1,109 +1,97 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-        <!-- ===================================================== -->
-        <!-- LIST VIEW -->
-        <!-- ===================================================== -->
-        <template id="portal_petty_cash_list" name="Petty Cash List">
-            <t t-call="employee_portal_suite.employee_portal_layout">
+    <template id="portal_petty_cash_list" name="Petty Cash List">
+        <t t-call="employee_portal_suite.employee_portal_layout">
 
-                <div class="container py-4">
+            <div class="container py-4">
 
-                    <!-- HEADER -->
-                    <div class="material-header">
-                        <div class="material-header-top">
-                            <h2 class="mb-0 fw-semibold">My Petty Cash Reports</h2>
+                <div class="material-header">
+                    <div class="material-header-top">
+                        <h2 class="mb-0 fw-semibold">My Petty Cash Reports</h2>
 
-                            <form action="/my/employee/petty-cash/create" method="post">
-                                <input type="hidden"
-                                    name="csrf_token"
-                                    t-att-value="request.csrf_token()"/>
-                                <button type="submit"
-                                        class="btn btn-primary rounded-pill px-4">
-                                    + New Report
-                                </button>
-                            </form>
-                        </div>
+                        <form action="/my/employee/petty-cash/create" method="post">
+                            <input type="hidden"
+                                name="csrf_token"
+                                t-att-value="request.csrf_token()"/>
+                            <button type="submit"
+                                    class="btn btn-primary rounded-pill px-4">
+                                + New Report
+                            </button>
+                        </form>
                     </div>
-
-                    <!-- ================= DESKTOP TABLE ================= -->
-                    <div class="card shadow-sm border-0 rounded-4 d-none d-md-block">
-                        <div class="card-body p-0">
-
-                            <table class="table table-hover table-sm mb-0 align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-4">Reference</th>
-                                        <th>Date</th>
-                                        <th>Total</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <t t-foreach="reports" t-as="report">
-                                        <tr>
-                                            <td class="ps-4">
-                                                <a class="fw-semibold text-decoration-none"
-                                                t-att-href="'/my/employee/petty-cash/%s' % report.id">
-                                                    <t t-esc="report.name"/>
-                                                </a>
-                                            </td>
-                                            <td><t t-esc="report.date"/></td>
-                                            <td class="fw-semibold">
-                                                <t t-esc="report.amount_total"/>
-                                            </td>
-                                            <td>
-                                                <t t-raw="status_badge(report)"/>
-                                            </td>
-                                        </tr>
-                                    </t>
-                                </tbody>
-                            </table>
-
-                        </div>
-                    </div>
-
-                    <!-- ================= MOBILE CARDS ================= -->
-                    <div class="d-md-none">
-
-                        <t t-foreach="reports" t-as="report">
-
-                            <a t-att-href="'/my/employee/petty-cash/%s' % report.id"
-                            class="mobile-request-card">
-
-                                <!-- TOP -->
-                                <div class="mobile-request-top">
-                                    <div>
-                                        <div class="mobile-request-id">
-                                            <t t-esc="report.name"/>
-                                        </div>
-                                        <div class="mobile-request-date">
-                                            <t t-esc="report.date"/>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <t t-raw="status_badge(report)"/>
-                                    </div>
-                                </div>
-
-                                <!-- BODY -->
-                                <div class="mobile-request-body">
-                                    <div>
-                                        <span class="label">Total</span>
-                                        <span class="fw-semibold">
-                                            <t t-esc="report.amount_total"/>
-                                        </span>
-                                    </div>
-                                </div>
-
-                            </a>
-
-                        </t>
-
-                    </div>
-
                 </div>
+
+                <div class="card shadow-sm border-0 rounded-4 d-none d-md-block">
+                    <div class="card-body p-0">
+                        <table class="table table-hover table-sm mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Reference</th>
+                                    <th>Date</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="reports" t-as="report">
+                                    <tr>
+                                        <td class="ps-4">
+                                            <a class="fw-semibold text-decoration-none"
+                                               t-att-href="'/my/employee/petty-cash/%s' % report.id">
+                                                <t t-esc="report.name"/>
+                                            </a>
+                                        </td>
+                                        <td><t t-esc="report.date"/></td>
+                                        <td class="fw-semibold">
+                                            <span t-field="report.amount_total"
+                                                  t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                        </td>
+                                        <td>
+                                            <t t-raw="status_badge(report)"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="d-md-none">
+                    <t t-foreach="reports" t-as="report">
+                        <a t-att-href="'/my/employee/petty-cash/%s' % report.id"
+                           class="mobile-request-card">
+
+                            <div class="mobile-request-top">
+                                <div>
+                                    <div class="mobile-request-id">
+                                        <t t-esc="report.name"/>
+                                    </div>
+                                    <div class="mobile-request-date">
+                                        <t t-esc="report.date"/>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <t t-raw="status_badge(report)"/>
+                                </div>
+                            </div>
+
+                            <div class="mobile-request-body">
+                                <div>
+                                    <span class="label">Total</span>
+                                    <span class="fw-semibold"
+                                          t-field="report.amount_total"
+                                          t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                </div>
+                            </div>
+
+                        </a>
+                    </t>
+                </div>
+
+            </div>
+
             <style>
 @media (max-width: 768px) {
 
@@ -176,15 +164,9 @@
 }
 </style>
 
-            </t>
-        </template>
+        </t>
+    </template>
 
-
-
-
-    <!-- ===================================================== -->
-    <!-- DETAIL VIEW -->
-    <!-- ===================================================== -->
     <template id="portal_petty_cash_detail" name="Petty Cash Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
 
@@ -207,16 +189,21 @@
                     </div>
                 </t>
 
-                <!-- Header Card -->
                 <div class="card shadow-sm border-0 rounded-4 mt-3 mb-4">
                     <div class="card-body">
 
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <h3 class="fw-semibold mb-0">
                                 <t t-esc="report.name"/>
                             </h3>
 
-                            <t t-raw="status_badge(report)"/>
+                            <div class="d-flex align-items-center gap-2">
+                                <a t-att-href="'/my/employee/petty-cash/%s/print' % report.id"
+                                   class="btn btn-outline-primary btn-sm rounded-pill">
+                                    Print PDF
+                                </a>
+                                <t t-raw="status_badge(report)"/>
+                            </div>
                         </div>
 
                         <div class="row mt-3 small">
@@ -226,17 +213,15 @@
                             </div>
                             <div class="col-md-4">
                                 <strong>Total:</strong><br/>
-                                <span class="fw-semibold">
-                                    <t t-esc="report.amount_total"/>
-                                </span>
+                                <span class="fw-semibold"
+                                      t-field="report.amount_total"
+                                      t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
                             </div>
                         </div>
 
                     </div>
                 </div>
 
-
-                <!-- Attachments -->
                 <t t-if="report.state == 'draft'">
                     <div class="card shadow-sm border-0 rounded-4 mb-4 table-responsive-mobile">
                         <div class="card-body">
@@ -314,8 +299,6 @@
                     </div>
                 </t>
 
-
-                <!-- Expense Lines -->
                 <div class="card shadow-sm border-0 rounded-4 mb-4 table-responsive-mobile">
                     <div class="card-body">
 
@@ -358,9 +341,18 @@
                                                 </small>
                                             </td>
                                             <td><t t-esc="line.category_id.name"/></td>
-                                            <td><t t-esc="line.amount_before_vat"/></td>
-                                            <td><t t-esc="line.vat_amount"/></td>
-                                            <td class="fw-semibold"><t t-esc="line.amount_total"/></td>
+                                            <td>
+                                                <span t-field="line.amount_before_vat"
+                                                      t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                            </td>
+                                            <td>
+                                                <span t-field="line.vat_amount"
+                                                      t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                            </td>
+                                            <td class="fw-semibold">
+                                                <span t-field="line.amount_total"
+                                                      t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                            </td>
                                             <td></td>
                                         </tr>
                                     </t>
@@ -437,10 +429,10 @@
                 </t>
 
             </div>
+
             <style>
 @media (max-width: 768px) {
 
-    /* Expense lines table becomes stacked */
     .table-responsive-mobile table,
     .table-responsive-mobile thead,
     .table-responsive-mobile tbody,
@@ -466,7 +458,6 @@
         border: none;
     }
 
-    /* Add button full width only on mobile */
     .table-responsive-mobile .btn-success {
         width: 100%;
         margin-top: 8px;
