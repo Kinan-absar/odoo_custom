@@ -226,6 +226,6 @@ class PortalPettyCash(CustomerPortal):
         headers = [
             ('Content-Type', 'application/pdf'),
             ('Content-Length', str(len(pdf))),
-            ('Content-Disposition', content_disposition('%s.pdf' % (report.name or 'Petty Cash Report'))),
+            ('Content-Disposition', 'attachment; filename="%s.pdf"' % (report.name or 'Petty Cash Report')),
         ]
         return request.make_response(pdf, headers=headers)
