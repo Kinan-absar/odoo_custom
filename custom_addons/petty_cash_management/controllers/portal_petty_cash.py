@@ -218,11 +218,10 @@ class PortalPettyCash(CustomerPortal):
         if not report.exists() or report.user_id.id != request.env.user.id:
             return request.redirect('/my')
 
-        report_action = request.env.ref(
-            'petty_cash_management.petty_cash_report_action'
-        ).sudo()
-
-        pdf, _ = report_action._render_qweb_pdf(res_ids=report.ids)
+        pdf, _ = request.env['ir.actions.report'].sudo()._render_qweb_pdf(
+            'petty_cash_management.petty_cash_report_action',
+            res_ids=report.ids
+        )
 
         headers = [
             ('Content-Type', 'application/pdf'),
