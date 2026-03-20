@@ -1,30 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-   <record id="view_petty_cash_config_wizard_form" model="ir.ui.view">
-        <field name="name">petty.cash.config.wizard.form</field>
-        <field name="model">petty.cash.config.wizard</field>
+    <record id="view_petty_cash_user_config_list" model="ir.ui.view">
+        <field name="name">petty.cash.user.config.list</field>
+        <field name="model">petty.cash.user.config</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="partner_id"/>
+                <field name="company_id"/>
+                <field name="petty_cash_journal_id"/>
+                <field name="petty_cash_account_id"/>
+                <field name="input_vat_account_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_petty_cash_user_config_form" model="ir.ui.view">
+        <field name="name">petty.cash.user.config.form</field>
+        <field name="model">petty.cash.user.config</field>
         <field name="arch" type="xml">
             <form string="Petty Cash Configuration">
                 <sheet>
                     <group>
+                        <field name="partner_id"/>
+                        <field name="company_id"/>
+                        <field name="petty_cash_journal_id"/>
                         <field name="petty_cash_account_id"/>
                         <field name="input_vat_account_id"/>
-                        <field name="petty_cash_journal_id"/>
                     </group>
-                    <footer>
-                        <button name="action_save"
-                                string="Save"
-                                type="object"
-                                class="btn-primary"/>
-                        <button string="Cancel"
-                                special="cancel"
-                                class="btn-secondary"/>
-                    </footer>
                 </sheet>
             </form>
         </field>
     </record>
 
+    <record id="action_petty_cash_user_config" model="ir.actions.act_window">
+        <field name="name">Petty Cash Configuration</field>
+        <field name="res_model">petty.cash.user.config</field>
+        <field name="view_mode">list,form</field>
+        <field name="groups_id" eval="[(4, ref('petty_cash_management.group_petty_cash_accountant'))]"/>
+    </record>
 
 </odoo>
