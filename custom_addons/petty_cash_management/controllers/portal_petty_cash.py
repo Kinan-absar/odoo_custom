@@ -215,16 +215,18 @@ class PortalPettyCash(CustomerPortal):
     def portal_print_petty_cash_report(self, report_id, **kwargs):
         report = request.env['petty.cash'].sudo().browse(report_id)
 
-        if not report.exists() or report.user_id != request.env.user:
+        if not report.exists() or report.user_id.id != request.env.user.id:
             return request.redirect('/my')
 
-        pdf, _ = request.env.ref(
+        report_action = request.env.ref(
             'petty_cash_management.petty_cash_report_action'
-        ).sudo()._render_qweb_pdf(report.ids)
+        ).sudo()
 
-        pdfhttpheaders = [
+        pdf, _ = report_action._render_qweb_pdf(res_ids=report.ids)
+
+        headers = [
             ('Content-Type', 'application/pdf'),
-            ('Content-Length', len(pdf)),
-            ('Content-Disposition', content_disposition('%s.pdf' % report.name)),
+            ('Content-Length', str(len(pdf))),
+            ('Content-Disposition', content_disposition('%s.pdf' % (report.name or 'Petty Cash Report'))),
         ]
-        return request.make_response(pdf, headers=pdfhttpheaders)
+        return request.make_response(pdf, headers=headers)
