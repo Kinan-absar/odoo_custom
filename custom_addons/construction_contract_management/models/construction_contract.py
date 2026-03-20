@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class ConstructionContract(models.Model):
@@ -23,7 +24,13 @@ class ConstructionContract(models.Model):
     date_end = fields.Date(string='End Date')
 
     original_amount = fields.Monetary(string='Original Amount', currency_field='currency_id', tracking=True)
-    revised_amount = fields.Monetary(string='Revised Amount', currency_field='currency_id', compute='_compute_revised_amount', store=True)
+    revised_amount = fields.Monetary(
+        string='Revised Amount',
+        currency_field='currency_id',
+        compute='_compute_revised_amount',
+        store=True,
+    )
+
     retention_percent = fields.Float(string='Retention %')
     advance_percent = fields.Float(string='Advance %')
     vat_percent = fields.Float(string='VAT %', default=15.0)
@@ -34,14 +41,12 @@ class ConstructionContract(models.Model):
         compute='_compute_advance_amount',
         store=True,
     )
-
     advance_recovered = fields.Monetary(
         string='Advance Recovered',
         currency_field='currency_id',
         default=0.0,
         tracking=True,
     )
-
     advance_balance = fields.Monetary(
         string='Advance Balance',
         currency_field='currency_id',
@@ -49,15 +54,13 @@ class ConstructionContract(models.Model):
         store=True,
     )
 
-    @api.depends('original_amount', 'advance_percent')
-    def _compute_advance_amount(self):
-        for rec in self:
-            rec.advance_amount = (rec.original_amount or 0.0) * ((rec.advance_percent or 0.0) / 100.0)
+    # Accounting setup
+    journal_id = fields.Many2one('account.journal', string='Accounting Journal')
+    work_account_id = fields.Many2one('account.account', string='Work Account')
+    advance_account_id = fields.Many2one('account.account', string='Advance Recovery Account')
+    retention_account_id = fields.Many2one('account.account', string='Retention Account')
+    tax_id = fields.Many2one('account.tax', string='VAT Tax')
 
-    @api.depends('advance_amount', 'advance_recovered')
-    def _compute_advance_balance(self):
-        for rec in self:
-            rec.advance_balance = (rec.advance_amount or 0.0) - (rec.advance_recovered or 0.0)
     notes = fields.Text(string='Internal Notes')
 
     boq_line_ids = fields.One2many('construction.contract.boq.line', 'contract_id', string='BOQ Lines')
@@ -67,6 +70,7 @@ class ConstructionContract(models.Model):
     boq_line_count = fields.Integer(compute='_compute_counts')
     measurement_count = fields.Integer(compute='_compute_counts')
     ipc_count = fields.Integer(compute='_compute_counts')
+    variation_count = fields.Integer(compute='_compute_variation_count')
 
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -81,16 +85,29 @@ class ConstructionContract(models.Model):
     @api.depends('boq_line_ids.revised_amount')
     def _compute_revised_amount(self):
         for rec in self:
-            if rec.boq_line_ids:
-                rec.revised_amount = sum(rec.boq_line_ids.mapped('revised_amount'))
-            else:
-                rec.revised_amount = rec.original_amount
+            rec.revised_amount = sum(rec.boq_line_ids.mapped('revised_amount')) if rec.boq_line_ids else rec.original_amount
+
+    @api.depends('original_amount', 'advance_percent')
+    def _compute_advance_amount(self):
+        for rec in self:
+            rec.advance_amount = (rec.original_amount or 0.0) * ((rec.advance_percent or 0.0) / 100.0)
+
+    @api.depends('advance_amount', 'advance_recovered')
+    def _compute_advance_balance(self):
+        for rec in self:
+            rec.advance_balance = (rec.advance_amount or 0.0) - (rec.advance_recovered or 0.0)
 
     def _compute_counts(self):
         for rec in self:
             rec.boq_line_count = len(rec.boq_line_ids)
             rec.measurement_count = len(rec.measurement_ids)
             rec.ipc_count = len(rec.ipc_ids)
+
+    def _compute_variation_count(self):
+        for rec in self:
+            rec.variation_count = self.env['construction.variation'].search_count([
+                ('contract_id', '=', rec.id)
+            ])
 
     @api.model
     def create(self, vals):
@@ -99,32 +116,25 @@ class ConstructionContract(models.Model):
         return super().create(vals)
 
     def action_submit_review(self):
-        for rec in self:
-            rec.state = 'under_review'
+        self.state = 'under_review'
 
     def action_approve(self):
-        for rec in self:
-            rec.state = 'approved'
+        self.state = 'approved'
 
     def action_activate(self):
-        for rec in self:
-            rec.state = 'active'
+        self.state = 'active'
 
     def action_complete(self):
-        for rec in self:
-            rec.state = 'completed'
+        self.state = 'completed'
 
     def action_close(self):
-        for rec in self:
-            rec.state = 'closed'
+        self.state = 'closed'
 
     def action_cancel(self):
-        for rec in self:
-            rec.state = 'cancelled'
+        self.state = 'cancelled'
 
     def action_reset_to_draft(self):
-        for rec in self:
-            rec.state = 'draft'
+        self.state = 'draft'
     def action_view_measurements(self):
         self.ensure_one()
         return {

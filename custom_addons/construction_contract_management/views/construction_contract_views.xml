@@ -151,6 +151,31 @@
                                 </list>
                             </field>
                         </page>
+                        <page string="Accounting">
+                            <group>
+                                <group>
+                                    <field name="journal_id"/>
+                                    <field name="work_account_id"/>
+                                    <field name="tax_id"/>
+                                </group>
+                                <group>
+                                    <field name="advance_account_id"/>
+                                    <field name="retention_account_id"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group>
+                                    <field name="advance_percent"/>
+                                    <field name="advance_amount" readonly="1"/>
+                                    <field name="advance_recovered" readonly="1"/>
+                                    <field name="advance_balance" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="retention_percent"/>
+                                    <field name="vat_percent"/>
+                                </group>
+                            </group>
+                        </page>
                     </notebook>
                 </sheet>
                 <chatter/>

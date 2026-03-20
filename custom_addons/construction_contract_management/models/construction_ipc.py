@@ -34,6 +34,9 @@ class ConstructionIPC(models.Model):
 
     advance_recovery_posted = fields.Boolean(default=False)
 
+    move_id = fields.Many2one('account.move', string='Invoice/Bill', copy=False, readonly=True)
+    move_count = fields.Integer(compute='_compute_move_count')
+
     state = fields.Selection([
         ('draft', 'Draft'),
         ('under_review', 'Under Review'),
@@ -41,6 +44,10 @@ class ConstructionIPC(models.Model):
         ('done', 'Done'),
         ('cancelled', 'Cancelled'),
     ], default='draft', tracking=True)
+
+    def _compute_move_count(self):
+        for rec in self:
+            rec.move_count = 1 if rec.move_id else 0
 
     @api.depends(
         'line_ids.current_value',
@@ -163,6 +170,99 @@ class ConstructionIPC(models.Model):
                 }))
 
             rec.line_ids = lines_vals
+
+    def _check_accounting_setup(self):
+        for rec in self:
+            contract = rec.contract_id
+            missing = []
+
+            if not contract.journal_id:
+                missing.append('Journal')
+            if not contract.work_account_id:
+                missing.append('Work Account')
+            if rec.advance_recovery_amount > 0 and not contract.advance_account_id:
+                missing.append('Advance Recovery Account')
+            if rec.retention_amount > 0 and not contract.retention_account_id:
+                missing.append('Retention Account')
+            if not contract.tax_id:
+                missing.append('VAT Tax')
+
+            if missing:
+                raise ValidationError(
+                    'Please configure contract accounting fields before creating invoice/bill:\n- ' +
+                    '\n- '.join(missing)
+                )
+
+    def action_create_move(self):
+        for rec in self:
+            if rec.state not in ['approved', 'done']:
+                raise ValidationError('Only approved or done IPCs can create invoice/bill.')
+
+            if rec.move_id:
+                raise ValidationError('Invoice/Bill already created for this IPC.')
+
+            rec._check_accounting_setup()
+
+            move_type = 'out_invoice' if rec.contract_direction == 'inbound' else 'in_invoice'
+            contract = rec.contract_id
+
+            invoice_line_vals = []
+
+            # 1) Work Done line
+            invoice_line_vals.append((0, 0, {
+                'name': f'{rec.name} - Work Done',
+                'quantity': 1.0,
+                'price_unit': rec.current_work_value,
+                'account_id': contract.work_account_id.id,
+                'tax_ids': [(6, 0, contract.tax_id.ids)],
+            }))
+
+            # 2) Advance Recovery line (optional)
+            if rec.advance_recovery_amount > 0:
+                invoice_line_vals.append((0, 0, {
+                    'name': f'{rec.name} - Advance Recovery',
+                    'quantity': 1.0,
+                    'price_unit': -rec.advance_recovery_amount,
+                    'account_id': contract.advance_account_id.id,
+                    'tax_ids': [(6, 0, contract.tax_id.ids)],
+                }))
+
+            # 3) Retention line (optional, no VAT)
+            if rec.retention_amount > 0:
+                invoice_line_vals.append((0, 0, {
+                    'name': f'{rec.name} - Retention',
+                    'quantity': 1.0,
+                    'price_unit': -rec.retention_amount,
+                    'account_id': contract.retention_account_id.id,
+                    'tax_ids': [(6, 0, [])],
+                }))
+
+            move_vals = {
+                'move_type': move_type,
+                'partner_id': contract.partner_id.id,
+                'invoice_date': rec.ipc_date or fields.Date.context_today(self),
+                'journal_id': contract.journal_id.id,
+                'invoice_origin': rec.name,
+                'ref': rec.name,
+                'invoice_line_ids': invoice_line_vals,
+            }
+
+            move = self.env['account.move'].create(move_vals)
+            rec.move_id = move.id
+
+    def action_view_move(self):
+        self.ensure_one()
+        if not self.move_id:
+            raise ValidationError('No invoice/bill linked to this IPC.')
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Invoice/Bill',
+            'res_model': 'account.move',
+            'res_id': self.move_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
 
 class ConstructionIPCLine(models.Model):

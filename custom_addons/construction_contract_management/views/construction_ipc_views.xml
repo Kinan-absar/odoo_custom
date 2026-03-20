@@ -34,7 +34,16 @@
                     <button name="action_done" string="Mark Done" type="object" invisible="state != 'approved'"/>
                     <button name="action_cancel" string="Cancel" type="object" invisible="state in ['done','cancelled']"/>
                     <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state == 'draft'"/>
+                    <button name="action_create_move"
+                            string="Create Invoice/Bill"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state not in ['approved','done'] or move_id"/>
 
+                    <button name="action_view_move"
+                            string="View Invoice/Bill"
+                            type="object"
+                            invisible="not move_id"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,under_review,approved,done,cancelled"/>
                 </header>
 
@@ -44,7 +53,15 @@
                             <field name="name" readonly="1"/>
                         </h1>
                     </div>
-
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_move"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-file-text-o"
+                                invisible="not move_id">
+                            <field name="move_count" widget="statinfo" string="Invoice/Bill"/>
+                        </button>
+                    </div>
                     <group>
                         <group>
                             <field name="contract_id"/>
@@ -91,6 +108,7 @@
                                     <field name="retention_amount" readonly="1"/>
                                     <field name="deduction_amount"/>
                                     <field name="net_amount" readonly="1"/>
+                                    <field name="move_id" readonly="1"/>
                                 </group>
                             </group>
                         </page>
