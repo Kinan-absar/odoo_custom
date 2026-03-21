@@ -7,264 +7,225 @@
                     <div class="page">
                         
                         <style>
-                            /* PDF-safe styling only */
+                            /* Compact, print-friendly B&W design */
                             .page {
                                 font-family: 'DejaVu Sans', Arial, sans-serif;
-                                font-size: 10pt;
-                                color: #2c3e50;
+                                font-size: 9pt;
+                                color: #000;
+                                line-height: 1.3;
                             }
                             
-                            /* Header Section */
+                            /* Header - Minimal */
                             .ipc-header {
-                                background: #1a365d;
-                                color: white;
-                                padding: 25px 30px;
-                                margin-bottom: 25px;
                                 text-align: center;
+                                border-bottom: 3px solid #000;
+                                padding-bottom: 8px;
+                                margin-bottom: 15px;
                             }
                             
                             .ipc-header h1 {
-                                font-size: 24pt;
+                                font-size: 16pt;
                                 font-weight: bold;
-                                margin: 0 0 8px 0;
+                                margin: 0;
+                                text-transform: uppercase;
                                 letter-spacing: 1px;
                             }
                             
                             .ipc-header h2 {
-                                font-size: 18pt;
-                                margin: 0;
+                                font-size: 13pt;
+                                margin: 3px 0 0 0;
                                 font-weight: 600;
                             }
                             
-                            /* Meta Grid */
-                            .meta-grid {
+                            /* Compact Meta Info - 3 columns */
+                            .meta-table {
                                 width: 100%;
-                                margin-bottom: 25px;
+                                margin-bottom: 15px;
                                 border-collapse: collapse;
+                                font-size: 8pt;
                             }
                             
-                            .meta-grid td {
-                                padding: 12px 15px;
-                                border: 1px solid #cbd5e0;
+                            .meta-table td {
+                                padding: 5px 8px;
+                                border: 1px solid #000;
                                 vertical-align: top;
-                                width: 50%;
                             }
                             
-                            .meta-grid .meta-label {
-                                font-size: 9pt;
+                            .meta-table .meta-label {
                                 font-weight: bold;
-                                color: #4a5568;
                                 text-transform: uppercase;
-                                letter-spacing: 0.5px;
-                                margin-bottom: 5px;
+                                font-size: 7pt;
+                                margin-bottom: 2px;
                             }
                             
-                            .meta-grid .meta-label-ar {
-                                font-size: 9pt;
-                                color: #718096;
+                            .meta-table .meta-label-ar {
+                                font-size: 7pt;
                                 display: block;
-                                margin-top: 3px;
                             }
                             
-                            .meta-grid .meta-value {
-                                font-size: 11pt;
+                            .meta-table .meta-value {
+                                font-size: 9pt;
                                 font-weight: bold;
-                                color: #1a202c;
-                                margin-top: 5px;
+                                margin-top: 2px;
                             }
                             
-                            .meta-grid .highlight-cell {
-                                background-color: #f7fafc;
-                                border-left: 4px solid #d4af37;
-                            }
-                            
-                            /* Line Items Table */
+                            /* Compact Items Table */
                             .items-table {
                                 width: 100%;
                                 border-collapse: collapse;
-                                margin: 25px 0;
-                                font-size: 9pt;
+                                margin: 12px 0;
+                                font-size: 8pt;
                             }
                             
-                            .items-table thead th {
-                                background-color: #1a365d;
-                                color: white;
-                                padding: 12px 8px;
+                            .items-table th {
+                                background-color: #000;
+                                color: #fff;
+                                padding: 6px 4px;
                                 text-align: left;
                                 font-weight: bold;
-                                border: 1px solid #2d3748;
+                                border: 1px solid #000;
+                                font-size: 7.5pt;
                             }
                             
-                            .items-table thead th.text-right {
+                            .items-table th.text-right {
                                 text-align: right;
                             }
                             
-                            .items-table thead .ar-label {
+                            .items-table .ar-label {
                                 display: block;
-                                font-size: 8pt;
-                                margin-top: 3px;
+                                font-size: 7pt;
+                                margin-top: 2px;
                                 font-weight: normal;
-                                opacity: 0.9;
                             }
                             
-                            .items-table tbody td {
-                                padding: 10px 8px;
-                                border: 1px solid #e2e8f0;
+                            .items-table td {
+                                padding: 5px 4px;
+                                border: 1px solid #000;
                             }
                             
-                            .items-table tbody td.text-right {
+                            .items-table td.text-right {
                                 text-align: right;
                             }
                             
                             .items-table tbody tr:nth-child(even) {
-                                background-color: #f8f9fa;
+                                background-color: #f5f5f5;
                             }
                             
                             .item-code {
-                                background-color: #d4af37;
-                                color: white;
-                                padding: 3px 8px;
-                                border-radius: 3px;
-                                font-size: 8pt;
+                                border: 1px solid #000;
+                                padding: 2px 5px;
+                                font-size: 7pt;
                                 font-weight: bold;
                                 display: inline-block;
-                                margin-bottom: 3px;
+                                margin-bottom: 2px;
                             }
                             
-                            /* Summary Section */
-                            .summary-wrapper {
-                                width: 100%;
-                                margin-top: 30px;
-                            }
-                            
-                            .summary-box {
-                                width: 55%;
-                                margin-left: auto;
-                                border: 2px solid #cbd5e0;
-                            }
-                            
-                            .summary-header {
-                                background-color: #edf2f7;
-                                padding: 10px 15px;
-                                border-bottom: 3px solid #d4af37;
-                            }
-                            
-                            .summary-header h3 {
-                                margin: 0;
-                                font-size: 12pt;
-                                font-weight: bold;
-                                color: #1a365d;
-                            }
-                            
+                            /* Compact Summary - Inline */
                             .summary-table {
-                                width: 100%;
+                                width: 50%;
+                                margin-left: auto;
+                                margin-top: 12px;
                                 border-collapse: collapse;
-                                font-size: 9pt;
+                                font-size: 8pt;
                             }
                             
                             .summary-table td {
-                                padding: 10px 15px;
-                                border-bottom: 1px solid #e2e8f0;
+                                padding: 5px 8px;
+                                border: 1px solid #000;
                             }
                             
                             .summary-table .label-cell {
                                 font-weight: 600;
-                                color: #2d3748;
                                 width: 60%;
                             }
                             
                             .summary-table .label-ar {
                                 display: block;
-                                font-size: 8pt;
-                                color: #718096;
-                                margin-top: 3px;
+                                font-size: 7pt;
+                                margin-top: 2px;
                                 font-weight: normal;
                             }
                             
                             .summary-table .value-cell {
                                 text-align: right;
                                 font-weight: bold;
-                                color: #1a202c;
                                 width: 40%;
                             }
                             
                             .summary-table .total-row {
-                                background-color: #f7fafc;
-                                border-top: 3px solid #d4af37;
+                                background-color: #e0e0e0;
+                                font-weight: bold;
                             }
                             
                             .summary-table .total-row td {
-                                padding: 12px 15px;
-                                font-size: 11pt;
-                                font-weight: bold;
+                                padding: 7px 8px;
+                                font-size: 9pt;
+                                border-top: 2px solid #000;
                             }
                             
-                            .summary-table .total-row .value-cell {
-                                color: #1a365d;
-                            }
-                            
-                            /* Notes Section */
+                            /* Compact Notes */
                             .notes-box {
-                                margin-top: 30px;
-                                padding: 15px 20px;
-                                background-color: #f7fafc;
-                                border-left: 4px solid #d4af37;
-                                border: 1px solid #cbd5e0;
+                                margin-top: 12px;
+                                padding: 8px 10px;
+                                border: 1px solid #000;
+                                font-size: 7pt;
                             }
                             
                             .notes-box h4 {
-                                margin: 0 0 10px 0;
-                                font-size: 10pt;
+                                margin: 0 0 5px 0;
+                                font-size: 8pt;
                                 font-weight: bold;
-                                color: #1a365d;
-                                text-transform: uppercase;
                             }
                             
                             .notes-box p {
                                 margin: 0;
-                                font-size: 9pt;
-                                line-height: 1.5;
+                                line-height: 1.4;
                             }
                             
-                            .notes-box .ar-text {
-                                display: block;
-                                margin-top: 8px;
-                            }
-                            
-                            /* Signatures */
+                            /* Compact Signatures */
                             .signatures-table {
                                 width: 100%;
-                                margin-top: 50px;
+                                margin-top: 20px;
                                 border-collapse: collapse;
+                                font-size: 7pt;
                             }
                             
                             .signatures-table td {
                                 width: 33.33%;
                                 text-align: center;
-                                padding: 20px 10px;
-                                border: 2px dashed #cbd5e0;
+                                padding: 12px 5px;
+                                border: 1px solid #000;
                             }
                             
                             .signatures-table .sig-title {
                                 font-weight: bold;
-                                font-size: 10pt;
-                                color: #1a365d;
-                                text-transform: uppercase;
-                                margin-bottom: 3px;
+                                font-size: 8pt;
+                                margin-bottom: 2px;
                             }
                             
                             .signatures-table .sig-title-ar {
-                                font-size: 9pt;
-                                color: #718096;
-                                margin-bottom: 30px;
+                                font-size: 7pt;
+                                margin-bottom: 20px;
                             }
                             
                             .signatures-table .sig-line {
-                                margin-top: 40px;
-                                padding-top: 8px;
-                                border-top: 2px solid #2d3748;
-                                font-size: 8pt;
-                                color: #718096;
+                                margin-top: 25px;
+                                padding-top: 5px;
+                                border-top: 1px solid #000;
+                                font-size: 6pt;
+                            }
+                            
+                            /* Print optimization */
+                            @media print {
+                                .page {
+                                    margin: 0;
+                                    padding: 10mm;
+                                }
+                            }
+                            
+                            /* Prevent page breaks */
+                            .items-table, .summary-table, .signatures-table {
+                                page-break-inside: avoid;
                             }
                         </style>
 
@@ -274,10 +235,10 @@
                             <h2>شهادة دفعة مرحلية</h2>
                         </div>
 
-                        <!-- Meta Information -->
-                        <table class="meta-grid">
+                        <!-- Compact Meta Information - 3 columns -->
+                        <table class="meta-table">
                             <tr>
-                                <td class="highlight-cell">
+                                <td style="width: 33.33%;">
                                     <div class="meta-label">
                                         IPC NO.
                                         <span class="meta-label-ar">رقم الشهادة</span>
@@ -286,7 +247,7 @@
                                         <span t-field="doc.name"/>
                                     </div>
                                 </td>
-                                <td class="highlight-cell">
+                                <td style="width: 33.33%;">
                                     <div class="meta-label">
                                         DATE
                                         <span class="meta-label-ar">التاريخ</span>
@@ -295,9 +256,7 @@
                                         <span t-field="doc.ipc_date"/>
                                     </div>
                                 </td>
-                            </tr>
-                            <tr>
-                                <td class="highlight-cell">
+                                <td style="width: 33.33%;">
                                     <div class="meta-label">
                                         CONTRACT
                                         <span class="meta-label-ar">العقد</span>
@@ -306,7 +265,9 @@
                                         <span t-field="doc.contract_id.name"/>
                                     </div>
                                 </td>
-                                <td class="highlight-cell">
+                            </tr>
+                            <tr>
+                                <td>
                                     <div class="meta-label">
                                         PROJECT
                                         <span class="meta-label-ar">المشروع</span>
@@ -315,18 +276,16 @@
                                         <span t-field="doc.contract_id.project_id.name"/>
                                     </div>
                                 </td>
-                            </tr>
-                            <tr>
-                                <td class="highlight-cell">
+                                <td>
                                     <div class="meta-label">
                                         PARTNER
-                                        <span class="meta-label-ar">الطرف</span>
+                                        <span class="meta-label-ar">الشريك</span>
                                     </div>
                                     <div class="meta-value">
                                         <span t-field="doc.contract_id.partner_id.name"/>
                                     </div>
                                 </td>
-                                <td class="highlight-cell">
+                                <td>
                                     <div class="meta-label">
                                         PERIOD
                                         <span class="meta-label-ar">الفترة</span>
@@ -338,31 +297,31 @@
                             </tr>
                         </table>
 
-                        <!-- Line Items Table -->
+                        <!-- Compact Line Items Table -->
                         <table class="items-table">
                             <thead>
                                 <tr>
-                                    <th>
+                                    <th style="width: 28%;">
                                         Description
                                         <span class="ar-label">الوصف</span>
                                     </th>
-                                    <th class="text-right" style="width: 12%;">
-                                        Previous Qty
-                                        <span class="ar-label">الكمية السابقة</span>
+                                    <th class="text-right" style="width: 10%;">
+                                        Prev. Qty
+                                        <span class="ar-label">السابقة</span>
                                     </th>
-                                    <th class="text-right" style="width: 12%;">
-                                        Current Qty
-                                        <span class="ar-label">الكمية الحالية</span>
+                                    <th class="text-right" style="width: 10%;">
+                                        Curr. Qty
+                                        <span class="ar-label">الحالية</span>
                                     </th>
-                                    <th class="text-right" style="width: 12%;">
-                                        Cumulative Qty
-                                        <span class="ar-label">الكمية التراكمية</span>
+                                    <th class="text-right" style="width: 10%;">
+                                        Cumul. Qty
+                                        <span class="ar-label">التراكمية</span>
                                     </th>
-                                    <th class="text-right" style="width: 13%;">
+                                    <th class="text-right" style="width: 15%;">
                                         Rate
                                         <span class="ar-label">السعر</span>
                                     </th>
-                                    <th class="text-right" style="width: 13%;">
+                                    <th class="text-right" style="width: 15%;">
                                         Amount
                                         <span class="ar-label">القيمة</span>
                                     </th>
@@ -398,119 +357,112 @@
                             </tbody>
                         </table>
 
-                        <!-- Summary Section -->
-                        <div class="summary-wrapper">
-                            <div class="summary-box">
-                                <div class="summary-header">
-                                    <h3>Financial Summary</h3>
-                                </div>
-                                <table class="summary-table">
-                                    <tbody>
-                                        <tr>
-                                            <td class="label-cell">
-                                                Previous Certified
-                                                <span class="label-ar">المعتمد السابق</span>
-                                            </td>
-                                            <td class="value-cell">
-                                                <span t-field="doc.previous_certified_value"
-                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="label-cell">
-                                                Current Work Value
-                                                <span class="label-ar">قيمة الأعمال الحالية</span>
-                                            </td>
-                                            <td class="value-cell">
-                                                <span t-field="doc.current_work_value"
-                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="label-cell">
-                                                Cumulative Certified
-                                                <span class="label-ar">المعتمد التراكمي</span>
-                                            </td>
-                                            <td class="value-cell">
-                                                <span t-field="doc.cumulative_certified_value"
-                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="label-cell">
-                                                Advance Recovery
-                                                <span class="label-ar">استرداد الدفعة المقدمة</span>
-                                            </td>
-                                            <td class="value-cell">
-                                                <span t-field="doc.advance_recovery_amount"
-                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="label-cell">
-                                                VAT
-                                                <span class="label-ar">ضريبة القيمة المضافة</span>
-                                            </td>
-                                            <td class="value-cell">
-                                                <span t-field="doc.vat_amount"
-                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="label-cell">
-                                                Gross With VAT
-                                                <span class="label-ar">الإجمالي شامل الضريبة</span>
-                                            </td>
-                                            <td class="value-cell">
-                                                <span t-field="doc.gross_with_vat"
-                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="label-cell">
-                                                Retention
-                                                <span class="label-ar">الاستقطاع</span>
-                                            </td>
-                                            <td class="value-cell">
-                                                <span t-field="doc.retention_amount"
-                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="label-cell">
-                                                Deductions
-                                                <span class="label-ar">الخصومات</span>
-                                            </td>
-                                            <td class="value-cell">
-                                                <span t-field="doc.deduction_amount"
-                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                            </td>
-                                        </tr>
-                                        <tr class="total-row">
-                                            <td class="label-cell">
-                                                Net Amount
-                                                <span class="label-ar">صافي المبلغ</span>
-                                            </td>
-                                            <td class="value-cell">
-                                                <span t-field="doc.net_amount"
-                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <!-- Compact Summary -->
+                        <table class="summary-table">
+                            <tbody>
+                                <tr>
+                                    <td class="label-cell">
+                                        Previous Certified
+                                        <span class="label-ar">المعتمد السابق</span>
+                                    </td>
+                                    <td class="value-cell">
+                                        <span t-field="doc.previous_certified_value"
+                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="label-cell">
+                                        Current Work Value
+                                        <span class="label-ar">قيمة الأعمال الحالية</span>
+                                    </td>
+                                    <td class="value-cell">
+                                        <span t-field="doc.current_work_value"
+                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="label-cell">
+                                        Cumulative Certified
+                                        <span class="label-ar">المعتمد التراكمي</span>
+                                    </td>
+                                    <td class="value-cell">
+                                        <span t-field="doc.cumulative_certified_value"
+                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="label-cell">
+                                        Advance Recovery
+                                        <span class="label-ar">استرداد الدفعة المقدمة</span>
+                                    </td>
+                                    <td class="value-cell">
+                                        <span t-field="doc.advance_recovery_amount"
+                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="label-cell">
+                                        VAT
+                                        <span class="label-ar">ضريبة القيمة المضافة</span>
+                                    </td>
+                                    <td class="value-cell">
+                                        <span t-field="doc.vat_amount"
+                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="label-cell">
+                                        Gross With VAT
+                                        <span class="label-ar">الإجمالي شامل الضريبة</span>
+                                    </td>
+                                    <td class="value-cell">
+                                        <span t-field="doc.gross_with_vat"
+                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="label-cell">
+                                        Retention
+                                        <span class="label-ar">الاستقطاع</span>
+                                    </td>
+                                    <td class="value-cell">
+                                        <span t-field="doc.retention_amount"
+                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="label-cell">
+                                        Deductions
+                                        <span class="label-ar">الخصومات</span>
+                                    </td>
+                                    <td class="value-cell">
+                                        <span t-field="doc.deduction_amount"
+                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr class="total-row">
+                                    <td class="label-cell">
+                                        Net Amount
+                                        <span class="label-ar">صافي المبلغ</span>
+                                    </td>
+                                    <td class="value-cell">
+                                        <span t-field="doc.net_amount"
+                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                        <!-- Notes -->
+                        <!-- Compact Notes -->
                         <div class="notes-box">
-                            <h4>Notes / ملاحظات</h4>
+                            <h4>NOTES / ملاحظات</h4>
                             <p>
-                                All quantities and amounts are subject to review and approval according to contract terms.
-                                <span class="ar-text">جميع الكميات والمبالغ خاضعة للمراجعة والاعتماد وفقاً لشروط العقد.</span>
+                                All quantities and amounts are subject to review and approval according to contract terms. 
+                                جميع الكميات والمبالغ خاضعة للمراجعة والاعتماد وفقاً لشروط العقد.
                             </p>
                         </div>
 
-                        <!-- Signatures -->
+                        <!-- Compact Signatures -->
                         <table class="signatures-table">
                             <tr>
                                 <td>
