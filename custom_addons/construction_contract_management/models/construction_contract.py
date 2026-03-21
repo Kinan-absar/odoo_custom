@@ -82,6 +82,39 @@ class ConstructionContract(models.Model):
     )
     retention_release_count = fields.Integer(compute='_compute_retention_release_count')
 
+    total_measured_amount = fields.Monetary(
+        string='Total Measured Amount',
+        currency_field='currency_id',
+        compute='_compute_summary_amounts',
+        store=True,
+    )
+
+    total_certified_amount = fields.Monetary(
+        string='Total Certified Amount',
+        currency_field='currency_id',
+        compute='_compute_summary_amounts',
+        store=True,
+    )
+
+    total_move_amount = fields.Monetary(
+        string='Total Invoiced/Billed',
+        currency_field='currency_id',
+        compute='_compute_summary_amounts',
+        store=True,
+    )
+
+    total_paid_amount = fields.Monetary(
+        string='Total Paid',
+        currency_field='currency_id',
+        compute='_compute_summary_amounts',
+        store=True,
+    )
+
+    completion_percent = fields.Float(
+        string='Completion %',
+        compute='_compute_summary_amounts',
+        store=True,
+    )
     # Accounting setup
     journal_id = fields.Many2one('account.journal', string='Accounting Journal')
     work_account_id = fields.Many2one('account.account', string='Work Account')
@@ -254,3 +287,39 @@ class ConstructionContract(models.Model):
             'domain': [('contract_id', '=', self.id)],
             'context': {'default_contract_id': self.id},
         }
+    
+    @api.depends(
+        'boq_line_ids.measured_qty',
+        'boq_line_ids.certified_qty',
+        'boq_line_ids.unit_rate',
+        'boq_line_ids.revised_unit_rate',
+        'ipc_ids.current_work_value',
+        'ipc_ids.move_id',
+        'ipc_ids.move_id.amount_total',
+        'ipc_ids.move_id.payment_state',
+        'ipc_ids.move_id.amount_residual',
+        'revised_amount',
+    )
+    def _compute_summary_amounts(self):
+        for rec in self:
+            total_measured = 0.0
+            total_certified = 0.0
+
+            for line in rec.boq_line_ids:
+                rate = line.revised_unit_rate or line.unit_rate
+                total_measured += (line.measured_qty or 0.0) * rate
+                total_certified += (line.certified_qty or 0.0) * rate
+
+            moves = rec.ipc_ids.mapped('move_id').filtered(lambda m: m.state != 'cancel')
+            total_move = sum(moves.mapped('amount_total'))
+            total_paid = sum((m.amount_total - m.amount_residual) for m in moves)
+
+            completion = 0.0
+            if rec.revised_amount:
+                completion = (total_certified / rec.revised_amount) * 100.0
+
+            rec.total_measured_amount = total_measured
+            rec.total_certified_amount = total_certified
+            rec.total_move_amount = total_move
+            rec.total_paid_amount = total_paid
+            rec.completion_percent = completion
