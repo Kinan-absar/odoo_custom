@@ -51,6 +51,12 @@
                                 icon="fa-exchange">
                             <field name="variation_count" widget="statinfo"/>
                         </button>
+                        <button name="action_view_advances"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-money">
+                            <field name="advance_count" widget="statinfo" string="Advances"/>
+                        </button>
                     </div>
 
                     <div class="oe_title">
@@ -175,6 +181,19 @@
                                     <field name="vat_percent"/>
                                 </group>
                             </group>
+                        </page>
+                        <page string="Advances">
+                            <field name="advance_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="date"/>
+                                    <field name="amount"/>
+                                    <field name="tax_amount"/>
+                                    <field name="total_amount"/>
+                                    <field name="state"/>
+                                    <field name="move_id"/>
+                                </list>
+                            </field>
                         </page>
                     </notebook>
                 </sheet>

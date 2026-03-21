@@ -25,4 +25,10 @@
         <field name="prefix">VAR/%(year)s/</field>
         <field name="padding">4</field>
     </record>
+    <record id="seq_construction_advance" model="ir.sequence">
+        <field name="name">Construction Advance</field>
+        <field name="code">construction.advance</field>
+        <field name="prefix">ADV/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
 </odoo>

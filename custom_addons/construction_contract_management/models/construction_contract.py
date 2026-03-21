@@ -53,6 +53,8 @@ class ConstructionContract(models.Model):
         compute='_compute_advance_balance',
         store=True,
     )
+    advance_ids = fields.One2many('construction.advance', 'contract_id', string='Advances')
+    advance_count = fields.Integer(compute='_compute_advance_count')
 
     # Accounting setup
     journal_id = fields.Many2one('account.journal', string='Accounting Journal')
@@ -170,6 +172,21 @@ class ConstructionContract(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'Variations',
             'res_model': 'construction.variation',
+            'view_mode': 'list,form',
+            'domain': [('contract_id', '=', self.id)],
+            'context': {'default_contract_id': self.id},
+        }
+    def _compute_advance_count(self):
+        for rec in self:
+            rec.advance_count = self.env['construction.advance'].search_count([
+                ('contract_id', '=', rec.id)
+            ])
+    def action_view_advances(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Advances',
+            'res_model': 'construction.advance',
             'view_mode': 'list,form',
             'domain': [('contract_id', '=', self.id)],
             'context': {'default_contract_id': self.id},

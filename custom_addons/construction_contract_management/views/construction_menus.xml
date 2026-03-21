@@ -27,5 +27,10 @@
             parent="menu_construction_root"
             action="action_construction_variation"
             sequence="40"/>
+    <menuitem id="menu_construction_advances"
+          name="Advances"
+          parent="menu_construction_root"
+          action="action_construction_advance"
+          sequence="35"/>
 
 </odoo>
