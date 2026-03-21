@@ -2,14 +2,10 @@
 
     <menuitem id="menu_construction_root"
               name="Construction Contracts"
+              action="action_construction_dashboard"
               sequence="10"
               groups="construction_contract_management.group_construction_user"/>
 
-    <menuitem id="menu_construction_root"
-                  name="Construction Contracts"
-                  action="action_construction_dashboard"
-                  sequence="10"
-                  groups="construction_contract_management.group_construction_user"/>
     <menuitem id="menu_construction_contracts"
               name="Contracts"
               parent="menu_construction_root"
@@ -27,20 +23,23 @@
               parent="menu_construction_root"
               action="action_construction_ipc"
               sequence="30"/>
-    <menuitem id="menu_construction_variation"
-            name="Variations"
-            parent="menu_construction_root"
-            action="action_construction_variation"
-            sequence="40"/>
+
     <menuitem id="menu_construction_advances"
-          name="Advances"
-          parent="menu_construction_root"
-          action="action_construction_advance"
-          sequence="35"/>
+              name="Advances"
+              parent="menu_construction_root"
+              action="action_construction_advance"
+              sequence="35"/>
+
+    <menuitem id="menu_construction_variation"
+              name="Variations"
+              parent="menu_construction_root"
+              action="action_construction_variation"
+              sequence="40"/>
+
     <menuitem id="menu_construction_retention_releases"
-          name="Retention Releases"
-          parent="menu_construction_root"
-          action="action_construction_retention_release"
-          sequence="45"/>
+              name="Retention Releases"
+              parent="menu_construction_root"
+              action="action_construction_retention_release"
+              sequence="45"/>
 
 </odoo>
