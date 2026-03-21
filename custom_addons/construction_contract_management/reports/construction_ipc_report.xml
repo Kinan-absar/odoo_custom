@@ -1,0 +1,99 @@
+<odoo>
+    <template id="report_construction_ipc">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>IPC Report</h2>
+
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>IPC No:</strong> <span t-field="o.name"/><br/>
+                                <strong>Date:</strong> <span t-field="o.ipc_date"/><br/>
+                                <strong>Contract:</strong> <span t-field="o.contract_id.name"/><br/>
+                                <strong>Project:</strong> <span t-field="o.contract_id.project_id.name"/><br/>
+                                <strong>Partner:</strong> <span t-field="o.contract_id.partner_id.name"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Direction:</strong> <span t-field="o.contract_direction"/><br/>
+                                <strong>Period From:</strong> <span t-field="o.period_from"/><br/>
+                                <strong>Period To:</strong> <span t-field="o.period_to"/><br/>
+                                <strong>Measurement:</strong> <span t-field="o.measurement_id.name"/><br/>
+                                <strong>Status:</strong> <span t-field="o.state"/>
+                            </div>
+                        </div>
+
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th class="text-end">Previous Qty</th>
+                                    <th class="text-end">Current Qty</th>
+                                    <th class="text-end">Cumulative Qty</th>
+                                    <th class="text-end">Rate</th>
+                                    <th class="text-end">Current Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.line_ids" t-as="l">
+                                    <td>
+                                        <span t-field="l.boq_line_id.item_code"/>
+                                        <t t-if="l.description">
+                                            <br/>
+                                            <span t-field="l.description"/>
+                                        </t>
+                                    </td>
+                                    <td class="text-end"><span t-field="l.previous_qty"/></td>
+                                    <td class="text-end"><span t-field="l.current_qty"/></td>
+                                    <td class="text-end"><span t-field="l.cumulative_qty"/></td>
+                                    <td class="text-end"><span t-field="l.unit_rate"/></td>
+                                    <td class="text-end"><span t-field="l.current_value"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="row mt-4">
+                            <div class="col-7"/>
+                            <div class="col-5">
+                                <table class="table table-sm table-bordered">
+                                    <tr>
+                                        <td>Previous Certified</td>
+                                        <td class="text-end"><span t-field="o.previous_certified_value"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Current Work Value</td>
+                                        <td class="text-end"><span t-field="o.current_work_value"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Advance Recovery</td>
+                                        <td class="text-end"><span t-field="o.advance_recovery_amount"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>VAT</td>
+                                        <td class="text-end"><span t-field="o.vat_amount"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Gross with VAT</td>
+                                        <td class="text-end"><span t-field="o.gross_with_vat"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Retention</td>
+                                        <td class="text-end"><span t-field="o.retention_amount"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Deductions</td>
+                                        <td class="text-end"><span t-field="o.deduction_amount"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Net Amount</strong></td>
+                                        <td class="text-end"><strong t-field="o.net_amount"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,70 @@
+<odoo>
+    <template id="report_construction_variation">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Variation Report</h2>
+
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Variation No:</strong> <span t-field="o.name"/><br/>
+                                <strong>Date:</strong> <span t-field="o.date"/><br/>
+                                <strong>Contract:</strong> <span t-field="o.contract_id.name"/><br/>
+                                <strong>Project:</strong> <span t-field="o.contract_id.project_id.name"/><br/>
+                                <strong>Partner:</strong> <span t-field="o.contract_id.partner_id.name"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Status:</strong> <span t-field="o.state"/><br/>
+                                <strong>Total Amount:</strong> <span t-field="o.total_amount"/>
+                            </div>
+                        </div>
+
+                        <t t-if="o.description">
+                            <p><strong>Description:</strong> <span t-field="o.description"/></p>
+                        </t>
+
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>BOQ Line</th>
+                                    <th>Description</th>
+                                    <th class="text-end">Original Qty</th>
+                                    <th class="text-end">Variation Qty</th>
+                                    <th class="text-end">Revised Qty</th>
+                                    <th class="text-end">Rate</th>
+                                    <th class="text-end">Impact</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.line_ids" t-as="l">
+                                    <td><span t-field="l.type"/></td>
+                                    <td><span t-field="l.boq_line_id"/></td>
+                                    <td><span t-field="l.description"/></td>
+                                    <td class="text-end"><span t-field="l.original_qty"/></td>
+                                    <td class="text-end"><span t-field="l.variation_qty"/></td>
+                                    <td class="text-end"><span t-field="l.revised_qty"/></td>
+                                    <td class="text-end"><span t-field="l.unit_rate"/></td>
+                                    <td class="text-end"><span t-field="l.amount"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="row mt-4">
+                            <div class="col-8"/>
+                            <div class="col-4">
+                                <table class="table table-sm table-bordered">
+                                    <tr>
+                                        <td><strong>Total Variation Amount</strong></td>
+                                        <td class="text-end"><strong t-field="o.total_amount"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
