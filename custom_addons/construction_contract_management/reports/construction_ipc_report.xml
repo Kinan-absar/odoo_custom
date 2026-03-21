@@ -7,7 +7,7 @@
                     <div class="page">
                         
                         <style>
-                            /* Compact, print-friendly B&W design */
+                            /* Compact, print-friendly BW design */
                             .page {
                                 font-family: 'DejaVu Sans', Arial, sans-serif;
                                 font-size: 9pt;
