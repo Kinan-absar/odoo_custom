@@ -6,6 +6,12 @@
               sequence="10"
               groups="construction_contract_management.group_construction_user"/>
 
+    <menuitem id="menu_construction_dashboard"
+              name="Dashboard"
+              parent="menu_construction_root"
+              action="action_construction_dashboard"
+              sequence="5"/>
+
     <menuitem id="menu_construction_contracts"
               name="Contracts"
               parent="menu_construction_root"
