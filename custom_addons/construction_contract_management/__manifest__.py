@@ -25,7 +25,9 @@ Construction Contract Management
     'data': [
         'security/construction_security.xml',
         'security/ir.model.access.csv',
+        'data/construction_dashboard_data.xml',
         'views/construction_sequence.xml',
+        'views/construction_dashboard_views.xml',
         'views/construction_contract_views.xml',
         'views/construction_measurement_views.xml',
         'views/construction_ipc_views.xml',
