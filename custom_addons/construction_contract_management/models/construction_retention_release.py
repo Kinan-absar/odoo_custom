@@ -8,8 +8,19 @@ class ConstructionRetentionRelease(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'id desc'
 
-    name = fields.Char(string='Retention Release Reference', required=True, copy=False, default='New', tracking=True)
-    contract_id = fields.Many2one('construction.contract', required=True, ondelete='cascade', tracking=True)
+    name = fields.Char(
+        string='Retention Release Reference',
+        required=True,
+        copy=False,
+        default='New',
+        tracking=True,
+    )
+    contract_id = fields.Many2one(
+        'construction.contract',
+        required=True,
+        ondelete='cascade',
+        tracking=True,
+    )
     project_id = fields.Many2one(related='contract_id.project_id', store=True)
     partner_id = fields.Many2one(related='contract_id.partner_id', store=True)
     company_id = fields.Many2one(related='contract_id.company_id', store=True)
@@ -17,15 +28,30 @@ class ConstructionRetentionRelease(models.Model):
     contract_direction = fields.Selection(related='contract_id.contract_direction', store=True)
 
     date = fields.Date(default=fields.Date.context_today, tracking=True)
-    amount = fields.Monetary(string='Release Amount', currency_field='currency_id', required=True, tracking=True)
+    amount = fields.Monetary(
+        string='Release Amount',
+        currency_field='currency_id',
+        required=True,
+        tracking=True,
+    )
     notes = fields.Text()
+
+    release_method = fields.Selection([
+        ('journal', 'Direct Journal Entry'),
+        ('invoice', 'Invoice Required'),
+    ], string='Release Method', required=True, default='journal', tracking=True)
 
     journal_id = fields.Many2one('account.journal', string='Journal')
     retention_account_id = fields.Many2one('account.account', string='Retention Account')
-    work_account_id = fields.Many2one('account.account', string='Release Account')
-    tax_id = fields.Many2one('account.tax', string='VAT Tax')
 
-    move_id = fields.Many2one('account.move', string='Invoice/Bill', copy=False, readonly=True)
+    # Used only for journal method
+    liquidity_account_id = fields.Many2one(
+        'account.account',
+        string='Liquidity Account',
+        help='Bank or cash account used for direct retention release journal entry.',
+    )
+
+    move_id = fields.Many2one('account.move', string='Journal Entry / Invoice / Bill', copy=False, readonly=True)
     move_count = fields.Integer(compute='_compute_move_count')
 
     state = fields.Selection([
@@ -56,33 +82,12 @@ class ConstructionRetentionRelease(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('construction.retention.release') or 'New'
         return super().create(vals)
 
-    def _check_accounting_setup(self):
-        for rec in self:
-            missing = []
-            contract = rec.contract_id
-
-            journal = rec.journal_id or contract.journal_id
-            retention_account = rec.retention_account_id or contract.retention_account_id
-            work_account = rec.work_account_id or contract.work_account_id
-
-            if not journal:
-                missing.append('Journal')
-            if not retention_account:
-                missing.append('Retention Account')
-            if not work_account:
-                missing.append('Release Account')
-
-            if missing:
-                raise ValidationError(
-                    'Please configure retention release accounting fields before creating invoice/bill:\n- ' +
-                    '\n- '.join(missing)
-                )
-
     @api.constrains('amount')
     def _check_amount(self):
         for rec in self:
             if rec.amount <= 0:
                 raise ValidationError('Release amount must be greater than zero.')
+
             if rec.amount > rec.contract_id.retention_balance:
                 raise ValidationError(
                     f'Release amount cannot exceed available retention balance.\n'
@@ -90,60 +95,141 @@ class ConstructionRetentionRelease(models.Model):
                     f'Release Amount: {rec.amount}'
                 )
 
-    def action_create_move(self):
+    def _check_accounting_setup(self):
+        for rec in self:
+            missing = []
+            contract = rec.contract_id
+
+            journal = rec.journal_id or contract.journal_id
+            retention_account = rec.retention_account_id or contract.retention_account_id
+
+            if not journal:
+                missing.append('Journal')
+            if not retention_account:
+                missing.append('Retention Account')
+
+            if rec.release_method == 'journal' and not rec.liquidity_account_id:
+                missing.append('Liquidity Account')
+
+            if missing:
+                raise ValidationError(
+                    'Please configure retention release accounting fields before posting:\n- ' +
+                    '\n- '.join(missing)
+                )
+
+    def action_post_release(self):
         for rec in self:
             if rec.move_id:
-                raise ValidationError('Invoice/Bill already created for this retention release.')
+                raise ValidationError('A journal entry or invoice/bill is already linked to this retention release.')
 
             rec._check_accounting_setup()
 
-            contract = rec.contract_id
-            journal = rec.journal_id or contract.journal_id
-            retention_account = rec.retention_account_id or contract.retention_account_id
-            work_account = rec.work_account_id or contract.work_account_id
+            if rec.release_method == 'journal':
+                rec._create_journal_entry()
+            else:
+                rec._create_invoice_or_bill()
 
-            move_type = 'out_invoice' if rec.contract_direction == 'inbound' else 'in_invoice'
+            rec.state = 'posted'
 
-            invoice_line_vals = [
+    def _create_journal_entry(self):
+        self.ensure_one()
+
+        contract = self.contract_id
+        journal = self.journal_id or contract.journal_id
+        retention_account = self.retention_account_id or contract.retention_account_id
+        liquidity_account = self.liquidity_account_id
+
+        line_vals = []
+
+        if self.contract_direction == 'inbound':
+            # We are receiving retained money from customer
+            line_vals = [
                 (0, 0, {
-                    'name': f'{rec.name} - Retention Release',
-                    'quantity': 1.0,
-                    'price_unit': rec.amount,
-                    'account_id': work_account.id,
-                    'tax_ids': [(6, 0, [])],
+                    'name': f'{self.name} - Retention Release',
+                    'account_id': liquidity_account.id,
+                    'debit': self.amount,
+                    'credit': 0.0,
+                    'partner_id': contract.partner_id.id,
                 }),
                 (0, 0, {
-                    'name': f'{rec.name} - Retention Settlement',
-                    'quantity': 1.0,
-                    'price_unit': -rec.amount,
+                    'name': f'{self.name} - Retention Receivable Clearance',
                     'account_id': retention_account.id,
-                    'tax_ids': [(6, 0, [])],
+                    'debit': 0.0,
+                    'credit': self.amount,
+                    'partner_id': contract.partner_id.id,
+                }),
+            ]
+        else:
+            # We are paying retained money to subcontractor
+            line_vals = [
+                (0, 0, {
+                    'name': f'{self.name} - Retention Payable Clearance',
+                    'account_id': retention_account.id,
+                    'debit': self.amount,
+                    'credit': 0.0,
+                    'partner_id': contract.partner_id.id,
+                }),
+                (0, 0, {
+                    'name': f'{self.name} - Retention Release Payment',
+                    'account_id': liquidity_account.id,
+                    'debit': 0.0,
+                    'credit': self.amount,
+                    'partner_id': contract.partner_id.id,
                 }),
             ]
 
-            move_vals = {
-                'move_type': move_type,
-                'partner_id': contract.partner_id.id,
-                'currency_id': contract.currency_id.id,
-                'invoice_date': rec.date,
-                'journal_id': journal.id,
-                'invoice_origin': rec.name,
-                'ref': rec.name,
-                'invoice_line_ids': invoice_line_vals,
-            }
+        move_vals = {
+            'move_type': 'entry',
+            'date': self.date,
+            'journal_id': journal.id,
+            'ref': self.name,
+            'line_ids': line_vals,
+        }
 
-            move = self.env['account.move'].create(move_vals)
-            rec.move_id = move.id
-            rec.state = 'posted'
+        move = self.env['account.move'].create(move_vals)
+        self.move_id = move.id
+
+    def _create_invoice_or_bill(self):
+        self.ensure_one()
+
+        contract = self.contract_id
+        journal = self.journal_id or contract.journal_id
+        retention_account = self.retention_account_id or contract.retention_account_id
+
+        move_type = 'out_invoice' if self.contract_direction == 'inbound' else 'in_invoice'
+
+        # No VAT. No revenue/expense recognition.
+        # This is only clearing retained balance through partner document.
+        invoice_line_vals = [(0, 0, {
+            'name': f'{self.name} - Retention Release',
+            'quantity': 1.0,
+            'price_unit': self.amount,
+            'account_id': retention_account.id,
+            'tax_ids': [(6, 0, [])],
+        })]
+
+        move_vals = {
+            'move_type': move_type,
+            'partner_id': contract.partner_id.id,
+            'currency_id': contract.currency_id.id,
+            'invoice_date': self.date,
+            'journal_id': journal.id,
+            'invoice_origin': self.name,
+            'ref': self.name,
+            'invoice_line_ids': invoice_line_vals,
+        }
+
+        move = self.env['account.move'].create(move_vals)
+        self.move_id = move.id
 
     def action_view_move(self):
         self.ensure_one()
         if not self.move_id:
-            raise ValidationError('No invoice/bill linked to this retention release.')
+            raise ValidationError('No journal entry or invoice/bill linked to this retention release.')
 
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Invoice/Bill',
+            'name': 'Journal Entry / Invoice / Bill',
             'res_model': 'account.move',
             'res_id': self.move_id.id,
             'view_mode': 'form',

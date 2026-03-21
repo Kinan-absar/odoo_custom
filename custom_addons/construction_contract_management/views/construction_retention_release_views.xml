@@ -8,6 +8,7 @@
                 <field name="name"/>
                 <field name="contract_id"/>
                 <field name="date"/>
+                <field name="release_method"/>
                 <field name="amount"/>
                 <field name="available_retention"/>
                 <field name="state"/>
@@ -21,14 +22,14 @@
         <field name="arch" type="xml">
             <form string="Retention Release">
                 <header>
-                    <button name="action_create_move"
-                            string="Create Invoice/Bill"
+                    <button name="action_post_release"
+                            string="Post Release"
                             type="object"
                             class="btn-primary"
                             invisible="move_id or state != 'draft'"/>
 
                     <button name="action_view_move"
-                            string="View Invoice/Bill"
+                            string="View Entry/Invoice"
                             type="object"
                             invisible="not move_id"/>
 
@@ -52,7 +53,7 @@
                                 class="oe_stat_button"
                                 icon="fa-file-text-o"
                                 invisible="not move_id">
-                            <field name="move_count" widget="statinfo" string="Invoice/Bill"/>
+                            <field name="move_count" widget="statinfo" string="Entry / Invoice"/>
                         </button>
                     </div>
 
@@ -62,12 +63,12 @@
                             <field name="contract_id"/>
                             <field name="date"/>
                             <field name="contract_direction" readonly="1"/>
+                            <field name="release_method"/>
                         </group>
                         <group>
                             <field name="journal_id"/>
                             <field name="retention_account_id"/>
-                            <field name="work_account_id"/>
-                            <field name="tax_id" invisible="1"/>
+                            <field name="liquidity_account_id" invisible="release_method != 'journal'"/>
                         </group>
                     </group>
 
@@ -105,6 +106,7 @@
 
                 <group expand="0" string="Group By">
                     <filter string="Contract" name="group_contract" context="{'group_by': 'contract_id'}"/>
+                    <filter string="Method" name="group_method" context="{'group_by': 'release_method'}"/>
                     <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
                 </group>
             </search>
