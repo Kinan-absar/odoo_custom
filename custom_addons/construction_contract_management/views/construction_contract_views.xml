@@ -57,6 +57,12 @@
                                 icon="fa-money">
                             <field name="advance_count" widget="statinfo" string="Advances"/>
                         </button>
+                        <button name="action_view_retention_releases"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-unlock-alt">
+                            <field name="retention_release_count" widget="statinfo" string="Retention Releases"/>
+                        </button>
                     </div>
 
                     <div class="oe_title">
@@ -180,6 +186,13 @@
                                     <field name="retention_percent"/>
                                     <field name="vat_percent"/>
                                 </group>
+                                <group>
+                                    <group>
+                                        <field name="retention_held" readonly="1"/>
+                                        <field name="retention_released" readonly="1"/>
+                                        <field name="retention_balance" readonly="1"/>
+                                    </group>
+                                </group>
                             </group>
                         </page>
                         <page string="Advances">
@@ -190,6 +203,17 @@
                                     <field name="amount"/>
                                     <field name="tax_amount"/>
                                     <field name="total_amount"/>
+                                    <field name="state"/>
+                                    <field name="move_id"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Retention Releases">
+                            <field name="retention_release_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="date"/>
+                                    <field name="amount"/>
                                     <field name="state"/>
                                     <field name="move_id"/>
                                 </list>

@@ -31,6 +31,7 @@ Construction Contract Management
         'views/construction_ipc_views.xml',
         'views/construction_variation_views.xml',
         'views/construction_advance_views.xml',
+        'views/construction_retention_release_views.xml',
         'views/construction_menus.xml',
     ],
     'application': True,

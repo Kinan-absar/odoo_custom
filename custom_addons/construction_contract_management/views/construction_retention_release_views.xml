@@ -1,0 +1,121 @@
+<odoo>
+
+    <record id="view_construction_retention_release_list" model="ir.ui.view">
+        <field name="name">construction.retention.release.list</field>
+        <field name="model">construction.retention.release</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="contract_id"/>
+                <field name="date"/>
+                <field name="amount"/>
+                <field name="available_retention"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_construction_retention_release_form" model="ir.ui.view">
+        <field name="name">construction.retention.release.form</field>
+        <field name="model">construction.retention.release</field>
+        <field name="arch" type="xml">
+            <form string="Retention Release">
+                <header>
+                    <button name="action_create_move"
+                            string="Create Invoice/Bill"
+                            type="object"
+                            class="btn-primary"
+                            invisible="move_id or state != 'draft'"/>
+
+                    <button name="action_view_move"
+                            string="View Invoice/Bill"
+                            type="object"
+                            invisible="not move_id"/>
+
+                    <button name="action_cancel"
+                            string="Cancel"
+                            type="object"
+                            invisible="state == 'cancelled'"/>
+
+                    <button name="action_reset_to_draft"
+                            string="Reset to Draft"
+                            type="object"
+                            invisible="state == 'draft'"/>
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft,posted,cancelled"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_move"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-file-text-o"
+                                invisible="not move_id">
+                            <field name="move_count" widget="statinfo" string="Invoice/Bill"/>
+                        </button>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="contract_id"/>
+                            <field name="date"/>
+                            <field name="contract_direction" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="journal_id"/>
+                            <field name="retention_account_id"/>
+                            <field name="work_account_id"/>
+                            <field name="tax_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group>
+                            <field name="available_retention" readonly="1"/>
+                            <field name="amount"/>
+                        </group>
+                        <group>
+                            <field name="move_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name="notes"/>
+                    </group>
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_construction_retention_release_search" model="ir.ui.view">
+        <field name="name">construction.retention.release.search</field>
+        <field name="model">construction.retention.release</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="contract_id"/>
+                <field name="partner_id"/>
+
+                <filter string="Draft" name="filter_draft" domain="[('state','=','draft')]"/>
+                <filter string="Posted" name="filter_posted" domain="[('state','=','posted')]"/>
+
+                <group expand="0" string="Group By">
+                    <filter string="Contract" name="group_contract" context="{'group_by': 'contract_id'}"/>
+                    <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_construction_retention_release" model="ir.actions.act_window">
+        <field name="name">Retention Releases</field>
+        <field name="res_model">construction.retention.release</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_construction_retention_release_search"/>
+    </record>
+
+</odoo>

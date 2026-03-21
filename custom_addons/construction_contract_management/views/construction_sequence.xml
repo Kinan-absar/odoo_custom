@@ -31,4 +31,10 @@
         <field name="prefix">ADV/%(year)s/</field>
         <field name="padding">4</field>
     </record>
+    <record id="seq_construction_retention_release" model="ir.sequence">
+        <field name="name">Construction Retention Release</field>
+        <field name="code">construction.retention.release</field>
+        <field name="prefix">REL/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
 </odoo>

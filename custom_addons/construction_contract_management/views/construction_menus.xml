@@ -32,5 +32,10 @@
           parent="menu_construction_root"
           action="action_construction_advance"
           sequence="35"/>
+    <menuitem id="menu_construction_retention_releases"
+          name="Retention Releases"
+          parent="menu_construction_root"
+          action="action_construction_retention_release"
+          sequence="45"/>
 
 </odoo>

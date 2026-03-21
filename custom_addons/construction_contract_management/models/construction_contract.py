@@ -56,6 +56,32 @@ class ConstructionContract(models.Model):
     advance_ids = fields.One2many('construction.advance', 'contract_id', string='Advances')
     advance_count = fields.Integer(compute='_compute_advance_count')
 
+    retention_held = fields.Monetary(
+        string='Retention Held',
+        currency_field='currency_id',
+        compute='_compute_retention_balances',
+        store=True,
+    )
+    retention_released = fields.Monetary(
+        string='Retention Released',
+        currency_field='currency_id',
+        compute='_compute_retention_balances',
+        store=True,
+    )
+    retention_balance = fields.Monetary(
+        string='Retention Balance',
+        currency_field='currency_id',
+        compute='_compute_retention_balances',
+        store=True,
+    )
+
+    retention_release_ids = fields.One2many(
+        'construction.retention.release',
+        'contract_id',
+        string='Retention Releases',
+    )
+    retention_release_count = fields.Integer(compute='_compute_retention_release_count')
+
     # Accounting setup
     journal_id = fields.Many2one('account.journal', string='Accounting Journal')
     work_account_id = fields.Many2one('account.account', string='Work Account')
@@ -187,6 +213,43 @@ class ConstructionContract(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'Advances',
             'res_model': 'construction.advance',
+            'view_mode': 'list,form',
+            'domain': [('contract_id', '=', self.id)],
+            'context': {'default_contract_id': self.id},
+        }
+    
+    @api.depends(
+        'ipc_ids.retention_amount',
+        'ipc_ids.state',
+        'retention_release_ids.amount',
+        'retention_release_ids.state',
+    )
+    def _compute_retention_balances(self):
+        for rec in self:
+            held = sum(
+                rec.ipc_ids.filtered(lambda x: x.state in ['approved', 'done']).mapped('retention_amount')
+            )
+            released = sum(
+                rec.retention_release_ids.filtered(lambda x: x.state in ['posted']).mapped('amount')
+            )
+            rec.retention_held = held
+            rec.retention_released = released
+            rec.retention_balance = held - released
+
+
+    def _compute_retention_release_count(self):
+        for rec in self:
+            rec.retention_release_count = self.env['construction.retention.release'].search_count([
+                ('contract_id', '=', rec.id)
+            ])
+
+
+    def action_view_retention_releases(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Retention Releases',
+            'res_model': 'construction.retention.release',
             'view_mode': 'list,form',
             'domain': [('contract_id', '=', self.id)],
             'context': {'default_contract_id': self.id},
