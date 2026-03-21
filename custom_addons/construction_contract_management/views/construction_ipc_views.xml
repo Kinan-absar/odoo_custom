@@ -39,7 +39,11 @@
                             type="object"
                             class="btn-primary"
                             invisible="state not in ['approved','done'] or move_id"/>
-
+                    <button name="%(construction_contract_management.action_report_construction_ipc)d"
+                            string="Print"
+                            type="action"
+                            class="btn-secondary"
+                            invisible="not id"/>
                     <button name="action_view_move"
                             string="View Invoice/Bill"
                             type="object"
