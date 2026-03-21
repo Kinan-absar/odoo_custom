@@ -15,28 +15,50 @@
                         <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:13px;">
                             <tbody>
                                 <tr>
-                                    <td style="width:25%; padding:4px;"><strong>IPC No.</strong><br/><span style="direction:rtl;">رقم الشهادة</span></td>
+                                    <td style="width:25%; padding:4px;">
+                                        <strong>IPC No.</strong><br/>
+                                        <span style="direction:rtl;">رقم الشهادة</span>
+                                    </td>
                                     <td style="width:25%; padding:4px;">
                                         <span t-field="doc.name"/>
                                     </td>
-                                    <td style="width:25%; padding:4px; text-align:right;"><strong style="direction:rtl;">التاريخ</strong><br/>Date</td>
                                     <td style="width:25%; padding:4px; text-align:right;">
-                                        <span t-esc="format_date(doc.env, doc.ipc_date)"/>
+                                        <strong style="direction:rtl;">التاريخ</strong><br/>Date
+                                    </td>
+                                    <td style="width:25%; padding:4px; text-align:right;">
+                                        <span t-field="doc.ipc_date"/>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:4px;"><strong>Contract</strong><br/><span style="direction:rtl;">العقد</span></td>
-                                    <td style="padding:4px;"><span t-field="doc.contract_id.name"/></td>
-                                    <td style="padding:4px; text-align:right;"><strong style="direction:rtl;">المشروع</strong><br/>Project</td>
-                                    <td style="padding:4px; text-align:right;"><span t-field="doc.contract_id.project_id"/></td>
+                                    <td style="padding:4px;">
+                                        <strong>Contract</strong><br/>
+                                        <span style="direction:rtl;">العقد</span>
+                                    </td>
+                                    <td style="padding:4px;">
+                                        <span t-field="doc.contract_id.name"/>
+                                    </td>
+                                    <td style="padding:4px; text-align:right;">
+                                        <strong style="direction:rtl;">المشروع</strong><br/>Project
+                                    </td>
+                                    <td style="padding:4px; text-align:right;">
+                                        <span t-field="doc.contract_id.project_id.name"/>
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:4px;"><strong>Partner</strong><br/><span style="direction:rtl;">الطرف</span></td>
-                                    <td style="padding:4px;"><span t-field="doc.contract_id.partner_id"/></td>
-                                    <td style="padding:4px; text-align:right;"><strong style="direction:rtl;">الفترة</strong><br/>Period</td>
+                                    <td style="padding:4px;">
+                                        <strong>Partner</strong><br/>
+                                        <span style="direction:rtl;">الطرف</span>
+                                    </td>
+                                    <td style="padding:4px;">
+                                        <span t-field="doc.contract_id.partner_id.name"/>
+                                    </td>
                                     <td style="padding:4px; text-align:right;">
-                                        <span t-esc="format_date(doc.env, doc.period_from)"/> -
-                                        <span t-esc="format_date(doc.env, doc.period_to)"/>
+                                        <strong style="direction:rtl;">الفترة</strong><br/>Period
+                                    </td>
+                                    <td style="padding:4px; text-align:right;">
+                                        <span t-field="doc.period_from"/>
+                                        <span> - </span>
+                                        <span t-field="doc.period_to"/>
                                     </td>
                                 </tr>
                             </tbody>
@@ -46,12 +68,24 @@
                         <table class="table table-sm" style="width:100%; border-collapse:collapse; font-size:12px;">
                             <thead>
                                 <tr style="background:#e9ecef;">
-                                    <th style="border:1px solid #999; padding:6px;">Description<br/><span style="direction:rtl;">الوصف</span></th>
-                                    <th style="border:1px solid #999; padding:6px; text-align:right;">Previous Qty<br/><span style="direction:rtl;">الكمية السابقة</span></th>
-                                    <th style="border:1px solid #999; padding:6px; text-align:right;">Current Qty<br/><span style="direction:rtl;">الكمية الحالية</span></th>
-                                    <th style="border:1px solid #999; padding:6px; text-align:right;">Cumulative Qty<br/><span style="direction:rtl;">الكمية التراكمية</span></th>
-                                    <th style="border:1px solid #999; padding:6px; text-align:right;">Rate<br/><span style="direction:rtl;">السعر</span></th>
-                                    <th style="border:1px solid #999; padding:6px; text-align:right;">Amount<br/><span style="direction:rtl;">القيمة</span></th>
+                                    <th style="border:1px solid #999; padding:6px;">
+                                        Description<br/><span style="direction:rtl;">الوصف</span>
+                                    </th>
+                                    <th style="border:1px solid #999; padding:6px; text-align:right;">
+                                        Previous Qty<br/><span style="direction:rtl;">الكمية السابقة</span>
+                                    </th>
+                                    <th style="border:1px solid #999; padding:6px; text-align:right;">
+                                        Current Qty<br/><span style="direction:rtl;">الكمية الحالية</span>
+                                    </th>
+                                    <th style="border:1px solid #999; padding:6px; text-align:right;">
+                                        Cumulative Qty<br/><span style="direction:rtl;">الكمية التراكمية</span>
+                                    </th>
+                                    <th style="border:1px solid #999; padding:6px; text-align:right;">
+                                        Rate<br/><span style="direction:rtl;">السعر</span>
+                                    </th>
+                                    <th style="border:1px solid #999; padding:6px; text-align:right;">
+                                        Amount<br/><span style="direction:rtl;">القيمة</span>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -72,10 +106,12 @@
                                         <span t-field="line.cumulative_qty"/>
                                     </td>
                                     <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                        <span t-esc="format_amount(doc.env, line.unit_rate, doc.currency_id)"/>
+                                        <span t-field="line.unit_rate"
+                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                     </td>
                                     <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                        <span t-esc="format_amount(doc.env, line.current_value, doc.currency_id)"/>
+                                        <span t-field="line.current_value"
+                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                     </td>
                                 </tr>
                             </tbody>
@@ -86,57 +122,84 @@
                             <table style="width:100%; border-collapse:collapse; font-size:12px;">
                                 <tbody>
                                     <tr>
-                                        <td style="border:1px solid #999; padding:6px;">Previous Certified<br/><span style="direction:rtl;">المعتمد السابق</span></td>
+                                        <td style="border:1px solid #999; padding:6px;">
+                                            Previous Certified<br/><span style="direction:rtl;">المعتمد السابق</span>
+                                        </td>
                                         <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-esc="format_amount(doc.env, doc.previous_certified_value, doc.currency_id)"/>
+                                            <span t-field="doc.previous_certified_value"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td style="border:1px solid #999; padding:6px;">Current Work Value<br/><span style="direction:rtl;">قيمة الأعمال الحالية</span></td>
+                                        <td style="border:1px solid #999; padding:6px;">
+                                            Current Work Value<br/><span style="direction:rtl;">قيمة الأعمال الحالية</span>
+                                        </td>
                                         <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-esc="format_amount(doc.env, doc.current_work_value, doc.currency_id)"/>
+                                            <span t-field="doc.current_work_value"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td style="border:1px solid #999; padding:6px;">Cumulative Certified<br/><span style="direction:rtl;">المعتمد التراكمي</span></td>
+                                        <td style="border:1px solid #999; padding:6px;">
+                                            Cumulative Certified<br/><span style="direction:rtl;">المعتمد التراكمي</span>
+                                        </td>
                                         <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-esc="format_amount(doc.env, doc.cumulative_certified_value, doc.currency_id)"/>
+                                            <span t-field="doc.cumulative_certified_value"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td style="border:1px solid #999; padding:6px;">Advance Recovery<br/><span style="direction:rtl;">استرداد الدفعة المقدمة</span></td>
+                                        <td style="border:1px solid #999; padding:6px;">
+                                            Advance Recovery<br/><span style="direction:rtl;">استرداد الدفعة المقدمة</span>
+                                        </td>
                                         <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-esc="format_amount(doc.env, doc.advance_recovery_amount, doc.currency_id)"/>
+                                            <span t-field="doc.advance_recovery_amount"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td style="border:1px solid #999; padding:6px;">VAT<br/><span style="direction:rtl;">ضريبة القيمة المضافة</span></td>
+                                        <td style="border:1px solid #999; padding:6px;">
+                                            VAT<br/><span style="direction:rtl;">ضريبة القيمة المضافة</span>
+                                        </td>
                                         <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-esc="format_amount(doc.env, doc.vat_amount, doc.currency_id)"/>
+                                            <span t-field="doc.vat_amount"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td style="border:1px solid #999; padding:6px;">Gross With VAT<br/><span style="direction:rtl;">الإجمالي شامل الضريبة</span></td>
+                                        <td style="border:1px solid #999; padding:6px;">
+                                            Gross With VAT<br/><span style="direction:rtl;">الإجمالي شامل الضريبة</span>
+                                        </td>
                                         <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-esc="format_amount(doc.env, doc.gross_with_vat, doc.currency_id)"/>
+                                            <span t-field="doc.gross_with_vat"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td style="border:1px solid #999; padding:6px;">Retention<br/><span style="direction:rtl;">الاستقطاع</span></td>
+                                        <td style="border:1px solid #999; padding:6px;">
+                                            Retention<br/><span style="direction:rtl;">الاستقطاع</span>
+                                        </td>
                                         <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-esc="format_amount(doc.env, doc.retention_amount, doc.currency_id)"/>
+                                            <span t-field="doc.retention_amount"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td style="border:1px solid #999; padding:6px;">Deductions<br/><span style="direction:rtl;">الخصومات</span></td>
+                                        <td style="border:1px solid #999; padding:6px;">
+                                            Deductions<br/><span style="direction:rtl;">الخصومات</span>
+                                        </td>
                                         <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-esc="format_amount(doc.env, doc.deduction_amount, doc.currency_id)"/>
+                                            <span t-field="doc.deduction_amount"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                         </td>
                                     </tr>
                                     <tr style="background:#f2f2f2;">
-                                        <td style="border:1px solid #999; padding:6px;"><strong>Net Amount</strong><br/><strong style="direction:rtl;">صافي المبلغ</strong></td>
+                                        <td style="border:1px solid #999; padding:6px;">
+                                            <strong>Net Amount</strong><br/><strong style="direction:rtl;">صافي المبلغ</strong>
+                                        </td>
                                         <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <strong t-esc="format_amount(doc.env, doc.net_amount, doc.currency_id)"/>
+                                            <strong t-field="doc.net_amount"
+                                                    t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                         </td>
                                     </tr>
                                 </tbody>
