@@ -1,244 +1,627 @@
 <odoo>
-    <template id="report_construction_ipc">
+    <template id="report_construction_ipc_modern">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="doc">
                 <t t-call="web.external_layout">
                     <div class="page">
+                        
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap');
+                            
+                            :root {
+                                --primary-color: #1a365d;
+                                --accent-color: #d4af37;
+                                --text-dark: #1a202c;
+                                --text-light: #4a5568;
+                                --border-color: #cbd5e0;
+                                --bg-light: #f7fafc;
+                                --bg-accent: #edf2f7;
+                            }
+                            
+                            * {
+                                font-family: 'IBM Plex Sans', 'Cairo', sans-serif;
+                            }
+                            
+                            .ipc-header {
+                                background: linear-gradient(135deg, var(--primary-color) 0%, #2d3748 100%);
+                                color: white;
+                                padding: 32px 40px;
+                                margin: -40px -40px 30px -40px;
+                                position: relative;
+                                overflow: hidden;
+                            }
+                            
+                            .ipc-header::before {
+                                content: '';
+                                position: absolute;
+                                top: 0;
+                                right: 0;
+                                width: 300px;
+                                height: 100%;
+                                background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.1));
+                                transform: skewX(-15deg);
+                            }
+                            
+                            .ipc-title {
+                                position: relative;
+                                z-index: 1;
+                            }
+                            
+                            .ipc-title h1 {
+                                font-family: 'IBM Plex Sans', sans-serif;
+                                font-size: 32px;
+                                font-weight: 700;
+                                letter-spacing: 0.5px;
+                                margin: 0 0 8px 0;
+                                text-transform: uppercase;
+                            }
+                            
+                            .ipc-title h2 {
+                                font-family: 'Cairo', sans-serif;
+                                font-size: 24px;
+                                font-weight: 600;
+                                margin: 0;
+                                direction: rtl;
+                                opacity: 0.95;
+                            }
+                            
+                            .ipc-meta-grid {
+                                display: grid;
+                                grid-template-columns: repeat(2, 1fr);
+                                gap: 20px;
+                                margin-bottom: 35px;
+                            }
+                            
+                            .meta-card {
+                                background: white;
+                                border: 1px solid var(--border-color);
+                                border-left: 4px solid var(--accent-color);
+                                padding: 16px 20px;
+                                border-radius: 4px;
+                                transition: all 0.2s;
+                            }
+                            
+                            .meta-card:hover {
+                                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                                transform: translateY(-2px);
+                            }
+                            
+                            .meta-label {
+                                font-size: 11px;
+                                font-weight: 600;
+                                color: var(--text-light);
+                                text-transform: uppercase;
+                                letter-spacing: 0.8px;
+                                margin-bottom: 6px;
+                            }
+                            
+                            .meta-label-ar {
+                                font-family: 'Cairo', sans-serif;
+                                font-size: 12px;
+                                display: block;
+                                direction: rtl;
+                                margin-top: 2px;
+                                font-weight: 500;
+                            }
+                            
+                            .meta-value {
+                                font-size: 15px;
+                                font-weight: 600;
+                                color: var(--text-dark);
+                                margin-top: 4px;
+                            }
+                            
+                            .ipc-table-wrapper {
+                                margin: 30px 0;
+                                overflow: hidden;
+                                border-radius: 6px;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                            }
+                            
+                            .ipc-table {
+                                width: 100%;
+                                border-collapse: separate;
+                                border-spacing: 0;
+                                font-size: 13px;
+                                background: white;
+                            }
+                            
+                            .ipc-table thead tr {
+                                background: linear-gradient(to bottom, #2d3748, var(--primary-color));
+                                color: white;
+                            }
+                            
+                            .ipc-table th {
+                                padding: 14px 12px;
+                                font-weight: 600;
+                                text-align: left;
+                                border: none;
+                                font-size: 12px;
+                            }
+                            
+                            .ipc-table th.text-right {
+                                text-align: right;
+                            }
+                            
+                            .ipc-table th .ar-label {
+                                font-family: 'Cairo', sans-serif;
+                                display: block;
+                                font-size: 11px;
+                                margin-top: 3px;
+                                opacity: 0.9;
+                                font-weight: 500;
+                            }
+                            
+                            .ipc-table tbody tr {
+                                border-bottom: 1px solid #e2e8f0;
+                                transition: background 0.15s;
+                            }
+                            
+                            .ipc-table tbody tr:hover {
+                                background: var(--bg-light);
+                            }
+                            
+                            .ipc-table tbody tr:nth-child(even) {
+                                background: #fafbfc;
+                            }
+                            
+                            .ipc-table tbody tr:nth-child(even):hover {
+                                background: var(--bg-light);
+                            }
+                            
+                            .ipc-table td {
+                                padding: 12px;
+                                border: none;
+                                color: var(--text-dark);
+                            }
+                            
+                            .ipc-table td.text-right {
+                                text-align: right;
+                            }
+                            
+                            .item-code {
+                                display: inline-block;
+                                background: var(--accent-color);
+                                color: white;
+                                padding: 3px 8px;
+                                border-radius: 3px;
+                                font-size: 11px;
+                                font-weight: 600;
+                                margin-bottom: 4px;
+                                letter-spacing: 0.3px;
+                            }
+                            
+                            .summary-section {
+                                margin-top: 40px;
+                                display: flex;
+                                justify-content: flex-end;
+                            }
+                            
+                            .summary-box {
+                                width: 480px;
+                                background: white;
+                                border: 1px solid var(--border-color);
+                                border-radius: 6px;
+                                overflow: hidden;
+                                box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+                            }
+                            
+                            .summary-header {
+                                background: var(--bg-accent);
+                                padding: 12px 20px;
+                                border-bottom: 2px solid var(--accent-color);
+                            }
+                            
+                            .summary-header h3 {
+                                margin: 0;
+                                font-size: 16px;
+                                font-weight: 700;
+                                color: var(--primary-color);
+                            }
+                            
+                            .summary-table {
+                                width: 100%;
+                            }
+                            
+                            .summary-table tr {
+                                border-bottom: 1px solid #e2e8f0;
+                            }
+                            
+                            .summary-table tr:last-child {
+                                border-bottom: none;
+                            }
+                            
+                            .summary-table td {
+                                padding: 14px 20px;
+                                font-size: 13px;
+                            }
+                            
+                            .summary-table .label-cell {
+                                color: var(--text-dark);
+                                font-weight: 500;
+                            }
+                            
+                            .summary-table .label-ar {
+                                font-family: 'Cairo', sans-serif;
+                                display: block;
+                                font-size: 12px;
+                                color: var(--text-light);
+                                margin-top: 2px;
+                                direction: rtl;
+                            }
+                            
+                            .summary-table .value-cell {
+                                text-align: right;
+                                font-weight: 600;
+                                color: var(--text-dark);
+                                font-family: 'IBM Plex Sans', monospace;
+                            }
+                            
+                            .summary-table tr.total-row {
+                                background: linear-gradient(to right, #f7fafc, #edf2f7);
+                                border-top: 2px solid var(--accent-color);
+                            }
+                            
+                            .summary-table tr.total-row td {
+                                font-weight: 700;
+                                font-size: 15px;
+                                padding: 16px 20px;
+                            }
+                            
+                            .summary-table tr.total-row .value-cell {
+                                color: var(--primary-color);
+                            }
+                            
+                            .notes-section {
+                                margin-top: 40px;
+                                background: var(--bg-light);
+                                border-left: 4px solid var(--accent-color);
+                                padding: 20px 24px;
+                                border-radius: 4px;
+                            }
+                            
+                            .notes-section h4 {
+                                margin: 0 0 12px 0;
+                                font-size: 14px;
+                                font-weight: 700;
+                                color: var(--primary-color);
+                                text-transform: uppercase;
+                                letter-spacing: 0.5px;
+                            }
+                            
+                            .notes-section p {
+                                margin: 0;
+                                font-size: 12px;
+                                line-height: 1.7;
+                                color: var(--text-dark);
+                            }
+                            
+                            .notes-section .ar-text {
+                                font-family: 'Cairo', sans-serif;
+                                display: block;
+                                direction: rtl;
+                                margin-top: 8px;
+                            }
+                            
+                            .signatures-section {
+                                margin-top: 60px;
+                                display: grid;
+                                grid-template-columns: repeat(3, 1fr);
+                                gap: 30px;
+                                padding-top: 20px;
+                            }
+                            
+                            .signature-box {
+                                text-align: center;
+                                padding: 20px;
+                                background: white;
+                                border: 2px dashed var(--border-color);
+                                border-radius: 6px;
+                                min-height: 140px;
+                            }
+                            
+                            .signature-box .title {
+                                font-weight: 700;
+                                font-size: 13px;
+                                color: var(--primary-color);
+                                margin-bottom: 4px;
+                                text-transform: uppercase;
+                                letter-spacing: 0.5px;
+                            }
+                            
+                            .signature-box .title-ar {
+                                font-family: 'Cairo', sans-serif;
+                                font-size: 13px;
+                                color: var(--text-light);
+                                direction: rtl;
+                                margin-bottom: 30px;
+                            }
+                            
+                            .signature-line {
+                                margin-top: 40px;
+                                padding-top: 10px;
+                                border-top: 2px solid var(--text-dark);
+                                font-size: 11px;
+                                color: var(--text-light);
+                            }
+                            
+                            @media print {
+                                .ipc-header {
+                                    margin: 0 0 30px 0;
+                                }
+                                
+                                .meta-card:hover,
+                                .ipc-table tbody tr:hover {
+                                    transform: none;
+                                    box-shadow: none;
+                                    background: none;
+                                }
+                            }
+                        </style>
 
-                        <!-- Title -->
-                        <div style="text-align:center; margin-bottom:20px;">
-                            <h2 style="margin:0;">INTERIM PAYMENT CERTIFICATE</h2>
-                            <h3 style="margin:4px 0 0 0; direction:rtl;">شهادة دفعة مرحلية</h3>
+                        <!-- Header -->
+                        <div class="ipc-header">
+                            <div class="ipc-title">
+                                <h1>Interim Payment Certificate</h1>
+                                <h2>شهادة دفعة مرحلية</h2>
+                            </div>
                         </div>
 
-                        <!-- Header Info -->
-                        <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:13px;">
-                            <tbody>
-                                <tr>
-                                    <td style="width:25%; padding:4px;">
-                                        <strong>IPC No.</strong><br/>
-                                        <span style="direction:rtl;">رقم الشهادة</span>
-                                    </td>
-                                    <td style="width:25%; padding:4px;">
-                                        <span t-field="doc.name"/>
-                                    </td>
-                                    <td style="width:25%; padding:4px; text-align:right;">
-                                        <strong style="direction:rtl;">التاريخ</strong><br/>Date
-                                    </td>
-                                    <td style="width:25%; padding:4px; text-align:right;">
-                                        <span t-field="doc.ipc_date"/>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="padding:4px;">
-                                        <strong>Contract</strong><br/>
-                                        <span style="direction:rtl;">العقد</span>
-                                    </td>
-                                    <td style="padding:4px;">
-                                        <span t-field="doc.contract_id.name"/>
-                                    </td>
-                                    <td style="padding:4px; text-align:right;">
-                                        <strong style="direction:rtl;">المشروع</strong><br/>Project
-                                    </td>
-                                    <td style="padding:4px; text-align:right;">
-                                        <span t-field="doc.contract_id.project_id.name"/>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="padding:4px;">
-                                        <strong>Partner</strong><br/>
-                                        <span style="direction:rtl;">الطرف</span>
-                                    </td>
-                                    <td style="padding:4px;">
-                                        <span t-field="doc.contract_id.partner_id.name"/>
-                                    </td>
-                                    <td style="padding:4px; text-align:right;">
-                                        <strong style="direction:rtl;">الفترة</strong><br/>Period
-                                    </td>
-                                    <td style="padding:4px; text-align:right;">
-                                        <span t-field="doc.period_from"/>
-                                        <span> - </span>
-                                        <span t-field="doc.period_to"/>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <!-- Meta Information Grid -->
+                        <div class="ipc-meta-grid">
+                            <div class="meta-card">
+                                <div class="meta-label">
+                                    IPC No.
+                                    <span class="meta-label-ar">رقم الشهادة</span>
+                                </div>
+                                <div class="meta-value">
+                                    <span t-field="doc.name"/>
+                                </div>
+                            </div>
+                            
+                            <div class="meta-card">
+                                <div class="meta-label">
+                                    Date
+                                    <span class="meta-label-ar">التاريخ</span>
+                                </div>
+                                <div class="meta-value">
+                                    <span t-field="doc.ipc_date"/>
+                                </div>
+                            </div>
+                            
+                            <div class="meta-card">
+                                <div class="meta-label">
+                                    Contract
+                                    <span class="meta-label-ar">العقد</span>
+                                </div>
+                                <div class="meta-value">
+                                    <span t-field="doc.contract_id.name"/>
+                                </div>
+                            </div>
+                            
+                            <div class="meta-card">
+                                <div class="meta-label">
+                                    Project
+                                    <span class="meta-label-ar">المشروع</span>
+                                </div>
+                                <div class="meta-value">
+                                    <span t-field="doc.contract_id.project_id.name"/>
+                                </div>
+                            </div>
+                            
+                            <div class="meta-card">
+                                <div class="meta-label">
+                                    Partner
+                                    <span class="meta-label-ar">الطرف</span>
+                                </div>
+                                <div class="meta-value">
+                                    <span t-field="doc.contract_id.partner_id.name"/>
+                                </div>
+                            </div>
+                            
+                            <div class="meta-card">
+                                <div class="meta-label">
+                                    Period
+                                    <span class="meta-label-ar">الفترة</span>
+                                </div>
+                                <div class="meta-value">
+                                    <span t-field="doc.period_from"/> - <span t-field="doc.period_to"/>
+                                </div>
+                            </div>
+                        </div>
 
-                        <!-- Lines -->
-                        <table class="table table-sm" style="width:100%; border-collapse:collapse; font-size:12px;">
-                            <thead>
-                                <tr style="background:#e9ecef;">
-                                    <th style="border:1px solid #999; padding:6px;">
-                                        Description<br/><span style="direction:rtl;">الوصف</span>
-                                    </th>
-                                    <th style="border:1px solid #999; padding:6px; text-align:right;">
-                                        Previous Qty<br/><span style="direction:rtl;">الكمية السابقة</span>
-                                    </th>
-                                    <th style="border:1px solid #999; padding:6px; text-align:right;">
-                                        Current Qty<br/><span style="direction:rtl;">الكمية الحالية</span>
-                                    </th>
-                                    <th style="border:1px solid #999; padding:6px; text-align:right;">
-                                        Cumulative Qty<br/><span style="direction:rtl;">الكمية التراكمية</span>
-                                    </th>
-                                    <th style="border:1px solid #999; padding:6px; text-align:right;">
-                                        Rate<br/><span style="direction:rtl;">السعر</span>
-                                    </th>
-                                    <th style="border:1px solid #999; padding:6px; text-align:right;">
-                                        Amount<br/><span style="direction:rtl;">القيمة</span>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr t-foreach="doc.line_ids" t-as="line">
-                                    <td style="border:1px solid #999; padding:6px;">
-                                        <t t-if="line.boq_line_id.item_code">
-                                            <strong t-field="line.boq_line_id.item_code"/><br/>
-                                        </t>
-                                        <span t-field="line.description"/>
-                                    </td>
-                                    <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                        <span t-field="line.previous_qty"/>
-                                    </td>
-                                    <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                        <span t-field="line.current_qty"/>
-                                    </td>
-                                    <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                        <span t-field="line.cumulative_qty"/>
-                                    </td>
-                                    <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                        <span t-field="line.unit_rate"
-                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                    </td>
-                                    <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                        <span t-field="line.current_value"
-                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <!-- Summary -->
-                        <div style="margin-top:20px; width:45%; margin-left:auto; page-break-inside: avoid;">
-                            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                        <!-- Line Items Table -->
+                        <div class="ipc-table-wrapper">
+                            <table class="ipc-table">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Description
+                                            <span class="ar-label">الوصف</span>
+                                        </th>
+                                        <th class="text-right">
+                                            Previous Qty
+                                            <span class="ar-label">الكمية السابقة</span>
+                                        </th>
+                                        <th class="text-right">
+                                            Current Qty
+                                            <span class="ar-label">الكمية الحالية</span>
+                                        </th>
+                                        <th class="text-right">
+                                            Cumulative Qty
+                                            <span class="ar-label">الكمية التراكمية</span>
+                                        </th>
+                                        <th class="text-right">
+                                            Rate
+                                            <span class="ar-label">السعر</span>
+                                        </th>
+                                        <th class="text-right">
+                                            Amount
+                                            <span class="ar-label">القيمة</span>
+                                        </th>
+                                    </tr>
+                                </thead>
                                 <tbody>
-                                    <tr>
-                                        <td style="border:1px solid #999; padding:6px;">
-                                            Previous Certified<br/><span style="direction:rtl;">المعتمد السابق</span>
+                                    <tr t-foreach="doc.line_ids" t-as="line">
+                                        <td>
+                                            <t t-if="line.boq_line_id.item_code">
+                                                <span class="item-code" t-field="line.boq_line_id.item_code"/>
+                                                <br/>
+                                            </t>
+                                            <span t-field="line.description"/>
                                         </td>
-                                        <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-field="doc.previous_certified_value"
+                                        <td class="text-right">
+                                            <span t-field="line.previous_qty"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="line.current_qty"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="line.cumulative_qty"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="line.unit_rate"
                                                   t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                         </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="border:1px solid #999; padding:6px;">
-                                            Current Work Value<br/><span style="direction:rtl;">قيمة الأعمال الحالية</span>
-                                        </td>
-                                        <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-field="doc.current_work_value"
+                                        <td class="text-right">
+                                            <span t-field="line.current_value"
                                                   t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="border:1px solid #999; padding:6px;">
-                                            Cumulative Certified<br/><span style="direction:rtl;">المعتمد التراكمي</span>
-                                        </td>
-                                        <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-field="doc.cumulative_certified_value"
-                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="border:1px solid #999; padding:6px;">
-                                            Advance Recovery<br/><span style="direction:rtl;">استرداد الدفعة المقدمة</span>
-                                        </td>
-                                        <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-field="doc.advance_recovery_amount"
-                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="border:1px solid #999; padding:6px;">
-                                            VAT<br/><span style="direction:rtl;">ضريبة القيمة المضافة</span>
-                                        </td>
-                                        <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-field="doc.vat_amount"
-                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="border:1px solid #999; padding:6px;">
-                                            Gross With VAT<br/><span style="direction:rtl;">الإجمالي شامل الضريبة</span>
-                                        </td>
-                                        <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-field="doc.gross_with_vat"
-                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="border:1px solid #999; padding:6px;">
-                                            Retention<br/><span style="direction:rtl;">الاستقطاع</span>
-                                        </td>
-                                        <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-field="doc.retention_amount"
-                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="border:1px solid #999; padding:6px;">
-                                            Deductions<br/><span style="direction:rtl;">الخصومات</span>
-                                        </td>
-                                        <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <span t-field="doc.deduction_amount"
-                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                        </td>
-                                    </tr>
-                                    <tr style="background:#f2f2f2;">
-                                        <td style="border:1px solid #999; padding:6px;">
-                                            <strong>Net Amount</strong><br/><strong style="direction:rtl;">صافي المبلغ</strong>
-                                        </td>
-                                        <td style="border:1px solid #999; padding:6px; text-align:right;">
-                                            <strong t-field="doc.net_amount"
-                                                    t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <div style="clear:both;"/>
+                        <!-- Summary Section -->
+                        <div class="summary-section">
+                            <div class="summary-box">
+                                <div class="summary-header">
+                                    <h3>Financial Summary</h3>
+                                </div>
+                                <table class="summary-table">
+                                    <tbody>
+                                        <tr>
+                                            <td class="label-cell">
+                                                Previous Certified
+                                                <span class="label-ar">المعتمد السابق</span>
+                                            </td>
+                                            <td class="value-cell">
+                                                <span t-field="doc.previous_certified_value"
+                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">
+                                                Current Work Value
+                                                <span class="label-ar">قيمة الأعمال الحالية</span>
+                                            </td>
+                                            <td class="value-cell">
+                                                <span t-field="doc.current_work_value"
+                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">
+                                                Cumulative Certified
+                                                <span class="label-ar">المعتمد التراكمي</span>
+                                            </td>
+                                            <td class="value-cell">
+                                                <span t-field="doc.cumulative_certified_value"
+                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">
+                                                Advance Recovery
+                                                <span class="label-ar">استرداد الدفعة المقدمة</span>
+                                            </td>
+                                            <td class="value-cell">
+                                                <span t-field="doc.advance_recovery_amount"
+                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">
+                                                VAT
+                                                <span class="label-ar">ضريبة القيمة المضافة</span>
+                                            </td>
+                                            <td class="value-cell">
+                                                <span t-field="doc.vat_amount"
+                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">
+                                                Gross With VAT
+                                                <span class="label-ar">الإجمالي شامل الضريبة</span>
+                                            </td>
+                                            <td class="value-cell">
+                                                <span t-field="doc.gross_with_vat"
+                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">
+                                                Retention
+                                                <span class="label-ar">الاستقطاع</span>
+                                            </td>
+                                            <td class="value-cell">
+                                                <span t-field="doc.retention_amount"
+                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">
+                                                Deductions
+                                                <span class="label-ar">الخصومات</span>
+                                            </td>
+                                            <td class="value-cell">
+                                                <span t-field="doc.deduction_amount"
+                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr class="total-row">
+                                            <td class="label-cell">
+                                                Net Amount
+                                                <span class="label-ar">صافي المبلغ</span>
+                                            </td>
+                                            <td class="value-cell">
+                                                <span t-field="doc.net_amount"
+                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
 
                         <!-- Notes -->
-                        <div style="margin-top:30px; font-size:12px;">
-                            <strong>Notes / ملاحظات</strong>
-                            <p style="margin-top:8px;">
-                                All quantities and amounts are subject to review and approval according to contract terms.<br/>
-                                <span style="direction:rtl; display:block; text-align:right;">
-                                    جميع الكميات والمبالغ خاضعة للمراجعة والاعتماد وفقًا لشروط العقد.
-                                </span>
+                        <div class="notes-section">
+                            <h4>Notes / ملاحظات</h4>
+                            <p>
+                                All quantities and amounts are subject to review and approval according to contract terms.
+                                <span class="ar-text">جميع الكميات والمبالغ خاضعة للمراجعة والاعتماد وفقًا لشروط العقد.</span>
                             </p>
                         </div>
 
                         <!-- Signatures -->
-                        <table style="width:100%; margin-top:50px; border-collapse:collapse; font-size:12px;">
-                            <tr>
-                                <td style="width:33%; text-align:center; padding:20px;">
-                                    <strong>Prepared By</strong><br/>
-                                    <span style="direction:rtl;">إعداد</span><br/><br/><br/>
-                                    ______________________
-                                </td>
-                                <td style="width:33%; text-align:center; padding:20px;">
-                                    <strong>Checked By</strong><br/>
-                                    <span style="direction:rtl;">مراجعة</span><br/><br/><br/>
-                                    ______________________
-                                </td>
-                                <td style="width:33%; text-align:center; padding:20px;">
-                                    <strong>Approved By</strong><br/>
-                                    <span style="direction:rtl;">اعتماد</span><br/><br/><br/>
-                                    ______________________
-                                </td>
-                            </tr>
-                        </table>
+                        <div class="signatures-section">
+                            <div class="signature-box">
+                                <div class="title">Prepared By</div>
+                                <div class="title-ar">إعداد</div>
+                                <div class="signature-line">Signature &amp; Date</div>
+                            </div>
+                            <div class="signature-box">
+                                <div class="title">Checked By</div>
+                                <div class="title-ar">مراجعة</div>
+                                <div class="signature-line">Signature &amp; Date</div>
+                            </div>
+                            <div class="signature-box">
+                                <div class="title">Approved By</div>
+                                <div class="title-ar">اعتماد</div>
+                                <div class="signature-line">Signature &amp; Date</div>
+                            </div>
+                        </div>
 
                     </div>
                 </t>
