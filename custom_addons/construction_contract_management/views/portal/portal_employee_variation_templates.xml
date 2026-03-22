@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Variations List -->
+    <template id="portal_employee_variations" name="Employee Portal - Variations">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Variations</t>
+            </t>
+
+            <t t-if="not variations">
+                <div class="alert alert-info" role="alert">
+                    There are currently no variations for your account.
+                </div>
+            </t>
+            <t t-if="variations" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Variation #</th>
+                        <th>Contract</th>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th class="text-right">Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="variations" t-as="variation">
+                        <tr>
+                            <td><a t-attf-href="/my/employee/variation/#{variation.id}"><t t-esc="variation.name"/></a></td>
+                            <td><span t-field="variation.contract_id"/></td>
+                            <td><span t-field="variation.date"/></td>
+                            <td><span t-field="variation.description"/></td>
+                            <td class="text-right"><span t-field="variation.total_amount" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></td>
+                            <td>
+                                <span t-if="variation.state == 'draft'" class="badge badge-secondary">Draft</span>
+                                <span t-if="variation.state == 'under_review'" class="badge badge-info">Under Review</span>
+                                <span t-if="variation.state == 'approved'" class="badge badge-success">Approved</span>
+                                <span t-if="variation.state == 'rejected'" class="badge badge-danger">Rejected</span>
+                            </td>
+                        </tr>
+                    </t>
+                </tbody>
+            </t>
+        </t>
+    </template>
+
+    <!-- Variation Detail -->
+    <template id="portal_employee_variation_detail" name="Employee Portal - Variation Detail">
+        <t t-call="portal.portal_layout">
+            <div class="container">
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h3 class="mb-3">
+                            <small class="text-muted">Variation -</small> <span t-field="variation.name"/>
+                            <span t-if="variation.state == 'draft'" class="badge badge-secondary ml-2">Draft</span>
+                            <span t-if="variation.state == 'under_review'" class="badge badge-info ml-2">Under Review</span>
+                            <span t-if="variation.state == 'approved'" class="badge badge-success ml-2">Approved</span>
+                            <span t-if="variation.state == 'rejected'" class="badge badge-danger ml-2">Rejected</span>
+                        </h3>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Variation Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-4"><strong>Contract:</strong></div>
+                                    <div class="col-8"><span t-field="variation.contract_id"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-4"><strong>Date:</strong></div>
+                                    <div class="col-8"><span t-field="variation.date"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-4"><strong>Description:</strong></div>
+                                    <div class="col-8"><span t-field="variation.description"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-4"><strong>Total Amount:</strong></div>
+                                    <div class="col-8"><span t-field="variation.total_amount" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <t t-if="variation.line_ids">
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5>Variation Lines</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th class="text-right">Quantity</th>
+                                        <th>Unit</th>
+                                        <th class="text-right">Unit Rate</th>
+                                        <th class="text-right">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="variation.line_ids" t-as="line">
+                                        <tr>
+                                            <td><span t-field="line.description"/></td>
+                                            <td class="text-right"><span t-field="line.quantity"/></td>
+                                            <td><span t-field="line.uom_id"/></td>
+                                            <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></td>
+                                            <td class="text-right"><span t-field="line.total_amount" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+
+                <div class="row mt-4 mb-4">
+                    <div class="col-12">
+                        <a href="/my/employee/variations" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"/> Back to Variations
+                        </a>
+                        <a href="/my/employee" class="btn btn-primary">
+                            <i class="fa fa-home"/> Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

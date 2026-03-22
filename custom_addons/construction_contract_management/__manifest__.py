@@ -40,6 +40,9 @@ Construction Contract Management
         'views/construction_menus.xml',
         'views/portal/employee_dashboard_extension.xml',
         'views/portal/portal_employee_contract_templates.xml',
+        'views/portal/portal_employee_ipc_templates.xml',        # ADD THIS
+        'views/portal/portal_employee_variation_templates.xml',  # ADD THIS
+        'views/portal/portal_employee_measurement_templates.xml',
         'reports/report_actions.xml',
         'reports/construction_ipc_report.xml',
         'reports/construction_variation_report.xml',

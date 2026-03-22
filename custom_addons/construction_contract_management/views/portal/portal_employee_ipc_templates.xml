@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- IPCs List -->
+    <template id="portal_employee_ipcs" name="Employee Portal - IPCs">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Interim Payment Certificates (IPCs)</t>
+            </t>
+
+            <t t-if="not ipcs">
+                <div class="alert alert-info" role="alert">
+                    There are currently no IPCs for your account.
+                </div>
+            </t>
+            <t t-if="ipcs" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>IPC #</th>
+                        <th>Contract</th>
+                        <th>Date</th>
+                        <th>Period</th>
+                        <th class="text-right">Current Value</th>
+                        <th class="text-right">Net Amount</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="ipcs" t-as="ipc">
+                        <tr>
+                            <td><a t-attf-href="/my/employee/ipc/#{ipc.id}"><t t-esc="ipc.name"/></a></td>
+                            <td><span t-field="ipc.contract_id"/></td>
+                            <td><span t-field="ipc.ipc_date"/></td>
+                            <td><span t-field="ipc.period_from"/> - <span t-field="ipc.period_to"/></td>
+                            <td class="text-right"><span t-field="ipc.current_work_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                            <td class="text-right"><span t-field="ipc.net_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                            <td>
+                                <span t-if="ipc.state == 'draft'" class="badge badge-secondary">Draft</span>
+                                <span t-if="ipc.state == 'under_review'" class="badge badge-info">Under Review</span>
+                                <span t-if="ipc.state == 'approved'" class="badge badge-success">Approved</span>
+                                <span t-if="ipc.state == 'done'" class="badge badge-primary">Done</span>
+                                <span t-if="ipc.state == 'cancelled'" class="badge badge-danger">Cancelled</span>
+                            </td>
+                            <td class="text-right">
+                                <a t-attf-href="/my/employee/ipc/#{ipc.id}?report_type=pdf" class="btn btn-sm btn-primary" title="Download PDF">
+                                    <i class="fa fa-download"/> PDF
+                                </a>
+                            </td>
+                        </tr>
+                    </t>
+                </tbody>
+            </t>
+        </t>
+    </template>
+
+    <!-- IPC Detail -->
+    <template id="portal_employee_ipc_detail" name="Employee Portal - IPC Detail">
+        <t t-call="portal.portal_layout">
+            <div class="container">
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h3 class="mb-3">
+                            <small class="text-muted">IPC -</small> <span t-field="ipc.name"/>
+                            <span t-if="ipc.state == 'draft'" class="badge badge-secondary ml-2">Draft</span>
+                            <span t-if="ipc.state == 'under_review'" class="badge badge-info ml-2">Under Review</span>
+                            <span t-if="ipc.state == 'approved'" class="badge badge-success ml-2">Approved</span>
+                            <span t-if="ipc.state == 'done'" class="badge badge-primary ml-2">Done</span>
+                            <span t-if="ipc.state == 'cancelled'" class="badge badge-danger ml-2">Cancelled</span>
+                        </h3>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <a t-attf-href="/my/employee/ipc/#{ipc.id}?report_type=pdf" class="btn btn-primary">
+                            <i class="fa fa-download"/> Download PDF
+                        </a>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>IPC Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Contract:</strong></div>
+                                    <div class="col-7"><span t-field="ipc.contract_id"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Project:</strong></div>
+                                    <div class="col-7"><span t-field="ipc.contract_id.project_id"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Date:</strong></div>
+                                    <div class="col-7"><span t-field="ipc.ipc_date"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Period:</strong></div>
+                                    <div class="col-7">
+                                        <span t-field="ipc.period_from"/> - <span t-field="ipc.period_to"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Financial Summary</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Previous Certified:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.previous_certified_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Current Work Value:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.current_work_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Cumulative Certified:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.cumulative_certified_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Advance Recovery:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.advance_recovery_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>VAT:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.vat_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Retention:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.retention_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Deductions:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.deduction_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <hr/>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Net Amount:</strong></div>
+                                    <div class="col-5 text-right"><strong><span t-field="ipc.net_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <t t-if="ipc.line_ids">
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5>IPC Lines</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th class="text-right">Prev. Qty</th>
+                                        <th class="text-right">Curr. Qty</th>
+                                        <th class="text-right">Cumul. Qty</th>
+                                        <th class="text-right">Rate</th>
+                                        <th class="text-right">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="ipc.line_ids" t-as="line">
+                                        <tr>
+                                            <td>
+                                                <t t-if="line.boq_line_id.item_code">
+                                                    <strong>[<span t-field="line.boq_line_id.item_code"/>]</strong><br/>
+                                                </t>
+                                                <span t-field="line.description"/>
+                                            </td>
+                                            <td class="text-right"><span t-field="line.previous_qty"/></td>
+                                            <td class="text-right"><span t-field="line.current_qty"/></td>
+                                            <td class="text-right"><span t-field="line.cumulative_qty"/></td>
+                                            <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                                            <td class="text-right"><span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+
+                <div class="row mt-4 mb-4">
+                    <div class="col-12">
+                        <a href="/my/employee/ipcs" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"/> Back to IPCs
+                        </a>
+                        <a href="/my/employee" class="btn btn-primary">
+                            <i class="fa fa-home"/> Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>
