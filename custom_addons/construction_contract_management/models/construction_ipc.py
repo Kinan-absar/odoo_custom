@@ -264,7 +264,10 @@ class ConstructionIPC(models.Model):
             'target': 'current',
         }
 
-
+    def _get_report_base_filename(self):
+        """Return the base filename for PDF reports"""
+        self.ensure_one()
+        return f"IPC_{self.name}"
 class ConstructionIPCLine(models.Model):
     _name = 'construction.ipc.line'
     _description = 'Construction IPC Line'

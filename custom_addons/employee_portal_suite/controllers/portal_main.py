@@ -452,3 +452,71 @@ class EmployeePortalMain(CustomerPortal):
             'page_name': 'construction_measurement',
         }
         return request.render("construction_contract_management.portal_employee_measurement_detail", values)
+
+# ---------------------------------------------------------
+    # CONSTRUCTION - NEW MEASUREMENT FORM
+    # ---------------------------------------------------------
+    @http.route(['/my/employee/measurement/new'], type='http', auth='user', website=True, methods=['GET', 'POST'])
+    def portal_construction_measurement_new(self, **post):
+        user = request.env.user
+
+        if not request.env['construction.measurement'].check_access_rights('create', raise_exception=False):
+            return request.redirect("/my/employee")
+
+        if request.httprequest.method == 'POST':
+            # Create the measurement
+            vals = {
+                'contract_id': int(post.get('contract_id')),
+                'date': post.get('date'),
+                'period_from': post.get('period_from'),
+                'period_to': post.get('period_to'),
+                'description': post.get('description', ''),
+            }
+            
+            measurement = request.env['construction.measurement'].create(vals)
+            
+            return request.redirect(f'/my/employee/measurement/{measurement.id}')
+        
+        # GET request - show form
+        contracts = request.env['construction.contract'].search([('state', 'in', ['active', 'approved'])])
+        
+        values = {
+            'contracts': contracts,
+            'page_name': 'construction_measurement_new',
+        }
+        return request.render("construction_contract_management.portal_employee_measurement_new", values)
+
+    # ---------------------------------------------------------
+    # CONSTRUCTION - NEW VARIATION FORM
+    # ---------------------------------------------------------
+    @http.route(['/my/employee/variation/new'], type='http', auth='user', website=True, methods=['GET', 'POST'])
+    def portal_construction_variation_new(self, **post):
+        user = request.env.user
+
+        if not request.env['construction.variation'].check_access_rights('create', raise_exception=False):
+            return request.redirect("/my/employee")
+
+        if request.httprequest.method == 'POST':
+            # Create the variation
+            vals = {
+                'contract_id': int(post.get('contract_id')),
+                'date': post.get('date'),
+                'description': post.get('description', ''),
+            }
+            
+            # Add reason if provided
+            if post.get('reason'):
+                vals['description'] = vals['description'] + '\n\nReason: ' + post.get('reason')
+            
+            variation = request.env['construction.variation'].create(vals)
+            
+            return request.redirect(f'/my/employee/variation/{variation.id}')
+        
+        # GET request - show form
+        contracts = request.env['construction.contract'].search([('state', 'in', ['active', 'approved'])])
+        
+        values = {
+            'contracts': contracts,
+            'page_name': 'construction_variation_new',
+        }
+        return request.render("construction_contract_management.portal_employee_variation_new", values)

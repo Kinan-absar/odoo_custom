@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Variations List -->
+    <!-- Variations List with NEW button -->
     <template id="portal_employee_variations" name="Employee Portal - Variations">
         <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container mt-4">
                 <div class="row">
-                    <div class="col-12">
+                    <div class="col-8">
                         <h3>Variations</h3>
+                    </div>
+                    <div class="col-4 text-right">
+                        <a href="/my/employee/variation/new" class="btn btn-warning">
+                            <i class="fa fa-plus"/> New Variation Request
+                        </a>
                     </div>
                 </div>
 
                 <t t-if="not variations">
                     <div class="alert alert-info mt-3" role="alert">
-                        There are currently no variations for your account.
+                        There are currently no variations. Click "New Variation Request" to create one.
                     </div>
                 </t>
 
@@ -150,6 +155,67 @@
                         </a>
                     </div>
                 </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- NEW Variation Form -->
+    <template id="portal_employee_variation_new" name="Employee Portal - New Variation">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="container">
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h3>New Variation Request</h3>
+                    </div>
+                </div>
+
+                <form method="POST" action="/my/employee/variation/new" class="mt-4">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="contract_id">Contract *</label>
+                                <select name="contract_id" id="contract_id" class="form-control" required="required">
+                                    <option value="">Select Contract...</option>
+                                    <t t-foreach="contracts" t-as="contract">
+                                        <option t-att-value="contract.id"><t t-esc="contract.name"/> - <t t-esc="contract.project_id.name"/></option>
+                                    </t>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date">Date *</label>
+                                <input type="date" name="date" id="date" class="form-control" required="required"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description of Change *</label>
+                        <textarea name="description" id="description" class="form-control" rows="4" required="required" placeholder="Describe the scope change or variation request..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reason">Reason for Variation</label>
+                        <textarea name="reason" id="reason" class="form-control" rows="3" placeholder="Explain why this variation is needed..."></textarea>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"/> After creating the variation, you'll be able to add line items with quantities and rates.
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fa fa-save"/> Submit Variation Request
+                        </button>
+                        <a href="/my/employee/variations" class="btn btn-secondary">
+                            <i class="fa fa-times"/> Cancel
+                        </a>
+                    </div>
+                </form>
             </div>
         </t>
     </template>
