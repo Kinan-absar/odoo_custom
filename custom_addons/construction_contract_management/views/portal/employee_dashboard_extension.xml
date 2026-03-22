@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extend Employee Portal Dashboard to add Construction section -->
+    <template id="employee_portal_dashboard_construction" inherit_id="employee_portal_suite.employee_portal_dashboard">
+        <xpath expr="//div[hasclass('row')]" position="inside">
+            <!-- Construction Contracts Card -->
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Contracts
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <t t-esc="contract_count or 0"/>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-file-contract fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <a href="/my/employee/contracts" class="btn btn-primary btn-sm btn-block">
+                                View Contracts
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IPCs Card -->
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    IPCs
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <t t-esc="ipc_count or 0"/>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <a href="/my/employee/ipcs" class="btn btn-success btn-sm btn-block">
+                                View IPCs
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Variations Card -->
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Variations
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <t t-esc="variation_count or 0"/>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-edit fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <a href="/my/employee/variations" class="btn btn-warning btn-sm btn-block">
+                                View Variations
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Measurements Card -->
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Measurements
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <t t-esc="measurement_count or 0"/>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-ruler fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <a href="/my/employee/measurements" class="btn btn-info btn-sm btn-block">
+                                View Measurements
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>
