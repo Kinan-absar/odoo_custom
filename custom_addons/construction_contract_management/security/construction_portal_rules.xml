@@ -1,121 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Portal users can only see contracts where they are the partner -->
+    <!-- 
+    ============================================================================
+    CONSTRUCTION PORTAL SECURITY MODEL
+    ============================================================================
+    
+    ROLES:
+    
+    1. PORTAL USER (Employee with limited access via employee portal):
+       - View ALL contracts (assigned or not)
+       - CREATE measurements (submit for approval)
+       - CREATE variation requests (submit for approval)
+       - View approved IPCs
+       - READ ONLY on other documents
+    
+    2. CONSTRUCTION USER (Internal employee with full backend access):
+       - View ALL contracts
+       - Check/approve measurements
+       - Generate IPCs
+       - Create advances, retention releases
+       - Full CRUD except final approvals
+    
+    3. CONSTRUCTION MANAGER (Manager):
+       - Everything Construction User can do
+       - Approve IPCs
+       - Activate/close contracts
+       - Full control
+    
+    ============================================================================
+    -->
+
+    <!-- ========================================= -->
+    <!-- PORTAL USERS - All employees using portal -->
+    <!-- ========================================= -->
+    
+    <!-- Portal: View ALL Contracts -->
     <record id="construction_contract_portal_rule" model="ir.rule">
-        <field name="name">Portal User: Own Contracts Only</field>
+        <field name="name">Portal Employee: View All Contracts</field>
         <field name="model_id" ref="model_construction_contract"/>
-        <field name="domain_force">[('partner_id', 'child_of', [user.partner_id.commercial_partner_id.id])]</field>
-        <field name="groups" eval="[(4, ref('construction_contract_management.group_construction_portal'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_portal'))]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="False"/>
         <field name="perm_create" eval="False"/>
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <!-- Portal users can only see IPCs related to their contracts -->
-    <record id="construction_ipc_portal_rule" model="ir.rule">
-        <field name="name">Portal User: Own IPCs Only</field>
-        <field name="model_id" ref="model_construction_ipc"/>
-        <field name="domain_force">[('contract_id.partner_id', 'child_of', [user.partner_id.commercial_partner_id.id])]</field>
-        <field name="groups" eval="[(4, ref('construction_contract_management.group_construction_portal'))]"/>
-        <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="False"/>
-        <field name="perm_create" eval="False"/>
-        <field name="perm_unlink" eval="False"/>
-    </record>
-
-    <!-- Portal users can only see IPC lines related to their contracts -->
-    <record id="construction_ipc_line_portal_rule" model="ir.rule">
-        <field name="name">Portal User: Own IPC Lines Only</field>
-        <field name="model_id" ref="model_construction_ipc_line"/>
-        <field name="domain_force">[('ipc_id.contract_id.partner_id', 'child_of', [user.partner_id.commercial_partner_id.id])]</field>
-        <field name="groups" eval="[(4, ref('construction_contract_management.group_construction_portal'))]"/>
-        <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="False"/>
-        <field name="perm_create" eval="False"/>
-        <field name="perm_unlink" eval="False"/>
-    </record>
-
-    <!-- Portal users can only see BOQ lines related to their contracts -->
+    <!-- Portal: View ALL BOQ Lines -->
     <record id="construction_boq_portal_rule" model="ir.rule">
-        <field name="name">Portal User: Own BOQ Lines Only</field>
+        <field name="name">Portal Employee: View All BOQ Lines</field>
         <field name="model_id" ref="model_construction_contract_boq_line"/>
-        <field name="domain_force">[('contract_id.partner_id', 'child_of', [user.partner_id.commercial_partner_id.id])]</field>
-        <field name="groups" eval="[(4, ref('construction_contract_management.group_construction_portal'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_portal'))]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="False"/>
         <field name="perm_create" eval="False"/>
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <!-- Portal users can only see measurements related to their contracts -->
+    <!-- Portal: CREATE & View Measurements -->
     <record id="construction_measurement_portal_rule" model="ir.rule">
-        <field name="name">Portal User: Own Measurements Only</field>
+        <field name="name">Portal Employee: Create/View Measurements</field>
         <field name="model_id" ref="model_construction_measurement"/>
-        <field name="domain_force">[('contract_id.partner_id', 'child_of', [user.partner_id.commercial_partner_id.id])]</field>
-        <field name="groups" eval="[(4, ref('construction_contract_management.group_construction_portal'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_portal'))]"/>
         <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="False"/>
-        <field name="perm_create" eval="False"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <!-- Portal users can only see measurement lines related to their contracts -->
+    <!-- Portal: CREATE & View Measurement Lines -->
     <record id="construction_measurement_line_portal_rule" model="ir.rule">
-        <field name="name">Portal User: Own Measurement Lines Only</field>
+        <field name="name">Portal Employee: Create/View Measurement Lines</field>
         <field name="model_id" ref="model_construction_measurement_line"/>
-        <field name="domain_force">[('measurement_id.contract_id.partner_id', 'child_of', [user.partner_id.commercial_partner_id.id])]</field>
-        <field name="groups" eval="[(4, ref('construction_contract_management.group_construction_portal'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_portal'))]"/>
         <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="False"/>
-        <field name="perm_create" eval="False"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <!-- Portal users can only see variations related to their contracts -->
+    <!-- Portal: CREATE & View Variations -->
     <record id="construction_variation_portal_rule" model="ir.rule">
-        <field name="name">Portal User: Own Variations Only</field>
+        <field name="name">Portal Employee: Create/View Variation Requests</field>
         <field name="model_id" ref="model_construction_variation"/>
-        <field name="domain_force">[('contract_id.partner_id', 'child_of', [user.partner_id.commercial_partner_id.id])]</field>
-        <field name="groups" eval="[(4, ref('construction_contract_management.group_construction_portal'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_portal'))]"/>
         <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="False"/>
-        <field name="perm_create" eval="False"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <!-- Portal users can only see variation lines related to their contracts -->
+    <!-- Portal: CREATE & View Variation Lines -->
     <record id="construction_variation_line_portal_rule" model="ir.rule">
-        <field name="name">Portal User: Own Variation Lines Only</field>
+        <field name="name">Portal Employee: Create/View Variation Lines</field>
         <field name="model_id" ref="model_construction_variation_line"/>
-        <field name="domain_force">[('variation_id.contract_id.partner_id', 'child_of', [user.partner_id.commercial_partner_id.id])]</field>
-        <field name="groups" eval="[(4, ref('construction_contract_management.group_construction_portal'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_portal'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Portal: View Approved IPCs Only -->
+    <record id="construction_ipc_portal_rule" model="ir.rule">
+        <field name="name">Portal Employee: View Approved IPCs</field>
+        <field name="model_id" ref="model_construction_ipc"/>
+        <field name="domain_force">[('state', 'in', ['approved', 'done'])]</field>
+        <field name="groups" eval="[(4, ref('group_construction_portal'))]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="False"/>
         <field name="perm_create" eval="False"/>
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <!-- Portal users can only see advances related to their contracts -->
+    <!-- Portal: View IPC Lines (for approved IPCs) -->
+    <record id="construction_ipc_line_portal_rule" model="ir.rule">
+        <field name="name">Portal Employee: View IPC Lines</field>
+        <field name="model_id" ref="model_construction_ipc_line"/>
+        <field name="domain_force">[('ipc_id.state', 'in', ['approved', 'done'])]</field>
+        <field name="groups" eval="[(4, ref('group_construction_portal'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Portal: View Advances (Read Only) -->
     <record id="construction_advance_portal_rule" model="ir.rule">
-        <field name="name">Portal User: Own Advances Only</field>
+        <field name="name">Portal Employee: View Advances</field>
         <field name="model_id" ref="model_construction_advance"/>
-        <field name="domain_force">[('contract_id.partner_id', 'child_of', [user.partner_id.commercial_partner_id.id])]</field>
-        <field name="groups" eval="[(4, ref('construction_contract_management.group_construction_portal'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_portal'))]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="False"/>
         <field name="perm_create" eval="False"/>
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <!-- Portal users can only see retention releases related to their contracts -->
+    <!-- Portal: View Retention Releases (Read Only) -->
     <record id="construction_retention_release_portal_rule" model="ir.rule">
-        <field name="name">Portal User: Own Retention Releases Only</field>
+        <field name="name">Portal Employee: View Retention Releases</field>
         <field name="model_id" ref="model_construction_retention_release"/>
-        <field name="domain_force">[('contract_id.partner_id', 'child_of', [user.partner_id.commercial_partner_id.id])]</field>
-        <field name="groups" eval="[(4, ref('construction_contract_management.group_construction_portal'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_portal'))]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="False"/>
         <field name="perm_create" eval="False"/>
         <field name="perm_unlink" eval="False"/>
     </record>
+
+    <!-- ========================================= -->
+    <!-- INTERNAL USERS - Backend access -->
+    <!-- ========================================= -->
+
+    <!-- Internal: Full access to ALL contracts -->
+    <record id="construction_contract_user_rule" model="ir.rule">
+        <field name="name">Internal: All Contracts</field>
+        <field name="model_id" ref="model_construction_contract"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_user')), (4, ref('group_construction_manager'))]"/>
+    </record>
+
+    <!-- Internal: Full access to ALL measurements -->
+    <record id="construction_measurement_user_rule" model="ir.rule">
+        <field name="name">Internal: All Measurements</field>
+        <field name="model_id" ref="model_construction_measurement"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_user')), (4, ref('group_construction_manager'))]"/>
+    </record>
+
+    <!-- Internal: Full access to ALL IPCs -->
+    <record id="construction_ipc_user_rule" model="ir.rule">
+        <field name="name">Internal: All IPCs</field>
+        <field name="model_id" ref="model_construction_ipc"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_user')), (4, ref('group_construction_manager'))]"/>
+    </record>
+
+    <!-- Internal: Full access to ALL variations -->
+    <record id="construction_variation_user_rule" model="ir.rule">
+        <field name="name">Internal: All Variations</field>
+        <field name="model_id" ref="model_construction_variation"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_user')), (4, ref('group_construction_manager'))]"/>
+    </record>
+
+    <!-- Internal: Full access to ALL advances -->
+    <record id="construction_advance_user_rule" model="ir.rule">
+        <field name="name">Internal: All Advances</field>
+        <field name="model_id" ref="model_construction_advance"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_user')), (4, ref('group_construction_manager'))]"/>
+    </record>
+
+    <!-- Internal: Full access to ALL retention releases -->
+    <record id="construction_retention_release_user_rule" model="ir.rule">
+        <field name="name">Internal: All Retention Releases</field>
+        <field name="model_id" ref="model_construction_retention_release"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_user')), (4, ref('group_construction_manager'))]"/>
+    </record>
+
+    <!-- Internal: Full access to line models -->
+    <record id="construction_boq_user_rule" model="ir.rule">
+        <field name="name">Internal: All BOQ Lines</field>
+        <field name="model_id" ref="model_construction_contract_boq_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_user')), (4, ref('group_construction_manager'))]"/>
+    </record>
+
+    <record id="construction_measurement_line_user_rule" model="ir.rule">
+        <field name="name">Internal: All Measurement Lines</field>
+        <field name="model_id" ref="model_construction_measurement_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_user')), (4, ref('group_construction_manager'))]"/>
+    </record>
+
+    <record id="construction_ipc_line_user_rule" model="ir.rule">
+        <field name="name">Internal: All IPC Lines</field>
+        <field name="model_id" ref="model_construction_ipc_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_user')), (4, ref('group_construction_manager'))]"/>
+    </record>
+
+    <record id="construction_variation_line_user_rule" model="ir.rule">
+        <field name="name">Internal: All Variation Lines</field>
+        <field name="model_id" ref="model_construction_variation_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_construction_user')), (4, ref('group_construction_manager'))]"/>
+    </record>
+
 </odoo>
