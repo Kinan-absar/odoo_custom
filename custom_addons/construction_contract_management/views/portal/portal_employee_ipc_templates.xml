@@ -2,7 +2,7 @@
 <odoo>
     <!-- IPCs List -->
     <template id="portal_employee_ipcs" name="Employee Portal - IPCs">
-        <t t-call="portal.portal_layout">
+        <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container mt-4">
                 <div class="row">
                     <div class="col-12">
@@ -75,7 +75,7 @@
 
     <!-- IPC Detail -->
     <template id="portal_employee_ipc_detail" name="Employee Portal - IPC Detail">
-        <t t-call="portal.portal_layout">
+        <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container">
                 <div class="row mt-4">
                     <div class="col-12">

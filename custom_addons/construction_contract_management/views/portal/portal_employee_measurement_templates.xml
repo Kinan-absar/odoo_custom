@@ -2,7 +2,7 @@
 <odoo>
     <!-- Measurements List -->
     <template id="portal_employee_measurements" name="Employee Portal - Measurements">
-        <t t-call="portal.portal_layout">
+        <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container mt-4">
                 <div class="row">
                     <div class="col-12">
@@ -64,7 +64,7 @@
 
     <!-- Measurement Detail -->
     <template id="portal_employee_measurement_detail" name="Employee Portal - Measurement Detail">
-        <t t-call="portal.portal_layout">
+        <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container">
                 <div class="row mt-4">
                     <div class="col-12">

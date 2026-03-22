@@ -2,7 +2,7 @@
 <odoo>
     <!-- Variations List -->
     <template id="portal_employee_variations" name="Employee Portal - Variations">
-        <t t-call="portal.portal_layout">
+        <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container mt-4">
                 <div class="row">
                     <div class="col-12">
@@ -66,7 +66,7 @@
 
     <!-- Variation Detail -->
     <template id="portal_employee_variation_detail" name="Employee Portal - Variation Detail">
-        <t t-call="portal.portal_layout">
+        <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container">
                 <div class="row mt-4">
                     <div class="col-12">
