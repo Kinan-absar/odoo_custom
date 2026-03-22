@@ -3,55 +3,73 @@
     <!-- IPCs List -->
     <template id="portal_employee_ipcs" name="Employee Portal - IPCs">
         <t t-call="portal.portal_layout">
-            <t t-set="breadcrumbs_searchbar" t-value="True"/>
-
-            <t t-call="portal.portal_searchbar">
-                <t t-set="title">Interim Payment Certificates (IPCs)</t>
-            </t>
-
-            <t t-if="not ipcs">
-                <div class="alert alert-info" role="alert">
-                    There are currently no IPCs for your account.
+            <div class="container mt-4">
+                <div class="row">
+                    <div class="col-12">
+                        <h3>Interim Payment Certificates (IPCs)</h3>
+                    </div>
                 </div>
-            </t>
-            <t t-if="ipcs" t-call="portal.portal_table">
-                <thead>
-                    <tr class="active">
-                        <th>IPC #</th>
-                        <th>Contract</th>
-                        <th>Date</th>
-                        <th>Period</th>
-                        <th class="text-right">Current Value</th>
-                        <th class="text-right">Net Amount</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <t t-foreach="ipcs" t-as="ipc">
-                        <tr>
-                            <td><a t-attf-href="/my/employee/ipc/#{ipc.id}"><t t-esc="ipc.name"/></a></td>
-                            <td><span t-field="ipc.contract_id"/></td>
-                            <td><span t-field="ipc.ipc_date"/></td>
-                            <td><span t-field="ipc.period_from"/> - <span t-field="ipc.period_to"/></td>
-                            <td class="text-right"><span t-field="ipc.current_work_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
-                            <td class="text-right"><span t-field="ipc.net_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
-                            <td>
-                                <span t-if="ipc.state == 'draft'" class="badge badge-secondary">Draft</span>
-                                <span t-if="ipc.state == 'under_review'" class="badge badge-info">Under Review</span>
-                                <span t-if="ipc.state == 'approved'" class="badge badge-success">Approved</span>
-                                <span t-if="ipc.state == 'done'" class="badge badge-primary">Done</span>
-                                <span t-if="ipc.state == 'cancelled'" class="badge badge-danger">Cancelled</span>
-                            </td>
-                            <td class="text-right">
-                                <a t-attf-href="/my/employee/ipc/#{ipc.id}?report_type=pdf" class="btn btn-sm btn-primary" title="Download PDF">
-                                    <i class="fa fa-download"/> PDF
-                                </a>
-                            </td>
-                        </tr>
-                    </t>
-                </tbody>
-            </t>
+
+                <t t-if="not ipcs">
+                    <div class="alert alert-info mt-3" role="alert">
+                        There are currently no IPCs for your account.
+                    </div>
+                </t>
+
+                <t t-if="ipcs">
+                    <div class="table-responsive mt-3">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>IPC #</th>
+                                    <th>Contract</th>
+                                    <th>Date</th>
+                                    <th>Period</th>
+                                    <th class="text-right">Current Value</th>
+                                    <th class="text-right">Net Amount</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="ipcs" t-as="ipc">
+                                    <tr>
+                                        <td><a t-attf-href="/my/employee/ipc/#{ipc.id}"><t t-esc="ipc.name"/></a></td>
+                                        <td><span t-field="ipc.contract_id"/></td>
+                                        <td><span t-field="ipc.ipc_date"/></td>
+                                        <td><span t-field="ipc.period_from"/> - <span t-field="ipc.period_to"/></td>
+                                        <td class="text-right"><span t-field="ipc.current_work_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                                        <td class="text-right"><span t-field="ipc.net_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                                        <td>
+                                            <span t-if="ipc.state == 'draft'" class="badge badge-secondary">Draft</span>
+                                            <span t-if="ipc.state == 'under_review'" class="badge badge-info">Under Review</span>
+                                            <span t-if="ipc.state == 'approved'" class="badge badge-success">Approved</span>
+                                            <span t-if="ipc.state == 'done'" class="badge badge-primary">Done</span>
+                                            <span t-if="ipc.state == 'cancelled'" class="badge badge-danger">Cancelled</span>
+                                        </td>
+                                        <td class="text-right">
+                                            <a t-attf-href="/my/employee/ipc/#{ipc.id}?report_type=pdf" class="btn btn-sm btn-primary" title="Download PDF">
+                                                <i class="fa fa-download"/> PDF
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <t t-if="pager" t-call="portal.pager"/>
+                </t>
+
+                <div class="row mt-3 mb-4">
+                    <div class="col-12">
+                        <a href="/my/employee" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"/> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
         </t>
     </template>
 
@@ -174,7 +192,7 @@
                                     <t t-foreach="ipc.line_ids" t-as="line">
                                         <tr>
                                             <td>
-                                                <t t-if="line.boq_line_id.item_code">
+                                                <t t-if="line.boq_line_id and line.boq_line_id.item_code">
                                                     <strong>[<span t-field="line.boq_line_id.item_code"/>]</strong><br/>
                                                 </t>
                                                 <span t-field="line.description"/>

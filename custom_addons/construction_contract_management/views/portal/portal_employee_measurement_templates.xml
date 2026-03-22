@@ -3,44 +3,62 @@
     <!-- Measurements List -->
     <template id="portal_employee_measurements" name="Employee Portal - Measurements">
         <t t-call="portal.portal_layout">
-            <t t-set="breadcrumbs_searchbar" t-value="True"/>
-
-            <t t-call="portal.portal_searchbar">
-                <t t-set="title">Measurements</t>
-            </t>
-
-            <t t-if="not measurements">
-                <div class="alert alert-info" role="alert">
-                    There are currently no measurements for your account.
+            <div class="container mt-4">
+                <div class="row">
+                    <div class="col-12">
+                        <h3>Measurements</h3>
+                    </div>
                 </div>
-            </t>
-            <t t-if="measurements" t-call="portal.portal_table">
-                <thead>
-                    <tr class="active">
-                        <th>Measurement #</th>
-                        <th>Contract</th>
-                        <th>Date</th>
-                        <th>Period</th>
-                        <th class="text-right">Total Amount</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <t t-foreach="measurements" t-as="measurement">
-                        <tr>
-                            <td><a t-attf-href="/my/employee/measurement/#{measurement.id}"><t t-esc="measurement.name"/></a></td>
-                            <td><span t-field="measurement.contract_id"/></td>
-                            <td><span t-field="measurement.date"/></td>
-                            <td><span t-field="measurement.period_from"/> - <span t-field="measurement.period_to"/></td>
-                            <td class="text-right"><span t-field="measurement.total_amount" t-options='{"widget": "monetary", "display_currency": measurement.currency_id}'/></td>
-                            <td>
-                                <span t-if="measurement.state == 'draft'" class="badge badge-secondary">Draft</span>
-                                <span t-if="measurement.state == 'approved'" class="badge badge-success">Approved</span>
-                            </td>
-                        </tr>
-                    </t>
-                </tbody>
-            </t>
+
+                <t t-if="not measurements">
+                    <div class="alert alert-info mt-3" role="alert">
+                        There are currently no measurements for your account.
+                    </div>
+                </t>
+
+                <t t-if="measurements">
+                    <div class="table-responsive mt-3">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Measurement #</th>
+                                    <th>Contract</th>
+                                    <th>Date</th>
+                                    <th>Period</th>
+                                    <th class="text-right">Total Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="measurements" t-as="measurement">
+                                    <tr>
+                                        <td><a t-attf-href="/my/employee/measurement/#{measurement.id}"><t t-esc="measurement.name"/></a></td>
+                                        <td><span t-field="measurement.contract_id"/></td>
+                                        <td><span t-field="measurement.date"/></td>
+                                        <td><span t-field="measurement.period_from"/> - <span t-field="measurement.period_to"/></td>
+                                        <td class="text-right"><span t-field="measurement.total_amount" t-options='{"widget": "monetary", "display_currency": measurement.currency_id}'/></td>
+                                        <td>
+                                            <span t-if="measurement.state == 'draft'" class="badge badge-secondary">Draft</span>
+                                            <span t-if="measurement.state == 'approved'" class="badge badge-success">Approved</span>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <t t-if="pager" t-call="portal.pager"/>
+                </t>
+
+                <div class="row mt-3 mb-4">
+                    <div class="col-12">
+                        <a href="/my/employee" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"/> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
         </t>
     </template>
 
@@ -112,7 +130,7 @@
                                     <t t-foreach="measurement.line_ids" t-as="line">
                                         <tr>
                                             <td>
-                                                <t t-if="line.boq_line_id.item_code">
+                                                <t t-if="line.boq_line_id and line.boq_line_id.item_code">
                                                     <strong>[<span t-field="line.boq_line_id.item_code"/>]</strong><br/>
                                                 </t>
                                                 <span t-field="line.description"/>
