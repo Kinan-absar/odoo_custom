@@ -27,7 +27,6 @@ Construction Contract Management
         'security/construction_security.xml',
         'security/construction_portal_security.xml',
         'security/ir.model.access.csv',
-        'security/portal_access.csv',
         'security/construction_portal_rules.xml',
         'data/construction_dashboard_data.xml',
         'views/construction_sequence.xml',
