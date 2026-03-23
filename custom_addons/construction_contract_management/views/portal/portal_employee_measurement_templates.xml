@@ -134,8 +134,12 @@
                         line-height: 16px;
                     }
                     .measurement-portal-page .measurement-section-header {
-                        background: #183247;
-                        color: #fff;
+                        background: #f8fafc;
+                        color: #0f172a;
+                        border-bottom: 1px solid #e5e7eb;
+                    }
+                    .measurement-portal-page .measurement-section-header h5 {
+                        color: #0f172a;
                     }
                     .measurement-portal-page .measurement-toolbar .btn {
                         border-radius: 8px;
@@ -179,18 +183,18 @@
                         margin-left: auto;
                     }
                     .measurement-portal-page .measurement-table .entry-input {
-                        width: 78px;
-                        min-width: 78px;
+                        width: 84px;
+                        min-width: 84px;
                         border-radius: 8px;
                         font-size: 0.8rem;
                         height: 32px;
                     }
                     .measurement-portal-page .measurement-table .entry-select {
-                        width: 58px;
-                        min-width: 58px;
+                        width: 64px;
+                        min-width: 64px;
                         border-radius: 8px;
                         font-size: 0.74rem;
-                        height: 32px;
+                        height: 28px;
                         padding: 0.2rem 0.35rem;
                     }
                     .measurement-portal-page .measurement-table .remarks-input {
@@ -219,15 +223,26 @@
                     .measurement-portal-page .measurement-table .entry-stack {
                         display: flex;
                         flex-direction: column;
-                        align-items: center;
+                        align-items: flex-end;
                         gap: 0.25rem;
                     }
                     .measurement-portal-page .measurement-table .entry-row {
                         display: flex;
                         align-items: center;
                         justify-content: flex-end;
-                        gap: 0.28rem;
+                        gap: 0.2rem;
                         width: 100%;
+                    }
+                    .measurement-portal-page .current-header {
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: flex-end;
+                        gap: 0.35rem;
+                        width: 100%;
+                    }
+                    .measurement-portal-page .current-header .entry-select {
+                        width: 62px;
+                        min-width: 62px;
                     }
                     .measurement-portal-page .measurement-table .qty-percent {
                         color: #64748b;
@@ -417,7 +432,15 @@
                                                 <th style="width: 9%;" class="text-right">Contract Qty</th>
                                                 <th style="width: 10%;" class="text-right">Previous</th>
                                                 <th style="width: 9%;" class="text-right">Remaining</th>
-                                                <th style="width: 13%;" class="text-right">Current *</th>
+                                                <th style="width: 13%;" class="text-right">
+                                                    <div class="current-header">
+                                                        <span>Current *</span>
+                                                        <select id="current_input_mode" class="form-control form-control-sm entry-select" onchange="syncAllCurrentModes()">
+                                                            <option value="qty" selected="selected">Qty</option>
+                                                            <option value="percent">%</option>
+                                                        </select>
+                                                    </div>
+                                                </th>
                                                 <th style="width: 10%;" class="text-right">Total</th>
                                                 <th style="width: 6%;">Unit</th>
                                                 <th style="width: 7%;" class="text-right">Unit Rate</th>
@@ -466,14 +489,6 @@
                                                     <td class="text-right qty-cell">
                                                         <div class="entry-stack">
                                                             <div class="entry-row">
-                                                                <select class="form-control form-control-sm entry-select"
-                                                                        t-att-name="'qty_mode_' + str(boq_line.id)"
-                                                                        t-att-id="'qty_mode_' + str(boq_line.id)"
-                                                                        t-att-data-boq-id="boq_line.id"
-                                                                        onchange="syncCurrentMode(this)">
-                                                                    <option value="qty" selected="selected">Qty</option>
-                                                                    <option value="percent">%</option>
-                                                                </select>
                                                                 <input type="number"
                                                                        step="0.01"
                                                                        min="0"
@@ -605,7 +620,7 @@
 
                                 function syncCurrentEntry(input) {
                                     var boqId = input.getAttribute('data-boq-id');
-                                    var modeSelect = document.getElementById('qty_mode_' + boqId);
+                                    var modeSelect = document.getElementById('current_input_mode');
                                     var qtyInput = document.getElementById('qty_' + boqId);
                                     var percentInput = document.getElementById('qty_percent_' + boqId);
                                     var allowed = parseFloat(input.getAttribute('data-allowed')) || 0;
@@ -626,17 +641,17 @@
                                     validateQuantity(qtyInput);
                                 }
 
-                                function syncCurrentMode(select) {
-                                    var boqId = select.getAttribute('data-boq-id');
-                                    var entryInput = document.getElementById('current_entry_' + boqId);
+                                function syncCurrentModeForRow(entryInput) {
+                                    var boqId = entryInput.getAttribute('data-boq-id');
+                                    var modeSelect = document.getElementById('current_input_mode');
                                     var qtyInput = document.getElementById('qty_' + boqId);
                                     var percentInput = document.getElementById('qty_percent_' + boqId);
 
-                                    if (!entryInput || !qtyInput || !percentInput) {
+                                    if (!modeSelect || !entryInput || !qtyInput || !percentInput) {
                                         return;
                                     }
 
-                                    if (select.value === 'percent') {
+                                    if (modeSelect.value === 'percent') {
                                         entryInput.value = parseFloat(percentInput.value || '0').toFixed(2);
                                         entryInput.setAttribute('max', '100');
                                         entryInput.setAttribute('placeholder', '%');
@@ -647,27 +662,38 @@
                                     }
                                 }
 
+                                function syncAllCurrentModes() {
+                                    document.querySelectorAll('.current-entry-input').forEach(function(entryInput) {
+                                        syncCurrentModeForRow(entryInput);
+                                    });
+                                }
+
                                 function applyBulkQuantity(percentage) {
-                                    var inputs = document.querySelectorAll('.qty-input');
+                                    var inputs = document.querySelectorAll('.current-entry-input');
+                                    var modeSelect = document.getElementById('current_input_mode');
                                     inputs.forEach(function(input) {
                                         var boqId = input.getAttribute('data-boq-id');
                                         var contractQtyInput = document.querySelector('input[name="contract_qty_' + boqId + '"]');
                                         if (contractQtyInput) {
                                             var contractQty = parseFloat(contractQtyInput.value) || 0;
-                                            var newQty = (contractQty * percentage / 100).toFixed(2);
-                                            input.value = newQty;
-                                            validateQuantity(input);
+                                            if (modeSelect && modeSelect.value === 'percent') {
+                                                input.value = percentage.toFixed(2);
+                                            } else {
+                                                input.value = (contractQty * percentage / 100).toFixed(2);
+                                            }
+                                            syncCurrentEntry(input);
                                         }
                                     });
                                 }
 
                                 function clearAllQuantities() {
-                                    var inputs = document.querySelectorAll('.qty-input');
+                                    var inputs = document.querySelectorAll('.current-entry-input');
                                     inputs.forEach(function(input) {
                                         input.value = '0.00';
+                                        syncCurrentEntry(input);
                                         input.style.borderColor = '';
                                         input.style.backgroundColor = '';
-                                        var warning = input.parentNode.querySelector('.qty-warning');
+                                        var warning = input.closest('td').querySelector('.qty-warning');
                                         if (warning) warning.remove();
                                     });
                                 }
@@ -686,8 +712,8 @@
                                         }
                                     });
 
-                                    document.querySelectorAll('.entry-select').forEach(function(select) {
-                                        syncCurrentMode(select);
+                                    document.querySelectorAll('.current-entry-input').forEach(function(entryInput) {
+                                        syncCurrentModeForRow(entryInput);
                                     });
                                 });
                                 ]]>
