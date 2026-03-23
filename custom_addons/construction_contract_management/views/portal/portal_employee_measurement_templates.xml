@@ -92,7 +92,41 @@
                         </div>
                     </div>
                 </div>
+<!-- Success/Error Messages -->
+                <t t-if="success == 'saved'">
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fa fa-check-circle"></i> <strong>Success!</strong> Quantities saved successfully.
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                </t>
 
+                <t t-if="success == 'submitted'">
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fa fa-check-circle"></i> <strong>Submitted!</strong> Measurement submitted for approval.
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                </t>
+
+                <t t-if="error == 'validation'">
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <i class="fa fa-exclamation-triangle"></i> <strong>Validation Error!</strong> Some quantities exceed allowed amount. Check chatter below for details.
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                </t>
+
+                <t t-if="error == 'system'">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fa fa-times-circle"></i> <strong>Error!</strong> Could not save measurement. Please contact support.
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                </t>
+
+                <t t-if="error == 'submit'">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fa fa-times-circle"></i> <strong>Submit Failed!</strong> Could not submit measurement. Please contact support.
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                </t>
                 <!-- Contract Progress Bar -->
                 <div class="row mb-3">
                     <div class="col-12">
@@ -187,7 +221,7 @@
                                                 <th style="width: 8%;">Item Code</th>
                                                 <th style="width: 25%;">Description</th>
                                                 <th style="width: 8%;" class="text-right">Contract Qty</th>
-                                                <th style="width: 8%;" class="text-right">Certified</th>
+                                                <th style="width: 8%;" class="text-right">Previous Qty</th>
                                                 <th style="width: 8%;" class="text-right">Remaining</th>
                                                 <th style="width: 10%;" class="text-right">Current Qty *</th>
                                                 <th style="width: 6%;">Unit</th>
@@ -199,7 +233,12 @@
                                             <t t-foreach="boq_lines" t-as="boq_line">
                                                 <t t-set="existing_line" t-value="existing_lines.get(boq_line.id)"/>
                                                 <t t-set="line_num" t-value="boq_line_index + 1"/>
-                                                <t t-set="remaining_qty" t-value="boq_line.revised_qty - boq_line.certified_qty"/>
+                                                
+                                                <!-- FIXED: Use previous_qty_map instead of certified_qty -->
+                                                <t t-set="previous_qty" t-value="previous_qty_map.get(boq_line.id, 0.0)"/>
+                                                <t t-set="allowed_qty" t-value="boq_line.revised_qty or boq_line.contract_qty"/>
+                                                <t t-set="remaining_qty" t-value="allowed_qty - previous_qty"/>
+                                                
                                                 <tr t-att-id="'row_' + str(boq_line.id)">
                                                     <td class="text-center"><strong><t t-esc="line_num"/></strong></td>
                                                     <td><strong><t t-esc="boq_line.item_code or ''"/></strong></td>
@@ -208,9 +247,12 @@
                                                         <t t-esc="'%.2f' % boq_line.contract_qty"/>
                                                         <input type="hidden" t-att-name="'contract_qty_' + str(boq_line.id)" t-att-value="boq_line.contract_qty"/>
                                                     </td>
-                                                    <td class="text-right text-muted">
-                                                        <t t-esc="'%.2f' % boq_line.certified_qty"/>
+                                                    
+                                                    <!-- FIXED: Show previous measured qty, not IPC certified qty -->
+                                                    <td class="text-right text-primary">
+                                                        <strong><t t-esc="'%.2f' % previous_qty"/></strong>
                                                     </td>
+                                                    
                                                     <td class="text-right">
                                                         <span t-att-class="'badge badge-' + ('success' if remaining_qty > 0 else 'secondary')">
                                                             <t t-esc="'%.2f' % remaining_qty"/>
