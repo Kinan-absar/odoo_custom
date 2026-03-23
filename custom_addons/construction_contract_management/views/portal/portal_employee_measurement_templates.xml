@@ -185,6 +185,13 @@
                         font-size: 0.8rem;
                         height: 32px;
                     }
+                    .measurement-portal-page .measurement-table .percent-input {
+                        max-width: 74px;
+                        min-width: 62px;
+                        border-radius: 8px;
+                        font-size: 0.78rem;
+                        height: 32px;
+                    }
                     .measurement-portal-page .measurement-table .remarks-input {
                         max-width: 130px;
                         border-radius: 8px;
@@ -207,6 +214,12 @@
                         align-items: flex-end;
                         gap: 0.1rem;
                         line-height: 1.2;
+                    }
+                    .measurement-portal-page .measurement-table .entry-stack {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-end;
+                        gap: 0.25rem;
                     }
                     .measurement-portal-page .measurement-table .qty-percent {
                         color: #64748b;
@@ -393,11 +406,11 @@
                                                 <th style="width: 9%;" class="text-right">Contract Qty</th>
                                                 <th style="width: 10%;" class="text-right">Previous</th>
                                                 <th style="width: 9%;" class="text-right">Remaining</th>
-                                                <th style="width: 10%;" class="text-right">Current *</th>
+                                                <th style="width: 13%;" class="text-right">Current *</th>
                                                 <th style="width: 10%;" class="text-right">Total</th>
                                                 <th style="width: 6%;">Unit</th>
-                                                <th style="width: 8%;" class="text-right">Unit Rate</th>
-                                                <th style="width: 12%;">Remarks</th>
+                                                <th style="width: 7%;" class="text-right">Unit Rate</th>
+                                                <th style="width: 10%;">Remarks</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -440,18 +453,34 @@
                                                         <input type="hidden" t-att-name="'remaining_qty_' + str(boq_line.id)" t-att-value="remaining_qty"/>
                                                     </td>
                                                     <td class="text-right qty-cell">
-                                                        <input type="number"
-                                                               step="0.01"
-                                                               min="0"
-                                                               class="form-control form-control-sm text-right qty-input"
-                                                               t-att-name="'qty_' + str(boq_line.id)"
-                                                               t-att-id="'qty_' + str(boq_line.id)"
-                                                               t-att-data-boq-id="boq_line.id"
-                                                               t-att-data-remaining="remaining_qty"
-                                                               t-att-data-allowed="allowed_qty"
-                                                               t-att-data-previous="previous_qty"
-                                                               t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"
-                                                               onchange="validateQuantity(this)"/>
+                                                        <div class="entry-stack">
+                                                            <input type="number"
+                                                                   step="0.01"
+                                                                   min="0"
+                                                                   class="form-control form-control-sm text-right qty-input"
+                                                                   t-att-name="'qty_' + str(boq_line.id)"
+                                                                   t-att-id="'qty_' + str(boq_line.id)"
+                                                                   t-att-data-boq-id="boq_line.id"
+                                                                   t-att-data-remaining="remaining_qty"
+                                                                   t-att-data-allowed="allowed_qty"
+                                                                   t-att-data-previous="previous_qty"
+                                                                   t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"
+                                                                   oninput="syncQuantityInput(this)"
+                                                                   onchange="validateQuantity(this)"/>
+                                                            <input type="number"
+                                                                   step="0.01"
+                                                                   min="0"
+                                                                   max="100"
+                                                                   class="form-control form-control-sm text-right percent-input"
+                                                                   t-att-name="'qty_percent_' + str(boq_line.id)"
+                                                                   t-att-id="'qty_percent_' + str(boq_line.id)"
+                                                                   t-att-data-boq-id="boq_line.id"
+                                                                   t-att-data-allowed="allowed_qty"
+                                                                   t-att-value="'%.2f' % (((existing_line.current_qty if existing_line else 0.0) / allowed_qty * 100) if allowed_qty else 0.0)"
+                                                                   placeholder="%"
+                                                                   oninput="syncPercentInput(this)"
+                                                                   onchange="syncPercentInput(this)"/>
+                                                        </div>
                                                         <div class="qty-percent mt-1 current-percent-display">
                                                             <t t-set="current_qty_value" t-value="existing_line.current_qty if existing_line else 0.0"/>
                                                             <t t-esc="'(' + str(int(round((current_qty_value / allowed_qty * 100) if allowed_qty else 0.0))) + '%)'"/>
@@ -535,6 +564,11 @@
                                         currentPercent.textContent = allowed ? '(' + Math.round((qty / allowed) * 100) + '%)' : '(0%)';
                                     }
 
+                                    var percentInput = row.querySelector('.percent-input');
+                                    if (percentInput && document.activeElement !== percentInput) {
+                                        percentInput.value = allowed ? ((qty / allowed) * 100).toFixed(2) : '0.00';
+                                    }
+
                                     var totalQty = previous + qty;
                                     var totalQtyDisplay = row.querySelector('.total-qty-display');
                                     if (totalQtyDisplay) {
@@ -545,6 +579,24 @@
                                     if (totalPercent) {
                                         totalPercent.textContent = allowed ? '(' + Math.round((totalQty / allowed) * 100) + '%)' : '(0%)';
                                     }
+                                }
+
+                                function syncQuantityInput(input) {
+                                    validateQuantity(input);
+                                }
+
+                                function syncPercentInput(input) {
+                                    var percent = parseFloat(input.value) || 0;
+                                    var allowed = parseFloat(input.getAttribute('data-allowed')) || 0;
+                                    var boqId = input.getAttribute('data-boq-id');
+                                    var qtyInput = document.getElementById('qty_' + boqId);
+                                    if (!qtyInput) {
+                                        return;
+                                    }
+
+                                    var qty = allowed ? ((allowed * percent) / 100) : 0;
+                                    qtyInput.value = qty.toFixed(2);
+                                    validateQuantity(qtyInput);
                                 }
 
                                 function applyBulkQuantity(percentage) {

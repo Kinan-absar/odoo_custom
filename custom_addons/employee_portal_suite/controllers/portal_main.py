@@ -521,12 +521,22 @@ class EmployeePortalMain(CustomerPortal):
 
             for boq_line in boq_lines:
                 qty_str = (post.get(f'qty_{boq_line.id}') or '0').strip()
+                qty_percent_str = (post.get(f'qty_percent_{boq_line.id}') or '').strip()
                 remarks = (post.get(f'remarks_{boq_line.id}') or '').strip()
+                allowed_qty = boq_line.revised_qty or boq_line.contract_qty or 0.0
 
                 try:
                     current_qty = float(qty_str)
                 except (ValueError, TypeError):
                     current_qty = 0.0
+
+                try:
+                    qty_percent = float(qty_percent_str) if qty_percent_str else None
+                except (ValueError, TypeError):
+                    qty_percent = None
+
+                if qty_percent is not None and allowed_qty:
+                    current_qty = (allowed_qty * qty_percent) / 100.0
 
                 existing_line = MeasurementLine.search([
                     ('measurement_id', '=', measurement.id),
@@ -541,7 +551,6 @@ class EmployeePortalMain(CustomerPortal):
                 ])
 
                 previous_qty = sum(approved_lines.mapped('current_qty'))
-                allowed_qty = boq_line.revised_qty or boq_line.contract_qty or 0.0
                 cumulative_qty = previous_qty + current_qty
 
                 if current_qty > 0 and allowed_qty and cumulative_qty > allowed_qty:
