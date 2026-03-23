@@ -304,19 +304,37 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     @http.route(['/my/employee/measurement/<int:measurement_id>/add_lines'], 
                 type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def portal_construction_measurement_add_lines(self, measurement_id, **post):
+        import logging
+        _logger = logging.getLogger(__name__)
+        
         try:
+            _logger.info(f"========== MEASUREMENT SAVE START ==========")
+            _logger.info(f"Measurement ID: {measurement_id}")
+            _logger.info(f"POST data: {post}")
+            _logger.info(f"Action parameter: {post.get('action')}")
+            
             measurement = request.env['construction.measurement'].browse(measurement_id)
             
-            if not measurement.exists() or measurement.state != 'draft':
+            if not measurement.exists():
+                _logger.error(f"Measurement {measurement_id} does not exist")
+                return request.redirect('/my/employee/measurements')
+            
+            _logger.info(f"Current state: {measurement.state}")
+            
+            if measurement.state != 'draft':
+                _logger.warning(f"Measurement not in draft state: {measurement.state}")
                 return request.redirect(f'/my/employee/measurement/{measurement_id}')
             
             # Clear existing lines
+            _logger.info(f"Deleting {len(measurement.line_ids)} existing lines")
             measurement.line_ids.unlink()
             
             # Get BOQ lines
             boq_lines = measurement.contract_id.boq_line_ids
+            _logger.info(f"Processing {len(boq_lines)} BOQ lines")
             
             MeasurementLine = request.env['construction.measurement.line']
+            lines_created = 0
             
             # Create measurement lines
             for boq_line in boq_lines:
@@ -329,8 +347,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 
                 # Only create line if quantity > 0
                 if current_qty > 0:
-                    # FIXED: Get previous qty from last APPROVED measurement (not certified from IPC)
-                    # Find last approved measurement for this BOQ line
+                    # Get previous qty from last APPROVED measurement
                     last_measurement_line = MeasurementLine.search([
                         ('boq_line_id', '=', boq_line.id),
                         ('measurement_id.contract_id', '=', measurement.contract_id.id),
@@ -350,17 +367,18 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                         'current_qty': current_qty,
                         'remarks': remarks if remarks else False,
                     })
+                    lines_created += 1
+            
+            _logger.info(f"Created {lines_created} measurement lines")
             
             # Handle photo uploads
             photos = request.httprequest.files.getlist('photos')
+            _logger.info(f"Found {len(photos)} photos to upload")
             if photos:
                 IrAttachment = request.env['ir.attachment']
                 for photo in photos:
                     if photo and photo.filename:
-                        # Read file content
                         file_content = photo.read()
-                        
-                        # Create attachment
                         IrAttachment.create({
                             'name': photo.filename,
                             'type': 'binary',
@@ -369,27 +387,48 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                             'res_id': measurement.id,
                             'mimetype': photo.content_type,
                         })
+                        _logger.info(f"Uploaded photo: {photo.filename}")
             
-            # FIXED: Check if user clicked "Save & Submit"
+            # Check if user clicked "Save & Submit"
             action = post.get('action')
+            _logger.info(f"Action value: '{action}'")
+            
             if action == 'submit':
-                # Change state to submitted using the model method
+                _logger.info("SUBMIT ACTION DETECTED - Changing state to submitted")
+                # Change state to submitted
                 if measurement.line_ids:
-                    # Use sudo to ensure portal user can change state
-                    measurement.sudo().write({'state': 'submitted'})
+                    try:
+                        # Try without sudo first
+                        measurement.write({'state': 'submitted'})
+                        _logger.info(f"State changed to: {measurement.state}")
+                    except Exception as e:
+                        _logger.error(f"Failed to change state: {str(e)}")
+                        # Try with sudo
+                        try:
+                            measurement.sudo().write({'state': 'submitted'})
+                            _logger.info(f"State changed with sudo to: {measurement.state}")
+                        except Exception as e2:
+                            _logger.error(f"Failed even with sudo: {str(e2)}")
                     
                     # Post message to chatter
-                    measurement.message_post(
-                        body=f"Measurement submitted for approval by {request.env.user.name}",
-                        message_type='notification',
-                        subtype_xmlid='mail.mt_comment',
-                    )
+                    try:
+                        measurement.message_post(
+                            body=f"Measurement submitted for approval by {request.env.user.name}",
+                            message_type='notification',
+                            subtype_xmlid='mail.mt_comment',
+                        )
+                        _logger.info("Posted message to chatter")
+                    except Exception as e:
+                        _logger.error(f"Failed to post message: {str(e)}")
+                else:
+                    _logger.warning("No lines created, not submitting")
+            else:
+                _logger.info(f"Not submitting - action was: {action}")
             
+            _logger.info("========== MEASUREMENT SAVE END ==========")
             return request.redirect(f'/my/employee/measurement/{measurement_id}')
             
         except Exception as e:
-            # Log the error for debugging
-            import logging
-            _logger = logging.getLogger(__name__)
-            _logger.error(f"Error saving measurement lines: {str(e)}", exc_info=True)
+            _logger.error(f"========== ERROR IN MEASUREMENT SAVE ==========")
+            _logger.error(f"Error: {str(e)}", exc_info=True)
             return request.redirect(f'/my/employee/measurement/{measurement_id}')
