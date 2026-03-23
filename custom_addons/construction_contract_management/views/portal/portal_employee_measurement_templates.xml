@@ -96,35 +96,35 @@
                 <t t-if="success == 'saved'">
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         <i class="fa fa-check-circle"></i> <strong>Success!</strong> Quantities saved successfully.
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        <button type="button" class="close" data-dismiss="alert">&#215;</button>
                     </div>
                 </t>
 
                 <t t-if="success == 'submitted'">
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         <i class="fa fa-check-circle"></i> <strong>Submitted!</strong> Measurement submitted for approval.
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        <button type="button" class="close" data-dismiss="alert">&#215;</button>
                     </div>
                 </t>
 
                 <t t-if="error == 'validation'">
                     <div class="alert alert-warning alert-dismissible fade show" role="alert">
                         <i class="fa fa-exclamation-triangle"></i> <strong>Validation Error!</strong> Some quantities exceed allowed amount. Check chatter below for details.
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        <button type="button" class="close" data-dismiss="alert">&#215;</button>
                     </div>
                 </t>
 
                 <t t-if="error == 'system'">
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         <i class="fa fa-times-circle"></i> <strong>Error!</strong> Could not save measurement. Please contact support.
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        <button type="button" class="close" data-dismiss="alert">&#215;</button>
                     </div>
                 </t>
 
                 <t t-if="error == 'submit'">
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         <i class="fa fa-times-circle"></i> <strong>Submit Failed!</strong> Could not submit measurement. Please contact support.
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        <button type="button" class="close" data-dismiss="alert">&#215;</button>
                     </div>
                 </t>
                 <!-- Contract Progress Bar -->
