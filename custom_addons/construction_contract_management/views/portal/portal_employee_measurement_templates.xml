@@ -550,9 +550,9 @@
                                 </div>
 
                                 <div class="mt-3">
-                                    <h6><i class="fa fa-camera"/> Attach Photos (Optional)</h6>
-                                    <input type="file" name="photos" class="form-control-file" multiple="multiple" accept="image/*"/>
-                                    <small class="form-text text-muted">You can select multiple photos to attach to this measurement</small>
+                                    <h6><i class="fa fa-paperclip"/> Attach Files (Optional)</h6>
+                                    <input type="file" name="photos" class="form-control-file" multiple="multiple"/>
+                                    <small class="form-text text-muted">You can attach multiple files such as PDF, Excel, photos, or other documents</small>
                                 </div>
 
                                 <div class="mt-4 measurement-actions">
