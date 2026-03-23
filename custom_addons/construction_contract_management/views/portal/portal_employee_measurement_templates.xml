@@ -134,7 +134,7 @@
                         line-height: 16px;
                     }
                     .measurement-portal-page .measurement-section-header {
-                        background: #163a52;
+                        background: #c2d1dcff;
                         color: #fff;
                     }
                     .measurement-portal-page .measurement-toolbar .btn {
