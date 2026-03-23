@@ -316,31 +316,24 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         # previous qty from latest approved measurement line for same contract + boq line
         previous_qty_map = {}
         for boq_line in boq_lines:
-            last_line = MeasurementLine.search([
+            approved_lines = MeasurementLine.search([
                 ('boq_line_id', '=', boq_line.id),
                 ('measurement_id.contract_id', '=', contract.id),
                 ('measurement_id.state', '=', 'approved'),
                 ('measurement_id', '!=', measurement.id),
-            ], order='measurement_id desc, id desc', limit=1)
+            ])
 
-            previous_qty_map[boq_line.id] = last_line.cumulative_qty if last_line else 0.0
+            previous_qty_map[boq_line.id] = sum(approved_lines.mapped('current_qty'))
 
         # progress denominator
         contract_revised = contract.revised_amount or sum(contract.boq_line_ids.mapped('revised_amount')) or sum(contract.boq_line_ids.mapped('total_amount')) or contract.original_amount or 0.0
 
         # progress numerator:
         # prefer contract computed measured amount if available, otherwise compute from approved measurements
-        contract_certified = contract.total_measured_amount or 0.0
-        if not contract_certified:
-            approved_measurements = request.env['construction.measurement'].sudo().search([
-                ('contract_id', '=', contract.id),
-                ('state', '=', 'approved'),
-            ])
-            contract_certified = sum(
-                (line.current_qty or 0.0) * (line.unit_rate or 0.0)
-                for meas in approved_measurements
-                for line in meas.line_ids
-            )
+        contract_certified = contract.total_measured_amount or sum(
+            (line.measured_qty or 0.0) * (line.revised_unit_rate or line.unit_rate or 0.0)
+            for line in contract.boq_line_ids
+        )
 
         values = self._prepare_portal_layout_values()
         values.update({
@@ -389,15 +382,14 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                     ('boq_line_id', '=', boq_line.id),
                 ], limit=1)
 
-                # latest approved previous cumulative qty
-                last_approved = MeasurementLine.search([
+                approved_lines = MeasurementLine.search([
                     ('boq_line_id', '=', boq_line.id),
                     ('measurement_id.contract_id', '=', measurement.contract_id.id),
                     ('measurement_id.state', '=', 'approved'),
                     ('measurement_id', '!=', measurement.id),
-                ], order='measurement_id desc, id desc', limit=1)
+                ])
 
-                previous_qty = last_approved.cumulative_qty if last_approved else 0.0
+                previous_qty = sum(approved_lines.mapped('current_qty'))
                 allowed_qty = boq_line.revised_qty or boq_line.contract_qty or 0.0
                 cumulative_qty = previous_qty + current_qty
 
@@ -453,9 +445,10 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
 
             # re-browse after create/write/unlink to get fresh line_ids
             measurement = request.env['construction.measurement'].sudo().browse(measurement_id)
+            positive_lines = measurement.line_ids.filtered(lambda l: l.current_qty > 0)
 
             if action == 'submit':
-                if not measurement.line_ids:
+                if not positive_lines:
                     return request.redirect(f'/my/employee/measurement/{measurement_id}?error=no_lines')
 
                 try:

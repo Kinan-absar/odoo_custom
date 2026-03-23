@@ -10,6 +10,8 @@ class ConstructionContractBoqLine(models.Model):
     contract_id = fields.Many2one('construction.contract', required=True, ondelete='cascade')
     company_id = fields.Many2one(related='contract_id.company_id', store=True)
     currency_id = fields.Many2one(related='contract_id.currency_id', store=True)
+    measurement_line_ids = fields.One2many('construction.measurement.line', 'boq_line_id')
+    ipc_line_ids = fields.One2many('construction.ipc.line', 'boq_line_id')
 
     section = fields.Char(string='Section')
     item_code = fields.Char(string='Item Code')
@@ -117,21 +119,25 @@ class ConstructionContractBoqLine(models.Model):
             rec.revised_amount = revised_qty * revised_unit_rate
             rec.is_omitted = is_omitted
 
-    @api.depends('contract_qty', 'revised_qty')
+    @api.depends(
+        'contract_qty',
+        'revised_qty',
+        'measurement_line_ids.current_qty',
+        'measurement_line_ids.measurement_id.state',
+        'ipc_line_ids.current_qty',
+        'ipc_line_ids.ipc_id.state',
+    )
     def _compute_progress_fields(self):
         for rec in self:
-            measurement_lines = self.env['construction.measurement.line'].search([
-                ('boq_line_id', '=', rec.id),
-                ('measurement_id.state', '=', 'approved'),
-            ])
+            approved_measurement_lines = rec.measurement_line_ids.filtered(
+                lambda l: l.measurement_id.state == 'approved'
+            )
+            approved_ipc_lines = rec.ipc_line_ids.filtered(
+                lambda l: l.ipc_id.state in ['approved', 'done']
+            )
 
-            ipc_lines = self.env['construction.ipc.line'].search([
-                ('boq_line_id', '=', rec.id),
-                ('ipc_id.state', 'in', ['approved', 'done']),
-            ])
-
-            rec.measured_qty = sum(measurement_lines.mapped('current_qty'))
-            rec.certified_qty = sum(ipc_lines.mapped('current_qty'))
+            rec.measured_qty = sum(approved_measurement_lines.mapped('current_qty'))
+            rec.certified_qty = sum(approved_ipc_lines.mapped('current_qty'))
 
             allowed_qty = rec.revised_qty or rec.contract_qty
             rec.remaining_qty = allowed_qty - rec.certified_qty
