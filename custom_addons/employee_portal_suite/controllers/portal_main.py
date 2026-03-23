@@ -440,18 +440,82 @@ class EmployeePortalMain(CustomerPortal):
         })
         return request.render("construction_contract_management.portal_employee_measurements", values)
 
+# ---------------------------------------------------------
+    # CONSTRUCTION - MEASUREMENT DETAIL (with BOQ for editing)
+    # ---------------------------------------------------------
     @http.route(['/my/employee/measurement/<int:measurement_id>'], type='http', auth='user', website=True)
-    def portal_construction_measurement_detail(self, measurement_id, access_token=None, **kw):
+    def portal_construction_measurement_detail(self, measurement_id, **kw):
         try:
-            measurement_sudo = self._document_check_access('construction.measurement', measurement_id, access_token)
-        except (AccessError, MissingError):
-            return request.redirect('/my/employee')
+            measurement = request.env['construction.measurement'].browse(measurement_id)
+            
+            if not measurement.exists():
+                return request.redirect('/my/employee/measurements')
+            
+            # Get BOQ lines for this contract
+            boq_lines = measurement.contract_id.boq_line_ids
+            
+            # Get existing measurement lines mapped by BOQ line ID
+            existing_lines = {}
+            for line in measurement.line_ids:
+                existing_lines[line.boq_line_id.id] = line
+            
+            values = {
+                'measurement': measurement,
+                'boq_lines': boq_lines,
+                'existing_lines': existing_lines,
+                'page_name': 'construction_measurement',
+            }
+            return request.render("construction_contract_management.portal_employee_measurement_detail", values)
+            
+        except Exception as e:
+            return request.redirect('/my/employee/measurements')
 
-        values = {
-            'measurement': measurement_sudo,
-            'page_name': 'construction_measurement',
-        }
-        return request.render("construction_contract_management.portal_employee_measurement_detail", values)
+    # ---------------------------------------------------------
+    # CONSTRUCTION - ADD MEASUREMENT LINES
+    # ---------------------------------------------------------
+    @http.route(['/my/employee/measurement/<int:measurement_id>/add_lines'], 
+                type='http', auth='user', website=True, methods=['POST'])
+    def portal_construction_measurement_add_lines(self, measurement_id, **post):
+        try:
+            measurement = request.env['construction.measurement'].browse(measurement_id)
+            
+            if not measurement.exists() or measurement.state != 'draft':
+                return request.redirect(f'/my/employee/measurement/{measurement_id}')
+            
+            # Clear existing lines
+            measurement.line_ids.unlink()
+            
+            # Get BOQ lines
+            boq_lines = measurement.contract_id.boq_line_ids
+            
+            MeasurementLine = request.env['construction.measurement.line']
+            
+            for boq_line in boq_lines:
+                # Check if this line was selected
+                if post.get(f'selected_{boq_line.id}'):
+                    # Get the quantity
+                    qty_str = post.get(f'qty_{boq_line.id}', '0')
+                    try:
+                        current_qty = float(qty_str)
+                    except:
+                        current_qty = 0.0
+                    
+                    # Only create line if quantity > 0
+                    if current_qty > 0:
+                        # Get previous certified quantity from BOQ line
+                        previous_qty = boq_line.certified_qty
+                        
+                        MeasurementLine.create({
+                            'measurement_id': measurement.id,
+                            'boq_line_id': boq_line.id,
+                            'previous_qty': previous_qty,
+                            'current_qty': current_qty,
+                        })
+            
+            return request.redirect(f'/my/employee/measurement/{measurement_id}')
+            
+        except Exception as e:
+            return request.redirect(f'/my/employee/measurement/{measurement_id}')
 
    # ---------------------------------------------------------
     # CONSTRUCTION - NEW MEASUREMENT FORM (FIXED)

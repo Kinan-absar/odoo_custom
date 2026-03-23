@@ -68,7 +68,7 @@
         </t>
     </template>
 
-    <!-- Measurement Detail - FIXED currency -->
+    <!-- Measurement Detail with EDITABLE Lines -->
     <template id="portal_employee_measurement_detail" name="Employee Portal - Measurement Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container">
@@ -77,7 +77,10 @@
                         <h3 class="mb-3">
                             <small class="text-muted">Measurement -</small> <span t-field="measurement.name"/>
                             <span t-if="measurement.state == 'draft'" class="badge badge-secondary ml-2">Draft</span>
+                            <span t-if="measurement.state == 'submitted'" class="badge badge-info ml-2">Submitted</span>
+                            <span t-if="measurement.state == 'checked'" class="badge badge-primary ml-2">Checked</span>
                             <span t-if="measurement.state == 'approved'" class="badge badge-success ml-2">Approved</span>
+                            <span t-if="measurement.state == 'rejected'" class="badge badge-danger ml-2">Rejected</span>
                         </h3>
                     </div>
                 </div>
@@ -112,6 +115,91 @@
                     </div>
                 </div>
 
+                <!-- BOQ Items with Measurement Form -->
+                <t t-if="measurement.state == 'draft'">
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5>Add Measurement Quantities</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Enter quantities for the items below and click "Save Quantities"</p>
+                            
+                            <form method="POST" t-attf-action="/my/employee/measurement/#{measurement.id}/add_lines" id="measurement_form">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 5%;">
+                                                    <input type="checkbox" id="select_all" onclick="toggleAll(this)"/>
+                                                </th>
+                                                <th style="width: 10%;">Item Code</th>
+                                                <th style="width: 30%;">Description</th>
+                                                <th style="width: 10%;" class="text-right">Contract Qty</th>
+                                                <th style="width: 10%;" class="text-right">Previous Qty</th>
+                                                <th style="width: 15%;" class="text-right">Current Qty</th>
+                                                <th style="width: 10%;">Unit</th>
+                                                <th style="width: 10%;" class="text-right">Unit Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="boq_lines" t-as="boq_line">
+                                                <t t-set="existing_line" t-value="existing_lines.get(boq_line.id)"/>
+                                                <tr>
+                                                    <td>
+                                                        <input type="checkbox" 
+                                                               t-att-name="'selected_' + str(boq_line.id)" 
+                                                               class="line_checkbox"
+                                                               t-att-checked="'checked' if existing_line else None"/>
+                                                    </td>
+                                                    <td><strong><t t-esc="boq_line.item_code or ''"/></strong></td>
+                                                    <td><t t-esc="boq_line.description"/></td>
+                                                    <td class="text-right"><t t-esc="'%.2f' % boq_line.contract_qty"/></td>
+                                                    <td class="text-right">
+                                                        <t t-esc="'%.2f' % (existing_line.previous_qty if existing_line else boq_line.certified_qty)"/>
+                                                    </td>
+                                                    <td class="text-right">
+                                                        <input type="number" 
+                                                               step="0.01" 
+                                                               class="form-control form-control-sm text-right" 
+                                                               t-att-name="'qty_' + str(boq_line.id)"
+                                                               t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"
+                                                               style="width: 100px; display: inline-block;"/>
+                                                    </td>
+                                                    <td><t t-esc="boq_line.uom_id.name"/></td>
+                                                    <td class="text-right">
+                                                        <t t-esc="'%.2f' % boq_line.unit_rate"/>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="mt-3">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fa fa-save"/> Save Quantities
+                                    </button>
+                                    <a t-attf-href="/my/employee/measurements" class="btn btn-secondary">
+                                        <i class="fa fa-times"/> Cancel
+                                    </a>
+                                </div>
+                            </form>
+
+                            <script>
+                                function toggleAll(source) {
+                                    var checkboxes = document.querySelectorAll('.line_checkbox');
+                                    for (var i = 0; i < checkboxes.length; i++) {
+                                        checkboxes[i].checked = source.checked;
+                                    }
+                                }
+                            </script>
+                        </div>
+                    </div>
+                </t>
+
+                <!-- Existing Lines (Read-only for approved) -->
                 <t t-if="measurement.line_ids">
                     <div class="card mt-4">
                         <div class="card-header">
@@ -121,6 +209,7 @@
                             <table class="table table-sm table-striped">
                                 <thead>
                                     <tr>
+                                        <th>Item Code</th>
                                         <th>Description</th>
                                         <th class="text-right">Previous Qty</th>
                                         <th class="text-right">Current Qty</th>
@@ -133,11 +222,13 @@
                                     <t t-foreach="measurement.line_ids" t-as="line">
                                         <tr>
                                             <td>
-                                                <t t-if="line.boq_line_id and line.boq_line_id.item_code">
-                                                    <strong>[<span t-field="line.boq_line_id.item_code"/>]</strong><br/>
-                                                </t>
-                                                <span t-field="line.description"/>
+                                                <strong>
+                                                    <t t-if="line.boq_line_id.item_code">
+                                                        <t t-esc="line.boq_line_id.item_code"/>
+                                                    </t>
+                                                </strong>
                                             </td>
+                                            <td><span t-field="line.description"/></td>
                                             <td class="text-right"><span t-field="line.previous_qty"/></td>
                                             <td class="text-right"><strong><span t-field="line.current_qty"/></strong></td>
                                             <td class="text-right"><span t-field="line.cumulative_qty"/></td>
@@ -216,7 +307,7 @@
                     </div>
 
                     <div class="alert alert-info">
-                        <i class="fa fa-info-circle"/> After creating the measurement, you'll be able to add line items from the BOQ.
+                        <i class="fa fa-info-circle"/> After creating the measurement, you'll be able to add quantities for each BOQ item.
                     </div>
 
                     <div class="form-group">
