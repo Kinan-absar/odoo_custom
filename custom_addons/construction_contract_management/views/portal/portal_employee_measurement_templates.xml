@@ -425,7 +425,7 @@
                                                         <div class="qty-stack">
                                                             <strong><t t-esc="'%.2f' % previous_qty"/></strong>
                                                             <span class="qty-percent">
-                                                                <t t-esc="'(%.0f%%)' % ((previous_qty / allowed_qty * 100) if allowed_qty else 0.0)"/>
+                                                                <t t-esc="'(' + str(int(round((previous_qty / allowed_qty * 100) if allowed_qty else 0.0))) + '%)'"/>
                                                             </span>
                                                         </div>
                                                     </td>
@@ -435,7 +435,7 @@
                                                             <t t-esc="'%.2f' % remaining_qty"/>
                                                         </span>
                                                         <div class="qty-percent mt-1">
-                                                            <t t-esc="'(%.0f%%)' % ((remaining_qty / allowed_qty * 100) if allowed_qty else 0.0)"/>
+                                                            <t t-esc="'(' + str(int(round((remaining_qty / allowed_qty * 100) if allowed_qty else 0.0))) + '%)'"/>
                                                         </div>
                                                         <input type="hidden" t-att-name="'remaining_qty_' + str(boq_line.id)" t-att-value="remaining_qty"/>
                                                     </td>
@@ -454,7 +454,7 @@
                                                                onchange="validateQuantity(this)"/>
                                                         <div class="qty-percent mt-1 current-percent-display">
                                                             <t t-set="current_qty_value" t-value="existing_line.current_qty if existing_line else 0.0"/>
-                                                            <t t-esc="'(%.0f%%)' % ((current_qty_value / allowed_qty * 100) if allowed_qty else 0.0)"/>
+                                                            <t t-esc="'(' + str(int(round((current_qty_value / allowed_qty * 100) if allowed_qty else 0.0))) + '%)'"/>
                                                         </div>
                                                     </td>
                                                     <td class="text-right">
@@ -464,7 +464,7 @@
                                                                 <t t-esc="'%.2f' % total_qty_value"/>
                                                             </strong>
                                                             <span class="qty-percent total-percent-display">
-                                                                <t t-esc="'(%.0f%%)' % ((total_qty_value / allowed_qty * 100) if allowed_qty else 0.0)"/>
+                                                                <t t-esc="'(' + str(int(round((total_qty_value / allowed_qty * 100) if allowed_qty else 0.0))) + '%)'"/>
                                                             </span>
                                                         </div>
                                                     </td>
@@ -631,19 +631,19 @@
                                             <td class="text-right">
                                                 <div class="qty-stack">
                                                     <span t-field="line.previous_qty"/>
-                                                    <span class="qty-percent"><t t-esc="'(%.0f%%)' % (line.previous_percent or 0.0)"/></span>
+                                                    <span class="qty-percent"><t t-esc="'(' + str(int(round(line.previous_percent or 0.0))) + '%)'"/></span>
                                                 </div>
                                             </td>
                                             <td class="text-right">
                                                 <div class="qty-stack">
                                                     <strong><span t-field="line.current_qty"/></strong>
-                                                    <span class="qty-percent"><t t-esc="'(%.0f%%)' % (line.current_percent or 0.0)"/></span>
+                                                    <span class="qty-percent"><t t-esc="'(' + str(int(round(line.current_percent or 0.0))) + '%)'"/></span>
                                                 </div>
                                             </td>
                                             <td class="text-right">
                                                 <div class="qty-stack">
                                                     <span t-field="line.cumulative_qty"/>
-                                                    <span class="qty-percent"><t t-esc="'(%.0f%%)' % (line.cumulative_percent or 0.0)"/></span>
+                                                    <span class="qty-percent"><t t-esc="'(' + str(int(round(line.cumulative_percent or 0.0))) + '%)'"/></span>
                                                 </div>
                                             </td>
                                             <td><span t-field="line.boq_line_id.uom_id"/></td>

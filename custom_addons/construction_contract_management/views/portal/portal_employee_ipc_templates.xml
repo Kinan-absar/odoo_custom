@@ -283,19 +283,19 @@
                                             <td class="text-right">
                                                 <div class="qty-stack">
                                                     <span t-field="line.previous_qty"/>
-                                                    <span class="qty-percent"><t t-esc="'(%.0f%%)' % (line.previous_percent or 0.0)"/></span>
+                                                    <span class="qty-percent"><t t-esc="'(' + str(int(round(line.previous_percent or 0.0))) + '%)'"/></span>
                                                 </div>
                                             </td>
                                             <td class="text-right">
                                                 <div class="qty-stack">
                                                     <span t-field="line.current_qty"/>
-                                                    <span class="qty-percent"><t t-esc="'(%.0f%%)' % (line.current_percent or 0.0)"/></span>
+                                                    <span class="qty-percent"><t t-esc="'(' + str(int(round(line.current_percent or 0.0))) + '%)'"/></span>
                                                 </div>
                                             </td>
                                             <td class="text-right">
                                                 <div class="qty-stack">
                                                     <span t-field="line.cumulative_qty"/>
-                                                    <span class="qty-percent"><t t-esc="'(%.0f%%)' % (line.cumulative_percent or 0.0)"/></span>
+                                                    <span class="qty-percent"><t t-esc="'(' + str(int(round(line.cumulative_percent or 0.0))) + '%)'"/></span>
                                                 </div>
                                             </td>
                                             <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
