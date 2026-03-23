@@ -446,27 +446,57 @@ class EmployeePortalMain(CustomerPortal):
     @http.route(['/my/employee/measurement/<int:measurement_id>'], type='http', auth='user', website=True)
     def portal_construction_measurement_detail(self, measurement_id, **kw):
         try:
-            measurement = request.env['construction.measurement'].browse(measurement_id)
-            
+            error = request.params.get('error')
+            success = request.params.get('success')
+            measurement = request.env['construction.measurement'].sudo().browse(measurement_id)
+
             if not measurement.exists():
                 return request.redirect('/my/employee/measurements')
-            
-            # Get BOQ lines for this contract
-            boq_lines = measurement.contract_id.boq_line_ids
-            
-            # Get existing measurement lines mapped by BOQ line ID
+
+            contract = measurement.contract_id.sudo()
+            boq_lines = contract.boq_line_ids.sorted(lambda l: (l.sequence, l.id))
+            MeasurementLine = request.env['construction.measurement.line'].sudo()
+
             existing_lines = {}
             for line in measurement.line_ids:
-                existing_lines[line.boq_line_id.id] = line
-            
-            values = {
+                if line.boq_line_id:
+                    existing_lines[line.boq_line_id.id] = line
+
+            previous_qty_map = {}
+            for boq_line in boq_lines:
+                approved_lines = MeasurementLine.search([
+                    ('boq_line_id', '=', boq_line.id),
+                    ('measurement_id.contract_id', '=', contract.id),
+                    ('measurement_id.state', '=', 'approved'),
+                    ('measurement_id', '!=', measurement.id),
+                ])
+                previous_qty_map[boq_line.id] = sum(approved_lines.mapped('current_qty'))
+
+            contract_revised = contract.revised_amount or sum(contract.boq_line_ids.mapped('revised_amount')) or sum(contract.boq_line_ids.mapped('total_amount')) or contract.original_amount or 0.0
+
+            approved_measurement_lines = MeasurementLine.search([
+                ('measurement_id.contract_id', '=', contract.id),
+                ('measurement_id.state', '=', 'approved'),
+            ])
+            contract_certified = sum(
+                (line.current_qty or 0.0) * (line.boq_line_id.revised_unit_rate or line.boq_line_id.unit_rate or 0.0)
+                for line in approved_measurement_lines
+            )
+
+            values = self._prepare_portal_layout_values()
+            values.update({
                 'measurement': measurement,
                 'boq_lines': boq_lines,
                 'existing_lines': existing_lines,
+                'previous_qty_map': previous_qty_map,
+                'contract_revised': contract_revised,
+                'contract_certified': contract_certified,
+                'error': error,
+                'success': success,
                 'page_name': 'construction_measurement',
-            }
+            })
             return request.render("construction_contract_management.portal_employee_measurement_detail", values)
-            
+
         except Exception as e:
             return request.redirect('/my/employee/measurements')
 
@@ -474,48 +504,95 @@ class EmployeePortalMain(CustomerPortal):
     # CONSTRUCTION - ADD MEASUREMENT LINES
     # ---------------------------------------------------------
     @http.route(['/my/employee/measurement/<int:measurement_id>/add_lines'], 
-                type='http', auth='user', website=True, methods=['POST'])
+                type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def portal_construction_measurement_add_lines(self, measurement_id, **post):
         try:
-            measurement = request.env['construction.measurement'].browse(measurement_id)
-            
-            if not measurement.exists() or measurement.state != 'draft':
+            measurement = request.env['construction.measurement'].sudo().browse(measurement_id)
+
+            if not measurement.exists():
+                return request.redirect('/my/employee/measurements')
+
+            if measurement.state != 'draft':
                 return request.redirect(f'/my/employee/measurement/{measurement_id}')
-            
-            # Clear existing lines
-            measurement.line_ids.unlink()
-            
-            # Get BOQ lines
-            boq_lines = measurement.contract_id.boq_line_ids
-            
-            MeasurementLine = request.env['construction.measurement.line']
-            
+
+            boq_lines = measurement.contract_id.boq_line_ids.sorted(lambda l: (l.sequence, l.id))
+            MeasurementLine = request.env['construction.measurement.line'].sudo()
+            validation_errors = []
+
             for boq_line in boq_lines:
-                # Check if this line was selected
-                if post.get(f'selected_{boq_line.id}'):
-                    # Get the quantity
-                    qty_str = post.get(f'qty_{boq_line.id}', '0')
-                    try:
-                        current_qty = float(qty_str)
-                    except:
-                        current_qty = 0.0
-                    
-                    # Only create line if quantity > 0
-                    if current_qty > 0:
-                        # Get previous certified quantity from BOQ line
-                        previous_qty = boq_line.certified_qty
-                        
-                        MeasurementLine.create({
-                            'measurement_id': measurement.id,
-                            'boq_line_id': boq_line.id,
-                            'previous_qty': previous_qty,
-                            'current_qty': current_qty,
-                        })
-            
-            return request.redirect(f'/my/employee/measurement/{measurement_id}')
-            
+                qty_str = (post.get(f'qty_{boq_line.id}') or '0').strip()
+                remarks = (post.get(f'remarks_{boq_line.id}') or '').strip()
+
+                try:
+                    current_qty = float(qty_str)
+                except (ValueError, TypeError):
+                    current_qty = 0.0
+
+                existing_line = MeasurementLine.search([
+                    ('measurement_id', '=', measurement.id),
+                    ('boq_line_id', '=', boq_line.id),
+                ], limit=1)
+
+                approved_lines = MeasurementLine.search([
+                    ('boq_line_id', '=', boq_line.id),
+                    ('measurement_id.contract_id', '=', measurement.contract_id.id),
+                    ('measurement_id.state', '=', 'approved'),
+                    ('measurement_id', '!=', measurement.id),
+                ])
+
+                previous_qty = sum(approved_lines.mapped('current_qty'))
+                allowed_qty = boq_line.revised_qty or boq_line.contract_qty or 0.0
+                cumulative_qty = previous_qty + current_qty
+
+                if current_qty > 0 and allowed_qty and cumulative_qty > allowed_qty:
+                    label = boq_line.item_code or (boq_line.description or '')[:30]
+                    validation_errors.append(
+                        f"{label}: cumulative {cumulative_qty:.2f} exceeds allowed {allowed_qty:.2f}"
+                    )
+                    continue
+
+                line_vals = {
+                    'measurement_id': measurement.id,
+                    'boq_line_id': boq_line.id,
+                    'previous_qty': previous_qty,
+                    'current_qty': current_qty,
+                    'remarks': remarks or False,
+                }
+
+                if current_qty > 0:
+                    if existing_line:
+                        existing_line.write(line_vals)
+                    else:
+                        MeasurementLine.create(line_vals)
+                elif existing_line:
+                    existing_line.unlink()
+
+            if validation_errors:
+                message = "Some quantities could not be saved:<br/>" + "<br/>".join(validation_errors)
+                measurement.message_post(body=message, message_type='comment')
+                return request.redirect(f'/my/employee/measurement/{measurement_id}?error=validation')
+
+            action = post.get('action', 'save')
+            measurement = request.env['construction.measurement'].sudo().browse(measurement_id)
+            measurement.contract_id.boq_line_ids._compute_progress_fields()
+            measurement.contract_id._compute_summary_amounts()
+            positive_lines = measurement.line_ids.filtered(lambda l: l.current_qty > 0)
+
+            if action == 'submit':
+                if not positive_lines:
+                    return request.redirect(f'/my/employee/measurement/{measurement_id}?error=no_lines')
+
+                measurement.action_submit()
+                measurement.message_post(
+                    body=f"Measurement submitted for approval by {request.env.user.name}",
+                    message_type='notification',
+                )
+                return request.redirect(f'/my/employee/measurement/{measurement_id}?success=submitted')
+
+            return request.redirect(f'/my/employee/measurement/{measurement_id}?success=saved')
+
         except Exception as e:
-            return request.redirect(f'/my/employee/measurement/{measurement_id}')
+            return request.redirect(f'/my/employee/measurement/{measurement_id}?error=system')
 
    # ---------------------------------------------------------
     # CONSTRUCTION - NEW MEASUREMENT FORM (FIXED)
@@ -528,22 +605,28 @@ class EmployeePortalMain(CustomerPortal):
             return request.redirect("/my/employee")
 
         if request.httprequest.method == 'POST':
-            # Create the measurement - REMOVED 'description' field
-            vals = {
-                'contract_id': int(post.get('contract_id')),
-                'date': post.get('date'),
-                'period_from': post.get('period_from'),
-                'period_to': post.get('period_to'),
-                # 'description' field does NOT exist on measurement model, removed
-            }
-            
-            measurement = request.env['construction.measurement'].create(vals)
-            
-            return request.redirect(f'/my/employee/measurement/{measurement.id}')
+            try:
+                vals = {
+                    'contract_id': int(post.get('contract_id')),
+                    'date': post.get('date') or False,
+                    'period_from': post.get('period_from') or False,
+                    'period_to': post.get('period_to') or False,
+                }
+
+                measurement = request.env['construction.measurement'].sudo().create(vals)
+                measurement.action_load_boq_lines()
+                return request.redirect(f'/my/employee/measurement/{measurement.id}')
+            except Exception:
+                contracts = request.env['construction.contract'].sudo().search([('state', 'in', ['active', 'approved'])])
+                values = {
+                    'contracts': contracts,
+                    'page_name': 'construction_measurement_new',
+                    'error': 'create_failed',
+                }
+                return request.render("construction_contract_management.portal_employee_measurement_new", values)
         
-        # GET request - show form
-        contracts = request.env['construction.contract'].search([('state', 'in', ['active', 'approved'])])
-        
+        contracts = request.env['construction.contract'].sudo().search([('state', 'in', ['active', 'approved'])])
+
         values = {
             'contracts': contracts,
             'page_name': 'construction_measurement_new',
