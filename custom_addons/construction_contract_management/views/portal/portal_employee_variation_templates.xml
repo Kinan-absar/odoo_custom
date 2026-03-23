@@ -22,12 +22,41 @@
                 </t>
 
                 <t t-if="variations">
+                    <form method="get" action="/my/employee/variations" class="form-row align-items-end mt-3 mb-3">
+                        <input type="hidden" name="sortby" t-att-value="sortby or 'date'"/>
+                        <div class="col-md-4 col-lg-3">
+                            <label class="small font-weight-bold mb-1">Project</label>
+                            <select name="project_filter" class="form-control">
+                                <t t-foreach="project_options or []" t-as="project_option">
+                                    <option t-att-value="project_option['value']" t-att-selected="project_filter == project_option['value'] and 'selected' or None">
+                                        <t t-esc="project_option['label']"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-md-4 col-lg-3">
+                            <label class="small font-weight-bold mb-1">Status</label>
+                            <select name="status_filter" class="form-control">
+                                <t t-foreach="status_options.items() if status_options else []" t-as="status_option">
+                                    <option t-att-value="status_option[0]" t-att-selected="status_filter == status_option[0] and 'selected' or None">
+                                        <t t-esc="status_option[1]['label']"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-md-4 col-lg-3">
+                            <button type="submit" class="btn btn-primary mr-2">Apply</button>
+                            <a href="/my/employee/variations" class="btn btn-secondary">Reset</a>
+                        </div>
+                    </form>
+
                     <div class="table-responsive mt-3">
                         <table class="table table-hover">
                             <thead class="thead-light">
                                 <tr>
                                     <th>Variation #</th>
                                     <th>Contract</th>
+                                    <th>Project</th>
                                     <th>Date</th>
                                     <th>Description</th>
                                     <th class="text-right">Amount</th>
@@ -39,6 +68,7 @@
                                     <tr>
                                         <td><a t-attf-href="/my/employee/variation/#{variation.id}"><t t-esc="variation.name"/></a></td>
                                         <td><span t-field="variation.contract_id"/></td>
+                                        <td><span t-field="variation.contract_id.project_id"/></td>
                                         <td><span t-field="variation.date"/></td>
                                         <td><span t-field="variation.description"/></td>
                                         <td class="text-right"><span t-field="variation.total_amount" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></td>
@@ -129,6 +159,10 @@
                                 <div class="row mb-2">
                                     <div class="col-4"><strong>Date:</strong></div>
                                     <div class="col-8"><span t-field="variation.date"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-4"><strong>Project:</strong></div>
+                                    <div class="col-8"><span t-field="variation.contract_id.project_id"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-4"><strong>Description:</strong></div>

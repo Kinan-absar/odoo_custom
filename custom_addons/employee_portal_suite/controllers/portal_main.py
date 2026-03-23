@@ -256,27 +256,40 @@ class EmployeePortalMain(CustomerPortal):
             'name': {'label': 'Reference', 'order': 'name'},
             'contract': {'label': 'Contract', 'order': 'contract_id'},
         }
-        searchbar_filters = {
+        status_options = {
             'all': {'label': 'All', 'domain': []},
             'draft': {'label': 'Draft', 'domain': [('state', '=', 'draft')]},
             'under_review': {'label': 'Under Review', 'domain': [('state', '=', 'under_review')]},
             'approved': {'label': 'Approved', 'domain': [('state', '=', 'approved')]},
             'done': {'label': 'Done', 'domain': [('state', '=', 'done')]},
+            'cancelled': {'label': 'Cancelled', 'domain': [('state', '=', 'cancelled')]},
         }
 
         if not sortby:
             sortby = 'date'
         order = searchbar_sortings[sortby]['order']
 
-        if not filterby:
-            filterby = 'all'
-        domain += searchbar_filters[filterby]['domain']
+        status_filter = kw.get('status_filter') or filterby or 'all'
+        if status_filter not in status_options:
+            status_filter = 'all'
+        domain += status_options[status_filter]['domain']
+
+        project_option_records = ConstructionIPC.search([]).mapped('contract_id.project_id').filtered(lambda p: p.id)
+        project_options = [{'value': 'all', 'label': 'All Projects'}]
+        for project in project_option_records.sorted(lambda p: (p.name or '').lower()):
+            project_options.append({'value': str(project.id), 'label': project.name})
+
+        project_filter = (kw.get('project_filter') or 'all').strip()
+        if project_filter != 'all' and project_filter.isdigit():
+            domain.append(('contract_id.project_id', '=', int(project_filter)))
+        else:
+            project_filter = 'all'
 
         ipc_count = ConstructionIPC.search_count(domain)
 
         pager = portal_pager(
             url="/my/employee/ipcs",
-            url_args={'sortby': sortby, 'filterby': filterby},
+            url_args={'sortby': sortby, 'status_filter': status_filter, 'project_filter': project_filter},
             total=ipc_count,
             page=page,
             step=self._items_per_page
@@ -290,9 +303,11 @@ class EmployeePortalMain(CustomerPortal):
             'default_url': '/my/employee/ipcs',
             'pager': pager,
             'searchbar_sortings': searchbar_sortings,
-            'searchbar_filters': searchbar_filters,
+            'status_options': status_options,
+            'project_options': project_options,
             'sortby': sortby,
-            'filterby': filterby,
+            'status_filter': status_filter,
+            'project_filter': project_filter,
         })
         return request.render("construction_contract_management.portal_employee_ipcs", values)
 
@@ -333,26 +348,39 @@ class EmployeePortalMain(CustomerPortal):
             'date': {'label': 'Newest', 'order': 'id desc'},
             'name': {'label': 'Reference', 'order': 'name'},
         }
-        searchbar_filters = {
+        status_options = {
             'all': {'label': 'All', 'domain': []},
             'draft': {'label': 'Draft', 'domain': [('state', '=', 'draft')]},
             'submitted': {'label': 'Submitted', 'domain': [('state', '=', 'submitted')]},
             'approved': {'label': 'Approved', 'domain': [('state', '=', 'approved')]},
+            'rejected': {'label': 'Rejected', 'domain': [('state', '=', 'rejected')]},
         }
 
         if not sortby:
             sortby = 'date'
         order = searchbar_sortings[sortby]['order']
 
-        if not filterby:
-            filterby = 'all'
-        domain += searchbar_filters[filterby]['domain']
+        status_filter = kw.get('status_filter') or filterby or 'all'
+        if status_filter not in status_options:
+            status_filter = 'all'
+        domain += status_options[status_filter]['domain']
+
+        project_option_records = ConstructionVariation.search([]).mapped('contract_id.project_id').filtered(lambda p: p.id)
+        project_options = [{'value': 'all', 'label': 'All Projects'}]
+        for project in project_option_records.sorted(lambda p: (p.name or '').lower()):
+            project_options.append({'value': str(project.id), 'label': project.name})
+
+        project_filter = (kw.get('project_filter') or 'all').strip()
+        if project_filter != 'all' and project_filter.isdigit():
+            domain.append(('contract_id.project_id', '=', int(project_filter)))
+        else:
+            project_filter = 'all'
 
         variation_count = ConstructionVariation.search_count(domain)
         
         pager = portal_pager(
             url="/my/employee/variations",
-            url_args={'sortby': sortby, 'filterby': filterby},
+            url_args={'sortby': sortby, 'status_filter': status_filter, 'project_filter': project_filter},
             total=variation_count,
             page=page,
             step=self._items_per_page
@@ -365,9 +393,11 @@ class EmployeePortalMain(CustomerPortal):
             'page_name': 'construction_variation',
             'pager': pager,
             'searchbar_sortings': searchbar_sortings,
-            'searchbar_filters': searchbar_filters,
+            'status_options': status_options,
+            'project_options': project_options,
             'sortby': sortby,
-            'filterby': filterby,
+            'status_filter': status_filter,
+            'project_filter': project_filter,
         })
         return request.render("construction_contract_management.portal_employee_variations", values)
 
@@ -468,25 +498,40 @@ class EmployeePortalMain(CustomerPortal):
             'date': {'label': 'Newest', 'order': 'id desc'},
             'name': {'label': 'Reference', 'order': 'name'},
         }
-        searchbar_filters = {
+        status_options = {
             'all': {'label': 'All', 'domain': []},
             'draft': {'label': 'Draft', 'domain': [('state', '=', 'draft')]},
+            'submitted': {'label': 'Submitted', 'domain': [('state', '=', 'submitted')]},
+            'checked': {'label': 'Checked', 'domain': [('state', '=', 'checked')]},
             'approved': {'label': 'Approved', 'domain': [('state', '=', 'approved')]},
+            'rejected': {'label': 'Rejected', 'domain': [('state', '=', 'rejected')]},
         }
 
         if not sortby:
             sortby = 'date'
         order = searchbar_sortings[sortby]['order']
 
-        if not filterby:
-            filterby = 'all'
-        domain += searchbar_filters[filterby]['domain']
+        status_filter = kw.get('status_filter') or filterby or 'all'
+        if status_filter not in status_options:
+            status_filter = 'all'
+        domain += status_options[status_filter]['domain']
+
+        project_option_records = ConstructionMeasurement.search([]).mapped('contract_id.project_id').filtered(lambda p: p.id)
+        project_options = [{'value': 'all', 'label': 'All Projects'}]
+        for project in project_option_records.sorted(lambda p: (p.name or '').lower()):
+            project_options.append({'value': str(project.id), 'label': project.name})
+
+        project_filter = (kw.get('project_filter') or 'all').strip()
+        if project_filter != 'all' and project_filter.isdigit():
+            domain.append(('contract_id.project_id', '=', int(project_filter)))
+        else:
+            project_filter = 'all'
 
         measurement_count = ConstructionMeasurement.search_count(domain)
         
         pager = portal_pager(
             url="/my/employee/measurements",
-            url_args={'sortby': sortby, 'filterby': filterby},
+            url_args={'sortby': sortby, 'status_filter': status_filter, 'project_filter': project_filter},
             total=measurement_count,
             page=page,
             step=self._items_per_page
@@ -499,9 +544,11 @@ class EmployeePortalMain(CustomerPortal):
             'page_name': 'construction_measurement',
             'pager': pager,
             'searchbar_sortings': searchbar_sortings,
-            'searchbar_filters': searchbar_filters,
+            'status_options': status_options,
+            'project_options': project_options,
             'sortby': sortby,
-            'filterby': filterby,
+            'status_filter': status_filter,
+            'project_filter': project_filter,
         })
         return request.render("construction_contract_management.portal_employee_measurements", values)
 
