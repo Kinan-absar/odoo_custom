@@ -140,37 +140,16 @@
                         color: #0f172a;
                         font-size: 0.76rem;
                         padding: 0.58rem 0.45rem;
+                        text-align: left;
                     }
                     .ipc-portal-page .ipc-lines-table tbody td {
                         padding: 0.5rem 0.45rem;
                         border-color: #e8edf3;
                         vertical-align: middle;
                     }
-                    .ipc-portal-page .ipc-lines-table td,
-                    .ipc-portal-page .ipc-lines-table th {
-                        overflow: hidden;
-                    }
-                    .ipc-portal-page .ipc-lines-table .cell-right {
-                        text-align: right;
-                    }
-                    .ipc-portal-page .ipc-lines-table .cell-right .qty-stack,
-                    .ipc-portal-page .ipc-lines-table .cell-right .money-stack {
-                        width: 100%;
-                        align-items: flex-end;
-                    }
-                    .ipc-portal-page .ipc-lines-table .qty-inline {
-                        display: inline-flex;
-                        align-items: baseline;
-                        justify-content: flex-end;
-                        gap: 0.28rem;
-                        width: 100%;
-                        white-space: nowrap;
-                        font-variant-numeric: tabular-nums;
-                    }
-                    .ipc-portal-page .ipc-lines-table .money-stack {
-                        display: flex;
-                        justify-content: flex-end;
-                        width: 100%;
+                    .ipc-portal-page .ipc-lines-table th.text-right,
+                    .ipc-portal-page .ipc-lines-table td.text-right {
+                        text-align: right !important;
                     }
                     .ipc-portal-page .qty-stack {
                         display: flex;
@@ -178,6 +157,8 @@
                         align-items: flex-end;
                         gap: 0.08rem;
                         line-height: 1.2;
+                        white-space: nowrap;
+                        width: 100%;
                     }
                     .ipc-portal-page .qty-percent {
                         color: #64748b;
@@ -321,34 +302,26 @@
                                                 </t>
                                                 <span t-field="line.description"/>
                                             </td>
-                                            <td class="cell-right">
+                                            <td class="text-right">
                                                 <div class="qty-stack">
                                                     <span t-field="line.previous_qty"/>
                                                     <span class="qty-percent"><t t-esc="'(' + str(int(round(line.previous_percent or 0.0))) + '%)'"/></span>
                                                 </div>
                                             </td>
-                                            <td class="cell-right">
+                                            <td class="text-right">
                                                 <div class="qty-stack">
                                                     <span t-field="line.current_qty"/>
                                                     <span class="qty-percent"><t t-esc="'(' + str(int(round(line.current_percent or 0.0))) + '%)'"/></span>
                                                 </div>
                                             </td>
-                                            <td class="cell-right">
+                                            <td class="text-right">
                                                 <div class="qty-stack">
                                                     <span t-field="line.cumulative_qty"/>
                                                     <span class="qty-percent"><t t-esc="'(' + str(int(round(line.cumulative_percent or 0.0))) + '%)'"/></span>
                                                 </div>
                                             </td>
-                                            <td class="cell-right money-text">
-                                                <div class="money-stack">
-                                                    <span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
-                                                </div>
-                                            </td>
-                                            <td class="cell-right money-text">
-                                                <div class="money-stack">
-                                                    <span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
-                                                </div>
-                                            </td>
+                                            <td class="text-right money-text"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                                            <td class="text-right money-text"><span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
                                         </tr>
                                     </t>
                                 </tbody>
