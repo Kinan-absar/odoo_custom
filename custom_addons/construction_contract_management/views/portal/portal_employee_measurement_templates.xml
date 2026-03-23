@@ -429,7 +429,7 @@
                                                 <th style="width: 8%;">Section</th>
                                                 <th style="width: 8%;">Item Code</th>
                                                 <th style="width: 21%;">Description</th>
-                                                <th style="width: 9%;" class="text-right">Contract Qty</th>
+                                                <th style="width: 9%;" class="text-right">Allowed Qty</th>
                                                 <th style="width: 10%;" class="text-right">Previous</th>
                                                 <th style="width: 9%;" class="text-right">Remaining</th>
                                                 <th style="width: 13%;" class="text-right">
@@ -454,6 +454,7 @@
                                                 <t t-set="existing_line" t-value="existing_lines.get(boq_line.id) if existing_lines else False"/>
                                                 <t t-set="previous_qty" t-value="previous_qty_map.get(boq_line.id, 0.0) if previous_qty_map else 0.0"/>
                                                 <t t-set="allowed_qty" t-value="boq_line.revised_qty or boq_line.contract_qty"/>
+                                                <t t-set="variation_delta" t-value="allowed_qty - boq_line.contract_qty"/>
                                                 <t t-set="remaining_qty" t-value="allowed_qty - previous_qty"/>
 
                                                 <tr t-att-id="'row_' + str(boq_line.id)">
@@ -463,10 +464,15 @@
                                                     <td><t t-esc="boq_line.description"/></td>
                                                     <td class="text-right">
                                                         <div class="qty-stack">
-                                                            <span><t t-esc="'%.2f' % boq_line.contract_qty"/></span>
+                                                            <span><t t-esc="'%.2f' % allowed_qty"/></span>
+                                                            <t t-if="variation_delta">
+                                                                <span class="qty-percent">
+                                                                    <t t-esc="'Var. ' + ('+' if variation_delta &gt; 0 else '') + ('%.2f' % variation_delta)"/>
+                                                                </span>
+                                                            </t>
                                                             <span class="qty-percent">(100%)</span>
                                                         </div>
-                                                        <input type="hidden" t-att-name="'contract_qty_' + str(boq_line.id)" t-att-value="boq_line.contract_qty"/>
+                                                        <input type="hidden" t-att-name="'contract_qty_' + str(boq_line.id)" t-att-value="allowed_qty"/>
                                                     </td>
                                                     <td class="text-right text-primary">
                                                         <div class="qty-stack">
