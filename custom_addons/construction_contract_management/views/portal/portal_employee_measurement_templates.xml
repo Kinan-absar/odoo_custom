@@ -84,7 +84,7 @@
                     </div>
                     <div class="col-4 text-right">
                         <!-- Progress Badge -->
-                        <t t-set="progress_pct" t-value="int((contract_certified / contract_revised * 100) if contract_revised else 0)"/>
+                        <t t-set="progress_pct" t-value="int((contract_certified / contract_revised * 100) if contract_revised and contract_revised > 0 else 0)"/>
                         <div class="mb-2">
                             <span class="badge badge-info" style="font-size: 14px;">
                                 Contract Progress: <t t-esc="progress_pct"/>%
@@ -101,8 +101,8 @@
                                 <div class="d-flex justify-content-between mb-1">
                                     <small><strong>Contract Progress</strong></small>
                                     <small>
-                                        <t t-esc="'%.2f' % contract_certified"/> / 
-                                        <t t-esc="'%.2f' % contract_revised"/> 
+                                        <t t-esc="'%.2f' % (contract_certified or 0.0)"/> / 
+                                        <t t-esc="'%.2f' % (contract_revised or 0.0)"/> 
                                         (<t t-esc="progress_pct"/>%)
                                     </small>
                                 </div>
