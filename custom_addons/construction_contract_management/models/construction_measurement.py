@@ -35,6 +35,13 @@ class ConstructionMeasurement(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('construction.measurement') or 'New'
         return super().create(vals)
 
+    def _recompute_contract_progress(self):
+        for rec in self:
+            contract = rec.contract_id
+            if contract:
+                contract.boq_line_ids._compute_progress_fields()
+                contract._compute_summary_amounts()
+
     def action_submit(self):
         self.state = 'submitted'
 
@@ -43,12 +50,14 @@ class ConstructionMeasurement(models.Model):
 
     def action_approve(self):
         self.state = 'approved'
+        self._recompute_contract_progress()
 
     def action_reject(self):
         self.state = 'rejected'
 
     def action_reset_to_draft(self):
         self.state = 'draft'
+        self._recompute_contract_progress()
 
     def action_load_boq_lines(self):
         for rec in self:

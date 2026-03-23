@@ -104,6 +104,13 @@ class ConstructionIPC(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('construction.ipc') or 'New'
         return super().create(vals)
 
+    def _recompute_contract_progress(self):
+        for rec in self:
+            contract = rec.contract_id
+            if contract:
+                contract.boq_line_ids._compute_progress_fields()
+                contract._compute_summary_amounts()
+
     def action_submit_review(self):
         self.state = 'under_review'
 
@@ -117,9 +124,11 @@ class ConstructionIPC(models.Model):
             if not rec.advance_recovery_posted:
                 rec.contract_id.advance_recovered += rec.advance_recovery_amount
                 rec.advance_recovery_posted = True
+        self._recompute_contract_progress()
 
     def action_done(self):
         self.state = 'done'
+        self._recompute_contract_progress()
 
     def action_cancel(self):
         for rec in self:
@@ -127,6 +136,7 @@ class ConstructionIPC(models.Model):
                 rec.contract_id.advance_recovered -= rec.advance_recovery_amount
                 rec.advance_recovery_posted = False
             rec.state = 'cancelled'
+        self._recompute_contract_progress()
 
     def action_reset_to_draft(self):
         for rec in self:
@@ -134,6 +144,7 @@ class ConstructionIPC(models.Model):
                 rec.contract_id.advance_recovered -= rec.advance_recovery_amount
                 rec.advance_recovery_posted = False
             rec.state = 'draft'
+        self._recompute_contract_progress()
 
     def action_load_from_measurement(self):
         for rec in self:

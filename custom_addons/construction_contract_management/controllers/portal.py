@@ -330,9 +330,13 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
 
         # progress numerator:
         # prefer contract computed measured amount if available, otherwise compute from approved measurements
-        contract_certified = contract.total_measured_amount or sum(
-            (line.measured_qty or 0.0) * (line.revised_unit_rate or line.unit_rate or 0.0)
-            for line in contract.boq_line_ids
+        approved_measurement_lines = MeasurementLine.search([
+            ('measurement_id.contract_id', '=', contract.id),
+            ('measurement_id.state', '=', 'approved'),
+        ])
+        contract_certified = sum(
+            (line.current_qty or 0.0) * (line.boq_line_id.revised_unit_rate or line.boq_line_id.unit_rate or 0.0)
+            for line in approved_measurement_lines
         )
 
         values = self._prepare_portal_layout_values()
@@ -445,6 +449,8 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
 
             # re-browse after create/write/unlink to get fresh line_ids
             measurement = request.env['construction.measurement'].sudo().browse(measurement_id)
+            measurement.contract_id.boq_line_ids._compute_progress_fields()
+            measurement.contract_id._compute_summary_amounts()
             positive_lines = measurement.line_ids.filtered(lambda l: l.current_qty > 0)
 
             if action == 'submit':
