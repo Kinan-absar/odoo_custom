@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Measurements List with NEW button -->
+    <!-- Measurements List -->
     <template id="portal_employee_measurements" name="Employee Portal - Measurements">
         <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container mt-4">
@@ -53,7 +53,6 @@
                         </table>
                     </div>
 
-                    <!-- Pagination -->
                     <t t-if="pager" t-call="portal.pager"/>
                 </t>
 
@@ -68,12 +67,12 @@
         </t>
     </template>
 
-    <!-- Measurement Detail with EDITABLE Lines -->
-    <template id="portal_employee_measurement_detail" name="Employee Portal - Measurement Detail">
+    <!-- ENHANCED Measurement Detail -->
+    <template id="portal_employee_measurement_detail" name="Employee Portal - Measurement Detail Enhanced">
         <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container">
                 <div class="row mt-4">
-                    <div class="col-12">
+                    <div class="col-8">
                         <h3 class="mb-3">
                             <small class="text-muted">Measurement -</small> <span t-field="measurement.name"/>
                             <span t-if="measurement.state == 'draft'" class="badge badge-secondary ml-2">Draft</span>
@@ -82,6 +81,44 @@
                             <span t-if="measurement.state == 'approved'" class="badge badge-success ml-2">Approved</span>
                             <span t-if="measurement.state == 'rejected'" class="badge badge-danger ml-2">Rejected</span>
                         </h3>
+                    </div>
+                    <div class="col-4 text-right">
+                        <!-- Progress Badge -->
+                        <t t-set="progress_pct" t-value="int((contract_certified / contract_revised * 100) if contract_revised else 0)"/>
+                        <div class="mb-2">
+                            <span class="badge badge-info" style="font-size: 14px;">
+                                Contract Progress: <t t-esc="progress_pct"/>%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contract Progress Bar -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small><strong>Contract Progress</strong></small>
+                                    <small>
+                                        <t t-esc="'%.2f' % contract_certified"/> / 
+                                        <t t-esc="'%.2f' % contract_revised"/> 
+                                        (<t t-esc="progress_pct"/>%)
+                                    </small>
+                                </div>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar" 
+                                         t-att-class="'bg-success' if progress_pct >= 80 else 'bg-primary' if progress_pct >= 50 else 'bg-warning'"
+                                         role="progressbar" 
+                                         t-att-style="'width: ' + str(progress_pct) + '%'"
+                                         t-att-aria-valuenow="progress_pct" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        <t t-esc="progress_pct"/>%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -115,61 +152,93 @@
                     </div>
                 </div>
 
-                <!-- BOQ Items with Measurement Form -->
+                <!-- DRAFT: Editable Form -->
                 <t t-if="measurement.state == 'draft'">
                     <div class="card mt-4">
-                        <div class="card-header">
-                            <h5>Add Measurement Quantities</h5>
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fa fa-edit"/> Add Measurement Quantities
+                            </h5>
                         </div>
                         <div class="card-body">
-                            <p class="text-muted">Enter quantities for the items below and click "Save Quantities"</p>
-                            
-                            <form method="POST" t-attf-action="/my/employee/measurement/#{measurement.id}/add_lines" id="measurement_form">
+                            <!-- Bulk Actions -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="applyBulkQuantity(100)">
+                                        <i class="fa fa-percent"/> Apply 100% to All Items
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ml-2" onclick="applyBulkQuantity(50)">
+                                        <i class="fa fa-percent"/> Apply 50% to All
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ml-2" onclick="clearAllQuantities()">
+                                        <i class="fa fa-eraser"/> Clear All
+                                    </button>
+                                </div>
+                            </div>
+
+                            <form method="POST" t-attf-action="/my/employee/measurement/#{measurement.id}/add_lines" id="measurement_form" enctype="multipart/form-data">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 
                                 <div class="table-responsive">
-                                    <table class="table table-sm table-striped">
-                                        <thead>
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="thead-light">
                                             <tr>
-                                                <th style="width: 5%;">
-                                                    <input type="checkbox" id="select_all" onclick="toggleAll(this)"/>
-                                                </th>
-                                                <th style="width: 10%;">Item Code</th>
-                                                <th style="width: 30%;">Description</th>
-                                                <th style="width: 10%;" class="text-right">Contract Qty</th>
-                                                <th style="width: 10%;" class="text-right">Previous Qty</th>
-                                                <th style="width: 15%;" class="text-right">Current Qty</th>
-                                                <th style="width: 10%;">Unit</th>
+                                                <th style="width: 3%;">#</th>
+                                                <th style="width: 8%;">Item Code</th>
+                                                <th style="width: 25%;">Description</th>
+                                                <th style="width: 8%;" class="text-right">Contract Qty</th>
+                                                <th style="width: 8%;" class="text-right">Certified</th>
+                                                <th style="width: 8%;" class="text-right">Remaining</th>
+                                                <th style="width: 10%;" class="text-right">Current Qty *</th>
+                                                <th style="width: 6%;">Unit</th>
                                                 <th style="width: 10%;" class="text-right">Unit Rate</th>
+                                                <th style="width: 14%;">Remarks</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <t t-foreach="boq_lines" t-as="boq_line">
                                                 <t t-set="existing_line" t-value="existing_lines.get(boq_line.id)"/>
-                                                <tr>
-                                                    <td>
-                                                        <input type="checkbox" 
-                                                               t-att-name="'selected_' + str(boq_line.id)" 
-                                                               class="line_checkbox"
-                                                               t-att-checked="'checked' if existing_line else None"/>
-                                                    </td>
+                                                <t t-set="line_num" t-value="boq_line_index + 1"/>
+                                                <t t-set="remaining_qty" t-value="boq_line.revised_qty - boq_line.certified_qty"/>
+                                                <tr t-att-id="'row_' + str(boq_line.id)">
+                                                    <td class="text-center"><strong><t t-esc="line_num"/></strong></td>
                                                     <td><strong><t t-esc="boq_line.item_code or ''"/></strong></td>
                                                     <td><t t-esc="boq_line.description"/></td>
-                                                    <td class="text-right"><t t-esc="'%.2f' % boq_line.contract_qty"/></td>
                                                     <td class="text-right">
-                                                        <t t-esc="'%.2f' % (existing_line.previous_qty if existing_line else boq_line.certified_qty)"/>
+                                                        <t t-esc="'%.2f' % boq_line.contract_qty"/>
+                                                        <input type="hidden" t-att-name="'contract_qty_' + str(boq_line.id)" t-att-value="boq_line.contract_qty"/>
+                                                    </td>
+                                                    <td class="text-right text-muted">
+                                                        <t t-esc="'%.2f' % boq_line.certified_qty"/>
+                                                    </td>
+                                                    <td class="text-right">
+                                                        <span t-att-class="'badge badge-' + ('success' if remaining_qty > 0 else 'secondary')">
+                                                            <t t-esc="'%.2f' % remaining_qty"/>
+                                                        </span>
+                                                        <input type="hidden" t-att-name="'remaining_qty_' + str(boq_line.id)" t-att-value="remaining_qty"/>
                                                     </td>
                                                     <td class="text-right">
                                                         <input type="number" 
                                                                step="0.01" 
-                                                               class="form-control form-control-sm text-right" 
+                                                               min="0"
+                                                               class="form-control form-control-sm text-right qty-input" 
                                                                t-att-name="'qty_' + str(boq_line.id)"
+                                                               t-att-id="'qty_' + str(boq_line.id)"
+                                                               t-att-data-boq-id="boq_line.id"
+                                                               t-att-data-remaining="remaining_qty"
                                                                t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"
-                                                               style="width: 100px; display: inline-block;"/>
+                                                               onchange="validateQuantity(this)"
+                                                               style="max-width: 100px;"/>
                                                     </td>
-                                                    <td><t t-esc="boq_line.uom_id.name"/></td>
-                                                    <td class="text-right">
-                                                        <t t-esc="'%.2f' % boq_line.unit_rate"/>
+                                                    <td><small><t t-esc="boq_line.uom_id.name"/></small></td>
+                                                    <td class="text-right"><small><t t-esc="'%.2f' % boq_line.unit_rate"/></small></td>
+                                                    <td>
+                                                        <input type="text" 
+                                                               class="form-control form-control-sm" 
+                                                               t-att-name="'remarks_' + str(boq_line.id)"
+                                                               t-att-value="existing_line.remarks if existing_line and existing_line.remarks else ''"
+                                                               placeholder="Optional notes"
+                                                               style="max-width: 150px;"/>
                                                     </td>
                                                 </tr>
                                             </t>
@@ -177,11 +246,22 @@
                                     </table>
                                 </div>
 
+                                <!-- Photo Upload Section -->
                                 <div class="mt-3">
-                                    <button type="submit" class="btn btn-success">
+                                    <h6><i class="fa fa-camera"/> Attach Photos (Optional)</h6>
+                                    <input type="file" name="photos" class="form-control-file" multiple="multiple" accept="image/*"/>
+                                    <small class="form-text text-muted">You can select multiple photos to attach to this measurement</small>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="mt-4">
+                                    <button type="submit" name="action" value="save" class="btn btn-success">
                                         <i class="fa fa-save"/> Save Quantities
                                     </button>
-                                    <a t-attf-href="/my/employee/measurements" class="btn btn-secondary">
+                                    <button type="submit" name="action" value="submit" class="btn btn-primary ml-2">
+                                        <i class="fa fa-check"/> Save &amp; Submit for Approval
+                                    </button>
+                                    <a t-attf-href="/my/employee/measurements" class="btn btn-secondary ml-2">
                                         <i class="fa fa-times"/> Cancel
                                     </a>
                                 </div>
@@ -189,20 +269,78 @@
 
                             <script type="text/javascript">
                                 <![CDATA[
-                                function toggleAll(source) {
-                                    var checkboxes = document.querySelectorAll('.line_checkbox');
-                                    for (var i = 0; i < checkboxes.length; i++) {
-                                        checkboxes[i].checked = source.checked;
+                                // Validate quantity against remaining
+                                function validateQuantity(input) {
+                                    var qty = parseFloat(input.value) || 0;
+                                    var remaining = parseFloat(input.getAttribute('data-remaining')) || 0;
+                                    var row = input.closest('tr');
+                                    
+                                    // Remove previous warning
+                                    var existingWarning = row.querySelector('.qty-warning');
+                                    if (existingWarning) {
+                                        existingWarning.remove();
+                                    }
+                                    
+                                    // Check if exceeds remaining
+                                    if (qty > remaining) {
+                                        input.style.borderColor = '#ffc107';
+                                        input.style.backgroundColor = '#fff3cd';
+                                        
+                                        var warning = document.createElement('div');
+                                        warning.className = 'qty-warning';
+                                        warning.style.cssText = 'color: #856404; font-size: 11px; margin-top: 2px;';
+                                        warning.innerHTML = '<i class="fa fa-exclamation-triangle"></i> Exceeds remaining: ' + remaining.toFixed(2);
+                                        input.parentNode.appendChild(warning);
+                                    } else {
+                                        input.style.borderColor = '';
+                                        input.style.backgroundColor = '';
                                     }
                                 }
+                                
+                                // Apply bulk percentage
+                                function applyBulkQuantity(percentage) {
+                                    var inputs = document.querySelectorAll('.qty-input');
+                                    inputs.forEach(function(input) {
+                                        var boqId = input.getAttribute('data-boq-id');
+                                        var contractQtyInput = document.querySelector('input[name="contract_qty_' + boqId + '"]');
+                                        if (contractQtyInput) {
+                                            var contractQty = parseFloat(contractQtyInput.value) || 0;
+                                            var newQty = (contractQty * percentage / 100).toFixed(2);
+                                            input.value = newQty;
+                                            validateQuantity(input);
+                                        }
+                                    });
+                                }
+                                
+                                // Clear all quantities
+                                function clearAllQuantities() {
+                                    var inputs = document.querySelectorAll('.qty-input');
+                                    inputs.forEach(function(input) {
+                                        input.value = '0.00';
+                                        input.style.borderColor = '';
+                                        input.style.backgroundColor = '';
+                                        var warning = input.parentNode.querySelector('.qty-warning');
+                                        if (warning) warning.remove();
+                                    });
+                                }
+                                
+                                // Validate on load for existing quantities
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    var inputs = document.querySelectorAll('.qty-input');
+                                    inputs.forEach(function(input) {
+                                        if (parseFloat(input.value) > 0) {
+                                            validateQuantity(input);
+                                        }
+                                    });
+                                });
                                 ]]>
                             </script>
                         </div>
                     </div>
                 </t>
 
-                <!-- Existing Lines (Read-only for approved) -->
-                <t t-if="measurement.line_ids">
+                <!-- APPROVED/SUBMITTED: Read-only Lines -->
+                <t t-if="measurement.line_ids and measurement.state != 'draft'">
                     <div class="card mt-4">
                         <div class="card-header">
                             <h5>Measurement Lines</h5>
@@ -211,6 +349,7 @@
                             <table class="table table-sm table-striped">
                                 <thead>
                                     <tr>
+                                        <th>#</th>
                                         <th>Item Code</th>
                                         <th>Description</th>
                                         <th class="text-right">Previous Qty</th>
@@ -218,11 +357,13 @@
                                         <th class="text-right">Cumulative Qty</th>
                                         <th>Unit</th>
                                         <th class="text-right">Unit Rate</th>
+                                        <th>Remarks</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <t t-foreach="measurement.line_ids" t-as="line">
                                         <tr>
+                                            <td><t t-esc="line_index + 1"/></td>
                                             <td>
                                                 <strong>
                                                     <t t-if="line.boq_line_id.item_code">
@@ -236,6 +377,7 @@
                                             <td class="text-right"><span t-field="line.cumulative_qty"/></td>
                                             <td><span t-field="line.boq_line_id.uom_id"/></td>
                                             <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/></td>
+                                            <td><t t-esc="line.remarks or '-'"/></td>
                                         </tr>
                                     </t>
                                 </tbody>

@@ -261,16 +261,121 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         })
         return request.render("construction_contract_management.portal_employee_measurements", values)
 
+    # ---------------------------------------------------------
+    # CONSTRUCTION - MEASUREMENT DETAIL (Enhanced with progress)
+    # ---------------------------------------------------------
     @http.route(['/my/employee/measurement/<int:measurement_id>'], type='http', auth='user', website=True)
-    def portal_employee_measurement_detail(self, measurement_id, access_token=None, **kw):
-        """View measurement details"""
+    def portal_construction_measurement_detail(self, measurement_id, **kw):
         try:
-            measurement_sudo = self._document_check_access('construction.measurement', measurement_id, access_token)
-        except (AccessError, MissingError):
-            return request.redirect('/my/employee')
+            measurement = request.env['construction.measurement'].browse(measurement_id)
+            
+            if not measurement.exists():
+                return request.redirect('/my/employee/measurements')
+            
+            # Get BOQ lines for this contract
+            boq_lines = measurement.contract_id.boq_line_ids
+            
+            # Get existing measurement lines mapped by BOQ line ID
+            existing_lines = {}
+            for line in measurement.line_ids:
+                existing_lines[line.boq_line_id.id] = line
+            
+            # Calculate contract progress
+            contract_revised = measurement.contract_id.revised_amount or measurement.contract_id.original_amount
+            contract_certified = measurement.contract_id.total_certified_amount or 0.0
+            
+            values = {
+                'measurement': measurement,
+                'boq_lines': boq_lines,
+                'existing_lines': existing_lines,
+                'contract_revised': contract_revised,
+                'contract_certified': contract_certified,
+                'page_name': 'construction_measurement',
+            }
+            return request.render("construction_contract_management.portal_employee_measurement_detail", values)
+            
+        except Exception as e:
+            return request.redirect('/my/employee/measurements')
 
-        values = {
-            'measurement': measurement_sudo,
-            'page_name': 'construction_measurement',
-        }
-        return request.render("construction_contract_management.portal_employee_measurement_detail", values)
+    # ---------------------------------------------------------
+    # CONSTRUCTION - ADD/UPDATE MEASUREMENT LINES (Enhanced)
+    # ---------------------------------------------------------
+    @http.route(['/my/employee/measurement/<int:measurement_id>/add_lines'], 
+                type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def portal_construction_measurement_add_lines(self, measurement_id, **post):
+        try:
+            measurement = request.env['construction.measurement'].browse(measurement_id)
+            
+            if not measurement.exists() or measurement.state != 'draft':
+                return request.redirect(f'/my/employee/measurement/{measurement_id}')
+            
+            # Clear existing lines
+            measurement.line_ids.unlink()
+            
+            # Get BOQ lines
+            boq_lines = measurement.contract_id.boq_line_ids
+            
+            MeasurementLine = request.env['construction.measurement.line']
+            
+            # Create measurement lines
+            for boq_line in boq_lines:
+                # Get the quantity
+                qty_str = post.get(f'qty_{boq_line.id}', '0')
+                try:
+                    current_qty = float(qty_str)
+                except:
+                    current_qty = 0.0
+                
+                # Only create line if quantity > 0
+                if current_qty > 0:
+                    # Get previous certified quantity from BOQ line
+                    previous_qty = boq_line.certified_qty
+                    
+                    # Get remarks if any
+                    remarks = post.get(f'remarks_{boq_line.id}', '').strip()
+                    
+                    MeasurementLine.create({
+                        'measurement_id': measurement.id,
+                        'boq_line_id': boq_line.id,
+                        'previous_qty': previous_qty,
+                        'current_qty': current_qty,
+                        'remarks': remarks if remarks else False,
+                    })
+            
+            # Handle photo uploads
+            photos = request.httprequest.files.getlist('photos')
+            if photos:
+                IrAttachment = request.env['ir.attachment']
+                for photo in photos:
+                    if photo and photo.filename:
+                        # Read file content
+                        file_content = photo.read()
+                        
+                        # Create attachment
+                        IrAttachment.create({
+                            'name': photo.filename,
+                            'type': 'binary',
+                            'datas': base64.b64encode(file_content),
+                            'res_model': 'construction.measurement',
+                            'res_id': measurement.id,
+                            'mimetype': photo.content_type,
+                        })
+            
+            # Check if user clicked "Save & Submit"
+            action = post.get('action')
+            if action == 'submit':
+                # Change state to submitted
+                if measurement.line_ids:
+                    measurement.write({'state': 'submitted'})
+                    
+                    # Post message to chatter
+                    measurement.message_post(
+                        body=f"Measurement submitted for approval by {request.env.user.name}",
+                        message_type='notification',
+                        subtype_xmlid='mail.mt_comment',
+                    )
+            
+            return request.redirect(f'/my/employee/measurement/{measurement_id}')
+            
+        except Exception as e:
+            return request.redirect(f'/my/employee/measurement/{measurement_id}')
