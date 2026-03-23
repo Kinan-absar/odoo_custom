@@ -2,6 +2,7 @@ from odoo import http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 from odoo.exceptions import AccessError, MissingError
+import base64
 
 
 class ConstructionPortalEmployeeSuite(CustomerPortal):
@@ -262,7 +263,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         return request.render("construction_contract_management.portal_employee_measurements", values)
 
     # ---------------------------------------------------------
-    # MEASUREMENT DETAIL - FIXED
+    # MEASUREMENT DETAIL
     # ---------------------------------------------------------
     @http.route(['/my/employee/measurement/<int:measurement_id>'], type='http', auth='user', website=True)
     def portal_construction_measurement_detail(self, measurement_id, **kw):
@@ -280,9 +281,8 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             for line in measurement.line_ids:
                 existing_lines[line.boq_line_id.id] = line
             
-            # Calculate contract progress - FIXED to use measured instead of certified
+            # Calculate contract progress
             contract_revised = measurement.contract_id.revised_amount or measurement.contract_id.original_amount or 0.0
-            # Use total_measured_amount (from approved measurements) instead of total_certified_amount (from IPCs)
             contract_measured = measurement.contract_id.total_measured_amount or 0.0
             
             values = {
@@ -290,7 +290,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 'boq_lines': boq_lines,
                 'existing_lines': existing_lines,
                 'contract_revised': contract_revised,
-                'contract_certified': contract_measured,  # Actually measured, but keep var name for template compatibility
+                'contract_certified': contract_measured,
                 'page_name': 'construction_measurement',
             }
             return request.render("construction_contract_management.portal_employee_measurement_detail", values)
@@ -299,44 +299,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             return request.redirect('/my/employee/measurements')
 
     # ---------------------------------------------------------
-    # MEASUREMENT DETAIL - FIXED
-    # ---------------------------------------------------------
-    @http.route(['/my/employee/measurement/<int:measurement_id>'], type='http', auth='user', website=True)
-    def portal_construction_measurement_detail(self, measurement_id, **kw):
-        try:
-            measurement = request.env['construction.measurement'].browse(measurement_id)
-            
-            if not measurement.exists():
-                return request.redirect('/my/employee/measurements')
-            
-            # Get BOQ lines for this contract
-            boq_lines = measurement.contract_id.boq_line_ids
-            
-            # Get existing measurement lines mapped by BOQ line ID
-            existing_lines = {}
-            for line in measurement.line_ids:
-                existing_lines[line.boq_line_id.id] = line
-            
-            # Calculate contract progress - FIXED to use measured instead of certified
-            contract_revised = measurement.contract_id.revised_amount or measurement.contract_id.original_amount or 0.0
-            # Use total_measured_amount (from approved measurements) instead of total_certified_amount (from IPCs)
-            contract_measured = measurement.contract_id.total_measured_amount or 0.0
-            
-            values = {
-                'measurement': measurement,
-                'boq_lines': boq_lines,
-                'existing_lines': existing_lines,
-                'contract_revised': contract_revised,
-                'contract_certified': contract_measured,  # Actually measured, but keep var name for template compatibility
-                'page_name': 'construction_measurement',
-            }
-            return request.render("construction_contract_management.portal_employee_measurement_detail", values)
-            
-        except Exception as e:
-            return request.redirect('/my/employee/measurements')
-
-    # ---------------------------------------------------------
-    # ADD/UPDATE MEASUREMENT LINES - FIXED
+    # ADD/UPDATE MEASUREMENT LINES + SUBMIT
     # ---------------------------------------------------------
     @http.route(['/my/employee/measurement/<int:measurement_id>/add_lines'], 
                 type='http', auth='user', website=True, methods=['POST'], csrf=True)
@@ -352,8 +315,10 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             
             # Get BOQ lines
             boq_lines = measurement.contract_id.boq_line_ids
-            
             MeasurementLine = request.env['construction.measurement.line']
+            
+            validation_errors = []
+            lines_created = []
             
             # Create measurement lines
             for boq_line in boq_lines:
@@ -366,8 +331,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 
                 # Only create line if quantity > 0
                 if current_qty > 0:
-                    # FIXED: Get previous qty from last APPROVED measurement (not certified from IPC)
-                    # Find last approved measurement for this BOQ line
+                    # Get previous qty from last APPROVED measurement
                     last_measurement_line = MeasurementLine.search([
                         ('boq_line_id', '=', boq_line.id),
                         ('measurement_id.contract_id', '=', measurement.contract_id.id),
@@ -377,16 +341,54 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                     
                     previous_qty = last_measurement_line.cumulative_qty if last_measurement_line else 0.0
                     
-                    # Get remarks if any
+                    # Get remarks
                     remarks = post.get(f'remarks_{boq_line.id}', '').strip()
                     
-                    MeasurementLine.create({
-                        'measurement_id': measurement.id,
-                        'boq_line_id': boq_line.id,
-                        'previous_qty': previous_qty,
-                        'current_qty': current_qty,
-                        'remarks': remarks if remarks else False,
-                    })
+                    # Validate BEFORE creating
+                    cumulative = previous_qty + current_qty
+                    allowed = boq_line.revised_qty or boq_line.contract_qty
+                    
+                    if cumulative > allowed:
+                        validation_errors.append({
+                            'item': boq_line.item_code or boq_line.description[:30],
+                            'current': current_qty,
+                            'previous': previous_qty,
+                            'cumulative': cumulative,
+                            'allowed': allowed,
+                        })
+                    
+                    # Create line (will fail if validation constraint triggers)
+                    try:
+                        line = MeasurementLine.create({
+                            'measurement_id': measurement.id,
+                            'boq_line_id': boq_line.id,
+                            'previous_qty': previous_qty,
+                            'current_qty': current_qty,
+                            'remarks': remarks if remarks else False,
+                        })
+                        lines_created.append(line)
+                    except ValidationError as ve:
+                        # Catch validation error from model constraint
+                        validation_errors.append({
+                            'item': boq_line.item_code or boq_line.description[:30],
+                            'error': str(ve),
+                        })
+            
+            # If there were validation errors, show them
+            if validation_errors:
+                error_msg = "Cannot save - quantities exceed allowed:\n"
+                for err in validation_errors:
+                    if 'error' in err:
+                        error_msg += f"\n{err['item']}: {err['error']}"
+                    else:
+                        error_msg += f"\n{err['item']}: Trying {err['cumulative']:.2f} but only {err['allowed']:.2f} allowed"
+                
+                # Post error message
+                measurement.message_post(
+                    body=error_msg,
+                    message_type='comment',
+                )
+                return request.redirect(f'/my/employee/measurement/{measurement_id}?error=validation')
             
             # Handle photo uploads
             photos = request.httprequest.files.getlist('photos')
@@ -394,10 +396,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 IrAttachment = request.env['ir.attachment']
                 for photo in photos:
                     if photo and photo.filename:
-                        # Read file content
                         file_content = photo.read()
-                        
-                        # Create attachment
                         IrAttachment.create({
                             'name': photo.filename,
                             'type': 'binary',
@@ -407,26 +406,36 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                             'mimetype': photo.content_type,
                         })
             
-            # FIXED: Check if user clicked "Save & Submit"
-            action = post.get('action')
-            if action == 'submit':
-                # Change state to submitted using the model method
-                if measurement.line_ids:
-                    # Use sudo to ensure portal user can change state
-                    measurement.sudo().write({'state': 'submitted'})
-                    
-                    # Post message to chatter
+            # Check action - Save or Submit
+            action = post.get('action', 'save')
+            
+            if action == 'submit' and measurement.line_ids:
+                # Use the model's action_submit method
+                try:
+                    measurement.action_submit()
                     measurement.message_post(
                         body=f"Measurement submitted for approval by {request.env.user.name}",
                         message_type='notification',
-                        subtype_xmlid='mail.mt_comment',
                     )
+                except Exception as e:
+                    # If action_submit fails, try direct write with sudo
+                    try:
+                        measurement.sudo().write({'state': 'submitted'})
+                        measurement.message_post(
+                            body=f"Measurement submitted for approval by {request.env.user.name}",
+                            message_type='notification',
+                        )
+                    except Exception as e2:
+                        # Log error and continue
+                        measurement.message_post(
+                            body=f"Failed to submit: {str(e2)}",
+                            message_type='comment',
+                        )
             
             return request.redirect(f'/my/employee/measurement/{measurement_id}')
             
         except Exception as e:
-            # Log the error for debugging
             import logging
             _logger = logging.getLogger(__name__)
-            _logger.error(f"Error saving measurement lines: {str(e)}", exc_info=True)
-            return request.redirect(f'/my/employee/measurement/{measurement_id}')
+            _logger.error(f"Error in measurement save: {str(e)}", exc_info=True)
+            return request.redirect(f'/my/employee/measurement/{measurement_id}?error=system')
