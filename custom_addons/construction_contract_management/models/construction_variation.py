@@ -49,19 +49,38 @@ class ConstructionVariation(models.Model):
             boq_lines._compute_progress_fields()
             rec.contract_id._compute_revised_amount()
 
+    def _sync_new_item_boq_lines(self):
+        BoqLine = self.env['construction.contract.boq.line']
+
+        for rec in self:
+            if rec.state == 'approved':
+                for line in rec.line_ids.filtered(lambda l: l.type == 'new'):
+                    if line.created_boq_line_id:
+                        line.created_boq_line_id.write(line._prepare_new_boq_line_vals())
+                    else:
+                        created_boq = BoqLine.create(line._prepare_new_boq_line_vals())
+                        line.created_boq_line_id = created_boq.id
+            else:
+                for line in rec.line_ids.filtered(lambda l: l.type == 'new' and l.created_boq_line_id):
+                    line.created_boq_line_id.unlink()
+                    line.created_boq_line_id = False
+
     def action_submit(self):
         self.state = 'submitted'
 
     def action_approve(self):
         self.state = 'approved'
+        self._sync_new_item_boq_lines()
         self._refresh_contract_boq()
 
     def action_reject(self):
         self.state = 'rejected'
+        self._sync_new_item_boq_lines()
         self._refresh_contract_boq()
 
     def action_reset_to_draft(self):
         self.state = 'draft'
+        self._sync_new_item_boq_lines()
         self._refresh_contract_boq()
 
 
@@ -77,6 +96,12 @@ class ConstructionVariationLine(models.Model):
         'construction.contract.boq.line',
         string='BOQ Line',
         domain="[('contract_id', '=', contract_id)]"
+    )
+    created_boq_line_id = fields.Many2one(
+        'construction.contract.boq.line',
+        string='Created BOQ Line',
+        copy=False,
+        readonly=True,
     )
 
     type = fields.Selection([
@@ -162,3 +187,16 @@ class ConstructionVariationLine(models.Model):
         for rec in self:
             if rec.variation_qty < 0:
                 raise ValidationError('Variation quantity cannot be negative.')
+
+    def _prepare_new_boq_line_vals(self):
+        self.ensure_one()
+        return {
+            'contract_id': self.contract_id.id,
+            'sequence': (self.contract_id.boq_line_ids and max(self.contract_id.boq_line_ids.mapped('sequence') or [0]) + 10) or 10,
+            'section': self.section,
+            'item_code': self.item_code or self.variation_id.name,
+            'description': self.description or 'New variation item',
+            'uom_id': self.uom_id.id if self.uom_id else False,
+            'contract_qty': self.variation_qty,
+            'unit_rate': self.unit_rate,
+        }

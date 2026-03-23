@@ -254,6 +254,7 @@
                                 <thead>
                                     <tr>
                                         <th>Type</th>
+                                        <th>BOQ Ref</th>
                                         <th>Section</th>
                                         <th>Item Code</th>
                                         <th>Description</th>
@@ -275,6 +276,15 @@
                                                 <t t-if="line.type == 'omit'">Omit Item</t>
                                                 <t t-if="line.type == 'rate'">Rate Change</t>
                                             </td>
+                                            <td>
+                                                <t t-if="line.boq_line_id">
+                                                    <t t-esc="line.boq_line_id.item_code or line.boq_line_id.display_name"/>
+                                                </t>
+                                                <t t-elif="line.created_boq_line_id">
+                                                    <t t-esc="line.created_boq_line_id.item_code or line.created_boq_line_id.display_name"/>
+                                                </t>
+                                                <t t-else="">-</t>
+                                            </td>
                                             <td><t t-esc="line.section or '-'"/></td>
                                             <td><t t-esc="line.item_code or '-'"/></td>
                                             <td><span t-field="line.description"/></td>
@@ -284,6 +294,12 @@
                                             <td><span t-field="line.uom_id"/></td>
                                             <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></td>
                                             <td class="text-right"><span t-field="line.amount" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></td>
+                                        </tr>
+                                        <tr t-if="line.type == 'new' and line.created_boq_line_id">
+                                            <td colspan="10" class="text-muted small">
+                                                Approved new item created BOQ line:
+                                                <strong><t t-esc="line.created_boq_line_id.item_code or line.created_boq_line_id.display_name"/></strong>
+                                            </td>
                                         </tr>
                                     </t>
                                 </tbody>

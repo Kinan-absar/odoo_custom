@@ -336,7 +336,7 @@ class EmployeePortalMain(CustomerPortal):
         searchbar_filters = {
             'all': {'label': 'All', 'domain': []},
             'draft': {'label': 'Draft', 'domain': [('state', '=', 'draft')]},
-            'under_review': {'label': 'Under Review', 'domain': [('state', '=', 'under_review')]},
+            'submitted': {'label': 'Submitted', 'domain': [('state', '=', 'submitted')]},
             'approved': {'label': 'Approved', 'domain': [('state', '=', 'approved')]},
         }
 
