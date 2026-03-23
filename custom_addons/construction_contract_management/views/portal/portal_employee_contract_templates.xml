@@ -148,6 +148,22 @@
                                     <div class="col-6 text-right"><span t-field="contract.total_measured_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
                                 </div>
                                 <div class="row mb-2">
+                                    <div class="col-6"><strong>Advance %:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.advance_percent"/>%</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Advance Amount:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.advance_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Advance Recovered:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.advance_recovered" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Advance Balance:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.advance_balance" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
                                     <div class="col-6"><strong>Retention %:</strong></div>
                                     <div class="col-6 text-right"><span t-field="contract.retention_percent"/>%</div>
                                 </div>

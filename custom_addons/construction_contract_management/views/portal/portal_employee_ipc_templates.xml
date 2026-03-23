@@ -131,6 +131,8 @@
                     .ipc-portal-page .ipc-lines-table {
                         margin-bottom: 0;
                         font-size: 0.82rem;
+                        table-layout: fixed;
+                        width: 100%;
                     }
                     .ipc-portal-page .ipc-lines-table thead th {
                         background: #f8fafc;
@@ -158,6 +160,7 @@
                     }
                     .ipc-portal-page .money-text {
                         font-variant-numeric: tabular-nums;
+                        white-space: nowrap;
                     }
                 </style>
                 <div class="row mt-4">
@@ -264,13 +267,13 @@
                             <table class="table table-sm table-striped ipc-lines-table">
                                 <thead>
                                     <tr>
-                                        <th>Section</th>
-                                        <th>Description</th>
-                                        <th class="text-right">Previous</th>
-                                        <th class="text-right">Current</th>
-                                        <th class="text-right">Total</th>
-                                        <th class="text-right">Rate</th>
-                                        <th class="text-right">Amount</th>
+                                        <th style="width: 12%;">Section</th>
+                                        <th style="width: 26%;">Description</th>
+                                        <th style="width: 12%;" class="text-right">Previous</th>
+                                        <th style="width: 12%;" class="text-right">Current</th>
+                                        <th style="width: 12%;" class="text-right">Total</th>
+                                        <th style="width: 10%;" class="text-right">Rate</th>
+                                        <th style="width: 16%;" class="text-right">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
