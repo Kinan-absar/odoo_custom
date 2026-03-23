@@ -178,19 +178,20 @@
                     .measurement-portal-page .measurement-table .remarks-cell input {
                         margin-left: auto;
                     }
-                    .measurement-portal-page .measurement-table .qty-input {
-                        max-width: 88px;
-                        min-width: 72px;
+                    .measurement-portal-page .measurement-table .entry-input {
+                        width: 78px;
+                        min-width: 78px;
                         border-radius: 8px;
                         font-size: 0.8rem;
                         height: 32px;
                     }
-                    .measurement-portal-page .measurement-table .percent-input {
-                        max-width: 74px;
-                        min-width: 62px;
+                    .measurement-portal-page .measurement-table .entry-select {
+                        width: 58px;
+                        min-width: 58px;
                         border-radius: 8px;
-                        font-size: 0.78rem;
+                        font-size: 0.74rem;
                         height: 32px;
+                        padding: 0.2rem 0.35rem;
                     }
                     .measurement-portal-page .measurement-table .remarks-input {
                         max-width: 130px;
@@ -217,27 +218,16 @@
                     }
                     .measurement-portal-page .measurement-table .entry-stack {
                         display: flex;
-                        flex-direction: row;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 0.25rem;
+                    }
+                    .measurement-portal-page .measurement-table .entry-row {
+                        display: flex;
                         align-items: center;
                         justify-content: flex-end;
-                        gap: 0.35rem;
-                        flex-wrap: nowrap;
-                    }
-                    .measurement-portal-page .measurement-table .entry-box {
-                        display: inline-flex;
-                        align-items: center;
                         gap: 0.28rem;
-                        background: #f8fafc;
-                        border: 1px solid #dbe2ea;
-                        border-radius: 8px;
-                        padding: 0.14rem 0.18rem 0.14rem 0.42rem;
-                    }
-                    .measurement-portal-page .measurement-table .entry-tag {
-                        font-size: 0.66rem;
-                        font-weight: 700;
-                        color: #64748b;
-                        text-transform: uppercase;
-                        letter-spacing: 0.04em;
+                        width: 100%;
                     }
                     .measurement-portal-page .measurement-table .qty-percent {
                         color: #64748b;
@@ -475,37 +465,40 @@
                                                     </td>
                                                     <td class="text-right qty-cell">
                                                         <div class="entry-stack">
-                                                            <div class="entry-box">
-                                                                <span class="entry-tag">Qty</span>
+                                                            <div class="entry-row">
+                                                                <select class="form-control form-control-sm entry-select"
+                                                                        t-att-name="'qty_mode_' + str(boq_line.id)"
+                                                                        t-att-id="'qty_mode_' + str(boq_line.id)"
+                                                                        t-att-data-boq-id="boq_line.id"
+                                                                        onchange="syncCurrentMode(this)">
+                                                                    <option value="qty" selected="selected">Qty</option>
+                                                                    <option value="percent">%</option>
+                                                                </select>
                                                                 <input type="number"
                                                                        step="0.01"
                                                                        min="0"
-                                                                       class="form-control form-control-sm text-right qty-input"
+                                                                       class="form-control form-control-sm text-right entry-input current-entry-input"
+                                                                       t-att-name="'current_entry_' + str(boq_line.id)"
+                                                                       t-att-id="'current_entry_' + str(boq_line.id)"
+                                                                       t-att-data-boq-id="boq_line.id"
+                                                                       t-att-data-remaining="remaining_qty"
+                                                                       t-att-data-allowed="allowed_qty"
+                                                                       t-att-data-previous="previous_qty"
+                                                                       t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"
+                                                                       oninput="syncCurrentEntry(this)"
+                                                                       onchange="syncCurrentEntry(this)"/>
+                                                                <input type="hidden"
                                                                        t-att-name="'qty_' + str(boq_line.id)"
                                                                        t-att-id="'qty_' + str(boq_line.id)"
                                                                        t-att-data-boq-id="boq_line.id"
                                                                        t-att-data-remaining="remaining_qty"
                                                                        t-att-data-allowed="allowed_qty"
                                                                        t-att-data-previous="previous_qty"
-                                                                       t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"
-                                                                       oninput="syncQuantityInput(this)"
-                                                                       onchange="validateQuantity(this)"/>
-                                                            </div>
-                                                            <div class="entry-box">
-                                                                <span class="entry-tag">%</span>
-                                                                <input type="number"
-                                                                       step="0.01"
-                                                                       min="0"
-                                                                       max="100"
-                                                                       class="form-control form-control-sm text-right percent-input"
+                                                                       t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"/>
+                                                                <input type="hidden"
                                                                        t-att-name="'qty_percent_' + str(boq_line.id)"
                                                                        t-att-id="'qty_percent_' + str(boq_line.id)"
-                                                                       t-att-data-boq-id="boq_line.id"
-                                                                       t-att-data-allowed="allowed_qty"
-                                                                       t-att-value="'%.2f' % (((existing_line.current_qty if existing_line else 0.0) / allowed_qty * 100) if allowed_qty else 0.0)"
-                                                                       placeholder="%"
-                                                                       oninput="syncPercentInput(this)"
-                                                                       onchange="syncPercentInput(this)"/>
+                                                                       t-att-value="'%.2f' % (((existing_line.current_qty if existing_line else 0.0) / allowed_qty * 100) if allowed_qty else 0.0)"/>
                                                             </div>
                                                         </div>
                                                         <div class="qty-percent mt-1 current-percent-display">
@@ -593,9 +586,9 @@
                                         currentPercent.textContent = allowed ? '(' + Math.round((qty / allowed) * 100) + '%)' : '(0%)';
                                     }
 
-                                    var percentInput = row.querySelector('.percent-input');
-                                    if (percentInput && document.activeElement !== percentInput) {
-                                        percentInput.value = allowed ? ((qty / allowed) * 100).toFixed(2) : '0.00';
+                                    var hiddenPercentInput = row.querySelector('input[id^="qty_percent_"]');
+                                    if (hiddenPercentInput) {
+                                        hiddenPercentInput.value = allowed ? ((qty / allowed) * 100).toFixed(2) : '0.00';
                                     }
 
                                     var totalQty = previous + qty;
@@ -610,22 +603,48 @@
                                     }
                                 }
 
-                                function syncQuantityInput(input) {
-                                    validateQuantity(input);
-                                }
-
-                                function syncPercentInput(input) {
-                                    var percent = parseFloat(input.value) || 0;
-                                    var allowed = parseFloat(input.getAttribute('data-allowed')) || 0;
+                                function syncCurrentEntry(input) {
                                     var boqId = input.getAttribute('data-boq-id');
+                                    var modeSelect = document.getElementById('qty_mode_' + boqId);
                                     var qtyInput = document.getElementById('qty_' + boqId);
-                                    if (!qtyInput) {
+                                    var percentInput = document.getElementById('qty_percent_' + boqId);
+                                    var allowed = parseFloat(input.getAttribute('data-allowed')) || 0;
+                                    var rawValue = parseFloat(input.value) || 0;
+
+                                    if (!modeSelect || !qtyInput || !percentInput) {
                                         return;
                                     }
 
-                                    var qty = allowed ? ((allowed * percent) / 100) : 0;
-                                    qtyInput.value = qty.toFixed(2);
+                                    if (modeSelect.value === 'percent') {
+                                        percentInput.value = rawValue.toFixed(2);
+                                        qtyInput.value = allowed ? ((allowed * rawValue) / 100).toFixed(2) : '0.00';
+                                    } else {
+                                        qtyInput.value = rawValue.toFixed(2);
+                                        percentInput.value = allowed ? ((rawValue / allowed) * 100).toFixed(2) : '0.00';
+                                    }
+
                                     validateQuantity(qtyInput);
+                                }
+
+                                function syncCurrentMode(select) {
+                                    var boqId = select.getAttribute('data-boq-id');
+                                    var entryInput = document.getElementById('current_entry_' + boqId);
+                                    var qtyInput = document.getElementById('qty_' + boqId);
+                                    var percentInput = document.getElementById('qty_percent_' + boqId);
+
+                                    if (!entryInput || !qtyInput || !percentInput) {
+                                        return;
+                                    }
+
+                                    if (select.value === 'percent') {
+                                        entryInput.value = parseFloat(percentInput.value || '0').toFixed(2);
+                                        entryInput.setAttribute('max', '100');
+                                        entryInput.setAttribute('placeholder', '%');
+                                    } else {
+                                        entryInput.value = parseFloat(qtyInput.value || '0').toFixed(2);
+                                        entryInput.removeAttribute('max');
+                                        entryInput.setAttribute('placeholder', 'Qty');
+                                    }
                                 }
 
                                 function applyBulkQuantity(percentage) {
@@ -660,11 +679,15 @@
                                         });
                                     }, 4200);
 
-                                    var inputs = document.querySelectorAll('.qty-input');
+                                    var inputs = document.querySelectorAll('input[id^="qty_"]');
                                     inputs.forEach(function(input) {
                                         if (parseFloat(input.value) > 0) {
                                             validateQuantity(input);
                                         }
+                                    });
+
+                                    document.querySelectorAll('.entry-select').forEach(function(select) {
+                                        syncCurrentMode(select);
                                     });
                                 });
                                 ]]>
