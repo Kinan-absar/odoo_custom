@@ -33,3 +33,4 @@ access_construction_advance_portal,construction.advance.portal,model_constructio
 access_construction_retention_release_portal,construction.retention.release.portal,model_construction_retention_release,group_construction_portal,1,0,0,0
 access_project_project_construction_portal,project.project.construction.portal,project.model_project_project,group_construction_portal,1,0,0,0
 access_ir_sequence_construction_portal,ir.sequence.construction.portal,base.model_ir_sequence,group_construction_portal,1,0,0,0
+access_uom_uom_construction_portal,uom.uom.construction.portal,uom.model_uom_uom,group_construction_portal,1,0,0,0
