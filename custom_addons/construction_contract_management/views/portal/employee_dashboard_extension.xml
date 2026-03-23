@@ -17,7 +17,7 @@
                                 </div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-file-contract fa-2x text-gray-300"></i>
+                                <i class="fa fa-file-text fa-2x text-gray-300"></i>
                             </div>
                         </div>
                         <div class="mt-2">
@@ -43,7 +43,7 @@
                                 </div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                                <i class="fa fa-money fa-2x text-gray-300"></i>
                             </div>
                         </div>
                         <div class="mt-2">
@@ -69,7 +69,7 @@
                                 </div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-edit fa-2x text-gray-300"></i>
+                                <i class="fa fa-exchange fa-2x text-gray-300"></i>
                             </div>
                         </div>
                         <div class="mt-2">
@@ -95,7 +95,7 @@
                                 </div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-ruler fa-2x text-gray-300"></i>
+                                <i class="fa fa-bar-chart fa-2x text-gray-300"></i>
                             </div>
                         </div>
                         <div class="mt-2">
