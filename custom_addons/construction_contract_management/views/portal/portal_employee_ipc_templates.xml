@@ -158,6 +158,15 @@
                         width: 100%;
                         align-items: flex-end;
                     }
+                    .ipc-portal-page .ipc-lines-table .qty-inline {
+                        display: inline-flex;
+                        align-items: baseline;
+                        justify-content: flex-end;
+                        gap: 0.28rem;
+                        width: 100%;
+                        white-space: nowrap;
+                        font-variant-numeric: tabular-nums;
+                    }
                     .ipc-portal-page .ipc-lines-table .money-stack {
                         display: flex;
                         justify-content: flex-end;
@@ -282,15 +291,24 @@
                         <div class="card-body">
                             <div class="table-responsive">
                             <table class="table table-sm table-striped ipc-lines-table">
+                                <colgroup>
+                                    <col style="width: 12%;"/>
+                                    <col style="width: 26%;"/>
+                                    <col style="width: 12%;"/>
+                                    <col style="width: 12%;"/>
+                                    <col style="width: 12%;"/>
+                                    <col style="width: 10%;"/>
+                                    <col style="width: 16%;"/>
+                                </colgroup>
                                 <thead>
                                     <tr>
-                                        <th style="width: 12%;">Section</th>
-                                        <th style="width: 26%;">Description</th>
-                                        <th style="width: 12%;" class="text-right">Previous</th>
-                                        <th style="width: 12%;" class="text-right">Current</th>
-                                        <th style="width: 12%;" class="text-right">Total</th>
-                                        <th style="width: 10%;" class="text-right">Rate</th>
-                                        <th style="width: 16%;" class="text-right">Amount</th>
+                                        <th>Section</th>
+                                        <th>Description</th>
+                                        <th class="text-right">Previous</th>
+                                        <th class="text-right">Current</th>
+                                        <th class="text-right">Total</th>
+                                        <th class="text-right">Rate</th>
+                                        <th class="text-right">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
