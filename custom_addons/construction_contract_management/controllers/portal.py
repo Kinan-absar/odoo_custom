@@ -262,7 +262,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         return request.render("construction_contract_management.portal_employee_measurements", values)
 
     # ---------------------------------------------------------
-    # CONSTRUCTION - MEASUREMENT DETAIL (Enhanced with progress)
+    # MEASUREMENT DETAIL - FIXED
     # ---------------------------------------------------------
     @http.route(['/my/employee/measurement/<int:measurement_id>'], type='http', auth='user', website=True)
     def portal_construction_measurement_detail(self, measurement_id, **kw):
@@ -280,16 +280,17 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             for line in measurement.line_ids:
                 existing_lines[line.boq_line_id.id] = line
             
-            # Calculate contract progress
+            # Calculate contract progress - FIXED to use measured instead of certified
             contract_revised = measurement.contract_id.revised_amount or measurement.contract_id.original_amount or 0.0
-            contract_certified = measurement.contract_id.total_certified_amount or 0.0
+            # Use total_measured_amount (from approved measurements) instead of total_certified_amount (from IPCs)
+            contract_measured = measurement.contract_id.total_measured_amount or 0.0
             
             values = {
                 'measurement': measurement,
                 'boq_lines': boq_lines,
                 'existing_lines': existing_lines,
                 'contract_revised': contract_revised,
-                'contract_certified': contract_certified,
+                'contract_certified': contract_measured,  # Actually measured, but keep var name for template compatibility
                 'page_name': 'construction_measurement',
             }
             return request.render("construction_contract_management.portal_employee_measurement_detail", values)
@@ -298,7 +299,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             return request.redirect('/my/employee/measurements')
 
     # ---------------------------------------------------------
-    # CONSTRUCTION - ADD/UPDATE MEASUREMENT LINES (Enhanced)
+    # ADD/UPDATE MEASUREMENT LINES - FIXED
     # ---------------------------------------------------------
     @http.route(['/my/employee/measurement/<int:measurement_id>/add_lines'], 
                 type='http', auth='user', website=True, methods=['POST'], csrf=True)
@@ -328,8 +329,16 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 
                 # Only create line if quantity > 0
                 if current_qty > 0:
-                    # Get previous certified quantity from BOQ line
-                    previous_qty = boq_line.certified_qty
+                    # FIXED: Get previous qty from last APPROVED measurement (not certified from IPC)
+                    # Find last approved measurement for this BOQ line
+                    last_measurement_line = MeasurementLine.search([
+                        ('boq_line_id', '=', boq_line.id),
+                        ('measurement_id.contract_id', '=', measurement.contract_id.id),
+                        ('measurement_id.state', '=', 'approved'),
+                        ('measurement_id', '!=', measurement.id),
+                    ], order='measurement_id.id desc', limit=1)
+                    
+                    previous_qty = last_measurement_line.cumulative_qty if last_measurement_line else 0.0
                     
                     # Get remarks if any
                     remarks = post.get(f'remarks_{boq_line.id}', '').strip()
@@ -361,12 +370,13 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                             'mimetype': photo.content_type,
                         })
             
-            # Check if user clicked "Save & Submit"
+            # FIXED: Check if user clicked "Save & Submit"
             action = post.get('action')
             if action == 'submit':
-                # Change state to submitted
+                # Change state to submitted using the model method
                 if measurement.line_ids:
-                    measurement.write({'state': 'submitted'})
+                    # Use sudo to ensure portal user can change state
+                    measurement.sudo().write({'state': 'submitted'})
                     
                     # Post message to chatter
                     measurement.message_post(
@@ -378,4 +388,8 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             return request.redirect(f'/my/employee/measurement/{measurement_id}')
             
         except Exception as e:
+            # Log the error for debugging
+            import logging
+            _logger = logging.getLogger(__name__)
+            _logger.error(f"Error saving measurement lines: {str(e)}", exc_info=True)
             return request.redirect(f'/my/employee/measurement/{measurement_id}')
