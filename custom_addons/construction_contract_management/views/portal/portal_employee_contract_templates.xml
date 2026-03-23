@@ -182,7 +182,7 @@
                                         <tr>
                                             <td><span t-esc="line.item_code or ''"/></td>
                                             <td><span t-esc="line.description or ''"/></td>
-                                            <td class="text-right"><t t-esc="'%.2f' % (line.quantity or 0)"/></td>
+                                            <td class="text-right"><t t-esc="'%.2f' % (line.contract_qty or 0)"/></td>
                                             <td><span t-field="line.uom_id"/></td>
                                             <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></td>
                                             <td class="text-right"><span t-field="line.total_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></td>

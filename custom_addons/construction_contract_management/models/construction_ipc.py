@@ -339,3 +339,7 @@ class ConstructionIPCLine(models.Model):
                         f'Measured Cumulative Qty: {measured_cumulative}\n'
                         f'IPC Cumulative Qty: {cumulative_qty}'
                     )
+    def _get_report_base_filename(self):
+        """Return the base filename for PDF reports"""
+        self.ensure_one()
+        return f"IPC_{self.name}"

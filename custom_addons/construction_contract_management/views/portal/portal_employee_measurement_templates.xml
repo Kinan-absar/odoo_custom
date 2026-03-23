@@ -30,7 +30,6 @@
                                     <th>Contract</th>
                                     <th>Date</th>
                                     <th>Period</th>
-                                    <th class="text-right">Total Amount</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -41,10 +40,12 @@
                                         <td><span t-field="measurement.contract_id"/></td>
                                         <td><span t-field="measurement.date"/></td>
                                         <td><span t-field="measurement.period_from"/> - <span t-field="measurement.period_to"/></td>
-                                        <td class="text-right"><span t-field="measurement.total_amount" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/></td>
                                         <td>
                                             <span t-if="measurement.state == 'draft'" class="badge badge-secondary">Draft</span>
+                                            <span t-if="measurement.state == 'submitted'" class="badge badge-info">Submitted</span>
+                                            <span t-if="measurement.state == 'checked'" class="badge badge-primary">Checked</span>
                                             <span t-if="measurement.state == 'approved'" class="badge badge-success">Approved</span>
+                                            <span t-if="measurement.state == 'rejected'" class="badge badge-danger">Rejected</span>
                                         </td>
                                     </tr>
                                 </t>
@@ -106,10 +107,6 @@
                                         <span t-field="measurement.period_from"/> - <span t-field="measurement.period_to"/>
                                     </div>
                                 </div>
-                                <div class="row mb-2">
-                                    <div class="col-5"><strong>Total Amount:</strong></div>
-                                    <div class="col-7"><span t-field="measurement.total_amount" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/></div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -125,10 +122,11 @@
                                 <thead>
                                     <tr>
                                         <th>Description</th>
-                                        <th class="text-right">Quantity</th>
+                                        <th class="text-right">Previous Qty</th>
+                                        <th class="text-right">Current Qty</th>
+                                        <th class="text-right">Cumulative Qty</th>
                                         <th>Unit</th>
                                         <th class="text-right">Unit Rate</th>
-                                        <th class="text-right">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -140,10 +138,11 @@
                                                 </t>
                                                 <span t-field="line.description"/>
                                             </td>
-                                            <td class="text-right"><span t-field="line.quantity"/></td>
-                                            <td><span t-field="line.uom_id"/></td>
+                                            <td class="text-right"><span t-field="line.previous_qty"/></td>
+                                            <td class="text-right"><strong><span t-field="line.current_qty"/></strong></td>
+                                            <td class="text-right"><span t-field="line.cumulative_qty"/></td>
+                                            <td><span t-field="line.boq_line_id.uom_id"/></td>
                                             <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/></td>
-                                            <td class="text-right"><span t-field="line.total_amount" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/></td>
                                         </tr>
                                     </t>
                                 </tbody>
