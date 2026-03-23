@@ -215,11 +215,6 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="description">Description</label>
-                        <textarea name="description" id="description" class="form-control" rows="3" placeholder="Describe the measurement..."></textarea>
-                    </div>
-
                     <div class="alert alert-info">
                         <i class="fa fa-info-circle"/> After creating the measurement, you'll be able to add line items from the BOQ.
                     </div>

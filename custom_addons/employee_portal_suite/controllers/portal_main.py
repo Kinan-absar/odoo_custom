@@ -453,8 +453,8 @@ class EmployeePortalMain(CustomerPortal):
         }
         return request.render("construction_contract_management.portal_employee_measurement_detail", values)
 
-# ---------------------------------------------------------
-    # CONSTRUCTION - NEW MEASUREMENT FORM
+   # ---------------------------------------------------------
+    # CONSTRUCTION - NEW MEASUREMENT FORM (FIXED)
     # ---------------------------------------------------------
     @http.route(['/my/employee/measurement/new'], type='http', auth='user', website=True, methods=['GET', 'POST'])
     def portal_construction_measurement_new(self, **post):
@@ -464,13 +464,13 @@ class EmployeePortalMain(CustomerPortal):
             return request.redirect("/my/employee")
 
         if request.httprequest.method == 'POST':
-            # Create the measurement
+            # Create the measurement - REMOVED 'description' field
             vals = {
                 'contract_id': int(post.get('contract_id')),
                 'date': post.get('date'),
                 'period_from': post.get('period_from'),
                 'period_to': post.get('period_to'),
-                'description': post.get('description', ''),
+                # 'description' field does NOT exist on measurement model, removed
             }
             
             measurement = request.env['construction.measurement'].create(vals)
@@ -487,7 +487,7 @@ class EmployeePortalMain(CustomerPortal):
         return request.render("construction_contract_management.portal_employee_measurement_new", values)
 
     # ---------------------------------------------------------
-    # CONSTRUCTION - NEW VARIATION FORM
+    # CONSTRUCTION - NEW VARIATION FORM (FIXED)
     # ---------------------------------------------------------
     @http.route(['/my/employee/variation/new'], type='http', auth='user', website=True, methods=['GET', 'POST'])
     def portal_construction_variation_new(self, **post):
@@ -501,10 +501,10 @@ class EmployeePortalMain(CustomerPortal):
             vals = {
                 'contract_id': int(post.get('contract_id')),
                 'date': post.get('date'),
-                'description': post.get('description', ''),
+                'description': post.get('description', ''),  # Variation DOES have description field
             }
             
-            # Add reason if provided
+            # Add reason to description if provided
             if post.get('reason'):
                 vals['description'] = vals['description'] + '\n\nReason: ' + post.get('reason')
             
