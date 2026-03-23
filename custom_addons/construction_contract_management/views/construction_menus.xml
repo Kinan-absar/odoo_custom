@@ -4,6 +4,7 @@
               name="Construction Contracts"
               action="action_construction_dashboard"
               sequence="10"
+              web_icon="construction_contract_management,static/description/icon.png"
               groups="construction_contract_management.group_construction_user"/>
 
     <menuitem id="menu_construction_dashboard"

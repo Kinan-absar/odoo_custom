@@ -156,6 +156,9 @@
                         font-size: 0.72rem;
                         font-weight: 600;
                     }
+                    .ipc-portal-page .money-text {
+                        font-variant-numeric: tabular-nums;
+                    }
                 </style>
                 <div class="row mt-4">
                     <div class="col-12">
@@ -298,8 +301,8 @@
                                                     <span class="qty-percent"><t t-esc="'(' + str(int(round(line.cumulative_percent or 0.0))) + '%)'"/></span>
                                                 </div>
                                             </td>
-                                            <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
-                                            <td class="text-right"><span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                                            <td class="text-right money-text"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                                            <td class="text-right money-text"><span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
                                         </tr>
                                     </t>
                                 </tbody>

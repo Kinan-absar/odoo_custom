@@ -134,7 +134,7 @@
                         line-height: 16px;
                     }
                     .measurement-portal-page .measurement-section-header {
-                        background: #c2d1dcff;
+                        background: #183247;
                         color: #fff;
                     }
                     .measurement-portal-page .measurement-toolbar .btn {
@@ -217,9 +217,27 @@
                     }
                     .measurement-portal-page .measurement-table .entry-stack {
                         display: flex;
-                        flex-direction: column;
-                        align-items: flex-end;
-                        gap: 0.25rem;
+                        flex-direction: row;
+                        align-items: center;
+                        justify-content: flex-end;
+                        gap: 0.35rem;
+                        flex-wrap: nowrap;
+                    }
+                    .measurement-portal-page .measurement-table .entry-box {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 0.28rem;
+                        background: #f8fafc;
+                        border: 1px solid #dbe2ea;
+                        border-radius: 8px;
+                        padding: 0.14rem 0.18rem 0.14rem 0.42rem;
+                    }
+                    .measurement-portal-page .measurement-table .entry-tag {
+                        font-size: 0.66rem;
+                        font-weight: 700;
+                        color: #64748b;
+                        text-transform: uppercase;
+                        letter-spacing: 0.04em;
                     }
                     .measurement-portal-page .measurement-table .qty-percent {
                         color: #64748b;
@@ -248,6 +266,9 @@
                     .measurement-portal-page .measurement-actions .btn-secondary {
                         background: #334155;
                         border-color: #334155;
+                    }
+                    .measurement-portal-page .money-text {
+                        font-variant-numeric: tabular-nums;
                     }
                     @keyframes measurementAlertFade {
                         0%, 75% { opacity: 1; transform: translateY(0); }
@@ -319,8 +340,8 @@
                                 <div class="d-flex justify-content-between mb-1">
                                     <small><strong>Contract Progress</strong></small>
                                     <small class="measurement-progress-meta">
-                                        <t t-esc="'%.2f' % (contract_certified or 0.0)"/> /
-                                        <t t-esc="'%.2f' % (contract_revised or 0.0)"/>
+                                        <span class="money-text"><t t-esc="'{:,.2f}'.format(contract_certified or 0.0)"/></span> /
+                                        <span class="money-text"><t t-esc="'{:,.2f}'.format(contract_revised or 0.0)"/></span>
                                         (<t t-esc="progress_pct"/>%)
                                     </small>
                                 </div>
@@ -454,32 +475,38 @@
                                                     </td>
                                                     <td class="text-right qty-cell">
                                                         <div class="entry-stack">
-                                                            <input type="number"
-                                                                   step="0.01"
-                                                                   min="0"
-                                                                   class="form-control form-control-sm text-right qty-input"
-                                                                   t-att-name="'qty_' + str(boq_line.id)"
-                                                                   t-att-id="'qty_' + str(boq_line.id)"
-                                                                   t-att-data-boq-id="boq_line.id"
-                                                                   t-att-data-remaining="remaining_qty"
-                                                                   t-att-data-allowed="allowed_qty"
-                                                                   t-att-data-previous="previous_qty"
-                                                                   t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"
-                                                                   oninput="syncQuantityInput(this)"
-                                                                   onchange="validateQuantity(this)"/>
-                                                            <input type="number"
-                                                                   step="0.01"
-                                                                   min="0"
-                                                                   max="100"
-                                                                   class="form-control form-control-sm text-right percent-input"
-                                                                   t-att-name="'qty_percent_' + str(boq_line.id)"
-                                                                   t-att-id="'qty_percent_' + str(boq_line.id)"
-                                                                   t-att-data-boq-id="boq_line.id"
-                                                                   t-att-data-allowed="allowed_qty"
-                                                                   t-att-value="'%.2f' % (((existing_line.current_qty if existing_line else 0.0) / allowed_qty * 100) if allowed_qty else 0.0)"
-                                                                   placeholder="%"
-                                                                   oninput="syncPercentInput(this)"
-                                                                   onchange="syncPercentInput(this)"/>
+                                                            <div class="entry-box">
+                                                                <span class="entry-tag">Qty</span>
+                                                                <input type="number"
+                                                                       step="0.01"
+                                                                       min="0"
+                                                                       class="form-control form-control-sm text-right qty-input"
+                                                                       t-att-name="'qty_' + str(boq_line.id)"
+                                                                       t-att-id="'qty_' + str(boq_line.id)"
+                                                                       t-att-data-boq-id="boq_line.id"
+                                                                       t-att-data-remaining="remaining_qty"
+                                                                       t-att-data-allowed="allowed_qty"
+                                                                       t-att-data-previous="previous_qty"
+                                                                       t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"
+                                                                       oninput="syncQuantityInput(this)"
+                                                                       onchange="validateQuantity(this)"/>
+                                                            </div>
+                                                            <div class="entry-box">
+                                                                <span class="entry-tag">%</span>
+                                                                <input type="number"
+                                                                       step="0.01"
+                                                                       min="0"
+                                                                       max="100"
+                                                                       class="form-control form-control-sm text-right percent-input"
+                                                                       t-att-name="'qty_percent_' + str(boq_line.id)"
+                                                                       t-att-id="'qty_percent_' + str(boq_line.id)"
+                                                                       t-att-data-boq-id="boq_line.id"
+                                                                       t-att-data-allowed="allowed_qty"
+                                                                       t-att-value="'%.2f' % (((existing_line.current_qty if existing_line else 0.0) / allowed_qty * 100) if allowed_qty else 0.0)"
+                                                                       placeholder="%"
+                                                                       oninput="syncPercentInput(this)"
+                                                                       onchange="syncPercentInput(this)"/>
+                                                            </div>
                                                         </div>
                                                         <div class="qty-percent mt-1 current-percent-display">
                                                             <t t-set="current_qty_value" t-value="existing_line.current_qty if existing_line else 0.0"/>
@@ -498,7 +525,9 @@
                                                         </div>
                                                     </td>
                                                     <td><small><t t-esc="boq_line.uom_id.name"/></small></td>
-                                                    <td class="text-right"><small><t t-esc="'%.2f' % boq_line.unit_rate"/></small></td>
+                                                    <td class="text-right">
+                                                        <small class="money-text" t-field="boq_line.unit_rate" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/>
+                                                    </td>
                                                     <td class="remarks-cell">
                                                         <input type="text"
                                                                class="form-control form-control-sm remarks-input"

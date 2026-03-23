@@ -23,6 +23,7 @@ Construction Contract Management
         'uom',
         'portal',
     ],
+    'images': ['static/description/icon.png'],
     'data': [
         'security/construction_security.xml',
         'security/construction_portal_security.xml',
