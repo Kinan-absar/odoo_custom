@@ -89,6 +89,32 @@
                 <t t-set="variation_summary" t-value="description_parts[0] if description_parts else ''"/>
                 <t t-set="variation_reason" t-value="description_parts[1] if len(description_parts) &gt; 1 else ''"/>
 
+                <t t-if="success == 'saved'">
+                    <div class="alert alert-success" role="alert">
+                        Variation line saved successfully.
+                    </div>
+                </t>
+                <t t-if="success == 'submitted'">
+                    <div class="alert alert-success" role="alert">
+                        Variation submitted for approval.
+                    </div>
+                </t>
+                <t t-if="error == 'boq_required'">
+                    <div class="alert alert-warning" role="alert">
+                        Please select a BOQ line for all variation types except New Item.
+                    </div>
+                </t>
+                <t t-if="error == 'validation'">
+                    <div class="alert alert-warning" role="alert">
+                        Could not save the variation line. Please check the entered values.
+                    </div>
+                </t>
+                <t t-if="error == 'system'">
+                    <div class="alert alert-danger" role="alert">
+                        Something went wrong while saving the variation.
+                    </div>
+                </t>
+
                 <div class="row mb-4">
                     <div class="col-lg-8">
                         <div class="card">
@@ -120,6 +146,103 @@
                         </div>
                     </div>
                 </div>
+
+                <t t-if="variation.state == 'draft'">
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5>Add Variation Line</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" t-attf-action="/my/employee/variation/#{variation.id}/add_line">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Type *</label>
+                                            <select name="type" class="form-control" required="required">
+                                                <option value="">Select type...</option>
+                                                <t t-foreach="line_types" t-as="line_type">
+                                                    <option t-att-value="line_type[0]"><t t-esc="line_type[1]"/></option>
+                                                </t>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>BOQ Line</label>
+                                            <select name="boq_line_id" class="form-control">
+                                                <option value="">Select BOQ line...</option>
+                                                <t t-foreach="boq_lines" t-as="boq_line">
+                                                    <option t-att-value="boq_line.id">
+                                                        <t t-esc="boq_line.item_code or '-'"/> - <t t-esc="boq_line.description or ''"/>
+                                                    </option>
+                                                </t>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Unit of Measure</label>
+                                            <select name="uom_id" class="form-control">
+                                                <option value="">Auto from BOQ</option>
+                                                <t t-foreach="uoms" t-as="uom">
+                                                    <option t-att-value="uom.id"><t t-esc="uom.name"/></option>
+                                                </t>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Section</label>
+                                            <input type="text" name="section" class="form-control"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Item Code</label>
+                                            <input type="text" name="item_code" class="form-control"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Variation Qty</label>
+                                            <input type="number" step="0.01" min="0" name="variation_qty" class="form-control" required="required"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Unit Rate</label>
+                                            <input type="number" step="0.01" min="0" name="unit_rate" class="form-control" required="required"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <textarea name="line_description" class="form-control" rows="3"/>
+                                </div>
+
+                                <div class="form-group">
+                                    <button type="submit" name="action" value="save" class="btn btn-warning">
+                                        <i class="fa fa-save"/> Save Line
+                                    </button>
+                                    <button type="submit" name="action" value="submit" class="btn btn-primary">
+                                        <i class="fa fa-check"/> Save &amp; Submit
+                                    </button>
+                                    <t t-if="variation.line_ids">
+                                        <button type="submit" name="action" value="submit" class="btn btn-success" formnovalidate="formnovalidate">
+                                            <i class="fa fa-paper-plane"/> Submit Existing Lines
+                                        </button>
+                                    </t>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </t>
 
                 <t t-if="variation.line_ids">
                     <div class="card mt-4">

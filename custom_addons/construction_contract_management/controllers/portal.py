@@ -217,8 +217,73 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
 
         return request.render("construction_contract_management.portal_employee_variation_detail", {
             'variation': variation_sudo,
+            'boq_lines': variation_sudo.contract_id.boq_line_ids.sorted(lambda l: (l.sequence, l.id)),
+            'uoms': request.env['uom.uom'].sudo().search([]),
+            'line_types': [
+                ('increase', 'Quantity Increase'),
+                ('decrease', 'Quantity Decrease'),
+                ('new', 'New Item'),
+                ('omit', 'Omit Item'),
+                ('rate', 'Rate Change'),
+            ],
+            'success': request.params.get('success'),
+            'error': request.params.get('error'),
             'page_name': 'construction_variation',
         })
+
+    @http.route(['/my/employee/variation/<int:variation_id>/add_line'],
+                type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def portal_employee_variation_add_line(self, variation_id, **post):
+        try:
+            variation = request.env['construction.variation'].sudo().browse(variation_id)
+            if not variation.exists():
+                return request.redirect('/my/employee/variations')
+
+            if variation.state != 'draft':
+                return request.redirect(f'/my/employee/variation/{variation_id}')
+
+            action = post.get('action', 'save')
+            line_type = (post.get('type') or '').strip()
+            boq_line_id = int(post.get('boq_line_id')) if post.get('boq_line_id') else False
+            boq_line = request.env['construction.contract.boq.line'].sudo().browse(boq_line_id) if boq_line_id else False
+
+            if action == 'submit' and not post.get('type') and variation.line_ids:
+                variation.action_submit()
+                return request.redirect(f'/my/employee/variation/{variation_id}?success=submitted')
+
+            vals = {
+                'variation_id': variation.id,
+                'type': line_type,
+                'boq_line_id': boq_line.id if boq_line else False,
+                'section': (post.get('section') or '').strip(),
+                'item_code': (post.get('item_code') or '').strip(),
+                'description': (post.get('line_description') or '').strip(),
+                'uom_id': int(post.get('uom_id')) if post.get('uom_id') else False,
+                'unit_rate': float(post.get('unit_rate') or 0.0),
+                'variation_qty': float(post.get('variation_qty') or 0.0),
+            }
+
+            if boq_line:
+                vals['section'] = vals['section'] or boq_line.section or False
+                vals['item_code'] = vals['item_code'] or boq_line.item_code or False
+                vals['description'] = vals['description'] or boq_line.description or False
+                vals['uom_id'] = vals['uom_id'] or boq_line.uom_id.id or False
+                vals['unit_rate'] = float(post.get('unit_rate') or boq_line.unit_rate or 0.0)
+
+            if line_type != 'new' and not boq_line:
+                return request.redirect(f'/my/employee/variation/{variation_id}?error=boq_required')
+
+            request.env['construction.variation.line'].sudo().create(vals)
+
+            if action == 'submit':
+                variation.action_submit()
+                return request.redirect(f'/my/employee/variation/{variation_id}?success=submitted')
+
+            return request.redirect(f'/my/employee/variation/{variation_id}?success=saved')
+        except (ValidationError, ValueError):
+            return request.redirect(f'/my/employee/variation/{variation_id}?error=validation')
+        except Exception:
+            return request.redirect(f'/my/employee/variation/{variation_id}?error=system')
 
     # =========================================================
     # MEASUREMENTS LIST
