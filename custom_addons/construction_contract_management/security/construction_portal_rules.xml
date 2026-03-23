@@ -153,6 +153,16 @@
         <field name="perm_create" eval="False"/>
         <field name="perm_unlink" eval="False"/>
     </record>
+    <record id="project_project_construction_portal_rule" model="ir.rule">
+        <field name="name">Construction Portal: Read All Projects</field>
+        <field name="model_id" ref="project.model_project_project"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('construction_contract_management.group_construction_portal'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
 
     <!-- ========================================= -->
     <!-- INTERNAL USERS - Backend access -->
