@@ -146,6 +146,23 @@
                         border-color: #e8edf3;
                         vertical-align: middle;
                     }
+                    .ipc-portal-page .ipc-lines-table td,
+                    .ipc-portal-page .ipc-lines-table th {
+                        overflow: hidden;
+                    }
+                    .ipc-portal-page .ipc-lines-table .cell-right {
+                        text-align: right;
+                    }
+                    .ipc-portal-page .ipc-lines-table .cell-right .qty-stack,
+                    .ipc-portal-page .ipc-lines-table .cell-right .money-stack {
+                        width: 100%;
+                        align-items: flex-end;
+                    }
+                    .ipc-portal-page .ipc-lines-table .money-stack {
+                        display: flex;
+                        justify-content: flex-end;
+                        width: 100%;
+                    }
                     .ipc-portal-page .qty-stack {
                         display: flex;
                         flex-direction: column;
@@ -286,26 +303,34 @@
                                                 </t>
                                                 <span t-field="line.description"/>
                                             </td>
-                                            <td class="text-right">
+                                            <td class="cell-right">
                                                 <div class="qty-stack">
                                                     <span t-field="line.previous_qty"/>
                                                     <span class="qty-percent"><t t-esc="'(' + str(int(round(line.previous_percent or 0.0))) + '%)'"/></span>
                                                 </div>
                                             </td>
-                                            <td class="text-right">
+                                            <td class="cell-right">
                                                 <div class="qty-stack">
                                                     <span t-field="line.current_qty"/>
                                                     <span class="qty-percent"><t t-esc="'(' + str(int(round(line.current_percent or 0.0))) + '%)'"/></span>
                                                 </div>
                                             </td>
-                                            <td class="text-right">
+                                            <td class="cell-right">
                                                 <div class="qty-stack">
                                                     <span t-field="line.cumulative_qty"/>
                                                     <span class="qty-percent"><t t-esc="'(' + str(int(round(line.cumulative_percent or 0.0))) + '%)'"/></span>
                                                 </div>
                                             </td>
-                                            <td class="text-right money-text"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
-                                            <td class="text-right money-text"><span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                                            <td class="cell-right money-text">
+                                                <div class="money-stack">
+                                                    <span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
+                                                </div>
+                                            </td>
+                                            <td class="cell-right money-text">
+                                                <div class="money-stack">
+                                                    <span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
+                                                </div>
+                                            </td>
                                         </tr>
                                     </t>
                                 </tbody>
