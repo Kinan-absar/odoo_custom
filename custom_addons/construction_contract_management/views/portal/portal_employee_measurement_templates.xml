@@ -234,8 +234,8 @@
                                                 <t t-set="existing_line" t-value="existing_lines.get(boq_line.id)"/>
                                                 <t t-set="line_num" t-value="boq_line_index + 1"/>
                                                 
-                                                <!-- FIXED: Use previous_qty_map instead of certified_qty -->
-                                                <t t-set="previous_qty" t-value="previous_qty_map.get(boq_line.id, 0.0)"/>
+                                                <!-- Safe lookup: previous_qty_map is always passed from controller -->
+                                                <t t-set="previous_qty" t-value="(previous_qty_map or {}).get(boq_line.id, 0.0)"/>
                                                 <t t-set="allowed_qty" t-value="boq_line.revised_qty or boq_line.contract_qty"/>
                                                 <t t-set="remaining_qty" t-value="allowed_qty - previous_qty"/>
                                                 

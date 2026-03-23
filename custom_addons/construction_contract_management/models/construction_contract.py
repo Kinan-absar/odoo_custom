@@ -217,15 +217,6 @@ class ConstructionContract(models.Model):
             'domain': [('contract_id', '=', self.id)],
             'context': {'default_contract_id': self.id},
         }
-    variation_count = fields.Integer(compute='_compute_variation_count')
-
-    def _compute_variation_count(self):
-        for rec in self:
-            rec.variation_count = self.env['construction.variation'].search_count([
-                ('contract_id', '=', rec.id)
-            ])
-
-
     def action_view_variations(self):
         return {
             'type': 'ir.actions.act_window',

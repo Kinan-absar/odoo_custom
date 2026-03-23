@@ -27,7 +27,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         searchbar_filters = {
             'all': {'label': 'All', 'domain': []},
             'draft': {'label': 'Draft', 'domain': [('state', '=', 'draft')]},
-            'under_review': {'label': 'Under Review', 'domain': [('state', '=', 'under_review')]},
+            'under_review': {'label': 'Under Review', 'domain': [('state', '=', 'submitted')]},
             'approved': {'label': 'Approved', 'domain': [('state', '=', 'approved')]},
             'active': {'label': 'Active', 'domain': [('state', '=', 'active')]},
             'completed': {'label': 'Completed', 'domain': [('state', '=', 'completed')]},
@@ -96,7 +96,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         searchbar_filters = {
             'all': {'label': 'All', 'domain': []},
             'draft': {'label': 'Draft', 'domain': [('state', '=', 'draft')]},
-            'under_review': {'label': 'Under Review', 'domain': [('state', '=', 'under_review')]},
+            'under_review': {'label': 'Under Review', 'domain': [('state', '=', 'submitted')]},
             'approved': {'label': 'Approved', 'domain': [('state', '=', 'approved')]},
             'done': {'label': 'Done', 'domain': [('state', '=', 'done')]},
         }
@@ -166,7 +166,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         searchbar_filters = {
             'all': {'label': 'All', 'domain': []},
             'draft': {'label': 'Draft', 'domain': [('state', '=', 'draft')]},
-            'under_review': {'label': 'Under Review', 'domain': [('state', '=', 'under_review')]},
+            'under_review': {'label': 'Under Review', 'domain': [('state', '=', 'submitted')]},
             'approved': {'label': 'Approved', 'domain': [('state', '=', 'approved')]},
         }
 
@@ -262,20 +262,20 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     def portal_construction_measurement_detail(self, measurement_id, **kw):
         try:
             measurement = request.env['construction.measurement'].browse(measurement_id)
-            
+
             if not measurement.exists():
                 return request.redirect('/my/employee/measurements')
-            
+
             boq_lines = measurement.contract_id.boq_line_ids
-            
+
             existing_lines = {}
             for line in measurement.line_ids:
                 existing_lines[line.boq_line_id.id] = line
-            
+
             # Build previous quantity map
             MeasurementLine = request.env['construction.measurement.line']
             previous_qty_map = {}
-            
+
             for boq_line in boq_lines:
                 last_line = MeasurementLine.search([
                     ('boq_line_id', '=', boq_line.id),
@@ -283,40 +283,40 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                     ('measurement_id.state', '=', 'approved'),
                     ('measurement_id', '!=', measurement.id),
                 ], order='measurement_id.id desc, id desc', limit=1)
-                
+
                 previous_qty_map[boq_line.id] = last_line.cumulative_qty if last_line else 0.0
-            
+
             # Calculate progress
             contract = measurement.contract_id
             contract_revised = contract.revised_amount or contract.original_amount or 0.0
-            
+
             approved_total = 0.0
             approved_measurements = request.env['construction.measurement'].search([
                 ('contract_id', '=', contract.id),
                 ('state', '=', 'approved'),
             ])
-            
+
             for meas in approved_measurements:
                 for line in meas.line_ids:
                     approved_total += (line.current_qty or 0.0) * (line.unit_rate or 0.0)
-            
-            values = {
-                'measurement': measurement,
-                'boq_lines': boq_lines,
-                'existing_lines': existing_lines,
-                'previous_qty_map': previous_qty_map,
-                'contract_revised': contract_revised,
-                'contract_certified': approved_total,
-                'error': kw.get('error'),
-                'success': kw.get('success'),
-                'page_name': 'construction_measurement',
-            }
-            
-            return request.render("construction_contract_management.portal_employee_measurement_detail", values)
-            
+
         except Exception as e:
-            _logger.error(f"Error in measurement detail: {str(e)}", exc_info=True)
+            _logger.error(f"Error building measurement detail context: {str(e)}", exc_info=True)
             return request.redirect('/my/employee/measurements')
+
+        values = {
+            'measurement': measurement,
+            'boq_lines': boq_lines,
+            'existing_lines': existing_lines,
+            'previous_qty_map': previous_qty_map,
+            'contract_revised': contract_revised,
+            'contract_certified': approved_total,
+            'error': kw.get('error'),
+            'success': kw.get('success'),
+            'page_name': 'construction_measurement',
+        }
+
+        return request.render("construction_contract_management.portal_employee_measurement_detail", values)
 
     @http.route(['/my/employee/measurement/<int:measurement_id>/add_lines'], 
                 type='http', auth='user', website=True, methods=['POST'], csrf=True)
