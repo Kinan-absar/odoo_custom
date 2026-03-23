@@ -62,10 +62,14 @@
                             <field name="line_ids">
                                 <list editable="bottom">
                                     <field name="boq_line_id"/>
+                                    <field name="section" readonly="1"/>
                                     <field name="description" readonly="1"/>
                                     <field name="previous_qty"/>
+                                    <field name="previous_percent" readonly="1" widget="percentage"/>
                                     <field name="current_qty"/>
+                                    <field name="current_percent" readonly="1" widget="percentage"/>
                                     <field name="cumulative_qty" readonly="1"/>
+                                    <field name="cumulative_percent" readonly="1" widget="percentage"/>
                                     <field name="allowed_qty" readonly="1"/>
                                     <field name="remaining_qty" readonly="1"/>
                                     <field name="remarks"/>

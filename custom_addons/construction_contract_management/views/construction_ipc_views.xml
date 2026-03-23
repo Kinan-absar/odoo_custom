@@ -84,11 +84,15 @@
                             <field name="line_ids">
                                 <list editable="bottom">
                                     <field name="boq_line_id"/>
+                                    <field name="section" readonly="1"/>
                                     <field name="measurement_line_id" optional="hide"/>
                                     <field name="description" readonly="1"/>
                                     <field name="previous_qty"/>
+                                    <field name="previous_percent" readonly="1" widget="percentage"/>
                                     <field name="current_qty"/>
+                                    <field name="current_percent" readonly="1" widget="percentage"/>
                                     <field name="cumulative_qty"/>
+                                    <field name="cumulative_percent" readonly="1" widget="percentage"/>
                                     <field name="allowed_qty" readonly="1"/>
                                     <field name="remaining_qty" readonly="1"/>
                                     <field name="unit_rate"/>

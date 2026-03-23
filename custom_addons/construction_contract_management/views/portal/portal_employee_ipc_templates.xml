@@ -76,7 +76,87 @@
     <!-- IPC Detail -->
     <template id="portal_employee_ipc_detail" name="Employee Portal - IPC Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container">
+            <div class="container ipc-portal-page">
+                <style type="text/css">
+                    .ipc-portal-page {
+                        font-size: 13px;
+                        color: #1f2937;
+                    }
+                    .ipc-portal-page h3 {
+                        font-size: 1.8rem;
+                        font-weight: 700;
+                        letter-spacing: -0.02em;
+                    }
+                    .ipc-portal-page .badge {
+                        font-size: 0.74rem;
+                    }
+                    .ipc-portal-page .card {
+                        border: 1px solid #d9dee7;
+                        border-radius: 16px;
+                        overflow: hidden;
+                        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+                    }
+                    .ipc-portal-page .card-header {
+                        background: #f8fafc;
+                        border-bottom: 1px solid #e5e7eb;
+                        padding: 0.82rem 1rem;
+                    }
+                    .ipc-portal-page .card-header h5 {
+                        margin: 0;
+                        font-size: 0.96rem;
+                        font-weight: 700;
+                    }
+                    .ipc-portal-page .card-body {
+                        padding: 1rem;
+                    }
+                    .ipc-portal-page .btn {
+                        border-radius: 8px;
+                        font-size: 0.82rem;
+                        font-weight: 700;
+                        box-shadow: none;
+                    }
+                    .ipc-portal-page .btn-primary {
+                        background: #1d4ed8;
+                        border-color: #1d4ed8;
+                    }
+                    .ipc-portal-page .btn-secondary {
+                        background: #334155;
+                        border-color: #334155;
+                    }
+                    .ipc-portal-page .table-responsive {
+                        border: 1px solid #e5e7eb;
+                        border-radius: 14px;
+                        overflow: hidden;
+                    }
+                    .ipc-portal-page .ipc-lines-table {
+                        margin-bottom: 0;
+                        font-size: 0.82rem;
+                    }
+                    .ipc-portal-page .ipc-lines-table thead th {
+                        background: #f8fafc;
+                        border-bottom: 1px solid #dbe2ea;
+                        color: #0f172a;
+                        font-size: 0.76rem;
+                        padding: 0.58rem 0.45rem;
+                    }
+                    .ipc-portal-page .ipc-lines-table tbody td {
+                        padding: 0.5rem 0.45rem;
+                        border-color: #e8edf3;
+                        vertical-align: middle;
+                    }
+                    .ipc-portal-page .qty-stack {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-end;
+                        gap: 0.08rem;
+                        line-height: 1.2;
+                    }
+                    .ipc-portal-page .qty-percent {
+                        color: #64748b;
+                        font-size: 0.72rem;
+                        font-weight: 600;
+                    }
+                </style>
                 <div class="row mt-4">
                     <div class="col-12">
                         <h3 class="mb-3">
@@ -177,13 +257,15 @@
                             <h5>IPC Lines</h5>
                         </div>
                         <div class="card-body">
-                            <table class="table table-sm table-striped">
+                            <div class="table-responsive">
+                            <table class="table table-sm table-striped ipc-lines-table">
                                 <thead>
                                     <tr>
+                                        <th>Section</th>
                                         <th>Description</th>
-                                        <th class="text-right">Prev. Qty</th>
-                                        <th class="text-right">Curr. Qty</th>
-                                        <th class="text-right">Cumul. Qty</th>
+                                        <th class="text-right">Previous</th>
+                                        <th class="text-right">Current</th>
+                                        <th class="text-right">Total</th>
                                         <th class="text-right">Rate</th>
                                         <th class="text-right">Amount</th>
                                     </tr>
@@ -191,21 +273,38 @@
                                 <tbody>
                                     <t t-foreach="ipc.line_ids" t-as="line">
                                         <tr>
+                                            <td><t t-esc="line.section or '-'"/></td>
                                             <td>
                                                 <t t-if="line.boq_line_id and line.boq_line_id.item_code">
                                                     <strong>[<span t-field="line.boq_line_id.item_code"/>]</strong><br/>
                                                 </t>
                                                 <span t-field="line.description"/>
                                             </td>
-                                            <td class="text-right"><span t-field="line.previous_qty"/></td>
-                                            <td class="text-right"><span t-field="line.current_qty"/></td>
-                                            <td class="text-right"><span t-field="line.cumulative_qty"/></td>
+                                            <td class="text-right">
+                                                <div class="qty-stack">
+                                                    <span t-field="line.previous_qty"/>
+                                                    <span class="qty-percent"><span t-field="line.previous_percent" t-options='{"widget": "percentage"}'/></span>
+                                                </div>
+                                            </td>
+                                            <td class="text-right">
+                                                <div class="qty-stack">
+                                                    <span t-field="line.current_qty"/>
+                                                    <span class="qty-percent"><span t-field="line.current_percent" t-options='{"widget": "percentage"}'/></span>
+                                                </div>
+                                            </td>
+                                            <td class="text-right">
+                                                <div class="qty-stack">
+                                                    <span t-field="line.cumulative_qty"/>
+                                                    <span class="qty-percent"><span t-field="line.cumulative_percent" t-options='{"widget": "percentage"}'/></span>
+                                                </div>
+                                            </td>
                                             <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
                                             <td class="text-right"><span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
                                         </tr>
                                     </t>
                                 </tbody>
                             </table>
+                            </div>
                         </div>
                     </div>
                 </t>

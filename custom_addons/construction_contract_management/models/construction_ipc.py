@@ -286,6 +286,7 @@ class ConstructionIPCLine(models.Model):
     ipc_id = fields.Many2one('construction.ipc', required=True, ondelete='cascade')
     boq_line_id = fields.Many2one('construction.contract.boq.line', required=True)
     measurement_line_id = fields.Many2one('construction.measurement.line', string='Measurement Line')
+    section = fields.Char(related='boq_line_id.section', store=True, readonly=True)
     description = fields.Text(related='boq_line_id.description', store=True)
     currency_id = fields.Many2one(related='ipc_id.currency_id', store=True)
 
@@ -294,6 +295,9 @@ class ConstructionIPCLine(models.Model):
     cumulative_qty = fields.Float()
     allowed_qty = fields.Float(compute='_compute_allowed_qty', store=True)
     remaining_qty = fields.Float(compute='_compute_remaining_qty', store=True)
+    previous_percent = fields.Float(string='Previous %', compute='_compute_percentages', store=True)
+    current_percent = fields.Float(string='Current %', compute='_compute_percentages', store=True)
+    cumulative_percent = fields.Float(string='Total %', compute='_compute_percentages', store=True)
 
     unit_rate = fields.Monetary(currency_field='currency_id')
     current_value = fields.Monetary(currency_field='currency_id', compute='_compute_values', store=True)
@@ -308,6 +312,19 @@ class ConstructionIPCLine(models.Model):
     def _compute_remaining_qty(self):
         for rec in self:
             rec.remaining_qty = rec.allowed_qty - rec.cumulative_qty
+
+    @api.depends('allowed_qty', 'previous_qty', 'current_qty', 'cumulative_qty')
+    def _compute_percentages(self):
+        for rec in self:
+            allowed_qty = rec.allowed_qty or 0.0
+            if allowed_qty:
+                rec.previous_percent = (rec.previous_qty / allowed_qty) * 100.0
+                rec.current_percent = (rec.current_qty / allowed_qty) * 100.0
+                rec.cumulative_percent = (rec.cumulative_qty / allowed_qty) * 100.0
+            else:
+                rec.previous_percent = 0.0
+                rec.current_percent = 0.0
+                rec.cumulative_percent = 0.0
 
     @api.depends('current_qty', 'cumulative_qty', 'unit_rate')
     def _compute_values(self):

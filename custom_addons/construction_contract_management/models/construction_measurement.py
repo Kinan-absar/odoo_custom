@@ -99,6 +99,7 @@ class ConstructionMeasurementLine(models.Model):
         required=True,
         domain="[('contract_id', '=', parent.contract_id)]",
     )
+    section = fields.Char(related='boq_line_id.section', store=True, readonly=True)
     description = fields.Text(related='boq_line_id.description', store=True)
     unit_rate = fields.Monetary(related='boq_line_id.unit_rate', store=True)
     currency_id = fields.Many2one(related='measurement_id.contract_id.currency_id', store=True)
@@ -108,6 +109,9 @@ class ConstructionMeasurementLine(models.Model):
     cumulative_qty = fields.Float(string='Cumulative Qty', compute='_compute_cumulative_qty', store=True)
     allowed_qty = fields.Float(string='Allowed Qty', compute='_compute_allowed_qty', store=True)
     remaining_qty = fields.Float(string='Remaining Qty', compute='_compute_remaining_qty', store=True)
+    previous_percent = fields.Float(string='Previous %', compute='_compute_progress_percentages', store=True)
+    current_percent = fields.Float(string='Current %', compute='_compute_progress_percentages', store=True)
+    cumulative_percent = fields.Float(string='Total %', compute='_compute_progress_percentages', store=True)
     remarks = fields.Char(string='Remarks', help='Notes or comments for this measurement line')
 
     @api.depends('previous_qty', 'current_qty')
@@ -124,6 +128,19 @@ class ConstructionMeasurementLine(models.Model):
     def _compute_remaining_qty(self):
         for rec in self:
             rec.remaining_qty = rec.allowed_qty - rec.cumulative_qty
+
+    @api.depends('allowed_qty', 'previous_qty', 'current_qty', 'cumulative_qty')
+    def _compute_progress_percentages(self):
+        for rec in self:
+            allowed_qty = rec.allowed_qty or 0.0
+            if allowed_qty:
+                rec.previous_percent = (rec.previous_qty / allowed_qty) * 100.0
+                rec.current_percent = (rec.current_qty / allowed_qty) * 100.0
+                rec.cumulative_percent = (rec.cumulative_qty / allowed_qty) * 100.0
+            else:
+                rec.previous_percent = 0.0
+                rec.current_percent = 0.0
+                rec.cumulative_percent = 0.0
 
     @api.constrains('current_qty', 'previous_qty', 'boq_line_id')
     def _check_current_qty(self):
