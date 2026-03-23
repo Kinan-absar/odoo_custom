@@ -281,7 +281,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 existing_lines[line.boq_line_id.id] = line
             
             # Calculate contract progress
-            contract_revised = measurement.contract_id.revised_amount or measurement.contract_id.original_amount
+            contract_revised = measurement.contract_id.revised_amount or measurement.contract_id.original_amount or 0.0
             contract_certified = measurement.contract_id.total_certified_amount or 0.0
             
             values = {

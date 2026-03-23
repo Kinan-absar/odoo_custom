@@ -99,7 +99,6 @@ class ConstructionMeasurementLine(models.Model):
     cumulative_qty = fields.Float(string='Cumulative Qty', compute='_compute_cumulative_qty', store=True)
     allowed_qty = fields.Float(string='Allowed Qty', compute='_compute_allowed_qty', store=True)
     remaining_qty = fields.Float(string='Remaining Qty', compute='_compute_remaining_qty', store=True)
-    remarks = fields.Char()
     remarks = fields.Char(string='Remarks', help='Notes or comments for this measurement line')
 
     @api.depends('previous_qty', 'current_qty')
