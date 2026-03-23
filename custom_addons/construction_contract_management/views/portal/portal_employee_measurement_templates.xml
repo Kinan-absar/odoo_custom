@@ -36,7 +36,11 @@
                             <tbody>
                                 <t t-foreach="measurements" t-as="measurement">
                                     <tr>
-                                        <td><a t-attf-href="/my/employee/measurement/#{measurement.id}"><t t-esc="measurement.name"/></a></td>
+                                        <td>
+                                            <a t-attf-href="/my/employee/measurement/#{measurement.id}">
+                                                <t t-esc="measurement.name"/>
+                                            </a>
+                                        </td>
                                         <td><span t-field="measurement.contract_id"/></td>
                                         <td><span t-field="measurement.date"/></td>
                                         <td><span t-field="measurement.period_from"/> - <span t-field="measurement.period_to"/></td>
@@ -67,7 +71,7 @@
         </t>
     </template>
 
-    <!-- ENHANCED Measurement Detail -->
+    <!-- Measurement Detail -->
     <template id="portal_employee_measurement_detail" name="Employee Portal - Measurement Detail Enhanced">
         <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container">
@@ -83,7 +87,6 @@
                         </h3>
                     </div>
                     <div class="col-4 text-right">
-                        <!-- Progress Badge -->
                         <t t-set="progress_pct" t-value="int((contract_certified / contract_revised * 100) if contract_revised and contract_revised > 0 else 0)"/>
                         <div class="mb-2">
                             <span class="badge badge-info" style="font-size: 14px;">
@@ -92,7 +95,7 @@
                         </div>
                     </div>
                 </div>
-<!-- Success/Error Messages -->
+
                 <t t-if="success == 'saved'">
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         <i class="fa fa-check-circle"></i> <strong>Success!</strong> Quantities saved successfully.
@@ -127,6 +130,7 @@
                         <button type="button" class="close" data-dismiss="alert">&#215;</button>
                     </div>
                 </t>
+
                 <t t-if="error == 'no_lines'">
                     <div class="alert alert-warning alert-dismissible fade show" role="alert">
                         <i class="fa fa-exclamation-triangle"></i>
@@ -134,7 +138,7 @@
                         <button type="button" class="close" data-dismiss="alert">&#215;</button>
                     </div>
                 </t>
-                <!-- Contract Progress Bar -->
+
                 <div class="row mb-3">
                     <div class="col-12">
                         <div class="card">
@@ -142,18 +146,18 @@
                                 <div class="d-flex justify-content-between mb-1">
                                     <small><strong>Contract Progress</strong></small>
                                     <small>
-                                        <t t-esc="'%.2f' % (contract_certified or 0.0)"/> / 
-                                        <t t-esc="'%.2f' % (contract_revised or 0.0)"/> 
+                                        <t t-esc="'%.2f' % (contract_certified or 0.0)"/> /
+                                        <t t-esc="'%.2f' % (contract_revised or 0.0)"/>
                                         (<t t-esc="progress_pct"/>%)
                                     </small>
                                 </div>
                                 <div class="progress" style="height: 20px;">
-                                    <div class="progress-bar" 
+                                    <div class="progress-bar"
                                          t-att-class="'bg-success' if progress_pct >= 80 else 'bg-primary' if progress_pct >= 50 else 'bg-warning'"
-                                         role="progressbar" 
+                                         role="progressbar"
                                          t-att-style="'width: ' + str(progress_pct) + '%'"
-                                         t-att-aria-valuenow="progress_pct" 
-                                         aria-valuemin="0" 
+                                         t-att-aria-valuenow="progress_pct"
+                                         aria-valuemin="0"
                                          aria-valuemax="100">
                                         <t t-esc="progress_pct"/>%
                                     </div>
@@ -193,7 +197,6 @@
                     </div>
                 </div>
 
-                <!-- DRAFT: Editable Form -->
                 <t t-if="measurement.state == 'draft'">
                     <div class="card mt-4">
                         <div class="card-header bg-primary text-white">
@@ -202,7 +205,6 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <!-- Bulk Actions -->
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="applyBulkQuantity(100)">
@@ -219,7 +221,7 @@
 
                             <form method="POST" t-attf-action="/my/employee/measurement/#{measurement.id}/add_lines" id="measurement_form" enctype="multipart/form-data">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                
+
                                 <div class="table-responsive">
                                     <table class="table table-sm table-bordered">
                                         <thead class="thead-light">
@@ -237,29 +239,25 @@
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            <t t-set="row_no" t-value="0"/>
                                             <t t-foreach="boq_lines" t-as="boq_line">
-                                                <t t-set="existing_line" t-value="existing_lines.get(boq_line.id)"/>
-                                                <t t-set="line_num" t-value="boq_line_index + 1"/>
-                                                
-                                                <!-- Safe lookup: previous_qty_map is always passed from controller -->
-                                                <t t-set="previous_qty" t-value="(previous_qty_map or {}).get(boq_line.id, 0.0)"/>
+                                                <t t-set="row_no" t-value="row_no + 1"/>
+                                                <t t-set="existing_line" t-value="existing_lines.get(boq_line.id) if existing_lines else False"/>
+                                                <t t-set="previous_qty" t-value="previous_qty_map.get(boq_line.id, 0.0) if previous_qty_map else 0.0"/>
                                                 <t t-set="allowed_qty" t-value="boq_line.revised_qty or boq_line.contract_qty"/>
                                                 <t t-set="remaining_qty" t-value="allowed_qty - previous_qty"/>
-                                                
+
                                                 <tr t-att-id="'row_' + str(boq_line.id)">
-                                                    <td class="text-center"><strong><t t-esc="line_num"/></strong></td>
+                                                    <td class="text-center"><strong><t t-esc="row_no"/></strong></td>
                                                     <td><strong><t t-esc="boq_line.item_code or ''"/></strong></td>
                                                     <td><t t-esc="boq_line.description"/></td>
                                                     <td class="text-right">
                                                         <t t-esc="'%.2f' % boq_line.contract_qty"/>
                                                         <input type="hidden" t-att-name="'contract_qty_' + str(boq_line.id)" t-att-value="boq_line.contract_qty"/>
                                                     </td>
-                                                    
-                                                    <!-- FIXED: Show previous measured qty, not IPC certified qty -->
                                                     <td class="text-right text-primary">
                                                         <strong><t t-esc="'%.2f' % previous_qty"/></strong>
                                                     </td>
-                                                    
                                                     <td class="text-right">
                                                         <span t-att-class="'badge badge-' + ('success' if remaining_qty > 0 else 'secondary')">
                                                             <t t-esc="'%.2f' % remaining_qty"/>
@@ -267,10 +265,10 @@
                                                         <input type="hidden" t-att-name="'remaining_qty_' + str(boq_line.id)" t-att-value="remaining_qty"/>
                                                     </td>
                                                     <td class="text-right">
-                                                        <input type="number" 
-                                                               step="0.01" 
+                                                        <input type="number"
+                                                               step="0.01"
                                                                min="0"
-                                                               class="form-control form-control-sm text-right qty-input" 
+                                                               class="form-control form-control-sm text-right qty-input"
                                                                t-att-name="'qty_' + str(boq_line.id)"
                                                                t-att-id="'qty_' + str(boq_line.id)"
                                                                t-att-data-boq-id="boq_line.id"
@@ -282,8 +280,8 @@
                                                     <td><small><t t-esc="boq_line.uom_id.name"/></small></td>
                                                     <td class="text-right"><small><t t-esc="'%.2f' % boq_line.unit_rate"/></small></td>
                                                     <td>
-                                                        <input type="text" 
-                                                               class="form-control form-control-sm" 
+                                                        <input type="text"
+                                                               class="form-control form-control-sm"
                                                                t-att-name="'remarks_' + str(boq_line.id)"
                                                                t-att-value="existing_line.remarks if existing_line and existing_line.remarks else ''"
                                                                placeholder="Optional notes"
@@ -295,14 +293,12 @@
                                     </table>
                                 </div>
 
-                                <!-- Photo Upload Section -->
                                 <div class="mt-3">
                                     <h6><i class="fa fa-camera"/> Attach Photos (Optional)</h6>
                                     <input type="file" name="photos" class="form-control-file" multiple="multiple" accept="image/*"/>
                                     <small class="form-text text-muted">You can select multiple photos to attach to this measurement</small>
                                 </div>
 
-                                <!-- Action Buttons -->
                                 <div class="mt-4">
                                     <button type="submit" name="action" value="save" class="btn btn-success">
                                         <i class="fa fa-save"/> Save Quantities
@@ -318,23 +314,20 @@
 
                             <script type="text/javascript">
                                 <![CDATA[
-                                // Validate quantity against remaining
                                 function validateQuantity(input) {
                                     var qty = parseFloat(input.value) || 0;
                                     var remaining = parseFloat(input.getAttribute('data-remaining')) || 0;
                                     var row = input.closest('tr');
-                                    
-                                    // Remove previous warning
+
                                     var existingWarning = row.querySelector('.qty-warning');
                                     if (existingWarning) {
                                         existingWarning.remove();
                                     }
-                                    
-                                    // Check if exceeds remaining
+
                                     if (qty > remaining) {
                                         input.style.borderColor = '#ffc107';
                                         input.style.backgroundColor = '#fff3cd';
-                                        
+
                                         var warning = document.createElement('div');
                                         warning.className = 'qty-warning';
                                         warning.style.cssText = 'color: #856404; font-size: 11px; margin-top: 2px;';
@@ -345,8 +338,7 @@
                                         input.style.backgroundColor = '';
                                     }
                                 }
-                                
-                                // Apply bulk percentage
+
                                 function applyBulkQuantity(percentage) {
                                     var inputs = document.querySelectorAll('.qty-input');
                                     inputs.forEach(function(input) {
@@ -360,8 +352,7 @@
                                         }
                                     });
                                 }
-                                
-                                // Clear all quantities
+
                                 function clearAllQuantities() {
                                     var inputs = document.querySelectorAll('.qty-input');
                                     inputs.forEach(function(input) {
@@ -372,8 +363,7 @@
                                         if (warning) warning.remove();
                                     });
                                 }
-                                
-                                // Validate on load for existing quantities
+
                                 document.addEventListener('DOMContentLoaded', function() {
                                     var inputs = document.querySelectorAll('.qty-input');
                                     inputs.forEach(function(input) {
@@ -388,7 +378,6 @@
                     </div>
                 </t>
 
-                <!-- APPROVED/SUBMITTED: Read-only Lines -->
                 <t t-if="measurement.line_ids and measurement.state != 'draft'">
                     <div class="card mt-4">
                         <div class="card-header">
@@ -410,9 +399,11 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    <t t-set="line_no" t-value="0"/>
                                     <t t-foreach="measurement.line_ids" t-as="line">
+                                        <t t-set="line_no" t-value="line_no + 1"/>
                                         <tr>
-                                            <td><t t-esc="line_index + 1"/></td>
+                                            <td><t t-esc="line_no"/></td>
                                             <td>
                                                 <strong>
                                                     <t t-if="line.boq_line_id.item_code">
@@ -425,7 +416,9 @@
                                             <td class="text-right"><strong><span t-field="line.current_qty"/></strong></td>
                                             <td class="text-right"><span t-field="line.cumulative_qty"/></td>
                                             <td><span t-field="line.boq_line_id.uom_id"/></td>
-                                            <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/></td>
+                                            <td class="text-right">
+                                                <span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/>
+                                            </td>
                                             <td><t t-esc="line.remarks or '-'"/></td>
                                         </tr>
                                     </t>
@@ -449,7 +442,7 @@
         </t>
     </template>
 
-    <!-- NEW Measurement Form -->
+    <!-- New Measurement -->
     <template id="portal_employee_measurement_new" name="Employee Portal - New Measurement">
         <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container">
@@ -459,9 +452,15 @@
                     </div>
                 </div>
 
+                <t t-if="error == 'create_failed'">
+                    <div class="alert alert-danger mt-3" role="alert">
+                        Could not create measurement. Please check the entered data.
+                    </div>
+                </t>
+
                 <form method="POST" action="/my/employee/measurement/new" class="mt-4">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -469,7 +468,9 @@
                                 <select name="contract_id" id="contract_id" class="form-control" required="required">
                                     <option value="">Select Contract...</option>
                                     <t t-foreach="contracts" t-as="contract">
-                                        <option t-att-value="contract.id"><t t-esc="contract.name"/> - <t t-esc="contract.project_id.name"/></option>
+                                        <option t-att-value="contract.id">
+                                            <t t-esc="contract.name"/> - <t t-esc="contract.project_id.name"/>
+                                        </option>
                                     </t>
                                 </select>
                             </div>
