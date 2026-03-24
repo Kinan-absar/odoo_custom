@@ -752,7 +752,7 @@ class EmployeePortalMain(CustomerPortal):
         def _measurement_new_values(error_message=None):
             try:
                 contracts = request.env['construction.contract'].search(
-                    [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
+                    self._portal_visible_contract_domain()
                 )
             except Exception:
                 contracts = request.env['construction.contract']
@@ -806,7 +806,7 @@ class EmployeePortalMain(CustomerPortal):
         def _variation_new_values(error_message=None):
             try:
                 contracts = request.env['construction.contract'].search(
-                    [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
+                    self._portal_visible_contract_domain()
                 )
             except Exception:
                 contracts = request.env['construction.contract']

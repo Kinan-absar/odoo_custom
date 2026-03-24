@@ -403,7 +403,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     def portal_construction_measurement_new(self, **post):
         def _measurement_new_values(error_message=None):
             contracts = request.env['construction.contract'].search(
-                [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
+                self._portal_visible_contract_domain()
             )
             if not error_message and not contracts:
                 error_message = "You do not have access to any contracts for creating a measurement."
