@@ -747,12 +747,28 @@ class EmployeePortalMain(CustomerPortal):
         if not request.env['construction.measurement'].check_access_rights('create', raise_exception=False):
             return request.redirect("/my/employee")
 
+        def _measurement_new_values(error_message=None):
+            try:
+                contracts = request.env['construction.contract'].search(
+                    [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
+                )
+            except Exception:
+                contracts = request.env['construction.contract']
+            return {
+                'contracts': contracts,
+                'page_name': 'construction_measurement_new',
+                'error_message': error_message,
+            }
+
         if request.httprequest.method == 'POST':
             try:
                 allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
                 contract_id = int(post.get('contract_id'))
                 if contract_id not in allowed_contract_ids:
-                    raise ValidationError("You do not have access to this contract.")
+                    return request.render(
+                        "construction_contract_management.portal_employee_measurement_new",
+                        _measurement_new_values("You are not allowed to create a measurement for this contract.")
+                    )
 
                 vals = {
                     'contract_id': contract_id,
@@ -765,25 +781,12 @@ class EmployeePortalMain(CustomerPortal):
                 measurement.action_load_boq_lines()
                 return request.redirect(f'/my/employee/measurement/{measurement.id}')
             except Exception:
-                contracts = request.env['construction.contract'].search(
-                    [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
+                return request.render(
+                    "construction_contract_management.portal_employee_measurement_new",
+                    _measurement_new_values("Could not create the measurement. Please check the entered data and try again.")
                 )
-                values = {
-                    'contracts': contracts,
-                    'page_name': 'construction_measurement_new',
-                    'error': 'create_failed',
-                }
-                return request.render("construction_contract_management.portal_employee_measurement_new", values)
-        
-        contracts = request.env['construction.contract'].search(
-            [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
-        )
 
-        values = {
-            'contracts': contracts,
-            'page_name': 'construction_measurement_new',
-        }
-        return request.render("construction_contract_management.portal_employee_measurement_new", values)
+        return request.render("construction_contract_management.portal_employee_measurement_new", _measurement_new_values())
 
     # ---------------------------------------------------------
     # CONSTRUCTION - NEW VARIATION FORM (FIXED)
@@ -795,11 +798,27 @@ class EmployeePortalMain(CustomerPortal):
         if not request.env['construction.variation'].check_access_rights('create', raise_exception=False):
             return request.redirect("/my/employee")
 
+        def _variation_new_values(error_message=None):
+            try:
+                contracts = request.env['construction.contract'].search(
+                    [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
+                )
+            except Exception:
+                contracts = request.env['construction.contract']
+            return {
+                'contracts': contracts,
+                'page_name': 'construction_variation_new',
+                'error_message': error_message,
+            }
+
         if request.httprequest.method == 'POST':
             allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
             contract_id = int(post.get('contract_id'))
             if contract_id not in allowed_contract_ids:
-                return request.redirect('/my/employee/variations')
+                return request.render(
+                    "construction_contract_management.portal_employee_variation_new",
+                    _variation_new_values("You are not allowed to create a variation for this contract.")
+                )
 
             vals = {
                 'contract_id': contract_id,
@@ -811,17 +830,13 @@ class EmployeePortalMain(CustomerPortal):
             if post.get('reason'):
                 vals['description'] = vals['description'] + '\n\nReason: ' + post.get('reason')
             
-            variation = request.env['construction.variation'].create(vals)
-            
-            return request.redirect(f'/my/employee/variation/{variation.id}')
-        
-        # GET request - show form
-        contracts = request.env['construction.contract'].search(
-            [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
-        )
-        
-        values = {
-            'contracts': contracts,
-            'page_name': 'construction_variation_new',
-        }
-        return request.render("construction_contract_management.portal_employee_variation_new", values)
+            try:
+                variation = request.env['construction.variation'].create(vals)
+                return request.redirect(f'/my/employee/variation/{variation.id}')
+            except Exception:
+                return request.render(
+                    "construction_contract_management.portal_employee_variation_new",
+                    _variation_new_values("Could not create the variation. Please check the entered data and try again.")
+                )
+
+        return request.render("construction_contract_management.portal_employee_variation_new", _variation_new_values())

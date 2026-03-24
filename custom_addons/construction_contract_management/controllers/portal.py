@@ -401,12 +401,25 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     # =========================================================
     @http.route(['/my/employee/measurement/new'], type='http', auth='user', website=True, methods=['GET', 'POST'])
     def portal_construction_measurement_new(self, **post):
+        def _measurement_new_values(error_message=None):
+            contracts = request.env['construction.contract'].search(
+                [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
+            )
+            return {
+                'contracts': contracts,
+                'page_name': 'construction_measurement_new',
+                'error_message': error_message,
+            }
+
         if request.httprequest.method == 'POST':
             try:
                 allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
                 contract_id = int(post.get('contract_id'))
                 if contract_id not in allowed_contract_ids:
-                    raise ValidationError("You do not have access to this contract.")
+                    return request.render(
+                        "construction_contract_management.portal_employee_measurement_new",
+                        _measurement_new_values("You are not allowed to create a measurement for this contract.")
+                    )
                 vals = {
                     'contract_id': contract_id,
                     'date': post.get('date') or False,
@@ -426,22 +439,12 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
 
             except Exception as e:
                 _logger.error("Error creating measurement: %s", str(e), exc_info=True)
-                contracts = request.env['construction.contract'].search(
-                    [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
+                return request.render(
+                    "construction_contract_management.portal_employee_measurement_new",
+                    _measurement_new_values("Could not create the measurement. Please check the entered data and try again.")
                 )
-                return request.render("construction_contract_management.portal_employee_measurement_new", {
-                    'contracts': contracts,
-                    'page_name': 'construction_measurement_new',
-                    'error': 'create_failed',
-                })
 
-        contracts = request.env['construction.contract'].search(
-            [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
-        )
-        return request.render("construction_contract_management.portal_employee_measurement_new", {
-            'contracts': contracts,
-            'page_name': 'construction_measurement_new',
-        })
+        return request.render("construction_contract_management.portal_employee_measurement_new", _measurement_new_values())
 
     # =========================================================
     # MEASUREMENT DETAIL

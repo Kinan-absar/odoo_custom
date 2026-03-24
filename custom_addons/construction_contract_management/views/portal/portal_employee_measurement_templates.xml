@@ -119,6 +119,12 @@
                         font-size: 0.74rem;
                     }
                     .measurement-portal-page .measurement-alert {
+                        position: fixed;
+                        top: 88px;
+                        right: 24px;
+                        z-index: 1050;
+                        min-width: 320px;
+                        max-width: 420px;
                         border-radius: 14px;
                         border-width: 1px;
                         padding: 0.78rem 0.95rem;
@@ -843,15 +849,39 @@
     <template id="portal_employee_measurement_new" name="Employee Portal - New Measurement">
         <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container">
+                <style type="text/css">
+                    .portal-form-popup {
+                        position: fixed;
+                        top: 88px;
+                        right: 24px;
+                        z-index: 1050;
+                        min-width: 320px;
+                        max-width: 420px;
+                        border-radius: 16px;
+                        border: 1px solid #fecaca;
+                        background: #fff7f7;
+                        color: #991b1b;
+                        padding: 0.9rem 1rem;
+                        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+                        animation: measurementAlertFade 5s ease forwards;
+                    }
+                    .portal-form-popup i {
+                        margin-right: 0.45rem;
+                    }
+                </style>
                 <div class="row mt-4">
                     <div class="col-12">
                         <h3>New Measurement</h3>
                     </div>
                 </div>
 
-                <t t-if="error == 'create_failed'">
-                    <div class="alert alert-danger mt-3" role="alert">
-                        Could not create measurement. Please check the entered data.
+                <t t-if="error_message or error == 'create_failed'">
+                    <div class="portal-form-popup" role="alert">
+                        <i class="fa fa-exclamation-circle"></i>
+                        <strong>Could not create measurement.</strong>
+                        <div class="mt-1">
+                            <t t-esc="error_message or 'Please check the entered data and try again.'"/>
+                        </div>
                     </div>
                 </t>
 

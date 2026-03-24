@@ -103,6 +103,44 @@
     <template id="portal_employee_variation_detail" name="Employee Portal - Variation Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container">
+                <style type="text/css">
+                    .variation-popup-alert {
+                        position: fixed;
+                        top: 88px;
+                        right: 24px;
+                        z-index: 1050;
+                        min-width: 320px;
+                        max-width: 420px;
+                        border-radius: 16px;
+                        padding: 0.9rem 1rem;
+                        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+                        animation: variationPopupFade 5s ease forwards;
+                    }
+                    .variation-popup-alert.info {
+                        background: #eff6ff;
+                        border: 1px solid #bfdbfe;
+                        color: #1d4ed8;
+                    }
+                    .variation-popup-alert.success {
+                        background: #f0fdf4;
+                        border: 1px solid #bbf7d0;
+                        color: #166534;
+                    }
+                    .variation-popup-alert.warning {
+                        background: #fffbeb;
+                        border: 1px solid #fde68a;
+                        color: #92400e;
+                    }
+                    .variation-popup-alert.danger {
+                        background: #fff7f7;
+                        border: 1px solid #fecaca;
+                        color: #991b1b;
+                    }
+                    @keyframes variationPopupFade {
+                        0%, 80% { opacity: 1; transform: translateY(0); }
+                        100% { opacity: 0; transform: translateY(-8px); }
+                    }
+                </style>
                 <div class="row mt-4">
                     <div class="col-12">
                         <h3 class="mb-3">
@@ -120,27 +158,27 @@
                 <t t-set="variation_reason" t-value="description_parts[1] if len(description_parts) &gt; 1 else ''"/>
 
                 <t t-if="success == 'saved'">
-                    <div class="alert alert-success" role="alert">
+                    <div class="variation-popup-alert success" role="alert">
                         Variation line saved successfully.
                     </div>
                 </t>
                 <t t-if="success == 'submitted'">
-                    <div class="alert alert-success" role="alert">
+                    <div class="variation-popup-alert success" role="alert">
                         Variation submitted for approval.
                     </div>
                 </t>
                 <t t-if="error == 'boq_required'">
-                    <div class="alert alert-warning" role="alert">
+                    <div class="variation-popup-alert warning" role="alert">
                         Please select a BOQ line for all variation types except New Item.
                     </div>
                 </t>
                 <t t-if="error == 'validation'">
-                    <div class="alert alert-warning" role="alert">
+                    <div class="variation-popup-alert warning" role="alert">
                         Could not save the variation line. Please check the entered values.
                     </div>
                 </t>
                 <t t-if="error == 'system'">
-                    <div class="alert alert-danger" role="alert">
+                    <div class="variation-popup-alert danger" role="alert">
                         Something went wrong while saving the variation.
                     </div>
                 </t>
@@ -360,11 +398,38 @@
     <template id="portal_employee_variation_new" name="Employee Portal - New Variation">
         <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container">
+                <style type="text/css">
+                    .variation-form-popup {
+                        position: fixed;
+                        top: 88px;
+                        right: 24px;
+                        z-index: 1050;
+                        min-width: 320px;
+                        max-width: 420px;
+                        border-radius: 16px;
+                        border: 1px solid #fecaca;
+                        background: #fff7f7;
+                        color: #991b1b;
+                        padding: 0.9rem 1rem;
+                        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+                        animation: variationPopupFade 5s ease forwards;
+                    }
+                </style>
                 <div class="row mt-4">
                     <div class="col-12">
                         <h3>New Variation Request</h3>
                     </div>
                 </div>
+
+                <t t-if="error_message">
+                    <div class="variation-form-popup" role="alert">
+                        <i class="fa fa-exclamation-circle mr-1"></i>
+                        <strong>Could not create variation.</strong>
+                        <div class="mt-1">
+                            <t t-esc="error_message"/>
+                        </div>
+                    </div>
+                </t>
 
                 <form method="POST" action="/my/employee/variation/new" class="mt-4">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
