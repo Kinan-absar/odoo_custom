@@ -185,6 +185,7 @@
                                     <field name="current_work_value"/>
                                     <field name="retention_amount"/>
                                     <field name="net_amount"/>
+                                    <field name="payment_status"/>
                                     <field name="state"/>
                                 </list>
                             </field>
@@ -229,6 +230,7 @@
                                     <field name="amount"/>
                                     <field name="tax_amount"/>
                                     <field name="total_amount"/>
+                                    <field name="payment_status"/>
                                     <field name="state"/>
                                     <field name="move_id"/>
                                 </list>
@@ -240,6 +242,7 @@
                                     <field name="name"/>
                                     <field name="date"/>
                                     <field name="amount"/>
+                                    <field name="payment_status"/>
                                     <field name="state"/>
                                     <field name="move_id"/>
                                 </list>

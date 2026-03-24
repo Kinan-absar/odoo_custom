@@ -27,6 +27,14 @@ class ConstructionAdvance(models.Model):
 
     move_id = fields.Many2one('account.move', string='Invoice/Bill', copy=False, readonly=True)
     move_count = fields.Integer(compute='_compute_move_count')
+    payment_status = fields.Selection([
+        ('no_move', 'Not Invoiced'),
+        ('not_paid', 'Not Paid'),
+        ('partial', 'Partially Paid'),
+        ('in_payment', 'In Payment'),
+        ('paid', 'Paid'),
+        ('cancelled', 'Cancelled'),
+    ], string='Payment Status', compute='_compute_payment_status', store=True)
 
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -53,6 +61,17 @@ class ConstructionAdvance(models.Model):
     def _compute_move_count(self):
         for rec in self:
             rec.move_count = 1 if rec.move_id else 0
+
+    @api.depends('move_id', 'move_id.state', 'move_id.payment_state')
+    def _compute_payment_status(self):
+        for rec in self:
+            move = rec.move_id
+            if not move:
+                rec.payment_status = 'no_move'
+            elif move.state == 'cancel':
+                rec.payment_status = 'cancelled'
+            else:
+                rec.payment_status = move.payment_state or 'not_paid'
 
     @api.model
     def create(self, vals):
