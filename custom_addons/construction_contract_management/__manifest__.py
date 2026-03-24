@@ -18,6 +18,7 @@ Construction Contract Management
     'depends': [
         'base',
         'mail',
+        'hr',
         'project',
         'account',
         'uom',

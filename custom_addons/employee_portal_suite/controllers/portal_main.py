@@ -6,6 +6,12 @@ from odoo.exceptions import AccessError, MissingError, ValidationError
 
 class EmployeePortalMain(CustomerPortal):
 
+    def _portal_visible_contract_domain(self):
+        employee = request.env.user.employee_id
+        if employee:
+            return ['|', ('portal_visibility_restricted', '=', False), ('portal_employee_ids', 'in', [employee.id])]
+        return [('portal_visibility_restricted', '=', False)]
+
     # ---------------------------------------------------------
     # EMPLOYEE PORTAL DASHBOARD (MAIN /my/employee)
     # ---------------------------------------------------------
@@ -429,7 +435,11 @@ class EmployeePortalMain(CustomerPortal):
                 type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def portal_construction_variation_add_line(self, variation_id, **post):
         try:
-            variation = request.env['construction.variation'].sudo().browse(variation_id)
+            allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
+            variation = request.env['construction.variation'].search([
+                ('id', '=', variation_id),
+                ('contract_id', 'in', allowed_contract_ids),
+            ], limit=1)
             if not variation.exists():
                 return request.redirect('/my/employee/variations')
 
@@ -560,14 +570,18 @@ class EmployeePortalMain(CustomerPortal):
         try:
             error = request.params.get('error')
             success = request.params.get('success')
-            measurement = request.env['construction.measurement'].sudo().browse(measurement_id)
+            allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
+            measurement = request.env['construction.measurement'].search([
+                ('id', '=', measurement_id),
+                ('contract_id', 'in', allowed_contract_ids),
+            ], limit=1)
 
             if not measurement.exists():
                 return request.redirect('/my/employee/measurements')
 
-            contract = measurement.contract_id.sudo()
+            contract = measurement.contract_id
             boq_lines = contract.boq_line_ids.sorted(lambda l: (l.sequence, l.id))
-            MeasurementLine = request.env['construction.measurement.line'].sudo()
+            MeasurementLine = request.env['construction.measurement.line']
 
             existing_lines = {}
             for line in measurement.line_ids:
@@ -619,7 +633,11 @@ class EmployeePortalMain(CustomerPortal):
                 type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def portal_construction_measurement_add_lines(self, measurement_id, **post):
         try:
-            measurement = request.env['construction.measurement'].sudo().browse(measurement_id)
+            allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
+            measurement = request.env['construction.measurement'].search([
+                ('id', '=', measurement_id),
+                ('contract_id', 'in', allowed_contract_ids),
+            ], limit=1)
 
             if not measurement.exists():
                 return request.redirect('/my/employee/measurements')
@@ -694,7 +712,10 @@ class EmployeePortalMain(CustomerPortal):
                 return request.redirect(f'/my/employee/measurement/{measurement_id}?error=validation')
 
             action = post.get('action', 'save')
-            measurement = request.env['construction.measurement'].sudo().browse(measurement_id)
+            measurement = request.env['construction.measurement'].search([
+                ('id', '=', measurement_id),
+                ('contract_id', 'in', allowed_contract_ids),
+            ], limit=1)
             measurement.contract_id.boq_line_ids._compute_progress_fields()
             measurement.contract_id._compute_summary_amounts()
             positive_lines = measurement.line_ids.filtered(lambda l: l.current_qty > 0)
@@ -727,8 +748,13 @@ class EmployeePortalMain(CustomerPortal):
 
         if request.httprequest.method == 'POST':
             try:
+                allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
+                contract_id = int(post.get('contract_id'))
+                if contract_id not in allowed_contract_ids:
+                    raise ValidationError("You do not have access to this contract.")
+
                 vals = {
-                    'contract_id': int(post.get('contract_id')),
+                    'contract_id': contract_id,
                     'date': post.get('date') or False,
                     'period_from': post.get('period_from') or False,
                     'period_to': post.get('period_to') or False,
@@ -738,7 +764,9 @@ class EmployeePortalMain(CustomerPortal):
                 measurement.action_load_boq_lines()
                 return request.redirect(f'/my/employee/measurement/{measurement.id}')
             except Exception:
-                contracts = request.env['construction.contract'].sudo().search([('state', 'in', ['active', 'approved'])])
+                contracts = request.env['construction.contract'].search(
+                    [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
+                )
                 values = {
                     'contracts': contracts,
                     'page_name': 'construction_measurement_new',
@@ -746,7 +774,9 @@ class EmployeePortalMain(CustomerPortal):
                 }
                 return request.render("construction_contract_management.portal_employee_measurement_new", values)
         
-        contracts = request.env['construction.contract'].sudo().search([('state', 'in', ['active', 'approved'])])
+        contracts = request.env['construction.contract'].search(
+            [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
+        )
 
         values = {
             'contracts': contracts,
@@ -765,9 +795,13 @@ class EmployeePortalMain(CustomerPortal):
             return request.redirect("/my/employee")
 
         if request.httprequest.method == 'POST':
-            # Create the variation
+            allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
+            contract_id = int(post.get('contract_id'))
+            if contract_id not in allowed_contract_ids:
+                return request.redirect('/my/employee/variations')
+
             vals = {
-                'contract_id': int(post.get('contract_id')),
+                'contract_id': contract_id,
                 'date': post.get('date'),
                 'description': post.get('description', ''),  # Variation DOES have description field
             }
@@ -781,7 +815,9 @@ class EmployeePortalMain(CustomerPortal):
             return request.redirect(f'/my/employee/variation/{variation.id}')
         
         # GET request - show form
-        contracts = request.env['construction.contract'].search([('state', 'in', ['active', 'approved'])])
+        contracts = request.env['construction.contract'].search(
+            [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
+        )
         
         values = {
             'contracts': contracts,

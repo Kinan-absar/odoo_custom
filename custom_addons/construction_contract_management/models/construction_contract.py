@@ -124,6 +124,31 @@ class ConstructionContract(models.Model):
 
     notes = fields.Text(string='Internal Notes')
 
+    portal_visibility_restricted = fields.Boolean(
+        string='Restrict Portal Visibility',
+        help='When enabled, only the selected portal employees can see this contract and related records in the portal.',
+    )
+    portal_employee_ids = fields.Many2many(
+        'hr.employee',
+        'construction_contract_portal_employee_rel',
+        'contract_id',
+        'employee_id',
+        string='Portal Employees',
+        help='Employees allowed to see this contract and related records in the portal.',
+    )
+    internal_visibility_restricted = fields.Boolean(
+        string='Restrict Internal Visibility',
+        help='When enabled, only the selected internal employees can see this contract and related records in Odoo.',
+    )
+    internal_employee_ids = fields.Many2many(
+        'hr.employee',
+        'construction_contract_internal_employee_rel',
+        'contract_id',
+        'employee_id',
+        string='Internal Employees',
+        help='Employees allowed to see this contract and related records inside Odoo.',
+    )
+
     boq_line_ids = fields.One2many('construction.contract.boq.line', 'contract_id', string='BOQ Lines')
     measurement_ids = fields.One2many('construction.measurement', 'contract_id', string='Measurements')
     ipc_ids = fields.One2many('construction.ipc', 'contract_id', string='IPCs')

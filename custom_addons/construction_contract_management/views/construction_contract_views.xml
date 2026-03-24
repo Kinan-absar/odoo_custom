@@ -101,6 +101,31 @@
                             </group>
                         </page>
 
+                        <page string="Visibility">
+                            <group string="Portal Visibility">
+                                <group>
+                                    <field name="portal_visibility_restricted"/>
+                                </group>
+                                <group>
+                                    <field name="portal_employee_ids"
+                                           widget="many2many_tags"
+                                           options="{'no_create_edit': True}"
+                                           invisible="not portal_visibility_restricted"/>
+                                </group>
+                            </group>
+                            <group string="Internal Visibility">
+                                <group>
+                                    <field name="internal_visibility_restricted"/>
+                                </group>
+                                <group>
+                                    <field name="internal_employee_ids"
+                                           widget="many2many_tags"
+                                           options="{'no_create_edit': True}"
+                                           invisible="not internal_visibility_restricted"/>
+                                </group>
+                            </group>
+                        </page>
+
                         <page string="BOQ Lines">
                             <field name="boq_line_ids">
                                 <list editable="bottom">

@@ -11,6 +11,12 @@ _logger = logging.getLogger(__name__)
 
 class ConstructionPortalEmployeeSuite(CustomerPortal):
 
+    def _portal_visible_contract_domain(self):
+        employee = request.env.user.employee_id
+        if employee:
+            return ['|', ('portal_visibility_restricted', '=', False), ('portal_employee_ids', 'in', [employee.id])]
+        return [('portal_visibility_restricted', '=', False)]
+
     # =========================================================
     # CONTRACTS
     # =========================================================
@@ -266,7 +272,11 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def portal_employee_variation_add_line(self, variation_id, **post):
         try:
-            variation = request.env['construction.variation'].sudo().browse(variation_id)
+            allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
+            variation = request.env['construction.variation'].search([
+                ('id', '=', variation_id),
+                ('contract_id', 'in', allowed_contract_ids),
+            ], limit=1)
             if not variation.exists():
                 return request.redirect('/my/employee/variations')
 
@@ -392,7 +402,10 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     def portal_construction_measurement_new(self, **post):
         if request.httprequest.method == 'POST':
             try:
+                allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
                 contract_id = int(post.get('contract_id'))
+                if contract_id not in allowed_contract_ids:
+                    raise ValidationError("You do not have access to this contract.")
                 vals = {
                     'contract_id': contract_id,
                     'date': post.get('date') or False,
@@ -412,14 +425,18 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
 
             except Exception as e:
                 _logger.error("Error creating measurement: %s", str(e), exc_info=True)
-                contracts = request.env['construction.contract'].sudo().search([('state', 'in', ['active', 'approved'])])
+                contracts = request.env['construction.contract'].search(
+                    [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
+                )
                 return request.render("construction_contract_management.portal_employee_measurement_new", {
                     'contracts': contracts,
                     'page_name': 'construction_measurement_new',
                     'error': 'create_failed',
                 })
 
-        contracts = request.env['construction.contract'].sudo().search([('state', 'in', ['active', 'approved'])])
+        contracts = request.env['construction.contract'].search(
+            [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
+        )
         return request.render("construction_contract_management.portal_employee_measurement_new", {
             'contracts': contracts,
             'page_name': 'construction_measurement_new',
@@ -433,13 +450,17 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         error = request.params.get('error')
         success = request.params.get('success')
 
-        measurement = request.env['construction.measurement'].sudo().browse(measurement_id)
+        allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
+        measurement = request.env['construction.measurement'].search([
+            ('id', '=', measurement_id),
+            ('contract_id', 'in', allowed_contract_ids),
+        ], limit=1)
         if not measurement.exists():
             return request.redirect('/my/employee/measurements')
 
-        contract = measurement.contract_id.sudo()
+        contract = measurement.contract_id
         boq_lines = contract.boq_line_ids.sorted(lambda l: (l.sequence, l.id))
-        MeasurementLine = request.env['construction.measurement.line'].sudo()
+        MeasurementLine = request.env['construction.measurement.line']
 
         # existing saved lines for this measurement
         existing_lines = {}
@@ -494,7 +515,11 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def portal_construction_measurement_add_lines(self, measurement_id, **post):
         try:
-            measurement = request.env['construction.measurement'].sudo().browse(measurement_id)
+            allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
+            measurement = request.env['construction.measurement'].search([
+                ('id', '=', measurement_id),
+                ('contract_id', 'in', allowed_contract_ids),
+            ], limit=1)
 
             if not measurement.exists():
                 return request.redirect('/my/employee/measurements')
