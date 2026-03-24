@@ -26,9 +26,18 @@
             .construction-report .report-title-row {
                 width: 100%;
                 border-collapse: collapse;
+                border: none !important;
+                outline: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
             }
+            .construction-report .report-title-row tr,
             .construction-report .report-title-row td {
                 vertical-align: top;
+                border: none !important;
+                outline: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
             }
             .construction-report .report-title {
                 margin: 0;

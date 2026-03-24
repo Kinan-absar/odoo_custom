@@ -344,9 +344,11 @@
                                 Contract Progress: <t t-esc="progress_pct"/>%
                             </span>
                         </div>
-                        <a t-attf-href="/my/employee/measurement/#{measurement.id}?report_type=pdf" class="btn btn-primary btn-sm" target="_blank" rel="noopener">
-                            <i class="fa fa-print"/> Print Measurement
-                        </a>
+                        <t t-if="measurement.state == 'approved'">
+                            <a t-attf-href="/my/employee/measurement/#{measurement.id}?report_type=pdf" class="btn btn-primary btn-sm" target="_blank" rel="noopener">
+                                <i class="fa fa-print"/> Print Measurement
+                            </a>
+                        </t>
                     </div>
                 </div>
 

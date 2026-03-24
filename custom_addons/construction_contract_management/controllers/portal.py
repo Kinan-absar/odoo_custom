@@ -101,6 +101,8 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             return request.redirect('/my/employee')
 
         if report_type in ('html', 'pdf', 'text'):
+            if contract.state != 'approved':
+                return request.redirect(f'/my/employee/contract/{contract.id}')
             return self._show_report(
                 model=contract.sudo(),
                 report_type=report_type,
@@ -530,6 +532,8 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             return request.redirect('/my/employee/measurements')
 
         if report_type in ('html', 'pdf', 'text'):
+            if measurement.state != 'approved':
+                return request.redirect(f'/my/employee/measurement/{measurement.id}')
             return self._show_report(
                 model=measurement.sudo(),
                 report_type=report_type,

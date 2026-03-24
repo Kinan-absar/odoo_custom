@@ -80,11 +80,15 @@
                                     <table class="summary-table">
                                         <tr>
                                             <td class="label-cell">Current Measured Value</td>
-                                            <td class="value-cell"><span t-esc="formatLang(current_value, currency_obj=doc.contract_id.currency_id)"/></td>
+                                            <td class="value-cell">
+                                                <span t-esc="'{} {:,.2f}'.format(doc.contract_id.currency_id.symbol or '', current_value or 0.0)"/>
+                                            </td>
                                         </tr>
                                         <tr>
                                             <td class="label-cell">Cumulative Value</td>
-                                            <td class="value-cell"><span t-esc="formatLang(cumulative_value, currency_obj=doc.contract_id.currency_id)"/></td>
+                                            <td class="value-cell">
+                                                <span t-esc="'{} {:,.2f}'.format(doc.contract_id.currency_id.symbol or '', cumulative_value or 0.0)"/>
+                                            </td>
                                         </tr>
                                         <tr>
                                             <td class="label-cell">Contract Revised Amount</td>

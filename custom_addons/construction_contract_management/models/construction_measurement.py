@@ -35,6 +35,10 @@ class ConstructionMeasurement(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('construction.measurement') or 'New'
         return super().create(vals)
 
+    def _get_report_base_filename(self):
+        self.ensure_one()
+        return f"Measurement_{self.name}"
+
     def _recompute_contract_progress(self):
         for rec in self:
             contract = rec.contract_id

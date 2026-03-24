@@ -201,6 +201,10 @@ class ConstructionContract(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('construction.contract') or 'New'
         return super().create(vals)
 
+    def _get_report_base_filename(self):
+        self.ensure_one()
+        return f"Contract_{self.name}"
+
     def action_submit_review(self):
         self.state = 'under_review'
 

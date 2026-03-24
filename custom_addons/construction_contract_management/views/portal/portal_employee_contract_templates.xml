@@ -108,9 +108,11 @@
                         </h3>
                     </div>
                     <div class="col-md-4 text-right">
+                        <t t-if="contract.state == 'approved'">
                         <a t-attf-href="/my/employee/contract/#{contract.id}?report_type=pdf" class="btn btn-primary" target="_blank" rel="noopener">
                             <i class="fa fa-print"/> Print Contract
                         </a>
+                        </t>
                     </div>
                 </div>
 
@@ -250,9 +252,11 @@
                         <a href="/my/employee/contracts" class="btn btn-secondary">
                             <i class="fa fa-arrow-left"/> Back to Contracts
                         </a>
-                        <a t-attf-href="/my/employee/contract/#{contract.id}?report_type=pdf" class="btn btn-primary" target="_blank" rel="noopener">
-                            <i class="fa fa-print"/> Print Contract
-                        </a>
+                        <t t-if="contract.state == 'approved'">
+                            <a t-attf-href="/my/employee/contract/#{contract.id}?report_type=pdf" class="btn btn-primary" target="_blank" rel="noopener">
+                                <i class="fa fa-print"/> Print Contract
+                            </a>
+                        </t>
                         <a href="/my/employee" class="btn btn-primary">
                             <i class="fa fa-home"/> Dashboard
                         </a>
