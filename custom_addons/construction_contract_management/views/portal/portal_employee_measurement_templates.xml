@@ -885,7 +885,7 @@
                     </div>
                 </t>
 
-                <t t-if="contracts">
+                <t t-if="has_contracts">
                     <form method="POST" action="/my/employee/measurement/new" class="mt-4">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 

@@ -409,6 +409,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 error_message = "You do not have access to any contracts for creating a measurement."
             return {
                 'contracts': contracts,
+                'has_contracts': bool(contracts),
                 'page_name': 'construction_measurement_new',
                 'error_message': error_message,
             }

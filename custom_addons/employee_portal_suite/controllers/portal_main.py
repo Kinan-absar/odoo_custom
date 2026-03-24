@@ -99,6 +99,7 @@ class EmployeePortalMain(CustomerPortal):
             ipc_count = request.env['construction.ipc'].search_count([])
             variation_count = request.env['construction.variation'].search_count([])
             measurement_count = request.env['construction.measurement'].search_count([])
+        show_construction_cards = user.has_group('construction_contract_management.group_construction_portal')
         
         # ------------------------------------------------------
         # 7. Recent Activities
@@ -141,6 +142,7 @@ class EmployeePortalMain(CustomerPortal):
             "ipc_count": ipc_count,
             "variation_count": variation_count,
             "measurement_count": measurement_count,
+            "show_construction_cards": show_construction_cards,
         })
 
     # ---------------------------------------------------------
@@ -758,6 +760,7 @@ class EmployeePortalMain(CustomerPortal):
                 error_message = "You do not have access to any contracts for creating a measurement."
             return {
                 'contracts': contracts,
+                'has_contracts': bool(contracts),
                 'page_name': 'construction_measurement_new',
                 'error_message': error_message,
             }
@@ -811,6 +814,7 @@ class EmployeePortalMain(CustomerPortal):
                 error_message = "You do not have access to any contracts for creating a variation."
             return {
                 'contracts': contracts,
+                'has_contracts': bool(contracts),
                 'page_name': 'construction_variation_new',
                 'error_message': error_message,
             }
