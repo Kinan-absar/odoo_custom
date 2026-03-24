@@ -32,7 +32,7 @@
                     <button name="action_reject" string="Reject" type="object" invisible="state not in ['submitted','checked']"/>
                     <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state == 'draft'"/>
                     <button name="action_load_boq_lines" string="Load BOQ Lines" type="object" class="btn-secondary" invisible="state != 'draft'"/>
-                    <button name="%(construction_contract_management.action_report_construction_measurement)d" string="Print" type="action" class="btn-secondary" invisible="state != 'approved'"/>
+                    <button name="%(construction_contract_management.action_report_construction_measurement)d" string="Print" type="action" class="btn-secondary" invisible="not id"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,checked,approved,rejected"/>
                 </header>

@@ -33,7 +33,7 @@
                     <button name="action_close" string="Close" type="object" invisible="state not in ['completed']"/>
                     <button name="action_cancel" string="Cancel" type="object" invisible="state in ['closed','cancelled']"/>
                     <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state == 'draft'"/>
-                    <button name="%(construction_contract_management.action_report_construction_contract)d" string="Print" type="action" class="btn-secondary" invisible="state != 'approved'"/>
+                    <button name="%(construction_contract_management.action_report_construction_contract)d" string="Print" type="action" class="btn-secondary" invisible="not id"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft,under_review,approved,active,completed,closed,cancelled"/>
                 </header>

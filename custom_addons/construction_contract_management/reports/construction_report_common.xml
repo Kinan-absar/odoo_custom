@@ -11,7 +11,7 @@
             .construction-report .report-header {
                 margin-bottom: 18px;
                 padding: 18px 20px;
-                border: 1px solid #d7dfeb;
+                border: none !important;
                 border-radius: 18px;
                 background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
             }
@@ -24,16 +24,22 @@
                 text-transform: uppercase;
             }
             .construction-report .report-title-row {
-                width: 100%;
-                border-collapse: collapse;
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 16px;
                 border: none !important;
                 outline: none !important;
                 box-shadow: none !important;
                 background: transparent !important;
             }
-            .construction-report .report-title-row tr,
-            .construction-report .report-title-row td {
-                vertical-align: top;
+            .construction-report .report-title-main {
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+            .construction-report .report-title-side {
+                flex: 0 0 auto;
+                text-align: right;
                 border: none !important;
                 outline: none !important;
                 box-shadow: none !important;

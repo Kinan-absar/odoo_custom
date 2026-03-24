@@ -11,19 +11,17 @@
 
                         <div class="report-header">
                             <p class="report-eyebrow">Construction Document</p>
-                            <table class="report-title-row">
-                                <tr>
-                                    <td>
-                                        <h1 class="report-title">Variation Order</h1>
-                                        <div class="report-subtitle">
-                                            <span t-esc="doc.name"/> for <span t-esc="doc.contract_id.name"/>
-                                        </div>
-                                    </td>
-                                    <td class="text-right" style="width: 1%;">
-                                        <span class="report-badge" t-esc="state_labels.get(doc.state, doc.state)"/>
-                                    </td>
-                                </tr>
-                            </table>
+                            <div class="report-title-row">
+                                <div class="report-title-main">
+                                    <h1 class="report-title">Variation Order</h1>
+                                    <div class="report-subtitle">
+                                        <span t-esc="doc.name"/> for <span t-esc="doc.contract_id.name"/>
+                                    </div>
+                                </div>
+                                <div class="report-title-side">
+                                    <span class="report-badge" t-esc="state_labels.get(doc.state, doc.state)"/>
+                                </div>
+                            </div>
                         </div>
 
                         <table class="meta-grid">
