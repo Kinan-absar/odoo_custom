@@ -7,9 +7,9 @@ from odoo.exceptions import AccessError, MissingError, ValidationError
 class EmployeePortalMain(CustomerPortal):
 
     def _portal_visible_contract_domain(self):
-        employee = request.env.user.employee_id
-        if employee:
-            return ['|', ('portal_visibility_restricted', '=', False), ('portal_employee_ids', 'in', [employee.id])]
+        user = request.env.user
+        if user:
+            return ['|', ('portal_visibility_restricted', '=', False), ('portal_employee_ids.user_id', '=', user.id)]
         return [('portal_visibility_restricted', '=', False)]
 
     # ---------------------------------------------------------
@@ -231,13 +231,14 @@ class EmployeePortalMain(CustomerPortal):
 
     @http.route(['/my/employee/contract/<int:contract_id>'], type='http', auth='user', website=True)
     def portal_construction_contract_detail(self, contract_id, access_token=None, **kw):
-        try:
-            contract_sudo = self._document_check_access('construction.contract', contract_id, access_token)
-        except (AccessError, MissingError):
+        contract = request.env['construction.contract'].search([
+            ('id', '=', contract_id),
+        ] + self._portal_visible_contract_domain(), limit=1)
+        if not contract:
             return request.redirect('/my/employee')
 
         values = {
-            'contract': contract_sudo,
+            'contract': contract,
             'page_name': 'construction_contract',
         }
         return request.render("construction_contract_management.portal_employee_contract_detail", values)
