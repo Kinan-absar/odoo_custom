@@ -34,7 +34,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             'name': {'label': 'Name', 'order': 'name'},
             'partner': {'label': 'Partner', 'order': 'partner_id'},
         }
-        searchbar_filters = {
+        status_options = {
             'all': {'label': 'All', 'domain': []},
             'draft': {'label': 'Draft', 'domain': [('state', '=', 'draft')]},
             'under_review': {'label': 'Under Review', 'domain': [('state', '=', 'under_review')]},
@@ -42,16 +42,28 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             'active': {'label': 'Active', 'domain': [('state', '=', 'active')]},
             'completed': {'label': 'Completed', 'domain': [('state', '=', 'completed')]},
         }
+        direction_options = {
+            'all': {'label': 'All Directions', 'domain': []},
+            'inbound': {'label': 'Inbound', 'domain': [('contract_direction', '=', 'inbound')]},
+            'outbound': {'label': 'Outbound', 'domain': [('contract_direction', '=', 'outbound')]},
+        }
 
         sortby = sortby or 'date'
-        filterby = filterby or 'all'
         order = searchbar_sortings[sortby]['order']
-        domain = list(searchbar_filters[filterby]['domain'])
+        domain = list(self._portal_visible_contract_domain())
+        status_filter = kw.get('status_filter') or filterby or 'all'
+        if status_filter not in status_options:
+            status_filter = 'all'
+        domain += status_options[status_filter]['domain']
+        direction_filter = (kw.get('direction_filter') or 'all').strip()
+        if direction_filter not in direction_options:
+            direction_filter = 'all'
+        domain += direction_options[direction_filter]['domain']
 
         contract_count = ConstructionContract.search_count(domain)
         pager = portal_pager(
             url="/my/employee/contracts",
-            url_args={'sortby': sortby, 'filterby': filterby},
+            url_args={'sortby': sortby, 'status_filter': status_filter, 'direction_filter': direction_filter},
             total=contract_count,
             page=page,
             step=self._items_per_page,
@@ -70,17 +82,17 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             'default_url': '/my/employee/contracts',
             'pager': pager,
             'searchbar_sortings': searchbar_sortings,
-            'searchbar_filters': searchbar_filters,
+            'status_options': status_options,
+            'direction_options': direction_options,
             'sortby': sortby,
-            'filterby': filterby,
+            'status_filter': status_filter,
+            'direction_filter': direction_filter,
         })
         return request.render("construction_contract_management.portal_employee_contracts", values)
 
     @http.route(['/my/employee/contract/<int:contract_id>'], type='http', auth='user', website=True)
     def portal_employee_contract_detail(self, contract_id, access_token=None, **kw):
-        contract = request.env['construction.contract'].search([
-            ('id', '=', contract_id),
-        ] + self._portal_visible_contract_domain(), limit=1)
+        contract = self._portal_visible_contracts().filtered(lambda c: c.id == contract_id)[:1]
         if not contract:
             return request.redirect('/my/employee')
 
@@ -129,11 +141,20 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             domain.append(('contract_id.project_id', '=', int(project_filter)))
         else:
             project_filter = 'all'
+        direction_options = {
+            'all': {'label': 'All Directions', 'domain': []},
+            'inbound': {'label': 'Inbound', 'domain': [('contract_id.contract_direction', '=', 'inbound')]},
+            'outbound': {'label': 'Outbound', 'domain': [('contract_id.contract_direction', '=', 'outbound')]},
+        }
+        direction_filter = (kw.get('direction_filter') or 'all').strip()
+        if direction_filter not in direction_options:
+            direction_filter = 'all'
+        domain += direction_options[direction_filter]['domain']
 
         ipc_count = ConstructionIPC.search_count(domain)
         pager = portal_pager(
             url="/my/employee/ipcs",
-            url_args={'sortby': sortby, 'status_filter': status_filter, 'project_filter': project_filter},
+            url_args={'sortby': sortby, 'status_filter': status_filter, 'project_filter': project_filter, 'direction_filter': direction_filter},
             total=ipc_count,
             page=page,
             step=self._items_per_page,
@@ -154,9 +175,11 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             'searchbar_sortings': searchbar_sortings,
             'status_options': status_options,
             'project_options': project_options,
+            'direction_options': direction_options,
             'sortby': sortby,
             'status_filter': status_filter,
             'project_filter': project_filter,
+            'direction_filter': direction_filter,
         })
         return request.render("construction_contract_management.portal_employee_ipcs", values)
 
@@ -218,11 +241,20 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             domain.append(('contract_id.project_id', '=', int(project_filter)))
         else:
             project_filter = 'all'
+        direction_options = {
+            'all': {'label': 'All Directions', 'domain': []},
+            'inbound': {'label': 'Inbound', 'domain': [('contract_id.contract_direction', '=', 'inbound')]},
+            'outbound': {'label': 'Outbound', 'domain': [('contract_id.contract_direction', '=', 'outbound')]},
+        }
+        direction_filter = (kw.get('direction_filter') or 'all').strip()
+        if direction_filter not in direction_options:
+            direction_filter = 'all'
+        domain += direction_options[direction_filter]['domain']
 
         variation_count = ConstructionVariation.search_count(domain)
         pager = portal_pager(
             url="/my/employee/variations",
-            url_args={'sortby': sortby, 'status_filter': status_filter, 'project_filter': project_filter},
+            url_args={'sortby': sortby, 'status_filter': status_filter, 'project_filter': project_filter, 'direction_filter': direction_filter},
             total=variation_count,
             page=page,
             step=self._items_per_page,
@@ -243,9 +275,11 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             'searchbar_sortings': searchbar_sortings,
             'status_options': status_options,
             'project_options': project_options,
+            'direction_options': direction_options,
             'sortby': sortby,
             'status_filter': status_filter,
             'project_filter': project_filter,
+            'direction_filter': direction_filter,
         })
         return request.render("construction_contract_management.portal_employee_variations", values)
 
@@ -369,11 +403,20 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             domain.append(('contract_id.project_id', '=', int(project_filter)))
         else:
             project_filter = 'all'
+        direction_options = {
+            'all': {'label': 'All Directions', 'domain': []},
+            'inbound': {'label': 'Inbound', 'domain': [('contract_id.contract_direction', '=', 'inbound')]},
+            'outbound': {'label': 'Outbound', 'domain': [('contract_id.contract_direction', '=', 'outbound')]},
+        }
+        direction_filter = (kw.get('direction_filter') or 'all').strip()
+        if direction_filter not in direction_options:
+            direction_filter = 'all'
+        domain += direction_options[direction_filter]['domain']
 
         measurement_count = Measurement.search_count(domain)
         pager = portal_pager(
             url="/my/employee/measurements",
-            url_args={'sortby': sortby, 'status_filter': status_filter, 'project_filter': project_filter},
+            url_args={'sortby': sortby, 'status_filter': status_filter, 'project_filter': project_filter, 'direction_filter': direction_filter},
             total=measurement_count,
             page=page,
             step=self._items_per_page,
@@ -393,9 +436,11 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             'searchbar_sortings': searchbar_sortings,
             'status_options': status_options,
             'project_options': project_options,
+            'direction_options': direction_options,
             'sortby': sortby,
             'status_filter': status_filter,
             'project_filter': project_filter,
+            'direction_filter': direction_filter,
         })
         return request.render("construction_contract_management.portal_employee_measurements", values)
 
