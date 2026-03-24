@@ -15,6 +15,9 @@ class EmployeePortalMain(CustomerPortal):
     def _portal_visible_contracts(self):
         return request.env['construction.contract'].sudo().search(self._portal_visible_contract_domain())
 
+    def _portal_visible_contract_ids(self):
+        return self._portal_visible_contracts().ids
+
     # ---------------------------------------------------------
     # EMPLOYEE PORTAL DASHBOARD (MAIN /my/employee)
     # ---------------------------------------------------------
@@ -185,9 +188,10 @@ class EmployeePortalMain(CustomerPortal):
             return request.redirect("/my/employee")
 
         values = self._prepare_portal_layout_values()
-        ConstructionContract = request.env['construction.contract']
+        ConstructionContract = request.env['construction.contract'].sudo()
 
-        domain = list(self._portal_visible_contract_domain())
+        allowed_contract_ids = self._portal_visible_contract_ids()
+        domain = [('id', 'in', allowed_contract_ids)] if allowed_contract_ids else [('id', '=', 0)]
         searchbar_sortings = {
             'date': {'label': 'Newest', 'order': 'id desc'},
             'name': {'label': 'Name', 'order': 'name'},
@@ -271,9 +275,10 @@ class EmployeePortalMain(CustomerPortal):
             return request.redirect("/my/employee")
 
         values = self._prepare_portal_layout_values()
-        ConstructionIPC = request.env['construction.ipc']
+        ConstructionIPC = request.env['construction.ipc'].sudo()
 
-        domain = []
+        allowed_contract_ids = self._portal_visible_contract_ids()
+        domain = [('contract_id', 'in', allowed_contract_ids)] if allowed_contract_ids else [('id', '=', 0)]
         searchbar_sortings = {
             'date': {'label': 'Newest', 'order': 'id desc'},
             'name': {'label': 'Reference', 'order': 'name'},
@@ -297,7 +302,7 @@ class EmployeePortalMain(CustomerPortal):
             status_filter = 'all'
         domain += status_options[status_filter]['domain']
 
-        project_option_records = ConstructionIPC.search([]).mapped('contract_id.project_id').filtered(lambda p: p.id)
+        project_option_records = self._portal_visible_contracts().mapped('project_id').filtered(lambda p: p.id)
         project_options = [{'value': 'all', 'label': 'All Projects'}]
         for project in project_option_records.sorted(lambda p: (p.name or '').lower()):
             project_options.append({'value': str(project.id), 'label': project.name})
@@ -376,9 +381,10 @@ class EmployeePortalMain(CustomerPortal):
             return request.redirect("/my/employee")
 
         values = self._prepare_portal_layout_values()
-        ConstructionVariation = request.env['construction.variation']
+        ConstructionVariation = request.env['construction.variation'].sudo()
 
-        domain = []
+        allowed_contract_ids = self._portal_visible_contract_ids()
+        domain = [('contract_id', 'in', allowed_contract_ids)] if allowed_contract_ids else [('id', '=', 0)]
         searchbar_sortings = {
             'date': {'label': 'Newest', 'order': 'id desc'},
             'name': {'label': 'Reference', 'order': 'name'},
@@ -400,7 +406,7 @@ class EmployeePortalMain(CustomerPortal):
             status_filter = 'all'
         domain += status_options[status_filter]['domain']
 
-        project_option_records = ConstructionVariation.search([]).mapped('contract_id.project_id').filtered(lambda p: p.id)
+        project_option_records = self._portal_visible_contracts().mapped('project_id').filtered(lambda p: p.id)
         project_options = [{'value': 'all', 'label': 'All Projects'}]
         for project in project_option_records.sorted(lambda p: (p.name or '').lower()):
             project_options.append({'value': str(project.id), 'label': project.name})
@@ -542,9 +548,10 @@ class EmployeePortalMain(CustomerPortal):
             return request.redirect("/my/employee")
 
         values = self._prepare_portal_layout_values()
-        ConstructionMeasurement = request.env['construction.measurement']
+        ConstructionMeasurement = request.env['construction.measurement'].sudo()
 
-        domain = []
+        allowed_contract_ids = self._portal_visible_contract_ids()
+        domain = [('contract_id', 'in', allowed_contract_ids)] if allowed_contract_ids else [('id', '=', 0)]
         searchbar_sortings = {
             'date': {'label': 'Newest', 'order': 'id desc'},
             'name': {'label': 'Reference', 'order': 'name'},
@@ -567,7 +574,7 @@ class EmployeePortalMain(CustomerPortal):
             status_filter = 'all'
         domain += status_options[status_filter]['domain']
 
-        project_option_records = ConstructionMeasurement.search([]).mapped('contract_id.project_id').filtered(lambda p: p.id)
+        project_option_records = self._portal_visible_contracts().mapped('project_id').filtered(lambda p: p.id)
         project_options = [{'value': 'all', 'label': 'All Projects'}]
         for project in project_option_records.sorted(lambda p: (p.name or '').lower()):
             project_options.append({'value': str(project.id), 'label': project.name})

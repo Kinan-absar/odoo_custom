@@ -20,6 +20,9 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     def _portal_visible_contracts(self):
         return request.env['construction.contract'].sudo().search(self._portal_visible_contract_domain())
 
+    def _portal_visible_contract_ids(self):
+        return self._portal_visible_contracts().ids
+
     # =========================================================
     # CONTRACTS
     # =========================================================
@@ -50,7 +53,8 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
 
         sortby = sortby or 'date'
         order = searchbar_sortings[sortby]['order']
-        domain = list(self._portal_visible_contract_domain())
+        allowed_contract_ids = self._portal_visible_contract_ids()
+        domain = [('id', 'in', allowed_contract_ids)] if allowed_contract_ids else [('id', '=', 0)]
         status_filter = kw.get('status_filter') or filterby or 'all'
         if status_filter not in status_options:
             status_filter = 'all'
@@ -129,9 +133,11 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         status_filter = kw.get('status_filter') or filterby or 'all'
         if status_filter not in status_options:
             status_filter = 'all'
-        domain = list(status_options[status_filter]['domain'])
+        allowed_contract_ids = self._portal_visible_contract_ids()
+        domain = [('contract_id', 'in', allowed_contract_ids)] if allowed_contract_ids else [('id', '=', 0)]
+        domain += list(status_options[status_filter]['domain'])
 
-        project_option_records = ConstructionIPC.search([]).mapped('contract_id.project_id').filtered(lambda p: p.id)
+        project_option_records = self._portal_visible_contracts().mapped('project_id').filtered(lambda p: p.id)
         project_options = [{'value': 'all', 'label': 'All Projects'}]
         for project in project_option_records.sorted(lambda p: (p.name or '').lower()):
             project_options.append({'value': str(project.id), 'label': project.name})
@@ -229,9 +235,11 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         status_filter = kw.get('status_filter') or filterby or 'all'
         if status_filter not in status_options:
             status_filter = 'all'
-        domain = list(status_options[status_filter]['domain'])
+        allowed_contract_ids = self._portal_visible_contract_ids()
+        domain = [('contract_id', 'in', allowed_contract_ids)] if allowed_contract_ids else [('id', '=', 0)]
+        domain += list(status_options[status_filter]['domain'])
 
-        project_option_records = ConstructionVariation.search([]).mapped('contract_id.project_id').filtered(lambda p: p.id)
+        project_option_records = self._portal_visible_contracts().mapped('project_id').filtered(lambda p: p.id)
         project_options = [{'value': 'all', 'label': 'All Projects'}]
         for project in project_option_records.sorted(lambda p: (p.name or '').lower()):
             project_options.append({'value': str(project.id), 'label': project.name})
@@ -391,9 +399,11 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         status_filter = kw.get('status_filter') or filterby or 'all'
         if status_filter not in status_options:
             status_filter = 'all'
-        domain = list(status_options[status_filter]['domain'])
+        allowed_contract_ids = self._portal_visible_contract_ids()
+        domain = [('contract_id', 'in', allowed_contract_ids)] if allowed_contract_ids else [('id', '=', 0)]
+        domain += list(status_options[status_filter]['domain'])
 
-        project_option_records = Measurement.search([]).mapped('contract_id.project_id').filtered(lambda p: p.id)
+        project_option_records = self._portal_visible_contracts().mapped('project_id').filtered(lambda p: p.id)
         project_options = [{'value': 'all', 'label': 'All Projects'}]
         for project in project_option_records.sorted(lambda p: (p.name or '').lower()):
             project_options.append({'value': str(project.id), 'label': project.name})
