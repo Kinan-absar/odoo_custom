@@ -614,9 +614,11 @@
                                 <![CDATA[
                                 function validateQuantity(input) {
                                     var qty = parseFloat(input.value) || 0;
-                                    var remaining = parseFloat(input.getAttribute('data-remaining')) || 0;
                                     var allowed = parseFloat(input.getAttribute('data-allowed')) || 0;
                                     var previous = parseFloat(input.getAttribute('data-previous')) || 0;
+                                    var totalQty = previous + qty;
+                                    var overLimit = allowed && totalQty > allowed;
+                                    var exceededBy = overLimit ? (totalQty - allowed) : 0;
                                     var row = input.closest('tr');
 
                                     var existingWarning = row.querySelector('.qty-warning');
@@ -624,14 +626,14 @@
                                         existingWarning.remove();
                                     }
 
-                                    if (qty > remaining) {
+                                    if (overLimit) {
                                         input.style.borderColor = '#ffc107';
                                         input.style.backgroundColor = '#fff3cd';
 
                                         var warning = document.createElement('div');
                                         warning.className = 'qty-warning';
                                         warning.style.cssText = 'color: #856404; font-size: 11px; margin-top: 2px;';
-                                        warning.innerHTML = '<i class="fa fa-exclamation-triangle"></i> Exceeds remaining: ' + remaining.toFixed(2);
+                                        warning.innerHTML = '<i class="fa fa-exclamation-triangle"></i> Exceeds allowed by: ' + exceededBy.toFixed(2);
                                         input.parentNode.appendChild(warning);
                                     } else {
                                         input.style.borderColor = '';
@@ -648,7 +650,6 @@
                                         hiddenPercentInput.value = allowed ? ((qty / allowed) * 100).toFixed(2) : '0.00';
                                     }
 
-                                    var totalQty = previous + qty;
                                     var totalQtyDisplay = row.querySelector('.total-qty-display');
                                     if (totalQtyDisplay) {
                                         totalQtyDisplay.textContent = totalQty.toFixed(2);
@@ -747,15 +748,9 @@
                                         });
                                     }, 4200);
 
-                                    var inputs = document.querySelectorAll('input[id^="qty_"]');
-                                    inputs.forEach(function(input) {
-                                        if (parseFloat(input.value) > 0) {
-                                            validateQuantity(input);
-                                        }
-                                    });
-
                                     document.querySelectorAll('.current-entry-input').forEach(function(entryInput) {
                                         syncCurrentModeForRow(entryInput);
+                                        syncCurrentEntry(entryInput);
                                     });
                                 });
                                 ]]>
