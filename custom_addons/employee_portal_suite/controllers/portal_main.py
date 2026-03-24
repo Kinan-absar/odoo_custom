@@ -252,10 +252,18 @@ class EmployeePortalMain(CustomerPortal):
         return request.render("construction_contract_management.portal_employee_contracts", values)
 
     @http.route(['/my/employee/contract/<int:contract_id>'], type='http', auth='user', website=True)
-    def portal_construction_contract_detail(self, contract_id, access_token=None, **kw):
+    def portal_construction_contract_detail(self, contract_id, access_token=None, report_type=None, download=False, **kw):
         contract = self._portal_visible_contracts().filtered(lambda c: c.id == contract_id)[:1]
         if not contract:
             return request.redirect('/my/employee')
+
+        if report_type in ('html', 'pdf', 'text'):
+            return self._show_report(
+                model=contract.sudo(),
+                report_type=report_type,
+                report_ref='construction_contract_management.action_report_construction_contract',
+                download=download,
+            )
 
         values = {
             'contract': contract,
@@ -626,7 +634,7 @@ class EmployeePortalMain(CustomerPortal):
     # CONSTRUCTION - MEASUREMENT DETAIL (with BOQ for editing)
     # ---------------------------------------------------------
     @http.route(['/my/employee/measurement/<int:measurement_id>'], type='http', auth='user', website=True)
-    def portal_construction_measurement_detail(self, measurement_id, **kw):
+    def portal_construction_measurement_detail(self, measurement_id, report_type=None, download=False, **kw):
         try:
             error = request.params.get('error')
             success = request.params.get('success')
@@ -638,6 +646,14 @@ class EmployeePortalMain(CustomerPortal):
 
             if not measurement.exists():
                 return request.redirect('/my/employee/measurements')
+
+            if report_type in ('html', 'pdf', 'text'):
+                return self._show_report(
+                    model=measurement.sudo(),
+                    report_type=report_type,
+                    report_ref='construction_contract_management.action_report_construction_measurement',
+                    download=download,
+                )
 
             contract = measurement.contract_id
             boq_lines = contract.boq_line_ids.sorted(lambda l: (l.sequence, l.id))

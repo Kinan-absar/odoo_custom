@@ -1,67 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="report_construction_variation">
         <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="o">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="state_labels" t-value="{'draft': 'Draft', 'submitted': 'Submitted', 'approved': 'Approved', 'rejected': 'Rejected'}"/>
+                <t t-set="type_labels" t-value="{'increase': 'Quantity Increase', 'decrease': 'Quantity Decrease', 'new': 'New Item', 'omit': 'Omit Item', 'rate': 'Rate Change'}"/>
                 <t t-call="web.external_layout">
-                    <div class="page">
-                        <h2>Variation Report</h2>
+                    <div class="page construction-report">
+                        <t t-call="construction_contract_management.report_construction_common_styles"/>
 
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <strong>Variation No:</strong> <span t-field="o.name"/><br/>
-                                <strong>Date:</strong> <span t-field="o.date"/><br/>
-                                <strong>Contract:</strong> <span t-field="o.contract_id.name"/><br/>
-                                <strong>Project:</strong> <span t-field="o.contract_id.project_id.name"/><br/>
-                                <strong>Partner:</strong> <span t-field="o.contract_id.partner_id.name"/>
-                            </div>
-                            <div class="col-6">
-                                <strong>Status:</strong> <span t-field="o.state"/><br/>
-                                <strong>Total Amount:</strong> <span t-field="o.total_amount"/>
-                            </div>
+                        <div class="report-header">
+                            <p class="report-eyebrow">Construction Document</p>
+                            <table class="report-title-row">
+                                <tr>
+                                    <td>
+                                        <h1 class="report-title">Variation Order</h1>
+                                        <div class="report-subtitle">
+                                            <span t-esc="doc.name"/> for <span t-esc="doc.contract_id.name"/>
+                                        </div>
+                                    </td>
+                                    <td class="text-right" style="width: 1%;">
+                                        <span class="report-badge" t-esc="state_labels.get(doc.state, doc.state)"/>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
 
-                        <t t-if="o.description">
-                            <p><strong>Description:</strong> <span t-field="o.description"/></p>
-                        </t>
+                        <table class="meta-grid">
+                            <tr>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Project</div>
+                                        <div class="meta-value"><span t-field="doc.contract_id.project_id"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Contract</div>
+                                        <div class="meta-value"><span t-field="doc.contract_id"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Date</div>
+                                        <div class="meta-value"><span t-field="doc.date"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Variation Amount</div>
+                                        <div class="meta-value"><span t-field="doc.total_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
 
-                        <table class="table table-sm table-bordered">
+                        <table class="two-col">
+                            <tr>
+                                <td>
+                                    <div class="section-title">Contract Summary</div>
+                                    <table class="summary-table">
+                                        <tr>
+                                            <td class="label-cell">Partner</td>
+                                            <td class="value-cell"><span t-field="doc.contract_id.partner_id"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Direction</td>
+                                            <td class="value-cell"><span t-esc="'Inbound' if doc.contract_id.contract_direction == 'inbound' else 'Outbound'"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Original Contract Value</td>
+                                            <td class="value-cell"><span t-field="doc.contract_id.original_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Revised Contract Value</td>
+                                            <td class="value-cell"><span t-field="doc.contract_id.revised_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td>
+                                    <div class="section-title">Description</div>
+                                    <div class="note-box" style="margin-top:0;">
+                                        <div class="note-title">Variation Notes</div>
+                                        <div t-esc="doc.description or 'No description provided.'"/>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div class="section-title">Variation Lines</div>
+                        <table class="data-table">
                             <thead>
                                 <tr>
                                     <th>Type</th>
-                                    <th>BOQ Line</th>
+                                    <th>Section</th>
+                                    <th>Item Code</th>
                                     <th>Description</th>
-                                    <th class="text-end">Original Qty</th>
-                                    <th class="text-end">Variation Qty</th>
-                                    <th class="text-end">Revised Qty</th>
-                                    <th class="text-end">Rate</th>
-                                    <th class="text-end">Impact</th>
+                                    <th class="text-right">Original Qty</th>
+                                    <th class="text-right">Variation Qty</th>
+                                    <th class="text-right">Revised Qty</th>
+                                    <th class="text-right">Unit Rate</th>
+                                    <th class="text-right">Impact Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr t-foreach="o.line_ids" t-as="l">
-                                    <td><span t-field="l.type"/></td>
-                                    <td><span t-field="l.boq_line_id"/></td>
-                                    <td><span t-field="l.description"/></td>
-                                    <td class="text-end"><span t-field="l.original_qty"/></td>
-                                    <td class="text-end"><span t-field="l.variation_qty"/></td>
-                                    <td class="text-end"><span t-field="l.revised_qty"/></td>
-                                    <td class="text-end"><span t-field="l.unit_rate"/></td>
-                                    <td class="text-end"><span t-field="l.amount"/></td>
+                                <tr t-foreach="doc.line_ids" t-as="line">
+                                    <td><span t-esc="type_labels.get(line.type, line.type)"/></td>
+                                    <td><span t-esc="line.section or '-'"/></td>
+                                    <td>
+                                        <span t-esc="line.item_code or '-'"/>
+                                        <t t-if="line.created_boq_line_id">
+                                            <div class="muted">BOQ: <span t-esc="line.created_boq_line_id.display_name"/></div>
+                                        </t>
+                                    </td>
+                                    <td><span t-esc="line.description or '-'"/></td>
+                                    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.original_qty or 0.0)"/></td>
+                                    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.variation_qty or 0.0)"/></td>
+                                    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.revised_qty or 0.0)"/></td>
+                                    <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                    <td class="text-right"><span t-field="line.amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
                                 </tr>
                             </tbody>
                         </table>
 
-                        <div class="row mt-4">
-                            <div class="col-8"/>
-                            <div class="col-4">
-                                <table class="table table-sm table-bordered">
-                                    <tr>
-                                        <td><strong>Total Variation Amount</strong></td>
-                                        <td class="text-end"><strong t-field="o.total_amount"/></td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
+                        <table class="summary-table" style="width: 38%; margin-left: auto; margin-top: 14px;">
+                            <tr class="emphasis">
+                                <td class="label-cell">Total Variation Amount</td>
+                                <td class="value-cell"><span t-field="doc.total_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                            </tr>
+                        </table>
                     </div>
                 </t>
             </t>

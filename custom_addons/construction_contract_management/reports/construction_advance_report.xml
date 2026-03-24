@@ -1,38 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="report_construction_advance">
         <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="o">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="state_labels" t-value="{'draft': 'Draft', 'posted': 'Posted', 'cancelled': 'Cancelled'}"/>
                 <t t-call="web.external_layout">
-                    <div class="page">
-                        <h2>Advance Payment Report</h2>
+                    <div class="page construction-report">
+                        <t t-call="construction_contract_management.report_construction_common_styles"/>
 
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <strong>Advance No:</strong> <span t-field="o.name"/><br/>
-                                <strong>Date:</strong> <span t-field="o.date"/><br/>
-                                <strong>Contract:</strong> <span t-field="o.contract_id.name"/><br/>
-                                <strong>Project:</strong> <span t-field="o.contract_id.project_id.name"/><br/>
-                                <strong>Partner:</strong> <span t-field="o.contract_id.partner_id.name"/>
-                            </div>
-                            <div class="col-6">
-                                <strong>Direction:</strong> <span t-field="o.contract_direction"/><br/>
-                                <strong>Status:</strong> <span t-field="o.state"/><br/>
-                                <strong>Invoice/Bill:</strong> <span t-field="o.move_id.name"/>
-                            </div>
+                        <div class="report-header">
+                            <p class="report-eyebrow">Construction Document</p>
+                            <table class="report-title-row">
+                                <tr>
+                                    <td>
+                                        <h1 class="report-title">Advance Payment</h1>
+                                        <div class="report-subtitle">
+                                            <span t-esc="doc.name"/> for <span t-esc="doc.contract_id.name"/>
+                                        </div>
+                                    </td>
+                                    <td class="text-right" style="width: 1%;">
+                                        <span class="report-badge" t-esc="state_labels.get(doc.state, doc.state)"/>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
 
-                        <table class="table table-sm table-bordered mt-4">
+                        <table class="meta-grid">
                             <tr>
-                                <td>Advance Amount</td>
-                                <td class="text-end"><span t-field="o.amount"/></td>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Project</div>
+                                        <div class="meta-value"><span t-field="doc.project_id"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Contract</div>
+                                        <div class="meta-value"><span t-field="doc.contract_id"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Date</div>
+                                        <div class="meta-value"><span t-field="doc.date"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Partner</div>
+                                        <div class="meta-value"><span t-field="doc.partner_id"/></div>
+                                    </div>
+                                </td>
                             </tr>
+                        </table>
+
+                        <table class="two-col">
                             <tr>
-                                <td>VAT</td>
-                                <td class="text-end"><span t-field="o.tax_amount"/></td>
-                            </tr>
-                            <tr>
-                                <td><strong>Total Amount</strong></td>
-                                <td class="text-end"><strong t-field="o.total_amount"/></td>
+                                <td>
+                                    <div class="section-title">Advance Details</div>
+                                    <table class="summary-table">
+                                        <tr>
+                                            <td class="label-cell">Direction</td>
+                                            <td class="value-cell"><span t-esc="'Inbound' if doc.contract_direction == 'inbound' else 'Outbound'"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Contract Advance %</td>
+                                            <td class="value-cell"><span t-esc="'{:.2f}%'.format(doc.contract_id.advance_percent or 0.0)"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Journal Entry / Invoice</td>
+                                            <td class="value-cell"><span t-esc="doc.move_id.name or '-'"/></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td>
+                                    <div class="section-title">Amounts</div>
+                                    <table class="summary-table">
+                                        <tr>
+                                            <td class="label-cell">Advance Amount</td>
+                                            <td class="value-cell"><span t-field="doc.amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">VAT</td>
+                                            <td class="value-cell"><span t-field="doc.tax_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                        </tr>
+                                        <tr class="emphasis">
+                                            <td class="label-cell">Total Amount</td>
+                                            <td class="value-cell"><span t-field="doc.total_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                        </tr>
+                                    </table>
+                                </td>
                             </tr>
                         </table>
                     </div>

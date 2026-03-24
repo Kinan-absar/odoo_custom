@@ -102,10 +102,15 @@
         <t t-call="employee_portal_suite.employee_portal_layout">
             <div class="container">
                 <div class="row mt-4">
-                    <div class="col-12">
+                    <div class="col-md-8">
                         <h3 class="mb-3">
                             <small class="text-muted">Contract -</small> <span t-field="contract.name"/>
                         </h3>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <a t-attf-href="/my/employee/contract/#{contract.id}?report_type=pdf" class="btn btn-primary" target="_blank" rel="noopener">
+                            <i class="fa fa-print"/> Print Contract
+                        </a>
                     </div>
                 </div>
 
@@ -244,6 +249,9 @@
                     <div class="col-12">
                         <a href="/my/employee/contracts" class="btn btn-secondary">
                             <i class="fa fa-arrow-left"/> Back to Contracts
+                        </a>
+                        <a t-attf-href="/my/employee/contract/#{contract.id}?report_type=pdf" class="btn btn-primary" target="_blank" rel="noopener">
+                            <i class="fa fa-print"/> Print Contract
                         </a>
                         <a href="/my/employee" class="btn btn-primary">
                             <i class="fa fa-home"/> Dashboard

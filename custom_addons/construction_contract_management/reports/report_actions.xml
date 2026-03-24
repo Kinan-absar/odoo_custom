@@ -1,5 +1,25 @@
 <odoo>
 
+    <record id="action_report_construction_contract" model="ir.actions.report">
+        <field name="name">Contract Report</field>
+        <field name="model">construction.contract</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">construction_contract_management.report_construction_contract</field>
+        <field name="report_file">construction_contract_management.report_construction_contract</field>
+        <field name="binding_model_id" ref="model_construction_contract"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_construction_measurement" model="ir.actions.report">
+        <field name="name">Measurement Report</field>
+        <field name="model">construction.measurement</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">construction_contract_management.report_construction_measurement</field>
+        <field name="report_file">construction_contract_management.report_construction_measurement</field>
+        <field name="binding_model_id" ref="model_construction_measurement"/>
+        <field name="binding_type">report</field>
+    </record>
+
     <record id="action_report_construction_ipc" model="ir.actions.report">
         <field name="name">IPC Report</field>
         <field name="model">construction.ipc</field>
