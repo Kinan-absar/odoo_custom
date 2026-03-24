@@ -202,12 +202,42 @@
                                     <div class="col-6 text-right"><span t-field="contract.advance_balance" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
                                 </div>
                                 <div class="row mb-2">
+                                    <div class="col-6"><strong>Latest Advance Payment:</strong></div>
+                                    <div class="col-6 text-right">
+                                        <t t-set="latest_advance" t-value="contract.advance_ids[:1]"/>
+                                        <t t-if="latest_advance">
+                                            <span t-if="latest_advance.payment_status == 'no_move'" class="badge badge-secondary">Not Invoiced</span>
+                                            <span t-if="latest_advance.payment_status == 'not_paid'" class="badge badge-warning">Not Paid</span>
+                                            <span t-if="latest_advance.payment_status == 'partial'" class="badge badge-info">Partial</span>
+                                            <span t-if="latest_advance.payment_status == 'in_payment'" class="badge badge-primary">In Payment</span>
+                                            <span t-if="latest_advance.payment_status == 'paid'" class="badge badge-success">Paid</span>
+                                            <span t-if="latest_advance.payment_status == 'cancelled'" class="badge badge-danger">Cancelled</span>
+                                        </t>
+                                        <t t-if="not latest_advance">-</t>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
                                     <div class="col-6"><strong>Retention %:</strong></div>
                                     <div class="col-6 text-right"><span t-field="contract.retention_percent"/>%</div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-6"><strong>VAT %:</strong></div>
                                     <div class="col-6 text-right"><span t-field="contract.vat_percent"/>%</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Latest Retention Release:</strong></div>
+                                    <div class="col-6 text-right">
+                                        <t t-set="latest_retention" t-value="contract.retention_release_ids[:1]"/>
+                                        <t t-if="latest_retention">
+                                            <span t-if="latest_retention.payment_status == 'no_move'" class="badge badge-secondary">Not Posted</span>
+                                            <span t-if="latest_retention.payment_status == 'not_paid'" class="badge badge-warning">Not Paid</span>
+                                            <span t-if="latest_retention.payment_status == 'partial'" class="badge badge-info">Partial</span>
+                                            <span t-if="latest_retention.payment_status == 'in_payment'" class="badge badge-primary">In Payment</span>
+                                            <span t-if="latest_retention.payment_status == 'paid'" class="badge badge-success">Paid</span>
+                                            <span t-if="latest_retention.payment_status == 'cancelled'" class="badge badge-danger">Cancelled</span>
+                                        </t>
+                                        <t t-if="not latest_retention">-</t>
+                                    </div>
                                 </div>
                             </div>
                         </div>

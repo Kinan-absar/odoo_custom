@@ -66,6 +66,7 @@
                                     <th>Period</th>
                                     <th class="text-right">Current Value</th>
                                     <th class="text-right">Net Amount</th>
+                                    <th>Payment</th>
                                     <th>Status</th>
                                     <th></th>
                                 </tr>
@@ -80,6 +81,14 @@
                                         <td><span t-field="ipc.period_from"/> - <span t-field="ipc.period_to"/></td>
                                         <td class="text-right"><span t-field="ipc.current_work_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
                                         <td class="text-right"><span t-field="ipc.net_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                                        <td>
+                                            <span t-if="ipc.payment_status == 'no_move'" class="badge badge-secondary">Not Invoiced</span>
+                                            <span t-if="ipc.payment_status == 'not_paid'" class="badge badge-warning">Not Paid</span>
+                                            <span t-if="ipc.payment_status == 'partial'" class="badge badge-info">Partial</span>
+                                            <span t-if="ipc.payment_status == 'in_payment'" class="badge badge-primary">In Payment</span>
+                                            <span t-if="ipc.payment_status == 'paid'" class="badge badge-success">Paid</span>
+                                            <span t-if="ipc.payment_status == 'cancelled'" class="badge badge-danger">Cancelled</span>
+                                        </td>
                                         <td>
                                             <span t-if="ipc.state == 'draft'" class="badge badge-secondary">Draft</span>
                                             <span t-if="ipc.state == 'under_review'" class="badge badge-info">Under Review</span>
@@ -254,6 +263,17 @@
                                     <div class="col-5"><strong>Period:</strong></div>
                                     <div class="col-7">
                                         <span t-field="ipc.period_from"/> - <span t-field="ipc.period_to"/>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Payment Status:</strong></div>
+                                    <div class="col-7">
+                                        <span t-if="ipc.payment_status == 'no_move'" class="badge badge-secondary">Not Invoiced</span>
+                                        <span t-if="ipc.payment_status == 'not_paid'" class="badge badge-warning">Not Paid</span>
+                                        <span t-if="ipc.payment_status == 'partial'" class="badge badge-info">Partial</span>
+                                        <span t-if="ipc.payment_status == 'in_payment'" class="badge badge-primary">In Payment</span>
+                                        <span t-if="ipc.payment_status == 'paid'" class="badge badge-success">Paid</span>
+                                        <span t-if="ipc.payment_status == 'cancelled'" class="badge badge-danger">Cancelled</span>
                                     </div>
                                 </div>
                             </div>
