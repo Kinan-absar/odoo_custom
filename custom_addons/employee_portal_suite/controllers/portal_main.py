@@ -463,11 +463,19 @@ class EmployeePortalMain(CustomerPortal):
         return request.render("construction_contract_management.portal_employee_variations", values)
 
     @http.route(['/my/employee/variation/<int:variation_id>'], type='http', auth='user', website=True)
-    def portal_construction_variation_detail(self, variation_id, access_token=None, **kw):
+    def portal_construction_variation_detail(self, variation_id, access_token=None, report_type=None, download=False, **kw):
         try:
             variation_sudo = self._document_check_access('construction.variation', variation_id, access_token)
         except (AccessError, MissingError):
             return request.redirect('/my/employee')
+
+        if report_type in ('html', 'pdf', 'text'):
+            return self._show_report(
+                model=variation_sudo,
+                report_type=report_type,
+                report_ref='construction_contract_management.action_report_construction_variation',
+                download=download,
+            )
 
         values = {
             'variation': variation_sudo,

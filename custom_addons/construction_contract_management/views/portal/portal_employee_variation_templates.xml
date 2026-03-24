@@ -163,6 +163,14 @@
                     </div>
                 </div>
 
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <a t-attf-href="/my/employee/variation/#{variation.id}?report_type=pdf" class="btn btn-primary" target="_blank" rel="noopener">
+                            <i class="fa fa-print"/> Print Variation
+                        </a>
+                    </div>
+                </div>
+
                 <t t-set="description_parts" t-value="(variation.description or '').split('\n\nReason: ', 1)"/>
                 <t t-set="variation_summary" t-value="description_parts[0] if description_parts else ''"/>
                 <t t-set="variation_reason" t-value="description_parts[1] if len(description_parts) &gt; 1 else ''"/>
