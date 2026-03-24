@@ -265,8 +265,8 @@
                 <field name="project_id"/>
                 <field name="partner_id"/>
 
-                <filter string="Inbound" name="filter_inbound" domain="[('contract_direction','=','inbound')]"/>
-                <filter string="Outbound" name="filter_outbound" domain="[('contract_direction','=','outbound')]"/>
+                <filter string="Client Contract" name="filter_inbound" domain="[('contract_direction','=','inbound')]"/>
+                <filter string="Subcontract" name="filter_outbound" domain="[('contract_direction','=','outbound')]"/>
 
                 <filter string="Draft" name="filter_draft" domain="[('state','=','draft')]"/>
                 <filter string="Active" name="filter_active" domain="[('state','=','active')]"/>
@@ -289,7 +289,7 @@
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_construction_contract_search"/>
         <field name="help" type="html">
-            <p>Create and manage inbound and outbound construction contracts.</p>
+            <p>Create and manage client contracts and subcontracts.</p>
         </field>
     </record>
 

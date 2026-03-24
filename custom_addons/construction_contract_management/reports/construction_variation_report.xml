@@ -64,7 +64,7 @@
                                         </tr>
                                         <tr>
                                             <td class="label-cell">Direction</td>
-                                            <td class="value-cell"><span t-esc="'Inbound' if doc.contract_id.contract_direction == 'inbound' else 'Outbound'"/></td>
+                                            <td class="value-cell"><span t-esc="'Client Contract' if doc.contract_id.contract_direction == 'inbound' else 'Subcontract'"/></td>
                                         </tr>
                                         <tr>
                                             <td class="label-cell">Original Contract Value</td>

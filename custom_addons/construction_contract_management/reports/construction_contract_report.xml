@@ -40,7 +40,7 @@
                                 <td>
                                     <div class="meta-card">
                                         <div class="meta-label">Direction</div>
-                                        <div class="meta-value"><span t-esc="'Inbound' if doc.contract_direction == 'inbound' else 'Outbound'"/></div>
+                                        <div class="meta-value"><span t-esc="'Client Contract' if doc.contract_direction == 'inbound' else 'Subcontract'"/></div>
                                     </div>
                                 </td>
                                 <td>

@@ -63,7 +63,7 @@
                                     <tr>
                                         <td><a t-attf-href="/my/employee/contract/#{contract.id}"><t t-esc="contract.name"/></a></td>
                                         <td><span t-field="contract.project_id"/></td>
-                                        <td><span t-esc="'Inbound' if contract.contract_direction == 'inbound' else 'Outbound'"/></td>
+                                        <td><span t-esc="'Client Contract' if contract.contract_direction == 'inbound' else 'Subcontract'"/></td>
                                         <td><span t-field="contract.date_start"/></td>
                                         <td><span t-field="contract.date_end"/></td>
                                         <td class="text-right"><span t-field="contract.revised_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></td>
@@ -135,8 +135,8 @@
                                 <div class="row mb-2">
                                     <div class="col-5"><strong>Direction:</strong></div>
                                     <div class="col-7">
-                                        <span t-if="contract.contract_direction == 'inbound'" class="badge badge-info">Inbound</span>
-                                        <span t-if="contract.contract_direction == 'outbound'" class="badge badge-warning">Outbound</span>
+                                        <span t-if="contract.contract_direction == 'inbound'" class="badge badge-info">Client Contract</span>
+                                        <span t-if="contract.contract_direction == 'outbound'" class="badge badge-warning">Subcontract</span>
                                     </div>
                                 </div>
                                 <div class="row mb-2">

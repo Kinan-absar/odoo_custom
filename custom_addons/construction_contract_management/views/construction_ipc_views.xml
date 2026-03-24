@@ -140,8 +140,8 @@
                 <field name="contract_id"/>
                 <field name="measurement_id"/>
 
-                <filter string="Inbound" name="filter_inbound" domain="[('contract_direction','=','inbound')]"/>
-                <filter string="Outbound" name="filter_outbound" domain="[('contract_direction','=','outbound')]"/>
+                <filter string="Client Contract" name="filter_inbound" domain="[('contract_direction','=','inbound')]"/>
+                <filter string="Subcontract" name="filter_outbound" domain="[('contract_direction','=','outbound')]"/>
                 <filter string="Approved" name="filter_approved" domain="[('state','=','approved')]"/>
                 <filter string="Done" name="filter_done" domain="[('state','=','done')]"/>
 

@@ -15,8 +15,8 @@ class ConstructionContract(models.Model):
     currency_id = fields.Many2one('res.currency', string='Currency', related='company_id.currency_id', store=True)
 
     contract_direction = fields.Selection([
-        ('inbound', 'Inbound Contract'),
-        ('outbound', 'Outbound Contract'),
+        ('inbound', 'Client Contract'),
+        ('outbound', 'Subcontract'),
     ], string='Contract Direction', required=True, default='outbound', tracking=True)
 
     scope = fields.Text(string='Scope of Work')

@@ -5,7 +5,7 @@
     'description': """
 Construction Contract Management
 
-- Inbound / Outbound contracts
+- Client contracts / subcontracts
 - BOQ
 - Measurements
 - IPC

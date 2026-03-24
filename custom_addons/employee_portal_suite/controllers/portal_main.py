@@ -207,8 +207,8 @@ class EmployeePortalMain(CustomerPortal):
         }
         direction_options = {
             'all': {'label': 'All Directions', 'domain': []},
-            'inbound': {'label': 'Inbound', 'domain': [('contract_direction', '=', 'inbound')]},
-            'outbound': {'label': 'Outbound', 'domain': [('contract_direction', '=', 'outbound')]},
+            'inbound': {'label': 'Client Contract', 'domain': [('contract_direction', '=', 'inbound')]},
+            'outbound': {'label': 'Subcontract', 'domain': [('contract_direction', '=', 'outbound')]},
         }
 
         if not sortby:
@@ -323,8 +323,8 @@ class EmployeePortalMain(CustomerPortal):
 
         direction_options = {
             'all': {'label': 'All Directions', 'domain': []},
-            'inbound': {'label': 'Inbound', 'domain': [('contract_id.contract_direction', '=', 'inbound')]},
-            'outbound': {'label': 'Outbound', 'domain': [('contract_id.contract_direction', '=', 'outbound')]},
+            'inbound': {'label': 'Client Contract', 'domain': [('contract_id.contract_direction', '=', 'inbound')]},
+            'outbound': {'label': 'Subcontract', 'domain': [('contract_id.contract_direction', '=', 'outbound')]},
         }
         direction_filter = (kw.get('direction_filter') or 'all').strip()
         if direction_filter not in direction_options:
@@ -427,8 +427,8 @@ class EmployeePortalMain(CustomerPortal):
 
         direction_options = {
             'all': {'label': 'All Directions', 'domain': []},
-            'inbound': {'label': 'Inbound', 'domain': [('contract_id.contract_direction', '=', 'inbound')]},
-            'outbound': {'label': 'Outbound', 'domain': [('contract_id.contract_direction', '=', 'outbound')]},
+            'inbound': {'label': 'Client Contract', 'domain': [('contract_id.contract_direction', '=', 'inbound')]},
+            'outbound': {'label': 'Subcontract', 'domain': [('contract_id.contract_direction', '=', 'outbound')]},
         }
         direction_filter = (kw.get('direction_filter') or 'all').strip()
         if direction_filter not in direction_options:
@@ -603,8 +603,8 @@ class EmployeePortalMain(CustomerPortal):
 
         direction_options = {
             'all': {'label': 'All Directions', 'domain': []},
-            'inbound': {'label': 'Inbound', 'domain': [('contract_id.contract_direction', '=', 'inbound')]},
-            'outbound': {'label': 'Outbound', 'domain': [('contract_id.contract_direction', '=', 'outbound')]},
+            'inbound': {'label': 'Client Contract', 'domain': [('contract_id.contract_direction', '=', 'inbound')]},
+            'outbound': {'label': 'Subcontract', 'domain': [('contract_id.contract_direction', '=', 'outbound')]},
         }
         direction_filter = (kw.get('direction_filter') or 'all').strip()
         if direction_filter not in direction_options:
