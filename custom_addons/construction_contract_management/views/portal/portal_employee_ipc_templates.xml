@@ -78,7 +78,7 @@
                                             <span t-if="ipc.state == 'cancelled'" class="badge badge-danger">Cancelled</span>
                                         </td>
                                         <td class="text-right">
-                                            <a t-attf-href="/my/employee/ipc/#{ipc.id}?report_type=pdf" class="btn btn-sm btn-primary" title="Download PDF">
+                                            <a t-attf-href="/my/employee/ipc/#{ipc.id}?report_type=pdf" class="btn btn-sm btn-primary" title="Download PDF" target="_blank" rel="noopener">
                                                 <i class="fa fa-download"/> PDF
                                             </a>
                                         </td>
@@ -215,7 +215,7 @@
 
                 <div class="row mb-3">
                     <div class="col-12">
-                        <a t-attf-href="/my/employee/ipc/#{ipc.id}?report_type=pdf" class="btn btn-primary">
+                        <a t-attf-href="/my/employee/ipc/#{ipc.id}?report_type=pdf" class="btn btn-primary" target="_blank" rel="noopener">
                             <i class="fa fa-download"/> Download PDF
                         </a>
                     </div>
