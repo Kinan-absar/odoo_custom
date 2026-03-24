@@ -441,7 +441,7 @@ class EmployeePortalMain(CustomerPortal):
                 type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def portal_construction_variation_add_line(self, variation_id, **post):
         try:
-            allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
+            allowed_contract_ids = self._portal_visible_contracts().ids
             variation = request.env['construction.variation'].search([
                 ('id', '=', variation_id),
                 ('contract_id', 'in', allowed_contract_ids),
@@ -576,7 +576,7 @@ class EmployeePortalMain(CustomerPortal):
         try:
             error = request.params.get('error')
             success = request.params.get('success')
-            allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
+            allowed_contract_ids = self._portal_visible_contracts().ids
             measurement = request.env['construction.measurement'].search([
                 ('id', '=', measurement_id),
                 ('contract_id', 'in', allowed_contract_ids),
@@ -639,7 +639,7 @@ class EmployeePortalMain(CustomerPortal):
                 type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def portal_construction_measurement_add_lines(self, measurement_id, **post):
         try:
-            allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
+            allowed_contract_ids = self._portal_visible_contracts().ids
             measurement = request.env['construction.measurement'].search([
                 ('id', '=', measurement_id),
                 ('contract_id', 'in', allowed_contract_ids),
