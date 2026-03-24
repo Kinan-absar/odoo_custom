@@ -754,6 +754,8 @@ class EmployeePortalMain(CustomerPortal):
                 )
             except Exception:
                 contracts = request.env['construction.contract']
+            if not error_message and not contracts:
+                error_message = "You do not have access to any contracts for creating a measurement."
             return {
                 'contracts': contracts,
                 'page_name': 'construction_measurement_new',
@@ -805,6 +807,8 @@ class EmployeePortalMain(CustomerPortal):
                 )
             except Exception:
                 contracts = request.env['construction.contract']
+            if not error_message and not contracts:
+                error_message = "You do not have access to any contracts for creating a variation."
             return {
                 'contracts': contracts,
                 'page_name': 'construction_variation_new',

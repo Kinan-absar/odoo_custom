@@ -431,53 +431,62 @@
                     </div>
                 </t>
 
-                <form method="POST" action="/my/employee/variation/new" class="mt-4">
-                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="contract_id">Contract *</label>
-                                <select name="contract_id" id="contract_id" class="form-control" required="required">
-                                    <option value="">Select Contract...</option>
-                                    <t t-foreach="contracts" t-as="contract">
-                                        <option t-att-value="contract.id"><t t-esc="contract.name"/> - <t t-esc="contract.project_id.name"/></option>
-                                    </t>
-                                </select>
+                <t t-if="contracts">
+                    <form method="POST" action="/my/employee/variation/new" class="mt-4">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="contract_id">Contract *</label>
+                                    <select name="contract_id" id="contract_id" class="form-control" required="required">
+                                        <option value="">Select Contract...</option>
+                                        <t t-foreach="contracts" t-as="contract">
+                                            <option t-att-value="contract.id"><t t-esc="contract.name"/> - <t t-esc="contract.project_id.name"/></option>
+                                        </t>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="date">Date *</label>
+                                    <input type="date" name="date" id="date" class="form-control" required="required"/>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="date">Date *</label>
-                                <input type="date" name="date" id="date" class="form-control" required="required"/>
-                            </div>
+                        <div class="form-group">
+                            <label for="description">Description of Change *</label>
+                            <textarea name="description" id="description" class="form-control" rows="4" required="required" placeholder="Describe the scope change or variation request..."></textarea>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label for="description">Description of Change *</label>
-                        <textarea name="description" id="description" class="form-control" rows="4" required="required" placeholder="Describe the scope change or variation request..."></textarea>
-                    </div>
+                        <div class="form-group">
+                            <label for="reason">Reason for Variation</label>
+                            <textarea name="reason" id="reason" class="form-control" rows="3" placeholder="Explain why this variation is needed..."></textarea>
+                        </div>
 
-                    <div class="form-group">
-                        <label for="reason">Reason for Variation</label>
-                        <textarea name="reason" id="reason" class="form-control" rows="3" placeholder="Explain why this variation is needed..."></textarea>
-                    </div>
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle"/> After creating the variation, you'll be able to add line items with quantities and rates.
+                        </div>
 
-                    <div class="alert alert-info">
-                        <i class="fa fa-info-circle"/> After creating the variation, you'll be able to add line items with quantities and rates.
-                    </div>
-
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-warning">
-                            <i class="fa fa-save"/> Submit Variation Request
-                        </button>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fa fa-save"/> Submit Variation Request
+                            </button>
+                            <a href="/my/employee/variations" class="btn btn-secondary">
+                                <i class="fa fa-times"/> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </t>
+                <t t-else="">
+                    <div class="mt-4">
                         <a href="/my/employee/variations" class="btn btn-secondary">
-                            <i class="fa fa-times"/> Cancel
+                            <i class="fa fa-arrow-left"/> Back to Variations
                         </a>
                     </div>
-                </form>
+                </t>
             </div>
         </t>
     </template>

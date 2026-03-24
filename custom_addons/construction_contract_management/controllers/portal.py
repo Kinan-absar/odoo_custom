@@ -405,6 +405,8 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             contracts = request.env['construction.contract'].search(
                 [('state', 'in', ['active', 'approved'])] + self._portal_visible_contract_domain()
             )
+            if not error_message and not contracts:
+                error_message = "You do not have access to any contracts for creating a measurement."
             return {
                 'contracts': contracts,
                 'page_name': 'construction_measurement_new',
