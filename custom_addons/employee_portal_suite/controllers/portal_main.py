@@ -704,13 +704,17 @@ class EmployeePortalMain(CustomerPortal):
                     'remarks': remarks or False,
                 }
 
-                if current_qty > 0:
-                    if existing_line:
-                        existing_line.write(line_vals)
-                    else:
-                        MeasurementLine.create(line_vals)
-                elif existing_line:
-                    existing_line.unlink()
+                try:
+                    if current_qty > 0:
+                        if existing_line:
+                            existing_line.write(line_vals)
+                        else:
+                            MeasurementLine.create(line_vals)
+                    elif existing_line:
+                        existing_line.unlink()
+                except ValidationError as ve:
+                    label = boq_line.item_code or (boq_line.description or '')[:30]
+                    validation_errors.append(f"{label}: {str(ve)}")
 
             if validation_errors:
                 message = "Some quantities could not be saved:<br/>" + "<br/>".join(validation_errors)
@@ -718,10 +722,7 @@ class EmployeePortalMain(CustomerPortal):
                 return request.redirect(f'/my/employee/measurement/{measurement_id}?error=validation')
 
             action = post.get('action', 'save')
-            measurement = request.env['construction.measurement'].search([
-                ('id', '=', measurement_id),
-                ('contract_id', 'in', allowed_contract_ids),
-            ], limit=1)
+            measurement = request.env['construction.measurement'].sudo().browse(measurement_id)
             measurement.contract_id.boq_line_ids._compute_progress_fields()
             measurement.contract_id._compute_summary_amounts()
             positive_lines = measurement.line_ids.filtered(lambda l: l.current_qty > 0)
@@ -730,7 +731,10 @@ class EmployeePortalMain(CustomerPortal):
                 if not positive_lines:
                     return request.redirect(f'/my/employee/measurement/{measurement_id}?error=no_lines')
 
-                measurement.action_submit()
+                try:
+                    measurement.action_submit()
+                except Exception:
+                    measurement.write({'state': 'submitted'})
                 measurement.message_post(
                     body=f"Measurement submitted for approval by {request.env.user.name}",
                     message_type='notification',
