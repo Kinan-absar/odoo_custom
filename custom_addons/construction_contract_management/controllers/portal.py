@@ -17,6 +17,9 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             return ['|', ('portal_visibility_restricted', '=', False), ('portal_employee_ids.user_id', '=', user.id)]
         return [('portal_visibility_restricted', '=', False)]
 
+    def _portal_visible_contracts(self):
+        return request.env['construction.contract'].sudo().search(self._portal_visible_contract_domain())
+
     # =========================================================
     # CONTRACTS
     # =========================================================
@@ -402,9 +405,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     @http.route(['/my/employee/measurement/new'], type='http', auth='user', website=True, methods=['GET', 'POST'])
     def portal_construction_measurement_new(self, **post):
         def _measurement_new_values(error_message=None):
-            contracts = request.env['construction.contract'].search(
-                self._portal_visible_contract_domain()
-            )
+            contracts = self._portal_visible_contracts()
             if not error_message and not contracts:
                 error_message = "You do not have access to any contracts for creating a measurement."
             return {
@@ -416,7 +417,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
 
         if request.httprequest.method == 'POST':
             try:
-                allowed_contract_ids = request.env['construction.contract'].search(self._portal_visible_contract_domain()).ids
+                allowed_contract_ids = self._portal_visible_contracts().ids
                 contract_id = int(post.get('contract_id'))
                 if contract_id not in allowed_contract_ids:
                     return request.render(
