@@ -37,6 +37,10 @@ class ConstructionVariation(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('construction.variation') or 'New'
         return super().create(vals)
 
+    def _get_report_base_filename(self):
+        self.ensure_one()
+        return f"Variation_{self.name}"
+
     @api.depends('line_ids.amount')
     def _compute_total_amount(self):
         for rec in self:
