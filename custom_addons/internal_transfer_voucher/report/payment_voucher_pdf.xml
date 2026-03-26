@@ -218,19 +218,26 @@ table {
 
     <!-- BANK FEES SECTION (only when present) -->
     <t t-if="o.has_bank_fees and o.fee_amount">
+        <t t-set="fee_tax_amount" t-value="0.0"/>
+        <t t-if="o.fee_tax_id">
+            <t t-set="fee_tax_amount"
+               t-value="o.fee_tax_id.compute_all(o.fee_amount, currency=o.currency_id)['total_included'] - o.fee_amount"/>
+        </t>
+        <t t-set="grand_total" t-value="o.amount + o.fee_amount + fee_tax_amount"/>
         <table class="table-bordered fees-table" style="margin-top:15px;">
             <thead>
                 <tr style="background-color:#f3f6f9;">
-                    <th style="text-align:center; padding:6px;">Bank Fees / رسوم بنكية</th>
                     <th style="text-align:center; padding:6px;">Amount / المبلغ</th>
-                    <th style="text-align:center; padding:6px;">VAT / ضريبة</th>
+                    <th style="text-align:center; padding:6px;">Bank Fees / رسوم بنكية</th>
+                    <th style="text-align:center; padding:6px;">VAT on Fees / ضريبة الرسوم</th>
                     <th style="text-align:center; padding:6px;">Total / الإجمالي</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td style="text-align:center;">
-                        <span t-esc="o.fee_account_id.name"/>
+                        <span t-field="o.amount"
+                              t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
                     </td>
                     <td style="text-align:center;">
                         <span t-field="o.fee_amount"
@@ -238,20 +245,13 @@ table {
                     </td>
                     <td style="text-align:center;">
                         <t t-if="o.fee_tax_id">
-                            <span t-esc="o.fee_tax_id.name"/>
+                            <span t-esc="'%.2f' % fee_tax_amount"/>
                         </t>
                         <t t-else="">—</t>
                     </td>
                     <td style="text-align:center; font-weight:bold;">
-                        <!-- Total paid from bank = payment + fee + tax -->
-                        <t t-set="fee_tax_amount" t-value="0"/>
-                        <t t-if="o.fee_tax_id">
-                            <t t-set="fee_tax_amount"
-                               t-value="o.fee_tax_id.compute_all(o.fee_amount, currency=o.currency_id)['total_included'] - o.fee_amount"/>
-                        </t>
-                        <span t-field="o.amount"
-                              t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
-                        + fees
+                        <span t-esc="'%.2f' % grand_total"/>
+                        <span t-esc="' ' + o.currency_id.symbol"/>
                     </td>
                 </tr>
             </tbody>

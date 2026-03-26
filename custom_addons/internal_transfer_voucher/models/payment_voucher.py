@@ -140,11 +140,19 @@ class AccountPaymentVoucher(models.Model):
     )
 
     def _compute_amount_in_words_ar(self):
+        # Check once if ar_001 is installed in this database
+        ar_installed = bool(
+            self.env['res.lang'].search([('code', '=', 'ar_001')], limit=1)
+        )
         for rec in self:
             if rec.amount and rec.currency_id:
-                rec.amount_in_words_ar = rec.currency_id.with_context(
-                    lang='ar_001'
-                ).amount_to_text(rec.amount)
+                if ar_installed:
+                    rec.amount_in_words_ar = rec.currency_id.with_context(
+                        lang='ar_001'
+                    ).amount_to_text(rec.amount)
+                else:
+                    # Fall back to the interface language or English
+                    rec.amount_in_words_ar = rec.currency_id.amount_to_text(rec.amount)
             else:
                 rec.amount_in_words_ar = ''
 
