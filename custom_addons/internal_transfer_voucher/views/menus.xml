@@ -31,5 +31,7 @@
               action="action_internal_transfer"
               sequence="30"
               groups="account.group_account_manager"/>
-
+    <record id="menu_internal_transfer" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 </odoo>
