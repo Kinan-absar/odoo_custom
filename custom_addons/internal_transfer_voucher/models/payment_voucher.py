@@ -48,15 +48,23 @@ class AccountPaymentVoucher(models.Model):
 
     journal_id = fields.Many2one(
         'account.journal',
+        string='Journal',
         domain="[('default_account_id', '!=', False)]",
         required=True
     )
 
+    # Used for pay-to-account mode (vendor, expense, advance)
     account_id = fields.Many2one(
         'account.account',
-        string='Expense / Advance Account',
+        string='Account',
         domain="[('deprecated','=',False)]",
-        required=True
+    )
+
+    # Used for journal-to-journal transfer mode
+    line_ids = fields.One2many(
+        'account.payment.voucher.line',
+        'voucher_id',
+        string='Destination Journals'
     )
 
     move_id = fields.Many2one(
@@ -82,6 +90,7 @@ class AccountPaymentVoucher(models.Model):
             ('cash', 'Cash'),
             ('cheque', 'Cheque'),
             ('bank_transfer', 'Bank Transfer'),
+            ('journal_transfer', 'Journal Transfer'),
         ],
         string="Payment Method",
         required=True,
@@ -118,7 +127,7 @@ class AccountPaymentVoucher(models.Model):
     )
 
     # -------------------------
-    # Analytic on Expense Account
+    # Analytic on Account
     # -------------------------
 
     analytic_distribution = fields.Json(
@@ -140,7 +149,6 @@ class AccountPaymentVoucher(models.Model):
     )
 
     def _compute_amount_in_words_ar(self):
-        # Check once if ar_001 is installed in this database
         ar_installed = bool(
             self.env['res.lang'].search([('code', '=', 'ar_001')], limit=1)
         )
@@ -151,7 +159,6 @@ class AccountPaymentVoucher(models.Model):
                         lang='ar_001'
                     ).amount_to_text(rec.amount)
                 else:
-                    # Fall back to the interface language or English
                     rec.amount_in_words_ar = rec.currency_id.amount_to_text(rec.amount)
             else:
                 rec.amount_in_words_ar = ''
@@ -160,13 +167,49 @@ class AccountPaymentVoucher(models.Model):
     # Constraints
     # -------------------------
 
+    @api.constrains('payment_method', 'account_id', 'line_ids')
+    def _check_payment_mode(self):
+        for rec in self:
+            if rec.payment_method == 'journal_transfer':
+                if not rec.line_ids:
+                    raise UserError(_("Please add at least one destination journal."))
+            else:
+                if not rec.account_id:
+                    raise UserError(_("Please set an account."))
+
+    @api.constrains('line_ids', 'amount', 'has_bank_fees', 'fee_amount', 'fee_tax_id')
+    def _check_destination_total(self):
+        for rec in self:
+            if rec.payment_method != 'journal_transfer' or not rec.line_ids:
+                continue
+
+            destination_total = sum(rec.line_ids.mapped('amount'))
+            expected_amount = rec.amount
+
+            if rec.has_bank_fees and rec.fee_amount:
+                tax_amount = 0.0
+                if rec.fee_tax_id:
+                    tax_amount = sum(
+                        t['amount']
+                        for t in rec.fee_tax_id.compute_all(
+                            rec.fee_amount,
+                            currency=rec.currency_id
+                        )['taxes']
+                    )
+                expected_amount -= (rec.fee_amount + tax_amount)
+
+            if not rec.currency_id.is_zero(destination_total - expected_amount):
+                raise UserError(_(
+                    "Destination total (%.2f) must equal net transfer amount (%.2f)."
+                ) % (destination_total, expected_amount))
+
     @api.constrains('has_bank_fees', 'fee_amount', 'fee_account_id', 'payment_method')
     def _check_bank_fees(self):
         for rec in self:
             if rec.has_bank_fees:
-                if rec.payment_method != 'bank_transfer':
+                if rec.payment_method not in ('bank_transfer', 'journal_transfer'):
                     raise UserError(_(
-                        "Bank fees are only applicable when payment method is Bank Transfer."
+                        "Bank fees are only applicable for Bank Transfer or Journal Transfer."
                     ))
                 if not rec.fee_account_id:
                     raise UserError(_("Please set a bank fee account."))
@@ -175,13 +218,15 @@ class AccountPaymentVoucher(models.Model):
 
     @api.onchange('payment_method')
     def _onchange_payment_method(self):
-        """Clear bank fee fields when switching away from bank transfer."""
-        if self.payment_method != 'bank_transfer':
+        if self.payment_method in ('cash', 'cheque'):
             self.has_bank_fees = False
             self.fee_amount = 0.0
             self.fee_account_id = False
             self.fee_tax_id = False
             self.fee_analytic_distribution = False
+            self.line_ids = [(5, 0, 0)]
+        if self.payment_method != 'journal_transfer':
+            self.line_ids = [(5, 0, 0)]
 
     # -------------------------
     # Actions
@@ -198,79 +243,152 @@ class AccountPaymentVoucher(models.Model):
             if not rec.journal_id.default_account_id:
                 raise UserError(_("The selected journal has no default account."))
 
-            if rec.has_bank_fees and not rec.fee_account_id:
-                raise UserError(_("Please set a bank fee account."))
+            if rec.payment_method == 'journal_transfer':
+                rec._post_journal_transfer()
+            else:
+                rec._post_account_payment()
 
-            lines = []
+    def _post_account_payment(self):
+        """Cash / Cheque / Bank Transfer — pay against an account."""
+        rec = self
+        if not rec.account_id:
+            raise UserError(_("Please set an account."))
 
-            # -- Analytic for expense/advance account line --
-            expense_analytic = {}
-            if rec.analytic_distribution:
-                expense_analytic['analytic_distribution'] = rec.analytic_distribution
+        if rec.has_bank_fees and not rec.fee_account_id:
+            raise UserError(_("Please set a bank fee account."))
 
-            # -- Analytic for fee line --
-            fee_analytic = {}
-            if rec.fee_analytic_distribution:
-                fee_analytic['analytic_distribution'] = rec.fee_analytic_distribution
+        lines = []
 
-            # 1. Debit: expense / advance account
+        expense_analytic = {}
+        if rec.analytic_distribution:
+            expense_analytic['analytic_distribution'] = rec.analytic_distribution
+
+        fee_analytic = {}
+        if rec.fee_analytic_distribution:
+            fee_analytic['analytic_distribution'] = rec.fee_analytic_distribution
+
+        # 1. Debit: account (expense / advance / payable)
+        lines.append((0, 0, {
+            'account_id': rec.account_id.id,
+            'partner_id': rec.partner_id.id,
+            'debit': rec.amount,
+            'name': rec.description or rec.name,
+            **expense_analytic,
+        }))
+
+        if rec.has_bank_fees and rec.fee_amount:
+            # 2. Debit: fee account
             lines.append((0, 0, {
-                'account_id': rec.account_id.id,
+                'account_id': rec.fee_account_id.id,
                 'partner_id': rec.partner_id.id,
-                'debit': rec.amount,
-                'name': rec.description or rec.name,
-                **expense_analytic,
+                'debit': rec.fee_amount,
+                'tax_ids': [(6, 0, rec.fee_tax_id.ids)] if rec.fee_tax_id else [],
+                'name': _('Bank Fees'),
+                **fee_analytic,
             }))
 
-            # 2. Bank fees debit line (bank transfer only)
-            if rec.has_bank_fees and rec.fee_amount:
-                lines.append((0, 0, {
-                    'account_id': rec.fee_account_id.id,
-                    'partner_id': rec.partner_id.id,
-                    'debit': rec.fee_amount,
-                    'tax_ids': [(6, 0, rec.fee_tax_id.ids)] if rec.fee_tax_id else [],
-                    'name': _('Bank Fees'),
-                    **fee_analytic,
-                }))
+            tax_amount = 0.0
+            if rec.fee_tax_id:
+                tax_amount = sum(
+                    t['amount']
+                    for t in rec.fee_tax_id.compute_all(
+                        rec.fee_amount, currency=rec.currency_id
+                    )['taxes']
+                )
 
-                tax_amount = 0.0
-                if rec.fee_tax_id:
-                    tax_amount = sum(
-                        t['amount']
-                        for t in rec.fee_tax_id.compute_all(
-                            rec.fee_amount,
-                            currency=rec.currency_id
-                        )['taxes']
-                    )
+            # 3. Credit: journal (amount + fees + tax)
+            lines.append((0, 0, {
+                'account_id': rec.journal_id.default_account_id.id,
+                'partner_id': rec.partner_id.id,
+                'credit': rec.amount + rec.fee_amount + tax_amount,
+                'name': rec.description or rec.name,
+            }))
+        else:
+            # 3. Credit: journal (no fees)
+            lines.append((0, 0, {
+                'account_id': rec.journal_id.default_account_id.id,
+                'partner_id': rec.partner_id.id,
+                'credit': rec.amount,
+                'name': rec.description or rec.name,
+            }))
 
-                # 3. Credit: journal account (payment + fees + tax)
-                lines.append((0, 0, {
-                    'account_id': rec.journal_id.default_account_id.id,
-                    'partner_id': rec.partner_id.id,
-                    'credit': rec.amount + rec.fee_amount + tax_amount,
-                    'name': rec.description or rec.name,
-                }))
+        move = self.env['account.move'].create({
+            'date': rec.date,
+            'journal_id': rec.journal_id.id,
+            'ref': rec.name,
+            'line_ids': lines,
+        })
+        move.action_post()
+        rec.move_id = move.id
+        rec.state = 'posted'
 
-            else:
-                # 3. Credit: journal account (no fees)
-                lines.append((0, 0, {
-                    'account_id': rec.journal_id.default_account_id.id,
-                    'partner_id': rec.partner_id.id,
-                    'credit': rec.amount,
-                    'name': rec.description or rec.name,
-                }))
+    def _post_journal_transfer(self):
+        """Journal Transfer — move funds between journals."""
+        rec = self
+        if not rec.line_ids:
+            raise UserError(_("Please add at least one destination journal."))
 
-            move = self.env['account.move'].create({
-                'date': rec.date,
-                'journal_id': rec.journal_id.id,
-                'ref': rec.name,
-                'line_ids': lines,
-            })
+        if rec.has_bank_fees and not rec.fee_account_id:
+            raise UserError(_("Please set a bank fee account."))
 
-            move.action_post()
+        lines = []
+        net_amount = rec.amount
 
-            rec.move_id = move.id
-            rec.state = 'posted'
+        fee_analytic = {}
+        if rec.fee_analytic_distribution:
+            fee_analytic['analytic_distribution'] = rec.fee_analytic_distribution
+
+        # 1. Credit: source journal
+        lines.append((0, 0, {
+            'account_id': rec.journal_id.default_account_id.id,
+            'credit': rec.amount,
+            'name': rec.description or rec.name,
+        }))
+
+        # 2. Bank fees
+        if rec.has_bank_fees and rec.fee_amount:
+            lines.append((0, 0, {
+                'account_id': rec.fee_account_id.id,
+                'debit': rec.fee_amount,
+                'tax_ids': [(6, 0, rec.fee_tax_id.ids)] if rec.fee_tax_id else [],
+                'name': _('Bank Fees'),
+                **fee_analytic,
+            }))
+
+            tax_amount = 0.0
+            if rec.fee_tax_id:
+                tax_amount = sum(
+                    t['amount']
+                    for t in rec.fee_tax_id.compute_all(
+                        rec.fee_amount, currency=rec.currency_id
+                    )['taxes']
+                )
+            net_amount -= (rec.fee_amount + tax_amount)
+
+        if net_amount <= 0:
+            raise UserError(_("Net transferred amount must be greater than zero after fees."))
+
+        # 3. Debit: each destination journal
+        for line in rec.line_ids:
+            if not line.journal_id.default_account_id:
+                raise UserError(_(
+                    "Destination journal '%s' has no default account."
+                ) % line.journal_id.name)
+            lines.append((0, 0, {
+                'account_id': line.journal_id.default_account_id.id,
+                'debit': line.amount,
+                'name': rec.description or rec.name,
+            }))
+
+        move = self.env['account.move'].create({
+            'date': rec.date,
+            'journal_id': rec.journal_id.id,
+            'ref': rec.name,
+            'line_ids': lines,
+        })
+        move.action_post()
+        rec.move_id = move.id
+        rec.state = 'posted'
 
     def action_cancel(self):
         for rec in self:
@@ -282,11 +400,9 @@ class AccountPaymentVoucher(models.Model):
         for rec in self:
             if rec.state not in ('posted', 'cancel'):
                 continue
-
             if rec.move_id:
                 rec.move_id.button_draft()
                 rec.move_id.unlink()
-
             rec.move_id = False
             rec.state = 'draft'
 
@@ -319,3 +435,52 @@ class AccountPaymentVoucher(models.Model):
                 if not set(vals.keys()).issubset(allowed_fields):
                     raise UserError(_("You cannot modify a posted payment voucher."))
         return super().write(vals)
+
+
+class AccountPaymentVoucherLine(models.Model):
+    _name = 'account.payment.voucher.line'
+    _description = 'Payment Voucher Destination Journal'
+
+    voucher_id = fields.Many2one(
+        'account.payment.voucher',
+        required=True,
+        ondelete='cascade'
+    )
+
+    journal_id = fields.Many2one(
+        'account.journal',
+        string='Destination Journal',
+        required=True,
+        domain="[('default_account_id','!=',False)]"
+    )
+
+    amount = fields.Monetary(required=True)
+
+    currency_id = fields.Many2one(
+        related='voucher_id.currency_id',
+        store=True
+    )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            voucher_id = vals.get('voucher_id')
+            if voucher_id:
+                voucher = self.env['account.payment.voucher'].browse(voucher_id)
+                if voucher.state == 'posted':
+                    raise UserError(
+                        _("You cannot add lines to a posted voucher.")
+                    )
+        return super().create(vals_list)
+
+    def write(self, vals):
+        for line in self:
+            if line.voucher_id.state == 'posted':
+                raise UserError(_("You cannot modify lines of a posted voucher."))
+        return super().write(vals)
+
+    def unlink(self):
+        for line in self:
+            if line.voucher_id.state == 'posted':
+                raise UserError(_("You cannot delete lines of a posted voucher."))
+        return super().unlink()
