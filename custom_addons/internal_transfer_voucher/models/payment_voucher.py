@@ -148,18 +148,24 @@ class AccountPaymentVoucher(models.Model):
         compute="_compute_amount_in_words_ar"
     )
 
+    @api.depends('amount', 'currency_id', 'payment_method', 'line_ids.amount')
     def _compute_amount_in_words_ar(self):
         ar_installed = bool(
             self.env['res.lang'].search([('code', '=', 'ar_001')], limit=1)
         )
         for rec in self:
-            if rec.amount and rec.currency_id:
+            amount_for_words = rec.amount
+
+            if rec.payment_method == 'journal_transfer':
+                amount_for_words = sum(rec.line_ids.mapped('amount'))
+
+            if amount_for_words and rec.currency_id:
                 if ar_installed:
                     rec.amount_in_words_ar = rec.currency_id.with_context(
                         lang='ar_001'
-                    ).amount_to_text(rec.amount)
+                    ).amount_to_text(amount_for_words)
                 else:
-                    rec.amount_in_words_ar = rec.currency_id.amount_to_text(rec.amount)
+                    rec.amount_in_words_ar = rec.currency_id.amount_to_text(amount_for_words)
             else:
                 rec.amount_in_words_ar = ''
 

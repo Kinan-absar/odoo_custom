@@ -127,7 +127,7 @@ table {
     <!-- JOURNAL TRANSFER LAYOUT                          -->
     <!-- ================================================ -->
     <t t-if="o.payment_method == 'journal_transfer'">
-
+    <t t-set="transfer_amount" t-value="sum(o.line_ids.mapped('amount'))"/>
         <div class="pv-title">
             <h2>INTERNAL TRANSFER VOUCHER</h2>
             <h3>سند تحويل داخلي</h3>
@@ -157,8 +157,8 @@ table {
             <table class="table-bordered amount-box">
                 <tr>
                     <td>
-                        <span t-field="o.amount"
-                              t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
+                       <span t-esc="transfer_amount"
+      t-options="{'widget':'monetary','display_currency': o.currency_id}"/>
                     </td>
                 </tr>
             </table>
@@ -219,7 +219,7 @@ table {
                 <t t-set="fee_tax_amount"
                    t-value="o.fee_tax_id.compute_all(o.fee_amount, currency=o.currency_id)['total_included'] - o.fee_amount"/>
             </t>
-            <t t-set="grand_total" t-value="o.amount + o.fee_amount + fee_tax_amount"/>
+            <t t-set="grand_total" t-value="transfer_amount + o.fee_amount + fee_tax_amount"/>
             <table class="table-bordered fees-table" style="margin-top:15px;">
                 <thead>
                     <tr style="background-color:#f3f6f9;">
@@ -232,7 +232,7 @@ table {
                 <tbody>
                     <tr>
                         <td style="text-align:center;">
-                            <span t-field="o.amount"
+                            <span t-esc="transfer_amount"
                                   t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
                         </td>
                         <td style="text-align:center;">
