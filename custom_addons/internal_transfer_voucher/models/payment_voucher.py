@@ -148,7 +148,6 @@ class AccountPaymentVoucher(models.Model):
         compute="_compute_amount_in_words_ar"
     )
 
-    @api.depends('amount', 'currency_id', 'payment_method', 'line_ids.amount')
     def _compute_amount_in_words_ar(self):
         ar_installed = bool(
             self.env['res.lang'].search([('code', '=', 'ar_001')], limit=1)
