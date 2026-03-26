@@ -12,6 +12,7 @@
                 <field name="partner_id"/>
                 <field name="amount"/>
                 <field name="journal_id"/>
+                <field name="payment_method"/>
                 <field name="state"/>
             </list>
         </field>
@@ -39,6 +40,7 @@
                             string="Cancel"
                             type="object"
                             invisible="state != 'draft'"/>
+
                     <button name="%(action_payment_voucher_pdf)d"
                             string="Print"
                             type="action"
@@ -57,14 +59,16 @@
                         </h1>
                     </div>
 
+                    <!-- Main Info -->
                     <group>
                         <group string="Payment Information">
                             <field name="date"/>
                             <field name="partner_id"/>
                             <field name="amount"/>
-                            <field name="description" placeholder="Add any notes or description..."/>
                             <field name="currency_id"
                                    groups="base.group_multi_currency"/>
+                            <field name="description"
+                                   placeholder="Add any notes or description..."/>
                         </group>
 
                         <group string="Accounting">
@@ -74,11 +78,45 @@
                         </group>
                     </group>
 
-                    <separator string="Journal Entry"/>
+                    <!-- Analytic on Expense Account -->
+                    <group string="Analytic"
+                           groups="analytic.group_analytic_accounting">
+                        <group>
+                            <field name="analytic_distribution"
+                                   widget="analytic_distribution"
+                                   options="{'force_applicability': 'optional'}"
+                                   string="Expense Account Analytic"/>
+                        </group>
+                        <group/>
+                    </group>
 
-                    <group>
+                    <!-- Bank Fees — only relevant for Bank Transfer -->
+                    <group string="Bank Fees"
+                           invisible="payment_method != 'bank_transfer'">
+                        <group>
+                            <field name="has_bank_fees"/>
+                            <field name="fee_amount"
+                                   invisible="not has_bank_fees"/>
+                            <field name="fee_account_id"
+                                   invisible="not has_bank_fees"/>
+                            <field name="fee_tax_id"
+                                   invisible="not has_bank_fees"/>
+                        </group>
+                        <group string="Fee Analytic"
+                               groups="analytic.group_analytic_accounting"
+                               invisible="not has_bank_fees">
+                            <field name="fee_analytic_distribution"
+                                   widget="analytic_distribution"
+                                   options="{'force_applicability': 'optional'}"
+                                   string="Bank Fee Analytic"/>
+                        </group>
+                    </group>
+
+                    <!-- Generated Journal Entry -->
+                    <group string="Journal Entry">
                         <field name="move_id" readonly="1"/>
                     </group>
+
                 </sheet>
 
                 <chatter/>
