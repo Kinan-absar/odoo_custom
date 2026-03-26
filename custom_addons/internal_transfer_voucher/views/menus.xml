@@ -17,4 +17,12 @@
               sequence="60"
               groups="account.group_account_user"/>
 
+    <!-- Receipt Vouchers -->
+    <menuitem id="menu_receipt_voucher"
+              name="Receipt Vouchers"
+              parent="account.menu_finance_entries"
+              action="action_receipt_voucher"
+              sequence="70"
+              groups="account.group_account_user"/>
+
 </odoo>
