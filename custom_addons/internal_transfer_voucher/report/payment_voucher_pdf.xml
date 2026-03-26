@@ -158,7 +158,7 @@ table {
                 <tr>
                     <td>
                        <span t-esc="transfer_amount"
-      t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
+      t-options="{'widget':'monetary','display_currency': o.currency_id}"/>
                     </td>
                 </tr>
             </table>
@@ -233,7 +233,7 @@ table {
                     <tr>
                         <td style="text-align:center;">
                             <span t-esc="transfer_amount"
-                                  t-options="{'widget':'monetary','currency_field':'currency_id'}"/>
+      t-options="{'widget':'monetary','display_currency': o.currency_id}"/>
                         </td>
                         <td style="text-align:center;">
                             <span t-field="o.fee_amount"
