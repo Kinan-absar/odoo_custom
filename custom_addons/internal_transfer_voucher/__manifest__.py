@@ -12,7 +12,7 @@ This module restores and extends internal accounting operations that were simpli
 Key Features
 ------------
 • Internal Transfers between Bank and Cash journals
-• Single journal entry posting (Odoo-native accounting)
+• Single journal entry posting ( Odoo-native accounting )
 • Optional bank fees with VAT support
 • Payment Vouchers — outbound payments (Cash / Cheque / Bank Transfer)
 • Receipt Vouchers — inbound receipts (Cash / Cheque / Bank Transfer)
