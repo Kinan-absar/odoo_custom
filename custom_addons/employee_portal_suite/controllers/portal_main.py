@@ -924,3 +924,14 @@ class EmployeePortalMain(CustomerPortal):
 
         return request.render("construction_contract_management.portal_employee_variation_new", _variation_new_values())
 
+    @http.route(['/my/employee/checkin'], type='http', auth='user', website=True)
+    def employee_checkin_page(self, **kwargs):
+        user = request.env.user
+        employee = user.employee_id
+
+        values = {
+            'page_name': 'employee_checkin',
+            'employee': employee,
+            'pwa_url': 'https://attendpro-neon.vercel.app',  # change this
+        }
+        return request.render('employee_portal_suite.employee_checkin_page', values)
