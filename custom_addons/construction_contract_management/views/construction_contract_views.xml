@@ -129,65 +129,64 @@
                         </page>
 
                         <page string="BOQ Lines">
-                            <field name="boq_line_ids" widget="section_and_note_one2many" groups="construction_contract_management.group_construction_manager">
-                               <list editable="bottom">
-                                    <control>
-                                        <create string="Add a line"/>
-                                        <create string="Add a section" context="{'default_display_type': 'line_section'}"/>
-                                        <create string="Add a note" context="{'default_display_type': 'line_note'}"/>
-                                    </control>
+                            <field name="boq_line_ids" groups="construction_contract_management.group_construction_manager">
+    <list editable="bottom">
+        <control>
+            <create string="Add a line"/>
+            <create string="Add a section" context="{'default_display_type': 'line_section'}"/>
+            <create string="Add a note" context="{'default_display_type': 'line_note'}"/>
+        </control>
 
-                                    <field name="display_type" column_invisible="True"/>
-                                    <field name="sequence" widget="handle"/>
+        <field name="display_type" column_invisible="True"/>
+        <field name="sequence" widget="handle"/>
 
-                                    <field name="item_code" invisible="display_type != False"/>
-                                    <field name="description"/>
-                                    <field name="uom_id" invisible="display_type != False"/>
+        <field name="item_code" invisible="display_type != False"/>
+        <field name="description"/>
+        <field name="uom_id" invisible="display_type != False"/>
 
-                                    <field name="contract_qty" invisible="display_type != False"/>
-                                    <field name="variation_qty_increase" readonly="1" invisible="display_type != False"/>
-                                    <field name="variation_qty_decrease" readonly="1" invisible="display_type != False"/>
-                                    <field name="revised_qty" readonly="1" invisible="display_type != False"/>
+        <field name="contract_qty" invisible="display_type != False"/>
+        <field name="variation_qty_increase" readonly="1" invisible="display_type != False"/>
+        <field name="variation_qty_decrease" readonly="1" invisible="display_type != False"/>
+        <field name="revised_qty" readonly="1" invisible="display_type != False"/>
 
-                                    <field name="unit_rate" invisible="display_type != False"/>
-                                    <field name="revised_unit_rate" readonly="1" invisible="display_type != False"/>
+        <field name="unit_rate" invisible="display_type != False"/>
+        <field name="revised_unit_rate" readonly="1" invisible="display_type != False"/>
 
-                                    <field name="total_amount" readonly="1" invisible="display_type != False"/>
-                                    <field name="revised_amount" readonly="1" invisible="display_type != False"/>
+        <field name="total_amount" readonly="1" invisible="display_type != False"/>
+        <field name="revised_amount" readonly="1" invisible="display_type != False"/>
 
-                                    <field name="measured_qty" readonly="1" invisible="display_type != False"/>
-                                    <field name="certified_qty" readonly="1" invisible="display_type != False"/>
-                                    <field name="remaining_qty" readonly="1" invisible="display_type != False"/>
-                                </list>
-                            </field>
+        <field name="measured_qty" readonly="1" invisible="display_type != False"/>
+        <field name="certified_qty" readonly="1" invisible="display_type != False"/>
+        <field name="remaining_qty" readonly="1" invisible="display_type != False"/>
+    </list>
+</field>
                             <field name="boq_line_ids"
-                                widget="section_and_note_one2many"
-                                groups="construction_contract_management.group_construction_user,!construction_contract_management.group_construction_manager"
-                                readonly="1">
-                                <list>
-                                    <field name="display_type" column_invisible="True"/>
-                                    <field name="sequence"/>
+       groups="construction_contract_management.group_construction_user,!construction_contract_management.group_construction_manager"
+       readonly="1">
+    <list>
+        <field name="display_type" column_invisible="True"/>
+        <field name="sequence"/>
 
-                                    <field name="item_code" invisible="display_type != False"/>
-                                    <field name="description" widget="section_and_note_text"/>
-                                    <field name="uom_id" invisible="display_type != False"/>
+        <field name="item_code" invisible="display_type != False"/>
+        <field name="description"/>
+        <field name="uom_id" invisible="display_type != False"/>
 
-                                    <field name="contract_qty" invisible="display_type != False"/>
-                                    <field name="variation_qty_increase" readonly="1" invisible="display_type != False"/>
-                                    <field name="variation_qty_decrease" readonly="1" invisible="display_type != False"/>
-                                    <field name="revised_qty" readonly="1" invisible="display_type != False"/>
+        <field name="contract_qty" invisible="display_type != False"/>
+        <field name="variation_qty_increase" readonly="1" invisible="display_type != False"/>
+        <field name="variation_qty_decrease" readonly="1" invisible="display_type != False"/>
+        <field name="revised_qty" readonly="1" invisible="display_type != False"/>
 
-                                    <field name="unit_rate" invisible="display_type != False"/>
-                                    <field name="revised_unit_rate" readonly="1" invisible="display_type != False"/>
+        <field name="unit_rate" invisible="display_type != False"/>
+        <field name="revised_unit_rate" readonly="1" invisible="display_type != False"/>
 
-                                    <field name="total_amount" readonly="1" invisible="display_type != False"/>
-                                    <field name="revised_amount" readonly="1" invisible="display_type != False"/>
+        <field name="total_amount" readonly="1" invisible="display_type != False"/>
+        <field name="revised_amount" readonly="1" invisible="display_type != False"/>
 
-                                    <field name="measured_qty" readonly="1" invisible="display_type != False"/>
-                                    <field name="certified_qty" readonly="1" invisible="display_type != False"/>
-                                    <field name="remaining_qty" readonly="1" invisible="display_type != False"/>
-                                </list>
-                            </field>
+        <field name="measured_qty" readonly="1" invisible="display_type != False"/>
+        <field name="certified_qty" readonly="1" invisible="display_type != False"/>
+        <field name="remaining_qty" readonly="1" invisible="display_type != False"/>
+    </list>
+</field>
                         </page>
 
                         <page string="Measurements">
