@@ -141,7 +141,7 @@
                                     <field name="sequence" widget="handle"/>
 
                                     <field name="item_code" invisible="display_type != False"/>
-                                    <field name="description" widget="section_and_note_text"/>
+                                    <field name="description"/>
                                     <field name="uom_id" invisible="display_type != False"/>
 
                                     <field name="contract_qty" invisible="display_type != False"/>
