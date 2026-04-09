@@ -143,6 +143,7 @@
         <field name="item_code" invisible="display_type != False"/>
         <field name="description"
        decoration-bf="display_type == 'line_section'"
+       decoration-it="display_type == 'line_section'"
        decoration-it="display_type == 'line_note'"/>
         <field name="uom_id" invisible="display_type != False"/>
 
@@ -172,6 +173,7 @@
         <field name="item_code" invisible="display_type != False"/>
         <field name="description"
        decoration-bf="display_type == 'line_section'"
+       decoration-it="display_type == 'line_section'"
        decoration-it="display_type == 'line_note'"/>
         <field name="uom_id" invisible="display_type != False"/>
 

@@ -109,67 +109,107 @@
                         </table>
 
                         <div class="section-title">Bill of Quantities</div>
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Section</th>
-                                    <th>Item Code</th>
-                                    <th>Description</th>
-                                    <th class="text-right">Contract Qty</th>
-                                    <th class="text-right">Revised Qty</th>
-                                    <th>Unit</th>
-                                    <th class="text-right">Unit Rate</th>
-                                    <th class="text-right">Revised Amount</th>
-                                    <th class="text-right">Measured</th>
-                                    <th class="text-right">Certified</th>
-                                    <th class="text-right">Remaining</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr t-foreach="doc.boq_line_ids.sorted(lambda l: (l.sequence, l.id))" t-as="line">
-                                    <td><span t-esc="line.section or '-'"/></td>
-                                    <td><span t-esc="line.item_code or '-'"/></td>
-                                    <td><span t-esc="line.description or '-'"/></td>
-                                    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.contract_qty or 0.0)"/></td>
-                                    <td class="text-right mono">
-                                        <span t-esc="'{:,.2f}'.format(line.revised_qty or line.contract_qty or 0.0)"/>
-                                        <t t-if="line.variation_qty_increase or line.variation_qty_decrease">
-                                            <div class="muted">
-                                                Var. +<span t-esc="'{:,.2f}'.format(line.variation_qty_increase or 0.0)"/>
-                                                / -<span t-esc="'{:,.2f}'.format(line.variation_qty_decrease or 0.0)"/>
-                                            </div>
-                                        </t>
-                                    </td>
-                                    <td><span t-field="line.uom_id"/></td>
-                                    <td class="text-right"><span t-field="line.revised_unit_rate" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
-                                    <td class="text-right"><span t-field="line.revised_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
-                                    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.measured_qty or 0.0)"/></td>
-                                    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.certified_qty or 0.0)"/></td>
-                                    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.remaining_qty or 0.0)"/></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item Code</th>
+                                        <th>Description</th>
+                                        <th class="text-right">Contract Qty</th>
+                                        <th class="text-right">Revised Qty</th>
+                                        <th>Unit</th>
+                                        <th class="text-right">Unit Rate</th>
+                                        <th class="text-right">Revised Amount</th>
+                                        <th class="text-right">Measured</th>
+                                        <th class="text-right">Certified</th>
+                                        <th class="text-right">Remaining</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="lines" t-value="doc.boq_line_ids.sorted(lambda l: (l.sequence, l.id))"/>
+                                    <t t-set="section_total" t-value="0.0"/>
+                                    <t t-set="current_section" t-value="''"/>
 
-                        <t t-if="doc.scope or doc.notes">
-                            <table class="two-col" style="margin-top: 14px;">
-                                <tr>
-                                    <td>
-                                        <t t-if="doc.scope">
-                                            <div class="note-box" style="margin-top:0;">
-                                                <div class="note-title">Scope of Work</div>
-                                                <div t-esc="doc.scope"/>
-                                            </div>
+                                    <t t-foreach="range(len(lines))" t-as="idx">
+                                        <t t-set="line" t-value="lines[idx]"/>
+                                        <t t-set="next_line" t-value="lines[idx + 1] if idx + 1 &lt; len(lines) else False"/>
+
+                                        <!-- Section row -->
+                                        <t t-if="line.display_type == 'line_section'">
+                                            <t t-if="idx != 0 and current_section">
+                                                <tr class="subtotal-row">
+                                                    <td colspan="6" class="subtotal-label">Subtotal - <span t-esc="current_section"/></td>
+                                                    <td class="subtotal-value">
+                                                        <span t-esc="'{:,.2f}'.format(section_total)"/>
+                                                    </td>
+                                                    <td colspan="3"></td>
+                                                </tr>
+                                            </t>
+                                            <t t-set="section_total" t-value="0.0"/>
+                                            <t t-set="current_section" t-value="line.description or 'Section'"/>
+
+                                            <tr class="section-row">
+                                                <td colspan="10">
+                                                    <span t-esc="line.description or 'Section'"/>
+                                                </td>
+                                            </tr>
                                         </t>
-                                    </td>
-                                    <td>
-                                        <t t-if="doc.notes">
-                                            <div class="note-box" style="margin-top:0;">
-                                                <div class="note-title">Internal Notes</div>
-                                                <div t-esc="doc.notes"/>
-                                            </div>
+
+                                        <!-- Note row -->
+                                        <t t-elif="line.display_type == 'line_note'">
+                                            <tr class="note-row">
+                                                <td colspan="10">
+                                                    <span t-esc="line.description or ''"/>
+                                                </td>
+                                            </tr>
                                         </t>
-                                    </td>
-                                </tr>
+
+                                        <!-- Normal line -->
+                                        <t t-else="">
+                                            <t t-set="line_amount" t-value="line.revised_amount or 0.0"/>
+                                            <t t-set="section_total" t-value="section_total + line_amount"/>
+
+                                            <tr>
+                                                <td><span t-esc="line.item_code or '-'"/></td>
+                                                <td><span t-esc="line.description or '-'"/></td>
+                                                <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.contract_qty or 0.0)"/></td>
+                                                <td class="text-right mono">
+                                                    <span t-esc="'{:,.2f}'.format(line.revised_qty or line.contract_qty or 0.0)"/>
+                                                    <t t-if="line.variation_qty_increase or line.variation_qty_decrease">
+                                                        <div class="muted">
+                                                            Var. +<span t-esc="'{:,.2f}'.format(line.variation_qty_increase or 0.0)"/>
+                                                            / -<span t-esc="'{:,.2f}'.format(line.variation_qty_decrease or 0.0)"/>
+                                                        </div>
+                                                    </t>
+                                                </td>
+                                                <td><span t-field="line.uom_id"/></td>
+                                                <td class="text-right">
+                                                    <span t-field="line.revised_unit_rate" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                                </td>
+                                                <td class="text-right">
+                                                    <span t-field="line.revised_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                                </td>
+                                                <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.measured_qty or 0.0)"/></td>
+                                                <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.certified_qty or 0.0)"/></td>
+                                                <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.remaining_qty or 0.0)"/></td>
+                                            </tr>
+
+                                            <t t-if="not next_line or next_line.display_type == 'line_section'">
+                                                <tr class="subtotal-row">
+                                                    <td colspan="6" class="subtotal-label">
+                                                        Subtotal
+                                                        <t t-if="current_section">
+                                                            - <span t-esc="current_section"/>
+                                                        </t>
+                                                    </td>
+                                                    <td class="subtotal-value">
+                                                        <span t-esc="'{:,.2f}'.format(section_total)"/>
+                                                    </td>
+                                                    <td colspan="3"></td>
+                                                </tr>
+                                            </t>
+                                        </t>
+                                    </t>
+                                </tbody>
                             </table>
                         </t>
                         <div class="note-box" style="margin-top: 14px;">
