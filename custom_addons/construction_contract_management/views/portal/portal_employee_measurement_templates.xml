@@ -479,133 +479,153 @@
                                     <table class="table table-sm table-bordered measurement-table">
                                         <thead class="thead-light">
                                             <tr>
-                                                <th style="width: 3%;">#</th>
-                                                <th style="width: 8%;">Section</th>
-                                                <th style="width: 8%;">Item Code</th>
-                                                <th style="width: 21%;">Description</th>
-                                                <th style="width: 9%;" class="text-right">Allowed Qty</th>
-                                                <th style="width: 10%;" class="text-right">Previous</th>
-                                                <th style="width: 9%;" class="text-right">Remaining</th>
-                                                <th style="width: 13%;" class="text-right">
-                                                    <div class="current-header">
-                                                        <span>Current *</span>
-                                                        <select id="current_input_mode" class="form-control form-control-sm entry-select" onchange="syncAllCurrentModes()">
-                                                            <option value="qty" selected="selected">Qty</option>
-                                                            <option value="percent">%</option>
-                                                        </select>
-                                                    </div>
-                                                </th>
-                                                <th style="width: 10%;" class="text-right">Total</th>
-                                                <th style="width: 6%;">Unit</th>
-                                                <th style="width: 7%;" class="text-right">Unit Rate</th>
-                                                <th style="width: 10%;">Remarks</th>
-                                            </tr>
+    <th style="width: 4%;">#</th>
+    <th style="width: 9%;">Item Code</th>
+    <th style="width: 25%;">Description</th>
+    <th style="width: 10%;" class="text-right">Allowed Qty</th>
+    <th style="width: 10%;" class="text-right">Previous</th>
+    <th style="width: 10%;" class="text-right">Remaining</th>
+    <th style="width: 13%;" class="text-right">
+        <div class="current-header">
+            <span>Current *</span>
+            <select id="current_input_mode" class="form-control form-control-sm entry-select" onchange="syncAllCurrentModes()">
+                <option value="qty" selected="selected">Qty</option>
+                <option value="percent">%</option>
+            </select>
+        </div>
+    </th>
+    <th style="width: 10%;" class="text-right">Total</th>
+    <th style="width: 5%;">Unit</th>
+    <th style="width: 8%;" class="text-right">Unit Rate</th>
+    <th style="width: 10%;">Remarks</th>
+</tr>
                                         </thead>
                                         <tbody>
-                                            <t t-set="row_no" t-value="0"/>
-                                            <t t-foreach="boq_lines" t-as="boq_line">
-                                                <t t-set="row_no" t-value="row_no + 1"/>
-                                                <t t-set="existing_line" t-value="existing_lines.get(boq_line.id) if existing_lines else False"/>
-                                                <t t-set="previous_qty" t-value="previous_qty_map.get(boq_line.id, 0.0) if previous_qty_map else 0.0"/>
-                                                <t t-set="allowed_qty" t-value="boq_line.revised_qty or boq_line.contract_qty"/>
-                                                <t t-set="variation_delta" t-value="allowed_qty - boq_line.contract_qty"/>
-                                                <t t-set="remaining_qty" t-value="allowed_qty - previous_qty"/>
+    <t t-set="row_no" t-value="0"/>
+    <t t-foreach="boq_lines.sorted(lambda l: (l.sequence, l.id))" t-as="boq_line">
 
-                                                <tr t-att-id="'row_' + str(boq_line.id)">
-                                                    <td class="text-center"><strong><t t-esc="row_no"/></strong></td>
-                                                    <td><t t-esc="boq_line.section or '-'"/></td>
-                                                    <td><strong><t t-esc="boq_line.item_code or ''"/></strong></td>
-                                                    <td><t t-esc="boq_line.description"/></td>
-                                                    <td class="text-right">
-                                                        <div class="qty-stack">
-                                                            <span><t t-esc="'%.2f' % allowed_qty"/></span>
-                                                            <t t-if="variation_delta">
-                                                                <span class="qty-percent">
-                                                                    <t t-esc="'Var. ' + ('+' if variation_delta &gt; 0 else '') + ('%.2f' % variation_delta)"/>
-                                                                </span>
-                                                            </t>
-                                                            <span class="qty-percent">(100%)</span>
-                                                        </div>
-                                                        <input type="hidden" t-att-name="'contract_qty_' + str(boq_line.id)" t-att-value="allowed_qty"/>
-                                                    </td>
-                                                    <td class="text-right text-primary">
-                                                        <div class="qty-stack">
-                                                            <strong><t t-esc="'%.2f' % previous_qty"/></strong>
-                                                            <span class="qty-percent">
-                                                                <t t-esc="'(' + str(int(round((previous_qty / allowed_qty * 100) if allowed_qty else 0.0))) + '%)'"/>
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td class="text-right">
-                                                        <span class="qty-badge"
-                                                              t-att-class="'qty-badge badge badge-' + ('success' if remaining_qty > 0 else 'secondary')">
-                                                            <t t-esc="'%.2f' % remaining_qty"/>
-                                                        </span>
-                                                        <div class="qty-percent mt-1">
-                                                            <t t-esc="'(' + str(int(round((remaining_qty / allowed_qty * 100) if allowed_qty else 0.0))) + '%)'"/>
-                                                        </div>
-                                                        <input type="hidden" t-att-name="'remaining_qty_' + str(boq_line.id)" t-att-value="remaining_qty"/>
-                                                    </td>
-                                                    <td class="text-right qty-cell">
-                                                        <div class="entry-stack">
-                                                            <div class="entry-row">
-                                                                <input type="number"
-                                                                       step="0.01"
-                                                                       min="0"
-                                                                       class="form-control form-control-sm text-right entry-input current-entry-input"
-                                                                       t-att-name="'current_entry_' + str(boq_line.id)"
-                                                                       t-att-id="'current_entry_' + str(boq_line.id)"
-                                                                       t-att-data-boq-id="boq_line.id"
-                                                                       t-att-data-remaining="remaining_qty"
-                                                                       t-att-data-allowed="allowed_qty"
-                                                                       t-att-data-previous="previous_qty"
-                                                                       t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"
-                                                                       oninput="syncCurrentEntry(this)"
-                                                                       onchange="syncCurrentEntry(this)"/>
-                                                                <input type="hidden"
-                                                                       t-att-name="'qty_' + str(boq_line.id)"
-                                                                       t-att-id="'qty_' + str(boq_line.id)"
-                                                                       t-att-data-boq-id="boq_line.id"
-                                                                       t-att-data-remaining="remaining_qty"
-                                                                       t-att-data-allowed="allowed_qty"
-                                                                       t-att-data-previous="previous_qty"
-                                                                       t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"/>
-                                                                <input type="hidden"
-                                                                       t-att-name="'qty_percent_' + str(boq_line.id)"
-                                                                       t-att-id="'qty_percent_' + str(boq_line.id)"
-                                                                       t-att-value="'%.2f' % (((existing_line.current_qty if existing_line else 0.0) / allowed_qty * 100) if allowed_qty else 0.0)"/>
-                                                            </div>
-                                                        </div>
-                                                        <div class="qty-percent mt-1 current-percent-display">
-                                                            <t t-set="current_qty_value" t-value="existing_line.current_qty if existing_line else 0.0"/>
-                                                            <t t-esc="'(' + str(int(round((current_qty_value / allowed_qty * 100) if allowed_qty else 0.0))) + '%)'"/>
-                                                        </div>
-                                                    </td>
-                                                    <td class="text-right">
-                                                        <div class="qty-stack">
-                                                            <strong class="muted-total total-qty-display">
-                                                                <t t-set="total_qty_value" t-value="previous_qty + (existing_line.current_qty if existing_line else 0.0)"/>
-                                                                <t t-esc="'%.2f' % total_qty_value"/>
-                                                            </strong>
-                                                            <span class="qty-percent total-percent-display">
-                                                                <t t-esc="'(' + str(int(round((total_qty_value / allowed_qty * 100) if allowed_qty else 0.0))) + '%)'"/>
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td><small><t t-esc="boq_line.uom_id.name"/></small></td>
-                                                    <td class="text-right">
-                                                        <small class="money-text" t-field="boq_line.unit_rate" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/>
-                                                    </td>
-                                                    <td class="remarks-cell">
-                                                        <input type="text"
-                                                               class="form-control form-control-sm remarks-input"
-                                                               t-att-name="'remarks_' + str(boq_line.id)"
-                                                               t-att-value="existing_line.remarks if existing_line and existing_line.remarks else ''"
-                                                               placeholder="Optional notes"/>
-                                                    </td>
-                                                </tr>
-                                            </t>
-                                        </tbody>
+        <!-- SECTION -->
+        <t t-if="boq_line.display_type == 'line_section'">
+            <tr style="background:#eef2f7; font-weight:700;">
+                <td colspan="12">
+                    <t t-esc="boq_line.description or 'Section'"/>
+                </td>
+            </tr>
+        </t>
+
+        <!-- NOTE -->
+        <t t-elif="boq_line.display_type == 'line_note'">
+            <tr style="background:#f8fafc; font-style:italic; color:#6b7280;">
+                <td colspan="12">
+                    <t t-esc="boq_line.description or ''"/>
+                </td>
+            </tr>
+        </t>
+
+        <!-- NORMAL LINE -->
+        <t t-else="">
+            <t t-set="row_no" t-value="row_no + 1"/>
+            <t t-set="existing_line" t-value="existing_lines.get(boq_line.id) if existing_lines else False"/>
+            <t t-set="previous_qty" t-value="previous_qty_map.get(boq_line.id, 0.0) if previous_qty_map else 0.0"/>
+            <t t-set="allowed_qty" t-value="boq_line.revised_qty or boq_line.contract_qty"/>
+            <t t-set="variation_delta" t-value="allowed_qty - boq_line.contract_qty"/>
+            <t t-set="remaining_qty" t-value="allowed_qty - previous_qty"/>
+
+            <tr t-att-id="'row_' + str(boq_line.id)">
+                <td class="text-center"><strong><t t-esc="row_no"/></strong></td>
+                <td><strong><t t-esc="boq_line.item_code or ''"/></strong></td>
+                <td><t t-esc="boq_line.description or ''"/></td>
+                <td class="text-right">
+                    <div class="qty-stack">
+                        <span><t t-esc="'%.2f' % allowed_qty"/></span>
+                        <t t-if="variation_delta">
+                            <span class="qty-percent">
+                                <t t-esc="'Var. ' + ('+' if variation_delta &gt; 0 else '') + ('%.2f' % variation_delta)"/>
+                            </span>
+                        </t>
+                        <span class="qty-percent">(100%)</span>
+                    </div>
+                    <input type="hidden" t-att-name="'contract_qty_' + str(boq_line.id)" t-att-value="allowed_qty"/>
+                </td>
+                <td class="text-right text-primary">
+                    <div class="qty-stack">
+                        <strong><t t-esc="'%.2f' % previous_qty"/></strong>
+                        <span class="qty-percent">
+                            <t t-esc="'(' + str(int(round((previous_qty / allowed_qty * 100) if allowed_qty else 0.0))) + '%)'"/>
+                        </span>
+                    </div>
+                </td>
+                <td class="text-right">
+                    <span class="qty-badge"
+                          t-att-class="'qty-badge badge badge-' + ('success' if remaining_qty > 0 else 'secondary')">
+                        <t t-esc="'%.2f' % remaining_qty"/>
+                    </span>
+                    <div class="qty-percent mt-1">
+                        <t t-esc="'(' + str(int(round((remaining_qty / allowed_qty * 100) if allowed_qty else 0.0))) + '%)'"/>
+                    </div>
+                    <input type="hidden" t-att-name="'remaining_qty_' + str(boq_line.id)" t-att-value="remaining_qty"/>
+                </td>
+                <td class="text-right qty-cell">
+                    <div class="entry-stack">
+                        <div class="entry-row">
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   class="form-control form-control-sm text-right entry-input current-entry-input"
+                                   t-att-name="'current_entry_' + str(boq_line.id)"
+                                   t-att-id="'current_entry_' + str(boq_line.id)"
+                                   t-att-data-boq-id="boq_line.id"
+                                   t-att-data-remaining="remaining_qty"
+                                   t-att-data-allowed="allowed_qty"
+                                   t-att-data-previous="previous_qty"
+                                   t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"
+                                   oninput="syncCurrentEntry(this)"
+                                   onchange="syncCurrentEntry(this)"/>
+                            <input type="hidden"
+                                   t-att-name="'qty_' + str(boq_line.id)"
+                                   t-att-id="'qty_' + str(boq_line.id)"
+                                   t-att-data-boq-id="boq_line.id"
+                                   t-att-data-remaining="remaining_qty"
+                                   t-att-data-allowed="allowed_qty"
+                                   t-att-data-previous="previous_qty"
+                                   t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"/>
+                            <input type="hidden"
+                                   t-att-name="'qty_percent_' + str(boq_line.id)"
+                                   t-att-id="'qty_percent_' + str(boq_line.id)"
+                                   t-att-value="'%.2f' % (((existing_line.current_qty if existing_line else 0.0) / allowed_qty * 100) if allowed_qty else 0.0)"/>
+                        </div>
+                    </div>
+                    <div class="qty-percent mt-1 current-percent-display">
+                        <t t-set="current_qty_value" t-value="existing_line.current_qty if existing_line else 0.0"/>
+                        <t t-esc="'(' + str(int(round((current_qty_value / allowed_qty * 100) if allowed_qty else 0.0))) + '%)'"/>
+                    </div>
+                </td>
+                <td class="text-right">
+                    <div class="qty-stack">
+                        <strong class="muted-total total-qty-display">
+                            <t t-set="total_qty_value" t-value="previous_qty + (existing_line.current_qty if existing_line else 0.0)"/>
+                            <t t-esc="'%.2f' % total_qty_value"/>
+                        </strong>
+                        <span class="qty-percent total-percent-display">
+                            <t t-esc="'(' + str(int(round((total_qty_value / allowed_qty * 100) if allowed_qty else 0.0))) + '%)'"/>
+                        </span>
+                    </div>
+                </td>
+                <td><small><t t-esc="boq_line.uom_id.name"/></small></td>
+                <td class="text-right">
+                    <small class="money-text" t-field="boq_line.unit_rate" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/>
+                </td>
+                <td class="remarks-cell">
+                    <input type="text"
+                           class="form-control form-control-sm remarks-input"
+                           t-att-name="'remarks_' + str(boq_line.id)"
+                           t-att-value="existing_line.remarks if existing_line and existing_line.remarks else ''"
+                           placeholder="Optional notes"/>
+                </td>
+            </tr>
+        </t>
+    </t>
+</tbody>
                                     </table>
                                 </div>
 
