@@ -81,7 +81,6 @@
         # --------------------------------------------------
         'views/employee_portal_layout.xml',
         'views/employee_dashboard_page.xml',
-        'views/employee_checkin_page.xml',
 
         # Employee Requests
         'views/employee_requests_page.xml',
