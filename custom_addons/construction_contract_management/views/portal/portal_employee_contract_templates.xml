@@ -161,11 +161,10 @@
                                 </div>
                             </div>
                             <div class="row mb-2">
-                                    <div class="col-5"><strong>Payment Terms::</strong></div>
-                                    <div class="col-7">
-                            <span t-field ="payment_term_id"/>
-                            </div>
-                            </div>
+                                <div class="col-5"><strong>Payment Terms:</strong></div>
+                                <div class="col-7">
+                                    <span t-field="contract.payment_term_id"/>
+                                </div>
                             </div>
                         </div>
                     </div>
