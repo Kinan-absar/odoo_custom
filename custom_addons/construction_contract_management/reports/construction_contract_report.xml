@@ -49,17 +49,7 @@
                                         <div class="meta-value"><span t-field="doc.date_start"/> - <span t-field="doc.date_end"/></div>
                                     </div>
                                 </td>
-                                <td>
-                                    <div class="meta-card">
-                                        <div class="meta-label">Payment Terms</div>
-                                        <div class="meta-value">
-                                            <t t-if="doc.payment_term_id">
-                                                <span t-field="doc.payment_term_id"/>
-                                            </t>
-                                            <t t-else="">-</t>
-                                        </div>
-                                    </div>
-                                </td>
+                                
                             </tr>
                         </table>
 
@@ -179,6 +169,19 @@
                                             </div>
                                         </t>
                                     </td>
+                                </tr>
+                                <tr>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Payment Terms</div>
+                                        <div class="meta-value">
+                                            <t t-if="doc.payment_term_id">
+                                                <span t-field="doc.payment_term_id"/>
+                                            </t>
+                                            <t t-else="">-</t>
+                                        </div>
+                                    </div>
+                                </td>
                                 </tr>
                             </table>
                         </t>
