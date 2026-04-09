@@ -75,7 +75,6 @@
                                         <group>
                                             <field name="type"/>
                                             <field name="boq_line_id"/>
-                                            <field name="section"/>
                                             <field name="item_code"/>
                                         </group>
                                         <group>
