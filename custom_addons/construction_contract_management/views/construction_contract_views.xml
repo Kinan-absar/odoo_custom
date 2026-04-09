@@ -132,7 +132,11 @@
                             <field name="boq_line_ids" groups="construction_contract_management.group_construction_manager">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="section"/>
+                                    <control>
+                                        <create string="Add a line"/>
+                                        <create string="Add a section" context="{'default_display_type': 'line_section'}"/>
+                                        <create string="Add a note" context="{'default_display_type': 'line_note'}"/>
+                                    </control>
                                     <field name="item_code"/>
                                     <field name="description"/>
                                     <field name="uom_id"/>

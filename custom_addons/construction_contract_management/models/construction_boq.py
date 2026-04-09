@@ -12,7 +12,10 @@ class ConstructionContractBoqLine(models.Model):
     currency_id = fields.Many2one(related='contract_id.currency_id', store=True)
     measurement_line_ids = fields.One2many('construction.measurement.line', 'boq_line_id')
     ipc_line_ids = fields.One2many('construction.ipc.line', 'boq_line_id')
-
+    display_type = fields.Selection([
+        ('line_section', 'Section'),
+        ('line_note', 'Note'),
+    ], string='Display Type', default=False)
     section = fields.Char(string='Section')
     item_code = fields.Char(string='Item Code')
     description = fields.Text(string='Description', required=True)
