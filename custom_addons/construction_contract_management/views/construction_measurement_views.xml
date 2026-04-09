@@ -61,13 +61,14 @@
                     <notebook>
                         <page string="Measurement Lines">
     <field name="line_ids"
-           widget="section_and_note_one2many"
            readonly="state == 'approved'">
         <list editable="bottom">
             <field name="display_type" column_invisible="True"/>
 
             <field name="boq_line_id" invisible="display_type != False"/>
-            <field name="description" widget="section_and_note_text" readonly="1"/>
+            <field name="description" 
+       decoration-bf="display_type == 'line_section'"
+       decoration-it="display_type == 'line_note'" readonly="1"/>
 
             <field name="previous_qty" invisible="display_type != False"/>
             <field name="previous_percent" readonly="1" invisible="display_type != False"/>
