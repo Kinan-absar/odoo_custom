@@ -159,7 +159,6 @@
                                         <span t-if="contract.state == 'cancelled'" class="badge badge-danger">Cancelled</span>
                                     </div>
                                 </div>
-                            </div>
                             <div class="row mb-2">
                                 <div class="col-5"><strong>Payment Terms:</strong></div>
                                 <div class="col-7">
@@ -168,6 +167,7 @@
                             </div>
                         </div>
                     </div>
+                     </div>
 
                     <div class="col-lg-6">
                         <div class="card">
