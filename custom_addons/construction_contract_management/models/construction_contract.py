@@ -329,7 +329,7 @@ class ConstructionContract(models.Model):
             total_measured = 0.0
             total_certified = 0.0
 
-            for line in rec.boq_line_ids:
+            for line in rec.boq_line_ids.filtered(lambda l: not l.display_type):
                 rate = line.revised_unit_rate or line.unit_rate
                 total_measured += (line.measured_qty or 0.0) * rate
                 total_certified += (line.certified_qty or 0.0) * rate

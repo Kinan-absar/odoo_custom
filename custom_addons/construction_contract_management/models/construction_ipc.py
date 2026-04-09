@@ -305,7 +305,11 @@ class ConstructionIPCLine(models.Model):
     ipc_id = fields.Many2one('construction.ipc', required=True, ondelete='cascade')
     boq_line_id = fields.Many2one('construction.contract.boq.line', required=True)
     measurement_line_id = fields.Many2one('construction.measurement.line', string='Measurement Line')
-    section = fields.Char(related='boq_line_id.section', store=True, readonly=True)
+    display_type = fields.Selection(
+        related='boq_line_id.display_type',
+        store=True,
+        readonly=True
+    )
     description = fields.Text(related='boq_line_id.description', store=True)
     currency_id = fields.Many2one(related='ipc_id.currency_id', store=True)
 

@@ -103,7 +103,11 @@ class ConstructionMeasurementLine(models.Model):
         required=True,
         domain="[('contract_id', '=', parent.contract_id)]",
     )
-    section = fields.Char(related='boq_line_id.section', store=True, readonly=True)
+    display_type = fields.Selection(
+        related='boq_line_id.display_type',
+        store=True,
+        readonly=True
+    )
     description = fields.Text(related='boq_line_id.description', store=True)
     unit_rate = fields.Monetary(related='boq_line_id.unit_rate', store=True)
     currency_id = fields.Many2one(related='measurement_id.contract_id.currency_id', store=True)

@@ -116,7 +116,7 @@ class ConstructionVariationLine(models.Model):
         ('rate', 'Rate Change'),
     ], required=True)
 
-    section = fields.Char(string='Section')
+    
     item_code = fields.Char(string='Item Code')
     description = fields.Text()
     uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
@@ -180,7 +180,6 @@ class ConstructionVariationLine(models.Model):
     def _onchange_boq_line_id(self):
         for rec in self:
             if rec.boq_line_id:
-                rec.section = rec.boq_line_id.section
                 rec.item_code = rec.boq_line_id.item_code
                 rec.description = rec.boq_line_id.description
                 rec.uom_id = rec.boq_line_id.uom_id
@@ -197,7 +196,7 @@ class ConstructionVariationLine(models.Model):
         return {
             'contract_id': self.contract_id.id,
             'sequence': (self.contract_id.boq_line_ids and max(self.contract_id.boq_line_ids.mapped('sequence') or [0]) + 10) or 10,
-            'section': self.section,
+            'display_type': False,
             'item_code': self.item_code or self.variation_id.name,
             'description': self.description or 'New variation item',
             'uom_id': self.uom_id.id if self.uom_id else False,

@@ -1,5 +1,5 @@
 from odoo import api, fields, models
-
+from odoo.exceptions import ValidationError
 
 class ConstructionContractBoqLine(models.Model):
     _name = 'construction.contract.boq.line'
@@ -87,7 +87,7 @@ class ConstructionContractBoqLine(models.Model):
             else:
                 if not rec.description:
                     raise ValidationError("Description is required for BOQ lines.")
-                    
+
     @api.depends('contract_qty', 'unit_rate', 'display_type')
     def _compute_amounts(self):
         for rec in self:
