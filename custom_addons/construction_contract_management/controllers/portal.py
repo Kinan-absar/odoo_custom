@@ -652,7 +652,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 previous_qty = sum(approved_lines.mapped('current_qty'))
                 cumulative_qty = previous_qty + current_qty
 
-                if current_qty > 0 and allowed_qty and cumulative_qty > allowed_qty:
+                if not boq_line.display_type and current_qty > 0 and allowed_qty and cumulative_qty > allowed_qty:
                     label = boq_line.item_code or (boq_line.description or '')[:30]
                     validation_errors.append(
                         f"{label}: cumulative {cumulative_qty:.2f} exceeds allowed {allowed_qty:.2f}"
@@ -662,22 +662,18 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 line_vals = {
                     'measurement_id': measurement.id,
                     'boq_line_id': boq_line.id,
-                    'previous_qty': previous_qty,
-                    'current_qty': current_qty,
-                    'remarks': remarks or False,
+                    'previous_qty': 0.0 if boq_line.display_type else previous_qty,
+                    'current_qty': 0.0 if boq_line.display_type else current_qty,
+                    'remarks': False if boq_line.display_type else (remarks or False),
                 }
 
                 try:
-                    if current_qty > 0:
-                        if existing_line:
-                            existing_line.write(line_vals)
-                        else:
-                            MeasurementLine.create(line_vals)
+                    if existing_line:
+                        existing_line.write(line_vals)
                     else:
-                        if existing_line:
-                            existing_line.unlink()
+                        MeasurementLine.create(line_vals)
                 except ValidationError as ve:
-                    label = boq_line.item_code or (boq_line.description or '')[:30]
+                    label = boq_line.item_code or (boq_line.description or '')[:30] or (boq_line.description or 'BOQ Line')
                     validation_errors.append(f"{label}: {str(ve)}")
 
             if validation_errors:
@@ -706,7 +702,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             measurement = request.env['construction.measurement'].sudo().browse(measurement_id)
             measurement.contract_id.boq_line_ids._compute_progress_fields()
             measurement.contract_id._compute_summary_amounts()
-            positive_lines = measurement.line_ids.filtered(lambda l: l.current_qty > 0)
+            positive_lines = measurement.line_ids.filtered(lambda l: not l.display_type and l.current_qty > 0)
 
             if action == 'submit':
                 if not positive_lines:
