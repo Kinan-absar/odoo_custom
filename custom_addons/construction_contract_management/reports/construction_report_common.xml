@@ -244,6 +244,12 @@
                 color: #15233b;
                 font-weight: 800;
             }
+            .construction-report .grand-total-row td {
+                background: #dfe8f3 !important;
+                font-weight: 900;
+                border-top: 3px solid #94a8c0;
+                border-bottom: 3px solid #94a8c0;
+            }
         </style>
     </template>
 </odoo>
