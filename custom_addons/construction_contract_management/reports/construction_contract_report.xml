@@ -134,7 +134,7 @@
                                         <t t-if="current_section">
                                             <tr class="subtotal-row">
                                                 <td colspan="6" class="subtotal-label">Subtotal - <span t-esc="current_section"/></td>
-                                                <td class="subtotal-value"><span t-esc="'{:,.2f}'.format(section_total)"/></td>
+                                                <td class="subtotal-value"><span t-esc="'{} {:,.2f}'.format(doc.currency_id.symbol or '', section_total or 0.0)"/></td>
                                                 <td colspan="3"></td>
                                             </tr>
                                         </t>
