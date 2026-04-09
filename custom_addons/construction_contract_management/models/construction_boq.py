@@ -16,13 +16,12 @@ class ConstructionContractBoqLine(models.Model):
         ('line_section', 'Section'),
         ('line_note', 'Note'),
     ], string='Display Type', default=False)
-    section = fields.Char(string='Section')
     item_code = fields.Char(string='Item Code')
-    description = fields.Text(string='Description', required=True)
+    description = fields.Text(string='Description')
     uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
 
-    contract_qty = fields.Float(string='Contract Qty', required=True, default=1.0)
-    unit_rate = fields.Monetary(string='Unit Rate', currency_field='currency_id', required=True, default=0.0)
+    contract_qty = fields.Float(string='Contract Qty', default=1.0)
+    unit_rate = fields.Monetary(string='Unit Rate', currency_field='currency_id', default=0.0)
     total_amount = fields.Monetary(
         string='Original Amount',
         currency_field='currency_id',
@@ -79,6 +78,16 @@ class ConstructionContractBoqLine(models.Model):
         store=True,
     )
 
+    @api.constrains('display_type', 'description', 'contract_qty', 'unit_rate')
+    def _check_accountable_required_fields(self):
+        for rec in self:
+            if rec.display_type in ('line_section', 'line_note'):
+                if not rec.description:
+                    raise ValidationError("Section and note lines must have a description.")
+            else:
+                if not rec.description:
+                    raise ValidationError("Description is required for BOQ lines.")
+                    
     @api.depends('contract_qty', 'unit_rate', 'display_type')
     def _compute_amounts(self):
         for rec in self:
