@@ -83,6 +83,7 @@
                             <field name="date_start"/>
                             <field name="date_end"/>
                             <field name="currency_id" readonly="1"/>
+                            <field name="payment_term_id"/>
                         </group>
                     </group>
 

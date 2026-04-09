@@ -30,7 +30,11 @@ class ConstructionContract(models.Model):
         compute='_compute_revised_amount',
         store=True,
     )
-
+    payment_term_id = fields.Many2one(
+        'account.payment.term',
+        string='Payment Terms',
+        tracking=True,
+    )
     retention_percent = fields.Float(string='Retention %')
     advance_percent = fields.Float(string='Advance %')
     vat_percent = fields.Float(string='VAT %', default=15.0)
