@@ -778,71 +778,153 @@
                 </t>
 
                 <t t-if="measurement.line_ids and measurement.state != 'draft'">
-                    <div class="card mt-4">
-                        <div class="card-header">
-                            <h5>Measurement Lines</h5>
-                        </div>
-                        <div class="card-body">
-                            <table class="table table-sm table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Section</th>
-                                        <th>Item Code</th>
-                                        <th>Description</th>
-                                        <th class="text-right">Previous</th>
-                                        <th class="text-right">Current</th>
-                                        <th class="text-right">Total</th>
-                                        <th>Unit</th>
-                                        <th class="text-right">Unit Rate</th>
-                                        <th>Remarks</th>
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Measurement Lines</h5>
+        </div>
+        <div class="card-body">
+            <style>
+                .meas-section {
+                    background: #eef2f7;
+                    font-weight: 700;
+                }
+                .meas-note {
+                    background: #f8fafc;
+                    font-style: italic;
+                    color: #6b7280;
+                }
+                .meas-subtotal {
+                    background: #f1f5f9;
+                    font-weight: 700;
+                }
+                .meas-grand-total {
+                    background: #e2e8f0;
+                    font-weight: 800;
+                }
+            </style>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-striped measurement-table">
+                    <thead>
+                        <tr>
+                            <th>Item Code</th>
+                            <th>Description</th>
+                            <th class="text-right">Allowed</th>
+                            <th class="text-right">Previous</th>
+                            <th class="text-right">Current</th>
+                            <th class="text-right">Total</th>
+                            <th class="text-right">Remaining</th>
+                            <th>Unit</th>
+                            <th class="text-right">Unit Rate</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-set="lines" t-value="measurement.line_ids.sorted(lambda l: (l.boq_line_id.sequence, l.id))"/>
+                        <t t-set="section_total" t-value="0.0"/>
+                        <t t-set="grand_total" t-value="0.0"/>
+                        <t t-set="current_section" t-value="''"/>
+
+                        <t t-foreach="lines" t-as="line">
+                            <t t-if="line.display_type == 'line_section'">
+                                <t t-if="current_section">
+                                    <tr class="meas-subtotal">
+                                        <td colspan="8" class="text-right">
+                                            Subtotal - <t t-esc="current_section"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-esc="'{} {:,.2f}'.format(measurement.contract_id.currency_id.symbol or '', section_total or 0.0)"/>
+                                        </td>
+                                        <td></td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    <t t-set="line_no" t-value="0"/>
-                                    <t t-foreach="measurement.line_ids" t-as="line">
-                                        <t t-set="line_no" t-value="line_no + 1"/>
-                                        <tr>
-                                            <td><t t-esc="line_no"/></td>
-                                            <td><t t-esc="line.section or '-'"/></td>
-                                            <td>
-                                                <strong>
-                                                    <t t-if="line.boq_line_id.item_code">
-                                                        <t t-esc="line.boq_line_id.item_code"/>
-                                                    </t>
-                                                </strong>
-                                            </td>
-                                            <td><span t-field="line.description"/></td>
-                                            <td class="text-right">
-                                                <div class="qty-stack">
-                                                    <span t-field="line.previous_qty"/>
-                                                    <span class="qty-percent"><t t-esc="'(' + str(int(round(line.previous_percent or 0.0))) + '%)'"/></span>
-                                                </div>
-                                            </td>
-                                            <td class="text-right">
-                                                <div class="qty-stack">
-                                                    <strong><span t-field="line.current_qty"/></strong>
-                                                    <span class="qty-percent"><t t-esc="'(' + str(int(round(line.current_percent or 0.0))) + '%)'"/></span>
-                                                </div>
-                                            </td>
-                                            <td class="text-right">
-                                                <div class="qty-stack">
-                                                    <span t-field="line.cumulative_qty"/>
-                                                    <span class="qty-percent"><t t-esc="'(' + str(int(round(line.cumulative_percent or 0.0))) + '%)'"/></span>
-                                                </div>
-                                            </td>
-                                            <td><span t-field="line.boq_line_id.uom_id"/></td>
-                                            <td class="text-right">
-                                                <span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/>
-                                            </td>
-                                            <td><t t-esc="line.remarks or '-'"/></td>
-                                        </tr>
-                                    </t>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </t>
+                                </t>
+
+                                <t t-set="section_total" t-value="0.0"/>
+                                <t t-set="current_section" t-value="line.description or 'Section'"/>
+
+                                <tr class="meas-section">
+                                    <td colspan="10">
+                                        <t t-esc="line.description or 'Section'"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <t t-elif="line.display_type == 'line_note'">
+                                <tr class="meas-note">
+                                    <td colspan="10">
+                                        <t t-esc="line.description or ''"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <t t-else="">
+                                <t t-set="line_value" t-value="(line.current_qty or 0.0) * (line.unit_rate or 0.0)"/>
+                                <t t-set="section_total" t-value="section_total + line_value"/>
+                                <t t-set="grand_total" t-value="grand_total + line_value"/>
+
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            <t t-if="line.boq_line_id.item_code">
+                                                <t t-esc="line.boq_line_id.item_code"/>
+                                            </t>
+                                        </strong>
+                                    </td>
+                                    <td><span t-field="line.description"/></td>
+                                    <td class="text-right"><t t-esc="'%.2f' % (line.allowed_qty or 0.0)"/></td>
+                                    <td class="text-right">
+                                        <div class="qty-stack">
+                                            <span t-field="line.previous_qty"/>
+                                            <span class="qty-percent"><t t-esc="'(' + str(int(round(line.previous_percent or 0.0))) + '%)'"/></span>
+                                        </div>
+                                    </td>
+                                    <td class="text-right">
+                                        <div class="qty-stack">
+                                            <strong><span t-field="line.current_qty"/></strong>
+                                            <span class="qty-percent"><t t-esc="'(' + str(int(round(line.current_percent or 0.0))) + '%)'"/></span>
+                                        </div>
+                                    </td>
+                                    <td class="text-right">
+                                        <div class="qty-stack">
+                                            <span t-field="line.cumulative_qty"/>
+                                            <span class="qty-percent"><t t-esc="'(' + str(int(round(line.cumulative_percent or 0.0))) + '%)'"/></span>
+                                        </div>
+                                    </td>
+                                    <td class="text-right"><t t-esc="'%.2f' % (line.remaining_qty or 0.0)"/></td>
+                                    <td><span t-field="line.boq_line_id.uom_id"/></td>
+                                    <td class="text-right">
+                                        <span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/>
+                                    </td>
+                                    <td><t t-esc="line.remarks or '-'"/></td>
+                                </tr>
+                            </t>
+                        </t>
+
+                        <t t-if="current_section">
+                            <tr class="meas-subtotal">
+                                <td colspan="8" class="text-right">
+                                    Subtotal - <t t-esc="current_section"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="'{} {:,.2f}'.format(measurement.contract_id.currency_id.symbol or '', section_total or 0.0)"/>
+                                </td>
+                                <td></td>
+                            </tr>
+                        </t>
+
+                        <tr class="meas-grand-total">
+                            <td colspan="8" class="text-right">Grand Total</td>
+                            <td class="text-right">
+                                <span t-esc="'{} {:,.2f}'.format(measurement.contract_id.currency_id.symbol or '', grand_total or 0.0)"/>
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</t>
 
                 <div class="row mt-4 mb-4">
                     <div class="col-12">
