@@ -60,23 +60,27 @@
 
                     <notebook>
                         <page string="Measurement Lines">
-                            <field name="line_ids" readonly="state == 'approved'">
-                                <list editable="bottom">
-                                    <field name="boq_line_id"/>
-                                    <field name="section" readonly="1"/>
-                                    <field name="description" readonly="1"/>
-                                    <field name="previous_qty"/>
-                                    <field name="previous_percent" readonly="1"/>
-                                    <field name="current_qty"/>
-                                    <field name="current_percent" readonly="1"/>
-                                    <field name="cumulative_qty" readonly="1"/>
-                                    <field name="cumulative_percent" readonly="1"/>
-                                    <field name="allowed_qty" readonly="1"/>
-                                    <field name="remaining_qty" readonly="1"/>
-                                    <field name="remarks"/>
-                                </list>
-                            </field>
-                        </page>
+    <field name="line_ids"
+           widget="section_and_note_one2many"
+           readonly="state == 'approved'">
+        <list editable="bottom">
+            <field name="display_type" column_invisible="True"/>
+
+            <field name="boq_line_id" invisible="display_type != False"/>
+            <field name="description" widget="section_and_note_text" readonly="1"/>
+
+            <field name="previous_qty" invisible="display_type != False"/>
+            <field name="previous_percent" readonly="1" invisible="display_type != False"/>
+            <field name="current_qty" invisible="display_type != False"/>
+            <field name="current_percent" readonly="1" invisible="display_type != False"/>
+            <field name="cumulative_qty" readonly="1" invisible="display_type != False"/>
+            <field name="cumulative_percent" readonly="1" invisible="display_type != False"/>
+            <field name="allowed_qty" readonly="1" invisible="display_type != False"/>
+            <field name="remaining_qty" readonly="1" invisible="display_type != False"/>
+            <field name="remarks" invisible="display_type != False"/>
+        </list>
+    </field>
+</page>
                     </notebook>
                 </sheet>
                 <chatter/>
