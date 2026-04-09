@@ -79,16 +79,28 @@ class ConstructionContractBoqLine(models.Model):
         store=True,
     )
 
-    @api.depends('contract_qty', 'unit_rate')
+    @api.depends('contract_qty', 'unit_rate', 'display_type')
     def _compute_amounts(self):
         for rec in self:
-            rec.total_amount = rec.contract_qty * rec.unit_rate
+            if rec.display_type:
+                rec.total_amount = 0.0
+            else:
+                rec.total_amount = rec.contract_qty * rec.unit_rate
 
-    @api.depends('contract_qty', 'unit_rate', 'contract_id')
+    @api.depends('contract_qty', 'unit_rate', 'contract_id', 'display_type')
     def _compute_variation_fields(self):
         VariationLine = self.env['construction.variation.line']
 
         for rec in self:
+            if rec.display_type:
+                rec.variation_qty_increase = 0.0
+                rec.variation_qty_decrease = 0.0
+                rec.revised_qty = 0.0
+                rec.revised_unit_rate = 0.0
+                rec.revised_amount = 0.0
+                rec.is_omitted = False
+                continue
+
             approved_lines = VariationLine.search([
                 ('variation_id.contract_id', '=', rec.contract_id.id),
                 ('variation_id.state', '=', 'approved'),
@@ -129,9 +141,16 @@ class ConstructionContractBoqLine(models.Model):
         'measurement_line_ids.measurement_id.state',
         'ipc_line_ids.current_qty',
         'ipc_line_ids.ipc_id.state',
+        'display_type',
     )
     def _compute_progress_fields(self):
         for rec in self:
+            if rec.display_type:
+                rec.measured_qty = 0.0
+                rec.certified_qty = 0.0
+                rec.remaining_qty = 0.0
+                continue
+
             approved_measurement_lines = rec.measurement_line_ids.filtered(
                 lambda l: l.measurement_id.state == 'approved'
             )
@@ -144,6 +163,15 @@ class ConstructionContractBoqLine(models.Model):
 
             allowed_qty = rec.revised_qty or rec.contract_qty
             rec.remaining_qty = allowed_qty - rec.certified_qty
+
+    @api.onchange('display_type')
+    def _onchange_display_type(self):
+        for rec in self:
+            if rec.display_type:
+                rec.item_code = False
+                rec.uom_id = False
+                rec.contract_qty = 0.0
+                rec.unit_rate = 0.0
 
     def name_get(self):
         result = []
