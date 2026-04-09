@@ -251,38 +251,138 @@
                 </div>
 
                 <t t-if="contract.boq_line_ids">
-                    <div class="card mt-4">
-                        <div class="card-header">
-                            <h5>Bill of Quantities</h5>
-                        </div>
-                        <div class="card-body">
-                            <table class="table table-sm table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Item Code</th>
-                                        <th>Description</th>
-                                        <th class="text-right">Quantity</th>
-                                        <th>Unit</th>
-                                        <th class="text-right">Unit Rate</th>
-                                        <th class="text-right">Amount</th>
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Bill of Quantities</h5>
+        </div>
+        <div class="card-body">
+
+            <style>
+                .boq-section {
+                    background: #eef2f7;
+                    font-weight: 700;
+                }
+                .boq-note {
+                    background: #f8fafc;
+                    font-style: italic;
+                    color: #6b7280;
+                }
+                .boq-subtotal {
+                    background: #f1f5f9;
+                    font-weight: 700;
+                }
+                .boq-grand-total {
+                    background: #e2e8f0;
+                    font-weight: 800;
+                }
+            </style>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Item Code</th>
+                            <th>Description</th>
+                            <th class="text-right">Qty</th>
+                            <th>Unit</th>
+                            <th class="text-right">Rate</th>
+                            <th class="text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <t t-set="lines" t-value="contract.boq_line_ids.sorted(lambda l: (l.sequence, l.id))"/>
+                        <t t-set="section_total" t-value="0.0"/>
+                        <t t-set="grand_total" t-value="0.0"/>
+                        <t t-set="current_section" t-value="''"/>
+
+                        <t t-foreach="lines" t-as="line">
+
+                            <!-- SECTION -->
+                            <t t-if="line.display_type == 'line_section'">
+                                <t t-if="current_section">
+                                    <tr class="boq-subtotal">
+                                        <td colspan="5" class="text-right">
+                                            Subtotal - <t t-esc="current_section"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-esc="'{} {:,.2f}'.format(contract.currency_id.symbol or '', section_total or 0.0)"/>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    <t t-foreach="contract.boq_line_ids" t-as="line">
-                                        <tr>
-                                            <td><span t-esc="line.item_code or ''"/></td>
-                                            <td><span t-esc="line.description or ''"/></td>
-                                            <td class="text-right"><t t-esc="'%.2f' % (line.contract_qty or 0)"/></td>
-                                            <td><span t-field="line.uom_id"/></td>
-                                            <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></td>
-                                            <td class="text-right"><span t-field="line.total_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></td>
-                                        </tr>
-                                    </t>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </t>
+                                </t>
+
+                                <t t-set="section_total" t-value="0.0"/>
+                                <t t-set="current_section" t-value="line.description or 'Section'"/>
+
+                                <tr class="boq-section">
+                                    <td colspan="6">
+                                        <t t-esc="line.description or 'Section'"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <!-- NOTE -->
+                            <t t-elif="line.display_type == 'line_note'">
+                                <tr class="boq-note">
+                                    <td colspan="6">
+                                        <t t-esc="line.description or ''"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <!-- NORMAL LINE -->
+                            <t t-else="">
+                                <t t-set="section_total" t-value="section_total + (line.revised_amount or 0.0)"/>
+                                <t t-set="grand_total" t-value="grand_total + (line.revised_amount or 0.0)"/>
+
+                                <tr>
+                                    <td><t t-esc="line.item_code or ''"/></td>
+                                    <td><t t-esc="line.description or ''"/></td>
+                                    <td class="text-right">
+                                        <t t-esc="'%.2f' % (line.revised_qty or line.contract_qty or 0)"/>
+                                    </td>
+                                    <td><span t-field="line.uom_id"/></td>
+                                    <td class="text-right">
+                                        <span t-field="line.revised_unit_rate"
+                                              t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-field="line.revised_amount"
+                                              t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                        </t>
+
+                        <!-- LAST SECTION SUBTOTAL -->
+                        <t t-if="current_section">
+                            <tr class="boq-subtotal">
+                                <td colspan="5" class="text-right">
+                                    Subtotal - <t t-esc="current_section"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="'{} {:,.2f}'.format(contract.currency_id.symbol or '', section_total or 0.0)"/>
+                                </td>
+                            </tr>
+                        </t>
+
+                        <!-- GRAND TOTAL -->
+                        <tr class="boq-grand-total">
+                            <td colspan="5" class="text-right">
+                                Grand Total
+                            </td>
+                            <td class="text-right">
+                                <span t-esc="'{} {:,.2f}'.format(contract.currency_id.symbol or '', grand_total or 0.0)"/>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</t>
 
                 <div class="row mt-4 mb-4">
                     <div class="col-12">
