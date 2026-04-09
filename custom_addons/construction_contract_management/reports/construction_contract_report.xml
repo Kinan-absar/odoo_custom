@@ -170,21 +170,17 @@
                                         </t>
                                     </td>
                                 </tr>
-                                <tr>
-                                <td>
-                                    <div class="meta-card">
-                                        <div class="meta-label">Payment Terms</div>
-                                        <div class="meta-value">
-                                            <t t-if="doc.payment_term_id">
-                                                <span t-field="doc.payment_term_id"/>
-                                            </t>
-                                            <t t-else="">-</t>
-                                        </div>
-                                    </div>
-                                </td>
-                                </tr>
                             </table>
                         </t>
+                        <div class="note-box" style="margin-top: 14px;">
+    <div class="note-title">Payment Terms</div>
+    <div>
+        <t t-if="doc.payment_term_id">
+            <span t-field="doc.payment_term_id"/>
+        </t>
+        <t t-else="">-</t>
+    </div>
+</div>
                     </div>
                 </t>
             </t>
