@@ -114,9 +114,14 @@ class ConstructionVariationLine(models.Model):
         ('new', 'New Item'),
         ('omit', 'Omit Item'),
         ('rate', 'Rate Change'),
-    ], required=True)
+    ], string='Type')
 
-    
+    @api.constrains('display_type', 'type')
+    def _check_type_required_for_normal_lines(self):
+        for rec in self:
+            if not rec.display_type and not rec.type:
+                raise ValidationError('Type is required for normal variation lines.')
+                
     item_code = fields.Char(string='Item Code')
     description = fields.Text()
     uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
