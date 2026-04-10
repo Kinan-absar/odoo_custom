@@ -90,34 +90,32 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Type</th>
-                                    <th>Section</th>
-                                    <th>Item Code</th>
-                                    <th>Description</th>
-                                    <th class="text-right">Original Qty</th>
-                                    <th class="text-right">Variation Qty</th>
-                                    <th class="text-right">Revised Qty</th>
-                                    <th class="text-right">Unit Rate</th>
-                                    <th class="text-right">Impact Amount</th>
-                                </tr>
+    <th>Type</th>
+    <th>Item Code</th>
+    <th>Description</th>
+    <th class="text-right">Original Qty</th>
+    <th class="text-right">Variation Qty</th>
+    <th class="text-right">Revised Qty</th>
+    <th class="text-right">Unit Rate</th>
+    <th class="text-right">Impact Amount</th>
+</tr>
                             </thead>
                             <tbody>
                                 <tr t-foreach="doc.line_ids" t-as="line">
-                                    <td><span t-esc="type_labels.get(line.type, line.type)"/></td>
-                                    <td><span t-esc="line.section or '-'"/></td>
-                                    <td>
-                                        <span t-esc="line.item_code or '-'"/>
-                                        <t t-if="line.created_boq_line_id">
-                                            <div class="muted">BOQ: <span t-esc="line.created_boq_line_id.display_name"/></div>
-                                        </t>
-                                    </td>
-                                    <td><span t-esc="line.description or '-'"/></td>
-                                    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.original_qty or 0.0)"/></td>
-                                    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.variation_qty or 0.0)"/></td>
-                                    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.revised_qty or 0.0)"/></td>
-                                    <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
-                                    <td class="text-right"><span t-field="line.amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
-                                </tr>
+    <td><span t-esc="type_labels.get(line.type, line.type)"/></td>
+    <td>
+        <span t-esc="line.item_code or '-'"/>
+        <t t-if="line.created_boq_line_id">
+            <div class="muted">BOQ: <span t-esc="line.created_boq_line_id.display_name"/></div>
+        </t>
+    </td>
+    <td><span t-esc="line.description or '-'"/></td>
+    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.original_qty or 0.0)"/></td>
+    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.variation_qty or 0.0)"/></td>
+    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.revised_qty or 0.0)"/></td>
+    <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+    <td class="text-right"><span t-field="line.amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+</tr>
                             </tbody>
                         </table>
 
