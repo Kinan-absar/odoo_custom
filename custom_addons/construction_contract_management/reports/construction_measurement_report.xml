@@ -176,15 +176,15 @@
                         <td><span t-esc="line.description or '-'"/></td>
                         <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.allowed_qty or 0.0)"/></td>
                         <td class="text-right mono">
-                            <span t-esc="'{:,.2f}'.format(line.previous_qty or 0.0)"/></span>
+                            <span t-esc="'{:,.2f}'.format(line.previous_qty or 0.0)"/>
                             <div class="muted"><span t-esc="'({:.0f}%)'.format(line.previous_percent or 0.0)"/></div>
                         </td>
                         <td class="text-right mono">
-                            <span t-esc="'{:,.2f}'.format(line.current_qty or 0.0)"/></span>
+                            <span t-esc="'{:,.2f}'.format(line.current_qty or 0.0)"/>
                             <div class="muted"><span t-esc="'({:.0f}%)'.format(line.current_percent or 0.0)"/></div>
                         </td>
                         <td class="text-right mono">
-                            <span t-esc="'{:,.2f}'.format(line.cumulative_qty or 0.0)"/></span>
+                            <span t-esc="'{:,.2f}'.format(line.cumulative_qty or 0.0)"/>
                             <div class="muted"><span t-esc="'({:.0f}%)'.format(line.cumulative_percent or 0.0)"/></div>
                         </td>
                         <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.remaining_qty or 0.0)"/></td>
