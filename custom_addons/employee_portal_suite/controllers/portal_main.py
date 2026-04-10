@@ -463,7 +463,7 @@ class EmployeePortalMain(CustomerPortal):
         return request.render("construction_contract_management.portal_employee_variations", values)
 
     @http.route(['/my/employee/variation/<int:variation_id>'], type='http', auth='user', website=True)
-    def portal_construction_variation_detail(self, variation_id, access_token=None, report_type=None, download=False, **kw):
+    def portal_employee_variation_detail(self, variation_id, access_token=None, report_type=None, download=False, **kw):
         try:
             variation_sudo = self._document_check_access('construction.variation', variation_id, access_token)
         except (AccessError, MissingError):
@@ -476,10 +476,14 @@ class EmployeePortalMain(CustomerPortal):
                 report_ref='construction_contract_management.action_report_construction_variation',
                 download=download,
             )
+        boq_lines = variation_sudo.contract_id.boq_line_ids.sorted(lambda l: (l.sequence, l.id))
 
-        values = {
+        section_options = boq_lines.filtered(lambda l: l.display_type == 'line_section').mapped('description')
+        section_options = [s for s in section_options if s]
+        return request.render("construction_contract_management.portal_employee_variation_detail", {
             'variation': variation_sudo,
-            'boq_lines': variation_sudo.contract_id.boq_line_ids.sorted(lambda l: (l.sequence, l.id)),
+            'boq_lines': boq_lines,
+            'section_options': section_options,   # 👈 ADD THIS
             'uoms': request.env['uom.uom'].sudo().search([]),
             'line_types': [
                 ('increase', 'Quantity Increase'),
@@ -491,8 +495,7 @@ class EmployeePortalMain(CustomerPortal):
             'success': request.params.get('success'),
             'error': request.params.get('error'),
             'page_name': 'construction_variation',
-        }
-        return request.render("construction_contract_management.portal_employee_variation_detail", values)
+        })
 
     @http.route(['/my/employee/variation/<int:variation_id>/add_line'],
                 type='http', auth='user', website=True, methods=['POST'], csrf=True)
@@ -513,7 +516,9 @@ class EmployeePortalMain(CustomerPortal):
             line_type = (post.get('type') or '').strip()
             boq_line_id = int(post.get('boq_line_id')) if post.get('boq_line_id') else False
             boq_line = request.env['construction.contract.boq.line'].sudo().browse(boq_line_id) if boq_line_id else False
-
+            existing_section = (post.get('existing_section') or '').strip()
+            new_section = (post.get('new_section') or '').strip()
+            final_section = new_section or existing_section or False
             if action == 'submit' and not post.get('type') and variation.line_ids:
                 variation.action_submit()
                 return request.redirect(f'/my/employee/variation/{variation_id}?success=submitted')
@@ -522,7 +527,7 @@ class EmployeePortalMain(CustomerPortal):
                 'variation_id': variation.id,
                 'type': line_type,
                 'boq_line_id': boq_line.id if boq_line else False,
-                'section': (post.get('section') or '').strip(),
+                'section': final_section,
                 'item_code': (post.get('item_code') or '').strip(),
                 'description': (post.get('line_description') or '').strip(),
                 'uom_id': int(post.get('uom_id')) if post.get('uom_id') else False,
@@ -531,7 +536,6 @@ class EmployeePortalMain(CustomerPortal):
             }
 
             if boq_line:
-                vals['section'] = vals['section'] or boq_line.section or False
                 vals['item_code'] = vals['item_code'] or boq_line.item_code or False
                 vals['description'] = vals['description'] or boq_line.description or False
                 vals['uom_id'] = vals['uom_id'] or boq_line.uom_id.id or False

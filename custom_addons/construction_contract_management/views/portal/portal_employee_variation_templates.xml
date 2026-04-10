@@ -263,7 +263,7 @@
                                             <label>BOQ Line</label>
                                             <select name="boq_line_id" class="form-control">
                                                 <option value="">Select BOQ line...</option>
-                                                <t t-foreach="boq_lines" t-as="boq_line">
+                                                <t t-foreach="boq_lines.filtered(lambda l: not l.display_type)" t-as="boq_line">
                                                     <option t-att-value="boq_line.id">
                                                         <t t-esc="boq_line.item_code or '-'"/> - <t t-esc="boq_line.description or ''"/>
                                                     </option>
@@ -296,7 +296,7 @@
                 </option>
             </t>
         </select>
-        <small class="form-text text-muted">Choose an existing BOQ section, or type a new one below.</small>
+        <small class="form-text text-muted">Choose an existing BOQ section, or type a new one next.</small>
     </div>
 </div>
 <div class="col-md-3">
@@ -360,7 +360,6 @@
                                     <tr>
                                         <th>Type</th>
                                         <th>BOQ Ref</th>
-                                        <th>Section</th>
                                         <th>Item Code</th>
                                         <th>Description</th>
                                         <th class="text-right">Original Qty</th>
@@ -390,7 +389,6 @@
                                                 </t>
                                                 <t t-else="">-</t>
                                             </td>
-                                            <td><t t-esc="line.section or '-'"/></td>
                                             <td><t t-esc="line.item_code or '-'"/></td>
                                             <td><span t-field="line.description"/></td>
                                             <td class="text-right"><span t-field="line.original_qty"/></td>
