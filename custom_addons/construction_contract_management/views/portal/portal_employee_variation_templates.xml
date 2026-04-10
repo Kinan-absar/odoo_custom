@@ -250,7 +250,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>Type *</label>
-                                            <select name="type" class="form-control" required="required">
+                                            <select name="type" class="form-control">
                                                 <option value="">Select type...</option>
                                                 <t t-foreach="line_types" t-as="line_type">
                                                     <option t-att-value="line_type[0]"><t t-esc="line_type[1]"/></option>

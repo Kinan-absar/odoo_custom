@@ -364,7 +364,6 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 'variation_id': variation.id,
                 'type': line_type,
                 'boq_line_id': boq_line.id if boq_line else False,
-                'section': final_section,
                 'item_code': (post.get('item_code') or '').strip(),
                 'description': (post.get('line_description') or '').strip(),
                 'uom_id': int(post.get('uom_id')) if post.get('uom_id') else False,
