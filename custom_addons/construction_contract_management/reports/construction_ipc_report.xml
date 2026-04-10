@@ -199,22 +199,52 @@
 </table>
 
                         <div class="note-box">
-                            <div class="note-title">Settlement</div>
-                            <table class="summary-table">
-                                <tr>
-                                    <td class="label-cell">Cumulative Certified</td>
-                                    <td class="value-cell"><span t-field="doc.cumulative_certified_value" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
-                                </tr>
-                                <tr>
-                                    <td class="label-cell">Deductions</td>
-                                    <td class="value-cell"><span t-field="doc.deduction_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
-                                </tr>
-                                <tr>
-                                    <td class="label-cell">Gross with VAT</td>
-                                    <td class="value-cell"><span t-field="doc.gross_with_vat" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
-                                </tr>
-                            </table>
-                        </div>
+    <div class="note-title">Settlement</div>
+    <table class="summary-table">
+        <tr>
+            <td class="label-cell">Cumulative Certified</td>
+            <td class="value-cell">
+                <span t-field="doc.cumulative_certified_value"
+                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell">Advance Recovery</td>
+            <td class="value-cell">
+                <span t-field="doc.advance_recovery_amount"
+                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell">Retention</td>
+            <td class="value-cell">
+                <span t-field="doc.retention_amount"
+                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell">Other Deductions</td>
+            <td class="value-cell">
+                <span t-field="doc.deduction_amount"
+                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell">VAT</td>
+            <td class="value-cell">
+                <span t-field="doc.vat_amount"
+                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+            </td>
+        </tr>
+        <tr class="emphasis">
+            <td class="label-cell">Net Amount</td>
+            <td class="value-cell">
+                <span t-field="doc.net_amount"
+                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+            </td>
+        </tr>
+    </table>
+</div>
 
                         <table class="signature-grid">
                             <tr>
