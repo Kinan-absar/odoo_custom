@@ -111,7 +111,7 @@
                             </tr>
                         </table>
 
-                        <div class="section-title">Certified Quantities</div>
+                       <div class="section-title">Certified Quantities</div>
 <table class="data-table">
     <thead>
         <tr>
@@ -130,57 +130,83 @@
         <t t-set="section_total" t-value="0.0"/>
         <t t-set="grand_total" t-value="0.0"/>
         <t t-set="current_section" t-value="''"/>
+        <t t-set="section_has_visible_lines" t-value="False"/>
+        <t t-set="pending_notes" t-value="[]"/>
 
         <t t-foreach="lines" t-as="line">
+
+            <!-- Section -->
             <t t-if="line.display_type == 'line_section'">
-                <t t-if="current_section">
+                <t t-if="current_section and section_has_visible_lines">
                     <tr class="subtotal-row">
-                        <td colspan="6" class="subtotal-label">Subtotal - <span t-esc="current_section"/></td>
+                        <td colspan="6" class="subtotal-label">
+                            Subtotal - <span t-esc="current_section"/>
+                        </td>
                         <td class="subtotal-value">
                             <span t-esc="'{} {:,.2f}'.format(doc.currency_id.symbol or '', section_total or 0.0)"/>
                         </td>
                         <td></td>
                     </tr>
                 </t>
+
                 <t t-set="section_total" t-value="0.0"/>
                 <t t-set="current_section" t-value="line.description or 'Section'"/>
-                <tr class="section-row">
-                    <td colspan="8"><span t-esc="line.description or 'Section'"/></td>
-                </tr>
+                <t t-set="section_has_visible_lines" t-value="False"/>
+                <t t-set="pending_notes" t-value="[]"/>
             </t>
 
+            <!-- Note -->
             <t t-elif="line.display_type == 'line_note'">
-                <tr class="note-row">
-                    <td colspan="8"><span t-esc="line.description or ''"/></td>
-                </tr>
+                <t t-set="pending_notes" t-value="pending_notes + [line.description or '']"/>
             </t>
 
+            <!-- Normal line -->
             <t t-else="">
-                <t t-set="section_total" t-value="section_total + (line.current_value or 0.0)"/>
-                <t t-set="grand_total" t-value="grand_total + (line.current_value or 0.0)"/>
+                <t t-if="line.current_value and line.current_value > 0">
+                    <t t-if="not section_has_visible_lines and current_section">
+                        <tr class="section-row">
+                            <td colspan="8">
+                                <span t-esc="current_section"/>
+                            </td>
+                        </tr>
+                        <t t-foreach="pending_notes" t-as="note_text">
+                            <tr class="note-row">
+                                <td colspan="8">
+                                    <span t-esc="note_text"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </t>
 
-                <tr>
-                    <td><span t-esc="line.boq_line_id.item_code or '-'"/></td>
-                    <td><span t-esc="line.description or '-'"/></td>
-                    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.previous_qty or 0.0)"/></td>
-                    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.current_qty or 0.0)"/></td>
-                    <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.cumulative_qty or 0.0)"/></td>
-                    <td class="text-right">
-                        <span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                    </td>
-                    <td class="text-right">
-                        <span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                    </td>
-                    <td class="text-right">
-                        <span t-field="line.cumulative_value" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                    </td>
-                </tr>
+                    <t t-set="section_has_visible_lines" t-value="True"/>
+                    <t t-set="section_total" t-value="section_total + (line.current_value or 0.0)"/>
+                    <t t-set="grand_total" t-value="grand_total + (line.current_value or 0.0)"/>
+
+                    <tr>
+                        <td><span t-esc="line.boq_line_id.item_code or '-'"/></td>
+                        <td><span t-esc="line.description or '-'"/></td>
+                        <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.previous_qty or 0.0)"/></td>
+                        <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.current_qty or 0.0)"/></td>
+                        <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.cumulative_qty or 0.0)"/></td>
+                        <td class="text-right">
+                            <span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                        </td>
+                        <td class="text-right">
+                            <span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                        </td>
+                        <td class="text-right">
+                            <span t-field="line.cumulative_value" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                        </td>
+                    </tr>
+                </t>
             </t>
         </t>
 
-        <t t-if="current_section">
+        <t t-if="current_section and section_has_visible_lines">
             <tr class="subtotal-row">
-                <td colspan="6" class="subtotal-label">Subtotal - <span t-esc="current_section"/></td>
+                <td colspan="6" class="subtotal-label">
+                    Subtotal - <span t-esc="current_section"/>
+                </td>
                 <td class="subtotal-value">
                     <span t-esc="'{} {:,.2f}'.format(doc.currency_id.symbol or '', section_total or 0.0)"/>
                 </td>

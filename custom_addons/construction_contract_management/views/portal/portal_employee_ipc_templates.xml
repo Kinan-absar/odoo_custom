@@ -369,10 +369,14 @@
                         <t t-set="section_total" t-value="0.0"/>
                         <t t-set="grand_total" t-value="0.0"/>
                         <t t-set="current_section" t-value="''"/>
+                        <t t-set="section_has_visible_lines" t-value="False"/>
+                        <t t-set="pending_notes" t-value="[]"/>
 
                         <t t-foreach="lines" t-as="line">
+
+                            <!-- Section -->
                             <t t-if="line.display_type == 'line_section'">
-                                <t t-if="current_section">
+                                <t t-if="current_section and section_has_visible_lines">
                                     <tr class="ipc-subtotal">
                                         <td colspan="6" class="text-right">
                                             Subtotal - <t t-esc="current_section"/>
@@ -386,61 +390,73 @@
 
                                 <t t-set="section_total" t-value="0.0"/>
                                 <t t-set="current_section" t-value="line.description or 'Section'"/>
-
-                                <tr class="ipc-section">
-                                    <td colspan="8">
-                                        <t t-esc="line.description or 'Section'"/>
-                                    </td>
-                                </tr>
+                                <t t-set="section_has_visible_lines" t-value="False"/>
+                                <t t-set="pending_notes" t-value="[]"/>
                             </t>
 
+                            <!-- Note -->
                             <t t-elif="line.display_type == 'line_note'">
-                                <tr class="ipc-note">
-                                    <td colspan="8">
-                                        <t t-esc="line.description or ''"/>
-                                    </td>
-                                </tr>
+                                <t t-set="pending_notes" t-value="pending_notes + [line.description or '']"/>
                             </t>
 
+                            <!-- Normal line -->
                             <t t-else="">
-                                <t t-set="section_total" t-value="section_total + (line.current_value or 0.0)"/>
-                                <t t-set="grand_total" t-value="grand_total + (line.current_value or 0.0)"/>
+                                <t t-if="line.current_value and line.current_value > 0">
+                                    <t t-if="not section_has_visible_lines and current_section">
+                                        <tr class="ipc-section">
+                                            <td colspan="8">
+                                                <t t-esc="current_section"/>
+                                            </td>
+                                        </tr>
+                                        <t t-foreach="pending_notes" t-as="note_text">
+                                            <tr class="ipc-note">
+                                                <td colspan="8">
+                                                    <t t-esc="note_text"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
 
-                                <tr>
-                                    <td><t t-esc="line.boq_line_id.item_code or ''"/></td>
-                                    <td><span t-field="line.description"/></td>
-                                    <td class="text-right">
-                                        <div class="qty-stack">
-                                            <span t-field="line.previous_qty"/>
-                                            <span class="qty-percent"><t t-esc="'(' + str(int(round(line.previous_percent or 0.0))) + '%)'"/></span>
-                                        </div>
-                                    </td>
-                                    <td class="text-right">
-                                        <div class="qty-stack">
-                                            <span t-field="line.current_qty"/>
-                                            <span class="qty-percent"><t t-esc="'(' + str(int(round(line.current_percent or 0.0))) + '%)'"/></span>
-                                        </div>
-                                    </td>
-                                    <td class="text-right">
-                                        <div class="qty-stack">
-                                            <span t-field="line.cumulative_qty"/>
-                                            <span class="qty-percent"><t t-esc="'(' + str(int(round(line.cumulative_percent or 0.0))) + '%)'"/></span>
-                                        </div>
-                                    </td>
-                                    <td class="text-right money-text">
-                                        <span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
-                                    </td>
-                                    <td class="text-right money-text">
-                                        <span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
-                                    </td>
-                                    <td class="text-right money-text">
-                                        <span t-field="line.cumulative_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
-                                    </td>
-                                </tr>
+                                    <t t-set="section_has_visible_lines" t-value="True"/>
+                                    <t t-set="section_total" t-value="section_total + (line.current_value or 0.0)"/>
+                                    <t t-set="grand_total" t-value="grand_total + (line.current_value or 0.0)"/>
+
+                                    <tr>
+                                        <td><t t-esc="line.boq_line_id.item_code or ''"/></td>
+                                        <td><span t-field="line.description"/></td>
+                                        <td class="text-right">
+                                            <div class="qty-stack">
+                                                <span t-field="line.previous_qty"/>
+                                                <span class="qty-percent"><t t-esc="'(' + str(int(round(line.previous_percent or 0.0))) + '%)'"/></span>
+                                            </div>
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="qty-stack">
+                                                <span t-field="line.current_qty"/>
+                                                <span class="qty-percent"><t t-esc="'(' + str(int(round(line.current_percent or 0.0))) + '%)'"/></span>
+                                            </div>
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="qty-stack">
+                                                <span t-field="line.cumulative_qty"/>
+                                                <span class="qty-percent"><t t-esc="'(' + str(int(round(line.cumulative_percent or 0.0))) + '%)'"/></span>
+                                            </div>
+                                        </td>
+                                        <td class="text-right money-text">
+                                            <span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
+                                        </td>
+                                        <td class="text-right money-text">
+                                            <span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
+                                        </td>
+                                        <td class="text-right money-text">
+                                            <span t-field="line.cumulative_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                </t>
                             </t>
                         </t>
 
-                        <t t-if="current_section">
+                        <t t-if="current_section and section_has_visible_lines">
                             <tr class="ipc-subtotal">
                                 <td colspan="6" class="text-right">
                                     Subtotal - <t t-esc="current_section"/>
@@ -451,6 +467,7 @@
                                 <td></td>
                             </tr>
                         </t>
+
                         <tr class="ipc-grand-total">
                             <td colspan="6" class="text-right">Grand Total</td>
                             <td class="text-right">
@@ -464,7 +481,6 @@
         </div>
     </div>
 </t>
-
                 <div class="row mt-4 mb-4">
                     <div class="col-12">
                         <a href="/my/employee/ipcs" class="btn btn-secondary">
