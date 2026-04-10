@@ -305,7 +305,7 @@
         <input type="text" name="new_section" class="form-control" placeholder="Create new section if needed"/>
     </div>
 </div>
-                                    </div>
+                                    
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label>Item Code</label>
