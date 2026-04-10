@@ -30,7 +30,7 @@ class ConstructionVariation(models.Model):
     )
 
     currency_id = fields.Many2one(related='contract_id.currency_id', store=True)
-
+    
     @api.model
     def create(self, vals):
         if vals.get('name', 'New') == 'New':
@@ -132,19 +132,26 @@ class ConstructionVariationLine(models.Model):
         store=True,
         currency_field='currency_id'
     )
-
-    @api.depends('boq_line_id', 'type')
+    display_type = fields.Selection([
+        ('line_section', 'Section'),
+        ('line_note', 'Note'),
+    ], string='Display Type', default=False)
+    @api.depends('boq_line_id', 'type', 'display_type')
     def _compute_original_qty(self):
         for rec in self:
-            if rec.type == 'new':
+            if rec.display_type:
+                rec.original_qty = 0.0
+            elif rec.type == 'new':
                 rec.original_qty = 0.0
             else:
                 rec.original_qty = rec.boq_line_id.contract_qty if rec.boq_line_id else 0.0
 
-    @api.depends('original_qty', 'variation_qty', 'type')
+    @api.depends('original_qty', 'variation_qty', 'type', 'display_type')
     def _compute_revised_qty(self):
         for rec in self:
-            if rec.type == 'increase':
+            if rec.display_type:
+                rec.revised_qty = 0.0
+            elif rec.type == 'increase':
                 rec.revised_qty = rec.original_qty + rec.variation_qty
             elif rec.type == 'decrease':
                 rec.revised_qty = rec.original_qty - rec.variation_qty
@@ -157,10 +164,12 @@ class ConstructionVariationLine(models.Model):
             else:
                 rec.revised_qty = rec.original_qty
 
-    @api.depends('variation_qty', 'unit_rate', 'type', 'original_qty', 'boq_line_id.unit_rate')
+    @api.depends('variation_qty', 'unit_rate', 'type', 'original_qty', 'boq_line_id.unit_rate', 'display_type')
     def _compute_amount(self):
         for rec in self:
-            if rec.type == 'increase':
+            if rec.display_type:
+                rec.amount = 0.0
+            elif rec.type == 'increase':
                 rec.amount = rec.variation_qty * rec.unit_rate
             elif rec.type == 'decrease':
                 rec.amount = -1 * rec.variation_qty * rec.unit_rate
@@ -179,6 +188,8 @@ class ConstructionVariationLine(models.Model):
     @api.onchange('boq_line_id')
     def _onchange_boq_line_id(self):
         for rec in self:
+            if rec.display_type:
+                continue
             if rec.boq_line_id:
                 rec.item_code = rec.boq_line_id.item_code
                 rec.description = rec.boq_line_id.description
@@ -188,6 +199,8 @@ class ConstructionVariationLine(models.Model):
     @api.constrains('variation_qty')
     def _check_variation_qty(self):
         for rec in self:
+            if rec.display_type:
+                continue
             if rec.variation_qty < 0:
                 raise ValidationError('Variation quantity cannot be negative.')
 

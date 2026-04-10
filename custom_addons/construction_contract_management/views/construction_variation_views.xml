@@ -58,46 +58,61 @@
                     <notebook>
                         <page string="Variation Lines">
                             <field name="line_ids">
+    <list editable="bottom">
 
-                                <list editable="bottom">
-                                    <field name="type"/>
-                                    <field name="boq_line_id"/>
-                                    <field name="description"/>
-                                    <field name="original_qty"/>
-                                    <field name="variation_qty"/>
-                                    <field name="revised_qty"/>
-                                    <field name="unit_rate"/>
-                                    <field name="amount"/>
-                                </list>
+        <control>
+            <create string="Add a line"/>
+            <create string="Add a section" context="{'default_display_type': 'line_section'}"/>
+            <create string="Add a note" context="{'default_display_type': 'line_note'}"/>
+        </control>
+
+        <!-- Important -->
+        <field name="display_type" column_invisible="True"/>
+
+        <!-- NORMAL FIELDS -->
+        <field name="type" invisible="display_type != False"/>
+        <field name="boq_line_id" invisible="display_type != False"/>
+        <field name="item_code" invisible="display_type != False"/>
+        <field name="description"/>
+        <field name="original_qty" invisible="display_type != False"/>
+        <field name="variation_qty" invisible="display_type != False"/>
+        <field name="revised_qty" invisible="display_type != False"/>
+        <field name="uom_id" invisible="display_type != False"/>
+        <field name="unit_rate" invisible="display_type != False"/>
+        <field name="amount" invisible="display_type != False"/>
+
+    </list>
 
                                 <form>
-                                    <group>
-                                        <group>
-                                            <field name="type"/>
-                                            <field name="boq_line_id"/>
-                                            <field name="item_code"/>
-                                        </group>
-                                        <group>
-                                            <field name="uom_id"/>
-                                            <field name="unit_rate"/>
-                                        </group>
-                                    </group>
+    <group>
+        <field name="display_type" invisible="1"/>
 
-                                    <group>
-                                        <field name="description"/>
-                                    </group>
+        <group>
+            <field name="type" invisible="display_type != False"/>
+            <field name="boq_line_id" invisible="display_type != False"/>
+            <field name="item_code" invisible="display_type != False"/>
+        </group>
+        <group>
+            <field name="uom_id" invisible="display_type != False"/>
+            <field name="unit_rate" invisible="display_type != False"/>
+        </group>
+    </group>
 
-                                    <group>
-                                        <group>
-                                            <field name="original_qty" readonly="1"/>
-                                            <field name="variation_qty"/>
-                                            <field name="revised_qty" readonly="1"/>
-                                        </group>
-                                        <group>
-                                            <field name="amount" readonly="1"/>
-                                        </group>
-                                    </group>
-                                </form>
+    <group>
+        <field name="description"/>
+    </group>
+
+    <group invisible="display_type != False">
+        <group>
+            <field name="original_qty" readonly="1"/>
+            <field name="variation_qty"/>
+            <field name="revised_qty" readonly="1"/>
+        </group>
+        <group>
+            <field name="amount" readonly="1"/>
+        </group>
+    </group>
+</form>
 
                             </field>
                         </page>
