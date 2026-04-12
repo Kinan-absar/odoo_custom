@@ -349,20 +349,42 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             if variation.state != 'draft':
                 return request.redirect(f'/my/employee/variation/{variation_id}')
 
-            action = post.get('action', 'save')
+            action = (post.get('action') or 'save').strip()
+            display_type = (post.get('display_type') or '').strip() or False
             line_type = (post.get('type') or '').strip()
             boq_line_id = int(post.get('boq_line_id')) if post.get('boq_line_id') else False
             boq_line = request.env['construction.contract.boq.line'].sudo().browse(boq_line_id) if boq_line_id else False
-            existing_section = (post.get('existing_section') or '').strip()
-            new_section = (post.get('new_section') or '').strip()
-            final_section = new_section or existing_section or False
-            if action == 'submit' and not post.get('type') and variation.line_ids:
+
+            # Submit existing lines only
+            if action == 'submit' and not display_type and not line_type and variation.line_ids:
                 variation.action_submit()
                 return request.redirect(f'/my/employee/variation/{variation_id}?success=submitted')
 
+            # Section / Note rows
+            if display_type in ('line_section', 'line_note'):
+                description = (post.get('line_description') or '').strip()
+                if not description:
+                    return request.redirect(f'/my/employee/variation/{variation_id}?error=validation')
+
+                vals = {
+                    'variation_id': variation.id,
+                    'display_type': display_type,
+                    'description': description,
+                }
+
+                request.env['construction.variation.line'].sudo().create(vals)
+
+                if action == 'submit':
+                    variation.action_submit()
+                    return request.redirect(f'/my/employee/variation/{variation_id}?success=submitted')
+
+                return request.redirect(f'/my/employee/variation/{variation_id}?success=saved')
+
+            # Normal line
             vals = {
                 'variation_id': variation.id,
-                'type': line_type,
+                'display_type': False,
+                'type': line_type or False,
                 'boq_line_id': boq_line.id if boq_line else False,
                 'item_code': (post.get('item_code') or '').strip(),
                 'description': (post.get('line_description') or '').strip(),
@@ -377,8 +399,14 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 vals['uom_id'] = vals['uom_id'] or boq_line.uom_id.id or False
                 vals['unit_rate'] = float(post.get('unit_rate') or boq_line.unit_rate or 0.0)
 
-            if line_type != 'new' and not boq_line:
+            if not vals['type']:
+                return request.redirect(f'/my/employee/variation/{variation_id}?error=validation')
+
+            if vals['type'] != 'new' and not boq_line:
                 return request.redirect(f'/my/employee/variation/{variation_id}?error=boq_required')
+
+            if not vals['description']:
+                return request.redirect(f'/my/employee/variation/{variation_id}?error=validation')
 
             request.env['construction.variation.line'].sudo().create(vals)
 
@@ -387,9 +415,12 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 return request.redirect(f'/my/employee/variation/{variation_id}?success=submitted')
 
             return request.redirect(f'/my/employee/variation/{variation_id}?success=saved')
-        except (ValidationError, ValueError):
+
+        except (ValidationError, ValueError) as e:
+            _logger.exception("Variation validation failed for variation %s. post=%s error=%s", variation_id, post, e)
             return request.redirect(f'/my/employee/variation/{variation_id}?error=validation')
-        except Exception:
+        except Exception as e:
+            _logger.exception("Variation system failure for variation %s. post=%s error=%s", variation_id, post, e)
             return request.redirect(f'/my/employee/variation/{variation_id}?error=system')
 
     # =========================================================

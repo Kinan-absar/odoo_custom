@@ -238,116 +238,113 @@
                 </div>
 
                 <t t-if="variation.state == 'draft'">
-                    <div class="card mt-4">
-                        <div class="card-header">
-                            <h5>Add Variation Line</h5>
-                        </div>
-                        <div class="card-body">
-                            <form method="POST" t-attf-action="/my/employee/variation/#{variation.id}/add_line">
-                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Add Variation Line</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" t-attf-action="/my/employee/variation/#{variation.id}/add_line">
+                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>Type *</label>
-                                            <select name="type" class="form-control">
-                                                <option value="">Select type...</option>
-                                                <t t-foreach="line_types" t-as="line_type">
-                                                    <option t-att-value="line_type[0]"><t t-esc="line_type[1]"/></option>
-                                                </t>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>BOQ Line</label>
-                                            <select name="boq_line_id" class="form-control">
-                                                <option value="">Select BOQ line...</option>
-                                                <t t-foreach="boq_lines.filtered(lambda l: not l.display_type)" t-as="boq_line">
-                                                    <option t-att-value="boq_line.id">
-                                                        <t t-esc="boq_line.item_code or '-'"/> - <t t-esc="boq_line.description or ''"/>
-                                                    </option>
-                                                </t>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>Unit of Measure</label>
-                                            <select name="uom_id" class="form-control">
-                                                <option value="">Auto from BOQ</option>
-                                                <t t-foreach="uoms" t-as="uom">
-                                                    <option t-att-value="uom.id"><t t-esc="uom.name"/></option>
-                                                </t>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-3">
-    <div class="form-group">
-        <label>Existing Section</label>
-        <select name="existing_section" id="existing_section_select" class="form-control">
-            <option value="">Select existing section...</option>
-            <t t-foreach="section_options" t-as="section_name">
-                <option t-att-value="section_name">
-                    <t t-esc="section_name"/>
-                </option>
-            </t>
-        </select>
-        <small class="form-text text-muted">Choose an existing BOQ section, or type a new one next.</small>
-    </div>
-</div>
-<div class="col-md-3">
-    <div class="form-group">
-        <label>New Section</label>
-        <input type="text" name="new_section" class="form-control" placeholder="Create new section if needed"/>
-    </div>
-</div>
-                                    
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label>Item Code</label>
-                                            <input type="text" name="item_code" class="form-control"/>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label>Variation Qty</label>
-                                            <input type="number" step="0.01" min="0" name="variation_qty" class="form-control" required="required"/>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label>Unit Rate</label>
-                                            <input type="number" step="0.01" min="0" name="unit_rate" class="form-control" required="required"/>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Description</label>
-                                    <textarea name="line_description" class="form-control" rows="3"/>
-                                </div>
-
-                                <div class="form-group">
-                                    <button type="submit" name="action" value="save" class="btn btn-warning">
-                                        <i class="fa fa-save"/> Save Line
-                                    </button>
-                                    <button type="submit" name="action" value="submit" class="btn btn-primary">
-                                        <i class="fa fa-check"/> Save &amp; Submit
-                                    </button>
-                                    <t t-if="variation.line_ids">
-                                        <button type="submit" name="action" value="submit" class="btn btn-success" formnovalidate="formnovalidate">
-                                            <i class="fa fa-paper-plane"/> Submit Existing Lines
-                                        </button>
-                                    </t>
-                                </div>
-                            </form>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Row Type *</label>
+                            <select name="display_type" class="form-control">
+                                <option value="" selected="selected">Normal Line</option>
+                                <option value="line_section">Section</option>
+                                <option value="line_note">Note</option>
+                            </select>
+                            <small class="form-text text-muted">Choose Section or Note for structural rows. Leave as Normal Line for priced items.</small>
                         </div>
                     </div>
-                </t>
+
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Type</label>
+                            <select name="type" class="form-control">
+                                <option value="">Select type...</option>
+                                <t t-foreach="line_types" t-as="line_type">
+                                    <option t-att-value="line_type[0]"><t t-esc="line_type[1]"/></option>
+                                </t>
+                            </select>
+                            <small class="form-text text-muted">Required only for Normal Line.</small>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>BOQ Line</label>
+                            <select name="boq_line_id" class="form-control">
+                                <option value="">Select BOQ line...</option>
+                                <t t-foreach="boq_lines.filtered(lambda l: not l.display_type)" t-as="boq_line">
+                                    <option t-att-value="boq_line.id">
+                                        <t t-esc="boq_line.item_code or '-'"/> - <t t-esc="boq_line.description or ''"/>
+                                    </option>
+                                </t>
+                            </select>
+                            <small class="form-text text-muted">Used only for Normal Line.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Unit of Measure</label>
+                            <select name="uom_id" class="form-control">
+                                <option value="">Auto from BOQ</option>
+                                <t t-foreach="uoms" t-as="uom">
+                                    <option t-att-value="uom.id"><t t-esc="uom.name"/></option>
+                                </t>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Item Code</label>
+                            <input type="text" name="item_code" class="form-control"/>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Variation Qty</label>
+                            <input type="number" step="0.01" min="0" name="variation_qty" class="form-control"/>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Unit Rate</label>
+                            <input type="number" step="0.01" min="0" name="unit_rate" class="form-control"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Description *</label>
+                    <textarea name="line_description" class="form-control" rows="3" required="required"/>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" name="action" value="save" class="btn btn-warning">
+                        <i class="fa fa-save"/> Save Line
+                    </button>
+                    <button type="submit" name="action" value="submit" class="btn btn-primary">
+                        <i class="fa fa-check"/> Save &amp; Submit
+                    </button>
+                    <t t-if="variation.line_ids">
+                        <button type="submit" name="action" value="submit" class="btn btn-success" formnovalidate="formnovalidate">
+                            <i class="fa fa-paper-plane"/> Submit Existing Lines
+                        </button>
+                    </t>
+                </div>
+            </form>
+        </div>
+    </div>
+</t>
 
                 <t t-if="variation.line_ids">
                     <div class="card mt-4">
@@ -371,41 +368,57 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <t t-foreach="variation.line_ids" t-as="line">
-                                        <tr>
-                                            <td>
-                                                <t t-if="line.type == 'increase'">Quantity Increase</t>
-                                                <t t-if="line.type == 'decrease'">Quantity Decrease</t>
-                                                <t t-if="line.type == 'new'">New Item</t>
-                                                <t t-if="line.type == 'omit'">Omit Item</t>
-                                                <t t-if="line.type == 'rate'">Rate Change</t>
-                                            </td>
-                                            <td>
-                                                <t t-if="line.boq_line_id">
-                                                    <t t-esc="line.boq_line_id.item_code or line.boq_line_id.display_name"/>
-                                                </t>
-                                                <t t-elif="line.created_boq_line_id">
-                                                    <t t-esc="line.created_boq_line_id.item_code or line.created_boq_line_id.display_name"/>
-                                                </t>
-                                                <t t-else="">-</t>
-                                            </td>
-                                            <td><t t-esc="line.item_code or '-'"/></td>
-                                            <td><span t-field="line.description"/></td>
-                                            <td class="text-right"><span t-field="line.original_qty"/></td>
-                                            <td class="text-right"><span t-field="line.variation_qty"/></td>
-                                            <td class="text-right"><span t-field="line.revised_qty"/></td>
-                                            <td><span t-field="line.uom_id"/></td>
-                                            <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></td>
-                                            <td class="text-right"><span t-field="line.amount" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></td>
-                                        </tr>
-                                        <tr t-if="line.type == 'new' and line.created_boq_line_id">
-                                            <td colspan="10" class="text-muted small">
-                                                Approved new item created BOQ line:
-                                                <strong><t t-esc="line.created_boq_line_id.item_code or line.created_boq_line_id.display_name"/></strong>
-                                            </td>
-                                        </tr>
-                                    </t>
-                                </tbody>
+    <t t-foreach="variation.line_ids" t-as="line">
+        <t t-if="line.display_type == 'line_section'">
+            <tr style="background:#eef2f7; font-weight:700;">
+                <td colspan="10">
+                    <t t-esc="line.description or 'Section'"/>
+                </td>
+            </tr>
+        </t>
+        <t t-elif="line.display_type == 'line_note'">
+            <tr style="background:#f8fafc; font-style:italic; color:#6b7280;">
+                <td colspan="10">
+                    <t t-esc="line.description or ''"/>
+                </td>
+            </tr>
+        </t>
+        <t t-else="">
+            <tr>
+                <td>
+                    <t t-if="line.type == 'increase'">Quantity Increase</t>
+                    <t t-if="line.type == 'decrease'">Quantity Decrease</t>
+                    <t t-if="line.type == 'new'">New Item</t>
+                    <t t-if="line.type == 'omit'">Omit Item</t>
+                    <t t-if="line.type == 'rate'">Rate Change</t>
+                </td>
+                <td>
+                    <t t-if="line.boq_line_id">
+                        <t t-esc="line.boq_line_id.item_code or line.boq_line_id.display_name"/>
+                    </t>
+                    <t t-elif="line.created_boq_line_id">
+                        <t t-esc="line.created_boq_line_id.item_code or line.created_boq_line_id.display_name"/>
+                    </t>
+                    <t t-else="">-</t>
+                </td>
+                <td><t t-esc="line.item_code or '-'"/></td>
+                <td><span t-field="line.description"/></td>
+                <td class="text-right"><span t-field="line.original_qty"/></td>
+                <td class="text-right"><span t-field="line.variation_qty"/></td>
+                <td class="text-right"><span t-field="line.revised_qty"/></td>
+                <td><span t-field="line.uom_id"/></td>
+                <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></td>
+                <td class="text-right"><span t-field="line.amount" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></td>
+            </tr>
+            <tr t-if="line.type == 'new' and line.created_boq_line_id">
+                <td colspan="10" class="text-muted small">
+                    Approved new item created BOQ line:
+                    <strong><t t-esc="line.created_boq_line_id.item_code or line.created_boq_line_id.display_name"/></strong>
+                </td>
+            </tr>
+        </t>
+    </t>
+</tbody>
                             </table>
                         </div>
                     </div>
