@@ -112,7 +112,7 @@
     <!-- Variation Detail -->
     <template id="portal_employee_variation_detail" name="Employee Portal - Variation Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container">
+            <div class="container construction-portal-page">
                 <style type="text/css">
                     .variation-popup-alert {
                         position: fixed;
@@ -441,7 +441,7 @@
     <!-- NEW Variation Form -->
     <template id="portal_employee_variation_new" name="Employee Portal - New Variation">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container">
+            <div class="container construction-portal-page">
                 <style type="text/css">
                     .variation-form-popup {
                         position: fixed;

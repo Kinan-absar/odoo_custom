@@ -45,7 +45,7 @@
                         </form>
                     </div>
 
-                    <div class="table-responsive mt-3">
+                    <div class="table-responsive mt-3 construction-desktop-table">
                         <table class="table table-hover">
                             <thead class="thead-light">
                                 <tr>
@@ -79,6 +79,43 @@
                                     </tr>
                                 </t>
                             </tbody>
+                            <div class="construction-mobile-list mt-3">
+    <t t-foreach="contracts" t-as="contract">
+        <a t-attf-href="/my/employee/contract/#{contract.id}" class="construction-mobile-card">
+            <div class="construction-mobile-card-top">
+                <div class="construction-mobile-card-title">
+                    <t t-esc="contract.name"/>
+                </div>
+                <div class="construction-mobile-card-date">
+                    <span t-field="contract.date_start"/>
+                </div>
+            </div>
+
+            <div class="construction-mobile-card-grid">
+                <div>
+                    <span class="construction-mobile-card-label">Project</span>
+                    <div class="construction-mobile-card-value"><span t-field="contract.project_id"/></div>
+                </div>
+                <div>
+                    <span class="construction-mobile-card-label">Direction</span>
+                    <div class="construction-mobile-card-value">
+                        <span t-esc="'Client Contract' if contract.contract_direction == 'inbound' else 'Subcontract'"/>
+                    </div>
+                </div>
+                <div>
+                    <span class="construction-mobile-card-label">End Date</span>
+                    <div class="construction-mobile-card-value"><span t-field="contract.date_end"/></div>
+                </div>
+                <div>
+                    <span class="construction-mobile-card-label">Value</span>
+                    <div class="construction-mobile-card-value">
+                        <span t-field="contract.revised_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </t>
+</div>
                         </table>
                     </div>
 
@@ -100,7 +137,7 @@
     <!-- Contract Detail - FIXED -->
     <template id="portal_employee_contract_detail" name="Employee Portal - Contract Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container">
+            <div class="container construction-portal-page">
                 <div class="row mt-4">
                     <div class="col-md-8">
                         <h3 class="mb-3">
