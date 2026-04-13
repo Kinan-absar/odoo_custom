@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="employee_portal_dashboard_construction" inherit_id="employee_portal_suite.employee_portal_dashboard">
-        <xpath expr="//div[hasclass('row')]" position="inside">
+    <template id="employee_dashboard_extension" inherit_id="employee_portal_suite.employee_dashboard" priority="20">
+
+        <xpath expr="//div[contains(@class, 'row')]" position="after">
+
             <t t-if="show_construction_cards">
                 <div class="construction-dashboard-section w-100">
                     <div class="row construction-dashboard-row">
 
+                        <!-- Contracts -->
                         <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
                             <a href="/my/employee/contracts" class="construction-dashboard-card-link">
-                                <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card border-left-primary h-100 py-2 construction-dashboard-card">
                                     <div class="card-body">
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Contracts</div>
+                                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                    Contracts
+                                                </div>
                                                 <div class="h5 mb-0 font-weight-bold text-gray-800">
                                                     <t t-esc="contract_count or 0"/>
                                                 </div>
@@ -26,13 +31,16 @@
                             </a>
                         </div>
 
+                        <!-- IPCs -->
                         <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
                             <a href="/my/employee/ipcs" class="construction-dashboard-card-link">
-                                <div class="card border-left-success shadow h-100 py-2">
+                                <div class="card border-left-success h-100 py-2 construction-dashboard-card">
                                     <div class="card-body">
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">IPCs</div>
+                                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                    IPCs
+                                                </div>
                                                 <div class="h5 mb-0 font-weight-bold text-gray-800">
                                                     <t t-esc="ipc_count or 0"/>
                                                 </div>
@@ -46,19 +54,22 @@
                             </a>
                         </div>
 
+                        <!-- Variations -->
                         <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
                             <a href="/my/employee/variations" class="construction-dashboard-card-link">
-                                <div class="card border-left-warning shadow h-100 py-2">
+                                <div class="card border-left-warning h-100 py-2 construction-dashboard-card">
                                     <div class="card-body">
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Variations</div>
+                                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                    Variations
+                                                </div>
                                                 <div class="h5 mb-0 font-weight-bold text-gray-800">
                                                     <t t-esc="variation_count or 0"/>
                                                 </div>
                                             </div>
                                             <div class="col-auto">
-                                                <i class="fa fa-exchange fa-2x text-gray-300"></i>
+                                                <i class="fa fa-random fa-2x text-gray-300"></i>
                                             </div>
                                         </div>
                                     </div>
@@ -66,19 +77,22 @@
                             </a>
                         </div>
 
+                        <!-- Measurements -->
                         <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
                             <a href="/my/employee/measurements" class="construction-dashboard-card-link">
-                                <div class="card border-left-info shadow h-100 py-2">
+                                <div class="card border-left-info h-100 py-2 construction-dashboard-card">
                                     <div class="card-body">
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Measurements</div>
+                                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                    Measurements
+                                                </div>
                                                 <div class="h5 mb-0 font-weight-bold text-gray-800">
                                                     <t t-esc="measurement_count or 0"/>
                                                 </div>
                                             </div>
                                             <div class="col-auto">
-                                                <i class="fa fa-bar-chart fa-2x text-gray-300"></i>
+                                                <i class="fa fa-tasks fa-2x text-gray-300"></i>
                                             </div>
                                         </div>
                                     </div>
@@ -89,6 +103,8 @@
                     </div>
                 </div>
             </t>
+
         </xpath>
+
     </template>
 </odoo>
