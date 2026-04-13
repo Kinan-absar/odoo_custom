@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="employee_dashboard_extension" inherit_id="employee_portal_suite.employee_dashboard" priority="20">
+    <template id="employee_portal_dashboard_construction" inherit_id="employee_portal_suite.employee_portal_dashboard">
 
         <xpath expr="//div[contains(@class, 'row')]" position="after">
 
