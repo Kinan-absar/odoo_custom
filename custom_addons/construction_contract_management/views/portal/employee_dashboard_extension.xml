@@ -6,80 +6,88 @@
                 <div class="construction-dashboard-section w-100">
                     <div class="row construction-dashboard-row">
 
+                        <!-- Contracts -->
                         <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
                             <a href="/my/employee/contracts" class="construction-dashboard-card-link">
-                                <div class="card border-left-primary shadow h-100 py-2">
-                                    <div class="card-body">
-                                        <div class="row no-gutters align-items-center">
-                                            <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Contracts</div>
-                                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                    <t t-esc="contract_count or 0"/>
-                                                </div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <i class="fa fa-file-text fa-2x text-gray-300"></i>
-                                            </div>
+                                <div class="construction-dashboard-card construction-card-primary">
+                                    <div class="construction-card-top">
+                                        <div class="construction-card-icon">
+                                            <i class="fa fa-file-text"></i>
+                                        </div>
+                                        <div class="construction-card-title">Contracts</div>
+                                    </div>
+                                    <div class="construction-card-bottom">
+                                        <div class="construction-card-number">
+                                            <t t-esc="contract_count or 0"/>
+                                        </div>
+                                        <div class="construction-card-arrow">
+                                            <i class="fa fa-arrow-right"></i>
                                         </div>
                                     </div>
                                 </div>
                             </a>
                         </div>
 
+                        <!-- IPCs -->
                         <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
                             <a href="/my/employee/ipcs" class="construction-dashboard-card-link">
-                                <div class="card border-left-success shadow h-100 py-2">
-                                    <div class="card-body">
-                                        <div class="row no-gutters align-items-center">
-                                            <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">IPCs</div>
-                                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                    <t t-esc="ipc_count or 0"/>
-                                                </div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <i class="fa fa-money fa-2x text-gray-300"></i>
-                                            </div>
+                                <div class="construction-dashboard-card construction-card-success">
+                                    <div class="construction-card-top">
+                                        <div class="construction-card-icon">
+                                            <i class="fa fa-money"></i>
+                                        </div>
+                                        <div class="construction-card-title">IPCs</div>
+                                    </div>
+                                    <div class="construction-card-bottom">
+                                        <div class="construction-card-number">
+                                            <t t-esc="ipc_count or 0"/>
+                                        </div>
+                                        <div class="construction-card-arrow">
+                                            <i class="fa fa-arrow-right"></i>
                                         </div>
                                     </div>
                                 </div>
                             </a>
                         </div>
 
+                        <!-- Variations -->
                         <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
                             <a href="/my/employee/variations" class="construction-dashboard-card-link">
-                                <div class="card border-left-warning shadow h-100 py-2">
-                                    <div class="card-body">
-                                        <div class="row no-gutters align-items-center">
-                                            <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Variations</div>
-                                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                    <t t-esc="variation_count or 0"/>
-                                                </div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <i class="fa fa-exchange fa-2x text-gray-300"></i>
-                                            </div>
+                                <div class="construction-dashboard-card construction-card-warning">
+                                    <div class="construction-card-top">
+                                        <div class="construction-card-icon">
+                                            <i class="fa fa-exchange"></i>
+                                        </div>
+                                        <div class="construction-card-title">Variations</div>
+                                    </div>
+                                    <div class="construction-card-bottom">
+                                        <div class="construction-card-number">
+                                            <t t-esc="variation_count or 0"/>
+                                        </div>
+                                        <div class="construction-card-arrow">
+                                            <i class="fa fa-arrow-right"></i>
                                         </div>
                                     </div>
                                 </div>
                             </a>
                         </div>
 
+                        <!-- Measurements -->
                         <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
                             <a href="/my/employee/measurements" class="construction-dashboard-card-link">
-                                <div class="card border-left-info shadow h-100 py-2">
-                                    <div class="card-body">
-                                        <div class="row no-gutters align-items-center">
-                                            <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Measurements</div>
-                                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                                    <t t-esc="measurement_count or 0"/>
-                                                </div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <i class="fa fa-bar-chart fa-2x text-gray-300"></i>
-                                            </div>
+                                <div class="construction-dashboard-card construction-card-info">
+                                    <div class="construction-card-top">
+                                        <div class="construction-card-icon">
+                                            <i class="fa fa-bar-chart"></i>
+                                        </div>
+                                        <div class="construction-card-title">Measurements</div>
+                                    </div>
+                                    <div class="construction-card-bottom">
+                                        <div class="construction-card-number">
+                                            <t t-esc="measurement_count or 0"/>
+                                        </div>
+                                        <div class="construction-card-arrow">
+                                            <i class="fa fa-arrow-right"></i>
                                         </div>
                                     </div>
                                 </div>
