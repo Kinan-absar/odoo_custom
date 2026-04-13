@@ -3,7 +3,7 @@
     <!-- IPCs List -->
     <template id="portal_employee_ipcs" name="Employee Portal - IPCs">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container mt-4">
+            <div class="container construction-portal-page mt-4">
                 <div class="row">
                     <div class="col-12">
                         <h3>Interim Payment Certificates (IPCs)</h3>
@@ -55,7 +55,7 @@
                         </form>
                     </div>
 
-                    <div class="table-responsive mt-3">
+                    <div class="table-responsive mt-3 construction-desktop-table">
                         <table class="table table-hover">
                             <thead class="thead-light">
                                 <tr>
@@ -105,6 +105,43 @@
                                 </t>
                             </tbody>
                         </table>
+                    </div>
+
+                    <div class="construction-mobile-list mt-3">
+                        <t t-foreach="ipcs" t-as="ipc">
+                            <a t-attf-href="/my/employee/ipc/#{ipc.id}" class="construction-mobile-card">
+                                <div class="construction-mobile-card-top">
+                                    <div class="construction-mobile-card-title"><t t-esc="ipc.name"/></div>
+                                    <div class="construction-mobile-card-date"><span t-field="ipc.ipc_date"/></div>
+                                </div>
+                                <div class="construction-mobile-card-grid">
+                                    <div>
+                                        <span class="construction-mobile-card-label">Project</span>
+                                        <div class="construction-mobile-card-value"><span t-field="ipc.contract_id.project_id"/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Period</span>
+                                        <div class="construction-mobile-card-value"><span t-field="ipc.period_from"/> - <span t-field="ipc.period_to"/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Current Value</span>
+                                        <div class="construction-mobile-card-value"><span t-field="ipc.current_work_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Net Amount</span>
+                                        <div class="construction-mobile-card-value"><span t-field="ipc.net_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Payment</span>
+                                        <div class="construction-mobile-card-value"><t t-esc="dict([('no_move','Not Invoiced'),('not_paid','Not Paid'),('partial','Partial'),('in_payment','In Payment'),('paid','Paid'),('cancelled','Cancelled')]).get(ipc.payment_status, '-')"/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Status</span>
+                                        <div class="construction-mobile-card-value"><t t-esc="dict([('draft','Draft'),('under_review','Under Review'),('approved','Approved'),('done','Done'),('cancelled','Cancelled')]).get(ipc.state, '-')"/></div>
+                                    </div>
+                                </div>
+                            </a>
+                        </t>
                     </div>
 
                     <!-- Pagination -->

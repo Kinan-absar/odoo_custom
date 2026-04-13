@@ -3,7 +3,7 @@
     <!-- Variations List with NEW button -->
     <template id="portal_employee_variations" name="Employee Portal - Variations">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container mt-4">
+            <div class="container construction-portal-page mt-4">
                 <div class="row">
                     <div class="col-8">
                         <h3>Variations</h3>
@@ -60,7 +60,7 @@
                         </form>
                     </div>
 
-                    <div class="table-responsive mt-3">
+                    <div class="table-responsive mt-3 construction-desktop-table">
                         <table class="table table-hover">
                             <thead class="thead-light">
                                 <tr>
@@ -92,6 +92,35 @@
                                 </t>
                             </tbody>
                         </table>
+                    </div>
+
+                    <div class="construction-mobile-list mt-3">
+                        <t t-foreach="variations" t-as="variation">
+                            <a t-attf-href="/my/employee/variation/#{variation.id}" class="construction-mobile-card">
+                                <div class="construction-mobile-card-top">
+                                    <div class="construction-mobile-card-title"><t t-esc="variation.name"/></div>
+                                    <div class="construction-mobile-card-date"><span t-field="variation.date"/></div>
+                                </div>
+                                <div class="construction-mobile-card-grid">
+                                    <div>
+                                        <span class="construction-mobile-card-label">Contract</span>
+                                        <div class="construction-mobile-card-value"><span t-field="variation.contract_id"/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Project</span>
+                                        <div class="construction-mobile-card-value"><span t-field="variation.contract_id.project_id"/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Amount</span>
+                                        <div class="construction-mobile-card-value"><span t-field="variation.total_amount" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Status</span>
+                                        <div class="construction-mobile-card-value"><t t-esc="dict([('draft','Draft'),('submitted','Submitted'),('approved','Approved'),('rejected','Rejected')]).get(variation.state, '-')"/></div>
+                                    </div>
+                                </div>
+                            </a>
+                        </t>
                     </div>
 
                     <!-- Pagination -->
