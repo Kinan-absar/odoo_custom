@@ -9,7 +9,11 @@ class VendorInvoice(models.Model):
     _description = 'Vendor Portal Invoice'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'create_date desc'
-
+    _sql_constraints = [
+        ('unique_vendor_invoice_number',
+        'UNIQUE(partner_id, vendor_invoice_number)',
+        'This vendor invoice number already exists for this vendor.')
+    ]
     name = fields.Char(
         string='Reference',
         required=True,

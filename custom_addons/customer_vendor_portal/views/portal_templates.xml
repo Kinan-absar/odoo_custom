@@ -125,7 +125,8 @@
                         <input type="file" name="invoice_file" class="form-control" required="required"/>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary"
+                            onclick="this.disabled=true; this.form.submit();">
                         <span t-translate="yes">Submit</span>
                     </button>
                 </form>
