@@ -128,7 +128,6 @@ class VendorPortal(CustomerPortal):
                 methods=['POST'], website=True, csrf=True)
     def vendor_invoice_upload(self, **post):
         import base64
-        from odoo.exceptions import UserError, ValidationError
 
         user = request.env.user
         partner = user.partner_id
@@ -150,32 +149,26 @@ class VendorPortal(CustomerPortal):
             }).id
 
         try:
-        request.env['portal.vendor.invoice'].sudo().create({
-            'partner_id': partner.id,
-            'po_id': po_id,
-            'amount_total': post.get('amount_total'),
-            'invoice_date': post.get('invoice_date'),
-            'notes': post.get('notes'),
-            'attachment_id': attachment_id,
-            'portal_user_id': user.id,
-            'vendor_invoice_number': post.get('vendor_invoice_number'),
-        })
-    except Exception as e:
-        # Roll back the failed transaction so Odoo's cursor stays usable
-        request.env.cr.rollback()
-        
-        purchase_orders = request.env['purchase.order'].sudo().search([
-            ('partner_id', '=', partner.id)
-        ])
-        
-        # Give a clean message instead of the raw psycopg2 error
-        error_message = "This vendor invoice number already exists. Please use a different invoice number."
-        
-        return request.render('customer_vendor_portal.vendor_invoice_upload_form', {
-            'purchase_orders': purchase_orders,
-            'error_message': error_message,
-            'form_data': post,
-        })
+            request.env['portal.vendor.invoice'].sudo().create({
+                'partner_id': partner.id,
+                'po_id': po_id,
+                'amount_total': post.get('amount_total'),
+                'invoice_date': post.get('invoice_date'),
+                'notes': post.get('notes'),
+                'attachment_id': attachment_id,
+                'portal_user_id': user.id,
+                'vendor_invoice_number': post.get('vendor_invoice_number'),
+            })
+        except Exception:
+            request.env.cr.rollback()
+            purchase_orders = request.env['purchase.order'].sudo().search([
+                ('partner_id', '=', partner.id)
+            ])
+            return request.render('customer_vendor_portal.vendor_invoice_upload_form', {
+                'purchase_orders': purchase_orders,
+                'error_message': 'This vendor invoice number already exists. Please use a different invoice number.',
+                'form_data': post,
+            })
 
         return request.redirect('/vendor/invoices?submitted=1')
 
