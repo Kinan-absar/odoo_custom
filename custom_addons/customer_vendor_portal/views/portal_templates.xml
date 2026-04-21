@@ -131,7 +131,7 @@
 
                     <div class="form-group mb-3">
                         <label t-translate="yes">Invoice File</label>
-                        <input type="file" name="invoice_file" class="form-control" required="required"t-att-value="form_data.get('vendor_invoice_number', '') if form_data else ''"/>
+                        <input type="file" name="invoice_file" class="form-control" required="required" t-att-value="form_data.get('vendor_invoice_number', '') if form_data else ''"/>
 
                     </div>
 
