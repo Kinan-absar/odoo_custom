@@ -128,6 +128,7 @@ class VendorPortal(CustomerPortal):
                 methods=['POST'], website=True, csrf=True)
     def vendor_invoice_upload(self, **post):
         import base64
+        from odoo.exceptions import UserError, ValidationError
 
         user = request.env.user
         partner = user.partner_id
@@ -136,7 +137,6 @@ class VendorPortal(CustomerPortal):
             return request.redirect('/my/home')
 
         po_id = int(post.get('po_id') or 0)
-
         file = post.get('invoice_file')
         attachment_id = False
 
@@ -149,18 +149,27 @@ class VendorPortal(CustomerPortal):
                 'res_id': 0,
             }).id
 
-        request.env['portal.vendor.invoice'].sudo().create({
-            'partner_id': partner.id,
-            'po_id': po_id,
-            'amount_total': post.get('amount_total'),
-            'invoice_date': post.get('invoice_date'),
-            'notes': post.get('notes'),
-            'attachment_id': attachment_id,
-            'portal_user_id': user.id,
-            'vendor_invoice_number': post.get('vendor_invoice_number'),
-        })
+        try:
+            request.env['portal.vendor.invoice'].sudo().create({
+                'partner_id': partner.id,
+                'po_id': po_id,
+                'amount_total': post.get('amount_total'),
+                'invoice_date': post.get('invoice_date'),
+                'notes': post.get('notes'),
+                'attachment_id': attachment_id,
+                'portal_user_id': user.id,
+                'vendor_invoice_number': post.get('vendor_invoice_number'),
+            })
+        except (UserError, ValidationError) as e:
+            purchase_orders = request.env['purchase.order'].sudo().search([
+                ('partner_id', '=', partner.id)
+            ])
+            return request.render('customer_vendor_portal.vendor_invoice_upload_form', {
+                'purchase_orders': purchase_orders,
+                'error_message': str(e.args[0]),
+                'form_data': post,  # repopulate the form
+            })
 
-        # ✅ After save → vendor invoice list (safe)
         return request.redirect('/vendor/invoices?submitted=1')
 
     # ---------------------------------------------------------
