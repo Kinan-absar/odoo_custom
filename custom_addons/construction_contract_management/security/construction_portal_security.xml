@@ -1,7 +1,0 @@
-<odoo>
-    <!-- Portal User Group -->
-    <record id="group_construction_portal" model="res.groups">
-        <field name="name">Construction Portal User</field>
-        <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
-    </record>
-</odoo>
