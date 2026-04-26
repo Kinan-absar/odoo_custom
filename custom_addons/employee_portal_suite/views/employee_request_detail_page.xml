@@ -4,147 +4,135 @@
     <template id="employee_request_detail_page" name="Employee Request Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
 
-            <div class="container my-4">
-                <h2 class="mb-4">Request Details</h2>
-                <!-- DOWNLOAD PDF BUTTON -->
-                <t t-if="request_rec.state in ['approved', 'rejected']">
-                    <a t-att-href="'/report/pdf/employee_portal_suite.report_employee_request_document/%s' % request_rec.id"
-                    class="btn btn-outline-primary mb-3" target="_blank">
-                        Download PDF
+            <div class="container mt-3 employee-req-detail">
+
+                <!-- BACK BUTTON -->
+                <div class="mb-4">
+                    <a href="/my/employee/requests" class="app-back-btn">
+                        <i class="fa fa-arrow-left"></i>
+                        <span>Back</span>
                     </a>
-                </t>
-
-                <!-- ========================= -->
-                <!-- MAIN REQUEST INFORMATION -->
-                <!-- ========================= -->
-                <table class="table table-bordered">
-                    <tr>
-                        <th>Request</th>
-                        <td><t t-esc="request_rec.name"/></td>
-                    </tr>
-
-                    <tr>
-                        <th>Type</th>
-                        <td><t t-esc="request_rec.get_request_type_display()"/></td>
-                    </tr>
-
-                    <tr>
-                        <th>Status</th>
-                        <td><span class="badge bg-primary" t-esc="request_rec.get_readable_status()"/></td>
-                    </tr>
-
-                    <tr>
-                        <th>Date</th>
-                        <td><t t-esc="request_rec.request_date"/></td>
-                    </tr>
-
-                    <tr>
-                        <th>Description</th>
-                        <td><t t-esc="request_rec.description"/></td>
-                    </tr>
-
-                    <t t-if="request_rec.request_type == 'leave'">
-                        <tr>
-                            <th>Leave From</th>
-                            <td><t t-esc="request_rec.leave_from"/></td>
-                        </tr>
-                        <tr>
-                            <th>Leave To</th>
-                            <td><t t-esc="request_rec.leave_to"/></td>
-                        </tr>
-                    </t>
-                </table>
-
-                <!-- ========================= -->
-                <!-- APPROVAL TIMELINE UI     -->
-                <!-- ========================= -->
-                <div class="card p-3 mt-4">
-                    <h4 class="mb-3">Approval Timeline</h4>
-
-                    <t t-if="request_rec.get_portal_timeline()">
-                        <ul class="timeline">
-                            <t t-foreach="request_rec.get_portal_timeline()" t-as="ev">
-                                <li class="timeline-item">
-                                    <div class="timeline-marker"></div>
-                                    <div class="timeline-content">
-                                        <h5 class="timeline-title">
-                                            <t t-esc="ev['stage']"/>
-                                        </h5>
-
-                                        <t t-if="ev['approved_by']">
-                                            <p><strong>By:</strong> <t t-esc="ev['approved_by']"/></p>
-                                        </t>
-
-                                        <p><strong>Date:</strong> <t t-esc="ev['date']"/></p>
-
-                                        <t t-if="ev['comment']">
-                                            <p><strong>Comment:</strong> <t t-esc="ev['comment']"/></p>
-                                        </t>
-                                    </div>
-                                </li>
-                            </t>
-                        </ul>
-                    </t>
-
-                    <t t-if="not request_rec.get_portal_timeline()">
-                        <p>No approval activity yet.</p>
-                    </t>
                 </div>
 
-                <a href="/my/employee/requests" class="btn btn-secondary mt-4">Back</a>
+                <!-- PAGE HEADER -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h4 class="mb-0 fw-bold">Employee Request</h4>
+                        <div class="text-muted small">
+                            <t t-esc="request_rec.name"/>
+                        </div>
+                    </div>
+
+                    <div>
+                        <t t-raw="status_badge(request_rec)"/>
+                    </div>
+                </div>
+
+                <t t-if="request_rec.state == 'rejected'">
+                    <div class="alert alert-danger small">
+                        <strong>Rejected at:</strong>
+                        <t t-esc="request_rec.state_before_reject"/> —
+                        <strong>Reason:</strong>
+                        <t t-esc="request_rec.get_rejection_reason()"/>
+                    </div>
+                </t>
+
+
+                <!-- OVERVIEW CARD -->
+                <div class="card mb-3 rounded-4 shadow-sm">
+                    <div class="card-body small">
+
+                        <div class="row g-3">
+
+                            <div class="col-6">
+                                <div class="text-muted">Type</div>
+                                <div class="fw-semibold">
+                                    <t t-esc="request_rec.get_request_type_display()"/>
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <div class="text-muted">Date</div>
+                                <div class="fw-semibold">
+                                    <t t-esc="request_rec.request_date"/>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="text-muted">Description</div>
+                                <div class="fw-semibold">
+                                    <t t-esc="request_rec.description"/>
+                                </div>
+                            </div>
+
+                            <t t-if="request_rec.request_type == 'leave'">
+                                <div class="col-6">
+                                    <div class="text-muted">Leave From</div>
+                                    <div class="fw-semibold">
+                                        <t t-esc="request_rec.leave_from"/>
+                                    </div>
+                                </div>
+
+                                <div class="col-6">
+                                    <div class="text-muted">Leave To</div>
+                                    <div class="fw-semibold">
+                                        <t t-esc="request_rec.leave_to"/>
+                                    </div>
+                                </div>
+                            </t>
+
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TIMELINE -->
+                <div class="card mb-3 rounded-4 shadow-sm">
+                    <div class="card-header bg-white fw-semibold">
+                        Approval Timeline
+                    </div>
+
+                    <div class="card-body small">
+
+                        <t t-if="request_rec.get_portal_timeline()">
+                            <ul class="timeline">
+
+                                <t t-foreach="request_rec.get_portal_timeline()" t-as="ev">
+                                    <li class="timeline-item">
+                                        <div class="timeline-marker"></div>
+                                        <div class="timeline-content">
+                                            <div class="fw-semibold">
+                                                <t t-esc="ev['stage']"/>
+                                            </div>
+
+                                            <div class="text-muted small">
+                                                <t t-esc="ev['date']"/>
+                                            </div>
+
+                                            <t t-if="ev['comment']">
+                                                <div class="small mt-1">
+                                                    <t t-esc="ev['comment']"/>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </li>
+                                </t>
+
+                            </ul>
+                        </t>
+
+                        <t t-else="">
+                            <div class="text-muted small">
+                                No approval activity yet.
+                            </div>
+                        </t>
+
+                    </div>
+                </div>
 
             </div>
 
-            <!-- ========================= -->
-            <!-- TIMELINE CSS              -->
-            <!-- ========================= -->
-            <style>
-                .timeline {
-                    list-style: none;
-                    padding-left: 20px;
-                    position: relative;
-                    margin-left: 10px;
-                }
 
-                .timeline:before {
-                    content: "";
-                    position: absolute;
-                    top: 0;
-                    bottom: 0;
-                    width: 2px;
-                    background: #c5c5c5;
-                    left: 8px;
-                }
-
-                .timeline-item {
-                    position: relative;
-                    margin-bottom: 20px;
-                }
-
-                .timeline-marker {
-                    position: absolute;
-                    width: 16px;
-                    height: 16px;
-                    background: #0d6efd;
-                    border-radius: 50%;
-                    left: 0px;
-                    top: 5px;
-                }
-
-                .timeline-content {
-                    margin-left: 30px;
-                    padding: 10px 15px;
-                    background: #f8f9fa;
-                    border-radius: 5px;
-                    border: 1px solid #dee2e6;
-                }
-
-                .timeline-title {
-                    margin: 0 0 5px 0;
-                    font-size: 16px;
-                    font-weight: 600;
-                }
-            </style>
 
         </t>
     </template>

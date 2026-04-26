@@ -1,57 +1,33 @@
 {
     'name': 'Employee Portal Suite',
-    'version': '1.0.0',
-    'summary': 'Employee & Material Requests, Portal Approvals, and Digital Signing',
+    'version': '19.0.1.0.0',
+    'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
 
     'description': """
-        Employee Portal Suite is a comprehensive self-service portal and approval management system designed to simplify internal operations for companies of all sizes.
+    Comprehensive Employee Portal Suite providing a full service system for employees, managers, and administrators.
 
-        This module provides employees, managers, and executives with a unified portal experience to:
-        • Submit structured requests
-        • Track approval progress
-        • Manage material needs
-        • Generate PDF reports
-        • Sign documents electronically
-        —all within a secure and customizable portal.
+    Features Included:
 
-        Key Features:
-        ----------------
-        • Clean, modern employee portal experience  
-        • Multi-level approval workflows for Employee Requests  
-        • Material Requests workflow with approval hierarchy  
-        • Manager & Approver centralized approval center  
-        • Automatic request numbering (Employee & Material)  
-        • Full approval timelines and history  
-        • Detail pages with attachments and comments  
-        • PDF generation for all request types  
-        • Integrated electronic document signing using Odoo Sign  
-        • Secure portal access and isolation (employees see only their own data)  
+    ✔ Employee Portal (/my/employee)
+    ✔ Clean custom portal layout and navigation
+    ✔ Employee Requests workflow (Employee → Manager → HR → Finance → CEO)
+    ✔ Material Requests workflow (Employee → Purchase Rep → Store Manager → Project Manager → Director → CEO)
+    ✔ Full approval timeline visible in backend + portal
+    ✔ Manager Approvals Center with tabs (Employee / Material)
+    ✔ Dynamic Request Submission Forms
+    ✔ Request Detail Pages with approval history and comments
+    ✔ Automatic request numbering (ERQ / MR sequences)
+    ✔ PDF reports for all request types
+    ✔ GPS Attendance with geofencing (Check-In / Check-Out)
+    ✔ Automatic checkout cron for missed attendance
+    ✔ Work location GPS configuration per employee
+    ✔ Backend menus for Requests, Attendance, and Material Requests
+    ✔ Secure access using custom portal user, manager, HR, finance, and approval groups
+    ✔ Completely isolated portal permissions (employees only see their own records)
 
-        Approval workflows:
-        -------------------
-        Employee Requests:
-        Employee → Manager → HR → Finance → CEO
-
-        Material Requests:
-        Employee → Purchase → Store → Project Manager → Director → CEO
-
-        Target Users:
-        -------------
-        • Construction companies  
-        • Engineering & services firms  
-        • Mid-size to large enterprises with formal approval processes  
-        • Organizations using Odoo Portal for internal services
-
-        Benefits:
-        ---------
-        • Reduces manual paperwork  
-        • Improves approval transparency  
-        • Centralizes employee services  
-        • Enhances accountability and traceability
+    This module enables a complete self-service environment for employees and a unified approval center for managers.
     """,
-    'license': 'OPL-1',
-    'price': 249.99,
-    'currency': 'USD',
+    'license': 'LGPL-3',
     'author': 'Kinan',
     'category': 'Human Resources',
     'application': True,
@@ -97,6 +73,7 @@
         # --- BACKEND VIEWS ---
         'views/employee_request_views.xml',
         'views/material_request_views.xml',
+        'views/portal_announcement_views.xml',
         'views/menus.xml',
         
         # --------------------------------------------------
@@ -138,6 +115,6 @@
     'assets': {
         
     },
-    'images': ['images/main_screenshot.png'],
+    'images': ['static/description/icon.png'],
 
 }

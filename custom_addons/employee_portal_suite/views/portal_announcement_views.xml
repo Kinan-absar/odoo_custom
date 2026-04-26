@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ============================= -->
+    <!-- TREE VIEW -->
+    <!-- ============================= -->
+    <record id="view_portal_announcement_list" model="ir.ui.view">
+        <field name="name">portal.announcement.list</field>
+        <field name="model">portal.announcement</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================= -->
+    <!-- FORM VIEW -->
+    <!-- ============================= -->
+    <record id="view_portal_announcement_form" model="ir.ui.view">
+        <field name="name">portal.announcement.form</field>
+        <field name="model">portal.announcement</field>
+        <field name="arch" type="xml">
+            <form string="Portal Announcement">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="active"/>
+                        <field name="sequence"/>
+                    </group>
+
+                    <group>
+                        <field name="start_date"/>
+                        <field name="end_date"/>
+                        <field name="color"/>
+                    </group>
+
+                    <group>
+                        <field name="group_ids" widget="many2many_tags"/>
+                    </group>
+
+                    <group>
+                        <field name="message" widget="html"/>
+                    </group>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

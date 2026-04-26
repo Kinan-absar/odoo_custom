@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_construction_measurement">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="state_labels" t-value="{'draft': 'Draft', 'submitted': 'Submitted', 'checked': 'Checked', 'approved': 'Approved', 'rejected': 'Rejected'}"/>
+                <t t-set="current_value" t-value="sum([(line.current_qty or 0.0) * (line.unit_rate or 0.0) for line in doc.line_ids])"/>
+                <t t-set="cumulative_value" t-value="sum([(line.cumulative_qty or 0.0) * (line.unit_rate or 0.0) for line in doc.line_ids])"/>
+                <t t-call="web.external_layout">
+                    <div class="page construction-report">
+                        <t t-call="construction_contract_management.report_construction_common_styles"/>
+
+                        <div class="report-header">
+                            <p class="report-eyebrow">Construction Document</p>
+                            <div class="report-title-row">
+                                <div class="report-title-main">
+                                    <h1 class="report-title">Measurement Sheet</h1>
+                                    <div class="report-subtitle">
+                                        <span t-esc="doc.name"/> for <span t-esc="doc.contract_id.name"/>
+                                    </div>
+                                </div>
+                                <div class="report-title-side">
+                                    <span class="report-badge" t-esc="state_labels.get(doc.state, doc.state)"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <table class="meta-grid">
+                            <tr>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Project</div>
+                                        <div class="meta-value"><span t-field="doc.project_id"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Contract</div>
+                                        <div class="meta-value"><span t-field="doc.contract_id"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Measurement Date</div>
+                                        <div class="meta-value"><span t-field="doc.date"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Period</div>
+                                        <div class="meta-value"><span t-field="doc.period_from"/> - <span t-field="doc.period_to"/></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <table class="two-col">
+                            <tr>
+                                <td>
+                                    <div class="section-title">Prepared By</div>
+                                    <table class="summary-table">
+                                        <tr>
+                                            <td class="label-cell">Prepared By</td>
+                                            <td class="value-cell"><span t-esc="doc.prepared_by.name or '-'"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Checked By</td>
+                                            <td class="value-cell"><span t-esc="doc.checked_by.name or '-'"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Contract Completion</td>
+                                            <td class="value-cell"><span t-esc="'{:.2f}%'.format(doc.contract_id.completion_percent or 0.0)"/></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td>
+                                    <div class="section-title">Value Summary</div>
+                                    <table class="summary-table">
+                                        <tr>
+                                            <td class="label-cell">Current Measured Value</td>
+                                            <td class="value-cell">
+                                                <span t-esc="'{} {:,.2f}'.format(doc.contract_id.currency_id.symbol or '', current_value or 0.0)"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Cumulative Value</td>
+                                            <td class="value-cell">
+                                                <span t-esc="'{} {:,.2f}'.format(doc.contract_id.currency_id.symbol or '', cumulative_value or 0.0)"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Contract Revised Amount</td>
+                                            <td class="value-cell"><span t-field="doc.contract_id.revised_amount" t-options='{"widget": "monetary", "display_currency": doc.contract_id.currency_id}'/></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div class="section-title">Measurement Lines</div>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Item Code</th>
+            <th>Description</th>
+            <th class="text-right">Allowed Qty</th>
+            <th class="text-right">Previous</th>
+            <th class="text-right">Current</th>
+            <th class="text-right">Total</th>
+            <th class="text-right">Remaining</th>
+            <th>Unit</th>
+            <th class="text-right">Unit Rate</th>
+            <th>Remarks</th>
+        </tr>
+    </thead>
+    <tbody>
+        <t t-set="lines" t-value="doc.line_ids.sorted(lambda l: (l.boq_line_id.sequence, l.id))"/>
+        <t t-set="section_total" t-value="0.0"/>
+        <t t-set="grand_total" t-value="0.0"/>
+        <t t-set="current_section" t-value="''"/>
+        <t t-set="section_has_visible_lines" t-value="False"/>
+        <t t-set="pending_notes" t-value="[]"/>
+
+        <t t-foreach="lines" t-as="line">
+
+            <!-- Section -->
+            <t t-if="line.display_type == 'line_section'">
+                <t t-if="current_section and section_has_visible_lines">
+                    <tr class="subtotal-row">
+                        <td colspan="8" class="subtotal-label">
+                            Subtotal - <span t-esc="current_section"/>
+                        </td>
+                        <td class="subtotal-value">
+                            <span t-esc="'{} {:,.2f}'.format(doc.contract_id.currency_id.symbol or '', section_total or 0.0)"/>
+                        </td>
+                        <td></td>
+                    </tr>
+                </t>
+
+                <t t-set="section_total" t-value="0.0"/>
+                <t t-set="current_section" t-value="line.description or 'Section'"/>
+                <t t-set="section_has_visible_lines" t-value="False"/>
+                <t t-set="pending_notes" t-value="[]"/>
+            </t>
+
+            <!-- Note -->
+            <t t-elif="line.display_type == 'line_note'">
+                <t t-set="pending_notes" t-value="pending_notes + [line.description or '']"/>
+            </t>
+
+            <!-- Normal line: show only if current has value -->
+            <t t-else="">
+                <t t-if="line.current_qty and line.current_qty > 0">
+                    <t t-if="not section_has_visible_lines and current_section">
+                        <tr class="section-row">
+                            <td colspan="10">
+                                <span t-esc="current_section"/>
+                            </td>
+                        </tr>
+                        <t t-foreach="pending_notes" t-as="note_text">
+                            <tr class="note-row">
+                                <td colspan="10">
+                                    <span t-esc="note_text"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </t>
+
+                    <t t-set="section_has_visible_lines" t-value="True"/>
+                    <t t-set="line_value" t-value="(line.current_qty or 0.0) * (line.unit_rate or 0.0)"/>
+                    <t t-set="section_total" t-value="section_total + line_value"/>
+                    <t t-set="grand_total" t-value="grand_total + line_value"/>
+
+                    <tr>
+                        <td><span t-esc="line.boq_line_id.item_code or '-'"/></td>
+                        <td><span t-esc="line.description or '-'"/></td>
+                        <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.allowed_qty or 0.0)"/></td>
+                        <td class="text-right mono">
+                            <span t-esc="'{:,.2f}'.format(line.previous_qty or 0.0)"/>
+                            <div class="muted"><span t-esc="'({:.0f}%)'.format(line.previous_percent or 0.0)"/></div>
+                        </td>
+                        <td class="text-right mono">
+                            <span t-esc="'{:,.2f}'.format(line.current_qty or 0.0)"/>
+                            <div class="muted"><span t-esc="'({:.0f}%)'.format(line.current_percent or 0.0)"/></div>
+                        </td>
+                        <td class="text-right mono">
+                            <span t-esc="'{:,.2f}'.format(line.cumulative_qty or 0.0)"/>
+                            <div class="muted"><span t-esc="'({:.0f}%)'.format(line.cumulative_percent or 0.0)"/></div>
+                        </td>
+                        <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.remaining_qty or 0.0)"/></td>
+                        <td><span t-field="line.boq_line_id.uom_id"/></td>
+                        <td class="text-right">
+                            <span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": doc.contract_id.currency_id}'/>
+                        </td>
+                        <td><span t-esc="line.remarks or '-'"/></td>
+                    </tr>
+                </t>
+            </t>
+        </t>
+
+        <t t-if="current_section and section_has_visible_lines">
+            <tr class="subtotal-row">
+                <td colspan="8" class="subtotal-label">
+                    Subtotal - <span t-esc="current_section"/>
+                </td>
+                <td class="subtotal-value">
+                    <span t-esc="'{} {:,.2f}'.format(doc.contract_id.currency_id.symbol or '', section_total or 0.0)"/>
+                </td>
+                <td></td>
+            </tr>
+        </t>
+
+        <tr class="grand-total-row">
+            <td colspan="8" class="subtotal-label">Grand Total</td>
+            <td class="subtotal-value">
+                <span t-esc="'{} {:,.2f}'.format(doc.contract_id.currency_id.symbol or '', grand_total or 0.0)"/>
+            </td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>
+
+                        <table class="signature-grid">
+                            <tr>
+                                <td>
+                                    <div class="signature-box">
+                                        <div class="signature-label">Prepared By</div>
+                                        <div class="signature-line"><span t-esc="doc.prepared_by.name or 'Name / Signature'"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="signature-box">
+                                        <div class="signature-label">Checked By</div>
+                                        <div class="signature-line"><span t-esc="doc.checked_by.name or 'Name / Signature'"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="signature-box">
+                                        <div class="signature-label">Approved By</div>
+                                        <div class="signature-line">Name / Signature</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

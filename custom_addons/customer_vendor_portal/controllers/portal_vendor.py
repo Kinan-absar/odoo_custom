@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 from odoo import http
 from odoo.http import request
-from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
+from odoo.addons.portal.controllers.portal import CustomerPortal
+try:
+    from odoo.addons.portal.controllers.portal import pager as portal_pager
+except ImportError:
+    from odoo.addons.web.controllers.main import pager as portal_pager
 
 
 class VendorPortal(CustomerPortal):
@@ -136,7 +140,6 @@ class VendorPortal(CustomerPortal):
             return request.redirect('/my/home')
 
         po_id = int(post.get('po_id') or 0)
-
         file = post.get('invoice_file')
         attachment_id = False
 
@@ -149,18 +152,28 @@ class VendorPortal(CustomerPortal):
                 'res_id': 0,
             }).id
 
-        request.env['portal.vendor.invoice'].sudo().create({
-            'partner_id': partner.id,
-            'po_id': po_id,
-            'amount_total': post.get('amount_total'),
-            'invoice_date': post.get('invoice_date'),
-            'notes': post.get('notes'),
-            'attachment_id': attachment_id,
-            'portal_user_id': user.id,
-            'vendor_invoice_number': post.get('vendor_invoice_number'),
-        })
+        try:
+            request.env['portal.vendor.invoice'].sudo().create({
+                'partner_id': partner.id,
+                'po_id': po_id,
+                'amount_total': post.get('amount_total'),
+                'invoice_date': post.get('invoice_date'),
+                'notes': post.get('notes'),
+                'attachment_id': attachment_id,
+                'portal_user_id': user.id,
+                'vendor_invoice_number': post.get('vendor_invoice_number'),
+            })
+        except Exception:
+            request.env.cr.rollback()
+            purchase_orders = request.env['purchase.order'].sudo().search([
+                ('partner_id', '=', partner.id)
+            ])
+            return request.render('customer_vendor_portal.vendor_invoice_upload_form', {
+                'purchase_orders': purchase_orders,
+                'error_message': 'This vendor invoice number already exists. Please use a different invoice number.',
+                'form_data': post,
+            })
 
-        # ✅ After save → vendor invoice list (safe)
         return request.redirect('/vendor/invoices?submitted=1')
 
     # ---------------------------------------------------------

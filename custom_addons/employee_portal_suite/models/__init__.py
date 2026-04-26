@@ -5,3 +5,4 @@ from . import material_request
 from . import purchase_order
 from . import hr_work_location
 from . import project_project
+from . import portal_announcement

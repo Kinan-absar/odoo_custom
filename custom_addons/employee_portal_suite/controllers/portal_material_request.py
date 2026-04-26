@@ -30,6 +30,17 @@ def _mr_status_badge(rec):
         reason = reasons.get(rec.state_before_reject) or "No reason"
 
         return f'<span class="badge bg-danger">Rejected — {lbl} Stage ({reason})</span>'
+        # CLARIFICATION OVERRIDE
+    if rec.needs_clarification and rec.clarification_stage:
+        stage_labels = {
+            'purchase': 'Purchase Rep',
+            'store': 'Store Manager',
+            'project_manager': 'Project Manager',
+            'director': 'Director',
+            'ceo': 'CEO',
+        }
+        clar_label = stage_labels.get(rec.clarification_stage, rec.clarification_stage)
+        return f'<span class="badge bg-info text-dark">🚩 Clarification — {clar_label}</span>'
 
     # PENDING STAGE BADGES
     stage_badges = {
@@ -62,15 +73,28 @@ class EmployeePortalMaterialRequests(http.Controller):
         if not emp:
             return request.redirect("/my")
 
-        records = request.env["material.request"].sudo().search([
-            ("employee_id", "=", emp.id)
-        ])
+        search = kw.get("search")
 
-        # Pass the same badge renderer used in approver views
-        return request.render("employee_portal_suite.employee_material_requests_page", {
-            "requests": records,
-            "status_badge": _mr_status_badge,
-        })
+        domain = [("employee_id", "=", emp.id)]
+
+        # If user typed something in search bar
+        if search:
+            domain += ["|",
+                ("name", "ilike", search),
+                ("worksite", "ilike", search),
+            ]
+
+        records = request.env["material.request"].sudo().search(domain, order="id desc")
+
+        return request.render(
+            "employee_portal_suite.employee_material_requests_page",
+            {
+                "requests": records,
+                "status_badge": _mr_status_badge,
+                "search": search,   # VERY IMPORTANT
+            },
+        )
+
 
 
     # ---------------------------------------------------------
@@ -128,20 +152,26 @@ class EmployeePortalMaterialRequests(http.Controller):
         })
 
         # Lines
-        for i in range(20):
+        i = 0
+        while True:
             name = post.get(f"item_name_{i}")
-            qty  = post.get(f"qty_required_{i}")
-            uom  = post.get(f"uom_id_{i}")
+            if name is None:
+                break
 
-            if not name:
-                continue
+            if name.strip():
+                qty = post.get(f"qty_required_{i}")
+                uom = post.get(f"uom_id_{i}")
 
-            request.env["material.request.line"].sudo().create({
-                "request_id": rec.id,
-                "item_name": name,
-                "qty_required": qty or 0,
-                "uom_id": int(uom) if uom else False,
-            })
+                request.env["material.request.line"].sudo().create({
+                    "request_id": rec.id,
+                    "item_name": name,
+                    "qty_required": qty or 0,
+                    "uom_id": int(uom) if uom else False,
+                })
+
+            i += 1
+
+
 
         rec.sudo().action_submit()
         # --- SAVE ATTACHMENTS FROM NEW FORM ---
@@ -186,23 +216,47 @@ class EmployeePortalMaterialRequests(http.Controller):
             return request.redirect('/my')
 
         current_filter = kw.get("filter", "pending")
+        search = (kw.get("search") or "").strip()
 
         # ---------------------------------------------------------
         # 1) PENDING LIST — currently waiting for THIS user
         # ---------------------------------------------------------
         pending_list = []
 
-        stage_group_map = {
-            "purchase": "employee_portal_suite.group_mr_purchase_rep",
-            "store": "employee_portal_suite.group_mr_store_manager",
-            "project_manager": "employee_portal_suite.group_mr_project_manager",
-            "director": "employee_portal_suite.group_mr_projects_director",
-            "ceo": "employee_portal_suite.group_employee_portal_ceo",
-        }
+        for rec in Material.search([
+            ("state", "in", ["purchase", "store", "project_manager", "director", "ceo"])
+        ]):
 
-        for rec in Material.search([("state", "in", list(stage_group_map.keys()))]):
-            g = stage_group_map.get(rec.state)
-            if g and user.has_group(g):
+            # -------------------------------
+            # STORE MANAGER (project-based)
+            # -------------------------------
+            if rec.state == "store":
+                if user == rec.store_manager_user_id:
+                    pending_list.append(rec)
+
+            # -------------------------------
+            # PROJECT MANAGER (project-based)
+            # -------------------------------
+            elif rec.state == "project_manager":
+                if user == rec.project_manager_user_id:
+                    pending_list.append(rec)
+
+            # -------------------------------
+            # GLOBAL STAGES (group-based)
+            # -------------------------------
+            elif rec.state == "purchase" and user.has_group(
+                "employee_portal_suite.group_mr_purchase_rep"
+            ):
+                pending_list.append(rec)
+
+            elif rec.state == "director" and user.has_group(
+                "employee_portal_suite.group_mr_projects_director"
+            ):
+                pending_list.append(rec)
+
+            elif rec.state == "ceo" and user.has_group(
+                "employee_portal_suite.group_employee_portal_ceo"
+            ):
                 pending_list.append(rec)
 
         # ---------------------------------------------------------
@@ -239,6 +293,11 @@ class EmployeePortalMaterialRequests(http.Controller):
             "rejected": rejected_list,
             "all": all_reqs,
         }.get(current_filter, pending_list)
+        # -----------------------------
+        # SEARCH FILTER (by name only)
+        # -----------------------------
+        if search:
+            shown_reqs = [r for r in shown_reqs if search.lower() in (r.name or "").lower()]
 
         return request.render("employee_portal_suite.portal_material_approvals_list", {
             "pending_reqs": pending_list,
@@ -247,6 +306,7 @@ class EmployeePortalMaterialRequests(http.Controller):
             "all_reqs": all_reqs,
             "shown_reqs": shown_reqs,
             "current_filter": current_filter,
+            "search": search,  # <-- ADD THIS
             "status_badge": _mr_status_badge,  # <= pass badge renderer
         })
 
@@ -356,13 +416,8 @@ class EmployeePortalMaterialRequests(http.Controller):
             "employee_portal_suite.material_request_pdf"
         ).sudo()
 
-        # Use Odoo's official report service (IMPORTANT)
-        ReportService = request.env['ir.actions.report'].sudo()
-
-        # Render PDF CORRECTLY
-        pdf_content, content_type = ReportService._render_qweb_pdf(
-            report_action.id, [rec.id]
-        )
+        # Odoo 19: call _render_qweb_pdf on the report record directly
+        pdf_content, content_type = report_action._render_qweb_pdf([rec.id])
 
         headers = [
             ("Content-Type", "application/pdf"),
@@ -371,6 +426,35 @@ class EmployeePortalMaterialRequests(http.Controller):
         ]
 
         return request.make_response(pdf_content, headers=headers)
+
+    @http.route(
+        "/my/employee/material/requests/set_clarification",
+        type="http",
+        auth="user",
+        website=True,
+        csrf=True,
+    )
+    def set_clarification(self, **post):
+
+        rec = request.env["material.request"].sudo().browse(int(post.get("req_id")))
+
+        if not rec.exists():
+            return request.redirect("/my")
+
+        # Security
+        if not rec._can_toggle_clarification():
+            return request.redirect(
+                request.httprequest.referrer + "?clarify_error=1"
+            )
+
+        is_flagged = post.get("flag") == "on"
+
+        rec.write({
+            "needs_clarification": is_flagged,
+            "clarification_stage": rec.state if is_flagged else False,
+        })
+
+        return request.redirect(request.httprequest.referrer)
 
     # Attachment
     import base64
@@ -419,7 +503,7 @@ class EmployeePortalMaterialRequests(http.Controller):
         else:
             return request.redirect(f"/my/employee/material/{req_id}")
 
-    # Attachment Delete       
+    # Attachment Delete
     @http.route(
         '/my/employee/material/attachment/delete/<int:att_id>/<int:req_id>',
         type='http',
@@ -438,3 +522,24 @@ class EmployeePortalMaterialRequests(http.Controller):
             return request.redirect(f"/my/employee/material/approvals/{req_id}")
         else:
             return request.redirect(f"/my/employee/material/{req_id}")
+
+    @http.route('/my/employee/material/<int:request_id>/message', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def post_message(self, request_id, **post):
+        record = request.env['material.request'].sudo().browse(request_id)
+        message = (post.get('message') or '').strip()
+
+        if not record.exists():
+            return request.redirect('/my')
+
+        if message:
+            record.message_post(
+                body=message,
+                message_type='comment',
+                subtype_xmlid='mail.mt_comment'
+            )
+
+        came_from_approval = "/material/approvals/" in (request.httprequest.referrer or "")
+
+        if came_from_approval:
+            return request.redirect(f'/my/employee/material/approvals/{request_id}')
+        return request.redirect(f'/my/employee/material/{request_id}')

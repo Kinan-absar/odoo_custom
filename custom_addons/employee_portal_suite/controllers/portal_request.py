@@ -8,10 +8,18 @@ def _er_status_badge(rec):
     if state == "approved":
         return '<span class="badge bg-success">Fully Approved</span>'
 
-    # REJECTED
+    # REJECTED WITH STAGE
     if state == "rejected":
-        return '<span class="badge bg-danger">Rejected</span>'
+        stage_labels = {
+            'manager': 'Manager',
+            'hr': 'HR',
+            'finance': 'Finance',
+            'ceo': 'CEO',
+        }
 
+        lbl = stage_labels.get(rec.state_before_reject, "Unknown Stage")
+
+        return f'<span class="badge bg-danger">Rejected — {lbl} Stage</span>'
     # PENDING STAGES
     stage_labels = {
         'manager': 'Pending Manager',
@@ -44,13 +52,27 @@ class EmployeePortalRequests(http.Controller):
         if not emp:
             return request.redirect('/my')
 
-        requests = request.env['employee.request'].sudo().search([
+        search = kw.get('search', '').strip()
+
+        domain = [
             ('employee_id', '=', emp.id)
-        ])
+        ]
+
+        if search:
+            domain.append(('name', 'ilike', search))
+
+        requests = request.env['employee.request'].sudo().search(
+            domain,
+            order="create_date desc"
+        )
 
         return request.render("employee_portal_suite.employee_requests_page", {
             "requests": requests,
+            "search": search,
+            "status_badge": _er_status_badge,
         })
+
+
 
     # ---------------------------------------------------------
     # EMPLOYEE — VIEW SINGLE REQUEST
@@ -65,6 +87,7 @@ class EmployeePortalRequests(http.Controller):
 
         return request.render("employee_portal_suite.employee_request_detail_page", {
             "request_rec": rec,
+            "status_badge": _er_status_badge,
         })
 
     # ---------------------------------------------------------
@@ -143,6 +166,7 @@ class EmployeePortalRequests(http.Controller):
 
         emp = user.employee_id
         current_filter = kw.get("filter", "pending")
+        search = kw.get("search")
 
         # ---------------------------------------------------------
         # 1) PENDING LIST — requests waiting for THIS user
@@ -199,6 +223,11 @@ class EmployeePortalRequests(http.Controller):
             "rejected": rejected_list,
             "all": all_reqs,
         }.get(current_filter, pending_list)
+        # ---------------------------------------------------------
+        # 6) APPLY SEARCH (by request number only)
+        # ---------------------------------------------------------
+        if search:
+            shown_reqs = [r for r in shown_reqs if search.lower() in (r.name or "").lower()]
 
         return request.render("employee_portal_suite.portal_employee_approvals_list", {
             "pending_reqs": pending_list,
@@ -208,6 +237,7 @@ class EmployeePortalRequests(http.Controller):
             "shown_reqs": shown_reqs,
             "current_filter": current_filter,
             "status_badge": _er_status_badge,
+            "search": search,   # 👈 ADD THIS
         })
 
 

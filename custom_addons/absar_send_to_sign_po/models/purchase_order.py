@@ -28,17 +28,15 @@ class PurchaseOrder(models.Model):
     # WRITE OVERRIDE – Reset signature workflow when PO is modified
     # ---------------------------------------------------------------------
     def write(self, vals):
-        # Capture original state and revision BEFORE changes
         for po in self:
             po_state_before = po.signature_state
             po_revision_before = po.revision
-    
+
         res = super().write(vals)
-    
+
         for po in self:
             modifications = set(vals.keys())
-    
-            # Fields that justify revision increment
+
             meaningful_fields = {
                 'order_line',
                 'amount_total',
@@ -48,27 +46,20 @@ class PurchaseOrder(models.Model):
                 'currency_id',
                 'notes',
             }
-    
-            # If PO was fully signed BEFORE the change
+
             if po_state_before == "signed":
-                # Do NOT increase revision on first signature
                 if po_revision_before == 0:
-                    # First time signed → revision stays 0
                     continue
-    
-                # If user edited meaningful data → revision++
                 if modifications & meaningful_fields:
                     po.revision += 1
                     po.signature_state = "draft"
-    
-            # PO was NOT signed before, but user is editing a sent-for-sign PO
+
             elif po_state_before in ("director_pending", "ceo_pending"):
                 if modifications & meaningful_fields:
                     po.revision += 1
                     po.signature_state = "draft"
-    
-        return res
 
+        return res
 
     # ---------------------------------------------------------------------
     # SEND TO SIGN
@@ -76,19 +67,16 @@ class PurchaseOrder(models.Model):
     def action_send_to_sign(self):
         self.ensure_one()
 
-        # Generate PDF report
-        pdf_content, _ = self.env['ir.actions.report']._render_qweb_pdf(
-            'purchase.report_purchaseorder',
-            self.ids,
-        )
+        # Generate PDF report using Odoo 19 pattern
+        report = self.env.ref('purchase.report_purchaseorder')
+        pdf_content, _ = report._render_qweb_pdf(self.ids)
         pdf_b64 = base64.b64encode(pdf_content)
 
-        # Filename includes revision if exists
         filename_parts = [
-            self.name,                               # PO number
-            self.partner_id.name,                   # Vendor
-            self.material_request_id.name if self.material_request_id else None,  # MR
-            self.project_id.name if self.project_id else None,  # Project
+            self.name,
+            self.partner_id.name,
+            self.material_request_id.name if self.material_request_id else None,
+            self.project_id.name if self.project_id else None,
         ]
 
         filename = " - ".join(p for p in filename_parts if p)
@@ -96,7 +84,6 @@ class PurchaseOrder(models.Model):
             filename += f"_R{self.revision}"
         filename += ".pdf"
 
-        # Create attachment
         attachment = self.env['ir.attachment'].create({
             'name': filename,
             'datas': pdf_b64,
@@ -104,7 +91,6 @@ class PurchaseOrder(models.Model):
             'mimetype': 'application/pdf',
         })
 
-        # Create Sign Template
         template = self.env['sign.template'].create({
             'name': f"PO - {filename.replace('.pdf', '')}",
             'attachment_id': attachment.id,
@@ -114,11 +100,13 @@ class PurchaseOrder(models.Model):
         self.signature_state = "director_pending"
         self.message_post(body="PO sent for Director Signature.")
 
-        # Final correct Sign URL
+        # Odoo 19 compatible: open sign template form
         return {
-            "type": "ir.actions.act_url",
-            "url": f'/odoo/sign/{template.id}/action-sign.Template?id={template.id}&name=Template%20"PO%20{self.name}"',
-            "target": "self",
+            'type': 'ir.actions.act_window',
+            'res_model': 'sign.template',
+            'res_id': template.id,
+            'view_mode': 'form',
+            'target': 'current',
         }
 
     # ---------------------------------------------------------------------
@@ -126,7 +114,6 @@ class PurchaseOrder(models.Model):
     # ---------------------------------------------------------------------
     @api.model
     def _cron_sync_sign_status(self):
-
         pos = self.search([
             ('sign_template_id', '!=', False)
         ])
@@ -142,17 +129,14 @@ class PurchaseOrder(models.Model):
             if not request:
                 continue
 
-            # Director signed → Move to CEO
             if po.signature_state == 'director_pending' and request.nb_closed == 1:
                 po.signature_state = 'ceo_pending'
                 po.message_post(body="Director has signed. Waiting for CEO signature.")
 
-            # CEO Signed → Completed
             if request.state == 'completed':
                 po.signature_state = 'signed'
                 po.message_post(body="PO fully signed.")
 
-            # Rejected / Cancelled
             if request.state == 'canceled':
                 po.signature_state = 'rejected'
                 po.message_post(body="Signature request was rejected.")

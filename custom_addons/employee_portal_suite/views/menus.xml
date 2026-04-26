@@ -20,5 +20,18 @@
               parent="menu_employee_portal_root"
               action="action_material_request"
               sequence="20"/>
+    <record id="action_portal_announcement" model="ir.actions.act_window">
+        <field name="name">Announcements</field>
+        <field name="res_model">portal.announcement</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_portal_announcements"
+            name="Announcements"
+            parent="menu_employee_portal_root"
+            action="action_portal_announcement"
+            sequence="30"
+            groups="employee_portal_suite.group_employee_portal_announcement_manager,employee_portal_suite.group_employee_portal_admin"/>
+
 
 </odoo>

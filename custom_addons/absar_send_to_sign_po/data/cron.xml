@@ -4,15 +4,9 @@
         <field name="name">Check PO Signature Workflow</field>
         <field name="model_id" ref="model_purchase_order"/>
         <field name="state">code</field>
-
-        <!-- The python function you want to run -->
-        <field name="code">model._cron_check_signature_workflow()</field>
-
-        <!-- Run every 1 minute -->
+        <field name="code">model._cron_sync_sign_status()</field>
         <field name="interval_number">1</field>
         <field name="interval_type">minutes</field>
-
-        <!-- Active -->
         <field name="active">True</field>
     </record>
 </odoo>

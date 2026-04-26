@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 from odoo import http, _, fields
 from odoo.http import request
-from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
+from odoo.addons.portal.controllers.portal import CustomerPortal
+try:
+    from odoo.addons.portal.controllers.portal import pager as portal_pager
+except ImportError:
+    from odoo.addons.web.controllers.main import pager as portal_pager
 
 
 class CustomerPortalExtended(CustomerPortal):

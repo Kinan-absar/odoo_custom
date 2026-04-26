@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Account Statement Reports",
-    "version": "1.0",
+    "version": "19.0.1.0.0",
     "category": "Accounting",
     "summary": "Customer and Vendor Financial Statements with Running Balance and Excel Export",
     "description": """
@@ -31,7 +31,7 @@
         "report/customer_statement.xml",
         "report/vendor_statement.xml",
     ],
-    "images": ["images/main_screenshot.png"],
+
     "installable": True,
     "application": False,
     "license": "LGPL-3",

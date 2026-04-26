@@ -1,6 +1,6 @@
 {
     "name": "Send to Sign for Purchase Orders",
-    "version": "1.0.0",
+    "version": "19.0.1.0.0",
     "summary": "Digital signing workflow for purchase orders using Odoo Sign.",
     "description": """
         Digital Signing Workflow for Purchase Orders
@@ -10,7 +10,7 @@
         and adding automated revision/version control.
 
         Key Features:
-        • Adds a “Send to Sign” button for confirmed Purchase Orders.
+        • Adds a "Send to Sign" button for confirmed Purchase Orders.
         • Generates a printable PO PDF and sends it to Odoo Sign for digital signatures.
         • Automatically tracks signature progress and updates PO signature state.
         • Displays signature status inside the form view and list view.
@@ -27,7 +27,7 @@
     "license": "OPL-1",
     "price": 14.99,
     "currency": "USD",
-    "depends": ["purchase", "sign", "mail", "project"],
+    "depends": ["purchase", "sign", "mail", "project", "employee_portal_suite"],
     "data": [
         "data/cron.xml",
         "views/purchase_order_view.xml",

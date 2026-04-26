@@ -9,7 +9,11 @@ class VendorInvoice(models.Model):
     _description = 'Vendor Portal Invoice'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'create_date desc'
-
+    _sql_constraints = [
+        ('unique_vendor_invoice_number',
+        'UNIQUE(partner_id, vendor_invoice_number)',
+        'This vendor invoice number already exists for this vendor.')
+    ]
     name = fields.Char(
         string='Reference',
         required=True,
@@ -94,7 +98,7 @@ class VendorInvoice(models.Model):
         self.ensure_one()
         if not self.attachment_id:
             raise UserError(_("No attachment found to download."))
-
+        
         return {
             'type': 'ir.actions.act_url',
             'target': 'self',
@@ -107,4 +111,26 @@ class VendorInvoice(models.Model):
     def create(self, vals):
         if vals.get('name', '/') == '/':
             vals['name'] = self.env['ir.sequence'].next_by_code('portal.vendor.invoice') or '/'
-        return super(VendorInvoice, self).create(vals)
+
+        record = super().create(vals)
+
+            # 🔐 Properly link attachment to record
+        if record.attachment_id:
+            record.attachment_id.write({
+                'res_model': record._name,
+                'res_id': record.id,
+            })
+        group = self.env.ref(
+            'customer_vendor_portal.group_vendor_invoice_reviewer',
+            raise_if_not_found=False
+        )
+        if group:
+            for user in group.users.filtered(lambda u: u.active):
+                record.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    user_id=user.id,
+                    summary=_("New Vendor Invoice Submitted"),
+                    note=_("A new vendor invoice has been uploaded and requires review."),
+                )
+
+        return record

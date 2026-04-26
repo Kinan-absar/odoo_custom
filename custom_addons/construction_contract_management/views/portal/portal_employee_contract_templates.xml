@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Contracts List -->
+    <template id="portal_employee_contracts" name="Employee Portal - Contracts">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="container construction-portal-page mt-4">
+                <div class="row">
+                    <div class="col-12">
+                        <h3>Construction Contracts</h3>
+                    </div>
+                </div>
+
+                <t t-if="not contracts">
+                    <div class="alert alert-info mt-3" role="alert">
+                        There are currently no contracts for your account.
+                    </div>
+                </t>
+
+                <t t-if="contracts">
+                    <div class="d-flex justify-content-end mt-3 mb-3">
+                        <form method="get" action="/my/employee/contracts" class="d-flex flex-wrap align-items-center" style="gap: 0.65rem 0.85rem;">
+                            <input type="hidden" name="sortby" t-att-value="sortby or 'date'"/>
+                            <div class="d-flex align-items-center" style="gap: 0.5rem;">
+                                <label class="mb-0 font-weight-bold text-muted">Show:</label>
+                                <select name="status_filter" class="form-control" style="min-width: 150px; max-width: 180px; border-radius: 12px;">
+                                    <t t-foreach="status_options.items() if status_options else []" t-as="status_option">
+                                        <option t-att-value="status_option[0]" t-att-selected="status_filter == status_option[0] and 'selected' or None">
+                                            <t t-esc="status_option[1]['label']"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+                            <div class="d-flex align-items-center" style="gap: 0.5rem;">
+                                <label class="mb-0 font-weight-bold text-muted">Direction:</label>
+                                <select name="direction_filter" class="form-control" style="min-width: 170px; max-width: 190px; border-radius: 12px;">
+                                    <t t-foreach="direction_options.items() if direction_options else []" t-as="direction_option">
+                                        <option t-att-value="direction_option[0]" t-att-selected="direction_filter == direction_option[0] and 'selected' or None">
+                                            <t t-esc="direction_option[1]['label']"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Apply</button>
+                            <a href="/my/employee/contracts" class="btn btn-secondary">Reset</a>
+                        </form>
+                    </div>
+
+                    <div class="table-responsive mt-3 construction-desktop-table">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Contract #</th>
+                                    <th>Project</th>
+                                    <th>Direction</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th class="text-right">Contract Value</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="contracts" t-as="contract">
+                                    <tr>
+                                        <td><a t-attf-href="/my/employee/contract/#{contract.id}"><t t-esc="contract.name"/></a></td>
+                                        <td><span t-field="contract.project_id"/></td>
+                                        <td><span t-esc="'Client Contract' if contract.contract_direction == 'inbound' else 'Subcontract'"/></td>
+                                        <td><span t-field="contract.date_start"/></td>
+                                        <td><span t-field="contract.date_end"/></td>
+                                        <td class="text-right"><span t-field="contract.revised_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></td>
+                                        <td>
+                                            <span t-if="contract.state == 'draft'" class="badge badge-secondary">Draft</span>
+                                            <span t-if="contract.state == 'under_review'" class="badge badge-info">Under Review</span>
+                                            <span t-if="contract.state == 'approved'" class="badge badge-success">Approved</span>
+                                            <span t-if="contract.state == 'active'" class="badge badge-primary">Active</span>
+                                            <span t-if="contract.state == 'completed'" class="badge badge-success">Completed</span>
+                                            <span t-if="contract.state == 'closed'" class="badge badge-dark">Closed</span>
+                                            <span t-if="contract.state == 'cancelled'" class="badge badge-danger">Cancelled</span>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="construction-mobile-list mt-3">
+                        <t t-foreach="contracts" t-as="contract">
+                            <a t-attf-href="/my/employee/contract/#{contract.id}" class="construction-mobile-card">
+                                <div class="construction-mobile-card-top">
+                                    <div class="construction-mobile-card-title"><t t-esc="contract.name"/></div>
+                                    <div class="construction-mobile-card-date"><span t-field="contract.date_start"/></div>
+                                </div>
+                                <div class="construction-mobile-card-grid">
+                                    <div>
+                                        <span class="construction-mobile-card-label">Project</span>
+                                        <div class="construction-mobile-card-value"><span t-field="contract.project_id"/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Direction</span>
+                                        <div class="construction-mobile-card-value"><span t-esc="'Client Contract' if contract.contract_direction == 'inbound' else 'Subcontract'"/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">End Date</span>
+                                        <div class="construction-mobile-card-value"><span t-field="contract.date_end"/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Value</span>
+                                        <div class="construction-mobile-card-value"><span t-field="contract.revised_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Status</span>
+                                        <div class="construction-mobile-card-value">
+                                            <t t-if="contract.state == 'draft'">Draft</t>
+                                            <t t-if="contract.state == 'under_review'">Under Review</t>
+                                            <t t-if="contract.state == 'approved'">Approved</t>
+                                            <t t-if="contract.state == 'active'">Active</t>
+                                            <t t-if="contract.state == 'completed'">Completed</t>
+                                            <t t-if="contract.state == 'closed'">Closed</t>
+                                            <t t-if="contract.state == 'cancelled'">Cancelled</t>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </t>
+                    </div>
+
+                    <!-- Pagination -->
+                    <t t-if="pager" t-call="portal.pager"/>
+                </t>
+
+                <div class="row mt-3 mb-4">
+                    <div class="col-12">
+                        <a href="/my/employee" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"/> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Contract Detail - FIXED -->
+    <template id="portal_employee_contract_detail" name="Employee Portal - Contract Detail">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="container construction-portal-page">
+                <div class="row mt-4">
+                    <div class="col-md-8">
+                        <h3 class="mb-3">
+                            <small class="text-muted">Contract -</small> <span t-field="contract.name"/>
+                        </h3>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <a t-attf-href="/my/employee/contract/#{contract.id}?report_type=pdf" class="btn btn-primary" target="_blank" rel="noopener">
+                            <i class="fa fa-print"/> Print Contract
+                        </a>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Contract Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Project:</strong></div>
+                                    <div class="col-7"><span t-field="contract.project_id"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Partner:</strong></div>
+                                    <div class="col-7"><span t-field="contract.partner_id"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Direction:</strong></div>
+                                    <div class="col-7">
+                                        <span t-if="contract.contract_direction == 'inbound'" class="badge badge-info">Client Contract</span>
+                                        <span t-if="contract.contract_direction == 'outbound'" class="badge badge-warning">Subcontract</span>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Start Date:</strong></div>
+                                    <div class="col-7"><span t-field="contract.date_start"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>End Date:</strong></div>
+                                    <div class="col-7"><span t-field="contract.date_end"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Status:</strong></div>
+                                    <div class="col-7">
+                                        <span t-if="contract.state == 'draft'" class="badge badge-secondary">Draft</span>
+                                        <span t-if="contract.state == 'under_review'" class="badge badge-info">Under Review</span>
+                                        <span t-if="contract.state == 'approved'" class="badge badge-success">Approved</span>
+                                        <span t-if="contract.state == 'active'" class="badge badge-primary">Active</span>
+                                        <span t-if="contract.state == 'completed'" class="badge badge-success">Completed</span>
+                                        <span t-if="contract.state == 'closed'" class="badge badge-dark">Closed</span>
+                                        <span t-if="contract.state == 'cancelled'" class="badge badge-danger">Cancelled</span>
+                                    </div>
+                                </div>
+                            <div class="row mb-2">
+                                <div class="col-5"><strong>Payment Terms:</strong></div>
+                                <div class="col-7">
+                                    <span t-field="contract.payment_term_id"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                     </div>
+
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Financial Summary</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Original Amount:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.original_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Revised Amount:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.revised_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Total Certified:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.total_certified_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Total Measured:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.total_measured_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Advance %:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.advance_percent"/>%</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Advance Amount:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.advance_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Advance Recovered:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.advance_recovered" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Advance Balance:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.advance_balance" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Latest Advance Payment:</strong></div>
+                                    <div class="col-6 text-right">
+                                        <t t-set="latest_advance" t-value="contract.advance_ids[:1]"/>
+                                        <t t-if="latest_advance">
+                                            <span t-if="latest_advance.payment_status == 'no_move'" class="badge badge-secondary">Not Invoiced</span>
+                                            <span t-if="latest_advance.payment_status == 'not_paid'" class="badge badge-warning">Not Paid</span>
+                                            <span t-if="latest_advance.payment_status == 'partial'" class="badge badge-info">Partial</span>
+                                            <span t-if="latest_advance.payment_status == 'in_payment'" class="badge badge-primary">In Payment</span>
+                                            <span t-if="latest_advance.payment_status == 'paid'" class="badge badge-success">Paid</span>
+                                            <span t-if="latest_advance.payment_status == 'cancelled'" class="badge badge-danger">Cancelled</span>
+                                        </t>
+                                        <t t-if="not latest_advance">-</t>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Retention %:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.retention_percent"/>%</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>VAT %:</strong></div>
+                                    <div class="col-6 text-right"><span t-field="contract.vat_percent"/>%</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Latest Retention Release:</strong></div>
+                                    <div class="col-6 text-right">
+                                        <t t-set="latest_retention" t-value="contract.retention_release_ids[:1]"/>
+                                        <t t-if="latest_retention">
+                                            <span t-if="latest_retention.payment_status == 'no_move'" class="badge badge-secondary">Not Posted</span>
+                                            <span t-if="latest_retention.payment_status == 'not_paid'" class="badge badge-warning">Not Paid</span>
+                                            <span t-if="latest_retention.payment_status == 'partial'" class="badge badge-info">Partial</span>
+                                            <span t-if="latest_retention.payment_status == 'in_payment'" class="badge badge-primary">In Payment</span>
+                                            <span t-if="latest_retention.payment_status == 'paid'" class="badge badge-success">Paid</span>
+                                            <span t-if="latest_retention.payment_status == 'cancelled'" class="badge badge-danger">Cancelled</span>
+                                        </t>
+                                        <t t-if="not latest_retention">-</t>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <t t-if="contract.boq_line_ids">
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Bill of Quantities</h5>
+        </div>
+        <div class="card-body">
+
+            <style>
+                .boq-section {
+                    background: #eef2f7;
+                    font-weight: 700;
+                }
+                .boq-note {
+                    background: #f8fafc;
+                    font-style: italic;
+                    color: #6b7280;
+                }
+                .boq-subtotal {
+                    background: #f1f5f9;
+                    font-weight: 700;
+                }
+                .boq-grand-total {
+                    background: #e2e8f0;
+                    font-weight: 800;
+                }
+            </style>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Item Code</th>
+                            <th>Description</th>
+                            <th class="text-right">Qty</th>
+                            <th>Unit</th>
+                            <th class="text-right">Rate</th>
+                            <th class="text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <t t-set="lines" t-value="contract.boq_line_ids.sorted(lambda l: (l.sequence, l.id))"/>
+                        <t t-set="section_total" t-value="0.0"/>
+                        <t t-set="grand_total" t-value="0.0"/>
+                        <t t-set="current_section" t-value="''"/>
+
+                        <t t-foreach="lines" t-as="line">
+
+                            <!-- SECTION -->
+                            <t t-if="line.display_type == 'line_section'">
+                                <t t-if="current_section">
+                                    <tr class="boq-subtotal">
+                                        <td colspan="5" class="text-right">
+                                            Subtotal - <t t-esc="current_section"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-esc="'{} {:,.2f}'.format(contract.currency_id.symbol or '', section_total or 0.0)"/>
+                                        </td>
+                                    </tr>
+                                </t>
+
+                                <t t-set="section_total" t-value="0.0"/>
+                                <t t-set="current_section" t-value="line.description or 'Section'"/>
+
+                                <tr class="boq-section">
+                                    <td colspan="6">
+                                        <t t-esc="line.description or 'Section'"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <!-- NOTE -->
+                            <t t-elif="line.display_type == 'line_note'">
+                                <tr class="boq-note">
+                                    <td colspan="6">
+                                        <t t-esc="line.description or ''"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <!-- NORMAL LINE -->
+                            <t t-else="">
+                                <t t-set="section_total" t-value="section_total + (line.revised_amount or 0.0)"/>
+                                <t t-set="grand_total" t-value="grand_total + (line.revised_amount or 0.0)"/>
+
+                                <tr>
+                                    <td><t t-esc="line.item_code or ''"/></td>
+                                    <td><t t-esc="line.description or ''"/></td>
+                                    <td class="text-right">
+                                        <t t-esc="'%.2f' % (line.revised_qty or line.contract_qty or 0)"/>
+                                    </td>
+                                    <td><span t-field="line.uom_id"/></td>
+                                    <td class="text-right">
+                                        <span t-field="line.revised_unit_rate"
+                                              t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-field="line.revised_amount"
+                                              t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                        </t>
+
+                        <!-- LAST SECTION SUBTOTAL -->
+                        <t t-if="current_section">
+                            <tr class="boq-subtotal">
+                                <td colspan="5" class="text-right">
+                                    Subtotal - <t t-esc="current_section"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="'{} {:,.2f}'.format(contract.currency_id.symbol or '', section_total or 0.0)"/>
+                                </td>
+                            </tr>
+                        </t>
+
+                        <!-- GRAND TOTAL -->
+                        <tr class="boq-grand-total">
+                            <td colspan="5" class="text-right">
+                                Grand Total
+                            </td>
+                            <td class="text-right">
+                                <span t-esc="'{} {:,.2f}'.format(contract.currency_id.symbol or '', grand_total or 0.0)"/>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</t>
+
+                <div class="row mt-4 mb-4">
+                    <div class="col-12">
+                        <a href="/my/employee/contracts" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"/> Back to Contracts
+                        </a>
+                        <a href="/my/employee" class="btn btn-primary">
+                            <i class="fa fa-home"/> Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Customer & Vendor Portal Extension',
-    'version': '1.0.0',
+    'version': '19.0.1.0.0',
     'author': 'Kinan',
     'website': 'https://absar-alomran.com',
     'category': 'Portal',
@@ -44,10 +44,7 @@ Features:
             # future CSS/JS for bilingual UI improvements
         ],
     },
-    'images': ['images/main_screenshot.png'],
     'installable': True,
     'application': False,
-    'license': 'OPL-1',
-    'price': 34.99,
-    'currency': 'USD',
+    'license': 'LGPL-3',
 }
