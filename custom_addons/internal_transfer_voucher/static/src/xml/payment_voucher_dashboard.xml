@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="internal_transfer_voucher.PaymentVoucherListButtons">
+        <PaymentVoucherDashboard/>
+    </t>
+
+    <t t-name="internal_transfer_voucher.PaymentVoucherDashboard">
+        <div class="o_payment_voucher_dashboard d-flex gap-2 flex-wrap mb-3">
+
+            <div class="o_stat_card p-3 rounded bg-light border"
+                 t-on-click="() => this.openFilter([['state','=','draft']])">
+                <div class="fw-bold fs-3 text-primary">
+                    <t t-esc="data.draft_count"/>
+                </div>
+                <div>Draft</div>
+            </div>
+
+            <div class="o_stat_card p-3 rounded bg-light border"
+                 t-on-click="() => this.openFilter([['state','=','posted']])">
+                <div class="fw-bold fs-3 text-success">
+                    <t t-esc="data.posted_count"/>
+                </div>
+                <div>Posted</div>
+            </div>
+
+            <div class="o_stat_card p-3 rounded bg-light border"
+                 t-on-click="() => this.openFilter([['state','=','cancel']])">
+                <div class="fw-bold fs-3 text-danger">
+                    <t t-esc="data.cancel_count"/>
+                </div>
+                <div>Cancelled</div>
+            </div>
+
+            <div class="o_stat_card p-3 rounded bg-light border"
+                 t-on-click="() => this.openFilter([['payment_method','=','cash']])">
+                <div class="fw-bold fs-3">
+                    <t t-esc="data.cash_count"/>
+                </div>
+                <div>Cash</div>
+            </div>
+
+            <div class="o_stat_card p-3 rounded bg-light border"
+                 t-on-click="() => this.openFilter([['payment_method','=','bank_transfer']])">
+                <div class="fw-bold fs-3">
+                    <t t-esc="data.bank_count"/>
+                </div>
+                <div>Bank Transfer</div>
+            </div>
+
+            <div class="o_stat_card p-3 rounded bg-light border"
+                 t-on-click="() => this.openFilter([['payment_method','=','journal_transfer']])">
+                <div class="fw-bold fs-3">
+                    <t t-esc="data.transfer_count"/>
+                </div>
+                <div>Journal Transfer</div>
+            </div>
+
+            <div class="o_stat_card p-3 rounded bg-light border">
+                <div class="fw-bold fs-3">
+                    <t t-esc="data.total_posted_amount"/> <t t-esc="data.currency_symbol"/>
+                </div>
+                <div>Total Posted</div>
+            </div>
+
+        </div>
+    </t>
+
+</templates>

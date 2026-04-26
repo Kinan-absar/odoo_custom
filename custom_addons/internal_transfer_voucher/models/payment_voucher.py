@@ -442,7 +442,34 @@ class AccountPaymentVoucher(models.Model):
                     raise UserError(_("You cannot modify a posted payment voucher."))
         return super().write(vals)
 
+    @api.model
+    def retrieve_dashboard(self):
+        domain = []
 
+        draft_count = self.search_count([('state', '=', 'draft')])
+        posted_count = self.search_count([('state', '=', 'posted')])
+        cancel_count = self.search_count([('state', '=', 'cancel')])
+
+        cash_count = self.search_count([('payment_method', '=', 'cash')])
+        bank_count = self.search_count([('payment_method', '=', 'bank_transfer')])
+        transfer_count = self.search_count([('payment_method', '=', 'journal_transfer')])
+
+        posted_vouchers = self.search([('state', '=', 'posted')])
+        total_posted_amount = sum(posted_vouchers.mapped('amount'))
+
+        my_count = self.search_count([('create_uid', '=', self.env.uid)])
+
+        return {
+            'draft_count': draft_count,
+            'posted_count': posted_count,
+            'cancel_count': cancel_count,
+            'cash_count': cash_count,
+            'bank_count': bank_count,
+            'transfer_count': transfer_count,
+            'total_posted_amount': total_posted_amount,
+            'my_count': my_count,
+            'currency_symbol': self.env.company.currency_id.symbol,
+        }
 class AccountPaymentVoucherLine(models.Model):
     _name = 'account.payment.voucher.line'
     _description = 'Payment Voucher Destination Journal'
