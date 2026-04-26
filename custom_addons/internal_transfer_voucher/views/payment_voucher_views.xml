@@ -16,7 +16,7 @@
         <field name="name">account.payment.voucher.list</field>
         <field name="model">account.payment.voucher</field>
         <field name="arch" type="xml">
-            <list <list js_class="payment_voucher_dashboard_list">>
+             <list js_class="payment_voucher_dashboard_list">
                 <field name="name"/>
                 <field name="date"/>
                 <field name="partner_id"/>
