@@ -58,7 +58,7 @@ class AccountReceiptVoucher(models.Model):
     account_id = fields.Many2one(
         'account.account',
         string='Income / Receivable Account',
-        domain="[('is_deprecated','=',False)]",
+        domain="[]",
         required=True
     )
 
