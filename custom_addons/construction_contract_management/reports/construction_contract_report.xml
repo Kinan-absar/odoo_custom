@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_construction_contract">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="state_labels" t-value="{'draft': 'Draft', 'under_review': 'Under Review', 'approved': 'Approved', 'active': 'Active', 'completed': 'Completed', 'closed': 'Closed', 'cancelled': 'Cancelled'}"/>
+                <t t-call="web.external_layout">
+                    <div class="page construction-report">
+                        <t t-call="construction_contract_management.report_construction_common_styles"/>
+
+                        <div class="report-header">
+                            <p class="report-eyebrow">Construction Document</p>
+                            <div class="report-title-row">
+                                <div class="report-title-main">
+                                    <h1 class="report-title">Construction Contract</h1>
+                                    <div class="report-subtitle">
+                                        <span t-esc="doc.name"/> for <span t-esc="doc.project_id.name or 'Unassigned Project'"/>
+                                    </div>
+                                </div>
+                                <div class="report-title-side">
+                                    <span class="report-badge" t-esc="state_labels.get(doc.state, doc.state)"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <table class="meta-grid">
+                            <tr>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Project</div>
+                                        <div class="meta-value"><span t-field="doc.project_id"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Partner</div>
+                                        <div class="meta-value"><span t-field="doc.partner_id"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Direction</div>
+                                        <div class="meta-value"><span t-esc="'Client Contract' if doc.contract_direction == 'inbound' else 'Subcontract'"/></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="meta-card">
+                                        <div class="meta-label">Period</div>
+                                        <div class="meta-value"><span t-field="doc.date_start"/> - <span t-field="doc.date_end"/></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <table class="two-col">
+                            <tr>
+                                <td>
+                                    <div class="section-title">Financial Summary</div>
+                                    <table class="summary-table">
+                                        <tr>
+                                            <td class="label-cell">Original Amount</td>
+                                            <td class="value-cell"><span t-field="doc.original_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Revised Amount</td>
+                                            <td class="value-cell"><span t-field="doc.revised_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Total Measured</td>
+                                            <td class="value-cell"><span t-field="doc.total_measured_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Total Certified</td>
+                                            <td class="value-cell"><span t-field="doc.total_certified_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                        </tr>
+                                        <tr class="emphasis">
+                                            <td class="label-cell">Completion</td>
+                                            <td class="value-cell"><span t-esc="'{:.2f}%'.format(doc.completion_percent or 0.0)"/></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td>
+                                    <div class="section-title">Accounting Snapshot</div>
+                                    <table class="summary-table">
+                                        <tr>
+                                            <td class="label-cell">Advance %</td>
+                                            <td class="value-cell"><span t-esc="'{:.2f}%'.format(doc.advance_percent or 0.0)"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Advance Amount</td>
+                                            <td class="value-cell"><span t-field="doc.advance_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Advance Balance</td>
+                                            <td class="value-cell"><span t-field="doc.advance_balance" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Retention %</td>
+                                            <td class="value-cell"><span t-esc="'{:.2f}%'.format(doc.retention_percent or 0.0)"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="label-cell">Retention Balance</td>
+                                            <td class="value-cell"><span t-field="doc.retention_balance" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div class="section-title">Bill of Quantities</div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Item Code</th>
+                                    <th>Description</th>
+                                    <th class="text-right">Contract Qty</th>
+                                    <th class="text-right">Revised Qty</th>
+                                    <th>Unit</th>
+                                    <th class="text-right">Unit Rate</th>
+                                    <th class="text-right">Revised Amount</th>
+                                    <th class="text-right">Measured</th>
+                                    <th class="text-right">Certified</th>
+                                    <th class="text-right">Remaining</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="lines" t-value="doc.boq_line_ids.sorted(lambda l: (l.sequence, l.id))"/>
+                                <t t-set="section_total" t-value="0.0"/>
+                                <t t-set="grand_total" t-value="0.0"/>
+                                <t t-set="current_section" t-value="''"/>
+
+                                <t t-foreach="lines" t-as="line">
+                                    <t t-if="line.display_type == 'line_section'">
+                                        <t t-if="current_section">
+                                            <tr class="subtotal-row">
+                                                <td colspan="6" class="subtotal-label">Subtotal - <span t-esc="current_section"/></td>
+                                                <td class="subtotal-value"><span t-esc="'{} {:,.2f}'.format(doc.currency_id.symbol or '', section_total or 0.0)"/></td>
+                                                <td colspan="3"></td>
+                                            </tr>
+                                        </t>
+                                        <t t-set="section_total" t-value="0.0"/>
+                                        <t t-set="current_section" t-value="line.description or 'Section'"/>
+                                        <tr class="section-row">
+                                            <td colspan="10"><span t-esc="line.description or 'Section'"/></td>
+                                        </tr>
+                                    </t>
+
+                                    <t t-elif="line.display_type == 'line_note'">
+                                        <tr class="note-row">
+                                            <td colspan="10"><span t-esc="line.description or ''"/></td>
+                                        </tr>
+                                    </t>
+
+                                    <t t-else="">
+                                        <t t-set="section_total" t-value="section_total + (line.revised_amount or 0.0)"/>
+                                        <t t-set="grand_total" t-value="grand_total + (line.revised_amount or 0.0)"/>
+
+                                        <tr>
+                                            <td><span t-esc="line.item_code or '-'"/></td>
+                                            <td><span t-esc="line.description or '-'"/></td>
+                                            <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.contract_qty or 0.0)"/></td>
+                                            <td class="text-right mono">
+                                                <span t-esc="'{:,.2f}'.format(line.revised_qty or line.contract_qty or 0.0)"/>
+                                                <t t-if="line.variation_qty_increase or line.variation_qty_decrease">
+                                                    <div class="muted">
+                                                        Var. +<span t-esc="'{:,.2f}'.format(line.variation_qty_increase or 0.0)"/>
+                                                        / -<span t-esc="'{:,.2f}'.format(line.variation_qty_decrease or 0.0)"/>
+                                                    </div>
+                                                </t>
+                                            </td>
+                                            <td><span t-field="line.uom_id"/></td>
+                                            <td class="text-right"><span t-field="line.revised_unit_rate" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                            <td class="text-right"><span t-field="line.revised_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                            <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.measured_qty or 0.0)"/></td>
+                                            <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.certified_qty or 0.0)"/></td>
+                                            <td class="text-right mono"><span t-esc="'{:,.2f}'.format(line.remaining_qty or 0.0)"/></td>
+                                        </tr>
+                                    </t>
+                                </t>
+
+                                <t t-if="current_section">
+                                    <tr class="subtotal-row">
+                                        <td colspan="6" class="subtotal-label">Subtotal - <span t-esc="current_section"/></td>
+                                        <td class="subtotal-value">
+                                            <span t-esc="'{} {:,.2f}'.format(doc.currency_id.symbol or '', section_total)"/>
+                                        </td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                </t>
+
+                                <tr class="grand-total-row">
+                                    <td colspan="6" class="subtotal-label">Grand Total</td>
+                                    <td class="subtotal-value">
+                                        <span t-esc="'{} {:,.2f}'.format(doc.currency_id.symbol or '', grand_total)"/>
+                                    </td>
+                                    <td colspan="3"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <t t-if="doc.scope or doc.notes">
+                            <table class="two-col" style="margin-top: 14px;">
+                                <tr>
+                                    <td>
+                                        <t t-if="doc.scope">
+                                            <div class="note-box" style="margin-top:0;">
+                                                <div class="note-title">Scope of Work</div>
+                                                <div t-esc="doc.scope"/>
+                                            </div>
+                                        </t>
+                                    </td>
+                                    <td>
+                                        <t t-if="doc.notes">
+                                            <div class="note-box" style="margin-top:0;">
+                                                <div class="note-title">Internal Notes</div>
+                                                <div t-esc="doc.notes"/>
+                                            </div>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </table>
+                        </t>
+
+                        <div class="note-box" style="margin-top: 14px;">
+                            <div class="note-title">Payment Terms</div>
+                            <div>
+                                <t t-if="doc.payment_term_id">
+                                    <span t-field="doc.payment_term_id"/>
+                                </t>
+                                <t t-else="">-</t>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="clean_sign_summary"
+              inherit_id="sign.sign_portal_my_request"
+              name="Clean Sign Summary Page">
+
+        <!-- 1) Inject CSS *after* portal layout -->
+        <xpath expr="//t[@t-call='portal.portal_layout']" position="inside">
+            <style>
+                header.o_header_standard,
+                footer.o_footer,
+                .o_portal_submenu.breadcrumb,
+                .o_portal_pager {
+                    display: none !important;
+                }
+
+                .ep-back-btn {
+                    margin-bottom: 20px;
+                    display: inline-block;
+                }
+            </style>
+        </xpath>
+
+        <!-- 2) Insert BACK BUTTON right before the first H3 inside layout -->
+        <xpath expr="//h3[1]" position="before">
+            <a href="/my/employee" 
+               class="btn btn-secondary ep-back-btn">
+                ← Back to Employee Portal
+            </a>
+        </xpath>
+
+    </template>
+
+</odoo>

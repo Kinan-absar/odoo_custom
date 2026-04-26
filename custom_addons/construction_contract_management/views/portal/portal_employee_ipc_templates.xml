@@ -1,0 +1,534 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- IPCs List -->
+    <template id="portal_employee_ipcs" name="Employee Portal - IPCs">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="container construction-portal-page mt-4">
+                <div class="row">
+                    <div class="col-12">
+                        <h3>Interim Payment Certificates (IPCs)</h3>
+                    </div>
+                </div>
+
+                <t t-if="not ipcs">
+                    <div class="alert alert-info mt-3" role="alert">
+                        There are currently no IPCs for your account.
+                    </div>
+                </t>
+
+                <t t-if="ipcs">
+                    <div class="d-flex justify-content-end mt-3 mb-3">
+                        <form method="get" action="/my/employee/ipcs" class="d-flex flex-wrap align-items-center" style="gap: 0.65rem 0.85rem;">
+                            <input type="hidden" name="sortby" t-att-value="sortby or 'date'"/>
+                            <div class="d-flex align-items-center" style="gap: 0.5rem;">
+                                <label class="mb-0 font-weight-bold text-muted">Project:</label>
+                                <select name="project_filter" class="form-control" style="min-width: 180px; max-width: 220px; border-radius: 12px;">
+                                    <t t-foreach="project_options or []" t-as="project_option">
+                                        <option t-att-value="project_option['value']" t-att-selected="project_filter == project_option['value'] and 'selected' or None">
+                                            <t t-esc="project_option['label']"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+                            <div class="d-flex align-items-center" style="gap: 0.5rem;">
+                                <label class="mb-0 font-weight-bold text-muted">Show:</label>
+                                <select name="status_filter" class="form-control" style="min-width: 150px; max-width: 180px; border-radius: 12px;">
+                                    <t t-foreach="status_options.items() if status_options else []" t-as="status_option">
+                                        <option t-att-value="status_option[0]" t-att-selected="status_filter == status_option[0] and 'selected' or None">
+                                            <t t-esc="status_option[1]['label']"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+                            <div class="d-flex align-items-center" style="gap: 0.5rem;">
+                                <label class="mb-0 font-weight-bold text-muted">Direction:</label>
+                                <select name="direction_filter" class="form-control" style="min-width: 170px; max-width: 190px; border-radius: 12px;">
+                                    <t t-foreach="direction_options.items() if direction_options else []" t-as="direction_option">
+                                        <option t-att-value="direction_option[0]" t-att-selected="direction_filter == direction_option[0] and 'selected' or None">
+                                            <t t-esc="direction_option[1]['label']"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Apply</button>
+                            <a href="/my/employee/ipcs" class="btn btn-secondary">Reset</a>
+                        </form>
+                    </div>
+
+                    <div class="table-responsive mt-3 construction-desktop-table">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>IPC #</th>
+                                    <th>Contract</th>
+                                    <th>Project</th>
+                                    <th>Date</th>
+                                    <th>Period</th>
+                                    <th class="text-right">Current Value</th>
+                                    <th class="text-right">Net Amount</th>
+                                    <th>Payment</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="ipcs" t-as="ipc">
+                                    <tr>
+                                        <td><a t-attf-href="/my/employee/ipc/#{ipc.id}"><t t-esc="ipc.name"/></a></td>
+                                        <td><span t-field="ipc.contract_id"/></td>
+                                        <td><span t-field="ipc.contract_id.project_id"/></td>
+                                        <td><span t-field="ipc.ipc_date"/></td>
+                                        <td><span t-field="ipc.period_from"/> - <span t-field="ipc.period_to"/></td>
+                                        <td class="text-right"><span t-field="ipc.current_work_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                                        <td class="text-right"><span t-field="ipc.net_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                                        <td>
+                                            <span t-if="ipc.payment_status == 'no_move'" class="badge badge-secondary">Not Invoiced</span>
+                                            <span t-if="ipc.payment_status == 'not_paid'" class="badge badge-warning">Not Paid</span>
+                                            <span t-if="ipc.payment_status == 'partial'" class="badge badge-info">Partial</span>
+                                            <span t-if="ipc.payment_status == 'in_payment'" class="badge badge-primary">In Payment</span>
+                                            <span t-if="ipc.payment_status == 'paid'" class="badge badge-success">Paid</span>
+                                            <span t-if="ipc.payment_status == 'cancelled'" class="badge badge-danger">Cancelled</span>
+                                        </td>
+                                        <td>
+                                            <span t-if="ipc.state == 'draft'" class="badge badge-secondary">Draft</span>
+                                            <span t-if="ipc.state == 'under_review'" class="badge badge-info">Under Review</span>
+                                            <span t-if="ipc.state == 'approved'" class="badge badge-success">Approved</span>
+                                            <span t-if="ipc.state == 'done'" class="badge badge-primary">Done</span>
+                                            <span t-if="ipc.state == 'cancelled'" class="badge badge-danger">Cancelled</span>
+                                        </td>
+                                        <td class="text-right">
+                                            <a t-attf-href="/my/employee/ipc/#{ipc.id}?report_type=pdf" class="btn btn-sm btn-primary" title="Download PDF" target="_blank" rel="noopener">
+                                                <i class="fa fa-download"/> PDF
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="construction-mobile-list mt-3">
+                        <t t-foreach="ipcs" t-as="ipc">
+                            <a t-attf-href="/my/employee/ipc/#{ipc.id}" class="construction-mobile-card">
+                                <div class="construction-mobile-card-top">
+                                    <div class="construction-mobile-card-title"><t t-esc="ipc.name"/></div>
+                                    <div class="construction-mobile-card-date"><span t-field="ipc.ipc_date"/></div>
+                                </div>
+                                <div class="construction-mobile-card-grid">
+                                    <div>
+                                        <span class="construction-mobile-card-label">Project</span>
+                                        <div class="construction-mobile-card-value"><span t-field="ipc.contract_id.project_id"/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Period</span>
+                                        <div class="construction-mobile-card-value"><span t-field="ipc.period_from"/> - <span t-field="ipc.period_to"/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Current Value</span>
+                                        <div class="construction-mobile-card-value"><span t-field="ipc.current_work_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Net Amount</span>
+                                        <div class="construction-mobile-card-value"><span t-field="ipc.net_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Payment</span>
+                                        <div class="construction-mobile-card-value"><t t-esc="dict([('no_move','Not Invoiced'),('not_paid','Not Paid'),('partial','Partial'),('in_payment','In Payment'),('paid','Paid'),('cancelled','Cancelled')]).get(ipc.payment_status, '-')"/></div>
+                                    </div>
+                                    <div>
+                                        <span class="construction-mobile-card-label">Status</span>
+                                        <div class="construction-mobile-card-value"><t t-esc="dict([('draft','Draft'),('under_review','Under Review'),('approved','Approved'),('done','Done'),('cancelled','Cancelled')]).get(ipc.state, '-')"/></div>
+                                    </div>
+                                </div>
+                            </a>
+                        </t>
+                    </div>
+
+                    <!-- Pagination -->
+                    <t t-if="pager" t-call="portal.pager"/>
+                </t>
+
+                <div class="row mt-3 mb-4">
+                    <div class="col-12">
+                        <a href="/my/employee" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"/> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- IPC Detail -->
+    <template id="portal_employee_ipc_detail" name="Employee Portal - IPC Detail">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="container ipc-portal-page">
+                <style type="text/css">
+                    .ipc-portal-page {
+                        font-size: 13px;
+                        color: #1f2937;
+                    }
+                    .ipc-portal-page h3 {
+                        font-size: 1.8rem;
+                        font-weight: 700;
+                        letter-spacing: -0.02em;
+                    }
+                    .ipc-portal-page .badge {
+                        font-size: 0.74rem;
+                    }
+                    .ipc-portal-page .card {
+                        border: 1px solid #d9dee7;
+                        border-radius: 16px;
+                        overflow: hidden;
+                        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+                    }
+                    .ipc-portal-page .card-header {
+                        background: #f8fafc;
+                        border-bottom: 1px solid #e5e7eb;
+                        padding: 0.82rem 1rem;
+                    }
+                    .ipc-portal-page .card-header h5 {
+                        margin: 0;
+                        font-size: 0.96rem;
+                        font-weight: 700;
+                    }
+                    .ipc-portal-page .card-body {
+                        padding: 1rem;
+                    }
+                    .ipc-portal-page .btn {
+                        border-radius: 8px;
+                        font-size: 0.82rem;
+                        font-weight: 700;
+                        box-shadow: none;
+                    }
+                    .ipc-portal-page .btn-primary {
+                        background: #1d4ed8;
+                        border-color: #1d4ed8;
+                    }
+                    .ipc-portal-page .btn-secondary {
+                        background: #334155;
+                        border-color: #334155;
+                    }
+                    .ipc-portal-page .table-responsive {
+                        border: 1px solid #e5e7eb;
+                        border-radius: 14px;
+                        overflow: hidden;
+                    }
+                    .ipc-portal-page .ipc-lines-table {
+                        margin-bottom: 0;
+                        font-size: 0.82rem;
+                        table-layout: fixed;
+                        width: 100%;
+                    }
+                    .ipc-portal-page .ipc-lines-table thead th {
+                        background: #f8fafc;
+                        border-bottom: 1px solid #dbe2ea;
+                        color: #0f172a;
+                        font-size: 0.76rem;
+                        padding: 0.58rem 0.45rem;
+                        text-align: left;
+                    }
+                    .ipc-portal-page .ipc-lines-table tbody td {
+                        padding: 0.5rem 0.45rem;
+                        border-color: #e8edf3;
+                        vertical-align: middle;
+                    }
+                    .ipc-portal-page .ipc-lines-table th.text-right,
+                    .ipc-portal-page .ipc-lines-table td.text-right {
+                        text-align: right !important;
+                    }
+                    .ipc-portal-page .qty-stack {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-end;
+                        gap: 0.08rem;
+                        line-height: 1.2;
+                        white-space: nowrap;
+                        width: 100%;
+                    }
+                    .ipc-portal-page .qty-percent {
+                        color: #64748b;
+                        font-size: 0.72rem;
+                        font-weight: 600;
+                    }
+                    .ipc-portal-page .money-text {
+                        font-variant-numeric: tabular-nums;
+                        white-space: nowrap;
+                    }
+                </style>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h3 class="mb-3">
+                            <small class="text-muted">IPC -</small> <span t-field="ipc.name"/>
+                            <span t-if="ipc.state == 'draft'" class="badge badge-secondary ml-2">Draft</span>
+                            <span t-if="ipc.state == 'under_review'" class="badge badge-info ml-2">Under Review</span>
+                            <span t-if="ipc.state == 'approved'" class="badge badge-success ml-2">Approved</span>
+                            <span t-if="ipc.state == 'done'" class="badge badge-primary ml-2">Done</span>
+                            <span t-if="ipc.state == 'cancelled'" class="badge badge-danger ml-2">Cancelled</span>
+                        </h3>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <a t-attf-href="/my/employee/ipc/#{ipc.id}?report_type=pdf" class="btn btn-primary" target="_blank" rel="noopener">
+                            <i class="fa fa-download"/> Download PDF
+                        </a>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>IPC Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Contract:</strong></div>
+                                    <div class="col-7"><span t-field="ipc.contract_id"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Project:</strong></div>
+                                    <div class="col-7"><span t-field="ipc.contract_id.project_id"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Date:</strong></div>
+                                    <div class="col-7"><span t-field="ipc.ipc_date"/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Period:</strong></div>
+                                    <div class="col-7">
+                                        <span t-field="ipc.period_from"/> - <span t-field="ipc.period_to"/>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-5"><strong>Payment Status:</strong></div>
+                                    <div class="col-7">
+                                        <span t-if="ipc.payment_status == 'no_move'" class="badge badge-secondary">Not Invoiced</span>
+                                        <span t-if="ipc.payment_status == 'not_paid'" class="badge badge-warning">Not Paid</span>
+                                        <span t-if="ipc.payment_status == 'partial'" class="badge badge-info">Partial</span>
+                                        <span t-if="ipc.payment_status == 'in_payment'" class="badge badge-primary">In Payment</span>
+                                        <span t-if="ipc.payment_status == 'paid'" class="badge badge-success">Paid</span>
+                                        <span t-if="ipc.payment_status == 'cancelled'" class="badge badge-danger">Cancelled</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Financial Summary</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Previous Certified:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.previous_certified_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Current Work Value:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.current_work_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Cumulative Certified:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.cumulative_certified_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Advance Recovery:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.advance_recovery_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>VAT:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.vat_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Retention:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.retention_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Deductions:</strong></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.deduction_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                </div>
+                                <hr/>
+                                <div class="row mb-2">
+                                    <div class="col-7"><strong>Net Amount:</strong></div>
+                                    <div class="col-5 text-right"><strong><span t-field="ipc.net_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <t t-if="ipc.line_ids">
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>IPC Lines</h5>
+        </div>
+        <div class="card-body">
+            <style>
+                .ipc-section {
+                    background: #eef2f7;
+                    font-weight: 700;
+                }
+                .ipc-note {
+                    background: #f8fafc;
+                    font-style: italic;
+                    color: #6b7280;
+                }
+                .ipc-subtotal {
+                    background: #f1f5f9;
+                    font-weight: 700;
+                }
+                .ipc-grand-total {
+                    background: #e2e8f0;
+                    font-weight: 800;
+                }
+            </style>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered ipc-lines-table">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Item Code</th>
+                            <th>Description</th>
+                            <th class="text-right">Previous</th>
+                            <th class="text-right">Current</th>
+                            <th class="text-right">Total</th>
+                            <th class="text-right">Rate</th>
+                            <th class="text-right">Current Value</th>
+                            <th class="text-right">Total Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-set="lines" t-value="ipc.line_ids.sorted(lambda l: (l.boq_line_id.sequence, l.id))"/>
+                        <t t-set="section_total" t-value="0.0"/>
+                        <t t-set="grand_total" t-value="0.0"/>
+                        <t t-set="current_section" t-value="''"/>
+                        <t t-set="section_has_visible_lines" t-value="False"/>
+                        <t t-set="pending_notes" t-value="[]"/>
+
+                        <t t-foreach="lines" t-as="line">
+
+                            <!-- Section -->
+                            <t t-if="line.display_type == 'line_section'">
+                                <t t-if="current_section and section_has_visible_lines">
+                                    <tr class="ipc-subtotal">
+                                        <td colspan="6" class="text-right">
+                                            Subtotal - <t t-esc="current_section"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-esc="'{} {:,.2f}'.format(ipc.currency_id.symbol or '', section_total or 0.0)"/>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </t>
+
+                                <t t-set="section_total" t-value="0.0"/>
+                                <t t-set="current_section" t-value="line.description or 'Section'"/>
+                                <t t-set="section_has_visible_lines" t-value="False"/>
+                                <t t-set="pending_notes" t-value="[]"/>
+                            </t>
+
+                            <!-- Note -->
+                            <t t-elif="line.display_type == 'line_note'">
+                                <t t-set="pending_notes" t-value="pending_notes + [line.description or '']"/>
+                            </t>
+
+                            <!-- Normal line -->
+                            <t t-else="">
+                                <t t-if="line.current_value and line.current_value > 0">
+                                    <t t-if="not section_has_visible_lines and current_section">
+                                        <tr class="ipc-section">
+                                            <td colspan="8">
+                                                <t t-esc="current_section"/>
+                                            </td>
+                                        </tr>
+                                        <t t-foreach="pending_notes" t-as="note_text">
+                                            <tr class="ipc-note">
+                                                <td colspan="8">
+                                                    <t t-esc="note_text"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+
+                                    <t t-set="section_has_visible_lines" t-value="True"/>
+                                    <t t-set="section_total" t-value="section_total + (line.current_value or 0.0)"/>
+                                    <t t-set="grand_total" t-value="grand_total + (line.current_value or 0.0)"/>
+
+                                    <tr>
+                                        <td><t t-esc="line.boq_line_id.item_code or ''"/></td>
+                                        <td><span t-field="line.description"/></td>
+                                        <td class="text-right">
+                                            <div class="qty-stack">
+                                                <span t-field="line.previous_qty"/>
+                                                <span class="qty-percent"><t t-esc="'(' + str(int(round(line.previous_percent or 0.0))) + '%)'"/></span>
+                                            </div>
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="qty-stack">
+                                                <span t-field="line.current_qty"/>
+                                                <span class="qty-percent"><t t-esc="'(' + str(int(round(line.current_percent or 0.0))) + '%)'"/></span>
+                                            </div>
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="qty-stack">
+                                                <span t-field="line.cumulative_qty"/>
+                                                <span class="qty-percent"><t t-esc="'(' + str(int(round(line.cumulative_percent or 0.0))) + '%)'"/></span>
+                                            </div>
+                                        </td>
+                                        <td class="text-right money-text">
+                                            <span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
+                                        </td>
+                                        <td class="text-right money-text">
+                                            <span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
+                                        </td>
+                                        <td class="text-right money-text">
+                                            <span t-field="line.cumulative_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </t>
+                        </t>
+
+                        <t t-if="current_section and section_has_visible_lines">
+                            <tr class="ipc-subtotal">
+                                <td colspan="6" class="text-right">
+                                    Subtotal - <t t-esc="current_section"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="'{} {:,.2f}'.format(ipc.currency_id.symbol or '', section_total or 0.0)"/>
+                                </td>
+                                <td></td>
+                            </tr>
+                        </t>
+
+                        <tr class="ipc-grand-total">
+                            <td colspan="6" class="text-right">Grand Total</td>
+                            <td class="text-right">
+                                <span t-esc="'{} {:,.2f}'.format(ipc.currency_id.symbol or '', grand_total or 0.0)"/>
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</t>
+                <div class="row mt-4 mb-4">
+                    <div class="col-12">
+                        <a href="/my/employee/ipcs" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"/> Back to IPCs
+                        </a>
+                        <a href="/my/employee" class="btn btn-primary">
+                            <i class="fa fa-home"/> Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

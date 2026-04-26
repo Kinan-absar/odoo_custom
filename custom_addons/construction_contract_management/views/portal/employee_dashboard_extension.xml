@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="employee_portal_dashboard_construction" inherit_id="employee_portal_suite.employee_portal_dashboard">
+        <xpath expr="//div[hasclass('row')]" position="inside">
+            <t t-if="show_construction_cards">
+                <div class="construction-dashboard-section w-100">
+                    <div class="row construction-dashboard-row">
+
+                        <!-- Contracts -->
+                        <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
+                            <a href="/my/employee/contracts" class="construction-dashboard-card-link">
+                                <div class="construction-dashboard-card construction-card-primary">
+                                    <div class="construction-card-top">
+                                        <div class="construction-card-icon">
+                                            <i class="fa fa-file-text"></i>
+                                        </div>
+                                        <div class="construction-card-title">Contracts</div>
+                                    </div>
+                                    <div class="construction-card-bottom">
+                                        <div class="construction-card-number">
+                                            <t t-esc="contract_count or 0"/>
+                                        </div>
+                                        <div class="construction-card-arrow">
+                                            <i class="fa fa-arrow-right"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- IPCs -->
+                        <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
+                            <a href="/my/employee/ipcs" class="construction-dashboard-card-link">
+                                <div class="construction-dashboard-card construction-card-success">
+                                    <div class="construction-card-top">
+                                        <div class="construction-card-icon">
+                                            <i class="fa fa-money"></i>
+                                        </div>
+                                        <div class="construction-card-title">IPCs</div>
+                                    </div>
+                                    <div class="construction-card-bottom">
+                                        <div class="construction-card-number">
+                                            <t t-esc="ipc_count or 0"/>
+                                        </div>
+                                        <div class="construction-card-arrow">
+                                            <i class="fa fa-arrow-right"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Variations -->
+                        <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
+                            <a href="/my/employee/variations" class="construction-dashboard-card-link">
+                                <div class="construction-dashboard-card construction-card-warning">
+                                    <div class="construction-card-top">
+                                        <div class="construction-card-icon">
+                                            <i class="fa fa-exchange"></i>
+                                        </div>
+                                        <div class="construction-card-title">Variations</div>
+                                    </div>
+                                    <div class="construction-card-bottom">
+                                        <div class="construction-card-number">
+                                            <t t-esc="variation_count or 0"/>
+                                        </div>
+                                        <div class="construction-card-arrow">
+                                            <i class="fa fa-arrow-right"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Measurements -->
+                        <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
+                            <a href="/my/employee/measurements" class="construction-dashboard-card-link">
+                                <div class="construction-dashboard-card construction-card-info">
+                                    <div class="construction-card-top">
+                                        <div class="construction-card-icon">
+                                            <i class="fa fa-bar-chart"></i>
+                                        </div>
+                                        <div class="construction-card-title">Measurements</div>
+                                    </div>
+                                    <div class="construction-card-bottom">
+                                        <div class="construction-card-number">
+                                            <t t-esc="measurement_count or 0"/>
+                                        </div>
+                                        <div class="construction-card-arrow">
+                                            <i class="fa fa-arrow-right"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </t>
+        </xpath>
+    </template>
+</odoo>

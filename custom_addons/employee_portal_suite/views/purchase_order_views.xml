@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<odoo>
+
+    <!-- FORM VIEW EXTENSION -->
+    <record id="view_purchase_order_form_inherit_mr" model="ir.ui.view">
+        <field name="name">purchase.order.form.mr.link</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+
+        <field name="arch" type="xml">
+            
+            <!-- Insert MR directly under Vendor Reference -->
+            <xpath expr="//field[@name='partner_ref']" position="after">
+                <field name="material_request_id"
+                    string="Material Request"
+                    options="{'no_open': False}"
+                    class="oe_inline"/>
+            </xpath>
+
+        </field>
+    </record>
+
+
+
+    <!-- LIST VIEW EXTENSION -->
+    <record id="view_purchase_order_kpis_tree_inherit_mr" model="ir.ui.view">
+        <field name="name">purchase.order.kpis.tree.mr.link</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
+
+        <field name="arch" type="xml">
+            <!-- Insert MR field right after PO number -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="material_request_id" string="MR"/>
+            </xpath>
+        </field>
+    </record>
+
+
+</odoo>
