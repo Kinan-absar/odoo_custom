@@ -57,7 +57,7 @@ class AccountPaymentVoucher(models.Model):
     account_id = fields.Many2one(
         'account.account',
         string='Account',
-        domain="[('deprecated','=',False)]",
+        domain="[('is_deprecated','=',False)]",
     )
 
     # Used for journal-to-journal transfer mode
@@ -108,7 +108,7 @@ class AccountPaymentVoucher(models.Model):
     fee_account_id = fields.Many2one(
         'account.account',
         string="Bank Fee Account",
-        domain="[('deprecated','=',False)]"
+        domain="[('is_deprecated','=',False)]"
     )
 
     fee_tax_id = fields.Many2one(

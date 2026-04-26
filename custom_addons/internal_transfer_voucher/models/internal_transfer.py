@@ -61,7 +61,7 @@ class AccountInternalTransfer(models.Model):
     fee_account_id = fields.Many2one(
         'account.account',
         string="Bank Fee Account",
-        domain="[('deprecated','=',False)]"
+        domain="[('is_deprecated','=',False)]"
     )
 
     fee_tax_id = fields.Many2one(
