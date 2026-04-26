@@ -444,31 +444,33 @@ class AccountPaymentVoucher(models.Model):
 
     @api.model
     def retrieve_dashboard(self):
-        domain = []
+        company_domain = [('company_id', 'in', self.env.companies.ids)]
 
-        draft_count = self.search_count([('state', '=', 'draft')])
-        posted_count = self.search_count([('state', '=', 'posted')])
-        cancel_count = self.search_count([('state', '=', 'cancel')])
+        def count(domain):
+            return self.search_count(company_domain + domain)
 
-        cash_count = self.search_count([('payment_method', '=', 'cash')])
-        bank_count = self.search_count([('payment_method', '=', 'bank_transfer')])
-        transfer_count = self.search_count([('payment_method', '=', 'journal_transfer')])
+        total_posted = self.read_group(
+            company_domain + [('state', '=', 'posted')],
+            ['amount:sum'],
+            []
+        )
 
-        posted_vouchers = self.search([('state', '=', 'posted')])
-        total_posted_amount = sum(posted_vouchers.mapped('amount'))
-
-        my_count = self.search_count([('create_uid', '=', self.env.uid)])
+        total_posted_amount = total_posted[0].get('amount', 0.0) if total_posted else 0.0
 
         return {
-            'draft_count': draft_count,
-            'posted_count': posted_count,
-            'cancel_count': cancel_count,
-            'cash_count': cash_count,
-            'bank_count': bank_count,
-            'transfer_count': transfer_count,
+            'all_count': count([]),
+            'draft_count': count([('state', '=', 'draft')]),
+            'posted_count': count([('state', '=', 'posted')]),
+            'cancel_count': count([('state', '=', 'cancel')]),
+
+            'cash_count': count([('payment_method', '=', 'cash')]),
+            'cheque_count': count([('payment_method', '=', 'cheque')]),
+            'bank_count': count([('payment_method', '=', 'bank_transfer')]),
+            'transfer_count': count([('payment_method', '=', 'journal_transfer')]),
+
+            'my_count': count([('create_uid', '=', self.env.uid)]),
             'total_posted_amount': total_posted_amount,
-            'my_count': my_count,
-            'currency_symbol': self.env.company.currency_id.symbol,
+            'currency_symbol': self.env.company.currency_id.symbol or '',
         }
 class AccountPaymentVoucherLine(models.Model):
     _name = 'account.payment.voucher.line'

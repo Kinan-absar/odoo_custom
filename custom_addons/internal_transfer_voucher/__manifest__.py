@@ -75,6 +75,7 @@ Fully compatible with Odoo 18.
         'web.assets_backend': [
             'internal_transfer_voucher/static/src/js/payment_voucher_dashboard.js',
             'internal_transfer_voucher/static/src/xml/payment_voucher_dashboard.xml',
+            'internal_transfer_voucher/static/src/scss/payment_voucher_dashboard.scss',
         ],
     },
     "images": ["images/main_screenshot.png"],

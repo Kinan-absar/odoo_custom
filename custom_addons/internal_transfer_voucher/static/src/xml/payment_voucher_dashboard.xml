@@ -1,68 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-    <t t-name="internal_transfer_voucher.PaymentVoucherListButtons">
-        <PaymentVoucherDashboard/>
+    <t t-name="internal_transfer_voucher.PaymentVoucherListView"
+       t-inherit="web.ListView"
+       t-inherit-mode="primary">
+        <xpath expr="//Layout" position="inside">
+            <xpath expr="//div[contains(@class, 'o_content')]" position="before">
+                <PaymentVoucherDashboard/>
+            </xpath>
+        </xpath>
     </t>
 
     <t t-name="internal_transfer_voucher.PaymentVoucherDashboard">
-        <div class="o_payment_voucher_dashboard d-flex gap-2 flex-wrap mb-3">
+        <div class="o_payment_voucher_dashboard px-3 py-3 border-bottom bg-view">
 
-            <div class="o_stat_card p-3 rounded bg-light border"
-                 t-on-click="() => this.openFilter([['state','=','draft']])">
-                <div class="fw-bold fs-3 text-primary">
-                    <t t-esc="data.draft_count"/>
+            <div class="d-flex flex-wrap gap-2">
+
+                <div class="pv_card pv_card_neutral" t-on-click="clearDashboardDomain">
+                    <div class="pv_value"><t t-esc="data.all_count"/></div>
+                    <div class="pv_label">All</div>
                 </div>
-                <div>Draft</div>
-            </div>
 
-            <div class="o_stat_card p-3 rounded bg-light border"
-                 t-on-click="() => this.openFilter([['state','=','posted']])">
-                <div class="fw-bold fs-3 text-success">
-                    <t t-esc="data.posted_count"/>
+                <div class="pv_card pv_card_blue"
+                     t-on-click="() => this.setDashboardDomain([['state','=','draft']], 'Draft')">
+                    <div class="pv_value"><t t-esc="data.draft_count"/></div>
+                    <div class="pv_label">Draft</div>
                 </div>
-                <div>Posted</div>
-            </div>
 
-            <div class="o_stat_card p-3 rounded bg-light border"
-                 t-on-click="() => this.openFilter([['state','=','cancel']])">
-                <div class="fw-bold fs-3 text-danger">
-                    <t t-esc="data.cancel_count"/>
+                <div class="pv_card pv_card_green"
+                     t-on-click="() => this.setDashboardDomain([['state','=','posted']], 'Posted')">
+                    <div class="pv_value"><t t-esc="data.posted_count"/></div>
+                    <div class="pv_label">Posted</div>
                 </div>
-                <div>Cancelled</div>
-            </div>
 
-            <div class="o_stat_card p-3 rounded bg-light border"
-                 t-on-click="() => this.openFilter([['payment_method','=','cash']])">
-                <div class="fw-bold fs-3">
-                    <t t-esc="data.cash_count"/>
+                <div class="pv_card pv_card_red"
+                     t-on-click="() => this.setDashboardDomain([['state','=','cancel']], 'Cancelled')">
+                    <div class="pv_value"><t t-esc="data.cancel_count"/></div>
+                    <div class="pv_label">Cancelled</div>
                 </div>
-                <div>Cash</div>
-            </div>
 
-            <div class="o_stat_card p-3 rounded bg-light border"
-                 t-on-click="() => this.openFilter([['payment_method','=','bank_transfer']])">
-                <div class="fw-bold fs-3">
-                    <t t-esc="data.bank_count"/>
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.setDashboardDomain([['payment_method','=','cash']], 'Cash')">
+                    <div class="pv_value"><t t-esc="data.cash_count"/></div>
+                    <div class="pv_label">Cash</div>
                 </div>
-                <div>Bank Transfer</div>
-            </div>
 
-            <div class="o_stat_card p-3 rounded bg-light border"
-                 t-on-click="() => this.openFilter([['payment_method','=','journal_transfer']])">
-                <div class="fw-bold fs-3">
-                    <t t-esc="data.transfer_count"/>
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.setDashboardDomain([['payment_method','=','cheque']], 'Cheque')">
+                    <div class="pv_value"><t t-esc="data.cheque_count"/></div>
+                    <div class="pv_label">Cheque</div>
                 </div>
-                <div>Journal Transfer</div>
-            </div>
 
-            <div class="o_stat_card p-3 rounded bg-light border">
-                <div class="fw-bold fs-3">
-                    <t t-esc="data.total_posted_amount"/> <t t-esc="data.currency_symbol"/>
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.setDashboardDomain([['payment_method','=','bank_transfer']], 'Bank Transfer')">
+                    <div class="pv_value"><t t-esc="data.bank_count"/></div>
+                    <div class="pv_label">Bank Transfer</div>
                 </div>
-                <div>Total Posted</div>
-            </div>
 
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.setDashboardDomain([['payment_method','=','journal_transfer']], 'Journal Transfer')">
+                    <div class="pv_value"><t t-esc="data.transfer_count"/></div>
+                    <div class="pv_label">Journal Transfer</div>
+                </div>
+
+                <div class="pv_card pv_card_purple"
+                     t-on-click="() => this.setDashboardDomain([['create_uid','=',context.uid]], 'My Vouchers')">
+                    <div class="pv_value"><t t-esc="data.my_count"/></div>
+                    <div class="pv_label">My Vouchers</div>
+                </div>
+
+                <div class="pv_card pv_card_total">
+                    <div class="pv_value">
+                        <t t-esc="formatAmount(data.total_posted_amount)"/>
+                        <t t-esc="data.currency_symbol"/>
+                    </div>
+                    <div class="pv_label">Total Posted</div>
+                </div>
+
+            </div>
         </div>
     </t>
 

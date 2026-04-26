@@ -8,35 +8,22 @@
             <filter name="draft" string="Draft" domain="[('state','=','draft')]"/>
             <filter name="posted" string="Posted" domain="[('state','=','posted')]"/>
             <filter name="cancel" string="Cancelled" domain="[('state','=','cancel')]"/>
+            <separator/>
+            <filter name="cash" string="Cash" domain="[('payment_method','=','cash')]"/>
+            <filter name="cheque" string="Cheque" domain="[('payment_method','=','cheque')]"/>
+            <filter name="bank_transfer" string="Bank Transfer" domain="[('payment_method','=','bank_transfer')]"/>
+            <filter name="journal_transfer" string="Journal Transfer" domain="[('payment_method','=','journal_transfer')]"/>
+            <separator/>
+            <filter name="my_vouchers" string="My Vouchers" domain="[('create_uid','=',uid)]"/>
         </search>
     </field>
 </record>
-   <record id="view_payment_voucher_list" model="ir.ui.view">
+
+<record id="view_payment_voucher_list" model="ir.ui.view">
     <field name="name">account.payment.voucher.list</field>
     <field name="model">account.payment.voucher</field>
     <field name="arch" type="xml">
         <list js_class="payment_voucher_dashboard_list">
-            <header>
-                <button type="action"
-                        name="%(action_payment_voucher)d"
-                        string="All"/>
-
-                <button type="action"
-                        name="%(action_payment_voucher)d"
-                        context="{'search_default_draft': 1}"
-                        string="Draft"/>
-
-                <button type="action"
-                        name="%(action_payment_voucher)d"
-                        context="{'search_default_posted': 1}"
-                        string="Posted"/>
-
-                <button type="action"
-                        name="%(action_payment_voucher)d"
-                        context="{'search_default_cancel': 1}"
-                        string="Cancelled"/>
-            </header>
-
             <field name="name"/>
             <field name="date"/>
             <field name="partner_id"/>

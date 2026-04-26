@@ -11,8 +11,19 @@ class PaymentVoucherDashboard extends Component {
 
     setup() {
         this.orm = useService("orm");
-        this.action = useService("action");
-        this.data = useState({});
+        this.data = useState({
+            all_count: 0,
+            draft_count: 0,
+            posted_count: 0,
+            cancel_count: 0,
+            cash_count: 0,
+            cheque_count: 0,
+            bank_count: 0,
+            transfer_count: 0,
+            my_count: 0,
+            total_posted_amount: 0,
+            currency_symbol: "",
+        });
 
         onWillStart(async () => {
             const result = await this.orm.call(
@@ -24,18 +35,31 @@ class PaymentVoucherDashboard extends Component {
         });
     }
 
-    openFilter(domain) {
-        this.action.doAction({
-            type: "ir.actions.act_window",
-            name: "Payment Vouchers",
-            res_model: "account.payment.voucher",
-            views: [[false, "list"], [false, "form"]],
-            domain: domain,
+    setDashboardDomain(domain, label) {
+        this.env.searchModel.setDomainParts({
+            payment_voucher_dashboard: {
+                domain: domain,
+                facetLabel: label,
+            },
+        });
+    }
+
+    clearDashboardDomain() {
+        this.env.searchModel.setDomainParts({
+            payment_voucher_dashboard: null,
+        });
+    }
+
+    formatAmount(amount) {
+        return Number(amount || 0).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
         });
     }
 }
 
 class PaymentVoucherListController extends ListController {
+    static template = "internal_transfer_voucher.PaymentVoucherListView";
     static components = {
         ...ListController.components,
         PaymentVoucherDashboard,
@@ -45,7 +69,9 @@ class PaymentVoucherListController extends ListController {
 export const paymentVoucherDashboardListView = {
     ...listView,
     Controller: PaymentVoucherListController,
-    buttonTemplate: "internal_transfer_voucher.PaymentVoucherListButtons",
 };
 
-registry.category("views").add("payment_voucher_dashboard_list", paymentVoucherDashboardListView);
+registry.category("views").add(
+    "payment_voucher_dashboard_list",
+    paymentVoucherDashboardListView
+);
