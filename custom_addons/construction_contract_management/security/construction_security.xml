@@ -7,12 +7,10 @@
 
     <record id="group_construction_user" model="res.groups">
         <field name="name">Construction User</field>
-        <field name="category_id" ref="construction_contract_management.module_category_construction_contract"/>
     </record>
 
     <record id="group_construction_manager" model="res.groups">
         <field name="name">Construction Manager</field>
-        <field name="category_id" ref="construction_contract_management.module_category_construction_contract"/>
         <field name="implied_ids" eval="[(4, ref('construction_contract_management.group_construction_user'))]"/>
     </record>
 </odoo>
