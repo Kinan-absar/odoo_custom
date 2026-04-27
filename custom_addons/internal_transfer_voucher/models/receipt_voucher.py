@@ -228,39 +228,26 @@ class AccountReceiptVoucher(models.Model):
     @api.model
     def retrieve_dashboard(self):
         company_domain = [('company_id', 'in', self.env.companies.ids)]
-        my_domain = company_domain + [('create_uid', '=', self.env.uid)]
 
         def count(domain):
             return self.search_count(company_domain + domain)
 
-        def my_count(domain):
-            return self.search_count(my_domain + domain)
-
-        def sum_posted(extra_domain):
-            res = self.read_group(
-                company_domain + [('state', '=', 'posted')] + extra_domain,
-                ['amount:sum'], []
-            )
-            return res[0].get('amount', 0.0) if res else 0.0
+        total_posted = self.read_group(
+            company_domain + [('state', '=', 'posted')],
+            ['amount:sum'],
+            []
+        )
+        total_posted_amount = total_posted[0].get('amount', 0.0) if total_posted else 0.0
 
         return {
-            # All row
-            'draft_count':   count([('state', '=', 'draft')]),
-            'posted_count':  count([('state', '=', 'posted')]),
-            'cancel_count':  count([('state', '=', 'cancel')]),
-            'cash_count':    count([('receipt_method', '=', 'cash')]),
-            'cheque_count':  count([('receipt_method', '=', 'cheque')]),
-            'bank_count':    count([('receipt_method', '=', 'bank_transfer')]),
-            'total_posted_amount': sum_posted([]),
-
-            # My row
-            'my_draft_count':   my_count([('state', '=', 'draft')]),
-            'my_posted_count':  my_count([('state', '=', 'posted')]),
-            'my_cancel_count':  my_count([('state', '=', 'cancel')]),
-            'my_cash_count':    my_count([('receipt_method', '=', 'cash')]),
-            'my_cheque_count':  my_count([('receipt_method', '=', 'cheque')]),
-            'my_bank_count':    my_count([('receipt_method', '=', 'bank_transfer')]),
-            'my_total_posted_amount': sum_posted([('create_uid', '=', self.env.uid)]),
-
+            'all_count': count([]),
+            'draft_count': count([('state', '=', 'draft')]),
+            'posted_count': count([('state', '=', 'posted')]),
+            'cancel_count': count([('state', '=', 'cancel')]),
+            'cash_count': count([('receipt_method', '=', 'cash')]),
+            'cheque_count': count([('receipt_method', '=', 'cheque')]),
+            'bank_count': count([('receipt_method', '=', 'bank_transfer')]),
+            'my_count': count([('create_uid', '=', self.env.uid)]),
+            'total_posted_amount': total_posted_amount,
             'currency_symbol': self.env.company.currency_id.symbol or '',
         }

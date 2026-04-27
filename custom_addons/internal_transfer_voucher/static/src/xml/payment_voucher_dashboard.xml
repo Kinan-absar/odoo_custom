@@ -5,113 +5,79 @@
        t-inherit="web.ListView"
        t-inherit-mode="primary">
 
-        <xpath expr="//Layout" position="before">
+        <xpath expr="//t[@t-set-slot='layout-content']" position="before">
             <PaymentVoucherDashboard onFilter.bind="onDashboardFilter"/>
         </xpath>
 
     </t>
 
     <t t-name="internal_transfer_voucher.PaymentVoucherDashboard">
-        <div class="o_payment_voucher_dashboard bg-view border-bottom">
-            <table class="pv_table">
-                <thead>
-                    <tr>
-                        <!-- empty top-left label cell -->
-                        <th class="pv_row_label"/>
-                        <th class="pv_col_head">Draft</th>
-                        <th class="pv_col_head">Posted</th>
-                        <th class="pv_col_head">Cancelled</th>
-                        <th class="pv_col_head pv_sep">Cash</th>
-                        <th class="pv_col_head">Cheque</th>
-                        <th class="pv_col_head">Bank Transfer</th>
-                        <th class="pv_col_head">Journal Transfer</th>
-                        <th class="pv_col_head pv_sep pv_total_col">Total Posted</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- ALL row -->
-                    <tr>
-                        <td class="pv_row_label"
-                            t-on-click="() => this.filter([])">All</td>
+        <div class="o_payment_voucher_dashboard px-3 py-3 border-bottom bg-view">
+            <div class="d-flex flex-wrap gap-2">
 
-                        <td class="pv_cell pv_blue"
-                            t-on-click="() => this.filter([['state','=','draft']])">
-                            <t t-esc="data.draft_count"/>
-                        </td>
-                        <td class="pv_cell pv_green"
-                            t-on-click="() => this.filter([['state','=','posted']])">
-                            <t t-esc="data.posted_count"/>
-                        </td>
-                        <td class="pv_cell pv_red"
-                            t-on-click="() => this.filter([['state','=','cancel']])">
-                            <t t-esc="data.cancel_count"/>
-                        </td>
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.filter([])">
+                    <div class="pv_value"><t t-esc="data.all_count"/></div>
+                    <div class="pv_label">All</div>
+                </div>
 
-                        <td class="pv_cell pv_sep"
-                            t-on-click="() => this.filter([['payment_method','=','cash']])">
-                            <t t-esc="data.cash_count"/>
-                        </td>
-                        <td class="pv_cell"
-                            t-on-click="() => this.filter([['payment_method','=','cheque']])">
-                            <t t-esc="data.cheque_count"/>
-                        </td>
-                        <td class="pv_cell"
-                            t-on-click="() => this.filter([['payment_method','=','bank_transfer']])">
-                            <t t-esc="data.bank_count"/>
-                        </td>
-                        <td class="pv_cell"
-                            t-on-click="() => this.filter([['payment_method','=','journal_transfer']])">
-                            <t t-esc="data.transfer_count"/>
-                        </td>
+                <div class="pv_card pv_card_blue"
+                     t-on-click="() => this.filter([['state','=','draft']])">
+                    <div class="pv_value"><t t-esc="data.draft_count"/></div>
+                    <div class="pv_label">Draft</div>
+                </div>
 
-                        <td class="pv_cell pv_sep pv_total_col">
-                            <t t-esc="formatAmount(data.total_posted_amount)"/>
-                            <span class="pv_symbol"><t t-esc="data.currency_symbol"/></span>
-                        </td>
-                    </tr>
+                <div class="pv_card pv_card_green"
+                     t-on-click="() => this.filter([['state','=','posted']])">
+                    <div class="pv_value"><t t-esc="data.posted_count"/></div>
+                    <div class="pv_label">Posted</div>
+                </div>
 
-                    <!-- MY row -->
-                    <tr>
-                        <td class="pv_row_label"
-                            t-on-click="() => this.filter(myDomain)">My</td>
+                <div class="pv_card pv_card_red"
+                     t-on-click="() => this.filter([['state','=','cancel']])">
+                    <div class="pv_value"><t t-esc="data.cancel_count"/></div>
+                    <div class="pv_label">Cancelled</div>
+                </div>
 
-                        <td class="pv_cell pv_blue"
-                            t-on-click="() => this.filter([['state','=','draft'],['create_uid','=',myDomain[0][2]]])">
-                            <t t-esc="data.my_draft_count"/>
-                        </td>
-                        <td class="pv_cell pv_green"
-                            t-on-click="() => this.filter([['state','=','posted'],['create_uid','=',myDomain[0][2]]])">
-                            <t t-esc="data.my_posted_count"/>
-                        </td>
-                        <td class="pv_cell pv_red"
-                            t-on-click="() => this.filter([['state','=','cancel'],['create_uid','=',myDomain[0][2]]])">
-                            <t t-esc="data.my_cancel_count"/>
-                        </td>
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.filter([['payment_method','=','cash']])">
+                    <div class="pv_value"><t t-esc="data.cash_count"/></div>
+                    <div class="pv_label">Cash</div>
+                </div>
 
-                        <td class="pv_cell pv_sep"
-                            t-on-click="() => this.filter([['payment_method','=','cash'],['create_uid','=',myDomain[0][2]]])">
-                            <t t-esc="data.my_cash_count"/>
-                        </td>
-                        <td class="pv_cell"
-                            t-on-click="() => this.filter([['payment_method','=','cheque'],['create_uid','=',myDomain[0][2]]])">
-                            <t t-esc="data.my_cheque_count"/>
-                        </td>
-                        <td class="pv_cell"
-                            t-on-click="() => this.filter([['payment_method','=','bank_transfer'],['create_uid','=',myDomain[0][2]]])">
-                            <t t-esc="data.my_bank_count"/>
-                        </td>
-                        <td class="pv_cell"
-                            t-on-click="() => this.filter([['payment_method','=','journal_transfer'],['create_uid','=',myDomain[0][2]]])">
-                            <t t-esc="data.my_transfer_count"/>
-                        </td>
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.filter([['payment_method','=','cheque']])">
+                    <div class="pv_value"><t t-esc="data.cheque_count"/></div>
+                    <div class="pv_label">Cheque</div>
+                </div>
 
-                        <td class="pv_cell pv_sep pv_total_col">
-                            <t t-esc="formatAmount(data.my_total_posted_amount)"/>
-                            <span class="pv_symbol"><t t-esc="data.currency_symbol"/></span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.filter([['payment_method','=','bank_transfer']])">
+                    <div class="pv_value"><t t-esc="data.bank_count"/></div>
+                    <div class="pv_label">Bank Transfer</div>
+                </div>
+
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.filter([['payment_method','=','journal_transfer']])">
+                    <div class="pv_value"><t t-esc="data.transfer_count"/></div>
+                    <div class="pv_label">Journal Transfer</div>
+                </div>
+
+                <div class="pv_card pv_card_purple"
+                     t-on-click="() => this.filter(myDomain)">
+                    <div class="pv_value"><t t-esc="data.my_count"/></div>
+                    <div class="pv_label">My Vouchers</div>
+                </div>
+
+                <div class="pv_card pv_card_total">
+                    <div class="pv_value">
+                        <t t-esc="formatAmount(data.total_posted_amount)"/>
+                        <t t-esc="data.currency_symbol"/>
+                    </div>
+                    <div class="pv_label">Total Posted</div>
+                </div>
+
+            </div>
         </div>
     </t>
 
