@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Res Users: add POS Access Rights tab ──────────────────────────── -->
+    <record id="view_users_form_pos_disable_payments" model="ir.ui.view">
+        <field name="name">res.users.form.pos.disable.payments</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="POS Access Rights" name="pos_access_rights">
+                    <group string="Point of Sale Feature Access">
+                        <group string="Transaction">
+                            <field name="pos_allow_payment"/>
+                            <field name="pos_allow_discount"/>
+                            <field name="pos_allow_edit_price"/>
+                        </group>
+                        <group string="Order Management">
+                            <field name="pos_allow_qty"/>
+                            <field name="pos_allow_remove_line"/>
+                            <field name="pos_allow_customer"/>
+                        </group>
+                        <group string="Interface">
+                            <field name="pos_allow_numpad"/>
+                            <field name="pos_allow_plus_minus"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        <strong>Note:</strong> These settings apply when the employee is linked to this
+                        Odoo user. If the employee has no linked user, configure access on the
+                        <em>Employee</em> form instead.
+                    </div>
+                </page>
+            </notebook>
+        </field>
+    </record>
+
+</odoo>
