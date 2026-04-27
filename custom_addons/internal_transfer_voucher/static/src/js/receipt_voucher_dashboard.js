@@ -12,6 +12,7 @@ class ReceiptVoucherDashboard extends Component {
 
     setup() {
         this.orm = useService("orm");
+        this.action = useService("action");
         this.data = useState({
             all_count: 0,
             draft_count: 0,
@@ -35,28 +36,27 @@ class ReceiptVoucherDashboard extends Component {
         });
     }
 
-    setDashboardDomain(domain, label) {
-        this.env.searchModel.setDomainParts({
-            receipt_voucher_dashboard: {
-                domain: domain,
-                facetLabel: label,
-            },
+    // Odoo 19: reload current action with a domain filter
+    _applyDomain(domain) {
+        this.action.doAction({
+            type: "ir.actions.act_window",
+            name: "Receipt Vouchers",
+            res_model: "account.receipt.voucher",
+            view_mode: "list,form",
+            views: [[false, "list"], [false, "form"]],
+            domain: domain,
+            target: "current",
         });
     }
 
-    clearDashboardDomain() {
-        this.env.searchModel.setDomainParts({
-            receipt_voucher_dashboard: null,
-        });
-    }
-
-    filterMyVouchers() {
-        // user is a module-level singleton in Odoo 19, not a service
-        this.setDashboardDomain(
-            [['create_uid', '=', user.userId]],
-            'My Vouchers'
-        );
-    }
+    filterAll()          { this._applyDomain([]); }
+    filterDraft()        { this._applyDomain([["state", "=", "draft"]]); }
+    filterPosted()       { this._applyDomain([["state", "=", "posted"]]); }
+    filterCancelled()    { this._applyDomain([["state", "=", "cancel"]]); }
+    filterCash()         { this._applyDomain([["receipt_method", "=", "cash"]]); }
+    filterCheque()       { this._applyDomain([["receipt_method", "=", "cheque"]]); }
+    filterBankTransfer() { this._applyDomain([["receipt_method", "=", "bank_transfer"]]); }
+    filterMyVouchers()   { this._applyDomain([["create_uid", "=", user.userId]]); }
 
     formatAmount(amount) {
         return Number(amount || 0).toLocaleString(undefined, {

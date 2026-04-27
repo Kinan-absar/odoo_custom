@@ -12,6 +12,7 @@ class PaymentVoucherDashboard extends Component {
 
     setup() {
         this.orm = useService("orm");
+        this.action = useService("action");
         this.data = useState({
             all_count: 0,
             draft_count: 0,
@@ -36,28 +37,28 @@ class PaymentVoucherDashboard extends Component {
         });
     }
 
-    setDashboardDomain(domain, label) {
-        this.env.searchModel.setDomainParts({
-            payment_voucher_dashboard: {
-                domain: domain,
-                facetLabel: label,
-            },
+    // Odoo 19: reload current action with a domain filter
+    _applyDomain(domain) {
+        this.action.doAction({
+            type: "ir.actions.act_window",
+            name: "Payment Vouchers",
+            res_model: "account.payment.voucher",
+            view_mode: "list,form",
+            views: [[false, "list"], [false, "form"]],
+            domain: domain,
+            target: "current",
         });
     }
 
-    clearDashboardDomain() {
-        this.env.searchModel.setDomainParts({
-            payment_voucher_dashboard: null,
-        });
-    }
-
-    filterMyVouchers() {
-        // user is a module-level singleton in Odoo 19, not a service
-        this.setDashboardDomain(
-            [['create_uid', '=', user.userId]],
-            'My Vouchers'
-        );
-    }
+    filterAll()            { this._applyDomain([]); }
+    filterDraft()          { this._applyDomain([["state", "=", "draft"]]); }
+    filterPosted()         { this._applyDomain([["state", "=", "posted"]]); }
+    filterCancelled()      { this._applyDomain([["state", "=", "cancel"]]); }
+    filterCash()           { this._applyDomain([["payment_method", "=", "cash"]]); }
+    filterCheque()         { this._applyDomain([["payment_method", "=", "cheque"]]); }
+    filterBankTransfer()   { this._applyDomain([["payment_method", "=", "bank_transfer"]]); }
+    filterJournalTransfer(){ this._applyDomain([["payment_method", "=", "journal_transfer"]]); }
+    filterMyVouchers()     { this._applyDomain([["create_uid", "=", user.userId]]); }
 
     formatAmount(amount) {
         return Number(amount || 0).toLocaleString(undefined, {
