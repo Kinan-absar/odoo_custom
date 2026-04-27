@@ -6,13 +6,18 @@ import { ListController } from "@web/views/list/list_controller";
 import { useService } from "@web/core/utils/hooks";
 import { user } from "@web/core/user";
 import { Component, onWillStart, useState } from "@odoo/owl";
+import { Domain } from "@web/core/domain";
+
+// ─── Dashboard Component ────────────────────────────────────────────────────
 
 class ReceiptVoucherDashboard extends Component {
     static template = "internal_transfer_voucher.ReceiptVoucherDashboard";
+    static props = {
+        onFilter: Function,
+    };
 
     setup() {
         this.orm = useService("orm");
-        this.action = useService("action");
         this.data = useState({
             all_count: 0,
             draft_count: 0,
@@ -36,27 +41,13 @@ class ReceiptVoucherDashboard extends Component {
         });
     }
 
-    // Odoo 19: reload current action with a domain filter
-    _applyDomain(domain) {
-        this.action.doAction({
-            type: "ir.actions.act_window",
-            name: "Receipt Vouchers",
-            res_model: "account.receipt.voucher",
-            view_mode: "list,form",
-            views: [[false, "list"], [false, "form"]],
-            domain: domain,
-            target: "current",
-        });
+    filter(domain) {
+        this.props.onFilter(domain);
     }
 
-    filterAll()          { this._applyDomain([]); }
-    filterDraft()        { this._applyDomain([["state", "=", "draft"]]); }
-    filterPosted()       { this._applyDomain([["state", "=", "posted"]]); }
-    filterCancelled()    { this._applyDomain([["state", "=", "cancel"]]); }
-    filterCash()         { this._applyDomain([["receipt_method", "=", "cash"]]); }
-    filterCheque()       { this._applyDomain([["receipt_method", "=", "cheque"]]); }
-    filterBankTransfer() { this._applyDomain([["receipt_method", "=", "bank_transfer"]]); }
-    filterMyVouchers()   { this._applyDomain([["create_uid", "=", user.userId]]); }
+    get myDomain() {
+        return [["create_uid", "=", user.userId]];
+    }
 
     formatAmount(amount) {
         return Number(amount || 0).toLocaleString(undefined, {
@@ -66,13 +57,29 @@ class ReceiptVoucherDashboard extends Component {
     }
 }
 
+// ─── Controller ────────────────────────────────────────────────────────────
+
 class ReceiptVoucherListController extends ListController {
     static template = "internal_transfer_voucher.ReceiptVoucherListView";
     static components = {
         ...ListController.components,
         ReceiptVoucherDashboard,
     };
+
+    setup() {
+        super.setup();
+        this.dashboardState = useState({ domain: [] });
+    }
+
+    onDashboardFilter(domain) {
+        this.dashboardState.domain = domain;
+        const baseDomain = this.props.domain || [];
+        const fullDomain = Domain.and([baseDomain, domain]).toList();
+        this.model.load({ domain: fullDomain });
+    }
 }
+
+// ─── View Registration ─────────────────────────────────────────────────────
 
 export const receiptVoucherDashboardListView = {
     ...listView,

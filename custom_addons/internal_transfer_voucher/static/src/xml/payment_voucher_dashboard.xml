@@ -6,7 +6,7 @@
        t-inherit-mode="primary">
 
         <xpath expr="//Layout" position="before">
-            <PaymentVoucherDashboard/>
+            <PaymentVoucherDashboard onFilter.bind="onDashboardFilter"/>
         </xpath>
 
     </t>
@@ -15,47 +15,56 @@
         <div class="o_payment_voucher_dashboard px-3 py-3 border-bottom bg-view">
             <div class="d-flex flex-wrap gap-2">
 
-                <div class="pv_card pv_card_neutral"  t-on-click="filterAll">
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.filter([])">
                     <div class="pv_value"><t t-esc="data.all_count"/></div>
                     <div class="pv_label">All</div>
                 </div>
 
-                <div class="pv_card pv_card_blue"     t-on-click="filterDraft">
+                <div class="pv_card pv_card_blue"
+                     t-on-click="() => this.filter([['state','=','draft']])">
                     <div class="pv_value"><t t-esc="data.draft_count"/></div>
                     <div class="pv_label">Draft</div>
                 </div>
 
-                <div class="pv_card pv_card_green"    t-on-click="filterPosted">
+                <div class="pv_card pv_card_green"
+                     t-on-click="() => this.filter([['state','=','posted']])">
                     <div class="pv_value"><t t-esc="data.posted_count"/></div>
                     <div class="pv_label">Posted</div>
                 </div>
 
-                <div class="pv_card pv_card_red"      t-on-click="filterCancelled">
+                <div class="pv_card pv_card_red"
+                     t-on-click="() => this.filter([['state','=','cancel']])">
                     <div class="pv_value"><t t-esc="data.cancel_count"/></div>
                     <div class="pv_label">Cancelled</div>
                 </div>
 
-                <div class="pv_card pv_card_neutral"  t-on-click="filterCash">
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.filter([['payment_method','=','cash']])">
                     <div class="pv_value"><t t-esc="data.cash_count"/></div>
                     <div class="pv_label">Cash</div>
                 </div>
 
-                <div class="pv_card pv_card_neutral"  t-on-click="filterCheque">
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.filter([['payment_method','=','cheque']])">
                     <div class="pv_value"><t t-esc="data.cheque_count"/></div>
                     <div class="pv_label">Cheque</div>
                 </div>
 
-                <div class="pv_card pv_card_neutral"  t-on-click="filterBankTransfer">
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.filter([['payment_method','=','bank_transfer']])">
                     <div class="pv_value"><t t-esc="data.bank_count"/></div>
                     <div class="pv_label">Bank Transfer</div>
                 </div>
 
-                <div class="pv_card pv_card_neutral"  t-on-click="filterJournalTransfer">
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.filter([['payment_method','=','journal_transfer']])">
                     <div class="pv_value"><t t-esc="data.transfer_count"/></div>
                     <div class="pv_label">Journal Transfer</div>
                 </div>
 
-                <div class="pv_card pv_card_purple"   t-on-click="filterMyVouchers">
+                <div class="pv_card pv_card_purple"
+                     t-on-click="() => this.filter(myDomain)">
                     <div class="pv_value"><t t-esc="data.my_count"/></div>
                     <div class="pv_label">My Vouchers</div>
                 </div>
