@@ -1,5 +1,5 @@
 {
-    "name": "Internal Transfer & Payment Voucher",
+    "name": "Payment & Receipt Voucher",
     "version": "19.0.1.1.0",
     "category": "Accounting",
     "summary": "Internal journal transfers, payment vouchers, and receipt vouchers for Odoo 19",
