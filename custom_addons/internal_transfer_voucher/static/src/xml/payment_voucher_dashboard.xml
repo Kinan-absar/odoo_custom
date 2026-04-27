@@ -2,10 +2,11 @@
 <templates xml:space="preserve">
 
     <t t-name="internal_transfer_voucher.PaymentVoucherListView"
-    t-inherit="web.ListView"
-    t-inherit-mode="primary">
+       t-inherit="web.ListView"
+       t-inherit-mode="primary">
 
-        <xpath expr="//Layout" position="inside">
+        <!-- BEFORE the renderer so dashboard appears at the TOP -->
+        <xpath expr="//Layout" position="before">
             <PaymentVoucherDashboard/>
         </xpath>
 
@@ -13,7 +14,6 @@
 
     <t t-name="internal_transfer_voucher.PaymentVoucherDashboard">
         <div class="o_payment_voucher_dashboard px-3 py-3 border-bottom bg-view">
-
             <div class="d-flex flex-wrap gap-2">
 
                 <div class="pv_card pv_card_neutral" t-on-click="clearDashboardDomain">
@@ -63,8 +63,8 @@
                     <div class="pv_label">Journal Transfer</div>
                 </div>
 
-                <div class="pv_card pv_card_purple"
-                     t-on-click="() => this.setDashboardDomain([['create_uid','=',context.uid]], 'My Vouchers')">
+                <!-- Fixed: use filterMyVouchers() instead of context.uid -->
+                <div class="pv_card pv_card_purple" t-on-click="filterMyVouchers">
                     <div class="pv_value"><t t-esc="data.my_count"/></div>
                     <div class="pv_label">My Vouchers</div>
                 </div>

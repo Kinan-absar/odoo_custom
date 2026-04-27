@@ -11,6 +11,7 @@ class ReceiptVoucherDashboard extends Component {
 
     setup() {
         this.orm = useService("orm");
+        this.user = useService("user");
         this.data = useState({
             all_count: 0,
             draft_count: 0,
@@ -47,6 +48,14 @@ class ReceiptVoucherDashboard extends Component {
         this.env.searchModel.setDomainParts({
             receipt_voucher_dashboard: null,
         });
+    }
+
+    filterMyVouchers() {
+        // Use user service instead of context.uid (context is undefined in OWL 2)
+        this.setDashboardDomain(
+            [['create_uid', '=', this.user.userId]],
+            'My Vouchers'
+        );
     }
 
     formatAmount(amount) {
