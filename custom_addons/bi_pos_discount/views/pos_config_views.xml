@@ -12,9 +12,10 @@
                 <group string="Custom Discount (BI)" name="bi_discount_group">
                     <field name="bi_show_discount_button"/>
                     <field name="bi_discount_type"
-                           attrs="{'invisible': [('bi_show_discount_button', '=', False)]}"/>
-                    <field name="bi_discount_value"
-                           attrs="{'invisible': [('bi_show_discount_button', '=', False)]}"
+                            invisible="not bi_show_discount_button"/>
+
+                        <field name="bi_discount_amount"
+                            invisible="not bi_show_discount_button"
                            widget="percentage"
                            string="Default Discount %"
                            options="{'placeholder': '0'}"
