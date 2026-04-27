@@ -18,20 +18,20 @@
     </t>
 
     <!-- ── ProductScreen: hide customer button when not allowed ────────────── -->
-    <t t-name="pos_disable_payments.ProductScreenInherit" t-inherit="point_of_sale.ProductScreen" t-inherit-mode="extension">
+    <!-- <t t-name="pos_disable_payments.ProductScreenInherit" t-inherit="point_of_sale.ProductScreen" t-inherit-mode="extension">-->
         <!-- Customer button -->
-        <xpath expr="//button[hasclass('customer-button')]" position="attributes">
+       <!-- <xpath expr="//button[hasclass('customer-button')]" position="attributes">
             <attribute name="t-att-class">
                 {'d-none': !component.canSelectCustomer}
             </attribute>
-        </xpath>
-        <!-- Discount field/button -->
+        </xpath>-->
+        <!-- Discount field/button 
         <xpath expr="//button[hasclass('discount-button')]" position="attributes">
             <attribute name="t-att-class">
                 {'d-none': !component.canApplyDiscount}
             </attribute>
         </xpath>
-    </t>
+    </t>-->
 
     <!-- ── NumpadWidget: disable numpad entirely when not allowed ───────────── -->
     <t t-name="pos_disable_payments.NumpadWidgetInherit" t-inherit="point_of_sale.Numpad" t-inherit-mode="extension">
