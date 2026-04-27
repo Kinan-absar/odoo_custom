@@ -4,6 +4,7 @@ import { registry } from "@web/core/registry";
 import { listView } from "@web/views/list/list_view";
 import { ListController } from "@web/views/list/list_controller";
 import { useService } from "@web/core/utils/hooks";
+import { user } from "@web/core/user";
 import { Component, onWillStart, useState } from "@odoo/owl";
 
 class ReceiptVoucherDashboard extends Component {
@@ -11,7 +12,6 @@ class ReceiptVoucherDashboard extends Component {
 
     setup() {
         this.orm = useService("orm");
-        this.user = useService("user");
         this.data = useState({
             all_count: 0,
             draft_count: 0,
@@ -51,9 +51,9 @@ class ReceiptVoucherDashboard extends Component {
     }
 
     filterMyVouchers() {
-        // Use user service instead of context.uid (context is undefined in OWL 2)
+        // user is a module-level singleton in Odoo 19, not a service
         this.setDashboardDomain(
-            [['create_uid', '=', this.user.userId]],
+            [['create_uid', '=', user.userId]],
             'My Vouchers'
         );
     }
