@@ -224,3 +224,30 @@ class AccountReceiptVoucher(models.Model):
                 if not set(vals.keys()).issubset(allowed_fields):
                     raise UserError(_("You cannot modify a posted receipt voucher."))
         return super().write(vals)
+
+    @api.model
+    def retrieve_dashboard(self):
+        company_domain = [('company_id', 'in', self.env.companies.ids)]
+
+        def count(domain):
+            return self.search_count(company_domain + domain)
+
+        total_posted = self.read_group(
+            company_domain + [('state', '=', 'posted')],
+            ['amount:sum'],
+            []
+        )
+        total_posted_amount = total_posted[0].get('amount', 0.0) if total_posted else 0.0
+
+        return {
+            'all_count': count([]),
+            'draft_count': count([('state', '=', 'draft')]),
+            'posted_count': count([('state', '=', 'posted')]),
+            'cancel_count': count([('state', '=', 'cancel')]),
+            'cash_count': count([('receipt_method', '=', 'cash')]),
+            'cheque_count': count([('receipt_method', '=', 'cheque')]),
+            'bank_count': count([('receipt_method', '=', 'bank_transfer')]),
+            'my_count': count([('create_uid', '=', self.env.uid)]),
+            'total_posted_amount': total_posted_amount,
+            'currency_symbol': self.env.company.currency_id.symbol or '',
+        }

@@ -1,12 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <!-- LIST -->
+    <!-- SEARCH -->
+    <record id="view_receipt_voucher_search" model="ir.ui.view">
+        <field name="name">account.receipt.voucher.search</field>
+        <field name="model">account.receipt.voucher</field>
+        <field name="arch" type="xml">
+            <search>
+                <filter name="draft"  string="Draft"     domain="[('state','=','draft')]"/>
+                <filter name="posted" string="Posted"    domain="[('state','=','posted')]"/>
+                <filter name="cancel" string="Cancelled" domain="[('state','=','cancel')]"/>
+                <separator/>
+                <filter name="cash"          string="Cash"          domain="[('receipt_method','=','cash')]"/>
+                <filter name="cheque"        string="Cheque"        domain="[('receipt_method','=','cheque')]"/>
+                <filter name="bank_transfer" string="Bank Transfer" domain="[('receipt_method','=','bank_transfer')]"/>
+                <separator/>
+                <filter name="my_vouchers" string="My Vouchers" domain="[('create_uid','=',uid)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- LIST — uses dashboard js_class -->
     <record id="view_receipt_voucher_list" model="ir.ui.view">
         <field name="name">account.receipt.voucher.list</field>
         <field name="model">account.receipt.voucher</field>
         <field name="arch" type="xml">
-            <list>
+            <list js_class="receipt_voucher_dashboard_list">
                 <field name="name"/>
                 <field name="date"/>
                 <field name="partner_id"/>
