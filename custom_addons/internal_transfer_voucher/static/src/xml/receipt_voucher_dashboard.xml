@@ -5,7 +5,7 @@
        t-inherit="web.ListView"
        t-inherit-mode="primary">
 
-        <xpath expr="//Layout" position="before">
+        <xpath expr="//Layout" position="inside">
             <ReceiptVoucherDashboard onFilter.bind="onDashboardFilter"/>
         </xpath>
 
