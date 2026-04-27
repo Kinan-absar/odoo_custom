@@ -1,61 +1,65 @@
 .o_receipt_voucher_dashboard {
-    width: 100%;
+    padding: 0;
 
-    .rv_card {
-        min-width: 135px;
-        height: 74px;
-        padding: 12px 16px;
-        border-radius: 6px;
-        border: 1px solid #d8dadd;
-        background: #fff;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        transition: all 0.15s ease-in-out;
+    .rv_table {
+        width: 100%;
+        border-collapse: collapse;
     }
 
-    .rv_card:hover {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-        transform: translateY(-1px);
-    }
-
-    .rv_value {
-        font-size: 21px;
+    .rv_row_label {
+        padding: 8px 20px;
         font-weight: 700;
-        line-height: 1.1;
-        color: #111827;
-    }
-
-    .rv_label {
         font-size: 13px;
         color: #374151;
-        margin-top: 5px;
+        cursor: pointer;
         white-space: nowrap;
+        width: 60px;
+        text-align: left;
+
+        &:hover { color: #714B67; }
     }
 
-    .rv_card_neutral {
-        background: #f9fafb;
+    .rv_col_head {
+        padding: 8px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #6b7280;
+        text-align: center;
+        white-space: nowrap;
+        border-bottom: 1px solid #e5e7eb;
     }
 
-    .rv_card_blue {
-        background: #d9edf2;
+    .rv_cell {
+        padding: 10px 16px;
+        font-size: 18px;
+        font-weight: 700;
+        text-align: center;
+        cursor: pointer;
+        color: #111827;
+        white-space: nowrap;
+        border-bottom: 1px solid #f3f4f6;
+
+        &:hover { opacity: 0.75; }
     }
 
-    .rv_card_green {
-        background: #e5f4e8;
+    .rv_blue  { background: #dbeafe; }
+    .rv_green { background: #dcfce7; }
+    .rv_red   { background: #fee2e2; }
+
+    .rv_sep {
+        border-left: 2px solid #d1d5db !important;
     }
 
-    .rv_card_red {
-        background: #f6d9dd;
+    .rv_total_col {
+        font-size: 15px;
+        min-width: 160px;
+        background: #d1fae5;
     }
 
-    .rv_card_purple {
-        background: #eadcf2;
-    }
-
-    .rv_card_total {
-        min-width: 190px;
-        background: #d4edda;
+    .rv_symbol {
+        font-size: 12px;
+        font-weight: 400;
+        margin-left: 3px;
+        color: #6b7280;
     }
 }
