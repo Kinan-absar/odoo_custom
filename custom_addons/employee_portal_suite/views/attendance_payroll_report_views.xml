@@ -1,151 +1,103 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- ================================================================
-         WIZARD FORM — Filter & Generate
-    ================================================================ -->
-    <record id="view_attendance_payroll_report_form" model="ir.ui.view">
-        <field name="name">attendance.payroll.report.form</field>
-        <field name="model">attendance.payroll.report</field>
-        <field name="arch" type="xml">
-            <form string="Payroll Oversight Report">
-                <sheet>
+    <data>
 
-                    <!-- HEADER BANNER -->
-                    <div class="o_form_sheet_bg">
-                        <div style="background: linear-gradient(135deg,#4f46e5,#6366f1);
-                                    border-radius:12px; padding:20px 28px; margin-bottom:20px;
-                                    color:white;">
-                            <h2 style="margin:0; font-weight:900; letter-spacing:-0.5px;">
-                                <i class="fa fa-calendar-check-o" style="margin-right:10px;"/>
-                                Payroll Oversight
-                            </h2>
-                            <p style="margin:4px 0 0; opacity:0.85; font-size:13px;">
-                                Generate attendance-based payroll analysis with deductions,
-                                overtime, and net salary per employee.
-                            </p>
+        <record id="view_attendance_payroll_report_form" model="ir.ui.view">
+            <field name="name">attendance.payroll.report.form</field>
+            <field name="model">attendance.payroll.report</field>
+            <field name="arch" type="xml">
+                <form string="Payroll Oversight Report">
+                    <sheet>
+
+                        <div class="o_form_sheet_bg">
+                            <div style="background: linear-gradient(135deg,#4f46e5,#6366f1); border-radius:12px; padding:20px 28px; margin-bottom:20px; color:white;">
+                                <h2 style="margin:0; font-weight:900; letter-spacing:-0.5px;">
+                                    <i class="fa fa-calendar-check-o" style="margin-right:10px;"/>
+                                    Payroll Oversight
+                                </h2>
+                                <p style="margin:4px 0 0; opacity:0.85; font-size:13px;">
+                                    Generate attendance-based payroll analysis with deductions,
+                                    overtime, and net salary per employee.
+                                </p>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- FILTERS -->
-                    <group string="Report Filters" col="4">
-                        <field name="date_from" required="1"/>
-                        <field name="date_to" required="1"/>
-                        <field name="standard_hours"/>
-                        <newline/>
-                        <field name="employee_ids" widget="many2many_tags"
-                               options="{'no_create': True}"
-                               placeholder="All employees"/>
-                        <field name="department_ids" widget="many2many_tags"
-                               options="{'no_create': True}"
-                               placeholder="All departments"/>
-                    </group>
-
-                    <!-- GENERATE BUTTON -->
-                    <div style="text-align:center; margin:16px 0;">
-                        <button name="action_generate" type="object"
-                                string="Generate Report"
-                                class="btn-primary"
-                                icon="fa-refresh"
-                                style="padding:10px 32px; font-weight:700;"/>
-                    </div>
-
-                    <!-- SUMMARY TOTALS (shown after generation) -->
-                    <group string="Summary" invisible="not line_ids">
-                        <group>
-                            <field name="total_hours" string="Total Hours Worked"
-                                   widget="float_time"/>
-                            <field name="total_gross" string="Total Gross (SR)"
-                                   widget="monetary"
-                                   options="{'currency_field': False}"/>
+                        <group string="Report Filters" col="4">
+                            <field name="date_from" required="1"/>
+                            <field name="date_to" required="1"/>
+                            <field name="standard_hours"/>
+                            <newline/>
+                            <field name="employee_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="All employees"/>
+                            <field name="department_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="All departments"/>
                         </group>
-                        <group>
-                            <field name="total_deduction" string="Total Deductions (SR)"
-                                   widget="monetary"
-                                   options="{'currency_field': False}"/>
-                            <field name="total_overtime" string="Total Overtime (SR)"
-                                   widget="monetary"
-                                   options="{'currency_field': False}"/>
-                            <field name="total_net" string="Total Net (SR)"
-                                   widget="monetary"
-                                   options="{'currency_field': False}"/>
+
+                        <div style="text-align:center; margin:16px 0;">
+                            <button name="action_generate" type="object" string="Generate Report" class="btn-primary" icon="fa-refresh" style="padding:10px 32px; font-weight:700;"/>
+                        </div>
+
+                        <group string="Summary" invisible="not line_ids">
+                            <group>
+                                <field name="total_hours" string="Total Hours Worked" widget="float_time"/>
+                                <field name="total_gross" string="Total Gross (SR)" widget="monetary" options="{'currency_field': False}"/>
+                            </group>
+                            <group>
+                                <field name="total_deduction" string="Total Deductions (SR)" widget="monetary" options="{'currency_field': False}"/>
+                                <field name="total_overtime" string="Total Overtime (SR)" widget="monetary" options="{'currency_field': False}"/>
+                                <field name="total_net" string="Total Net (SR)" widget="monetary" options="{'currency_field': False}"/>
+                            </group>
                         </group>
-                    </group>
 
-                    <!-- EXPORT ACTIONS -->
-                    <div style="margin:12px 0 4px;"
-                         invisible="not line_ids">
-                        <button name="action_print_report" type="object"
-                                string="Print / PDF"
-                                icon="fa-print"
-                                class="btn-secondary"
-                                style="margin-right:8px;"/>
-                        <button name="action_export_csv" type="object"
-                                string="Export CSV"
-                                icon="fa-file-excel-o"
-                                class="btn-secondary"/>
-                    </div>
+                        <div style="margin:12px 0 4px;" invisible="not line_ids">
+                            <button name="action_print_report" type="object" string="Print / PDF" icon="fa-print" class="btn-secondary" style="margin-right:8px;"/>
+                            <button name="action_export_csv" type="object" string="Export CSV" icon="fa-file-excel-o" class="btn-secondary"/>
+                        </div>
 
-                    <!-- DETAIL LINES -->
-                    <notebook invisible="not line_ids">
-                        <page string="Employee Detail">
-                            <field name="line_ids" readonly="0">
-                                <list editable="bottom" decoration-danger="diff_hours &lt; 0"
-                                      decoration-success="diff_hours &gt; 0">
-                                    <field name="employee_id" optional="show"/>
-                                    <field name="department_id" optional="show"/>
-                                    <field name="shift_count" optional="show"/>
-                                    <field name="days_worked" optional="show"/>
-                                    <field name="worked_hours" widget="float_time" optional="show"/>
-                                    <field name="target_hours" widget="float_time" optional="show"/>
-                                    <field name="diff_hours" widget="float_time" optional="show"/>
-                                    <field name="flagged_count" optional="show"
-                                           decoration-danger="flagged_count &gt; 0"/>
-                                    <field name="gross_salary" optional="show"/>
-                                    <field name="absent_days" optional="show"/>
-                                    <field name="absent_days_adj" optional="show"
-                                           string="Abs. Adj."/>
-                                    <field name="absent_deduction" optional="show"
-                                           string="Day Ded."/>
-                                    <field name="hourly_deduction" optional="show"
-                                           string="Hour Ded."/>
-                                    <field name="total_deduction" optional="show"
-                                           string="Total Ded."/>
-                                    <field name="overtime_pay" optional="show" string="OT Pay"/>
-                                    <field name="other_deductions" optional="show"
-                                           string="Other Ded."/>
-                                    <field name="reimbursements" optional="show"
-                                           string="Reimb."/>
-                                    <field name="net_salary" optional="show"
-                                           string="Net (SR)"
-                                           decoration-danger="net_salary &lt; 0"/>
-                                </list>
-                            </field>
-                        </page>
-                    </notebook>
+                        <notebook invisible="not line_ids">
+                            <page string="Employee Detail">
+                                <field name="line_ids" readonly="0">
+                                    <list editable="bottom" decoration-danger="diff_hours &lt; 0" decoration-success="diff_hours &gt; 0">
+                                        <field name="employee_id" optional="show"/>
+                                        <field name="department_id" optional="show"/>
+                                        <field name="shift_count" optional="show"/>
+                                        <field name="days_worked" optional="show"/>
+                                        <field name="worked_hours" widget="float_time" optional="show"/>
+                                        <field name="target_hours" widget="float_time" optional="show"/>
+                                        <field name="diff_hours" widget="float_time" optional="show"/>
+                                        <field name="flagged_count" optional="show" decoration-danger="flagged_count &gt; 0"/>
+                                        <field name="gross_salary" optional="show"/>
+                                        <field name="absent_days" optional="show"/>
+                                        <field name="absent_days_adj" optional="show" string="Abs. Adj."/>
+                                        <field name="absent_deduction" optional="show" string="Day Ded."/>
+                                        <field name="hourly_deduction" optional="show" string="Hour Ded."/>
+                                        <field name="total_deduction" optional="show" string="Total Ded."/>
+                                        <field name="overtime_pay" optional="show" string="OT Pay"/>
+                                        <field name="other_deductions" optional="show" string="Other Ded."/>
+                                        <field name="reimbursements" optional="show" string="Reimb."/>
+                                        <field name="net_salary" optional="show" string="Net (SR)" decoration-danger="net_salary &lt; 0"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
 
-                </sheet>
-            </form>
-        </field>
-    </record>
+                    </sheet>
+                </form>
+            </field>
+        </record>
 
-    <!-- ================================================================
-         ACTION — open the wizard
-    ================================================================ -->
-    <record id="action_attendance_payroll_report" model="ir.actions.act_window">
-        <field name="name">Payroll Oversight Report</field>
-        <field name="res_model">attendance.payroll.report</field>
-        <field name="view_mode">form</field>
-        <field name="target">current</field>
-        <field name="context">{'default_standard_hours': 240}</field>
-    </record>
+        <record id="action_attendance_payroll_report" model="ir.actions.act_window">
+            <field name="name">Payroll Oversight Report</field>
+            <field name="res_model">attendance.payroll.report</field>
+            <field name="view_mode">form</field>
+            <field name="target">current</field>
+            <field name="context">{'default_standard_hours': 240}</field>
+        </record>
 
-    <!-- ================================================================
-         MENU — under Attendances
-    ================================================================ -->
-    <menuitem id="menu_attendance_payroll_report"
-              name="Payroll Report"
-              parent="hr_attendance.menu_hr_attendance_root"
-              action="action_attendance_payroll_report"
-              sequence="50"
-              groups="hr_attendance.group_hr_attendance_manager"/>
+        <menuitem id="menu_attendance_payroll_report"
+                  name="Payroll Report"
+                  parent="hr_attendance.menu_hr_attendance_root"
+                  action="action_attendance_payroll_report"
+                  sequence="50"
+                  groups="hr_attendance.group_hr_attendance_manager"/>
+
+    </data>
 </odoo>
