@@ -1,10 +1,6 @@
 from odoo import http
 from odoo.http import request
-from odoo.addons.portal.controllers.portal import CustomerPortal
-try:
-    from odoo.addons.portal.controllers.portal import pager as portal_pager
-except ImportError:
-    from odoo.addons.web.controllers.main import pager as portal_pager
+from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 from odoo.exceptions import AccessError, MissingError, ValidationError
 
 
@@ -139,6 +135,17 @@ class EmployeePortalMain(CustomerPortal):
         )[:6]
 
         # ------------------------------------------------------
+        # 8. Attendance Status
+        # ------------------------------------------------------
+        attendance_checked_in = False
+        if employee:
+            open_att = request.env['hr.attendance'].sudo().search([
+                ('employee_id', '=', employee.id),
+                ('check_out', '=', False),
+            ], limit=1)
+            attendance_checked_in = bool(open_att)
+
+        # ------------------------------------------------------
         # Render
         # ------------------------------------------------------
         return request.render("employee_portal_suite.employee_portal_dashboard", {
@@ -153,6 +160,7 @@ class EmployeePortalMain(CustomerPortal):
             "variation_count": variation_count,
             "measurement_count": measurement_count,
             "show_construction_cards": show_construction_cards,
+            "attendance_checked_in": attendance_checked_in,
         })
 
     # ---------------------------------------------------------

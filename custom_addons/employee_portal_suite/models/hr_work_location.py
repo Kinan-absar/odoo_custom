@@ -6,6 +6,7 @@ class HrWorkLocation(models.Model):
     project_id = fields.Many2one(
         "project.project",
         string="Project",
+        required=True,
         ondelete="restrict",
         help="Project linked to this work location. Used for approvals and routing."
     )

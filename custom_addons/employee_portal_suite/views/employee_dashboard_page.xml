@@ -510,6 +510,32 @@
                     </a>
                 </div>
 
+                <!-- ATTENDANCE -->
+                <div class="col-6 col-md-6">
+                    <a href="/my/employee/attendance" class="dashboard-link">
+                        <div class="dashboard-card"
+                            t-att-style="'background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid rgba(16,185,129,0.18);' if attendance_checked_in else ''">
+                            <div class="card-top">
+                                <div class="card-icon"
+                                    t-att-style="'background: rgba(16,185,129,0.15); color: #059669;' if attendance_checked_in else 'background: rgba(99,102,241,0.10); color: #6366F1;'">
+                                    <i t-att-class="'fa ' + ('fa-clock-o' if attendance_checked_in else 'fa-sign-in')"></i>
+                                </div>
+                                <span class="card-title">Attendance</span>
+                            </div>
+                            <div class="card-bottom">
+                                <span class="card-number"
+                                    t-att-style="'font-size:18px; color:#059669;' if attendance_checked_in else 'font-size:18px;'">
+                                    <t t-if="attendance_checked_in">Active</t>
+                                    <t t-if="not attendance_checked_in">Check In</t>
+                                </span>
+                                <t t-if="attendance_checked_in">
+                                    <span class="badge-pulse bg-success"></span>
+                                </t>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
             </div>
            <div class="recent-activity mt-4">
 

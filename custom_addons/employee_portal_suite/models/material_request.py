@@ -88,7 +88,7 @@ class MaterialRequest(models.Model):
     expense_account_id = fields.Many2one(
         "account.account",
         string="Expense Account",
-        domain="[('account_type', '=', 'expense')]",
+        domain="[('account_type', 'in', ('expense','expense_direct_cost'))]",
         tracking=True,
     )
     # ---------------------------------------------------------
@@ -757,7 +757,9 @@ class MaterialRequest(models.Model):
         # 1) Render PDF
         # --------------------------------------------------
         report = self.env.ref(report_xmlid)
-        pdf_content, _ = report._render_qweb_pdf([self.id])
+        pdf_content, _ = self.env['ir.actions.report']._render_qweb_pdf(
+            report.id, [self.id]
+        )
 
         attachment = self.env['ir.attachment'].sudo().create({
             'name': f"{self.name}.pdf",

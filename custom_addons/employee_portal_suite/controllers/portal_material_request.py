@@ -416,8 +416,13 @@ class EmployeePortalMaterialRequests(http.Controller):
             "employee_portal_suite.material_request_pdf"
         ).sudo()
 
-        # Odoo 19: call _render_qweb_pdf on the report record directly
-        pdf_content, content_type = report_action._render_qweb_pdf([rec.id])
+        # Use Odoo's official report service (IMPORTANT)
+        ReportService = request.env['ir.actions.report'].sudo()
+
+        # Render PDF CORRECTLY
+        pdf_content, content_type = ReportService._render_qweb_pdf(
+            report_action.id, [rec.id]
+        )
 
         headers = [
             ("Content-Type", "application/pdf"),
