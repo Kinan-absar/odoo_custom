@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <data>
 
         <!-- =============================== -->
         <!--       EMPLOYEE REQUEST PDF      -->
@@ -23,4 +24,5 @@
             <field name="print_report_name">'Material Request - %s' % (object.name)</field>
         </record>
 
+    </data>
 </odoo>

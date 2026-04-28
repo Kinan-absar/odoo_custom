@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <data>
 
     <record id="hr_employee_form_force_portal_user" model="ir.ui.view">
         <field name="name">hr.employee.form.force.portal.user</field>
@@ -20,4 +21,5 @@
         </field>
     </record>
 
+    </data>
 </odoo>

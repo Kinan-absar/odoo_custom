@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <data>
 
     <template id="clean_sign_summary"
               inherit_id="sign.sign_portal_my_request"
@@ -32,4 +33,5 @@
 
     </template>
 
+    </data>
 </odoo>

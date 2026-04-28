@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <data>
 
     <template id="employee_portal_attendance" name="Employee Portal - Attendance">
         <t t-call="employee_portal_suite.employee_portal_layout">
@@ -385,4 +386,5 @@
         </t>
     </template>
 
+    </data>
 </odoo>

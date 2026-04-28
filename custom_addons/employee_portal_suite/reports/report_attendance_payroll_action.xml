@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <data>
 
     <!-- Attendance Payroll Report Action -->
 
@@ -13,4 +14,5 @@
         <field name="paperformat_id" ref="base.paperformat_euro"/>
     </record>
 
+    </data>
 </odoo>

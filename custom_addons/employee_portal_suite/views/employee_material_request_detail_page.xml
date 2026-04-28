@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <data>
 
 <template id="employee_material_request_detail_page" name="Material Request Detail">
 <t t-call="employee_portal_suite.employee_portal_layout">
@@ -437,4 +438,5 @@
         </t>
     </template>
 
+    </data>
 </odoo>

@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <odoo>
+    <data>
 
     <!-- FORM VIEW EXTENSION -->
     <record id="view_purchase_order_form_inherit_mr" model="ir.ui.view">
@@ -37,4 +38,5 @@
     </record>
 
 
+    </data>
 </odoo>

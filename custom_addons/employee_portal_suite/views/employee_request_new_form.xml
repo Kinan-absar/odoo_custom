@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <data>
 
 <template id="employee_request_new_form" name="New Employee Request Form">
 <t t-call="employee_portal_suite.employee_portal_layout">
@@ -184,4 +185,5 @@ document.addEventListener("DOMContentLoaded", function () {
 </t>
 </template>
 
+    </data>
 </odoo>
