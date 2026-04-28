@@ -67,6 +67,52 @@ class AttendancePayrollReport(models.Model):
             domain.append(('id', 'in', self.employee_ids.ids))
         return self.env['hr.employee'].search(domain, order='name')
 
+    def _field_value(self, record, field_name, default=False):
+        if record and field_name in record._fields:
+            return record[field_name] or default
+        return default
+
+    def _active_contract(self, employee):
+        contract = employee.contract_id
+        if contract:
+            return contract
+        Contract = self.env["hr.contract"].sudo()
+        return Contract.search([
+            ("employee_id", "=", employee.id),
+            ("state", "=", "open"),
+            "|", ("date_start", "=", False), ("date_start", "<=", self.date_to),
+            "|", ("date_end", "=", False), ("date_end", ">=", self.date_from),
+        ], order="date_start desc, id desc", limit=1)
+
+    def _salary_components(self, employee):
+        contract = self._active_contract(employee)
+        basic = self._field_value(contract, "wage", 0.0)
+        housing = self._field_value(contract, "l10n_sa_housing_allowance", 0.0)
+        transportation = self._field_value(contract, "l10n_sa_transportation_allowance", 0.0)
+        other = self._field_value(contract, "l10n_sa_other_allowances", 0.0)
+        fixed_deductions = self._field_value(contract, "eps_fixed_deductions", 0.0)
+        gross = basic + housing + transportation + other
+        if not gross:
+            gross = basic
+        return {"contract": contract, "gross": gross, "basic": basic, "housing": housing, "other": transportation + other, "fixed_deductions": fixed_deductions}
+
+    def _employee_iqama(self, employee):
+        return (self._field_value(employee, "l10n_sa_employee_code", "") or "").strip()
+
+    def _employee_iban(self, employee):
+        bank_account = employee.bank_account_id
+        return ((bank_account.acc_number if bank_account else "") or "").strip().replace(" ", "")
+
+    def _employee_bank_code(self, employee):
+        if employee.eps_bank_code:
+            return employee.eps_bank_code.strip()
+        bank = employee.bank_account_id.bank_id if employee.bank_account_id else False
+        for fname in ("l10n_sa_bank_code", "code", "bic"):
+            value = self._field_value(bank, fname, "")
+            if value:
+                return str(value).strip()[:4]
+        return ""
+
     def _holiday_dates(self):
         if not self.exclude_public_holidays:
             return set()
@@ -139,11 +185,15 @@ class AttendancePayrollReport(models.Model):
             else:
                 absent_days = max(0.0, expected_days_count - worked_days)
 
-            gross = emp.eps_gross_salary or 0.0
-            basic = emp.eps_basic_salary or (gross / 1.35 if gross else 0.0)
-            target_hours = emp.eps_standard_monthly_hours or self.standard_hours or 240.0
-            gross_hourly = gross / 240.0 if gross else 0.0
-            basic_hourly = basic / 240.0 if basic else 0.0
+            salary = self._salary_components(emp)
+            gross = salary["gross"]
+            basic = salary["basic"]
+            housing_allowance = salary["housing"]
+            other_allowances = salary["other"]
+            fixed_deductions = salary["fixed_deductions"]
+            target_hours = self.standard_hours or 240.0
+            gross_hourly = gross / target_hours if gross and target_hours else 0.0
+            basic_hourly = basic / target_hours if basic and target_hours else 0.0
             daily_rate = gross / 30.0 if gross else 0.0
             hour_diff = s['hours'] - target_hours
 
@@ -158,7 +208,7 @@ class AttendancePayrollReport(models.Model):
             absent_deduction = absent_days * daily_rate if deductions_enabled else 0.0
             overtime_rate = gross_hourly + (0.5 * basic_hourly)
             overtime_pay = hour_diff * overtime_rate if hour_diff > 0.01 and overtime_enabled else 0.0
-            total_deductions = hourly_deduction + absent_deduction + (emp.eps_fixed_deductions or 0.0)
+            total_deductions = hourly_deduction + absent_deduction + fixed_deductions
             net = gross - total_deductions + overtime_pay
 
             lines.append((0, 0, {
@@ -175,9 +225,9 @@ class AttendancePayrollReport(models.Model):
                 'hour_diff': hour_diff,
                 'gross_salary': gross,
                 'basic_salary': basic,
-                'housing_allowance': emp.eps_housing_allowance or 0.0,
-                'other_allowances': emp.eps_other_allowances or 0.0,
-                'fixed_deductions': emp.eps_fixed_deductions or 0.0,
+                'housing_allowance': housing_allowance,
+                'other_allowances': other_allowances,
+                'fixed_deductions': fixed_deductions,
                 'hourly_deduction': hourly_deduction,
                 'absent_deduction': absent_deduction,
                 'overtime_pay': overtime_pay,
@@ -205,9 +255,9 @@ class AttendancePayrollReport(models.Model):
         lines, warnings = [], []
         for line in self.line_ids:
             emp = line.employee_id
-            iqama = (emp.eps_iqama_number or '').strip()
-            bank = (emp.eps_bank_code or '').strip()
-            iban = (emp.eps_iban_number or '').strip().replace(' ', '')
+            iqama = self._employee_iqama(emp)
+            bank = self._employee_bank_code(emp)
+            iban = self._employee_iban(emp)
             emp_warnings = []
             if not iqama.isdigit() or len(iqama) != 10:
                 emp_warnings.append(_('invalid Iqama/National ID'))
@@ -237,7 +287,7 @@ class AttendancePayrollReport(models.Model):
             self.action_generate()
         lines, warnings = self._mudad_lines_and_warnings()
         if not lines:
-            raise UserError(_('No valid employees to export. Fill Iqama, Bank Code, IBAN, and salary breakdown first.'))
+            raise UserError(_('No valid employees to export. Fill Saudi National/Iqama ID, bank account IBAN, bank code, and contract salary fields first.'))
         self.mudad_warning = '\n'.join(warnings) if warnings else False
         return {
             'type': 'ir.actions.act_url',
@@ -289,8 +339,8 @@ class AttendancePayrollReportLine(models.Model):
     @api.depends('employee_id.eps_disable_deductions', 'employee_id.eps_disable_overtime', 'standard_hours', 'expected_days', 'days_worked', 'absent_days', 'adjusted_absent_days', 'total_hours', 'gross_salary', 'basic_salary', 'fixed_deductions', 'other_deductions', 'reimbursements')
     def _compute_amounts(self):
         for line in self:
-            gross_hourly = line.gross_salary / 240.0 if line.gross_salary else 0.0
-            basic_hourly = line.basic_salary / 240.0 if line.basic_salary else 0.0
+            gross_hourly = line.gross_salary / (line.standard_hours or 240.0) if line.gross_salary else 0.0
+            basic_hourly = line.basic_salary / (line.standard_hours or 240.0) if line.basic_salary else 0.0
             daily_rate = line.gross_salary / 30.0 if line.gross_salary else 0.0
             line.total_absent_days = max(0.0, (line.absent_days or 0.0) + (line.adjusted_absent_days or 0.0))
             days_for_calc = line.expected_days or 26.0
