@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <data>
 
     <!-- ========================================================= -->
     <!-- FORM VIEW                                                  -->
@@ -181,5 +180,4 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    </data>
 </odoo>

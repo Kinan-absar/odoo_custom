@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <data>
 
     <!-- EMPLOYEE REQUEST: Employee can only see their own -->
     <record id="employee_request_portal_rule" model="ir.rule">
@@ -31,5 +30,4 @@
         </field>
     </record>
 
-    </data>
 </odoo>

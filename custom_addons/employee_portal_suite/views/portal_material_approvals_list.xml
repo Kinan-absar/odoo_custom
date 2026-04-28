@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <data>
 
     <template id="portal_material_approvals_list" name="Material Approvals Page">
         <t t-call="employee_portal_suite.employee_portal_layout">
@@ -211,5 +210,4 @@
         </t>
     </template>
 
-    </data>
 </odoo>

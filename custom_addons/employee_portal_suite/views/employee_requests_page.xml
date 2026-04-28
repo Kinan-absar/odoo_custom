@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <data>
 
     <template id="employee_requests_page" name="Employee Requests Page">
         <t t-call="employee_portal_suite.employee_portal_layout">
@@ -166,5 +165,4 @@
         </t>
     </template>
 
-    </data>
 </odoo>

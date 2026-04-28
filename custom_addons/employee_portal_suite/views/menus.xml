@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <data>
 
     <!-- Main Root Menu -->
     <menuitem id="menu_employee_portal_root"
@@ -35,5 +34,4 @@
             groups="employee_portal_suite.group_employee_portal_announcement_manager,employee_portal_suite.group_employee_portal_admin"/>
 
 
-    </data>
 </odoo>
