@@ -62,6 +62,7 @@
         # --- DATA / SEQUENCES ---
         'data/request_sequence.xml',
         'views/hr_employee_user_domain.xml',
+        'views/hr_employee_payroll_views.xml',
 
         # --------------------------------------------------
         # REPORTS
@@ -69,6 +70,7 @@
         'reports/report_action.xml',
         'reports/report_employee_request.xml',
         'reports/report_material_request.xml',
+        'reports/report_attendance_payroll.xml',
 
         # --- BACKEND VIEWS ---
         'views/employee_request_views.xml',
@@ -107,6 +109,7 @@
         'views/hr_work_location_views.xml',
         'views/project_project_views.xml',
         'views/employee_portal_attendance.xml',
+        'views/attendance_payroll_report_views.xml',
 
     ],
 

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <record id="view_attendance_payroll_report_form" model="ir.ui.view">
+    <field name="name">attendance.payroll.report.form</field>
+    <field name="model">attendance.payroll.report</field>
+    <field name="arch" type="xml">
+      <form string="Attendance Payroll Report">
+        <header>
+          <button name="action_generate" string="Generate" type="object" class="btn-primary"/>
+          <button name="action_print_pdf" string="Print PDF" type="object"/>
+          <button name="action_export_csv" string="Export CSV" type="object"/>
+          <button name="action_export_mudad" string="Export Mudad WPS" type="object" class="btn-success"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1>Attendance Payroll Report</h1></div>
+          <group>
+            <group string="Period &amp; Filters">
+              <field name="date_from"/>
+              <field name="date_to"/>
+              <field name="department_id"/>
+              <field name="employee_ids" widget="many2many_tags"/>
+            </group>
+            <group string="Calculation Settings">
+              <field name="standard_hours"/>
+              <field name="exclude_fridays"/>
+              <field name="exclude_public_holidays"/>
+            </group>
+          </group>
+          <group string="Summary" col="6">
+            <field name="total_employees" readonly="1"/>
+            <field name="total_hours" readonly="1"/>
+            <field name="total_gross" readonly="1"/>
+            <field name="total_deductions" readonly="1"/>
+            <field name="total_overtime" readonly="1"/>
+            <field name="total_net" readonly="1"/>
+          </group>
+          <field name="mudad_warning" readonly="1" placeholder="Mudad validation warnings will appear here after export."/>
+          <field name="line_ids" nolabel="1">
+            <list editable="bottom" decoration-danger="hour_diff &lt; 0" decoration-success="overtime_pay &gt; 0">
+              <field name="employee_id" readonly="1"/>
+              <field name="department_id" readonly="1"/>
+              <field name="is_on_leave" readonly="1"/>
+              <field name="shift_count" readonly="1"/>
+              <field name="expected_days" readonly="1"/>
+              <field name="days_worked" readonly="1"/>
+              <field name="absent_days" readonly="1"/>
+              <field name="adjusted_absent_days"/>
+              <field name="total_absent_days" readonly="1"/>
+              <field name="total_hours" readonly="1" sum="Hours"/>
+              <field name="standard_hours" readonly="1"/>
+              <field name="hour_diff" readonly="1"/>
+              <field name="gross_salary" readonly="1" sum="Gross"/>
+              <field name="hourly_deduction" readonly="1" sum="Hourly Ded."/>
+              <field name="absent_deduction" readonly="1" sum="Absent Ded."/>
+              <field name="fixed_deductions" readonly="1" sum="Fixed Ded."/>
+              <field name="other_deductions" sum="Other Ded."/>
+              <field name="overtime_pay" readonly="1" sum="OT"/>
+              <field name="reimbursements" sum="Reimb."/>
+              <field name="total_deductions" readonly="1" sum="Deductions"/>
+              <field name="net_salary" readonly="1" sum="Net"/>
+            </list>
+          </field>
+        </sheet>
+      </form>
+    </field>
+  </record>
+  <record id="action_attendance_payroll_report" model="ir.actions.act_window">
+    <field name="name">Payroll Report</field>
+    <field name="res_model">attendance.payroll.report</field>
+    <field name="view_mode">form</field>
+    <field name="target">current</field>
+  </record>
+  <menuitem id="menu_attendance_payroll_report_employee_portal" name="Attendance Payroll Report" parent="menu_employee_portal_root" action="action_attendance_payroll_report" sequence="40" groups="hr_attendance.group_hr_attendance_manager"/>
+  <menuitem id="menu_attendance_payroll_report_attendance" name="Payroll Report" parent="hr_attendance.menu_hr_attendance_root" action="action_attendance_payroll_report" sequence="90" groups="hr_attendance.group_hr_attendance_manager"/>
+</odoo>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <record id="view_employee_form_payroll_mudad" model="ir.ui.view">
+    <field name="name">hr.employee.form.payroll.mudad</field>
+    <field name="model">hr.employee</field>
+    <field name="inherit_id" ref="hr.view_employee_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//notebook" position="inside">
+        <page string="Payroll / Mudad">
+          <group>
+            <group string="Salary Components">
+              <field name="eps_gross_salary"/>
+              <field name="eps_basic_salary"/>
+              <field name="eps_housing_allowance"/>
+              <field name="eps_other_allowances"/>
+              <field name="eps_fixed_deductions"/>
+              <field name="eps_standard_monthly_hours"/>
+            </group>
+            <group string="WPS / Mudad Banking">
+              <field name="eps_iqama_number"/>
+              <field name="eps_bank_code"/>
+              <field name="eps_iban_number"/>
+            </group>
+          </group>
+          <group>
+            <group string="Calculation Flags">
+              <field name="eps_disable_overtime"/>
+              <field name="eps_disable_deductions"/>
+            </group>
+            <group string="Leave Flag">
+              <field name="eps_is_on_leave"/>
+              <field name="eps_leave_start_date" invisible="not eps_is_on_leave"/>
+              <field name="eps_leave_end_date" invisible="not eps_is_on_leave"/>
+            </group>
+          </group>
+        </page>
+      </xpath>
+    </field>
+  </record>
+</odoo>
