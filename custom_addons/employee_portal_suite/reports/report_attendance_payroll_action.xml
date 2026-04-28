@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+<record id="action_report_attendance_payroll" model="ir.actions.report">
+        <field name="name">Payroll Oversight Report</field>
+        <field name="model">attendance.payroll.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">employee_portal_suite.report_attendance_payroll_doc</field>
+        <field name="report_file">employee_portal_suite.report_attendance_payroll_doc</field>
+        <field name="binding_model_id" ref="base.model_res_partner" eval="False"/>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+</odoo>

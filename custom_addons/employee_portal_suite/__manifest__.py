@@ -108,7 +108,8 @@
         'views/project_project_views.xml',
         'views/employee_portal_attendance.xml',
         'views/attendance_payroll_report_views.xml',
-        'reports/report_attendance_payroll.xml',
+        'reports/report_attendance_payroll_action.xml',
+        'reports/report_attendance_payroll_template.xml',
 
     ],
 
