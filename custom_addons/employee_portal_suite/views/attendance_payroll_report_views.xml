@@ -51,7 +51,7 @@
                     </div>
 
                     <!-- SUMMARY TOTALS (shown after generation) -->
-                    <group string="Summary" attrs="{'invisible': [('line_ids', '=', [])]}">
+                    <group string="Summary" invisible="not line_ids">
                         <group>
                             <field name="total_hours" string="Total Hours Worked"
                                    widget="float_time"/>
@@ -74,7 +74,7 @@
 
                     <!-- EXPORT ACTIONS -->
                     <div style="margin:12px 0 4px;"
-                         attrs="{'invisible': [('line_ids', '=', [])]}">
+                         invisible="not line_ids">
                         <button name="action_print_report" type="object"
                                 string="Print / PDF"
                                 icon="fa-print"
@@ -87,7 +87,7 @@
                     </div>
 
                     <!-- DETAIL LINES -->
-                    <notebook attrs="{'invisible': [('line_ids', '=', [])]}">
+                    <notebook invisible="not line_ids">
                         <page string="Employee Detail">
                             <field name="line_ids" readonly="0">
                                 <list editable="bottom" decoration-danger="diff_hours &lt; 0"
