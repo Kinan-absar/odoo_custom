@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="employee_portal_attendance" name="Employee Portal - Attendance">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <style>
+            /* ================================================================
+               ATTENDANCE PAGE STYLES
+            ================================================================ */
+
+            .attendance-hero {
+                border-radius: 26px;
+                padding: 28px 24px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+                margin-bottom: 20px;
+            }
+
+            .attendance-hero.checked-in {
+                background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+                color: white;
+            }
+
+            .attendance-hero.checked-out {
+                background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+                color: white;
+            }
+
+            .attendance-hero::before {
+                content: '';
+                position: absolute;
+                top: -40%;
+                right: -20%;
+                width: 200px;
+                height: 200px;
+                background: radial-gradient(circle, rgba(255,255,255,0.2), transparent 70%);
+                pointer-events: none;
+            }
+
+            .status-icon {
+                width: 72px;
+                height: 72px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 30px;
+                margin-bottom: 16px;
+            }
+
+            .status-title {
+                font-size: 20px;
+                font-weight: 700;
+                margin-bottom: 4px;
+            }
+
+            .status-sub {
+                font-size: 13px;
+                opacity: 0.88;
+                margin-bottom: 20px;
+            }
+
+            .attendance-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 13px 32px;
+                border-radius: 50px;
+                font-weight: 700;
+                font-size: 15px;
+                border: none;
+                cursor: pointer;
+                transition: transform 0.2s cubic-bezier(.34,1.56,.64,1), box-shadow 0.2s ease;
+                text-decoration: none !important;
+            }
+
+            .btn-checkin {
+                background: white;
+                color: #4F46E5;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            }
+
+            .btn-checkout {
+                background: white;
+                color: #059669;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            }
+
+            .attendance-btn:hover {
+                transform: scale(1.04);
+                box-shadow: 0 14px 30px rgba(0,0,0,0.2);
+            }
+
+            .attendance-btn:active {
+                transform: scale(0.97);
+            }
+
+            /* Today Stats */
+            .today-stats {
+                display: flex;
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+
+            .stat-card {
+                flex: 1;
+                background: white;
+                border-radius: 18px;
+                padding: 16px;
+                text-align: center;
+                box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+            }
+
+            .stat-value {
+                font-size: 22px;
+                font-weight: 700;
+                color: #1F2937;
+            }
+
+            .stat-label {
+                font-size: 11px;
+                color: #6B7280;
+                font-weight: 600;
+                margin-top: 2px;
+            }
+
+            /* History */
+            .attendance-history {
+                background: white;
+                border-radius: 22px;
+                padding: 18px;
+                box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+            }
+
+            .history-row {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 11px 12px;
+                border-radius: 14px;
+                transition: background 0.15s ease;
+            }
+
+            .history-row + .history-row {
+                border-top: 1px solid rgba(0,0,0,0.04);
+            }
+
+            .history-row:hover {
+                background: rgba(79,70,229,0.04);
+            }
+
+            .history-icon {
+                width: 36px;
+                height: 36px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                flex-shrink: 0;
+            }
+
+            .history-icon.complete {
+                background: rgba(16,185,129,0.12);
+                color: #059669;
+            }
+
+            .history-icon.open {
+                background: rgba(245,158,11,0.12);
+                color: #D97706;
+            }
+
+            .history-content { flex: 1; }
+
+            .history-date {
+                font-size: 13px;
+                font-weight: 600;
+                color: #1F2937;
+            }
+
+            .history-times {
+                font-size: 11px;
+                color: #6B7280;
+                margin-top: 2px;
+            }
+
+            .history-hours {
+                font-size: 13px;
+                font-weight: 700;
+                color: #4F46E5;
+            }
+
+            /* Alert messages */
+            .portal-alert {
+                border-radius: 14px;
+                padding: 12px 16px;
+                font-size: 13px;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 16px;
+            }
+
+            .portal-alert.success {
+                background: rgba(16,185,129,0.12);
+                color: #065F46;
+            }
+
+            .portal-alert.error {
+                background: rgba(239,68,68,0.1);
+                color: #991B1B;
+            }
+
+            .section-title {
+                font-weight: 700;
+                font-size: 14px;
+                color: #374151;
+                margin-bottom: 12px;
+            }
+            </style>
+
+            <div class="mt-4">
+
+                <!-- SUCCESS / ERROR MESSAGES -->
+                <t t-if="success_message == 'checked_in'">
+                    <div class="portal-alert success">
+                        <i class="fa fa-check-circle"></i>
+                        You have successfully checked in.
+                    </div>
+                </t>
+                <t t-if="success_message == 'checked_out'">
+                    <div class="portal-alert success">
+                        <i class="fa fa-check-circle"></i>
+                        You have successfully checked out.
+                    </div>
+                </t>
+                <t t-if="error_message == 'already_checked_in'">
+                    <div class="portal-alert error">
+                        <i class="fa fa-exclamation-circle"></i>
+                        You are already checked in. Please check out first.
+                    </div>
+                </t>
+                <t t-if="error_message == 'not_checked_in'">
+                    <div class="portal-alert error">
+                        <i class="fa fa-exclamation-circle"></i>
+                        You are not currently checked in.
+                    </div>
+                </t>
+                <t t-if="error_message == 'check_in_failed' or error_message == 'check_out_failed'">
+                    <div class="portal-alert error">
+                        <i class="fa fa-exclamation-circle"></i>
+                        An error occurred. Please try again or contact HR.
+                    </div>
+                </t>
+
+                <!-- STATUS HERO CARD -->
+                <t t-if="is_checked_in">
+                    <div class="attendance-hero checked-in">
+                        <div class="status-icon">
+                            <i class="fa fa-clock-o"></i>
+                        </div>
+                        <div class="status-title">You're Clocked In</div>
+                        <div class="status-sub">
+                            Since
+                            <t t-esc="open_attendance.check_in.strftime('%I:%M %p')"/>
+                            ·
+                            <t t-esc="open_attendance.check_in.strftime('%d %b %Y')"/>
+                        </div>
+                        <form action="/my/employee/attendance/check_out" method="post">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <button type="submit" class="attendance-btn btn-checkout">
+                                <i class="fa fa-sign-out"></i>
+                                Check Out
+                            </button>
+                        </form>
+                    </div>
+                </t>
+
+                <t t-if="not is_checked_in">
+                    <div class="attendance-hero checked-out">
+                        <div class="status-icon">
+                            <i class="fa fa-user-o"></i>
+                        </div>
+                        <div class="status-title">Not Checked In</div>
+                        <div class="status-sub">Tap below to start your work session</div>
+                        <form action="/my/employee/attendance/check_in" method="post">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <button type="submit" class="attendance-btn btn-checkin">
+                                <i class="fa fa-sign-in"></i>
+                                Check In
+                            </button>
+                        </form>
+                    </div>
+                </t>
+
+                <!-- TODAY STATS -->
+                <div class="today-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">
+                            <t t-esc="'%dh %dm' % (int(today_hours), int((today_hours % 1) * 60))"/>
+                        </div>
+                        <div class="stat-label">Today's Hours</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">
+                            <t t-esc="'Active' if is_checked_in else 'Inactive'"/>
+                        </div>
+                        <div class="stat-label">Current Status</div>
+                    </div>
+                </div>
+
+                <!-- RECENT HISTORY -->
+                <div class="attendance-history">
+                    <div class="section-title">
+                        <i class="fa fa-history me-1"></i> Recent Attendance
+                    </div>
+
+                    <t t-if="recent_attendances">
+                        <t t-foreach="recent_attendances" t-as="att">
+                            <div class="history-row">
+
+                                <div t-att-class="'history-icon ' + ('open' if not att.check_out else 'complete')">
+                                    <i t-att-class="'fa ' + ('fa-clock-o' if not att.check_out else 'fa-check')"></i>
+                                </div>
+
+                                <div class="history-content">
+                                    <div class="history-date">
+                                        <t t-esc="att.check_in.strftime('%A, %d %b %Y')"/>
+                                    </div>
+                                    <div class="history-times">
+                                        In: <t t-esc="att.check_in.strftime('%I:%M %p')"/>
+                                        <t t-if="att.check_out">
+                                            &amp;nbsp;·&amp;nbsp; Out: <t t-esc="att.check_out.strftime('%I:%M %p')"/>
+                                        </t>
+                                        <t t-if="not att.check_out">
+                                            &amp;nbsp;·&amp;nbsp; <span style="color:#D97706;">Still active</span>
+                                        </t>
+                                    </div>
+                                </div>
+
+                                <div class="history-hours">
+                                    <t t-if="att.check_out">
+                                        <t t-esc="'%dh %dm' % (int(att.worked_hours), int((att.worked_hours % 1) * 60))"/>
+                                    </t>
+                                    <t t-if="not att.check_out">
+                                        <span style="color:#D97706;">—</span>
+                                    </t>
+                                </div>
+
+                            </div>
+                        </t>
+                    </t>
+
+                    <t t-if="not recent_attendances">
+                        <div class="text-muted small py-2">No attendance records found.</div>
+                    </t>
+
+                </div>
+
+            </div>
+        </t>
+    </template>
+
+</odoo>
