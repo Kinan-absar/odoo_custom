@@ -1,18 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+  <record id="view_attendance_payroll_report_list" model="ir.ui.view">
+    <field name="name">attendance.payroll.report.list</field>
+    <field name="model">attendance.payroll.report</field>
+    <field name="arch" type="xml">
+      <list string="Attendance Payroll Reports" create="1" delete="1">
+        <field name="name"/>
+        <field name="date_from"/>
+        <field name="date_to"/>
+        <field name="department_id"/>
+        <field name="total_employees"/>
+        <field name="total_hours" sum="Hours"/>
+        <field name="total_gross" sum="Gross"/>
+        <field name="total_deductions" sum="Deductions"/>
+        <field name="total_overtime" sum="Overtime"/>
+        <field name="total_net" sum="Net"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="view_attendance_payroll_report_search" model="ir.ui.view">
+    <field name="name">attendance.payroll.report.search</field>
+    <field name="model">attendance.payroll.report</field>
+    <field name="arch" type="xml">
+      <search string="Search Attendance Payroll Reports">
+        <field name="name"/>
+        <field name="date_from"/>
+        <field name="date_to"/>
+        <field name="department_id"/>
+        <group expand="0" string="Group By">
+          <filter string="Department" name="group_department" context="{'group_by': 'department_id'}"/>
+          <filter string="Date From" name="group_date_from" context="{'group_by': 'date_from'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+
   <record id="view_attendance_payroll_report_form" model="ir.ui.view">
     <field name="name">attendance.payroll.report.form</field>
     <field name="model">attendance.payroll.report</field>
     <field name="arch" type="xml">
       <form string="Attendance Payroll Report">
         <header>
-          <button name="action_generate" string="Generate" type="object" class="btn-primary"/>
+          <button name="action_generate" string="Generate / Regenerate" type="object" class="btn-primary"/>
           <button name="action_print_pdf" string="Print PDF" type="object"/>
           <button name="action_export_csv" string="Export CSV" type="object"/>
           <button name="action_export_mudad" string="Export Mudad WPS" type="object" class="btn-success"/>
         </header>
         <sheet>
-          <div class="oe_title"><h1>Attendance Payroll Report</h1></div>
+          <div class="oe_title">
+            <label for="name"/>
+            <h1><field name="name" placeholder="Attendance Payroll Report"/></h1>
+          </div>
           <group>
             <group string="Period &amp; Filters">
               <field name="date_from"/>
@@ -64,12 +103,18 @@
       </form>
     </field>
   </record>
+
   <record id="action_attendance_payroll_report" model="ir.actions.act_window">
-    <field name="name">Payroll Report</field>
+    <field name="name">Attendance Payroll Reports</field>
     <field name="res_model">attendance.payroll.report</field>
-    <field name="view_mode">form</field>
+    <field name="view_mode">list,form</field>
     <field name="target">current</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">Create an attendance payroll report</p>
+      <p>Open a report, select the payroll period, then click Generate / Regenerate.</p>
+    </field>
   </record>
-  <menuitem id="menu_attendance_payroll_report_employee_portal" name="Attendance Payroll Report" parent="menu_employee_portal_root" action="action_attendance_payroll_report" sequence="40" groups="hr_attendance.group_hr_attendance_manager"/>
-  <menuitem id="menu_attendance_payroll_report_attendance" name="Payroll Report" parent="hr_attendance.menu_hr_attendance_root" action="action_attendance_payroll_report" sequence="90" groups="hr_attendance.group_hr_attendance_manager"/>
+
+  <menuitem id="menu_attendance_payroll_report_employee_portal" name="Attendance Payroll Reports" parent="menu_employee_portal_root" action="action_attendance_payroll_report" sequence="40" groups="hr_attendance.group_hr_attendance_manager"/>
+  <menuitem id="menu_attendance_payroll_report_attendance" name="Payroll Reports" parent="hr_attendance.menu_hr_attendance_root" action="action_attendance_payroll_report" sequence="90" groups="hr_attendance.group_hr_attendance_manager"/>
 </odoo>

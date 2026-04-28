@@ -11,7 +11,7 @@ from odoo.exceptions import UserError
 from odoo.http import request
 
 
-class AttendancePayrollReport(models.TransientModel):
+class AttendancePayrollReport(models.Model):
     _name = 'attendance.payroll.report'
     _description = 'Attendance Payroll Report'
 
@@ -256,7 +256,7 @@ class AttendancePayrollReport(models.TransientModel):
         }
 
 
-class AttendancePayrollReportLine(models.TransientModel):
+class AttendancePayrollReportLine(models.Model):
     _name = 'attendance.payroll.report.line'
     _description = 'Attendance Payroll Report Line'
 
