@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-<record id="action_report_attendance_payroll" model="ir.actions.report">
+    <!-- Attendance Payroll Report Action -->
+
+    <record id="action_report_attendance_payroll" model="ir.actions.report">
         <field name="name">Payroll Oversight Report</field>
         <field name="model">attendance.payroll.report</field>
         <field name="report_type">qweb-pdf</field>
