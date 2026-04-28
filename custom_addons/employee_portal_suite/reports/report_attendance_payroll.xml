@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-<data>
     <record id="action_report_attendance_payroll" model="ir.actions.report">
         <field name="name">Payroll Oversight Report</field>
         <field name="model">attendance.payroll.report</field>
@@ -138,5 +137,4 @@
             </t>
         </t>
     </template>
-</data>
 </odoo>
