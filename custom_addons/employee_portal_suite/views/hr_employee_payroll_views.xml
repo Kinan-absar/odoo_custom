@@ -8,12 +8,26 @@
       <xpath expr="//notebook" position="inside">
         <page string="Payroll Controls">
           <group>
-            <group string="Mudad Export">
+            <group string="Mudad Overrides">
+              <field name="eps_iqama_number" placeholder="Leave empty to use Saudi National / Iqama ID"/>
+              <field name="eps_iban_number" placeholder="Leave empty to use Bank Account"/>
               <field name="eps_bank_code"/>
             </group>
             <group string="Calculation Flags">
               <field name="eps_disable_overtime"/>
               <field name="eps_disable_deductions"/>
+            </group>
+          </group>
+          <group string="Payroll Calculation Overrides">
+            <group>
+              <field name="eps_gross_salary" placeholder="Leave empty to calculate from contract"/>
+              <field name="eps_basic_salary" placeholder="Leave empty to use contract wage"/>
+              <field name="eps_housing_allowance" placeholder="Leave empty to use contract housing"/>
+            </group>
+            <group>
+              <field name="eps_other_allowances" placeholder="Leave empty to use contract transportation + other"/>
+              <field name="eps_fixed_deductions"/>
+              <field name="eps_standard_monthly_hours" placeholder="Leave empty to use report standard hours"/>
             </group>
           </group>
           <group string="Leave Flag">

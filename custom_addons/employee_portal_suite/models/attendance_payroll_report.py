@@ -86,22 +86,27 @@ class AttendancePayrollReport(models.Model):
 
     def _salary_components(self, employee):
         contract = self._active_contract(employee)
-        basic = self._field_value(contract, "wage", 0.0)
-        housing = self._field_value(contract, "l10n_sa_housing_allowance", 0.0)
-        transportation = self._field_value(contract, "l10n_sa_transportation_allowance", 0.0)
-        other = self._field_value(contract, "l10n_sa_other_allowances", 0.0)
-        fixed_deductions = self._field_value(contract, "eps_fixed_deductions", 0.0)
-        gross = basic + housing + transportation + other
+        contract_basic = self._field_value(contract, "wage", 0.0)
+        contract_housing = self._field_value(contract, "l10n_sa_housing_allowance", 0.0)
+        contract_transportation = self._field_value(contract, "l10n_sa_transportation_allowance", 0.0)
+        contract_other = self._field_value(contract, "l10n_sa_other_allowances", 0.0)
+
+        basic = employee.eps_basic_salary or contract_basic
+        housing = employee.eps_housing_allowance or contract_housing
+        other = employee.eps_other_allowances or (contract_transportation + contract_other)
+        fixed_deductions = employee.eps_fixed_deductions or self._field_value(contract, "eps_fixed_deductions", 0.0)
+
+        gross = employee.eps_gross_salary or (basic + housing + other)
         if not gross:
             gross = basic
-        return {"contract": contract, "gross": gross, "basic": basic, "housing": housing, "other": transportation + other, "fixed_deductions": fixed_deductions}
+        return {"contract": contract, "gross": gross, "basic": basic, "housing": housing, "other": other, "fixed_deductions": fixed_deductions}
 
     def _employee_iqama(self, employee):
-        return (self._field_value(employee, "l10n_sa_employee_code", "") or "").strip()
+        return (employee.eps_iqama_number or self._field_value(employee, "l10n_sa_employee_code", "") or "").strip()
 
     def _employee_iban(self, employee):
         bank_account = employee.bank_account_id
-        return ((bank_account.acc_number if bank_account else "") or "").strip().replace(" ", "")
+        return (employee.eps_iban_number or ((bank_account.acc_number if bank_account else "") or "")).strip().replace(" ", "")
 
     def _employee_bank_code(self, employee):
         if employee.eps_bank_code:
@@ -191,7 +196,7 @@ class AttendancePayrollReport(models.Model):
             housing_allowance = salary["housing"]
             other_allowances = salary["other"]
             fixed_deductions = salary["fixed_deductions"]
-            target_hours = self.standard_hours or 240.0
+            target_hours = emp.eps_standard_monthly_hours or self.standard_hours or 240.0
             gross_hourly = gross / target_hours if gross and target_hours else 0.0
             basic_hourly = basic / target_hours if basic and target_hours else 0.0
             daily_rate = gross / 30.0 if gross else 0.0
@@ -339,18 +344,19 @@ class AttendancePayrollReportLine(models.Model):
     @api.depends('employee_id.eps_disable_deductions', 'employee_id.eps_disable_overtime', 'standard_hours', 'expected_days', 'days_worked', 'absent_days', 'adjusted_absent_days', 'total_hours', 'gross_salary', 'basic_salary', 'fixed_deductions', 'other_deductions', 'reimbursements')
     def _compute_amounts(self):
         for line in self:
-            gross_hourly = line.gross_salary / (line.standard_hours or 240.0) if line.gross_salary else 0.0
-            basic_hourly = line.basic_salary / (line.standard_hours or 240.0) if line.basic_salary else 0.0
+            hours_base = line.standard_hours or line.report_id.standard_hours or 240.0
+            gross_hourly = line.gross_salary / hours_base if line.gross_salary else 0.0
+            basic_hourly = line.basic_salary / hours_base if line.basic_salary else 0.0
             daily_rate = line.gross_salary / 30.0 if line.gross_salary else 0.0
             line.total_absent_days = max(0.0, (line.absent_days or 0.0) + (line.adjusted_absent_days or 0.0))
             days_for_calc = line.expected_days or 26.0
-            expected_hours_worked = (line.days_worked or 0.0) * ((line.standard_hours or 240.0) / days_for_calc)
+            expected_hours_worked = (line.days_worked or 0.0) * (hours_base / days_for_calc)
             hourly_shortfall = max(0.0, expected_hours_worked - (line.total_hours or 0.0))
             deductions_enabled = not line.employee_id.eps_disable_deductions
             overtime_enabled = not line.employee_id.eps_disable_overtime
             line.hourly_deduction = hourly_shortfall * gross_hourly if hourly_shortfall > 0.01 and deductions_enabled else 0.0
             line.absent_deduction = line.total_absent_days * daily_rate if deductions_enabled else 0.0
-            hour_diff = (line.total_hours or 0.0) - (line.standard_hours or 240.0)
+            hour_diff = (line.total_hours or 0.0) - hours_base
             line.hour_diff = hour_diff
             line.overtime_pay = hour_diff * (gross_hourly + (0.5 * basic_hourly)) if hour_diff > 0.01 and overtime_enabled else 0.0
             line.total_deductions = line.hourly_deduction + line.absent_deduction + (line.fixed_deductions or 0.0) + (line.other_deductions or 0.0)
