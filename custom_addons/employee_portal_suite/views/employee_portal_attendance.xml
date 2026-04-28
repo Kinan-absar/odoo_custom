@@ -225,6 +225,12 @@
                 color: #374151;
                 margin-bottom: 12px;
             }
+
+            .tz-label {
+                font-size: 11px;
+                opacity: 0.7;
+                margin-top: 6px;
+            }
             </style>
 
             <div class="mt-4">
@@ -261,7 +267,7 @@
                     </div>
                 </t>
 
-                <!-- STATUS HERO CARD -->
+                <!-- STATUS HERO CARD — checked in -->
                 <t t-if="is_checked_in">
                     <div class="attendance-hero checked-in">
                         <div class="status-icon">
@@ -270,9 +276,9 @@
                         <div class="status-title">You're Clocked In</div>
                         <div class="status-sub">
                             Since
-                            <t t-esc="open_attendance.check_in.strftime('%I:%M %p')"/>
+                            <t t-esc="open_checkin_local.strftime('%I:%M %p')"/>
                             ·
-                            <t t-esc="open_attendance.check_in.strftime('%d %b %Y')"/>
+                            <t t-esc="open_checkin_local.strftime('%d %b %Y')"/>
                         </div>
                         <form action="/my/employee/attendance/check_out" method="post">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -281,9 +287,14 @@
                                 Check Out
                             </button>
                         </form>
+                        <div class="tz-label">
+                            <i class="fa fa-globe"></i>
+                            <t t-esc="tz_name"/>
+                        </div>
                     </div>
                 </t>
 
+                <!-- STATUS HERO CARD — not checked in -->
                 <t t-if="not is_checked_in">
                     <div class="attendance-hero checked-out">
                         <div class="status-icon">
@@ -298,6 +309,10 @@
                                 Check In
                             </button>
                         </form>
+                        <div class="tz-label">
+                            <i class="fa fa-globe"></i>
+                            <t t-esc="tz_name"/>
+                        </div>
                     </div>
                 </t>
 
@@ -318,6 +333,7 @@
                 </div>
 
                 <!-- RECENT HISTORY -->
+                <!-- att is now a plain dict with pre-localized datetimes -->
                 <div class="attendance-history">
                     <div class="section-title">
                         <i class="fa fa-history me-1"></i> Recent Attendance
@@ -327,30 +343,30 @@
                         <t t-foreach="recent_attendances" t-as="att">
                             <div class="history-row">
 
-                                <div t-att-class="'history-icon ' + ('open' if not att.check_out else 'complete')">
-                                    <i t-att-class="'fa ' + ('fa-clock-o' if not att.check_out else 'fa-check')"></i>
+                                <div t-att-class="'history-icon ' + ('open' if att['is_open'] else 'complete')">
+                                    <i t-att-class="'fa ' + ('fa-clock-o' if att['is_open'] else 'fa-check')"></i>
                                 </div>
 
                                 <div class="history-content">
                                     <div class="history-date">
-                                        <t t-esc="att.check_in.strftime('%A, %d %b %Y')"/>
+                                        <t t-esc="att['check_in_local'].strftime('%A, %d %b %Y')"/>
                                     </div>
                                     <div class="history-times">
-                                        In: <t t-esc="att.check_in.strftime('%I:%M %p')"/>
-                                        <t t-if="att.check_out">
-                                            &amp;nbsp;·&amp;nbsp; Out: <t t-esc="att.check_out.strftime('%I:%M %p')"/>
+                                        In: <t t-esc="att['check_in_local'].strftime('%I:%M %p')"/>
+                                        <t t-if="not att['is_open']">
+                                            &#160;·&#160; Out: <t t-esc="att['check_out_local'].strftime('%I:%M %p')"/>
                                         </t>
-                                        <t t-if="not att.check_out">
-                                            &amp;nbsp;·&amp;nbsp; <span style="color:#D97706;">Still active</span>
+                                        <t t-if="att['is_open']">
+                                            &#160;·&#160; <span style="color:#D97706;">Still active</span>
                                         </t>
                                     </div>
                                 </div>
 
                                 <div class="history-hours">
-                                    <t t-if="att.check_out">
-                                        <t t-esc="'%dh %dm' % (int(att.worked_hours), int((att.worked_hours % 1) * 60))"/>
+                                    <t t-if="not att['is_open']">
+                                        <t t-esc="'%dh %dm' % (int(att['worked_hours']), int((att['worked_hours'] % 1) * 60))"/>
                                     </t>
-                                    <t t-if="not att.check_out">
+                                    <t t-if="att['is_open']">
                                         <span style="color:#D97706;">—</span>
                                     </t>
                                 </div>
