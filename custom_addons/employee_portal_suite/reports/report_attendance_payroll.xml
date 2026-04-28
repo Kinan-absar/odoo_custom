@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="action_report_attendance_payroll" model="ir.actions.report">
+        <field name="name">Payroll Oversight Report</field>
+        <field name="model">attendance.payroll.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">employee_portal_suite.report_attendance_payroll_doc</field>
+        <field name="report_file">employee_portal_suite.report_attendance_payroll_doc</field>
+        <field name="binding_model_id" ref="base.model_res_partner" eval="False"/>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <template id="report_attendance_payroll_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+
+                    <!-- Report Header -->
+                    <div style="margin-bottom:24px; border-bottom:2px solid #4f46e5; padding-bottom:12px;">
+                        <h2 style="margin:0; color:#1e1b4b; font-weight:900;">
+                            Payroll Oversight Report
+                        </h2>
+                        <p style="margin:4px 0 0; color:#6b7280; font-size:11px;">
+                            Period:
+                            <strong>
+                                <t t-esc="o.date_from.strftime('%d %b %Y')"/>
+                                –
+                                <t t-esc="o.date_to.strftime('%d %b %Y')"/>
+                            </strong>
+                            &amp;nbsp;|&amp;nbsp; Standard Hours:
+                            <strong><t t-esc="'%g hrs' % o.standard_hours"/></strong>
+                        </p>
+                    </div>
+
+                    <!-- Detail Table -->
+                    <table class="table table-sm table-bordered" style="font-size:9px; width:100%;">
+                        <thead style="background:#4f46e5; color:white;">
+                            <tr>
+                                <th>Employee</th>
+                                <th>Dept</th>
+                                <th class="text-center">Shifts</th>
+                                <th class="text-center">Days</th>
+                                <th class="text-center">Absent</th>
+                                <th class="text-right">Hours</th>
+                                <th class="text-right">Diff</th>
+                                <th class="text-right">Gross</th>
+                                <th class="text-right">Day Ded.</th>
+                                <th class="text-right">Hour Ded.</th>
+                                <th class="text-right">OT Pay</th>
+                                <th class="text-right">Other Ded.</th>
+                                <th class="text-right">Reimb.</th>
+                                <th class="text-right" style="background:#1e1b4b;">Net (SR)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="o.line_ids.sorted(key=lambda l: l.employee_id.name)" t-as="line">
+                                <tr t-att-style="'background:#fef2f2;' if line.diff_hours &lt; 0 else ('background:#f0fdf4;' if line.diff_hours &gt; 0.01 else '')">
+                                    <td style="font-weight:700;"><t t-esc="line.employee_id.name"/></td>
+                                    <td><t t-esc="line.department_id.name or '—'"/></td>
+                                    <td class="text-center"><t t-esc="line.shift_count"/></td>
+                                    <td class="text-center"><t t-esc="line.days_worked"/></td>
+                                    <td class="text-center">
+                                        <t t-esc="'%.1f' % (line.absent_days + line.absent_days_adj)"/>
+                                    </td>
+                                    <td class="text-right font-monospace">
+                                        <t t-esc="'%dh %02dm' % (int(line.worked_hours), int((line.worked_hours % 1)*60))"/>
+                                    </td>
+                                    <td class="text-right font-monospace"
+                                        t-att-style="'color:#dc2626;' if line.diff_hours &lt; 0 else 'color:#16a34a;'">
+                                        <t t-esc="('+' if line.diff_hours >= 0 else '') + '%dh %02dm' % (int(abs(line.diff_hours)), int((abs(line.diff_hours) % 1)*60))"/>
+                                    </td>
+                                    <td class="text-right"><t t-esc="'%,.0f' % line.gross_salary"/></td>
+                                    <td class="text-right" style="color:#dc2626;">
+                                        <t t-if="line.absent_deduction > 0">
+                                            -<t t-esc="'%,.0f' % line.absent_deduction"/>
+                                        </t>
+                                        <t t-if="line.absent_deduction &lt;= 0">—</t>
+                                    </td>
+                                    <td class="text-right" style="color:#dc2626;">
+                                        <t t-if="line.hourly_deduction > 0">
+                                            -<t t-esc="'%,.0f' % line.hourly_deduction"/>
+                                        </t>
+                                        <t t-if="line.hourly_deduction &lt;= 0">—</t>
+                                    </td>
+                                    <td class="text-right" style="color:#16a34a;">
+                                        <t t-if="line.overtime_pay > 0">
+                                            +<t t-esc="'%,.0f' % line.overtime_pay"/>
+                                        </t>
+                                        <t t-if="line.overtime_pay &lt;= 0">—</t>
+                                    </td>
+                                    <td class="text-right" style="color:#dc2626;">
+                                        <t t-if="line.other_deductions > 0">
+                                            -<t t-esc="'%,.0f' % line.other_deductions"/>
+                                        </t>
+                                        <t t-if="line.other_deductions &lt;= 0">—</t>
+                                    </td>
+                                    <td class="text-right" style="color:#16a34a;">
+                                        <t t-if="line.reimbursements > 0">
+                                            +<t t-esc="'%,.0f' % line.reimbursements"/>
+                                        </t>
+                                        <t t-if="line.reimbursements &lt;= 0">—</t>
+                                    </td>
+                                    <td class="text-right" style="font-weight:900; background:#f8fafc;">
+                                        <t t-esc="'%,.0f' % (line.gross_salary - line.total_deduction - (line.absent_days_adj * (line.gross_salary / 30.0)) + line.overtime_pay - line.other_deductions + line.reimbursements)"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                        <!-- Grand Totals Footer -->
+                        <tfoot style="background:#1e1b4b; color:white; font-weight:900; font-size:10px;">
+                            <tr>
+                                <td colspan="7" style="text-align:right; letter-spacing:1px; font-size:9px; text-transform:uppercase;">
+                                    Grand Totals
+                                </td>
+                                <td class="text-right"><t t-esc="'%,.0f' % o.total_gross"/></td>
+                                <td class="text-right"></td>
+                                <td class="text-right"></td>
+                                <td class="text-right" style="color:#86efac;">
+                                    +<t t-esc="'%,.0f' % o.total_overtime"/>
+                                </td>
+                                <td class="text-right"></td>
+                                <td class="text-right"></td>
+                                <td class="text-right" style="background:#312e81;">
+                                    SR <t t-esc="'%,.0f' % o.total_net"/>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <!-- Footer note -->
+                    <p style="margin-top:16px; font-size:9px; color:#9ca3af;">
+                        Generated on <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d %b %Y %H:%M')"/>
+                        &amp;nbsp;·&amp;nbsp; Standard hours used: <t t-esc="o.standard_hours"/> hrs/month
+                        &amp;nbsp;·&amp;nbsp; All amounts in SAR
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>
