@@ -90,7 +90,7 @@
                     <notebook attrs="{'invisible': [('line_ids', '=', [])]}">
                         <page string="Employee Detail">
                             <field name="line_ids" readonly="0">
-                                <tree editable="bottom" decoration-danger="diff_hours &lt; 0"
+                                <list editable="bottom" decoration-danger="diff_hours &lt; 0"
                                       decoration-success="diff_hours &gt; 0">
                                     <field name="employee_id" optional="show"/>
                                     <field name="department_id" optional="show"/>
@@ -119,7 +119,7 @@
                                     <field name="net_salary" optional="show"
                                            string="Net (SR)"
                                            decoration-danger="net_salary &lt; 0"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
