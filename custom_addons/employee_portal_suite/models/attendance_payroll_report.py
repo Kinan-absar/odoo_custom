@@ -86,19 +86,22 @@ class AttendancePayrollReport(models.Model):
 
     def _salary_components(self, employee):
         contract = self._active_contract(employee)
-        contract_basic = self._field_value(contract, "wage", 0.0)
+        contract_gross = self._field_value(contract, "wage", 0.0)
         contract_housing = self._field_value(contract, "l10n_sa_housing_allowance", 0.0)
         contract_transportation = self._field_value(contract, "l10n_sa_transportation_allowance", 0.0)
         contract_other = self._field_value(contract, "l10n_sa_other_allowances", 0.0)
+
+        contract_total_allowances = contract_housing + contract_transportation + contract_other
+        contract_basic = max(0.0, contract_gross - contract_total_allowances)
 
         basic = employee.eps_basic_salary or contract_basic
         housing = employee.eps_housing_allowance or contract_housing
         other = employee.eps_other_allowances or (contract_transportation + contract_other)
         fixed_deductions = employee.eps_fixed_deductions or self._field_value(contract, "eps_fixed_deductions", 0.0)
 
-        gross = employee.eps_gross_salary or (basic + housing + other)
+        gross = employee.eps_gross_salary or contract_gross
         if not gross:
-            gross = basic
+            gross = basic + housing + other
         return {"contract": contract, "gross": gross, "basic": basic, "housing": housing, "other": other, "fixed_deductions": fixed_deductions}
 
     def _employee_iqama(self, employee):
