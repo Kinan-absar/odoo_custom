@@ -360,10 +360,19 @@ class AttendancePayrollReportLine(models.Model):
             hourly_shortfall = max(0.0, expected_hours_worked - (line.total_hours or 0.0))
             deductions_enabled = not line.employee_id.eps_disable_deductions
             overtime_enabled = not line.employee_id.eps_disable_overtime            
+            # ✅ define FIRST
+            hour_diff = (line.total_hours or 0.0) - hours_base
+            line.hour_diff = hour_diff
+
+            # ✅ then use it
             if hour_diff > 0:
                 line.hourly_deduction = 0.0
             else:
-                line.hourly_deduction = hourly_shortfall * gross_hourly if hourly_shortfall > 0.01 and deductions_enabled else 0.0
+                line.hourly_deduction = (
+                    hourly_shortfall * gross_hourly
+                    if hourly_shortfall > 0.01 and deductions_enabled
+                    else 0.0
+                )
             line.absent_deduction = line.total_absent_days * daily_rate if deductions_enabled else 0.0
             hour_diff = (line.total_hours or 0.0) - hours_base
             line.hour_diff = hour_diff
