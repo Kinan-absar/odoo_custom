@@ -6,6 +6,26 @@ from odoo.exceptions import AccessError, MissingError, ValidationError
 
 class EmployeePortalMain(CustomerPortal):
 
+    def _model_exists(self, model_name):
+        """Return True only when an optional model is loaded in the current DB registry."""
+        return model_name in request.env
+
+    def _safe_has_group(self, xmlid):
+        """Avoid errors when an optional module group XMLID is not installed."""
+        if not request.env.ref(xmlid, raise_if_not_found=False):
+            return False
+        return request.env.user.has_group(xmlid)
+
+    def _construction_portal_available(self):
+        """Construction Contract Management is optional for Employee Portal Suite."""
+        required_models = (
+            'construction.contract',
+            'construction.ipc',
+            'construction.variation',
+            'construction.measurement',
+        )
+        return all(self._model_exists(model) for model in required_models)
+
     def _portal_visible_contract_domain(self):
         user = request.env.user
         if user:
@@ -13,9 +33,13 @@ class EmployeePortalMain(CustomerPortal):
         return [('portal_visibility_restricted', '=', False)]
 
     def _portal_visible_contracts(self):
+        if not self._model_exists('construction.contract'):
+            return request.env['project.project'].browse([])
         return request.env['construction.contract'].sudo().search(self._portal_visible_contract_domain())
 
     def _portal_visible_contract_ids(self):
+        if not self._model_exists('construction.contract'):
+            return []
         return self._portal_visible_contracts().ids
 
     # ---------------------------------------------------------
@@ -100,12 +124,12 @@ class EmployeePortalMain(CustomerPortal):
         variation_count = 0
         measurement_count = 0
         
-        if request.env['construction.contract'].check_access_rights('read', raise_exception=False):
+        if self._construction_portal_available() and request.env['construction.contract'].check_access_rights('read', raise_exception=False):
             contract_count = request.env['construction.contract'].search_count([])
             ipc_count = request.env['construction.ipc'].search_count([])
             variation_count = request.env['construction.variation'].search_count([])
             measurement_count = request.env['construction.measurement'].search_count([])
-        show_construction_cards = user.has_group('construction_contract_management.group_construction_portal')
+        show_construction_cards = self._construction_portal_available() and self._safe_has_group('construction_contract_management.group_construction_portal')
         
         # ------------------------------------------------------
         # 7. Recent Activities
@@ -170,7 +194,7 @@ class EmployeePortalMain(CustomerPortal):
     def portal_petty_cash_list(self, **kw):
         user = request.env.user
 
-        if not user.has_group("petty_cash_management.group_portal_petty_cash_user"):
+        if not self._safe_has_group("petty_cash_management.group_portal_petty_cash_user"):
             return request.redirect("/my")
 
         records = request.env["petty.cash"].search([
@@ -183,7 +207,7 @@ class EmployeePortalMain(CustomerPortal):
 
     @http.route("/my/employee/petty-cash/new", type="http", auth="user", website=True)
     def portal_petty_cash_new(self, **kw):
-        if not request.env.user.has_group("petty_cash_management.group_portal_petty_cash_user"):
+        if not request.env.self._safe_has_group("petty_cash_management.group_portal_petty_cash_user"):
             return request.redirect("/my")
 
         return request.render("employee_portal_suite.portal_petty_cash_new")
@@ -196,7 +220,7 @@ class EmployeePortalMain(CustomerPortal):
     def portal_construction_contracts(self, page=1, sortby=None, filterby=None, **kw):
         user = request.env.user
 
-        if not request.env['construction.contract'].check_access_rights('read', raise_exception=False):
+        if not self._model_exists('construction.contract') or not request.env['construction.contract'].check_access_rights('read', raise_exception=False):
             return request.redirect("/my/employee")
 
         values = self._prepare_portal_layout_values()
@@ -265,6 +289,8 @@ class EmployeePortalMain(CustomerPortal):
 
     @http.route(['/my/employee/contract/<int:contract_id>'], type='http', auth='user', website=True)
     def portal_construction_contract_detail(self, contract_id, access_token=None, report_type=None, download=False, **kw):
+        if not self._model_exists('construction.contract'):
+            return request.redirect('/my/employee')
         contract = self._portal_visible_contracts().filtered(lambda c: c.id == contract_id)[:1]
         if not contract:
             return request.redirect('/my/employee')
@@ -291,7 +317,7 @@ class EmployeePortalMain(CustomerPortal):
     def portal_construction_ipcs(self, page=1, sortby=None, filterby=None, **kw):
         user = request.env.user
 
-        if not request.env['construction.ipc'].check_access_rights('read', raise_exception=False):
+        if not self._model_exists('construction.ipc') or not request.env['construction.ipc'].check_access_rights('read', raise_exception=False):
             return request.redirect("/my/employee")
 
         values = self._prepare_portal_layout_values()
@@ -373,6 +399,8 @@ class EmployeePortalMain(CustomerPortal):
 
     @http.route(['/my/employee/ipc/<int:ipc_id>'], type='http', auth='user', website=True)
     def portal_construction_ipc_detail(self, ipc_id, access_token=None, report_type=None, download=False, **kw):
+        if not self._model_exists('construction.ipc'):
+            return request.redirect('/my/employee')
         try:
             ipc_sudo = self._document_check_access('construction.ipc', ipc_id, access_token)
         except (AccessError, MissingError):
@@ -397,7 +425,7 @@ class EmployeePortalMain(CustomerPortal):
     def portal_construction_variations(self, page=1, sortby=None, filterby=None, **kw):
         user = request.env.user
 
-        if not request.env['construction.variation'].check_access_rights('read', raise_exception=False):
+        if not self._model_exists('construction.variation') or not request.env['construction.variation'].check_access_rights('read', raise_exception=False):
             return request.redirect("/my/employee")
 
         values = self._prepare_portal_layout_values()
@@ -476,6 +504,8 @@ class EmployeePortalMain(CustomerPortal):
 
     @http.route(['/my/employee/variation/<int:variation_id>'], type='http', auth='user', website=True)
     def portal_employee_variation_detail(self, variation_id, access_token=None, report_type=None, download=False, **kw):
+        if not self._model_exists('construction.variation'):
+            return request.redirect('/my/employee')
         try:
             variation_sudo = self._document_check_access('construction.variation', variation_id, access_token)
         except (AccessError, MissingError):
@@ -512,6 +542,8 @@ class EmployeePortalMain(CustomerPortal):
     @http.route(['/my/employee/variation/<int:variation_id>/add_line'],
                 type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def portal_employee_variation_add_line(self, variation_id, **post):
+        if not self._model_exists('construction.variation'):
+            return request.redirect('/my/employee')
         try:
             allowed_contract_ids = self._portal_visible_contracts().ids
             variation = request.env['construction.variation'].search([
@@ -606,7 +638,7 @@ class EmployeePortalMain(CustomerPortal):
     def portal_construction_measurements(self, page=1, sortby=None, filterby=None, **kw):
         user = request.env.user
 
-        if not request.env['construction.measurement'].check_access_rights('read', raise_exception=False):
+        if not self._model_exists('construction.measurement') or not request.env['construction.measurement'].check_access_rights('read', raise_exception=False):
             return request.redirect("/my/employee")
 
         values = self._prepare_portal_layout_values()
@@ -689,6 +721,8 @@ class EmployeePortalMain(CustomerPortal):
     # ---------------------------------------------------------
     @http.route(['/my/employee/measurement/<int:measurement_id>'], type='http', auth='user', website=True)
     def portal_construction_measurement_detail(self, measurement_id, report_type=None, download=False, **kw):
+        if not self._model_exists('construction.measurement'):
+            return request.redirect('/my/employee')
         try:
             error = request.params.get('error')
             success = request.params.get('success')
@@ -762,6 +796,8 @@ class EmployeePortalMain(CustomerPortal):
     @http.route(['/my/employee/measurement/<int:measurement_id>/add_lines'], 
                 type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def portal_construction_measurement_add_lines(self, measurement_id, **post):
+        if not self._model_exists('construction.measurement'):
+            return request.redirect('/my/employee')
         try:
             allowed_contract_ids = self._portal_visible_contracts().ids
             measurement = request.env['construction.measurement'].search([
@@ -874,7 +910,7 @@ class EmployeePortalMain(CustomerPortal):
     def portal_construction_measurement_new(self, **post):
         user = request.env.user
 
-        if not request.env['construction.measurement'].check_access_rights('create', raise_exception=False):
+        if not self._model_exists('construction.measurement') or not request.env['construction.measurement'].check_access_rights('create', raise_exception=False):
             return request.redirect("/my/employee")
 
         def _measurement_new_values(error_message=None):
@@ -923,7 +959,7 @@ class EmployeePortalMain(CustomerPortal):
     def portal_construction_variation_new(self, **post):
         user = request.env.user
 
-        if not request.env['construction.variation'].check_access_rights('create', raise_exception=False):
+        if not self._model_exists('construction.variation') or not request.env['construction.variation'].check_access_rights('create', raise_exception=False):
             return request.redirect("/my/employee")
 
         def _variation_new_values(error_message=None):
