@@ -43,11 +43,6 @@
                             string="Reset to Draft"
                             type="object"
                             invisible="state == 'draft'"/>
-                    <button name="%(construction_contract_management.action_report_construction_retention_release)d"
-                            string="Print"
-                            type="action"
-                            class="btn-secondary"
-                            invisible="not id"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,posted,cancelled"/>
                 </header>
 
