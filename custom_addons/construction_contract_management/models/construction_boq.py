@@ -182,12 +182,14 @@ class ConstructionContractBoqLine(models.Model):
                 rec.contract_qty = 0.0
                 rec.unit_rate = 0.0
 
-    def _compute_display_name(self):
+    def name_get(self):
+        result = []
         for rec in self:
             parts = []
             if rec.item_code:
                 parts.append(rec.item_code)
             if rec.description:
-                parts.append(str(rec.description)[:50])
-            rec.display_name = ' - '.join(parts) if parts else f'BOQ {rec.id}'
-
+                parts.append(rec.description)
+            name = ' - '.join(parts) if parts else f'BOQ {rec.id}'
+            result.append((rec.id, name))
+        return result

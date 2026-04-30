@@ -9,7 +9,7 @@
                     <div class="oe_title">
                         <h1>Construction Dashboard</h1>
                     </div>
-                    <group string="Filters">
+                    <group string="Filters" col="4">
                         <group>
                             <field name="selected_contract_id" options="{'no_create': True}"/>
                         </group>
@@ -21,7 +21,7 @@
                                     invisible="not selected_contract_id"/>
                         </group>
                     </group>
-                    <group string="Key Metrics">
+                    <group string="Key Metrics" col="4">
                         <group>
                             <field name="active_contract_count" readonly="1"/>
                             <button name="action_open_active_contracts" string="Open Active Contracts" type="object" class="btn-link"/>
@@ -40,7 +40,7 @@
                         </group>
                     </group>
 
-                    <group string="Financial Summary">
+                    <group string="Financial Summary" col="4">
                         <group>
                             <field name="total_revised_amount" readonly="1"/>
                         </group>
@@ -55,7 +55,7 @@
                         </group>
                     </group>
 
-                    <group string="Balances">
+                    <group string="Balances" col="4">
                         <group>
                             <field name="total_advance_balance" readonly="1"/>
                         </group>
@@ -68,7 +68,7 @@
                         </group>
                     </group>
 
-                    <group string="Quick Actions">
+                    <group string="Quick Actions" col="5">
                         <group>
                             <button name="action_new_contract" string="New Contract" type="object" class="btn-primary"/>
                         </group>

@@ -117,12 +117,11 @@ class ConstructionIPC(models.Model):
             rec.gross_with_vat = gross_with_vat
             rec.net_amount = net
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('name', 'New') == 'New':
-                vals['name'] = self.env['ir.sequence'].next_by_code('construction.ipc') or 'New'
-        return super().create(vals_list)
+    @api.model
+    def create(self, vals):
+        if vals.get('name', 'New') == 'New':
+            vals['name'] = self.env['ir.sequence'].next_by_code('construction.ipc') or 'New'
+        return super().create(vals)
 
     def _recompute_contract_progress(self):
         for rec in self:

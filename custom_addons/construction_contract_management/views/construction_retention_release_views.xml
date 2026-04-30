@@ -43,6 +43,11 @@
                             string="Reset to Draft"
                             type="object"
                             invisible="state == 'draft'"/>
+                    <button name="%(construction_contract_management.action_report_construction_retention_release)d"
+                            string="Print"
+                            type="action"
+                            class="btn-secondary"
+                            invisible="not id"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,posted,cancelled"/>
                 </header>
 
@@ -105,7 +110,7 @@
                 <filter string="Draft" name="filter_draft" domain="[('state','=','draft')]"/>
                 <filter string="Posted" name="filter_posted" domain="[('state','=','posted')]"/>
 
-                <group string="Group By">
+                <group expand="0" string="Group By">
                     <filter string="Contract" name="group_contract" context="{'group_by': 'contract_id'}"/>
                     <filter string="Method" name="group_method" context="{'group_by': 'release_method'}"/>
                     <filter string="State" name="group_state" context="{'group_by': 'state'}"/>

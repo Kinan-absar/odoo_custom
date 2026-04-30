@@ -31,12 +31,11 @@ class ConstructionVariation(models.Model):
 
     currency_id = fields.Many2one(related='contract_id.currency_id', store=True)
     
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('name', 'New') == 'New':
-                vals['name'] = self.env['ir.sequence'].next_by_code('construction.variation') or 'New'
-        return super().create(vals_list)
+    @api.model
+    def create(self, vals):
+        if vals.get('name', 'New') == 'New':
+            vals['name'] = self.env['ir.sequence'].next_by_code('construction.variation') or 'New'
+        return super().create(vals)
 
     def _get_report_base_filename(self):
         self.ensure_one()

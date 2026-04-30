@@ -97,12 +97,11 @@ class ConstructionRetentionRelease(models.Model):
             else:
                 rec.payment_status = move.payment_state or 'not_paid'
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('name', 'New') == 'New':
-                vals['name'] = self.env['ir.sequence'].next_by_code('construction.retention.release') or 'New'
-        return super().create(vals_list)
+    @api.model
+    def create(self, vals):
+        if vals.get('name', 'New') == 'New':
+            vals['name'] = self.env['ir.sequence'].next_by_code('construction.retention.release') or 'New'
+        return super().create(vals)
 
     @api.constrains('amount')
     def _check_amount(self):

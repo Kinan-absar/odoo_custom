@@ -33,6 +33,7 @@
                     <button name="action_close" string="Close" type="object" invisible="state not in ['completed']"/>
                     <button name="action_cancel" string="Cancel" type="object" invisible="state in ['closed','cancelled']"/>
                     <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state == 'draft'"/>
+                    <button name="%(construction_contract_management.action_report_construction_contract)d" string="Print" type="action" class="btn-secondary" invisible="not id"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft,under_review,approved,active,completed,closed,cancelled"/>
                 </header>
@@ -290,7 +291,7 @@
         <field name="name">construction.contract.search</field>
         <field name="model">construction.contract</field>
         <field name="arch" type="xml">
-            <search string="Search Contracts">
+            <search>
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="partner_id"/>
@@ -302,7 +303,7 @@
                 <filter string="Active" name="filter_active" domain="[('state','=','active')]"/>
                 <filter string="Closed" name="filter_closed" domain="[('state','=','closed')]"/>
 
-                <group string="Group By">
+                <group expand="0" string="Group By">
                     <filter string="Project" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="Partner" name="group_partner" context="{'group_by': 'partner_id'}"/>
                     <filter string="Direction" name="group_direction" context="{'group_by': 'contract_direction'}"/>
