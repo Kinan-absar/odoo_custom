@@ -303,7 +303,7 @@
                 <filter string="Active" name="filter_active" domain="[('state','=','active')]"/>
                 <filter string="Closed" name="filter_closed" domain="[('state','=','closed')]"/>
 
-                <group expand="0" string="Group By">
+                <group string="Group By">
                     <filter string="Project" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="Partner" name="group_partner" context="{'group_by': 'partner_id'}"/>
                     <filter string="Direction" name="group_direction" context="{'group_by': 'contract_direction'}"/>

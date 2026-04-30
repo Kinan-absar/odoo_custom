@@ -102,7 +102,7 @@
                 <filter string="Draft" name="filter_draft" domain="[('state','=','draft')]"/>
                 <filter string="Approved" name="filter_approved" domain="[('state','=','approved')]"/>
 
-                <group expand="0" string="Group By">
+                <group string="Group By">
                     <filter string="Contract" name="group_contract" context="{'group_by': 'contract_id'}"/>
                     <filter string="Project" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="State" name="group_state" context="{'group_by': 'state'}"/>

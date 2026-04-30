@@ -106,7 +106,7 @@
                 <filter string="Draft" name="filter_draft" domain="[('state','=','draft')]"/>
                 <filter string="Posted" name="filter_posted" domain="[('state','=','posted')]"/>
 
-                <group expand="0" string="Group By">
+                <group string="Group By">
                     <filter string="Contract" name="group_contract" context="{'group_by': 'contract_id'}"/>
                     <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
                 </group>

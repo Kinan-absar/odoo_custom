@@ -149,7 +149,7 @@
                 <filter string="Approved" name="filter_approved" domain="[('state','=','approved')]"/>
                 <filter string="Done" name="filter_done" domain="[('state','=','done')]"/>
 
-                <group expand="0" string="Group By">
+                <group string="Group By">
                     <filter string="Contract" name="group_contract" context="{'group_by': 'contract_id'}"/>
                     <filter string="Direction" name="group_direction" context="{'group_by': 'contract_direction'}"/>
                     <filter string="State" name="group_state" context="{'group_by': 'state'}"/>

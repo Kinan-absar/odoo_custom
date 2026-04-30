@@ -176,11 +176,11 @@ class ConstructionDashboard(models.Model):
             'res_model': 'construction.contract',
             'view_mode': 'form',
             'target': 'current',
-            'context': {'form_view_initial_mode': 'edit'},
+            'context': {'view_mode': 'form'},
         }
 
     def action_new_ipc(self):
-        context = {'form_view_initial_mode': 'edit'}
+        context = {'view_mode': 'form'}
         if self.selected_contract_id:
             context['default_contract_id'] = self.selected_contract_id.id
 
@@ -194,7 +194,7 @@ class ConstructionDashboard(models.Model):
         }
 
     def action_new_variation(self):
-        context = {'form_view_initial_mode': 'edit'}
+        context = {'view_mode': 'form'}
         if self.selected_contract_id:
             context['default_contract_id'] = self.selected_contract_id.id
 
@@ -208,7 +208,7 @@ class ConstructionDashboard(models.Model):
         }
 
     def action_new_advance(self):
-        context = {'form_view_initial_mode': 'edit'}
+        context = {'view_mode': 'form'}
         if self.selected_contract_id:
             context['default_contract_id'] = self.selected_contract_id.id
 
@@ -222,7 +222,7 @@ class ConstructionDashboard(models.Model):
         }
 
     def action_new_retention_release(self):
-        context = {'form_view_initial_mode': 'edit'}
+        context = {'view_mode': 'form'}
         if self.selected_contract_id:
             context['default_contract_id'] = self.selected_contract_id.id
 
