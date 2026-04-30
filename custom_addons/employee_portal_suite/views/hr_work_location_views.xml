@@ -15,13 +15,13 @@
                 <group string="Geofencing">
                     <field name="geo_enforce"/>
                     <field name="geo_latitude"
-                           attrs="{'invisible': [('geo_enforce','=',False)]}"
+                           invisible="not geo_enforce"
                            placeholder="e.g. 24.7136"/>
                     <field name="geo_longitude"
-                           attrs="{'invisible': [('geo_enforce','=',False)]}"
+                           invisible="not geo_enforce"
                            placeholder="e.g. 46.6753"/>
                     <field name="geo_radius"
-                           attrs="{'invisible': [('geo_enforce','=',False)]}"
+                           invisible="not geo_enforce"
                            help="Employees must check in within this distance (metres) from the coordinates above."/>
                 </group>
 
