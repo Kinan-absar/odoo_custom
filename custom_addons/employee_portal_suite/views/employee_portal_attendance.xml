@@ -260,6 +260,20 @@
                         An error occurred. Please try again or contact HR.
                     </div>
                 </t>
+                <t t-if="error_message == 'geo_required'">
+                    <div class="portal-alert error">
+                        <i class="fa fa-map-marker"></i>
+                        Location access is required to check in at your assigned work location.
+                        Please allow location access in your browser and try again.
+                    </div>
+                </t>
+                <t t-if="error_message == 'geo_out_of_range'">
+                    <div class="portal-alert error">
+                        <i class="fa fa-map-marker"></i>
+                        You are outside the allowed check-in zone for your work location.
+                        Please move closer and try again.
+                    </div>
+                </t>
 
                 <!-- STATUS HERO CARD -->
                 <t t-if="is_checked_in">
@@ -286,18 +300,74 @@
 
                 <t t-if="not is_checked_in">
                     <div class="attendance-hero checked-out">
-                        <div class="status-icon">
+                        <div class="status-icon" id="geo-status-icon">
                             <i class="fa fa-user-o"></i>
                         </div>
                         <div class="status-title">Not Checked In</div>
-                        <div class="status-sub">Tap below to start your work session</div>
-                        <form action="/my/employee/attendance/check_in" method="post">
+                        <div class="status-sub" id="geo-status-sub">Tap below to start your work session</div>
+                        <!--
+                            geo_enforce is passed from the controller.
+                            Hidden inputs geo_lat / geo_lon are populated by JS before submit.
+                        -->
+                        <form id="checkin-form" action="/my/employee/attendance/check_in" method="post">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                            <button type="submit" class="attendance-btn btn-checkin">
+                            <input type="hidden" id="geo_lat" name="geo_lat" value=""/>
+                            <input type="hidden" id="geo_lon" name="geo_lon" value=""/>
+                            <button id="checkin-btn" type="button" class="attendance-btn btn-checkin"
+                                    t-att-data-geo-enforce="'1' if geo_enforce else '0'">
                                 <i class="fa fa-sign-in"></i>
                                 Check In
                             </button>
                         </form>
+
+                        <script>
+                        (function () {
+                            var btn = document.getElementById('checkin-btn');
+                            var form = document.getElementById('checkin-form');
+                            var latInput = document.getElementById('geo_lat');
+                            var lonInput = document.getElementById('geo_lon');
+                            var subText  = document.getElementById('geo-status-sub');
+                            var iconEl   = document.getElementById('geo-status-icon');
+
+                            var geoEnforce = btn.getAttribute('data-geo-enforce') === '1';
+
+                            btn.addEventListener('click', function () {
+                                if (!geoEnforce) {
+                                    // No geofencing required — submit directly
+                                    form.submit();
+                                    return;
+                                }
+
+                                if (!navigator.geolocation) {
+                                    subText.textContent = 'Geolocation is not supported by your browser.';
+                                    return;
+                                }
+
+                                btn.disabled = true;
+                                subText.textContent = 'Detecting your location…';
+                                iconEl.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+
+                                navigator.geolocation.getCurrentPosition(
+                                    function (position) {
+                                        latInput.value = position.coords.latitude;
+                                        lonInput.value = position.coords.longitude;
+                                        subText.textContent = 'Location found — submitting…';
+                                        form.submit();
+                                    },
+                                    function (err) {
+                                        btn.disabled = false;
+                                        iconEl.innerHTML = '<i class="fa fa-user-o"></i>';
+                                        if (err.code === err.PERMISSION_DENIED) {
+                                            subText.textContent = 'Location access denied. Please allow location and try again.';
+                                        } else {
+                                            subText.textContent = 'Could not get your location. Please try again.';
+                                        }
+                                    },
+                                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                                );
+                            });
+                        })();
+                        </script>
                     </div>
                 </t>
 

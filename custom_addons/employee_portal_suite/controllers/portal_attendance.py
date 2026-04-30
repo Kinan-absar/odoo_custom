@@ -54,6 +54,10 @@ class EmployeePortalAttendance(http.Controller):
             'success_message': success_message,
             'error_message': error_message,
             'page_name': 'attendance',
+            'geo_enforce': (
+                employee.work_location_id.geo_enforce
+                if employee.work_location_id else False
+            ),
         })
 
     # ---------------------------------------------------------
@@ -76,13 +80,32 @@ class EmployeePortalAttendance(http.Controller):
         if existing:
             return request.redirect('/my/employee/attendance?error=already_checked_in')
 
+        # ------------------------------------------------------------------
+        # Geolocation validation
+        # ------------------------------------------------------------------
+        work_location = employee.work_location_id
+        if work_location and work_location.geo_enforce:
+            try:
+                emp_lat = float(post.get('geo_lat', ''))
+                emp_lon = float(post.get('geo_lon', ''))
+            except (TypeError, ValueError):
+                # Browser did not send coordinates — reject if enforcement is on
+                return request.redirect('/my/employee/attendance?error=geo_required')
+
+            in_range, distance = work_location.check_employee_in_range(emp_lat, emp_lon)
+            if not in_range:
+                return request.redirect(
+                    '/my/employee/attendance?error=geo_out_of_range&distance=%d&radius=%d'
+                    % (distance, work_location.geo_radius)
+                )
+
         try:
             request.env['hr.attendance'].sudo().create({
                 'employee_id': employee.id,
                 'check_in': fields.Datetime.now(),
             })
             return request.redirect('/my/employee/attendance?success=checked_in')
-        except Exception as e:
+        except Exception:
             return request.redirect('/my/employee/attendance?error=check_in_failed')
 
     # ---------------------------------------------------------
