@@ -101,23 +101,20 @@
               name="Attendance"
               parent="menu_employee_portal_root"
               sequence="40"
-              groups="employee_portal_suite.group_employee_portal_hr,
-                      employee_portal_suite.group_employee_portal_admin"/>
+              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
 
     <menuitem id="menu_attendance_all"
               name="All Records"
               parent="menu_employee_portal_attendance_root"
               action="action_attendance_all_with_flag"
               sequence="10"
-              groups="employee_portal_suite.group_employee_portal_hr,
-                      employee_portal_suite.group_employee_portal_admin"/>
+              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
 
     <menuitem id="menu_attendance_outside_location"
               name="Outside Location Check-outs"
               parent="menu_employee_portal_attendance_root"
               action="action_attendance_outside_location"
               sequence="20"
-              groups="employee_portal_suite.group_employee_portal_hr,
-                      employee_portal_suite.group_employee_portal_admin"/>
+              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
 
 </odoo>
