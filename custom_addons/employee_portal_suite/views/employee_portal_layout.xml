@@ -1191,7 +1191,7 @@
 
                     <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
                         <a href="/my/employee/petty-cash" class="ep-link">Petty Cash</a>
-                        <a href="/my/employee/attendance" class="ep-link">Attendance</a>
+                        
                     </t>
                 </div>
 
