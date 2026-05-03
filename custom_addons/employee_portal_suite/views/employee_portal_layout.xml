@@ -1191,7 +1191,7 @@
 
                     <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
                         <a href="/my/employee/petty-cash" class="ep-link">Petty Cash</a>
-                        
+                        <a href="/my/employee/attendance" class="ep-link">Attendance</a>
                     </t>
                 </div>
 
@@ -1371,11 +1371,7 @@
                         </a>
                     </t>
                        </t>
-                    <a href="/my/employee/attendance"
-                        t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/attendance') else 'nav-btn'">
-                        <i class="fa fa-clock-o"></i>
-                        <span>Attendance</span>
-                    </a>
+                    
 
                     <a href="/web/session/logout" class="nav-btn">
                         <i class="fa fa-sign-out"></i>
