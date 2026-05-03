@@ -1139,61 +1139,66 @@
                  ================================================================ -->
             <nav class="ep-navbar">
                 <div class="ep-nav-links">
-                    <a href="/my" class="ep-link">Dashboard</a>
+                    <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                        <a href="/my" class="ep-link">Dashboard</a>
 
-                    <div class="ep-dropdown">
-                        <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests &#9662;</button>
-                        <div id="req-d" class="ep-dropdown-menu">
-                            <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
-                            <a href="/my/employee/requests/new" class="ep-sub-link text-primary">+ New Employee Request</a>
-                            <hr class="my-1"/>
-                            <a href="/my/employee/material" class="ep-sub-link">Material Requests</a>
-                            <a href="/my/employee/material/new" class="ep-sub-link text-primary">+ New Material Request</a>
-                        </div>
-                    </div>
-
-                    <t t-if="
-                        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                        or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                    ">
                         <div class="ep-dropdown">
-                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals &#9662;</button>
-                            <div id="app-d" class="ep-dropdown-menu">
-
-                                <t t-if="
-                                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                                ">
-                                    <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
-                                </t>
-
-                                <t t-if="
-                                    request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                                ">
-                                    <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
-                                </t>
-
+                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests &#9662;</button>
+                            <div id="req-d" class="ep-dropdown-menu">
+                                <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
+                                <a href="/my/employee/requests/new" class="ep-sub-link text-primary">+ New Employee Request</a>
+                                <hr class="my-1"/>
+                                <a href="/my/employee/material" class="ep-sub-link">Material Requests</a>
+                                <a href="/my/employee/material/new" class="ep-sub-link text-primary">+ New Material Request</a>
                             </div>
                         </div>
-                    </t>
 
-                    <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
-                        <a href="/my/employee/petty-cash" class="ep-link">Petty Cash</a>
+                        <t t-if="
+                            request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                        ">
+                            <div class="ep-dropdown">
+                                <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals &#9662;</button>
+                                <div id="app-d" class="ep-dropdown-menu">
+
+                                    <t t-if="
+                                        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                                    ">
+                                        <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
+                                    </t>
+
+                                    <t t-if="
+                                        request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                                        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                                        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                                        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                                    ">
+                                        <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
+                                    </t>
+
+                                </div>
+                            </div>
+                        </t>
+
+                        <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                            <a href="/my/employee/petty-cash" class="ep-link">Petty Cash</a>
+                            <a href="/my/employee/attendance" class="ep-link">Attendance</a>
+                        </t>
+                    </t><!-- /not attendance_only -->
+                    <t t-if="request.env.user.has_group('employee_portal_suite.group_attendance_only')">
                         <a href="/my/employee/attendance" class="ep-link">Attendance</a>
                     </t>
-                </div>
+                </div><!-- /ep-nav-links -->
 
                 <div class="d-flex align-items-center gap-3">
                     <div class="text-end d-none d-lg-block">
@@ -1260,8 +1265,12 @@
             <!-- ================================================================
                  MOBILE BOTTOM NAV
                  ================================================================ -->
+                 <t t-set="is_attendance_only"
+   t-value="request.env.user.has_group('employee_portal_suite.group_attendance_only')"/>
+
                  <t t-set="has_extended_nav"
    t-value="
+       not is_attendance_only and (
        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
@@ -1271,8 +1280,29 @@
        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
        or request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')
+       )
    "/>
 
+            <!-- Attendance-only: minimal nav with just Attendance + Exit -->
+            <t t-if="is_attendance_only">
+                <nav class="ep-bottom-nav mobile-only basic-nav">
+                    <div class="ep-nav-left">
+                        <a href="/my/employee/attendance"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/attendance') else 'nav-btn'">
+                            <i class="fa fa-clock-o"></i>
+                            <span>Attendance</span>
+                        </a>
+                    </div>
+                    <div class="ep-fab-center"></div>
+                    <div class="ep-nav-right">
+                        <a href="/web/session/logout" class="nav-btn">
+                            <i class="fa fa-sign-out"></i>
+                            <span>Exit</span>
+                        </a>
+                    </div>
+                </nav>
+            </t>
+            <t t-if="not is_attendance_only">
             <nav t-att-class="'ep-bottom-nav mobile-only ' + ('extended-nav' if has_extended_nav else 'basic-nav')">
 
                 <div class="ep-nav-left">
@@ -1381,6 +1411,7 @@
                 </div>
 
             </nav>
+            </t><!-- /not is_attendance_only -->
 
             <!-- ================================================================
                  FAB POPUP MENU

@@ -10,11 +10,13 @@
         <field name="model">hr.attendance</field>
         <field name="arch" type="xml">
             <list string="Attendance Records"
-                  decoration-danger="checkout_outside_location == True">
-                <field name="employee_id" string="Employee"/>
-                <field name="check_in" string="Check In"/>
-                <field name="check_out" string="Check Out"/>
-                <field name="worked_hours" string="Worked Hours" widget="float_time"/>
+                  decoration-danger="checkout_outside_location == True"
+                  decoration-warning="auto_checked_out == True">
+                <field name="employee_id"               string="Employee"/>
+                <field name="check_in"                  string="Check In"/>
+                <field name="check_out"                 string="Check Out"/>
+                <field name="worked_hours"              string="Worked Hours" widget="float_time"/>
+                <field name="auto_checked_out"          string="Auto Checkout"/>
                 <field name="checkout_outside_location" string="Outside Location"/>
             </list>
         </field>
@@ -31,6 +33,9 @@
                         <field name="check_in"/>
                         <field name="check_out"/>
                         <field name="worked_hours" widget="float_time"/>
+                        <field name="auto_checked_out"
+                               string="Automatically Checked Out"
+                               readonly="1"/>
                         <field name="checkout_outside_location"
                                string="Checked Out Outside Location"
                                readonly="1"/>
@@ -46,9 +51,17 @@
         <field name="arch" type="xml">
             <search string="Search Attendance">
                 <field name="employee_id" string="Employee"/>
+                <separator/>
+                <filter string="Auto Checked Out"
+                        name="auto_checked_out"
+                        domain="[('auto_checked_out','=',True)]"/>
                 <filter string="Outside Location Check-outs"
                         name="checkout_outside_location"
                         domain="[('checkout_outside_location','=',True)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Employee"      name="group_employee" context="{'group_by': 'employee_id'}"/>
+                    <filter string="Check-In Date" name="group_date"     context="{'group_by': 'check_in:day'}"/>
+                </group>
             </search>
         </field>
     </record>
@@ -68,6 +81,23 @@
         <field name="search_view_id" ref="view_hr_attendance_flag_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No attendance records found.</p>
+        </field>
+    </record>
+
+    <record id="action_attendance_auto_checkout" model="ir.actions.act_window">
+        <field name="name">Auto Checked-Out Records</field>
+        <field name="res_model">hr.attendance</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('auto_checked_out', '=', True)]</field>
+        <field name="view_ids" eval="[(5,0,0),
+            (0,0,{'view_mode':'list','view_id':ref('view_hr_attendance_flag_list')}),
+            (0,0,{'view_mode':'form','view_id':ref('view_hr_attendance_flag_form')}),
+        ]"/>
+        <field name="search_view_id" ref="view_hr_attendance_flag_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No auto check-outs recorded yet.</p>
+            <p>Records appear here when Odoo's automatic checkout closed an attendance
+               because the employee forgot to check out manually.</p>
         </field>
     </record>
 
@@ -104,11 +134,18 @@
               sequence="10"
               groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
 
+    <menuitem id="menu_attendance_auto_checkout"
+              name="Auto Checked-Out"
+              parent="menu_employee_portal_attendance_root"
+              action="action_attendance_auto_checkout"
+              sequence="20"
+              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
+
     <menuitem id="menu_attendance_outside_location"
               name="Outside Location Check-outs"
               parent="menu_employee_portal_attendance_root"
               action="action_attendance_outside_location"
-              sequence="20"
+              sequence="30"
               groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
 
 </odoo>

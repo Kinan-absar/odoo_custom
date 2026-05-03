@@ -19,6 +19,13 @@ def _tz_convert(dt, employee):
     return dt_utc.astimezone(tz)
 
 
+def _is_attendance_only():
+    """Return True when the current user is restricted to attendance only."""
+    return request.env.user.has_group(
+        'employee_portal_suite.group_attendance_only'
+    )
+
+
 class EmployeePortalAttendance(http.Controller):
 
     # ---------------------------------------------------------
@@ -168,7 +175,7 @@ class EmployeePortalAttendance(http.Controller):
             vals = {'check_out': fields.Datetime.now()}
             if outside_location:
                 vals['checkout_outside_location'] = True
-            open_attendance.sudo().write(vals)
+            open_attendance.sudo().with_context(from_portal_checkout=True).write(vals)
             if outside_location:
                 return request.redirect('/my/employee/attendance?success=checked_out&warn=outside_location')
             return request.redirect('/my/employee/attendance?success=checked_out')
