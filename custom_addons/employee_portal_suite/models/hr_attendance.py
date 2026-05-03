@@ -16,8 +16,9 @@ class HrAttendance(models.Model):
     )
 
     def _notify_hr_outside_checkout(self):
-        """Post an internal chatter note on each flagged attendance record.
-        Called by the base.automation server action — must not use import statements.
+        """Notify HR of outside-location check-outs.
+        Posts on the employee record (which always has mail.thread via hr.employee).
+        Called by the base.automation server action.
         """
         for record in self:
             employee = record.employee_id
@@ -38,13 +39,15 @@ class HrAttendance(models.Model):
                 '<strong>&#9888; Outside Location Check-out</strong><br/>'
                 'Employee <strong>%s</strong> checked out at <strong>%s</strong> '
                 'from a location <strong>outside their designated work location</strong>.<br/>'
-                'Please review this attendance record.'
+                'Please review their attendance record.'
                 '</p>'
             ) % (employee.name, time_str)
 
-            record.message_post(
-                body=body,
-                message_type='comment',
-                subtype_xmlid='mail.mt_note',
-                author_id=self.env.ref('base.user_root').partner_id.id,
-            )
+            # hr.employee always has mail.thread — post there so HR followers are notified
+            if employee:
+                employee.message_post(
+                    body=body,
+                    message_type='comment',
+                    subtype_xmlid='mail.mt_note',
+                    author_id=self.env.ref('base.user_root').partner_id.id,
+                )
