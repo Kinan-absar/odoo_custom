@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!--
+        Automated Action: notify HR when an attendance record is flagged
+        as a checkout outside the designated work location.
+
+        Trigger: on write, when checkout_outside_location becomes True.
+        Action : post an internal message on the hr.attendance record
+                 so HR users following the model (or the employee) are notified.
+    -->
+    <record id="action_server_outside_checkout_notify" model="ir.actions.server">
+        <field name="name">Post HR Notification — Outside Location Check-out</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="state">code</field>
+        <field name="code">records._notify_hr_outside_checkout()</field>
+    </record>
+
+    <!-- Automation trigger — fires when checkout_outside_location flips False → True -->
+    <record id="automation_outside_checkout_notify" model="base.automation">
+        <field name="name">Attendance: Notify HR on Outside-Location Check-out</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="trigger">on_write</field>
+        <field name="filter_pre_domain">[('checkout_outside_location', '=', False)]</field>
+        <field name="filter_domain">[('checkout_outside_location', '=', True)]</field>
+        <field name="action_server_ids" eval="[(4, ref('action_server_outside_checkout_notify'))]"/>
+        <field name="active">True</field>
+    </record>
+
+</odoo>

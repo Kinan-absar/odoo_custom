@@ -4,6 +4,21 @@ from datetime import datetime, timedelta
 import pytz
 
 
+def _tz_convert(dt, employee):
+    """Convert a naive UTC datetime (as stored by Odoo) to the employee's
+    local timezone and return a formatted string like '11:00 AM'."""
+    if not dt:
+        return ''
+    tz_name = (employee and employee.tz) or 'UTC'
+    try:
+        tz = pytz.timezone(tz_name)
+    except pytz.UnknownTimeZoneError:
+        tz = pytz.utc
+    # Odoo stores datetimes as naive UTC — make them timezone-aware then convert
+    dt_utc = pytz.utc.localize(dt)
+    return dt_utc.astimezone(tz)
+
+
 class EmployeePortalAttendance(http.Controller):
 
     # ---------------------------------------------------------
@@ -57,6 +72,11 @@ class EmployeePortalAttendance(http.Controller):
             'geo_enforce': (
                 employee.work_location_id.geo_enforce
                 if employee.work_location_id else False
+            ),
+            # Pass a callable so the XML template can convert UTC → local time.
+            # Usage in QWeb: t-esc="fmt_dt(att.check_in, '%I:%M %p')"
+            'fmt_dt': lambda dt, fmt='%I:%M %p': (
+                _tz_convert(dt, employee).strftime(fmt) if dt else ''
             ),
         })
 
@@ -127,10 +147,30 @@ class EmployeePortalAttendance(http.Controller):
         if not open_attendance:
             return request.redirect('/my/employee/attendance?error=not_checked_in')
 
+        # ------------------------------------------------------------------
+        # Geolocation check on check-out (non-blocking: always allow,
+        # but flag the record when the employee is outside the allowed zone)
+        # ------------------------------------------------------------------
+        outside_location = False
+        work_location = employee.work_location_id
+        if work_location and work_location.geo_enforce:
+            try:
+                emp_lat = float(post.get('geo_lat', ''))
+                emp_lon = float(post.get('geo_lon', ''))
+                in_range, _distance = work_location.check_employee_in_range(emp_lat, emp_lon)
+                if not in_range:
+                    outside_location = True
+            except (TypeError, ValueError):
+                # Coordinates not provided or invalid — flag conservatively
+                outside_location = True
+
         try:
-            open_attendance.sudo().write({
-                'check_out': fields.Datetime.now(),
-            })
+            vals = {'check_out': fields.Datetime.now()}
+            if outside_location:
+                vals['checkout_outside_location'] = True
+            open_attendance.sudo().write(vals)
+            if outside_location:
+                return request.redirect('/my/employee/attendance?success=checked_out&warn=outside_location')
             return request.redirect('/my/employee/attendance?success=checked_out')
         except Exception as e:
             return request.redirect('/my/employee/attendance?error=check_out_failed')
