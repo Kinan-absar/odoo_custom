@@ -19,6 +19,14 @@ def _tz_convert(dt, employee):
     return dt_utc.astimezone(tz)
 
 
+def _is_attendance_only():
+    """Return True when the current user belongs ONLY to the Attendance Only
+    group and should be restricted to /my/employee/attendance."""
+    return request.env.user.has_group(
+        'employee_portal_suite.group_attendance_only'
+    )
+
+
 class EmployeePortalAttendance(http.Controller):
 
     # ---------------------------------------------------------

@@ -47,6 +47,10 @@ class EmployeePortalMain(CustomerPortal):
     # ---------------------------------------------------------
     @http.route('/my/employee', type='http', auth='user', website=True)
     def employee_portal_dashboard(self, **kw):
+        # Attendance-only users go straight to the attendance page.
+        if request.env.user.has_group('employee_portal_suite.group_attendance_only'):
+            return request.redirect('/my/employee/attendance')
+
         user = request.env.user
         employee = user.employee_id
 

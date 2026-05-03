@@ -1,5 +1,6 @@
-from odoo import models, fields
+from odoo import models, fields, api
 import pytz
+from datetime import datetime, time as dt_time
 
 
 class HrAttendance(models.Model):

@@ -1139,6 +1139,7 @@
                  ================================================================ -->
             <nav class="ep-navbar">
                 <div class="ep-nav-links">
+                    <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
                     <a href="/my" class="ep-link">Dashboard</a>
 
                     <div class="ep-dropdown">
@@ -1195,6 +1196,11 @@
                     </t>
                 </div>
 
+                    </t><!-- /attendance-only guard -->
+                    <t t-if="request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                        <a href="/my/employee/attendance" class="ep-link">Attendance</a>
+                    </t>
+                </div><!-- /ep-nav-links attendance-only block -->
                 <div class="d-flex align-items-center gap-3">
                     <div class="text-end d-none d-lg-block">
                         <h6 class="mb-0 fw-bold" t-out="request.env.user.partner_id.name"/>
@@ -1260,8 +1266,12 @@
             <!-- ================================================================
                  MOBILE BOTTOM NAV
                  ================================================================ -->
+                 <t t-set="is_attendance_only"
+   t-value="request.env.user.has_group('employee_portal_suite.group_attendance_only')"/>
+
                  <t t-set="has_extended_nav"
    t-value="
+       not is_attendance_only and (
        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
@@ -1271,8 +1281,29 @@
        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
        or request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')
+       )
    "/>
 
+            <!-- Attendance-only mobile nav: just Attendance + Logout -->
+            <t t-if="is_attendance_only">
+                <nav class="ep-bottom-nav mobile-only basic-nav">
+                    <div class="ep-nav-left">
+                        <a href="/my/employee/attendance"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/attendance') else 'nav-btn'">
+                            <i class="fa fa-clock-o"></i>
+                            <span>Attendance</span>
+                        </a>
+                    </div>
+                    <div class="ep-fab-center"></div>
+                    <div class="ep-nav-right">
+                        <a href="/web/session/logout" class="nav-btn">
+                            <i class="fa fa-sign-out"></i>
+                            <span>Exit</span>
+                        </a>
+                    </div>
+                </nav>
+            </t>
+            <t t-if="not is_attendance_only">
             <nav t-att-class="'ep-bottom-nav mobile-only ' + ('extended-nav' if has_extended_nav else 'basic-nav')">
 
                 <div class="ep-nav-left">
@@ -1381,6 +1412,7 @@
                 </div>
 
             </nav>
+            </t><!-- /not is_attendance_only -->
 
             <!-- ================================================================
                  FAB POPUP MENU

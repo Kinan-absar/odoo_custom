@@ -69,5 +69,10 @@
          
     </record>
 
+    <!-- Attendance-only users: can check in/out via the portal, nothing else -->
+    <record id="group_attendance_only" model="res.groups">
+        <field name="name">Employee Portal: Attendance Only</field>
+    </record>
+
 
 </odoo>
