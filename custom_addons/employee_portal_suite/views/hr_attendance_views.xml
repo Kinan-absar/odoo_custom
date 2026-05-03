@@ -2,17 +2,17 @@
 <odoo>
 
     <!-- ============================================================
-         HR ATTENDANCE — Standalone views for HR/Admin
-         (no inherit_id to avoid version-specific XML ID deps)
+         HR ATTENDANCE — Standalone views for HR/Admin (Odoo 19)
     ============================================================ -->
 
     <record id="view_hr_attendance_flag_list" model="ir.ui.view">
         <field name="name">hr.attendance.flag.list</field>
         <field name="model">hr.attendance</field>
+        <field name="type">list</field>
         <field name="arch" type="xml">
             <list string="Attendance Records" decoration-danger="checkout_outside_location == True">
                 <field name="employee_id" string="Employee"/>
-                <field name="check_in"  string="Check In"/>
+                <field name="check_in" string="Check In"/>
                 <field name="check_out" string="Check Out"/>
                 <field name="worked_hours" string="Worked Hours" widget="float_time"/>
                 <field name="checkout_outside_location" string="Outside Location"/>
@@ -23,6 +23,7 @@
     <record id="view_hr_attendance_flag_form" model="ir.ui.view">
         <field name="name">hr.attendance.flag.form</field>
         <field name="model">hr.attendance</field>
+        <field name="type">form</field>
         <field name="arch" type="xml">
             <form string="Attendance">
                 <sheet>
@@ -36,7 +37,10 @@
                                readonly="1"/>
                     </group>
                 </sheet>
-                <chatter/>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
         </field>
     </record>
@@ -44,6 +48,7 @@
     <record id="view_hr_attendance_flag_search" model="ir.ui.view">
         <field name="name">hr.attendance.flag.search</field>
         <field name="model">hr.attendance</field>
+        <field name="type">search</field>
         <field name="arch" type="xml">
             <search string="Search Attendance">
                 <field name="employee_id" string="Employee"/>
