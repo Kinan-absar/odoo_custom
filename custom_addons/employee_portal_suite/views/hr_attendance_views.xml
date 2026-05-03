@@ -58,10 +58,9 @@
                 <filter string="Outside Location Check-outs"
                         name="checkout_outside_location"
                         domain="[('checkout_outside_location','=',True)]"/>
-                <group expand="0" string="Group By">
-                    <filter string="Employee"      name="group_employee" context="{'group_by': 'employee_id'}"/>
-                    <filter string="Check-In Date" name="group_date"     context="{'group_by': 'check_in:day'}"/>
-                </group>
+                <separator/>
+                <filter string="Group by Employee"      name="group_employee" context="{'group_by': 'employee_id'}"/>
+                <filter string="Group by Check-In Date" name="group_date"     context="{'group_by': 'check_in:day'}"/>
             </search>
         </field>
     </record>
