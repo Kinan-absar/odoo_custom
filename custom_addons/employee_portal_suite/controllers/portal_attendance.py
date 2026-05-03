@@ -176,7 +176,7 @@ class EmployeePortalAttendance(http.Controller):
             vals = {'check_out': fields.Datetime.now()}
             if outside_location:
                 vals['checkout_outside_location'] = True
-            open_attendance.sudo().write(vals)
+            open_attendance.sudo().with_context(from_portal_checkout=True).write(vals)
             if outside_location:
                 return request.redirect('/my/employee/attendance?success=checked_out&warn=outside_location')
             return request.redirect('/my/employee/attendance?success=checked_out')
