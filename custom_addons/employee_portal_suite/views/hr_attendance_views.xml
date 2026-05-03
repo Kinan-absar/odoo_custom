@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ============================================================
+         HR ATTENDANCE — Backend list view
+         Shows all attendances with the "Outside Location" flag
+         visible as a column and filterable.
+    ============================================================ -->
+
+    <record id="view_hr_attendance_outside_list" model="ir.ui.view">
+        <field name="name">hr.attendance.outside.list</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_list"/>
+        <field name="arch" type="xml">
+            <!-- Inject the flag column right after the worked_hours column -->
+            <field name="worked_hours" position="after">
+                <field name="checkout_outside_location"
+                       string="⚠ Outside Location"
+                       widget="boolean"
+                       optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Extend the attendance form to show the flag -->
+    <record id="view_hr_attendance_outside_form" model="ir.ui.view">
+        <field name="name">hr.attendance.outside.form</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form"/>
+        <field name="arch" type="xml">
+            <field name="check_out" position="after">
+                <field name="checkout_outside_location"
+                       string="Checked Out Outside Location"
+                       readonly="1"
+                       widget="boolean"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         Action — filtered to ONLY outside-location records
+         (used for the HR menu / notification link)
+    ============================================================ -->
+    <record id="action_attendance_outside_location" model="ir.actions.act_window">
+        <field name="name">Outside Location Check-outs</field>
+        <field name="res_model">hr.attendance</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('checkout_outside_location', '=', True)]</field>
+        <field name="context">{'search_default_checkout_outside_location': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No outside-location check-outs recorded yet.
+            </p>
+            <p>
+                This list shows every check-out where the employee was detected
+                outside their designated work location geofence.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action — all attendances (with outside filter available) -->
+    <record id="action_attendance_all_with_flag" model="ir.actions.act_window">
+        <field name="name">Attendance Records</field>
+        <field name="res_model">hr.attendance</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No attendance records found.</p>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         Search view extension — add "Outside Location" filter
+    ============================================================ -->
+    <record id="view_hr_attendance_outside_search" model="ir.ui.view">
+        <field name="name">hr.attendance.outside.search</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_filter"/>
+        <field name="arch" type="xml">
+            <filter name="check_out" position="after">
+                <separator/>
+                <filter string="⚠ Outside Location Check-outs"
+                        name="checkout_outside_location"
+                        domain="[('checkout_outside_location','=',True)]"
+                        help="Show only check-outs flagged as outside the work location"/>
+            </filter>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         Menu items under Employee Portal root
+    ============================================================ -->
+
+    <!-- Parent sub-menu grouping for Attendance -->
+    <menuitem id="menu_employee_portal_attendance_root"
+              name="Attendance"
+              parent="menu_employee_portal_root"
+              sequence="40"
+              groups="employee_portal_suite.group_employee_portal_hr,
+                      employee_portal_suite.group_employee_portal_admin"/>
+
+    <!-- All attendance records -->
+    <menuitem id="menu_attendance_all"
+              name="All Records"
+              parent="menu_employee_portal_attendance_root"
+              action="action_attendance_all_with_flag"
+              sequence="10"
+              groups="employee_portal_suite.group_employee_portal_hr,
+                      employee_portal_suite.group_employee_portal_admin"/>
+
+    <!-- Outside-location only — the flagged ones -->
+    <menuitem id="menu_attendance_outside_location"
+              name="⚠ Outside Location Check-outs"
+              parent="menu_employee_portal_attendance_root"
+              action="action_attendance_outside_location"
+              sequence="20"
+              groups="employee_portal_suite.group_employee_portal_hr,
+                      employee_portal_suite.group_employee_portal_admin"/>
+
+</odoo>

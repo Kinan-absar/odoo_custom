@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!--
+        Automated Action: notify HR when an attendance record is flagged
+        as a checkout outside the designated work location.
+
+        Trigger: on write, when checkout_outside_location becomes True.
+        Action : post an internal message on the hr.attendance record
+                 so HR users following the model (or the employee) are notified.
+    -->
+    <record id="automation_outside_checkout_notify" model="base.automation">
+        <field name="name">Attendance: Notify HR on Outside-Location Check-out</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="trigger">on_write</field>
+        <field name="filter_pre_domain">[('checkout_outside_location', '=', False)]</field>
+        <field name="filter_domain">[('checkout_outside_location', '=', True)]</field>
+        <field name="action_server_ids" eval="[(4, ref('action_server_outside_checkout_notify'))]"/>
+        <field name="active">True</field>
+    </record>
+
+    <record id="action_server_outside_checkout_notify" model="ir.actions.server">
+        <field name="name">Post HR Notification — Outside Location Check-out</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="state">code</field>
+        <field name="code">
+for record in records:
+    employee = record.employee_id
+    check_out_time = record.check_out
+    if check_out_time:
+        # Format in the employee's timezone if available
+        import pytz
+        tz_name = (employee and employee.tz) or 'UTC'
+        try:
+            tz = pytz.timezone(tz_name)
+        except Exception:
+            tz = pytz.utc
+        local_time = pytz.utc.localize(check_out_time).astimezone(tz)
+        time_str = local_time.strftime('%d %b %Y at %I:%M %p')
+    else:
+        time_str = 'unknown time'
+
+    body = (
+        '&lt;p&gt;'
+        '&lt;strong&gt;⚠ Outside Location Check-out&lt;/strong&gt;&lt;br/&gt;'
+        'Employee &lt;strong&gt;%s&lt;/strong&gt; checked out at &lt;strong&gt;%s&lt;/strong&gt; '
+        'from a location &lt;strong&gt;outside their designated work location&lt;/strong&gt;.&lt;br/&gt;'
+        'Please review this attendance record.'
+        '&lt;/p&gt;'
+    ) % (employee.name, time_str)
+
+    record.message_post(
+        body=body,
+        message_type='comment',
+        subtype_xmlid='mail.mt_note',
+        author_id=env.ref('base.user_root').partner_id.id,
+    )
+        </field>
+    </record>
+
+</odoo>

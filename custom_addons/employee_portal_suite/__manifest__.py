@@ -43,6 +43,7 @@
         'hr',
         'mail',
         'hr_attendance',
+        'base_automation',
         'website',
         'purchase',
         'sign',
@@ -61,6 +62,7 @@
 
         # --- DATA / SEQUENCES ---
         'data/request_sequence.xml',
+        'data/attendance_automation.xml',
         'views/hr_employee_user_domain.xml',
 
         # --------------------------------------------------
@@ -107,6 +109,7 @@
         'views/hr_work_location_views.xml',
         'views/project_project_views.xml',
         'views/employee_portal_attendance.xml',
+        'views/hr_attendance_views.xml',
 
     ],
 
