@@ -242,6 +242,12 @@
                         You have successfully checked out.
                     </div>
                 </t>
+                <t t-if="success_message == 'checked_out' and request.params.get('warn') == 'outside_location'">
+                    <div class="portal-alert error">
+                        <i class="fa fa-map-marker"></i>
+                        Note: Your check-out was recorded outside your designated work location and has been flagged for HR review.
+                    </div>
+                </t>
                 <t t-if="error_message == 'already_checked_in'">
                     <div class="portal-alert error">
                         <i class="fa fa-exclamation-circle"></i>
@@ -284,17 +290,50 @@
                         <div class="status-title">You're Clocked In</div>
                         <div class="status-sub">
                             Since
-                            <t t-esc="open_attendance.check_in.strftime('%I:%M %p')"/>
+                            <t t-esc="fmt_dt(open_attendance.check_in, '%I:%M %p')"/>
                             ·
-                            <t t-esc="open_attendance.check_in.strftime('%d %b %Y')"/>
+                            <t t-esc="fmt_dt(open_attendance.check_in, '%d %b %Y')"/>
                         </div>
-                        <form action="/my/employee/attendance/check_out" method="post">
+                        <form action="/my/employee/attendance/check_out" method="post" id="checkout-form">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                            <button type="submit" class="attendance-btn btn-checkout">
+                            <input type="hidden" id="checkout_geo_lat" name="geo_lat" value=""/>
+                            <input type="hidden" id="checkout_geo_lon" name="geo_lon" value=""/>
+                            <button type="button" id="checkout-btn" class="attendance-btn btn-checkout"
+                                    t-att-data-geo-enforce="'1' if geo_enforce else '0'">
                                 <i class="fa fa-sign-out"></i>
                                 Check Out
                             </button>
                         </form>
+                        <script>
+                        (function () {
+                            var btn   = document.getElementById('checkout-btn');
+                            var form  = document.getElementById('checkout-form');
+                            var latIn = document.getElementById('checkout_geo_lat');
+                            var lonIn = document.getElementById('checkout_geo_lon');
+                            var geoEnforce = btn.getAttribute('data-geo-enforce') === '1';
+
+                            btn.addEventListener('click', function () {
+                                if (!geoEnforce || !navigator.geolocation) {
+                                    form.submit();
+                                    return;
+                                }
+                                btn.disabled = true;
+                                navigator.geolocation.getCurrentPosition(
+                                    function (pos) {
+                                        latIn.value = pos.coords.latitude;
+                                        lonIn.value = pos.coords.longitude;
+                                        form.submit();
+                                    },
+                                    function () {
+                                        // Could not get location — submit anyway;
+                                        // server will flag as outside if coords missing
+                                        form.submit();
+                                    },
+                                    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+                                );
+                            });
+                        })();
+                        </script>
                     </div>
                 </t>
 
@@ -403,12 +442,22 @@
 
                                 <div class="history-content">
                                     <div class="history-date">
-                                        <t t-esc="att.check_in.strftime('%A, %d %b %Y')"/>
+                                        <t t-esc="fmt_dt(att.check_in, '%A, %d %b %Y')"/>
+                                        <!-- Outside-location checkout flag -->
+                                        <t t-if="att.checkout_outside_location">
+                                            <span style="
+                                                display:inline-flex;align-items:center;gap:4px;
+                                                background:rgba(239,68,68,0.12);color:#991B1B;
+                                                font-size:10px;font-weight:700;border-radius:6px;
+                                                padding:2px 7px;margin-left:6px;vertical-align:middle;">
+                                                <i class="fa fa-map-marker"></i> Outside Location
+                                            </span>
+                                        </t>
                                     </div>
                                     <div class="history-times">
-                                        In: <t t-esc="att.check_in.strftime('%I:%M %p')"/>
+                                        In: <t t-esc="fmt_dt(att.check_in, '%I:%M %p')"/>
                                         <t t-if="att.check_out">
-                                            &amp;nbsp;·&amp;nbsp; Out: <t t-esc="att.check_out.strftime('%I:%M %p')"/>
+                                            &amp;nbsp;·&amp;nbsp; Out: <t t-esc="fmt_dt(att.check_out, '%I:%M %p')"/>
                                         </t>
                                         <t t-if="not att.check_out">
                                             &amp;nbsp;·&amp;nbsp; <span style="color:#D97706;">Still active</span>
