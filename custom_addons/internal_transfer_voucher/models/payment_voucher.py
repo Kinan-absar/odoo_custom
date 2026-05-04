@@ -57,7 +57,7 @@ class AccountPaymentVoucher(models.Model):
     account_id = fields.Many2one(
         'account.account',
         string='Account',
-        domain="[('deprecated','=',False)]",
+        domain="[]",
     )
 
     # Used for journal-to-journal transfer mode
@@ -108,7 +108,7 @@ class AccountPaymentVoucher(models.Model):
     fee_account_id = fields.Many2one(
         'account.account',
         string="Bank Fee Account",
-        domain="[('deprecated','=',False)]"
+        domain="[]"
     )
 
     fee_tax_id = fields.Many2one(
@@ -425,13 +425,14 @@ class AccountPaymentVoucher(models.Model):
     # Sequence
     # -------------------------
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code(
-                'payment.voucher'
-            ) or 'New'
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'New') == 'New':
+                vals['name'] = self.env['ir.sequence'].next_by_code(
+                    'payment.voucher'
+                ) or 'New'
+        return super().create(vals_list)
 
     def write(self, vals):
         for rec in self:
@@ -441,7 +442,36 @@ class AccountPaymentVoucher(models.Model):
                     raise UserError(_("You cannot modify a posted payment voucher."))
         return super().write(vals)
 
+    @api.model
+    def retrieve_dashboard(self):
+        company_domain = [('company_id', 'in', self.env.companies.ids)]
 
+        def count(domain):
+            return self.search_count(company_domain + domain)
+
+        total_posted = self.read_group(
+            company_domain + [('state', '=', 'posted')],
+            ['amount:sum'],
+            []
+        )
+
+        total_posted_amount = total_posted[0].get('amount', 0.0) if total_posted else 0.0
+
+        return {
+            'all_count': count([]),
+            'draft_count': count([('state', '=', 'draft')]),
+            'posted_count': count([('state', '=', 'posted')]),
+            'cancel_count': count([('state', '=', 'cancel')]),
+
+            'cash_count': count([('payment_method', '=', 'cash')]),
+            'cheque_count': count([('payment_method', '=', 'cheque')]),
+            'bank_count': count([('payment_method', '=', 'bank_transfer')]),
+            'transfer_count': count([('payment_method', '=', 'journal_transfer')]),
+
+            'my_count': count([('create_uid', '=', self.env.uid)]),
+            'total_posted_amount': total_posted_amount,
+            'currency_symbol': self.env.company.currency_id.symbol or '',
+        }
 class AccountPaymentVoucherLine(models.Model):
     _name = 'account.payment.voucher.line'
     _description = 'Payment Voucher Destination Journal'

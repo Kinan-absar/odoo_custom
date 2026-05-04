@@ -1,56 +1,23 @@
 {
-    "name": "Internal Transfer & Payment Voucher",
-    "version": "18.0.1.1.0",
+    "name": "Payment & Receipt Voucher",
+    "version": "19.0.1.1.0",
     "category": "Accounting",
-    "summary": "Internal journal transfers, payment vouchers, and receipt vouchers for Odoo 18",
+    "summary": "Internal journal transfers, payment vouchers, and receipt vouchers for Odoo 19",
     "description": """
 Internal Transfers & Payment Vouchers
 =====================================
 
-This module restores and extends internal accounting operations that were simplified in Odoo 18.
-
 Key Features
 ------------
 • Internal Transfers between Bank and Cash journals
-• Single journal entry posting (Odoo-native accounting)
-• Optional bank fees with VAT support
 • Payment Vouchers — outbound payments (Cash / Cheque / Bank Transfer)
 • Receipt Vouchers — inbound receipts (Cash / Cheque / Bank Transfer)
+• Dashboard on Payment Voucher and Receipt Voucher list views
 • Clean workflow: Draft → Posted → Cancel
-• Printable, professional bilingual (English / Arabic) PDF vouchers
+• Printable bilingual (English / Arabic) PDF vouchers
 • Amount in words (Arabic)
-• Optional analytic distribution on expense and income accounts
-• Classic accounting-style layouts suitable for real-world printing
-
-Internal Transfer
------------------
-• Transfer between bank and cash journals
-• Optional bank fees and VAT
-• Automatic balancing journal entry
-• Printable internal transfer voucher
-
-Payment Voucher
----------------
-• Outgoing payments (Cash / Cheque / Bank Transfer)
-• Optional bank fees with VAT and analytic distribution
-• Optional analytic on expense/advance account
-• Accountant-friendly printable voucher (سند صرف)
-
-Receipt Voucher
----------------
-• Incoming receipts from customers (Cash / Cheque / Bank Transfer)
-• Optional analytic on income/receivable account
-• Accountant-friendly printable voucher (سند قبض)
-
-Designed For
-------------
-• Middle East accounting practices
-• Companies migrating from Odoo 16 / 17 to Odoo 18
-• Users who need classic vouchers instead of simplified UI flows
-
-No external dependencies.
-Fully compatible with Odoo 18.
-""",
+• Optional analytic distribution
+    """,
     "author": "Kinan",
     "website": "https://absar-alomran.com",
     "license": "OPL-1",
@@ -71,6 +38,16 @@ Fully compatible with Odoo 18.
         "views/receipt_voucher_views.xml",
         "views/menus.xml",
     ],
+    'assets': {
+        'web.assets_backend': [
+            'internal_transfer_voucher/static/src/js/payment_voucher_dashboard.js',
+            'internal_transfer_voucher/static/src/xml/payment_voucher_dashboard.xml',
+            'internal_transfer_voucher/static/src/scss/payment_voucher_dashboard.scss',
+            'internal_transfer_voucher/static/src/js/receipt_voucher_dashboard.js',
+            'internal_transfer_voucher/static/src/xml/receipt_voucher_dashboard.xml',
+            'internal_transfer_voucher/static/src/scss/receipt_voucher_dashboard.scss',
+        ],
+    },
     "images": ["images/main_screenshot.png"],
     "installable": True,
     "application": False,

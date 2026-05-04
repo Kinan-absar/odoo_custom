@@ -1,22 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+<record id="view_payment_voucher_search" model="ir.ui.view">
+    <field name="name">account.payment.voucher.search</field>
+    <field name="model">account.payment.voucher</field>
+    <field name="arch" type="xml">
+        <search>
+            <filter name="draft" string="Draft" domain="[('state','=','draft')]"/>
+            <filter name="posted" string="Posted" domain="[('state','=','posted')]"/>
+            <filter name="cancel" string="Cancelled" domain="[('state','=','cancel')]"/>
+            <separator/>
+            <filter name="cash" string="Cash" domain="[('payment_method','=','cash')]"/>
+            <filter name="cheque" string="Cheque" domain="[('payment_method','=','cheque')]"/>
+            <filter name="bank_transfer" string="Bank Transfer" domain="[('payment_method','=','bank_transfer')]"/>
+            <filter name="journal_transfer" string="Journal Transfer" domain="[('payment_method','=','journal_transfer')]"/>
+            <separator/>
+            <filter name="my_vouchers" string="My Vouchers" domain="[('create_uid','=',uid)]"/>
+        </search>
+    </field>
+</record>
 
-    <!-- LIST -->
-    <record id="view_payment_voucher_list" model="ir.ui.view">
-        <field name="name">account.payment.voucher.list</field>
-        <field name="model">account.payment.voucher</field>
-        <field name="arch" type="xml">
-            <list>
-                <field name="name"/>
-                <field name="date"/>
-                <field name="partner_id"/>
-                <field name="amount"/>
-                <field name="journal_id"/>
-                <field name="payment_method"/>
-                <field name="state"/>
-            </list>
-        </field>
-    </record>
+<record id="view_payment_voucher_list" model="ir.ui.view">
+    <field name="name">account.payment.voucher.list</field>
+    <field name="model">account.payment.voucher</field>
+    <field name="arch" type="xml">
+        <list js_class="payment_voucher_dashboard_list">
+            <field name="name"/>
+            <field name="date"/>
+            <field name="partner_id"/>
+            <field name="amount"/>
+            <field name="journal_id"/>
+            <field name="payment_method"/>
+            <field name="state"/>
+        </list>
+    </field>
+</record>
 
     <!-- FORM -->
     <record id="view_payment_voucher_form" model="ir.ui.view">

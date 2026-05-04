@@ -58,7 +58,7 @@ class AccountReceiptVoucher(models.Model):
     account_id = fields.Many2one(
         'account.account',
         string='Income / Receivable Account',
-        domain="[('deprecated','=',False)]",
+        domain="[]",
         required=True
     )
 
@@ -209,13 +209,14 @@ class AccountReceiptVoucher(models.Model):
     # Sequence
     # -------------------------
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code(
-                'receipt.voucher'
-            ) or 'New'
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'New') == 'New':
+                vals['name'] = self.env['ir.sequence'].next_by_code(
+                    'payment.voucher'
+                ) or 'New'
+        return super().create(vals_list)
 
     def write(self, vals):
         for rec in self:
@@ -224,3 +225,30 @@ class AccountReceiptVoucher(models.Model):
                 if not set(vals.keys()).issubset(allowed_fields):
                     raise UserError(_("You cannot modify a posted receipt voucher."))
         return super().write(vals)
+
+    @api.model
+    def retrieve_dashboard(self):
+        company_domain = [('company_id', 'in', self.env.companies.ids)]
+
+        def count(domain):
+            return self.search_count(company_domain + domain)
+
+        total_posted = self.read_group(
+            company_domain + [('state', '=', 'posted')],
+            ['amount:sum'],
+            []
+        )
+        total_posted_amount = total_posted[0].get('amount', 0.0) if total_posted else 0.0
+
+        return {
+            'all_count': count([]),
+            'draft_count': count([('state', '=', 'draft')]),
+            'posted_count': count([('state', '=', 'posted')]),
+            'cancel_count': count([('state', '=', 'cancel')]),
+            'cash_count': count([('receipt_method', '=', 'cash')]),
+            'cheque_count': count([('receipt_method', '=', 'cheque')]),
+            'bank_count': count([('receipt_method', '=', 'bank_transfer')]),
+            'my_count': count([('create_uid', '=', self.env.uid)]),
+            'total_posted_amount': total_posted_amount,
+            'currency_symbol': self.env.company.currency_id.symbol or '',
+        }

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="internal_transfer_voucher.ReceiptVoucherListView"
+       t-inherit="web.ListView"
+       t-inherit-mode="primary">
+
+        <xpath expr="//Layout/t[@t-component]" position="before">
+            <ReceiptVoucherDashboard onFilter.bind="onDashboardFilter"/>
+        </xpath>
+
+    </t>
+
+    <t t-name="internal_transfer_voucher.ReceiptVoucherDashboard">
+        <div class="o_receipt_voucher_dashboard px-3 py-3 border-bottom bg-view">
+            <div class="d-flex flex-wrap gap-2">
+
+                <div class="rv_card rv_card_neutral"
+                     t-on-click="() => this.filter([])">
+                    <div class="rv_value"><t t-esc="data.all_count"/></div>
+                    <div class="rv_label">All</div>
+                </div>
+
+                <div class="rv_card rv_card_blue"
+                     t-on-click="() => this.filter([['state','=','draft']])">
+                    <div class="rv_value"><t t-esc="data.draft_count"/></div>
+                    <div class="rv_label">Draft</div>
+                </div>
+
+                <div class="rv_card rv_card_green"
+                     t-on-click="() => this.filter([['state','=','posted']])">
+                    <div class="rv_value"><t t-esc="data.posted_count"/></div>
+                    <div class="rv_label">Posted</div>
+                </div>
+
+                <div class="rv_card rv_card_red"
+                     t-on-click="() => this.filter([['state','=','cancel']])">
+                    <div class="rv_value"><t t-esc="data.cancel_count"/></div>
+                    <div class="rv_label">Cancelled</div>
+                </div>
+
+                <div class="rv_card rv_card_neutral"
+                     t-on-click="() => this.filter([['receipt_method','=','cash']])">
+                    <div class="rv_value"><t t-esc="data.cash_count"/></div>
+                    <div class="rv_label">Cash</div>
+                </div>
+
+                <div class="rv_card rv_card_neutral"
+                     t-on-click="() => this.filter([['receipt_method','=','cheque']])">
+                    <div class="rv_value"><t t-esc="data.cheque_count"/></div>
+                    <div class="rv_label">Cheque</div>
+                </div>
+
+                <div class="rv_card rv_card_neutral"
+                     t-on-click="() => this.filter([['receipt_method','=','bank_transfer']])">
+                    <div class="rv_value"><t t-esc="data.bank_count"/></div>
+                    <div class="rv_label">Bank Transfer</div>
+                </div>
+
+                <div class="rv_card rv_card_purple"
+                     t-on-click="() => this.filter(myDomain)">
+                    <div class="rv_value"><t t-esc="data.my_count"/></div>
+                    <div class="rv_label">My Vouchers</div>
+                </div>
+
+                <div class="rv_card rv_card_total">
+                    <div class="rv_value">
+                        <t t-esc="formatAmount(data.total_posted_amount)"/>
+                        <t t-esc="data.currency_symbol"/>
+                    </div>
+                    <div class="rv_label">Total Posted</div>
+                </div>
+
+            </div>
+        </div>
+    </t>
+
+</templates>
