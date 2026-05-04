@@ -117,7 +117,14 @@
     #  ASSETS (JS)
     # ------------------------------------------------------------------
     'assets': {
-        
+        'web.assets_backend': [
+            'employee_portal_suite/static/src/js/material_request_dashboard.js',
+            'employee_portal_suite/static/src/js/employee_request_dashboard.js',
+            'employee_portal_suite/static/src/xml/material_request_dashboard.xml',
+            'employee_portal_suite/static/src/xml/employee_request_dashboard.xml',
+            'employee_portal_suite/static/src/scss/material_request_dashboard.scss',
+            'employee_portal_suite/static/src/scss/employee_request_dashboard.scss',
+        ],
     },
     'images': ['static/description/icon.png'],
 

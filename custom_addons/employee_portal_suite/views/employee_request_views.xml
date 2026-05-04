@@ -140,7 +140,7 @@
         <field name="name">employee.request.list</field>
         <field name="model">employee.request</field>
         <field name="arch" type="xml">
-            <list>
+            <list js_class="employee_request_dashboard_list">
                 <field name="name"/>
                 <field name="employee_id"/>
                 <field name="request_type"/>

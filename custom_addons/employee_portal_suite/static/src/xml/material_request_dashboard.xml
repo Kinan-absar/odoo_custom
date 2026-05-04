@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="employee_portal_suite.MaterialRequestListView"
+       t-inherit="web.ListView"
+       t-inherit-mode="primary">
+
+        <xpath expr="//Layout/t[@t-component]" position="before">
+            <MaterialRequestDashboard onFilter.bind="onDashboardFilter"/>
+        </xpath>
+
+    </t>
+
+    <t t-name="employee_portal_suite.MaterialRequestDashboard">
+        <div class="o_material_request_dashboard px-3 py-3 border-bottom bg-view">
+            <div class="d-flex flex-wrap gap-2">
+
+                <!-- ALL -->
+                <div class="mr_card mr_card_neutral"
+                     t-on-click="() => this.filter([])">
+                    <div class="mr_value"><t t-esc="data.all_count"/></div>
+                    <div class="mr_label">All</div>
+                </div>
+
+                <!-- DRAFT -->
+                <div class="mr_card mr_card_muted"
+                     t-on-click="() => this.filter([['state','=','draft']])">
+                    <div class="mr_value"><t t-esc="data.draft_count"/></div>
+                    <div class="mr_label">Draft</div>
+                </div>
+
+                <!-- PURCHASE REP -->
+                <div class="mr_card mr_card_blue"
+                     t-on-click="() => this.filter([['state','=','purchase']])">
+                    <div class="mr_value"><t t-esc="data.purchase_count"/></div>
+                    <div class="mr_label">Purchase Rep</div>
+                </div>
+
+                <!-- STORE MANAGER -->
+                <div class="mr_card mr_card_teal"
+                     t-on-click="() => this.filter([['state','=','store']])">
+                    <div class="mr_value"><t t-esc="data.store_count"/></div>
+                    <div class="mr_label">Store Manager</div>
+                </div>
+
+                <!-- PROJECT MANAGER -->
+                <div class="mr_card mr_card_orange"
+                     t-on-click="() => this.filter([['state','=','project_manager']])">
+                    <div class="mr_value"><t t-esc="data.project_manager_count"/></div>
+                    <div class="mr_label">Project Manager</div>
+                </div>
+
+                <!-- DIRECTOR -->
+                <div class="mr_card mr_card_indigo"
+                     t-on-click="() => this.filter([['state','=','director']])">
+                    <div class="mr_value"><t t-esc="data.director_count"/></div>
+                    <div class="mr_label">Director</div>
+                </div>
+
+                <!-- CEO -->
+                <div class="mr_card mr_card_purple"
+                     t-on-click="() => this.filter([['state','=','ceo']])">
+                    <div class="mr_value"><t t-esc="data.ceo_count"/></div>
+                    <div class="mr_label">CEO Approval</div>
+                </div>
+
+                <!-- APPROVED -->
+                <div class="mr_card mr_card_green"
+                     t-on-click="() => this.filter([['state','=','approved']])">
+                    <div class="mr_value"><t t-esc="data.approved_count"/></div>
+                    <div class="mr_label">Approved</div>
+                </div>
+
+                <!-- REJECTED -->
+                <div class="mr_card mr_card_red"
+                     t-on-click="() => this.filter([['state','=','rejected']])">
+                    <div class="mr_value"><t t-esc="data.rejected_count"/></div>
+                    <div class="mr_label">Rejected</div>
+                </div>
+
+                <!-- NEEDS CLARIFICATION -->
+                <div class="mr_card mr_card_warning"
+                     t-on-click="() => this.filter([['needs_clarification','=',true]])">
+                    <div class="mr_value"><t t-esc="data.clarification_count"/></div>
+                    <div class="mr_label">🚩 Clarification</div>
+                </div>
+
+                <!-- MY REQUESTS -->
+                <div class="mr_card mr_card_my"
+                     t-on-click="() => this.filter(myDomain)">
+                    <div class="mr_value"><t t-esc="data.my_count"/></div>
+                    <div class="mr_label">My Requests</div>
+                </div>
+
+            </div>
+        </div>
+    </t>
+
+</templates>

@@ -228,7 +228,7 @@
         <field name="name">material.request.list</field>
         <field name="model">material.request</field>
         <field name="arch" type="xml">
-            <list>
+            <list js_class="material_request_dashboard_list">
                 <field name="name"/>
                 <field name="employee_id"/>
                 <field name="request_date"/>

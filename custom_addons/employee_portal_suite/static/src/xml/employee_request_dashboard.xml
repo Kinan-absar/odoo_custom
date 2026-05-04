@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="employee_portal_suite.EmployeeRequestListView"
+       t-inherit="web.ListView"
+       t-inherit-mode="primary">
+
+        <xpath expr="//Layout/t[@t-component]" position="before">
+            <EmployeeRequestDashboard onFilter.bind="onDashboardFilter"/>
+        </xpath>
+
+    </t>
+
+    <t t-name="employee_portal_suite.EmployeeRequestDashboard">
+        <div class="o_employee_request_dashboard px-3 py-3 border-bottom bg-view">
+            <div class="d-flex flex-wrap gap-2">
+
+                <!-- ALL -->
+                <div class="er_card er_card_neutral"
+                     t-on-click="() => this.filter([])">
+                    <div class="er_value"><t t-esc="data.all_count"/></div>
+                    <div class="er_label">All</div>
+                </div>
+
+                <!-- DRAFT -->
+                <div class="er_card er_card_muted"
+                     t-on-click="() => this.filter([['state','=','draft']])">
+                    <div class="er_value"><t t-esc="data.draft_count"/></div>
+                    <div class="er_label">Draft</div>
+                </div>
+
+                <!-- MANAGER -->
+                <div class="er_card er_card_blue"
+                     t-on-click="() => this.filter([['state','=','manager']])">
+                    <div class="er_value"><t t-esc="data.manager_count"/></div>
+                    <div class="er_label">Manager Approval</div>
+                </div>
+
+                <!-- HR -->
+                <div class="er_card er_card_teal"
+                     t-on-click="() => this.filter([['state','=','hr']])">
+                    <div class="er_value"><t t-esc="data.hr_count"/></div>
+                    <div class="er_label">HR Approval</div>
+                </div>
+
+                <!-- FINANCE -->
+                <div class="er_card er_card_orange"
+                     t-on-click="() => this.filter([['state','=','finance']])">
+                    <div class="er_value"><t t-esc="data.finance_count"/></div>
+                    <div class="er_label">Finance Approval</div>
+                </div>
+
+                <!-- CEO -->
+                <div class="er_card er_card_purple"
+                     t-on-click="() => this.filter([['state','=','ceo']])">
+                    <div class="er_value"><t t-esc="data.ceo_count"/></div>
+                    <div class="er_label">CEO Approval</div>
+                </div>
+
+                <!-- APPROVED -->
+                <div class="er_card er_card_green"
+                     t-on-click="() => this.filter([['state','=','approved']])">
+                    <div class="er_value"><t t-esc="data.approved_count"/></div>
+                    <div class="er_label">Approved</div>
+                </div>
+
+                <!-- REJECTED -->
+                <div class="er_card er_card_red"
+                     t-on-click="() => this.filter([['state','=','rejected']])">
+                    <div class="er_value"><t t-esc="data.rejected_count"/></div>
+                    <div class="er_label">Rejected</div>
+                </div>
+
+                <!-- TYPE: LEAVE -->
+                <div class="er_card er_card_neutral"
+                     t-on-click="() => this.filter([['request_type','=','leave']])">
+                    <div class="er_value"><t t-esc="data.leave_count"/></div>
+                    <div class="er_label">Leave</div>
+                </div>
+
+                <!-- TYPE: ADVANCE -->
+                <div class="er_card er_card_neutral"
+                     t-on-click="() => this.filter([['request_type','=','advance']])">
+                    <div class="er_value"><t t-esc="data.advance_count"/></div>
+                    <div class="er_label">Salary Advance</div>
+                </div>
+
+                <!-- TYPE: OTHER -->
+                <div class="er_card er_card_neutral"
+                     t-on-click="() => this.filter([['request_type','=','other']])">
+                    <div class="er_value"><t t-esc="data.other_count"/></div>
+                    <div class="er_label">Other</div>
+                </div>
+
+                <!-- MY REQUESTS -->
+                <div class="er_card er_card_my"
+                     t-on-click="() => this.filter(myDomain)">
+                    <div class="er_value"><t t-esc="data.my_count"/></div>
+                    <div class="er_label">My Requests</div>
+                </div>
+
+            </div>
+        </div>
+    </t>
+
+</templates>

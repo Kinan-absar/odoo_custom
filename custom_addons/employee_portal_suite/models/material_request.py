@@ -631,6 +631,24 @@ class MaterialRequest(models.Model):
 
         return timeline
         
+    @api.model
+    def retrieve_dashboard(self):
+        domain = []
+        data = {
+            'all_count': self.search_count(domain),
+            'draft_count': self.search_count([('state', '=', 'draft')]),
+            'purchase_count': self.search_count([('state', '=', 'purchase')]),
+            'store_count': self.search_count([('state', '=', 'store')]),
+            'project_manager_count': self.search_count([('state', '=', 'project_manager')]),
+            'director_count': self.search_count([('state', '=', 'director')]),
+            'ceo_count': self.search_count([('state', '=', 'ceo')]),
+            'approved_count': self.search_count([('state', '=', 'approved')]),
+            'rejected_count': self.search_count([('state', '=', 'rejected')]),
+            'clarification_count': self.search_count([('needs_clarification', '=', True)]),
+            'my_count': self.search_count([('create_uid', '=', self.env.user.id)]),
+        }
+        return data
+
     def get_readable_status(self):
         mapping = {
             "purchase": "Pending Purchase",
