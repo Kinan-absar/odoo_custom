@@ -4,25 +4,13 @@
     <!-- ==============================================================
          CUSTOM AUTO-CHECKOUT CRON
          
-         Why this exists (instead of Odoo's built-in "Automatic Check-Out"):
+         Runs once daily at 20:50 UTC = 11:50 PM Riyadh time (UTC+3).
+         Closes any attendance record that is still open at end of day.
+         Applies to ALL employees regardless of work schedule.
          
-         Odoo's native cron (hr_attendance.hr_attendance_action_auto_checkout)
-         reads each employee's resource.calendar (work schedule) to decide
-         when to close open attendance records. It explicitly SKIPS employees
-         who have a flexible schedule or no schedule set at all.
-         
-         Portal-only employees typically have no shift schedule configured,
-         so they are completely invisible to the native cron and never get
-         automatically checked out.
-         
-         This cron uses a simple threshold approach: any attendance record
-         that has been open for more than N hours (default 10, configurable
-         via Settings > Technical > System Parameters:
-             employee_portal_suite.auto_checkout_hours)
-         is automatically closed, regardless of the employee's work schedule.
-         
-         The threshold is intentionally generous (10 hours) to avoid closing
-         records for employees who are legitimately still working a long shift.
+         The cron sets context key 'from_auto_checkout' = True so the
+         write() override in hr_attendance.py correctly flags the records
+         as auto_checked_out and posts a chatter notification.
     ================================================================ -->
     <record id="ir_cron_auto_checkout_open_attendances" model="ir.cron">
         <field name="name">Employee Portal: Auto Check-Out Open Attendances</field>
@@ -30,7 +18,8 @@
         <field name="state">code</field>
         <field name="code">model._auto_checkout_open_attendances()</field>
         <field name="interval_number">1</field>
-        <field name="interval_type">hours</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall">2025-01-01 20:50:00</field>
         <field name="active">True</field>
         <field name="user_id" ref="base.user_root"/>
         <field name="priority">5</field>

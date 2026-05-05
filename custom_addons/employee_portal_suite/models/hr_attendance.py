@@ -1,7 +1,8 @@
 from odoo import models, fields, api
+from markupsafe import Markup
 import pytz
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 _logger = logging.getLogger(__name__)
 
@@ -94,42 +95,45 @@ class HrAttendance(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def _auto_checkout_open_attendances(self):
-        """Close all attendance records that have been open longer than
-        the configured threshold (default 10 hours).
+        """Close all attendance records that are still open at end of day
+        in Riyadh time (Asia/Riyadh, UTC+3).
 
-        Called by the ir.cron defined in data/attendance_automation.xml.
-        Sets the context key 'from_auto_checkout' so the write() override
-        can correctly flag the records as auto_checked_out.
+        Called by the ir.cron defined in data/attendance_automation.xml
+        which is scheduled to run daily at 11:50 PM Riyadh time (20:50 UTC).
+
+        Any attendance record with no check_out and a check_in before
+        today's end-of-day in Riyadh time will be closed at the exact
+        moment the cron runs.
         """
-        # Read configurable threshold (hours)
-        param = self.env['ir.config_parameter'].sudo().get_param(
-            'employee_portal_suite.auto_checkout_hours', default='10'
+        riyadh_tz = pytz.timezone('Asia/Riyadh')
+
+        # Current time in Riyadh
+        now_utc = datetime.utcnow().replace(tzinfo=pytz.utc)
+        now_riyadh = now_utc.astimezone(riyadh_tz)
+
+        # End of today in Riyadh = 23:59:59 today
+        end_of_day_riyadh = now_riyadh.replace(
+            hour=23, minute=59, second=59, microsecond=999999
         )
-        try:
-            threshold_hours = float(param)
-        except (TypeError, ValueError):
-            threshold_hours = 10.0
 
-        cutoff = datetime.utcnow() - timedelta(hours=threshold_hours)
+        # Convert end-of-day back to UTC for the DB query (Odoo stores UTC)
+        end_of_day_utc = end_of_day_riyadh.astimezone(pytz.utc).replace(tzinfo=None)
 
-        # Find all open attendance records checked in before the cutoff
+        # Find all open attendance records checked in before end of today
         open_attendances = self.sudo().search([
             ('check_out', '=', False),
-            ('check_in', '<=', fields.Datetime.to_string(cutoff)),
+            ('check_in', '<=', fields.Datetime.to_string(end_of_day_utc)),
         ])
 
         if not open_attendances:
-            _logger.info(
-                "Auto-checkout cron: no open attendance records older than %.1f hours.",
-                threshold_hours
-            )
+            _logger.info("Auto-checkout cron: no open attendance records found.")
             return
 
         _logger.info(
             "Auto-checkout cron: closing %d open attendance record(s) "
-            "older than %.1f hours.",
+            "at end of day (Riyadh time: %s).",
             len(open_attendances),
-            threshold_hours,
+            now_riyadh.strftime('%Y-%m-%d %H:%M:%S %Z'),
         )
 
         checkout_time = fields.Datetime.now()
@@ -158,7 +162,7 @@ class HrAttendance(models.Model):
             else:
                 time_str = 'unknown time'
 
-            body = (
+            body = Markup(
                 '<p>'
                 '<strong>&#128337; Automatic Check-out</strong><br/>'
                 'Employee <strong>%s</strong> was <strong>automatically checked out</strong> '
@@ -193,7 +197,7 @@ class HrAttendance(models.Model):
             else:
                 time_str = 'unknown time'
 
-            body = (
+            body = Markup(
                 '<p>'
                 '<strong>&#9888; Outside Location Check-out</strong><br/>'
                 'Employee <strong>%s</strong> checked out at <strong>%s</strong> '
