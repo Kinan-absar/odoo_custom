@@ -1,5 +1,9 @@
 from odoo import models, fields, api
 import pytz
+import logging
+from datetime import datetime, timedelta
+
+_logger = logging.getLogger(__name__)
 
 
 class HrAttendance(models.Model):
@@ -19,70 +23,121 @@ class HrAttendance(models.Model):
     )
 
     # ------------------------------------------------------------------
-    # FIELD: flagged when Odoo's auto-checkout cron closed this record
+    # FIELD: flagged when our custom auto-checkout cron closed this record
     # ------------------------------------------------------------------
     auto_checked_out = fields.Boolean(
         string="Auto Checked Out",
         default=False,
         readonly=True,
         help=(
-            "Set to True when Odoo's automatic checkout closed this record "
-            "because the employee forgot to check out manually."
+            "Set to True when the system automatically checked out this employee "
+            "because they forgot to check out manually."
         ),
     )
 
     # ------------------------------------------------------------------
-    # WRITE OVERRIDE — detect system-triggered checkouts
+    # WRITE OVERRIDE — detect portal vs. system checkouts
+    #
+    # BUG FIX: The previous version had an inverted condition that caused
+    # the auto_checked_out flag to fire on portal checkouts and miss
+    # actual system-driven checkouts.
+    #
+    # NEW LOGIC (clear and explicit):
+    #   - Portal checkout  → context key 'from_portal_checkout' = True  → NOT auto
+    #   - Our cron method  → context key 'from_auto_checkout'   = True  → IS auto
+    #   - Any other write  → treated as manual/backend edit               → NOT auto
+    #
+    # We no longer rely on uid == SUPERUSER_ID since sudo() is used
+    # everywhere and makes that check unreliable.
     # ------------------------------------------------------------------
     def write(self, vals):
-        """Intercept every write on hr.attendance.
-
-        When check_out is being set on a record that currently has no
-        check_out AND the write is NOT coming from a human user (i.e. the
-        uid is the OdooBot / superuser, which is what Odoo's scheduled
-        actions run as), we mark the record as auto_checked_out and post
-        a chatter note so HR can see it immediately.
-
-        The portal check-in/out routes use sudo() which also runs as
-        superuser, so we distinguish them by checking whether check_out
-        was supplied by our own portal controller.  We do that via a
-        context key `from_portal_checkout` that the controller sets;
-        if that key is absent AND the user is the system user, we treat
-        the write as an automatic one.
-        """
-        # Identify records that are open (no check_out yet) and are now
-        # receiving a check_out value in this write.
         receiving_checkout = (
             'check_out' in vals
-            and vals['check_out']  # not being cleared
+            and vals['check_out']
         )
 
         auto_close_candidates = self.env['hr.attendance']
+
         if receiving_checkout:
-            # Only flag records that have no check_out yet
-            auto_close_candidates = self.filtered(lambda r: not r.check_out)
+            open_records = self.filtered(lambda r: not r.check_out)
 
-            # Determine whether this write is coming from the system scheduler.
-            # Portal controller sets context key 'from_portal_checkout' = True.
-            # Human backend users have uid != SUPERUSER_ID in normal sessions,
-            # but scheduled actions always run as SUPERUSER_ID without that key.
-            from_portal = self.env.context.get('from_portal_checkout', False)
-            from_superuser = self.env.uid == self.env.ref('base.user_root').id
+            # Only flag as auto-checked-out when our own cron sets this key
+            if self.env.context.get('from_auto_checkout'):
+                auto_close_candidates = open_records
 
-            if from_portal or not from_superuser:
-                # Normal portal checkout or a human admin editing the record —
-                # do not flag as auto checkout.
-                auto_close_candidates = self.env['hr.attendance']
-
-        # Perform the actual write first so check_out is stored
         result = super().write(vals)
 
-        # Now flag and notify for any auto-closed records
         if auto_close_candidates:
-            auto_close_candidates.sudo().write({'auto_checked_out': True})
+            # Use direct write to avoid triggering this override recursively
+            super(HrAttendance, auto_close_candidates).write({'auto_checked_out': True})
             auto_close_candidates._notify_hr_auto_checkout()
 
         return result
+
+    # ------------------------------------------------------------------
+    # CUSTOM AUTO-CHECKOUT CRON
+    #
+    # Why we need this instead of Odoo's built-in:
+    #   1. Odoo's native "Automatic Check-Out" cron SKIPS employees who
+    #      have a flexible working schedule or NO schedule set at all.
+    #      Portal-only employees typically fall into this category, so
+    #      they are completely ignored by the native cron.
+    #   2. The native cron reads the employee's work schedule to determine
+    #      an appropriate checkout time — it cannot handle employees who
+    #      don't have a resource.calendar set.
+    #   3. Our cron uses a simple configurable tolerance (hours) and
+    #      applies to ALL employees with an open attendance, regardless
+    #      of their work schedule.
+    #
+    # Configurable via ir.config_parameter:
+    #   employee_portal_suite.auto_checkout_hours  (default: 10)
+    # ------------------------------------------------------------------
+    @api.model
+    def _auto_checkout_open_attendances(self):
+        """Close all attendance records that have been open longer than
+        the configured threshold (default 10 hours).
+
+        Called by the ir.cron defined in data/attendance_automation.xml.
+        Sets the context key 'from_auto_checkout' so the write() override
+        can correctly flag the records as auto_checked_out.
+        """
+        # Read configurable threshold (hours)
+        param = self.env['ir.config_parameter'].sudo().get_param(
+            'employee_portal_suite.auto_checkout_hours', default='10'
+        )
+        try:
+            threshold_hours = float(param)
+        except (TypeError, ValueError):
+            threshold_hours = 10.0
+
+        cutoff = datetime.utcnow() - timedelta(hours=threshold_hours)
+
+        # Find all open attendance records checked in before the cutoff
+        open_attendances = self.sudo().search([
+            ('check_out', '=', False),
+            ('check_in', '<=', fields.Datetime.to_string(cutoff)),
+        ])
+
+        if not open_attendances:
+            _logger.info(
+                "Auto-checkout cron: no open attendance records older than %.1f hours.",
+                threshold_hours
+            )
+            return
+
+        _logger.info(
+            "Auto-checkout cron: closing %d open attendance record(s) "
+            "older than %.1f hours.",
+            len(open_attendances),
+            threshold_hours,
+        )
+
+        checkout_time = fields.Datetime.now()
+
+        # Write with our context key so write() flags them correctly
+        open_attendances.with_context(from_auto_checkout=True).write({
+            'check_out': checkout_time,
+        })
 
     # ------------------------------------------------------------------
     # NOTIFICATION: post chatter note on auto-closed records
@@ -123,16 +178,12 @@ class HrAttendance(models.Model):
     # NOTIFICATION: outside-location checkout (unchanged)
     # ------------------------------------------------------------------
     def _notify_hr_outside_checkout(self):
-        """Post an internal chatter note on each flagged attendance record.
-        Called by the base.automation server action.
-        """
+        """Post an internal chatter note on each flagged attendance record."""
         for record in self:
             employee = record.employee_id
             check_out_time = record.check_out
             if check_out_time:
-                tz_name = (employee and employee.tz) or 'UTC'\
-
-
+                tz_name = (employee and employee.tz) or 'UTC'
                 try:
                     tz = pytz.timezone(tz_name)
                 except Exception:
