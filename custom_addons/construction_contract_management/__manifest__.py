@@ -54,6 +54,11 @@ Construction Contract Management
         'views/portal/portal_employee_variation_templates.xml',
         'views/portal/portal_employee_measurement_templates.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'construction_contract_management/static/src/css/construction_dashboard.css',
+        ],
+    },
     'application': True,
     'installable': True,
 }
