@@ -74,5 +74,10 @@
         <field name="name">Employee Portal: Attendance Only</field>
     </record>
 
+    <!-- Controls which portal employees can access the attendance check-in/out page -->
+    <record id="group_portal_attendance_user" model="res.groups">
+        <field name="name">Employee Portal: Attendance User</field>
+    </record>
+
 
 </odoo>

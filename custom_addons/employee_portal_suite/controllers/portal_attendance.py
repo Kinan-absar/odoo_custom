@@ -35,6 +35,10 @@ class EmployeePortalAttendance(http.Controller):
     @http.route('/my/employee/attendance', type='http', auth='user', website=True)
     def portal_attendance(self, **kw):
         user = request.env.user
+
+        if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
+            return request.redirect('/my/employee')
+
         employee = user.employee_id
 
         if not employee:
@@ -94,6 +98,10 @@ class EmployeePortalAttendance(http.Controller):
     @http.route('/my/employee/attendance/check_in', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def portal_attendance_check_in(self, **post):
         user = request.env.user
+
+        if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
+            return request.redirect('/my/employee')
+
         employee = user.employee_id
 
         if not employee:
@@ -142,6 +150,10 @@ class EmployeePortalAttendance(http.Controller):
     @http.route('/my/employee/attendance/check_out', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def portal_attendance_check_out(self, **post):
         user = request.env.user
+
+        if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
+            return request.redirect('/my/employee')
+
         employee = user.employee_id
 
         if not employee:
