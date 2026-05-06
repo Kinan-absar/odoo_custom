@@ -1,17 +1,35 @@
-/* ═══════════════════════════════════════════════════════════
-   Construction Contract Management — Dashboard Styles
-   ═══════════════════════════════════════════════════════════ */
+/* ==========================================================
+   Construction Contract Management - Professional Dashboard
+   Neutral executive design for Odoo backend
+   ========================================================== */
 
-/* ── Reset & Base ── */
+:root {
+    --ccm-bg: #f4f5f7;
+    --ccm-surface: #ffffff;
+    --ccm-surface-soft: #f8fafc;
+    --ccm-border: #e2e5ea;
+    --ccm-border-strong: #d1d5db;
+    --ccm-text: #182032;
+    --ccm-muted: #687386;
+    --ccm-primary: #182032;
+    --ccm-primary-2: #263149;
+    --ccm-accent: #9c7a36;
+    --ccm-accent-soft: #f3efe6;
+    --ccm-success: #2f6f5e;
+    --ccm-shadow: 0 4px 16px rgba(24, 32, 50, 0.06);
+    --ccm-shadow-hover: 0 8px 24px rgba(24, 32, 50, 0.10);
+}
+
+/* Base */
 .o_construction_dashboard .o_form_sheet_bg {
-    background: #f0f2f7;
+    background: var(--ccm-bg);
     min-height: 100vh;
 }
 
 .o_construction_dashboard .o_form_sheet {
     background: transparent;
     box-shadow: none;
-    padding: 0;
+    padding: 24px;
     max-width: 100%;
 }
 
@@ -20,29 +38,17 @@
     display: none;
 }
 
-/* ── Dashboard Header ── */
+/* Header */
 .ccm_dashboard_header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: linear-gradient(135deg, #1a1f3a 0%, #2d3561 50%, #1e2d5a 100%);
+    gap: 24px;
+    background: linear-gradient(135deg, var(--ccm-primary), var(--ccm-primary-2));
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 28px;
-    box-shadow: 0 8px 32px rgba(29, 35, 90, 0.3);
-    position: relative;
-    overflow: hidden;
-}
-
-.ccm_dashboard_header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(99, 132, 255, 0.15) 0%, transparent 70%);
-    pointer-events: none;
+    box-shadow: 0 14px 34px rgba(24, 32, 50, 0.18);
 }
 
 .ccm_header_left {
@@ -51,84 +57,102 @@
     gap: 16px;
 }
 
-.ccm_header_icon {
-    font-size: 40px;
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+.ccm_header_mark {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1px;
 }
 
 .ccm_header_title {
-    font-size: 28px;
-    font-weight: 700;
+    font-size: 27px;
+    font-weight: 750;
     color: #ffffff;
     margin: 0;
-    letter-spacing: -0.5px;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    letter-spacing: -0.4px;
 }
 
 .ccm_header_subtitle {
     font-size: 13px;
-    color: rgba(255,255,255,0.55);
-    margin: 4px 0 0;
-    font-weight: 400;
+    color: rgba(255, 255, 255, 0.66);
+    margin: 5px 0 0;
 }
 
 .ccm_contract_filter_pill {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 12px;
+    min-width: 300px;
     padding: 12px 16px;
-    backdrop-filter: blur(10px);
-    min-width: 260px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .ccm_filter_label {
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 800;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.58);
 }
 
 .ccm_contract_filter_pill .ccm_filter_field .o_field_many2one input,
 .ccm_contract_filter_pill .ccm_filter_field .o_field_widget input {
     background: transparent;
     border: none;
-    color: white;
+    color: #ffffff;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
-/* ── Section Labels ── */
+/* Section Headers */
+.ccm_section_header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin: 28px 0 12px;
+}
+
 .ccm_section_label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.9px;
     text-transform: uppercase;
-    color: #6b7280;
-    margin: 0 0 12px;
-    padding-left: 4px;
+    color: var(--ccm-text);
 }
 
-/* ── KPI Cards Row ── */
+.ccm_section_hint {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--ccm-muted);
+}
+
+/* KPI Cards */
 .ccm_kpi_row {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 28px;
 }
 
 .ccm_kpi_card {
-    background: #ffffff;
-    border-radius: 14px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    border: 1px solid rgba(0,0,0,0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
     overflow: hidden;
+    background: var(--ccm-surface);
+    border: 1px solid var(--ccm-border);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: var(--ccm-shadow);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
 .ccm_kpi_card::before {
@@ -137,308 +161,265 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    border-radius: 14px 14px 0 0;
+    height: 3px;
+    background: var(--ccm-accent);
 }
 
 .ccm_kpi_card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+    box-shadow: var(--ccm-shadow-hover);
+    border-color: var(--ccm-border-strong);
 }
-
-/* Card Color Themes */
-.ccm_card_blue::before  { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
-.ccm_card_amber::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-.ccm_card_purple::before{ background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
-.ccm_card_teal::before  { background: linear-gradient(90deg, #14b8a6, #2dd4bf); }
-.ccm_card_rose::before  { background: linear-gradient(90deg, #f43f5e, #fb7185); }
 
 .ccm_card_top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
 }
-
-.ccm_card_icon_wrap {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-}
-
-.ccm_icon_blue   { background: #eff6ff; }
-.ccm_icon_amber  { background: #fffbeb; }
-.ccm_icon_purple { background: #f5f3ff; }
-.ccm_icon_teal   { background: #f0fdfa; }
-.ccm_icon_rose   { background: #fff1f2; }
 
 .ccm_card_badge {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: var(--ccm-surface-soft);
+    border: 1px solid var(--ccm-border);
+    color: var(--ccm-muted);
     font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.8px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
     text-transform: uppercase;
-    padding: 3px 8px;
-    border-radius: 20px;
 }
 
-.ccm_badge_blue   { background: #dbeafe; color: #1d4ed8; }
-.ccm_badge_amber  { background: #fef3c7; color: #d97706; }
-.ccm_badge_purple { background: #ede9fe; color: #7c3aed; }
-.ccm_badge_teal   { background: #ccfbf1; color: #0d9488; }
-.ccm_badge_rose   { background: #ffe4e6; color: #e11d48; }
+.ccm_card_indicator {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--ccm-accent);
+    box-shadow: 0 0 0 4px var(--ccm-accent-soft);
+}
 
-.ccm_card_value {
-    font-size: 40px;
+.ccm_status_active .ccm_card_indicator {
+    background: var(--ccm-success);
+    box-shadow: 0 0 0 4px rgba(47, 111, 94, 0.12);
+}
+
+.ccm_card_value,
+.ccm_card_value .o_field_integer {
+    color: var(--ccm-text);
+    font-size: 39px;
     font-weight: 800;
-    color: #111827;
     line-height: 1;
-    margin-bottom: 6px;
-    font-family: 'Segoe UI', system-ui, sans-serif;
     letter-spacing: -1px;
 }
 
-.ccm_card_value .o_field_integer {
-    font-size: 40px;
-    font-weight: 800;
-    color: #111827;
-}
-
 .ccm_card_label {
-    font-size: 12px;
-    color: #6b7280;
-    font-weight: 500;
-    margin-bottom: 14px;
+    margin-top: 8px;
+    margin-bottom: 16px;
+    color: var(--ccm-muted);
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .ccm_card_link {
-    background: none;
+    background: transparent;
     border: none;
     padding: 0;
+    color: var(--ccm-accent);
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 800;
     cursor: pointer;
-    transition: opacity 0.15s;
     text-decoration: none;
 }
 
-.ccm_card_blue   .ccm_card_link { color: #3b82f6; }
-.ccm_card_amber  .ccm_card_link { color: #f59e0b; }
-.ccm_card_purple .ccm_card_link { color: #8b5cf6; }
-.ccm_card_teal   .ccm_card_link { color: #14b8a6; }
-.ccm_card_rose   .ccm_card_link { color: #f43f5e; }
+.ccm_card_link:hover {
+    color: var(--ccm-primary);
+}
 
-.ccm_card_link:hover { opacity: 0.7; }
-
-/* ── Financial Cards ── */
-.ccm_financial_row {
+/* Financial Overview */
+.ccm_financial_panel {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: 1.3fr repeat(3, 1fr);
     gap: 16px;
     margin-bottom: 28px;
 }
 
 .ccm_finance_card {
+    min-height: 126px;
+    background: var(--ccm-surface);
+    border: 1px solid var(--ccm-border);
     border-radius: 14px;
-    padding: 22px 24px 16px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-    min-height: 130px;
+    padding: 22px 24px;
+    box-shadow: var(--ccm-shadow);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    transition: transform 0.2s ease;
+    justify-content: center;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
 .ccm_finance_card:hover {
     transform: translateY(-2px);
+    box-shadow: var(--ccm-shadow-hover);
+    border-color: var(--ccm-border-strong);
 }
 
-.ccm_finance_dark    { background: linear-gradient(135deg, #1e2d5a, #2d3a6e); }
-.ccm_finance_green   { background: linear-gradient(135deg, #065f46, #047857); }
-.ccm_finance_blue    { background: linear-gradient(135deg, #1e3a5f, #1d4ed8); }
-.ccm_finance_emerald { background: linear-gradient(135deg, #064e3b, #059669); }
-
-.ccm_finance_icon {
-    font-size: 28px;
-    margin-bottom: 8px;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+.ccm_finance_primary {
+    background: linear-gradient(135deg, var(--ccm-primary), var(--ccm-primary-2));
+    border-color: transparent;
 }
 
 .ccm_finance_label {
+    color: var(--ccm-muted);
     font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    color: rgba(255,255,255,0.65);
+    font-weight: 800;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    letter-spacing: 0.7px;
+    margin-bottom: 10px;
 }
 
-.ccm_finance_value {
-    font-size: 22px;
+.ccm_finance_value,
+.ccm_finance_value .o_field_monetary,
+.ccm_finance_value .o_field_monetary span {
+    color: var(--ccm-text) !important;
+    font-size: 24px;
     font-weight: 800;
-    color: #ffffff;
     letter-spacing: -0.5px;
 }
 
-.ccm_finance_value .o_field_monetary,
-.ccm_finance_value .o_field_monetary span {
-    font-size: 22px;
-    font-weight: 800;
+.ccm_finance_primary .ccm_finance_label {
+    color: rgba(255, 255, 255, 0.68);
+}
+
+.ccm_finance_primary .ccm_finance_value,
+.ccm_finance_primary .ccm_finance_value .o_field_monetary,
+.ccm_finance_primary .ccm_finance_value .o_field_monetary span {
     color: #ffffff !important;
+    font-size: 27px;
 }
 
-.ccm_finance_bar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 3px;
-    background: rgba(255,255,255,0.3);
-    border-radius: 0 0 14px 14px;
-}
-
-.ccm_bar_full      { width: 100%; }
-.ccm_bar_certified { width: 75%; }
-.ccm_bar_invoiced  { width: 55%; }
-.ccm_bar_paid      { width: 40%; }
-
-/* ── Balance Cards ── */
+/* Balances */
 .ccm_balances_row {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 28px;
 }
 
 .ccm_balance_card {
+    background: var(--ccm-surface);
+    border: 1px solid var(--ccm-border);
     border-radius: 14px;
     padding: 24px 28px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    border: 1px solid transparent;
-    transition: transform 0.2s ease;
+    box-shadow: var(--ccm-shadow);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
 .ccm_balance_card:hover {
     transform: translateY(-2px);
-}
-
-.ccm_balance_orange {
-    background: linear-gradient(135deg, #fff7ed, #ffedd5);
-    border-color: #fed7aa;
-}
-
-.ccm_balance_indigo {
-    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
-    border-color: #c7d2fe;
-}
-
-.ccm_balance_header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 16px;
-}
-
-.ccm_balance_icon {
-    font-size: 22px;
+    box-shadow: var(--ccm-shadow-hover);
+    border-color: var(--ccm-border-strong);
 }
 
 .ccm_balance_title {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
+    color: var(--ccm-muted);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-bottom: 12px;
 }
 
-.ccm_balance_orange .ccm_balance_title { color: #c2410c; }
-.ccm_balance_indigo .ccm_balance_title { color: #4338ca; }
-
-.ccm_balance_amount {
-    font-size: 32px;
+.ccm_balance_amount,
+.ccm_balance_amount .o_field_monetary,
+.ccm_balance_amount .o_field_monetary span {
+    color: var(--ccm-text) !important;
+    font-size: 31px;
     font-weight: 800;
-    letter-spacing: -1px;
-    margin-bottom: 8px;
-}
-
-.ccm_balance_orange .ccm_balance_amount,
-.ccm_balance_orange .o_field_monetary span { color: #ea580c !important; }
-
-.ccm_balance_indigo .ccm_balance_amount,
-.ccm_balance_indigo .o_field_monetary span { color: #4f46e5 !important; }
-
-.ccm_balance_amount .o_field_monetary {
-    font-size: 32px;
-    font-weight: 800;
+    letter-spacing: -0.8px;
 }
 
 .ccm_balance_footer {
-    font-size: 11px;
-    font-weight: 500;
+    margin-top: 8px;
+    color: var(--ccm-muted);
+    font-size: 12px;
 }
 
-.ccm_balance_orange .ccm_balance_footer { color: #c2410c; opacity: 0.6; }
-.ccm_balance_indigo .ccm_balance_footer { color: #4338ca; opacity: 0.6; }
-
-/* ── Quick Actions ── */
+/* Actions */
 .ccm_actions_row {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 20px;
 }
 
 .ccm_action_btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 20px;
+    justify-content: center;
+    min-height: 38px;
+    padding: 10px 18px;
     border-radius: 10px;
+    background: var(--ccm-surface);
+    border: 1px solid var(--ccm-border);
+    color: var(--ccm-text);
     font-size: 13px;
-    font-weight: 600;
-    border: none;
+    font-weight: 750;
+    box-shadow: none;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    text-decoration: none;
+    transition: transform 0.16s ease, border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
 }
 
 .ccm_action_btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    transform: translateY(-1px);
+    border-color: var(--ccm-accent);
+    color: var(--ccm-accent);
+    background: #ffffff;
 }
 
-.ccm_action_icon {
-    font-size: 16px;
+.ccm_action_primary {
+    background: var(--ccm-primary);
+    color: #ffffff;
+    border-color: var(--ccm-primary);
 }
 
-.ccm_action_primary { background: #2d3561; color: #fff; }
-.ccm_action_amber   { background: #f59e0b; color: #fff; }
-.ccm_action_purple  { background: #8b5cf6; color: #fff; }
-.ccm_action_teal    { background: #14b8a6; color: #fff; }
-.ccm_action_rose    { background: #f43f5e; color: #fff; }
-.ccm_action_dark    { background: #374151; color: #fff; }
+.ccm_action_primary:hover {
+    background: var(--ccm-primary-2);
+    color: #ffffff;
+    border-color: var(--ccm-primary-2);
+}
 
-/* ── Responsive ── */
+/* Responsive */
 @media (max-width: 1200px) {
     .ccm_kpi_row {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
-    .ccm_financial_row {
-        grid-template-columns: repeat(2, 1fr);
+
+    .ccm_financial_panel {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 768px) {
+    .o_construction_dashboard .o_form_sheet {
+        padding: 16px;
+    }
+
     .ccm_dashboard_header {
         flex-direction: column;
-        gap: 20px;
+        align-items: stretch;
+        padding: 24px;
     }
+
+    .ccm_contract_filter_pill {
+        min-width: 0;
+        width: 100%;
+    }
+
     .ccm_kpi_row,
-    .ccm_financial_row,
+    .ccm_financial_panel,
     .ccm_balances_row {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
     }
 }
