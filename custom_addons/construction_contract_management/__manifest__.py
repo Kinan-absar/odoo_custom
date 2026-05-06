@@ -32,7 +32,6 @@ Construction Contract Management
         'security/construction_portal_rules.xml',
         'data/construction_dashboard_data.xml',
         'views/construction_sequence.xml',
-        'views/construction_assets.xml',
         'views/construction_dashboard_views.xml',
         'reports/report_actions.xml',
         'reports/construction_report_common.xml',
@@ -55,6 +54,11 @@ Construction Contract Management
         'views/portal/portal_employee_variation_templates.xml',
         'views/portal/portal_employee_measurement_templates.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'construction_contract_management/static/src/css/construction_dashboard.css',
+        ],
+    },
     'application': True,
     'installable': True,
 }

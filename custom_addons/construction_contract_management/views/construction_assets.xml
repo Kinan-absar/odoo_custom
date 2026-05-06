@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <template id="construction_dashboard_assets" inherit_id="web.assets_backend">
-        <xpath expr="." position="inside">
-            <link rel="stylesheet" href="/construction_contract_management/static/src/css/construction_dashboard.css"/>
-        </xpath>
-    </template>
-</odoo>
