@@ -71,20 +71,6 @@
          Actions
     ============================================================ -->
 
-    <record id="action_attendance_all_with_flag" model="ir.actions.act_window">
-        <field name="name">Attendance Records</field>
-        <field name="res_model">hr.attendance</field>
-        <field name="view_mode">list,form</field>
-        <field name="view_ids" eval="[(5,0,0),
-            (0,0,{'view_mode':'list','view_id':ref('view_hr_attendance_flag_list')}),
-            (0,0,{'view_mode':'form','view_id':ref('view_hr_attendance_flag_form')}),
-        ]"/>
-        <field name="search_view_id" ref="view_hr_attendance_flag_search"/>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">No attendance records found.</p>
-        </field>
-    </record>
-
     <record id="action_attendance_auto_checkout" model="ir.actions.act_window">
         <field name="name">Auto Checked-Out Records</field>
         <field name="res_model">hr.attendance</field>
@@ -126,13 +112,6 @@
               name="Attendance"
               parent="menu_employee_portal_root"
               sequence="40"
-              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
-
-    <menuitem id="menu_attendance_all"
-              name="All Records"
-              parent="menu_employee_portal_attendance_root"
-              action="action_attendance_all_with_flag"
-              sequence="10"
               groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
 
     <menuitem id="menu_attendance_auto_checkout"
