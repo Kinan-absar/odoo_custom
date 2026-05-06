@@ -32,6 +32,7 @@ Construction Contract Management
         'security/construction_portal_rules.xml',
         'data/construction_dashboard_data.xml',
         'views/construction_sequence.xml',
+        'views/construction_assets.xml',
         'views/construction_dashboard_views.xml',
         'reports/report_actions.xml',
         'reports/construction_report_common.xml',

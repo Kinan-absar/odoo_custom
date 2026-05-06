@@ -1,0 +1,444 @@
+/* ═══════════════════════════════════════════════════════════
+   Construction Contract Management — Dashboard Styles
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Reset & Base ── */
+.o_construction_dashboard .o_form_sheet_bg {
+    background: #f0f2f7;
+    min-height: 100vh;
+}
+
+.o_construction_dashboard .o_form_sheet {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    max-width: 100%;
+}
+
+.o_construction_dashboard .o_form_statusbar,
+.o_construction_dashboard .o_form_title {
+    display: none;
+}
+
+/* ── Dashboard Header ── */
+.ccm_dashboard_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #1a1f3a 0%, #2d3561 50%, #1e2d5a 100%);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    box-shadow: 0 8px 32px rgba(29, 35, 90, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.ccm_dashboard_header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(99, 132, 255, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.ccm_header_left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.ccm_header_icon {
+    font-size: 40px;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+}
+
+.ccm_header_title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: -0.5px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.ccm_header_subtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    margin: 4px 0 0;
+    font-weight: 400;
+}
+
+.ccm_contract_filter_pill {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 12px 16px;
+    backdrop-filter: blur(10px);
+    min-width: 260px;
+}
+
+.ccm_filter_label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+}
+
+.ccm_contract_filter_pill .ccm_filter_field .o_field_many2one input,
+.ccm_contract_filter_pill .ccm_filter_field .o_field_widget input {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* ── Section Labels ── */
+.ccm_section_label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin: 0 0 12px;
+    padding-left: 4px;
+}
+
+/* ── KPI Cards Row ── */
+.ccm_kpi_row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.ccm_kpi_card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.ccm_kpi_card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    border-radius: 14px 14px 0 0;
+}
+
+.ccm_kpi_card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+/* Card Color Themes */
+.ccm_card_blue::before  { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.ccm_card_amber::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.ccm_card_purple::before{ background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+.ccm_card_teal::before  { background: linear-gradient(90deg, #14b8a6, #2dd4bf); }
+.ccm_card_rose::before  { background: linear-gradient(90deg, #f43f5e, #fb7185); }
+
+.ccm_card_top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.ccm_card_icon_wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.ccm_icon_blue   { background: #eff6ff; }
+.ccm_icon_amber  { background: #fffbeb; }
+.ccm_icon_purple { background: #f5f3ff; }
+.ccm_icon_teal   { background: #f0fdfa; }
+.ccm_icon_rose   { background: #fff1f2; }
+
+.ccm_card_badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+.ccm_badge_blue   { background: #dbeafe; color: #1d4ed8; }
+.ccm_badge_amber  { background: #fef3c7; color: #d97706; }
+.ccm_badge_purple { background: #ede9fe; color: #7c3aed; }
+.ccm_badge_teal   { background: #ccfbf1; color: #0d9488; }
+.ccm_badge_rose   { background: #ffe4e6; color: #e11d48; }
+
+.ccm_card_value {
+    font-size: 40px;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1;
+    margin-bottom: 6px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    letter-spacing: -1px;
+}
+
+.ccm_card_value .o_field_integer {
+    font-size: 40px;
+    font-weight: 800;
+    color: #111827;
+}
+
+.ccm_card_label {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 14px;
+}
+
+.ccm_card_link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    text-decoration: none;
+}
+
+.ccm_card_blue   .ccm_card_link { color: #3b82f6; }
+.ccm_card_amber  .ccm_card_link { color: #f59e0b; }
+.ccm_card_purple .ccm_card_link { color: #8b5cf6; }
+.ccm_card_teal   .ccm_card_link { color: #14b8a6; }
+.ccm_card_rose   .ccm_card_link { color: #f43f5e; }
+
+.ccm_card_link:hover { opacity: 0.7; }
+
+/* ── Financial Cards ── */
+.ccm_financial_row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.ccm_finance_card {
+    border-radius: 14px;
+    padding: 22px 24px 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease;
+}
+
+.ccm_finance_card:hover {
+    transform: translateY(-2px);
+}
+
+.ccm_finance_dark    { background: linear-gradient(135deg, #1e2d5a, #2d3a6e); }
+.ccm_finance_green   { background: linear-gradient(135deg, #065f46, #047857); }
+.ccm_finance_blue    { background: linear-gradient(135deg, #1e3a5f, #1d4ed8); }
+.ccm_finance_emerald { background: linear-gradient(135deg, #064e3b, #059669); }
+
+.ccm_finance_icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.ccm_finance_label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.65);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.ccm_finance_value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+}
+
+.ccm_finance_value .o_field_monetary,
+.ccm_finance_value .o_field_monetary span {
+    font-size: 22px;
+    font-weight: 800;
+    color: #ffffff !important;
+}
+
+.ccm_finance_bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 0 0 14px 14px;
+}
+
+.ccm_bar_full      { width: 100%; }
+.ccm_bar_certified { width: 75%; }
+.ccm_bar_invoiced  { width: 55%; }
+.ccm_bar_paid      { width: 40%; }
+
+/* ── Balance Cards ── */
+.ccm_balances_row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.ccm_balance_card {
+    border-radius: 14px;
+    padding: 24px 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    border: 1px solid transparent;
+    transition: transform 0.2s ease;
+}
+
+.ccm_balance_card:hover {
+    transform: translateY(-2px);
+}
+
+.ccm_balance_orange {
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border-color: #fed7aa;
+}
+
+.ccm_balance_indigo {
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+    border-color: #c7d2fe;
+}
+
+.ccm_balance_header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.ccm_balance_icon {
+    font-size: 22px;
+}
+
+.ccm_balance_title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.ccm_balance_orange .ccm_balance_title { color: #c2410c; }
+.ccm_balance_indigo .ccm_balance_title { color: #4338ca; }
+
+.ccm_balance_amount {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+}
+
+.ccm_balance_orange .ccm_balance_amount,
+.ccm_balance_orange .o_field_monetary span { color: #ea580c !important; }
+
+.ccm_balance_indigo .ccm_balance_amount,
+.ccm_balance_indigo .o_field_monetary span { color: #4f46e5 !important; }
+
+.ccm_balance_amount .o_field_monetary {
+    font-size: 32px;
+    font-weight: 800;
+}
+
+.ccm_balance_footer {
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.ccm_balance_orange .ccm_balance_footer { color: #c2410c; opacity: 0.6; }
+.ccm_balance_indigo .ccm_balance_footer { color: #4338ca; opacity: 0.6; }
+
+/* ── Quick Actions ── */
+.ccm_actions_row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.ccm_action_btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    text-decoration: none;
+}
+
+.ccm_action_btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+}
+
+.ccm_action_icon {
+    font-size: 16px;
+}
+
+.ccm_action_primary { background: #2d3561; color: #fff; }
+.ccm_action_amber   { background: #f59e0b; color: #fff; }
+.ccm_action_purple  { background: #8b5cf6; color: #fff; }
+.ccm_action_teal    { background: #14b8a6; color: #fff; }
+.ccm_action_rose    { background: #f43f5e; color: #fff; }
+.ccm_action_dark    { background: #374151; color: #fff; }
+
+/* ── Responsive ── */
+@media (max-width: 1200px) {
+    .ccm_kpi_row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .ccm_financial_row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .ccm_dashboard_header {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .ccm_kpi_row,
+    .ccm_financial_row,
+    .ccm_balances_row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
