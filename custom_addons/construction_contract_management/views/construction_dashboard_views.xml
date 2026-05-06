@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ==========================================================
-         CONSTRUCTION DASHBOARD - Professional Executive UI
-         ========================================================== -->
+    <!-- ══════════════════════════════════════════════════════════
+         CONSTRUCTION DASHBOARD — Enhanced Card UI
+    ══════════════════════════════════════════════════════════ -->
 
     <record id="view_construction_dashboard_form" model="ir.ui.view">
         <field name="name">construction.dashboard.form</field>
@@ -11,182 +11,229 @@
         <field name="arch" type="xml">
             <form string="Construction Dashboard" class="o_construction_dashboard">
 
-                <!-- Header -->
+                <!-- ── Top Header Bar ── -->
                 <div class="ccm_dashboard_header">
                     <div class="ccm_header_left">
-                        <div class="ccm_header_mark">CCM</div>
+                        <span class="ccm_header_icon">🏗️</span>
                         <div>
                             <h1 class="ccm_header_title">Construction Dashboard</h1>
-                            <p class="ccm_header_subtitle">Contract portfolio, billing, advances and retention overview</p>
+                            <p class="ccm_header_subtitle">Contract Portfolio Overview</p>
                         </div>
                     </div>
                     <div class="ccm_header_right">
                         <div class="ccm_contract_filter_pill">
-                            <span class="ccm_filter_label">Contract Filter</span>
+                            <span class="ccm_filter_label">Filter by Contract</span>
                             <field name="selected_contract_id" options="{'no_create': True}" class="ccm_filter_field"/>
                         </div>
                     </div>
                 </div>
 
-                <!-- Main KPI Overview -->
-                <div class="ccm_section_header">
-                    <div>
-                        <div class="ccm_section_label">Activity Overview</div>
-                        <div class="ccm_section_hint">Operational items requiring monitoring</div>
-                    </div>
-                </div>
-
+                <!-- ── KPI Status Cards Row ── -->
+                <div class="ccm_section_label">⚡ Activity Status</div>
                 <div class="ccm_kpi_row">
 
-                    <div class="ccm_kpi_card ccm_status_active">
+                    <!-- Active Contracts -->
+                    <div class="ccm_kpi_card ccm_card_blue">
                         <div class="ccm_card_top">
-                            <span class="ccm_card_badge">Active</span>
-                            <span class="ccm_card_indicator"></span>
+                            <div class="ccm_card_icon_wrap ccm_icon_blue">
+                                <span class="ccm_card_icon">📋</span>
+                            </div>
+                            <span class="ccm_card_badge ccm_badge_blue">Active</span>
                         </div>
                         <div class="ccm_card_value">
                             <field name="active_contract_count" readonly="1"/>
                         </div>
                         <div class="ccm_card_label">Active Contracts</div>
-                        <button name="action_open_active_contracts" type="object" class="ccm_card_link">Open Records</button>
+                        <button name="action_open_active_contracts" type="object" class="ccm_card_link">
+                            View All →
+                        </button>
                     </div>
 
-                    <div class="ccm_kpi_card">
+                    <!-- Pending IPCs -->
+                    <div class="ccm_kpi_card ccm_card_amber">
                         <div class="ccm_card_top">
-                            <span class="ccm_card_badge">Pending</span>
-                            <span class="ccm_card_indicator"></span>
+                            <div class="ccm_card_icon_wrap ccm_icon_amber">
+                                <span class="ccm_card_icon">📄</span>
+                            </div>
+                            <span class="ccm_card_badge ccm_badge_amber">Pending</span>
                         </div>
                         <div class="ccm_card_value">
                             <field name="pending_ipc_count" readonly="1"/>
                         </div>
                         <div class="ccm_card_label">Pending IPCs</div>
-                        <button name="action_open_pending_ipcs" type="object" class="ccm_card_link">Open Records</button>
+                        <button name="action_open_pending_ipcs" type="object" class="ccm_card_link">
+                            View All →
+                        </button>
                     </div>
 
-                    <div class="ccm_kpi_card">
+                    <!-- Pending Variations -->
+                    <div class="ccm_kpi_card ccm_card_purple">
                         <div class="ccm_card_top">
-                            <span class="ccm_card_badge">Pending</span>
-                            <span class="ccm_card_indicator"></span>
+                            <div class="ccm_card_icon_wrap ccm_icon_purple">
+                                <span class="ccm_card_icon">🔀</span>
+                            </div>
+                            <span class="ccm_card_badge ccm_badge_purple">Pending</span>
                         </div>
                         <div class="ccm_card_value">
                             <field name="pending_variation_count" readonly="1"/>
                         </div>
                         <div class="ccm_card_label">Pending Variations</div>
-                        <button name="action_open_pending_variations" type="object" class="ccm_card_link">Open Records</button>
+                        <button name="action_open_pending_variations" type="object" class="ccm_card_link">
+                            View All →
+                        </button>
                     </div>
 
-                    <div class="ccm_kpi_card">
+                    <!-- Pending Advances -->
+                    <div class="ccm_kpi_card ccm_card_teal">
                         <div class="ccm_card_top">
-                            <span class="ccm_card_badge">Pending</span>
-                            <span class="ccm_card_indicator"></span>
+                            <div class="ccm_card_icon_wrap ccm_icon_teal">
+                                <span class="ccm_card_icon">💸</span>
+                            </div>
+                            <span class="ccm_card_badge ccm_badge_teal">Pending</span>
                         </div>
                         <div class="ccm_card_value">
                             <field name="pending_advance_count" readonly="1"/>
                         </div>
                         <div class="ccm_card_label">Pending Advances</div>
-                        <button name="action_open_pending_advances" type="object" class="ccm_card_link">Open Records</button>
+                        <button name="action_open_pending_advances" type="object" class="ccm_card_link">
+                            View All →
+                        </button>
                     </div>
 
-                    <div class="ccm_kpi_card">
+                    <!-- Pending Retention Releases -->
+                    <div class="ccm_kpi_card ccm_card_rose">
                         <div class="ccm_card_top">
-                            <span class="ccm_card_badge">Pending</span>
-                            <span class="ccm_card_indicator"></span>
+                            <div class="ccm_card_icon_wrap ccm_icon_rose">
+                                <span class="ccm_card_icon">🔓</span>
+                            </div>
+                            <span class="ccm_card_badge ccm_badge_rose">Pending</span>
                         </div>
                         <div class="ccm_card_value">
                             <field name="pending_retention_release_count" readonly="1"/>
                         </div>
                         <div class="ccm_card_label">Retention Releases</div>
-                        <button name="action_open_pending_retention_releases" type="object" class="ccm_card_link">Open Records</button>
+                        <button name="action_open_pending_retention_releases" type="object" class="ccm_card_link">
+                            View All →
+                        </button>
                     </div>
 
                 </div>
 
-                <!-- Financial Overview -->
-                <div class="ccm_section_header">
-                    <div>
-                        <div class="ccm_section_label">Financial Overview</div>
-                        <div class="ccm_section_hint">Certified, billed and collected values</div>
+                <!-- ── Financial Summary Cards ── -->
+                <div class="ccm_section_label">💰 Financial Summary</div>
+                <div class="ccm_financial_row">
+
+                    <div class="ccm_finance_card ccm_finance_dark">
+                        <div class="ccm_finance_icon">📊</div>
+                        <div class="ccm_finance_content">
+                            <div class="ccm_finance_label">Total Revised Amount</div>
+                            <div class="ccm_finance_value">
+                                <field name="total_revised_amount" readonly="1" widget="monetary"/>
+                            </div>
+                        </div>
+                        <div class="ccm_finance_bar ccm_bar_full"></div>
                     </div>
+
+                    <div class="ccm_finance_card ccm_finance_green">
+                        <div class="ccm_finance_icon">✅</div>
+                        <div class="ccm_finance_content">
+                            <div class="ccm_finance_label">Total Certified</div>
+                            <div class="ccm_finance_value">
+                                <field name="total_certified_amount" readonly="1" widget="monetary"/>
+                            </div>
+                        </div>
+                        <div class="ccm_finance_bar ccm_bar_certified"></div>
+                    </div>
+
+                    <div class="ccm_finance_card ccm_finance_blue">
+                        <div class="ccm_finance_icon">🧾</div>
+                        <div class="ccm_finance_content">
+                            <div class="ccm_finance_label">Total Invoiced / Billed</div>
+                            <div class="ccm_finance_value">
+                                <field name="total_invoiced_amount" readonly="1" widget="monetary"/>
+                            </div>
+                        </div>
+                        <div class="ccm_finance_bar ccm_bar_invoiced"></div>
+                    </div>
+
+                    <div class="ccm_finance_card ccm_finance_emerald">
+                        <div class="ccm_finance_icon">💳</div>
+                        <div class="ccm_finance_content">
+                            <div class="ccm_finance_label">Total Paid</div>
+                            <div class="ccm_finance_value">
+                                <field name="total_paid_amount" readonly="1" widget="monetary"/>
+                            </div>
+                        </div>
+                        <div class="ccm_finance_bar ccm_bar_paid"></div>
+                    </div>
+
                 </div>
 
-                <div class="ccm_financial_panel">
-                    <div class="ccm_finance_card ccm_finance_primary">
-                        <div class="ccm_finance_label">Total Revised Amount</div>
-                        <div class="ccm_finance_value">
-                            <field name="total_revised_amount" readonly="1" widget="monetary"/>
-                        </div>
-                    </div>
-
-                    <div class="ccm_finance_card">
-                        <div class="ccm_finance_label">Total Certified</div>
-                        <div class="ccm_finance_value">
-                            <field name="total_certified_amount" readonly="1" widget="monetary"/>
-                        </div>
-                    </div>
-
-                    <div class="ccm_finance_card">
-                        <div class="ccm_finance_label">Total Invoiced / Billed</div>
-                        <div class="ccm_finance_value">
-                            <field name="total_invoiced_amount" readonly="1" widget="monetary"/>
-                        </div>
-                    </div>
-
-                    <div class="ccm_finance_card">
-                        <div class="ccm_finance_label">Total Paid</div>
-                        <div class="ccm_finance_value">
-                            <field name="total_paid_amount" readonly="1" widget="monetary"/>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Balances -->
-                <div class="ccm_section_header">
-                    <div>
-                        <div class="ccm_section_label">Balances</div>
-                        <div class="ccm_section_hint">Outstanding contractual balances</div>
-                    </div>
-                </div>
-
+                <!-- ── Balances Row ── -->
+                <div class="ccm_section_label">⚖️ Balances</div>
                 <div class="ccm_balances_row">
-                    <div class="ccm_balance_card">
-                        <div class="ccm_balance_title">Advance Balance</div>
+
+                    <div class="ccm_balance_card ccm_balance_orange">
+                        <div class="ccm_balance_header">
+                            <span class="ccm_balance_icon">📈</span>
+                            <span class="ccm_balance_title">Advance Balance</span>
+                        </div>
                         <div class="ccm_balance_amount">
                             <field name="total_advance_balance" readonly="1" widget="monetary"/>
                         </div>
                         <div class="ccm_balance_footer">Outstanding advance funds</div>
                     </div>
 
-                    <div class="ccm_balance_card">
-                        <div class="ccm_balance_title">Retention Balance</div>
+                    <div class="ccm_balance_card ccm_balance_indigo">
+                        <div class="ccm_balance_header">
+                            <span class="ccm_balance_icon">🏦</span>
+                            <span class="ccm_balance_title">Retention Balance</span>
+                        </div>
                         <div class="ccm_balance_amount">
                             <field name="total_retention_balance" readonly="1" widget="monetary"/>
                         </div>
                         <div class="ccm_balance_footer">Total retained funds</div>
                     </div>
+
                 </div>
 
-                <!-- Actions -->
-                <div class="ccm_section_header">
-                    <div>
-                        <div class="ccm_section_label">Actions</div>
-                        <div class="ccm_section_hint">Create new transactions or open contract records</div>
-                    </div>
-                </div>
-
+                <!-- ── Quick Actions ── -->
+                <div class="ccm_section_label">🚀 Quick Actions</div>
                 <div class="ccm_actions_row">
-                    <button name="action_new_contract" type="object" class="ccm_action_btn ccm_action_primary">New Contract</button>
-                    <button name="action_new_ipc" type="object" class="ccm_action_btn">New IPC</button>
-                    <button name="action_new_variation" type="object" class="ccm_action_btn">New Variation</button>
-                    <button name="action_new_advance" type="object" class="ccm_action_btn">New Advance</button>
-                    <button name="action_new_retention_release" type="object" class="ccm_action_btn">New Retention Release</button>
-                    <button name="action_open_contracts" type="object" class="ccm_action_btn">All Contracts</button>
+                    <button name="action_new_contract" type="object" class="ccm_action_btn ccm_action_primary">
+                        <span class="ccm_action_icon">📋</span>
+                        <span>New Contract</span>
+                    </button>
+                    <button name="action_new_ipc" type="object" class="ccm_action_btn ccm_action_amber">
+                        <span class="ccm_action_icon">📄</span>
+                        <span>New IPC</span>
+                    </button>
+                    <button name="action_new_variation" type="object" class="ccm_action_btn ccm_action_purple">
+                        <span class="ccm_action_icon">🔀</span>
+                        <span>New Variation</span>
+                    </button>
+                    <button name="action_new_advance" type="object" class="ccm_action_btn ccm_action_teal">
+                        <span class="ccm_action_icon">💸</span>
+                        <span>New Advance</span>
+                    </button>
+                    <button name="action_new_retention_release" type="object" class="ccm_action_btn ccm_action_rose">
+                        <span class="ccm_action_icon">🔓</span>
+                        <span>New Retention Release</span>
+                    </button>
+                    <button name="action_open_contracts" type="object" class="ccm_action_btn ccm_action_dark">
+                        <span class="ccm_action_icon">📁</span>
+                        <span>All Contracts</span>
+                    </button>
                 </div>
 
+                <!-- hidden currency -->
                 <field name="currency_id" invisible="1"/>
 
             </form>
         </field>
     </record>
 
+    <!-- ── Action ── -->
     <record id="action_construction_dashboard" model="ir.actions.act_window">
         <field name="name">Dashboard</field>
         <field name="res_model">construction.dashboard</field>
