@@ -239,6 +239,7 @@
         <field name="res_model">construction.dashboard</field>
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_construction_dashboard_form"/>
+        <field name="res_id" ref="construction_contract_management.construction_dashboard_main"/>
         <field name="target">current</field>
     </record>
 
