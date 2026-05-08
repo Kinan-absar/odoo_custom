@@ -14,4 +14,11 @@
         <field name="prefix">PV/%(year)s/</field>
         <field name="padding">4</field>
     </record>
+
+    <record id="seq_receipt_voucher" model="ir.sequence">
+        <field name="name">Receipt Voucher</field>
+        <field name="code">receipt.voucher</field>
+        <field name="prefix">RV/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
 </odoo>

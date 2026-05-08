@@ -7,9 +7,24 @@
         <field name="inherit_id" ref="hr.hr_work_location_form_view"/>
         <field name="arch" type="xml">
             <xpath expr="//sheet/group" position="inside">
-            <group string="Project">
-                <field name="project_id"/>
-            </group> 
+
+                <group string="Project">
+                    <field name="project_id"/>
+                </group>
+
+                <group string="Geofencing">
+                    <field name="geo_enforce"/>
+                    <field name="geo_latitude"
+                           invisible="not geo_enforce"
+                           placeholder="e.g. 24.7136"/>
+                    <field name="geo_longitude"
+                           invisible="not geo_enforce"
+                           placeholder="e.g. 46.6753"/>
+                    <field name="geo_radius"
+                           invisible="not geo_enforce"
+                           help="Employees must check in within this distance (metres) from the coordinates above."/>
+                </group>
+
             </xpath>
         </field>
     </record>

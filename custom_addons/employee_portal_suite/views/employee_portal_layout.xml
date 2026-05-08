@@ -787,19 +787,351 @@
                 }
             }
             /* ================================================================
-            RTL FIX - KEEP BOTTOM NAV STRUCTURE STABLE
-            ================================================================ */
+   CONSTRUCTION PORTAL SHARED STYLES
+   Dashboard + list/detail mobile behavior
+   ================================================================ */
 
-            [dir="rtl"] .ep-bottom-nav {
-                direction: ltr;
-            }
+.construction-dashboard-section {
+    width: 100%;
+}
 
-            [dir="rtl"] .ep-bottom-nav .nav-btn span {
-                direction: rtl;
-            }
+.construction-dashboard-row {
+    margin-top: 4px;
+}
 
+.construction-dashboard-card-col {
+    display: flex;
+}
 
+.construction-dashboard-card-link {
+    display: block;
+    width: 100%;
+    text-decoration: none !important;
+    color: inherit !important;
+}
 
+.construction-dashboard-card-link:hover,
+.construction-dashboard-card-link:focus,
+.construction-dashboard-card-link:active {
+    text-decoration: none !important;
+    color: inherit !important;
+}
+
+.construction-dashboard-card {
+    width: 100%;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: transform var(--dur-fast) var(--ease-smooth),
+                box-shadow var(--dur-fast) var(--ease-smooth);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.construction-dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md) !important;
+}
+
+.construction-dashboard-card:active {
+    transform: scale(0.985);
+    box-shadow: var(--shadow-xs) !important;
+}
+
+/* Shared page wrapper */
+.construction-portal-page,
+.measurement-portal-page,
+.ipc-portal-page {
+    font-size: 13px;
+    color: var(--text-primary);
+}
+/* ================================================================
+   CONSTRUCTION DASHBOARD CARDS
+   Match main dashboard premium card style
+   ================================================================ */
+
+.construction-dashboard-card-link,
+.construction-dashboard-card-link:hover,
+.construction-dashboard-card-link:focus,
+.construction-dashboard-card-link:active {
+    display: block;
+    width: 100%;
+    text-decoration: none !important;
+    color: inherit !important;
+}
+
+.construction-dashboard-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+    border: 1px solid rgba(0,0,0,0.04);
+    border-radius: 24px;
+    padding: 20px;
+    height: 140px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+
+    position: relative;
+    overflow: hidden;
+
+    transition:
+        transform 0.25s cubic-bezier(.34,1.56,.64,1),
+        box-shadow 0.25s ease,
+        background 0.25s ease;
+}
+
+.construction-dashboard-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(79,70,229,0.08),
+        transparent 60%
+    );
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+}
+
+.construction-dashboard-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 45px rgba(26,27,46,0.12);
+}
+
+.construction-dashboard-card:hover::before {
+    opacity: 1;
+}
+
+.construction-dashboard-card:active {
+    transform: scale(0.97);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.construction-card-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.construction-card-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
+}
+
+.construction-dashboard-card:hover .construction-card-icon {
+    transform: scale(1.08);
+}
+
+.construction-card-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.construction-card-number {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: #111827;
+    line-height: 1;
+}
+
+.construction-card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.construction-card-arrow {
+    font-size: 14px;
+    color: #9CA3AF;
+    transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.construction-dashboard-card:hover .construction-card-arrow {
+    transform: translateX(4px);
+    color: var(--app-primary);
+}
+
+/* Optional color variants */
+.construction-card-primary .construction-card-icon {
+    background: rgba(79,70,229,0.10);
+    color: #4F46E5;
+}
+
+.construction-card-success .construction-card-icon {
+    background: rgba(16,185,129,0.10);
+    color: #10B981;
+}
+
+.construction-card-warning .construction-card-icon {
+    background: rgba(245,158,11,0.12);
+    color: #F59E0B;
+}
+
+.construction-card-info .construction-card-icon {
+    background: rgba(14,165,233,0.12);
+    color: #0EA5E9;
+}
+
+@media (max-width: 768px) {
+    .construction-dashboard-card {
+        height: 132px;
+        border-radius: 22px;
+        padding: 18px;
+    }
+
+    .construction-card-number {
+        font-size: 28px;
+    }
+
+    .construction-card-title {
+        font-size: 13px;
+    }
+}
+
+/* Shared cards on construction pages */
+.construction-portal-page .card,
+.measurement-portal-page .card,
+.ipc-portal-page .card {
+    border: 1px solid #d9dee7;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+    transition: transform var(--dur-fast) var(--ease-smooth),
+                box-shadow var(--dur-fast) var(--ease-smooth);
+}
+
+.construction-portal-page .card:hover,
+.measurement-portal-page .card:hover,
+.ipc-portal-page .card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md) !important;
+}
+
+.construction-portal-page .card-header,
+.measurement-portal-page .card-header,
+.ipc-portal-page .card-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.82rem 1rem;
+}
+
+.construction-portal-page .card-header h5,
+.measurement-portal-page .card-header h5,
+.ipc-portal-page .card-header h5 {
+    margin: 0;
+    font-size: 0.96rem;
+    font-weight: 700;
+}
+
+.construction-portal-page .card-body,
+.measurement-portal-page .card-body,
+.ipc-portal-page .card-body {
+    padding: 1rem;
+}
+
+/* Mobile construction list cards */
+.construction-mobile-list {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .construction-desktop-table {
+        display: none !important;
+    }
+
+    .construction-mobile-list {
+        display: block;
+    }
+
+    .construction-mobile-card {
+        display: block;
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        padding: 18px 18px 18px 22px;
+        margin-bottom: 12px;
+        text-decoration: none !important;
+        color: inherit;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-light);
+        transition: transform var(--dur-fast) var(--ease-smooth),
+                    box-shadow var(--dur-fast) var(--ease-smooth);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .construction-mobile-card::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 16px;
+        bottom: 16px;
+        width: 3px;
+        background: linear-gradient(180deg, var(--app-primary-light), var(--app-primary-dark));
+        border-radius: 0 3px 3px 0;
+    }
+
+    .construction-mobile-card:active {
+        transform: scale(0.975);
+        box-shadow: var(--shadow-xs);
+    }
+
+    .construction-mobile-card-top {
+        display: flex;
+    justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        gap: 12px;
+    }
+
+    .construction-mobile-card-title {
+        font-weight: 700;
+        font-size: 14.5px;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+    }
+
+    .construction-mobile-card-date {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .construction-mobile-card-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 14px;
+    }
+
+    .construction-mobile-card-label {
+        font-size: 10px;
+        color: var(--text-muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 3px;
+        display: block;
+    }
+
+    .construction-mobile-card-value {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        word-break: break-word;
+    }
+}
             </style>
 
             <!-- ================================================================
@@ -807,61 +1139,66 @@
                  ================================================================ -->
             <nav class="ep-navbar">
                 <div class="ep-nav-links">
-                    <a href="/my" class="ep-link">Dashboard</a>
+                    <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                        <a href="/my" class="ep-link">Dashboard</a>
 
-                    <div class="ep-dropdown">
-                        <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests &#9662;</button>
-                        <div id="req-d" class="ep-dropdown-menu">
-                            <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
-                            <a href="/my/employee/requests/new" class="ep-sub-link text-primary">+ New Employee Request</a>
-                            <hr class="my-1"/>
-                            <a href="/my/employee/material" class="ep-sub-link">Material Requests</a>
-                            <a href="/my/employee/material/new" class="ep-sub-link text-primary">+ New Material Request</a>
-                        </div>
-                    </div>
-
-                    <t t-if="
-                        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                        or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                    ">
                         <div class="ep-dropdown">
-                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals &#9662;</button>
-                            <div id="app-d" class="ep-dropdown-menu">
-
-                                <t t-if="
-                                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                                ">
-                                    <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
-                                </t>
-
-                                <t t-if="
-                                    request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                                ">
-                                    <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
-                                </t>
-
+                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests &#9662;</button>
+                            <div id="req-d" class="ep-dropdown-menu">
+                                <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
+                                <a href="/my/employee/requests/new" class="ep-sub-link text-primary">+ New Employee Request</a>
+                                <hr class="my-1"/>
+                                <a href="/my/employee/material" class="ep-sub-link">Material Requests</a>
+                                <a href="/my/employee/material/new" class="ep-sub-link text-primary">+ New Material Request</a>
                             </div>
                         </div>
-                    </t>
 
-                    <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
-                        <a href="/my/employee/petty-cash" class="ep-link">Petty Cash</a>
-                    </t>
-                </div>
+                        <t t-if="
+                            request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                        ">
+                            <div class="ep-dropdown">
+                                <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals &#9662;</button>
+                                <div id="app-d" class="ep-dropdown-menu">
 
+                                    <t t-if="
+                                        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                                    ">
+                                        <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
+                                    </t>
+
+                                    <t t-if="
+                                        request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                                        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                                        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                                        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                                    ">
+                                        <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
+                                    </t>
+
+                                </div>
+                            </div>
+                        </t>
+
+                        <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                            <a href="/my/employee/petty-cash" class="ep-link">Petty Cash</a>
+                            <a href="/my/employee/attendance" class="ep-link">Attendance</a>
+                        </t>
+                    </t><!-- /not attendance_only -->
+                    <t t-if="request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                        <a href="/my/employee/attendance" class="ep-link">Attendance</a>
+                    </t>
+                </div><!-- /ep-nav-links -->
                 <div class="d-flex align-items-center gap-3">
                     <div class="text-end d-none d-lg-block">
                         <h6 class="mb-0 fw-bold" t-out="request.env.user.partner_id.name"/>
@@ -927,8 +1264,12 @@
             <!-- ================================================================
                  MOBILE BOTTOM NAV
                  ================================================================ -->
+                 <t t-set="is_attendance_only"
+   t-value="request.env.user.has_group('employee_portal_suite.group_attendance_only')"/>
+
                  <t t-set="has_extended_nav"
    t-value="
+       not is_attendance_only and (
        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
@@ -938,8 +1279,29 @@
        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
        or request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')
+       )
    "/>
 
+            <!-- Attendance-only mobile nav: just Attendance + Logout -->
+            <t t-if="is_attendance_only">
+                <nav class="ep-bottom-nav mobile-only basic-nav">
+                    <div class="ep-nav-left">
+                        <a href="/my/employee/attendance"
+                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/attendance') else 'nav-btn'">
+                            <i class="fa fa-clock-o"></i>
+                            <span>Attendance</span>
+                        </a>
+                    </div>
+                    <div class="ep-fab-center"></div>
+                    <div class="ep-nav-right">
+                        <a href="/web/session/logout" class="nav-btn">
+                            <i class="fa fa-sign-out"></i>
+                            <span>Exit</span>
+                        </a>
+                    </div>
+                </nav>
+            </t>
+            <t t-if="not is_attendance_only">
             <nav t-att-class="'ep-bottom-nav mobile-only ' + ('extended-nav' if has_extended_nav else 'basic-nav')">
 
                 <div class="ep-nav-left">
@@ -1038,6 +1400,8 @@
                         </a>
                     </t>
                        </t>
+                    
+
                     <a href="/web/session/logout" class="nav-btn">
                         <i class="fa fa-sign-out"></i>
                         <span>Exit</span>
@@ -1046,6 +1410,7 @@
                 </div>
 
             </nav>
+            </t><!-- /not is_attendance_only -->
 
             <!-- ================================================================
                  FAB POPUP MENU

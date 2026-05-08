@@ -310,7 +310,25 @@
         </div>
     </div>
 
-    
+    <t t-foreach="request_rec.message_ids.filtered(lambda m: m.message_type == 'comment')" t-as="msg">
+    <div class="border p-2 mb-2">
+        <strong><t t-esc="msg.author_id.name or 'Unknown'"/></strong>
+        <small class="text-muted ms-2">
+            <t t-esc="msg.date"/>
+        </small>
+        <div class="mt-1">
+            <t t-raw="msg.body"/>
+        </div>
+    </div>
+</t>
+
+<form t-att-action="'/my/employee/material/%s/message' % request_rec.id" method="post">
+    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+    <textarea name="message" class="form-control" placeholder="Write something..." required="1"></textarea>
+    <button type="submit" class="btn btn-primary mt-2">
+        Send
+    </button>
+</form>
 
 </div>
 
