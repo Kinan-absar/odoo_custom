@@ -161,11 +161,13 @@ class MaterialRequest(models.Model):
         for rec in self:
             rec.vendor_bill_count = len(rec.vendor_bill_ids)
 
+    @api.depends("state", "no_po_required", "vendor_bill_ids")
     def _compute_can_create_vendor_bill(self):
         for rec in self:
             rec.can_create_vendor_bill = (
                 rec.state == "approved"
                 and rec.no_po_required
+                and not rec.vendor_bill_ids.filtered(lambda move: move.move_type == "in_invoice")
             )
 
     def _prepare_vendor_bill_line_vals(self):
@@ -199,7 +201,6 @@ class MaterialRequest(models.Model):
                 "default_move_type": "in_invoice",
                 "default_material_request_id": self.id,
                 "default_invoice_origin": self.name,
-                "default_ref": self.name,
                 "default_invoice_line_ids": self._prepare_vendor_bill_line_vals(),
             },
         }
@@ -219,7 +220,6 @@ class MaterialRequest(models.Model):
                     "default_move_type": "in_invoice",
                     "default_material_request_id": self.id,
                     "default_invoice_origin": self.name,
-                    "default_ref": self.name,
                     "default_invoice_line_ids": self._prepare_vendor_bill_line_vals(),
                 },
             }

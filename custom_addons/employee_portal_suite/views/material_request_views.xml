@@ -76,7 +76,7 @@
                                 type="object"
                                 class="oe_stat_button"
                                 icon="fa-external-link"
-                                invisible="po_name == False">
+                                invisible="po_name == False or no_po_required">
 
                             <div class="o_stat_info">
                                 <span class="o_stat_text">PO</span>
@@ -284,13 +284,22 @@
                         decoration-success="state in ('approved','ceo')"
                         decoration-danger="state == 'rejected'"/>
 
-                <!-- CLICKABLE PO ICON - visible ONLYif po_name has something -->
+                <!-- Open PO only when this MR uses a purchase order -->
                 <button name="action_open_po"
                         type="object"
                         string="Open PO"
                         icon="fa-external-link"
                         class="text-primary fw-bold"
-                        invisible="po_name == False"/>
+                        invisible="po_name == False or no_po_required"/>
+
+                <!-- For No PO Required MRs, open the linked vendor bill instead -->
+                <field name="vendor_bill_count" invisible="1"/>
+                <button name="action_open_vendor_bills"
+                        type="object"
+                        string="Open Bill"
+                        icon="fa-file-text-o"
+                        class="text-primary fw-bold"
+                        invisible="not no_po_required or vendor_bill_count == 0"/>
                         
                 <field name="po_name" string="Purchase Order"/>
                 <field name="po_status"

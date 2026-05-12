@@ -327,14 +327,21 @@ class EmployeePortalMaterialRequests(http.Controller):
         if not rec.exists():
             return request.redirect("/my")
 
-        attachments = request.env["ir.attachment"].sudo().search([
+        all_attachments = request.env["ir.attachment"].sudo().search([
             ("res_model", "=", "material.request"),
             ("res_id", "=", rec.id)
         ])
+        accounting_attachments = all_attachments.filtered(
+            lambda att: (att.description or "") == "Accounting Documents"
+        )
+        attachments = all_attachments - accounting_attachments
+        is_purchase_rep = request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep")
 
         return request.render("employee_portal_suite.portal_material_approval_detail", {
             "request_rec": rec,
             "attachments": attachments,
+            "accounting_attachments": accounting_attachments,
+            "is_purchase_rep": is_purchase_rep,
             "status_badge": _mr_status_badge,
         })
 
@@ -508,6 +515,12 @@ class EmployeePortalMaterialRequests(http.Controller):
         rec = request.env["material.request"].sudo().browse(req_id)
         if not rec.exists():
             return request.not_found()
+
+        if tag == "Accounting Documents":
+            if not request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep"):
+                return request.redirect("/my")
+            if rec.state != "approved":
+                return request.redirect(f"/my/employee/material/approvals/{rec.id}")
 
         files = request.httprequest.files.getlist("attachments")
 

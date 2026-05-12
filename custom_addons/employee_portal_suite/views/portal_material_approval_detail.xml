@@ -143,17 +143,97 @@
                         </t>
                     </div>
 
-                    <t t-if="request_rec.state == 'approved' and request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')">
-                        <form method="post" action="/my/employee/material/submit_docs_to_accounting" class="mt-3">
+                </div>
+            </div>
+
+            <!-- ========================= -->
+            <!-- ACCOUNTING DOCUMENTS - PURCHASE REPRESENTATIVE ONLY -->
+            <!-- ========================= -->
+            <t t-if="is_purchase_rep and request_rec.state == 'approved'">
+                <div class="card mb-3 rounded-4 shadow-sm border-success">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                        <span class="fw-semibold">Accounting Invoice Documents</span>
+                        <span class="badge bg-light text-dark">
+                            <t t-esc="len(accounting_attachments)"/>
+                        </span>
+                    </div>
+
+                    <div class="card-body small">
+                        <div class="mb-3">
+                            <div class="text-muted">Status</div>
+                            <div class="fw-semibold">
+                                <t t-esc="dict(request_rec._fields['accounting_docs_status'].selection).get(request_rec.accounting_docs_status)"/>
+                            </div>
+                        </div>
+
+                        <t t-if="accounting_attachments">
+                            <div class="list-group list-group-flush mb-3">
+                                <t t-foreach="accounting_attachments" t-as="att">
+                                    <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                        <div class="overflow-hidden">
+                                            <div class="fw-semibold text-truncate">
+                                                <t t-esc="att.name"/>
+                                            </div>
+                                            <div class="text-muted small">Accounting Documents</div>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <a t-att-href="'/web/content/%s' % att.id" target="_blank" class="attachment-icon-btn text-primary">
+                                                <i class="fa fa-eye"></i>
+                                            </a>
+                                            <a t-att-href="'/web/content/%s?download=true' % att.id" target="_blank" class="attachment-icon-btn text-secondary">
+                                                <i class="fa fa-download"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </t>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <div class="alert alert-light border small mb-3">
+                                No accounting invoice documents uploaded yet.
+                            </div>
+                        </t>
+
+                        <form method="post"
+                              action="/my/employee/material/attachment/upload"
+                              enctype="multipart/form-data"
+                              class="mb-3">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
+                            <input type="hidden" name="attachment_tag" value="Accounting Documents"/>
+
+                            <div id="dropzone-accounting"
+                                 class="border rounded-4 p-4 text-center bg-light mb-3"
+                                 style="cursor:pointer;">
+                                <div class="text-muted small">
+                                    Drag invoice/supporting documents here or click to upload
+                                </div>
+                                <input type="file"
+                                       name="attachments"
+                                       id="fileInput-accounting"
+                                       class="d-none"
+                                       multiple="multiple"/>
+                            </div>
+
+                            <div id="previewArea-accounting"></div>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-outline-success px-4">
+                                    Upload Accounting Documents
+                                </button>
+                            </div>
+                        </form>
+
+                        <form method="post" action="/my/employee/material/submit_docs_to_accounting">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                             <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
                             <button type="submit" class="btn btn-success btn-sm">
                                 Submit Documents to Accounting
                             </button>
                         </form>
-                    </t>
+                    </div>
                 </div>
-            </div>
+            </t>
 
             <!-- ========================= -->
             <!-- MATERIAL LIST -->
@@ -288,8 +368,6 @@
                                 <option value="BOQ">BOQ</option>
                                 <option value="Quotation">Quotation</option>
                                 <option value="Image">Image</option>
-                                <option value="Invoice">Invoice</option>
-                                <option value="Delivery Note">Delivery Note</option>
                                 <option value="Receipt">Receipt</option>
                             </select>
 
@@ -593,6 +671,7 @@
 
             document.addEventListener("DOMContentLoaded", function () {
                 setupDropzone("dropzone-detail", "fileInput-detail", "previewArea-detail");
+                setupDropzone("dropzone-accounting", "fileInput-accounting", "previewArea-accounting");
             });
                 document.addEventListener("DOMContentLoaded", function () {
 
