@@ -78,6 +78,20 @@
                     <div class="mr_label">Rejected</div>
                 </div>
 
+                <!-- PO REQUIRED -->
+                <div class="mr_card mr_card_blue"
+                     t-on-click="() => this.filter([['no_po_required','=',false]])">
+                    <div class="mr_value"><t t-esc="data.po_required_count"/></div>
+                    <div class="mr_label">PO Required</div>
+                </div>
+
+                <!-- NO PO REQUIRED -->
+                <div class="mr_card mr_card_teal"
+                     t-on-click="() => this.filter([['no_po_required','=',true]])">
+                    <div class="mr_value"><t t-esc="data.no_po_required_count"/></div>
+                    <div class="mr_label">No PO Required</div>
+                </div>
+
                 <!-- NEEDS CLARIFICATION -->
                 <div class="mr_card mr_card_warning"
                      t-on-click="() => this.filter([['needs_clarification','=',true]])">

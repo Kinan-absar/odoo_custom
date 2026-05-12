@@ -336,6 +336,7 @@
                 <field name="worksite"/>
                 <field name="state"/>
                 <field name="accounting_docs_status"/>
+                <filter string="PO Required" name="po_required" domain="[('no_po_required','=',False)]"/>
                 <filter string="No PO Required" name="no_po_required" domain="[('no_po_required','=',True)]"/>
                 <filter string="Docs Submitted" name="docs_submitted" domain="[('accounting_docs_status','=','submitted')]"/>
             </search>

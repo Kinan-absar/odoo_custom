@@ -790,6 +790,8 @@ class MaterialRequest(models.Model):
             'rejected_count': self.search_count([('state', '=', 'rejected')]),
             'clarification_count': self.search_count([('needs_clarification', '=', True)]),
             'my_count': self.search_count([('create_uid', '=', self.env.user.id)]),
+            'po_required_count': self.search_count([('no_po_required', '=', False)]),
+            'no_po_required_count': self.search_count([('no_po_required', '=', True)]),
         }
         return data
 

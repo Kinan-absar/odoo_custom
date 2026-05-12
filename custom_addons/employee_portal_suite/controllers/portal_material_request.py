@@ -77,11 +77,14 @@ class EmployeePortalMaterialRequests(http.Controller):
 
         domain = [("employee_id", "=", emp.id)]
 
-        # If user typed something in search bar
+        # If user typed something in search bar, search by MR number, employee, worksite, item name, or linked PO.
         if search:
-            domain += ["|",
+            domain += ["|", "|", "|", "|",
                 ("name", "ilike", search),
+                ("employee_id.name", "ilike", search),
                 ("worksite", "ilike", search),
+                ("line_ids.item_name", "ilike", search),
+                ("purchase_order_ids.name", "ilike", search),
             ]
 
         records = request.env["material.request"].sudo().search(domain, order="id desc")
@@ -299,10 +302,23 @@ class EmployeePortalMaterialRequests(http.Controller):
             "all": all_reqs,
         }.get(current_filter, pending_list)
         # -----------------------------
-        # SEARCH FILTER (by name only)
+        # SEARCH FILTER
+        # Search by MR number, employee, worksite, item/material name, or linked PO.
         # -----------------------------
         if search:
-            shown_reqs = [r for r in shown_reqs if search.lower() in (r.name or "").lower()]
+            term = search.lower()
+
+            def _matches_search(r):
+                values = [
+                    r.name or "",
+                    r.employee_id.name or "",
+                    r.worksite or "",
+                    r.po_name or "",
+                ]
+                values += [line.item_name or "" for line in r.line_ids]
+                return any(term in value.lower() for value in values)
+
+            shown_reqs = [r for r in shown_reqs if _matches_search(r)]
 
         return request.render("employee_portal_suite.portal_material_approvals_list", {
             "pending_reqs": pending_list,
