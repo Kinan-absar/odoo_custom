@@ -209,7 +209,7 @@
                                     <field name="no_po_reason" invisible="not no_po_required"/>
                                 </group>
                                 <group string="Accounting Documents">
-                                    <field name="accounting_docs_status" widget="badge"/>
+                                    <field name="accounting_docs_status"/>
                                     <field name="docs_submitted_by" readonly="1"/>
                                     <field name="docs_submitted_date" readonly="1"/>
                                     <field name="vendor_bill_count" readonly="1"/>
@@ -285,7 +285,7 @@
                         decoration-danger="state == 'rejected'"/>
 
                 <!-- CLICKABLE DOCUMENT ACTION - same action area for PO or Vendor Bill -->
-                <field name="vendor_bill_count" invisible="1"/>
+                <field name="vendor_bill_count" invisible="1" column_invisible="1"/>
                 <button name="action_open_po"
                         type="object"
                         string="Open PO"

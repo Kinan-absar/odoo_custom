@@ -200,7 +200,6 @@ class MaterialRequest(models.Model):
             "context": {
                 "default_move_type": "in_invoice",
                 "default_material_request_id": self.id,
-                "default_invoice_origin": self.name,
                 "default_invoice_line_ids": self._prepare_vendor_bill_line_vals(),
             },
         }
@@ -219,8 +218,7 @@ class MaterialRequest(models.Model):
                 "context": {
                     "default_move_type": "in_invoice",
                     "default_material_request_id": self.id,
-                    "default_invoice_origin": self.name,
-                    "default_invoice_line_ids": self._prepare_vendor_bill_line_vals(),
+                        "default_invoice_line_ids": self._prepare_vendor_bill_line_vals(),
                 },
             }
 
