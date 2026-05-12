@@ -284,7 +284,7 @@
                         decoration-success="state in ('approved','ceo')"
                         decoration-danger="state == 'rejected'"/>
 
-                <!-- Related purchasing document: use the same place for PO or vendor bill -->
+                <!-- CLICKABLE DOCUMENT ACTION - same action area for PO or Vendor Bill -->
                 <field name="vendor_bill_count" invisible="1"/>
                 <button name="action_open_po"
                         type="object"
@@ -298,6 +298,16 @@
                         icon="fa-file-text-o"
                         class="text-primary fw-bold"
                         invisible="not no_po_required or vendor_bill_count == 0"/>
+
+                <field name="po_name" string="Purchase Order"/>
+                <field name="po_status"
+                   widget="badge"
+                    decoration-info="po_status in ('draft', 'sent')"
+                    decoration-warning="po_status == 'to approve'"
+                    decoration-success="po_status in ('purchase', 'done')"
+                    decoration-danger="po_status == 'cancel'"
+                   string="PO Status"
+                   invisible="po_status == False"/>
                 <field name="last_log_note" optional="hide"/>
             </list>
         </field>
