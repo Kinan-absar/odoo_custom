@@ -284,39 +284,20 @@
                         decoration-success="state in ('approved','ceo')"
                         decoration-danger="state == 'rejected'"/>
 
-                <!-- Open PO only when this MR uses a purchase order -->
+                <!-- Related purchasing document: use the same place for PO or vendor bill -->
+                <field name="vendor_bill_count" invisible="1"/>
                 <button name="action_open_po"
                         type="object"
                         string="Open PO"
                         icon="fa-external-link"
                         class="text-primary fw-bold"
                         invisible="po_name == False or no_po_required"/>
-
-                <!-- For No PO Required MRs, open the linked vendor bill instead -->
-                <field name="vendor_bill_count" invisible="1"/>
                 <button name="action_open_vendor_bills"
                         type="object"
                         string="Open Bill"
                         icon="fa-file-text-o"
                         class="text-primary fw-bold"
                         invisible="not no_po_required or vendor_bill_count == 0"/>
-                        
-                <field name="po_name" string="Purchase Order"/>
-                <field name="po_status"
-                   widget="badge"
-                    decoration-info="po_status in ('draft', 'sent')"
-                    decoration-warning="po_status == 'to approve'"
-                    decoration-success="po_status in ('purchase', 'done')"
-                    decoration-danger="po_status == 'cancel'"
-                   string="PO Status"
-                   invisible="po_status == False"/>
-                <field name="no_po_required" string="No PO Required"/>
-                <field name="accounting_docs_status" string="Docs Status" widget="badge"
-                       decoration-muted="accounting_docs_status == 'pending'"
-                       decoration-info="accounting_docs_status == 'submitted'"
-                       decoration-success="accounting_docs_status in ('received','processed')"
-                       decoration-warning="accounting_docs_status == 'need_more'"
-                       decoration-danger="accounting_docs_status == 'rejected'"/>
                 <field name="last_log_note" optional="hide"/>
             </list>
         </field>

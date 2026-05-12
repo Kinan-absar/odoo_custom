@@ -1,4 +1,4 @@
-from odoo import http
+from odoo import http, fields, _
 from odoo.http import request
 import base64
 
@@ -541,6 +541,9 @@ class EmployeePortalMaterialRequests(http.Controller):
                 "description": tag,
                 "public": True,   # ← THIS IS THE MAGIC FIX
             })
+
+        if tag == "Accounting Documents" and files:
+            rec.sudo().message_post(body=_("Accounting invoice documents uploaded."))
 
         # Detect origin page (detail vs approval)
         came_from_approval = "/material/approvals/" in (request.httprequest.referrer or "")

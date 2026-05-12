@@ -224,13 +224,16 @@
                             </div>
                         </form>
 
-                        <form method="post" action="/my/employee/material/submit_docs_to_accounting">
+                        <form method="post" action="/my/employee/material/submit_docs_to_accounting" class="d-flex justify-content-end">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                             <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
-                            <button type="submit" class="btn btn-success btn-sm">
-                                Submit Documents to Accounting
+                            <button type="submit"
+                                    class="btn btn-success px-4"
+                                    t-att-disabled="not accounting_attachments">
+                                Submit to Accounting
                             </button>
                         </form>
+
                     </div>
                 </div>
             </t>
