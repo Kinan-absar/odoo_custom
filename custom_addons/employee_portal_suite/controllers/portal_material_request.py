@@ -260,16 +260,21 @@ class EmployeePortalMaterialRequests(http.Controller):
                 pending_list.append(rec)
 
         # ---------------------------------------------------------
-        # 2) APPROVED LIST — ANY request user approved at any stage
+        # 2) APPROVED LIST
+        # Purchase reps need to work on fully approved MRs for PO/docs.
+        # Other approvers keep seeing requests they personally approved.
         # ---------------------------------------------------------
-        approved_list = Material.search([
-            "|", "|", "|", "|",
-            ("purchase_approved_by", "=", user.id),
-            ("store_approved_by", "=", user.id),
-            ("project_manager_approved_by", "=", user.id),
-            ("director_approved_by", "=", user.id),
-            ("ceo_approved_by", "=", user.id),
-        ])
+        if user.has_group("employee_portal_suite.group_mr_purchase_rep"):
+            approved_list = Material.search([("state", "=", "approved")], order="id desc")
+        else:
+            approved_list = Material.search([
+                "|", "|", "|", "|",
+                ("purchase_approved_by", "=", user.id),
+                ("store_approved_by", "=", user.id),
+                ("project_manager_approved_by", "=", user.id),
+                ("director_approved_by", "=", user.id),
+                ("ceo_approved_by", "=", user.id),
+            ])
 
         # ---------------------------------------------------------
         # 3) REJECTED LIST — ONLY if user rejected
@@ -460,6 +465,30 @@ class EmployeePortalMaterialRequests(http.Controller):
         })
 
         return request.redirect(request.httprequest.referrer)
+
+    @http.route(
+        "/my/employee/material/submit_docs_to_accounting",
+        type="http",
+        auth="user",
+        website=True,
+        methods=["POST"],
+        csrf=True,
+    )
+    def submit_docs_to_accounting(self, **post):
+        user = request.env.user
+        rec = request.env["material.request"].sudo().browse(int(post.get("req_id", 0)))
+
+        if not rec.exists():
+            return request.redirect("/my")
+
+        if not user.has_group("employee_portal_suite.group_mr_purchase_rep"):
+            return request.redirect("/my")
+
+        if rec.state != "approved":
+            return request.redirect(f"/my/employee/material/approvals/{rec.id}")
+
+        rec.sudo().action_submit_docs_to_accounting()
+        return request.redirect(f"/my/employee/material/approvals/{rec.id}")
 
     # Attachment
     import base64

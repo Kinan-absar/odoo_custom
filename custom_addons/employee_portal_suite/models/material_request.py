@@ -91,6 +91,56 @@ class MaterialRequest(models.Model):
         domain="[('account_type', 'in', ('expense','expense_direct_cost'))]",
         tracking=True,
     )
+
+    # ---------------------------------------------------------
+    # PURCHASE / ACCOUNTING DOCUMENT TRACKING
+    # ---------------------------------------------------------
+    no_po_required = fields.Boolean(
+        string="No PO Required",
+        tracking=True,
+        help="Check this when this approved MR does not require a Purchase Order, for example small purchases below the company threshold."
+    )
+    no_po_reason = fields.Text(
+        string="No PO Reason",
+        tracking=True,
+    )
+    po_created = fields.Boolean(
+        string="PO Created",
+        compute="_compute_po_created",
+        store=False,
+    )
+    accounting_docs_status = fields.Selection([
+        ("pending", "Pending"),
+        ("submitted", "Submitted to Accounting"),
+        ("received", "Received by Accounting"),
+        ("need_more", "Need More Documents"),
+        ("processed", "Processed"),
+        ("rejected", "Rejected"),
+    ], string="Accounting Docs Status", default="pending", tracking=True)
+    docs_submitted_by = fields.Many2one(
+        "res.users",
+        string="Docs Submitted By",
+        readonly=True,
+        tracking=True,
+    )
+    docs_submitted_date = fields.Datetime(
+        string="Docs Submitted Date",
+        readonly=True,
+        tracking=True,
+    )
+
+    @api.depends("purchase_order_ids")
+    def _compute_po_created(self):
+        for rec in self:
+            rec.po_created = bool(rec.purchase_order_ids)
+
+    def action_submit_docs_to_accounting(self):
+        for rec in self:
+            rec.accounting_docs_status = "submitted"
+            rec.docs_submitted_by = self.env.user.id
+            rec.docs_submitted_date = fields.Datetime.now()
+            rec.message_post(body=_("Purchase documents submitted to Accounting."))
+
     # ---------------------------------------------------------
     # CLARIFICATION
     # ---------------------------------------------------------
@@ -707,6 +757,7 @@ class MaterialRequest(models.Model):
             rec.can_create_po = (
                 rec.state == "approved"
                 and not rec.purchase_order_ids
+                and not rec.no_po_required
             )
 
     # END OF INSERTION

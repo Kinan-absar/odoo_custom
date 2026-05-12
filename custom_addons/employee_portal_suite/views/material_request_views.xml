@@ -60,6 +60,7 @@
                     </header>
                 <sheet>
                     <field name="can_create_po" invisible="1"/>
+                    <field name="po_created" invisible="1"/>
 
                     <!-- 🔥 SMART BUTTON BOX -->
                    <div class="oe_button_box" name="button_box">
@@ -177,6 +178,24 @@
                             </field>
                         </page>
 
+                        <!-- PURCHASE / ACCOUNTING DOCS TAB -->
+                        <page string="Purchase / Accounting Docs">
+                            <group>
+                                <group string="PO Information">
+                                    <field name="po_created" readonly="1"/>
+                                    <field name="po_name" string="Linked PO" readonly="1"/>
+                                    <field name="po_status" readonly="1"/>
+                                    <field name="no_po_required"/>
+                                    <field name="no_po_reason" invisible="not no_po_required"/>
+                                </group>
+                                <group string="Accounting Documents">
+                                    <field name="accounting_docs_status" widget="badge"/>
+                                    <field name="docs_submitted_by" readonly="1"/>
+                                    <field name="docs_submitted_date" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
                         <!-- APPROVAL TIMELINE TAB -->
                         <page string="Approval Timeline">
 
@@ -261,6 +280,13 @@
                     decoration-danger="po_status == 'cancel'"
                    string="PO Status"
                    invisible="po_status == False"/>
+                <field name="no_po_required" string="No PO Required"/>
+                <field name="accounting_docs_status" string="Docs Status" widget="badge"
+                       decoration-muted="accounting_docs_status == 'pending'"
+                       decoration-info="accounting_docs_status == 'submitted'"
+                       decoration-success="accounting_docs_status in ('received','processed')"
+                       decoration-warning="accounting_docs_status == 'need_more'"
+                       decoration-danger="accounting_docs_status == 'rejected'"/>
                 <field name="last_log_note" optional="hide"/>
             </list>
         </field>
@@ -278,6 +304,9 @@
                 <field name="employee_id"/>
                 <field name="worksite"/>
                 <field name="state"/>
+                <field name="accounting_docs_status"/>
+                <filter string="No PO Required" name="no_po_required" domain="[('no_po_required','=',True)]"/>
+                <filter string="Docs Submitted" name="docs_submitted" domain="[('accounting_docs_status','=','submitted')]"/>
             </search>
         </field>
     </record>
