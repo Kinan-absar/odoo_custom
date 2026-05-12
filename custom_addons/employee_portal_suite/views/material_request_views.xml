@@ -55,11 +55,17 @@
                                 string="Create Purchase Order"
                                 class="btn btn-primary"
                                 invisible="not can_create_po"/>
+                        <button name="action_create_vendor_bill"
+                                type="object"
+                                string="Create Vendor Bill"
+                                class="btn btn-primary"
+                                invisible="not can_create_vendor_bill"/>
                         
 
                     </header>
                 <sheet>
                     <field name="can_create_po" invisible="1"/>
+                    <field name="can_create_vendor_bill" invisible="1"/>
                     <field name="po_created" invisible="1"/>
 
                     <!-- 🔥 SMART BUTTON BOX -->
@@ -92,6 +98,20 @@
                                 </span>
                             </div>
 
+                        </button>
+
+                        <!-- OPEN VENDOR BILLS BUTTON -->
+                        <button name="action_open_vendor_bills"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-file-text-o"
+                                invisible="vendor_bill_count == 0">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Vendor Bills</span>
+                                <span class="o_stat_value">
+                                    <field name="vendor_bill_count"/>
+                                </span>
+                            </div>
                         </button>
 
                     </div>
@@ -192,6 +212,7 @@
                                     <field name="accounting_docs_status" widget="badge"/>
                                     <field name="docs_submitted_by" readonly="1"/>
                                     <field name="docs_submitted_date" readonly="1"/>
+                                    <field name="vendor_bill_count" readonly="1"/>
                                 </group>
                             </group>
                         </page>

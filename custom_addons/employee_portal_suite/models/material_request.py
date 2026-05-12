@@ -141,6 +141,102 @@ class MaterialRequest(models.Model):
             rec.docs_submitted_date = fields.Datetime.now()
             rec.message_post(body=_("Purchase documents submitted to Accounting."))
 
+    vendor_bill_ids = fields.One2many(
+        "account.move",
+        "material_request_id",
+        string="Vendor Bills",
+        domain=[("move_type", "=", "in_invoice")],
+    )
+    vendor_bill_count = fields.Integer(
+        string="Vendor Bills",
+        compute="_compute_vendor_bill_count",
+    )
+    can_create_vendor_bill = fields.Boolean(
+        string="Can Create Vendor Bill",
+        compute="_compute_can_create_vendor_bill",
+        store=False,
+    )
+
+    def _compute_vendor_bill_count(self):
+        for rec in self:
+            rec.vendor_bill_count = len(rec.vendor_bill_ids)
+
+    def _compute_can_create_vendor_bill(self):
+        for rec in self:
+            rec.can_create_vendor_bill = (
+                rec.state == "approved"
+                and rec.no_po_required
+            )
+
+    def _prepare_vendor_bill_line_vals(self):
+        self.ensure_one()
+        lines = []
+        for line in self.line_ids:
+            vals = {
+                "name": line.item_name or self.name,
+                "quantity": line.qty_required or 1.0,
+            }
+            if self.expense_account_id:
+                vals["account_id"] = self.expense_account_id.id
+            if line.uom_id:
+                vals["product_uom_id"] = line.uom_id.id
+            lines.append((0, 0, vals))
+        return lines
+
+    def action_create_vendor_bill(self):
+        self.ensure_one()
+
+        if not self.no_po_required:
+            raise UserError(_("Vendor Bill can only be created directly when No PO Required is checked."))
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Vendor Bill"),
+            "res_model": "account.move",
+            "view_mode": "form",
+            "target": "current",
+            "context": {
+                "default_move_type": "in_invoice",
+                "default_material_request_id": self.id,
+                "default_invoice_origin": self.name,
+                "default_ref": self.name,
+                "default_invoice_line_ids": self._prepare_vendor_bill_line_vals(),
+            },
+        }
+
+    def action_open_vendor_bills(self):
+        self.ensure_one()
+
+        bills = self.vendor_bill_ids.filtered(lambda move: move.move_type == "in_invoice")
+        if not bills:
+            return {
+                "type": "ir.actions.act_window",
+                "name": _("Vendor Bill"),
+                "res_model": "account.move",
+                "view_mode": "form",
+                "target": "current",
+                "context": {
+                    "default_move_type": "in_invoice",
+                    "default_material_request_id": self.id,
+                    "default_invoice_origin": self.name,
+                    "default_ref": self.name,
+                    "default_invoice_line_ids": self._prepare_vendor_bill_line_vals(),
+                },
+            }
+
+        action = {
+            "type": "ir.actions.act_window",
+            "name": _("Vendor Bills"),
+            "res_model": "account.move",
+            "view_mode": "list,form",
+            "domain": [("id", "in", bills.ids)],
+            "context": {"default_move_type": "in_invoice"},
+            "target": "current",
+        }
+        if len(bills) == 1:
+            action.update({"view_mode": "form", "res_id": bills.id})
+        return action
+
     # ---------------------------------------------------------
     # CLARIFICATION
     # ---------------------------------------------------------
