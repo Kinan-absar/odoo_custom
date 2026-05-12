@@ -308,6 +308,16 @@
                     decoration-danger="po_status == 'cancel'"
                    string="PO Status"
                    invisible="po_status == False"/>
+                <field name="no_po_required" string="No PO Required"/>
+                <field name="accounting_docs_status"
+                       string="Docs Status"
+                       widget="badge"
+                       decoration-muted="accounting_docs_status == 'pending'"
+                       decoration-info="accounting_docs_status == 'submitted'"
+                       decoration-primary="accounting_docs_status == 'received'"
+                       decoration-warning="accounting_docs_status == 'need_more'"
+                       decoration-success="accounting_docs_status == 'processed'"
+                       decoration-danger="accounting_docs_status == 'rejected'"/>
                 <field name="last_log_note" optional="hide"/>
             </list>
         </field>
