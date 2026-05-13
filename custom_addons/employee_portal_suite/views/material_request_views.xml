@@ -206,7 +206,6 @@
                                     <field name="po_name" string="Linked PO" readonly="1"/>
                                     <field name="po_status" readonly="1"/>
                                     <field name="no_po_required"/>
-                                    <field name="no_po_reason" invisible="not no_po_required"/>
                                 </group>
                                 <group string="Quotation Collection">
                                     <field name="quotation_status" readonly="1"/>
@@ -315,6 +314,13 @@
                    string="PO Status"
                    invisible="po_status == False"/>
                 <field name="no_po_required" string="No PO Required"/>
+                <field name="quotation_status"
+                       string="Quotation Status"
+                       widget="badge"
+                       decoration-muted="quotation_status == 'pending'"
+                       decoration-warning="quotation_status in ('remaining_2', 'remaining_1')"
+                       decoration-success="quotation_status == 'uploaded'"
+                       decoration-info="quotation_status in ('exception_approved', 'single_source_approved')"/>
                 <field name="accounting_docs_status"
                        string="Invoice Status"
                        widget="badge"

@@ -564,6 +564,7 @@ class EmployeePortalMaterialRequests(http.Controller):
         max_accounting_size = 10 * 1024 * 1024
         max_quotation_size = 10 * 1024 * 1024
 
+        uploaded_names = []
         for f in files:
             if not f or f.filename.strip() == "":
                 continue
@@ -579,7 +580,6 @@ class EmployeePortalMaterialRequests(http.Controller):
                 continue
             if category == "quotation" and len(file_content) > max_quotation_size:
                 continue
-            
 
             request.env["ir.attachment"].sudo().create({
                 "name": filename,
@@ -592,13 +592,23 @@ class EmployeePortalMaterialRequests(http.Controller):
                 "mr_attachment_category": category,
                 "public": True,   # ← THIS IS THE MAGIC FIX
             })
+            uploaded_names.append(filename)
 
-        if files:
+        if uploaded_names:
+            names_text = ", ".join(uploaded_names)
             if category == "invoice_submission":
-                rec.sudo().message_post(body=_("Invoice document uploaded for Accounting."), message_type="comment", subtype_xmlid="mail.mt_comment")
+                rec.sudo().message_post(
+                    body=_("Invoice document(s) uploaded for Accounting: %s") % names_text,
+                    message_type="comment",
+                    subtype_xmlid="mail.mt_comment",
+                )
             elif category == "quotation":
                 rec.sudo()._compute_quotation_status()
-                rec.sudo().message_post(body=_("Quotation document uploaded."), message_type="comment", subtype_xmlid="mail.mt_comment")
+                rec.sudo().message_post(
+                    body=_("Quotation document(s) uploaded: %s") % names_text,
+                    message_type="comment",
+                    subtype_xmlid="mail.mt_comment",
+                )
 
         # Detect origin page (detail vs approval)
         came_from_approval = "/material/approvals/" in (request.httprequest.referrer or "")

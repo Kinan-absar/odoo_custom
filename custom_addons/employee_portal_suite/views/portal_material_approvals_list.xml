@@ -71,7 +71,8 @@
                             <th>Worksite</th>
                             <th>Status</th>
                             <th>PO</th>
-                            <th>Docs</th>
+                            <th>Quotation</th>
+                            <th>Invoice</th>
                             <th>Date</th>
                             <th></th>
                         </tr>
@@ -103,6 +104,12 @@
                                         <t t-else="">
                                             <span class="badge bg-light text-dark">No PO</span>
                                         </t>
+                                    </td>
+
+                                    <td>
+                                        <span t-att-class="'badge ' + ('bg-secondary' if req.quotation_status == 'pending' else 'bg-warning text-dark' if req.quotation_status in ['remaining_2','remaining_1'] else 'bg-success' if req.quotation_status == 'uploaded' else 'bg-info text-dark')">
+                                            <t t-esc="dict(req._fields['quotation_status'].selection).get(req.quotation_status)"/>
+                                        </span>
                                     </td>
 
                                     <td>
@@ -182,7 +189,12 @@
                                 </div>
 
                                 <div>
-                                    <span class="label">Docs</span>
+                                    <span class="label">Quotation</span>
+                                    <div><t t-esc="dict(req._fields['quotation_status'].selection).get(req.quotation_status)"/></div>
+                                </div>
+
+                                <div>
+                                    <span class="label">Invoice</span>
                                     <div><t t-esc="dict(req._fields['accounting_docs_status'].selection).get(req.accounting_docs_status)"/></div>
                                 </div>
 

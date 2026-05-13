@@ -100,10 +100,6 @@ class MaterialRequest(models.Model):
         tracking=True,
         help="Check this when this approved MR does not require a Purchase Order, for example small purchases below the company threshold."
     )
-    no_po_reason = fields.Text(
-        string="No PO Reason",
-        tracking=True,
-    )
     po_created = fields.Boolean(
         string="PO Created",
         compute="_compute_po_created",

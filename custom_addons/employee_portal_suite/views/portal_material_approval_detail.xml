@@ -280,11 +280,7 @@
                             </div>
                         </div>
 
-                        <t t-if="request_rec.no_po_required and request_rec.no_po_reason">
-                            <div class="alert alert-light border small mb-3">
-                                <strong>No PO Reason:</strong> <t t-esc="request_rec.no_po_reason"/>
-                            </div>
-                        </t>
+
 
                         <!-- Uploaded accounting files -->
                         <t t-if="accounting_attachments">
