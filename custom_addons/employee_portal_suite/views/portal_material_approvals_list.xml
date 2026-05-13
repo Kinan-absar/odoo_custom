@@ -40,7 +40,7 @@
                             id="materialApprovalSearchInput"
                             name="search"
                             t-att-value="search or ''"
-                            placeholder="Search request #"
+                            placeholder="Search MR, employee, item, or PO"
                             class="form-control mobile-search"/>
 
                         <button type="submit" class="search-btn">

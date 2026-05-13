@@ -218,7 +218,7 @@ class EmployeePortalMaterialRequests(http.Controller):
         ):
             return request.redirect('/my')
 
-        current_filter = kw.get("filter", "pending")
+        current_filter = kw.get("filter", "all")
         search = (kw.get("search") or "").strip()
 
         # ---------------------------------------------------------
@@ -264,20 +264,21 @@ class EmployeePortalMaterialRequests(http.Controller):
 
         # ---------------------------------------------------------
         # 2) APPROVED LIST
-        # Purchase reps need to work on fully approved MRs for PO/docs.
-        # Other approvers keep seeing requests they personally approved.
+        # Show requests already approved by this user, even if the MR
+        # is now waiting at a later approval stage. Purchase reps also
+        # need fully approved MRs so they can continue PO/docs work.
         # ---------------------------------------------------------
+        approved_domain = [
+            "|", "|", "|", "|",
+            ("purchase_approved_by", "=", user.id),
+            ("store_approved_by", "=", user.id),
+            ("project_manager_approved_by", "=", user.id),
+            ("director_approved_by", "=", user.id),
+            ("ceo_approved_by", "=", user.id),
+        ]
         if user.has_group("employee_portal_suite.group_mr_purchase_rep"):
-            approved_list = Material.search([("state", "=", "approved")], order="id desc")
-        else:
-            approved_list = Material.search([
-                "|", "|", "|", "|",
-                ("purchase_approved_by", "=", user.id),
-                ("store_approved_by", "=", user.id),
-                ("project_manager_approved_by", "=", user.id),
-                ("director_approved_by", "=", user.id),
-                ("ceo_approved_by", "=", user.id),
-            ])
+            approved_domain = ["|", ("state", "=", "approved")] + approved_domain
+        approved_list = Material.search(approved_domain, order="id desc")
 
         # ---------------------------------------------------------
         # 3) REJECTED LIST — ONLY if user rejected
