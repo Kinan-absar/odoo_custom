@@ -279,13 +279,18 @@
                                     Submit is disabled because no accounting documents are uploaded yet.
                                 </div>
                             </t>
-                            <div class="d-flex justify-content-end">
-                                <button type="submit"
-                                        class="btn btn-success px-4"
-                                        t-att-disabled="not accounting_attachments">
-                                    Submit to Accounting
-                                </button>
-                            </div>
+                            <t t-elif="not can_submit_accounting_docs">
+                                <div class="alert alert-success border small mb-3">
+                                    All uploaded accounting documents have already been submitted. The Submit button will appear again after you upload a new document.
+                                </div>
+                            </t>
+                            <t t-if="can_submit_accounting_docs">
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-success px-4">
+                                        Submit to Accounting
+                                    </button>
+                                </div>
+                            </t>
                         </form>
 
                     </div>

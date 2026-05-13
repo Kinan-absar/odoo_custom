@@ -132,22 +132,47 @@ class MaterialRequest(models.Model):
         string="Note to Accounting",
         tracking=True,
     )
+    accounting_docs_submitted_attachment_count = fields.Integer(
+        string="Submitted Accounting Attachment Count",
+        readonly=True,
+        default=0,
+        copy=False,
+        help="Technical field used by the portal to show Submit to Accounting only when new accounting documents were uploaded after the last submission.",
+    )
 
     @api.depends("purchase_order_ids")
     def _compute_po_created(self):
         for rec in self:
             rec.po_created = bool(rec.purchase_order_ids)
 
+    def _get_accounting_attachment_count(self):
+        self.ensure_one()
+        return self.env["ir.attachment"].sudo().search_count([
+            ("res_model", "=", "material.request"),
+            ("res_id", "=", self.id),
+            ("description", "=", "Accounting Documents"),
+        ])
+
+    def has_unsubmitted_accounting_docs(self):
+        self.ensure_one()
+        return self._get_accounting_attachment_count() > self.accounting_docs_submitted_attachment_count
+
     def action_submit_docs_to_accounting(self, note=False):
         for rec in self:
+            attachment_count = rec._get_accounting_attachment_count()
+            if not attachment_count or attachment_count <= rec.accounting_docs_submitted_attachment_count:
+                continue
+
             if note is not False:
                 rec.accounting_docs_note = note
             rec.accounting_docs_status = "submitted"
             rec.docs_submitted_by = self.env.user.id
             rec.docs_submitted_date = fields.Datetime.now()
+            rec.accounting_docs_submitted_attachment_count = attachment_count
+
             body = _("Purchase documents submitted to Accounting.")
             if rec.accounting_docs_note:
-                body += "<br/><b>%s</b><br/>%s" % (_("Note to Accounting:"), rec.accounting_docs_note)
+                body += "\n\n%s\n%s" % (_("Note to Accounting:"), rec.accounting_docs_note)
             rec.message_post(body=body)
 
     vendor_bill_ids = fields.One2many(

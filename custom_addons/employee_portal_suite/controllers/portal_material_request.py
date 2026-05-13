@@ -352,10 +352,16 @@ class EmployeePortalMaterialRequests(http.Controller):
         attachments = all_attachments - accounting_attachments
         is_purchase_rep = request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep")
 
+        can_submit_accounting_docs = bool(
+            accounting_attachments
+            and rec.sudo().has_unsubmitted_accounting_docs()
+        )
+
         return request.render("employee_portal_suite.portal_material_approval_detail", {
             "request_rec": rec,
             "attachments": attachments,
             "accounting_attachments": accounting_attachments,
+            "can_submit_accounting_docs": can_submit_accounting_docs,
             "is_purchase_rep": is_purchase_rep,
             "status_badge": _mr_status_badge,
         })
@@ -507,6 +513,9 @@ class EmployeePortalMaterialRequests(http.Controller):
             return request.redirect("/my")
 
         if rec.state != "approved":
+            return request.redirect(f"/my/employee/material/approvals/{rec.id}")
+
+        if not rec.sudo().has_unsubmitted_accounting_docs():
             return request.redirect(f"/my/employee/material/approvals/{rec.id}")
 
         note = (post.get("accounting_docs_note") or "").strip()
