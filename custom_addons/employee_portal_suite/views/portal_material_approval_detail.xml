@@ -96,101 +96,138 @@
             </div>
 
             <!-- ========================= -->
-            <!-- PURCHASE / ACCOUNTING STATUS -->
-            <!-- ========================= -->
-            <div class="card mb-3 rounded-4 shadow-sm">
-                <div class="card-header bg-white fw-semibold">
-                    Purchase / Accounting Documents
-                </div>
-                <div class="card-body small">
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="text-muted">PO Status</div>
-                            <div class="fw-semibold">
-                                <t t-if="request_rec.po_created">
-                                    PO Created: <t t-esc="request_rec.po_name"/>
-                                    <t t-if="request_rec.po_status"> — <t t-esc="request_rec.po_status"/></t>
-                                </t>
-                                <t t-elif="request_rec.no_po_required">
-                                    No PO Required
-                                </t>
-                                <t t-else="">
-                                    No PO Created
-                                </t>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-muted">Accounting Docs Status</div>
-                            <div class="fw-semibold">
-                                <t t-esc="dict(request_rec._fields['accounting_docs_status'].selection).get(request_rec.accounting_docs_status)"/>
-                            </div>
-                        </div>
-                        <t t-if="request_rec.no_po_required and request_rec.no_po_reason">
-                            <div class="col-12">
-                                <div class="text-muted">No PO Reason</div>
-                                <div class="fw-semibold"><t t-esc="request_rec.no_po_reason"/></div>
-                            </div>
-                        </t>
-                        <t t-if="request_rec.docs_submitted_by">
-                            <div class="col-6">
-                                <div class="text-muted">Submitted By</div>
-                                <div class="fw-semibold"><t t-esc="request_rec.docs_submitted_by.name"/></div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">Submitted Date</div>
-                                <div class="fw-semibold"><t t-esc="request_rec.docs_submitted_date"/></div>
-                            </div>
-                        </t>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- ========================= -->
             <!-- ACCOUNTING DOCUMENTS - PURCHASE REPRESENTATIVE ONLY -->
             <!-- ========================= -->
             <t t-if="is_purchase_rep and request_rec.state == 'approved'">
                 <div class="card mb-3 rounded-4 shadow-sm border-success">
-                    <div class="card-header d-flex justify-content-between align-items-center bg-white">
-                        <span class="fw-semibold">Accounting Invoice Documents</span>
-                        <span class="badge bg-light text-dark">
-                            <t t-esc="len(accounting_attachments)"/>
-                        </span>
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <div class="fw-semibold">Accounting Invoice Documents</div>
+                                <div class="text-muted small">Upload supplier invoice/supporting files, then submit them to Accounting.</div>
+                            </div>
+                            <span t-att-class="'badge ' + ('bg-secondary' if request_rec.accounting_docs_status == 'pending' else 'bg-primary' if request_rec.accounting_docs_status == 'submitted' else 'bg-info text-dark' if request_rec.accounting_docs_status == 'received' else 'bg-warning text-dark' if request_rec.accounting_docs_status == 'need_more' else 'bg-success' if request_rec.accounting_docs_status == 'processed' else 'bg-danger')">
+                                <t t-esc="dict(request_rec._fields['accounting_docs_status'].selection).get(request_rec.accounting_docs_status)"/>
+                            </span>
+                        </div>
                     </div>
 
                     <div class="card-body small">
-                        <div class="mb-3">
-                            <div class="text-muted">Status</div>
-                            <div class="fw-semibold">
-                                <t t-esc="dict(request_rec._fields['accounting_docs_status'].selection).get(request_rec.accounting_docs_status)"/>
+                        <!-- Progress stepper -->
+                        <div class="d-flex align-items-center justify-content-between text-center mb-3 accounting-stepper">
+                            <div t-att-class="'flex-fill ' + ('text-success fw-semibold' if accounting_attachments else 'text-muted')">
+                                <div class="rounded-circle border mx-auto mb-1 d-flex align-items-center justify-content-center" style="width:32px;height:32px;">
+                                    <i class="fa fa-upload"></i>
+                                </div>
+                                <div>Upload</div>
+                            </div>
+                            <div class="border-top flex-fill mx-2"></div>
+                            <div t-att-class="'flex-fill ' + ('text-success fw-semibold' if request_rec.accounting_docs_status in ['submitted','received','need_more','processed','rejected'] else 'text-muted')">
+                                <div class="rounded-circle border mx-auto mb-1 d-flex align-items-center justify-content-center" style="width:32px;height:32px;">
+                                    <i class="fa fa-paper-plane"></i>
+                                </div>
+                                <div>Submitted</div>
+                            </div>
+                            <div class="border-top flex-fill mx-2"></div>
+                            <div t-att-class="'flex-fill ' + ('text-success fw-semibold' if request_rec.accounting_docs_status == 'processed' else 'text-muted')">
+                                <div class="rounded-circle border mx-auto mb-1 d-flex align-items-center justify-content-center" style="width:32px;height:32px;">
+                                    <i class="fa fa-check"></i>
+                                </div>
+                                <div>Processed</div>
                             </div>
                         </div>
 
+                        <!-- Context strip -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-3 col-6">
+                                <div class="p-2 rounded-3 bg-light border h-100">
+                                    <div class="text-muted">PO / Bill</div>
+                                    <div class="fw-semibold text-truncate">
+                                        <t t-if="request_rec.po_created"><t t-esc="request_rec.po_name"/></t>
+                                        <t t-elif="request_rec.no_po_required and request_rec.vendor_bill_ids">Bill Created</t>
+                                        <t t-elif="request_rec.no_po_required">No PO Required</t>
+                                        <t t-else="">No PO Created</t>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-2 rounded-3 bg-light border h-100">
+                                    <div class="text-muted">Files</div>
+                                    <div class="fw-semibold"><t t-esc="len(accounting_attachments)"/> uploaded</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-2 rounded-3 bg-light border h-100">
+                                    <div class="text-muted">Submitted By</div>
+                                    <div class="fw-semibold text-truncate">
+                                        <t t-if="request_rec.docs_submitted_by"><t t-esc="request_rec.docs_submitted_by.name"/></t>
+                                        <t t-else="">-</t>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-2 rounded-3 bg-light border h-100">
+                                    <div class="text-muted">Submitted Date</div>
+                                    <div class="fw-semibold text-truncate">
+                                        <t t-if="request_rec.docs_submitted_date"><t t-esc="request_rec.docs_submitted_date"/></t>
+                                        <t t-else="">-</t>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <t t-if="request_rec.no_po_required and request_rec.no_po_reason">
+                            <div class="alert alert-light border small mb-3">
+                                <strong>No PO Reason:</strong> <t t-esc="request_rec.no_po_reason"/>
+                            </div>
+                        </t>
+
+                        <!-- Uploaded accounting files -->
                         <t t-if="accounting_attachments">
                             <div class="list-group list-group-flush mb-3">
                                 <t t-foreach="accounting_attachments" t-as="att">
-                                    <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                                        <div class="overflow-hidden">
-                                            <div class="fw-semibold text-truncate">
-                                                <t t-esc="att.name"/>
+                                    <div class="list-group-item px-0">
+                                        <div class="d-flex justify-content-between align-items-center gap-2">
+                                            <div class="overflow-hidden d-flex align-items-center gap-2">
+                                                <i t-att-class="'fa ' + ('fa-file-pdf-o text-danger' if (att.mimetype or '').find('pdf') >= 0 else 'fa-file-image-o text-primary' if (att.mimetype or '').find('image') >= 0 else 'fa-file-excel-o text-success' if ((att.mimetype or '').find('sheet') >= 0 or (att.name or '').lower().endswith(('.xls', '.xlsx'))) else 'fa-file-o text-muted')"></i>
+                                                <div class="overflow-hidden">
+                                                    <div class="fw-semibold text-truncate"><t t-esc="att.name"/></div>
+                                                    <div class="text-muted small">
+                                                        <t t-if="att.file_size"><t t-esc="'%.1f KB' % (att.file_size / 1024.0)"/></t>
+                                                        <t t-if="att.create_date"> · Uploaded <t t-esc="att.create_date"/></t>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="text-muted small">Accounting Documents</div>
+                                            <div class="d-flex gap-2 flex-shrink-0">
+                                                <a t-att-href="'/web/content/%s' % att.id" target="_blank" class="attachment-icon-btn text-primary" title="Preview">
+                                                    <i class="fa fa-eye"></i>
+                                                </a>
+                                                <a t-att-href="'/web/content/%s?download=true' % att.id" target="_blank" class="attachment-icon-btn text-secondary" title="Download">
+                                                    <i class="fa fa-download"></i>
+                                                </a>
+                                                <t t-if="request_rec.accounting_docs_status == 'pending'">
+                                                    <a href="#" class="attachment-icon-btn text-danger delete-trigger" t-att-data-url="'/my/employee/material/attachment/delete/%s/%s' % (att.id, request_rec.id)" title="Remove">
+                                                        <i class="fa fa-times"></i>
+                                                    </a>
+                                                </t>
+                                            </div>
                                         </div>
-                                        <div class="d-flex gap-2">
-                                            <a t-att-href="'/web/content/%s' % att.id" target="_blank" class="attachment-icon-btn text-primary">
-                                                <i class="fa fa-eye"></i>
-                                            </a>
-                                            <a t-att-href="'/web/content/%s?download=true' % att.id" target="_blank" class="attachment-icon-btn text-secondary">
-                                                <i class="fa fa-download"></i>
-                                            </a>
+                                        <div class="delete-confirmation d-none mt-3">
+                                            <div class="confirm-box p-3 rounded-3">
+                                                <div class="small mb-2 text-muted">Delete this accounting document?</div>
+                                                <div class="d-flex gap-2 justify-content-end">
+                                                    <button type="button" class="btn btn-sm btn-light cancel-delete">Cancel</button>
+                                                    <a href="#" class="btn btn-sm btn-danger confirm-delete-link">Delete</a>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </t>
                             </div>
                         </t>
                         <t t-else="">
-                            <div class="alert alert-light border small mb-3">
-                                No accounting invoice documents uploaded yet.
+                            <div class="alert alert-warning small mb-3">
+                                Upload at least one invoice/supporting document before submitting to Accounting.
                             </div>
                         </t>
 
@@ -203,15 +240,21 @@
                             <input type="hidden" name="attachment_tag" value="Accounting Documents"/>
 
                             <div id="dropzone-accounting"
-                                 class="border rounded-4 p-4 text-center bg-light mb-3"
+                                 class="border rounded-4 p-4 text-center bg-light mb-2"
                                  style="cursor:pointer;">
-                                <div class="text-muted small">
-                                    Drag invoice/supporting documents here or click to upload
+                                <div class="fw-semibold mb-1">Upload Invoice / Supporting Documents</div>
+                                <div class="text-muted small">Drag files here or click to choose files.</div>
+                                <div class="mt-2">
+                                    <span class="badge bg-white text-dark border">PDF</span>
+                                    <span class="badge bg-white text-dark border">JPG/PNG</span>
+                                    <span class="badge bg-white text-dark border">XLS/XLSX</span>
+                                    <span class="badge bg-white text-dark border">Max 10 MB each</span>
                                 </div>
                                 <input type="file"
                                        name="attachments"
                                        id="fileInput-accounting"
                                        class="d-none"
+                                       accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,application/pdf,image/jpeg,image/png,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                                        multiple="multiple"/>
                             </div>
 
@@ -219,19 +262,30 @@
 
                             <div class="d-flex justify-content-end">
                                 <button type="submit" class="btn btn-outline-success px-4">
-                                    Upload Accounting Documents
+                                    Upload Documents
                                 </button>
                             </div>
                         </form>
 
-                        <form method="post" action="/my/employee/material/submit_docs_to_accounting" class="d-flex justify-content-end">
+                        <form method="post" action="/my/employee/material/submit_docs_to_accounting">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                             <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
-                            <button type="submit"
-                                    class="btn btn-success px-4"
-                                    t-att-disabled="not accounting_attachments">
-                                Submit to Accounting
-                            </button>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Note to Accounting <span class="text-muted fw-normal">(optional)</span></label>
+                                <textarea name="accounting_docs_note" class="form-control" rows="2" placeholder="Example: partial delivery, split invoice, urgent processing..."><t t-esc="request_rec.accounting_docs_note or ''"/></textarea>
+                            </div>
+                            <t t-if="not accounting_attachments">
+                                <div class="alert alert-light border small mb-3">
+                                    Submit is disabled because no accounting documents are uploaded yet.
+                                </div>
+                            </t>
+                            <div class="d-flex justify-content-end">
+                                <button type="submit"
+                                        class="btn btn-success px-4"
+                                        t-att-disabled="not accounting_attachments">
+                                    Submit to Accounting
+                                </button>
+                            </div>
                         </form>
 
                     </div>

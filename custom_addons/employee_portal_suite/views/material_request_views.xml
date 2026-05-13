@@ -212,6 +212,7 @@
                                     <field name="accounting_docs_status"/>
                                     <field name="docs_submitted_by" readonly="1"/>
                                     <field name="docs_submitted_date" readonly="1"/>
+                                    <field name="accounting_docs_note" placeholder="Optional note from Purchase Representative / Accounting"/>
                                     <field name="vendor_bill_count" readonly="1"/>
                                 </group>
                             </group>

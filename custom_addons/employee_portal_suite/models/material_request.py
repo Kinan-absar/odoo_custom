@@ -128,18 +128,27 @@ class MaterialRequest(models.Model):
         readonly=True,
         tracking=True,
     )
+    accounting_docs_note = fields.Text(
+        string="Note to Accounting",
+        tracking=True,
+    )
 
     @api.depends("purchase_order_ids")
     def _compute_po_created(self):
         for rec in self:
             rec.po_created = bool(rec.purchase_order_ids)
 
-    def action_submit_docs_to_accounting(self):
+    def action_submit_docs_to_accounting(self, note=False):
         for rec in self:
+            if note is not False:
+                rec.accounting_docs_note = note
             rec.accounting_docs_status = "submitted"
             rec.docs_submitted_by = self.env.user.id
             rec.docs_submitted_date = fields.Datetime.now()
-            rec.message_post(body=_("Purchase documents submitted to Accounting."))
+            body = _("Purchase documents submitted to Accounting.")
+            if rec.accounting_docs_note:
+                body += "<br/><b>%s</b><br/>%s" % (_("Note to Accounting:"), rec.accounting_docs_note)
+            rec.message_post(body=body)
 
     vendor_bill_ids = fields.One2many(
         "account.move",

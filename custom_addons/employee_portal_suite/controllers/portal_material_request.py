@@ -188,7 +188,7 @@ class EmployeePortalMaterialRequests(http.Controller):
             file_content = f.read()
 
             request.env["ir.attachment"].sudo().create({
-                "name": f.filename,
+                "name": filename,
                 "datas": base64.b64encode(file_content).decode(),
                 "mimetype": f.mimetype,
                 "res_model": "material.request",
@@ -509,7 +509,8 @@ class EmployeePortalMaterialRequests(http.Controller):
         if rec.state != "approved":
             return request.redirect(f"/my/employee/material/approvals/{rec.id}")
 
-        rec.sudo().action_submit_docs_to_accounting()
+        note = (post.get("accounting_docs_note") or "").strip()
+        rec.sudo().action_submit_docs_to_accounting(note=note)
         return request.redirect(f"/my/employee/material/approvals/{rec.id}")
 
     # Attachment
@@ -539,15 +540,24 @@ class EmployeePortalMaterialRequests(http.Controller):
 
         files = request.httprequest.files.getlist("attachments")
 
+        allowed_accounting_ext = (".pdf", ".jpg", ".jpeg", ".png", ".xls", ".xlsx")
+        max_accounting_size = 10 * 1024 * 1024
+
         for f in files:
             if not f or f.filename.strip() == "":
                 continue
 
+            filename = f.filename.strip()
+            if tag == "Accounting Documents" and not filename.lower().endswith(allowed_accounting_ext):
+                continue
+
             file_content = f.read()
+            if tag == "Accounting Documents" and len(file_content) > max_accounting_size:
+                continue
             
 
             request.env["ir.attachment"].sudo().create({
-                "name": f.filename,
+                "name": filename,
                 "datas": base64.b64encode(file_content).decode(),   # REQUIRED
                 "mimetype": f.mimetype,                             # RECOMMENDED
                 "res_model": "material.request",
@@ -578,7 +588,11 @@ class EmployeePortalMaterialRequests(http.Controller):
     def delete_material_attachment(self, att_id, req_id, **kw):
 
         att = request.env["ir.attachment"].sudo().browse(att_id)
-        if att.exists():
+        rec = request.env["material.request"].sudo().browse(req_id)
+        if att.exists() and rec.exists():
+            if (att.description or "") == "Accounting Documents":
+                if not request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep") or rec.accounting_docs_status != "pending":
+                    return request.redirect(f"/my/employee/material/approvals/{req_id}")
             att.unlink()
 
         came_from_approval = "/material/approvals/" in (request.httprequest.referrer or "")
