@@ -96,6 +96,110 @@
             </div>
 
             <!-- ========================= -->
+            <!-- QUOTATION DOCUMENTS - PURCHASE REPRESENTATIVE ONLY -->
+            <!-- ========================= -->
+            <t t-if="is_purchase_rep">
+                <div class="card mb-3 rounded-4 shadow-sm border-primary">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <div class="fw-semibold">Quotation Collection</div>
+                                <div class="text-muted small">Upload supplier quotations separately from general MR attachments.</div>
+                            </div>
+                            <span t-att-class="'badge ' + ('bg-secondary' if request_rec.quotation_status == 'pending' else 'bg-warning text-dark' if request_rec.quotation_status in ['remaining_2','remaining_1'] else 'bg-success' if request_rec.quotation_status == 'uploaded' else 'bg-info text-dark')">
+                                <t t-esc="dict(request_rec._fields['quotation_status'].selection).get(request_rec.quotation_status)"/>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body small">
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-4 col-6">
+                                <div class="p-2 rounded-3 bg-light border h-100">
+                                    <div class="text-muted">Quotation Files</div>
+                                    <div class="fw-semibold"><t t-esc="len(quotation_attachments)"/> uploaded</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-6">
+                                <div class="p-2 rounded-3 bg-light border h-100">
+                                    <div class="text-muted">Target</div>
+                                    <div class="fw-semibold">3 quotations</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-12">
+                                <div class="p-2 rounded-3 bg-light border h-100">
+                                    <div class="text-muted">Backend Override</div>
+                                    <div class="fw-semibold text-truncate">
+                                        <t t-if="request_rec.quotation_status_override"><t t-esc="dict(request_rec._fields['quotation_status_override'].selection).get(request_rec.quotation_status_override)"/></t>
+                                        <t t-else="">Automatic</t>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <t t-if="quotation_attachments">
+                            <div class="list-group list-group-flush mb-3">
+                                <t t-foreach="quotation_attachments" t-as="att">
+                                    <div class="list-group-item px-0">
+                                        <div class="d-flex justify-content-between align-items-center gap-2">
+                                            <div class="overflow-hidden d-flex align-items-center gap-2">
+                                                <i t-att-class="'fa ' + ('fa-file-pdf-o text-danger' if (att.mimetype or '').find('pdf') >= 0 else 'fa-file-image-o text-primary' if (att.mimetype or '').find('image') >= 0 else 'fa-file-excel-o text-success' if ((att.mimetype or '').find('sheet') >= 0 or (att.name or '').lower().endswith(('.xls', '.xlsx'))) else 'fa-file-o text-muted')"></i>
+                                                <div class="overflow-hidden">
+                                                    <div class="fw-semibold text-truncate"><t t-esc="att.name"/></div>
+                                                    <div class="text-muted small">
+                                                        <t t-if="att.file_size"><t t-esc="'%.1f KB' % (att.file_size / 1024.0)"/></t>
+                                                        <t t-if="att.create_date"> · Uploaded <t t-esc="att.create_date"/></t>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-2 flex-shrink-0">
+                                                <a t-att-href="'/web/content/%s' % att.id" target="_blank" class="attachment-icon-btn text-primary" title="Preview"><i class="fa fa-eye"></i></a>
+                                                <a t-att-href="'/web/content/%s?download=true' % att.id" target="_blank" class="attachment-icon-btn text-secondary" title="Download"><i class="fa fa-download"></i></a>
+                                                <a href="#" class="attachment-icon-btn text-danger delete-trigger" t-att-data-url="'/my/employee/material/attachment/delete/%s/%s' % (att.id, request_rec.id)" title="Delete"><i class="fa fa-trash"></i></a>
+                                            </div>
+                                        </div>
+                                        <div class="delete-confirmation d-none mt-3">
+                                            <div class="confirm-box p-3 rounded-3">
+                                                <div class="small mb-2 text-muted">Delete this quotation document?</div>
+                                                <div class="d-flex gap-2 justify-content-end">
+                                                    <button type="button" class="btn btn-sm btn-light cancel-delete">Cancel</button>
+                                                    <a href="#" class="btn btn-sm btn-danger confirm-delete-link">Delete</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </t>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <div class="alert alert-light border small mb-3">No quotation documents uploaded yet.</div>
+                        </t>
+
+                        <form method="post" action="/my/employee/material/attachment/upload" enctype="multipart/form-data" class="mb-0">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
+                            <input type="hidden" name="attachment_tag" value="Quotation Documents"/>
+                            <div id="dropzone-quotation" class="border rounded-4 p-4 text-center bg-light mb-2" style="cursor:pointer;">
+                                <div class="fw-semibold mb-1">Upload Quotation Documents</div>
+                                <div class="text-muted small">Only quotation files uploaded here count toward quotation status.</div>
+                                <div class="mt-2">
+                                    <span class="badge bg-white text-dark border">PDF</span>
+                                    <span class="badge bg-white text-dark border">JPG/PNG</span>
+                                    <span class="badge bg-white text-dark border">XLS/XLSX</span>
+                                    <span class="badge bg-white text-dark border">DOC/DOCX</span>
+                                    <span class="badge bg-white text-dark border">Max 10 MB each</span>
+                                </div>
+                                <input type="file" name="attachments" id="fileInput-quotation" class="d-none" accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.doc,.docx,application/pdf,image/jpeg,image/png,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple="multiple"/>
+                            </div>
+                            <div id="previewArea-quotation"></div>
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-outline-primary px-4">Upload Quotations</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </t>
+
+            <!-- ========================= -->
             <!-- ACCOUNTING DOCUMENTS - PURCHASE REPRESENTATIVE ONLY -->
             <!-- ========================= -->
             <t t-if="is_purchase_rep and request_rec.state == 'approved'">
@@ -103,8 +207,8 @@
                     <div class="card-header bg-white">
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
-                                <div class="fw-semibold">Accounting Invoice Documents</div>
-                                <div class="text-muted small">Upload supplier invoice/supporting files, then submit them to Accounting.</div>
+                                <div class="fw-semibold">Invoice Submission to Accounting</div>
+                                <div class="text-muted small">Upload invoice/supporting files separately from quotation and general MR attachments, then submit them to Accounting.</div>
                             </div>
                             <span t-att-class="'badge ' + ('bg-secondary' if request_rec.accounting_docs_status == 'pending' else 'bg-primary' if request_rec.accounting_docs_status == 'submitted' else 'bg-info text-dark' if request_rec.accounting_docs_status == 'received' else 'bg-warning text-dark' if request_rec.accounting_docs_status == 'need_more' else 'bg-success' if request_rec.accounting_docs_status == 'processed' else 'bg-danger')">
                                 <t t-esc="dict(request_rec._fields['accounting_docs_status'].selection).get(request_rec.accounting_docs_status)"/>
@@ -242,7 +346,7 @@
                             <div id="dropzone-accounting"
                                  class="border rounded-4 p-4 text-center bg-light mb-2"
                                  style="cursor:pointer;">
-                                <div class="fw-semibold mb-1">Upload Invoice / Supporting Documents</div>
+                                <div class="fw-semibold mb-1">Upload Invoice Documents</div>
                                 <div class="text-muted small">Drag files here or click to choose files.</div>
                                 <div class="mt-2">
                                     <span class="badge bg-white text-dark border">PDF</span>
@@ -733,6 +837,7 @@
 
             document.addEventListener("DOMContentLoaded", function () {
                 setupDropzone("dropzone-detail", "fileInput-detail", "previewArea-detail");
+                setupDropzone("dropzone-quotation", "fileInput-quotation", "previewArea-quotation");
                 setupDropzone("dropzone-accounting", "fileInput-accounting", "previewArea-accounting");
             });
                 document.addEventListener("DOMContentLoaded", function () {

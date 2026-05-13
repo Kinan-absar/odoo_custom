@@ -208,7 +208,12 @@
                                     <field name="no_po_required"/>
                                     <field name="no_po_reason" invisible="not no_po_required"/>
                                 </group>
-                                <group string="Accounting Documents">
+                                <group string="Quotation Collection">
+                                    <field name="quotation_status" readonly="1"/>
+                                    <field name="quotation_attachment_count" readonly="1"/>
+                                    <field name="quotation_status_override"/>
+                                </group>
+                                <group string="Invoice Submission">
                                     <field name="accounting_docs_status"/>
                                     <field name="docs_submitted_by" readonly="1"/>
                                     <field name="docs_submitted_date" readonly="1"/>
@@ -311,7 +316,7 @@
                    invisible="po_status == False"/>
                 <field name="no_po_required" string="No PO Required"/>
                 <field name="accounting_docs_status"
-                       string="Docs Status"
+                       string="Invoice Status"
                        widget="badge"
                        decoration-muted="accounting_docs_status == 'pending'"
                        decoration-info="accounting_docs_status == 'submitted'"
@@ -339,7 +344,7 @@
                 <field name="accounting_docs_status"/>
                 <filter string="PO Required" name="po_required" domain="[('no_po_required','=',False)]"/>
                 <filter string="No PO Required" name="no_po_required" domain="[('no_po_required','=',True)]"/>
-                <filter string="Docs Submitted" name="docs_submitted" domain="[('accounting_docs_status','=','submitted')]"/>
+                <filter string="Invoice Submitted" name="docs_submitted" domain="[('accounting_docs_status','=','submitted')]"/>
             </search>
         </field>
     </record>

@@ -347,9 +347,12 @@ class EmployeePortalMaterialRequests(http.Controller):
             ("res_id", "=", rec.id)
         ])
         accounting_attachments = all_attachments.filtered(
-            lambda att: (att.description or "") == "Accounting Documents"
+            lambda att: att.mr_attachment_category == "invoice_submission" or (att.description or "") == "Accounting Documents"
         )
-        attachments = all_attachments - accounting_attachments
+        quotation_attachments = all_attachments.filtered(
+            lambda att: att.mr_attachment_category == "quotation" or (att.description or "") == "Quotation Documents"
+        )
+        attachments = all_attachments - accounting_attachments - quotation_attachments
         is_purchase_rep = request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep")
 
         can_submit_accounting_docs = bool(
@@ -361,6 +364,7 @@ class EmployeePortalMaterialRequests(http.Controller):
             "request_rec": rec,
             "attachments": attachments,
             "accounting_attachments": accounting_attachments,
+            "quotation_attachments": quotation_attachments,
             "can_submit_accounting_docs": can_submit_accounting_docs,
             "is_purchase_rep": is_purchase_rep,
             "status_badge": _mr_status_badge,
@@ -541,27 +545,39 @@ class EmployeePortalMaterialRequests(http.Controller):
         if not rec.exists():
             return request.not_found()
 
-        if tag == "Accounting Documents":
+        category_by_tag = {
+            "Accounting Documents": "invoice_submission",
+            "Quotation Documents": "quotation",
+        }
+        category = category_by_tag.get(tag, "general")
+
+        if category in ("invoice_submission", "quotation"):
             if not request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep"):
                 return request.redirect("/my")
-            if rec.state != "approved":
-                return request.redirect(f"/my/employee/material/approvals/{rec.id}")
+        if category == "invoice_submission" and rec.state != "approved":
+            return request.redirect(f"/my/employee/material/approvals/{rec.id}")
 
         files = request.httprequest.files.getlist("attachments")
 
         allowed_accounting_ext = (".pdf", ".jpg", ".jpeg", ".png", ".xls", ".xlsx")
+        allowed_quotation_ext = (".pdf", ".jpg", ".jpeg", ".png", ".xls", ".xlsx", ".doc", ".docx")
         max_accounting_size = 10 * 1024 * 1024
+        max_quotation_size = 10 * 1024 * 1024
 
         for f in files:
             if not f or f.filename.strip() == "":
                 continue
 
             filename = f.filename.strip()
-            if tag == "Accounting Documents" and not filename.lower().endswith(allowed_accounting_ext):
+            if category == "invoice_submission" and not filename.lower().endswith(allowed_accounting_ext):
+                continue
+            if category == "quotation" and not filename.lower().endswith(allowed_quotation_ext):
                 continue
 
             file_content = f.read()
-            if tag == "Accounting Documents" and len(file_content) > max_accounting_size:
+            if category == "invoice_submission" and len(file_content) > max_accounting_size:
+                continue
+            if category == "quotation" and len(file_content) > max_quotation_size:
                 continue
             
 
@@ -573,11 +589,16 @@ class EmployeePortalMaterialRequests(http.Controller):
                 "res_id": rec.id,
                 "type": "binary",
                 "description": tag,
+                "mr_attachment_category": category,
                 "public": True,   # ← THIS IS THE MAGIC FIX
             })
 
-        if tag == "Accounting Documents" and files:
-            rec.sudo().message_post(body=_("Accounting invoice documents uploaded."))
+        if files:
+            if category == "invoice_submission":
+                rec.sudo().message_post(body=_("Invoice document uploaded for Accounting."), message_type="comment", subtype_xmlid="mail.mt_comment")
+            elif category == "quotation":
+                rec.sudo()._compute_quotation_status()
+                rec.sudo().message_post(body=_("Quotation document uploaded."), message_type="comment", subtype_xmlid="mail.mt_comment")
 
         # Detect origin page (detail vs approval)
         came_from_approval = "/material/approvals/" in (request.httprequest.referrer or "")
@@ -599,9 +620,12 @@ class EmployeePortalMaterialRequests(http.Controller):
         att = request.env["ir.attachment"].sudo().browse(att_id)
         rec = request.env["material.request"].sudo().browse(req_id)
         if att.exists() and rec.exists():
-            if (att.description or "") == "Accounting Documents":
+            category = att.mr_attachment_category or ("invoice_submission" if (att.description or "") == "Accounting Documents" else "quotation" if (att.description or "") == "Quotation Documents" else "general")
+            if category == "invoice_submission":
                 if not request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep") or rec.accounting_docs_status != "pending":
                     return request.redirect(f"/my/employee/material/approvals/{req_id}")
+            if category == "quotation" and not request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep"):
+                return request.redirect(f"/my/employee/material/approvals/{req_id}")
             att.unlink()
 
         came_from_approval = "/material/approvals/" in (request.httprequest.referrer or "")

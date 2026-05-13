@@ -110,13 +110,32 @@ class MaterialRequest(models.Model):
         store=False,
     )
     accounting_docs_status = fields.Selection([
-        ("pending", "Pending"),
+        ("pending", "Pending Invoice"),
         ("submitted", "Submitted to Accounting"),
         ("received", "Received by Accounting"),
-        ("need_more", "Need More Documents"),
+        ("need_more", "Need More Invoice Docs"),
         ("processed", "Processed"),
         ("rejected", "Rejected"),
-    ], string="Accounting Docs Status", default="pending", tracking=True)
+    ], string="Invoice Submission Status", default="pending", tracking=True)
+    quotation_status_override = fields.Selection([
+        ("uploaded", "Quotations Uploaded"),
+        ("exception_approved", "Exception Approved"),
+        ("single_source_approved", "Single Source Approved"),
+    ], string="Quotation Status Override", tracking=True,
+       help="Optional manual override when fewer than three quotations are acceptable or an exception is approved.")
+    quotation_attachment_count = fields.Integer(
+        string="Quotation Count",
+        compute="_compute_quotation_status",
+        store=False,
+    )
+    quotation_status = fields.Selection([
+        ("pending", "Pending Quotations"),
+        ("remaining_2", "Remaining 2 Quotations"),
+        ("remaining_1", "Remaining 1 Quotation"),
+        ("uploaded", "Quotations Uploaded"),
+        ("exception_approved", "Exception Approved"),
+        ("single_source_approved", "Single Source Approved"),
+    ], string="Quotation Status", compute="_compute_quotation_status", store=False)
     docs_submitted_by = fields.Many2one(
         "res.users",
         string="Docs Submitted By",
@@ -145,13 +164,45 @@ class MaterialRequest(models.Model):
         for rec in self:
             rec.po_created = bool(rec.purchase_order_ids)
 
-    def _get_accounting_attachment_count(self):
+    def _attachment_domain_by_category(self, category):
         self.ensure_one()
-        return self.env["ir.attachment"].sudo().search_count([
+        legacy_description = {
+            "invoice_submission": "Accounting Documents",
+            "quotation": "Quotation Documents",
+            "general": "General",
+        }.get(category, "General")
+        return [
             ("res_model", "=", "material.request"),
             ("res_id", "=", self.id),
-            ("description", "=", "Accounting Documents"),
-        ])
+            "|",
+            ("mr_attachment_category", "=", category),
+            ("description", "=", legacy_description),
+        ]
+
+    def _get_mr_attachment_count_by_category(self, category):
+        self.ensure_one()
+        return self.env["ir.attachment"].sudo().search_count(
+            self._attachment_domain_by_category(category)
+        )
+
+    def _compute_quotation_status(self):
+        for rec in self:
+            count = rec._get_mr_attachment_count_by_category("quotation") if rec.id else 0
+            rec.quotation_attachment_count = count
+            if rec.quotation_status_override:
+                rec.quotation_status = rec.quotation_status_override
+            elif count <= 0:
+                rec.quotation_status = "pending"
+            elif count == 1:
+                rec.quotation_status = "remaining_2"
+            elif count == 2:
+                rec.quotation_status = "remaining_1"
+            else:
+                rec.quotation_status = "uploaded"
+
+    def _get_accounting_attachment_count(self):
+        self.ensure_one()
+        return self._get_mr_attachment_count_by_category("invoice_submission")
 
     def has_unsubmitted_accounting_docs(self):
         self.ensure_one()
@@ -170,10 +221,10 @@ class MaterialRequest(models.Model):
             rec.docs_submitted_date = fields.Datetime.now()
             rec.accounting_docs_submitted_attachment_count = attachment_count
 
-            body = _("Purchase documents submitted to Accounting.")
+            body = _("Invoice documents submitted to Accounting.")
             if rec.accounting_docs_note:
                 body += "\n\n%s\n%s" % (_("Note to Accounting:"), rec.accounting_docs_note)
-            rec.message_post(body=body)
+            rec.message_post(body=body, message_type="comment", subtype_xmlid="mail.mt_comment")
 
     vendor_bill_ids = fields.One2many(
         "account.move",
