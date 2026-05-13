@@ -264,9 +264,9 @@ class EmployeePortalMaterialRequests(http.Controller):
 
         # ---------------------------------------------------------
         # 2) APPROVED LIST
-        # Show requests already approved by this user, even if the MR
-        # is now waiting at a later approval stage. Purchase reps also
-        # need fully approved MRs so they can continue PO/docs work.
+        # Show only requests already approved by THIS user, even if the MR
+        # is now waiting at a later approval stage. Do not show every fully
+        # approved MR to Purchase Rep unless they personally approved it.
         # ---------------------------------------------------------
         approved_domain = [
             "|", "|", "|", "|",
@@ -276,8 +276,6 @@ class EmployeePortalMaterialRequests(http.Controller):
             ("director_approved_by", "=", user.id),
             ("ceo_approved_by", "=", user.id),
         ]
-        if user.has_group("employee_portal_suite.group_mr_purchase_rep"):
-            approved_domain = ["|", ("state", "=", "approved")] + approved_domain
         approved_list = Material.search(approved_domain, order="id desc")
 
         # ---------------------------------------------------------
