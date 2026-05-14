@@ -631,12 +631,23 @@ class EmployeePortalMaterialRequests(http.Controller):
         rec = request.env["material.request"].sudo().browse(req_id)
         if att.exists() and rec.exists():
             category = att.mr_attachment_category or ("invoice_submission" if (att.description or "") == "Accounting Documents" else "quotation" if (att.description or "") == "Quotation Documents" else "general")
-            if category == "invoice_submission":
-                if not request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep") or rec.accounting_docs_status != "pending":
-                    return request.redirect(f"/my/employee/material/approvals/{req_id}")
-            if category == "quotation" and not request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep"):
+
+            # Quotation and invoice submission files are managed by the Purchase Representative
+            # from the portal. Deletion should behave like the original MR attachment delete,
+            # but keep the related counters/status helpers consistent after unlink.
+            if category in ("invoice_submission", "quotation") and not request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep"):
                 return request.redirect(f"/my/employee/material/approvals/{req_id}")
+
             att.unlink()
+
+            if category == "invoice_submission":
+                current_count = rec._get_accounting_attachment_count()
+                if rec.accounting_docs_submitted_attachment_count > current_count:
+                    rec.write({"accounting_docs_submitted_attachment_count": current_count})
+                if current_count == 0 and rec.accounting_docs_status == "submitted":
+                    rec.write({"accounting_docs_status": "pending"})
+            elif category == "quotation":
+                rec._compute_quotation_status()
 
         came_from_approval = "/material/approvals/" in (request.httprequest.referrer or "")
 
