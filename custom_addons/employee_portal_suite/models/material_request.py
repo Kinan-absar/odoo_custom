@@ -229,7 +229,7 @@ class MaterialRequest(models.Model):
         domain=[("move_type", "=", "in_invoice")],
     )
     vendor_bill_count = fields.Integer(
-        string="Vendor Bills",
+        string="Created Vendor Bills",
         compute="_compute_vendor_bill_count",
     )
     can_create_vendor_bill = fields.Boolean(
@@ -242,12 +242,15 @@ class MaterialRequest(models.Model):
         for rec in self:
             rec.vendor_bill_count = len(rec.vendor_bill_ids)
 
-    @api.depends("state", "no_po_required", "vendor_bill_ids")
+    @api.depends("state", "no_po_required", "vendor_bill_ids", "purchase_order_ids")
     def _compute_can_create_vendor_bill(self):
         for rec in self:
+            # Direct vendor bills are only for No-PO MRs. If a PO exists,
+            # the vendor bill should be created from the PO/vendor bill flow.
             rec.can_create_vendor_bill = (
                 rec.state == "approved"
                 and rec.no_po_required
+                and not rec.purchase_order_ids
                 and not rec.vendor_bill_ids.filtered(lambda move: move.move_type == "in_invoice")
             )
 
@@ -931,9 +934,10 @@ class MaterialRequest(models.Model):
 
     def _compute_can_create_po(self):
         for rec in self:
+            # Allow more than one PO to be created from the same approved MR.
+            # The button is hidden only when this MR is marked as No PO Required.
             rec.can_create_po = (
                 rec.state == "approved"
-                and not rec.purchase_order_ids
                 and not rec.no_po_required
             )
 

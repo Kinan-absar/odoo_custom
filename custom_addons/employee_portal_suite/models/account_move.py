@@ -10,4 +10,5 @@ class AccountMove(models.Model):
         index=True,
         ondelete="set null",
         copy=False,
+        readonly=True,
     )
