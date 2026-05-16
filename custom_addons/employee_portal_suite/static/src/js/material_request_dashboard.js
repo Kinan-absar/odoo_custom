@@ -30,8 +30,6 @@ class MaterialRequestDashboard extends Component {
             rejected_count: 0,
             clarification_count: 0,
             my_count: 0,
-            po_required_count: 0,
-            no_po_required_count: 0,
         });
 
         onWillStart(async () => {

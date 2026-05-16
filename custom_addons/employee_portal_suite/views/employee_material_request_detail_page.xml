@@ -421,7 +421,7 @@
                 });
             });
 
-            document.querySelectorAll(".confirm-delete, .confirm-delete-link").forEach(btn => {
+            document.querySelectorAll(".confirm-delete").forEach(btn => {
                 btn.addEventListener("click", function (e) {
                     e.preventDefault();
                     const trigger = this.closest(".list-group-item")
