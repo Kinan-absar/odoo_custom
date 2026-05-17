@@ -190,9 +190,7 @@ class AccountReceiptVoucher(models.Model):
 
             if rec.move_id:
                 rec.move_id.button_draft()
-                rec.move_id.unlink()
 
-            rec.move_id = False
             rec.state = 'draft'
 
     # -------------------------
