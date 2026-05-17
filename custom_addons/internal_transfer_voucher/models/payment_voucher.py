@@ -242,7 +242,7 @@ class AccountPaymentVoucher(models.Model):
             if rec.state != 'draft':
                 continue
 
-            if rec.move_id:
+            if rec.move_id and rec.move_id.state == 'posted':
                 raise UserError(_("This voucher is already posted."))
 
             if not rec.journal_id.default_account_id:
@@ -317,14 +317,24 @@ class AccountPaymentVoucher(models.Model):
                 'name': rec.description or rec.name,
             }))
 
-        move = self.env['account.move'].create({
-            'date': rec.date,
-            'journal_id': rec.journal_id.id,
-            'ref': rec.name,
-            'line_ids': lines,
-        })
+        if rec.move_id and rec.move_id.state == 'draft':
+            move = rec.move_id
+            move.write({
+                'date': rec.date,
+                'journal_id': rec.journal_id.id,
+                'ref': rec.name,
+                'line_ids': [(5, 0, 0)] + lines,
+            })
+        else:
+            move = self.env['account.move'].create({
+                'date': rec.date,
+                'journal_id': rec.journal_id.id,
+                'ref': rec.name,
+                'line_ids': lines,
+            })
+            rec.move_id = move.id
+
         move.action_post()
-        rec.move_id = move.id
         rec.state = 'posted'
 
     def _post_journal_transfer(self):
@@ -385,14 +395,24 @@ class AccountPaymentVoucher(models.Model):
                 'name': rec.description or rec.name,
             }))
 
-        move = self.env['account.move'].create({
-            'date': rec.date,
-            'journal_id': rec.journal_id.id,
-            'ref': rec.name,
-            'line_ids': lines,
-        })
+        if rec.move_id and rec.move_id.state == 'draft':
+            move = rec.move_id
+            move.write({
+                'date': rec.date,
+                'journal_id': rec.journal_id.id,
+                'ref': rec.name,
+                'line_ids': [(5, 0, 0)] + lines,
+            })
+        else:
+            move = self.env['account.move'].create({
+                'date': rec.date,
+                'journal_id': rec.journal_id.id,
+                'ref': rec.name,
+                'line_ids': lines,
+            })
+            rec.move_id = move.id
+
         move.action_post()
-        rec.move_id = move.id
         rec.state = 'posted'
 
     def action_cancel(self):
