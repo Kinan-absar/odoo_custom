@@ -1199,7 +1199,6 @@
                         <a href="/my/employee/attendance" class="ep-link">Attendance</a>
                     </t>
                 </div><!-- /ep-nav-links -->
-
                 <div class="d-flex align-items-center gap-3">
                     <div class="text-end d-none d-lg-block">
                         <h6 class="mb-0 fw-bold" t-out="request.env.user.partner_id.name"/>
@@ -1283,7 +1282,7 @@
        )
    "/>
 
-            <!-- Attendance-only: minimal nav with just Attendance + Exit -->
+            <!-- Attendance-only mobile nav: just Attendance + Logout -->
             <t t-if="is_attendance_only">
                 <nav class="ep-bottom-nav mobile-only basic-nav">
                     <div class="ep-nav-left">
