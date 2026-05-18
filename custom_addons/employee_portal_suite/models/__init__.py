@@ -7,3 +7,4 @@ from . import hr_work_location
 from . import project_project
 from . import portal_announcement
 from . import hr_attendance
+from . import account_move
