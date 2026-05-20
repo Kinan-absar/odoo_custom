@@ -46,7 +46,7 @@
                     </group>
 
                     <group>
-                        <field name="message" widget="html"/>
+                        <field name="message" placeholder="Write the announcement message. Paste any URL directly in the text; backend users will see it as an Open Link button."/>
                     </group>
 
                 </sheet>

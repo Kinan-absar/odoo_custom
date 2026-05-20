@@ -2,7 +2,7 @@
 
 import { patch } from "@web/core/utils/patch";
 import { HomeMenu } from "@web_enterprise/webclient/home_menu/home_menu";
-import { markup, onWillStart, useState } from "@odoo/owl";
+import { onWillStart, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 
 patch(HomeMenu.prototype, {
@@ -21,10 +21,7 @@ patch(HomeMenu.prototype, {
                     "get_backend_announcements",
                     []
                 );
-                this.backendAnnouncementState.announcements = announcements.map((ann) => ({
-                    ...ann,
-                    message: markup(ann.message || ""),
-                }));
+                this.backendAnnouncementState.announcements = announcements || [];
             } catch (error) {
                 this.backendAnnouncementState.announcements = [];
             }

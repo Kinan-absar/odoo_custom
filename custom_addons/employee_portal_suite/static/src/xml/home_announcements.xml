@@ -11,8 +11,18 @@
                             <span class="eps_backend_announcement_icon">📢</span>
                             <t t-esc="ann.title"/>
                         </div>
-                        <div class="eps_backend_announcement_message">
-                            <t t-out="ann.message"/>
+                        <div class="eps_backend_announcement_message" t-if="ann.message">
+                            <t t-esc="ann.message"/>
+                        </div>
+                        <div class="eps_backend_announcement_links" t-if="ann.links and ann.links.length">
+                            <t t-foreach="ann.links" t-as="link" t-key="link.url">
+                                <a t-att-href="link.url"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="btn btn-primary btn-sm eps_backend_announcement_link">
+                                    <t t-esc="link.label"/>
+                                </a>
+                            </t>
                         </div>
                     </div>
                 </t>
