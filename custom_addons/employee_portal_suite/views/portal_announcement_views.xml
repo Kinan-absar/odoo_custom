@@ -13,6 +13,7 @@
                 <field name="name"/>
                 <field name="start_date"/>
                 <field name="end_date"/>
+                <field name="target"/>
                 <field name="active"/>
             </list>
         </field>
@@ -31,6 +32,7 @@
                         <field name="name"/>
                         <field name="active"/>
                         <field name="sequence"/>
+                        <field name="target"/>
                     </group>
 
                     <group>
