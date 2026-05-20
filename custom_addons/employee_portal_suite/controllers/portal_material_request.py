@@ -347,10 +347,10 @@ class EmployeePortalMaterialRequests(http.Controller):
             ("res_id", "=", rec.id)
         ])
         accounting_attachments = all_attachments.filtered(
-            lambda att: att.mr_attachment_category == "invoice_submission" or (att.description or "") == "Accounting Documents"
+            lambda att: (att.description or "") == "Accounting Documents"
         )
         quotation_attachments = all_attachments.filtered(
-            lambda att: att.mr_attachment_category == "quotation" or (att.description or "") == "Quotation Documents"
+            lambda att: (att.description or "") == "Quotation Documents"
         )
         attachments = all_attachments - accounting_attachments - quotation_attachments
         is_purchase_rep = request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep")
@@ -589,7 +589,6 @@ class EmployeePortalMaterialRequests(http.Controller):
                 "res_id": rec.id,
                 "type": "binary",
                 "description": tag,
-                "mr_attachment_category": category,
                 "public": True,   # ← THIS IS THE MAGIC FIX
             })
             uploaded_names.append(filename)
@@ -630,7 +629,7 @@ class EmployeePortalMaterialRequests(http.Controller):
         att = request.env["ir.attachment"].sudo().browse(att_id)
         rec = request.env["material.request"].sudo().browse(req_id)
         if att.exists() and rec.exists():
-            category = att.mr_attachment_category or ("invoice_submission" if (att.description or "") == "Accounting Documents" else "quotation" if (att.description or "") == "Quotation Documents" else "general")
+            category = "invoice_submission" if (att.description or "") == "Accounting Documents" else "quotation" if (att.description or "") == "Quotation Documents" else "general"
 
             # Quotation and invoice submission files are managed by the Purchase Representative
             # from the portal. Deletion should behave like the original MR attachment delete,

@@ -1229,9 +1229,7 @@
             </t>
 
             <t t-set="portal_announcements"
-                t-value="request.env['portal.announcement'].sudo().search([
-                        ('active', '=', True)
-                ])"/>
+                t-value="request.env['portal.announcement']._get_visible_announcements_for_current_user(target='portal', limit=5)"/>
 
             <t t-if="portal_announcements">
                 <div class="portal-announcement-wrapper">
