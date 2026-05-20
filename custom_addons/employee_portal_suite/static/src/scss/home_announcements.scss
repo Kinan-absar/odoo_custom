@@ -68,18 +68,29 @@
 .eps_backend_announcement_info {
     border-left-color: #875A7B;
 }
-@media (max-width: 768px) {
-
-    .eps_backend_announcements {
-        width: calc(100% - 20px);
-        left: 10px;
-        top: 70px;
+@media screen and (max-width: 768px) {
+    body .o_home_menu .eps_backend_announcements,
+    body .eps_backend_announcements {
+        position: fixed !important;
+        top: 65px !important;
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        max-width: none !important;
+        transform: none !important;
+        z-index: 20 !important;
     }
 
-    .eps_backend_announcement_card {
-        padding: 10px 12px;
-        font-size: 13px;
-        margin-bottom: 8px;
+    body .eps_backend_announcement_card {
+        padding: 8px 10px !important;
+        font-size: 12px !important;
+        line-height: 1.3 !important;
+        margin-bottom: 6px !important;
+        max-height: 90px !important;
+        overflow-y: auto !important;
     }
 
+    body .eps_backend_announcement_card strong {
+        font-size: 13px !important;
+    }
 }
