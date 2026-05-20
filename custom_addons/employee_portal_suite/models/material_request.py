@@ -249,7 +249,6 @@ class MaterialRequest(models.Model):
                 rec.state == "approved"
                 and rec.no_po_required
                 and not rec.purchase_order_ids
-                and not rec.vendor_bill_ids.filtered(lambda move: move.move_type == "in_invoice")
             )
 
     def _prepare_vendor_bill_line_vals(self):
