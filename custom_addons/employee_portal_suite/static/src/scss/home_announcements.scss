@@ -68,3 +68,18 @@
 .eps_backend_announcement_info {
     border-left-color: #875A7B;
 }
+@media (max-width: 768px) {
+
+    .eps_backend_announcements {
+        width: calc(100% - 20px);
+        left: 10px;
+        top: 70px;
+    }
+
+    .eps_backend_announcement_card {
+        padding: 10px 12px;
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+}
