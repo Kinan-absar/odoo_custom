@@ -1,7 +1,7 @@
 /** @odoo-module **/
 
 import { patch } from "@web/core/utils/patch";
-import { HomeMenu } from "@web/webclient/home_menu/home_menu";
+import { HomeMenu } from "@web_enterprise/webclient/home_menu/home_menu";
 import { onWillStart, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 

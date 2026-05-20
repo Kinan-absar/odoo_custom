@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-    <t t-inherit="web.HomeMenu" t-inherit-mode="extension">
+    <t t-inherit="web_enterprise.HomeMenu" t-inherit-mode="extension">
         <xpath expr="//div[contains(@class, 'o_home_menu')]" position="inside">
             <div class="eps_backend_announcements"
                  t-if="backendAnnouncementState and backendAnnouncementState.announcements.length">

@@ -39,6 +39,7 @@
     'depends': [
         'base',
         'web',
+        'web_enterprise',
         'portal',
         'hr',
         'mail',
