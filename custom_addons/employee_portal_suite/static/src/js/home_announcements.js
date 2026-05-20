@@ -2,7 +2,7 @@
 
 import { patch } from "@web/core/utils/patch";
 import { HomeMenu } from "@web_enterprise/webclient/home_menu/home_menu";
-import { onWillStart, useState } from "@odoo/owl";
+import { markup, onWillStart, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 
 patch(HomeMenu.prototype, {
@@ -16,11 +16,15 @@ patch(HomeMenu.prototype, {
 
         onWillStart(async () => {
             try {
-                this.backendAnnouncementState.announcements = await this.orm.call(
+                const announcements = await this.orm.call(
                     "portal.announcement",
                     "get_backend_announcements",
                     []
                 );
+                this.backendAnnouncementState.announcements = announcements.map((ann) => ({
+                    ...ann,
+                    message: markup(ann.message || ""),
+                }));
             } catch (error) {
                 this.backendAnnouncementState.announcements = [];
             }

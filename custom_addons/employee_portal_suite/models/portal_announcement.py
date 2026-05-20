@@ -1,5 +1,4 @@
 from odoo import models, fields, api
-from odoo.tools import html2plaintext
 from datetime import date
 
 
@@ -67,7 +66,7 @@ class PortalAnnouncement(models.Model):
             result.append({
                 "id": ann.id,
                 "title": ann.name,
-                "message": html2plaintext(ann.message or "").strip(),
+                "message": ann.message or "",
                 "type": color_to_type.get(ann.color, "info"),
             })
         return result

@@ -12,7 +12,7 @@
                             <t t-esc="ann.title"/>
                         </div>
                         <div class="eps_backend_announcement_message">
-                            <t t-esc="ann.message"/>
+                            <t t-out="ann.message"/>
                         </div>
                     </div>
                 </t>
