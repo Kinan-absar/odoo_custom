@@ -82,7 +82,10 @@ class EmployeePortalMessages(CustomerPortal):
         if 'channel_type' in Channel._fields:
             vals['channel_type'] = 'chat'
         if 'channel_partner_ids' in Channel._fields:
-            vals['channel_partner_ids'] = [(6, 0, [partner_a.id, partner_b.id])]
+            # Odoo 18 discuss.channel.create() expects channel_partner_ids as a
+            # plain list of partner ids. Passing ORM commands here creates a
+            # nested list and raises: TypeError: unhashable type: 'list'.
+            vals['channel_partner_ids'] = [partner_a.id, partner_b.id]
         elif 'channel_member_ids' in Channel._fields:
             vals['channel_member_ids'] = [
                 (0, 0, {'partner_id': partner_a.id}),
