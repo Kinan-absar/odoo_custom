@@ -194,6 +194,9 @@ class EmployeePortalMessages(CustomerPortal):
             'conversations': conversations,
             'employees': employees,
             'unread_total': self._unread_count(),
+            'active_channel': False,
+            'messages': request.env['mail.message'].sudo().browse(),
+            'summary': False,
         })
 
     @http.route('/my/employee/messages/start', type='http', auth='user', website=True, methods=['POST'], csrf=True)
@@ -227,11 +230,16 @@ class EmployeePortalMessages(CustomerPortal):
             self._message_domain_for_channel(channel),
             order='date asc, id asc'
         )
-        return request.render('employee_portal_suite.employee_portal_message_thread', {
+        conversations = [self._conversation_summary(c) for c in self._my_channels()]
+        employees = self._messageable_employees().filtered(lambda e: e.user_id.id != request.env.user.id)
+        return request.render('employee_portal_suite.employee_portal_messages', {
+            'conversations': conversations,
+            'employees': employees,
+            'unread_total': self._unread_count(),
+            'active_channel': channel,
             'channel': channel,
             'messages': messages,
             'summary': self._conversation_summary(channel),
-            'unread_total': self._unread_count(),
         })
 
     @http.route('/my/employee/messages/<int:channel_id>/send', type='http', auth='user', website=True, methods=['POST'], csrf=True)
