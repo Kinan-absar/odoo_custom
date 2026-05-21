@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="employee_portal_messages" name="Employee Portal Messages">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="ep-msg-page">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                    <div>
+                        <h2 class="mb-1">Messages</h2>
+                        <p class="text-muted mb-0">Private employee-to-employee conversations.</p>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm rounded-4">
+                            <div class="card-body">
+                                <h5 class="mb-3">Start Conversation</h5>
+                                <form action="/my/employee/messages/start" method="post">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <div class="mb-3">
+                                        <label class="form-label">Employee</label>
+                                        <select name="partner_id" class="form-select" required="required">
+                                            <option value="">Select employee...</option>
+                                            <t t-foreach="employees" t-as="emp">
+                                                <option t-att-value="emp.user_id.partner_id.id">
+                                                    <t t-esc="emp.name"/>
+                                                    <t t-if="emp.job_title"> - <t t-esc="emp.job_title"/></t>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Message</label>
+                                        <textarea name="body" class="form-control" rows="4" placeholder="Write your message..."></textarea>
+                                    </div>
+                                    <button class="btn btn-primary w-100" type="submit">
+                                        <i class="fa fa-paper-plane me-1"></i> Send / Open Chat
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm rounded-4">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0">Inbox</h5>
+                                    <t t-if="unread_total">
+                                        <span class="badge rounded-pill bg-primary"><t t-esc="unread_total"/> unread</span>
+                                    </t>
+                                </div>
+
+                                <t t-if="not conversations">
+                                    <div class="text-center text-muted py-5">
+                                        <i class="fa fa-comments-o fa-3x mb-3 d-block"></i>
+                                        No conversations yet.
+                                    </div>
+                                </t>
+
+                                <div class="list-group list-group-flush">
+                                    <t t-foreach="conversations" t-as="conv">
+                                        <a t-att-href="'/my/employee/messages/%s' % conv['channel'].id" class="list-group-item list-group-item-action px-0 py-3">
+                                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                                <div>
+                                                    <div class="fw-bold"><t t-esc="conv['title']"/></div>
+                                                    <div class="small text-muted mt-1" t-if="conv['last_message']">
+                                                        <t t-raw="conv['last_message'].body"/>
+                                                    </div>
+                                                    <div class="small text-muted mt-1" t-if="not conv['last_message']">No messages yet.</div>
+                                                </div>
+                                                <div class="text-end">
+                                                    <t t-if="conv['unread_count']">
+                                                        <span class="badge rounded-pill bg-danger"><t t-esc="conv['unread_count']"/></span>
+                                                    </t>
+                                                    <div class="small text-muted mt-1" t-if="conv['last_message']">
+                                                        <t t-esc="conv['last_message'].date.strftime('%Y-%m-%d %H:%M') if conv['last_message'].date else ''"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="employee_portal_message_thread" name="Employee Portal Message Thread">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="ep-msg-page">
+                <div class="mb-3">
+                    <a href="/my/employee/messages" class="btn btn-sm btn-light border">
+                        <i class="fa fa-arrow-left me-1"></i> Back to Messages
+                    </a>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-header bg-white border-0 pt-4 px-4">
+                        <h4 class="mb-1"><t t-esc="summary['title']"/></h4>
+                        <p class="text-muted mb-0">Employee private conversation</p>
+                    </div>
+                    <div class="card-body px-4">
+                        <div class="ep-chat-box mb-4">
+                            <t t-if="not messages">
+                                <div class="text-center text-muted py-5">No messages yet.</div>
+                            </t>
+                            <t t-foreach="messages" t-as="msg">
+                                <t t-set="mine" t-value="msg.author_id.id == request.env.user.partner_id.id"/>
+                                <div t-att-class="'ep-chat-row mine' if mine else 'ep-chat-row'">
+                                    <div class="ep-chat-bubble">
+                                        <div class="small fw-bold mb-1">
+                                            <t t-esc="msg.author_id.name or 'Employee'"/>
+                                        </div>
+                                        <div t-raw="msg.body"/>
+                                        <div class="small text-muted mt-2">
+                                            <t t-esc="msg.date.strftime('%Y-%m-%d %H:%M') if msg.date else ''"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+
+                        <form t-att-action="'/my/employee/messages/%s/send' % channel.id" method="post">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <div class="mb-3">
+                                <textarea name="body" class="form-control" rows="4" required="required" placeholder="Write a reply..."></textarea>
+                            </div>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fa fa-paper-plane me-1"></i> Send Message
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>

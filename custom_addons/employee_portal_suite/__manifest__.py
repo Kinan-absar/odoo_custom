@@ -84,6 +84,7 @@
         # EMPLOYEE PORTAL (FRONTEND)
         # --------------------------------------------------
         'views/employee_portal_layout.xml',
+        'views/employee_portal_messages.xml',
         'views/employee_dashboard_page.xml',
 
         # Employee Requests
