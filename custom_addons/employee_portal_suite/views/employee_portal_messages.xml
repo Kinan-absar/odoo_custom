@@ -3,88 +3,85 @@
 
     <template id="employee_portal_messages" name="Employee Portal Messages">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="ep-msg-page">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div class="ep-msg-page ep-msg-shell">
+                <div class="ep-msg-header">
                     <div>
                         <h2 class="mb-1">Messages</h2>
-                        <p class="text-muted mb-0">Private employee-to-employee conversations.</p>
+                        <p class="text-muted mb-0">Chat with employees who have user accounts.</p>
                     </div>
+                    <t t-if="unread_total">
+                        <span class="ep-msg-pill"><t t-esc="unread_total"/> unread</span>
+                    </t>
                 </div>
 
-                <div class="row g-4">
-                    <div class="col-lg-4">
-                        <div class="card border-0 shadow-sm rounded-4">
-                            <div class="card-body">
-                                <h5 class="mb-3">Start Conversation</h5>
-                                <form action="/my/employee/messages/start" method="post">
-                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <div class="mb-3">
-                                        <label class="form-label">Employee</label>
-                                        <select name="partner_id" class="form-select" required="required">
-                                            <option value="">Select employee...</option>
-                                            <t t-foreach="employees" t-as="emp">
-                                                <option t-att-value="emp.user_id.partner_id.id">
-                                                    <t t-esc="emp.name"/>
-                                                    <t t-if="emp.job_title"> - <t t-esc="emp.job_title"/></t>
-                                                </option>
-                                            </t>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Message</label>
-                                        <textarea name="body" class="form-control" rows="4" placeholder="Write your message..."></textarea>
-                                    </div>
-                                    <button class="btn btn-primary w-100" type="submit">
-                                        <i class="fa fa-paper-plane me-1"></i> Send / Open Chat
-                                    </button>
-                                </form>
+                <div class="ep-msg-layout">
+                    <aside class="ep-msg-sidebar">
+                        <div class="ep-msg-card ep-msg-new">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">New chat</h5>
+                                <i class="fa fa-pencil-square-o text-primary"></i>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-8">
-                        <div class="card border-0 shadow-sm rounded-4">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="mb-0">Inbox</h5>
-                                    <t t-if="unread_total">
-                                        <span class="badge rounded-pill bg-primary"><t t-esc="unread_total"/> unread</span>
+                            <form action="/my/employee/messages/start" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <label class="form-label small text-muted">Employee</label>
+                                <select name="partner_id" class="form-select ep-msg-select" required="required">
+                                    <option value="">Search/select employee...</option>
+                                    <t t-foreach="employees" t-as="emp">
+                                        <option t-att-value="emp.user_id.partner_id.id">
+                                            <t t-esc="emp.name"/>
+                                            <t t-if="emp.job_title"> - <t t-esc="emp.job_title"/></t>
+                                        </option>
                                     </t>
+                                </select>
+                                <label class="form-label small text-muted mt-3">First message</label>
+                                <textarea name="body" class="form-control ep-msg-textarea" rows="3" placeholder="Type a message or leave empty to open the chat..."></textarea>
+                                <button class="btn btn-primary w-100 mt-3 ep-msg-send-btn" type="submit">
+                                    <i class="fa fa-paper-plane me-1"></i> Start Chat
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="ep-msg-card ep-msg-conversations">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">Inbox</h5>
+                                <span class="text-muted small"><t t-esc="len(conversations)"/> chats</span>
+                            </div>
+                            <t t-if="not conversations">
+                                <div class="ep-msg-empty">
+                                    <i class="fa fa-comments-o"></i>
+                                    <p>No conversations yet.</p>
                                 </div>
-
-                                <t t-if="not conversations">
-                                    <div class="text-center text-muted py-5">
-                                        <i class="fa fa-comments-o fa-3x mb-3 d-block"></i>
-                                        No conversations yet.
-                                    </div>
-                                </t>
-
-                                <div class="list-group list-group-flush">
-                                    <t t-foreach="conversations" t-as="conv">
-                                        <a t-att-href="'/my/employee/messages/%s' % conv['channel'].id" class="list-group-item list-group-item-action px-0 py-3">
-                                            <div class="d-flex justify-content-between align-items-start gap-3">
-                                                <div>
-                                                    <div class="fw-bold"><t t-esc="conv['title']"/></div>
-                                                    <div class="small text-muted mt-1" t-if="conv['last_message']">
-                                                        <t t-raw="conv['last_message'].body"/>
-                                                    </div>
-                                                    <div class="small text-muted mt-1" t-if="not conv['last_message']">No messages yet.</div>
-                                                </div>
-                                                <div class="text-end">
-                                                    <t t-if="conv['unread_count']">
-                                                        <span class="badge rounded-pill bg-danger"><t t-esc="conv['unread_count']"/></span>
-                                                    </t>
-                                                    <div class="small text-muted mt-1" t-if="conv['last_message']">
-                                                        <t t-esc="conv['last_message'].date.strftime('%Y-%m-%d %H:%M') if conv['last_message'].date else ''"/>
-                                                    </div>
-                                                </div>
+                            </t>
+                            <div class="ep-msg-thread-list">
+                                <t t-foreach="conversations" t-as="conv">
+                                    <a t-att-href="'/my/employee/messages/%s' % conv['channel'].id" class="ep-msg-thread-item">
+                                        <div class="ep-msg-avatar"><t t-esc="(conv['title'] or 'E')[:1].upper()"/></div>
+                                        <div class="ep-msg-thread-main">
+                                            <div class="d-flex justify-content-between gap-2">
+                                                <strong class="ep-msg-thread-title"><t t-esc="conv['title']"/></strong>
+                                                <small class="text-muted" t-if="conv['last_message']">
+                                                    <t t-esc="conv['last_message'].date.strftime('%H:%M') if conv['last_message'].date else ''"/>
+                                                </small>
                                             </div>
-                                        </a>
-                                    </t>
-                                </div>
+                                            <div class="ep-msg-preview" t-if="conv['last_message']" t-raw="conv['last_message'].body"/>
+                                            <div class="ep-msg-preview text-muted" t-if="not conv['last_message']">No messages yet.</div>
+                                        </div>
+                                        <t t-if="conv['unread_count']">
+                                            <span class="ep-msg-unread"><t t-esc="conv['unread_count']"/></span>
+                                        </t>
+                                    </a>
+                                </t>
                             </div>
                         </div>
-                    </div>
+                    </aside>
+
+                    <section class="ep-msg-main ep-msg-main-empty">
+                        <div class="ep-msg-empty-large">
+                            <i class="fa fa-comments-o"></i>
+                            <h4>Select a conversation</h4>
+                            <p>Choose a chat from the inbox, or start a new one with any employee linked to a user account.</p>
+                        </div>
+                    </section>
                 </div>
             </div>
         </t>
@@ -92,49 +89,57 @@
 
     <template id="employee_portal_message_thread" name="Employee Portal Message Thread">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="ep-msg-page">
-                <div class="mb-3">
-                    <a href="/my/employee/messages" class="btn btn-sm btn-light border">
-                        <i class="fa fa-arrow-left me-1"></i> Back to Messages
+            <div class="ep-msg-page ep-msg-shell">
+                <div class="ep-msg-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="/my/employee/messages" class="btn btn-sm btn-light border ep-msg-back">
+                            <i class="fa fa-arrow-left"></i>
+                        </a>
+                        <div class="ep-msg-avatar ep-msg-avatar-lg"><t t-esc="(summary['title'] or 'E')[:1].upper()"/></div>
+                        <div>
+                            <h2 class="mb-1"><t t-esc="summary['title']"/></h2>
+                            <p class="text-muted mb-0">Employee private conversation</p>
+                        </div>
+                    </div>
+                    <a href="/my/employee/messages" class="btn btn-outline-primary d-none d-md-inline-flex">
+                        <i class="fa fa-plus me-1"></i> New / Inbox
                     </a>
                 </div>
 
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-header bg-white border-0 pt-4 px-4">
-                        <h4 class="mb-1"><t t-esc="summary['title']"/></h4>
-                        <p class="text-muted mb-0">Employee private conversation</p>
-                    </div>
-                    <div class="card-body px-4">
-                        <div class="ep-chat-box mb-4">
-                            <t t-if="not messages">
-                                <div class="text-center text-muted py-5">No messages yet.</div>
-                            </t>
-                            <t t-foreach="messages" t-as="msg">
-                                <t t-set="mine" t-value="msg.author_id.id == request.env.user.partner_id.id"/>
-                                <div t-att-class="'ep-chat-row mine' if mine else 'ep-chat-row'">
-                                    <div class="ep-chat-bubble">
-                                        <div class="small fw-bold mb-1">
-                                            <t t-esc="msg.author_id.name or 'Employee'"/>
-                                        </div>
-                                        <div t-raw="msg.body"/>
-                                        <div class="small text-muted mt-2">
-                                            <t t-esc="msg.date.strftime('%Y-%m-%d %H:%M') if msg.date else ''"/>
-                                        </div>
+                <div class="ep-msg-chat-card">
+                    <div class="ep-chat-box" id="ep_chat_box">
+                        <t t-if="not messages">
+                            <div class="ep-msg-empty-large py-5">
+                                <i class="fa fa-commenting-o"></i>
+                                <h4>No messages yet</h4>
+                                <p>Send the first message below.</p>
+                            </div>
+                        </t>
+                        <t t-foreach="messages" t-as="msg">
+                            <t t-set="mine" t-value="msg.author_id.id == request.env.user.partner_id.id"/>
+                            <div t-att-class="'ep-chat-row mine' if mine else 'ep-chat-row'">
+                                <div class="ep-chat-avatar" t-if="not mine"><t t-esc="(msg.author_id.name or 'E')[:1].upper()"/></div>
+                                <div class="ep-chat-bubble">
+                                    <div class="ep-chat-author" t-if="not mine">
+                                        <t t-esc="msg.author_id.name or 'Employee'"/>
+                                    </div>
+                                    <div class="ep-chat-body" t-raw="msg.body"/>
+                                    <div class="ep-chat-time">
+                                        <t t-esc="msg.date.strftime('%Y-%m-%d %H:%M') if msg.date else ''"/>
                                     </div>
                                 </div>
-                            </t>
-                        </div>
-
-                        <form t-att-action="'/my/employee/messages/%s/send' % channel.id" method="post">
-                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                            <div class="mb-3">
-                                <textarea name="body" class="form-control" rows="4" required="required" placeholder="Write a reply..."></textarea>
                             </div>
-                            <button class="btn btn-primary" type="submit">
-                                <i class="fa fa-paper-plane me-1"></i> Send Message
-                            </button>
-                        </form>
+                        </t>
                     </div>
+
+                    <form t-att-action="'/my/employee/messages/%s/send' % channel.id" method="post" class="ep-chat-composer">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <textarea name="body" class="form-control" rows="2" required="required" placeholder="Write a reply..."></textarea>
+                        <button class="btn btn-primary ep-chat-send" type="submit" title="Send">
+                            <i class="fa fa-paper-plane"></i>
+                            <span class="d-none d-md-inline ms-1">Send</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </t>
