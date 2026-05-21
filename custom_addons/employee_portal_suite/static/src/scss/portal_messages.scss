@@ -112,7 +112,7 @@
 }
 .ep-chat-row.mine { justify-content: flex-end; }
 .ep-chat-bubble {
-    max-width: min(680px, 78%);
+    max-width: 78%;
     background: #fff;
     border: 1px solid rgba(15, 23, 42, .08);
     border-radius: 1.1rem 1.1rem 1.1rem .35rem;

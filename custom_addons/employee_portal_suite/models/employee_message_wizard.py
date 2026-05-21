@@ -1,11 +1,22 @@
 # -*- coding: utf-8 -*-
 
-from odoo import _, models
+from markupsafe import Markup
+from odoo import _, fields, models
 from odoo.exceptions import UserError
+from odoo.tools import html_escape
 
 
-class HrEmployee(models.Model):
-    _inherit = 'hr.employee'
+class EmployeeMessageWizard(models.TransientModel):
+    _name = 'employee.message.wizard'
+    _description = 'Start Employee Message'
+
+    employee_id = fields.Many2one(
+        'hr.employee',
+        string='To Employee',
+        required=True,
+        domain="[('active', '=', True), ('user_id', '!=', False)]",
+    )
+    body = fields.Text(string='Message', required=True)
 
     def _eps_channel_model_name(self):
         return 'discuss.channel' if 'discuss.channel' in self.env else 'mail.channel'
@@ -28,8 +39,7 @@ class HrEmployee(models.Model):
             return Channel.browse()
         channels = Channel.search(domain, order='write_date desc', limit=20)
         for channel in channels:
-            members = set(self._eps_channel_partner_ids(channel))
-            if {partner_a.id, partner_b.id}.issubset(members):
+            if {partner_a.id, partner_b.id}.issubset(set(self._eps_channel_partner_ids(channel))):
                 return channel
         return Channel.browse()
 
@@ -44,17 +54,36 @@ class HrEmployee(models.Model):
             vals['channel_member_ids'] = [(0, 0, {'partner_id': partner_a.id}), (0, 0, {'partner_id': partner_b.id})]
         return Channel.create(vals)
 
-    def action_open_employee_portal_message(self):
+    def action_send_message(self):
         self.ensure_one()
-        if not self.user_id or not self.user_id.partner_id:
-            raise UserError(_('This employee is not linked to a user account, so they cannot receive messages.'))
-        if self.user_id.partner_id == self.env.user.partner_id:
+        current_partner = self.env.user.partner_id.sudo()
+        target_user = self.employee_id.user_id
+        target_partner = target_user.partner_id.sudo() if target_user else False
+        if not target_partner:
+            raise UserError(_('The selected employee is not linked to a user account.'))
+        if target_partner == current_partner:
             raise UserError(_('You cannot start a private conversation with yourself.'))
+
+        channel = self._eps_find_direct_channel(current_partner, target_partner)
+        if not channel:
+            channel = self._eps_create_direct_channel(current_partner, target_partner)
+
+        clean_body = Markup('<p>%s</p>' % html_escape(self.body or '').replace('\n', '<br/>'))
+        channel.message_post(
+            body=clean_body,
+            message_type='comment',
+            subtype_xmlid='mail.mt_comment',
+            author_id=current_partner.id,
+        )
+
         return {
-            'type': 'ir.actions.act_window',
-            'name': _('New Employee Message'),
-            'res_model': 'employee.message.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {'default_employee_id': self.id},
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Message sent'),
+                'message': _('Your message was sent to %s.') % (self.employee_id.name,),
+                'type': 'success',
+                'sticky': False,
+                'next': {'type': 'ir.actions.act_window_close'},
+            },
         }

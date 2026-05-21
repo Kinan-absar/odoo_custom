@@ -11,3 +11,5 @@ from . import hr_attendance
 from . import employee_portal_message_read
 
 from . import hr_employee_messaging
+
+from . import employee_message_wizard

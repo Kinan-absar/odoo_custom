@@ -66,6 +66,7 @@
         'data/attendance_automation.xml',
         'views/hr_employee_user_domain.xml',
         'views/hr_employee_messaging_views.xml',
+        'views/employee_message_wizard_views.xml',
 
         # --------------------------------------------------
         # REPORTS

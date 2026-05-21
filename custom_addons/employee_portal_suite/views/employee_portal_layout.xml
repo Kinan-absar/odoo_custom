@@ -1169,7 +1169,7 @@
                 .ep-chat-row { display: flex; margin-bottom: 12px; }
                 .ep-chat-row.mine { justify-content: flex-end; }
                 .ep-chat-bubble {
-                    max-width: min(680px, 86%);
+                    max-width: 86%;
                     background: #fff;
                     border: 1px solid var(--border-light);
                     border-radius: 18px;
