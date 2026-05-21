@@ -65,8 +65,6 @@
         'data/request_sequence.xml',
         'data/attendance_automation.xml',
         'views/hr_employee_user_domain.xml',
-        'views/hr_employee_messaging_views.xml',
-        'views/employee_message_wizard_views.xml',
 
         # --------------------------------------------------
         # REPORTS
@@ -86,7 +84,6 @@
         # EMPLOYEE PORTAL (FRONTEND)
         # --------------------------------------------------
         'views/employee_portal_layout.xml',
-        'views/employee_portal_messages.xml',
         'views/employee_dashboard_page.xml',
 
         # Employee Requests
@@ -122,10 +119,6 @@
     #  ASSETS (JS)
     # ------------------------------------------------------------------
     'assets': {
-        'web.assets_frontend': [
-            'employee_portal_suite/static/src/scss/portal_messages.scss',
-            'employee_portal_suite/static/src/js/portal_messages.js',
-        ],
         'web.assets_backend': [
             'employee_portal_suite/static/src/js/material_request_dashboard.js',
             'employee_portal_suite/static/src/js/employee_request_dashboard.js',

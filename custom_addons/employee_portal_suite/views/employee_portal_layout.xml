@@ -1132,54 +1132,6 @@
         word-break: break-word;
     }
 }
-
-
-                .ep-message-link {
-                    position: relative;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 6px;
-                }
-
-                .ep-message-badge {
-                    display: none;
-                    min-width: 18px;
-                    height: 18px;
-                    padding: 0 5px;
-                    border-radius: 999px;
-                    background: #DC2626;
-                    color: #fff;
-                    font-size: 11px;
-                    font-weight: 700;
-                    line-height: 18px;
-                    text-align: center;
-                }
-
-                .ep-message-badge.show { display: inline-block; }
-
-                .ep-msg-page .rounded-4 { border-radius: var(--radius-lg) !important; }
-                .ep-chat-box {
-                    max-height: 58vh;
-                    overflow-y: auto;
-                    background: var(--surface-2);
-                    border: 1px solid var(--border-light);
-                    border-radius: var(--radius-lg);
-                    padding: 16px;
-                }
-                .ep-chat-row { display: flex; margin-bottom: 12px; }
-                .ep-chat-row.mine { justify-content: flex-end; }
-                .ep-chat-bubble {
-                    max-width: 86%;
-                    background: #fff;
-                    border: 1px solid var(--border-light);
-                    border-radius: 18px;
-                    padding: 12px 14px;
-                    box-shadow: var(--shadow-xs);
-                }
-                .ep-chat-row.mine .ep-chat-bubble {
-                    background: rgba(79,70,229,0.08);
-                    border-color: rgba(79,70,229,0.16);
-                }
             </style>
 
             <!-- ================================================================
@@ -1189,10 +1141,6 @@
                 <div class="ep-nav-links">
                     <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
                         <a href="/my" class="ep-link">Dashboard</a>
-                        <a href="/my/employee/messages" class="ep-link ep-message-link">
-                            <i class="fa fa-comments-o"></i> Messages
-                            <span class="ep-message-badge js-ep-message-badge"></span>
-                        </a>
 
                         <div class="ep-dropdown">
                             <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests &#9662;</button>
@@ -1252,10 +1200,6 @@
                     </t>
                 </div><!-- /ep-nav-links -->
                 <div class="d-flex align-items-center gap-3">
-                    <a href="/my/employee/messages" class="btn btn-sm btn-light border ep-message-link" title="Messages">
-                        <i class="fa fa-comments-o"></i>
-                        <span class="ep-message-badge js-ep-message-badge"></span>
-                    </a>
                     <div class="text-end d-none d-lg-block">
                         <h6 class="mb-0 fw-bold" t-out="request.env.user.partner_id.name"/>
                         <p class="mb-0 text-muted small" t-out="request.env.user.partner_id.company_name"/>
@@ -1344,12 +1288,6 @@
                             t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/attendance') else 'nav-btn'">
                             <i class="fa fa-clock-o"></i>
                             <span>Attendance</span>
-                        </a>
-                        <a href="/my/employee/messages"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/messages') else 'nav-btn'">
-                            <i class="fa fa-comments-o"></i>
-                            <span>Messages</span>
-                            <span class="ep-message-badge js-ep-message-badge"></span>
                         </a>
                     </div>
                     <div class="ep-fab-center"></div>
@@ -1462,13 +1400,6 @@
                        </t>
                     
 
-                    <a href="/my/employee/messages"
-                        t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/messages') else 'nav-btn'">
-                        <i class="fa fa-comments-o"></i>
-                        <span>Messages</span>
-                        <span class="ep-message-badge js-ep-message-badge"></span>
-                    </a>
-
                     <a href="/web/session/logout" class="nav-btn">
                         <i class="fa fa-sign-out"></i>
                         <span>Exit</span>
@@ -1519,31 +1450,6 @@
                     var menu = document.getElementById('approvalMenu');
                     if (menu) menu.classList.toggle('show');
                 }
-
-
-
-                function refreshEmployeePortalMessageBadge() {
-                    fetch('/my/employee/messages/count', {credentials: 'same-origin'})
-                        .then(function(response) { return response.json(); })
-                        .then(function(data) {
-                            var count = parseInt(data.count || 0, 10);
-                            document.querySelectorAll('.js-ep-message-badge').forEach(function(badge) {
-                                if (count > 0) {
-                                    badge.textContent = count > 99 ? '99+' : count;
-                                    badge.classList.add('show');
-                                } else {
-                                    badge.textContent = '';
-                                    badge.classList.remove('show');
-                                }
-                            });
-                        })
-                        .catch(function(){});
-                }
-
-                document.addEventListener('DOMContentLoaded', function(){
-                    refreshEmployeePortalMessageBadge();
-                    setInterval(refreshEmployeePortalMessageBadge, 60000);
-                });
 
                 document.addEventListener('click', function(e) {
                     document.querySelectorAll('.ep-dropdown-menu').forEach(function(m){

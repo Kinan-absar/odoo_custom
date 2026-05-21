@@ -610,15 +610,43 @@ class MaterialRequest(models.Model):
     # NOTIFY / ACTIVITY HELPERS
     # ---------------------------------------------------------
     def _notify_user(self, user, subject, body):
-        if not user or not user.partner_id.email:
+        """Notify an approver by email + Odoo inbox/chatter.
+
+        The Odoo inbox/chatter notification is what gives the best chance for
+        a mobile app / PWA push notification when the recipient has enabled
+        Odoo notifications on their device. This is intentionally kept beside
+        the old email behavior so existing email approvals keep working.
+        """
+        self.ensure_one()
+        if not user or not user.partner_id:
             return
-        mail_values = {
-            "subject": subject,
-            "body_html": f"<p>{body}</p>",
-            "email_to": user.partner_id.email,
-            "author_id": self.env.user.partner_id.id,
-        }
-        self.env["mail.mail"].sudo().create(mail_values).send()
+
+        partner = user.partner_id
+
+        # 1) Email notification - keep existing behavior.
+        if partner.email:
+            mail_values = {
+                "subject": subject,
+                "body_html": f"<p>{body}</p>",
+                "email_to": partner.email,
+                "author_id": self.env.user.partner_id.id,
+            }
+            self.env["mail.mail"].sudo().create(mail_values).send()
+
+        # 2) Odoo inbox/chatter notification - visible in Odoo web/mobile.
+        # Subscribe first so the partner is linked to the record/thread.
+        record = self.sudo()
+        if partner.id not in record.message_partner_ids.ids:
+            record.message_subscribe(partner_ids=[partner.id])
+
+        record.message_post(
+            body=body,
+            subject=subject,
+            partner_ids=[partner.id],
+            message_type="notification",
+            subtype_xmlid="mail.mt_comment",
+            author_id=self.env.user.partner_id.id,
+        )
 
     def _schedule_activity(self, user, summary, note):
         self.activity_schedule(

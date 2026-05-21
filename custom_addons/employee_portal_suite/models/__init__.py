@@ -8,10 +8,3 @@ from . import hr_work_location
 from . import project_project
 from . import portal_announcement
 from . import hr_attendance
-from . import employee_portal_message_read
-
-from . import hr_employee_messaging
-
-from . import employee_message_wizard
-
-from . import employee_message_recipient
