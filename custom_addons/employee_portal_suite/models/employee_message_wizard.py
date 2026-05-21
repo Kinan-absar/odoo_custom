@@ -10,13 +10,27 @@ class EmployeeMessageWizard(models.TransientModel):
     _name = 'employee.message.wizard'
     _description = 'Start Employee Message'
 
-    employee_id = fields.Many2one(
-        'hr.employee',
+    recipient_id = fields.Many2one(
+        'employee.message.recipient',
         string='To Employee',
         required=True,
-        domain="[('active', '=', True), ('user_id', '!=', False)]",
+        domain="[('partner_id', '!=', False)]",
+    )
+    employee_id = fields.Many2one(
+        'hr.employee',
+        string='Legacy To Employee',
+        help='Technical compatibility field. Use To Employee.',
     )
     body = fields.Text(string='Message', required=True)
+
+    def default_get(self, fields_list):
+        values = super().default_get(fields_list)
+        employee_id = self.env.context.get('default_employee_id')
+        if employee_id and 'recipient_id' in fields_list:
+            recipient = self.env['employee.message.recipient'].sudo().search([('employee_id', '=', employee_id)], limit=1)
+            if recipient:
+                values['recipient_id'] = recipient.id
+        return values
 
     def _eps_channel_model_name(self):
         return 'discuss.channel' if 'discuss.channel' in self.env else 'mail.channel'
@@ -37,7 +51,7 @@ class EmployeeMessageWizard(models.TransientModel):
             domain += [('channel_member_ids.partner_id', 'in', [partner_a.id]), ('channel_member_ids.partner_id', 'in', [partner_b.id])]
         else:
             return Channel.browse()
-        channels = Channel.search(domain, order='write_date desc', limit=20)
+        channels = Channel.search(domain, order='write_date desc', limit=30)
         for channel in channels:
             if {partner_a.id, partner_b.id}.issubset(set(self._eps_channel_partner_ids(channel))):
                 return channel
@@ -57,11 +71,10 @@ class EmployeeMessageWizard(models.TransientModel):
     def action_send_message(self):
         self.ensure_one()
         current_partner = self.env.user.partner_id.sudo()
-        target_user = self.employee_id.user_id
-        target_partner = target_user.partner_id.sudo() if target_user else False
+        target_partner = self.recipient_id.sudo().partner_id
         if not target_partner:
             raise UserError(_('The selected employee is not linked to a user account.'))
-        if target_partner == current_partner:
+        if target_partner.id == current_partner.id:
             raise UserError(_('You cannot start a private conversation with yourself.'))
 
         channel = self._eps_find_direct_channel(current_partner, target_partner)
@@ -81,7 +94,7 @@ class EmployeeMessageWizard(models.TransientModel):
             'tag': 'display_notification',
             'params': {
                 'title': _('Message sent'),
-                'message': _('Your message was sent to %s.') % (self.employee_id.name,),
+                'message': _('Your message was sent to %s.') % (self.recipient_id.name,),
                 'type': 'success',
                 'sticky': False,
                 'next': {'type': 'ir.actions.act_window_close'},

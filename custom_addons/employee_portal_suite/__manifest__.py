@@ -124,6 +124,7 @@
     'assets': {
         'web.assets_frontend': [
             'employee_portal_suite/static/src/scss/portal_messages.scss',
+            'employee_portal_suite/static/src/js/portal_messages.js',
         ],
         'web.assets_backend': [
             'employee_portal_suite/static/src/js/material_request_dashboard.js',
@@ -135,7 +136,6 @@
             'employee_portal_suite/static/src/scss/material_request_dashboard.scss',
             'employee_portal_suite/static/src/scss/employee_request_dashboard.scss',
             'employee_portal_suite/static/src/scss/home_announcements.scss',
-            'employee_portal_suite/static/src/scss/portal_messages.scss',
         ],
     },
     'images': ['static/description/icon.png'],
