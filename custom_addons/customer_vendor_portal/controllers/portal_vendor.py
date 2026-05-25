@@ -132,7 +132,7 @@ class VendorPortal(CustomerPortal):
         pager = portal_pager(url='/vendor/invoices', url_args={'state': state or ''}, total=invoice_count, page=page, step=15)
         invoices = Invoice.search(domain, limit=15, offset=pager['offset'])
 
-        submitted = request.args.get('submitted')
+        submitted = request.httprequest.args.get('submitted')
 
         return request.render('customer_vendor_portal.vendor_invoice_list', {
             'invoices': invoices,
