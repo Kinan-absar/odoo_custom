@@ -1,35 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="vendor_sidebar_menu" inherit_id="portal.portal_sidebar">
         <xpath expr="//div[@class='container o_portal_sidebar']" position="inside">
-
-            <t t-if="request.env.user.partner_id.supplier_rank &gt; 0">
-
-                <h5 class="mt-3" t-translate="yes">Vendor Menu</h5>
-
-                <ul class="list-unstyled ms-2">
-
-                    <li>
-                        <a href="/vendor">
-                            <span t-translate="yes">Vendor Home</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="/vendor/invoices">
-                            <span t-translate="yes">My Invoices</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="/vendor/invoice/upload">
-                            <span t-translate="yes">Upload Invoice</span>
-                        </a>
-                    </li>
-
-                </ul>
-
+            <t t-if="request.env.user.partner_id.supplier_rank > 0">
+                <div class="border-top pt-3 mt-2">
+                    <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size:.72rem;letter-spacing:.08em" t-translate="yes">Vendor Portal</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-1">
+                            <a href="/my/home" class="d-flex align-items-center gap-2 text-decoration-none py-1 px-2 rounded" style="color:#1a3a5c">
+                                <i class="fa fa-tachometer fa-fw"/> <span t-translate="yes">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="/vendor/invoices" class="d-flex align-items-center gap-2 text-decoration-none py-1 px-2 rounded" style="color:#1a3a5c">
+                                <i class="fa fa-file-text-o fa-fw"/> <span t-translate="yes">My Invoices</span>
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="/vendor/invoice/upload" class="d-flex align-items-center gap-2 text-decoration-none py-1 px-2 rounded" style="color:#2e7d52;font-weight:600">
+                                <i class="fa fa-upload fa-fw"/> <span t-translate="yes">Upload Invoice</span>
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="/vendor/pos" class="d-flex align-items-center gap-2 text-decoration-none py-1 px-2 rounded" style="color:#1a3a5c">
+                                <i class="fa fa-shopping-cart fa-fw"/> <span t-translate="yes">Purchase Orders</span>
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="/my/account" class="d-flex align-items-center gap-2 text-decoration-none py-1 px-2 rounded" style="color:#1a3a5c">
+                                <i class="fa fa-user-circle-o fa-fw"/> <span t-translate="yes">My Profile</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </t>
-
         </xpath>
     </template>
 </odoo>
