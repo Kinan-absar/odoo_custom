@@ -48,8 +48,14 @@ class VendorPortal(CustomerPortal):
         domain = [('partner_id', '=', partner.id)]
         all_invoices = Invoice.search(domain)
 
+        po_count = request.env['purchase.order'].sudo().search_count([
+            ('partner_id', '=', partner.id),
+            ('state', 'in', ['purchase', 'done']),
+        ])
+
         stats = {
             'total': len(all_invoices),
+            'po_count': po_count,
             'submitted': len(all_invoices.filtered(lambda i: i.state == 'submitted')),
             'review': len(all_invoices.filtered(lambda i: i.state == 'review')),
             'approved': len(all_invoices.filtered(lambda i: i.state == 'approved')),
