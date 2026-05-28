@@ -89,11 +89,8 @@ class VendorInvoice(models.Model):
     )
 
     notes = fields.Text(string='Vendor Notes')
-
-    # Internal notes visible to internal users only (backend)
     internal_notes = fields.Text(string='Internal Notes')
 
-    # Review comment shown to vendor on portal
     review_comment = fields.Text(
         string='Review Comment for Vendor',
         tracking=True,
@@ -107,6 +104,30 @@ class VendorInvoice(models.Model):
     )
 
     vendor_invoice_number = fields.Char(string="Vendor Invoice Number")
+
+    # ------------------------------------------------------------------
+    # State transition methods
+    # ------------------------------------------------------------------
+
+    def action_set_review(self):
+        for rec in self:
+            rec.write({'state': 'review'})
+            rec.message_post(body=_("Invoice moved to <b>Under Review</b>."))
+
+    def action_approve(self):
+        for rec in self:
+            rec.write({'state': 'approved'})
+            rec.message_post(body=_("Invoice has been <b>Approved</b>."))
+
+    def action_reject(self):
+        for rec in self:
+            rec.write({'state': 'rejected'})
+            rec.message_post(body=_("Invoice has been <b>Rejected</b>."))
+
+    def action_reset_submitted(self):
+        for rec in self:
+            rec.write({'state': 'submitted'})
+            rec.message_post(body=_("Invoice has been reset to <b>Submitted</b>."))
 
     def action_download_attachment(self):
         self.ensure_one()

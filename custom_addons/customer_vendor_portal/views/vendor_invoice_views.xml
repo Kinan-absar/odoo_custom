@@ -8,6 +8,25 @@
         <field name="arch" type="xml">
             <form string="Vendor Invoice">
                 <header>
+                    <button name="action_set_review"
+                            string="Mark as Under Review"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'submitted'"/>
+                    <button name="action_approve"
+                            string="Approve"
+                            type="object"
+                            class="btn-success"
+                            invisible="state != 'review'"/>
+                    <button name="action_reject"
+                            string="Reject"
+                            type="object"
+                            class="btn-danger"
+                            invisible="state != 'review'"/>
+                    <button name="action_reset_submitted"
+                            string="Reset to Submitted"
+                            type="object"
+                            invisible="state not in ('approved', 'rejected')"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="submitted,review,approved,rejected"/>
                 </header>
@@ -58,7 +77,8 @@
         <field name="name">portal.vendor.invoice.tree</field>
         <field name="model">portal.vendor.invoice</field>
         <field name="arch" type="xml">
-            <list string="Vendor Invoices" decoration-info="state == 'submitted'"
+            <list string="Vendor Invoices"
+                  decoration-info="state == 'submitted'"
                   decoration-warning="state == 'review'"
                   decoration-success="state == 'approved'"
                   decoration-danger="state == 'rejected'">

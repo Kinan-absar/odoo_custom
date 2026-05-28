@@ -49,21 +49,26 @@
      ================================================================ -->
 <template id="vendor_dashboard" name="Vendor Dashboard">
     <t t-call="portal.portal_layout">
-        <t t-set="breadcrumbs_searchbar" t-value="True"/>
         <div class="vp-page">
             <div class="container">
 
-                <!-- Welcome header -->
-                <div class="vp-page-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
-                    <div>
-                        <h2><i class="fa fa-tachometer me-2"/>
-                            <t t-esc="partner.name"/> — <span t-translate="yes">Vendor Portal</span>
-                        </h2>
-                        <p t-translate="yes">Welcome back. Here's an overview of your account activity.</p>
+                <!-- Page header -->
+                <div class="vp-page-header mb-4">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div>
+                            <h2 class="mb-1">
+                                <i class="fa fa-tachometer me-2"/>
+                                <span t-translate="yes">Vendor Dashboard</span>
+                            </h2>
+                            <p class="mb-0">
+                                <span t-translate="yes">Welcome back,</span>
+                                <strong> <t t-esc="partner.name"/></strong>
+                            </p>
+                        </div>
+                        <a href="/vendor/invoice/upload" class="vp-btn vp-btn-success align-self-start">
+                            <i class="fa fa-plus"/> <span t-translate="yes">Upload Invoice</span>
+                        </a>
                     </div>
-                    <a href="/vendor/invoice/upload" class="vp-btn vp-btn-success align-self-start">
-                        <i class="fa fa-plus"/> <span t-translate="yes">Upload Invoice</span>
-                    </a>
                 </div>
 
                 <!-- Stats row -->
@@ -72,7 +77,7 @@
                         <div class="vp-stat-card accent-navy">
                             <div class="vp-stat-icon"><i class="fa fa-files-o"/></div>
                             <div class="vp-stat-value"><t t-esc="stats['total']"/></div>
-                            <div class="vp-stat-label" t-translate="yes">Total Invoices</div>
+                            <div class="vp-stat-label" t-translate="yes">Total</div>
                         </div>
                     </div>
                     <div class="col-6 col-md-4 col-lg-2">
@@ -106,42 +111,54 @@
                     <div class="col-6 col-md-4 col-lg-2">
                         <div class="vp-stat-card accent-green">
                             <div class="vp-stat-icon"><i class="fa fa-money"/></div>
-                            <div class="vp-stat-value" style="font-size:1.2rem">
+                            <div class="vp-stat-value" style="font-size:1.1rem;line-height:1.2">
                                 <t t-esc="stats['currency'].symbol"/>
                                 <t t-esc="'{:,.0f}'.format(stats['total_amount'])"/>
                             </div>
-                            <div class="vp-stat-label" t-translate="yes">Approved Amount</div>
+                            <div class="vp-stat-label" t-translate="yes">Approved Amt</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
+                <!-- Quick actions (2 cards only) -->
                 <div class="row g-3 mb-4">
                     <div class="col-12">
-                        <h6 class="text-muted fw-bold text-uppercase mb-3" style="font-size:.78rem;letter-spacing:.07em" t-translate="yes">Quick Actions</h6>
+                        <h6 class="text-uppercase fw-bold mb-2"
+                            style="font-size:.75rem;letter-spacing:.08em;color:#6c757d"
+                            t-translate="yes">Quick Actions</h6>
                     </div>
                     <div class="col-6 col-md-3">
                         <a href="/vendor/invoice/upload" class="vp-action-card">
-                            <div class="vp-action-icon"><i class="fa fa-upload"/></div>
+                            <div class="vp-action-icon" style="background:#e8f5ee;color:#2e7d52">
+                                <i class="fa fa-upload"/>
+                            </div>
                             <span t-translate="yes">Upload Invoice</span>
                         </a>
                     </div>
                     <div class="col-6 col-md-3">
                         <a href="/vendor/invoices" class="vp-action-card">
-                            <div class="vp-action-icon"><i class="fa fa-list-alt"/></div>
-                            <span t-translate="yes">My Invoices</span>
+                            <div class="vp-action-icon">
+                                <i class="fa fa-list-alt"/>
+                            </div>
+                            <span t-translate="yes">All Invoices</span>
                         </a>
                     </div>
                     <div class="col-6 col-md-3">
-                        <a href="/vendor/pos" class="vp-action-card">
-                            <div class="vp-action-icon"><i class="fa fa-shopping-cart"/></div>
-                            <span t-translate="yes">Purchase Orders</span>
-                            <small class="text-muted">(<t t-esc="po_count"/>)</small>
+                        <a href="/vendor/invoices?state=review" class="vp-action-card">
+                            <div class="vp-action-icon" style="background:#fef3e8;color:#e67e22">
+                                <i class="fa fa-hourglass-half"/>
+                            </div>
+                            <span t-translate="yes">Under Review</span>
+                            <t t-if="stats['review']">
+                                <small class="text-warning fw-bold">(<t t-esc="stats['review']"/>)</small>
+                            </t>
                         </a>
                     </div>
                     <div class="col-6 col-md-3">
                         <a href="/my/account" class="vp-action-card">
-                            <div class="vp-action-icon"><i class="fa fa-user-circle"/></div>
+                            <div class="vp-action-icon">
+                                <i class="fa fa-user-circle-o"/>
+                            </div>
                             <span t-translate="yes">My Profile</span>
                         </a>
                     </div>
@@ -150,7 +167,7 @@
                 <!-- Recent Invoices -->
                 <div class="vp-card">
                     <div class="vp-card-header">
-                        <h5><i class="fa fa-clock-o"/> <span t-translate="yes">Recent Invoices</span></h5>
+                        <h5><i class="fa fa-clock-o me-1"/> <span t-translate="yes">Recent Invoices</span></h5>
                         <a href="/vendor/invoices" class="vp-btn vp-btn-outline vp-btn-sm" t-translate="yes">View All</a>
                     </div>
                     <t t-if="recent_invoices">
@@ -163,18 +180,18 @@
                                         <th t-translate="yes">Date</th>
                                         <th t-translate="yes">Amount</th>
                                         <th t-translate="yes">Status</th>
-                                        <th/>
+                                        <th t-translate="yes">Comment</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <t t-foreach="recent_invoices" t-as="inv">
-                                        <tr class="vp-row-link" t-att-onclick="'window.location=\'/vendor/invoice/' + str(inv.id) + '\''">
+                                        <tr class="vp-row-link"
+                                            t-att-onclick="'window.location=\'/vendor/invoice/' + str(inv.id) + '\''">
                                             <td><strong><t t-esc="inv.name"/></strong></td>
                                             <td class="text-muted"><t t-esc="inv.vendor_invoice_number or '-'"/></td>
                                             <td><t t-esc="inv.invoice_date or '-'"/></td>
-                                            <td>
-                                                <t t-esc="inv.currency_id.symbol"/>
-                                                <t t-esc="'{:,.2f}'.format(inv.amount_total)"/>
+                                            <td style="white-space:nowrap">
+                                                <t t-esc="inv.currency_id.symbol"/>&#160;<t t-esc="'{:,.2f}'.format(inv.amount_total)"/>
                                             </td>
                                             <td>
                                                 <span t-attf-class="vp-badge vp-badge-#{inv.state}">
@@ -184,7 +201,12 @@
                                                     <t t-elif="inv.state == 'rejected'" t-translate="yes">Rejected</t>
                                                 </span>
                                             </td>
-                                            <td><a t-attf-href="/vendor/invoice/#{inv.id}" class="vp-btn vp-btn-outline vp-btn-sm"><i class="fa fa-eye"/></a></td>
+                                            <td>
+                                                <t t-if="inv.review_comment">
+                                                    <span class="text-info"><i class="fa fa-comment" title="Has review comment"/></span>
+                                                </t>
+                                                <t t-else=""><span class="text-muted">—</span></t>
+                                            </td>
                                         </tr>
                                     </t>
                                 </tbody>
@@ -196,7 +218,7 @@
                             <div class="vp-empty-icon"><i class="fa fa-inbox"/></div>
                             <h5 t-translate="yes">No invoices yet</h5>
                             <p t-translate="yes">Submit your first invoice to get started.</p>
-                            <a href="/vendor/invoice/upload" class="vp-btn vp-btn-primary">
+                            <a href="/vendor/invoice/upload" class="vp-btn vp-btn-primary mt-2">
                                 <i class="fa fa-upload"/> <span t-translate="yes">Upload Invoice</span>
                             </a>
                         </div>
@@ -216,12 +238,11 @@
         <div class="vp-page">
             <div class="container">
 
-                <!-- Header -->
                 <div class="vp-page-header mb-4">
                     <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
                         <div>
                             <h2><i class="fa fa-file-text-o me-2"/> <span t-translate="yes">My Invoices</span></h2>
-                            <p t-translate="yes">Track the status of all your submitted invoices.</p>
+                            <p class="mb-0" t-translate="yes">Track the status of all your submitted invoices.</p>
                         </div>
                         <a href="/vendor/invoice/upload" class="vp-btn vp-btn-success align-self-start">
                             <i class="fa fa-plus"/> <span t-translate="yes">Upload New Invoice</span>
@@ -229,9 +250,8 @@
                     </div>
                 </div>
 
-                <!-- Success banner -->
                 <t t-if="submitted">
-                    <div class="vp-success-banner">
+                    <div class="vp-success-banner mb-3">
                         <span class="icon"><i class="fa fa-check-circle"/></span>
                         <span t-translate="yes">Your invoice has been submitted successfully. We will review it shortly.</span>
                     </div>
@@ -239,19 +259,19 @@
 
                 <!-- Status filter tabs -->
                 <div class="d-flex gap-2 flex-wrap mb-3">
-                    <a t-attf-href="/vendor/invoices"
+                    <a href="/vendor/invoices"
                        t-attf-class="vp-btn vp-btn-sm #{'vp-btn-primary' if not active_state else 'vp-btn-outline'}"
                        t-translate="yes">All</a>
-                    <a t-attf-href="/vendor/invoices?state=submitted"
+                    <a href="/vendor/invoices?state=submitted"
                        t-attf-class="vp-btn vp-btn-sm #{'vp-btn-primary' if active_state == 'submitted' else 'vp-btn-outline'}"
                        t-translate="yes">Submitted</a>
-                    <a t-attf-href="/vendor/invoices?state=review"
+                    <a href="/vendor/invoices?state=review"
                        t-attf-class="vp-btn vp-btn-sm #{'vp-btn-primary' if active_state == 'review' else 'vp-btn-outline'}"
                        t-translate="yes">Under Review</a>
-                    <a t-attf-href="/vendor/invoices?state=approved"
+                    <a href="/vendor/invoices?state=approved"
                        t-attf-class="vp-btn vp-btn-sm #{'vp-btn-primary' if active_state == 'approved' else 'vp-btn-outline'}"
                        t-translate="yes">Approved</a>
-                    <a t-attf-href="/vendor/invoices?state=rejected"
+                    <a href="/vendor/invoices?state=rejected"
                        t-attf-class="vp-btn vp-btn-sm #{'vp-btn-primary' if active_state == 'rejected' else 'vp-btn-outline'}"
                        t-translate="yes">Rejected</a>
                 </div>
@@ -274,7 +294,8 @@
                                 </thead>
                                 <tbody>
                                     <t t-foreach="invoices" t-as="inv">
-                                        <tr class="vp-row-link" t-att-onclick="'window.location=\'/vendor/invoice/' + str(inv.id) + '\''">
+                                        <tr class="vp-row-link"
+                                            t-att-onclick="'window.location=\'/vendor/invoice/' + str(inv.id) + '\''">
                                             <td><strong><t t-esc="inv.name"/></strong></td>
                                             <td class="text-muted"><t t-esc="inv.vendor_invoice_number or '-'"/></td>
                                             <td><t t-esc="inv.po_id.name if inv.po_id else '-'"/></td>
@@ -292,11 +313,13 @@
                                             </td>
                                             <td>
                                                 <t t-if="inv.review_comment">
-                                                    <span class="text-info" title="Has review comment"><i class="fa fa-comment"/></span>
+                                                    <span class="text-info"><i class="fa fa-comment"/></span>
                                                 </t>
                                             </td>
                                             <td>
-                                                <a t-attf-href="/vendor/invoice/#{inv.id}" class="vp-btn vp-btn-outline vp-btn-sm" onclick="event.stopPropagation()">
+                                                <a t-attf-href="/vendor/invoice/#{inv.id}"
+                                                   class="vp-btn vp-btn-outline vp-btn-sm"
+                                                   onclick="event.stopPropagation()">
                                                     <i class="fa fa-eye"/>
                                                 </a>
                                             </td>
@@ -314,7 +337,7 @@
                             <div class="vp-empty-icon"><i class="fa fa-inbox"/></div>
                             <h5 t-translate="yes">No invoices found</h5>
                             <p t-translate="yes">No invoices match your current filter.</p>
-                            <a href="/vendor/invoice/upload" class="vp-btn vp-btn-primary">
+                            <a href="/vendor/invoice/upload" class="vp-btn vp-btn-primary mt-2">
                                 <i class="fa fa-upload"/> <span t-translate="yes">Upload Invoice</span>
                             </a>
                         </div>
@@ -334,7 +357,6 @@
         <div class="vp-page">
             <div class="container">
 
-                <!-- Breadcrumb -->
                 <nav class="mb-3">
                     <a href="/vendor/invoices" class="text-muted" style="font-size:.88rem">
                         <i class="fa fa-arrow-left me-1"/> <span t-translate="yes">Back to Invoices</span>
@@ -350,31 +372,32 @@
                                 <t t-esc="invoice.currency_id.symbol"/>&#160;<t t-esc="'{:,.2f}'.format(invoice.amount_total)"/>
                             </div>
                             <div class="invoice-meta">
-                                <span t-translate="yes">Invoice</span> #<t t-esc="invoice.vendor_invoice_number or '-'"/>
+                                <span t-translate="yes">Invoice #</span><t t-esc="invoice.vendor_invoice_number or '-'"/>
                                 &#160;·&#160;
                                 <t t-esc="invoice.invoice_date or '-'"/>
+                                <t t-if="invoice.po_id">
+                                    &#160;·&#160; <span t-translate="yes">PO:</span> <t t-esc="invoice.po_id.name"/>
+                                </t>
                             </div>
                         </div>
-                        <div style="text-align:right">
-                            <span t-attf-class="vp-badge vp-badge-#{invoice.state}" style="font-size:.9rem;padding:.4rem 1rem">
-                                <t t-if="invoice.state == 'submitted'" t-translate="yes">Submitted</t>
-                                <t t-elif="invoice.state == 'review'" t-translate="yes">Under Review</t>
-                                <t t-elif="invoice.state == 'approved'" t-translate="yes">Approved</t>
-                                <t t-elif="invoice.state == 'rejected'" t-translate="yes">Rejected</t>
-                            </span>
-                        </div>
+                        <span t-attf-class="vp-badge vp-badge-#{invoice.state}"
+                              style="font-size:.9rem;padding:.4rem 1rem;align-self:flex-start">
+                            <t t-if="invoice.state == 'submitted'" t-translate="yes">Submitted</t>
+                            <t t-elif="invoice.state == 'review'" t-translate="yes">Under Review</t>
+                            <t t-elif="invoice.state == 'approved'" t-translate="yes">Approved</t>
+                            <t t-elif="invoice.state == 'rejected'" t-translate="yes">Rejected</t>
+                        </span>
                     </div>
                 </div>
 
                 <!-- Progress tracker -->
                 <div class="vp-card mb-3">
                     <div class="vp-card-header">
-                        <h5><i class="fa fa-road"/> <span t-translate="yes">Invoice Progress</span></h5>
+                        <h5><i class="fa fa-road me-1"/> <span t-translate="yes">Invoice Progress</span></h5>
                     </div>
                     <div class="vp-card-body">
                         <div class="vp-tracker">
-                            <!-- Submitted -->
-                            <div t-attf-class="vp-tracker-step #{'done' if invoice.state in ('submitted','review','approved') else ('active' if invoice.state == 'submitted' else '')}">
+                            <div t-attf-class="vp-tracker-step #{'done' if invoice.state in ('review','approved') else 'active'}">
                                 <div class="step-dot">
                                     <t t-if="invoice.state in ('review','approved')"><i class="fa fa-check"/></t>
                                     <t t-else="">1</t>
@@ -382,7 +405,6 @@
                                 <div class="step-label" t-translate="yes">Submitted</div>
                             </div>
                             <div t-attf-class="vp-tracker-line #{'done' if invoice.state in ('review','approved') else ''}"/>
-                            <!-- Under Review -->
                             <div t-attf-class="vp-tracker-step #{'done' if invoice.state == 'approved' else ('active' if invoice.state == 'review' else ('rejected' if invoice.state == 'rejected' else ''))}">
                                 <div class="step-dot">
                                     <t t-if="invoice.state == 'approved'"><i class="fa fa-check"/></t>
@@ -392,7 +414,6 @@
                                 <div class="step-label" t-translate="yes">Under Review</div>
                             </div>
                             <div t-attf-class="vp-tracker-line #{'done' if invoice.state == 'approved' else ''}"/>
-                            <!-- Approved / Rejected -->
                             <div t-attf-class="vp-tracker-step #{'done' if invoice.state == 'approved' else ('rejected' if invoice.state == 'rejected' else '')}">
                                 <div class="step-dot">
                                     <t t-if="invoice.state == 'approved'"><i class="fa fa-check"/></t>
@@ -409,11 +430,18 @@
                 </div>
 
                 <div class="row g-3">
-                    <!-- Left column: details -->
+                    <!-- Left: invoice details (no supplier, no download button) -->
                     <div class="col-lg-7">
                         <div class="vp-card mb-3">
                             <div class="vp-card-header">
-                                <h5><i class="fa fa-info-circle"/> <span t-translate="yes">Invoice Details</span></h5>
+                                <h5><i class="fa fa-info-circle me-1"/> <span t-translate="yes">Invoice Details</span></h5>
+                                <!-- Download link here, subtle, not a big button -->
+                                <t t-if="invoice.has_attachment">
+                                    <a t-attf-href="/web/content/#{invoice.attachment_id.id}?download=1"
+                                       class="vp-btn vp-btn-outline vp-btn-sm">
+                                        <i class="fa fa-download"/> <span t-translate="yes">Download File</span>
+                                    </a>
+                                </t>
                             </div>
                             <div class="vp-card-body">
                                 <div class="vp-info-grid">
@@ -435,49 +463,42 @@
                                             <t t-esc="invoice.currency_id.symbol"/>&#160;<t t-esc="'{:,.2f}'.format(invoice.amount_total)"/>
                                         </div>
                                     </div>
-                                    <div class="vp-info-item">
-                                        <div class="vp-info-label" t-translate="yes">Purchase Order</div>
-                                        <div class="vp-info-value"><t t-esc="invoice.po_id.name if invoice.po_id else '-'"/></div>
-                                    </div>
+                                    <t t-if="invoice.po_id">
+                                        <div class="vp-info-item">
+                                            <div class="vp-info-label" t-translate="yes">Purchase Order</div>
+                                            <div class="vp-info-value"><t t-esc="invoice.po_id.name"/></div>
+                                        </div>
+                                    </t>
                                     <div class="vp-info-item">
                                         <div class="vp-info-label" t-translate="yes">Submitted On</div>
-                                        <div class="vp-info-value"><t t-esc="invoice.create_date.strftime('%d %b %Y') if invoice.create_date else '-'"/></div>
+                                        <div class="vp-info-value">
+                                            <t t-esc="invoice.create_date.strftime('%d %b %Y') if invoice.create_date else '-'"/>
+                                        </div>
                                     </div>
                                 </div>
-
-                                <!-- Attachment -->
-                                <t t-if="invoice.has_attachment">
-                                    <hr style="border-color:#f0f2f5"/>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i class="fa fa-paperclip text-muted"/>
-                                        <span class="text-muted" style="font-size:.88rem" t-translate="yes">Attached Document:</span>
-                                        <a t-attf-href="/web/content/#{invoice.attachment_id.id}?download=1"
-                                           class="vp-btn vp-btn-outline vp-btn-sm">
-                                            <i class="fa fa-download"/> <span t-translate="yes">Download</span>
-                                        </a>
-                                    </div>
-                                </t>
                             </div>
                         </div>
 
                         <!-- Vendor Notes -->
                         <t t-if="invoice.notes">
-                            <div class="vp-card mb-3">
+                            <div class="vp-card">
                                 <div class="vp-card-header">
-                                    <h5><i class="fa fa-sticky-note-o"/> <span t-translate="yes">Your Notes</span></h5>
+                                    <h5><i class="fa fa-sticky-note-o me-1"/> <span t-translate="yes">Your Notes</span></h5>
                                 </div>
                                 <div class="vp-card-body">
-                                    <p style="white-space:pre-line;font-size:.94rem;color:#2d3748;margin:0"><t t-esc="invoice.notes"/></p>
+                                    <p style="white-space:pre-line;font-size:.94rem;color:#2d3748;margin:0">
+                                        <t t-esc="invoice.notes"/>
+                                    </p>
                                 </div>
                             </div>
                         </t>
                     </div>
 
-                    <!-- Right column: review comments -->
+                    <!-- Right: review comments -->
                     <div class="col-lg-5">
                         <div class="vp-card">
                             <div class="vp-card-header">
-                                <h5><i class="fa fa-comments"/> <span t-translate="yes">Review Comments</span></h5>
+                                <h5><i class="fa fa-comments me-1"/> <span t-translate="yes">Review Comments</span></h5>
                             </div>
                             <div class="vp-card-body">
                                 <t t-if="invoice.review_comment">
@@ -495,7 +516,9 @@
                                 <t t-else="">
                                     <div class="vp-empty" style="padding:2rem .5rem">
                                         <div class="vp-empty-icon" style="font-size:2rem"><i class="fa fa-comment-o"/></div>
-                                        <p style="font-size:.88rem" t-translate="yes">No comments yet. Our team will leave feedback here once review begins.</p>
+                                        <p style="font-size:.88rem;color:#adb5bd" t-translate="yes">
+                                            No comments yet. Our team will leave feedback here once review begins.
+                                        </p>
                                     </div>
                                 </t>
                             </div>
@@ -516,15 +539,13 @@
         <div class="vp-page">
             <div class="container" style="max-width:760px">
 
-                <!-- Header -->
                 <div class="vp-page-header mb-4">
                     <h2><i class="fa fa-upload me-2"/> <span t-translate="yes">Upload Invoice</span></h2>
-                    <p t-translate="yes">Fill in the details below and attach your invoice document.</p>
+                    <p class="mb-0" t-translate="yes">Fill in the details below and attach your invoice document.</p>
                 </div>
 
-                <!-- Error -->
                 <t t-if="error_message">
-                    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2">
                         <i class="fa fa-exclamation-circle"/>
                         <span><t t-esc="error_message"/></span>
                         <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"/>
@@ -534,7 +555,6 @@
                 <form action="/vendor/invoice/upload" method="POST" enctype="multipart/form-data" class="vp-form-card">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
-                    <!-- Section 1: Invoice Details -->
                     <div class="vp-form-section">
                         <div class="vp-form-section-title">
                             <i class="fa fa-file-text"/> <span t-translate="yes">Invoice Details</span>
@@ -543,21 +563,20 @@
                             <div class="col-md-6">
                                 <label class="vp-form-label" t-translate="yes">Invoice Number <span class="text-danger">*</span></label>
                                 <input type="text" name="vendor_invoice_number" class="form-control vp-form-control"
-                                       required="required"
-                                       placeholder="e.g. INV-2025-001"
-                                       t-att-value="form_data.get('vendor_invoice_number', '') if form_data else ''"/>
+                                       required="required" placeholder="e.g. INV-2025-001"
+                                       t-att-value="form_data.get('vendor_invoice_number','') if form_data else ''"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="vp-form-label" t-translate="yes">Invoice Date <span class="text-danger">*</span></label>
                                 <input type="date" name="invoice_date" class="form-control vp-form-control"
                                        required="required"
-                                       t-att-value="form_data.get('invoice_date', '') if form_data else ''"/>
+                                       t-att-value="form_data.get('invoice_date','') if form_data else ''"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="vp-form-label" t-translate="yes">Total Amount <span class="text-danger">*</span></label>
                                 <input type="number" name="amount_total" class="form-control vp-form-control"
                                        required="required" step="0.01" min="0" placeholder="0.00"
-                                       t-att-value="form_data.get('amount_total', '') if form_data else ''"/>
+                                       t-att-value="form_data.get('amount_total','') if form_data else ''"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="vp-form-label" t-translate="yes">Related Purchase Order</label>
@@ -571,7 +590,6 @@
                         </div>
                     </div>
 
-                    <!-- Section 2: Notes -->
                     <div class="vp-form-section">
                         <div class="vp-form-section-title">
                             <i class="fa fa-sticky-note-o"/> <span t-translate="yes">Notes (Optional)</span>
@@ -580,21 +598,19 @@
                                   placeholder="Any additional information for our team..."><t t-if="form_data" t-esc="form_data.get('notes','')"/></textarea>
                     </div>
 
-                    <!-- Section 3: File Upload -->
                     <div class="vp-form-section">
                         <div class="vp-form-section-title">
                             <i class="fa fa-paperclip"/> <span t-translate="yes">Invoice Document <span class="text-danger">*</span></span>
                         </div>
                         <div class="vp-dropzone" id="vpDropzone">
-                            <input type="file" name="invoice_file" id="vpFileInput" required="required"
-                                   accept=".pdf,.jpg,.jpeg,.png"/>
+                            <input type="file" name="invoice_file" id="vpFileInput"
+                                   required="required" accept=".pdf,.jpg,.jpeg,.png"/>
                             <div class="vp-dropzone-icon"><i class="fa fa-cloud-upload"/></div>
-                            <div class="vp-dropzone-text" id="vpDropText" t-translate="yes">Click to browse or drag &amp; drop your file</div>
-                            <div class="vp-dropzone-hint" t-translate="yes">Supported: PDF, JPG, PNG — Max 10 MB</div>
+                            <div class="vp-dropzone-text" id="vpDropText" t-translate="yes">Click to browse or drag &amp; drop</div>
+                            <div class="vp-dropzone-hint" t-translate="yes">PDF, JPG, PNG — Max 10 MB</div>
                         </div>
                     </div>
 
-                    <!-- Submit -->
                     <div class="d-flex align-items-center justify-content-between mt-3 flex-wrap gap-2">
                         <a href="/vendor/invoices" class="vp-btn vp-btn-outline">
                             <i class="fa fa-arrow-left"/> <span t-translate="yes">Cancel</span>
@@ -612,13 +628,16 @@
                     var zone = document.getElementById('vpDropzone');
                     if (!inp) return;
                     inp.addEventListener('change', function() {
-                        if (inp.files.length) { txt.textContent = inp.files[0].name; zone.style.borderColor = 'var(--vp-accent)'; }
+                        if (inp.files.length) {
+                            txt.textContent = inp.files[0].name;
+                            zone.style.borderColor = 'var(--vp-accent)';
+                        }
                     });
-                    ['dragover','dragenter'].forEach(function(e){
-                        zone.addEventListener(e, function(ev){ ev.preventDefault(); zone.classList.add('drag-over'); });
+                    ['dragover','dragenter'].forEach(function(e) {
+                        zone.addEventListener(e, function(ev) { ev.preventDefault(); zone.classList.add('drag-over'); });
                     });
-                    ['dragleave','drop'].forEach(function(e){
-                        zone.addEventListener(e, function(){ zone.classList.remove('drag-over'); });
+                    ['dragleave','drop'].forEach(function(e) {
+                        zone.addEventListener(e, function() { zone.classList.remove('drag-over'); });
                     });
                 })();
                 </script>
@@ -636,9 +655,8 @@
             <div class="container">
                 <div class="vp-page-header mb-4">
                     <h2><i class="fa fa-shopping-cart me-2"/> <span t-translate="yes">Purchase Orders</span></h2>
-                    <p t-translate="yes">Confirmed purchase orders issued to your company.</p>
+                    <p class="mb-0" t-translate="yes">Confirmed purchase orders issued to your company.</p>
                 </div>
-
                 <div class="vp-card">
                     <t t-if="pos">
                         <div class="table-responsive">
@@ -661,15 +679,12 @@
                                                 <t t-esc="po.currency_id.symbol"/>&#160;<t t-esc="'{:,.2f}'.format(po.amount_total)"/>
                                             </td>
                                             <td>
-                                                <span class="vp-badge" t-attf-style="background:#e8edf3;color:#1a3a5c">
-                                                    <t t-if="po.state == 'purchase'" t-translate="yes">Confirmed</t>
-                                                    <t t-elif="po.state == 'done'" t-translate="yes">Done</t>
-                                                    <t t-else=""><t t-esc="po.state"/></t>
-                                                </span>
+                                                <span class="vp-badge vp-badge-approved" t-if="po.state == 'done'" t-translate="yes">Done</span>
+                                                <span class="vp-badge vp-badge-submitted" t-else="" t-translate="yes">Confirmed</span>
                                             </td>
                                             <td>
                                                 <a t-attf-href="/vendor/po/#{po.id}" class="vp-btn vp-btn-outline vp-btn-sm">
-                                                    <i class="fa fa-eye"/> <span t-translate="yes">View</span>
+                                                    <i class="fa fa-eye"/>
                                                 </a>
                                             </td>
                                         </tr>
@@ -704,7 +719,6 @@
                         <i class="fa fa-arrow-left me-1"/> <span t-translate="yes">Back to Purchase Orders</span>
                     </a>
                 </nav>
-
                 <div class="vp-detail-hero mb-3">
                     <div class="invoice-ref"><t t-esc="po.name"/></div>
                     <div class="invoice-amount">
@@ -714,17 +728,15 @@
                         <span t-translate="yes">Approved:</span> <t t-esc="po.date_approve or '-'"/>
                     </div>
                 </div>
-
                 <div class="vp-card">
                     <div class="vp-card-header">
-                        <h5><i class="fa fa-list"/> <span t-translate="yes">Order Lines</span></h5>
+                        <h5><i class="fa fa-list me-1"/> <span t-translate="yes">Order Lines</span></h5>
                     </div>
                     <div class="table-responsive">
                         <table class="vp-invoice-table">
                             <thead>
                                 <tr>
                                     <th t-translate="yes">Product</th>
-                                    <th t-translate="yes">Description</th>
                                     <th t-translate="yes">Qty</th>
                                     <th t-translate="yes">Unit Price</th>
                                     <th t-translate="yes">Subtotal</th>
@@ -734,7 +746,6 @@
                                 <t t-foreach="po.order_line" t-as="line">
                                     <tr>
                                         <td><t t-esc="line.product_id.name if line.product_id else '-'"/></td>
-                                        <td class="text-muted" style="font-size:.85rem"><t t-esc="line.name or ''"/></td>
                                         <td><t t-esc="line.product_qty"/> <t t-esc="line.product_uom.name if line.product_uom else ''"/></td>
                                         <td><t t-esc="po.currency_id.symbol"/>&#160;<t t-esc="'{:,.2f}'.format(line.price_unit)"/></td>
                                         <td><t t-esc="po.currency_id.symbol"/>&#160;<t t-esc="'{:,.2f}'.format(line.price_subtotal)"/></td>
@@ -748,148 +759,14 @@
                         <t t-esc="po.currency_id.symbol"/>&#160;<t t-esc="'{:,.2f}'.format(po.amount_total)"/>
                     </div>
                 </div>
-
-                <!-- Upload invoice for this PO -->
                 <div class="mt-3 text-center">
-                    <a t-attf-href="/vendor/invoice/upload" class="vp-btn vp-btn-success">
+                    <a href="/vendor/invoice/upload" class="vp-btn vp-btn-success">
                         <i class="fa fa-upload"/> <span t-translate="yes">Upload Invoice for this PO</span>
                     </a>
                 </div>
             </div>
         </div>
     </t>
-</template>
-
-<!-- ================================================================
-     CUSTOMER BUTTONS (non-vendors)
-     ================================================================ -->
-<template id="customer_buttons" inherit_id="portal.portal_my_home">
-    <xpath expr="//div[@id='portal_client_category']" position="inside">
-        <t t-if="not request.env.user.partner_id.supplier_rank > 0">
-            <div class="col-md-6 mb-3">
-                <a href="/my/customer_invoices" class="btn btn-secondary w-100">
-                    <span t-translate="yes">My Invoices</span>
-                </a>
-            </div>
-            <div class="col-md-6 mb-3">
-                <a href="/my/sales_orders" class="btn btn-info w-100">
-                    <span t-translate="yes">My Orders</span>
-                </a>
-            </div>
-        </t>
-    </xpath>
-</template>
-
-<!-- ================================================================
-     CUSTOMER INVOICE LIST
-     ================================================================ -->
-<template id="customer_invoice_list" name="Customer Invoice List">
-    <t t-call="portal.portal_layout">
-        <div class="vp-page">
-            <div class="container">
-                <div class="vp-page-header mb-4">
-                    <h2><i class="fa fa-file-invoice-dollar me-2"/> <span t-translate="yes">My Invoices</span></h2>
-                </div>
-                <div class="vp-card">
-                    <t t-if="invoices">
-                        <div class="table-responsive">
-                            <table class="vp-invoice-table">
-                                <thead>
-                                    <tr>
-                                        <th t-translate="yes">Number</th>
-                                        <th t-translate="yes">Date</th>
-                                        <th t-translate="yes">Due Date</th>
-                                        <th t-translate="yes">Amount</th>
-                                        <th t-translate="yes">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <t t-foreach="invoices" t-as="inv">
-                                        <tr>
-                                            <td><t t-esc="inv.name"/></td>
-                                            <td><t t-esc="inv.invoice_date"/></td>
-                                            <td><t t-esc="inv.invoice_date_due"/></td>
-                                            <td><t t-esc="inv.currency_id.symbol"/>&#160;<t t-esc="'{:,.2f}'.format(inv.amount_total)"/></td>
-                                            <td><t t-esc="inv.payment_state"/></td>
-                                        </tr>
-                                    </t>
-                                </tbody>
-                            </table>
-                        </div>
-                    </t>
-                    <t t-else="">
-                        <div class="vp-empty"><div class="vp-empty-icon"><i class="fa fa-inbox"/></div><h5 t-translate="yes">No invoices found</h5></div>
-                    </t>
-                </div>
-            </div>
-        </div>
-    </t>
-</template>
-
-<!-- ================================================================
-     CUSTOMER SALES ORDERS
-     ================================================================ -->
-<template id="customer_sales_list" name="Customer Sales Orders">
-    <t t-call="portal.portal_layout">
-        <div class="vp-page">
-            <div class="container">
-                <div class="vp-page-header mb-4">
-                    <h2><i class="fa fa-shopping-bag me-2"/> <span t-translate="yes">My Sales Orders</span></h2>
-                </div>
-                <div class="vp-card">
-                    <t t-if="sales_orders">
-                        <div class="table-responsive">
-                            <table class="vp-invoice-table">
-                                <thead>
-                                    <tr>
-                                        <th t-translate="yes">Order</th>
-                                        <th t-translate="yes">Date</th>
-                                        <th t-translate="yes">Total</th>
-                                        <th t-translate="yes">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <t t-foreach="sales_orders" t-as="so">
-                                        <tr>
-                                            <td><t t-esc="so.name"/></td>
-                                            <td><t t-esc="so.date_order"/></td>
-                                            <td><t t-esc="so.currency_id.symbol"/>&#160;<t t-esc="'{:,.2f}'.format(so.amount_total)"/></td>
-                                            <td><t t-esc="so.state"/></td>
-                                        </tr>
-                                    </t>
-                                </tbody>
-                            </table>
-                        </div>
-                    </t>
-                    <t t-else="">
-                        <div class="vp-empty"><div class="vp-empty-icon"><i class="fa fa-shopping-bag"/></div><h5 t-translate="yes">No orders found</h5></div>
-                    </t>
-                </div>
-            </div>
-        </div>
-    </t>
-</template>
-
-<!-- ================================================================
-     EXTEND ACCOUNT INVOICES TABLE
-     ================================================================ -->
-<template id="extend_account_portal_my_invoices" inherit_id="account.portal_my_invoices">
-    <xpath expr="//thead/tr/th[1]" position="after">
-        <th t-translate="yes">PO</th>
-        <th t-translate="yes">Bill Number</th>
-    </xpath>
-    <xpath expr="//tbody//tr/td[1]" position="after">
-        <td>
-            <t t-if="invoice.move_type == 'in_invoice'">
-                <t t-esc="invoice.invoice_line_ids and invoice.invoice_line_ids[0].purchase_line_id.order_id.name or '-'"/>
-            </t>
-        </td>
-        <td>
-            <t t-if="invoice.move_type == 'in_invoice'">
-                <t t-esc="invoice.ref or '-'"/>
-            </t>
-        </td>
-    </xpath>
 </template>
 
 </odoo>
