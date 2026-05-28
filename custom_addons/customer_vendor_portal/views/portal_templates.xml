@@ -126,7 +126,7 @@
                 <!-- Portal entries from the old /my page -->
                 <div class="row g-3 mb-4">
                     <div class="col-12 col-lg-6">
-                        <a href="/vendor/invoices" class="vp-portal-entry">
+                        <a href="/my/invoices" class="vp-portal-entry">
                             <div class="vp-portal-entry-icon">
                                 <i class="fa fa-file-text-o"/>
                             </div>
@@ -137,7 +137,7 @@
                         </a>
                     </div>
                     <div class="col-12 col-lg-6">
-                        <a href="/vendor/pos" class="vp-portal-entry">
+                        <a href="/my/purchase" class="vp-portal-entry">
                             <div class="vp-portal-entry-icon">
                                 <i class="fa fa-list-alt"/>
                             </div>
@@ -145,9 +145,6 @@
                                 <h4 t-translate="yes">Our Orders</h4>
                                 <p t-translate="yes">Follow orders you have to fulfill</p>
                             </div>
-                            <t t-if="stats.get('po_count')">
-                                <span class="vp-entry-count"><t t-esc="stats['po_count']"/></span>
-                            </t>
                         </a>
                     </div>
                 </div>
@@ -168,11 +165,11 @@
                         </a>
                     </div>
                     <div class="col-6 col-md-3">
-                        <a href="/vendor/invoices" class="vp-action-card">
+                        <a href="/my/invoices" class="vp-action-card">
                             <div class="vp-action-icon">
                                 <i class="fa fa-list-alt"/>
                             </div>
-                            <span t-translate="yes">All Invoices</span>
+                            <span t-translate="yes">Odoo Invoices</span>
                         </a>
                     </div>
                     <div class="col-6 col-md-3">
