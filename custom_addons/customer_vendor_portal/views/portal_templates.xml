@@ -131,8 +131,8 @@
                                 <i class="fa fa-file-text-o"/>
                             </div>
                             <div>
-                                <h4 t-translate="yes">Our Invoices</h4>
-                                <p t-translate="yes">Follow, download or pay our invoices</p>
+                                <h4 t-translate="yes">System Invoices</h4>
+                                <p t-translate="yes">Follow your invoices payment status</p>
                             </div>
                         </a>
                     </div>
@@ -142,8 +142,8 @@
                                 <i class="fa fa-list-alt"/>
                             </div>
                             <div>
-                                <h4 t-translate="yes">Our Orders</h4>
-                                <p t-translate="yes">Follow orders you have to fulfill</p>
+                                <h4 t-translate="yes">System Orders</h4>
+                                <p t-translate="yes">Follow your purchase order status</p>
                             </div>
                         </a>
                     </div>
@@ -165,11 +165,11 @@
                         </a>
                     </div>
                     <div class="col-6 col-md-3">
-                        <a href="/my/invoices" class="vp-action-card">
+                        <a href="/vendor/invoices" class="vp-action-card">
                             <div class="vp-action-icon">
                                 <i class="fa fa-list-alt"/>
                             </div>
-                            <span t-translate="yes">Odoo Invoices</span>
+                            <span t-translate="yes">My Invoices</span>
                         </a>
                     </div>
                     <div class="col-6 col-md-3">
