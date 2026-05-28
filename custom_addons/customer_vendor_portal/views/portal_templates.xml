@@ -2,7 +2,8 @@
 <odoo>
 
 <!-- ================================================================
-     VENDOR HOME BUTTONS on portal_my_home
+     INJECT VENDOR BUTTONS into default portal home (portal_my_home)
+     Only My Invoices + Upload Invoice — no PO button
      ================================================================ -->
 <template id="vendor_buttons" inherit_id="portal.portal_my_home">
     <xpath expr="//div[@id='portal_vendor_category']" position="inside">
@@ -17,17 +18,12 @@
                     <i class="fa fa-upload me-1"/> <span t-translate="yes">Upload Invoice</span>
                 </a>
             </div>
-            <div class="col-md-6 mb-3">
-                <a href="/vendor/pos" class="btn btn-secondary w-100">
-                    <i class="fa fa-shopping-cart me-1"/> <span t-translate="yes">Purchase Orders</span>
-                </a>
-            </div>
         </t>
     </xpath>
 </template>
 
 <!-- ================================================================
-     HIDE CUSTOMER CATEGORY FOR VENDORS
+     HIDE CUSTOMER SECTIONS FOR VENDORS
      ================================================================ -->
 <template id="hide_customer_category" inherit_id="portal.portal_my_home">
     <xpath expr="//div[@id='portal_client_category']" position="attributes">
@@ -36,7 +32,7 @@
 </template>
 
 <!-- ================================================================
-     HIDE VENDOR CATEGORY FOR CUSTOMERS
+     HIDE VENDOR CATEGORY FROM NON-VENDORS
      ================================================================ -->
 <template id="hide_vendor_category" inherit_id="portal.portal_my_home">
     <xpath expr="//div[@id='portal_vendor_category']" position="attributes">
@@ -45,7 +41,7 @@
 </template>
 
 <!-- ================================================================
-     VENDOR DASHBOARD
+     VENDOR DASHBOARD  — at /vendor/dashboard
      ================================================================ -->
 <template id="vendor_dashboard" name="Vendor Dashboard">
     <t t-call="portal.portal_layout">
@@ -60,7 +56,7 @@
                                 <i class="fa fa-tachometer me-2"/>
                                 <span t-translate="yes">Vendor Dashboard</span>
                             </h2>
-                            <p class="mb-0">
+                            <p class="mb-0 opacity-75">
                                 <span t-translate="yes">Welcome back,</span>
                                 <strong> <t t-esc="partner.name"/></strong>
                             </p>
@@ -120,7 +116,7 @@
                     </div>
                 </div>
 
-                <!-- Quick actions (2 cards only) -->
+                <!-- Quick actions -->
                 <div class="row g-3 mb-4">
                     <div class="col-12">
                         <h6 class="text-uppercase fw-bold mb-2"
@@ -257,7 +253,6 @@
                     </div>
                 </t>
 
-                <!-- Status filter tabs -->
                 <div class="d-flex gap-2 flex-wrap mb-3">
                     <a href="/vendor/invoices"
                        t-attf-class="vp-btn vp-btn-sm #{'vp-btn-primary' if not active_state else 'vp-btn-outline'}"
@@ -328,9 +323,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="p-3">
-                            <t t-call="portal.pager"/>
-                        </div>
+                        <div class="p-3"><t t-call="portal.pager"/></div>
                     </t>
                     <t t-else="">
                         <div class="vp-empty">
@@ -350,7 +343,7 @@
 </template>
 
 <!-- ================================================================
-     VENDOR INVOICE DETAIL
+     VENDOR INVOICE DETAIL  — no download button, no supplier field
      ================================================================ -->
 <template id="vendor_invoice_detail" name="Vendor Invoice Detail">
     <t t-call="portal.portal_layout">
@@ -376,7 +369,7 @@
                                 &#160;·&#160;
                                 <t t-esc="invoice.invoice_date or '-'"/>
                                 <t t-if="invoice.po_id">
-                                    &#160;·&#160; <span t-translate="yes">PO:</span> <t t-esc="invoice.po_id.name"/>
+                                    &#160;·&#160; PO: <t t-esc="invoice.po_id.name"/>
                                 </t>
                             </div>
                         </div>
@@ -430,18 +423,10 @@
                 </div>
 
                 <div class="row g-3">
-                    <!-- Left: invoice details (no supplier, no download button) -->
                     <div class="col-lg-7">
                         <div class="vp-card mb-3">
                             <div class="vp-card-header">
                                 <h5><i class="fa fa-info-circle me-1"/> <span t-translate="yes">Invoice Details</span></h5>
-                                <!-- Download link here, subtle, not a big button -->
-                                <t t-if="invoice.has_attachment">
-                                    <a t-attf-href="/web/content/#{invoice.attachment_id.id}?download=1"
-                                       class="vp-btn vp-btn-outline vp-btn-sm">
-                                        <i class="fa fa-download"/> <span t-translate="yes">Download File</span>
-                                    </a>
-                                </t>
                             </div>
                             <div class="vp-card-body">
                                 <div class="vp-info-grid">
@@ -479,7 +464,6 @@
                             </div>
                         </div>
 
-                        <!-- Vendor Notes -->
                         <t t-if="invoice.notes">
                             <div class="vp-card">
                                 <div class="vp-card-header">
@@ -494,7 +478,7 @@
                         </t>
                     </div>
 
-                    <!-- Right: review comments -->
+                    <!-- Review comments -->
                     <div class="col-lg-5">
                         <div class="vp-card">
                             <div class="vp-card-header">
@@ -675,9 +659,7 @@
                                         <tr>
                                             <td><strong><t t-esc="po.name"/></strong></td>
                                             <td><t t-esc="po.date_approve or po.date_order or '-'"/></td>
-                                            <td>
-                                                <t t-esc="po.currency_id.symbol"/>&#160;<t t-esc="'{:,.2f}'.format(po.amount_total)"/>
-                                            </td>
+                                            <td><t t-esc="po.currency_id.symbol"/>&#160;<t t-esc="'{:,.2f}'.format(po.amount_total)"/></td>
                                             <td>
                                                 <span class="vp-badge vp-badge-approved" t-if="po.state == 'done'" t-translate="yes">Done</span>
                                                 <span class="vp-badge vp-badge-submitted" t-else="" t-translate="yes">Confirmed</span>

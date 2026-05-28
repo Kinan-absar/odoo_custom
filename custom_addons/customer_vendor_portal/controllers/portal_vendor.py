@@ -8,52 +8,41 @@ from odoo.addons.portal.controllers.portal import CustomerPortal, pager as porta
 class VendorPortal(CustomerPortal):
 
     # ---------------------------------------------------------------
-    # VENDOR ENTRY POINT — smart first-login redirect
+    # OVERRIDE /my and /my/home — redirect vendors to their dashboard
     # ---------------------------------------------------------------
-    @http.route(['/vendor'], type='http', auth='user', website=True)
-    def vendor_home(self, **kw):
-        user = request.env.user
-        partner = user.partner_id
-        if not partner.supplier_rank:
-            return request.redirect('/my/home')
-        return request.redirect('/my/home')
+    @http.route(['/my', '/my/home'], type='http', auth='user', website=True)
+    def home(self, **kw):
+        partner = request.env.user.partner_id
+        if partner.supplier_rank:
+            return request.redirect('/vendor/dashboard')
+        return super().home(**kw)
 
     # ---------------------------------------------------------------
-    # OVERRIDE /my and /my/account — first-login onboarding logic
+    # OVERRIDE /my/account — first-login onboarding only
     # ---------------------------------------------------------------
-    @http.route(['/my', '/my/account'], type='http', auth='user', website=True)
+    @http.route(['/my/account'], type='http', auth='user', website=True)
     def account(self, redirect=None, **post):
         user = request.env.user
         partner = user.partner_id
 
-        # POST: vendor saved their details → mark onboarding done, go to dashboard
-        if post and partner.supplier_rank:
-            result = super().account(redirect=None, **post)
+        # POST: vendor saves details for the FIRST time → mark onboarded, go to dashboard
+        if post and partner.supplier_rank and not partner.vendor_portal_onboarded:
+            super().account(redirect=None, **post)
             partner.sudo().write({'vendor_portal_onboarded': True})
-            return request.redirect('/my/home')
+            return request.redirect('/vendor/dashboard')
 
-        # GET for vendor:
-        if partner.supplier_rank:
-            if partner.vendor_portal_onboarded:
-                # Already onboarded → skip details page, go to dashboard
-                return request.redirect('/my/home')
-            else:
-                # First login → show account details so they can complete profile
-                return super().account(redirect=redirect, **post)
-
-        # Non-vendor: normal behaviour
+        # GET or subsequent POST (already onboarded): always allow access normally
         return super().account(redirect=redirect, **post)
 
     # ---------------------------------------------------------------
-    # VENDOR DASHBOARD (home)
+    # VENDOR DASHBOARD
     # ---------------------------------------------------------------
-    @http.route(['/my/home'], type='http', auth='user', website=True)
+    @http.route(['/vendor/dashboard'], type='http', auth='user', website=True)
     def vendor_dashboard(self, **kw):
-        user = request.env.user
-        partner = user.partner_id
+        partner = request.env.user.partner_id
 
         if not partner.supplier_rank:
-            return super().home(**kw) if hasattr(super(), 'home') else request.render('portal.portal_my_home', {})
+            return request.redirect('/my')
 
         Invoice = request.env['portal.vendor.invoice'].sudo()
         domain = [('partner_id', '=', partner.id)]
@@ -70,19 +59,13 @@ class VendorPortal(CustomerPortal):
         }
 
         recent_invoices = Invoice.search(domain, limit=5, order='create_date desc')
-        po_count = request.env['purchase.order'].sudo().search_count([
-            ('partner_id', '=', partner.id),
-            ('state', 'in', ['purchase', 'done']),
-        ])
 
-        values = {
+        return request.render('customer_vendor_portal.vendor_dashboard', {
             'partner': partner,
             'stats': stats,
             'recent_invoices': recent_invoices,
-            'po_count': po_count,
             'page_name': 'vendor_dashboard',
-        }
-        return request.render('customer_vendor_portal.vendor_dashboard', values)
+        })
 
     # ---------------------------------------------------------------
     # PURCHASE ORDER LIST
@@ -91,9 +74,9 @@ class VendorPortal(CustomerPortal):
     def vendor_po_list(self, page=1, **kw):
         partner = request.env.user.partner_id
         if not partner.supplier_rank:
-            return request.redirect('/my/home')
+            return request.redirect('/vendor/dashboard')
 
-        PO = request.env['purchase.order']
+        PO = request.env['purchase.order'].sudo()
         domain = [('partner_id', '=', partner.id), ('state', 'in', ['purchase', 'done'])]
         pos_count = PO.search_count(domain)
         pager = portal_pager(url='/vendor/pos', total=pos_count, page=page, step=10)
@@ -112,7 +95,9 @@ class VendorPortal(CustomerPortal):
         po = request.env['purchase.order'].sudo().browse(po_id)
         if not po.exists() or po.partner_id.id != partner.id or po.state not in ['purchase', 'done']:
             return request.redirect('/vendor/pos')
-        return request.render('customer_vendor_portal.vendor_po_detail', {'po': po, 'page_name': 'vendor_pos'})
+        return request.render('customer_vendor_portal.vendor_po_detail', {
+            'po': po, 'page_name': 'vendor_pos',
+        })
 
     # ---------------------------------------------------------------
     # VENDOR INVOICE LIST
@@ -121,17 +106,22 @@ class VendorPortal(CustomerPortal):
     def vendor_invoice_list(self, page=1, state=None, **kw):
         partner = request.env.user.partner_id
         if not partner.supplier_rank:
-            return request.redirect('/my/home')
+            return request.redirect('/vendor/dashboard')
 
-        Invoice = request.env['portal.vendor.invoice']
+        Invoice = request.env['portal.vendor.invoice'].sudo()
         domain = [('partner_id', '=', partner.id)]
         if state and state in ('submitted', 'review', 'approved', 'rejected'):
             domain.append(('state', '=', state))
 
         invoice_count = Invoice.search_count(domain)
-        pager = portal_pager(url='/vendor/invoices', url_args={'state': state or ''}, total=invoice_count, page=page, step=15)
+        pager = portal_pager(
+            url='/vendor/invoices',
+            url_args={'state': state or ''},
+            total=invoice_count,
+            page=page,
+            step=15,
+        )
         invoices = Invoice.search(domain, limit=15, offset=pager['offset'])
-
         submitted = request.httprequest.args.get('submitted')
 
         return request.render('customer_vendor_portal.vendor_invoice_list', {
@@ -163,7 +153,7 @@ class VendorPortal(CustomerPortal):
     def vendor_invoice_upload_form(self, **kw):
         partner = request.env.user.partner_id
         if not partner.supplier_rank:
-            return request.redirect('/my/home')
+            return request.redirect('/vendor/dashboard')
 
         purchase_orders = request.env['purchase.order'].sudo().search([
             ('partner_id', '=', partner.id),
@@ -184,7 +174,7 @@ class VendorPortal(CustomerPortal):
         partner = user.partner_id
 
         if not partner.supplier_rank:
-            return request.redirect('/my/home')
+            return request.redirect('/vendor/dashboard')
 
         po_id = int(post.get('po_id') or 0)
         file = post.get('invoice_file')

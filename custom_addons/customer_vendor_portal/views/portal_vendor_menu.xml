@@ -7,7 +7,7 @@
                     <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size:.72rem;letter-spacing:.08em" t-translate="yes">Vendor Portal</h6>
                     <ul class="list-unstyled">
                         <li class="mb-1">
-                            <a href="/my/home" class="d-flex align-items-center gap-2 text-decoration-none py-1 px-2 rounded" style="color:#1a3a5c">
+                            <a href="/vendor/dashboard" class="d-flex align-items-center gap-2 text-decoration-none py-1 px-2 rounded" style="color:#1a3a5c">
                                 <i class="fa fa-tachometer fa-fw"/> <span t-translate="yes">Dashboard</span>
                             </a>
                         </li>
