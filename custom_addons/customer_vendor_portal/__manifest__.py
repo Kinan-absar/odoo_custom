@@ -10,7 +10,7 @@
 Customer & Vendor Portal Extension v2
 ======================================
 
-Redesigned vendor portal with a professional UX for Odoo 18.
+Redesigned vendor portal with a professional UX for Odoo 18. 
 
 Features:
 ---------
