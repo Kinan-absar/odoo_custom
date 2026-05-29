@@ -69,16 +69,27 @@
     border-left-color: #875A7B;
 }
 @media screen and (max-width: 768px) {
+    /*
+     * Mobile fix:
+     * Do not keep announcements fixed/absolute on the Home Menu. A fixed block floats
+     * above the app grid on phones, which makes the announcements cover the apps.
+     * Keeping the block in the normal layout lets the Home Menu reserve vertical space.
+     */
     body .o_home_menu .eps_backend_announcements,
     body .eps_backend_announcements {
-        position: fixed !important;
-        top: 65px !important;
-        left: 8px !important;
-        right: 8px !important;
-        width: auto !important;
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: calc(100% - 16px) !important;
         max-width: none !important;
+        margin: 8px auto 12px auto !important;
         transform: none !important;
-        z-index: 20 !important;
+        z-index: 1 !important;
+        flex: 0 0 calc(100% - 16px) !important;
+        order: -1 !important;
+        max-height: 30vh !important;
+        overflow-y: auto !important;
     }
 
     body .eps_backend_announcement_card {
@@ -86,11 +97,16 @@
         font-size: 12px !important;
         line-height: 1.3 !important;
         margin-bottom: 6px !important;
-        max-height: 90px !important;
-        overflow-y: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
     }
 
+    body .eps_backend_announcement_title,
     body .eps_backend_announcement_card strong {
         font-size: 13px !important;
+    }
+
+    body .eps_backend_announcement_message {
+        font-size: 12px !important;
     }
 }
