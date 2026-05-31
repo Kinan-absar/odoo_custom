@@ -671,8 +671,22 @@ class AccountPaymentVoucher(models.Model):
         for rec in self:
             if rec.state not in ('posted', 'cancel'):
                 continue
-            if rec.bill_reconciled:
-                raise UserError(_("This voucher has reconciled payable lines. Unreconcile the journal items first before resetting it to draft."))
+
+            # Safety net: do not allow deleting/resetting the voucher journal entry
+            # while any payable line has full or partial reconciliation attached.
+            # This must block both full reconciliation and partial reconciliation.
+            voucher_lines = rec._get_voucher_payable_lines()
+            has_reconciled_payable_lines = bool(voucher_lines.filtered(
+                lambda line: line.reconciled
+                or line.matched_debit_ids
+                or line.matched_credit_ids
+                or abs(line.amount_residual) < abs(line.balance)
+            ))
+            if has_reconciled_payable_lines:
+                raise UserError(_(
+                    "This voucher has reconciled payable lines. Unreconcile the vendor bills first before resetting it to draft."
+                ))
+
             if rec.move_id:
                 rec.move_id.button_draft()
                 rec.move_id.unlink()
