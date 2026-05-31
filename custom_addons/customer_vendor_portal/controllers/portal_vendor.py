@@ -19,12 +19,6 @@ class VendorPortal(CustomerPortal):
     # ---------------------------------------------------------
     # OVERRIDE /my/home — catch post-login redirects for vendors
     # ---------------------------------------------------------
-    @http.route(['/my/home'], type='http', auth='user', website=True)
-    def home(self, **kw):
-        partner = request.env.user.partner_id
-        if partner.supplier_rank:
-            return request.redirect('/vendor/dashboard')
-        return super().home(**kw)
 
     # ---------------------------------------------------------
     # OVERRIDE /my and /my/account
@@ -34,7 +28,7 @@ class VendorPortal(CustomerPortal):
     #   POST + vendor + onboarded     → save normally, go to dashboard
     #   anything else                 → default Odoo behaviour
     # ---------------------------------------------------------
-    @http.route(['/my', '/my/account'], type='http', auth='user', website=True)
+    @http.route(['/my/account'], type='http', auth='user', website=True)
     def account(self, redirect=None, **post):
         partner = request.env.user.partner_id
 
