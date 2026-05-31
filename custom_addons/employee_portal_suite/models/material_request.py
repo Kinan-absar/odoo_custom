@@ -610,33 +610,15 @@ class MaterialRequest(models.Model):
     # NOTIFY / ACTIVITY HELPERS
     # ---------------------------------------------------------
     def _notify_user(self, user, subject, body):
-        if not user or not user.partner_id:
+        if not user or not user.partner_id.email:
             return
-
-        partner = user.partner_id
-
-        # Keep the original email behavior.
-        if partner.email:
-            mail_values = {
-                "subject": subject,
-                "body_html": f"<p>{body}</p>",
-                "email_to": partner.email,
-                "author_id": self.env.user.partner_id.id,
-            }
-            self.env["mail.mail"].sudo().create(mail_values).send()
-
-        # Add an Odoo notification for web/mobile app testing.
-        for record in self:
-            record_sudo = record.sudo()
-            if partner.id not in record_sudo.message_partner_ids.ids:
-                record_sudo.message_subscribe(partner_ids=[partner.id])
-            record_sudo.message_post(
-                body=body,
-                subject=subject,
-                partner_ids=[partner.id],
-                message_type="notification",
-                subtype_xmlid="mail.mt_comment",
-            )
+        mail_values = {
+            "subject": subject,
+            "body_html": f"<p>{body}</p>",
+            "email_to": user.partner_id.email,
+            "author_id": self.env.user.partner_id.id,
+        }
+        self.env["mail.mail"].sudo().create(mail_values).send()
 
     def _schedule_activity(self, user, summary, note):
         self.activity_schedule(
