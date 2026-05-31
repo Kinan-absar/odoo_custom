@@ -76,6 +76,12 @@
                             class="btn-primary"
                             invisible="state != 'posted' or payment_method == 'journal_transfer' or not is_payable_account or not bill_ids or bill_reconciled"/>
 
+                    <button name="action_unreconcile_bills"
+                            string="Unreconcile Bills"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'posted' or payment_method == 'journal_transfer' or not is_payable_account or bill_reconciliation_state not in ('partial', 'reconciled')"/>
+
                     <field name="state"
                            widget="statusbar"
                            statusbar_visible="draft,posted,cancel"/>
@@ -180,6 +186,7 @@
                         </group>
                         <group>
                             <field name="bill_total" readonly="1"/>
+                            <field name="remaining_to_reconcile" readonly="1"/>
                             <field name="difference_amount" readonly="1"/>
                         </group>
                     </group>
