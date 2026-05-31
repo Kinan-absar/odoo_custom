@@ -137,7 +137,7 @@ class AccountPaymentVoucher(models.Model):
             ('partial', 'Partially Reconciled'),
             ('reconciled', 'Reconciled'),
         ],
-        string='Bill Reconciliation Status',
+        string='Payment Reconciliation Status',
         compute='_compute_bill_reconciliation_state',
         store=True,
     )
@@ -147,7 +147,7 @@ class AccountPaymentVoucher(models.Model):
             ('not_reconciled', 'Not Reconciled'),
             ('reconciled', 'Reconciled'),
         ],
-        string='Reconciliation',
+        string='Payment Status',
         compute='_compute_reconciliation_list_status',
         store=True,
     )

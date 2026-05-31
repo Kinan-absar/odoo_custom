@@ -9,9 +9,9 @@
             <filter name="posted" string="Posted" domain="[('state','=','posted')]"/>
             <filter name="cancel" string="Cancelled" domain="[('state','=','cancel')]"/>
             <separator/>
-            <filter name="bill_reconciled" string="Reconciled" domain="[('reconciliation_list_status','=','reconciled')]"/>
-            <filter name="bill_not_reconciled" string="Not Reconciled" domain="[('reconciliation_list_status','=','not_reconciled')]"/>
-            <filter name="bill_partial" string="Partially Reconciled" domain="[('bill_reconciliation_state','=','partial')]"/>
+            <filter name="payment_reconciled" string="Payment Reconciled" domain="[('reconciliation_list_status','=','reconciled')]"/>
+            <filter name="payment_not_reconciled" string="Payment Not Reconciled" domain="[('reconciliation_list_status','=','not_reconciled')]"/>
+            <filter name="payment_partial" string="Payment Partially Reconciled" domain="[('bill_reconciliation_state','=','partial')]"/>
             <separator/>
             <filter name="cash" string="Cash" domain="[('payment_method','=','cash')]"/>
             <filter name="cheque" string="Cheque" domain="[('payment_method','=','cheque')]"/>
@@ -34,10 +34,10 @@
             <field name="amount"/>
             <field name="journal_id"/>
             <field name="payment_method"/>
-            <field name="reconciliation_list_status" widget="badge"/>
-            <field name="bill_reconciliation_state" widget="badge"/>
+            <field name="reconciliation_list_status" widget="badge" decoration-success="reconciliation_list_status == 'reconciled'" decoration-danger="reconciliation_list_status == 'not_reconciled'"/>
+            <field name="bill_reconciliation_state" widget="badge" decoration-success="bill_reconciliation_state == 'reconciled'" decoration-warning="bill_reconciliation_state == 'partial'" decoration-info="bill_reconciliation_state == 'ready'" decoration-danger="bill_reconciliation_state == 'no_bills'" decoration-muted="bill_reconciliation_state == 'not_applicable'"/>
             <field name="remaining_to_reconcile"/>
-            <field name="state"/>
+            <field name="state" widget="badge" decoration-success="state == 'posted'" decoration-info="state == 'draft'" decoration-danger="state == 'cancel'"/>
         </list>
     </field>
 </record>
@@ -189,7 +189,7 @@
                                    widget="many2many_tags"
                                    readonly="1"
                                    invisible="not reconciled_bill_ids"/>
-                            <field name="bill_reconciliation_state" readonly="1"/>
+                            <field name="bill_reconciliation_state" widget="badge" readonly="1" decoration-success="bill_reconciliation_state == 'reconciled'" decoration-warning="bill_reconciliation_state == 'partial'" decoration-info="bill_reconciliation_state == 'ready'" decoration-danger="bill_reconciliation_state == 'no_bills'" decoration-muted="bill_reconciliation_state == 'not_applicable'"/>
                         </group>
                         <group>
                             <field name="bill_total" readonly="1"/>
