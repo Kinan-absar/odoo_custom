@@ -28,6 +28,9 @@ class PaymentVoucherDashboard extends Component {
             bank_count: 0,
             transfer_count: 0,
             my_count: 0,
+            reconciled_count: 0,
+            not_reconciled_count: 0,
+            partial_reconciled_count: 0,
             total_posted_amount: 0,
             currency_symbol: "",
         });

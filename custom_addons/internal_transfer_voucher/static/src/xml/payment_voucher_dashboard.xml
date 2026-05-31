@@ -63,6 +63,25 @@
                     <div class="pv_label">Journal Transfer</div>
                 </div>
 
+
+                <div class="pv_card pv_card_green"
+                     t-on-click="() => this.filter([['reconciliation_list_status','=','reconciled']])">
+                    <div class="pv_value"><t t-esc="data.reconciled_count"/></div>
+                    <div class="pv_label">Reconciled</div>
+                </div>
+
+                <div class="pv_card pv_card_red"
+                     t-on-click="() => this.filter([['reconciliation_list_status','=','not_reconciled']])">
+                    <div class="pv_value"><t t-esc="data.not_reconciled_count"/></div>
+                    <div class="pv_label">Not Reconciled</div>
+                </div>
+
+                <div class="pv_card pv_card_neutral"
+                     t-on-click="() => this.filter([['bill_reconciliation_state','=','partial']])">
+                    <div class="pv_value"><t t-esc="data.partial_reconciled_count"/></div>
+                    <div class="pv_label">Partial</div>
+                </div>
+
                 <div class="pv_card pv_card_purple"
                      t-on-click="() => this.filter(myDomain)">
                     <div class="pv_value"><t t-esc="data.my_count"/></div>

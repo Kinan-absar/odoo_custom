@@ -9,6 +9,10 @@
             <filter name="posted" string="Posted" domain="[('state','=','posted')]"/>
             <filter name="cancel" string="Cancelled" domain="[('state','=','cancel')]"/>
             <separator/>
+            <filter name="bill_reconciled" string="Reconciled" domain="[('reconciliation_list_status','=','reconciled')]"/>
+            <filter name="bill_not_reconciled" string="Not Reconciled" domain="[('reconciliation_list_status','=','not_reconciled')]"/>
+            <filter name="bill_partial" string="Partially Reconciled" domain="[('bill_reconciliation_state','=','partial')]"/>
+            <separator/>
             <filter name="cash" string="Cash" domain="[('payment_method','=','cash')]"/>
             <filter name="cheque" string="Cheque" domain="[('payment_method','=','cheque')]"/>
             <filter name="bank_transfer" string="Bank Transfer" domain="[('payment_method','=','bank_transfer')]"/>
@@ -30,6 +34,9 @@
             <field name="amount"/>
             <field name="journal_id"/>
             <field name="payment_method"/>
+            <field name="reconciliation_list_status" widget="badge"/>
+            <field name="bill_reconciliation_state" widget="badge"/>
+            <field name="remaining_to_reconcile"/>
             <field name="state"/>
         </list>
     </field>
