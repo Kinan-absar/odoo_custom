@@ -10,7 +10,7 @@
 Customer & Vendor Portal Extension
 ==================================
 
-This module extends the default Odoo customer portal with additional features,
+This module extends the default Odoo customer portal with additional features, 
 and introduces a full vendor portal that allows vendors to view purchase orders,
 upload invoices, and track their invoice status.
 
