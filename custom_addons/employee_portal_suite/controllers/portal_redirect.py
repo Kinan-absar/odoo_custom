@@ -1,32 +1,32 @@
 from odoo import http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal
+from odoo.addons.web.controllers.home import Home
+
+
+class EmployeePortalLogin(Home):
+
+    @http.route('/web/login', type='http', auth='none', website=True, sitemap=False)
+    def web_login(self, redirect=None, **kw):
+        response = super().web_login(redirect=redirect, **kw)
+        # Only act after a successful login POST
+        if request.httprequest.method == 'POST' and request.session.uid:
+            user = request.env['res.users'].sudo().browse(request.session.uid)
+            if user.employee_id:
+                return request.redirect('/my/employee')
+        return response
 
 
 class EmployeePortalRedirect(CustomerPortal):
 
     @http.route(['/my'], type='http', auth='user', website=True)
     def account(self, **kw):
-        """Redirect employees away from customer portal."""
-        user = request.env.user
-
-        # Employees → always redirect to employee portal
-        if user.employee_id:
+        if request.env.user.employee_id:
             return request.redirect('/my/employee')
-
-        # Customers/vendors → normal Odoo portal
         return super().account(**kw)
-
 
     @http.route(['/my/home'], type='http', auth='user', website=True)
     def home_redirect(self, **kw):
-        """Override My Account page. Employees should never land here."""
-        user = request.env.user
-
-        # Employees → force employee dashboard
-        if user.employee_id:
+        if request.env.user.employee_id:
             return request.redirect('/my/employee')
-
-        # Normal customers/vendors → default portal home
         return super().account(**kw)
-    

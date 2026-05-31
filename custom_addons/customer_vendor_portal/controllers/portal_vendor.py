@@ -3,12 +3,29 @@ import base64
 from odoo import http, _
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
+from odoo.addons.web.controllers.home import Home
+
+
+class VendorPortalLogin(Home):
+
+    @http.route('/web/login', type='http', auth='none', website=True, sitemap=False)
+    def web_login(self, redirect=None, **kw):
+        response = super().web_login(redirect=redirect, **kw)
+        # Only act after a successful login POST
+        if request.httprequest.method == 'POST' and request.session.uid:
+            user = request.env['res.users'].sudo().browse(request.session.uid)
+            partner = user.partner_id
+            if partner.supplier_rank:
+                if not partner.vendor_portal_onboarded:
+                    return request.redirect('/my/account')
+                return request.redirect('/vendor/dashboard')
+        return response
 
 
 class VendorPortal(CustomerPortal):
 
     # ---------------------------------------------------------
-    # VENDOR ENTRY POINT — /vendor just redirects to dashboard
+    # VENDOR ENTRY POINT
     # ---------------------------------------------------------
     @http.route(['/vendor'], type='http', auth='user', website=True)
     def vendor_home(self, **kw):
@@ -17,7 +34,7 @@ class VendorPortal(CustomerPortal):
         return request.redirect('/vendor/dashboard')
 
     # ---------------------------------------------------------
-    # OVERRIDE /my/home — catch post-login redirects for vendors
+    # OVERRIDE /my/home — catch any stray post-login redirects
     # ---------------------------------------------------------
     @http.route(['/my/home'], type='http', auth='user', website=True)
     def home(self, **kw):
@@ -28,25 +45,18 @@ class VendorPortal(CustomerPortal):
 
     # ---------------------------------------------------------
     # OVERRIDE /my and /my/account
-    #   GET  + vendor + onboarded     → vendor dashboard
-    #   GET  + vendor + not onboarded → show profile form (first-login)
-    #   POST + vendor + not onboarded → save, mark onboarded, go to dashboard
-    #   POST + vendor + onboarded     → save normally, go to dashboard
-    #   anything else                 → default Odoo behaviour
     # ---------------------------------------------------------
     @http.route(['/my', '/my/account'], type='http', auth='user', website=True)
     def account(self, redirect=None, **post):
         partner = request.env.user.partner_id
 
         if partner.supplier_rank:
-            # POST — save profile details
             if post:
                 super().account(redirect=None, **post)
                 if not partner.vendor_portal_onboarded:
                     partner.sudo().write({'vendor_portal_onboarded': True})
                 return request.redirect('/vendor/dashboard')
 
-            # GET — only show profile form on first login; after that go straight to dashboard
             if not partner.vendor_portal_onboarded:
                 return super().account(redirect=redirect, **post)
 
