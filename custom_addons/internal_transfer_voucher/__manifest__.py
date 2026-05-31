@@ -1,6 +1,6 @@
 {
     "name": "Payment & Receipt Voucher",
-    "version": "18.0.1.1.0",
+    "version": "18.0.1.2.0",
     "category": "Accounting",
     "summary": "Internal journal transfers, payment vouchers, and receipt vouchers for Odoo 18",
     "description": """
@@ -17,6 +17,7 @@ Key Features
 • Printable bilingual (English / Arabic) PDF vouchers
 • Amount in words (Arabic)
 • Optional analytic distribution
+• Vendor bill matching and payable reconciliation from payment vouchers
     """,
     "author": "Kinan",
     "website": "https://absar-alomran.com",
