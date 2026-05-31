@@ -8,14 +8,12 @@ from odoo.addons.portal.controllers.portal import CustomerPortal, pager as porta
 class VendorPortal(CustomerPortal):
 
     # ---------------------------------------------------------------
-    # OVERRIDE /my and /my/home — redirect vendors to their dashboard
+    # Do NOT override /my or /my/home here.
+    # Employee Portal Suite also controls those routes, so keeping this
+    # module limited to /vendor/* avoids portal redirect conflicts.
+    # Vendors can still access their dashboard directly through
+    # /vendor/dashboard and the portal menu entry.
     # ---------------------------------------------------------------
-    @http.route(['/my', '/my/home'], type='http', auth='user', website=True)
-    def home(self, **kw):
-        partner = request.env.user.partner_id
-        if partner.supplier_rank:
-            return request.redirect('/vendor/dashboard')
-        return super().home(**kw)
 
     # ---------------------------------------------------------------
     # OVERRIDE /my/account — first-login onboarding only
