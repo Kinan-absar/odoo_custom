@@ -7,18 +7,21 @@ from odoo.addons.portal.controllers.portal import CustomerPortal, pager as porta
 
 class VendorPortal(CustomerPortal):
 
-    # ---------------------------------------------------------------
-    # Do NOT override /my or /my/home here.
-    # Employee Portal Suite also controls those routes, so keeping this
-    # module limited to /vendor/* avoids portal redirect conflicts.
-    # Vendors can still access their dashboard directly through
-    # /vendor/dashboard and the portal menu entry.
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
+    # VENDOR ENTRY POINT — safe routing, no /my or /my/home override
+    # ---------------------------------------------------------
+    @http.route(['/vendor'], type='http', auth='user', website=True)
+    def vendor_home(self, **kw):
+        """Entry point: redirect vendors to their dashboard, others to standard portal."""
+        user = request.env.user
+        if not user.partner_id.supplier_rank:
+            return request.redirect('/my/home')
+        return request.redirect('/vendor/dashboard')
 
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     # OVERRIDE /my/account — first-login onboarding only
-    # ---------------------------------------------------------------
-    @http.route(['/my/account'], type='http', auth='user', website=True)
+    # ---------------------------------------------------------
+    @http.route(['/my', '/my/account'], type='http', auth='user', website=True)
     def account(self, redirect=None, **post):
         user = request.env.user
         partner = user.partner_id
@@ -29,12 +32,12 @@ class VendorPortal(CustomerPortal):
             partner.sudo().write({'vendor_portal_onboarded': True})
             return request.redirect('/vendor/dashboard')
 
-        # GET or subsequent POST (already onboarded): always allow access normally
+        # GET or already onboarded: normal Odoo behavior
         return super().account(redirect=redirect, **post)
 
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     # VENDOR DASHBOARD
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     @http.route(['/vendor/dashboard'], type='http', auth='user', website=True)
     def vendor_dashboard(self, **kw):
         partner = request.env.user.partner_id
@@ -71,9 +74,9 @@ class VendorPortal(CustomerPortal):
             'page_name': 'vendor_dashboard',
         })
 
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     # PURCHASE ORDER LIST
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     @http.route(['/vendor/pos'], type='http', auth='user', website=True)
     def vendor_po_list(self, page=1, **kw):
         partner = request.env.user.partner_id
@@ -90,9 +93,9 @@ class VendorPortal(CustomerPortal):
             'pos': pos, 'pager': pager, 'page_name': 'vendor_pos',
         })
 
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     # PURCHASE ORDER DETAIL
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     @http.route(['/vendor/po/<int:po_id>'], type='http', auth='user', website=True)
     def vendor_po_detail(self, po_id, **kw):
         partner = request.env.user.partner_id
@@ -103,9 +106,9 @@ class VendorPortal(CustomerPortal):
             'po': po, 'page_name': 'vendor_pos',
         })
 
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     # VENDOR INVOICE LIST
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     @http.route(['/vendor/invoices'], type='http', auth='user', website=True)
     def vendor_invoice_list(self, page=1, state=None, **kw):
         partner = request.env.user.partner_id
@@ -136,9 +139,9 @@ class VendorPortal(CustomerPortal):
             'page_name': 'vendor_invoices',
         })
 
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     # VENDOR INVOICE DETAIL
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     @http.route(['/vendor/invoice/<int:invoice_id>'], type='http', auth='user', website=True)
     def vendor_invoice_detail(self, invoice_id, **kw):
         partner = request.env.user.partner_id
@@ -150,9 +153,9 @@ class VendorPortal(CustomerPortal):
             'page_name': 'vendor_invoices',
         })
 
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     # UPLOAD VENDOR INVOICE (GET)
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     @http.route(['/vendor/invoice/upload'], type='http', auth='user', methods=['GET'], website=True)
     def vendor_invoice_upload_form(self, **kw):
         partner = request.env.user.partner_id
@@ -168,9 +171,9 @@ class VendorPortal(CustomerPortal):
             'page_name': 'vendor_upload',
         })
 
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     # SUBMIT INVOICE (POST)
-    # ---------------------------------------------------------------
+    # ---------------------------------------------------------
     @http.route(['/vendor/invoice/upload'], type='http', auth='user',
                 methods=['POST'], website=True, csrf=True)
     def vendor_invoice_upload(self, **post):
