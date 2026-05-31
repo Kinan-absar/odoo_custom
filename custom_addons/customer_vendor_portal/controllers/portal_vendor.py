@@ -8,18 +8,17 @@ from odoo.addons.web.controllers.home import Home
 
 class VendorPortalLogin(Home):
 
-    @http.route('/web/login', type='http', auth='none', website=True, sitemap=False)
-    def web_login(self, redirect=None, **kw):
-        response = super().web_login(redirect=redirect, **kw)
-        # Only act after a successful login POST
-        if request.httprequest.method == 'POST' and request.session.uid:
-            user = request.env['res.users'].sudo().browse(request.session.uid)
-            partner = user.partner_id
-            if partner.supplier_rank:
-                if not partner.vendor_portal_onboarded:
-                    return request.redirect('/my/account')
-                return request.redirect('/vendor/dashboard')
-        return response
+    def _login_redirect(self, uid, redirect=None):
+        """Hook called by Odoo 18 after successful login to determine redirect target."""
+        if redirect:
+            return redirect
+        user = request.env['res.users'].sudo().browse(uid)
+        partner = user.partner_id
+        if partner.supplier_rank:
+            if not partner.vendor_portal_onboarded:
+                return '/my/account'
+            return '/vendor/dashboard'
+        return super()._login_redirect(uid, redirect=redirect)
 
 
 class VendorPortal(CustomerPortal):
@@ -34,7 +33,7 @@ class VendorPortal(CustomerPortal):
         return request.redirect('/vendor/dashboard')
 
     # ---------------------------------------------------------
-    # OVERRIDE /my/home — catch any stray post-login redirects
+    # OVERRIDE /my/home — catch any stray redirects
     # ---------------------------------------------------------
     @http.route(['/my/home'], type='http', auth='user', website=True)
     def home(self, **kw):
