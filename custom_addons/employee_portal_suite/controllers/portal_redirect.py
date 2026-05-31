@@ -10,13 +10,13 @@ class EmployeePortalRedirect(CustomerPortal):
         user = request.env.user
         partner = user.partner_id
 
-        # Employees first
-        if user.employee_id:
-            return request.redirect('/my/employee')
-
-        # Vendors
+        # Vendors first
         if partner.supplier_rank:
             return request.redirect('/vendor/dashboard')
+
+        # Employees second
+        if user.employee_id:
+            return request.redirect('/my/employee')
 
         # Customers
         return super().account(**kw)
