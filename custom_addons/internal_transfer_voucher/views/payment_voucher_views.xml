@@ -68,13 +68,13 @@
                             string="Find Bills"
                             type="object"
                             class="btn-secondary"
-                            invisible="payment_method == 'journal_transfer' or not is_payable_account"/>
+                            invisible="payment_method == 'journal_transfer' or not is_payable_account or bill_reconciled"/>
 
                     <button name="action_reconcile_bills"
                             string="Reconcile Bills"
                             type="object"
                             class="btn-primary"
-                            invisible="state != 'posted' or payment_method == 'journal_transfer' or not is_payable_account or not bill_ids"/>
+                            invisible="state != 'posted' or payment_method == 'journal_transfer' or not is_payable_account or not bill_ids or bill_reconciled"/>
 
                     <field name="state"
                            widget="statusbar"
@@ -89,6 +89,7 @@
                     </div>
 
                     <field name="is_payable_account" invisible="1"/>
+                    <field name="bill_reconciled" invisible="1"/>
                     <field name="company_id" invisible="1"/>
 
                     <!-- Main Info -->
@@ -168,9 +169,13 @@
                         <group>
                             <field name="bill_ids"
                                    widget="many2many_tags"
-                                   readonly="bill_reconciliation_state == 'reconciled'"
+                                   readonly="bill_reconciled"
                                    domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('move_type', '=', 'in_invoice'), ('state', '=', 'posted'), ('payment_state', 'in', ['not_paid', 'partial'])]"
                                    options="{'no_create': True}"/>
+                            <field name="reconciled_bill_ids"
+                                   widget="many2many_tags"
+                                   readonly="1"
+                                   invisible="not reconciled_bill_ids"/>
                             <field name="bill_reconciliation_state" readonly="1"/>
                         </group>
                         <group>
