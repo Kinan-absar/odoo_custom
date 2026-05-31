@@ -137,7 +137,7 @@ class AccountReceiptVoucher(models.Model):
             if rec.state != 'draft':
                 continue
 
-            if rec.move_id and rec.move_id.state == 'posted':
+            if rec.move_id:
                 raise UserError(_("This voucher is already posted."))
 
             if not rec.journal_id.default_account_id:
@@ -165,24 +165,16 @@ class AccountReceiptVoucher(models.Model):
                 }),
             ]
 
-            if rec.move_id and rec.move_id.state == 'draft':
-                move = rec.move_id
-                move.write({
-                    'date': rec.date,
-                    'journal_id': rec.journal_id.id,
-                    'ref': rec.name,
-                    'line_ids': [(5, 0, 0)] + lines,
-                })
-            else:
-                move = self.env['account.move'].create({
-                    'date': rec.date,
-                    'journal_id': rec.journal_id.id,
-                    'ref': rec.name,
-                    'line_ids': lines,
-                })
-                rec.move_id = move.id
+            move = self.env['account.move'].create({
+                'date': rec.date,
+                'journal_id': rec.journal_id.id,
+                'ref': rec.name,
+                'line_ids': lines,
+            })
 
             move.action_post()
+
+            rec.move_id = move.id
             rec.state = 'posted'
 
     def action_cancel(self):
@@ -198,7 +190,9 @@ class AccountReceiptVoucher(models.Model):
 
             if rec.move_id:
                 rec.move_id.button_draft()
+                rec.move_id.unlink()
 
+            rec.move_id = False
             rec.state = 'draft'
 
     # -------------------------

@@ -1,35 +1,34 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Customer & Vendor Portal Extension',
-    'version': '1.0.0',
+    'version': '2.0.0',
     'author': 'Kinan',
     'website': 'https://absar-alomran.com',
     'category': 'Portal',
-    'summary': 'Enhanced customer portal and new vendor portal with invoice upload, PO access, and financial data.',
+    'summary': 'Professional vendor portal with smart onboarding, invoice tracking, and review comments.',
     'description': """
-Customer & Vendor Portal Extension
-==================================
+Customer & Vendor Portal Extension v2
+======================================
 
-This module extends the default Odoo customer portal with additional features, 
-and introduces a full vendor portal that allows vendors to view purchase orders,
-upload invoices, and track their invoice status.
+Redesigned vendor portal with a professional UX for Odoo 18.
 
 Features:
 ---------
-- Enhanced Customer Portal (Statements, Invoices, Orders, Documents)
-- Full Vendor Portal
-- Vendor Purchase Order list and PDF view
-- Vendor Invoice Upload
-- Vendor Invoice Status Tracking (Submitted, Under Review, Approved, Rejected)
+- Smart first-login onboarding: vendors see account details only once, then go directly to dashboard
+- Vendor dashboard with live stats (total invoices, amounts by status)
+- Beautiful invoice list with status badges and progress tracker
+- Invoice detail page with review comments/notes visible to vendor
+- Drag-and-drop invoice upload form
+- Purchase Order list with detail view
 - Bilingual Support (English / Arabic)
 """,
     'depends': [
         'portal',
         'website',
         'purchase',
-        'sale', 
+        'sale',
         'account',
-        'mail'
+        'mail',
     ],
     'data': [
         'security/security.xml',
@@ -41,7 +40,7 @@ Features:
     ],
     'assets': {
         'web.assets_frontend': [
-            # future CSS/JS for bilingual UI improvements
+            'customer_vendor_portal/static/src/css/vendor_portal.css',
         ],
     },
     'installable': True,

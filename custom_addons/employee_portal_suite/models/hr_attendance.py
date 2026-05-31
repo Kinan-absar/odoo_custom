@@ -35,7 +35,10 @@ class HrAttendance(models.Model):
             "because they forgot to check out manually."
         ),
     )
-
+    attendance_exception_state = fields.Selection([
+        ('pending', 'Pending Review'),
+        ('resolved', 'Resolved'),
+    ], string="Exception Status", default='pending', tracking=True)
     # ------------------------------------------------------------------
     # WRITE OVERRIDE — detect portal vs. system checkouts
     #
@@ -211,4 +214,12 @@ class HrAttendance(models.Model):
                 message_type='comment',
                 subtype_xmlid='mail.mt_note',
                 author_id=self.env.ref('base.user_root').partner_id.id,
+            )
+    def action_resolve_attendance_exception(self):
+        for record in self:
+            record.attendance_exception_state = 'resolved'
+            record.message_post(
+                body="Attendance exception has been marked as resolved.",
+                message_type='comment',
+                subtype_xmlid='mail.mt_note',
             )

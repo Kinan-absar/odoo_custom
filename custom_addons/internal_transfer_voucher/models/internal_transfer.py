@@ -145,9 +145,6 @@ class AccountInternalTransfer(models.Model):
             if rec.state != 'draft':
                 continue
 
-            if rec.move_id and rec.move_id.state == 'posted':
-                raise UserError(_("This transfer is already posted."))
-
             if not rec.source_journal_id.default_account_id:
                 raise UserError(_("Source journal has no default account."))
 
@@ -205,24 +202,15 @@ class AccountInternalTransfer(models.Model):
                     'name': rec.description or rec.name,
                 }))
 
-            if rec.move_id and rec.move_id.state == 'draft':
-                move = rec.move_id
-                move.write({
-                    'date': rec.date,
-                    'journal_id': rec.source_journal_id.id,
-                    'ref': rec.description or rec.name,
-                    'line_ids': [(5, 0, 0)] + lines,
-                })
-            else:
-                move = self.env['account.move'].create({
-                    'date': rec.date,
-                    'journal_id': rec.source_journal_id.id,
-                    'ref': rec.description or rec.name,
-                    'line_ids': lines,
-                })
-                rec.move_id = move.id
+            move = self.env['account.move'].create({
+                'date': rec.date,
+                'journal_id': rec.source_journal_id.id,
+                'ref': rec.description or rec.name,
+                'line_ids': lines,
+            })
 
             move.action_post()
+            rec.move_id = move.id
             rec.state = 'posted'
 
     def action_cancel(self):
@@ -238,7 +226,9 @@ class AccountInternalTransfer(models.Model):
 
             if rec.move_id:
                 rec.move_id.button_draft()
+                rec.move_id.unlink()
 
+            rec.move_id = False
             rec.state = 'draft'
 
 

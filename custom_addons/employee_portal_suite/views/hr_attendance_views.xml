@@ -18,6 +18,7 @@
                 <field name="worked_hours"             string="Worked Hours" widget="float_time"/>
                 <field name="auto_checked_out"         string="Auto Checkout"/>
                 <field name="checkout_outside_location" string="Outside Location"/>
+                <field name="attendance_exception_state" string="Status"/>
             </list>
         </field>
     </record>
@@ -27,6 +28,16 @@
         <field name="model">hr.attendance</field>
         <field name="arch" type="xml">
             <form string="Attendance">
+            <header>
+                <button name="action_resolve_attendance_exception"
+                        string="Mark as Resolved"
+                        type="object"
+                        class="btn-primary"
+                        invisible="attendance_exception_state == 'resolved'"/>
+                <field name="attendance_exception_state"
+                    widget="statusbar"
+                    statusbar_visible="pending,resolved"/>
+            </header>
                 <sheet>
                     <group>
                         <field name="employee_id"/>
@@ -39,6 +50,7 @@
                         <field name="checkout_outside_location"
                                string="Checked Out Outside Location"
                                readonly="1"/>
+                        <field name="attendance_exception_state" readonly="1"/>
                     </group>
                 </sheet>
                 <chatter/>
@@ -75,7 +87,7 @@
         <field name="name">Auto Checked-Out Records</field>
         <field name="res_model">hr.attendance</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('auto_checked_out', '=', True)]</field>
+        <field name="domain">[('auto_checked_out', '=', True), ('attendance_exception_state', '=', 'pending')]</field>
         <field name="view_ids" eval="[(5,0,0),
             (0,0,{'view_mode':'list','view_id':ref('view_hr_attendance_flag_list')}),
             (0,0,{'view_mode':'form','view_id':ref('view_hr_attendance_flag_form')}),
@@ -92,7 +104,7 @@
         <field name="name">Outside Location Check-outs</field>
         <field name="res_model">hr.attendance</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('checkout_outside_location', '=', True)]</field>
+        <field name="domain">[('checkout_outside_location', '=', True), ('attendance_exception_state', '=', 'pending')]</field>
         <field name="view_ids" eval="[(5,0,0),
             (0,0,{'view_mode':'list','view_id':ref('view_hr_attendance_flag_list')}),
             (0,0,{'view_mode':'form','view_id':ref('view_hr_attendance_flag_form')}),
