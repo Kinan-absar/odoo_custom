@@ -33,6 +33,7 @@
                 <field name="journal_id"/>
                 <field name="receipt_method"/>
                 <field name="state"/>
+                <field name="company_id" optional="hide"/>
             </list>
         </field>
     </record>
@@ -80,6 +81,7 @@
 
                     <group>
                         <group string="Receipt Information">
+                            <field name="company_id" invisible="1"/>
                             <field name="date"/>
                             <field name="partner_id"/>
                             <field name="amount"/>
@@ -91,8 +93,8 @@
 
                         <group string="Accounting">
                             <field name="receipt_method"/>
-                            <field name="journal_id"/>
-                            <field name="account_id"/>
+                            <field name="journal_id" domain="[('default_account_id', '!=', False), ('company_id', '=', company_id)]"/>
+                            <field name="account_id" domain="[('company_ids', 'in', company_id)]"/>
                         </group>
                     </group>
 
@@ -125,6 +127,7 @@
         <field name="name">Receipt Vouchers</field>
         <field name="res_model">account.receipt.voucher</field>
         <field name="view_mode">list,form</field>
+        <field name="domain">[('company_id', 'in', allowed_company_ids)]</field>
     </record>
 
 </odoo>
