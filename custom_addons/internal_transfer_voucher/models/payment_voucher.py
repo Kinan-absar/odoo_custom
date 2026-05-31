@@ -118,8 +118,14 @@ class AccountPaymentVoucher(models.Model):
         currency_field='currency_id',
     )
 
+    allocated_amount = fields.Monetary(
+        string='Allocated Amount',
+        compute='_compute_bill_reconciliation_amounts',
+        currency_field='currency_id',
+    )
+
     remaining_to_reconcile = fields.Monetary(
-        string='Remaining to Reconcile',
+        string='Remaining to Allocate',
         compute='_compute_bill_reconciliation_amounts',
         currency_field='currency_id',
     )
@@ -132,22 +138,22 @@ class AccountPaymentVoucher(models.Model):
     bill_reconciliation_state = fields.Selection(
         [
             ('not_applicable', 'Not Applicable'),
-            ('no_bills', 'No Bills Selected'),
-            ('ready', 'Ready to Reconcile'),
-            ('partial', 'Partially Reconciled'),
-            ('reconciled', 'Reconciled'),
+            ('no_bills', 'Not Allocated'),
+            ('ready', 'Ready to Allocate'),
+            ('partial', 'Partially Allocated'),
+            ('reconciled', 'Fully Allocated'),
         ],
-        string='Payment Reconciliation Status',
+        string='Payment Allocation Status',
         compute='_compute_bill_reconciliation_state',
         store=True,
     )
 
     reconciliation_list_status = fields.Selection(
         [
-            ('not_reconciled', 'Not Reconciled'),
-            ('reconciled', 'Reconciled'),
+            ('not_reconciled', 'Not Fully Allocated'),
+            ('reconciled', 'Fully Allocated'),
         ],
-        string='Payment Status',
+        string='Legacy Allocation List Status',
         compute='_compute_reconciliation_list_status',
         store=True,
     )
@@ -270,10 +276,13 @@ class AccountPaymentVoucher(models.Model):
 
             voucher_lines = rec._get_voucher_payable_lines()
             if voucher_lines:
+                original = sum(abs(line.balance) for line in voucher_lines)
                 remaining = sum(abs(line.amount_residual) for line in voucher_lines)
             else:
+                original = rec.amount or 0.0
                 remaining = rec.amount or 0.0
 
+            rec.allocated_amount = max(original - remaining, 0.0)
             rec.remaining_to_reconcile = remaining
             rec.difference_amount = remaining - rec.bill_total
 
@@ -828,9 +837,10 @@ class AccountPaymentVoucher(models.Model):
             'transfer_count': count([('payment_method', '=', 'journal_transfer')]),
 
             'my_count': count([('create_uid', '=', self.env.uid)]),
-            'reconciled_count': count([('reconciliation_list_status', '=', 'reconciled')]),
-            'not_reconciled_count': count([('reconciliation_list_status', '=', 'not_reconciled')]),
-            'partial_reconciled_count': count([('bill_reconciliation_state', '=', 'partial')]),
+            'fully_allocated_count': count([('bill_reconciliation_state', '=', 'reconciled')]),
+            'not_allocated_count': count([('bill_reconciliation_state', '=', 'no_bills')]),
+            'partial_allocated_count': count([('bill_reconciliation_state', '=', 'partial')]),
+            'ready_to_allocate_count': count([('bill_reconciliation_state', '=', 'ready')]),
             'total_posted_amount': total_posted_amount,
             'currency_symbol': self.env.company.currency_id.symbol or '',
         }
