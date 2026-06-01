@@ -37,17 +37,18 @@ class PortalAnnouncement(models.Model):
         ('danger', 'Red'),
     ], default='primary')
 
-
     @api.model
-    def _get_visible_announcements_for_current_user(self, target="backend", limit=5):
+    def _get_visible_announcements_for_current_user(self, target="backend", limit=0):
         """Return active announcements visible to the current user and target."""
         today = fields.Date.context_today(self)
-        announcements = self.sudo().search([
+        domain = [
             ("active", "=", True),
             "|", ("start_date", "=", False), ("start_date", "<=", today),
             "|", ("end_date", "=", False), ("end_date", ">=", today),
             ("target", "in", [target, "both"]),
-        ], order="sequence desc, id desc", limit=limit)
+        ]
+        # limit=0 means no limit in Odoo search
+        announcements = self.sudo().search(domain, order="sequence desc, id desc", limit=limit or False)
 
         user_groups = self.env.user.groups_id
         return announcements.filtered(lambda ann: not ann.group_ids or bool(user_groups & ann.group_ids))
@@ -62,7 +63,7 @@ class PortalAnnouncement(models.Model):
             "danger": "danger",
         }
         result = []
-        for ann in self._get_visible_announcements_for_current_user(target="backend", limit=5):
+        for ann in self._get_visible_announcements_for_current_user(target="backend"):
             result.append({
                 "id": ann.id,
                 "title": ann.name,

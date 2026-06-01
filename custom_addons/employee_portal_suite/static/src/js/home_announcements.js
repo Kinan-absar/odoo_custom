@@ -12,6 +12,7 @@ patch(HomeMenu.prototype, {
         this.orm = useService("orm");
         this.backendAnnouncementState = useState({
             announcements: [],
+            collapsed: false,   // panel starts open
         });
 
         onWillStart(async () => {
@@ -29,5 +30,9 @@ patch(HomeMenu.prototype, {
                 this.backendAnnouncementState.announcements = [];
             }
         });
+    },
+
+    toggleAnnouncements() {
+        this.backendAnnouncementState.collapsed = !this.backendAnnouncementState.collapsed;
     },
 });
