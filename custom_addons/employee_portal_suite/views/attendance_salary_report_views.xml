@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_attendance_salary_report_form" model="ir.ui.view">
+        <field name="name">employee.attendance.salary.report.form</field>
+        <field name="model">employee.attendance.salary.report</field>
+        <field name="arch" type="xml">
+            <form string="Instant Attendance Salary Report" create="0" edit="1">
+                <header>
+                    <button name="action_generate" string="Generate / Refresh" type="object" class="btn-primary"/>
+                    <button name="action_create_payroll_batch" string="Create Payroll Batch" type="object" class="btn-secondary" groups="employee_portal_suite.group_employee_portal_admin"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Instant Attendance Salary Report</h1>
+                        <p class="text-muted">Live attendance and salary estimate for the 26 to 25 payroll cycle or any selected period.</p>
+                    </div>
+                    <group>
+                        <group string="Period &amp; Filters">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="department_id"/>
+                            <field name="employee_ids" widget="many2many_tags"/>
+                            <field name="include_inactive"/>
+                        </group>
+                        <group string="Totals">
+                            <field name="total_employees" readonly="1"/>
+                            <field name="total_basic_salary" readonly="1"/>
+                            <field name="total_gross_salary" readonly="1"/>
+                            <field name="total_deductions" readonly="1"/>
+                            <field name="total_overtime_amount" readonly="1"/>
+                            <field name="total_net_salary" readonly="1"/>
+                            <field name="payroll_batch_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Employees">
+                            <field name="line_ids" nolabel="1" readonly="1">
+                                <list string="Report Lines" decoration-danger="shortage_hours &gt; 0" decoration-success="overtime_hours &gt; 0">
+                                    <field name="employee_id"/>
+                                    <field name="department_id"/>
+                                    <field name="basic_salary" sum="Basic"/>
+                                    <field name="expected_days"/>
+                                    <field name="expected_hours" widget="float_time" sum="Expected"/>
+                                    <field name="worked_hours" widget="float_time" sum="Worked"/>
+                                    <field name="approved_leave_days" sum="Leave"/>
+                                    <field name="unpaid_leave_days" sum="Unpaid"/>
+                                    <field name="absent_days" sum="Absent"/>
+                                    <field name="shortage_hours" widget="float_time" sum="Shortage"/>
+                                    <field name="overtime_hours" widget="float_time" sum="Overtime"/>
+                                    <field name="shortage_deduction" sum="Shortage Deduction"/>
+                                    <field name="overtime_amount" sum="Overtime Amount"/>
+                                    <field name="net_salary" sum="Estimated Net"/>
+                                    <field name="attendance_count"/>
+                                    <field name="auto_checkout_count"/>
+                                    <field name="outside_location_count"/>
+                                </list>
+                                <form string="Employee Report Line">
+                                    <group>
+                                        <field name="employee_id"/>
+                                        <field name="department_id"/>
+                                        <field name="contract_id"/>
+                                        <field name="calendar_id"/>
+                                    </group>
+                                    <group>
+                                        <group string="Attendance">
+                                            <field name="expected_days"/>
+                                            <field name="expected_hours" widget="float_time"/>
+                                            <field name="worked_hours" widget="float_time"/>
+                                            <field name="approved_leave_days"/>
+                                            <field name="unpaid_leave_days"/>
+                                            <field name="absent_days"/>
+                                            <field name="shortage_hours" widget="float_time"/>
+                                            <field name="overtime_hours" widget="float_time"/>
+                                        </group>
+                                        <group string="Salary Estimate">
+                                            <field name="basic_salary"/>
+                                            <field name="daily_rate"/>
+                                            <field name="hourly_rate"/>
+                                            <field name="absence_deduction"/>
+                                            <field name="shortage_deduction"/>
+                                            <field name="overtime_amount"/>
+                                            <field name="net_salary"/>
+                                        </group>
+                                    </group>
+                                    <group string="Flags">
+                                        <field name="attendance_count"/>
+                                        <field name="auto_checkout_count"/>
+                                        <field name="outside_location_count"/>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <p>
+                                This report reads live data from HR Attendances, Employee contracts when Payroll/Contracts are installed,
+                                working schedules, and validated Time Off when available. Payroll batch creation is optional and requires Payroll.
+                            </p>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_attendance_salary_report" model="ir.actions.act_window">
+        <field name="name">Instant Salary Report</field>
+        <field name="res_model">employee.attendance.salary.report</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'form_view_initial_mode': 'edit'}</field>
+    </record>
+
+    <menuitem id="menu_attendance_salary_report"
+              name="Instant Salary Report"
+              parent="menu_employee_portal_attendance_root"
+              action="action_attendance_salary_report"
+              sequence="10"
+              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
+</odoo>

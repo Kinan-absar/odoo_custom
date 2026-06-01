@@ -112,6 +112,7 @@
         'views/project_project_views.xml',
         'views/employee_portal_attendance.xml',
         'views/hr_attendance_views.xml',
+        'views/attendance_salary_report_views.xml',
 
     ],
 
