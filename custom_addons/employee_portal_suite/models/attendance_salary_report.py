@@ -65,13 +65,11 @@ class AttendanceSalaryReport(models.TransientModel):
         for employee in employees:
             line_vals.append((0, 0, self._prepare_employee_line(employee)))
         self.write({'line_ids': line_vals})
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': self._name,
-            'res_id': self.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
+        # Stay on the same form after refresh. Returning an act_window from a
+        # form button creates a new breadcrumb level in Odoo, which looks like
+        # the report opened inside another report. A client reload refreshes
+        # the current record in place.
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     def action_create_payroll_batch(self):
         self.ensure_one()
