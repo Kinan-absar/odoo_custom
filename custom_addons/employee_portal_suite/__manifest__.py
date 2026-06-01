@@ -4,7 +4,7 @@
     'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
 
     'description': """
-    Comprehensive Employee Portal Suite providing a full service system for employees, managers, and administrators. 
+    Comprehensive Employee Portal Suite providing a full service system for employees, managers, and administrators.
 
     Features Included:
 
