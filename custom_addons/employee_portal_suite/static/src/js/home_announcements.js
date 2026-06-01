@@ -10,29 +10,39 @@ patch(HomeMenu.prototype, {
         super.setup(...arguments);
 
         this.orm = useService("orm");
-        this.backendAnnouncementState = useState({
+        this.annState = useState({
             announcements: [],
-            collapsed: false,   // panel starts open
+            activeIndex: 0,
         });
 
         onWillStart(async () => {
             try {
-                const announcements = await this.orm.call(
+                const result = await this.orm.call(
                     "portal.announcement",
                     "get_backend_announcements",
                     []
                 );
-                this.backendAnnouncementState.announcements = announcements.map((ann) => ({
+                this.annState.announcements = result.map((ann) => ({
                     ...ann,
                     message: markup(ann.message || ""),
                 }));
-            } catch (error) {
-                this.backendAnnouncementState.announcements = [];
+            } catch {
+                this.annState.announcements = [];
             }
         });
     },
 
-    toggleAnnouncements() {
-        this.backendAnnouncementState.collapsed = !this.backendAnnouncementState.collapsed;
+    annSetActive(index) {
+        this.annState.activeIndex = index;
+    },
+
+    annPrev() {
+        const len = this.annState.announcements.length;
+        this.annState.activeIndex = (this.annState.activeIndex - 1 + len) % len;
+    },
+
+    annNext() {
+        const len = this.annState.announcements.length;
+        this.annState.activeIndex = (this.annState.activeIndex + 1) % len;
     },
 });
