@@ -3,13 +3,13 @@
     <template id="report_po_revision_inherit"
               inherit_id="purchase.report_purchaseorder_document">
 
-        <!-- Purchase Order state: "Purchase Order #<span t-field="o.name"/>" -->
-        <xpath expr="//t[@t-if=\"o.state in ['purchase', 'done']\"]/span[@t-field='o.name']" position="after">
+        <!-- Purchase Order state -->
+        <xpath expr="//t[@t-if=&quot;o.state in ['purchase', 'done']&quot;]/span[@t-field='o.name']" position="after">
             <t t-if="o.revision &gt; 0"> (R-<t t-esc="o.revision"/>)</t>
         </xpath>
 
-        <!-- RFQ state: "Request for Quotation #<span t-field="o.name"/>" -->
-        <xpath expr="//t[@t-if=\"o.state in ['draft', 'sent', 'to approve']\"]/span[@t-field='o.name']" position="after">
+        <!-- RFQ state -->
+        <xpath expr="//t[@t-if=&quot;o.state in ['draft', 'sent', 'to approve']&quot;]/span[@t-field='o.name']" position="after">
             <t t-if="o.revision &gt; 0"> (R-<t t-esc="o.revision"/>)</t>
         </xpath>
 
