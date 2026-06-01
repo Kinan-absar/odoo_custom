@@ -1,7 +1,3 @@
-// ─── Announcements Panel ──────────────────────────────────────────────────────
-// Sits in the top-left of the home menu as a fixed-width collapsible panel.
-// On mobile it becomes full-width and flows in the normal document layout.
-
 $panel-width: 360px;
 $panel-max-height: 72vh;
 $border-radius: 14px;
@@ -23,8 +19,7 @@ $color-danger:  #dc3545;
     z-index: 20;
     border-radius: $border-radius;
     box-shadow: $shadow;
-    overflow: hidden;
-    backdrop-filter: blur(6px);
+    // NO overflow:hidden here — that was killing scroll inside the body
     pointer-events: auto;
 }
 
@@ -38,10 +33,18 @@ $color-danger:  #dc3545;
     cursor: pointer;
     user-select: none;
     border-bottom: 1px solid rgba(0,0,0,0.07);
+    border-radius: $border-radius $border-radius 0 0;
+    backdrop-filter: blur(6px);
 
     &:hover {
         background: rgba(255, 255, 255, 1);
     }
+}
+
+// When body is hidden, round all corners on the header
+.eps_announcements_body_hidden ~ .eps_announcements_header,
+.eps_announcements_panel:has(.eps_announcements_body_hidden) .eps_announcements_header {
+    border-radius: $border-radius;
 }
 
 .eps_announcements_header_icon {
@@ -87,12 +90,13 @@ $color-danger:  #dc3545;
 // ─── Scrollable Body ──────────────────────────────────────────────────────────
 .eps_announcements_body {
     background: $body-bg;
+    backdrop-filter: blur(6px);
     max-height: $panel-max-height;
-    overflow-y: auto;
+    overflow-y: auto;   // scrolls independently — NOT clipped by parent
     overflow-x: hidden;
     padding: 10px 10px 6px 10px;
-
-    // smooth collapse animation
+    border-radius: 0 0 $border-radius $border-radius;
+    box-shadow: $shadow;
     transition: max-height 0.25s ease, padding 0.25s ease;
 
     &::-webkit-scrollbar {
@@ -107,7 +111,7 @@ $color-danger:  #dc3545;
         max-height: 0 !important;
         padding-top: 0 !important;
         padding-bottom: 0 !important;
-        overflow: hidden;
+        overflow: hidden !important;
     }
 }
 
@@ -149,7 +153,6 @@ $color-danger:  #dc3545;
 // ─── Mobile ───────────────────────────────────────────────────────────────────
 @media screen and (max-width: 768px) {
     .o_home_menu {
-        // Make home menu a flex column so panel flows above the app grid
         display: flex !important;
         flex-direction: column !important;
         align-items: stretch !important;
@@ -163,20 +166,21 @@ $color-danger:  #dc3545;
         max-width: none !important;
         margin: 10px auto 4px auto !important;
         box-shadow: 0 4px 16px rgba(0,0,0,0.14) !important;
-        order: -1;  // above the app grid
+        order: -1;
     }
 
     .eps_announcements_body {
-        max-height: 40vh !important;
+        max-height: 45vh !important;   // taller on mobile so more cards visible
+        overflow-y: auto !important;   // explicitly re-assert scroll on mobile
 
         &.eps_announcements_body_hidden {
             max-height: 0 !important;
+            overflow: hidden !important;
         }
     }
 
     .eps_announcement_card {
         padding: 8px 11px;
-        font-size: 12px;
     }
 
     .eps_announcement_title {
