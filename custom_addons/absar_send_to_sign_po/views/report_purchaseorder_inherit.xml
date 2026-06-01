@@ -3,11 +3,17 @@
     <template id="report_po_revision_inherit"
               inherit_id="purchase.report_purchaseorder_document">
 
-        <!-- Add Revision right after the PO number (targets the name span directly) -->
-        <xpath expr="//span[@t-field='o.name']" position="after">
-            <span t-if="o.revision &gt; 0" style="margin-left:4px;">
-                (R-<t t-esc="o.revision"/>)
-            </span>
+        <!--
+            In Odoo 18 the PO number heading is rendered as:
+                <h2 t-if="...">Purchase Order #<span t-field="o.name"/></h2>
+            OR:
+                <h2><t t-out="'Purchase Order #' + o.name"/></h2>
+
+            We target the h2 directly and append revision inside it.
+            position="inside" appends at the END of h2's children.
+        -->
+        <xpath expr="//h2" position="inside">
+            <t t-if="o.revision &gt; 0"> (R-<t t-esc="o.revision"/>)</t>
         </xpath>
 
     </template>
