@@ -1,0 +1,183 @@
+$color-info:    #875A7B;
+$color-success: #28a745;
+$color-warning: #f0ad4e;
+$color-danger:  #dc3545;
+
+// ─── Systray icon wrapper ──────────────────────────────────────────────────────
+.eps_ann_systray {
+    position: relative;
+}
+
+.eps_ann_icon_wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #fff;
+    opacity: 0.85;
+    transition: opacity 0.15s ease, background 0.15s ease;
+
+    &:hover, &.eps_ann_icon_wrap_active {
+        opacity: 1;
+        background: rgba(255,255,255,0.15);
+    }
+}
+
+.eps_ann_bell_icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+// ─── Badge ────────────────────────────────────────────────────────────────────
+.eps_ann_badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #e74c3c;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    border: 1.5px solid rgba(255,255,255,0.3);
+}
+
+// ─── Dropdown panel ────────────────────────────────────────────────────────────
+.eps_ann_dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 340px;
+    max-width: calc(100vw - 16px);
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    z-index: 1050;
+    overflow: hidden;
+    animation: eps_dropdown_in 0.18s ease;
+}
+
+@keyframes eps_dropdown_in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+// ─── Dropdown header ──────────────────────────────────────────────────────────
+.eps_ann_dropdown_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    background: linear-gradient(135deg, #875A7B 0%, #6d4566 100%);
+}
+
+.eps_ann_dropdown_title {
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    letter-spacing: 0.01em;
+}
+
+.eps_ann_dropdown_count {
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
+.eps_ann_empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: #999;
+    font-size: 13px;
+}
+
+// ─── Scrollable list ──────────────────────────────────────────────────────────
+.eps_ann_list {
+    max-height: 420px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px 0;
+
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,0.15);
+        border-radius: 4px;
+    }
+}
+
+// ─── Individual item ──────────────────────────────────────────────────────────
+.eps_ann_item {
+    padding: 11px 16px;
+    border-bottom: 1px solid #f5f5f5;
+    transition: background 0.12s ease;
+
+    &:last-child { border-bottom: none; }
+    &:hover { background: #fafafa; }
+}
+
+.eps_ann_item_title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #1a1a1a;
+    margin-bottom: 5px;
+}
+
+.eps_ann_dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &.eps_ann_dot_info    { background: $color-info; }
+    &.eps_ann_dot_success { background: $color-success; }
+    &.eps_ann_dot_warning { background: $color-warning; }
+    &.eps_ann_dot_danger  { background: $color-danger; }
+}
+
+.eps_ann_item_message {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #555;
+    padding-left: 16px;   // align with title text (past the dot)
+
+    p { margin: 0 0 4px 0; }
+    p:last-child { margin-bottom: 0; }
+    a { color: $color-info; }
+}
+
+// ─── Mobile ───────────────────────────────────────────────────────────────────
+@media screen and (max-width: 576px) {
+    .eps_ann_dropdown {
+        right: -8px;
+        width: calc(100vw - 16px);
+        border-radius: 12px;
+    }
+
+    .eps_ann_list {
+        max-height: 55vh;
+    }
+}
