@@ -116,7 +116,7 @@ class PurchaseOrder(models.Model):
         # Redirect to the Sign template so director can set up signers & send
         return {
             "type": "ir.actions.act_url",
-            "url": f"/odoo/sign/{template.id}",
+            "url": f'/odoo/sign/{template.id}/action-sign.Template?id={template.id}&name=Template%20"PO%20{self.name}"',
             "target": "self",
         }
 
