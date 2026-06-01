@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="employee_portal_suite.AnnouncementSystray">
+        <div class="o_menu_systray_item eps_ann_systray" t-ref="dropdown">
+
+            <!-- Icon button -->
+            <div class="eps_ann_icon_wrap" t-on-click="toggle"
+                 t-att-class="state.open ? 'eps_ann_icon_wrap_active' : ''">
+                <svg class="eps_ann_bell_icon" viewBox="0 0 24 24" fill="none"
+                     xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span t-if="count > 0" class="eps_ann_badge">
+                    <t t-esc="count"/>
+                </span>
+            </div>
+
+            <!-- Dropdown panel -->
+            <div class="eps_ann_dropdown" t-if="state.open">
+
+                <!-- Header -->
+                <div class="eps_ann_dropdown_header">
+                    <span class="eps_ann_dropdown_title">📢 Announcements</span>
+                    <span class="eps_ann_dropdown_count"><t t-esc="count"/></span>
+                </div>
+
+                <!-- Empty state -->
+                <div t-if="count === 0" class="eps_ann_empty">
+                    No announcements right now.
+                </div>
+
+                <!-- Scrollable list -->
+                <div t-else="" class="eps_ann_list">
+                    <t t-foreach="state.announcements" t-as="ann" t-key="ann.id">
+                        <div t-attf-class="eps_ann_item eps_ann_item_#{ann.type or 'info'}">
+                            <div class="eps_ann_item_title">
+                                <span t-attf-class="eps_ann_dot eps_ann_dot_#{ann.type or 'info'}"/>
+                                <t t-esc="ann.title"/>
+                            </div>
+                            <div class="eps_ann_item_message">
+                                <t t-out="ann.message"/>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+
+            </div>
+        </div>
+    </t>
+
+</templates>
