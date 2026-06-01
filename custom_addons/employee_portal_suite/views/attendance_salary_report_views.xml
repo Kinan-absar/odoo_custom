@@ -4,8 +4,9 @@
         <field name="name">employee.attendance.salary.report.form</field>
         <field name="model">employee.attendance.salary.report</field>
         <field name="arch" type="xml">
-            <form string="Instant Attendance Salary Report" create="0" edit="1">
+            <form string="Instant Attendance Salary Report" create="1" edit="1">
                 <header>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,generated,batch_created"/>
                     <button name="action_generate" string="Generate / Refresh" type="object" class="btn-primary"/>
                     <button name="action_create_payroll_batch" string="Create Payroll Batch" type="object" class="btn-secondary" groups="employee_portal_suite.group_employee_portal_admin"/>
                 </header>
@@ -29,6 +30,10 @@
                             <field name="total_deductions" readonly="1"/>
                             <field name="total_overtime_amount" readonly="1"/>
                             <field name="total_net_salary" readonly="1"/>
+                            <field name="state" readonly="1"/>
+                            <field name="generated_on" readonly="1"/>
+                            <field name="batch_created" readonly="1"/>
+                            <field name="batch_created_on" readonly="1"/>
                             <field name="payroll_batch_id" readonly="1"/>
                         </group>
                     </group>
@@ -102,16 +107,53 @@
         </field>
     </record>
 
+    <record id="view_attendance_salary_report_tree" model="ir.ui.view">
+        <field name="name">employee.attendance.salary.report.tree</field>
+        <field name="model">employee.attendance.salary.report</field>
+        <field name="arch" type="xml">
+            <list string="Instant Attendance Salary Reports" decoration-success="state == 'batch_created'" decoration-info="state == 'generated'" decoration-muted="state == 'draft'">
+                <field name="name"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="department_id"/>
+                <field name="total_employees"/>
+                <field name="total_net_salary"/>
+                <field name="state" widget="badge" decoration-success="state == 'batch_created'" decoration-info="state == 'generated'" decoration-muted="state == 'draft'"/>
+                <field name="batch_created"/>
+                <field name="payroll_batch_id"/>
+                <field name="generated_on"/>
+                <field name="batch_created_on"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_attendance_salary_report_search" model="ir.ui.view">
+        <field name="name">employee.attendance.salary.report.search</field>
+        <field name="model">employee.attendance.salary.report</field>
+        <field name="arch" type="xml">
+            <search string="Instant Attendance Salary Reports">
+                <field name="name"/>
+                <field name="department_id"/>
+                <filter name="not_batched" string="Not Batched" domain="[('state', '!=', 'batch_created')]"/>
+                <filter name="batched" string="Batch Created" domain="[('state', '=', 'batch_created')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_attendance_salary_report" model="ir.actions.act_window">
         <field name="name">Instant Salary Report</field>
         <field name="res_model">employee.attendance.salary.report</field>
-        <field name="view_mode">form</field>
+        <field name="view_mode">list,form</field>
         <field name="target">current</field>
-        <field name="context">{'form_view_initial_mode': 'edit'}</field>
+        <field name="context">{'form_view_initial_mode': 'edit', 'search_default_not_batched': 1}</field>
     </record>
 
     <menuitem id="menu_attendance_salary_report"
-              name="Instant Salary Report"
+              name="Instant Salary Reports"
               parent="menu_employee_portal_attendance_root"
               action="action_attendance_salary_report"
               sequence="10"

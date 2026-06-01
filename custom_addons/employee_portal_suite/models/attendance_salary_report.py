@@ -6,7 +6,7 @@ from datetime import date, datetime, time, timedelta
 import calendar
 
 
-class AttendanceSalaryReport(models.TransientModel):
+class AttendanceSalaryReport(models.Model):
     _name = 'employee.attendance.salary.report'
     _description = 'Instant Attendance Salary Report'
 
@@ -26,6 +26,15 @@ class AttendanceSalaryReport(models.TransientModel):
     total_overtime_amount = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
     total_net_salary = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
     payroll_batch_id = fields.Many2one('hr.payslip.run', string='Payroll Batch', readonly=True) if False else fields.Char(string='Payroll Batch', readonly=True)
+    state = fields.Selection([
+        ('draft', 'Not Generated'),
+        ('generated', 'Generated - No Batch'),
+        ('batch_created', 'Batch Created'),
+    ], string='Status', default='draft', readonly=True, copy=False)
+    generated_on = fields.Datetime(string='Last Generated On', readonly=True, copy=False)
+    batch_created_on = fields.Datetime(string='Batch Created On', readonly=True, copy=False)
+    batch_created = fields.Boolean(string='Payroll Batch Created', compute='_compute_batch_created', store=True)
+
 
     @api.model
     def _default_period(self):
@@ -43,6 +52,11 @@ class AttendanceSalaryReport(models.TransientModel):
             else:
                 start = today.replace(month=today.month - 1, day=26)
         return start, end
+
+    @api.depends('state', 'payroll_batch_id')
+    def _compute_batch_created(self):
+        for report in self:
+            report.batch_created = report.state == 'batch_created' or bool(report.payroll_batch_id)
 
     @api.depends('line_ids.basic_salary', 'line_ids.gross_salary', 'line_ids.absence_deduction', 'line_ids.shortage_deduction', 'line_ids.overtime_amount', 'line_ids.net_salary')
     def _compute_totals(self):
@@ -64,12 +78,23 @@ class AttendanceSalaryReport(models.TransientModel):
         line_vals = []
         for employee in employees:
             line_vals.append((0, 0, self._prepare_employee_line(employee)))
-        self.write({'line_ids': line_vals})
-        # Stay on the same form after refresh. Returning an act_window from a
-        # form button creates a new breadcrumb level in Odoo, which looks like
-        # the report opened inside another report. A client reload refreshes
-        # the current record in place.
-        return {'type': 'ir.actions.client', 'tag': 'reload'}
+        self.write({
+            'line_ids': line_vals,
+            'state': 'batch_created' if self.payroll_batch_id else 'generated',
+            'generated_on': fields.Datetime.now(),
+            'name': _('Attendance Salary Report %s to %s') % (self.date_from, self.date_to),
+        })
+        # Return the same saved record in the same form. This avoids the odd
+        # breadcrumb/new-record behavior caused by reload or opening a fresh action.
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.name,
+            'res_model': self._name,
+            'view_mode': 'form',
+            'res_id': self.id,
+            'target': 'current',
+            'context': {'form_view_initial_mode': 'edit'},
+        }
 
     def action_create_payroll_batch(self):
         self.ensure_one()
@@ -100,7 +125,11 @@ class AttendanceSalaryReport(models.TransientModel):
             created += 1
             if hasattr(slip, 'compute_sheet'):
                 slip.compute_sheet()
-        self.payroll_batch_id = batch.name
+        self.write({
+            'payroll_batch_id': batch.name,
+            'state': 'batch_created',
+            'batch_created_on': fields.Datetime.now(),
+        })
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'hr.payslip.run',
@@ -226,7 +255,7 @@ class AttendanceSalaryReport(models.TransientModel):
         return approved, unpaid
 
 
-class AttendanceSalaryReportLine(models.TransientModel):
+class AttendanceSalaryReportLine(models.Model):
     _name = 'employee.attendance.salary.report.line'
     _description = 'Instant Attendance Salary Report Line'
     _order = 'employee_id'
