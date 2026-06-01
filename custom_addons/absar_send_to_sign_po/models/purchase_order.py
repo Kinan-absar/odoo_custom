@@ -29,44 +29,43 @@ class PurchaseOrder(models.Model):
     # ---------------------------------------------------------------------
     def write(self, vals):
         # Capture original state and revision BEFORE changes
-        for po in self:
-            po_state_before = po.signature_state
-            po_revision_before = po.revision
-    
+        po_states_before = {po.id: (po.signature_state, po.revision) for po in self}
+
         res = super().write(vals)
-    
+
+        modifications = set(vals.keys())
+
+        # Fields that justify revision increment
+        meaningful_fields = {
+            'order_line',
+            'amount_total',
+            'date_planned',
+            'date_approve',
+            'partner_id',
+            'currency_id',
+            'notes',
+        }
+
         for po in self:
-            modifications = set(vals.keys())
-    
-            # Fields that justify revision increment
-            meaningful_fields = {
-                'order_line',
-                'amount_total',
-                'date_planned',
-                'date_approve',
-                'partner_id',
-                'currency_id',
-                'notes',
-            }
-    
+            po_state_before, po_revision_before = po_states_before[po.id]
+
             # If PO was fully signed BEFORE the change
             if po_state_before == "signed":
                 # Do NOT increase revision on first signature
                 if po_revision_before == 0:
-                    # First time signed → revision stays 0
                     continue
-    
+
                 # If user edited meaningful data → revision++
                 if modifications & meaningful_fields:
                     po.revision += 1
                     po.signature_state = "draft"
-    
+
             # PO was NOT signed before, but user is editing a sent-for-sign PO
             elif po_state_before in ("director_pending", "ceo_pending"):
                 if modifications & meaningful_fields:
                     po.revision += 1
                     po.signature_state = "draft"
-    
+
         return res
 
 
@@ -87,7 +86,7 @@ class PurchaseOrder(models.Model):
         filename_parts = [
             self.name,                               # PO number
             self.partner_id.name,                   # Vendor
-            self.material_request_id.name if self.material_request_id else None,  # MR
+            self.material_request_id.name if hasattr(self, 'material_request_id') and self.material_request_id else None,
             self.project_id.name if self.project_id else None,  # Project
         ]
 
@@ -114,10 +113,10 @@ class PurchaseOrder(models.Model):
         self.signature_state = "director_pending"
         self.message_post(body="PO sent for Director Signature.")
 
-        # Final correct Sign URL
+        # Redirect to the Sign template so director can set up signers & send
         return {
             "type": "ir.actions.act_url",
-            "url": f'/odoo/sign/{template.id}/action-sign.Template?id={template.id}&name=Template%20"PO%20{self.name}"',
+            "url": f"/odoo/sign/{template.id}",
             "target": "self",
         }
 
@@ -128,12 +127,14 @@ class PurchaseOrder(models.Model):
     def _cron_sync_sign_status(self):
 
         pos = self.search([
-            ('sign_template_id', '!=', False)
+            ('sign_template_id', '!=', False),
+            ('signature_state', 'in', ['director_pending', 'ceo_pending']),
         ])
 
         for po in pos:
             template = po.sign_template_id
 
+            # Get the most recent sign request for this template
             request = self.env['sign.request'].search(
                 [('template_id', '=', template.id)],
                 order="id desc",
@@ -142,17 +143,25 @@ class PurchaseOrder(models.Model):
             if not request:
                 continue
 
-            # Director signed → Move to CEO
-            if po.signature_state == 'director_pending' and request.nb_closed == 1:
-                po.signature_state = 'ceo_pending'
-                po.message_post(body="Director has signed. Waiting for CEO signature.")
+            # Cancelled / Refused → Rejected
+            if request.state in ('canceled', 'refused'):
+                po.signature_state = 'rejected'
+                po.message_post(body="Signature request was rejected or cancelled.")
+                continue
 
-            # CEO Signed → Completed
-            if request.state == 'completed':
+            # Fully completed → Signed
+            if request.state == 'signed':
                 po.signature_state = 'signed'
                 po.message_post(body="PO fully signed.")
+                continue
 
-            # Rejected / Cancelled
-            if request.state == 'canceled':
-                po.signature_state = 'rejected'
-                po.message_post(body="Signature request was rejected.")
+            # Count how many signers have completed their part
+            signed_items = self.env['sign.request.item'].search_count([
+                ('sign_request_id', '=', request.id),
+                ('state', '=', 'completed'),
+            ])
+
+            # Director signed (1st signer done) → move to CEO pending
+            if po.signature_state == 'director_pending' and signed_items >= 1:
+                po.signature_state = 'ceo_pending'
+                po.message_post(body="Director has signed. Waiting for CEO signature.")
