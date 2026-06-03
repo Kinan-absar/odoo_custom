@@ -1,41 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-  <!-- ================================================================
-       HR EMPLOYEE: add Instant Payroll tab in the employee form
-       ================================================================ -->
   <record id="view_employee_instant_payroll_tab" model="ir.ui.view">
     <field name="name">hr.employee.instant.payroll.tab</field>
     <field name="model">hr.employee</field>
     <field name="inherit_id" ref="hr.view_employee_form"/>
     <field name="arch" type="xml">
       <notebook position="inside">
-        <page string="Instant Payroll" name="instant_payroll"
-              groups="hr.group_hr_manager,employee_portal_suite.group_employee_portal_hr">
+        <page string="Instant Payroll" name="instant_payroll" groups="hr.group_hr_manager,employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin">
           <group string="Salary (Instant Report)">
             <group>
-              <field name="instant_gross_salary"
-                     string="Gross Salary (SAR)"
-                     help="Total gross monthly salary. Leave 0 to pull from the active payroll contract."/>
-              <field name="instant_basic_salary"    string="Basic Salary (SAR)"/>
-              <field name="instant_housing_allowance" string="Housing Allowance (SAR)"/>
-              <field name="instant_other_allowances"  string="Other Allowances (SAR)"/>
-              <field name="instant_fixed_deductions"  string="Fixed Monthly Deductions (SAR)"/>
+              <field name="instant_gross_salary"/>
+              <field name="instant_basic_salary"/>
+              <field name="instant_housing_allowance"/>
+              <field name="instant_other_allowances"/>
+              <field name="instant_fixed_deductions"/>
             </group>
             <group>
-              <field name="instant_standard_hours"
-                     string="Standard Monthly Hours"
-                     help="Target hours per payroll cycle. Leave 0 to use the global default (240 h)."/>
-              <field name="instant_disable_overtime"  string="Disable Overtime Pay"/>
-              <field name="instant_disable_deductions" string="Disable Hour/Day Deductions"/>
+              <field name="instant_standard_hours"/>
+              <field name="instant_disable_overtime"/>
+              <field name="instant_disable_deductions"/>
             </group>
           </group>
-
           <group string="WPS / Mudad Export">
             <group>
-              <field name="iqama_number"  string="Iqama / National ID (10 digits)"/>
-              <field name="bank_code"     string="Bank Code (4 chars, e.g. RJHI)"/>
-              <field name="iban_number"   string="IBAN (SA… 24 chars)"/>
+              <field name="iqama_number"/>
+              <field name="bank_code"/>
+              <field name="iban_number"/>
             </group>
           </group>
         </page>
@@ -43,28 +34,22 @@
     </field>
   </record>
 
-  <!-- ================================================================
-       INSTANT PAYROLL ADJUSTMENTS — list view
-       ================================================================ -->
   <record id="view_instant_payroll_adjustment_list" model="ir.ui.view">
     <field name="name">hr.payroll.instant.adjustment.list</field>
     <field name="model">hr.payroll.instant.adjustment</field>
     <field name="arch" type="xml">
       <list string="Instant Payroll Adjustments" default_order="period_start desc, employee_id">
         <field name="employee_id"/>
-        <field name="period_start" string="Period Start (26th)"/>
-        <field name="period_end"   string="Period End (25th)"/>
-        <field name="absent_days_adjustment" string="Extra Absent Days"/>
-        <field name="other_deductions"       string="Other Ded. (SAR)"/>
-        <field name="reimbursements"         string="Reimbursements (SAR)"/>
+        <field name="period_start"/>
+        <field name="period_end"/>
+        <field name="absent_days_adjustment"/>
+        <field name="other_deductions"/>
+        <field name="reimbursements"/>
         <field name="notes"/>
       </list>
     </field>
   </record>
 
-  <!-- ================================================================
-       INSTANT PAYROLL ADJUSTMENTS — form view
-       ================================================================ -->
   <record id="view_instant_payroll_adjustment_form" model="ir.ui.view">
     <field name="name">hr.payroll.instant.adjustment.form</field>
     <field name="model">hr.payroll.instant.adjustment</field>
@@ -74,63 +59,122 @@
           <group>
             <group string="Employee &amp; Period">
               <field name="employee_id"/>
-              <field name="period_start" string="Period Start (26th)"/>
-              <field name="period_end"   string="Period End (25th)"/>
+              <field name="period_start"/>
+              <field name="period_end"/>
             </group>
-            <group string="Manual Adjustments (SAR)">
-              <field name="absent_days_adjustment" string="Additional Absent Days"/>
-              <field name="other_deductions"       string="Other Deductions (SAR)"/>
-              <field name="reimbursements"         string="Reimbursements (SAR)"/>
+            <group string="Manual Adjustments">
+              <field name="absent_days_adjustment"/>
+              <field name="other_deductions"/>
+              <field name="reimbursements"/>
             </group>
           </group>
           <group string="Notes">
-            <field name="notes" nolabel="1" placeholder="Reason for adjustment…"/>
+            <field name="notes" nolabel="1"/>
           </group>
         </sheet>
       </form>
     </field>
   </record>
 
-  <!-- ================================================================
-       MENU ACTIONS
-       ================================================================ -->
-
-  <!-- Action: open the web-based instant payroll report -->
-  <record id="action_instant_payroll_report_web" model="ir.actions.act_url">
-    <field name="name">Instant Payroll Report</field>
-    <field name="url">/odoo/instant-payroll</field>
-    <field name="target">self</field>
-  </record>
-
-  <!-- Action: backend list of manual adjustments -->
   <record id="action_instant_payroll_adjustments" model="ir.actions.act_window">
     <field name="name">Payroll Adjustments</field>
     <field name="res_model">hr.payroll.instant.adjustment</field>
     <field name="view_mode">list,form</field>
-    <field name="context">{'search_default_group_by_period': 1}</field>
   </record>
 
-  <!-- ================================================================
-       MENU ITEMS — placed under Employees top menu
-       ================================================================ -->
-  <menuitem id="menu_instant_payroll_root"
-            name="Instant Payroll"
-            parent="hr.menu_hr_root"
-            sequence="25"
-            groups="hr.group_hr_manager,employee_portal_suite.group_employee_portal_hr"/>
+  <record id="view_hr_payroll_instant_report_form" model="ir.ui.view">
+    <field name="name">hr.payroll.instant.report.form</field>
+    <field name="model">hr.payroll.instant.report</field>
+    <field name="arch" type="xml">
+      <form string="Instant Attendance Salary Report" create="0" duplicate="0">
+        <header>
+          <button name="action_generate" type="object" string="Generate / Refresh" class="btn-primary"/>
+          <button name="action_create_payroll_batch" type="object" string="Create Payroll Batch" class="btn-secondary"/>
+        </header>
+        <sheet>
+          <div class="oe_title">
+            <h1>Instant Attendance Salary Report</h1>
+            <p class="text-muted">Backend live attendance and salary estimate for the selected 26 to 25 payroll cycle.</p>
+          </div>
 
-  <menuitem id="menu_instant_payroll_report"
-            name="Instance Report"
-            parent="menu_instant_payroll_root"
-            action="action_instant_payroll_report_web"
-            sequence="10"
-            groups="hr.group_hr_manager,employee_portal_suite.group_employee_portal_hr"/>
+          <group>
+            <group string="Period">
+              <field name="date_start"/>
+              <field name="date_end"/>
+              <field name="standard_hours"/>
+            </group>
+            <group string="Filters">
+              <field name="employee_ids" widget="many2many_tags"/>
+              <field name="department_id"/>
+              <field name="work_location_id"/>
+            </group>
+          </group>
 
-  <menuitem id="menu_instant_payroll_adjustments"
-            name="Manual Adjustments"
-            parent="menu_instant_payroll_root"
-            action="action_instant_payroll_adjustments"
-            sequence="20"
-            groups="hr.group_hr_manager,employee_portal_suite.group_employee_portal_hr"/>
+          <group string="Totals" col="6">
+            <field name="employee_count"/>
+            <field name="total_worked_hours" widget="float_time"/>
+            <field name="total_expected_days"/>
+            <field name="total_absent_days"/>
+            <field name="total_overtime_hours" widget="float_time"/>
+            <field name="total_net_payable"/>
+          </group>
+
+          <notebook>
+            <page string="Report Lines">
+              <field name="line_ids" nolabel="1" readonly="1">
+                <list string="Instant Attendance Salary Report Lines" create="0" edit="0" delete="0">
+                  <field name="employee_id"/>
+                  <field name="department_id"/>
+                  <field name="job_id" optional="hide"/>
+                  <field name="expected_working_days" sum="Expected Days"/>
+                  <field name="days_worked" sum="Worked Days"/>
+                  <field name="worked_hours" widget="float_time" sum="Worked Hours"/>
+                  <field name="hourly_shortfall" widget="float_time" sum="Shortage Hours"/>
+                  <field name="overtime_hours" widget="float_time" sum="Overtime Hours"/>
+                  <field name="total_absent_days" sum="Absent Days"/>
+                  <field name="gross" sum="Gross"/>
+                  <field name="basic_salary" optional="hide"/>
+                  <field name="housing_allowance" optional="hide"/>
+                  <field name="other_allowances" optional="hide"/>
+                  <field name="hourly_deduction" optional="hide"/>
+                  <field name="absent_deduction" optional="hide"/>
+                  <field name="deduction" sum="Deductions"/>
+                  <field name="other_ded" sum="Other Deductions"/>
+                  <field name="overtime" sum="Overtime Pay"/>
+                  <field name="reimb" sum="Reimbursements"/>
+                  <field name="net" sum="Net Payable"/>
+                  <field name="leave_balance" optional="show"/>
+                </list>
+              </field>
+            </page>
+            <page string="Leave Details">
+              <field name="line_ids" nolabel="1" readonly="1">
+                <list string="Leave Details" create="0" edit="0" delete="0">
+                  <field name="employee_id"/>
+                  <field name="leave_allocation_total"/>
+                  <field name="leave_taken_ytd"/>
+                  <field name="leave_balance"/>
+                  <field name="absent_days_from_leave"/>
+                  <field name="adj_absent_days"/>
+                </list>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_hr_payroll_instant_report" model="ir.actions.act_window">
+    <field name="name">Instant Attendance Salary Report</field>
+    <field name="res_model">hr.payroll.instant.report</field>
+    <field name="view_mode">form</field>
+    <field name="target">current</field>
+    <field name="context">{}</field>
+  </record>
+
+  <menuitem id="menu_instant_payroll_root" name="Instant Payroll" parent="hr.menu_hr_root" sequence="25" groups="hr.group_hr_manager,employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
+  <menuitem id="menu_instant_payroll_report" name="Instant Attendance Salary Report" parent="menu_instant_payroll_root" action="action_hr_payroll_instant_report" sequence="10" groups="hr.group_hr_manager,employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
+  <menuitem id="menu_instant_payroll_adjustments" name="Manual Adjustments" parent="menu_instant_payroll_root" action="action_instant_payroll_adjustments" sequence="20" groups="hr.group_hr_manager,employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
 
 </odoo>

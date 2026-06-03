@@ -117,7 +117,6 @@
         # INSTANT PAYROLL REPORT
         # --------------------------------------------------
         'views/instant_payroll_views.xml',
-        'views/instant_payroll_report.xml',
 
     ],
 
