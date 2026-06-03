@@ -59,7 +59,6 @@
         # --- SECURITY ---
         'security/security_groups.xml',
         'security/ir.model.access.csv',
-        'security/ir_payroll_instant_access.csv',
         'security/record_rules.xml',
 
         # --- DATA / SEQUENCES ---
