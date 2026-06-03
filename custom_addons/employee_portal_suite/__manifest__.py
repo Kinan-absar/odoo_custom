@@ -1,6 +1,6 @@
 {
     'name': 'Employee Portal Suite',
-    'version': '1.0',
+    'version': '1.1',
     'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
 
     'description': """
@@ -59,6 +59,7 @@
         # --- SECURITY ---
         'security/security_groups.xml',
         'security/ir.model.access.csv',
+        'security/ir_payroll_instant_access.csv',
         'security/record_rules.xml',
 
         # --- DATA / SEQUENCES ---
@@ -112,7 +113,12 @@
         'views/project_project_views.xml',
         'views/employee_portal_attendance.xml',
         'views/hr_attendance_views.xml',
-        'views/attendance_salary_report_views.xml',
+
+        # --------------------------------------------------
+        # INSTANT PAYROLL REPORT
+        # --------------------------------------------------
+        'views/instant_payroll_views.xml',
+        'views/instant_payroll_report.xml',
 
     ],
 

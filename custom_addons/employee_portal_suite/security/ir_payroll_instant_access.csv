@@ -1,0 +1,13 @@
+# model,name,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+
+# HR Managers — full CRUD
+hr.payroll.instant.adjustment,hr_payroll_instant_adj_manager,hr.group_hr_manager,1,1,1,1
+
+# Employee Portal HR group — full CRUD (mirrors HR Manager for this module)
+hr.payroll.instant.adjustment,hr_payroll_instant_adj_portal_hr,employee_portal_suite.group_employee_portal_hr,1,1,1,1
+
+# System admin — full CRUD
+hr.payroll.instant.adjustment,hr_payroll_instant_adj_system,base.group_system,1,1,1,1
+
+# Employee fields extension on hr.employee — read access for portal HR group
+# (write is already granted to hr.group_hr_manager by default Odoo ACL)
