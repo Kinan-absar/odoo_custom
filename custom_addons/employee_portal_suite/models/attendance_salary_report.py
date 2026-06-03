@@ -13,6 +13,7 @@ class AttendanceSalaryReport(models.Model):
     name = fields.Char(default='Instant Attendance Salary Report')
     date_from = fields.Date(string='From', required=True, default=lambda self: self._default_period()[0])
     date_to = fields.Date(string='To', required=True, default=lambda self: self._default_period()[1])
+    company_id = fields.Many2one('res.company', string='Company', required=True, default=lambda self: self.env.company)
     employee_ids = fields.Many2many('hr.employee', string='Employees')
     department_id = fields.Many2one('hr.department', string='Department')
     include_inactive = fields.Boolean(string='Include Archived Employees')
@@ -138,8 +139,22 @@ class AttendanceSalaryReport(models.Model):
             'target': 'current',
         }
 
+    @api.onchange('company_id')
+    def _onchange_company_id(self):
+        if self.company_id:
+            self.employee_ids = [(5, 0, 0)]
+            if self.department_id and self.department_id.company_id and self.department_id.company_id != self.company_id:
+                self.department_id = False
+
     def _get_employees(self):
         domain = []
+        company = self.company_id or self.env.company
+        # Keep the instant report company-specific. Employees without a company are
+        # also included because Odoo commonly treats them as shared employees.
+        if company:
+            domain.append('|')
+            domain.append(('company_id', '=', company.id))
+            domain.append(('company_id', '=', False))
         if self.employee_ids:
             domain.append(('id', 'in', self.employee_ids.ids))
         if self.department_id:
@@ -178,6 +193,7 @@ class AttendanceSalaryReport(models.Model):
         return {
             'employee_id': employee.id,
             'department_id': employee.department_id.id,
+            'company_id': employee.company_id.id or (self.company_id.id if self.company_id else False),
             'contract_id': contract.id if contract else False,
             'calendar_id': calendar_obj.id if calendar_obj else False,
             'basic_salary': basic_salary,
@@ -263,6 +279,7 @@ class AttendanceSalaryReportLine(models.Model):
     report_id = fields.Many2one('employee.attendance.salary.report', required=True, ondelete='cascade')
     currency_id = fields.Many2one(related='report_id.currency_id', readonly=True)
     employee_id = fields.Many2one('hr.employee', string='Employee', readonly=True)
+    company_id = fields.Many2one('res.company', string='Company', readonly=True)
     department_id = fields.Many2one('hr.department', string='Department', readonly=True)
     contract_id = fields.Many2one('hr.contract', string='Contract', readonly=True) if False else fields.Integer(string='Contract ID', readonly=True)
     calendar_id = fields.Many2one('resource.calendar', string='Working Schedule', readonly=True)

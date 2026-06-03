@@ -19,8 +19,9 @@
                         <group string="Period &amp; Filters">
                             <field name="date_from"/>
                             <field name="date_to"/>
-                            <field name="department_id"/>
-                            <field name="employee_ids" widget="many2many_tags"/>
+                            <field name="company_id" options="{'no_create': True}"/>
+                            <field name="department_id" domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]"/>
+                            <field name="employee_ids" widget="many2many_tags" domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]"/>
                             <field name="include_inactive"/>
                         </group>
                         <group string="Totals">
@@ -42,6 +43,7 @@
                             <field name="line_ids" nolabel="1" readonly="1">
                                 <list string="Report Lines" decoration-danger="shortage_hours &gt; 0" decoration-success="overtime_hours &gt; 0">
                                     <field name="employee_id"/>
+                                    <field name="company_id"/>
                                     <field name="department_id"/>
                                     <field name="basic_salary" sum="Basic"/>
                                     <field name="expected_days"/>
@@ -62,6 +64,7 @@
                                 <form string="Employee Report Line">
                                     <group>
                                         <field name="employee_id"/>
+                                        <field name="company_id"/>
                                         <field name="department_id"/>
                                         <field name="contract_id"/>
                                         <field name="calendar_id"/>
@@ -115,6 +118,7 @@
                 <field name="name"/>
                 <field name="date_from"/>
                 <field name="date_to"/>
+                <field name="company_id"/>
                 <field name="department_id"/>
                 <field name="total_employees"/>
                 <field name="total_net_salary"/>
@@ -133,11 +137,13 @@
         <field name="arch" type="xml">
             <search string="Instant Attendance Salary Reports">
                 <field name="name"/>
+                <field name="company_id"/>
                 <field name="department_id"/>
                 <filter name="not_batched" string="Not Batched" domain="[('state', '!=', 'batch_created')]"/>
                 <filter name="batched" string="Batch Created" domain="[('state', '=', 'batch_created')]"/>
                 <group expand="0" string="Group By">
                     <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
                     <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
                 </group>
             </search>
