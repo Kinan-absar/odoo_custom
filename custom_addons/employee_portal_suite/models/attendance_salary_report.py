@@ -82,6 +82,43 @@ class AttendanceSalaryReport(models.Model):
             report.total_overtime_amount = sum(report.line_ids.mapped('overtime_amount'))
             report.total_net_salary = sum(report.line_ids.mapped('net_salary'))
 
+
+    def _get_work_location_groups(self):
+        """Return salary lines grouped by work location for the PDF report."""
+        self.ensure_one()
+        groups = []
+        location_map = {}
+
+        def _key(line):
+            location = line.work_location_id
+            return (location.name or '') if location else _('No Work Location')
+
+        for line in self.line_ids.sorted(key=lambda l: (_key(l), l.employee_id.name or '')):
+            location = line.work_location_id
+            key = location.id if location else 0
+            if key not in location_map:
+                group = {
+                    'name': location.name if location else _('No Work Location'),
+                    'lines': self.env['employee.attendance.salary.report.line'],
+                    'employee_count': 0,
+                    'gross_salary': 0.0,
+                    'deductions': 0.0,
+                    'reimbursements': 0.0,
+                    'net_salary': 0.0,
+                }
+                location_map[key] = group
+                groups.append(group)
+
+            group = location_map[key]
+            group['lines'] |= line
+            group['employee_count'] += 1
+            group['gross_salary'] += line.gross_salary
+            group['deductions'] += line.attendance_deduction + line.other_deductions
+            group['reimbursements'] += line.reimbursements
+            group['net_salary'] += line.net_salary
+
+        return groups
+
     # ──────────────────────────────────────────────────────────────────────────
     # Actions
     # ──────────────────────────────────────────────────────────────────────────
