@@ -61,7 +61,7 @@
                             <field name="total_net_salary" readonly="1" class="fw-bold text-success"/>
                             <field name="generated_on" readonly="1"/>
                             <field name="payroll_batch_id" readonly="1"
-                                   attrs="{'invisible': [('payroll_batch_id', '=', False)]}"/>
+                                   invisible="not payroll_batch_id"/>
                         </group>
                     </group>
 
