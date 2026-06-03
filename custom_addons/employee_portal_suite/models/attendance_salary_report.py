@@ -18,6 +18,7 @@ class AttendanceSalaryReport(models.Model):
                                     domain="[('company_id', '=', company_id)]")
     department_id = fields.Many2one('hr.department', string='Department',
                                     domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
+    work_location_id = fields.Many2one('hr.work.location', string='Work Location')
     include_inactive = fields.Boolean(string='Include Archived Employees')
     line_ids = fields.One2many('employee.attendance.salary.report.line', 'report_id', string='Lines')
     currency_id = fields.Many2one('res.currency', default=lambda self: self.env.company.currency_id)
@@ -162,6 +163,8 @@ class AttendanceSalaryReport(models.Model):
             domain.append(('id', 'in', self.employee_ids.ids))
         if self.department_id:
             domain.append(('department_id', '=', self.department_id.id))
+        if self.work_location_id:
+            domain.append(('work_location_id', '=', self.work_location_id.id))
         if not self.include_inactive:
             domain.append(('active', '=', True))
         return self.env['hr.employee'].sudo().search(domain, order='name')
@@ -223,6 +226,7 @@ class AttendanceSalaryReport(models.Model):
             'company_id': employee.company_id.id,
             'employee_id': employee.id,
             'department_id': employee.department_id.id if employee.department_id else False,
+            'work_location_id': employee.work_location_id.id if employee.work_location_id else False,
             'contract_id': contract.id if contract else False,
             'calendar_id': calendar_obj.id if calendar_obj else False,
             'use_attendance': use_attendance,
@@ -350,6 +354,7 @@ class AttendanceSalaryReportLine(models.Model):
     currency_id = fields.Many2one(related='report_id.currency_id', readonly=True)
     employee_id = fields.Many2one('hr.employee', string='Employee', readonly=True)
     department_id = fields.Many2one('hr.department', string='Department', readonly=True)
+    work_location_id = fields.Many2one('hr.work.location', string='Work Location', readonly=True)
     contract_id = fields.Integer(string='Contract ID', readonly=True)
     calendar_id = fields.Many2one('resource.calendar', string='Working Schedule', readonly=True)
 

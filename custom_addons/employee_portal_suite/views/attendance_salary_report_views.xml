@@ -28,11 +28,6 @@
                 <sheet>
                     <div class="oe_title">
                         <h1><field name="name" placeholder="Report Name"/></h1>
-                        <p class="text-muted">
-                            Gross wage is read from the contract. Basic = Gross − Housing − Transport − Other Allowances.
-                            Employees on <strong>Working Schedule</strong> get full credit with no deductions (add Manual Absent Days for exceptions).
-                            Employees on <strong>Attendances</strong> have their actual clocked hours monitored.
-                        </p>
                     </div>
 
                     <group>
@@ -41,6 +36,7 @@
                             <field name="date_from"/>
                             <field name="date_to"/>
                             <field name="department_id"/>
+                            <field name="work_location_id"/>
                             <field name="employee_ids" widget="many2many_tags"/>
                             <field name="include_inactive"/>
                         </group>
@@ -78,6 +74,7 @@
 
                                     <field name="employee_id" readonly="1"/>
                                     <field name="department_id" readonly="1" optional="show"/>
+                                    <field name="work_location_id" readonly="1" optional="show"/>
 
                                     <!-- Source indicator — read-only, no checkbox to tick -->
                                     <field name="use_attendance" readonly="1" string="Att. Source"
@@ -126,6 +123,7 @@
                                         <group string="Employee">
                                             <field name="employee_id" readonly="1"/>
                                             <field name="department_id" readonly="1"/>
+                                            <field name="work_location_id" readonly="1"/>
                                             <field name="calendar_id" readonly="1"/>
                                             <field name="use_attendance" readonly="1"/>
                                             <field name="attendance_count" readonly="1"/>
@@ -215,6 +213,7 @@
                 <field name="date_from"/>
                 <field name="date_to"/>
                 <field name="department_id" optional="show"/>
+                <field name="work_location_id" optional="show"/>
                 <field name="total_employees"/>
                 <field name="total_gross_salary"/>
                 <field name="total_attendance_deductions"/>
@@ -241,6 +240,7 @@
                 <field name="name"/>
                 <field name="company_id"/>
                 <field name="department_id"/>
+                <field name="work_location_id"/>
                 <filter name="not_batched" string="Not Batched"
                         domain="[('state', '!=', 'batch_created')]"/>
                 <filter name="batched" string="Batch Created"
@@ -254,6 +254,8 @@
                             context="{'group_by': 'state'}"/>
                     <filter name="group_department" string="Department"
                             context="{'group_by': 'department_id'}"/>
+                    <filter name="group_work_location" string="Work Location"
+                            context="{'group_by': 'work_location_id'}"/>
                 </group>
             </search>
         </field>
