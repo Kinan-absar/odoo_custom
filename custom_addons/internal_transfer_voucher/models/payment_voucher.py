@@ -73,6 +73,92 @@ class AccountPaymentVoucher(models.Model):
         copy=False
     )
 
+
+    # -------------------------
+    # Vendor Bill Matching / Reconciliation
+    # -------------------------
+
+    bill_ids = fields.Many2many(
+        'account.move',
+        'account_payment_voucher_bill_rel',
+        'voucher_id',
+        'move_id',
+        string='Vendor Bills to Reconcile',
+        domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('move_type', '=', 'in_invoice'), ('state', '=', 'posted'), ('payment_state', 'in', ('not_paid', 'partial'))]",
+        copy=False,
+        tracking=True,
+    )
+
+    reconciled_bill_ids = fields.Many2many(
+        'account.move',
+        'account_payment_voucher_reconciled_bill_rel',
+        'voucher_id',
+        'move_id',
+        string='Reconciled Vendor Bills',
+        compute='_compute_reconciled_bill_ids',
+        copy=False,
+        readonly=True,
+    )
+
+    bill_reconciled = fields.Boolean(
+        string='Bills Reconciled',
+        compute='_compute_bill_reconciled',
+        store=True,
+    )
+
+    bill_total = fields.Monetary(
+        string='Selected Bills Residual',
+        compute='_compute_bill_reconciliation_amounts',
+        currency_field='currency_id',
+    )
+
+    difference_amount = fields.Monetary(
+        string='Difference',
+        compute='_compute_bill_reconciliation_amounts',
+        currency_field='currency_id',
+    )
+
+    allocated_amount = fields.Monetary(
+        string='Allocated Amount',
+        compute='_compute_bill_reconciliation_amounts',
+        currency_field='currency_id',
+    )
+
+    remaining_to_reconcile = fields.Monetary(
+        string='Remaining to Allocate',
+        compute='_compute_bill_reconciliation_amounts',
+        currency_field='currency_id',
+    )
+
+    is_payable_account = fields.Boolean(
+        string='Is Payable Account',
+        compute='_compute_is_payable_account',
+    )
+
+    bill_reconciliation_state = fields.Selection(
+        [
+            ('not_applicable', 'Not Applicable'),
+            ('no_bills', 'Not Allocated'),
+            ('ready', 'Ready to Allocate'),
+            ('partial', 'Partially Allocated'),
+            ('reconciled', 'Fully Allocated'),
+        ],
+        string='Payment Allocation Status',
+        compute='_compute_bill_reconciliation_state',
+        store=True,
+    )
+
+    reconciliation_list_status = fields.Selection(
+        [
+            ('not_reconciled', 'Not Fully Allocated'),
+            ('reconciled', 'Fully Allocated'),
+        ],
+        string='Legacy Allocation List Status',
+        compute='_compute_reconciliation_list_status',
+        store=True,
+    )
+
+
     state = fields.Selection(
         [
             ('draft', 'Draft'),
@@ -167,6 +253,270 @@ class AccountPaymentVoucher(models.Model):
                     rec.amount_in_words_ar = rec.currency_id.amount_to_text(amount_for_words)
             else:
                 rec.amount_in_words_ar = ''
+
+
+    @api.depends('account_id')
+    def _compute_is_payable_account(self):
+        for rec in self:
+            rec.is_payable_account = rec.account_id.account_type == 'liability_payable'
+
+    @api.depends(
+        'bill_ids',
+        'bill_ids.amount_residual',
+        'amount',
+        'move_id.line_ids.balance',
+        'move_id.line_ids.amount_residual',
+        'move_id.line_ids.reconciled',
+        'move_id.line_ids.matched_debit_ids',
+        'move_id.line_ids.matched_credit_ids',
+    )
+    def _compute_bill_reconciliation_amounts(self):
+        for rec in self:
+            rec.bill_total = sum(rec.bill_ids.mapped('amount_residual'))
+
+            voucher_lines = rec._get_voucher_payable_lines()
+            if voucher_lines:
+                original = sum(abs(line.balance) for line in voucher_lines)
+                remaining = sum(abs(line.amount_residual) for line in voucher_lines)
+            else:
+                original = rec.amount or 0.0
+                remaining = rec.amount or 0.0
+
+            rec.allocated_amount = max(original - remaining, 0.0)
+            rec.remaining_to_reconcile = remaining
+            rec.difference_amount = remaining - rec.bill_total
+
+    @api.depends(
+        'move_id.line_ids.balance',
+        'move_id.line_ids.amount_residual',
+        'move_id.line_ids.reconciled',
+        'move_id.line_ids.matched_debit_ids',
+        'move_id.line_ids.matched_credit_ids',
+        'account_id',
+        'partner_id',
+        'company_id',
+    )
+    def _compute_reconciled_bill_ids(self):
+        for rec in self:
+            bills = self.env['account.move']
+            voucher_lines = rec._get_voucher_payable_lines()
+            if voucher_lines:
+                partials = self.env['account.partial.reconcile'].search([
+                    '|',
+                    ('debit_move_id', 'in', voucher_lines.ids),
+                    ('credit_move_id', 'in', voucher_lines.ids),
+                ])
+                opposite_lines = (partials.mapped('debit_move_id') | partials.mapped('credit_move_id')) - voucher_lines
+                bills = opposite_lines.mapped('move_id').filtered(
+                    lambda move: move.move_type == 'in_invoice' and move.company_id == rec.company_id
+                )
+            rec.reconciled_bill_ids = bills
+
+    @api.depends(
+        'move_id.line_ids.balance',
+        'move_id.line_ids.amount_residual',
+        'move_id.line_ids.reconciled',
+        'move_id.line_ids.matched_debit_ids',
+        'move_id.line_ids.matched_credit_ids',
+        'account_id',
+        'partner_id',
+        'company_id',
+    )
+    def _compute_bill_reconciled(self):
+        for rec in self:
+            voucher_lines = rec._get_voucher_payable_lines()
+            rec.bill_reconciled = bool(voucher_lines) and all(line.reconciled for line in voucher_lines)
+
+    @api.depends(
+        'state',
+        'account_id',
+        'account_id.account_type',
+        'payment_method',
+        'bill_ids',
+        'move_id.line_ids.balance',
+        'move_id.line_ids.amount_residual',
+        'move_id.line_ids.reconciled',
+        'move_id.line_ids.matched_debit_ids',
+        'move_id.line_ids.matched_credit_ids',
+    )
+    def _compute_bill_reconciliation_state(self):
+        for rec in self:
+            if rec.payment_method == 'journal_transfer' or rec.account_id.account_type != 'liability_payable':
+                rec.bill_reconciliation_state = 'not_applicable'
+                continue
+
+            voucher_lines = rec._get_voucher_payable_lines()
+            if voucher_lines:
+                remaining = sum(abs(line.amount_residual) for line in voucher_lines)
+                original = sum(abs(line.balance) for line in voucher_lines)
+                used = original - remaining
+
+                if rec.currency_id.is_zero(remaining):
+                    rec.bill_reconciliation_state = 'reconciled'
+                elif rec.currency_id.compare_amounts(used, 0.0) > 0:
+                    rec.bill_reconciliation_state = 'partial'
+                elif rec.bill_ids:
+                    rec.bill_reconciliation_state = 'ready'
+                else:
+                    rec.bill_reconciliation_state = 'no_bills'
+                continue
+
+            if rec.bill_ids:
+                rec.bill_reconciliation_state = 'ready'
+            else:
+                rec.bill_reconciliation_state = 'no_bills'
+
+    @api.depends('bill_reconciliation_state')
+    def _compute_reconciliation_list_status(self):
+        for rec in self:
+            rec.reconciliation_list_status = 'reconciled' if rec.bill_reconciliation_state == 'reconciled' else 'not_reconciled'
+
+    def _get_voucher_payable_lines(self):
+        self.ensure_one()
+        if not self.move_id or not self.account_id:
+            return self.env['account.move.line']
+        return self.move_id.line_ids.filtered(
+            lambda line: line.account_id == self.account_id
+            and line.account_id.account_type == 'liability_payable'
+            and line.partner_id == self.partner_id
+            and line.company_id == self.company_id
+        )
+
+    def _get_selected_bill_payable_lines(self):
+        self.ensure_one()
+        if not self.bill_ids or not self.account_id:
+            return self.env['account.move.line']
+        return self.bill_ids.line_ids.filtered(
+            lambda line: line.account_id == self.account_id
+            and line.account_id.account_type == 'liability_payable'
+            and line.partner_id == self.partner_id
+            and line.company_id == self.company_id
+            and not line.reconciled
+        )
+
+    def action_find_matching_bills(self):
+        """Find open vendor bills for the same vendor/account/company.
+
+        This action only suggests bills. The user can still edit the selected
+        bills before clicking Reconcile Bills.
+        """
+        for rec in self:
+            if rec.bill_reconciled:
+                raise UserError(_("This payment voucher is fully reconciled. You cannot find or replace bills after full reconciliation."))
+            if rec.payment_method == 'journal_transfer':
+                raise UserError(_("Bill matching is only available for Cash, Cheque, and Bank Transfer payment vouchers."))
+            if rec.account_id.account_type != 'liability_payable':
+                raise UserError(_("Bill matching is only available when the voucher account is Accounts Payable."))
+            if not rec.partner_id:
+                raise UserError(_("Please set the vendor/partner first."))
+
+            bills = self.env['account.move'].search([
+                ('partner_id', '=', rec.partner_id.id),
+                ('company_id', '=', rec.company_id.id),
+                ('move_type', '=', 'in_invoice'),
+                ('state', '=', 'posted'),
+                ('payment_state', 'in', ['not_paid', 'partial']),
+                ('amount_residual', '>', 0),
+            ], order='invoice_date asc, date asc, id asc')
+
+            selected_bills = self.env['account.move']
+            remaining = rec.remaining_to_reconcile or rec.amount or 0.0
+
+            exact_bills = bills.filtered(lambda bill: rec.currency_id.compare_amounts(bill.amount_residual, remaining) == 0)
+            if exact_bills:
+                selected_bills = exact_bills[:1]
+            else:
+                for bill in bills:
+                    if rec.currency_id.compare_amounts(remaining, 0.0) <= 0:
+                        break
+                    selected_bills |= bill
+                    remaining -= bill.amount_residual
+                    if rec.currency_id.compare_amounts(remaining, 0.0) <= 0:
+                        break
+
+            rec.bill_ids = [(6, 0, selected_bills.ids)]
+            if selected_bills:
+                rec.message_post(body=_("Suggested vendor bill(s): %s") % ', '.join(selected_bills.mapped('name')))
+            else:
+                rec.message_post(body=_("No open vendor bills were found for this vendor."))
+        return True
+
+    def action_reconcile_bills(self):
+        for rec in self:
+            if rec.state != 'posted':
+                raise UserError(_("Only posted payment vouchers can be reconciled."))
+            if rec.payment_method == 'journal_transfer':
+                raise UserError(_("Vendor bill reconciliation is not available for Journal Transfer vouchers."))
+            if rec.account_id.account_type != 'liability_payable':
+                raise UserError(_("The voucher account must be an Accounts Payable account."))
+            if rec.bill_reconciled:
+                raise UserError(_("This payment voucher is fully reconciled."))
+            if not rec.bill_ids:
+                raise UserError(_("Please select at least one vendor bill to reconcile."))
+            if not rec.move_id:
+                raise UserError(_("This payment voucher has no posted journal entry."))
+
+            voucher_lines = rec._get_voucher_payable_lines().filtered(lambda line: not line.reconciled)
+            bill_lines = rec._get_selected_bill_payable_lines()
+
+            if not voucher_lines:
+                raise UserError(_("No unreconciled payable line was found on the voucher journal entry."))
+            if not bill_lines:
+                raise UserError(_("No unreconciled payable lines were found on the selected vendor bills."))
+
+            all_lines = voucher_lines | bill_lines
+            accounts = all_lines.mapped('account_id')
+            partners = all_lines.mapped('partner_id')
+            companies = all_lines.mapped('company_id')
+
+            if len(accounts) != 1:
+                raise UserError(_("All lines must use the same payable account."))
+            if len(partners) != 1:
+                raise UserError(_("All lines must use the same vendor/partner."))
+            if len(companies) != 1:
+                raise UserError(_("All lines must belong to the same company."))
+
+            bills_to_reconcile = rec.bill_ids
+            all_lines.reconcile()
+            rec.with_context(skip_bill_reconcile_lock=True).write({
+                'bill_ids': [(5, 0, 0)],
+            })
+            rec.message_post(body=_("Reconciled with vendor bill(s): %s") % ', '.join(bills_to_reconcile.mapped('name')))
+        return True
+
+    def action_unreconcile_bills(self):
+        for rec in self:
+            if rec.state != 'posted':
+                raise UserError(_("Only posted payment vouchers can be unreconciled."))
+            if not rec.move_id:
+                raise UserError(_("This payment voucher has no posted journal entry."))
+
+            voucher_lines = rec._get_voucher_payable_lines()
+            if not voucher_lines:
+                raise UserError(_("No payable line was found on this voucher."))
+
+            # IMPORTANT: only remove partial reconciliations directly connected to
+            # this voucher's payable line. Do not call remove_move_reconcile() on
+            # the invoice lines, because that can remove reconciliations made by
+            # other payment vouchers against the same bill.
+            partials = self.env['account.partial.reconcile'].search([
+                '|',
+                ('debit_move_id', 'in', voucher_lines.ids),
+                ('credit_move_id', 'in', voucher_lines.ids),
+            ])
+            if not partials:
+                raise UserError(_("No reconciled payable lines were found to unreconcile for this voucher."))
+
+            opposite_lines = (partials.mapped('debit_move_id') | partials.mapped('credit_move_id')) - voucher_lines
+            affected_bills = opposite_lines.mapped('move_id').filtered(lambda move: move.move_type == 'in_invoice')
+            amount = sum(partials.mapped('amount'))
+
+            partials.unlink()
+            rec.with_context(skip_bill_reconcile_lock=True).write({
+                'bill_ids': [(5, 0, 0)],
+            })
+            rec.message_post(body=_("Unreconciled %.2f from vendor bill(s): %s") % (amount, ', '.join(affected_bills.mapped('name'))))
+        return True
 
     # -------------------------
     # Constraints
@@ -405,6 +755,22 @@ class AccountPaymentVoucher(models.Model):
         for rec in self:
             if rec.state not in ('posted', 'cancel'):
                 continue
+
+            # Safety net: do not allow deleting/resetting the voucher journal entry
+            # while any payable line has full or partial reconciliation attached.
+            # This must block both full reconciliation and partial reconciliation.
+            voucher_lines = rec._get_voucher_payable_lines()
+            has_reconciled_payable_lines = bool(voucher_lines.filtered(
+                lambda line: line.reconciled
+                or line.matched_debit_ids
+                or line.matched_credit_ids
+                or abs(line.amount_residual) < abs(line.balance)
+            ))
+            if has_reconciled_payable_lines:
+                raise UserError(_(
+                    "This voucher has reconciled payable lines. Unreconcile the vendor bills first before resetting it to draft."
+                ))
+
             if rec.move_id:
                 rec.move_id.button_draft()
                 rec.move_id.unlink()
@@ -437,9 +803,11 @@ class AccountPaymentVoucher(models.Model):
     def write(self, vals):
         for rec in self:
             if rec.state == 'posted':
-                allowed_fields = {'state', 'move_id'}
+                allowed_fields = {'state', 'move_id', 'bill_ids'}
                 if not set(vals.keys()).issubset(allowed_fields):
                     raise UserError(_("You cannot modify a posted payment voucher."))
+                if 'bill_ids' in vals and rec.bill_reconciled and not self.env.context.get('skip_bill_reconcile_lock'):
+                    raise UserError(_("You cannot change selected bills after this voucher has been fully reconciled."))
         return super().write(vals)
 
     @api.model
@@ -469,6 +837,10 @@ class AccountPaymentVoucher(models.Model):
             'transfer_count': count([('payment_method', '=', 'journal_transfer')]),
 
             'my_count': count([('create_uid', '=', self.env.uid)]),
+            'fully_allocated_count': count([('bill_reconciliation_state', '=', 'reconciled')]),
+            'not_allocated_count': count([('bill_reconciliation_state', '=', 'no_bills')]),
+            'partial_allocated_count': count([('bill_reconciliation_state', '=', 'partial')]),
+            'ready_to_allocate_count': count([('bill_reconciliation_state', '=', 'ready')]),
             'total_posted_amount': total_posted_amount,
             'currency_symbol': self.env.company.currency_id.symbol or '',
         }

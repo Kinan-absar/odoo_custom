@@ -1199,7 +1199,6 @@
                         <a href="/my/employee/attendance" class="ep-link">Attendance</a>
                     </t>
                 </div><!-- /ep-nav-links -->
-
                 <div class="d-flex align-items-center gap-3">
                     <div class="text-end d-none d-lg-block">
                         <h6 class="mb-0 fw-bold" t-out="request.env.user.partner_id.name"/>
@@ -1230,9 +1229,7 @@
             </t>
 
             <t t-set="portal_announcements"
-                t-value="request.env['portal.announcement'].sudo().search([
-                        ('active', '=', True)
-                ])"/>
+                t-value="request.env['portal.announcement']._get_visible_announcements_for_current_user(target='portal', limit=5)"/>
 
             <t t-if="portal_announcements">
                 <div class="portal-announcement-wrapper">
@@ -1283,7 +1280,7 @@
        )
    "/>
 
-            <!-- Attendance-only: minimal nav with just Attendance + Exit -->
+            <!-- Attendance-only mobile nav: just Attendance + Logout -->
             <t t-if="is_attendance_only">
                 <nav class="ep-bottom-nav mobile-only basic-nav">
                     <div class="ep-nav-left">

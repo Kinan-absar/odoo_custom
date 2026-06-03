@@ -1,0 +1,193 @@
+$panel-width: 360px;
+$panel-max-height: 72vh;
+$border-radius: 14px;
+$header-bg: rgba(255, 255, 255, 0.97);
+$body-bg: rgba(255, 255, 255, 0.95);
+$shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+
+$color-info:    #875A7B;
+$color-success: #28a745;
+$color-warning: #f0ad4e;
+$color-danger:  #dc3545;
+
+.eps_announcements_panel {
+    position: absolute;
+    top: 18px;
+    left: 24px;
+    width: $panel-width;
+    max-width: calc(100vw - 48px);
+    z-index: 20;
+    border-radius: $border-radius;
+    box-shadow: $shadow;
+    // NO overflow:hidden here — that was killing scroll inside the body
+    pointer-events: auto;
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+.eps_announcements_header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 16px;
+    background: $header-bg;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+    border-radius: $border-radius $border-radius 0 0;
+    backdrop-filter: blur(6px);
+
+    &:hover {
+        background: rgba(255, 255, 255, 1);
+    }
+}
+
+// When body is hidden, round all corners on the header
+.eps_announcements_body_hidden ~ .eps_announcements_header,
+.eps_announcements_panel:has(.eps_announcements_body_hidden) .eps_announcements_header {
+    border-radius: $border-radius;
+}
+
+.eps_announcements_header_icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.eps_announcements_header_title {
+    flex: 1;
+    font-weight: 700;
+    font-size: 14px;
+    color: #2f2f2f;
+}
+
+.eps_announcements_count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: $color-info;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.eps_announcements_chevron {
+    font-size: 18px;
+    color: #666;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+    line-height: 1;
+
+    &.eps_chevron_collapsed {
+        transform: rotate(-90deg);
+    }
+}
+
+// ─── Scrollable Body ──────────────────────────────────────────────────────────
+.eps_announcements_body {
+    background: $body-bg;
+    backdrop-filter: blur(6px);
+    max-height: $panel-max-height;
+    overflow-y: auto;   // scrolls independently — NOT clipped by parent
+    overflow-x: hidden;
+    padding: 10px 10px 6px 10px;
+    border-radius: 0 0 $border-radius $border-radius;
+    box-shadow: $shadow;
+    transition: max-height 0.25s ease, padding 0.25s ease;
+
+    &::-webkit-scrollbar {
+        width: 5px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,0.18);
+        border-radius: 4px;
+    }
+
+    &.eps_announcements_body_hidden {
+        max-height: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        overflow: hidden !important;
+    }
+}
+
+// ─── Individual Card ──────────────────────────────────────────────────────────
+.eps_announcement_card {
+    background: #fff;
+    border-left: 4px solid $color-info;
+    border-radius: 9px;
+    padding: 10px 13px;
+    margin-bottom: 8px;
+    color: #2f2f2f;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+
+    &:last-child { margin-bottom: 4px; }
+
+    &.eps_announcement_success { border-left-color: $color-success; }
+    &.eps_announcement_warning { border-left-color: $color-warning; }
+    &.eps_announcement_danger  { border-left-color: $color-danger; }
+    &.eps_announcement_info    { border-left-color: $color-info; }
+}
+
+.eps_announcement_title {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 4px;
+    color: #1a1a1a;
+}
+
+.eps_announcement_message {
+    font-size: 13px;
+    line-height: 1.45;
+    color: #444;
+
+    p { margin: 0 0 5px 0; }
+    p:last-child { margin-bottom: 0; }
+    a, .btn { pointer-events: auto; }
+}
+
+// ─── Mobile ───────────────────────────────────────────────────────────────────
+@media screen and (max-width: 768px) {
+    .o_home_menu {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .eps_announcements_panel {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        width: calc(100% - 16px) !important;
+        max-width: none !important;
+        margin: 10px auto 4px auto !important;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.14) !important;
+        order: -1;
+    }
+
+    .eps_announcements_body {
+        max-height: 45vh !important;   // taller on mobile so more cards visible
+        overflow-y: auto !important;   // explicitly re-assert scroll on mobile
+
+        &.eps_announcements_body_hidden {
+            max-height: 0 !important;
+            overflow: hidden !important;
+        }
+    }
+
+    .eps_announcement_card {
+        padding: 8px 11px;
+    }
+
+    .eps_announcement_title {
+        font-size: 12px;
+    }
+
+    .eps_announcement_message {
+        font-size: 12px;
+    }
+}

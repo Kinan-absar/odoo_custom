@@ -1,0 +1,75 @@
+.o_employee_request_dashboard {
+    .er_card {
+        min-width: 135px;
+        height: 74px;
+        padding: 12px 16px;
+        border-radius: 6px;
+        border: 1px solid #d8dadd;
+        background: #fff;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .er_card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        transform: translateY(-1px);
+    }
+
+    .er_value {
+        font-size: 21px;
+        font-weight: 700;
+        line-height: 1.1;
+        color: #111827;
+    }
+
+    .er_label {
+        font-size: 13px;
+        color: #374151;
+        margin-top: 5px;
+        white-space: nowrap;
+    }
+
+    .er_card_neutral {
+        background: #f3f4f6;
+    }
+
+    .er_card_muted {
+        background: #e9ecef;
+    }
+
+    .er_card_blue {
+        background: #d9edf2;
+    }
+
+    .er_card_teal {
+        background: #d1f0ec;
+    }
+
+    .er_card_orange {
+        background: #fde8d0;
+    }
+
+    .er_card_purple {
+        background: #eadcf2;
+    }
+
+    .er_card_green {
+        background: #e5f4e8;
+    }
+
+    .er_card_red {
+        background: #f6d9dd;
+    }
+
+    .er_card_my {
+        background: #e8eaf6;
+    }
+
+    .o_employee_request_dashboard {
+        width: 100%;
+        flex: 0 0 100%;
+    }
+}

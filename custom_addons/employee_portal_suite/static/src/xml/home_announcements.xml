@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-inherit="web_enterprise.HomeMenu" t-inherit-mode="extension">
+        <xpath expr="//div[contains(@class, 'o_home_menu')]" position="inside">
+
+            <div class="eps_announcements_panel"
+                 t-if="backendAnnouncementState and backendAnnouncementState.announcements.length">
+
+                <!-- Header bar: always visible, click to collapse/expand -->
+                <div class="eps_announcements_header" t-on-click="() => this.toggleAnnouncements()">
+                    <span class="eps_announcements_header_icon">📢</span>
+                    <span class="eps_announcements_header_title">
+                        Announcements
+                        <span class="eps_announcements_count">
+                            <t t-esc="backendAnnouncementState.announcements.length"/>
+                        </span>
+                    </span>
+                    <span class="eps_announcements_chevron"
+                          t-att-class="backendAnnouncementState.collapsed ? 'eps_chevron_collapsed' : ''">
+                        ▾
+                    </span>
+                </div>
+
+                <!-- Scrollable cards body -->
+                <div class="eps_announcements_body"
+                     t-att-class="backendAnnouncementState.collapsed ? 'eps_announcements_body_hidden' : ''">
+                    <t t-foreach="backendAnnouncementState.announcements" t-as="ann" t-key="ann.id">
+                        <div t-attf-class="eps_announcement_card eps_announcement_#{ann.type or 'info'}">
+                            <div class="eps_announcement_title">
+                                <t t-esc="ann.title"/>
+                            </div>
+                            <div class="eps_announcement_message">
+                                <t t-out="ann.message"/>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+
+            </div>
+
+        </xpath>
+    </t>
+
+</templates>

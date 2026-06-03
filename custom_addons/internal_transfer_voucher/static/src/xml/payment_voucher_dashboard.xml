@@ -63,6 +63,31 @@
                     <div class="pv_label">Journal Transfer</div>
                 </div>
 
+
+                <div class="pv_card pv_card_green"
+                     t-on-click="() => this.filter([['bill_reconciliation_state','=','reconciled']])">
+                    <div class="pv_value"><t t-esc="data.fully_allocated_count"/></div>
+                    <div class="pv_label">Fully Allocated</div>
+                </div>
+
+                <div class="pv_card pv_card_orange"
+                     t-on-click="() => this.filter([['bill_reconciliation_state','=','partial']])">
+                    <div class="pv_value"><t t-esc="data.partial_allocated_count"/></div>
+                    <div class="pv_label">Partially Allocated</div>
+                </div>
+
+                <div class="pv_card pv_card_red"
+                     t-on-click="() => this.filter([['bill_reconciliation_state','=','no_bills']])">
+                    <div class="pv_value"><t t-esc="data.not_allocated_count"/></div>
+                    <div class="pv_label">Not Allocated</div>
+                </div>
+
+                <div class="pv_card pv_card_blue"
+                     t-on-click="() => this.filter([['bill_reconciliation_state','=','ready']])">
+                    <div class="pv_value"><t t-esc="data.ready_to_allocate_count"/></div>
+                    <div class="pv_label">Ready to Allocate</div>
+                </div>
+
                 <div class="pv_card pv_card_purple"
                      t-on-click="() => this.filter(myDomain)">
                     <div class="pv_value"><t t-esc="data.my_count"/></div>

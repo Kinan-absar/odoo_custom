@@ -291,7 +291,7 @@
         <field name="name">construction.contract.search</field>
         <field name="model">construction.contract</field>
         <field name="arch" type="xml">
-            <search>
+            <search string="Search Contracts">
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="partner_id"/>

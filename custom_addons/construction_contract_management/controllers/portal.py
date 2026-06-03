@@ -3,11 +3,7 @@ import logging
 
 from odoo import http
 from odoo.http import request
-from odoo.addons.portal.controllers.portal import CustomerPortal
-try:
-    from odoo.addons.portal.controllers.portal import pager as portal_pager
-except ImportError:
-    from odoo.addons.web.controllers.main import pager as portal_pager
+from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 from odoo.exceptions import AccessError, MissingError, ValidationError
 
 _logger = logging.getLogger(__name__)

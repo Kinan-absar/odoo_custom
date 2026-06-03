@@ -1,14 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <!--
-        Automated Action: notify HR when an attendance record is flagged
-        as a checkout outside the designated work location.
+    <!-- ==============================================================
+         CUSTOM AUTO-CHECKOUT CRON
+         
+         Runs once daily at 20:50 UTC = 11:50 PM Riyadh time (UTC+3).
+         Closes any attendance record that is still open at end of day.
+         Applies to ALL employees regardless of work schedule.
+         
+         The cron sets context key 'from_auto_checkout' = True so the
+         write() override in hr_attendance.py correctly flags the records
+         as auto_checked_out and posts a chatter notification.
+    ================================================================ -->
+    <record id="ir_cron_auto_checkout_open_attendances" model="ir.cron">
+        <field name="name">Employee Portal: Auto Check-Out Open Attendances</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="state">code</field>
+        <field name="code">model._auto_checkout_open_attendances()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall">2025-01-01 20:50:00</field>
+        <field name="active">True</field>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="priority">5</field>
+    </record>
 
-        Trigger: on write, when checkout_outside_location becomes True.
-        Action : post an internal message on the hr.attendance record
-                 so HR users following the model (or the employee) are notified.
-    -->
+    <!-- ==============================================================
+         AUTOMATED ACTION: notify HR on outside-location checkout
+         
+         Fires when checkout_outside_location flips False → True.
+         Posts an internal chatter note on the attendance record.
+    ================================================================ -->
     <record id="action_server_outside_checkout_notify" model="ir.actions.server">
         <field name="name">Post HR Notification — Outside Location Check-out</field>
         <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
@@ -17,7 +39,6 @@
         <field name="code">records._notify_hr_outside_checkout()</field>
     </record>
 
-    <!-- Automation trigger — fires when checkout_outside_location flips False → True -->
     <record id="automation_outside_checkout_notify" model="base.automation">
         <field name="name">Attendance: Notify HR on Outside-Location Check-out</field>
         <field name="model_id" ref="hr_attendance.model_hr_attendance"/>

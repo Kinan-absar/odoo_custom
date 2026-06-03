@@ -94,7 +94,7 @@
         <field name="name">construction.measurement.search</field>
         <field name="model">construction.measurement</field>
         <field name="arch" type="xml">
-            <search>
+            <search string="Search Measurements">
                 <field name="name"/>
                 <field name="contract_id"/>
                 <field name="project_id"/>

@@ -40,7 +40,7 @@
                             id="materialApprovalSearchInput"
                             name="search"
                             t-att-value="search or ''"
-                            placeholder="Search request #"
+                            placeholder="Search MR, employee, item, or PO"
                             class="form-control mobile-search"/>
 
                         <button type="submit" class="search-btn">
@@ -70,6 +70,9 @@
                             <th>Employee</th>
                             <th>Worksite</th>
                             <th>Status</th>
+                            <th>PO</th>
+                            <th>Quotation</th>
+                            <th>Invoice</th>
                             <th>Date</th>
                             <th></th>
                         </tr>
@@ -92,6 +95,30 @@
                                     </td>
 
                                     <td>
+                                        <t t-if="req.po_created">
+                                            <span class="badge bg-success">PO: <t t-esc="req.po_name"/></span>
+                                        </t>
+                                        <t t-elif="req.no_po_required">
+                                            <span class="badge bg-info text-dark">No PO Required</span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="badge bg-light text-dark">No PO</span>
+                                        </t>
+                                    </td>
+
+                                    <td>
+                                        <span t-att-class="'badge ' + ('bg-secondary' if req.quotation_status == 'pending' else 'bg-warning text-dark' if req.quotation_status in ['remaining_2','remaining_1'] else 'bg-success' if req.quotation_status == 'uploaded' else 'bg-info text-dark')">
+                                            <t t-esc="dict(req._fields['quotation_status'].selection).get(req.quotation_status)"/>
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            <t t-esc="dict(req._fields['accounting_docs_status'].selection).get(req.accounting_docs_status)"/>
+                                        </span>
+                                    </td>
+
+                                    <td>
                                         <small class="text-muted">
                                             <t t-esc="req.request_date"/>
                                         </small>
@@ -109,7 +136,7 @@
 
                         <t t-if="not shown_reqs">
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">
+                                <td colspan="8" class="text-center text-muted py-4">
                                     No Requests Found.
                                 </td>
                             </tr>
@@ -150,6 +177,25 @@
                                 <div>
                                     <span class="label">Worksite</span>
                                     <div><t t-esc="req.worksite"/></div>
+                                </div>
+
+                                <div>
+                                    <span class="label">PO</span>
+                                    <div>
+                                        <t t-if="req.po_created"><t t-esc="req.po_name"/></t>
+                                        <t t-elif="req.no_po_required">No PO Required</t>
+                                        <t t-else="">No PO</t>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <span class="label">Quotation</span>
+                                    <div><t t-esc="dict(req._fields['quotation_status'].selection).get(req.quotation_status)"/></div>
+                                </div>
+
+                                <div>
+                                    <span class="label">Invoice</span>
+                                    <div><t t-esc="dict(req._fields['accounting_docs_status'].selection).get(req.accounting_docs_status)"/></div>
                                 </div>
 
                                 <div>

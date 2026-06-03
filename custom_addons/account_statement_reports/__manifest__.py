@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Account Statement Reports",
-    "version": "19.0.1.0.0",
+    "version": "1.0",
     "category": "Accounting",
     "summary": "Customer and Vendor Financial Statements with Running Balance and Excel Export",
     "description": """
