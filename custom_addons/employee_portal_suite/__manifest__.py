@@ -9,7 +9,7 @@
     Features Included:
 
     ✔ Employee Portal (/my/employee)
-    ✔ Clean custom portal layout and navigation
+    ✔ Clean custom portal layout and navigation 
     ✔ Employee Requests workflow (Employee → Manager → HR → Finance → CEO)
     ✔ Material Requests workflow (Employee → Purchase Rep → Store Manager → Project Manager → Director → CEO)
     ✔ Full approval timeline visible in backend + portal
