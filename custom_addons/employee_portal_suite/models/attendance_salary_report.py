@@ -144,6 +144,14 @@ class AttendanceSalaryReport(models.Model):
             'target': 'current',
         }
 
+
+    def action_print_report(self):
+        """Open the salary summary PDF report."""
+        self.ensure_one()
+        return self.env.ref(
+            'employee_portal_suite.action_report_salary_summary'
+        ).report_action(self)
+
     # ──────────────────────────────────────────────────────────────────────────
     # Core data gathering
     # ──────────────────────────────────────────────────────────────────────────

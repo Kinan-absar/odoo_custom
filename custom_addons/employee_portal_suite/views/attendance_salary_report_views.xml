@@ -14,6 +14,9 @@
                             string="Generate / Refresh"
                             class="btn-primary"
                             groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
+                    <button name="action_print_report" string="Print Report" type="object"
+                            class="btn-secondary"
+                            groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
                     <button name="action_create_payroll_batch" type="object"
                             string="Create Payroll Batch"
                             class="btn-secondary"
