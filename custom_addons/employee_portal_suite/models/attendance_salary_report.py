@@ -2,8 +2,7 @@
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
-from datetime import date, datetime, time, timedelta
-import calendar
+from datetime import datetime, time, timedelta
 
 
 class AttendanceSalaryReport(models.Model):
@@ -14,19 +13,22 @@ class AttendanceSalaryReport(models.Model):
     date_from = fields.Date(string='From', required=True, default=lambda self: self._default_period()[0])
     date_to = fields.Date(string='To', required=True, default=lambda self: self._default_period()[1])
     company_id = fields.Many2one('res.company', string='Company', required=True, default=lambda self: self.env.company)
-    employee_ids = fields.Many2many('hr.employee', string='Employees')
-    department_id = fields.Many2one('hr.department', string='Department')
+    employee_ids = fields.Many2many('hr.employee', string='Employees', domain="[('company_id', '=', company_id)]")
+    department_id = fields.Many2one('hr.department', string='Department', domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
     include_inactive = fields.Boolean(string='Include Archived Employees')
-    line_ids = fields.One2many('employee.attendance.salary.report.line', 'report_id', string='Lines', readonly=True)
+    line_ids = fields.One2many('employee.attendance.salary.report.line', 'report_id', string='Lines')
     currency_id = fields.Many2one('res.currency', default=lambda self: self.env.company.currency_id)
 
     total_employees = fields.Integer(compute='_compute_totals')
-    total_basic_salary = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
     total_gross_salary = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
-    total_deductions = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
+    total_basic_salary = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
+    total_allowances = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
+    total_attendance_deductions = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
+    total_other_deductions = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
+    total_reimbursements = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
     total_overtime_amount = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
     total_net_salary = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
-    payroll_batch_id = fields.Many2one('hr.payslip.run', string='Payroll Batch', readonly=True) if False else fields.Char(string='Payroll Batch', readonly=True)
+    payroll_batch_id = fields.Char(string='Payroll Batch', readonly=True)
     state = fields.Selection([
         ('draft', 'Not Generated'),
         ('generated', 'Generated - No Batch'),
@@ -36,22 +38,15 @@ class AttendanceSalaryReport(models.Model):
     batch_created_on = fields.Datetime(string='Batch Created On', readonly=True, copy=False)
     batch_created = fields.Boolean(string='Payroll Batch Created', compute='_compute_batch_created', store=True)
 
-
     @api.model
     def _default_period(self):
         today = fields.Date.context_today(self)
         if today.day >= 26:
             start = today.replace(day=26)
-            if today.month == 12:
-                end = today.replace(year=today.year + 1, month=1, day=25)
-            else:
-                end = today.replace(month=today.month + 1, day=25)
+            end = today.replace(year=today.year + 1, month=1, day=25) if today.month == 12 else today.replace(month=today.month + 1, day=25)
         else:
             end = today.replace(day=25)
-            if today.month == 1:
-                start = today.replace(year=today.year - 1, month=12, day=26)
-            else:
-                start = today.replace(month=today.month - 1, day=26)
+            start = today.replace(year=today.year - 1, month=12, day=26) if today.month == 1 else today.replace(month=today.month - 1, day=26)
         return start, end
 
     @api.depends('state', 'payroll_batch_id')
@@ -59,13 +54,16 @@ class AttendanceSalaryReport(models.Model):
         for report in self:
             report.batch_created = report.state == 'batch_created' or bool(report.payroll_batch_id)
 
-    @api.depends('line_ids.basic_salary', 'line_ids.gross_salary', 'line_ids.absence_deduction', 'line_ids.shortage_deduction', 'line_ids.overtime_amount', 'line_ids.net_salary')
+    @api.depends('line_ids.gross_salary', 'line_ids.basic_salary', 'line_ids.total_allowances', 'line_ids.attendance_deduction', 'line_ids.other_deductions', 'line_ids.reimbursements', 'line_ids.overtime_amount', 'line_ids.net_salary')
     def _compute_totals(self):
         for report in self:
             report.total_employees = len(report.line_ids)
-            report.total_basic_salary = sum(report.line_ids.mapped('basic_salary'))
             report.total_gross_salary = sum(report.line_ids.mapped('gross_salary'))
-            report.total_deductions = sum(report.line_ids.mapped('absence_deduction')) + sum(report.line_ids.mapped('shortage_deduction'))
+            report.total_basic_salary = sum(report.line_ids.mapped('basic_salary'))
+            report.total_allowances = sum(report.line_ids.mapped('total_allowances'))
+            report.total_attendance_deductions = sum(report.line_ids.mapped('attendance_deduction'))
+            report.total_other_deductions = sum(report.line_ids.mapped('other_deductions'))
+            report.total_reimbursements = sum(report.line_ids.mapped('reimbursements'))
             report.total_overtime_amount = sum(report.line_ids.mapped('overtime_amount'))
             report.total_net_salary = sum(report.line_ids.mapped('net_salary'))
 
@@ -73,20 +71,13 @@ class AttendanceSalaryReport(models.Model):
         self.ensure_one()
         if self.date_from > self.date_to:
             raise UserError(_('The start date must be before the end date.'))
-
         self.line_ids.unlink()
-        employees = self._get_employees()
-        line_vals = []
-        for employee in employees:
-            line_vals.append((0, 0, self._prepare_employee_line(employee)))
         self.write({
-            'line_ids': line_vals,
+            'line_ids': [(0, 0, self._prepare_employee_line(employee)) for employee in self._get_employees()],
             'state': 'batch_created' if self.payroll_batch_id else 'generated',
             'generated_on': fields.Datetime.now(),
             'name': _('Attendance Salary Report %s to %s') % (self.date_from, self.date_to),
         })
-        # Return the same saved record in the same form. This avoids the odd
-        # breadcrumb/new-record behavior caused by reload or opening a fresh action.
         return {
             'type': 'ir.actions.act_window',
             'name': self.name,
@@ -103,7 +94,6 @@ class AttendanceSalaryReport(models.Model):
             raise UserError(_('Payroll is not installed. Install Payroll first, then this report can create a payslip batch for the selected employees.'))
         if not self.line_ids:
             raise UserError(_('Generate the report before creating a payroll batch.'))
-
         PayslipRun = self.env['hr.payslip.run'].sudo()
         Payslip = self.env['hr.payslip'].sudo()
         batch = PayslipRun.create({
@@ -111,7 +101,6 @@ class AttendanceSalaryReport(models.Model):
             'date_start': self.date_from,
             'date_end': self.date_to,
         })
-        created = 0
         for line in self.line_ids.filtered(lambda l: l.employee_id):
             vals = {
                 'name': _('Salary Slip - %s - %s/%s') % (line.employee_id.name, self.date_from, self.date_to),
@@ -123,38 +112,13 @@ class AttendanceSalaryReport(models.Model):
             if line.contract_id and 'contract_id' in Payslip._fields:
                 vals['contract_id'] = line.contract_id
             slip = Payslip.create(vals)
-            created += 1
             if hasattr(slip, 'compute_sheet'):
                 slip.compute_sheet()
-        self.write({
-            'payroll_batch_id': batch.name,
-            'state': 'batch_created',
-            'batch_created_on': fields.Datetime.now(),
-        })
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'hr.payslip.run',
-            'res_id': batch.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
-
-    @api.onchange('company_id')
-    def _onchange_company_id(self):
-        if self.company_id:
-            self.employee_ids = [(5, 0, 0)]
-            if self.department_id and self.department_id.company_id and self.department_id.company_id != self.company_id:
-                self.department_id = False
+        self.write({'payroll_batch_id': batch.name, 'state': 'batch_created', 'batch_created_on': fields.Datetime.now()})
+        return {'type': 'ir.actions.act_window', 'res_model': 'hr.payslip.run', 'res_id': batch.id, 'view_mode': 'form', 'target': 'current'}
 
     def _get_employees(self):
-        domain = []
-        company = self.company_id or self.env.company
-        # Keep the instant report company-specific. Employees without a company are
-        # also included because Odoo commonly treats them as shared employees.
-        if company:
-            domain.append('|')
-            domain.append(('company_id', '=', company.id))
-            domain.append(('company_id', '=', False))
+        domain = [('company_id', '=', self.company_id.id)]
         if self.employee_ids:
             domain.append(('id', 'in', self.employee_ids.ids))
         if self.department_id:
@@ -171,60 +135,88 @@ class AttendanceSalaryReport(models.Model):
             ('check_in', '<=', fields.Datetime.to_string(end_dt)),
             '|', ('check_out', '=', False), ('check_out', '>=', fields.Datetime.to_string(start_dt)),
         ])
-        worked_hours = sum(attendances.mapped('worked_hours'))
+        attendance_worked_hours = sum(attendances.mapped('worked_hours'))
         contract = self._get_contract(employee)
-        basic_salary = contract.wage if contract and 'wage' in contract._fields else 0.0
         calendar_obj = contract.resource_calendar_id if contract and 'resource_calendar_id' in contract._fields and contract.resource_calendar_id else employee.resource_calendar_id
         hours_per_day = calendar_obj.hours_per_day if calendar_obj and 'hours_per_day' in calendar_obj._fields and calendar_obj.hours_per_day else 8.0
         expected_days = self._expected_working_days(calendar_obj)
         expected_hours = expected_days * hours_per_day
         approved_leave_days, unpaid_leave_days = self._leave_days(employee)
-        payable_expected_days = max(expected_days - approved_leave_days, 0.0)
-        payable_expected_hours = max(expected_hours - (approved_leave_days * hours_per_day), 0.0)
-        shortage_hours = max(payable_expected_hours - worked_hours, 0.0)
-        overtime_hours = max(worked_hours - payable_expected_hours, 0.0)
-        absent_days = min(shortage_hours / hours_per_day if hours_per_day else 0.0, payable_expected_days)
-        daily_rate = basic_salary / expected_days if expected_days else 0.0
-        hourly_rate = daily_rate / hours_per_day if hours_per_day else 0.0
-        shortage_deduction = shortage_hours * hourly_rate
-        absence_deduction = absent_days * daily_rate
-        overtime_amount = overtime_hours * hourly_rate
-        net_salary = basic_salary - shortage_deduction + overtime_amount
+
+        attendance_not_required = self._bool_from_any(employee, contract, [
+            'attendance_not_required', 'not_applicable_to_attendance', 'disable_attendance',
+            'eps_attendance_not_required', 'x_attendance_not_required', 'x_studio_attendance_not_required'
+        ])
+        fixed_hours = self._float_from_any(employee, contract, [
+            'standard_hours', 'fixed_worked_hours', 'monthly_fixed_hours', 'eps_fixed_worked_hours',
+            'x_standard_hours', 'x_fixed_worked_hours', 'x_studio_standard_hours', 'x_studio_fixed_worked_hours'
+        ])
+        if not fixed_hours:
+            fixed_hours = expected_hours
+        worked_hours = fixed_hours if attendance_not_required else attendance_worked_hours
+
+        gross_salary, basic_salary, housing, transport, other_allowances = self._salary_components(employee, contract)
         return {
+            'company_id': employee.company_id.id,
             'employee_id': employee.id,
             'department_id': employee.department_id.id,
-            'company_id': employee.company_id.id or (self.company_id.id if self.company_id else False),
             'contract_id': contract.id if contract else False,
             'calendar_id': calendar_obj.id if calendar_obj else False,
+            'attendance_not_required': attendance_not_required,
+            'gross_salary': gross_salary,
             'basic_salary': basic_salary,
-            'gross_salary': basic_salary,
+            'housing_allowance': housing,
+            'transport_allowance': transport,
+            'other_allowances': other_allowances,
             'expected_days': expected_days,
             'expected_hours': expected_hours,
+            'attendance_worked_hours': attendance_worked_hours,
             'worked_hours': worked_hours,
             'approved_leave_days': approved_leave_days,
             'unpaid_leave_days': unpaid_leave_days,
-            'absent_days': absent_days,
-            'shortage_hours': shortage_hours,
-            'overtime_hours': overtime_hours,
-            'daily_rate': daily_rate,
-            'hourly_rate': hourly_rate,
-            'absence_deduction': absence_deduction,
-            'shortage_deduction': shortage_deduction,
-            'overtime_amount': overtime_amount,
-            'net_salary': net_salary,
             'attendance_count': len(attendances),
-            'auto_checkout_count': len(attendances.filtered(lambda a: getattr(a, 'auto_checked_out', False))),
-            'outside_location_count': len(attendances.filtered(lambda a: getattr(a, 'checkout_outside_location', False))),
         }
 
     def _get_contract(self, employee):
         if 'hr.contract' not in self.env.registry:
             return False
         domain = [('employee_id', '=', employee.id)]
-        if 'state' in self.env['hr.contract']._fields:
+        Contract = self.env['hr.contract']
+        if 'company_id' in Contract._fields:
+            domain.append(('company_id', '=', self.company_id.id))
+        if 'state' in Contract._fields:
             domain.append(('state', 'in', ['open', 'close']))
-        contracts = self.env['hr.contract'].sudo().search(domain, order='date_start desc, id desc', limit=1)
-        return contracts[:1]
+        return Contract.sudo().search(domain, order='date_start desc, id desc', limit=1)[:1]
+
+    def _salary_components(self, employee, contract=False):
+        gross = self._float_from_any(contract, employee, ['wage', 'gross_salary', 'monthly_gross_salary', 'x_gross_salary', 'x_studio_gross_salary']) if contract else self._float_from_any(employee, False, ['gross_salary', 'x_gross_salary', 'x_studio_gross_salary'])
+        housing = self._float_from_any(contract, employee, ['housing_allowance', 'hra', 'l10n_sa_housing_allowance', 'x_housing_allowance', 'x_studio_housing_allowance'])
+        transport = self._float_from_any(contract, employee, ['transport_allowance', 'transportation_allowance', 'travel_allowance', 'x_transport_allowance', 'x_studio_transport_allowance'])
+        other = self._float_from_any(contract, employee, ['other_allowance', 'other_allowances', 'allowance', 'x_other_allowances', 'x_studio_other_allowances'])
+        basic = gross - housing - transport - other
+        # Fallback only when no salary breakdown exists. Your reference report uses gross / 1.35 as a practical default.
+        if gross and basic == gross and not (housing or transport or other):
+            basic = gross / 1.35
+            other = gross - basic
+        return max(gross, 0.0), max(basic, 0.0), max(housing, 0.0), max(transport, 0.0), max(other, 0.0)
+
+    def _float_from_any(self, primary, secondary=False, field_names=None):
+        for record in (primary, secondary):
+            if not record:
+                continue
+            for name in (field_names or []):
+                if name in record._fields:
+                    return float(getattr(record, name) or 0.0)
+        return 0.0
+
+    def _bool_from_any(self, primary, secondary=False, field_names=None):
+        for record in (primary, secondary):
+            if not record:
+                continue
+            for name in (field_names or []):
+                if name in record._fields:
+                    return bool(getattr(record, name))
+        return False
 
     def _expected_working_days(self, calendar_obj=False):
         days = 0.0
@@ -255,8 +247,7 @@ class AttendanceSalaryReport(models.Model):
             ('date_from', '<=', fields.Datetime.to_string(end_dt)),
             ('date_to', '>=', fields.Datetime.to_string(start_dt)),
         ])
-        approved = 0.0
-        unpaid = 0.0
+        approved = unpaid = 0.0
         for leave in leaves:
             days = getattr(leave, 'number_of_days', 0.0) or getattr(leave, 'number_of_days_display', 0.0) or 0.0
             approved += days
@@ -277,28 +268,83 @@ class AttendanceSalaryReportLine(models.Model):
     _order = 'employee_id'
 
     report_id = fields.Many2one('employee.attendance.salary.report', required=True, ondelete='cascade')
+    company_id = fields.Many2one('res.company', string='Company', readonly=True)
     currency_id = fields.Many2one(related='report_id.currency_id', readonly=True)
     employee_id = fields.Many2one('hr.employee', string='Employee', readonly=True)
-    company_id = fields.Many2one('res.company', string='Company', readonly=True)
     department_id = fields.Many2one('hr.department', string='Department', readonly=True)
     contract_id = fields.Many2one('hr.contract', string='Contract', readonly=True) if False else fields.Integer(string='Contract ID', readonly=True)
     calendar_id = fields.Many2one('resource.calendar', string='Working Schedule', readonly=True)
-    basic_salary = fields.Monetary(string='Basic Salary', currency_field='currency_id', readonly=True)
+    attendance_not_required = fields.Boolean(string='Attendance Not Applicable', readonly=True)
+
     gross_salary = fields.Monetary(string='Gross Salary', currency_field='currency_id', readonly=True)
+    basic_salary = fields.Monetary(string='Basic Salary', currency_field='currency_id', readonly=True)
+    housing_allowance = fields.Monetary(string='Housing', currency_field='currency_id', readonly=True)
+    transport_allowance = fields.Monetary(string='Transport', currency_field='currency_id', readonly=True)
+    other_allowances = fields.Monetary(string='Other Allowances', currency_field='currency_id', readonly=True)
+    total_allowances = fields.Monetary(string='Total Allowances', currency_field='currency_id', compute='_compute_amounts', store=True)
+
     expected_days = fields.Float(string='Expected Days', readonly=True)
-    expected_hours = fields.Float(string='Expected Hours', readonly=True)
+    expected_hours = fields.Float(string='Target Hours', readonly=True)
+    attendance_worked_hours = fields.Float(string='Attendance Hours', readonly=True)
     worked_hours = fields.Float(string='Worked Hours', readonly=True)
+    manual_worked_hours = fields.Float(string='Manual Worked Hours')
+    final_worked_hours = fields.Float(string='Final Worked Hours', compute='_compute_amounts', store=True)
+
     approved_leave_days = fields.Float(string='Approved Leave', readonly=True)
     unpaid_leave_days = fields.Float(string='Unpaid Leave', readonly=True)
-    absent_days = fields.Float(string='Absence Days', readonly=True)
-    shortage_hours = fields.Float(string='Shortage Hours', readonly=True)
-    overtime_hours = fields.Float(string='Overtime Hours', readonly=True)
-    daily_rate = fields.Monetary(string='Daily Rate', currency_field='currency_id', readonly=True)
-    hourly_rate = fields.Monetary(string='Hourly Rate', currency_field='currency_id', readonly=True)
-    absence_deduction = fields.Monetary(string='Absence Deduction', currency_field='currency_id', readonly=True)
-    shortage_deduction = fields.Monetary(string='Shortage Deduction', currency_field='currency_id', readonly=True)
-    overtime_amount = fields.Monetary(string='Overtime Amount', currency_field='currency_id', readonly=True)
-    net_salary = fields.Monetary(string='Estimated Net', currency_field='currency_id', readonly=True)
+    system_absent_days = fields.Float(string='System Absent Days', compute='_compute_amounts', store=True)
+    manual_absent_days = fields.Float(string='Manual Absent Days')
+    final_absent_days = fields.Float(string='Final Absent Days', compute='_compute_amounts', store=True)
+
+    shortage_hours = fields.Float(string='Shortage Hours', compute='_compute_amounts', store=True)
+    overtime_hours = fields.Float(string='Overtime Hours', compute='_compute_amounts', store=True)
+    daily_rate = fields.Monetary(string='Daily Rate', currency_field='currency_id', compute='_compute_amounts', store=True)
+    gross_hourly_rate = fields.Monetary(string='Gross Hourly Rate', currency_field='currency_id', compute='_compute_amounts', store=True)
+    basic_hourly_rate = fields.Monetary(string='Basic Hourly Rate', currency_field='currency_id', compute='_compute_amounts', store=True)
+    overtime_hourly_rate = fields.Monetary(string='Overtime Hourly Rate', currency_field='currency_id', compute='_compute_amounts', store=True)
+    absence_deduction = fields.Monetary(string='Absence Deduction', currency_field='currency_id', compute='_compute_amounts', store=True)
+    shortage_deduction = fields.Monetary(string='Hourly Deduction', currency_field='currency_id', compute='_compute_amounts', store=True)
+    attendance_deduction = fields.Monetary(string='Attendance Deduction', currency_field='currency_id', compute='_compute_amounts', store=True)
+    overtime_amount = fields.Monetary(string='Overtime Amount', currency_field='currency_id', compute='_compute_amounts', store=True)
+    other_deductions = fields.Monetary(string='Other Deduction', currency_field='currency_id')
+    reimbursements = fields.Monetary(string='Reimbursement', currency_field='currency_id')
+    net_salary = fields.Monetary(string='Estimated Net', currency_field='currency_id', compute='_compute_amounts', store=True)
     attendance_count = fields.Integer(string='Attendance Entries', readonly=True)
-    auto_checkout_count = fields.Integer(string='Auto Checkouts', readonly=True)
-    outside_location_count = fields.Integer(string='Outside Location', readonly=True)
+
+    @api.depends('gross_salary', 'basic_salary', 'housing_allowance', 'transport_allowance', 'other_allowances', 'expected_days', 'expected_hours', 'worked_hours', 'manual_worked_hours', 'manual_absent_days', 'approved_leave_days', 'other_deductions', 'reimbursements')
+    def _compute_amounts(self):
+        for line in self:
+            line.total_allowances = line.housing_allowance + line.transport_allowance + line.other_allowances
+            final_worked = line.manual_worked_hours if line.manual_worked_hours else line.worked_hours
+            hours_per_day = (line.expected_hours / line.expected_days) if line.expected_days else 8.0
+            target_hours = line.expected_hours
+            payable_expected_days = max(line.expected_days - line.approved_leave_days, 0.0)
+            payable_expected_hours = max(target_hours - (line.approved_leave_days * hours_per_day), 0.0)
+            gross_hourly_rate = (line.gross_salary / 240.0) if line.gross_salary else 0.0
+            basic_hourly_rate = (line.basic_salary / 240.0) if line.basic_salary else 0.0
+            overtime_hourly_rate = gross_hourly_rate + (0.5 * basic_hourly_rate)
+            daily_rate = (line.gross_salary / 30.0) if line.gross_salary else 0.0
+
+            days_for_calc = line.expected_days or 26.0
+            theoretical_hours_per_day = target_hours / days_for_calc if days_for_calc else hours_per_day
+            days_worked = min(final_worked / theoretical_hours_per_day, payable_expected_days) if theoretical_hours_per_day else 0.0
+            expected_hours_for_days_worked = days_worked * theoretical_hours_per_day
+            hourly_shortfall = max(0.0, expected_hours_for_days_worked - final_worked)
+            system_absent_days = max(0.0, payable_expected_days - days_worked)
+            final_absent_days = system_absent_days + (line.manual_absent_days or 0.0)
+            overtime_hours = max(0.0, final_worked - payable_expected_hours)
+
+            line.final_worked_hours = final_worked
+            line.system_absent_days = system_absent_days
+            line.final_absent_days = final_absent_days
+            line.shortage_hours = hourly_shortfall
+            line.overtime_hours = overtime_hours
+            line.daily_rate = daily_rate
+            line.gross_hourly_rate = gross_hourly_rate
+            line.basic_hourly_rate = basic_hourly_rate
+            line.overtime_hourly_rate = overtime_hourly_rate
+            line.absence_deduction = final_absent_days * daily_rate
+            line.shortage_deduction = hourly_shortfall * gross_hourly_rate
+            line.attendance_deduction = line.absence_deduction + line.shortage_deduction
+            line.overtime_amount = overtime_hours * overtime_hourly_rate
+            line.net_salary = line.gross_salary - line.attendance_deduction + line.overtime_amount - (line.other_deductions or 0.0) + (line.reimbursements or 0.0)
