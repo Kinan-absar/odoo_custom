@@ -3,10 +3,6 @@
 
     <!-- ================================================================
          FORM VIEW
-         - Generate/Refresh stays on same record (action_generate returns False)
-         - Clean two-column summary at the top
-         - Slim line list with only the columns that matter for a payroll table
-         - Print-friendly via odoo standard print button
     ================================================================ -->
     <record id="view_attendance_salary_report_form" model="ir.ui.view">
         <field name="name">employee.attendance.salary.report.form</field>
@@ -27,19 +23,15 @@
                 </header>
 
                 <sheet>
-                    <!-- Title row -->
                     <div class="oe_title">
-                        <h1>
-                            <field name="name" placeholder="Report Name"/>
-                        </h1>
+                        <h1><field name="name" placeholder="Report Name"/></h1>
                         <p class="text-muted">
-                            Payroll attendance calculation — gross wage is taken from the contract;
-                            allowances are subtracted to derive the basic salary.
-                            Employees not enrolled in attendance tracking use their scheduled hours.
+                            Gross wage is read from the contract. Basic = Gross − Housing − Transport − Other Allowances.
+                            Employees on <strong>Working Schedule</strong> get full credit with no deductions (add Manual Absent Days for exceptions).
+                            Employees on <strong>Attendances</strong> have their actual clocked hours monitored.
                         </p>
                     </div>
 
-                    <!-- Filters + Summary side by side -->
                     <group>
                         <group string="Period &amp; Filters">
                             <field name="company_id" options="{'no_create': True}"/>
@@ -65,69 +57,74 @@
                         </group>
                     </group>
 
-                    <!-- ── Report table ──────────────────────────────────── -->
                     <notebook>
                         <page string="Employee Lines">
                             <field name="line_ids" nolabel="1">
                                 <!--
-                                    Columns kept lean so the table is readable on screen and prints cleanly:
-                                    Employee | Dept | Att? | Basic | Allowances | Gross | Worked | Absent | OT Hrs
-                                    | Att.Deduction | OT Amt | Other Ded | Reimb | Net
-                                    Less-critical columns are optional (hidden by default).
+                                    Column strategy:
+                                    Always visible  : Employee, Dept, Tracks Att?, Gross, Basic,
+                                                      Target Hrs, Worked Hrs, Absent Days, Manual Abs.,
+                                                      Att. Deduction, OT Amount, Other Ded, Reimb, Net
+                                    Optional (hide) : allowance detail, leave days, shortage/OT hours, check-ins
                                 -->
                                 <list string="Salary Report Lines"
                                       editable="bottom"
                                       decoration-danger="attendance_deduction &gt; 0"
                                       decoration-success="overtime_amount &gt; 0"
-                                      decoration-muted="attendance_not_required">
+                                      decoration-muted="not use_attendance">
 
-                                    <field name="employee_id" readonly="1" string="Employee" optional="show"/>
+                                    <field name="employee_id" readonly="1"/>
                                     <field name="department_id" readonly="1" optional="show"/>
-                                    <field name="attendance_not_required" readonly="1"
-                                           string="No Att." optional="show"
-                                           widget="boolean"
-                                           title="Checked = employee does not clock in/out; schedule hours used instead"/>
 
-                                    <!-- Salary breakdown -->
+                                    <!-- Source indicator — read-only, no checkbox to tick -->
+                                    <field name="use_attendance" readonly="1" string="Att. Source"
+                                           widget="boolean"
+                                           optional="show"/>
+
+                                    <!-- Salary -->
                                     <field name="gross_salary" sum="Gross" readonly="1" optional="show"/>
                                     <field name="basic_salary" sum="Basic" readonly="1" optional="show"/>
                                     <field name="total_allowances" sum="Allowances" readonly="1" optional="hide"/>
                                     <field name="housing_allowance" sum="Housing" readonly="1" optional="hide"/>
                                     <field name="transport_allowance" sum="Transport" readonly="1" optional="hide"/>
-                                    <field name="other_allowances" sum="Other Allow." readonly="1" optional="hide"/>
+                                    <field name="other_allowances" sum="Other" readonly="1" optional="hide"/>
 
-                                    <!-- Attendance / time -->
-                                    <field name="expected_days" readonly="1" optional="hide"/>
-                                    <field name="expected_hours" widget="float_time" readonly="1" optional="show" string="Target Hrs"/>
-                                    <field name="final_worked_hours" widget="float_time" sum="Worked" readonly="1" optional="show" string="Worked Hrs"/>
-                                    <field name="manual_worked_hours" widget="float_time" optional="hide" string="Manual Hrs"/>
+                                    <!-- Time -->
+                                    <field name="expected_hours" widget="float_time" readonly="1"
+                                           optional="show" string="Target Hrs"/>
+                                    <field name="final_worked_hours" widget="float_time" sum="Worked"
+                                           readonly="1" optional="show" string="Worked Hrs"/>
 
-                                    <!-- Leave / absence -->
+                                    <!-- Absence -->
                                     <field name="approved_leave_days" sum="Leave" readonly="1" optional="hide"/>
-                                    <field name="final_absent_days" sum="Absent" readonly="1" optional="show" string="Absent Days"/>
+                                    <field name="final_absent_days" sum="Absent" readonly="1"
+                                           optional="show" string="Absent Days"/>
                                     <field name="manual_absent_days" optional="show" string="Manual Abs."/>
 
-                                    <!-- Over/under hours -->
-                                    <field name="shortage_hours" widget="float_time" sum="Shortage" readonly="1" optional="hide"/>
-                                    <field name="overtime_hours" widget="float_time" sum="OT Hrs" readonly="1" optional="show"/>
+                                    <!-- OT/shortage detail -->
+                                    <field name="shortage_hours" widget="float_time" sum="Shortage"
+                                           readonly="1" optional="hide"/>
+                                    <field name="overtime_hours" widget="float_time" sum="OT Hrs"
+                                           readonly="1" optional="hide"/>
 
-                                    <!-- Money columns -->
-                                    <field name="attendance_deduction" sum="Att. Deduction" readonly="1" optional="show"/>
-                                    <field name="overtime_amount" sum="OT Amount" readonly="1" optional="show"/>
+                                    <!-- Money -->
+                                    <field name="attendance_deduction" sum="Att. Ded." readonly="1" optional="show"/>
+                                    <field name="overtime_amount" sum="OT Amt" readonly="1" optional="show"/>
                                     <field name="other_deductions" sum="Other Ded." optional="show"/>
                                     <field name="reimbursements" sum="Reimb." optional="show"/>
-                                    <field name="net_salary" sum="Estimated Net" readonly="1" optional="show"/>
+                                    <field name="net_salary" sum="Net" readonly="1" optional="show"/>
+
                                     <field name="attendance_count" readonly="1" optional="hide" string="Check-ins"/>
                                 </list>
 
-                                <!-- Detail form opened per-line -->
+                                <!-- Per-employee detail popup -->
                                 <form string="Employee Salary Line">
                                     <group>
-                                        <group string="Employee Info">
+                                        <group string="Employee">
                                             <field name="employee_id" readonly="1"/>
                                             <field name="department_id" readonly="1"/>
                                             <field name="calendar_id" readonly="1"/>
-                                            <field name="attendance_not_required" readonly="1"/>
+                                            <field name="use_attendance" readonly="1"/>
                                             <field name="attendance_count" readonly="1"/>
                                         </group>
                                         <group string="Salary Breakdown">
@@ -140,12 +137,10 @@
                                         </group>
                                     </group>
                                     <group>
-                                        <group string="Attendance &amp; Leave">
+                                        <group string="Time &amp; Leave">
                                             <field name="expected_days" readonly="1"/>
                                             <field name="expected_hours" widget="float_time" readonly="1"/>
                                             <field name="attendance_worked_hours" widget="float_time" readonly="1"/>
-                                            <field name="worked_hours" widget="float_time" readonly="1" string="System Worked Hours"/>
-                                            <field name="manual_worked_hours" widget="float_time"/>
                                             <field name="final_worked_hours" widget="float_time" readonly="1"/>
                                             <field name="approved_leave_days" readonly="1"/>
                                             <field name="unpaid_leave_days" readonly="1"/>
@@ -153,7 +148,7 @@
                                             <field name="manual_absent_days"/>
                                             <field name="final_absent_days" readonly="1"/>
                                         </group>
-                                        <group string="Rates &amp; Deductions">
+                                        <group string="Rates &amp; Calculations">
                                             <field name="daily_rate" readonly="1"/>
                                             <field name="gross_hourly_rate" readonly="1"/>
                                             <field name="basic_hourly_rate" readonly="1"/>
@@ -175,19 +170,23 @@
 
                         <page string="Notes">
                             <div class="alert alert-info" role="alert">
-                                <h5>How salary components are calculated</h5>
+                                <h5>Salary calculation rules</h5>
                                 <ul>
-                                    <li><strong>Gross Salary</strong> — taken from the employee's active contract wage field.</li>
-                                    <li><strong>Allowances</strong> — housing, transport and other allowance fields on the contract.</li>
-                                    <li><strong>Basic Salary</strong> — Gross minus all allowances. If no allowance fields are found, falls back to Gross ÷ 1.35.</li>
-                                    <li><strong>Daily Rate</strong> — Gross ÷ 30.</li>
-                                    <li><strong>Hourly Rate</strong> — Gross ÷ 240 (basic ÷ 240 for overtime calculation).</li>
-                                    <li><strong>Overtime Rate</strong> — Gross hourly + 0.5 × Basic hourly (1.5× effective).</li>
+                                    <li><strong>Gross</strong> — contract <code>wage</code> field.</li>
+                                    <li><strong>Housing</strong> — <code>l10n_sa_housing_allowance</code></li>
+                                    <li><strong>Transport</strong> — <code>l10n_sa_transportation_allowance</code></li>
+                                    <li><strong>Other Allow.</strong> — <code>l10n_sa_other_allowances</code></li>
+                                    <li><strong>Basic</strong> = Gross − Housing − Transport − Other (fallback: Gross ÷ 1.35)</li>
+                                    <li><strong>Daily Rate</strong> = Gross ÷ 30</li>
+                                    <li><strong>OT Rate</strong> = (Gross ÷ 240) + 0.5 × (Basic ÷ 240)</li>
                                 </ul>
-                                <h5>Attendance logic</h5>
+                                <h5>Attendance source (from contract "Work Entry Source")</h5>
                                 <ul>
-                                    <li>Employees with an attendance-tracking flag on their contract use actual HR Attendance check-in/out hours.</li>
-                                    <li>Employees <strong>not</strong> enrolled in attendance (flag absent or explicitly set to "not required") are credited with their full expected schedule hours — no shortfall deductions apply to them.</li>
+                                    <li><strong>Working Schedule</strong> — employee is credited with full expected hours.
+                                        No hour shortfall or absence deductions are applied automatically.
+                                        Use <em>Manual Absent Days</em> to deduct specific days if needed.</li>
+                                    <li><strong>Attendances</strong> — actual clocked hours are monitored.
+                                        Shortfalls and absent days are calculated and deducted automatically.</li>
                                 </ul>
                             </div>
                         </page>
@@ -198,7 +197,7 @@
     </record>
 
     <!-- ================================================================
-         LIST VIEW — index of all reports
+         LIST VIEW
     ================================================================ -->
     <record id="view_attendance_salary_report_tree" model="ir.ui.view">
         <field name="name">employee.attendance.salary.report.tree</field>
@@ -239,13 +238,19 @@
                 <field name="name"/>
                 <field name="company_id"/>
                 <field name="department_id"/>
-                <filter name="not_batched" string="Not Batched" domain="[('state', '!=', 'batch_created')]"/>
-                <filter name="batched"     string="Batch Created" domain="[('state', '=', 'batch_created')]"/>
-                <filter name="draft"       string="Not Generated" domain="[('state', '=', 'draft')]"/>
+                <filter name="not_batched" string="Not Batched"
+                        domain="[('state', '!=', 'batch_created')]"/>
+                <filter name="batched" string="Batch Created"
+                        domain="[('state', '=', 'batch_created')]"/>
+                <filter name="draft" string="Not Generated"
+                        domain="[('state', '=', 'draft')]"/>
                 <group expand="0" string="Group By">
-                    <filter name="group_company"    string="Company"    context="{'group_by': 'company_id'}"/>
-                    <filter name="group_state"      string="Status"     context="{'group_by': 'state'}"/>
-                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_company"    string="Company"
+                            context="{'group_by': 'company_id'}"/>
+                    <filter name="group_state"      string="Status"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="group_department" string="Department"
+                            context="{'group_by': 'department_id'}"/>
                 </group>
             </search>
         </field>
