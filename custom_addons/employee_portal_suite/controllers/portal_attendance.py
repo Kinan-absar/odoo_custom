@@ -20,8 +20,7 @@ def _tz_convert(dt, employee):
 
 
 def _is_attendance_only():
-    """Return True when the current user belongs ONLY to the Attendance Only
-    group and should be restricted to /my/employee/attendance."""
+    """Return True when the current user is restricted to attendance only."""
     return request.env.user.has_group(
         'employee_portal_suite.group_attendance_only'
     )
@@ -38,9 +37,6 @@ class EmployeePortalAttendance(http.Controller):
         employee = user.employee_id
 
         if not employee:
-            return request.redirect('/my/employee')
-
-        if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
             return request.redirect('/my/employee')
 
         # Current open attendance (checked in, not yet checked out)
@@ -102,9 +98,6 @@ class EmployeePortalAttendance(http.Controller):
         if not employee:
             return request.redirect('/my/employee')
 
-        if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
-            return request.redirect('/my/employee')
-
         # Prevent double check-in
         existing = request.env['hr.attendance'].sudo().search([
             ('employee_id', '=', employee.id),
@@ -151,9 +144,6 @@ class EmployeePortalAttendance(http.Controller):
         employee = user.employee_id
 
         if not employee:
-            return request.redirect('/my/employee')
-
-        if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
             return request.redirect('/my/employee')
 
         open_attendance = request.env['hr.attendance'].sudo().search([

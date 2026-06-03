@@ -1,0 +1,507 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+  <!-- ================================================================
+       INSTANT PAYROLL REPORT PAGE
+       Route: /my/instant-payroll
+       Mirrors Attendance Pro's AdminReports "Instance Report"
+       ================================================================ -->
+  <template id="instant_payroll_report_page" name="Instant Payroll Report">
+    <t t-call="employee_portal_suite.employee_portal_layout">
+
+      <style>
+        /* ── Instant Payroll Report — scoped styles ── */
+        .ipr-hero {
+          background: linear-gradient(135deg, var(--app-primary-dark, #3730A3) 0%, var(--app-primary, #4F46E5) 100%);
+          border-radius: 20px;
+          padding: 24px 28px;
+          color: #fff;
+          margin-bottom: 20px;
+        }
+        .ipr-card {
+          background: #fff;
+          border-radius: 16px;
+          box-shadow: 0 2px 12px rgba(0,0,0,.06);
+          border: 1px solid rgba(0,0,0,.05);
+        }
+        .ipr-summary-card {
+          background: #fff;
+          border-radius: 14px;
+          border: 1px solid rgba(0,0,0,.06);
+          padding: 14px 16px;
+          text-align: center;
+        }
+        .ipr-summary-card .label { font-size: .68rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; }
+        .ipr-summary-card .value { font-size: 1.3rem; font-weight: 800; color: #111827; margin-top: 2px; }
+        .ipr-table { font-size: .72rem; width: 100%; border-collapse: collapse; }
+        .ipr-table th { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #9ca3af; padding: 10px 8px; border-bottom: 1px solid #f3f4f6; white-space: nowrap; }
+        .ipr-table td { padding: 9px 8px; border-bottom: 1px solid #f9fafb; vertical-align: middle; }
+        .ipr-table tbody tr:hover { background: #fafbff; }
+        .ipr-table tfoot td { font-weight: 800; background: #1e1e2e; color: #fff; padding: 10px 8px; }
+        .ipr-sticky { position: sticky; left: 0; background: #fff; z-index: 2; }
+        .ipr-table tbody tr:hover .ipr-sticky { background: #fafbff; }
+        .ipr-table tfoot td.ipr-sticky { background: #1e1e2e; }
+        .badge-leave { background: #ede9fe; color: #5b21b6; border-radius: 6px; padding: 1px 6px; font-size: .6rem; font-weight: 700; }
+        .badge-net-pos { background: #111827; color: #fff; border-radius: 8px; padding: 3px 10px; font-weight: 800; }
+        .badge-net-neg { background: #dc2626; color: #fff; border-radius: 8px; padding: 3px 10px; font-weight: 800; }
+        .badge-leave-bal-pos { background: #d1fae5; color: #065f46; border-radius: 6px; padding: 2px 7px; font-size: .65rem; font-weight: 700; }
+        .badge-leave-bal-neg { background: #fee2e2; color: #991b1b; border-radius: 6px; padding: 2px 7px; font-size: .65rem; font-weight: 700; }
+        .text-pos { color: #16a34a; font-weight: 700; }
+        .text-neg { color: #dc2626; font-weight: 700; }
+        .text-muted-sm { color: #9ca3af; font-size: .65rem; }
+        .adj-input {
+          width: 68px; border: 1px solid #e5e7eb; border-radius: 6px;
+          padding: 2px 5px; font-size: .68rem; font-weight: 700;
+          text-align: right; background: #f9fafb;
+          transition: border-color .15s, background .15s;
+        }
+        .adj-input:focus { outline: none; border-color: #6366f1; background: #eef2ff; }
+        .adj-input.red { background: #fff1f2; border-color: #fca5a5; color: #dc2626; }
+        .adj-input.green { background: #f0fdf4; border-color: #86efac; color: #16a34a; }
+        .filter-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; padding: 16px 20px; }
+        .filter-bar label { font-size: .68rem; font-weight: 700; color: #6b7280; display: block; margin-bottom: 4px; text-transform: uppercase; }
+        .filter-bar select, .filter-bar input[type=text] {
+          border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px;
+          font-size: .75rem; font-weight: 600; color: #374151;
+          background: #fff; cursor: pointer;
+        }
+        .btn-ipr { border: none; border-radius: 10px; padding: 7px 16px; font-size: .72rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-ipr-primary { background: var(--app-primary, #4F46E5); color: #fff; }
+        .btn-ipr-primary:hover { background: var(--app-primary-dark, #3730A3); }
+        .btn-ipr-outline { background: #fff; color: #374151; border: 1px solid #e5e7eb; }
+        .btn-ipr-outline:hover { background: #f9fafb; }
+        .btn-ipr-green { background: #16a34a; color: #fff; }
+        .btn-ipr-green:hover { background: #15803d; }
+        .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,.75); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 12px; }
+        .loading-overlay.active { display: flex; }
+        .spinner { width: 36px; height: 36px; border: 3px solid #e5e7eb; border-top-color: #4F46E5; border-radius: 50%; animation: spin .7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media print {
+          .no-print { display: none !important; }
+          .ipr-hero { background: #1e1e2e !important; print-color-adjust: exact; }
+          .ipr-card { box-shadow: none; border: 1px solid #e5e7eb; }
+        }
+      </style>
+
+      <!-- Loading overlay -->
+      <div id="iprOverlay" class="loading-overlay">
+        <div class="spinner"/>
+        <span style="font-size:.8rem;font-weight:700;color:#4F46E5">Computing payroll…</span>
+      </div>
+
+      <!-- Hero header -->
+      <div class="ipr-hero no-print">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-size:1.25rem;font-weight:800;letter-spacing:-.02em">
+              &#128202; Instant Payroll Report
+            </div>
+            <div style="font-size:.8rem;opacity:.8;margin-top:3px">
+              Live salary snapshot &nbsp;·&nbsp;
+              <span t-out="period_start"/> &#8594; <span t-out="period_end"/>
+            </div>
+          </div>
+          <select id="periodSelect"
+                  style="border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);color:#fff;padding:7px 12px;font-size:.75rem;font-weight:700;cursor:pointer"
+                  onchange="IPR.changePeriod(this.value)">
+            <t t-foreach="periods" t-as="p">
+              <option t-att-value="str(p['year']) + '-' + str(p['month'])"
+                      t-att-selected="p['active'] and 'selected' or None"
+                      t-out="p['label']"/>
+            </t>
+          </select>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="ipr-card no-print" style="margin-bottom:16px">
+        <div class="filter-bar">
+          <div>
+            <label>Department</label>
+            <select id="deptFilter">
+              <option value="">All Departments</option>
+              <t t-foreach="departments" t-as="dept">
+                <option t-att-value="dept.id" t-out="dept.name"/>
+              </t>
+            </select>
+          </div>
+          <div>
+            <label>Search</label>
+            <input type="text" id="searchInput" placeholder="Employee name…"
+                   oninput="IPR.filterTable()" style="width:160px"/>
+          </div>
+          <button class="btn-ipr btn-ipr-primary" onclick="IPR.loadData()">
+            &#8635; Refresh
+          </button>
+          <button class="btn-ipr btn-ipr-outline" onclick="IPR.exportCsv()">
+            &#8615; Export CSV
+          </button>
+          <button id="btnBatch" class="btn-ipr btn-ipr-green" style="display:none"
+                  onclick="IPR.createBatch()">
+            &#128228; Push to Payroll Batch
+          </button>
+          <button class="btn-ipr btn-ipr-outline" onclick="window.print()">
+            &#128438; Print
+          </button>
+        </div>
+      </div>
+
+      <!-- Summary cards -->
+      <div id="summaryRow" style="display:none;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px">
+          <div class="ipr-summary-card"><div class="label">Employees</div><div class="value" id="sEmp">—</div></div>
+          <div class="ipr-summary-card"><div class="label">Worked Hrs</div><div class="value" id="sHours" style="color:#4F46E5">—</div></div>
+          <div class="ipr-summary-card"><div class="label">Total Gross</div><div class="value" id="sGross">—</div></div>
+          <div class="ipr-summary-card"><div class="label">Deductions</div><div class="value" id="sDed" style="color:#dc2626">—</div></div>
+          <div class="ipr-summary-card"><div class="label">Overtime</div><div class="value" id="sOT" style="color:#16a34a">—</div></div>
+          <div class="ipr-summary-card"><div class="label">Net Total</div><div class="value" id="sNet" style="color:#111">—</div></div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="ipr-card" style="overflow:hidden;margin-bottom:32px">
+        <div style="overflow-x:auto">
+          <table class="ipr-table" id="iprTable">
+            <thead>
+              <tr>
+                <th class="ipr-sticky" style="min-width:160px">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <input type="checkbox" id="chkAll" class="no-print" onchange="IPR.toggleAll(this)" style="cursor:pointer"/>
+                    Employee
+                  </div>
+                </th>
+                <th class="no-print">Dept</th>
+                <th style="text-align:right">Hours</th>
+                <th style="text-align:right">Diff</th>
+                <th class="no-print" style="text-align:center">Shifts</th>
+                <th class="no-print" style="text-align:center">Days</th>
+                <th style="text-align:right;color:#4F46E5">Gross</th>
+                <th style="text-align:right;color:#dc2626;font-size:.6rem">Day Ded.</th>
+                <th style="text-align:right;color:#dc2626;font-size:.6rem">Hr Ded.</th>
+                <th style="text-align:right;color:#dc2626">Tot. Ded.</th>
+                <th style="text-align:right;color:#16a34a">OT</th>
+                <th style="text-align:center;min-width:95px">Abs. Days</th>
+                <th class="no-print" style="text-align:center;min-width:85px">Other Ded.</th>
+                <th class="no-print" style="text-align:center;min-width:85px">Reimb.</th>
+                <th style="text-align:right;min-width:100px">Net (SAR)</th>
+                <th class="no-print" style="text-align:center">Leave Bal.</th>
+              </tr>
+            </thead>
+            <tbody id="iprBody">
+              <tr>
+                <td colspan="16" style="text-align:center;padding:40px;color:#9ca3af">
+                  Loading…
+                </td>
+              </tr>
+            </tbody>
+            <tfoot id="iprFoot" style="display:none">
+              <tr>
+                <td class="ipr-sticky" colspan="2">Grand Total</td>
+                <td id="ftHours"  style="text-align:right;font-family:monospace"></td>
+                <td></td>
+                <td class="no-print"></td>
+                <td class="no-print"></td>
+                <td id="ftGross"  style="text-align:right;font-family:monospace"></td>
+                <td id="ftDayDed" style="text-align:right;font-family:monospace;color:#fca5a5"></td>
+                <td id="ftHrDed"  style="text-align:right;font-family:monospace;color:#fca5a5"></td>
+                <td id="ftDed"    style="text-align:right;font-family:monospace;color:#fca5a5"></td>
+                <td id="ftOT"     style="text-align:right;font-family:monospace;color:#86efac"></td>
+                <td></td>
+                <td id="ftOtherDed" class="no-print" style="text-align:center;font-family:monospace;color:#fca5a5"></td>
+                <td id="ftReimb"    class="no-print" style="text-align:center;font-family:monospace;color:#86efac"></td>
+                <td id="ftNet"    style="text-align:right;font-family:monospace;font-size:.9rem"></td>
+                <td class="no-print"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </t><!-- /layout -->
+
+    <!-- ================================================================
+         JAVASCRIPT
+         ================================================================ -->
+    <script type="text/javascript">
+    (function() {
+      'use strict';
+
+      /* ── state ────────────────────────────────────────────────── */
+      var _year    = <t t-out="year"/>;
+      var _month   = <t t-out="month"/>;
+      var _rows    = [];
+      var _selected = {};   // id → true
+
+      /* ── utils ────────────────────────────────────────────────── */
+      function fmt(n) {
+        return Number(n).toLocaleString('en-SA', {minimumFractionDigits:0, maximumFractionDigits:0});
+      }
+      function hhmm(h) {
+        h = Number(h) || 0;
+        var sign = h &lt; -0.01 ? '-' : '';
+        var abs  = Math.abs(h);
+        var hh   = Math.floor(abs);
+        var mm   = Math.round((abs - hh) * 60);
+        return sign + pad(hh) + ':' + pad(mm);
+      }
+      function pad(n) { return n &lt; 10 ? '0'+n : ''+n; }
+      function fmtD(n) { return Number(n).toFixed(1); }
+
+      function getCsrf() {
+        var m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : '';
+      }
+
+      async function postJson(url, data) {
+        var body = new URLSearchParams(data);
+        var resp = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken':  getCsrf()
+          },
+          body: body.toString()
+        });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        return await resp.json();
+      }
+
+      /* ── period ───────────────────────────────────────────────── */
+      window.IPR = window.IPR || {};
+
+      IPR.changePeriod = function(val) {
+        var parts = val.split('-');
+        window.location.href = '/my/instant-payroll?year=' + parts[0] + '&amp;month=' + parts[1];
+      };
+
+      /* ── load ─────────────────────────────────────────────────── */
+      IPR.loadData = async function() {
+        document.getElementById('iprOverlay').classList.add('active');
+        var dept = document.getElementById('deptFilter').value || '';
+        try {
+          var result = await postJson('/my/instant-payroll/data', {
+            year:          _year,
+            month:         _month,
+            department_id: dept
+          });
+          _rows = result.rows || [];
+          _selected = {};
+          document.getElementById('chkAll').checked = false;
+          document.getElementById('btnBatch').style.display = 'none';
+          renderTable(_rows);
+          renderSummary(_rows.length, result.grand_totals || {});
+        } catch(e) {
+          document.getElementById('iprBody').innerHTML =
+            '&lt;tr&gt;&lt;td colspan="16" style="text-align:center;color:#dc2626;padding:32px"&gt;Error: ' + e.message + '&lt;/td&gt;&lt;/tr&gt;';
+        } finally {
+          document.getElementById('iprOverlay').classList.remove('active');
+        }
+      };
+
+      /* ── render rows ──────────────────────────────────────────── */
+      function renderTable(rows) {
+        var body = document.getElementById('iprBody');
+        if (!rows.length) {
+          body.innerHTML = '&lt;tr&gt;&lt;td colspan="16" style="text-align:center;color:#9ca3af;padding:40px"&gt;No employees found.&lt;/td&gt;&lt;/tr&gt;';
+          return;
+        }
+        var q = (document.getElementById('searchInput').value || '').toLowerCase();
+        var visible = q ? rows.filter(function(r){ return r.name.toLowerCase().indexOf(q) >= 0; }) : rows;
+
+        body.innerHTML = visible.map(function(r) {
+          var diffCls  = r.diff > 0.01 ? 'text-pos' : r.diff &lt; -0.01 ? 'text-neg' : 'text-muted-sm';
+          var diffSign = r.diff > 0.01 ? '+' : '';
+          var netCls   = r.net &lt; 0 ? 'badge-net-neg' : 'badge-net-pos';
+          var leaveCls = r.leave_balance > 0 ? 'badge-leave-bal-pos' : 'badge-leave-bal-neg';
+
+          return [
+            '&lt;tr data-id="' + r.id + '"&gt;',
+            /* sticky employee col */
+            '&lt;td class="ipr-sticky"&gt;',
+            '  &lt;div style="display:flex;align-items:flex-start;gap:7px"&gt;',
+            '    &lt;input type="checkbox" class="emp-chk no-print" value="' + r.id + '"',
+            '           ' + (_selected[r.id] ? 'checked' : '') + ' onchange="IPR.onCheck(this)"',
+            '           style="margin-top:3px;cursor:pointer"/&gt;',
+            '    &lt;div&gt;',
+            r.is_on_leave_now ? '      &lt;span class="badge-leave"&gt;On Leave&lt;/span&gt;&lt;br/&gt;' : '',
+            '      &lt;span style="font-weight:700"&gt;' + r.name + '&lt;/span&gt;',
+            r.job ? '&lt;br/&gt;&lt;span class="text-muted-sm"&gt;' + r.job + '&lt;/span&gt;' : '',
+            '    &lt;/div&gt;',
+            '  &lt;/div&gt;',
+            '&lt;/td&gt;',
+            /* dept */
+            '&lt;td class="no-print text-muted-sm" style="text-align:center"&gt;' + (r.department||'') + '&lt;/td&gt;',
+            /* hours */
+            '&lt;td style="text-align:right;font-family:monospace;font-weight:700"&gt;' + hhmm(r.worked_hours) + '&lt;/td&gt;',
+            /* diff */
+            '&lt;td class="' + diffCls + '" style="text-align:right;font-family:monospace"&gt;' + diffSign + hhmm(r.diff) + '&lt;/td&gt;',
+            /* shifts */
+            '&lt;td class="no-print text-muted-sm" style="text-align:center"&gt;' + r.shift_count + '&lt;/td&gt;',
+            /* days */
+            '&lt;td class="no-print text-muted-sm" style="text-align:center"&gt;' + r.days_worked + '/' + r.expected_days + '&lt;/td&gt;',
+            /* gross */
+            '&lt;td style="text-align:right;font-family:monospace;font-weight:700;color:#4F46E5"&gt;' + fmt(r.gross) + '&lt;/td&gt;',
+            /* day ded */
+            '&lt;td style="text-align:right;font-family:monospace;color:#dc2626"&gt;' + (r.absent_ded > 0.01 ? '-'+fmt(r.absent_ded) : '—') + '&lt;/td&gt;',
+            /* hr ded */
+            '&lt;td style="text-align:right;font-family:monospace;color:#dc2626"&gt;' + (r.hourly_ded > 0.01 ? '-'+fmt(r.hourly_ded) : '—') + '&lt;/td&gt;',
+            /* total ded */
+            '&lt;td style="text-align:right;font-family:monospace;font-weight:700;color:#dc2626"&gt;' + (r.deduction > 0.01 ? fmt(r.deduction) : '—') + '&lt;/td&gt;',
+            /* ot */
+            '&lt;td style="text-align:right;font-family:monospace;font-weight:700;color:#16a34a"&gt;' + (r.overtime > 0.01 ? '+'+fmt(r.overtime) : '—') + '&lt;/td&gt;',
+            /* absent days — computed + adj input */
+            '&lt;td style="text-align:center"&gt;',
+            '  &lt;span style="font-weight:700;color:#dc2626;font-size:.72rem"&gt;' + fmtD(r.absent_from_leave) + '&lt;/span&gt;&lt;br/&gt;',
+            '  &lt;input type="number" step="0.5" class="adj-input red no-print"',
+            '         value="' + (r.adj_absent || '') + '"',
+            '         placeholder="Adj"',
+            '         title="Extra absent days"',
+            '         onchange="IPR.saveAdj(' + r.id + ', \'absent_days_adjustment\', this.value)"/&gt;',
+            '&lt;/td&gt;',
+            /* other ded */
+            '&lt;td class="no-print" style="text-align:center"&gt;',
+            '  &lt;input type="number" step="1" class="adj-input red"',
+            '         value="' + (r.adj_other_ded || '') + '"',
+            '         placeholder="0"',
+            '         title="Extra deductions"',
+            '         onchange="IPR.saveAdj(' + r.id + ', \'other_deductions\', this.value)"/&gt;',
+            '&lt;/td&gt;',
+            /* reimb */
+            '&lt;td class="no-print" style="text-align:center"&gt;',
+            '  &lt;input type="number" step="1" class="adj-input green"',
+            '         value="' + (r.reimb || '') + '"',
+            '         placeholder="0"',
+            '         title="Reimbursements"',
+            '         onchange="IPR.saveAdj(' + r.id + ', \'reimbursements\', this.value)"/&gt;',
+            '&lt;/td&gt;',
+            /* net */
+            '&lt;td style="text-align:right"&gt;',
+            '  &lt;span class="' + netCls + '"&gt;' + fmt(r.net) + '&lt;/span&gt;',
+            '&lt;/td&gt;',
+            /* leave balance */
+            '&lt;td class="no-print" style="text-align:center"&gt;',
+            '  &lt;span class="' + leaveCls + '" title="Allocated: ' + fmtD(r.leave_alloc_total) + 'd | Taken: ' + fmtD(r.leave_taken_ytd) + 'd"&gt;',
+            '    ' + fmtD(r.leave_balance) + ' d',
+            '  &lt;/span&gt;',
+            '&lt;/td&gt;',
+            '&lt;/tr&gt;'
+          ].join('');
+        }).join('');
+      }
+
+      /* ── summary cards ────────────────────────────────────────── */
+      function renderSummary(count, g) {
+        document.getElementById('sEmp').textContent   = count;
+        document.getElementById('sHours').textContent = hhmm(g.worked_hours||0);
+        document.getElementById('sGross').textContent = fmt(g.gross||0);
+        document.getElementById('sDed').textContent   = fmt(g.deduction||0);
+        document.getElementById('sOT').textContent    = '+' + fmt(g.overtime||0);
+        document.getElementById('sNet').textContent   = fmt(g.net||0);
+        document.getElementById('summaryRow').style.display = 'block';
+
+        document.getElementById('ftHours').textContent   = hhmm(g.worked_hours||0);
+        document.getElementById('ftGross').textContent   = fmt(g.gross||0);
+        document.getElementById('ftDed').textContent     = fmt(g.deduction||0);
+        document.getElementById('ftOT').textContent      = '+' + fmt(g.overtime||0);
+        document.getElementById('ftNet').textContent     = fmt(g.net||0);
+        document.getElementById('ftOtherDed').textContent = fmt(g.other_ded||0);
+        document.getElementById('ftReimb').textContent   = fmt(g.reimb||0);
+        document.getElementById('iprFoot').style.display = '';
+      }
+
+      /* ── search filter ────────────────────────────────────────── */
+      IPR.filterTable = function() { renderTable(_rows); };
+
+      /* ── save adjustment (debounced) ─────────────────────────── */
+      var _adjBuf = {};
+      var _adjTmr = {};
+
+      IPR.saveAdj = function(empId, field, rawVal) {
+        var val = parseFloat(rawVal) || 0;
+        if (!_adjBuf[empId]) _adjBuf[empId] = {};
+        _adjBuf[empId][field] = val;
+        clearTimeout(_adjTmr[empId]);
+        _adjTmr[empId] = setTimeout(async function() {
+          var buf = _adjBuf[empId];
+          var row = _rows.find(function(r){ return r.id === empId; }) || {};
+          try {
+            await postJson('/my/instant-payroll/save-adjustment', {
+              employee_id:           empId,
+              year:                  _year,
+              month:                 _month,
+              other_deductions:      buf.other_deductions      !== undefined ? buf.other_deductions      : (row.adj_other_ded||0),
+              reimbursements:        buf.reimbursements        !== undefined ? buf.reimbursements        : (row.reimb||0),
+              absent_days_adjustment: buf.absent_days_adjustment !== undefined ? buf.absent_days_adjustment : (row.adj_absent||0)
+            });
+            IPR.loadData();
+          } catch(e) { console.error('Save adj failed', e); }
+        }, 900);
+      };
+
+      /* ── export CSV ───────────────────────────────────────────── */
+      IPR.exportCsv = function() {
+        if (!_rows.length) return;
+        var headers = ['Employee','Department','Worked Hours','Diff (h)','Gross (SAR)',
+                       'Day Deduction','Hour Deduction','Total Deduction','Overtime',
+                       'Absent Days','Other Ded.','Reimb.','Net (SAR)','Leave Balance (d)'];
+        var rows = _rows.map(function(r) {
+          return [r.name, r.department, hhmm(r.worked_hours), r.diff.toFixed(2),
+                  r.gross, r.absent_ded, r.hourly_ded, r.deduction, r.overtime,
+                  r.total_absent, r.adj_other_ded, r.reimb, r.net, r.leave_balance];
+        });
+        var csv = [headers].concat(rows).map(function(row) {
+          return row.map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Payroll_' + _year + '_' + pad(_month) + '.csv';
+        link.click();
+      };
+
+      /* ── checkbox logic ───────────────────────────────────────── */
+      IPR.onCheck = function(el) {
+        var id = parseInt(el.value);
+        if (el.checked) _selected[id] = true;
+        else delete _selected[id];
+        var hasAny = Object.keys(_selected).length > 0;
+        document.getElementById('btnBatch').style.display = hasAny ? 'inline-flex' : 'none';
+      };
+
+      IPR.toggleAll = function(el) {
+        document.querySelectorAll('.emp-chk').forEach(function(chk) {
+          chk.checked = el.checked;
+          IPR.onCheck(chk);
+        });
+      };
+
+      /* ── push to payroll batch ────────────────────────────────── */
+      IPR.createBatch = async function() {
+        var ids = Object.keys(_selected);
+        if (!ids.length) return;
+        if (!confirm('Create a payroll batch for ' + ids.length + ' selected employee(s)?')) return;
+        try {
+          var result = await postJson('/my/instant-payroll/create-batch', {
+            year:         _year,
+            month:        _month,
+            employee_ids: JSON.stringify(ids.map(Number))
+          });
+          if (result.status === 'ok') {
+            alert('✅ Batch created with ' + result.slips_created + ' payslip(s). Opening…');
+            window.location.href = result.batch_url;
+          } else {
+            alert('⚠️ ' + result.message);
+          }
+        } catch(e) { alert('Error: ' + e.message); }
+      };
+
+      /* ── auto-load ────────────────────────────────────────────── */
+      document.addEventListener('DOMContentLoaded', function() {
+        IPR.loadData();
+      });
+
+    })();
+    </script>
+
+  </template>
+</odoo>

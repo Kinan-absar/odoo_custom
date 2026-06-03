@@ -1,6 +1,6 @@
 {
     'name': 'Employee Portal Suite',
-    'version': '1.0',
+    'version': '1.1',
     'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
 
     'description': """
@@ -58,6 +58,7 @@
         # --- SECURITY ---
         'security/security_groups.xml',
         'security/ir.model.access.csv',
+        'security/ir_payroll_instant_access.csv',
         'security/record_rules.xml',
 
         # --- DATA / SEQUENCES ---
@@ -110,7 +111,12 @@
         'views/project_project_views.xml',
         'views/employee_portal_attendance.xml',
         'views/hr_attendance_views.xml',
-        'views/account_move_views.xml',
+
+        # --------------------------------------------------
+        # INSTANT PAYROLL REPORT
+        # --------------------------------------------------
+        'views/instant_payroll_views.xml',
+        'views/instant_payroll_report.xml',
 
     ],
 
@@ -118,14 +124,7 @@
     #  ASSETS (JS)
     # ------------------------------------------------------------------
     'assets': {
-        'web.assets_backend': [
-            'employee_portal_suite/static/src/js/material_request_dashboard.js',
-            'employee_portal_suite/static/src/js/employee_request_dashboard.js',
-            'employee_portal_suite/static/src/xml/material_request_dashboard.xml',
-            'employee_portal_suite/static/src/xml/employee_request_dashboard.xml',
-            'employee_portal_suite/static/src/scss/material_request_dashboard.scss',
-            'employee_portal_suite/static/src/scss/employee_request_dashboard.scss',
-        ],
+        
     },
     'images': ['static/description/icon.png'],
 

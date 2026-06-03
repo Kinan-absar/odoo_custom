@@ -510,8 +510,7 @@
                     </a>
                 </div>
 
-                <!-- ATTENDANCE (only for group_portal_attendance_user) -->
-                <t t-if="can_use_attendance">
+                <!-- ATTENDANCE -->
                 <div class="col-6 col-md-6">
                     <a href="/my/employee/attendance" class="dashboard-link">
                         <div class="dashboard-card"
@@ -536,7 +535,6 @@
                         </div>
                     </a>
                 </div>
-                </t>
 
             </div>
            <div class="recent-activity mt-4">
