@@ -97,7 +97,7 @@
               &#128202; Instant Payroll Report
             </div>
             <div style="font-size:.8rem;opacity:.8;margin-top:3px">
-              Live salary snapshot &nbsp;·&nbsp;
+              Live salary snapshot &#160;·&#160;
               <span t-out="period_start"/> &#8594; <span t-out="period_end"/>
             </div>
           </div>
