@@ -42,7 +42,7 @@
                     </group>
 
                     <field name="line_ids" nolabel="1" readonly="1">
-                        <list string="Salary Lines" create="false" delete="false" editable="false">
+                        <list string="Salary Lines" create="false" delete="false">
                             <field name="employee_id" readonly="1"/>
                             <field name="department_id" readonly="1" optional="show"/>
                             <field name="gross_salary" sum="Gross" readonly="1"/>
