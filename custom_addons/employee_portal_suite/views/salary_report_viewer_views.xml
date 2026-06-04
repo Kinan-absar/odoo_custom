@@ -97,12 +97,14 @@
         <field name="context">{'search_default_generated': 1}</field>
     </record>
 
-    <!-- Menu item — only visible to salary report viewers -->
-    <menuitem id="menu_salary_report_viewer"
-              name="Salary Reports"
-              parent="menu_employee_portal_attendance_root"
-              action="action_salary_report_viewer"
-              sequence="15"
-              groups="employee_portal_suite.group_salary_report_viewer"/>
+    <!-- Backend menu intentionally disabled. Salary Report Viewer is a PORTAL read-only group. -->
+    <record id="menu_salary_report_viewer" model="ir.ui.menu">
+        <field name="name">Salary Reports</field>
+        <field name="parent_id" ref="menu_employee_portal_attendance_root"/>
+        <field name="action" ref="action_salary_report_viewer"/>
+        <field name="sequence">15</field>
+        <field name="groups_id" eval="[(6, 0, [ref('employee_portal_suite.group_salary_report_viewer')])]"/>
+        <field name="active" eval="False"/>
+    </record>
 
 </odoo>
