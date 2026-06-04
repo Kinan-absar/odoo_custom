@@ -62,8 +62,8 @@
                         <h3 class="mb-1">Salary Report</h3>
                         <p class="text-muted mb-0">
                             Period: <strong><t t-esc="report.date_from"/> to <t t-esc="report.date_to"/></strong>
-                            <t t-if="report.work_location_id">
-                                | Work Location Filter: <strong><t t-esc="report.work_location_id.name"/></strong>
+                            <t t-if="report.work_location_ids">
+                                | Work Location Filter: <strong><t t-esc="', '.join(report.work_location_ids.mapped('name'))"/></strong>
                             </t>
                         </p>
                     </div>
