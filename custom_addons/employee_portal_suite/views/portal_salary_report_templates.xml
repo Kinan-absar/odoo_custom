@@ -125,6 +125,34 @@
                         </div>
                     </div>
                 </t>
+
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-header bg-dark text-white">
+                        <strong>Grand Total</strong>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-end">Employees</th>
+                                    <th class="text-end">Gross Salary</th>
+                                    <th class="text-end">Deductions</th>
+                                    <th class="text-end">Reimbursements</th>
+                                    <th class="text-end">Net Salary</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="fw-bold">
+                                    <td class="text-end"><t t-esc="report.total_employees"/></td>
+                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(report.total_gross_salary)"/></td>
+                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(report.total_attendance_deductions + report.total_other_deductions)"/></td>
+                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(sum(report.line_ids.mapped('reimbursements')))"/></td>
+                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(report.total_net_salary)"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </t>
     </template>
