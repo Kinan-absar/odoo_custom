@@ -115,6 +115,7 @@
         'reports/report_salary_report.xml',
         'views/hr_employee_payroll_views.xml',
         'views/attendance_salary_report_views.xml',
+        'views/salary_report_viewer_views.xml',
 
     ],
 

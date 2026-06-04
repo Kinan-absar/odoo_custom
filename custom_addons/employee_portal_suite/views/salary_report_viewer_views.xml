@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================
+         READ-ONLY FORM VIEW for Salary Report Viewers
+         Shows only: Employee, Gross, Deductions, Reimbursements, Net
+         (mirrors the printed PDF columns)
+    ================================================================ -->
+    <record id="view_salary_report_viewer_form" model="ir.ui.view">
+        <field name="name">employee.attendance.salary.report.viewer.form</field>
+        <field name="model">employee.attendance.salary.report</field>
+        <field name="arch" type="xml">
+            <form string="Salary Report" create="false" edit="false" delete="false">
+                <header>
+                    <button name="action_print_report" type="object"
+                            string="Print Report"
+                            class="btn-primary"
+                            groups="employee_portal_suite.group_salary_report_viewer"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,generated,batch_created"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Period">
+                            <field name="company_id" readonly="1"/>
+                            <field name="date_from" readonly="1"/>
+                            <field name="date_to" readonly="1"/>
+                            <field name="department_id" readonly="1"/>
+                            <field name="generated_on" readonly="1"/>
+                        </group>
+                        <group string="Summary">
+                            <field name="total_employees" readonly="1"/>
+                            <field name="total_gross_salary" readonly="1"/>
+                            <field name="total_attendance_deductions" readonly="1"/>
+                            <field name="total_other_deductions" readonly="1"/>
+                            <field name="total_reimbursements" readonly="1"/>
+                            <field name="total_net_salary" readonly="1" class="fw-bold text-success"/>
+                        </group>
+                    </group>
+
+                    <field name="line_ids" nolabel="1" readonly="1">
+                        <list string="Salary Lines" create="false" delete="false" editable="false">
+                            <field name="employee_id" readonly="1"/>
+                            <field name="department_id" readonly="1" optional="show"/>
+                            <field name="gross_salary" sum="Gross" readonly="1"/>
+                            <field name="attendance_deduction" sum="Att. Ded." readonly="1" string="Att. Deduction"/>
+                            <field name="other_deductions" sum="Other Ded." readonly="1"/>
+                            <field name="reimbursements" sum="Reimb." readonly="1"/>
+                            <field name="net_salary" sum="Net" readonly="1"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Read-only list view for viewers -->
+    <record id="view_salary_report_viewer_list" model="ir.ui.view">
+        <field name="name">employee.attendance.salary.report.viewer.list</field>
+        <field name="model">employee.attendance.salary.report</field>
+        <field name="arch" type="xml">
+            <list string="Salary Reports" create="false" delete="false" edit="false"
+                  decoration-success="state == 'batch_created'"
+                  decoration-info="state == 'generated'"
+                  decoration-muted="state == 'draft'">
+                <field name="name"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="department_id" optional="show"/>
+                <field name="total_employees"/>
+                <field name="total_gross_salary"/>
+                <field name="total_net_salary"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'batch_created'"
+                       decoration-info="state == 'generated'"
+                       decoration-muted="state == 'draft'"/>
+                <field name="generated_on" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Action for viewers — opens the viewer-specific views -->
+    <record id="action_salary_report_viewer" model="ir.actions.act_window">
+        <field name="name">Salary Reports</field>
+        <field name="res_model">employee.attendance.salary.report</field>
+        <field name="view_mode">list,form</field>
+        <field name="target">current</field>
+        <field name="view_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_salary_report_viewer_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_salary_report_viewer_form')}),
+        ]"/>
+        <field name="domain">[('state', 'in', ['generated', 'batch_created'])]</field>
+        <field name="context">{'search_default_generated': 1}</field>
+    </record>
+
+    <!-- Menu item — only visible to salary report viewers -->
+    <menuitem id="menu_salary_report_viewer"
+              name="Salary Reports"
+              parent="menu_employee_portal_attendance_root"
+              action="action_salary_report_viewer"
+              sequence="15"
+              groups="employee_portal_suite.group_salary_report_viewer"/>
+
+</odoo>
