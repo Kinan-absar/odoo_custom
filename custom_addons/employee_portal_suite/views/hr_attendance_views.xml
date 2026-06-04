@@ -124,7 +124,7 @@
               name="Attendance"
               parent="menu_employee_portal_root"
               sequence="40"
-              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
+              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_salary_report_viewer"/>
 
     <menuitem id="menu_attendance_auto_checkout"
               name="Auto Checked-Out"
