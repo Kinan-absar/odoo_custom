@@ -16,9 +16,9 @@ class AttendanceSalaryReport(models.Model):
                                  default=lambda self: self.env.company)
     employee_ids = fields.Many2many('hr.employee', string='Employees',
                                     domain="[('company_id', '=', company_id)]")
-    department_id = fields.Many2one('hr.department', string='Department',
+    department_ids = fields.Many2many('hr.department', string='Departments',
                                     domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
-    work_location_id = fields.Many2one('hr.work.location', string='Work Location')
+    work_location_ids = fields.Many2many('hr.work.location', string='Work Locations')
     include_inactive = fields.Boolean(string='Include Archived Employees')
     line_ids = fields.One2many('employee.attendance.salary.report.line', 'report_id', string='Lines')
     currency_id = fields.Many2one('res.currency', default=lambda self: self.env.company.currency_id)
@@ -176,10 +176,10 @@ class AttendanceSalaryReport(models.Model):
         domain = [('company_id', '=', self.company_id.id)]
         if self.employee_ids:
             domain.append(('id', 'in', self.employee_ids.ids))
-        if self.department_id:
-            domain.append(('department_id', '=', self.department_id.id))
-        if self.work_location_id:
-            domain.append(('work_location_id', '=', self.work_location_id.id))
+        if self.department_ids:
+            domain.append(('department_id', 'in', self.department_ids.ids))
+        if self.work_location_ids:
+            domain.append(('work_location_id', 'in', self.work_location_ids.ids))
         if not self.include_inactive:
             domain.append(('active', '=', True))
         return self.env['hr.employee'].sudo().search(domain, order='name')
