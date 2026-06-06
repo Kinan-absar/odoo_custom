@@ -33,34 +33,38 @@ class EmployeePortalRedirect(CustomerPortal):
 
 class EmployeePortalSignRedirect(http.Controller):
     """
-    Intercepts Odoo's post-signing redirect to /my/signature (with or without
-    a trailing /<id>) and sends employees to their sign documents page instead.
+    Catches ALL /my/signature* routes that Odoo's sign module registers,
+    and redirects employees to their employee sign page.
 
-    In Odoo 18 the sign widget redirects the browser to:
-        /my/signature/<request_item_id>?access_token=...
-    after the user completes signing. We catch both the bare path and the
-    path-with-id variant so nothing slips through.
+    Odoo 18 navigates to /my/signatures (plural, the list) after signing.
+    We cover both the list route and the single-item route just in case.
     """
 
     @http.route(
-        ['/my/signature', '/my/signature/<int:request_item_id>'],
+        [
+            '/my/signatures',
+            '/my/signatures/page/<int:page>',
+            '/my/signature',
+            '/my/signature/<int:request_item_id>',
+        ],
         type='http',
         auth='user',
         website=True,
         sitemap=False,
     )
-    def employee_sign_done_redirect(self, request_item_id=None, **kw):
+    def employee_sign_done_redirect(self, request_item_id=None, page=None, **kw):
         if request.env.user.employee_id:
             return request.redirect('/my/employee/sign')
 
-        # Non-employee portal user — hand off to the original Sign controller
-        # by calling it directly rather than via super() (avoids method-name
-        # mismatch across Odoo versions).
+        # Non-employee: hand off to the real Sign controller
         from odoo.addons.sign.controllers.main import Sign
         sign_ctrl = Sign()
-        if request_item_id is not None:
-            return sign_ctrl.sign_portal_my_request(
-                request_item_id=request_item_id, **kw
-            )
-        # Bare /my/signature with no id — just send them home
-        return request.redirect('/my')
+        try:
+            if request_item_id is not None:
+                return sign_ctrl.sign_portal_my_request(
+                    request_item_id=request_item_id, **kw
+                )
+            else:
+                return sign_ctrl.portal_my_signatures(page=page or 1, **kw)
+        except Exception:
+            return request.redirect('/my')

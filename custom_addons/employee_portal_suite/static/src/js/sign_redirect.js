@@ -1,66 +1,100 @@
 /** @odoo-module **/
 
 /**
- * Intercepts the post-signing redirect in Odoo 18's sign widget.
+ * After the user finishes signing, Odoo's sign widget navigates to
+ * /my/signatures (the portal signatures list). We intercept that
+ * navigation and send employees to /my/employee/sign instead.
  *
- * After the user signs, the OWL ThankYouDialog closes and the JS sets
- * window.location to /my/signature/<id>. We patch window.location via
- * a MutationObserver + event delegation on the Close button so that
- * employees are sent to /my/employee/sign instead.
- *
- * This runs only on /sign/document/* pages.
+ * Strategy: patch window.location assignment via history.pushState
+ * and a beforeunload-style check, PLUS directly intercept the Close
+ * button in the "It's signed!" dialog.
  */
 
 (function () {
-    // Only activate on the sign document portal page
     if (!window.location.pathname.startsWith('/sign/document/')) {
         return;
     }
 
-    /**
-     * When the "It's signed!" dialog appears, rewrite the Close button
-     * so it sends the user to /my/employee/sign instead of /my/signature.
-     */
-    function patchCloseButton(dialog) {
-        // The Close button is any button whose text is exactly "Close"
-        // (Odoo uses _t("Close") — English default shown in screenshot)
-        const buttons = dialog.querySelectorAll('button');
+    // -- Strategy 1: intercept the Close button directly --
+    function patchDialog(root) {
+        const buttons = root.querySelectorAll('button');
         buttons.forEach(function (btn) {
-            const label = btn.textContent.trim();
-            if (label === 'Close' || label === 'إغلاق') {
-                // Clone to strip existing listeners, then re-add ours
-                const fresh = btn.cloneNode(true);
-                btn.parentNode.replaceChild(fresh, btn);
-                fresh.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
-                    window.location.href = '/my/employee/sign';
-                });
+            const txt = btn.textContent.trim();
+            // Match "Close" in any language by also checking aria or class,
+            // but text is reliable from the screenshot
+            if (!btn.dataset.epPatched) {
+                btn.dataset.epPatched = '1';
+                btn.addEventListener('click', function (e) {
+                    // Give Odoo's handler a tick to run, then override location
+                    setTimeout(function () {
+                        if (window.location.pathname.startsWith('/my/signature')) {
+                            window.location.replace('/my/employee/sign');
+                        }
+                    }, 0);
+                }, true); // capture phase so we run before Odoo's handler
             }
         });
     }
 
-    // Watch for the dialog being injected into the DOM
+    // -- Strategy 2: intercept window.location changes directly --
+    // Override location.assign and location.replace
+    const origAssign   = window.location.assign.bind(window.location);
+    const origReplace  = window.location.replace.bind(window.location);
+
+    window.location.assign = function (url) {
+        if (typeof url === 'string' && url.includes('/my/signature')) {
+            origAssign('/my/employee/sign');
+        } else {
+            origAssign(url);
+        }
+    };
+
+    window.location.replace = function (url) {
+        if (typeof url === 'string' && url.includes('/my/signature')) {
+            origReplace('/my/employee/sign');
+        } else {
+            origReplace(url);
+        }
+    };
+
+    // Override history.pushState / replaceState too
+    const origPush    = history.pushState.bind(history);
+    const origReplaceS = history.replaceState.bind(history);
+
+    history.pushState = function (state, title, url) {
+        if (typeof url === 'string' && url.includes('/my/signature')) {
+            return origPush(state, title, '/my/employee/sign');
+        }
+        return origPush(state, title, url);
+    };
+
+    history.replaceState = function (state, title, url) {
+        if (typeof url === 'string' && url.includes('/my/signature')) {
+            return origReplaceS(state, title, '/my/employee/sign');
+        }
+        return origReplaceS(state, title, url);
+    };
+
+    // -- Strategy 3: MutationObserver watches for the dialog --
     const observer = new MutationObserver(function (mutations) {
-        mutations.forEach(function (mutation) {
-            mutation.addedNodes.forEach(function (node) {
+        mutations.forEach(function (m) {
+            m.addedNodes.forEach(function (node) {
                 if (node.nodeType !== 1) return;
-
-                // The dialog contains the text "It's signed!" or similar
-                // Odoo renders it inside a .modal or an OWL dialog wrapper
-                const text = node.textContent || '';
-                if (text.includes("It's signed") || text.includes("signed")) {
-                    patchCloseButton(node);
-                }
-
-                // Also search descendants
-                const dialogs = node.querySelectorAll
-                    ? node.querySelectorAll('.o_dialog, .modal-dialog, [role="dialog"]')
-                    : [];
-                dialogs.forEach(patchCloseButton);
+                patchDialog(node);
+                const children = node.querySelectorAll('*');
+                children.forEach(function (c) { patchDialog(c); });
             });
         });
     });
 
-    observer.observe(document.body, { childList: true, subtree: true });
+    document.addEventListener('DOMContentLoaded', function () {
+        observer.observe(document.body, { childList: true, subtree: true });
+        // Patch anything already in the DOM
+        patchDialog(document.body);
+    });
+
+    // Also run immediately in case DOM is already ready
+    if (document.body) {
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
 })();
