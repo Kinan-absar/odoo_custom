@@ -26,3 +26,28 @@ class HrEmployee(models.Model):
         default=True,
         help='Allow attendance shortage/absence deduction in the instant salary report.'
     )
+
+    eps_target_hours = fields.Float(
+        string='Target Hours',
+        help='Monthly target hours used by the instant salary report. If empty, the report uses the working schedule or default period target.'
+    )
+    eps_housing_allowance = fields.Monetary(
+        string='Housing Allowance',
+        currency_field='currency_id',
+        help='Housing allowance amount used to split gross salary into basic salary for overtime premium calculation.'
+    )
+    eps_transport_allowance = fields.Monetary(
+        string='Transport Allowance',
+        currency_field='currency_id',
+        help='Transport allowance amount used to split gross salary into basic salary for overtime premium calculation.'
+    )
+    eps_other_allowance = fields.Monetary(
+        string='Other Allowance',
+        currency_field='currency_id',
+        help='Other allowance amount used to split gross salary into basic salary for overtime premium calculation.'
+    )
+    currency_id = fields.Many2one(
+        related='company_id.currency_id',
+        readonly=True,
+        string='Currency'
+    )
