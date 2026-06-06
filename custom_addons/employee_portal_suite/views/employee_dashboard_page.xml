@@ -510,27 +510,6 @@
                     </a>
                 </div>
 
-                <!-- SALARY REPORTS (read-only portal viewer group) -->
-                <t t-if="request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')">
-                    <div class="col-6 col-md-6">
-                        <a href="/my/employee/salary-reports" class="dashboard-link">
-                            <div class="dashboard-card">
-                                <div class="card-top">
-                                    <div class="card-icon bg-success-soft">
-                                        <i class="fa fa-money"></i>
-                                    </div>
-                                    <span class="card-title">Salary Reports</span>
-                                </div>
-                                <div class="card-bottom">
-                                    <span class="card-number">
-                                        <t t-esc="salary_report_count"/>
-                                    </span>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </t>
-
                 <!-- ATTENDANCE (only for group_portal_attendance_user) -->
                 <t t-if="can_use_attendance">
                 <div class="col-6 col-md-6">

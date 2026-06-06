@@ -184,7 +184,7 @@ class EmployeePortalMaterialRequests(http.Controller):
         for f in files:
             if not f or f.filename.strip() == "":
                 continue
-            filename = f.filename.strip()
+
             file_content = f.read()
 
             request.env["ir.attachment"].sudo().create({

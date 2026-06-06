@@ -136,16 +136,7 @@ class EmployeePortalMain(CustomerPortal):
         show_construction_cards = self._construction_portal_available() and self._safe_has_group('construction_contract_management.group_construction_portal')
         
         # ------------------------------------------------------
-        # 7. Salary Reports available to read-only portal viewers
-        # ------------------------------------------------------
-        salary_report_count = 0
-        if request.env.user.has_group('employee_portal_suite.group_salary_report_viewer'):
-            salary_report_count = request.env['employee.attendance.salary.report'].sudo().search_count([
-                ('state', 'in', ['generated', 'batch_created'])
-            ])
-
-        # ------------------------------------------------------
-        # 8. Recent Activities
+        # 7. Recent Activities
         # ------------------------------------------------------
         from itertools import chain
 
@@ -172,7 +163,7 @@ class EmployeePortalMain(CustomerPortal):
         )[:6]
 
         # ------------------------------------------------------
-        # 9. Attendance Status
+        # 8. Attendance Status
         # ------------------------------------------------------
         can_use_attendance = request.env.user.has_group(
             'employee_portal_suite.group_portal_attendance_user'
@@ -194,7 +185,6 @@ class EmployeePortalMain(CustomerPortal):
             "employee_pending_count": employee_pending_count,
             "material_pending_count": material_pending_count,
             "pending_sign_count": pending_sign_count,
-            "salary_report_count": salary_report_count,
             "recent_activities": recent_activities,
             "contract_count": contract_count,
             "ipc_count": ipc_count,
