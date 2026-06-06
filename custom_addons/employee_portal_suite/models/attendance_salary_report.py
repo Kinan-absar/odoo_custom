@@ -247,7 +247,7 @@ class AttendanceSalaryReport(models.Model):
         # For calendar employees: credit full expected hours
         worked_hours = attendance_worked_hours if use_attendance else expected_hours
 
-        approved_leave_days, unpaid_leave_days = self._leave_days(employee)
+        approved_leave_days, unpaid_leave_days, public_holiday_days = self._leave_days(employee)
 
         gross_salary, basic_salary, housing, transport, other_allowances = \
             self._salary_components(employee, contract)
@@ -273,6 +273,7 @@ class AttendanceSalaryReport(models.Model):
             'days_worked': days_worked,
             'approved_leave_days': approved_leave_days,
             'unpaid_leave_days': unpaid_leave_days,
+            'public_holiday_days': public_holiday_days,
             'attendance_count': attendance_count,
         }
 
@@ -326,7 +327,7 @@ class AttendanceSalaryReport(models.Model):
 
     def _leave_days(self, employee):
         if 'hr.leave' not in self.env.registry:
-            return 0.0, 0.0
+            return 0.0, 0.0, 0.0
         start_dt = datetime.combine(self.date_from, time.min)
         end_dt = datetime.combine(self.date_to, time.max)
         leaves = self.env['hr.leave'].sudo().search([
@@ -335,17 +336,42 @@ class AttendanceSalaryReport(models.Model):
             ('date_from', '<=', fields.Datetime.to_string(end_dt)),
             ('date_to', '>=', fields.Datetime.to_string(start_dt)),
         ])
-        approved = unpaid = 0.0
+        approved = unpaid = public_holiday = 0.0
         for leave in leaves:
             days = getattr(leave, 'number_of_days', 0.0) or getattr(leave, 'number_of_days_display', 0.0) or 0.0
             approved += days
             leave_type = leave.holiday_status_id if 'holiday_status_id' in leave._fields else False
-            if leave_type:
-                for fname in ('unpaid', 'is_unpaid', 'unpaid_leave'):
-                    if fname in leave_type._fields and getattr(leave_type, fname):
-                        unpaid += days
-                        break
-        return approved, unpaid
+            if not leave_type:
+                continue
+
+            work_entry_type = (
+                leave_type.work_entry_type_id
+                if 'work_entry_type_id' in leave_type._fields and leave_type.work_entry_type_id
+                else False
+            )
+            work_entry_name = ((work_entry_type.name or '') if work_entry_type else '').strip().lower()
+            work_entry_code = ((getattr(work_entry_type, 'code', '') or '') if work_entry_type else '').strip().lower()
+            leave_type_name = (leave_type.name or '').strip().lower()
+
+            # Main mapping requested by Absar:
+            # - Work Entry Type = Public Holiday -> no deduction, only reduces target days/hours.
+            # - Work Entry Type = Unpaid -> deducted once as leave/absence deduction.
+            # Fallbacks are kept only so older databases without work_entry_type_id still work.
+            if 'public holiday' in work_entry_name or 'public' in work_entry_code:
+                public_holiday += days
+                continue
+            if (
+                'unpaid' in work_entry_name
+                or 'unpaid' in work_entry_code
+                or 'unpaid vacation' in leave_type_name
+            ):
+                unpaid += days
+                continue
+            for fname in ('unpaid', 'is_unpaid', 'unpaid_leave'):
+                if fname in leave_type._fields and getattr(leave_type, fname):
+                    unpaid += days
+                    break
+        return approved, unpaid, public_holiday
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -391,6 +417,7 @@ class AttendanceSalaryReportLine(models.Model):
     # ── Leave ─────────────────────────────────────────────────────────────────
     approved_leave_days = fields.Float(string='Approved Leave', readonly=True)
     unpaid_leave_days = fields.Float(string='Unpaid Leave', readonly=True)
+    public_holiday_days = fields.Float(string='Public Holiday', readonly=True)
     system_absent_days = fields.Float(string='System Absent Days', compute='_compute_amounts', store=True)
     manual_absent_days = fields.Float(string='Manual Absent Days')
     final_absent_days = fields.Float(string='Final Absent Days', compute='_compute_amounts', store=True)
@@ -422,7 +449,7 @@ class AttendanceSalaryReportLine(models.Model):
         'gross_salary', 'basic_salary',
         'housing_allowance', 'transport_allowance', 'other_allowances',
         'expected_days', 'expected_hours', 'worked_hours', 'days_worked',
-        'manual_absent_days', 'approved_leave_days',
+        'manual_absent_days', 'approved_leave_days', 'unpaid_leave_days', 'public_holiday_days',
         'other_deductions', 'reimbursements',
         'use_attendance', 'overtime_enabled',
     )
@@ -451,10 +478,10 @@ class AttendanceSalaryReportLine(models.Model):
             if not line.use_attendance:
                 line.final_worked_hours = line.expected_hours
                 line.system_absent_days = 0.0
-                line.final_absent_days = line.manual_absent_days or 0.0
+                line.final_absent_days = (line.manual_absent_days or 0.0) + (line.unpaid_leave_days or 0.0)
                 line.shortage_hours = 0.0
                 line.shortage_deduction = 0.0
-                line.absence_deduction = (line.manual_absent_days or 0.0) * daily_rate
+                line.absence_deduction = line.final_absent_days * daily_rate
                 line.attendance_deduction = line.absence_deduction
                 line.overtime_hours = 0.0
                 line.overtime_amount = 0.0
@@ -470,7 +497,7 @@ class AttendanceSalaryReportLine(models.Model):
             #
             # Algorithm (ported from attendance_pro AdminReports.tsx):
             #
-            # 1. Payable expected days  = expected_days - approved_leave_days
+            # 1. Public holidays reduce target days/hours with no deduction. Unpaid leave is deducted once.
             # 2. theoretical_hours_per_day = expected_hours / expected_days
             #    (or 8 if expected_days = 0)
             #
@@ -499,9 +526,11 @@ class AttendanceSalaryReportLine(models.Model):
             days_for_calc = line.expected_days if line.expected_days > 0 else 26.0
             theoretical_hours_per_day = target_hours / days_for_calc if days_for_calc else 8.0
 
-            payable_expected_days = max(line.expected_days - line.approved_leave_days, 0.0)
+            public_days = line.public_holiday_days or 0.0
+            unpaid_days = line.unpaid_leave_days or 0.0
+            payable_expected_days = max(line.expected_days - public_days - unpaid_days, 0.0)
             payable_expected_hours = max(
-                target_hours - (line.approved_leave_days * theoretical_hours_per_day), 0.0
+                target_hours - ((public_days + unpaid_days) * theoretical_hours_per_day), 0.0
             )
 
             actual_worked_hours = line.worked_hours
@@ -509,7 +538,7 @@ class AttendanceSalaryReportLine(models.Model):
 
             # ── Step 3: Absent days ───────────────────────────────────────────
             system_absent_days = max(0.0, payable_expected_days - actual_days_worked)
-            final_absent_days = system_absent_days + (line.manual_absent_days or 0.0)
+            final_absent_days = system_absent_days + (line.manual_absent_days or 0.0) + unpaid_days
             absence_deduction = final_absent_days * daily_rate
 
             # ── Step 4: Shortage hours (only on attended days) ────────────────
