@@ -125,8 +125,7 @@
                                     <!-- PENDING -->
                                     <t t-elif="'🟡' in your_status">
                                         <a class="btn btn-sm btn-primary"
-                                           t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1"
-                                        target="_blank">
+                                           t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1">
                                             Sign
                                         </a>
                                     </t>
@@ -207,8 +206,7 @@
 
                         <t t-elif="'🟡' in your_status">
                             <a class="btn btn-sm btn-primary"
-                               t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1"
-                               target="_blank">
+                               t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1">
                                 Sign
                             </a>
                         </t>
