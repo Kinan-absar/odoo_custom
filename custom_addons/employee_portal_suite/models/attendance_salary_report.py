@@ -140,12 +140,8 @@ class AttendanceSalaryReport(models.Model):
         calendar_obj = contract.resource_calendar_id if contract and 'resource_calendar_id' in contract._fields and contract.resource_calendar_id else employee.resource_calendar_id
         hours_per_day = calendar_obj.hours_per_day if calendar_obj and 'hours_per_day' in calendar_obj._fields and calendar_obj.hours_per_day else 8.0
         expected_days = self._expected_working_days(calendar_obj)
-        calendar_public_holiday_days = self._public_holiday_days(employee, calendar_obj)
         expected_hours = expected_days * hours_per_day
-        # Business rule: only Time Off linked to Work Entry Type "Unpaid" is deducted.
-        # Time Off linked to Work Entry Type "Public Holiday" is not deducted and only reduces the target.
-        approved_leave_days, unpaid_leave_days, timeoff_public_holiday_days = self._leave_days(employee)
-        public_holiday_days = calendar_public_holiday_days + timeoff_public_holiday_days
+        approved_leave_days, unpaid_leave_days = self._leave_days(employee)
 
         attendance_not_required = self._bool_from_any(employee, contract, [
             'attendance_not_required', 'not_applicable_to_attendance', 'disable_attendance',
@@ -167,15 +163,12 @@ class AttendanceSalaryReport(models.Model):
             'contract_id': contract.id if contract else False,
             'calendar_id': calendar_obj.id if calendar_obj else False,
             'attendance_not_required': attendance_not_required,
-            'overtime_enabled': self._bool_from_any(employee, contract, ['eps_overtime_enabled', 'overtime_enabled', 'x_overtime_enabled']) if any(n in employee._fields for n in ['eps_overtime_enabled', 'overtime_enabled', 'x_overtime_enabled']) else True,
-            'deduction_enabled': self._bool_from_any(employee, contract, ['eps_deduction_enabled', 'deduction_enabled', 'x_deduction_enabled']) if any(n in employee._fields for n in ['eps_deduction_enabled', 'deduction_enabled', 'x_deduction_enabled']) else True,
             'gross_salary': gross_salary,
             'basic_salary': basic_salary,
             'housing_allowance': housing,
             'transport_allowance': transport,
             'other_allowances': other_allowances,
             'expected_days': expected_days,
-            'public_holiday_days': public_holiday_days,
             'expected_hours': expected_hours,
             'attendance_worked_hours': attendance_worked_hours,
             'worked_hours': worked_hours,
@@ -243,55 +236,9 @@ class AttendanceSalaryReport(models.Model):
             current += timedelta(days=1)
         return days
 
-    def _public_holiday_days(self, employee, calendar_obj=False):
-        """Return public/official holiday days inside the report period.
-
-        Public holidays should not create a salary deduction and should not make the
-        employee look absent. They reduce the payable target before absence/hour
-        shortage is calculated.
-        """
-        if 'resource.calendar.leaves' not in self.env.registry:
-            return 0.0
-        CalendarLeave = self.env['resource.calendar.leaves'].sudo()
-        start_dt = datetime.combine(self.date_from, time.min)
-        end_dt = datetime.combine(self.date_to, time.max)
-        domain = [
-            ('date_from', '<=', fields.Datetime.to_string(end_dt)),
-            ('date_to', '>=', fields.Datetime.to_string(start_dt)),
-        ]
-        # Calendar leaves can be global, company-specific, calendar-specific, or resource-specific.
-        if 'company_id' in CalendarLeave._fields:
-            domain.append('|')
-            domain.append(('company_id', '=', False))
-            domain.append(('company_id', '=', self.company_id.id))
-        leaves = CalendarLeave.search(domain)
-        if calendar_obj and 'calendar_id' in CalendarLeave._fields:
-            leaves = leaves.filtered(lambda l: not l.calendar_id or l.calendar_id == calendar_obj)
-        if 'resource_id' in CalendarLeave._fields and employee.resource_id:
-            leaves = leaves.filtered(lambda l: not l.resource_id or l.resource_id == employee.resource_id)
-
-        attendance_weekdays = set()
-        if calendar_obj and 'attendance_ids' in calendar_obj._fields:
-            for att in calendar_obj.attendance_ids:
-                if hasattr(att, 'dayofweek'):
-                    attendance_weekdays.add(int(att.dayofweek))
-
-        holiday_dates = set()
-        for leave in leaves:
-            local_from = fields.Datetime.context_timestamp(self, leave.date_from).date() if leave.date_from else self.date_from
-            local_to = fields.Datetime.context_timestamp(self, leave.date_to).date() if leave.date_to else self.date_to
-            current = max(local_from, self.date_from)
-            last = min(local_to, self.date_to)
-            while current <= last:
-                weekday = current.weekday()
-                if (attendance_weekdays and weekday in attendance_weekdays) or (not attendance_weekdays and weekday < 5):
-                    holiday_dates.add(current)
-                current += timedelta(days=1)
-        return float(len(holiday_dates))
-
     def _leave_days(self, employee):
         if 'hr.leave' not in self.env.registry:
-            return 0.0, 0.0, 0.0
+            return 0.0, 0.0
         start_dt = datetime.combine(self.date_from, time.min)
         end_dt = datetime.combine(self.date_to, time.max)
         leaves = self.env['hr.leave'].sudo().search([
@@ -300,33 +247,19 @@ class AttendanceSalaryReport(models.Model):
             ('date_from', '<=', fields.Datetime.to_string(end_dt)),
             ('date_to', '>=', fields.Datetime.to_string(start_dt)),
         ])
-        approved = unpaid = public_holiday = 0.0
+        approved = unpaid = 0.0
         for leave in leaves:
             days = getattr(leave, 'number_of_days', 0.0) or getattr(leave, 'number_of_days_display', 0.0) or 0.0
-            leave_type = leave.holiday_status_id if 'holiday_status_id' in leave._fields else False
-            leave_type_name = (leave_type.name or '').lower() if leave_type else ''
-            work_entry_type = leave_type.work_entry_type_id if leave_type and 'work_entry_type_id' in leave_type._fields else False
-            work_entry_name = (work_entry_type.name or '').lower() if work_entry_type else ''
-            work_entry_code = (getattr(work_entry_type, 'code', '') or '').lower() if work_entry_type else ''
-
-            is_public_holiday = (
-                'public holiday' in work_entry_name
-                or 'public holiday' in leave_type_name
-                or work_entry_code in ('public', 'public_holiday', 'ph')
-            )
-            if is_public_holiday:
-                public_holiday += days
-                continue
-
             approved += days
-            is_unpaid = (
-                'unpaid' in work_entry_name
-                or 'unpaid' in leave_type_name
-                or work_entry_code in ('unpaid', 'unpaid_leave')
-            )
+            leave_type = leave.holiday_status_id if 'holiday_status_id' in leave._fields else False
+            is_unpaid = False
+            if leave_type:
+                for field_name in ('unpaid', 'is_unpaid', 'unpaid_leave'):
+                    if field_name in leave_type._fields and getattr(leave_type, field_name):
+                        is_unpaid = True
             if is_unpaid:
                 unpaid += days
-        return approved, unpaid, public_holiday
+        return approved, unpaid
 
 
 class AttendanceSalaryReportLine(models.Model):
@@ -342,8 +275,6 @@ class AttendanceSalaryReportLine(models.Model):
     contract_id = fields.Many2one('hr.contract', string='Contract', readonly=True) if False else fields.Integer(string='Contract ID', readonly=True)
     calendar_id = fields.Many2one('resource.calendar', string='Working Schedule', readonly=True)
     attendance_not_required = fields.Boolean(string='Attendance Not Applicable', readonly=True)
-    overtime_enabled = fields.Boolean(string='Overtime Enabled', readonly=True, default=True)
-    deduction_enabled = fields.Boolean(string='Deduction Enabled', readonly=True, default=True)
 
     gross_salary = fields.Monetary(string='Gross Salary', currency_field='currency_id', readonly=True)
     basic_salary = fields.Monetary(string='Basic Salary', currency_field='currency_id', readonly=True)
@@ -353,15 +284,14 @@ class AttendanceSalaryReportLine(models.Model):
     total_allowances = fields.Monetary(string='Total Allowances', currency_field='currency_id', compute='_compute_amounts', store=True)
 
     expected_days = fields.Float(string='Expected Days', readonly=True)
-    public_holiday_days = fields.Float(string='Public Holidays', readonly=True)
     expected_hours = fields.Float(string='Target Hours', readonly=True)
     attendance_worked_hours = fields.Float(string='Attendance Hours', readonly=True)
     worked_hours = fields.Float(string='Worked Hours', readonly=True)
     manual_worked_hours = fields.Float(string='Manual Worked Hours')
     final_worked_hours = fields.Float(string='Final Worked Hours', compute='_compute_amounts', store=True)
 
-    approved_leave_days = fields.Float(string='Time Off Leave', readonly=True)
-    unpaid_leave_days = fields.Float(string='Deducted Leave', readonly=True)
+    approved_leave_days = fields.Float(string='Approved Leave', readonly=True)
+    unpaid_leave_days = fields.Float(string='Unpaid Leave', readonly=True)
     system_absent_days = fields.Float(string='System Absent Days', compute='_compute_amounts', store=True)
     manual_absent_days = fields.Float(string='Manual Absent Days')
     final_absent_days = fields.Float(string='Final Absent Days', compute='_compute_amounts', store=True)
@@ -372,7 +302,6 @@ class AttendanceSalaryReportLine(models.Model):
     gross_hourly_rate = fields.Monetary(string='Gross Hourly Rate', currency_field='currency_id', compute='_compute_amounts', store=True)
     basic_hourly_rate = fields.Monetary(string='Basic Hourly Rate', currency_field='currency_id', compute='_compute_amounts', store=True)
     overtime_hourly_rate = fields.Monetary(string='Overtime Hourly Rate', currency_field='currency_id', compute='_compute_amounts', store=True)
-    leave_deduction = fields.Monetary(string='Leave Deduction', currency_field='currency_id', compute='_compute_amounts', store=True)
     absence_deduction = fields.Monetary(string='Absence Deduction', currency_field='currency_id', compute='_compute_amounts', store=True)
     shortage_deduction = fields.Monetary(string='Hourly Deduction', currency_field='currency_id', compute='_compute_amounts', store=True)
     attendance_deduction = fields.Monetary(string='Attendance Deduction', currency_field='currency_id', compute='_compute_amounts', store=True)
@@ -382,17 +311,15 @@ class AttendanceSalaryReportLine(models.Model):
     net_salary = fields.Monetary(string='Estimated Net', currency_field='currency_id', compute='_compute_amounts', store=True)
     attendance_count = fields.Integer(string='Attendance Entries', readonly=True)
 
-    @api.depends('gross_salary', 'basic_salary', 'housing_allowance', 'transport_allowance', 'other_allowances', 'expected_days', 'public_holiday_days', 'expected_hours', 'worked_hours', 'manual_worked_hours', 'manual_absent_days', 'approved_leave_days', 'unpaid_leave_days', 'other_deductions', 'reimbursements')
+    @api.depends('gross_salary', 'basic_salary', 'housing_allowance', 'transport_allowance', 'other_allowances', 'expected_days', 'expected_hours', 'worked_hours', 'manual_worked_hours', 'manual_absent_days', 'approved_leave_days', 'other_deductions', 'reimbursements')
     def _compute_amounts(self):
         for line in self:
             line.total_allowances = line.housing_allowance + line.transport_allowance + line.other_allowances
             final_worked = line.manual_worked_hours if line.manual_worked_hours else line.worked_hours
             hours_per_day = (line.expected_hours / line.expected_days) if line.expected_days else 8.0
             target_hours = line.expected_hours
-            # Public holidays and employee time off reduce the attendance target.
-            # Time off is then deducted separately; public holidays are never deducted.
-            payable_expected_days = max(line.expected_days - line.public_holiday_days - line.approved_leave_days, 0.0)
-            payable_expected_hours = max(target_hours - ((line.public_holiday_days + line.approved_leave_days) * hours_per_day), 0.0)
+            payable_expected_days = max(line.expected_days - line.approved_leave_days, 0.0)
+            payable_expected_hours = max(target_hours - (line.approved_leave_days * hours_per_day), 0.0)
             gross_hourly_rate = (line.gross_salary / 240.0) if line.gross_salary else 0.0
             basic_hourly_rate = (line.basic_salary / 240.0) if line.basic_salary else 0.0
             overtime_hourly_rate = gross_hourly_rate + (0.5 * basic_hourly_rate)
@@ -416,9 +343,8 @@ class AttendanceSalaryReportLine(models.Model):
             line.gross_hourly_rate = gross_hourly_rate
             line.basic_hourly_rate = basic_hourly_rate
             line.overtime_hourly_rate = overtime_hourly_rate
-            line.leave_deduction = line.unpaid_leave_days * daily_rate if line.deduction_enabled else 0.0
-            line.absence_deduction = final_absent_days * daily_rate if line.deduction_enabled else 0.0
-            line.shortage_deduction = hourly_shortfall * gross_hourly_rate if line.deduction_enabled else 0.0
-            line.attendance_deduction = line.leave_deduction + line.absence_deduction + line.shortage_deduction
-            line.overtime_amount = overtime_hours * overtime_hourly_rate if line.overtime_enabled else 0.0
+            line.absence_deduction = final_absent_days * daily_rate
+            line.shortage_deduction = hourly_shortfall * gross_hourly_rate
+            line.attendance_deduction = line.absence_deduction + line.shortage_deduction
+            line.overtime_amount = overtime_hours * overtime_hourly_rate
             line.net_salary = line.gross_salary - line.attendance_deduction + line.overtime_amount - (line.other_deductions or 0.0) + (line.reimbursements or 0.0)

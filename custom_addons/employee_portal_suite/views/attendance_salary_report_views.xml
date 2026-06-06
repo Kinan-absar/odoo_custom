@@ -52,20 +52,18 @@
                                     <field name="basic_salary" optional="show" sum="Basic" readonly="1"/>
                                     <field name="total_allowances" optional="hide" sum="Allowances" readonly="1"/>
                                     <field name="expected_days" optional="show" readonly="1"/>
-                                    <field name="public_holiday_days" optional="show" sum="PH" readonly="1"/>
                                     <field name="expected_hours" widget="float_time" sum="Target" readonly="1"/>
                                     <field name="worked_hours" widget="float_time" sum="System Worked" readonly="1" string="System Worked"/>
                                     <field name="manual_worked_hours" widget="float_time" string="Manual Worked"/>
                                     <field name="final_worked_hours" widget="float_time" sum="Final Worked" readonly="1"/>
-                                    <field name="approved_leave_days" optional="show" sum="Time Off" readonly="1"/>
-                                    <field name="unpaid_leave_days" optional="hide" sum="Deducted Leave" readonly="1"/>
+                                    <field name="approved_leave_days" optional="show" sum="Leave" readonly="1"/>
+                                    <field name="unpaid_leave_days" optional="hide" sum="Unpaid" readonly="1"/>
                                     <field name="system_absent_days" optional="show" sum="System Abs." readonly="1"/>
                                     <field name="manual_absent_days" string="Manual Abs."/>
                                     <field name="final_absent_days" sum="Final Abs." readonly="1"/>
                                     <field name="shortage_hours" widget="float_time" sum="Shortage" readonly="1"/>
                                     <field name="overtime_hours" widget="float_time" sum="Overtime" readonly="1"/>
-                                    <field name="leave_deduction" optional="show" sum="Leave Ded." readonly="1"/>
-                                    <field name="absence_deduction" optional="hide" sum="Absent Ded." readonly="1"/>
+                                    <field name="absence_deduction" optional="hide" sum="Day Ded." readonly="1"/>
                                     <field name="shortage_deduction" optional="show" sum="Hour Ded." readonly="1"/>
                                     <field name="attendance_deduction" sum="Attendance Ded." readonly="1"/>
                                     <field name="overtime_amount" sum="OT Amount" readonly="1"/>
@@ -93,7 +91,6 @@
                                         </group>
                                         <group string="Attendance">
                                             <field name="expected_days" readonly="1"/>
-                                            <field name="public_holiday_days" readonly="1"/>
                                             <field name="expected_hours" widget="float_time" readonly="1"/>
                                             <field name="attendance_worked_hours" widget="float_time" readonly="1"/>
                                             <field name="worked_hours" widget="float_time" readonly="1"/>
@@ -113,7 +110,6 @@
                                             <field name="overtime_hourly_rate" readonly="1"/>
                                             <field name="shortage_hours" widget="float_time" readonly="1"/>
                                             <field name="overtime_hours" widget="float_time" readonly="1"/>
-                                            <field name="leave_deduction" readonly="1"/>
                                             <field name="absence_deduction" readonly="1"/>
                                             <field name="shortage_deduction" readonly="1"/>
                                             <field name="attendance_deduction" readonly="1"/>
@@ -131,7 +127,6 @@
                         <page string="Field Source Notes">
                             <p>Gross salary is read from the active/latest employee contract wage. Basic salary is calculated as Gross - Housing - Transport - Other Allowances when those allowance fields exist. If no breakdown fields exist, the report falls back to Gross / 1.35.</p>
                             <p>Employees marked with an attendance-not-applicable/custom flag use fixed/standard hours instead of summed HR Attendance worked hours.</p>
-                            <p>Time Off rule: all validated employee time off days are deducted from salary. Public holidays from resource calendar leaves reduce the attendance target but never create a deduction.</p>
                         </page>
                     </notebook>
                 </sheet>
