@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_attendance_salary_report_form" model="ir.ui.view">
+        <field name="name">employee.attendance.salary.report.form</field>
+        <field name="model">employee.attendance.salary.report</field>
+        <field name="arch" type="xml">
+            <form string="Instant Attendance Salary Report">
+                <header>
+                    <button name="action_generate" type="object"
+                            string="Generate / Refresh"
+                            class="btn-primary"
+                            groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
+                    <button name="action_print_report" type="object"
+                            string="Print Report"
+                            class="btn-secondary"
+                            groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
+                    <button name="action_create_payroll_batch" type="object"
+                            string="Create Payroll Batch"
+                            class="btn-secondary"
+                            groups="employee_portal_suite.group_employee_portal_admin"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,generated,batch_created"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Report Name"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Period &amp; Filters">
+                            <field name="company_id" options="{'no_create': True}"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="department_ids" widget="many2many_tags"/>
+                            <field name="work_location_ids" widget="many2many_tags"/>
+                            <field name="employee_ids" widget="many2many_tags"/>
+                            <field name="include_inactive"/>
+                        </group>
+                        <group string="Payroll Summary">
+                            <field name="total_employees" readonly="1"/>
+                            <field name="total_gross_salary" readonly="1"/>
+                            <field name="total_basic_salary" readonly="1"/>
+                            <field name="total_allowances" readonly="1"/>
+                            <field name="total_attendance_deductions" readonly="1"/>
+                            <field name="total_overtime_amount" readonly="1"/>
+                            <field name="total_other_deductions" readonly="1"/>
+                            <field name="total_reimbursements" readonly="1"/>
+                            <field name="total_net_salary" readonly="1" class="fw-bold text-success"/>
+                            <field name="generated_on" readonly="1"/>
+                            <field name="payroll_batch_id" readonly="1"
+                                   invisible="not payroll_batch_id"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Employee Lines">
+                            <field name="line_ids" nolabel="1">
+                                <list string="Salary Report Lines"
+                                      editable="bottom"
+                                      decoration-danger="attendance_deduction &gt; 0"
+                                      decoration-success="overtime_amount &gt; 0"
+                                      decoration-muted="not use_attendance">
+
+                                    <field name="employee_id" readonly="1"/>
+                                    <field name="department_id" readonly="1" optional="show"/>
+                                    <field name="work_location_id" readonly="1" optional="show"/>
+                                    <field name="use_attendance" readonly="1" string="Att. Source" optional="show"/>
+                                    <field name="overtime_enabled" readonly="1" string="OT" optional="show"/>
+
+                                    <!-- Salary -->
+                                    <field name="gross_salary" sum="Gross" readonly="1" optional="show"/>
+                                    <field name="basic_salary" sum="Basic" readonly="1" optional="show"/>
+                                    <field name="total_allowances" sum="Allowances" readonly="1" optional="hide"/>
+                                    <field name="housing_allowance" sum="Housing" readonly="1" optional="hide"/>
+                                    <field name="transport_allowance" sum="Transport" readonly="1" optional="hide"/>
+                                    <field name="other_allowances" sum="Other" readonly="1" optional="hide"/>
+
+                                    <!-- Time -->
+                                    <field name="expected_hours" widget="float_time" readonly="1"
+                                           optional="show" string="Target Hrs"/>
+                                    <field name="days_worked" readonly="1" optional="show" string="Days In"/>
+                                    <field name="final_worked_hours" widget="float_time" sum="Worked"
+                                           readonly="1" optional="show" string="Worked Hrs"/>
+
+                                    <!-- Absence -->
+                                    <field name="approved_leave_days" sum="Leave" readonly="1" optional="hide"/>
+                                    <field name="unpaid_leave_days" sum="Unpaid" readonly="1" optional="show"/>
+                                    <field name="public_holiday_days" sum="Public Holiday" readonly="1" optional="show"/>
+                                    <field name="system_absent_days" sum="Sys.Absent" readonly="1"
+                                           optional="show" string="Absent Days"/>
+                                    <field name="manual_absent_days" optional="show" string="Manual Abs."/>
+                                    <field name="final_absent_days" sum="Total Absent" readonly="1"
+                                           optional="hide" string="Total Absent"/>
+
+                                    <!-- Separated deductions -->
+                                    <field name="absence_deduction" sum="Day Ded." readonly="1"
+                                           optional="show" string="Day Ded."/>
+                                    <field name="shortage_hours" widget="float_time" readonly="1"
+                                           optional="show" string="Short Hrs"/>
+                                    <field name="shortage_deduction" sum="Hr Ded." readonly="1"
+                                           optional="show" string="Hr Ded."/>
+                                    <field name="attendance_deduction" sum="Total Ded." readonly="1"
+                                           optional="show" string="Total Att. Ded."/>
+
+                                    <!-- Overtime -->
+                                    <field name="overtime_hours" widget="float_time" sum="OT Hrs"
+                                           readonly="1" optional="show" string="OT Hrs"/>
+                                    <field name="overtime_amount" sum="OT Amt" readonly="1" optional="show"/>
+
+                                    <!-- Manual adjustments -->
+                                    <field name="other_deductions" sum="Other Ded." optional="show"/>
+                                    <field name="reimbursements" sum="Reimb." optional="show"/>
+                                    <field name="net_salary" sum="Net" readonly="1" optional="show"/>
+
+                                    <field name="attendance_count" readonly="1" optional="hide" string="Check-ins"/>
+                                </list>
+
+                                <!-- Per-employee detail form -->
+                                <form string="Employee Salary Line">
+                                    <group>
+                                        <group string="Employee">
+                                            <field name="employee_id" readonly="1"/>
+                                            <field name="department_id" readonly="1"/>
+                                            <field name="work_location_id" readonly="1"/>
+                                            <field name="calendar_id" readonly="1"/>
+                                            <field name="use_attendance" readonly="1"/>
+                                            <field name="overtime_enabled" readonly="1"/>
+                                            <field name="attendance_count" readonly="1"/>
+                                        </group>
+                                        <group string="Salary Breakdown">
+                                            <field name="gross_salary" readonly="1"/>
+                                            <field name="basic_salary" readonly="1"/>
+                                            <field name="housing_allowance" readonly="1"/>
+                                            <field name="transport_allowance" readonly="1"/>
+                                            <field name="other_allowances" readonly="1"/>
+                                            <field name="total_allowances" readonly="1"/>
+                                        </group>
+                                    </group>
+                                    <group>
+                                        <group string="Time &amp; Attendance">
+                                            <field name="expected_days" readonly="1"/>
+                                            <field name="expected_hours" widget="float_time" readonly="1"/>
+                                            <field name="days_worked" readonly="1"/>
+                                            <field name="attendance_worked_hours" widget="float_time" readonly="1"/>
+                                            <field name="final_worked_hours" widget="float_time" readonly="1"/>
+                                            <field name="approved_leave_days" readonly="1"/>
+                                            <field name="unpaid_leave_days" readonly="1"/>
+                                            <field name="public_holiday_days" readonly="1"/>
+                                            <field name="system_absent_days" readonly="1"/>
+                                            <field name="manual_absent_days"/>
+                                            <field name="final_absent_days" readonly="1"/>
+                                        </group>
+                                        <group string="Rates &amp; Deductions">
+                                            <field name="daily_rate" readonly="1"/>
+                                            <field name="gross_hourly_rate" readonly="1"/>
+                                            <field name="basic_hourly_rate" readonly="1"/>
+                                            <field name="overtime_hourly_rate" readonly="1"/>
+                                            <separator string="Day Deduction"/>
+                                            <field name="absence_deduction" readonly="1" string="Absence Deduction (Days × Daily Rate)"/>
+                                            <separator string="Hour Deduction"/>
+                                            <field name="shortage_hours" widget="float_time" readonly="1"/>
+                                            <field name="shortage_deduction" readonly="1" string="Shortage Deduction (Hrs × Hourly Rate)"/>
+                                            <separator string="Total"/>
+                                            <field name="attendance_deduction" readonly="1" class="fw-bold"/>
+                                            <separator string="Overtime"/>
+                                            <field name="overtime_hours" widget="float_time" readonly="1"/>
+                                            <field name="overtime_amount" readonly="1"/>
+                                            <separator string="Adjustments"/>
+                                            <field name="other_deductions"/>
+                                            <field name="reimbursements"/>
+                                            <separator/>
+                                            <field name="net_salary" readonly="1" class="fw-bold"/>
+                                        </group>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+
+                        <page string="Notes">
+                            <div class="alert alert-info" role="alert">
+                                <h5>Deduction logic</h5>
+                                <ul>
+                                    <li><strong>Day Deduction</strong> — counts full absent days (payable expected days minus distinct days the employee checked in) multiplied by the Daily Rate (Gross ÷ 30). Manual absent days are added on top.</li>
+                                    <li><strong>Hour Deduction</strong> — calculated only for days the employee actually showed up. If they worked fewer hours than the daily target on those days, the shortfall is multiplied by the Gross Hourly Rate (Gross ÷ 240). These two deductions never overlap.</li>
+                                    <li><strong>Overtime</strong> — only calculated if the employee has "OT Enabled" turned on in their Payroll Settings tab. Rate = (Gross ÷ 240) + 0.5 × (Basic ÷ 240).</li>
+                                    <li><strong>Calendar employees</strong> — get full credit, no automatic deductions. Only Manual Absent Days can trigger a day deduction.</li>
+                                </ul>
+                                <h5>Employee fields (set on Employee → Payroll Settings tab)</h5>
+                                <ul>
+                                    <li><strong>Enable Overtime</strong> — off by default. Turn on per employee to activate OT calculation.</li>
+                                    <li><strong>Target Hours Override</strong> — leave at 0 to use the working schedule hours. Set a number to override.</li>
+                                </ul>
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_attendance_salary_report_tree" model="ir.ui.view">
+        <field name="name">employee.attendance.salary.report.tree</field>
+        <field name="model">employee.attendance.salary.report</field>
+        <field name="arch" type="xml">
+            <list string="Instant Attendance Salary Reports"
+                  decoration-success="state == 'batch_created'"
+                  decoration-info="state == 'generated'"
+                  decoration-muted="state == 'draft'">
+                <field name="name"/>
+                <field name="company_id" optional="show"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="department_ids" widget="many2many_tags" optional="show"/>
+                <field name="work_location_ids" widget="many2many_tags" optional="show"/>
+                <field name="total_employees"/>
+                <field name="total_gross_salary"/>
+                <field name="total_attendance_deductions"/>
+                <field name="total_overtime_amount"/>
+                <field name="total_net_salary"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'batch_created'"
+                       decoration-info="state == 'generated'"
+                       decoration-muted="state == 'draft'"/>
+                <field name="generated_on" optional="show"/>
+                <field name="payroll_batch_id" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_attendance_salary_report_search" model="ir.ui.view">
+        <field name="name">employee.attendance.salary.report.search</field>
+        <field name="model">employee.attendance.salary.report</field>
+        <field name="arch" type="xml">
+            <search string="Instant Attendance Salary Reports">
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="department_ids" widget="many2many_tags"/>
+                <field name="work_location_ids" widget="many2many_tags"/>
+                <filter name="not_batched" string="Not Batched" domain="[('state', '!=', 'batch_created')]"/>
+                <filter name="batched" string="Batch Created" domain="[('state', '=', 'batch_created')]"/>
+                <filter name="draft" string="Not Generated" domain="[('state', '=', 'draft')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_attendance_salary_report" model="ir.actions.act_window">
+        <field name="name">Instant Salary Report</field>
+        <field name="res_model">employee.attendance.salary.report</field>
+        <field name="view_mode">list,form</field>
+        <field name="target">current</field>
+        <field name="context">{'form_view_initial_mode': 'edit', 'search_default_not_batched': 1}</field>
+    </record>
+
+    <menuitem id="menu_attendance_salary_report"
+              name="Instant Salary Reports"
+              parent="menu_employee_portal_attendance_root"
+              action="action_attendance_salary_report"
+              sequence="10"
+              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
+
+</odoo>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Inject two payroll fields into the standard Employee form -->
+    <record id="view_employee_payroll_fields_form" model="ir.ui.view">
+        <field name="name">hr.employee.payroll.fields.form</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!-- Add a dedicated "Payroll Settings" tab inside the employee notebook -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Payroll Settings" name="eps_payroll_settings"
+                      groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin">
+                    <group>
+                        <group string="Attendance &amp; Overtime">
+                            <field name="eps_overtime_enabled"
+                                   string="Enable Overtime"
+                                   help="Turn on to include overtime pay for this employee in salary reports. Off by default."/>
+                            <field name="eps_target_hours"
+                                   string="Target Hours Override"
+                                   help="Set a custom monthly target hours for this employee. Leave at 0 to use the hours from the working schedule automatically."/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
