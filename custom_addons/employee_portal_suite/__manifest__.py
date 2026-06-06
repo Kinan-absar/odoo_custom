@@ -9,7 +9,7 @@
     Features Included:
 
     ✔ Employee Portal (/my/employee)
-    ✔ Clean custom portal layout and navigation
+    ✔ Clean custom portal layout and navigation 
     ✔ Employee Requests workflow (Employee → Manager → HR → Finance → CEO)
     ✔ Material Requests workflow (Employee → Purchase Rep → Store Manager → Project Manager → Director → CEO)
     ✔ Full approval timeline visible in backend + portal
@@ -112,7 +112,11 @@
         'views/project_project_views.xml',
         'views/employee_portal_attendance.xml',
         'views/hr_attendance_views.xml',
+        'reports/report_salary_report.xml',
+        'views/hr_employee_payroll_views.xml',
         'views/attendance_salary_report_views.xml',
+        'views/salary_report_viewer_views.xml',
+        'views/portal_salary_report_templates.xml',
 
     ],
 
