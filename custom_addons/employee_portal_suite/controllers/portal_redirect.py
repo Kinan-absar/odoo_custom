@@ -2,6 +2,7 @@ from odoo import http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal
 from odoo.addons.web.controllers.home import Home
+from odoo.addons.sign.controllers.main import Sign
 
 
 class EmployeePortalLogin(Home):
@@ -29,3 +30,14 @@ class EmployeePortalRedirect(CustomerPortal):
         if request.env.user.employee_id:
             return request.redirect('/my/employee')
         return super().account(**kw)
+
+
+class EmployeePortalSignRedirect(Sign):
+
+    @http.route(['/my/signature'], type='http', auth='user', website=True)
+    def portal_my_signature(self, **kw):
+        """After finishing signing a document, redirect employees to their
+        sign documents page instead of the default Odoo /my/signature page."""
+        if request.env.user.employee_id:
+            return request.redirect('/my/employee/sign')
+        return super().portal_my_signature(**kw)
