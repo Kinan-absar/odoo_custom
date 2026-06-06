@@ -185,9 +185,7 @@
                                     <li><strong>Day Deduction</strong> — counts full absent days (payable expected days minus distinct days the employee checked in) multiplied by the Daily Rate (Gross ÷ 30). Manual absent days are added on top.</li>
                                     <li><strong>Hour Deduction</strong> — calculated only for days the employee actually showed up. If they worked fewer hours than the daily target on those days, the shortfall is multiplied by the Gross Hourly Rate (Gross ÷ 240). These two deductions never overlap.</li>
                                     <li><strong>Overtime</strong> — only calculated if the employee has "OT Enabled" turned on in their Payroll Settings tab. Rate = (Gross ÷ 240) + 0.5 × (Basic ÷ 240).</li>
-                                    <li><strong>Public Holiday</strong> — Time Off Type with Work Entry Type “Public Holiday” reduces target days/hours and does not deduct salary.</li>
-                                    <li><strong>Unpaid Leave</strong> — Time Off Type with Work Entry Type “Unpaid” is deducted once using Gross ÷ 30. It is excluded from target attendance days/hours to avoid double deduction.</li>
-                                    <li><strong>Calendar employees</strong> — get full credit, no automatic deductions except Unpaid Leave and Manual Absent Days.</li>
+                                    <li><strong>Calendar employees</strong> — get full credit, no automatic deductions. Only Manual Absent Days can trigger a day deduction.</li>
                                 </ul>
                                 <h5>Employee fields (set on Employee → Payroll Settings tab)</h5>
                                 <ul>

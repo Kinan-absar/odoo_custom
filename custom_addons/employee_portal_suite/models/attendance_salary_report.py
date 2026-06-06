@@ -247,7 +247,7 @@ class AttendanceSalaryReport(models.Model):
         # For calendar employees: credit full expected hours
         worked_hours = attendance_worked_hours if use_attendance else expected_hours
 
-        approved_leave_days, unpaid_leave_days, public_holiday_days = self._leave_days(employee)
+        approved_leave_days, unpaid_leave_days, public_holiday_days = self._leave_days(employee, calendar_obj, contract)
 
         gross_salary, basic_salary, housing, transport, other_allowances = \
             self._salary_components(employee, contract)
@@ -310,67 +310,141 @@ class AttendanceSalaryReport(models.Model):
     def _expected_working_days(self, calendar_obj=False):
         days = 0.0
         current = self.date_from
+        while current <= self.date_to:
+            if self._is_working_day(current, calendar_obj):
+                days += 1
+            current += timedelta(days=1)
+        return days
+
+    def _is_working_day(self, date_value, calendar_obj=False):
+        weekday = date_value.weekday()
         attendance_weekdays = set()
         if calendar_obj and 'attendance_ids' in calendar_obj._fields:
             for att in calendar_obj.attendance_ids:
                 if hasattr(att, 'dayofweek'):
                     attendance_weekdays.add(int(att.dayofweek))
-        while current <= self.date_to:
-            weekday = current.weekday()
-            if attendance_weekdays:
-                if weekday in attendance_weekdays:
-                    days += 1
-            elif weekday < 5:
-                days += 1
-            current += timedelta(days=1)
-        return days
+        if attendance_weekdays:
+            return weekday in attendance_weekdays
+        return weekday < 5
 
-    def _leave_days(self, employee):
-        if 'hr.leave' not in self.env.registry:
-            return 0.0, 0.0, 0.0
+    def _is_public_holiday_work_entry_type(self, work_entry_type):
+        if not work_entry_type:
+            return False
+        name = ((work_entry_type.name or '') if 'name' in work_entry_type._fields else '').strip().lower()
+        code = ((getattr(work_entry_type, 'code', '') or '') if 'code' in work_entry_type._fields else '').strip().lower()
+        return 'public holiday' in name or 'public_holiday' in code or code == 'public' or 'public' in code
+
+    def _is_unpaid_work_entry_type(self, work_entry_type):
+        if not work_entry_type:
+            return False
+        name = ((work_entry_type.name or '') if 'name' in work_entry_type._fields else '').strip().lower()
+        code = ((getattr(work_entry_type, 'code', '') or '') if 'code' in work_entry_type._fields else '').strip().lower()
+        return 'unpaid' in name or 'unpaid' in code
+
+    def _dates_from_range(self, start_value, end_value, calendar_obj=False, only_working_days=True):
+        if not start_value or not end_value:
+            return set()
+        start_date = fields.Date.to_date(start_value)
+        end_date = fields.Date.to_date(end_value)
+        if not start_date or not end_date:
+            return set()
+        start_date = max(start_date, self.date_from)
+        end_date = min(end_date, self.date_to)
+        dates = set()
+        current = start_date
+        while current <= end_date:
+            if not only_working_days or self._is_working_day(current, calendar_obj):
+                dates.add(current)
+            current += timedelta(days=1)
+        return dates
+
+    def _public_holiday_dates_from_work_entries(self, employee):
+        if 'hr.work.entry' not in self.env.registry:
+            return set()
+        WorkEntry = self.env['hr.work.entry'].sudo()
+        required = {'employee_id', 'work_entry_type_id', 'date_start', 'date_stop'}
+        if not required.issubset(set(WorkEntry._fields)):
+            return set()
         start_dt = datetime.combine(self.date_from, time.min)
         end_dt = datetime.combine(self.date_to, time.max)
-        leaves = self.env['hr.leave'].sudo().search([
+        entries = WorkEntry.search([
             ('employee_id', '=', employee.id),
-            ('state', '=', 'validate'),
+            ('date_start', '<=', fields.Datetime.to_string(end_dt)),
+            ('date_stop', '>=', fields.Datetime.to_string(start_dt)),
+        ])
+        dates = set()
+        for entry in entries:
+            if self._is_public_holiday_work_entry_type(entry.work_entry_type_id):
+                dates |= self._dates_from_range(entry.date_start, entry.date_stop, False, only_working_days=False)
+        return dates
+
+    def _public_holiday_dates_from_calendar_leaves(self, employee, calendar_obj=False):
+        if 'resource.calendar.leaves' not in self.env.registry:
+            return set()
+        Leaves = self.env['resource.calendar.leaves'].sudo()
+        if 'date_from' not in Leaves._fields or 'date_to' not in Leaves._fields:
+            return set()
+        start_dt = datetime.combine(self.date_from, time.min)
+        end_dt = datetime.combine(self.date_to, time.max)
+        domain = [
             ('date_from', '<=', fields.Datetime.to_string(end_dt)),
             ('date_to', '>=', fields.Datetime.to_string(start_dt)),
-        ])
-        approved = unpaid = public_holiday = 0.0
+        ]
+        if 'company_id' in Leaves._fields:
+            domain += ['|', ('company_id', '=', False), ('company_id', '=', self.company_id.id)]
+        if 'calendar_id' in Leaves._fields and calendar_obj:
+            domain += ['|', ('calendar_id', '=', False), ('calendar_id', '=', calendar_obj.id)]
+        leaves = Leaves.search(domain)
+        dates = set()
         for leave in leaves:
-            days = getattr(leave, 'number_of_days', 0.0) or getattr(leave, 'number_of_days_display', 0.0) or 0.0
-            approved += days
-            leave_type = leave.holiday_status_id if 'holiday_status_id' in leave._fields else False
-            if not leave_type:
-                continue
+            # Calendar leaves can include many reasons. Only count the ones explicitly linked/named as public holidays.
+            work_entry_type = False
+            if 'work_entry_type_id' in leave._fields and leave.work_entry_type_id:
+                work_entry_type = leave.work_entry_type_id
+            leave_name = ((getattr(leave, 'name', '') or '') if 'name' in leave._fields else '').strip().lower()
+            if self._is_public_holiday_work_entry_type(work_entry_type) or 'public holiday' in leave_name or 'public holidays' in leave_name:
+                dates |= self._dates_from_range(leave.date_from, leave.date_to, calendar_obj, only_working_days=True)
+        return dates
 
-            work_entry_type = (
-                leave_type.work_entry_type_id
-                if 'work_entry_type_id' in leave_type._fields and leave_type.work_entry_type_id
-                else False
-            )
-            work_entry_name = ((work_entry_type.name or '') if work_entry_type else '').strip().lower()
-            work_entry_code = ((getattr(work_entry_type, 'code', '') or '') if work_entry_type else '').strip().lower()
-            leave_type_name = (leave_type.name or '').strip().lower()
+    def _leave_days(self, employee, calendar_obj=False, contract=False):
+        approved = unpaid = public_holiday = 0.0
+        public_holiday_dates = set()
 
-            # Main mapping requested by Absar:
-            # - Work Entry Type = Public Holiday -> no deduction, only reduces target days/hours.
-            # - Work Entry Type = Unpaid -> deducted once as leave/absence deduction.
-            # Fallbacks are kept only so older databases without work_entry_type_id still work.
-            if 'public holiday' in work_entry_name or 'public' in work_entry_code:
-                public_holiday += days
-                continue
-            if (
-                'unpaid' in work_entry_name
-                or 'unpaid' in work_entry_code
-                or 'unpaid vacation' in leave_type_name
-            ):
-                unpaid += days
-                continue
-            for fname in ('unpaid', 'is_unpaid', 'unpaid_leave'):
-                if fname in leave_type._fields and getattr(leave_type, fname):
+        if 'hr.leave' in self.env.registry:
+            start_dt = datetime.combine(self.date_from, time.min)
+            end_dt = datetime.combine(self.date_to, time.max)
+            leaves = self.env['hr.leave'].sudo().search([
+                ('employee_id', '=', employee.id),
+                ('state', '=', 'validate'),
+                ('date_from', '<=', fields.Datetime.to_string(end_dt)),
+                ('date_to', '>=', fields.Datetime.to_string(start_dt)),
+            ])
+            for leave in leaves:
+                days = getattr(leave, 'number_of_days', 0.0) or getattr(leave, 'number_of_days_display', 0.0) or 0.0
+                leave_type = leave.holiday_status_id if 'holiday_status_id' in leave._fields else False
+                work_entry_type = (
+                    leave_type.work_entry_type_id
+                    if leave_type and 'work_entry_type_id' in leave_type._fields and leave_type.work_entry_type_id
+                    else False
+                )
+                if self._is_public_holiday_work_entry_type(work_entry_type):
+                    public_holiday += days
+                    continue
+                approved += days
+                if self._is_unpaid_work_entry_type(work_entry_type):
                     unpaid += days
-                    break
+                elif leave_type:
+                    for fname in ('unpaid', 'is_unpaid', 'unpaid_leave'):
+                        if fname in leave_type._fields and getattr(leave_type, fname):
+                            unpaid += days
+                            break
+
+        # In Odoo Payroll, public holidays are often not hr.leave records. They are generated
+        # as hr.work.entry records or stored as global resource.calendar.leaves.
+        public_holiday_dates |= self._public_holiday_dates_from_work_entries(employee)
+        public_holiday_dates |= self._public_holiday_dates_from_calendar_leaves(employee, calendar_obj)
+        public_holiday += float(len(public_holiday_dates))
+
         return approved, unpaid, public_holiday
 
 
@@ -497,7 +571,7 @@ class AttendanceSalaryReportLine(models.Model):
             #
             # Algorithm (ported from attendance_pro AdminReports.tsx):
             #
-            # 1. Public holidays reduce target days/hours with no deduction. Unpaid leave is deducted once.
+            # 1. Payable expected days  = expected_days - approved_leave_days
             # 2. theoretical_hours_per_day = expected_hours / expected_days
             #    (or 8 if expected_days = 0)
             #
@@ -526,11 +600,17 @@ class AttendanceSalaryReportLine(models.Model):
             days_for_calc = line.expected_days if line.expected_days > 0 else 26.0
             theoretical_hours_per_day = target_hours / days_for_calc if days_for_calc else 8.0
 
+            paid_leave_days = max((line.approved_leave_days or 0.0) - (line.unpaid_leave_days or 0.0), 0.0)
             public_days = line.public_holiday_days or 0.0
             unpaid_days = line.unpaid_leave_days or 0.0
-            payable_expected_days = max(line.expected_days - public_days - unpaid_days, 0.0)
+
+            # Public holidays and paid leave reduce the target with no deduction.
+            # Unpaid leave is removed from the target to avoid double counting, then added back
+            # as final absent days so it is deducted exactly once.
+            non_working_days = public_days + paid_leave_days + unpaid_days
+            payable_expected_days = max(line.expected_days - non_working_days, 0.0)
             payable_expected_hours = max(
-                target_hours - ((public_days + unpaid_days) * theoretical_hours_per_day), 0.0
+                target_hours - (non_working_days * theoretical_hours_per_day), 0.0
             )
 
             actual_worked_hours = line.worked_hours
@@ -538,7 +618,7 @@ class AttendanceSalaryReportLine(models.Model):
 
             # ── Step 3: Absent days ───────────────────────────────────────────
             system_absent_days = max(0.0, payable_expected_days - actual_days_worked)
-            final_absent_days = system_absent_days + (line.manual_absent_days or 0.0) + unpaid_days
+            final_absent_days = system_absent_days + unpaid_days + (line.manual_absent_days or 0.0)
             absence_deduction = final_absent_days * daily_rate
 
             # ── Step 4: Shortage hours (only on attended days) ────────────────
