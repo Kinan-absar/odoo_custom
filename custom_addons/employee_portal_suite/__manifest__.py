@@ -124,6 +124,9 @@
     #  ASSETS (JS)
     # ------------------------------------------------------------------
     'assets': {
+        'web.assets_frontend': [
+            'employee_portal_suite/static/src/js/sign_redirect.js',
+        ],
         'web.assets_backend': [
             'employee_portal_suite/static/src/js/material_request_dashboard.js',
             'employee_portal_suite/static/src/js/employee_request_dashboard.js',
