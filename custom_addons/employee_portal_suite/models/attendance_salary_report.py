@@ -167,6 +167,8 @@ class AttendanceSalaryReport(models.Model):
             'contract_id': contract.id if contract else False,
             'calendar_id': calendar_obj.id if calendar_obj else False,
             'attendance_not_required': attendance_not_required,
+            'overtime_enabled': self._bool_from_any(employee, contract, ['eps_overtime_enabled', 'overtime_enabled', 'x_overtime_enabled']) if any(n in employee._fields for n in ['eps_overtime_enabled', 'overtime_enabled', 'x_overtime_enabled']) else True,
+            'deduction_enabled': self._bool_from_any(employee, contract, ['eps_deduction_enabled', 'deduction_enabled', 'x_deduction_enabled']) if any(n in employee._fields for n in ['eps_deduction_enabled', 'deduction_enabled', 'x_deduction_enabled']) else True,
             'gross_salary': gross_salary,
             'basic_salary': basic_salary,
             'housing_allowance': housing,
@@ -340,6 +342,8 @@ class AttendanceSalaryReportLine(models.Model):
     contract_id = fields.Many2one('hr.contract', string='Contract', readonly=True) if False else fields.Integer(string='Contract ID', readonly=True)
     calendar_id = fields.Many2one('resource.calendar', string='Working Schedule', readonly=True)
     attendance_not_required = fields.Boolean(string='Attendance Not Applicable', readonly=True)
+    overtime_enabled = fields.Boolean(string='Overtime Enabled', readonly=True, default=True)
+    deduction_enabled = fields.Boolean(string='Deduction Enabled', readonly=True, default=True)
 
     gross_salary = fields.Monetary(string='Gross Salary', currency_field='currency_id', readonly=True)
     basic_salary = fields.Monetary(string='Basic Salary', currency_field='currency_id', readonly=True)
@@ -412,9 +416,9 @@ class AttendanceSalaryReportLine(models.Model):
             line.gross_hourly_rate = gross_hourly_rate
             line.basic_hourly_rate = basic_hourly_rate
             line.overtime_hourly_rate = overtime_hourly_rate
-            line.leave_deduction = line.unpaid_leave_days * daily_rate
-            line.absence_deduction = final_absent_days * daily_rate
-            line.shortage_deduction = hourly_shortfall * gross_hourly_rate
+            line.leave_deduction = line.unpaid_leave_days * daily_rate if line.deduction_enabled else 0.0
+            line.absence_deduction = final_absent_days * daily_rate if line.deduction_enabled else 0.0
+            line.shortage_deduction = hourly_shortfall * gross_hourly_rate if line.deduction_enabled else 0.0
             line.attendance_deduction = line.leave_deduction + line.absence_deduction + line.shortage_deduction
-            line.overtime_amount = overtime_hours * overtime_hourly_rate
+            line.overtime_amount = overtime_hours * overtime_hourly_rate if line.overtime_enabled else 0.0
             line.net_salary = line.gross_salary - line.attendance_deduction + line.overtime_amount - (line.other_deductions or 0.0) + (line.reimbursements or 0.0)
