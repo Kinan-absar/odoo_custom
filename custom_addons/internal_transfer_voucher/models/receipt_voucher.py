@@ -199,7 +199,9 @@ class AccountReceiptVoucher(models.Model):
                 continue
 
             if rec.move_id:
-                rec.move_id.sudo().write({'state': 'draft', 'name': '/'})
+                rec.move_id.sudo().write({'state': 'draft'})
+                rec.move_id.sudo().unlink()
+            rec.move_id = False
             rec.state = 'draft'
 
     # -------------------------

@@ -775,11 +775,12 @@ class AccountPaymentVoucher(models.Model):
                 ))
 
             if rec.move_id:
-                # Use sudo().write() to bypass Odoo 18's restrict_mode_hash_table
-                # audit trail check that blocks button_draft() on bank journals.
-                # Resetting name to '/' clears the locked sequence so re-posting
-                # assigns a fresh sequence number correctly.
-                rec.move_id.sudo().write({'state': 'draft', 'name': '/'})
+                # In Odoo 18, button_draft() raises "You cannot remove parts of the
+                # audit trail" on journals with restrict_mode_hash_table enabled.
+                # We bypass this by writing state directly via sudo(), then unlink.
+                rec.move_id.sudo().write({'state': 'draft'})
+                rec.move_id.sudo().unlink()
+            rec.move_id = False
             rec.state = 'draft'
 
     # -------------------------
