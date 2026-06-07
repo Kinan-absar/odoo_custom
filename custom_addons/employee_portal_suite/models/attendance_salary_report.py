@@ -33,14 +33,12 @@ class AttendanceSalaryReport(models.Model):
     total_overtime_amount = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
     total_net_salary = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
 
-    # Stored as Char (structure name) to avoid any comodel dependency on
-    # hr.payroll.structure, which caused _unknown / onchange RPC errors.
-    # Resolved to a real record by name at batch-creation time.
-    struct_name = fields.Char(
+    struct_id = fields.Many2one(
+        comodel_name='hr.payroll.structure',
         string='Salary Structure',
         copy=False,
-        help='Name of the payroll structure to apply to all payslips in the batch. '
-             "Leave empty to use each employee's contract default.",
+        ondelete='set null',
+        help="If set, this structure will be applied to all payslips in the batch.",
     )
     payroll_batch_id = fields.Char(string='Payroll Batch', readonly=True)
     state = fields.Selection([
@@ -69,23 +67,6 @@ class AttendanceSalaryReport(models.Model):
     def _compute_batch_created(self):
         for r in self:
             r.batch_created = r.state == 'batch_created' or bool(r.payroll_batch_id)
-
-    @api.onchange('struct_name')
-    def _onchange_struct_name(self):
-        if self.struct_name and 'hr.payroll.structure' in self.env.registry:
-            match = self.env['hr.payroll.structure'].sudo().search(
-                [('name', '=', self.struct_name)], limit=1
-            )
-            if not match:
-                return {
-                    'warning': {
-                        'title': _('Salary Structure Not Found'),
-                        'message': _(
-                            'No payroll structure named "%s" was found. '
-                            'Please check the name or leave this field empty.'
-                        ) % self.struct_name,
-                    }
-                }
 
     @api.depends(
         'line_ids.gross_salary', 'line_ids.basic_salary', 'line_ids.total_allowances',
@@ -176,12 +157,8 @@ class AttendanceSalaryReport(models.Model):
             }
             if line.contract_id and 'contract_id' in Payslip._fields:
                 vals['contract_id'] = line.contract_id
-            if self.struct_name and 'struct_id' in Payslip._fields and 'hr.payroll.structure' in self.env.registry:
-                structure = self.env['hr.payroll.structure'].sudo().search(
-                    [('name', '=', self.struct_name)], limit=1
-                )
-                if structure:
-                    vals['struct_id'] = structure.id
+            if self.struct_id and 'struct_id' in Payslip._fields:
+                vals['struct_id'] = self.struct_id.id
             slip = Payslip.create(vals)
             if hasattr(slip, 'compute_sheet'):
                 slip.compute_sheet()
