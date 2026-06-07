@@ -37,9 +37,7 @@
                             <field name="work_location_ids" widget="many2many_tags"/>
                             <field name="employee_ids" widget="many2many_tags"/>
                             <field name="include_inactive"/>
-                            <field name="struct_id"
-                                   widget="many2one"
-                                   options="{'no_create': True, 'relation': 'hr.payroll.structure'}"
+                            <field name="struct_name"
                                    placeholder="Leave empty to use contract default"/>
                         </group>
                         <group string="Payroll Summary">
