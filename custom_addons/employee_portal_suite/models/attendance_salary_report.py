@@ -33,6 +33,11 @@ class AttendanceSalaryReport(models.Model):
     total_overtime_amount = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
     total_net_salary = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
 
+    struct_id = fields.Many2one(
+        'hr.payroll.structure',
+        string='Salary Structure',
+        help='If set, this structure will be applied to all payslips created in the payroll batch.',
+    )
     payroll_batch_id = fields.Char(string='Payroll Batch', readonly=True)
     state = fields.Selection([
         ('draft', 'Not Generated'),
@@ -150,6 +155,8 @@ class AttendanceSalaryReport(models.Model):
             }
             if line.contract_id and 'contract_id' in Payslip._fields:
                 vals['contract_id'] = line.contract_id
+            if self.struct_id and 'struct_id' in Payslip._fields:
+                vals['struct_id'] = self.struct_id.id
             slip = Payslip.create(vals)
             if hasattr(slip, 'compute_sheet'):
                 slip.compute_sheet()

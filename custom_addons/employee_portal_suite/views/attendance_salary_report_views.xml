@@ -37,6 +37,8 @@
                             <field name="work_location_ids" widget="many2many_tags"/>
                             <field name="employee_ids" widget="many2many_tags"/>
                             <field name="include_inactive"/>
+                            <field name="struct_id" options="{'no_create': True}"
+                                   placeholder="Leave empty to use contract default"/>
                         </group>
                         <group string="Payroll Summary">
                             <field name="total_employees" readonly="1"/>
