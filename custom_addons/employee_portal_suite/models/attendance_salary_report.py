@@ -33,10 +33,24 @@ class AttendanceSalaryReport(models.Model):
     total_overtime_amount = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
     total_net_salary = fields.Monetary(compute='_compute_totals', currency_field='currency_id')
 
+    # We store the payroll structure as a plain Integer (the record ID) so there
+    # is no hard FK / comodel dependency that breaks when hr.payroll.structure is
+    # absent or not yet migrated into the DB column.  The Many2one-style selector
+    # in the view is rendered via a dedicated non-stored Many2one field whose
+    # value is never persisted — only struct_id_int is stored.
+    struct_id_int = fields.Integer(
+        string='Payroll Structure ID',
+        default=0,
+        copy=False,
+    )
     struct_id = fields.Many2one(
-        'hr.payroll.structure',
+        comodel_name='hr.payroll.structure',
         string='Salary Structure',
-        help='If set, this structure will be applied to all payslips created in the payroll batch.',
+        compute='_compute_struct_m2o',
+        inverse='_inverse_struct_m2o',
+        store=False,          # no DB column → never triggers _unknown error
+        copy=False,
+        help='If set, this structure will be applied to all payslips in the batch.',
     )
     payroll_batch_id = fields.Char(string='Payroll Batch', readonly=True)
     state = fields.Selection([
@@ -65,6 +79,18 @@ class AttendanceSalaryReport(models.Model):
     def _compute_batch_created(self):
         for r in self:
             r.batch_created = r.state == 'batch_created' or bool(r.payroll_batch_id)
+
+    @api.depends('struct_id_int')
+    def _compute_struct_m2o(self):
+        for rec in self:
+            if rec.struct_id_int and 'hr.payroll.structure' in self.env.registry:
+                rec.struct_id = self.env['hr.payroll.structure'].sudo().browse(rec.struct_id_int).exists() or False
+            else:
+                rec.struct_id = False
+
+    def _inverse_struct_m2o(self):
+        for rec in self:
+            rec.struct_id_int = rec.struct_id.id if rec.struct_id else 0
 
     @api.depends(
         'line_ids.gross_salary', 'line_ids.basic_salary', 'line_ids.total_allowances',
@@ -155,8 +181,8 @@ class AttendanceSalaryReport(models.Model):
             }
             if line.contract_id and 'contract_id' in Payslip._fields:
                 vals['contract_id'] = line.contract_id
-            if self.struct_id and 'struct_id' in Payslip._fields:
-                vals['struct_id'] = self.struct_id.id
+            if self.struct_id_int and 'struct_id' in Payslip._fields:
+                vals['struct_id'] = self.struct_id_int
             slip = Payslip.create(vals)
             if hasattr(slip, 'compute_sheet'):
                 slip.compute_sheet()
