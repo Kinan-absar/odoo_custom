@@ -226,8 +226,7 @@ class AccountInternalTransfer(models.Model):
                 continue
 
             if rec.move_id:
-                rec.move_id.with_context(force_delete=True).button_draft()
-
+                rec.move_id.sudo().write({'state': 'draft', 'name': '/'})
             rec.state = 'draft'
 
 
