@@ -159,7 +159,20 @@ class AttendanceSalaryReport(models.Model):
                 vals['contract_id'] = line.contract_id
             if self.struct_id and 'struct_id' in Payslip._fields:
                 vals['struct_id'] = self.struct_id.id
+
+            # Inject the attendance report values into Payslip > Other Inputs.
+            # Unpaid leave is intentionally NOT injected here because Odoo payroll
+            # already deducts unpaid leave through the normal work-entry/leave flow.
+            if 'input_line_ids' in Payslip._fields:
+                input_commands = self._prepare_payslip_input_commands(line)
+                if input_commands:
+                    vals['input_line_ids'] = input_commands
+
             slip = Payslip.create(vals)
+
+            # Some payroll versions/onchange flows rebuild input lines during compute.
+            # Re-apply after creation as a safety net, then compute the payslip.
+            self._inject_attendance_inputs_to_payslip(slip, line)
             if hasattr(slip, 'compute_sheet'):
                 slip.compute_sheet()
         self.write({
@@ -174,6 +187,91 @@ class AttendanceSalaryReport(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
+
+    def _get_attendance_input_lines(self, line):
+        """Return (input code, label, amount) tuples to push to payslip Other Inputs."""
+        items = [
+            # ABSENT must come from Absence Deduction (Days) only.
+            # Do not include shortage_deduction here, and do not include unpaid leave,
+            # because unpaid leave is already handled by Odoo payroll work entries.
+            ('ABSENT', _('Absence Deduction'), line.absence_deduction or 0.0),
+            ('LOAN', _('Loan / Other Deduction'), line.other_deductions or 0.0),
+            ('OVERTIME', _('Overtime'), line.overtime_amount or 0.0),
+            ('REIMBURSEMENT', _('Reimbursement'), line.reimbursements or 0.0),
+        ]
+        return [(code, name, amount) for code, name, amount in items if abs(amount) > 0.0001]
+
+    def _get_payslip_input_type(self, code, name=None):
+        """Find the hr.payslip.input.type by code; create it when missing.
+
+        The salary structure still needs salary rules reading these input codes.
+        This method only makes sure the Other Input line can be created.
+        """
+        if 'hr.payslip.input.type' not in self.env.registry:
+            return False
+        InputType = self.env['hr.payslip.input.type'].sudo()
+        domain = [('code', '=', code)]
+        if self.struct_id and 'struct_ids' in InputType._fields:
+            input_type = InputType.search(domain + ['|', ('struct_ids', '=', False), ('struct_ids', 'in', self.struct_id.ids)], limit=1)
+        else:
+            input_type = InputType.search(domain, limit=1)
+        if input_type:
+            return input_type
+
+        vals = {'name': name or code, 'code': code}
+        if self.company_id and 'company_id' in InputType._fields:
+            vals['company_id'] = self.company_id.id
+        if self.company_id.country_id and 'country_id' in InputType._fields:
+            vals['country_id'] = self.company_id.country_id.id
+        if self.struct_id and 'struct_ids' in InputType._fields:
+            vals['struct_ids'] = [(6, 0, self.struct_id.ids)]
+        if self.struct_id and 'availability_structure_ids' in InputType._fields:
+            vals['availability_structure_ids'] = [(6, 0, self.struct_id.ids)]
+        return InputType.create(vals)
+
+    def _prepare_payslip_input_commands(self, line):
+        commands = []
+        if 'hr.payslip.input' not in self.env.registry:
+            return commands
+        InputLine = self.env['hr.payslip.input'].sudo()
+        for code, name, amount in self._get_attendance_input_lines(line):
+            input_type = self._get_payslip_input_type(code, name)
+            if not input_type:
+                continue
+            vals = {
+                'name': name,
+                'amount': amount,
+            }
+            if 'input_type_id' in InputLine._fields:
+                vals['input_type_id'] = input_type.id
+            if 'code' in InputLine._fields:
+                vals['code'] = code
+            if line.contract_id and 'contract_id' in InputLine._fields:
+                vals['contract_id'] = line.contract_id
+            commands.append((0, 0, vals))
+        return commands
+
+    def _inject_attendance_inputs_to_payslip(self, slip, line):
+        """Ensure the current report values exist on the payslip as Other Inputs."""
+        if not slip or 'hr.payslip.input' not in self.env.registry:
+            return
+        InputLine = self.env['hr.payslip.input'].sudo()
+        codes = [code for code, _name, _amount in self._get_attendance_input_lines(line)]
+        if not codes:
+            return
+
+        # Remove existing generated lines for the same codes to avoid duplicates.
+        if 'input_line_ids' in slip._fields:
+            existing = slip.input_line_ids.filtered(
+                lambda inp: (getattr(inp, 'input_type_id', False) and inp.input_type_id.code in codes)
+                or (getattr(inp, 'code', False) in codes)
+            )
+            existing.unlink()
+
+        for command in self._prepare_payslip_input_commands(line):
+            vals = command[2]
+            vals['payslip_id'] = slip.id
+            InputLine.create(vals)
 
     def action_print_report(self):
         self.ensure_one()
@@ -557,11 +655,12 @@ class AttendanceSalaryReportLine(models.Model):
 
             # ── CALENDAR employees (work_entry_source = 'calendar') ───────────
             # Full expected hours credited. No automatic deductions.
-            # Only manual_absent_days can trigger a day-deduction.
+            # Only manual_absent_days can trigger an attendance day-deduction.
+            # Unpaid leave is handled by Odoo payroll, so it is not deducted here.
             if not line.use_attendance:
                 line.final_worked_hours = line.expected_hours
                 line.system_absent_days = 0.0
-                line.final_absent_days = (line.manual_absent_days or 0.0) + (line.unpaid_leave_days or 0.0)
+                line.final_absent_days = (line.manual_absent_days or 0.0)
                 line.shortage_hours = 0.0
                 line.shortage_deduction = 0.0
                 line.absence_deduction = line.final_absent_days * daily_rate
@@ -603,7 +702,8 @@ class AttendanceSalaryReportLine(models.Model):
             #    overtime_hours = max(0, worked_hours - payable_expected_hours)
             #    overtime_amount = overtime_hours × overtime_hourly_rate
             #
-            # 6. NET = Gross - absence_deduction - shortage_deduction + OT - other_ded + reimb
+            # 6. NET = Gross - attendance_deduction + OT - other_ded + reimb
+            #    Unpaid leave is left to Odoo payroll and is not deducted in this report.
 
             target_hours = line.expected_hours
             days_for_calc = line.expected_days if line.expected_days > 0 else 26.0
@@ -614,8 +714,8 @@ class AttendanceSalaryReportLine(models.Model):
             unpaid_days = line.unpaid_leave_days or 0.0
 
             # Public holidays and paid leave reduce the target with no deduction.
-            # Unpaid leave is removed from the target to avoid double counting, then added back
-            # as final absent days so it is deducted exactly once.
+            # Unpaid leave is removed from the attendance target to avoid counting it as absence.
+            # It is NOT added back here because Odoo payroll already deducts unpaid leave.
             non_working_days = public_days + paid_leave_days + unpaid_days
             payable_expected_days = max(line.expected_days - non_working_days, 0.0)
             payable_expected_hours = max(
@@ -627,7 +727,7 @@ class AttendanceSalaryReportLine(models.Model):
 
             # ── Step 3: Absent days ───────────────────────────────────────────
             system_absent_days = max(0.0, payable_expected_days - actual_days_worked)
-            final_absent_days = system_absent_days + unpaid_days + (line.manual_absent_days or 0.0)
+            final_absent_days = system_absent_days + (line.manual_absent_days or 0.0)
             absence_deduction = final_absent_days * daily_rate
 
             # ── Step 4: Shortage hours (only on attended days) ────────────────
