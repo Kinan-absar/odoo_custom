@@ -3,6 +3,7 @@ from odoo.exceptions import UserError
 
 
 class AccountPaymentVoucher(models.Model):
+    _check_company_auto = True
     _name = 'account.payment.voucher'
     _description = 'Payment Voucher'
     _inherit = ['mail.thread', 'mail.activity.mixin']
@@ -49,6 +50,7 @@ class AccountPaymentVoucher(models.Model):
     journal_id = fields.Many2one(
         'account.journal',
         string='Journal',
+        check_company=True,
         domain="[('default_account_id', '!=', False)]",
         required=True
     )
@@ -57,6 +59,7 @@ class AccountPaymentVoucher(models.Model):
     account_id = fields.Many2one(
         'account.account',
         string='Account',
+        check_company=True,
         domain="[]",
     )
 

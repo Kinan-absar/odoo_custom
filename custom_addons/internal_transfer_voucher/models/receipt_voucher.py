@@ -3,6 +3,7 @@ from odoo.exceptions import UserError
 
 
 class AccountReceiptVoucher(models.Model):
+    _check_company_auto = True
     _name = 'account.receipt.voucher'
     _description = 'Receipt Voucher'
     _inherit = ['mail.thread', 'mail.activity.mixin']
@@ -50,7 +51,8 @@ class AccountReceiptVoucher(models.Model):
     journal_id = fields.Many2one(
         'account.journal',
         string='Deposit To',
-        domain="[('default_account_id', '!=', False)]",
+        check_company=True,
+        domain="[('default_account_id', '!=', False), ('company_id', '=', company_id)]",
         required=True
     )
 
@@ -58,7 +60,8 @@ class AccountReceiptVoucher(models.Model):
     account_id = fields.Many2one(
         'account.account',
         string='Income / Receivable Account',
-        domain="[]",
+        check_company=True,
+        domain="[('company_ids', 'in', company_id)]",
         required=True
     )
 
@@ -140,6 +143,12 @@ class AccountReceiptVoucher(models.Model):
             if rec.move_id:
                 raise UserError(_("This voucher is already posted."))
 
+            if rec.journal_id.company_id and rec.journal_id.company_id != rec.company_id:
+                raise UserError(_("The selected journal belongs to a different company."))
+
+            if rec.account_id.company_ids and rec.company_id not in rec.account_id.company_ids:
+                raise UserError(_("The selected account is not available for this company."))
+
             if not rec.journal_id.default_account_id:
                 raise UserError(_("The selected journal has no default account."))
 
@@ -165,9 +174,10 @@ class AccountReceiptVoucher(models.Model):
                 }),
             ]
 
-            move = self.env['account.move'].create({
+            move = self.env['account.move'].with_company(rec.company_id).create({
                 'date': rec.date,
                 'journal_id': rec.journal_id.id,
+                'company_id': rec.company_id.id,
                 'ref': rec.name,
                 'line_ids': lines,
             })
@@ -225,6 +235,20 @@ class AccountReceiptVoucher(models.Model):
                 if not set(vals.keys()).issubset(allowed_fields):
                     raise UserError(_("You cannot modify a posted receipt voucher."))
         return super().write(vals)
+
+
+    @api.onchange('company_id')
+    def _onchange_company_id(self):
+        for rec in self:
+            rec.currency_id = rec.company_id.currency_id if rec.company_id else self.env.company.currency_id
+            rec.journal_id = False
+            rec.account_id = False
+        return {
+            'domain': {
+                'journal_id': [('default_account_id', '!=', False), ('company_id', '=', self.company_id.id)] if self.company_id else [('default_account_id', '!=', False)],
+                'account_id': [('company_ids', 'in', self.company_id.id)] if self.company_id else [],
+            }
+        }
 
     @api.model
     def retrieve_dashboard(self):

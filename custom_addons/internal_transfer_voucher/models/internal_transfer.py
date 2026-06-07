@@ -3,6 +3,7 @@ from odoo.exceptions import UserError
 
 
 class AccountInternalTransfer(models.Model):
+    _check_company_auto = True
     _name = 'account.internal.transfer'
     _description = 'Internal Transfer'
     _inherit = ['mail.thread', 'mail.activity.mixin']
