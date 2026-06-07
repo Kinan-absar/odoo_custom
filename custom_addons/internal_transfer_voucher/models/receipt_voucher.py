@@ -140,9 +140,6 @@ class AccountReceiptVoucher(models.Model):
             if rec.state != 'draft':
                 continue
 
-            if rec.move_id:
-                raise UserError(_("This voucher is already posted."))
-
             if rec.journal_id.company_id and rec.journal_id.company_id != rec.company_id:
                 raise UserError(_("The selected journal belongs to a different company."))
 
@@ -174,17 +171,25 @@ class AccountReceiptVoucher(models.Model):
                 }),
             ]
 
-            move = self.env['account.move'].with_company(rec.company_id).create({
-                'date': rec.date,
-                'journal_id': rec.journal_id.id,
-                'company_id': rec.company_id.id,
-                'ref': rec.name,
-                'line_ids': lines,
-            })
+            if rec.move_id and rec.move_id.state == 'draft':
+                move = rec.move_id
+                move.write({
+                    'date': rec.date,
+                    'journal_id': rec.journal_id.id,
+                    'ref': rec.name,
+                    'line_ids': [(5, 0, 0)] + lines,
+                })
+            else:
+                move = self.env['account.move'].with_company(rec.company_id).create({
+                    'date': rec.date,
+                    'journal_id': rec.journal_id.id,
+                    'company_id': rec.company_id.id,
+                    'ref': rec.name,
+                    'line_ids': lines,
+                })
+                rec.move_id = move.id
 
             move.action_post()
-
-            rec.move_id = move.id
             rec.state = 'posted'
 
     def action_cancel(self):
@@ -199,10 +204,7 @@ class AccountReceiptVoucher(models.Model):
                 continue
 
             if rec.move_id:
-                rec.move_id.button_draft()
-                rec.move_id.unlink()
-
-            rec.move_id = False
+                rec.move_id.sudo().write({'state': 'draft'})
             rec.state = 'draft'
 
     # -------------------------
@@ -223,7 +225,7 @@ class AccountReceiptVoucher(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', 'New') == 'New':
-                vals['name'] = self.env['ir.sequence'].next_by_code(
+                vals['name'] = self.env['ir.sequence'].sudo().next_by_code(
                     'receipt.voucher'
                 ) or 'New'
         return super().create(vals_list)

@@ -226,17 +226,14 @@ class AccountInternalTransfer(models.Model):
                 continue
 
             if rec.move_id:
-                rec.move_id.button_draft()
-                rec.move_id.unlink()
-
-            rec.move_id = False
+                rec.move_id.sudo().write({'state': 'draft'})
             rec.state = 'draft'
 
 
     @api.model
     def create(self, vals):
         if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code(
+            vals['name'] = self.env['ir.sequence'].sudo().next_by_code(
                 'internal.transfer'
             ) or 'New'
         return super().create(vals)
