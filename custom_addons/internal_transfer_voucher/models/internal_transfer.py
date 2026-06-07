@@ -227,8 +227,6 @@ class AccountInternalTransfer(models.Model):
 
             if rec.move_id:
                 rec.move_id.sudo().write({'state': 'draft'})
-                rec.move_id.sudo().unlink()
-            rec.move_id = False
             rec.state = 'draft'
 
 
