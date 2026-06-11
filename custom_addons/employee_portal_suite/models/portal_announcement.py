@@ -30,6 +30,15 @@ class PortalAnnouncement(models.Model):
         help="If empty, visible to all users in the selected target."
     )
 
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "portal_announcement_ir_attachment_rel",
+        "announcement_id",
+        "attachment_id",
+        string="Attachments",
+        help="Upload PDF or image files to show with this announcement in the employee portal."
+    )
+
     color = fields.Selection([
         ('primary', 'Blue'),
         ('success', 'Green'),
@@ -52,6 +61,22 @@ class PortalAnnouncement(models.Model):
 
         user_groups = self.env.user.groups_id
         return announcements.filtered(lambda ann: not ann.group_ids or bool(user_groups & ann.group_ids))
+
+    def _user_can_access(self, user, target="portal"):
+        """Security helper for announcement attachment preview/download routes."""
+        self.ensure_one()
+        today = fields.Date.context_today(self)
+        if not self.active:
+            return False
+        if self.start_date and self.start_date > today:
+            return False
+        if self.end_date and self.end_date < today:
+            return False
+        if self.target not in (target, "both"):
+            return False
+        if self.group_ids and not bool(user.groups_id & self.group_ids):
+            return False
+        return True
 
     @api.model
     def get_backend_announcements(self):

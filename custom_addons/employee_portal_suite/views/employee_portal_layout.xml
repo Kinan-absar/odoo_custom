@@ -774,6 +774,39 @@
                 line-height: 1.5;
             }
 
+
+            .portal-announcement-attachments {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 12px;
+            }
+
+            .portal-announcement-image {
+                max-width: 220px;
+                max-height: 160px;
+                border-radius: 12px;
+                border: 1px solid var(--border-light);
+                box-shadow: var(--shadow-sm);
+                object-fit: cover;
+            }
+
+            .portal-announcement-file {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 10px;
+                border-radius: 10px;
+                background: rgba(79, 70, 229, 0.06);
+                border: 1px solid var(--border-light);
+                font-size: 12.5px;
+            }
+
+            .portal-announcement-file a {
+                font-weight: 600;
+                text-decoration: none;
+            }
+
             /* Mobile optimization */
             @media (max-width: 768px) {
                 .portal-announcement-wrapper {
@@ -1243,6 +1276,38 @@
                                 <div>
                                     <t t-raw="ann.message"/>
                                 </div>
+
+                                <t t-if="ann.attachment_ids">
+                                    <div class="portal-announcement-attachments">
+                                        <t t-foreach="ann.attachment_ids" t-as="attachment">
+                                            <t t-set="view_url" t-value="'/my/employee/announcements/%s/attachments/%s/view' % (ann.id, attachment.id)"/>
+                                            <t t-set="download_url" t-value="'/my/employee/announcements/%s/attachments/%s/download' % (ann.id, attachment.id)"/>
+                                            <t t-if="attachment.mimetype and attachment.mimetype.startswith('image/')">
+                                                <a t-att-href="view_url" target="_blank" title="Open image">
+                                                    <img class="portal-announcement-image" t-att-src="view_url" t-att-alt="attachment.name"/>
+                                                </a>
+                                            </t>
+                                            <t t-elif="attachment.mimetype == 'application/pdf'">
+                                                <div class="portal-announcement-file">
+                                                    <span>PDF</span>
+                                                    <a t-att-href="view_url" target="_blank">
+                                                        <t t-esc="attachment.name"/>
+                                                    </a>
+                                                    <span>·</span>
+                                                    <a t-att-href="download_url">Download</a>
+                                                </div>
+                                            </t>
+                                            <t t-else="">
+                                                <div class="portal-announcement-file">
+                                                    <span>File</span>
+                                                    <a t-att-href="download_url">
+                                                        <t t-esc="attachment.name"/>
+                                                    </a>
+                                                </div>
+                                            </t>
+                                        </t>
+                                    </div>
+                                </t>
                             </div>
                         </t>
 
