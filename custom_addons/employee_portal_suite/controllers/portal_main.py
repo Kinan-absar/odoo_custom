@@ -145,7 +145,15 @@ class EmployeePortalMain(CustomerPortal):
             ])
 
         # ------------------------------------------------------
-        # 8. Recent Activities
+        # 8. Portal Reports available to this user's portal groups
+        # ------------------------------------------------------
+        portal_report_count = request.env['portal.report.document'].sudo().search_count([
+            ('active', '=', True),
+            ('allowed_group_ids', 'in', user.groups_id.ids),
+        ])
+
+        # ------------------------------------------------------
+        # 9. Recent Activities
         # ------------------------------------------------------
         from itertools import chain
 
@@ -195,6 +203,7 @@ class EmployeePortalMain(CustomerPortal):
             "material_pending_count": material_pending_count,
             "pending_sign_count": pending_sign_count,
             "salary_report_count": salary_report_count,
+            "portal_report_count": portal_report_count,
             "recent_activities": recent_activities,
             "contract_count": contract_count,
             "ipc_count": ipc_count,

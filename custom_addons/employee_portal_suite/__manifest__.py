@@ -80,6 +80,7 @@
         'views/account_move_views.xml',
         'views/portal_announcement_views.xml',
         'views/menus.xml',
+        'views/portal_report_document_views.xml',
         
         # --------------------------------------------------
         # EMPLOYEE PORTAL (FRONTEND)
@@ -118,6 +119,7 @@
         'views/attendance_salary_report_views.xml',
         'views/salary_report_viewer_views.xml',
         'views/portal_salary_report_templates.xml',
+        'views/portal_report_templates.xml',
 
     ],
 
