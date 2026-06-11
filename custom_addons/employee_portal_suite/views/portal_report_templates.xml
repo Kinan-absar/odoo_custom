@@ -59,7 +59,7 @@
                         </div>
                     </div>
                 </t>
-                <t t-call="portal.portal_pager"/>
+                <t t-call="portal.pager"/>
             </t>
             <t t-if="not reports">
                 <div class="alert alert-info mt-3">No reports are available for your portal group yet.</div>
