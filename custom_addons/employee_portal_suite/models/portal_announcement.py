@@ -89,10 +89,24 @@ class PortalAnnouncement(models.Model):
         }
         result = []
         for ann in self._get_visible_announcements_for_current_user(target="backend"):
+            attachments = []
+            for attachment in ann.attachment_ids:
+                mimetype = attachment.mimetype or ""
+                attachments.append({
+                    "id": attachment.id,
+                    "name": attachment.name or "Attachment",
+                    "mimetype": mimetype,
+                    "is_image": mimetype.startswith("image/"),
+                    "is_pdf": mimetype == "application/pdf",
+                    "view_url": "/employee_portal_suite/announcements/%s/attachments/%s/view" % (ann.id, attachment.id),
+                    "download_url": "/employee_portal_suite/announcements/%s/attachments/%s/download" % (ann.id, attachment.id),
+                })
+
             result.append({
                 "id": ann.id,
                 "title": ann.name,
                 "message": ann.message or "",
                 "type": color_to_type.get(ann.color, "info"),
+                "attachments": attachments,
             })
         return result

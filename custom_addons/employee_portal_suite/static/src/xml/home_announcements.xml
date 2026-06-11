@@ -33,6 +33,29 @@
                             <div class="eps_announcement_message">
                                 <t t-out="ann.message"/>
                             </div>
+
+                            <div class="eps_announcement_attachments" t-if="ann.attachments and ann.attachments.length">
+                                <t t-foreach="ann.attachments" t-as="attachment" t-key="attachment.id">
+                                    <t t-if="attachment.is_image">
+                                        <a t-att-href="attachment.view_url" target="_blank" rel="noopener">
+                                            <img class="eps_announcement_image"
+                                                 t-att-src="attachment.view_url"
+                                                 t-att-alt="attachment.name"/>
+                                        </a>
+                                    </t>
+                                    <t t-else="">
+                                        <div class="eps_announcement_file">
+                                            <span class="eps_announcement_file_name">
+                                                <t t-esc="attachment.name"/>
+                                            </span>
+                                            <span class="eps_announcement_file_actions">
+                                                <a t-att-href="attachment.view_url" target="_blank" rel="noopener">View</a>
+                                                <a t-att-href="attachment.download_url">Download</a>
+                                            </span>
+                                        </div>
+                                    </t>
+                                </t>
+                            </div>
                         </div>
                     </t>
                 </div>
