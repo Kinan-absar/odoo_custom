@@ -99,7 +99,6 @@ class PortalAnnouncement(models.Model):
                     "is_image": mimetype.startswith("image/"),
                     "is_pdf": mimetype == "application/pdf",
                     "view_url": "/employee_portal_suite/announcements/%s/attachments/%s/view" % (ann.id, attachment.id),
-                    "download_url": "/employee_portal_suite/announcements/%s/attachments/%s/download" % (ann.id, attachment.id),
                 })
 
             result.append({
