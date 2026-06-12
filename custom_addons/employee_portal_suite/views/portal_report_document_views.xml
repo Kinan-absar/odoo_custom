@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="view_portal_report_document_list" model="ir.ui.view">
+        <field name="name">portal.report.document.list</field>
+        <field name="model">portal.report.document</field>
+        <field name="arch" type="xml">
+            <list string="Portal Reports">
+                <field name="date"/>
+                <field name="name"/>
+                <field name="filename"/>
+                <field name="allowed_group_ids" widget="many2many_tags"/>
+                <field name="uploaded_by_id"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_portal_report_document_form" model="ir.ui.view">
+        <field name="name">portal.report.document.form</field>
+        <field name="model">portal.report.document</field>
+        <field name="arch" type="xml">
+            <form string="Portal Report">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Report title"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date"/>
+                            <field name="file" filename="filename" accept="application/pdf"/>
+                            <field name="filename" invisible="1"/>
+                            <field name="uploaded_by_id" readonly="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="allowed_group_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Optional note shown in the portal list"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_portal_report_document" model="ir.actions.act_window">
+        <field name="name">Portal Reports</field>
+        <field name="res_model">portal.report.document</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Upload a PDF report for selected portal groups.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_portal_report_documents"
+              name="Portal Reports"
+              parent="menu_employee_portal_root"
+              action="action_portal_report_document"
+              sequence="35"
+              groups="employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_portal_report_uploader"/>
+
+</odoo>

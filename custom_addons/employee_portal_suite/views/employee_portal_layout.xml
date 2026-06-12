@@ -774,6 +774,50 @@
                 line-height: 1.5;
             }
 
+
+            .portal-announcement-attachments {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 12px;
+            }
+
+            .portal-announcement-file {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 12px;
+                border-radius: 10px;
+                background: rgba(79, 70, 229, 0.06);
+                border: 1px solid var(--border-light);
+                font-size: 12.5px;
+                font-weight: 600;
+                text-decoration: none;
+                color: var(--text-primary);
+            }
+
+            .portal-announcement-file:hover {
+                text-decoration: none;
+                background: rgba(79, 70, 229, 0.11);
+            }
+
+            .portal-announcement-download {
+                display: inline-flex;
+                align-items: center;
+                padding: 8px 10px;
+                border-radius: 10px;
+                border: 1px solid var(--border-light);
+                font-size: 12.5px;
+                font-weight: 600;
+                text-decoration: none;
+                color: var(--text-secondary);
+            }
+
+            .portal-announcement-download:hover {
+                text-decoration: none;
+                color: var(--text-primary);
+            }
+
             /* Mobile optimization */
             @media (max-width: 768px) {
                 .portal-announcement-wrapper {
@@ -1243,6 +1287,18 @@
                                 <div>
                                     <t t-raw="ann.message"/>
                                 </div>
+
+                                <t t-if="ann.attachment_ids">
+                                    <div class="portal-announcement-attachments">
+                                        <t t-foreach="ann.attachment_ids" t-as="attachment">
+                                            <t t-set="view_url" t-value="'/my/employee/announcements/%s/attachments/%s/view' % (ann.id, attachment.id)"/>
+                                            <a class="portal-announcement-file" t-att-href="view_url" target="_blank">
+                                                <i class="fa fa-paperclip me-1"/>
+                                                <t t-esc="attachment.name"/>
+                                            </a>
+                                        </t>
+                                    </div>
+                                </t>
                             </div>
                         </t>
 

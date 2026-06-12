@@ -30,6 +30,15 @@ class PortalAnnouncement(models.Model):
         help="If empty, visible to all users in the selected target."
     )
 
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "portal_announcement_ir_attachment_rel",
+        "announcement_id",
+        "attachment_id",
+        string="Attachments",
+        help="Upload PDF or image files to show with this announcement in the employee portal."
+    )
+
     color = fields.Selection([
         ('primary', 'Blue'),
         ('success', 'Green'),
@@ -53,6 +62,22 @@ class PortalAnnouncement(models.Model):
         user_groups = self.env.user.groups_id
         return announcements.filtered(lambda ann: not ann.group_ids or bool(user_groups & ann.group_ids))
 
+    def _user_can_access(self, user, target="portal"):
+        """Security helper for announcement attachment preview/download routes."""
+        self.ensure_one()
+        today = fields.Date.context_today(self)
+        if not self.active:
+            return False
+        if self.start_date and self.start_date > today:
+            return False
+        if self.end_date and self.end_date < today:
+            return False
+        if self.target not in (target, "both"):
+            return False
+        if self.group_ids and not bool(user.groups_id & self.group_ids):
+            return False
+        return True
+
     @api.model
     def get_backend_announcements(self):
         """Payload used by the backend web client notification service."""
@@ -64,10 +89,23 @@ class PortalAnnouncement(models.Model):
         }
         result = []
         for ann in self._get_visible_announcements_for_current_user(target="backend"):
+            attachments = []
+            for attachment in ann.attachment_ids:
+                mimetype = attachment.mimetype or ""
+                attachments.append({
+                    "id": attachment.id,
+                    "name": attachment.name or "Attachment",
+                    "mimetype": mimetype,
+                    "is_image": mimetype.startswith("image/"),
+                    "is_pdf": mimetype == "application/pdf",
+                    "view_url": "/employee_portal_suite/announcements/%s/attachments/%s/view" % (ann.id, attachment.id),
+                })
+
             result.append({
                 "id": ann.id,
                 "title": ann.name,
                 "message": ann.message or "",
                 "type": color_to_type.get(ann.color, "info"),
+                "attachments": attachments,
             })
         return result

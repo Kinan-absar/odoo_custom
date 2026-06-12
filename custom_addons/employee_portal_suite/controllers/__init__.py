@@ -6,3 +6,7 @@ from . import portal_sign_documents
 from . import portal_attendance
 
 from . import portal_salary_report
+
+from . import portal_reports
+
+from . import portal_announcements
