@@ -667,6 +667,12 @@ class AccountPaymentVoucher(models.Model):
                 'name': rec.description or rec.name,
             }))
 
+        if rec.move_id and rec.move_id.state not in ('draft', False):
+            raise UserError(_(
+                "This voucher is already linked to journal entry %s which is not in draft state. "
+                "Please reset it to draft before posting again, to avoid creating a duplicate entry."
+            ) % rec.move_id.name)
+
         if rec.move_id and rec.move_id.state == 'draft':
             move = rec.move_id
             move.write({
@@ -744,6 +750,12 @@ class AccountPaymentVoucher(models.Model):
                 'name': rec.description or rec.name,
             }))
 
+        if rec.move_id and rec.move_id.state not in ('draft', False):
+            raise UserError(_(
+                "This voucher is already linked to journal entry %s which is not in draft state. "
+                "Please reset it to draft before posting again, to avoid creating a duplicate entry."
+            ) % rec.move_id.name)
+
         if rec.move_id and rec.move_id.state == 'draft':
             move = rec.move_id
             move.write({
@@ -789,8 +801,8 @@ class AccountPaymentVoucher(models.Model):
                     "This voucher has reconciled payable lines. Unreconcile the vendor bills first before resetting it to draft."
                 ))
 
-            if rec.move_id:
-                rec.move_id.sudo().write({'state': 'draft'})
+            if rec.move_id and rec.move_id.state == 'posted':
+                rec.move_id.sudo().button_draft()
             rec.state = 'draft'
 
     # -------------------------
