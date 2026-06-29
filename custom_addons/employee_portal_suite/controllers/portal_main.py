@@ -16,6 +16,19 @@ class EmployeePortalMain(CustomerPortal):
             return False
         return request.env.user.has_group(xmlid)
 
+    def _count_new_reports(self, model_name, base_domain, report_type):
+        """Count records in `model_name` matching `base_domain` created after the
+        current user's last-seen marker for `report_type`. Used to drive the
+        "new report" badge on dashboard cards. If the user has never seen this
+        report type before, everything currently visible counts as new.
+        """
+        user = request.env.user
+        last_seen = request.env['portal.report.seen'].sudo()._get_last_seen(user.id, report_type)
+        domain = list(base_domain)
+        if last_seen:
+            domain.append(('create_date', '>', last_seen))
+        return request.env[model_name].sudo().search_count(domain)
+
     def _construction_portal_available(self):
         """Construction Contract Management is optional for Employee Portal Suite."""
         required_models = (
@@ -139,18 +152,27 @@ class EmployeePortalMain(CustomerPortal):
         # 7. Salary Reports available to read-only portal viewers
         # ------------------------------------------------------
         salary_report_count = 0
+        new_salary_report_count = 0
         if request.env.user.has_group('employee_portal_suite.group_salary_report_viewer'):
-            salary_report_count = request.env['employee.attendance.salary.report'].sudo().search_count([
-                ('state', 'in', ['generated', 'batch_created'])
-            ])
+            salary_report_domain = [('state', 'in', ['generated', 'batch_created'])]
+            salary_report_count = request.env['employee.attendance.salary.report'].sudo().search_count(
+                salary_report_domain
+            )
+            new_salary_report_count = self._count_new_reports(
+                'employee.attendance.salary.report', salary_report_domain, 'salary_report'
+            )
 
         # ------------------------------------------------------
         # 8. Portal Reports available to this user's portal groups
         # ------------------------------------------------------
-        portal_report_count = request.env['portal.report.document'].sudo().search_count([
+        portal_report_domain = [
             ('active', '=', True),
             ('allowed_group_ids', 'in', user.groups_id.ids),
-        ])
+        ]
+        portal_report_count = request.env['portal.report.document'].sudo().search_count(portal_report_domain)
+        new_portal_report_count = self._count_new_reports(
+            'portal.report.document', portal_report_domain, 'portal_report'
+        )
 
         # ------------------------------------------------------
         # 9. Recent Activities
@@ -203,7 +225,9 @@ class EmployeePortalMain(CustomerPortal):
             "material_pending_count": material_pending_count,
             "pending_sign_count": pending_sign_count,
             "salary_report_count": salary_report_count,
+            "new_salary_report_count": new_salary_report_count,
             "portal_report_count": portal_report_count,
+            "new_portal_report_count": new_portal_report_count,
             "recent_activities": recent_activities,
             "contract_count": contract_count,
             "ipc_count": ipc_count,

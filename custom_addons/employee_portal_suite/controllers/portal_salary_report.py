@@ -29,6 +29,11 @@ class EmployeePortalSalaryReport(CustomerPortal):
             step=20,
         )
         reports = Report.search(domain, order='date_from desc, id desc', limit=20, offset=pager['offset'])
+
+        # Clear the "new report" badge on the dashboard now that the user has
+        # opened the list. Next badge only appears once a newer report is added.
+        request.env['portal.report.seen'].sudo()._mark_seen(request.env.user.id, 'salary_report')
+
         return request.render('employee_portal_suite.portal_salary_report_list', {
             'reports': reports,
             'pager': pager,

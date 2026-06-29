@@ -42,3 +42,5 @@ portal_report_document_internal,portal.report.document.internal,model_portal_rep
 portal_report_document_uploader,portal.report.document.uploader,model_portal_report_document,employee_portal_suite.group_portal_report_uploader,1,1,1,1
 portal_report_document_admin,portal.report.document.admin,model_portal_report_document,employee_portal_suite.group_employee_portal_admin,1,1,1,1
 portal_report_document_employee,portal.report.document.employee,model_portal_report_document,employee_portal_suite.group_employee_portal_employee,1,0,0,0
+portal_report_seen_user,portal.report.seen.user,model_portal_report_seen,base.group_user,1,1,1,0
+portal_report_seen_portal,portal.report.seen.portal,model_portal_report_seen,base.group_portal,1,1,1,0
