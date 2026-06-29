@@ -513,6 +513,15 @@
                                             <span class="badge-pulse bg-success"></span>
                                         </t>
                                     </div>
+                                    <t t-if="new_employee_pending_count &gt; 0">
+                                        <span class="card-new-pill">
+                                            <span class="card-new-pill-dot"></span>
+                                            <t t-if="new_employee_pending_count == 1">New approval waiting</t>
+                                            <t t-if="new_employee_pending_count &gt; 1">
+                                                <t t-esc="new_employee_pending_count"/> new approvals waiting
+                                            </t>
+                                        </span>
+                                    </t>
                                 </div>
                             </div>
                         </a>
@@ -546,6 +555,15 @@
                                             <span class="badge-pulse"></span>
                                         </t>
                                     </div>
+                                    <t t-if="new_material_pending_count &gt; 0">
+                                        <span class="card-new-pill">
+                                            <span class="card-new-pill-dot"></span>
+                                            <t t-if="new_material_pending_count == 1">New approval waiting</t>
+                                            <t t-if="new_material_pending_count &gt; 1">
+                                                <t t-esc="new_material_pending_count"/> new approvals waiting
+                                            </t>
+                                        </span>
+                                    </t>
                                 </div>
                             </div>
                         </a>
@@ -569,6 +587,15 @@
                                         <t t-esc="pending_sign_count"/>
                                     </span>
                                 </div>
+                                <t t-if="new_pending_sign_count &gt; 0">
+                                    <span class="card-new-pill">
+                                        <span class="card-new-pill-dot"></span>
+                                        <t t-if="new_pending_sign_count == 1">New document to sign</t>
+                                        <t t-if="new_pending_sign_count &gt; 1">
+                                            <t t-esc="new_pending_sign_count"/> new documents to sign
+                                        </t>
+                                    </span>
+                                </t>
                             </div>
                         </div>
                     </a>

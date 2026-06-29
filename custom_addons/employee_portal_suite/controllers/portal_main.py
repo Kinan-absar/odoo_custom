@@ -16,19 +16,6 @@ class EmployeePortalMain(CustomerPortal):
             return False
         return request.env.user.has_group(xmlid)
 
-    def _count_new_reports(self, model_name, base_domain, report_type):
-        """Count records in `model_name` matching `base_domain` created after the
-        current user's last-seen marker for `report_type`. Used to drive the
-        "new report" badge on dashboard cards. If the user has never seen this
-        report type before, everything currently visible counts as new.
-        """
-        user = request.env.user
-        last_seen = request.env['portal.report.seen'].sudo()._get_last_seen(user.id, report_type)
-        domain = list(base_domain)
-        if last_seen:
-            domain.append(('create_date', '>', last_seen))
-        return request.env[model_name].sudo().search_count(domain)
-
     def _construction_portal_available(self):
         """Construction Contract Management is optional for Employee Portal Suite."""
         required_models = (
@@ -82,57 +69,23 @@ class EmployeePortalMain(CustomerPortal):
         ])
 
         # ------------------------------------------------------
-        # 3. Employee Pending Approvals
+        # 3-5, 7-8. Pending approvals, signatures, and reports —
+        # all sourced from the shared notification summary so the
+        # dashboard cards and the header bell never disagree.
         # ------------------------------------------------------
-        employee_pending_count = 0
+        notif_summary = request.env['portal.report.seen'].sudo()._get_notification_summary(user)
 
-        pending_recs = request.env['employee.request'].sudo().search([
-            ('state', 'in', ['manager', 'hr', 'finance', 'ceo'])
-        ])
+        employee_pending_count = notif_summary.get('er_approval', {}).get('count', 0)
+        new_employee_pending_count = notif_summary.get('er_approval', {}).get('new', 0)
+        material_pending_count = notif_summary.get('mr_approval', {}).get('count', 0)
+        new_material_pending_count = notif_summary.get('mr_approval', {}).get('new', 0)
+        pending_sign_count = notif_summary.get('sign_request', {}).get('count', 0)
+        new_pending_sign_count = notif_summary.get('sign_request', {}).get('new', 0)
+        salary_report_count = notif_summary.get('salary_report', {}).get('count', 0)
+        new_salary_report_count = notif_summary.get('salary_report', {}).get('new', 0)
+        portal_report_count = notif_summary.get('portal_report', {}).get('count', 0)
+        new_portal_report_count = notif_summary.get('portal_report', {}).get('new', 0)
 
-        for rec in pending_recs:
-            if rec.state == 'manager' and user.has_group('employee_portal_suite.group_employee_portal_manager'):
-                if rec.manager_id == employee:
-                    employee_pending_count += 1
-            elif rec.state == 'hr' and user.has_group('employee_portal_suite.group_employee_portal_hr'):
-                employee_pending_count += 1
-            elif rec.state == 'finance' and user.has_group('employee_portal_suite.group_employee_portal_finance'):
-                employee_pending_count += 1
-            elif rec.state == 'ceo' and user.has_group('employee_portal_suite.group_employee_portal_ceo'):
-                employee_pending_count += 1
-
-        # ------------------------------------------------------
-        # 4. Material Pending Approvals
-        # ------------------------------------------------------
-        material_pending_count = 0
-        Material = request.env['material.request'].sudo()
-
-        pending_recs = Material.search([
-            ('state', 'in', ['purchase', 'store', 'project_manager', 'director', 'ceo'])
-        ])
-
-        for rec in pending_recs:
-            if rec.state == 'purchase' and user.has_group('employee_portal_suite.group_mr_purchase_rep'):
-                material_pending_count += 1
-            elif rec.state == 'store' and rec.store_manager_user_id == user:
-                material_pending_count += 1
-            elif rec.state == 'project_manager' and rec.project_manager_user_id == user:
-                material_pending_count += 1
-            elif rec.state == 'director' and user.has_group('employee_portal_suite.group_mr_projects_director'):
-                material_pending_count += 1
-            elif rec.state == 'ceo' and user.has_group('employee_portal_suite.group_employee_portal_ceo'):
-                material_pending_count += 1
-        
-        # -------------------------------
-        # 5. Documents to Sign
-        # -------------------------------
-        pending_sign_count = 0
-        if "sign.request.item" in request.env:
-            pending_sign_count = request.env["sign.request.item"].sudo().search_count([
-                ('partner_id', '=', user.partner_id.id),
-                ('state', '=', 'sent')
-            ])
-        
         # -------------------------------
         # 6. Construction Counts
         # -------------------------------
@@ -147,32 +100,6 @@ class EmployeePortalMain(CustomerPortal):
             variation_count = request.env['construction.variation'].search_count([])
             measurement_count = request.env['construction.measurement'].search_count([])
         show_construction_cards = self._construction_portal_available() and self._safe_has_group('construction_contract_management.group_construction_portal')
-        
-        # ------------------------------------------------------
-        # 7. Salary Reports available to read-only portal viewers
-        # ------------------------------------------------------
-        salary_report_count = 0
-        new_salary_report_count = 0
-        if request.env.user.has_group('employee_portal_suite.group_salary_report_viewer'):
-            salary_report_domain = [('state', 'in', ['generated', 'batch_created'])]
-            salary_report_count = request.env['employee.attendance.salary.report'].sudo().search_count(
-                salary_report_domain
-            )
-            new_salary_report_count = self._count_new_reports(
-                'employee.attendance.salary.report', salary_report_domain, 'salary_report'
-            )
-
-        # ------------------------------------------------------
-        # 8. Portal Reports available to this user's portal groups
-        # ------------------------------------------------------
-        portal_report_domain = [
-            ('active', '=', True),
-            ('allowed_group_ids', 'in', user.groups_id.ids),
-        ]
-        portal_report_count = request.env['portal.report.document'].sudo().search_count(portal_report_domain)
-        new_portal_report_count = self._count_new_reports(
-            'portal.report.document', portal_report_domain, 'portal_report'
-        )
 
         # ------------------------------------------------------
         # 9. Recent Activities
@@ -222,8 +149,11 @@ class EmployeePortalMain(CustomerPortal):
             "my_request_count": my_request_count,
             "my_material_count": my_material_count,
             "employee_pending_count": employee_pending_count,
+            "new_employee_pending_count": new_employee_pending_count,
             "material_pending_count": material_pending_count,
+            "new_material_pending_count": new_material_pending_count,
             "pending_sign_count": pending_sign_count,
+            "new_pending_sign_count": new_pending_sign_count,
             "salary_report_count": salary_report_count,
             "new_salary_report_count": new_salary_report_count,
             "portal_report_count": portal_report_count,
