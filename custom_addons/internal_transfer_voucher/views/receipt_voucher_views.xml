@@ -7,6 +7,11 @@
         <field name="model">account.receipt.voucher</field>
         <field name="arch" type="xml">
             <search>
+                <field name="name" string="Voucher"/>
+                <field name="partner_id"/>
+                <field name="journal_id"/>
+                <field name="description" string="Notes"/>
+                <field name="amount"/>
                 <filter name="draft"  string="Draft"     domain="[('state','=','draft')]"/>
                 <filter name="posted" string="Posted"    domain="[('state','=','posted')]"/>
                 <filter name="cancel" string="Cancelled" domain="[('state','=','cancel')]"/>

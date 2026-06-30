@@ -12,3 +12,4 @@ from . import hr_employee_payroll_fields
 from . import attendance_salary_report
 
 from . import portal_report_document
+from . import portal_report_seen

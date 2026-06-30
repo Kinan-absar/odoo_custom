@@ -119,6 +119,10 @@ class EmployeePortalSignDocs(CustomerPortal):
         # Sort newest → oldest
         documents = sorted(documents, key=lambda d: d["date"], reverse=True)
 
+        # Clear the "new signature request" badge on the dashboard/header bell
+        # now that the user has opened this page.
+        request.env['portal.report.seen'].sudo()._mark_seen(user.id, 'sign_request')
+
         return request.render(
             "employee_portal_suite.portal_sign_documents_page",
             {
