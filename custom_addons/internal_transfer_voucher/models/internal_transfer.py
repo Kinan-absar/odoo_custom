@@ -205,12 +205,18 @@ class AccountInternalTransfer(models.Model):
 
             if rec.move_id and rec.move_id.state == 'draft':
                 move = rec.move_id
-                move.write({
+                move_vals = {
                     'date': rec.date,
                     'journal_id': rec.source_journal_id.id,
                     'ref': rec.description or rec.name,
-                    'line_ids': [(5, 0, 0)] + lines,
-                })
+                }
+                # Avoid deleting/recreating protected tax lines on repost.
+                has_tax_lines = bool(move.line_ids.filtered(
+                    lambda line: line.tax_line_id or line.tax_ids or line.tax_repartition_line_id
+                ))
+                if not has_tax_lines:
+                    move_vals['line_ids'] = [(5, 0, 0)] + lines
+                move.write(move_vals)
             else:
                 move = self.env['account.move'].create({
                     'date': rec.date,

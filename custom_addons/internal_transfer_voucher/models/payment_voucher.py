@@ -710,12 +710,23 @@ class AccountPaymentVoucher(models.Model):
 
         if rec.move_id and rec.move_id.state == 'draft':
             move = rec.move_id
-            move.write({
+            move_vals = {
                 'date': rec.date,
                 'journal_id': rec.journal_id.id,
                 'ref': rec.name,
-                'line_ids': [(5, 0, 0)] + lines,
-            })
+            }
+            # If this is a reposted voucher move that already contains tax lines,
+            # do NOT clear/recreate line_ids. In Odoo 17/18, deleting tax lines from
+            # a move that already affected the tax report raises:
+            # "You cannot delete a tax line as it would impact the tax report".
+            # The voucher is linked to the same draft move, so repost the existing
+            # lines instead of deleting protected tax lines and creating duplicates.
+            has_tax_lines = bool(move.line_ids.filtered(
+                lambda line: line.tax_line_id or line.tax_ids or line.tax_repartition_line_id
+            ))
+            if not has_tax_lines:
+                move_vals['line_ids'] = [(5, 0, 0)] + lines
+            move.write(move_vals)
         else:
             move = self.env['account.move'].create({
                 'date': rec.date,
@@ -793,12 +804,23 @@ class AccountPaymentVoucher(models.Model):
 
         if rec.move_id and rec.move_id.state == 'draft':
             move = rec.move_id
-            move.write({
+            move_vals = {
                 'date': rec.date,
                 'journal_id': rec.journal_id.id,
                 'ref': rec.name,
-                'line_ids': [(5, 0, 0)] + lines,
-            })
+            }
+            # If this is a reposted voucher move that already contains tax lines,
+            # do NOT clear/recreate line_ids. In Odoo 17/18, deleting tax lines from
+            # a move that already affected the tax report raises:
+            # "You cannot delete a tax line as it would impact the tax report".
+            # The voucher is linked to the same draft move, so repost the existing
+            # lines instead of deleting protected tax lines and creating duplicates.
+            has_tax_lines = bool(move.line_ids.filtered(
+                lambda line: line.tax_line_id or line.tax_ids or line.tax_repartition_line_id
+            ))
+            if not has_tax_lines:
+                move_vals['line_ids'] = [(5, 0, 0)] + lines
+            move.write(move_vals)
         else:
             move = self.env['account.move'].create({
                 'date': rec.date,
