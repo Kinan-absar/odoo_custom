@@ -92,6 +92,22 @@ class AccountPaymentVoucher(models.Model):
         tracking=True,
     )
 
+    # -------------------------
+    # Purchase Order Tracking
+    # -------------------------
+
+    purchase_order_id = fields.Many2one(
+        'purchase.order',
+        string='Purchase Order',
+        check_company=True,
+        domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]",
+        tracking=True,
+        help="Optionally link this payment voucher to a specific Purchase Order. "
+             "This lets you track how much has been paid against that order. "
+             "For Cash/Cheque/Bank Transfer vouchers, the full voucher amount is counted "
+             "as paid towards the selected order once the voucher is posted.",
+    )
+
     reconciled_bill_ids = fields.Many2many(
         'account.move',
         'account_payment_voucher_reconciled_bill_rel',
@@ -585,6 +601,25 @@ class AccountPaymentVoucher(models.Model):
             self.line_ids = [(5, 0, 0)]
         if self.payment_method != 'journal_transfer':
             self.line_ids = [(5, 0, 0)]
+
+    @api.onchange('purchase_order_id')
+    def _onchange_purchase_order_id(self):
+        """When a Purchase Order is picked, default the partner and suggest
+        any open vendor bills generated from that order so the user can
+        reconcile the payment straight away."""
+        if self.purchase_order_id:
+            if not self.partner_id:
+                self.partner_id = self.purchase_order_id.partner_id
+
+            if self.payment_method != 'journal_transfer':
+                bills = self.env['account.move'].search([
+                    ('invoice_line_ids.purchase_line_id.order_id', '=', self.purchase_order_id.id),
+                    ('move_type', '=', 'in_invoice'),
+                    ('state', '=', 'posted'),
+                    ('payment_state', 'in', ('not_paid', 'partial')),
+                ])
+                if bills:
+                    self.bill_ids = [(6, 0, bills.ids)]
 
     # -------------------------
     # Actions

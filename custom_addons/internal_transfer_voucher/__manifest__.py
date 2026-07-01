@@ -24,7 +24,7 @@ Key Features
     "license": "OPL-1",
     "price": 14.99,
     "currency": "USD",
-    "depends": ["account"],
+    "depends": ["account", "purchase"],
     "data": [
         "security/ir.model.access.csv",
         "security/ir_rules.xml",
@@ -38,6 +38,7 @@ Key Features
         "views/internal_transfer_views.xml",
         "views/payment_voucher_views.xml",
         "views/receipt_voucher_views.xml",
+        "views/purchase_order_views.xml",
         "views/menus.xml",
     ],
     'assets': {
