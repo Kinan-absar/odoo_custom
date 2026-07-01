@@ -100,7 +100,7 @@ class AccountPaymentVoucher(models.Model):
         'purchase.order',
         string='Purchase Order',
         check_company=True,
-        domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id)]",
+        domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]",
         tracking=True,
         help="Optionally link this payment voucher to a specific Purchase Order. "
              "This lets you track how much has been paid against that order. "

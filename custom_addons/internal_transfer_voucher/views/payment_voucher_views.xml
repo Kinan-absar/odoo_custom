@@ -119,7 +119,7 @@
                             <field name="date"/>
                             <field name="partner_id"/>
                             <field name="purchase_order_id"
-                                   domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id)]"
+                                   domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]"
                                    options="{'no_create': True}"
                                    invisible="payment_method == 'journal_transfer' or not is_payable_account"/>
                             <field name="amount"/>
