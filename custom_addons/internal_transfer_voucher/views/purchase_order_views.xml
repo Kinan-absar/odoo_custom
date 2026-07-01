@@ -20,7 +20,7 @@
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
 
-            <!-- Smart button showing how many vouchers / how much was paid -->
+            <!-- Smart button showing how much was paid -->
             <div name="button_box" position="inside">
                 <button name="action_view_payment_vouchers"
                         type="object"
@@ -32,10 +32,27 @@
                 </button>
             </div>
 
-            <field name="amount_total" position="after">
-                <field name="amount_paid" widget="monetary"/>
-                <field name="amount_paid_residual" widget="monetary"/>
-            </field>
+            <!-- Dedicated tab: Payments, showing totals and the linked vouchers -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Payments" name="payments">
+                    <group>
+                        <group string="Payment Summary">
+                            <field name="amount_paid" widget="monetary"/>
+                            <field name="amount_paid_residual" widget="monetary"/>
+                        </group>
+                    </group>
+                    <field name="payment_voucher_ids" nolabel="1">
+                        <list>
+                            <field name="name"/>
+                            <field name="date"/>
+                            <field name="partner_id"/>
+                            <field name="amount" widget="monetary"/>
+                            <field name="payment_method"/>
+                            <field name="state" widget="badge" decoration-success="state == 'posted'" decoration-info="state == 'draft'" decoration-danger="state == 'cancel'"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
 
         </field>
     </record>
