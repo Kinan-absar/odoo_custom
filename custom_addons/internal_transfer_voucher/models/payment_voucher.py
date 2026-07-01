@@ -745,6 +745,59 @@ class AccountPaymentVoucher(models.Model):
         for extra in extra_lines:
             rec._write_line_amounts_safely(extra, debit=0.0, credit=0.0, tax_ids=False)
 
+        # Final safety: make the bank line exactly balance the final draft move.
+        # This prevents Odoo from adding an "Automatic Balancing Line" on repost.
+        # Do this after fee/tax lines are updated because Odoo may recompute tax amounts
+        # with rounding. We never delete protected tax lines here.
+        move.invalidate_recordset(['line_ids'])
+        auto_lines = move.line_ids.filtered(
+            lambda line: (line.name or '') == 'Automatic Balancing Line'
+        )
+        protected_tax_lines = move.line_ids.filtered(
+            lambda line: line.tax_line_id or line.tax_repartition_line_id
+        )
+        balancing_base_lines = move.line_ids - bank_line - auto_lines
+        target_bank_balance = -sum(balancing_base_lines.mapped('balance'))
+        if target_bank_balance >= 0:
+            rec._write_line_amounts_safely(
+                bank_line,
+                debit=target_bank_balance,
+                credit=0.0,
+                account=credit_line_data['account'],
+                partner=rec.partner_id,
+                name=credit_line_data['name'],
+                tax_ids=False,
+            )
+        else:
+            rec._write_line_amounts_safely(
+                bank_line,
+                debit=0.0,
+                credit=abs(target_bank_balance),
+                account=credit_line_data['account'],
+                partner=rec.partner_id,
+                name=credit_line_data['name'],
+                tax_ids=False,
+            )
+
+        # Remove only useless zero automatic balancing lines. These are not tax lines,
+        # and deleting them does not touch the tax report. If any automatic line has a
+        # value, stop instead of hiding an imbalance.
+        move.invalidate_recordset(['line_ids'])
+        auto_lines = move.line_ids.filtered(
+            lambda line: (line.name or '') == 'Automatic Balancing Line'
+        )
+        non_zero_auto_lines = auto_lines.filtered(
+            lambda line: not move.currency_id.is_zero(line.debit) or not move.currency_id.is_zero(line.credit)
+        )
+        if non_zero_auto_lines:
+            raise UserError(_(
+                "The journal entry is still not balanced and Odoo created an Automatic Balancing Line. "
+                "Please check the voucher amount, bank fees, and tax setup."
+            ))
+        zero_auto_lines = auto_lines - protected_tax_lines
+        if zero_auto_lines:
+            zero_auto_lines.with_context(check_move_validity=False).unlink()
+
     # -------------------------
     # Actions
     # -------------------------
