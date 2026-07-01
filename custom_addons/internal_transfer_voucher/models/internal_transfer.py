@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class AccountInternalTransfer(models.Model):
@@ -205,12 +205,18 @@ class AccountInternalTransfer(models.Model):
 
             if rec.move_id and rec.move_id.state == 'draft':
                 move = rec.move_id
-                move.write({
+                move_vals = {
                     'date': rec.date,
                     'journal_id': rec.source_journal_id.id,
                     'ref': rec.description or rec.name,
-                    'line_ids': [(5, 0, 0)] + lines,
-                })
+                }
+                # Avoid deleting/recreating protected tax lines on repost.
+                has_tax_lines = bool(move.line_ids.filtered(
+                    lambda line: line.tax_line_id or line.tax_ids or line.tax_repartition_line_id
+                ))
+                if not has_tax_lines:
+                    move_vals['line_ids'] = [(5, 0, 0)] + lines
+                move.write(move_vals)
             else:
                 move = self.env['account.move'].create({
                     'date': rec.date,
@@ -235,9 +241,11 @@ class AccountInternalTransfer(models.Model):
                 continue
 
             if rec.move_id and rec.move_id.state == 'posted':
-                rec.move_id.sudo().button_draft()
-            rec.state = 'draft'
+                # Keep the linked custom move and reuse it on repost. Avoid
+                # button_draft() because it may trigger tax-line rebuild validation.
+                rec.move_id.sudo().write({'state': 'draft'})
 
+            rec.state = 'draft'
 
     @api.model
     def create(self, vals):

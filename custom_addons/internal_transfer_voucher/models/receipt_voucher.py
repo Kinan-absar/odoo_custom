@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class AccountReceiptVoucher(models.Model):
@@ -210,7 +210,11 @@ class AccountReceiptVoucher(models.Model):
                 continue
 
             if rec.move_id and rec.move_id.state == 'posted':
-                rec.move_id.sudo().button_draft()
+                # Do not use button_draft() for voucher-generated moves because it
+                # can delete/rebuild dynamic tax lines and trigger Odoo's tax report
+                # protection. Keep the existing move linked and reuse it on repost.
+                rec.move_id.sudo().write({'state': 'draft'})
+
             rec.state = 'draft'
 
     # -------------------------
