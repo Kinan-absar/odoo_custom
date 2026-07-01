@@ -621,6 +621,130 @@ class AccountPaymentVoucher(models.Model):
                 if bills:
                     self.bill_ids = [(6, 0, bills.ids)]
 
+
+    def _write_line_amounts_safely(self, line, debit=0.0, credit=0.0, account=None, partner=None, name=None, analytic_distribution=None, tax_ids=None):
+        """Update an existing draft move line without deleting protected tax lines."""
+        vals = {
+            'debit': debit or 0.0,
+            'credit': credit or 0.0,
+        }
+        if account:
+            vals['account_id'] = account.id
+        if partner:
+            vals['partner_id'] = partner.id
+        if name is not None:
+            vals['name'] = name
+        if analytic_distribution is not None:
+            vals['analytic_distribution'] = analytic_distribution or False
+        if tax_ids is not None:
+            vals['tax_ids'] = [(6, 0, tax_ids.ids)] if tax_ids else [(5, 0, 0)]
+        line.with_context(check_move_validity=False).write(vals)
+
+    def _update_existing_move_lines_without_deleting_tax(self, move, debit_line_data, credit_line_data, fee_line_data=None, tax_amount=0.0):
+        """Update voucher-generated draft move lines when tax lines already exist.
+
+        Odoo may block deleting tax lines after they affected the tax report. Therefore,
+        on repost we update the existing base, bank, fee, and generated tax lines in-place
+        instead of using (5, 0, 0) to remove all lines.
+        """
+        self.ensure_one()
+        rec = self
+        lines = move.line_ids
+        tax_lines = lines.filtered(lambda line: line.tax_line_id or (line.tax_repartition_line_id and not line.tax_ids))
+
+        fee_lines = lines.filtered(lambda line: line.tax_ids or (rec.fee_account_id and line.account_id == rec.fee_account_id and not line.tax_line_id))
+        fee_line = fee_lines[:1]
+
+        bank_lines = lines.filtered(lambda line: line.account_id == rec.journal_id.default_account_id and not line.tax_line_id and line not in fee_lines)
+        bank_line = bank_lines.filtered(lambda line: line.credit > 0)[:1] or bank_lines[:1]
+
+        base_lines = lines.filtered(lambda line: line not in tax_lines and line not in fee_lines and line not in bank_lines)
+        debit_line = base_lines.filtered(lambda line: line.account_id == rec.account_id)[:1] or base_lines[:1]
+
+        if not debit_line:
+            debit_line = self.env['account.move.line'].with_context(check_move_validity=False).create({
+                'move_id': move.id,
+                'account_id': debit_line_data['account'].id,
+                'partner_id': rec.partner_id.id,
+                'debit': debit_line_data['debit'],
+                'credit': debit_line_data['credit'],
+                'name': debit_line_data['name'],
+                'analytic_distribution': debit_line_data.get('analytic_distribution') or False,
+            })
+        else:
+            rec._write_line_amounts_safely(
+                debit_line,
+                debit=debit_line_data['debit'],
+                credit=debit_line_data['credit'],
+                account=debit_line_data['account'],
+                partner=rec.partner_id,
+                name=debit_line_data['name'],
+                analytic_distribution=debit_line_data.get('analytic_distribution') or False,
+                tax_ids=False,
+            )
+
+        if fee_line_data:
+            if not fee_line:
+                fee_line = self.env['account.move.line'].with_context(check_move_validity=False).create({
+                    'move_id': move.id,
+                    'account_id': fee_line_data['account'].id,
+                    'partner_id': rec.partner_id.id,
+                    'debit': fee_line_data['debit'],
+                    'credit': fee_line_data['credit'],
+                    'name': fee_line_data['name'],
+                    'tax_ids': [(6, 0, fee_line_data['tax_ids'].ids)] if fee_line_data.get('tax_ids') else [],
+                    'analytic_distribution': fee_line_data.get('analytic_distribution') or False,
+                })
+            else:
+                rec._write_line_amounts_safely(
+                    fee_line,
+                    debit=fee_line_data['debit'],
+                    credit=fee_line_data['credit'],
+                    account=fee_line_data['account'],
+                    partner=rec.partner_id,
+                    name=fee_line_data['name'],
+                    analytic_distribution=fee_line_data.get('analytic_distribution') or False,
+                    tax_ids=fee_line_data.get('tax_ids'),
+                )
+        else:
+            # Keep protected old fee/tax lines but neutralize their value.
+            if fee_line:
+                rec._write_line_amounts_safely(fee_line, debit=0.0, credit=0.0, tax_ids=False)
+            tax_amount = 0.0
+
+        if tax_lines:
+            for tax_line in tax_lines:
+                rec._write_line_amounts_safely(tax_line, debit=0.0, credit=0.0)
+            main_tax_line = tax_lines[:1]
+            if tax_amount:
+                rec._write_line_amounts_safely(main_tax_line, debit=tax_amount, credit=0.0)
+
+        if not bank_line:
+            self.env['account.move.line'].with_context(check_move_validity=False).create({
+                'move_id': move.id,
+                'account_id': credit_line_data['account'].id,
+                'partner_id': rec.partner_id.id,
+                'debit': credit_line_data['debit'],
+                'credit': credit_line_data['credit'],
+                'name': credit_line_data['name'],
+            })
+        else:
+            rec._write_line_amounts_safely(
+                bank_line,
+                debit=credit_line_data['debit'],
+                credit=credit_line_data['credit'],
+                account=credit_line_data['account'],
+                partner=rec.partner_id,
+                name=credit_line_data['name'],
+                tax_ids=False,
+            )
+
+        # Neutralize any extra old non-tax lines so previous data does not remain active.
+        active_lines = debit_line | fee_line | bank_line | tax_lines
+        extra_lines = lines - active_lines
+        for extra in extra_lines:
+            rec._write_line_amounts_safely(extra, debit=0.0, credit=0.0, tax_ids=False)
+
     # -------------------------
     # Actions
     # -------------------------
@@ -715,18 +839,41 @@ class AccountPaymentVoucher(models.Model):
                 'journal_id': rec.journal_id.id,
                 'ref': rec.name,
             }
-            # If this is a reposted voucher move that already contains tax lines,
-            # do NOT clear/recreate line_ids. In Odoo 17/18, deleting tax lines from
-            # a move that already affected the tax report raises:
-            # "You cannot delete a tax line as it would impact the tax report".
-            # The voucher is linked to the same draft move, so repost the existing
-            # lines instead of deleting protected tax lines and creating duplicates.
             has_tax_lines = bool(move.line_ids.filtered(
                 lambda line: line.tax_line_id or line.tax_ids or line.tax_repartition_line_id
             ))
-            if not has_tax_lines:
+            if has_tax_lines:
+                debit_data = {
+                    'account': rec.account_id,
+                    'debit': rec.amount,
+                    'credit': 0.0,
+                    'name': rec.description or rec.name,
+                    'analytic_distribution': rec.analytic_distribution,
+                }
+                fee_data = False
+                tax_amount = 0.0
+                if rec.has_bank_fees and rec.fee_amount:
+                    if rec.fee_tax_id:
+                        tax_amount = sum(t['amount'] for t in rec.fee_tax_id.compute_all(rec.fee_amount, currency=rec.currency_id)['taxes'])
+                    fee_data = {
+                        'account': rec.fee_account_id,
+                        'debit': rec.fee_amount,
+                        'credit': 0.0,
+                        'name': _('Bank Fees'),
+                        'analytic_distribution': rec.fee_analytic_distribution,
+                        'tax_ids': rec.fee_tax_id,
+                    }
+                credit_data = {
+                    'account': rec.journal_id.default_account_id,
+                    'debit': 0.0,
+                    'credit': rec.amount + (rec.fee_amount if fee_data else 0.0) + tax_amount,
+                    'name': rec.description or rec.name,
+                }
+                move.with_context(check_move_validity=False).write(move_vals)
+                rec._update_existing_move_lines_without_deleting_tax(move, debit_data, credit_data, fee_data, tax_amount)
+            else:
                 move_vals['line_ids'] = [(5, 0, 0)] + lines
-            move.write(move_vals)
+                move.write(move_vals)
         else:
             move = self.env['account.move'].create({
                 'date': rec.date,
@@ -809,18 +956,17 @@ class AccountPaymentVoucher(models.Model):
                 'journal_id': rec.journal_id.id,
                 'ref': rec.name,
             }
-            # If this is a reposted voucher move that already contains tax lines,
-            # do NOT clear/recreate line_ids. In Odoo 17/18, deleting tax lines from
-            # a move that already affected the tax report raises:
-            # "You cannot delete a tax line as it would impact the tax report".
-            # The voucher is linked to the same draft move, so repost the existing
-            # lines instead of deleting protected tax lines and creating duplicates.
             has_tax_lines = bool(move.line_ids.filtered(
                 lambda line: line.tax_line_id or line.tax_ids or line.tax_repartition_line_id
             ))
-            if not has_tax_lines:
+            if has_tax_lines:
+                raise UserError(_(
+                    "This journal transfer contains protected VAT lines. To change amounts or fees after posting, "
+                    "create a new transfer or reverse the old one instead of deleting tax lines."
+                ))
+            else:
                 move_vals['line_ids'] = [(5, 0, 0)] + lines
-            move.write(move_vals)
+                move.write(move_vals)
         else:
             move = self.env['account.move'].create({
                 'date': rec.date,
