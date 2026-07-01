@@ -118,6 +118,10 @@
                         <group string="Payment Information">
                             <field name="date"/>
                             <field name="partner_id"/>
+                            <field name="purchase_order_id"
+                                   domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id)]"
+                                   options="{'no_create': True}"
+                                   invisible="payment_method == 'journal_transfer' or not is_payable_account"/>
                             <field name="amount"/>
                             <field name="currency_id"
                                    groups="base.group_multi_currency"/>
@@ -188,9 +192,6 @@
                     <group string="Vendor Bill Matching"
                            invisible="payment_method == 'journal_transfer' or not is_payable_account">
                         <group>
-                            <field name="purchase_order_id"
-                                   domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id)]"
-                                   options="{'no_create': True}"/>
                             <field name="bill_ids"
                                    widget="many2many_tags"
                                    readonly="bill_reconciled"
