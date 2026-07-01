@@ -7,6 +7,7 @@
         <search>
             <field name="name" string="Voucher"/>
             <field name="partner_id"/>
+            <field name="purchase_order_id"/>
             <field name="journal_id"/>
             <field name="description" string="Notes"/>
             <field name="amount"/>
@@ -37,6 +38,7 @@
             <field name="name"/>
             <field name="date"/>
             <field name="partner_id"/>
+            <field name="purchase_order_id"/>
             <field name="amount"/>
             <field name="journal_id"/>
             <field name="payment_method"/>
@@ -186,6 +188,9 @@
                     <group string="Vendor Bill Matching"
                            invisible="payment_method == 'journal_transfer' or not is_payable_account">
                         <group>
+                            <field name="purchase_order_id"
+                                   domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id)]"
+                                   options="{'no_create': True}"/>
                             <field name="bill_ids"
                                    widget="many2many_tags"
                                    readonly="bill_reconciled"
