@@ -8,7 +8,7 @@ Internal Transfers & Payment Vouchers
 =====================================
 
 Key Features
-------------
+------------ 
 • Internal Transfers between Bank and Cash journals 
 • Payment Vouchers — outbound payments (Cash / Cheque / Bank Transfer)
 • Receipt Vouchers — inbound receipts (Cash / Cheque / Bank Transfer)

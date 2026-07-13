@@ -7,7 +7,7 @@
         <search>
             <field name="name" string="Voucher"/>
             <field name="partner_id"/>
-            <field name="purchase_order_id"/>
+            <field name="purchase_order_ids" string="Purchase Order"/>
             <field name="journal_id"/>
             <field name="description" string="Notes"/>
             <field name="amount"/>
@@ -38,7 +38,7 @@
             <field name="name"/>
             <field name="date"/>
             <field name="partner_id"/>
-            <field name="purchase_order_id"/>
+            <field name="purchase_order_ids" widget="many2many_tags" options="{'color_field': 'priority'}"/>
             <field name="amount"/>
             <field name="journal_id"/>
             <field name="payment_method"/>
@@ -118,7 +118,8 @@
                         <group string="Payment Information">
                             <field name="date"/>
                             <field name="partner_id"/>
-                            <field name="purchase_order_id"
+                            <field name="purchase_order_ids"
+                                   widget="many2many_tags"
                                    domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]"
                                    options="{'no_create': True}"
                                    invisible="payment_method == 'journal_transfer' or not is_payable_account"/>
