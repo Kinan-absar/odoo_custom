@@ -96,16 +96,18 @@ class AccountPaymentVoucher(models.Model):
     # Purchase Order Tracking
     # -------------------------
 
-    purchase_order_id = fields.Many2one(
+    purchase_order_ids = fields.Many2many(
         'purchase.order',
-        string='Purchase Order',
+        'account_payment_voucher_po_rel',
+        'voucher_id',
+        'order_id',
+        string='Purchase Orders',
         check_company=True,
         domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]",
         tracking=True,
-        help="Optionally link this payment voucher to a specific Purchase Order. "
-             "This lets you track how much has been paid against that order. "
-             "For Cash/Cheque/Bank Transfer vouchers, the full voucher amount is counted "
-             "as paid towards the selected order once the voucher is posted.",
+        help="Optionally link this payment voucher to one or more Purchase Orders. "
+             "This lets you track how much has been paid against those orders. "
+             "Selecting POs will automatically load their unpaid vendor bills for reconciliation.",
     )
 
     reconciled_bill_ids = fields.Many2many(
@@ -602,24 +604,27 @@ class AccountPaymentVoucher(models.Model):
         if self.payment_method != 'journal_transfer':
             self.line_ids = [(5, 0, 0)]
 
-    @api.onchange('purchase_order_id')
-    def _onchange_purchase_order_id(self):
-        """When a Purchase Order is picked, default the partner and suggest
-        any open vendor bills generated from that order so the user can
-        reconcile the payment straight away."""
-        if self.purchase_order_id:
-            if not self.partner_id:
-                self.partner_id = self.purchase_order_id.partner_id
+    @api.onchange('purchase_order_ids')
+    def _onchange_purchase_order_ids(self):
+        """When Purchase Orders are selected, auto-set partner if all share
+        the same partner, and load all unpaid vendor bills from those orders."""
+        if not self.purchase_order_ids:
+            return
 
-            if self.payment_method != 'journal_transfer':
-                bills = self.env['account.move'].search([
-                    ('invoice_line_ids.purchase_line_id.order_id', '=', self.purchase_order_id.id),
-                    ('move_type', '=', 'in_invoice'),
-                    ('state', '=', 'posted'),
-                    ('payment_state', 'in', ('not_paid', 'partial')),
-                ])
-                if bills:
-                    self.bill_ids = [(6, 0, bills.ids)]
+        # Auto-set partner only when all selected POs share the same partner
+        partners = self.purchase_order_ids.mapped('partner_id')
+        if len(partners) == 1 and not self.partner_id:
+            self.partner_id = partners
+
+        if self.payment_method != 'journal_transfer':
+            bills = self.env['account.move'].search([
+                ('invoice_line_ids.purchase_line_id.order_id', 'in', self.purchase_order_ids.ids),
+                ('move_type', '=', 'in_invoice'),
+                ('state', '=', 'posted'),
+                ('payment_state', 'in', ('not_paid', 'partial')),
+            ])
+            if bills:
+                self.bill_ids = [(6, 0, bills.ids)]
 
 
     def _write_line_amounts_safely(self, line, debit=0.0, credit=0.0, account=None, partner=None, name=None, analytic_distribution=None, tax_ids=None):
@@ -635,7 +640,7 @@ class AccountPaymentVoucher(models.Model):
         if name is not None:
             vals['name'] = name
         if analytic_distribution is not None:
-            vals['analytic_distribution'] = analytic_distribution or False
+            vals['analytic_distribution'] = analytic_distribution or {}
         if tax_ids is not None:
             vals['tax_ids'] = [(6, 0, tax_ids.ids)] if tax_ids else [(5, 0, 0)]
         line.with_context(check_move_validity=False).write(vals)
@@ -669,7 +674,7 @@ class AccountPaymentVoucher(models.Model):
                 'debit': debit_line_data['debit'],
                 'credit': debit_line_data['credit'],
                 'name': debit_line_data['name'],
-                'analytic_distribution': debit_line_data.get('analytic_distribution') or False,
+                'analytic_distribution': debit_line_data.get('analytic_distribution') or {},
             })
         else:
             rec._write_line_amounts_safely(
@@ -679,7 +684,7 @@ class AccountPaymentVoucher(models.Model):
                 account=debit_line_data['account'],
                 partner=rec.partner_id,
                 name=debit_line_data['name'],
-                analytic_distribution=debit_line_data.get('analytic_distribution') or False,
+                analytic_distribution=debit_line_data.get('analytic_distribution') or {},
                 tax_ids=False,
             )
 
@@ -693,7 +698,7 @@ class AccountPaymentVoucher(models.Model):
                     'credit': fee_line_data['credit'],
                     'name': fee_line_data['name'],
                     'tax_ids': [(6, 0, fee_line_data['tax_ids'].ids)] if fee_line_data.get('tax_ids') else [],
-                    'analytic_distribution': fee_line_data.get('analytic_distribution') or False,
+                    'analytic_distribution': fee_line_data.get('analytic_distribution') or {},
                 })
             else:
                 rec._write_line_amounts_safely(
@@ -703,7 +708,7 @@ class AccountPaymentVoucher(models.Model):
                     account=fee_line_data['account'],
                     partner=rec.partner_id,
                     name=fee_line_data['name'],
-                    analytic_distribution=fee_line_data.get('analytic_distribution') or False,
+                    analytic_distribution=fee_line_data.get('analytic_distribution') or {},
                     tax_ids=fee_line_data.get('tax_ids'),
                 )
         else:
@@ -901,7 +906,7 @@ class AccountPaymentVoucher(models.Model):
                     'debit': rec.amount,
                     'credit': 0.0,
                     'name': rec.description or rec.name,
-                    'analytic_distribution': rec.analytic_distribution,
+                    'analytic_distribution': rec.analytic_distribution or {},
                 }
                 fee_data = False
                 tax_amount = 0.0
@@ -913,7 +918,7 @@ class AccountPaymentVoucher(models.Model):
                         'debit': rec.fee_amount,
                         'credit': 0.0,
                         'name': _('Bank Fees'),
-                        'analytic_distribution': rec.fee_analytic_distribution,
+                        'analytic_distribution': rec.fee_analytic_distribution or {},
                         'tax_ids': rec.fee_tax_id,
                     }
                 credit_data = {
