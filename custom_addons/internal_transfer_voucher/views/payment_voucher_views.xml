@@ -119,6 +119,11 @@
                             <field name="date"/>
                             <field name="partner_id"/>
                             <field name="purchase_order_id" invisible="1"/>
+                            <field name="purchase_order_ids"
+                                   widget="many2many_tags"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   readonly="state != 'draft'"
+                                   placeholder="Select one or more Purchase Orders..."/>
                             <field name="amount"/>
                             <field name="currency_id"
                                    groups="base.group_multi_currency"/>
@@ -147,54 +152,24 @@
                         </group>
                     </group>
 
-                    <!-- Purchase Order Allocation -->
-                    <group string="Purchase Order Allocation"
-                           invisible="payment_method == 'journal_transfer' or not is_payable_account">
-                        <group colspan="4">
-                            <div class="alert alert-info mb-2" role="alert">
-                                Add the purchase orders covered by this payment and enter the amount allocated to each one.
-                            </div>
-                        </group>
-
-                        <field name="po_allocation_ids"
-                               nolabel="1"
-                               colspan="4"
-                               readonly="state != 'draft'">
-                            <list editable="bottom" string="Purchase Orders">
-                                <control>
-                                    <create string="Add Purchase Order"/>
-                                </control>
-                                <field name="purchase_order_id"
-                                       string="Purchase Order"
-                                       domain="[('partner_id', '=', parent.partner_id), ('company_id', '=', parent.company_id), ('state', 'in', ('purchase', 'done'))]"
-                                       options="{'no_create': True, 'no_open': True}"/>
-                                <field name="po_total"
-                                       string="PO Total"
-                                       widget="monetary"
-                                       readonly="1"
-                                       optional="show"/>
-                                <field name="po_balance_due"
-                                       string="Balance Due"
-                                       widget="monetary"
-                                       readonly="1"/>
-                                <field name="amount"
-                                       string="Payment Allocation"
-                                       widget="monetary"
-                                       sum="Total Allocated"/>
+                    <!-- Clean multi-PO selector above; only allocation amounts are edited here. -->
+                    <group string="PO Allocation Amounts"
+                           invisible="payment_method == 'journal_transfer' or not is_payable_account or not purchase_order_ids">
+                        <field name="po_allocation_ids" nolabel="1" colspan="4" readonly="state != 'draft'">
+                            <list editable="bottom" create="0" delete="0">
+                                <field name="purchase_order_id" string="Purchase Order" readonly="1"/>
+                                <field name="po_total" string="PO Total" widget="monetary" readonly="1" optional="hide"/>
+                                <field name="po_balance_due" string="Balance Due" widget="monetary" readonly="1"/>
+                                <field name="amount" string="Allocated Amount" widget="monetary" sum="Total Allocated"/>
                                 <field name="currency_id" column_invisible="True"/>
                                 <field name="po_currency_id" column_invisible="True"/>
                                 <field name="company_id" column_invisible="True"/>
                             </list>
                         </field>
-
                         <group colspan="2"/>
-                        <group string="Allocation Summary" colspan="2">
-                            <field name="po_allocated_amount"
-                                   string="Total Allocated"
-                                   readonly="1"/>
-                            <field name="po_unallocated_amount"
-                                   string="Remaining Amount"
-                                   readonly="1"/>
+                        <group colspan="2">
+                            <field name="po_allocated_amount" string="Total Allocated" readonly="1"/>
+                            <field name="po_unallocated_amount" string="Remaining" readonly="1"/>
                         </group>
                     </group>
 

@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-
-    <!-- LIST VIEW EXTENSION (RFQ list) -->
-    <!-- Add "Amount Paid" column right after the Status field -->
     <record id="view_purchase_order_kpis_tree_inherit_amount_paid" model="ir.ui.view">
         <field name="name">purchase.order.kpis.tree.amount.paid</field>
         <field name="model">purchase.order</field>
@@ -14,33 +11,36 @@
         </field>
     </record>
 
-    <!-- FORM VIEW EXTENSION -->
-    <!-- Dedicated "Payments" tab showing totals and the linked payment vouchers -->
     <record id="view_purchase_order_form_amount_paid" model="ir.ui.view">
         <field name="name">purchase.order.form.amount.paid</field>
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
-
             <xpath expr="//notebook" position="inside">
                 <page string="Payments" name="payments">
                     <group>
                         <group string="Payment Summary">
-                            <field name="amount_paid" widget="monetary"/>
-                            <field name="amount_paid_residual" widget="monetary"/>
+                            <field name="amount_paid" widget="monetary" readonly="1"/>
+                            <field name="amount_paid_residual" widget="monetary" readonly="1"/>
                         </group>
                     </group>
-                    <field name="payment_voucher_allocation_ids" nolabel="1" readonly="1">
-                        <list>
-                            <field name="voucher_id"/>
-                            <field name="amount" widget="monetary"/>
+                    <field name="payment_voucher_allocation_ids" nolabel="1">
+                        <list editable="bottom">
+                            <control>
+                                <create string="Add a line"/>
+                            </control>
+                            <field name="voucher_id"
+                                   string="Payment Voucher"
+                                   domain="[('partner_id', '=', parent.partner_id), ('company_id', '=', parent.company_id), ('state', '=', 'draft')]"
+                                   options="{'no_create': True, 'no_open': False}"/>
+                            <field name="voucher_state" string="Status" widget="badge" readonly="1"/>
+                            <field name="amount" widget="monetary" readonly="voucher_state != 'draft'"/>
                             <field name="currency_id" column_invisible="True"/>
+                            <field name="purchase_order_id" column_invisible="True"/>
                         </list>
                     </field>
                 </page>
             </xpath>
-
         </field>
     </record>
-
 </odoo>

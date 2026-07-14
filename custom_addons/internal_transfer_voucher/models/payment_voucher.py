@@ -118,10 +118,14 @@ class AccountPaymentVoucher(models.Model):
 
     purchase_order_ids = fields.Many2many(
         'purchase.order',
+        'account_payment_voucher_purchase_order_rel',
+        'voucher_id',
+        'purchase_order_id',
         string='Purchase Orders',
-        compute='_compute_purchase_order_ids',
-        store=True,
-        readonly=True,
+        domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]",
+        tracking=True,
+        copy=False,
+        help='Select one or more Purchase Orders covered by this payment.',
     )
 
     po_allocated_amount = fields.Monetary(
@@ -632,13 +636,37 @@ class AccountPaymentVoucher(models.Model):
         if self.payment_method != 'journal_transfer':
             self.line_ids = [(5, 0, 0)]
 
-    @api.depends('po_allocation_ids.purchase_order_id', 'purchase_order_id')
-    def _compute_purchase_order_ids(self):
-        for rec in self:
-            orders = rec.po_allocation_ids.mapped('purchase_order_id')
-            if rec.purchase_order_id:
-                orders |= rec.purchase_order_id
-            rec.purchase_order_ids = orders
+    @api.onchange('purchase_order_ids')
+    def _onchange_purchase_order_ids(self):
+        """Keep allocation rows aligned with the clean multi-PO selector."""
+        selected = self.purchase_order_ids
+        existing_amounts = {
+            line.purchase_order_id.id: line.amount
+            for line in self.po_allocation_ids
+            if line.purchase_order_id
+        }
+        self.po_allocation_ids = [(5, 0, 0)] + [
+            (0, 0, {
+                'purchase_order_id': order.id,
+                'amount': existing_amounts.get(order.id, 0.0),
+            })
+            for order in selected
+        ]
+
+        if selected:
+            vendors = selected.mapped('partner_id.commercial_partner_id')
+            if len(vendors) == 1 and not self.partner_id:
+                self.partner_id = vendors
+
+            if self.payment_method != 'journal_transfer':
+                bills = self.env['account.move'].search([
+                    ('invoice_line_ids.purchase_line_id.order_id', 'in', selected.ids),
+                    ('move_type', '=', 'in_invoice'),
+                    ('state', '=', 'posted'),
+                    ('payment_state', 'in', ('not_paid', 'partial')),
+                ])
+                if bills:
+                    self.bill_ids = [(6, 0, bills.ids)]
 
     @api.depends('po_allocation_ids.amount', 'amount')
     def _compute_po_allocation_totals(self):
@@ -674,27 +702,6 @@ class AccountPaymentVoucher(models.Model):
                     allocated=allocated,
                     amount=rec.amount,
                 ))
-
-    @api.onchange('po_allocation_ids', 'po_allocation_ids.purchase_order_id')
-    def _onchange_po_allocation_ids(self):
-        """Default the vendor and suggest open bills from all selected POs."""
-        orders = self.po_allocation_ids.mapped('purchase_order_id')
-        if not orders:
-            return
-
-        vendors = orders.mapped('partner_id.commercial_partner_id')
-        if len(vendors) == 1 and not self.partner_id:
-            self.partner_id = vendors
-
-        if self.payment_method != 'journal_transfer':
-            bills = self.env['account.move'].search([
-                ('invoice_line_ids.purchase_line_id.order_id', 'in', orders.ids),
-                ('move_type', '=', 'in_invoice'),
-                ('state', '=', 'posted'),
-                ('payment_state', 'in', ('not_paid', 'partial')),
-            ])
-            if bills:
-                self.bill_ids = [(6, 0, bills.ids)]
 
     @api.onchange('purchase_order_id')
     def _onchange_purchase_order_id(self):
@@ -903,6 +910,9 @@ class AccountPaymentVoucher(models.Model):
 
             if not rec.journal_id.default_account_id:
                 raise UserError(_("The selected journal has no default account."))
+
+            if rec.po_allocation_ids and any(line.amount <= 0 for line in rec.po_allocation_ids):
+                raise UserError(_("Enter an allocated amount greater than zero for every selected Purchase Order."))
 
             if rec.payment_method == 'journal_transfer':
                 rec._post_journal_transfer()
@@ -1272,6 +1282,12 @@ class AccountPaymentVoucherPOAllocation(models.Model):
         store=True,
         readonly=True,
     )
+    voucher_state = fields.Selection(
+        related='voucher_id.state',
+        string='Status',
+        store=True,
+        readonly=True,
+    )
     po_currency_id = fields.Many2one(
         related='purchase_order_id.currency_id',
         readonly=True,
@@ -1292,8 +1308,8 @@ class AccountPaymentVoucherPOAllocation(models.Model):
     _sql_constraints = [
         ('voucher_po_unique', 'unique(voucher_id, purchase_order_id)',
          'The same Purchase Order cannot be allocated twice on one voucher.'),
-        ('allocation_amount_positive', 'check(amount > 0)',
-         'The allocated amount must be greater than zero.'),
+        ('allocation_amount_nonnegative', 'check(amount >= 0)',
+         'The allocated amount cannot be negative.'),
     ]
 
     @api.constrains('purchase_order_id', 'voucher_id')
@@ -1306,6 +1322,17 @@ class AccountPaymentVoucherPOAllocation(models.Model):
             if line.purchase_order_id.partner_id.commercial_partner_id != line.voucher_id.partner_id.commercial_partner_id:
                 raise ValidationError(_("The Purchase Order must belong to the same vendor as the payment voucher."))
 
+    def _sync_voucher_purchase_orders(self, vouchers):
+        if self.env.context.get('skip_po_selector_sync'):
+            return
+        for voucher in vouchers:
+            orders = voucher.po_allocation_ids.mapped('purchase_order_id')
+            if voucher.purchase_order_id:
+                orders |= voucher.purchase_order_id
+            voucher.with_context(skip_po_selector_sync=True).write({
+                'purchase_order_ids': [(6, 0, orders.ids)],
+            })
+
     @api.model_create_multi
     def create(self, vals_list):
         vouchers = self.env['account.payment.voucher'].browse(
@@ -1313,17 +1340,25 @@ class AccountPaymentVoucherPOAllocation(models.Model):
         )
         if any(v.state != 'draft' for v in vouchers):
             raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records._sync_voucher_purchase_orders(records.mapped('voucher_id'))
+        return records
 
     def write(self, vals):
-        if any(v.state != 'draft' for v in self.mapped('voucher_id')):
+        vouchers = self.mapped('voucher_id')
+        if any(v.state != 'draft' for v in vouchers):
             raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
-        return super().write(vals)
+        result = super().write(vals)
+        self._sync_voucher_purchase_orders(vouchers | self.mapped('voucher_id'))
+        return result
 
     def unlink(self):
-        if any(v.state != 'draft' for v in self.mapped('voucher_id')):
+        vouchers = self.mapped('voucher_id')
+        if any(v.state != 'draft' for v in vouchers):
             raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
-        return super().unlink()
+        result = super().unlink()
+        self._sync_voucher_purchase_orders(vouchers)
+        return result
 class AccountPaymentVoucherLine(models.Model):
     _name = 'account.payment.voucher.line'
     _description = 'Payment Voucher Destination Journal'
