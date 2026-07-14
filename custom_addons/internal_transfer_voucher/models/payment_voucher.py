@@ -1244,6 +1244,9 @@ class AccountPaymentVoucher(models.Model):
 class AccountPaymentVoucherPOAllocation(models.Model):
     _name = 'account.payment.voucher.po.allocation'
     _description = 'Payment Voucher Purchase Order Allocation'
+    # Use a dedicated fresh table. A previous failed development upgrade may
+    # have left the default table partially created without voucher_id.
+    _table = 'account_payment_voucher_po_allocation_v2'
     _order = 'id'
     _check_company_auto = True
 
