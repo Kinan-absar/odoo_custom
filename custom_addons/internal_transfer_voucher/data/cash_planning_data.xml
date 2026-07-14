@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+  <record id="seq_cash_plan_run" model="ir.sequence"><field name="name">Weekly Cash Plan</field><field name="code">cash.plan.run</field><field name="prefix">CP/%(year)s/</field><field name="padding">4</field></record>
+  <record id="cat_in_sales" model="cash.plan.category"><field name="name">Sales / Revenue</field><field name="flow_type">in</field></record>
+  <record id="cat_in_customer" model="cash.plan.category"><field name="name">Customer Payments Received</field><field name="flow_type">in</field></record>
+  <record id="cat_in_loan" model="cash.plan.category"><field name="name">Loan Proceeds / Financing</field><field name="flow_type">in</field></record>
+  <record id="cat_in_other" model="cash.plan.category"><field name="name">Other Income</field><field name="flow_type">in</field></record>
+  <record id="cat_out_supplier" model="cash.plan.category"><field name="name">Suppliers</field><field name="flow_type">out</field></record>
+  <record id="cat_out_subcontractor" model="cash.plan.category"><field name="name">Subcontractors</field><field name="flow_type">out</field></record>
+  <record id="cat_out_payroll" model="cash.plan.category"><field name="name">Payroll</field><field name="flow_type">out</field></record>
+  <record id="cat_out_manpower" model="cash.plan.category"><field name="name">Manpower</field><field name="flow_type">out</field></record>
+  <record id="cat_out_rent" model="cash.plan.category"><field name="name">Rent</field><field name="flow_type">out</field></record>
+  <record id="cat_out_legal" model="cash.plan.category"><field name="name">Legal</field><field name="flow_type">out</field></record>
+  <record id="cat_out_insurance" model="cash.plan.category"><field name="name">Social Insurance</field><field name="flow_type">out</field></record>
+  <record id="cat_out_cash" model="cash.plan.category"><field name="name">Cash</field><field name="flow_type">out</field></record>
+  <record id="cat_out_loans" model="cash.plan.category"><field name="name">Loans</field><field name="flow_type">out</field></record>
+  <record id="cat_out_other" model="cash.plan.category"><field name="name">Other Expenses</field><field name="flow_type">out</field></record>
+</odoo>
