@@ -16,6 +16,11 @@
                 <filter name="posted" string="Posted"    domain="[('state','=','posted')]"/>
                 <filter name="cancel" string="Cancelled" domain="[('state','=','cancel')]"/>
                 <separator/>
+                <filter name="fully_allocated" string="Fully Allocated" domain="[('invoice_reconciliation_state','=','reconciled')]"/>
+                <filter name="partially_allocated" string="Partially Allocated" domain="[('invoice_reconciliation_state','=','partial')]"/>
+                <filter name="not_allocated" string="Not Allocated" domain="[('invoice_reconciliation_state','=','no_invoices')]"/>
+                <filter name="ready_to_allocate" string="Ready to Allocate" domain="[('invoice_reconciliation_state','=','ready')]"/>
+                <separator/>
                 <filter name="cash"          string="Cash"          domain="[('receipt_method','=','cash')]"/>
                 <filter name="cheque"        string="Cheque"        domain="[('receipt_method','=','cheque')]"/>
                 <filter name="bank_transfer" string="Bank Transfer" domain="[('receipt_method','=','bank_transfer')]"/>
@@ -37,6 +42,9 @@
                 <field name="amount"/>
                 <field name="journal_id"/>
                 <field name="receipt_method"/>
+                <field name="allocated_amount"/>
+                <field name="remaining_to_reconcile"/>
+                <field name="invoice_reconciliation_state" widget="badge" decoration-success="invoice_reconciliation_state == 'reconciled'" decoration-warning="invoice_reconciliation_state == 'partial'" decoration-info="invoice_reconciliation_state == 'ready'" decoration-danger="invoice_reconciliation_state == 'no_invoices'" decoration-primary="invoice_reconciliation_state == 'not_applicable'"/>
                 <field name="state"/>
                 <field name="company_id" optional="hide"/>
             </list>
@@ -72,6 +80,25 @@
                             class="btn-secondary"
                             invisible="state != 'posted'"/>
 
+
+                    <button name="action_find_matching_invoices"
+                            string="Find Invoices"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="not is_receivable_account or invoice_reconciled"/>
+
+                    <button name="action_reconcile_invoices"
+                            string="Reconcile Invoices"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'posted' or not is_receivable_account or not invoice_ids or invoice_reconciled"/>
+
+                    <button name="action_unreconcile_invoices"
+                            string="Unreconcile Invoices"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'posted' or not is_receivable_account or invoice_reconciliation_state not in ('partial', 'reconciled')"/>
+
                     <field name="state"
                            widget="statusbar"
                            statusbar_visible="draft,posted,cancel"/>
@@ -83,6 +110,9 @@
                             <field name="name"/>
                         </h1>
                     </div>
+
+                    <field name="is_receivable_account" invisible="1"/>
+                    <field name="invoice_reconciled" invisible="1"/>
 
                     <group>
                         <group string="Receipt Information">
@@ -113,6 +143,25 @@
                                    string="Account Analytic"/>
                         </group>
                         <group/>
+                    </group>
+
+
+                    <group string="Customer Invoice Matching" invisible="not is_receivable_account">
+                        <group>
+                            <field name="invoice_ids"
+                                   widget="many2many_tags"
+                                   readonly="invoice_reconciled"
+                                   domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('move_type', '=', 'out_invoice'), ('state', '=', 'posted'), ('payment_state', 'in', ['not_paid', 'partial'])]"
+                                   options="{'no_create': True}"/>
+                            <field name="reconciled_invoice_ids" widget="many2many_tags" readonly="1" invisible="not reconciled_invoice_ids"/>
+                            <field name="invoice_reconciliation_state" widget="badge" readonly="1" decoration-success="invoice_reconciliation_state == 'reconciled'" decoration-warning="invoice_reconciliation_state == 'partial'" decoration-info="invoice_reconciliation_state == 'ready'" decoration-danger="invoice_reconciliation_state == 'no_invoices'" decoration-primary="invoice_reconciliation_state == 'not_applicable'"/>
+                        </group>
+                        <group>
+                            <field name="invoice_total" readonly="1"/>
+                            <field name="allocated_amount" readonly="1"/>
+                            <field name="remaining_to_reconcile" readonly="1"/>
+                            <field name="difference_amount" readonly="1"/>
+                        </group>
                     </group>
 
                     <!-- Generated Journal Entry -->
