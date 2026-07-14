@@ -669,13 +669,37 @@ class AccountPaymentVoucher(models.Model):
                 if real_id:
                     preserved[real_id] = line.amount
 
+            single_amount = voucher.amount if len(selected) == 1 else None
             voucher.po_allocation_ids = [(5, 0, 0)] + [
                 (0, 0, {
                     'purchase_order_id': order_id,
-                    'amount': preserved.get(order_id, 0.0),
+                    'amount': single_amount if single_amount is not None else preserved.get(order_id, 0.0),
                 })
                 for order_id, _order in selected
             ]
+
+    @api.onchange('amount')
+    def _onchange_amount_allocate_single_po(self):
+        """For one selected PO, the whole voucher amount belongs to that PO."""
+        for voucher in self:
+            if len(voucher.purchase_order_ids) == 1 and len(voucher.po_allocation_ids) == 1:
+                voucher.po_allocation_ids[0].amount = voucher.amount
+
+    def _apply_single_po_full_amount(self):
+        """Persist the full voucher amount on the only PO allocation.
+
+        This runs before overpayment validation so the warning includes the current
+        voucher amount instead of treating it as zero.
+        """
+        for voucher in self:
+            if len(voucher.purchase_order_ids) != 1:
+                continue
+            voucher._sync_po_allocations_from_selector()
+            lines = voucher.po_allocation_ids.filtered(
+                lambda line: line.purchase_order_id == voucher.purchase_order_ids[:1]
+            )
+            if len(lines) == 1 and voucher.currency_id.compare_amounts(lines.amount, voucher.amount) != 0:
+                lines.with_context(skip_po_selector_sync=True).write({'amount': voucher.amount})
 
     def _sync_po_allocations_from_selector(self):
         """Synchronize allocation records only for persisted vouchers and POs.
@@ -711,7 +735,7 @@ class AccountPaymentVoucher(models.Model):
                 {
                     'voucher_id': voucher.id,
                     'purchase_order_id': order.id,
-                    'amount': 0.0,
+                    'amount': voucher.amount if len(selected_orders) == 1 else 0.0,
                 }
                 for order in selected_orders
                 if order.id and order.id not in existing_order_ids
@@ -997,6 +1021,11 @@ class AccountPaymentVoucher(models.Model):
         for rec in self:
             if rec.state != 'draft':
                 continue
+
+            # A voucher linked to one PO always allocates its full amount to that PO.
+            # Apply this before calculating overpayment and before the positive-allocation check.
+            rec._apply_single_po_full_amount()
+            rec.invalidate_recordset(['po_allocation_ids'])
 
             if not self.env.context.get('skip_po_overpayment_confirmation'):
                 overpayment_lines = rec._get_po_overpayment_lines()
@@ -1290,6 +1319,7 @@ class AccountPaymentVoucher(models.Model):
                 ) or 'New'
         records = super().create(vals_list)
         records._sync_po_allocations_from_selector()
+        records._apply_single_po_full_amount()
         return records
 
     def write(self, vals):
@@ -1303,6 +1333,8 @@ class AccountPaymentVoucher(models.Model):
         result = super().write(vals)
         if 'purchase_order_ids' in vals and not self.env.context.get('skip_po_allocation_sync'):
             self._sync_po_allocations_from_selector()
+        if ({'purchase_order_ids', 'amount'} & set(vals)) and not self.env.context.get('skip_po_allocation_sync'):
+            self._apply_single_po_full_amount()
         return result
 
     @api.model
