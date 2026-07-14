@@ -128,6 +128,12 @@ class AccountPaymentVoucher(models.Model):
         help='Select one or more Purchase Orders covered by this payment.',
     )
 
+    purchase_order_numbers = fields.Char(
+        string='Purchase Orders',
+        compute='_compute_purchase_order_numbers',
+        store=True,
+    )
+
     po_allocated_amount = fields.Monetary(
         string='Allocated to Purchase Orders',
         compute='_compute_po_allocation_totals',
@@ -636,6 +642,41 @@ class AccountPaymentVoucher(models.Model):
         if self.payment_method != 'journal_transfer':
             self.line_ids = [(5, 0, 0)]
 
+    @api.depends('purchase_order_ids', 'purchase_order_ids.name')
+    def _compute_purchase_order_numbers(self):
+        for voucher in self:
+            voucher.purchase_order_numbers = ', '.join(voucher.purchase_order_ids.mapped('name'))
+
+    @api.onchange('purchase_order_ids')
+    def _onchange_purchase_order_ids_build_allocations(self):
+        """Show allocation rows immediately for selected saved POs.
+
+        Purchase orders selected in a Many2many are existing database records, but
+        Odoo may wrap them in NewId objects during onchange.  Use _origin.id and
+        rebuild only virtual One2many commands with real integer PO IDs.
+        """
+        for voucher in self:
+            selected = []
+            for order in voucher.purchase_order_ids:
+                real_id = order._origin.id or (order.id if isinstance(order.id, int) else False)
+                if real_id:
+                    selected.append((real_id, order))
+
+            preserved = {}
+            for line in voucher.po_allocation_ids:
+                order = line.purchase_order_id
+                real_id = order._origin.id or (order.id if isinstance(order.id, int) else False)
+                if real_id:
+                    preserved[real_id] = line.amount
+
+            voucher.po_allocation_ids = [(5, 0, 0)] + [
+                (0, 0, {
+                    'purchase_order_id': order_id,
+                    'amount': preserved.get(order_id, 0.0),
+                })
+                for order_id, _order in selected
+            ]
+
     def _sync_po_allocations_from_selector(self):
         """Synchronize allocation records only for persisted vouchers and POs.
 
@@ -916,10 +957,51 @@ class AccountPaymentVoucher(models.Model):
     # Actions
     # -------------------------
 
+    def _get_po_overpayment_lines(self):
+        self.ensure_one()
+        result = []
+        for line in self.po_allocation_ids:
+            if not line.purchase_order_id:
+                continue
+            if line.po_currency_id.compare_amounts(line.overpayment_amount, 0.0) > 0:
+                result.append(line)
+        return self.env['account.payment.voucher.po.allocation'].browse([line.id for line in result if line.id]) or result
+
+    def _open_po_overpayment_confirmation(self, lines):
+        self.ensure_one()
+        details = []
+        for line in lines:
+            details.append(_(
+                '%(po)s: PO total %(total).2f, previously paid %(paid).2f, this payment %(current).2f, overpayment %(over).2f %(currency)s',
+                po=line.purchase_order_id.name,
+                total=line.po_total,
+                paid=line.po_paid_before,
+                current=line.amount_in_po_currency,
+                over=line.overpayment_amount,
+                currency=line.po_currency_id.name,
+            ))
+        wizard = self.env['account.payment.voucher.overpayment.confirm'].create({
+            'voucher_id': self.id,
+            'message': '\n'.join(details),
+        })
+        return {
+            'name': _('Confirm Purchase Order Overpayment'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.payment.voucher.overpayment.confirm',
+            'view_mode': 'form',
+            'res_id': wizard.id,
+            'target': 'new',
+        }
+
     def action_post(self):
         for rec in self:
             if rec.state != 'draft':
                 continue
+
+            if not self.env.context.get('skip_po_overpayment_confirmation'):
+                overpayment_lines = rec._get_po_overpayment_lines()
+                if overpayment_lines:
+                    return rec._open_po_overpayment_confirmation(overpayment_lines)
 
             if not rec.journal_id.default_account_id:
                 raise UserError(_("The selected journal has no default account."))
@@ -1326,6 +1408,99 @@ class AccountPaymentVoucherPOAllocation(models.Model):
         readonly=True,
     )
 
+    po_paid_before = fields.Monetary(
+        string='Previously Paid',
+        compute='_compute_po_payment_status',
+        currency_field='po_currency_id',
+    )
+    po_balance_before = fields.Monetary(
+        string='Available Balance',
+        compute='_compute_po_payment_status',
+        currency_field='po_currency_id',
+    )
+    amount_in_po_currency = fields.Monetary(
+        string='This Payment (PO Currency)',
+        compute='_compute_po_payment_status',
+        currency_field='po_currency_id',
+    )
+    projected_paid = fields.Monetary(
+        string='Paid After This Payment',
+        compute='_compute_po_payment_status',
+        currency_field='po_currency_id',
+    )
+    overpayment_amount = fields.Monetary(
+        string='Overpayment',
+        compute='_compute_po_payment_status',
+        currency_field='po_currency_id',
+    )
+
+    @api.depends('purchase_order_id', 'amount', 'voucher_id.date', 'voucher_id.currency_id',
+                 'purchase_order_id.amount_total', 'purchase_order_id.payment_voucher_allocation_ids.amount',
+                 'purchase_order_id.payment_voucher_allocation_ids.voucher_id.state')
+    def _compute_po_payment_status(self):
+        for line in self:
+            order = line.purchase_order_id
+            voucher = line.voucher_id
+            if not order or not voucher:
+                line.po_paid_before = 0.0
+                line.po_balance_before = 0.0
+                line.amount_in_po_currency = 0.0
+                line.projected_paid = 0.0
+                line.overpayment_amount = 0.0
+                continue
+
+            paid_before = 0.0
+            allocations = order.payment_voucher_allocation_ids.filtered(
+                lambda alloc: alloc.voucher_id.state == 'posted' and alloc.voucher_id != voucher
+            )
+            for alloc in allocations:
+                paid_before += alloc.voucher_id.currency_id._convert(
+                    alloc.amount,
+                    order.currency_id,
+                    order.company_id,
+                    alloc.voucher_id.date or fields.Date.context_today(order),
+                )
+            legacy = order.legacy_payment_voucher_ids.filtered(
+                lambda old: old.state == 'posted' and old != voucher and not old.po_allocation_ids
+            )
+            for old in legacy:
+                paid_before += old.currency_id._convert(
+                    old.amount,
+                    order.currency_id,
+                    order.company_id,
+                    old.date or fields.Date.context_today(order),
+                )
+
+            current = voucher.currency_id._convert(
+                line.amount,
+                order.currency_id,
+                order.company_id,
+                voucher.date or fields.Date.context_today(voucher),
+            )
+            balance = order.amount_total - paid_before
+            projected = paid_before + current
+            line.po_paid_before = paid_before
+            line.po_balance_before = balance
+            line.amount_in_po_currency = current
+            line.projected_paid = projected
+            line.overpayment_amount = max(projected - order.amount_total, 0.0)
+
+    @api.onchange('amount', 'purchase_order_id')
+    def _onchange_warn_po_overpayment(self):
+        for line in self:
+            if line.purchase_order_id and line.overpayment_amount > 0:
+                return {
+                    'warning': {
+                        'title': _('Purchase Order Overpayment'),
+                        'message': _(
+                            '%(po)s will be overpaid by %(amount).2f %(currency)s. You may continue editing; confirmation will be required when posting.',
+                            po=line.purchase_order_id.name,
+                            amount=line.overpayment_amount,
+                            currency=line.po_currency_id.name,
+                        ),
+                    }
+                }
+
     def init(self):
         """Remove incomplete rows left by earlier failed development upgrades."""
         self.env.cr.execute("""
@@ -1387,6 +1562,19 @@ class AccountPaymentVoucherPOAllocation(models.Model):
         result = super().unlink()
         self._sync_voucher_purchase_orders(vouchers)
         return result
+class AccountPaymentVoucherOverpaymentConfirm(models.TransientModel):
+    _name = 'account.payment.voucher.overpayment.confirm'
+    _description = 'Confirm Payment Voucher PO Overpayment'
+
+    voucher_id = fields.Many2one('account.payment.voucher', required=True, readonly=True)
+    message = fields.Text(string='Overpayment Details', readonly=True)
+
+    def action_confirm(self):
+        self.ensure_one()
+        self.voucher_id.with_context(skip_po_overpayment_confirmation=True).action_post()
+        return {'type': 'ir.actions.act_window_close'}
+
+
 class AccountPaymentVoucherLine(models.Model):
     _name = 'account.payment.voucher.line'
     _description = 'Payment Voucher Destination Journal'

@@ -94,6 +94,27 @@ class PurchaseOrder(models.Model):
             order.amount_paid_residual = order.amount_total - paid
             order.payment_voucher_count = len(vouchers)
 
+    def action_new_payment_voucher(self):
+        self.ensure_one()
+        default_amount = max(self.amount_paid_residual, 0.0)
+        return {
+            'name': 'New Payment Voucher',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.payment.voucher',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_partner_id': self.partner_id.id,
+                'default_company_id': self.company_id.id,
+                'default_purchase_order_ids': [(6, 0, [self.id])],
+                'default_po_allocation_ids': [(0, 0, {
+                    'purchase_order_id': self.id,
+                    'amount': default_amount,
+                })],
+                'default_amount': default_amount,
+            },
+        }
+
     def action_view_payment_vouchers(self):
         self.ensure_one()
         return {

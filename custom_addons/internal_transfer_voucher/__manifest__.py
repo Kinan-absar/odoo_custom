@@ -1,6 +1,6 @@
 {
     "name": "Payment & Receipt Voucher",
-    "version": "18.0.1.6.3",
+    "version": "18.0.1.7.0",
     "category": "Accounting",
     "summary": "Internal journal transfers, payment vouchers, and receipt vouchers for Odoo 18",
     "description": """
@@ -37,6 +37,7 @@ Key Features
         "report/receipt_voucher_pdf.xml",
         "views/internal_transfer_views.xml",
         "views/payment_voucher_views.xml",
+        "views/payment_voucher_overpayment_views.xml",
         "views/receipt_voucher_views.xml",
         "views/purchase_order_views.xml",
         "views/menus.xml",
