@@ -636,52 +636,50 @@ class AccountPaymentVoucher(models.Model):
         if self.payment_method != 'journal_transfer':
             self.line_ids = [(5, 0, 0)]
 
-    @api.onchange('purchase_order_ids')
-    def _onchange_purchase_order_ids(self):
-        """Keep allocation rows aligned with the multi-PO selector.
+    def _sync_po_allocations_from_selector(self):
+        """Synchronize allocation records only for persisted vouchers and POs.
 
-        During a web onchange, selected Many2many records can be represented by
-        temporary ``NewId`` wrappers.  Using ``order.id`` in that state can
-        produce ``False`` in the One2many command and Odoo then tries to create
-        an allocation without the mandatory Purchase Order.  Always resolve the
-        real database id through ``_origin`` and ignore unsaved records.
+        Do not build required One2many rows during a browser onchange. Odoo uses
+        temporary NewId records there, which can result in an allocation row with
+        an empty purchase_order_id. This method runs only after create/write, when
+        both the voucher and selected purchase orders have real database IDs.
         """
-        selected_orders = self.purchase_order_ids.filtered(
-            lambda order: bool(order._origin.id or (isinstance(order.id, int) and order.id))
-        )
+        if self.env.context.get('skip_po_allocation_sync'):
+            return
 
-        existing_amounts = {}
-        for line in self.po_allocation_ids:
-            order = line.purchase_order_id
-            order_id = order._origin.id or (order.id if isinstance(order.id, int) else False)
-            if order_id:
-                existing_amounts[order_id] = line.amount
+        Allocation = self.env['account.payment.voucher.po.allocation']
+        for voucher in self.filtered(lambda v: bool(v.id)):
+            selected_orders = voucher.purchase_order_ids.exists()
+            existing = voucher.po_allocation_ids
 
-        commands = [(5, 0, 0)]
-        selected_ids = []
-        for order in selected_orders:
-            order_id = order._origin.id or order.id
-            selected_ids.append(order_id)
-            commands.append((0, 0, {
-                'purchase_order_id': order_id,
-                'amount': existing_amounts.get(order_id, 0.0),
-            }))
-        self.po_allocation_ids = commands
+            # Remove allocations for POs no longer selected.
+            to_remove = existing.filtered(
+                lambda line: line.purchase_order_id not in selected_orders
+            )
+            if to_remove:
+                to_remove.with_context(
+                    skip_po_selector_sync=True,
+                    skip_po_allocation_sync=True,
+                ).unlink()
 
-        if selected_orders:
-            vendors = selected_orders.mapped('partner_id.commercial_partner_id')
-            if len(vendors) == 1 and not self.partner_id:
-                self.partner_id = vendors[0]
-
-            if self.payment_method != 'journal_transfer' and selected_ids:
-                bills = self.env['account.move'].search([
-                    ('invoice_line_ids.purchase_line_id.order_id', 'in', selected_ids),
-                    ('move_type', '=', 'in_invoice'),
-                    ('state', '=', 'posted'),
-                    ('payment_state', 'in', ('not_paid', 'partial')),
-                ])
-                if bills:
-                    self.bill_ids = [(6, 0, bills.ids)]
+            # Create missing rows only with real PO IDs.
+            existing_order_ids = set(
+                voucher.po_allocation_ids.mapped('purchase_order_id').ids
+            )
+            vals_list = [
+                {
+                    'voucher_id': voucher.id,
+                    'purchase_order_id': order.id,
+                    'amount': 0.0,
+                }
+                for order in selected_orders
+                if order.id and order.id not in existing_order_ids
+            ]
+            if vals_list:
+                Allocation.with_context(
+                    skip_po_selector_sync=True,
+                    skip_po_allocation_sync=True,
+                ).create(vals_list)
 
     @api.depends('po_allocation_ids.amount', 'amount')
     def _compute_po_allocation_totals(self):
@@ -1208,7 +1206,9 @@ class AccountPaymentVoucher(models.Model):
                 vals['name'] = self.env['ir.sequence'].sudo().next_by_code(
                     'payment.voucher'
                 ) or 'New'
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records._sync_po_allocations_from_selector()
+        return records
 
     def write(self, vals):
         for rec in self:
@@ -1218,7 +1218,10 @@ class AccountPaymentVoucher(models.Model):
                     raise UserError(_("You cannot modify a posted payment voucher."))
                 if 'bill_ids' in vals and rec.bill_reconciled and not self.env.context.get('skip_bill_reconcile_lock'):
                     raise UserError(_("You cannot change selected bills after this voucher has been fully reconciled."))
-        return super().write(vals)
+        result = super().write(vals)
+        if 'purchase_order_ids' in vals and not self.env.context.get('skip_po_allocation_sync'):
+            self._sync_po_allocations_from_selector()
+        return result
 
     @api.model
     def retrieve_dashboard(self):
@@ -1275,7 +1278,7 @@ class AccountPaymentVoucherPOAllocation(models.Model):
     purchase_order_id = fields.Many2one(
         'purchase.order',
         string='Purchase Order',
-        required=True,
+        required=False,
         ondelete='restrict',
         index=True,
         check_company=True,
@@ -1322,6 +1325,13 @@ class AccountPaymentVoucherPOAllocation(models.Model):
         currency_field='po_currency_id',
         readonly=True,
     )
+
+    def init(self):
+        """Remove incomplete rows left by earlier failed development upgrades."""
+        self.env.cr.execute("""
+            DELETE FROM account_payment_voucher_po_allocation_v2
+             WHERE voucher_id IS NULL OR purchase_order_id IS NULL
+        """)
 
     _sql_constraints = [
         ('voucher_po_unique', 'unique(voucher_id, purchase_order_id)',
