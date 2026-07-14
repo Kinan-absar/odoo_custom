@@ -4,11 +4,9 @@ from odoo import models, fields, api
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
-    payment_voucher_ids = fields.Many2many(
+    payment_voucher_ids = fields.One2many(
         'account.payment.voucher',
-        'account_payment_voucher_po_rel',
-        'order_id',
-        'voucher_id',
+        'purchase_order_id',
         string='Payment Vouchers',
     )
 
@@ -17,7 +15,7 @@ class PurchaseOrder(models.Model):
         compute='_compute_amount_paid',
         currency_field='currency_id',
         store=True,
-        help="Total of all posted payment vouchers linked to this Purchase Order.",
+        help="Total of all Posted payment vouchers linked to this Purchase Order.",
     )
 
     amount_paid_residual = fields.Monetary(
@@ -50,10 +48,7 @@ class PurchaseOrder(models.Model):
             'type': 'ir.actions.act_window',
             'res_model': 'account.payment.voucher',
             'view_mode': 'list,form',
-            'domain': [('purchase_order_ids', 'in', [self.id])],
-            'context': {
-                'default_purchase_order_ids': [(4, self.id)],
-                'default_partner_id': self.partner_id.id,
-            },
+            'domain': [('purchase_order_id', '=', self.id)],
+            'context': {'default_purchase_order_id': self.id, 'default_partner_id': self.partner_id.id},
         }
         return action
