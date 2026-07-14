@@ -643,7 +643,11 @@ class AccountPaymentVoucher(models.Model):
             vals['analytic_distribution'] = analytic_distribution or {}
         if tax_ids is not None:
             vals['tax_ids'] = [(6, 0, tax_ids.ids)] if tax_ids else [(5, 0, 0)]
-        line.with_context(check_move_validity=False).write(vals)
+        line.with_context(
+            check_move_validity=False,
+            skip_account_move_synchronization=True,
+            skip_invoice_sync=True,
+        ).write(vals)
 
     def _update_existing_move_lines_without_deleting_tax(self, move, debit_line_data, credit_line_data, fee_line_data=None, tax_amount=0.0):
         """Update voucher-generated draft move lines when tax lines already exist.
@@ -667,7 +671,11 @@ class AccountPaymentVoucher(models.Model):
         debit_line = base_lines.filtered(lambda line: line.account_id == rec.account_id)[:1] or base_lines[:1]
 
         if not debit_line:
-            debit_line = self.env['account.move.line'].with_context(check_move_validity=False).create({
+            debit_line = self.env['account.move.line'].with_context(
+                check_move_validity=False,
+                skip_account_move_synchronization=True,
+                skip_invoice_sync=True,
+            ).create({
                 'move_id': move.id,
                 'account_id': debit_line_data['account'].id,
                 'partner_id': rec.partner_id.id,
@@ -690,7 +698,11 @@ class AccountPaymentVoucher(models.Model):
 
         if fee_line_data:
             if not fee_line:
-                fee_line = self.env['account.move.line'].with_context(check_move_validity=False).create({
+                fee_line = self.env['account.move.line'].with_context(
+                check_move_validity=False,
+                skip_account_move_synchronization=True,
+                skip_invoice_sync=True,
+            ).create({
                     'move_id': move.id,
                     'account_id': fee_line_data['account'].id,
                     'partner_id': rec.partner_id.id,
@@ -725,7 +737,11 @@ class AccountPaymentVoucher(models.Model):
                 rec._write_line_amounts_safely(main_tax_line, debit=tax_amount, credit=0.0)
 
         if not bank_line:
-            self.env['account.move.line'].with_context(check_move_validity=False).create({
+            self.env['account.move.line'].with_context(
+                check_move_validity=False,
+                skip_account_move_synchronization=True,
+                skip_invoice_sync=True,
+            ).create({
                 'move_id': move.id,
                 'account_id': credit_line_data['account'].id,
                 'partner_id': rec.partner_id.id,
@@ -801,7 +817,11 @@ class AccountPaymentVoucher(models.Model):
             ))
         zero_auto_lines = auto_lines - protected_tax_lines
         if zero_auto_lines:
-            zero_auto_lines.with_context(check_move_validity=False).unlink()
+            zero_auto_lines.with_context(
+                check_move_validity=False,
+                skip_account_move_synchronization=True,
+                skip_invoice_sync=True,
+            ).unlink()
 
     # -------------------------
     # Actions
@@ -927,7 +947,11 @@ class AccountPaymentVoucher(models.Model):
                     'credit': rec.amount + (rec.fee_amount if fee_data else 0.0) + tax_amount,
                     'name': rec.description or rec.name,
                 }
-                move.with_context(check_move_validity=False).write(move_vals)
+                move.with_context(
+                    check_move_validity=False,
+                    skip_account_move_synchronization=True,
+                    skip_invoice_sync=True,
+                ).write(move_vals)
                 rec._update_existing_move_lines_without_deleting_tax(move, debit_data, credit_data, fee_data, tax_amount)
             else:
                 move_vals['line_ids'] = [(5, 0, 0)] + lines
