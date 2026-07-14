@@ -118,7 +118,7 @@ class AccountPaymentVoucher(models.Model):
 
     purchase_order_ids = fields.Many2many(
         'purchase.order',
-        'account_payment_voucher_purchase_order_rel',
+        'account_payment_voucher_purchase_order_rel_v2',
         'voucher_id',
         'purchase_order_id',
         string='Purchase Orders',
