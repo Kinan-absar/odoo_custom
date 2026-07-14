@@ -638,29 +638,44 @@ class AccountPaymentVoucher(models.Model):
 
     @api.onchange('purchase_order_ids')
     def _onchange_purchase_order_ids(self):
-        """Keep allocation rows aligned with the clean multi-PO selector."""
-        selected = self.purchase_order_ids
-        existing_amounts = {
-            line.purchase_order_id.id: line.amount
-            for line in self.po_allocation_ids
-            if line.purchase_order_id
-        }
-        self.po_allocation_ids = [(5, 0, 0)] + [
-            (0, 0, {
-                'purchase_order_id': order.id,
-                'amount': existing_amounts.get(order.id, 0.0),
-            })
-            for order in selected
-        ]
+        """Keep allocation rows aligned with the multi-PO selector.
 
-        if selected:
-            vendors = selected.mapped('partner_id.commercial_partner_id')
+        During a web onchange, selected Many2many records can be represented by
+        temporary ``NewId`` wrappers.  Using ``order.id`` in that state can
+        produce ``False`` in the One2many command and Odoo then tries to create
+        an allocation without the mandatory Purchase Order.  Always resolve the
+        real database id through ``_origin`` and ignore unsaved records.
+        """
+        selected_orders = self.purchase_order_ids.filtered(
+            lambda order: bool(order._origin.id or (isinstance(order.id, int) and order.id))
+        )
+
+        existing_amounts = {}
+        for line in self.po_allocation_ids:
+            order = line.purchase_order_id
+            order_id = order._origin.id or (order.id if isinstance(order.id, int) else False)
+            if order_id:
+                existing_amounts[order_id] = line.amount
+
+        commands = [(5, 0, 0)]
+        selected_ids = []
+        for order in selected_orders:
+            order_id = order._origin.id or order.id
+            selected_ids.append(order_id)
+            commands.append((0, 0, {
+                'purchase_order_id': order_id,
+                'amount': existing_amounts.get(order_id, 0.0),
+            }))
+        self.po_allocation_ids = commands
+
+        if selected_orders:
+            vendors = selected_orders.mapped('partner_id.commercial_partner_id')
             if len(vendors) == 1 and not self.partner_id:
-                self.partner_id = vendors
+                self.partner_id = vendors[0]
 
-            if self.payment_method != 'journal_transfer':
+            if self.payment_method != 'journal_transfer' and selected_ids:
                 bills = self.env['account.move'].search([
-                    ('invoice_line_ids.purchase_line_id.order_id', 'in', selected.ids),
+                    ('invoice_line_ids.purchase_line_id.order_id', 'in', selected_ids),
                     ('move_type', '=', 'in_invoice'),
                     ('state', '=', 'posted'),
                     ('payment_state', 'in', ('not_paid', 'partial')),
