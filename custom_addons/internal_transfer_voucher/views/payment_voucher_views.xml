@@ -7,7 +7,7 @@
         <search>
             <field name="name" string="Voucher"/>
             <field name="partner_id"/>
-            <field name="purchase_order_ids" string="Purchase Order"/>
+            <field name="purchase_order_ids"/>
             <field name="journal_id"/>
             <field name="description" string="Notes"/>
             <field name="amount"/>
@@ -38,7 +38,7 @@
             <field name="name"/>
             <field name="date"/>
             <field name="partner_id"/>
-            <field name="purchase_order_ids" widget="many2many_tags" options="{'color_field': 'priority'}"/>
+            <field name="purchase_order_ids"/>
             <field name="amount"/>
             <field name="journal_id"/>
             <field name="payment_method"/>
@@ -118,12 +118,29 @@
                         <group string="Payment Information">
                             <field name="date"/>
                             <field name="partner_id"/>
-                            <field name="purchase_order_ids"
-                                   widget="many2many_tags"
-                                   domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]"
-                                   options="{'no_create': True}"
+                            <field name="purchase_order_id" invisible="1"/>
+                            <field name="purchase_order_ids" widget="many2many_tags" readonly="1"
                                    invisible="payment_method == 'journal_transfer' or not is_payable_account"/>
                             <field name="amount"/>
+                            <field name="po_allocation_ids"
+                                   invisible="payment_method == 'journal_transfer' or not is_payable_account"
+                                   readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="purchase_order_id"
+                                           domain="[('partner_id', '=', parent.partner_id), ('company_id', '=', parent.company_id), ('state', 'in', ('purchase', 'done'))]"
+                                           options="{'no_create': True}"/>
+                                    <field name="po_total" widget="monetary" readonly="1"/>
+                                    <field name="po_balance_due" widget="monetary" readonly="1"/>
+                                    <field name="amount" widget="monetary"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                    <field name="po_currency_id" column_invisible="True"/>
+                                    <field name="company_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                            <field name="po_allocated_amount" readonly="1"
+                                   invisible="not po_allocation_ids"/>
+                            <field name="po_unallocated_amount" readonly="1"
+                                   invisible="not po_allocation_ids"/>
                             <field name="currency_id"
                                    groups="base.group_multi_currency"/>
                             <field name="description"

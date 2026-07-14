@@ -4,3 +4,4 @@ access_payment_voucher_user,access.payment.voucher.user,model_account_payment_vo
 access_payment_voucher_line,access.payment.voucher.line,model_account_payment_voucher_line,,1,1,1,1
 access_internal_transfer_line,access.internal.transfer.line,model_account_internal_transfer_line,,1,1,1,1
 access_receipt_voucher_user,access.receipt.voucher.user,model_account_receipt_voucher,account.group_account_user,1,1,1,1
+access_payment_voucher_po_allocation,access.payment.voucher.po.allocation,model_account_payment_voucher_po_allocation,account.group_account_user,1,1,1,1

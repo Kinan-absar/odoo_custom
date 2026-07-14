@@ -30,14 +30,11 @@
                             <field name="amount_paid_residual" widget="monetary"/>
                         </group>
                     </group>
-                    <field name="payment_voucher_ids" nolabel="1">
+                    <field name="payment_voucher_allocation_ids" nolabel="1" readonly="1">
                         <list>
-                            <field name="name"/>
-                            <field name="date"/>
-                            <field name="partner_id"/>
+                            <field name="voucher_id"/>
                             <field name="amount" widget="monetary"/>
-                            <field name="payment_method"/>
-                            <field name="state" widget="badge" decoration-success="state == 'posted'" decoration-info="state == 'draft'" decoration-danger="state == 'cancel'"/>
+                            <field name="currency_id" column_invisible="True"/>
                         </list>
                     </field>
                 </page>
