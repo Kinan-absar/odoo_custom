@@ -86,7 +86,7 @@ class PortalTreasury(http.Controller):
         run = self._get_run(run_id)
         if not run:
             return request.not_found()
-        return request.render('employee_portal_suite.portal_treasury_plan_detail', {
+        return request.render('employee_portal_suite.portal_treasury_plan_detail_clean_v3', {
             'run': run,
             'page_name': 'treasury_plans',
         })

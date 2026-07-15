@@ -173,7 +173,7 @@
       </div>
     </t>
   </template>
-  <template id="portal_treasury_plan_detail" name="CEO Weekly Cash Plan Detail">
+  <template id="portal_treasury_plan_detail_clean_v3" name="CEO Weekly Cash Plan Detail">
     <t t-call="employee_portal_suite.employee_portal_layout">
       <div class="container py-4">
         <a href="/my/employee/treasury/plans" class="text-decoration-none">← Weekly Cash Plans</a>
