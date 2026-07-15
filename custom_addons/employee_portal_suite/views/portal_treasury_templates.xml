@@ -225,7 +225,7 @@
                         <span t-field="run.actual_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
                       </td>
                       <td t-attf-class="text-end fw-semibold #{'text-success' if (run.actual_inflow - run.forecast_inflow) &gt;= 0 else 'text-danger'}">
-                        <span t-out="run.actual_inflow - run.forecast_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                        <span t-field="run.portal_variance_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
                       </td>
                     </tr>
                     <tr>
@@ -237,7 +237,7 @@
                         <span t-field="run.actual_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
                       </td>
                       <td t-attf-class="text-end fw-semibold #{'text-success' if (run.actual_outflow - run.forecast_outflow) &lt;= 0 else 'text-danger'}">
-                        <span t-out="run.actual_outflow - run.forecast_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                        <span t-field="run.portal_variance_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
                       </td>
                     </tr>
                     <tr>
@@ -249,7 +249,7 @@
                         <span t-field="run.actual_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
                       </td>
                       <td t-attf-class="text-end fw-semibold #{'text-success' if (run.actual_net - run.forecast_net) &gt;= 0 else 'text-danger'}">
-                        <span t-out="run.actual_net - run.forecast_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                        <span t-field="run.portal_variance_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
                       </td>
                     </tr>
                     <tr class="table-light fw-bold">
