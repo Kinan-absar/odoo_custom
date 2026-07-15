@@ -16,22 +16,50 @@ class PortalTreasury(http.Controller):
             return False
         return run
 
-    @http.route(['/my/employee/treasury', '/my/employee/treasury/plans'], type='http', auth='user', website=True)
-    def treasury_plans(self, status='pending', **kw):
+    def _get_line(self, line_id):
+        line = request.env['cash.plan.line'].sudo().browse(line_id).exists()
+        if not line or line.company_id not in request.env.user.company_ids:
+            return False
+        return line
+
+    @http.route('/my/employee/treasury', type='http', auth='user', website=True)
+    def treasury_home(self, **kw):
         if not self._is_ceo():
             return request.redirect('/my/employee')
-        domain = self._company_domain()
+        return request.redirect('/my/employee/treasury/payments')
+
+    @http.route('/my/employee/treasury/payments', type='http', auth='user', website=True)
+    def treasury_payment_approvals(self, status='pending', **kw):
+        if not self._is_ceo():
+            return request.redirect('/my/employee')
+        domain = self._company_domain() + [('flow_type', '=', 'out')]
         if status == 'pending':
-            domain += [('line_ids.flow_type', '=', 'out'), ('line_ids.ceo_decision', '=', 'pending')]
+            domain += [('ceo_decision', '=', 'pending')]
         elif status == 'approved':
-            domain += [('line_ids.flow_type', '=', 'out'), ('line_ids.ceo_decision', 'in', ('approved', 'adjusted'))]
+            domain += [('ceo_decision', 'in', ('approved', 'adjusted'))]
         elif status == 'rejected':
-            domain += [('line_ids.flow_type', '=', 'out'), ('line_ids.ceo_decision', '=', 'rejected')]
-        runs = request.env['cash.plan.run'].sudo().search(domain, order='date_from desc, id desc')
+            domain += [('ceo_decision', '=', 'rejected')]
+        lines = request.env['cash.plan.line'].sudo().search(
+            domain, order='planned_date asc, priority desc, id desc'
+        )
+        return request.render('employee_portal_suite.portal_treasury_payment_list', {
+            'lines': lines,
+            'current_status': status,
+            'page_name': 'treasury_payments',
+            'message': kw.get('message'),
+            'error': kw.get('error'),
+        })
+
+    @http.route('/my/employee/treasury/plans', type='http', auth='user', website=True)
+    def treasury_plans(self, **kw):
+        if not self._is_ceo():
+            return request.redirect('/my/employee')
+        runs = request.env['cash.plan.run'].sudo().search(
+            self._company_domain(), order='date_from desc, id desc'
+        )
         return request.render('employee_portal_suite.portal_treasury_plan_list', {
             'runs': runs,
-            'current_status': status,
-            'page_name': 'treasury',
+            'page_name': 'treasury_plans',
         })
 
     @http.route('/my/employee/treasury/plans/<int:run_id>', type='http', auth='user', website=True)
@@ -43,17 +71,15 @@ class PortalTreasury(http.Controller):
             return request.not_found()
         return request.render('employee_portal_suite.portal_treasury_plan_detail', {
             'run': run,
-            'page_name': 'treasury',
-            'message': kw.get('message'),
-            'error': kw.get('error'),
+            'page_name': 'treasury_plans',
         })
 
     @http.route('/my/employee/treasury/lines/<int:line_id>/review', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def treasury_line_review(self, line_id, **post):
         if not self._is_ceo():
             return request.redirect('/my/employee')
-        line = request.env['cash.plan.line'].sudo().browse(line_id).exists()
-        if not line or line.company_id not in request.env.user.company_ids:
+        line = self._get_line(line_id)
+        if not line:
             return request.not_found()
         try:
             if line.flow_type != 'out':
@@ -67,6 +93,6 @@ class PortalTreasury(http.Controller):
                 comment=post.get('comment'),
                 reviewer=request.env.user,
             )
-            return request.redirect('/my/employee/treasury/plans/%s?message=Payment reviewed successfully' % line.run_id.id)
+            return request.redirect('/my/employee/treasury/payments?status=pending&message=Payment reviewed successfully')
         except (ValueError, ValidationError, UserError) as exc:
-            return request.redirect('/my/employee/treasury/plans/%s?error=%s' % (line.run_id.id, str(exc)))
+            return request.redirect('/my/employee/treasury/payments?status=pending&error=%s' % str(exc))
