@@ -4,13 +4,13 @@
     <t t-call="employee_portal_suite.employee_portal_layout">
       <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <div><h3 class="mb-1">Treasury Approval</h3><p class="text-muted mb-0">Weekly payment and receipt plans</p></div>
+          <div><h3 class="mb-1">Payment Approvals</h3><p class="text-muted mb-0">Planned outgoing payments grouped by weekly cash plan</p></div>
           <a href="/my/employee" class="btn btn-outline-secondary btn-sm">Dashboard</a>
         </div>
         <div class="btn-group mb-3">
           <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'pending' else 'btn-outline-primary'}" href="/my/employee/treasury/plans?status=pending">Pending</a>
           <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'approved' else 'btn-outline-primary'}" href="/my/employee/treasury/plans?status=approved">Approved</a>
-          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'all' else 'btn-outline-primary'}" href="/my/employee/treasury/plans?status=all">All</a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'rejected' else 'btn-outline-primary'}" href="/my/employee/treasury/plans?status=rejected">Rejected</a><a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'all' else 'btn-outline-primary'}" href="/my/employee/treasury/plans?status=all">All</a>
         </div>
         <div class="card border-0 shadow-sm"><div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
@@ -26,7 +26,7 @@
                 <td><span class="badge text-bg-secondary"><t t-esc="dict(run._fields['state'].selection).get(run.state)"/></span></td>
                 <td class="text-end"><a t-att-href="'/my/employee/treasury/plans/%s' % run.id" class="btn btn-sm btn-outline-primary">Review</a></td>
               </tr></t>
-              <tr t-if="not runs"><td colspan="8" class="text-center text-muted py-5">No weekly cash plans found.</td></tr>
+              <tr t-if="not runs"><td colspan="8" class="text-center text-muted py-5">No planned payments found.</td></tr>
             </tbody>
           </table>
         </div></div>
@@ -48,9 +48,9 @@
           <div class="col-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><small class="text-muted">Opening cash</small><div class="fs-4 fw-bold"><span t-field="run.opening_balance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div></div></div>
           <div class="col-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><small class="text-muted">Forecast inflow</small><div class="fs-4 fw-bold text-success"><span t-field="run.forecast_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div></div></div>
           <div class="col-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><small class="text-muted">Forecast outflow</small><div class="fs-4 fw-bold text-danger"><span t-field="run.forecast_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div></div></div>
-          <div class="col-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><small class="text-muted">CEO approved closing</small><div class="fs-4 fw-bold"><span t-field="run.approved_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div></div></div>
+          <div class="col-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><small class="text-muted">Closing after approved payments</small><div class="fs-4 fw-bold"><span t-field="run.approved_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div></div></div>
         </div>
-        <div class="card border-0 shadow-sm mb-4"><div class="card-header bg-white"><strong>Planned cash movements</strong></div><div class="table-responsive">
+        <div class="card border-0 shadow-sm mb-4"><div class="card-header bg-white"><strong>Weekly cash movements</strong></div><div class="table-responsive">
           <table class="table align-middle mb-0"><thead class="table-light"><tr><th>Date</th><th>Flow</th><th>Description</th><th>Partner / Project</th><th>Requested</th><th>CEO Approved</th><th>Decision</th><th>Review</th></tr></thead><tbody>
             <t t-foreach="run.line_ids.filtered(lambda l: l.state != 'cancel' or l.ceo_decision == 'rejected')" t-as="line"><tr>
               <td><t t-esc="line.planned_date"/></td><td><span t-attf-class="badge #{'text-bg-success' if line.flow_type == 'in' else 'text-bg-danger'}"><t t-esc="'Receipt' if line.flow_type == 'in' else 'Payment'"/></span></td>
@@ -60,32 +60,17 @@
               <td><span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></td>
               <td><span class="badge text-bg-secondary"><t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/></span><div class="small text-muted" t-if="line.ceo_comment"><t t-esc="line.ceo_comment"/></div></td>
               <td style="min-width:270px">
-                <form t-if="run.ceo_status == 'pending' and line.ceo_decision == 'pending'" t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
+                <form t-if="line.flow_type == 'out' and line.ceo_decision == 'pending'" t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
                   <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                   <div class="input-group input-group-sm mb-2"><span class="input-group-text">Amount</span><input type="number" step="0.01" min="0" name="approved_amount" class="form-control" t-att-value="line.approved_amount or line.forecast_amount"/></div>
                   <textarea name="comment" class="form-control form-control-sm mb-2" rows="2" placeholder="CEO comment"><t t-esc="line.ceo_comment or ''"/></textarea>
                   <button name="decision" value="approved" class="btn btn-success btn-sm">Approve</button>
                   <button name="decision" value="rejected" class="btn btn-outline-danger btn-sm">Reject</button>
                 </form>
-                <span t-else="" class="text-muted small"><t t-esc="dict(run._fields['ceo_status'].selection).get(run.ceo_status)"/></span>
+                <span t-else="" class="text-muted small"><t t-if="line.flow_type == 'in'">No CEO approval required</t><t t-else=""><t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/></t></span>
               </td>
             </tr></t>
           </tbody></table>
-        </div></div>
-        <div class="card border-0 shadow-sm" t-if="run.ceo_status == 'pending'"><div class="card-body">
-          <form t-att-action="'/my/employee/treasury/plans/%s/approve' % run.id" method="post">
-            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-            <label class="form-label fw-semibold">Final CEO comment</label><textarea name="comment" class="form-control mb-3" rows="3"><t t-esc="run.ceo_comment or ''"/></textarea>
-            <div class="d-flex justify-content-between align-items-center"><span class="text-muted"><t t-esc="run.ceo_pending_count"/> line(s) still pending</span><div class="d-flex gap-2"><button class="btn btn-primary" t-att-disabled="run.ceo_pending_count != 0">Approve weekly plan</button></div></div>
-          </form>
-        </div></div>
-        <div class="card border-danger border-1 shadow-sm mt-3" t-if="run.ceo_status == 'pending'"><div class="card-body">
-          <form t-att-action="'/my/employee/treasury/plans/%s/reject' % run.id" method="post">
-            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-            <label class="form-label fw-semibold text-danger">Reject weekly plan</label>
-            <textarea name="comment" class="form-control mb-3" rows="2" placeholder="Reason for rejection" required="required"></textarea>
-            <button class="btn btn-outline-danger">Reject plan</button>
-          </form>
         </div></div>
       </div>
     </t>

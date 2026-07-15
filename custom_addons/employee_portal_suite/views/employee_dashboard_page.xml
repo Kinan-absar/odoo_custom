@@ -531,7 +531,7 @@
 
                 <!-- TREASURY APPROVALS (CEO ONLY) -->
                 <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
-                    <t t-set="treasury_pending_count" t-value="request.env['cash.plan.run'].sudo().search_count([('company_id','in',request.env.user.company_ids.ids),('state','=','submitted')])"/>
+                    <t t-set="treasury_pending_count" t-value="request.env['cash.plan.line'].sudo().search_count([('company_id','in',request.env.user.company_ids.ids),('flow_type','=','out'),('ceo_decision','=','pending')])"/>
                     <div class="col-6 col-md-6">
                         <a href="/my/employee/treasury" class="dashboard-link">
                             <div class="dashboard-card">
