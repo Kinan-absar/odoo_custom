@@ -6,7 +6,7 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
           <div>
             <h3 class="mb-1">Payment Approvals</h3>
-            <p class="text-muted mb-0">Review, adjust, approve, or reject planned outgoing payments.</p>
+            <p class="text-muted mb-0">Review, adjust, approve, hold, or reject planned outgoing payments.</p>
           </div>
           <a href="/my/employee/treasury/plans" class="btn btn-outline-primary btn-sm">Weekly Cash Plans</a>
         </div>
@@ -15,6 +15,7 @@
         <div class="btn-group mb-3">
           <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'pending' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=pending">Pending</a>
           <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'approved' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=approved">Approved</a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'held' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=held">On Hold</a>
           <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'rejected' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=rejected">Rejected</a>
           <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'all' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=all">All</a>
         </div>
@@ -31,14 +32,15 @@
                 <td><span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></td>
                 <td><span class="badge text-bg-secondary"><t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/></span></td>
                 <td>
-                  <form t-if="line.ceo_decision == 'pending'" t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
+                  <form t-if="line.ceo_decision in ('pending', 'held')" t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                     <div class="input-group input-group-sm mb-2"><span class="input-group-text">Approved amount</span><input type="number" step="0.01" min="0" name="approved_amount" class="form-control" t-att-value="line.approved_amount or line.forecast_amount"/></div>
                     <textarea name="comment" class="form-control form-control-sm mb-2" rows="2" placeholder="CEO comment"><t t-esc="line.ceo_comment or ''"/></textarea>
                     <button name="decision" value="approved" class="btn btn-success btn-sm">Approve</button>
-                    <button name="decision" value="rejected" class="btn btn-outline-danger btn-sm">Reject</button>
+                    <button name="decision" value="held" class="btn btn-warning btn-sm ms-1">Hold</button>
+                    <button name="decision" value="rejected" class="btn btn-outline-danger btn-sm ms-1">Reject</button>
                   </form>
-                  <div t-else="" class="small"><div t-if="line.ceo_comment" class="text-muted"><t t-esc="line.ceo_comment"/></div><div t-if="line.ceo_reviewed_by" class="text-muted">Reviewed by <t t-esc="line.ceo_reviewed_by.name"/></div></div>
+                  <div t-else="" class="small"><div t-if="line.ceo_comment" class="text-muted"><t t-esc="line.ceo_comment"/></div><div t-if="line.ceo_approved_by" class="text-muted">Reviewed by <t t-esc="line.ceo_approved_by.name"/></div></div>
                 </td>
               </tr></t>
               <tr t-if="not lines"><td colspan="8" class="text-center text-muted py-5">No payments found.</td></tr>

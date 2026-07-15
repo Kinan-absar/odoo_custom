@@ -4,10 +4,11 @@
     <xpath expr="//a[@href='/my/employee/approvals']/.." position="after">
       <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
         <t t-set="treasury_pending_count" t-value="request.env['cash.plan.line'].sudo().search_count([('company_id','in',request.env.user.company_ids.ids),('flow_type','=','out'),('ceo_decision','=','pending')])"/>
+                        <t t-set="treasury_held_count" t-value="request.env['cash.plan.line'].sudo().search_count([('company_id','in',request.env.user.company_ids.ids),('flow_type','=','out'),('ceo_decision','=','held')])"/>
         <div class="col-6 col-md-6">
           <a href="/my/employee/treasury" class="dashboard-link"><div class="dashboard-card">
             <div class="card-top"><div class="card-icon bg-info-soft"><i class="fa fa-line-chart"></i></div><span class="card-title">Treasury</span></div>
-            <div class="card-bottom"><div class="card-bottom-number-row"><span class="card-number"><t t-esc="treasury_pending_count"/></span><t t-if="treasury_pending_count &gt; 0"><span class="badge-pulse"></span></t></div><span class="small text-muted">Payments awaiting review</span></div>
+            <div class="card-bottom"><div class="card-bottom-number-row"><span class="card-number"><t t-esc="treasury_pending_count"/></span><t t-if="treasury_pending_count &gt; 0"><span class="badge-pulse"></span></t></div><span class="small text-muted">Payments awaiting review; held items are listed separately</span></div>
           </div></a>
         </div>
       </t>

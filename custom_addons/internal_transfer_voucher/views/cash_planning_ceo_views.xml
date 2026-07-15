@@ -13,7 +13,7 @@
           <field name="approved_closing" readonly="1"/>
           <field name="ceo_pending_count" readonly="1"/>
           <field name="ceo_approved_count" readonly="1"/>
-          <field name="ceo_rejected_count" readonly="1"/>
+          <field name="ceo_rejected_count" readonly="1"/><field name="ceo_held_count" readonly="1"/>
           <field name="ceo_reviewed_by" readonly="1"/>
         </group>
       </xpath>

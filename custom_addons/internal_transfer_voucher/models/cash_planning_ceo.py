@@ -19,6 +19,7 @@ class CashPlanRunCEO(models.Model):
     ceo_pending_count = fields.Integer(compute='_compute_ceo_summary', store=True)
     ceo_approved_count = fields.Integer(compute='_compute_ceo_summary', store=True)
     ceo_rejected_count = fields.Integer(compute='_compute_ceo_summary', store=True)
+    ceo_held_count = fields.Integer(compute='_compute_ceo_summary', store=True)
     approved_inflow = fields.Monetary(compute='_compute_ceo_summary', store=True)
     approved_outflow = fields.Monetary(compute='_compute_ceo_summary', store=True)
     approved_net = fields.Monetary(compute='_compute_ceo_summary', store=True)
@@ -36,16 +37,18 @@ class CashPlanRunCEO(models.Model):
             pending = payments.filtered(lambda line: line.ceo_decision == 'pending')
             approved = payments.filtered(lambda line: line.ceo_decision in ('approved', 'adjusted'))
             rejected = payments.filtered(lambda line: line.ceo_decision == 'rejected')
+            held = payments.filtered(lambda line: line.ceo_decision == 'held')
 
             run.ceo_pending_count = len(pending)
             run.ceo_approved_count = len(approved)
             run.ceo_rejected_count = len(rejected)
+            run.ceo_held_count = len(held)
             # Receipts are forecasts only and never require CEO approval.
             run.approved_inflow = sum(receipts.mapped('forecast_amount'))
             run.approved_outflow = sum(approved.mapped('approved_amount'))
             run.approved_net = run.approved_inflow - run.approved_outflow
             run.approved_closing = run.opening_balance + run.approved_net
-            if pending:
+            if pending or held:
                 run.ceo_status = 'pending'
             elif rejected:
                 run.ceo_status = 'rejected'
@@ -72,6 +75,7 @@ class CashPlanLineCEO(models.Model):
         ('approved', 'Approved'),
         ('adjusted', 'Approved with Adjustment'),
         ('rejected', 'Rejected'),
+        ('held', 'On Hold'),
         ('not_required', 'No Approval Required'),
     ], default='not_sent', required=True, tracking=True, copy=False)
     ceo_comment = fields.Text(string='CEO Comment', tracking=True, copy=False)
@@ -176,17 +180,17 @@ class CashPlanLineCEO(models.Model):
         raise UserError(_('Planned payments must be approved by the CEO from the Employee Portal.'))
 
     def action_ceo_decide(self, decision, approved_amount=None, comment=None, reviewer=None):
-        if decision not in ('approved', 'adjusted', 'rejected'):
+        if decision not in ('approved', 'adjusted', 'rejected', 'held'):
             raise ValidationError(_('Invalid CEO decision.'))
         reviewer = reviewer or self.env.user
         for line in self:
             if line.flow_type != 'out':
                 raise UserError(_('Receipts do not require CEO approval.'))
-            if line.ceo_decision != 'pending':
-                raise UserError(_('Only payments pending CEO review can be reviewed.'))
+            if line.ceo_decision not in ('pending', 'held'):
+                raise UserError(_('Only payments pending CEO review or currently on hold can be reviewed.'))
             amount = 0.0
             final_decision = decision
-            if decision != 'rejected':
+            if decision not in ('rejected', 'held'):
                 amount = line.forecast_amount if approved_amount is None else float(approved_amount)
                 if amount <= 0:
                     raise ValidationError(_('Approved amount must be greater than zero.'))
@@ -197,7 +201,8 @@ class CashPlanLineCEO(models.Model):
                 'ceo_comment': comment or False,
                 'ceo_approved_by': reviewer.id,
                 'ceo_approved_date': fields.Datetime.now(),
-                'state': 'approved' if final_decision in ('approved', 'adjusted') else 'cancel',
+                'state': ('approved' if final_decision in ('approved', 'adjusted') else
+                          'planned' if final_decision == 'held' else 'cancel'),
             })
         return True
 

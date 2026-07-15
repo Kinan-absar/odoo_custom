@@ -39,6 +39,8 @@ class PortalTreasury(http.Controller):
             domain += [('ceo_decision', 'in', ('approved', 'adjusted'))]
         elif status == 'rejected':
             domain += [('ceo_decision', '=', 'rejected')]
+        elif status == 'held':
+            domain += [('ceo_decision', '=', 'held')]
         lines = request.env['cash.plan.line'].sudo().search(
             domain, order='planned_date asc, priority desc, id desc'
         )
@@ -93,6 +95,8 @@ class PortalTreasury(http.Controller):
                 comment=post.get('comment'),
                 reviewer=request.env.user,
             )
-            return request.redirect('/my/employee/treasury/payments?status=pending&message=Payment reviewed successfully')
+            redirect_status = 'held' if decision == 'held' else 'pending'
+            message = 'Payment placed on hold' if decision == 'held' else 'Payment reviewed successfully'
+            return request.redirect('/my/employee/treasury/payments?status=%s&message=%s' % (redirect_status, message))
         except (ValueError, ValidationError, UserError) as exc:
             return request.redirect('/my/employee/treasury/payments?status=pending&error=%s' % str(exc))
