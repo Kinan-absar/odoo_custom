@@ -13,11 +13,11 @@
         <div t-if="message" class="alert alert-success"><t t-esc="message"/></div>
         <div t-if="error" class="alert alert-danger"><t t-esc="error"/></div>
         <div class="btn-group mb-3">
-          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'pending' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=pending">Pending</a>
-          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'approved' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=approved">Approved</a>
-          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'held' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=held">On Hold</a>
-          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'rejected' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=rejected">Rejected</a>
-          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'all' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=all">All</a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'pending' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=pending">Pending <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('pending', 0)"/></span></t></a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'approved' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=approved">Approved <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('approved', 0)"/></span></t></a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'held' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=held">On Hold <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('held', 0)"/></span></t></a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'rejected' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=rejected">Rejected <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('rejected', 0)"/></span></t></a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'all' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=all">All <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('all', 0)"/></span></t></a>
         </div>
         <div class="card border-0 shadow-sm"><div class="table-responsive">
           <table class="table table-hover align-middle mb-0">

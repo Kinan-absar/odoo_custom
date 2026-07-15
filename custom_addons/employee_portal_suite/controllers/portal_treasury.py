@@ -1,9 +1,13 @@
+from urllib.parse import quote
+
 from odoo import http
 from odoo.http import request
 from odoo.exceptions import ValidationError, UserError
 
 
 class PortalTreasury(http.Controller):
+    VALID_FILTERS = {'pending', 'approved', 'held', 'rejected', 'all'}
+
     def _is_ceo(self):
         return request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
 
@@ -22,30 +26,41 @@ class PortalTreasury(http.Controller):
             return False
         return line
 
+    def _payment_domain(self, status):
+        domain = self._company_domain() + [('flow_type', '=', 'out')]
+        if status == 'pending':
+            domain.append(('ceo_decision', '=', 'pending'))
+        elif status == 'approved':
+            domain.append(('ceo_decision', 'in', ['approved', 'adjusted']))
+        elif status == 'held':
+            domain.append(('ceo_decision', '=', 'held'))
+        elif status == 'rejected':
+            domain.append(('ceo_decision', '=', 'rejected'))
+        return domain
+
     @http.route('/my/employee/treasury', type='http', auth='user', website=True)
     def treasury_home(self, **kw):
         if not self._is_ceo():
             return request.redirect('/my/employee')
-        return request.redirect('/my/employee/treasury/payments')
+        return request.redirect('/my/employee/treasury/payments?status=pending')
 
     @http.route('/my/employee/treasury/payments', type='http', auth='user', website=True)
     def treasury_payment_approvals(self, status='pending', **kw):
         if not self._is_ceo():
             return request.redirect('/my/employee')
-        domain = self._company_domain() + [('flow_type', '=', 'out')]
-        if status == 'pending':
-            domain += [('ceo_decision', '=', 'pending')]
-        elif status == 'approved':
-            domain += [('ceo_decision', 'in', ('approved', 'adjusted'))]
-        elif status == 'rejected':
-            domain += [('ceo_decision', '=', 'rejected')]
-        elif status == 'held':
-            domain += [('ceo_decision', '=', 'held')]
-        lines = request.env['cash.plan.line'].sudo().search(
-            domain, order='planned_date asc, priority desc, id desc'
-        )
+        status = (request.httprequest.args.get('status') or status or 'pending').strip().lower()
+        if status not in self.VALID_FILTERS:
+            status = 'pending'
+
+        Line = request.env['cash.plan.line'].sudo()
+        lines = Line.search(self._payment_domain(status), order='planned_date asc, priority desc, id desc')
+        counts = {
+            key: Line.search_count(self._payment_domain(key))
+            for key in ('pending', 'approved', 'held', 'rejected', 'all')
+        }
         return request.render('employee_portal_suite.portal_treasury_payment_list', {
             'lines': lines,
+            'counts': counts,
             'current_status': status,
             'page_name': 'treasury_payments',
             'message': kw.get('message'),
@@ -76,17 +91,20 @@ class PortalTreasury(http.Controller):
             'page_name': 'treasury_plans',
         })
 
-    @http.route('/my/employee/treasury/lines/<int:line_id>/review', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    @http.route(
+        '/my/employee/treasury/lines/<int:line_id>/review',
+        type='http', auth='user', website=True, methods=['POST'], csrf=True
+    )
     def treasury_line_review(self, line_id, **post):
         if not self._is_ceo():
             return request.redirect('/my/employee')
         line = self._get_line(line_id)
         if not line:
             return request.not_found()
+        decision = (post.get('decision') or '').strip().lower()
         try:
             if line.flow_type != 'out':
                 raise UserError('Receipts do not require CEO approval.')
-            decision = post.get('decision')
             amount_text = (post.get('approved_amount') or '').replace(',', '').strip()
             amount = float(amount_text) if amount_text else None
             line.action_ceo_decide(
@@ -95,8 +113,21 @@ class PortalTreasury(http.Controller):
                 comment=post.get('comment'),
                 reviewer=request.env.user,
             )
-            redirect_status = 'held' if decision == 'held' else 'pending'
-            message = 'Payment placed on hold' if decision == 'held' else 'Payment reviewed successfully'
-            return request.redirect('/my/employee/treasury/payments?status=%s&message=%s' % (redirect_status, message))
+            target = {
+                'approved': 'approved',
+                'held': 'held',
+                'rejected': 'rejected',
+            }.get(decision, 'pending')
+            message = {
+                'approved': 'Payment approved successfully.',
+                'held': 'Payment placed on hold.',
+                'rejected': 'Payment rejected.',
+            }.get(decision, 'Payment reviewed successfully.')
+            return request.redirect(
+                '/my/employee/treasury/payments?status=%s&message=%s'
+                % (target, quote(message))
+            )
         except (ValueError, ValidationError, UserError) as exc:
-            return request.redirect('/my/employee/treasury/payments?status=pending&error=%s' % str(exc))
+            return request.redirect(
+                '/my/employee/treasury/payments?status=pending&error=%s' % quote(str(exc))
+            )
