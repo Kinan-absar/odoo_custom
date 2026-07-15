@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-  <template id="portal_treasury_payment_list" name="CEO Payment Approvals">
+  <template id="portal_treasury_payment_list_v2" name="CEO Payment Approvals">
     <t t-call="employee_portal_suite.employee_portal_layout">
       <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -51,7 +51,7 @@
     </t>
   </template>
 
-  <template id="portal_treasury_plan_list" name="CEO Weekly Cash Plans">
+  <template id="portal_treasury_plan_list_v2" name="CEO Weekly Cash Plans">
     <t t-call="employee_portal_suite.employee_portal_layout">
       <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -80,7 +80,7 @@
     </t>
   </template>
 
-  <template id="portal_treasury_plan_detail" name="CEO Weekly Cash Plan Detail">
+  <template id="portal_treasury_plan_detail_v2" name="CEO Weekly Cash Plan Detail">
     <t t-call="employee_portal_suite.employee_portal_layout">
       <div class="container py-4">
         <a href="/my/employee/treasury/plans" class="text-decoration-none">← Weekly Cash Plans</a>
