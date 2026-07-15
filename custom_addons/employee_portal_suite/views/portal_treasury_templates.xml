@@ -60,23 +60,31 @@
               <td><span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></td>
               <td><span class="badge text-bg-secondary"><t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/></span><div class="small text-muted" t-if="line.ceo_comment"><t t-esc="line.ceo_comment"/></div></td>
               <td style="min-width:270px">
-                <form t-if="run.state == 'submitted'" t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
+                <form t-if="run.state == 'submitted' and run.ceo_status == 'pending'" t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
                   <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                   <div class="input-group input-group-sm mb-2"><span class="input-group-text">Amount</span><input type="number" step="0.01" min="0" name="approved_amount" class="form-control" t-att-value="line.approved_amount or line.forecast_amount"/></div>
                   <textarea name="comment" class="form-control form-control-sm mb-2" rows="2" placeholder="CEO comment"><t t-esc="line.ceo_comment or ''"/></textarea>
                   <button name="decision" value="approved" class="btn btn-success btn-sm">Approve</button>
                   <button name="decision" value="rejected" class="btn btn-outline-danger btn-sm">Reject</button>
                 </form>
-                <span t-else="" class="text-muted small">Review closed</span>
+                <span t-else="" class="text-muted small"><t t-esc="dict(run._fields['ceo_status'].selection).get(run.ceo_status)"/></span>
               </td>
             </tr></t>
           </tbody></table>
         </div></div>
-        <div class="card border-0 shadow-sm" t-if="run.state == 'submitted'"><div class="card-body">
+        <div class="card border-0 shadow-sm" t-if="run.state == 'submitted' and run.ceo_status == 'pending'"><div class="card-body">
           <form t-att-action="'/my/employee/treasury/plans/%s/approve' % run.id" method="post">
             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
             <label class="form-label fw-semibold">Final CEO comment</label><textarea name="comment" class="form-control mb-3" rows="3"><t t-esc="run.ceo_comment or ''"/></textarea>
-            <div class="d-flex justify-content-between align-items-center"><span class="text-muted"><t t-esc="run.ceo_pending_count"/> line(s) still pending</span><button class="btn btn-primary" t-att-disabled="run.ceo_pending_count != 0">Approve weekly plan</button></div>
+            <div class="d-flex justify-content-between align-items-center"><span class="text-muted"><t t-esc="run.ceo_pending_count"/> line(s) still pending</span><div class="d-flex gap-2"><button class="btn btn-primary" t-att-disabled="run.ceo_pending_count != 0">Approve weekly plan</button></div></div>
+          </form>
+        </div></div>
+        <div class="card border-danger border-1 shadow-sm mt-3" t-if="run.state == 'submitted' and run.ceo_status == 'pending'"><div class="card-body">
+          <form t-att-action="'/my/employee/treasury/plans/%s/reject' % run.id" method="post">
+            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+            <label class="form-label fw-semibold text-danger">Reject weekly plan</label>
+            <textarea name="comment" class="form-control mb-3" rows="2" placeholder="Reason for rejection" required="required"></textarea>
+            <button class="btn btn-outline-danger">Reject plan</button>
           </form>
         </div></div>
       </div>

@@ -71,7 +71,21 @@ class PortalTreasury(http.Controller):
             # Set date separately to avoid portal-user ACL interaction.
             from odoo import fields
             run.sudo().write({'ceo_reviewed_date': fields.Datetime.now()})
-            run.sudo().action_approve()
+            run.sudo().with_context(ceo_portal_approval=True).action_approve()
             return request.redirect('/my/employee/treasury/plans/%s?message=Weekly cash plan approved' % run.id)
+        except (ValidationError, UserError) as exc:
+            return request.redirect('/my/employee/treasury/plans/%s?error=%s' % (run.id, str(exc)))
+
+
+    @http.route('/my/employee/treasury/plans/<int:run_id>/reject', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def treasury_plan_reject(self, run_id, **post):
+        if not self._is_ceo():
+            return request.redirect('/my/employee')
+        run = self._get_run(run_id)
+        if not run:
+            return request.not_found()
+        try:
+            run.sudo().action_ceo_reject(comment=post.get('comment'), reviewer=request.env.user)
+            return request.redirect('/my/employee/treasury/plans/%s?message=Weekly cash plan rejected' % run.id)
         except (ValidationError, UserError) as exc:
             return request.redirect('/my/employee/treasury/plans/%s?error=%s' % (run.id, str(exc)))

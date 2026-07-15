@@ -8,6 +8,7 @@ class CashPlanRunCEO(models.Model):
     ceo_reviewed_by = fields.Many2one('res.users', string='CEO Reviewed By', readonly=True, copy=False, tracking=True)
     ceo_reviewed_date = fields.Datetime(string='CEO Reviewed On', readonly=True, copy=False, tracking=True)
     ceo_comment = fields.Text(string='CEO Plan Comment', tracking=True)
+    ceo_status = fields.Selection([('not_sent', 'Not Sent'), ('pending', 'Pending CEO Review'), ('approved', 'CEO Approved'), ('rejected', 'CEO Rejected')], string='CEO Review Status', default='not_sent', required=True, tracking=True, copy=False)
     ceo_pending_count = fields.Integer(compute='_compute_ceo_summary', store=True)
     ceo_approved_count = fields.Integer(compute='_compute_ceo_summary', store=True)
     ceo_rejected_count = fields.Integer(compute='_compute_ceo_summary', store=True)
@@ -40,11 +41,15 @@ class CashPlanRunCEO(models.Model):
                 'ceo_approved_by': False,
                 'ceo_approved_date': False,
             })
-            run.write({'state': 'submitted', 'ceo_reviewed_by': False, 'ceo_reviewed_date': False})
+            run.write({'state': 'submitted', 'ceo_status': 'pending', 'ceo_reviewed_by': False, 'ceo_reviewed_date': False, 'ceo_comment': False})
         return True
 
     def action_approve(self):
+        if not self.env.context.get('ceo_portal_approval'):
+            raise UserError(_('This weekly plan can only be approved by the CEO from the Employee Portal.'))
         for run in self:
+            if run.state != 'submitted' or run.ceo_status != 'pending':
+                raise UserError(_('Only plans pending CEO review can be approved.'))
             pending = run.line_ids.filtered(lambda line: line.state != 'cancel' and line.ceo_decision == 'pending')
             if pending:
                 raise UserError(_('All planned movements must be reviewed by the CEO before approving the weekly plan.'))
@@ -53,9 +58,31 @@ class CashPlanRunCEO(models.Model):
                 raise UserError(_('At least one planned movement must be approved.'))
             run.write({
                 'state': 'approved',
+                'ceo_status': 'approved',
                 'ceo_reviewed_by': run.ceo_reviewed_by.id or self.env.user.id,
                 'ceo_reviewed_date': run.ceo_reviewed_date or fields.Datetime.now(),
             })
+        return True
+
+    def action_ceo_reject(self, comment=None, reviewer=None):
+        reviewer = reviewer or self.env.user
+        for run in self:
+            if run.state != 'submitted' or run.ceo_status != 'pending':
+                raise UserError(_('Only plans pending CEO review can be rejected.'))
+            run.write({
+                'state': 'cancel',
+                'ceo_status': 'rejected',
+                'ceo_comment': comment or False,
+                'ceo_reviewed_by': reviewer.id,
+                'ceo_reviewed_date': fields.Datetime.now(),
+            })
+        return True
+
+    def action_return_to_ceo_review(self):
+        for run in self:
+            if run.state not in ('approved', 'cancel'):
+                raise UserError(_('Only approved or rejected plans can be returned to CEO review.'))
+            run.write({'state': 'submitted', 'ceo_status': 'pending', 'ceo_reviewed_by': False, 'ceo_reviewed_date': False})
         return True
 
 
@@ -87,6 +114,10 @@ class CashPlanLineCEO(models.Model):
                 record.approved_amount = 0.0
                 record.ceo_decision = 'pending'
         return records
+
+
+    def action_approve(self):
+        raise UserError(_('Planning lines must be approved by the CEO from the Employee Portal.'))
 
     def action_ceo_decide(self, decision, approved_amount=None, comment=None, reviewer=None):
         if decision not in ('approved', 'adjusted', 'rejected'):
