@@ -17,6 +17,23 @@ class CashPlanRunCEO(models.Model):
     approved_net = fields.Monetary(compute='_compute_ceo_summary', store=True)
     approved_closing = fields.Monetary(compute='_compute_ceo_summary', store=True)
 
+    def init(self):
+        """Repair plans left in an executable state while CEO review is still pending."""
+        self.env.cr.execute("""
+            UPDATE cash_plan_run run
+               SET state = 'submitted',
+                   ceo_status = 'pending'
+             WHERE run.state IN ('approved', 'in_progress')
+               AND COALESCE(run.ceo_status, 'not_sent') IN ('not_sent', 'pending')
+               AND EXISTS (
+                    SELECT 1
+                      FROM cash_plan_line line
+                     WHERE line.run_id = run.id
+                       AND line.state != 'cancel'
+                       AND COALESCE(line.ceo_decision, 'pending') = 'pending'
+               )
+        """)
+
     @api.depends('opening_balance', 'line_ids.ceo_decision', 'line_ids.approved_amount', 'line_ids.flow_type', 'line_ids.state')
     def _compute_ceo_summary(self):
         for run in self:
@@ -30,19 +47,33 @@ class CashPlanRunCEO(models.Model):
             run.approved_net = run.approved_inflow - run.approved_outflow
             run.approved_closing = run.opening_balance + run.approved_net
 
-    def action_submit(self):
+    def _send_to_ceo_review(self):
         for run in self:
-            if not run.line_ids.filtered(lambda line: line.state != 'cancel'):
+            lines = run.line_ids.filtered(lambda line: line.state != 'cancel')
+            if not lines:
                 raise UserError(_('Add at least one planned cash movement before submitting.'))
-            run.line_ids.filtered(lambda line: line.state != 'cancel').write({
+            lines.write({
                 'ceo_decision': 'pending',
                 'approved_amount': 0.0,
                 'ceo_comment': False,
                 'ceo_approved_by': False,
                 'ceo_approved_date': False,
+                'state': 'planned',
             })
-            run.write({'state': 'submitted', 'ceo_status': 'pending', 'ceo_reviewed_by': False, 'ceo_reviewed_date': False, 'ceo_comment': False})
+            run.write({
+                'state': 'submitted',
+                'ceo_status': 'pending',
+                'ceo_reviewed_by': False,
+                'ceo_reviewed_date': False,
+                'ceo_comment': False,
+            })
         return True
+
+    def action_submit(self):
+        return self._send_to_ceo_review()
+
+    def action_send_to_ceo_review(self):
+        return self._send_to_ceo_review()
 
     def action_approve(self):
         if not self.env.context.get('ceo_portal_approval'):
@@ -100,6 +131,8 @@ class CashPlanLineCEO(models.Model):
     ceo_approved_by = fields.Many2one('res.users', string='CEO Reviewed By', readonly=True, copy=False)
     ceo_approved_date = fields.Datetime(string='CEO Reviewed On', readonly=True, copy=False)
     execution_amount = fields.Monetary(string='Execution Amount', compute='_compute_execution_amount', store=True)
+    run_state = fields.Selection(related='run_id.state', string='Weekly Plan Status', readonly=True)
+    run_ceo_status = fields.Selection(related='run_id.ceo_status', string='Weekly CEO Status', readonly=True)
 
     @api.depends('forecast_amount', 'approved_amount', 'ceo_decision')
     def _compute_execution_amount(self):
@@ -115,6 +148,16 @@ class CashPlanLineCEO(models.Model):
                 record.ceo_decision = 'pending'
         return records
 
+
+    def action_submit_to_ceo(self):
+        for line in self:
+            if not line.run_id:
+                raise UserError(_('Save the planned movement inside a weekly cash plan first.'))
+            line.run_id.action_send_to_ceo_review()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
 
     def action_approve(self):
         raise UserError(_('Planning lines must be approved by the CEO from the Employee Portal.'))

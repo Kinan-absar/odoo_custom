@@ -22,7 +22,7 @@ class PortalTreasury(http.Controller):
             return request.redirect('/my/employee')
         domain = self._company_domain()
         if status == 'pending':
-            domain += [('state', '=', 'submitted')]
+            domain += [('ceo_status', '=', 'pending')]
         elif status == 'approved':
             domain += [('state', 'in', ('approved', 'in_progress', 'done'))]
         elif status == 'draft':
@@ -39,6 +39,10 @@ class PortalTreasury(http.Controller):
         run = self._get_run(run_id)
         if not run:
             return request.not_found()
+        # Repair records created by older workflow versions: pending lines must be actionable.
+        pending_lines = run.line_ids.filtered(lambda line: line.state != 'cancel' and line.ceo_decision == 'pending')
+        if pending_lines and (run.state != 'submitted' or run.ceo_status != 'pending'):
+            run.sudo().write({'state': 'submitted', 'ceo_status': 'pending'})
         return request.render('employee_portal_suite.portal_treasury_plan_detail', {
             'run': run, 'page_name': 'treasury', 'message': kw.get('message'), 'error': kw.get('error'),
         })
