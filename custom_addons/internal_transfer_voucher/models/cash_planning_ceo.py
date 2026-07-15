@@ -5,20 +5,17 @@ from odoo.exceptions import UserError, ValidationError
 class CashPlanRunCEO(models.Model):
     _inherit = 'cash.plan.run'
 
-    # Compatibility/read-only summary fields. CEO approval is performed only on outgoing lines.
-    ceo_reviewed_by = fields.Many2one(
-        'res.users', string='Last CEO Reviewer', compute='_compute_ceo_summary', store=True, readonly=True
-    )
-    ceo_reviewed_date = fields.Datetime(
-        string='Last CEO Review Date', compute='_compute_ceo_summary', store=True, readonly=True
-    )
-    ceo_comment = fields.Text(string='CEO Plan Comment', readonly=True)
+    # Kept for compatibility with plans created by previous versions. Approval is now line-level only.
+    ceo_reviewed_by = fields.Many2one('res.users', string='CEO Reviewed By', readonly=True, copy=False, tracking=True)
+    ceo_reviewed_date = fields.Datetime(string='CEO Reviewed On', readonly=True, copy=False, tracking=True)
+    ceo_comment = fields.Text(string='CEO Plan Comment', tracking=True)
     ceo_status = fields.Selection([
-        ('not_sent', 'No Payments Submitted'),
+        ('not_sent', 'Not Sent'),
         ('pending', 'Pending Payment Reviews'),
         ('approved', 'Payments Reviewed'),
         ('rejected', 'Contains Rejected Payments'),
-    ], string='CEO Review Status', compute='_compute_ceo_summary', store=True, readonly=True)
+    ], string='CEO Review Status', default='not_sent', required=True, tracking=True, copy=False,
+       compute='_compute_ceo_summary', store=True)
     ceo_pending_count = fields.Integer(compute='_compute_ceo_summary', store=True)
     ceo_approved_count = fields.Integer(compute='_compute_ceo_summary', store=True)
     ceo_rejected_count = fields.Integer(compute='_compute_ceo_summary', store=True)
@@ -30,14 +27,13 @@ class CashPlanRunCEO(models.Model):
 
     @api.depends(
         'opening_balance', 'line_ids.flow_type', 'line_ids.forecast_amount',
-        'line_ids.ceo_decision', 'line_ids.approved_amount', 'line_ids.state',
-        'line_ids.ceo_approved_by', 'line_ids.ceo_approved_date'
+        'line_ids.ceo_decision', 'line_ids.approved_amount', 'line_ids.state'
     )
     def _compute_ceo_summary(self):
         for run in self:
-            lines = run.line_ids.filtered(lambda line: line.state != 'cancel' or line.ceo_decision == 'rejected')
-            payments = lines.filtered(lambda line: line.flow_type == 'out')
-            receipts = lines.filtered(lambda line: line.flow_type == 'in')
+            active = run.line_ids.filtered(lambda line: line.state != 'cancel' or line.ceo_decision == 'rejected')
+            payments = active.filtered(lambda line: line.flow_type == 'out')
+            receipts = active.filtered(lambda line: line.flow_type == 'in')
             pending = payments.filtered(lambda line: line.ceo_decision == 'pending')
             approved = payments.filtered(lambda line: line.ceo_decision in ('approved', 'adjusted'))
             rejected = payments.filtered(lambda line: line.ceo_decision == 'rejected')
@@ -47,15 +43,11 @@ class CashPlanRunCEO(models.Model):
             run.ceo_approved_count = len(approved)
             run.ceo_rejected_count = len(rejected)
             run.ceo_held_count = len(held)
+            # Receipts are forecasts only and never require CEO approval.
             run.approved_inflow = sum(receipts.mapped('forecast_amount'))
             run.approved_outflow = sum(approved.mapped('approved_amount'))
             run.approved_net = run.approved_inflow - run.approved_outflow
             run.approved_closing = run.opening_balance + run.approved_net
-
-            reviewed = payments.filtered('ceo_approved_date').sorted('ceo_approved_date', reverse=True)[:1]
-            run.ceo_reviewed_by = reviewed.ceo_approved_by if reviewed else False
-            run.ceo_reviewed_date = reviewed.ceo_approved_date if reviewed else False
-
             if pending or held:
                 run.ceo_status = 'pending'
             elif rejected:
@@ -65,7 +57,7 @@ class CashPlanRunCEO(models.Model):
             else:
                 run.ceo_status = 'not_sent'
 
-    # Weekly plans are forecast containers only, not CEO approval documents.
+    # Weekly plans are planning containers only; they are not CEO approval documents.
     def action_submit(self):
         return self.action_start()
 
@@ -82,38 +74,36 @@ class CashPlanLineCEO(models.Model):
         ('pending', 'Pending CEO Review'),
         ('approved', 'Approved'),
         ('adjusted', 'Approved with Adjustment'),
-        ('held', 'On Hold'),
         ('rejected', 'Rejected'),
+        ('held', 'On Hold'),
         ('not_required', 'No Approval Required'),
-    ], default='not_sent', required=True, tracking=True, copy=False, index=True)
+    ], default='not_sent', required=True, tracking=True, copy=False)
     ceo_comment = fields.Text(string='CEO Comment', tracking=True, copy=False)
     ceo_approved_by = fields.Many2one('res.users', string='CEO Reviewed By', readonly=True, copy=False)
     ceo_approved_date = fields.Datetime(string='CEO Reviewed On', readonly=True, copy=False)
-
-    # Compatibility aliases for old portal templates still cached in ir.ui.view.
-    ceo_reviewed_by = fields.Many2one(related='ceo_approved_by', string='CEO Reviewed By', readonly=True)
-    ceo_reviewed_date = fields.Datetime(related='ceo_approved_date', string='CEO Reviewed On', readonly=True)
-
     execution_amount = fields.Monetary(string='Execution Amount', compute='_compute_execution_amount', store=True)
     run_state = fields.Selection(related='run_id.state', string='Weekly Plan Status', readonly=True)
     run_ceo_status = fields.Selection(related='run_id.ceo_status', string='Weekly CEO Status', readonly=True)
 
     def init(self):
-        """Normalize data left by previous workflow versions without deleting records."""
+        # Repair data created by the earlier weekly-plan approval workflow.
         self.env.cr.execute("""
             UPDATE cash_plan_line
                SET ceo_decision = 'not_required',
                    approved_amount = forecast_amount
              WHERE flow_type = 'in'
-               AND COALESCE(ceo_decision, '') <> 'not_required'
+               AND COALESCE(ceo_decision, '') != 'not_required'
         """)
         self.env.cr.execute("""
             UPDATE cash_plan_line
-               SET ceo_decision = 'not_sent',
-                   approved_amount = 0
+               SET state = 'planned',
+                   ceo_decision = 'not_sent',
+                   approved_amount = 0,
+                   ceo_approved_by = NULL,
+                   ceo_approved_date = NULL
              WHERE flow_type = 'out'
-               AND COALESCE(ceo_decision, '') NOT IN
-                   ('not_sent','pending','approved','adjusted','held','rejected')
+               AND state = 'cancel'
+               AND COALESCE(ceo_decision, '') = 'pending'
         """)
 
     @api.depends('flow_type', 'forecast_amount', 'approved_amount', 'ceo_decision')
@@ -130,33 +120,33 @@ class CashPlanLineCEO(models.Model):
     def create(self, vals_list):
         records = super().create(vals_list)
         for record in records:
-            record._sync_approval_defaults()
+            if record.flow_type == 'in':
+                record.write({'ceo_decision': 'not_required', 'approved_amount': record.forecast_amount})
+            else:
+                record.write({'ceo_decision': 'not_sent', 'approved_amount': 0.0})
         return records
 
     def write(self, vals):
         result = super().write(vals)
-        if {'flow_type', 'forecast_amount'} & set(vals):
-            self._sync_approval_defaults()
+        if 'flow_type' in vals or 'forecast_amount' in vals:
+            for line in self:
+                if line.flow_type == 'in' and (
+                    line.ceo_decision != 'not_required' or
+                    line.currency_id.compare_amounts(line.approved_amount, line.forecast_amount) != 0
+                ):
+                    super(CashPlanLineCEO, line).write({
+                        'ceo_decision': 'not_required',
+                        'approved_amount': line.forecast_amount,
+                        'ceo_comment': False,
+                        'ceo_approved_by': False,
+                        'ceo_approved_date': False,
+                    })
+                elif line.flow_type == 'out' and line.ceo_decision == 'not_required':
+                    super(CashPlanLineCEO, line).write({
+                        'ceo_decision': 'not_sent',
+                        'approved_amount': 0.0,
+                    })
         return result
-
-    def _sync_approval_defaults(self):
-        for line in self:
-            if line.flow_type == 'in':
-                values = {}
-                if line.ceo_decision != 'not_required':
-                    values['ceo_decision'] = 'not_required'
-                if line.currency_id.compare_amounts(line.approved_amount, line.forecast_amount) != 0:
-                    values['approved_amount'] = line.forecast_amount
-                if values:
-                    super(CashPlanLineCEO, line).write(values)
-            elif line.ceo_decision == 'not_required':
-                super(CashPlanLineCEO, line).write({
-                    'ceo_decision': 'not_sent',
-                    'approved_amount': 0.0,
-                    'ceo_comment': False,
-                    'ceo_approved_by': False,
-                    'ceo_approved_date': False,
-                })
 
     def action_submit_to_ceo(self):
         for line in self:
@@ -167,7 +157,7 @@ class CashPlanLineCEO(models.Model):
             line.write({
                 'state': 'planned',
                 'ceo_decision': 'pending',
-                'approved_amount': line.forecast_amount,
+                'approved_amount': 0.0,
                 'ceo_comment': False,
                 'ceo_approved_by': False,
                 'ceo_approved_date': False,
@@ -178,59 +168,41 @@ class CashPlanLineCEO(models.Model):
         for line in self:
             if line.state == 'executed':
                 raise UserError(_('An executed movement cannot be reset to draft.'))
+            values = {'state': 'planned', 'ceo_comment': False, 'ceo_approved_by': False, 'ceo_approved_date': False}
             if line.flow_type == 'out':
-                line.write({
-                    'state': 'planned',
-                    'ceo_decision': 'not_sent',
-                    'approved_amount': 0.0,
-                    'ceo_comment': False,
-                    'ceo_approved_by': False,
-                    'ceo_approved_date': False,
-                })
+                values.update({'ceo_decision': 'not_sent', 'approved_amount': 0.0})
             else:
-                line.write({
-                    'state': 'planned',
-                    'ceo_decision': 'not_required',
-                    'approved_amount': line.forecast_amount,
-                })
+                values.update({'ceo_decision': 'not_required', 'approved_amount': line.forecast_amount})
+            line.write(values)
         return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     def action_approve(self):
         raise UserError(_('Planned payments must be approved by the CEO from the Employee Portal.'))
 
     def action_ceo_decide(self, decision, approved_amount=None, comment=None, reviewer=None):
-        if decision not in ('approved', 'rejected', 'held'):
+        if decision not in ('approved', 'adjusted', 'rejected', 'held'):
             raise ValidationError(_('Invalid CEO decision.'))
         reviewer = reviewer or self.env.user
         for line in self:
             if line.flow_type != 'out':
                 raise UserError(_('Receipts do not require CEO approval.'))
             if line.ceo_decision not in ('pending', 'held'):
-                raise UserError(_('Only pending or held payments can be reviewed.'))
-
+                raise UserError(_('Only payments pending CEO review or currently on hold can be reviewed.'))
             amount = 0.0
             final_decision = decision
-            next_state = 'planned'
-            if decision == 'approved':
+            if decision not in ('rejected', 'held'):
                 amount = line.forecast_amount if approved_amount is None else float(approved_amount)
                 if amount <= 0:
                     raise ValidationError(_('Approved amount must be greater than zero.'))
-                final_decision = (
-                    'approved'
-                    if line.currency_id.compare_amounts(amount, line.forecast_amount) == 0
-                    else 'adjusted'
-                )
-                next_state = 'approved'
-            elif decision == 'rejected':
-                next_state = 'cancel'
-
+                final_decision = 'approved' if line.currency_id.compare_amounts(amount, line.forecast_amount) == 0 else 'adjusted'
             line.write({
                 'approved_amount': amount,
                 'ceo_decision': final_decision,
                 'ceo_comment': comment or False,
                 'ceo_approved_by': reviewer.id,
                 'ceo_approved_date': fields.Datetime.now(),
-                'state': next_state,
+                'state': ('approved' if final_decision in ('approved', 'adjusted') else
+                          'planned' if final_decision == 'held' else 'cancel'),
             })
         return True
 
