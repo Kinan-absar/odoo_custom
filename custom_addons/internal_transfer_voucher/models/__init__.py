@@ -4,3 +4,5 @@ from . import receipt_voucher
 from . import purchase_order
 
 from . import cash_planning
+
+from . import cash_planning_ceo

@@ -88,7 +88,7 @@ class CashPlanLine(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'planned_date, priority, id'
 
-    name = fields.Char(required=True, tracking=True)
+    name = fields.Char(required=True, tracking=True, default=lambda self: _('Planned Cash Movement'))
     run_id = fields.Many2one('cash.plan.run', required=True, ondelete='cascade', index=True)
     company_id = fields.Many2one(related='run_id.company_id', store=True)
     currency_id = fields.Many2one(related='run_id.currency_id', store=True)
@@ -132,6 +132,48 @@ class CashPlanLine(models.Model):
                 actual = rec.internal_transfer_id.amount
             rec.actual_amount = actual
             rec.variance_amount = actual - rec.forecast_amount
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name'):
+                vals['name'] = self._prepare_default_name(vals)
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if 'name' in vals and not vals.get('name'):
+            vals['name'] = _('Planned Cash Movement')
+        return super().write(vals)
+
+    @api.onchange('category_id', 'partner_id', 'transaction_type', 'flow_type')
+    def _onchange_planning_name(self):
+        for rec in self:
+            if not rec.name or rec.name == _('Planned Cash Movement'):
+                parts = []
+                if rec.category_id:
+                    parts.append(rec.category_id.display_name)
+                elif rec.transaction_type:
+                    parts.append(dict(rec._fields['transaction_type'].selection).get(rec.transaction_type))
+                if rec.partner_id:
+                    parts.append(rec.partner_id.display_name)
+                rec.name = ' - '.join(filter(None, parts)) or _('Planned Cash Movement')
+
+    def _prepare_default_name(self, vals):
+        parts = []
+        category_id = vals.get('category_id')
+        partner_id = vals.get('partner_id')
+        transaction_type = vals.get('transaction_type')
+        if category_id:
+            category = self.env['cash.plan.category'].browse(category_id).exists()
+            if category:
+                parts.append(category.display_name)
+        elif transaction_type:
+            parts.append(dict(self._fields['transaction_type'].selection).get(transaction_type))
+        if partner_id:
+            partner = self.env['res.partner'].browse(partner_id).exists()
+            if partner:
+                parts.append(partner.display_name)
+        return ' - '.join(filter(None, parts)) or _('Planned Cash Movement')
 
     @api.constrains('forecast_amount')
     def _check_amount(self):

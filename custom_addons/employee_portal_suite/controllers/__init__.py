@@ -10,3 +10,5 @@ from . import portal_salary_report
 from . import portal_reports
 
 from . import portal_announcements
+
+from . import portal_treasury

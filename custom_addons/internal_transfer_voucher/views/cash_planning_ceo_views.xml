@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <record id="view_cash_plan_run_form_ceo" model="ir.ui.view">
+    <field name="name">cash.plan.run.form.ceo</field>
+    <field name="model">cash.plan.run</field>
+    <field name="inherit_id" ref="internal_transfer_voucher.view_cash_plan_run_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//group[@string='Forecast Summary']" position="after">
+        <group string="CEO Approved Summary" col="4">
+          <field name="approved_inflow" readonly="1"/>
+          <field name="approved_outflow" readonly="1"/>
+          <field name="approved_net" readonly="1"/>
+          <field name="approved_closing" readonly="1"/>
+          <field name="ceo_pending_count" readonly="1"/>
+          <field name="ceo_approved_count" readonly="1"/>
+          <field name="ceo_rejected_count" readonly="1"/>
+          <field name="ceo_reviewed_by" readonly="1"/>
+        </group>
+      </xpath>
+      <xpath expr="//field[@name='line_ids']/list/field[@name='forecast_amount']" position="after">
+        <field name="approved_amount" sum="CEO Approved" readonly="1"/>
+        <field name="ceo_decision" widget="badge" readonly="1"/>
+      </xpath>
+    </field>
+  </record>
+  <record id="view_cash_plan_line_form_ceo" model="ir.ui.view">
+    <field name="name">cash.plan.line.form.ceo</field>
+    <field name="model">cash.plan.line</field>
+    <field name="inherit_id" ref="internal_transfer_voucher.view_cash_plan_line_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='forecast_amount']" position="after">
+        <field name="approved_amount" readonly="1"/>
+        <field name="execution_amount" readonly="1"/>
+        <field name="ceo_decision" widget="badge" readonly="1"/>
+        <field name="ceo_approved_by" readonly="1"/>
+        <field name="ceo_approved_date" readonly="1"/>
+      </xpath>
+      <xpath expr="//page[@string='Notes']" position="inside">
+        <group string="CEO Review"><field name="ceo_comment" readonly="1"/></group>
+      </xpath>
+    </field>
+  </record>
+  <record id="view_cash_plan_line_list_ceo" model="ir.ui.view">
+    <field name="name">cash.plan.line.list.ceo</field>
+    <field name="model">cash.plan.line</field>
+    <field name="inherit_id" ref="internal_transfer_voucher.view_cash_plan_line_list"/>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='forecast_amount']" position="after">
+        <field name="approved_amount" sum="CEO Approved"/>
+        <field name="ceo_decision" widget="badge"/>
+      </xpath>
+    </field>
+  </record>
+</odoo>
