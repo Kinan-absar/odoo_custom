@@ -35,4 +35,32 @@
         <field name="domain_force">[('transfer_id.company_id', 'in', company_ids)]</field>
         <field name="groups" eval="[(4, ref('account.group_account_user'))]"/>
     </record>
+
+    <record id="rule_payment_voucher_po_allocation_multi_company" model="ir.rule">
+        <field name="name">Payment Voucher PO Allocation: multi-company</field>
+        <field name="model_id" ref="model_account_payment_voucher_po_allocation"/>
+        <field name="domain_force">[('voucher_id.company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('account.group_account_user'))]"/>
+    </record>
+
+    <record id="rule_cash_plan_run_multi_company" model="ir.rule">
+        <field name="name">Weekly Cash Plan: multi-company</field>
+        <field name="model_id" ref="model_cash_plan_run"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('account.group_account_user'))]"/>
+    </record>
+
+    <record id="rule_cash_plan_line_multi_company" model="ir.rule">
+        <field name="name">Cash Planning Line: multi-company</field>
+        <field name="model_id" ref="model_cash_plan_line"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('account.group_account_user'))]"/>
+    </record>
+
+    <record id="rule_cash_plan_category_multi_company" model="ir.rule">
+        <field name="name">Cash Planning Category: multi-company</field>
+        <field name="model_id" ref="model_cash_plan_category"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('account.group_account_user'))]"/>
+    </record>
 </odoo>

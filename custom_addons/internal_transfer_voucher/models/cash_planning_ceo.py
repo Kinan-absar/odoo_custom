@@ -162,7 +162,7 @@ class CashPlanLineCEO(models.Model):
                 'ceo_approved_by': False,
                 'ceo_approved_date': False,
             })
-        return {'type': 'ir.actions.client', 'tag': 'reload'}
+        return True
 
     def action_reset_to_draft(self):
         for line in self:
@@ -174,7 +174,7 @@ class CashPlanLineCEO(models.Model):
             else:
                 values.update({'ceo_decision': 'not_required', 'approved_amount': line.forecast_amount})
             line.write(values)
-        return {'type': 'ir.actions.client', 'tag': 'reload'}
+        return True
 
     def action_approve(self):
         raise UserError(_('Planned payments must be approved by the CEO from the Employee Portal.'))
