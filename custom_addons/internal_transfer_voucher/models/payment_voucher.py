@@ -686,10 +686,14 @@ class AccountPaymentVoucher(models.Model):
                 voucher.po_allocation_ids[0].amount = voucher.amount
 
     def _apply_single_po_full_amount(self):
-        """Persist the full voucher amount on the only PO allocation.
+        """Default the full voucher amount onto a newly selected single PO.
 
-        This runs before overpayment validation so the warning includes the current
-        voucher amount instead of treating it as zero.
+        Only fills in the amount when the allocation line has not yet been
+        given one (still zero). This gives a convenient default the first
+        time a single PO is chosen, without permanently overriding a partial
+        allocation the user deliberately set (e.g. paying only part of the
+        voucher against a PO and leaving the rest unallocated / against
+        account).
         """
         for voucher in self:
             if len(voucher.purchase_order_ids) != 1:
@@ -698,7 +702,7 @@ class AccountPaymentVoucher(models.Model):
             lines = voucher.po_allocation_ids.filtered(
                 lambda line: line.purchase_order_id == voucher.purchase_order_ids[:1]
             )
-            if len(lines) == 1 and voucher.currency_id.compare_amounts(lines.amount, voucher.amount) != 0:
+            if len(lines) == 1 and voucher.currency_id.is_zero(lines.amount) and not voucher.currency_id.is_zero(voucher.amount):
                 lines.with_context(skip_po_selector_sync=True).write({'amount': voucher.amount})
 
     def _sync_po_allocations_from_selector(self):
