@@ -649,50 +649,14 @@ class AccountPaymentVoucher(models.Model):
 
     @api.onchange('purchase_order_ids')
     def _onchange_purchase_order_ids_build_allocations(self):
-        """Keep exactly one allocation row for every selected Purchase Order.
+        """Do not create allocation rows inside the browser onchange.
 
-        Do not clear and recreate the whole One2many.  On an existing voucher,
-        Odoo can create the replacement row before deleting the old row, which
-        temporarily produces two rows for the same PO and triggers the unique
-        allocation validation.  Reusing existing rows avoids that save/post
-        failure and also preserves amounts already entered by the user.
+        Odoo can send both the old persisted allocation row and a new virtual
+        row for the same PO in one save request.  The database then correctly
+        rejects the temporary duplicate.  Allocation rows are synchronized
+        after create/write, once the voucher and PO selections have real IDs.
         """
-        Allocation = self.env['account.payment.voucher.po.allocation']
-        for voucher in self:
-            selected_orders = voucher.purchase_order_ids
-            selected_ids = {
-                order._origin.id or (order.id if isinstance(order.id, int) else False)
-                for order in selected_orders
-            }
-            selected_ids.discard(False)
-
-            kept_by_po = {}
-            rows_to_keep = Allocation
-            for line in voucher.po_allocation_ids:
-                order = line.purchase_order_id
-                order_id = order._origin.id or (order.id if isinstance(order.id, int) else False)
-                if not order_id or order_id not in selected_ids or order_id in kept_by_po:
-                    continue
-                kept_by_po[order_id] = line
-                rows_to_keep |= line
-
-            # Reassign only the retained records. Existing database rows remain
-            # linked instead of being replaced by duplicate create commands.
-            voucher.po_allocation_ids = rows_to_keep
-
-            for order in selected_orders:
-                order_id = order._origin.id or (order.id if isinstance(order.id, int) else False)
-                if not order_id or order_id in kept_by_po:
-                    continue
-                line = Allocation.new({
-                    'purchase_order_id': order_id,
-                    'amount': voucher.amount if len(selected_orders) == 1 else 0.0,
-                })
-                voucher.po_allocation_ids += line
-                kept_by_po[order_id] = line
-
-            if len(selected_orders) == 1 and voucher.po_allocation_ids:
-                voucher.po_allocation_ids[:1].amount = voucher.amount
+        return
 
     @api.onchange('amount')
     def _onchange_amount_allocate_single_po(self):
@@ -1326,19 +1290,72 @@ class AccountPaymentVoucher(models.Model):
                 raise UserError(_("You cannot delete a posted payment voucher."))
         return super().unlink()
 
+    def _extract_po_allocation_amounts(self, commands):
+        """Return requested allocation amounts keyed by purchase order ID.
+
+        This is used when the web client sends PO selector and One2many changes
+        together.  We save the selector first, synchronize one row per PO, then
+        apply the entered amounts without ever creating a temporary duplicate.
+        """
+        amounts = {}
+        Allocation = self.env['account.payment.voucher.po.allocation']
+        for command in commands or []:
+            if not isinstance(command, (list, tuple)) or not command:
+                continue
+            op = command[0]
+            if op == 0 and len(command) > 2:
+                data = command[2] or {}
+                po_id = data.get('purchase_order_id')
+                if po_id and 'amount' in data:
+                    amounts[int(po_id)] = data.get('amount') or 0.0
+            elif op == 1 and len(command) > 2:
+                line = Allocation.browse(command[1]).exists()
+                data = command[2] or {}
+                po_id = data.get('purchase_order_id') or (line.purchase_order_id.id if line else False)
+                if po_id and 'amount' in data:
+                    amounts[int(po_id)] = data.get('amount') or 0.0
+            elif op == 4 and len(command) > 1:
+                line = Allocation.browse(command[1]).exists()
+                if line:
+                    amounts[line.purchase_order_id.id] = line.amount
+            elif op == 6 and len(command) > 2:
+                for line in Allocation.browse(command[2]).exists():
+                    amounts[line.purchase_order_id.id] = line.amount
+        return amounts
+
+    def _apply_po_allocation_amounts(self, amounts):
+        if not amounts:
+            return
+        for voucher in self:
+            for line in voucher.po_allocation_ids:
+                if line.purchase_order_id.id in amounts:
+                    line.with_context(
+                        skip_po_selector_sync=True,
+                        skip_po_allocation_sync=True,
+                    ).write({'amount': amounts[line.purchase_order_id.id]})
+
     # -------------------------
     # Sequence
     # -------------------------
 
     @api.model_create_multi
     def create(self, vals_list):
-        for vals in vals_list:
+        clean_vals_list = []
+        pending_amounts = []
+        for original_vals in vals_list:
+            vals = dict(original_vals)
+            commands = vals.pop('po_allocation_ids', []) if 'purchase_order_ids' in vals else []
+            pending_amounts.append(self._extract_po_allocation_amounts(commands))
             if vals.get('name', 'New') == 'New':
                 vals['name'] = self.env['ir.sequence'].sudo().next_by_code(
                     'payment.voucher'
                 ) or 'New'
-        records = super().create(vals_list)
+            clean_vals_list.append(vals)
+
+        records = super().create(clean_vals_list)
         records._sync_po_allocations_from_selector()
+        for record, amounts in zip(records, pending_amounts):
+            record._apply_po_allocation_amounts(amounts)
         records._apply_single_po_full_amount()
         return records
 
@@ -1350,10 +1367,19 @@ class AccountPaymentVoucher(models.Model):
                     raise UserError(_("You cannot modify a posted payment voucher."))
                 if 'bill_ids' in vals and rec.bill_reconciled and not self.env.context.get('skip_bill_reconcile_lock'):
                     raise UserError(_("You cannot change selected bills after this voucher has been fully reconciled."))
-        result = super().write(vals)
-        if 'purchase_order_ids' in vals and not self.env.context.get('skip_po_allocation_sync'):
+
+        clean_vals = dict(vals)
+        pending_amounts = {}
+        if 'purchase_order_ids' in clean_vals and 'po_allocation_ids' in clean_vals:
+            pending_amounts = self._extract_po_allocation_amounts(
+                clean_vals.pop('po_allocation_ids')
+            )
+
+        result = super().write(clean_vals)
+        if 'purchase_order_ids' in clean_vals and not self.env.context.get('skip_po_allocation_sync'):
             self._sync_po_allocations_from_selector()
-        if ({'purchase_order_ids', 'amount'} & set(vals)) and not self.env.context.get('skip_po_allocation_sync'):
+            self._apply_po_allocation_amounts(pending_amounts)
+        if ({'purchase_order_ids', 'amount'} & set(clean_vals)) and not self.env.context.get('skip_po_allocation_sync'):
             self._apply_single_po_full_amount()
         return result
 
