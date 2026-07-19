@@ -21,11 +21,17 @@ class PurchaseOrderLinkPaymentVoucherWizard(models.TransientModel):
         related='purchase_order_id.company_id',
         readonly=True,
     )
+    commercial_partner_id = fields.Many2one(
+        'res.partner',
+        string='Commercial Vendor',
+        related='purchase_order_id.partner_id.commercial_partner_id',
+        readonly=True,
+    )
     voucher_id = fields.Many2one(
         'account.payment.voucher',
         string='Payment Voucher',
         required=True,
-        domain="[('partner_id.commercial_partner_id', '=', partner_id.commercial_partner_id), ('company_id', '=', company_id), ('state', '=', 'posted')]",
+        domain="[('partner_id.commercial_partner_id', '=', commercial_partner_id), ('company_id', '=', company_id), ('state', '=', 'posted')]",
         help='Only posted payment vouchers for the same vendor and company are available.',
     )
     voucher_currency_id = fields.Many2one(
