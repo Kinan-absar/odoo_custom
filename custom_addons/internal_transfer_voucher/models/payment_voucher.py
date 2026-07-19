@@ -649,34 +649,50 @@ class AccountPaymentVoucher(models.Model):
 
     @api.onchange('purchase_order_ids')
     def _onchange_purchase_order_ids_build_allocations(self):
-        """Show allocation rows immediately for selected saved POs.
+        """Keep exactly one allocation row for every selected Purchase Order.
 
-        Purchase orders selected in a Many2many are existing database records, but
-        Odoo may wrap them in NewId objects during onchange.  Use _origin.id and
-        rebuild only virtual One2many commands with real integer PO IDs.
+        Do not clear and recreate the whole One2many.  On an existing voucher,
+        Odoo can create the replacement row before deleting the old row, which
+        temporarily produces two rows for the same PO and triggers the unique
+        allocation validation.  Reusing existing rows avoids that save/post
+        failure and also preserves amounts already entered by the user.
         """
+        Allocation = self.env['account.payment.voucher.po.allocation']
         for voucher in self:
-            selected = []
-            for order in voucher.purchase_order_ids:
-                real_id = order._origin.id or (order.id if isinstance(order.id, int) else False)
-                if real_id:
-                    selected.append((real_id, order))
+            selected_orders = voucher.purchase_order_ids
+            selected_ids = {
+                order._origin.id or (order.id if isinstance(order.id, int) else False)
+                for order in selected_orders
+            }
+            selected_ids.discard(False)
 
-            preserved = {}
+            kept_by_po = {}
+            rows_to_keep = Allocation
             for line in voucher.po_allocation_ids:
                 order = line.purchase_order_id
-                real_id = order._origin.id or (order.id if isinstance(order.id, int) else False)
-                if real_id:
-                    preserved[real_id] = line.amount
+                order_id = order._origin.id or (order.id if isinstance(order.id, int) else False)
+                if not order_id or order_id not in selected_ids or order_id in kept_by_po:
+                    continue
+                kept_by_po[order_id] = line
+                rows_to_keep |= line
 
-            single_amount = voucher.amount if len(selected) == 1 else None
-            voucher.po_allocation_ids = [(5, 0, 0)] + [
-                (0, 0, {
+            # Reassign only the retained records. Existing database rows remain
+            # linked instead of being replaced by duplicate create commands.
+            voucher.po_allocation_ids = rows_to_keep
+
+            for order in selected_orders:
+                order_id = order._origin.id or (order.id if isinstance(order.id, int) else False)
+                if not order_id or order_id in kept_by_po:
+                    continue
+                line = Allocation.new({
                     'purchase_order_id': order_id,
-                    'amount': single_amount if single_amount is not None else preserved.get(order_id, 0.0),
+                    'amount': voucher.amount if len(selected_orders) == 1 else 0.0,
                 })
-                for order_id, _order in selected
-            ]
+                voucher.po_allocation_ids += line
+                kept_by_po[order_id] = line
+
+            if len(selected_orders) == 1 and voucher.po_allocation_ids:
+                voucher.po_allocation_ids[:1].amount = voucher.amount
 
     @api.onchange('amount')
     def _onchange_amount_allocate_single_po(self):
