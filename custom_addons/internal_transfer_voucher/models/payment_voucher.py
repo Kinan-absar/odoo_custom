@@ -649,86 +649,142 @@ class AccountPaymentVoucher(models.Model):
 
     @api.onchange('purchase_order_ids')
     def _onchange_purchase_order_ids_build_allocations(self):
-        """Do not create allocation rows inside the browser onchange.
+        """Display PO allocation rows immediately without requiring a save.
 
-        Odoo can send both the old persisted allocation row and a new virtual
-        row for the same PO in one save request.  The database then correctly
-        rejects the temporary duplicate.  Allocation rows are synchronized
-        after create/write, once the voucher and PO selections have real IDs.
+        Existing persisted allocation rows are updated in place. Only genuinely
+        new Purchase Orders receive virtual rows. This prevents the web client
+        from sending a delete-all/create-all command set that can briefly create
+        two rows for the same PO and trigger the unique constraint.
         """
-        return
+        Allocation = self.env['account.payment.voucher.po.allocation']
+        for voucher in self:
+            selected_orders = voucher.purchase_order_ids
+            selected_ids = set(selected_orders._origin.ids or selected_orders.ids)
+
+            existing_by_po = {}
+            for line in voucher.po_allocation_ids:
+                po = line.purchase_order_id
+                po_id = po._origin.id or (po.id if isinstance(po.id, int) else False)
+                if po_id and po_id not in existing_by_po:
+                    existing_by_po[po_id] = line
+
+            displayed_lines = Allocation.browse()
+            for order in selected_orders:
+                po_id = order._origin.id or (order.id if isinstance(order.id, int) else False)
+                if not po_id:
+                    continue
+                line = existing_by_po.get(po_id)
+                if not line:
+                    line = Allocation.new({
+                        'voucher_id': voucher.id or False,
+                        'purchase_order_id': po_id,
+                        'amount': voucher.amount if len(selected_ids) == 1 else 0.0,
+                    })
+                displayed_lines |= line
+
+            voucher.po_allocation_ids = displayed_lines
 
     @api.onchange('amount')
     def _onchange_amount_allocate_single_po(self):
-        """For one selected PO, the whole voucher amount belongs to that PO."""
+        """For one selected PO, default the full voucher amount immediately."""
         for voucher in self:
             if len(voucher.purchase_order_ids) == 1 and len(voucher.po_allocation_ids) == 1:
                 voucher.po_allocation_ids[0].amount = voucher.amount
 
-    def _apply_single_po_full_amount(self):
-        """Default the full voucher amount onto a newly selected single PO.
-
-        Only fills in the amount when the allocation line has not yet been
-        given one (still zero). This gives a convenient default the first
-        time a single PO is chosen, without permanently overriding a partial
-        allocation the user deliberately set (e.g. paying only part of the
-        voucher against a PO and leaving the rest unallocated / against
-        account).
-        """
-        for voucher in self:
-            if len(voucher.purchase_order_ids) != 1:
+    def _apply_m2m_commands(self, current_ids, commands):
+        """Return the resulting IDs after applying standard M2M commands."""
+        result = list(current_ids)
+        for command in commands or []:
+            if not isinstance(command, (list, tuple)) or not command:
                 continue
-            voucher._sync_po_allocations_from_selector()
-            lines = voucher.po_allocation_ids.filtered(
-                lambda line: line.purchase_order_id == voucher.purchase_order_ids[:1]
-            )
-            if len(lines) == 1 and voucher.currency_id.is_zero(lines.amount) and not voucher.currency_id.is_zero(voucher.amount):
-                lines.with_context(skip_po_selector_sync=True).write({'amount': voucher.amount})
+            operation = command[0]
+            record_id = command[1] if len(command) > 1 else 0
+            payload = command[2] if len(command) > 2 else False
+            if operation == 4 and record_id and record_id not in result:
+                result.append(record_id)
+            elif operation in (2, 3) and record_id in result:
+                result.remove(record_id)
+            elif operation == 5:
+                result = []
+            elif operation == 6:
+                result = list(payload or [])
+        return result
 
-    def _sync_po_allocations_from_selector(self):
-        """Synchronize allocation records only for persisted vouchers and POs.
+    def _normalise_po_allocation_commands(self, vals, selected_order_ids):
+        """Build one safe allocation command per selected PO.
 
-        Do not build required One2many rows during a browser onchange. Odoo uses
-        temporary NewId records there, which can result in an allocation row with
-        an empty purchase_order_id. This method runs only after create/write, when
-        both the voucher and selected purchase orders have real database IDs.
+        The browser may submit virtual allocation rows created by onchange while
+        persisted rows for the same PO already exist. This method converts that
+        payload into updates of existing rows plus creates only for missing POs,
+        so no temporary duplicate can reach PostgreSQL.
         """
-        if self.env.context.get('skip_po_allocation_sync'):
-            return
+        self.ensure_one()
+        selected_order_ids = list(dict.fromkeys(int(po_id) for po_id in selected_order_ids if po_id))
+        selected_set = set(selected_order_ids)
 
-        Allocation = self.env['account.payment.voucher.po.allocation']
-        for voucher in self.filtered(lambda v: bool(v.id)):
-            selected_orders = voucher.purchase_order_ids.exists()
-            existing = voucher.po_allocation_ids
+        requested_amounts = {}
+        incoming = vals.get('po_allocation_ids') or []
+        existing_by_id = {line.id: line for line in self.po_allocation_ids if line.id}
 
-            # Remove allocations for POs no longer selected.
-            to_remove = existing.filtered(
-                lambda line: line.purchase_order_id not in selected_orders
-            )
-            if to_remove:
-                to_remove.with_context(
-                    skip_po_selector_sync=True,
-                    skip_po_allocation_sync=True,
-                ).unlink()
+        for command in incoming:
+            if not isinstance(command, (list, tuple)) or not command:
+                continue
+            operation = command[0]
+            record_id = command[1] if len(command) > 1 else 0
+            payload = command[2] if len(command) > 2 and isinstance(command[2], dict) else {}
+            po_id = payload.get('purchase_order_id')
+            if isinstance(po_id, (list, tuple)):
+                po_id = po_id[0] if po_id else False
+            if not po_id and record_id in existing_by_id:
+                po_id = existing_by_id[record_id].purchase_order_id.id
+            if po_id and 'amount' in payload:
+                requested_amounts[int(po_id)] = payload['amount']
 
-            # Create missing rows only with real PO IDs.
-            existing_order_ids = set(
-                voucher.po_allocation_ids.mapped('purchase_order_id').ids
-            )
-            vals_list = [
-                {
-                    'voucher_id': voucher.id,
-                    'purchase_order_id': order.id,
-                    'amount': voucher.amount if len(selected_orders) == 1 else 0.0,
-                }
-                for order in selected_orders
-                if order.id and order.id not in existing_order_ids
-            ]
-            if vals_list:
-                Allocation.with_context(
-                    skip_po_selector_sync=True,
-                    skip_po_allocation_sync=True,
-                ).create(vals_list)
+        # Keep only one persisted row per PO. Any historical duplicate is removed.
+        persisted_by_po = {}
+        commands = []
+        for line in self.po_allocation_ids.sorted('id'):
+            po_id = line.purchase_order_id.id
+            if not po_id or po_id not in selected_set or po_id in persisted_by_po:
+                commands.append((2, line.id, 0))
+                continue
+            persisted_by_po[po_id] = line
+            update_vals = {}
+            if po_id in requested_amounts:
+                update_vals['amount'] = requested_amounts[po_id]
+            if update_vals:
+                commands.append((1, line.id, update_vals))
+
+        single_default = vals.get('amount', self.amount) if len(selected_order_ids) == 1 else 0.0
+        for po_id in selected_order_ids:
+            if po_id in persisted_by_po:
+                continue
+            commands.append((0, 0, {
+                'purchase_order_id': po_id,
+                'amount': requested_amounts.get(po_id, single_default),
+            }))
+        return commands
+
+    def _prepare_po_values_for_write(self, vals):
+        """Sanitise selector/allocation values before the ORM writes them."""
+        vals = dict(vals)
+        current_ids = self.purchase_order_ids.ids
+        if 'purchase_order_ids' in vals:
+            selected_ids = self._apply_m2m_commands(current_ids, vals['purchase_order_ids'])
+            vals['po_allocation_ids'] = self._normalise_po_allocation_commands(vals, selected_ids)
+        elif 'po_allocation_ids' in vals:
+            vals['po_allocation_ids'] = self._normalise_po_allocation_commands(vals, current_ids)
+        elif 'amount' in vals and len(current_ids) == 1 and len(self.po_allocation_ids) == 1:
+            vals['po_allocation_ids'] = [(1, self.po_allocation_ids.id, {'amount': vals['amount']})]
+        return vals
+
+    def _apply_single_po_full_amount(self):
+        """Ensure a single selected PO defaults to the full voucher amount."""
+        for voucher in self:
+            if len(voucher.purchase_order_ids) == 1 and len(voucher.po_allocation_ids) == 1:
+                line = voucher.po_allocation_ids[0]
+                if voucher.currency_id.is_zero(line.amount) and not voucher.currency_id.is_zero(voucher.amount):
+                    line.with_context(skip_po_selector_sync=True).write({'amount': voucher.amount})
 
     @api.depends('po_allocation_ids.amount', 'amount')
     def _compute_po_allocation_totals(self):
@@ -1290,73 +1346,50 @@ class AccountPaymentVoucher(models.Model):
                 raise UserError(_("You cannot delete a posted payment voucher."))
         return super().unlink()
 
-    def _extract_po_allocation_amounts(self, commands):
-        """Return requested allocation amounts keyed by purchase order ID.
-
-        This is used when the web client sends PO selector and One2many changes
-        together.  We save the selector first, synchronize one row per PO, then
-        apply the entered amounts without ever creating a temporary duplicate.
-        """
-        amounts = {}
-        Allocation = self.env['account.payment.voucher.po.allocation']
-        for command in commands or []:
-            if not isinstance(command, (list, tuple)) or not command:
-                continue
-            op = command[0]
-            if op == 0 and len(command) > 2:
-                data = command[2] or {}
-                po_id = data.get('purchase_order_id')
-                if po_id and 'amount' in data:
-                    amounts[int(po_id)] = data.get('amount') or 0.0
-            elif op == 1 and len(command) > 2:
-                line = Allocation.browse(command[1]).exists()
-                data = command[2] or {}
-                po_id = data.get('purchase_order_id') or (line.purchase_order_id.id if line else False)
-                if po_id and 'amount' in data:
-                    amounts[int(po_id)] = data.get('amount') or 0.0
-            elif op == 4 and len(command) > 1:
-                line = Allocation.browse(command[1]).exists()
-                if line:
-                    amounts[line.purchase_order_id.id] = line.amount
-            elif op == 6 and len(command) > 2:
-                for line in Allocation.browse(command[2]).exists():
-                    amounts[line.purchase_order_id.id] = line.amount
-        return amounts
-
-    def _apply_po_allocation_amounts(self, amounts):
-        if not amounts:
-            return
-        for voucher in self:
-            for line in voucher.po_allocation_ids:
-                if line.purchase_order_id.id in amounts:
-                    line.with_context(
-                        skip_po_selector_sync=True,
-                        skip_po_allocation_sync=True,
-                    ).write({'amount': amounts[line.purchase_order_id.id]})
-
     # -------------------------
     # Sequence
     # -------------------------
 
     @api.model_create_multi
     def create(self, vals_list):
-        clean_vals_list = []
-        pending_amounts = []
+        prepared_vals_list = []
         for original_vals in vals_list:
             vals = dict(original_vals)
-            commands = vals.pop('po_allocation_ids', []) if 'purchase_order_ids' in vals else []
-            pending_amounts.append(self._extract_po_allocation_amounts(commands))
             if vals.get('name', 'New') == 'New':
                 vals['name'] = self.env['ir.sequence'].sudo().next_by_code(
                     'payment.voucher'
                 ) or 'New'
-            clean_vals_list.append(vals)
 
-        records = super().create(clean_vals_list)
-        records._sync_po_allocations_from_selector()
-        for record, amounts in zip(records, pending_amounts):
-            record._apply_po_allocation_amounts(amounts)
-        records._apply_single_po_full_amount()
+            # On a new voucher there are no persisted allocation rows. Deduplicate
+            # the browser payload and create exactly one row per selected PO.
+            selected_ids = self._apply_m2m_commands([], vals.get('purchase_order_ids', []))
+            requested_amounts = {}
+            for command in vals.get('po_allocation_ids', []) or []:
+                if isinstance(command, (list, tuple)) and command and command[0] == 0:
+                    payload = command[2] if len(command) > 2 and isinstance(command[2], dict) else {}
+                    po_id = payload.get('purchase_order_id')
+                    if isinstance(po_id, (list, tuple)):
+                        po_id = po_id[0] if po_id else False
+                    if po_id:
+                        requested_amounts[int(po_id)] = payload.get('amount', 0.0)
+            selected_ids = list(dict.fromkeys(selected_ids))
+            if selected_ids:
+                single_default = vals.get('amount', 0.0) if len(selected_ids) == 1 else 0.0
+                vals['po_allocation_ids'] = [
+                    (0, 0, {
+                        'purchase_order_id': po_id,
+                        'amount': requested_amounts.get(po_id, single_default),
+                    })
+                    for po_id in selected_ids
+                ]
+            else:
+                vals['po_allocation_ids'] = []
+            prepared_vals_list.append(vals)
+
+        records = super(AccountPaymentVoucher, self.with_context(
+            skip_po_selector_sync=True,
+            skip_po_allocation_sync=True,
+        )).create(prepared_vals_list)
         return records
 
     def write(self, vals):
@@ -1368,20 +1401,18 @@ class AccountPaymentVoucher(models.Model):
                 if 'bill_ids' in vals and rec.bill_reconciled and not self.env.context.get('skip_bill_reconcile_lock'):
                     raise UserError(_("You cannot change selected bills after this voucher has been fully reconciled."))
 
-        clean_vals = dict(vals)
-        pending_amounts = {}
-        if 'purchase_order_ids' in clean_vals and 'po_allocation_ids' in clean_vals:
-            pending_amounts = self._extract_po_allocation_amounts(
-                clean_vals.pop('po_allocation_ids')
-            )
+        # Prepare each record separately because its current allocations may differ.
+        if len(self) > 1 and ({'purchase_order_ids', 'po_allocation_ids', 'amount'} & set(vals)):
+            result = True
+            for rec in self:
+                result = rec.write(vals) and result
+            return result
 
-        result = super().write(clean_vals)
-        if 'purchase_order_ids' in clean_vals and not self.env.context.get('skip_po_allocation_sync'):
-            self._sync_po_allocations_from_selector()
-            self._apply_po_allocation_amounts(pending_amounts)
-        if ({'purchase_order_ids', 'amount'} & set(clean_vals)) and not self.env.context.get('skip_po_allocation_sync'):
-            self._apply_single_po_full_amount()
-        return result
+        prepared_vals = self._prepare_po_values_for_write(vals) if self else vals
+        return super(AccountPaymentVoucher, self.with_context(
+            skip_po_selector_sync=True,
+            skip_po_allocation_sync=True,
+        )).write(prepared_vals)
 
     @api.model
     def retrieve_dashboard(self):
@@ -1580,32 +1611,10 @@ class AccountPaymentVoucherPOAllocation(models.Model):
                 }
 
     def init(self):
-        """Clean incomplete rows and restore PO selectors from valid allocations.
-
-        Earlier builds could clear the voucher Many2many while leaving the
-        allocation rows intact.  Rebuilding the relation here repairs those
-        already-created vouchers automatically when the module is upgraded.
-        """
+        """Remove incomplete rows left by earlier failed development upgrades."""
         self.env.cr.execute("""
             DELETE FROM account_payment_voucher_po_allocation_v2
              WHERE voucher_id IS NULL OR purchase_order_id IS NULL
-        """)
-        self.env.cr.execute("""
-            INSERT INTO account_payment_voucher_purchase_order_rel_v2
-                        (voucher_id, purchase_order_id)
-            SELECT DISTINCT allocation.voucher_id, allocation.purchase_order_id
-              FROM account_payment_voucher_po_allocation_v2 allocation
-              JOIN account_payment_voucher voucher
-                ON voucher.id = allocation.voucher_id
-              JOIN purchase_order po
-                ON po.id = allocation.purchase_order_id
-             WHERE voucher.company_id = po.company_id
-               AND NOT EXISTS (
-                    SELECT 1
-                      FROM account_payment_voucher_purchase_order_rel_v2 relation
-                     WHERE relation.voucher_id = allocation.voucher_id
-                       AND relation.purchase_order_id = allocation.purchase_order_id
-               )
         """)
 
     _sql_constraints = [
@@ -1625,32 +1634,42 @@ class AccountPaymentVoucherPOAllocation(models.Model):
             if line.purchase_order_id.partner_id.commercial_partner_id != line.voucher_id.partner_id.commercial_partner_id:
                 raise ValidationError(_("The Purchase Order must belong to the same vendor as the payment voucher."))
 
+    def _sync_voucher_purchase_orders(self, vouchers):
+        """Compatibility no-op.
+
+        The Purchase Orders selector is the canonical source. Allocation rows
+        must never write back to it while the parent voucher is being saved,
+        otherwise recursive writes can recreate duplicate rows.
+        """
+        return
+
+
     @api.model_create_multi
     def create(self, vals_list):
-        # IMPORTANT: purchase_order_ids on the voucher is the selector/source of
-        # truth.  Do not write that Many2many from allocation-line callbacks.
-        # During a parent voucher save Odoo creates One2many rows while the
-        # parent's relational cache is still being flushed; writing the selector
-        # from here can therefore replace it with an empty value.  That was the
-        # reason the selected PO disappeared after Save/Post.
         vouchers = self.env['account.payment.voucher'].browse(
             [vals.get('voucher_id') for vals in vals_list if vals.get('voucher_id')]
         )
         if any(v.state != 'draft' for v in vouchers):
             raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records._sync_voucher_purchase_orders(records.mapped('voucher_id'))
+        return records
 
     def write(self, vals):
         vouchers = self.mapped('voucher_id')
         if any(v.state != 'draft' for v in vouchers):
             raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
-        return super().write(vals)
+        result = super().write(vals)
+        self._sync_voucher_purchase_orders(vouchers | self.mapped('voucher_id'))
+        return result
 
     def unlink(self):
         vouchers = self.mapped('voucher_id')
         if any(v.state != 'draft' for v in vouchers):
             raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
-        return super().unlink()
+        result = super().unlink()
+        self._sync_voucher_purchase_orders(vouchers)
+        return result
 class AccountPaymentVoucherOverpaymentConfirm(models.TransientModel):
     _name = 'account.payment.voucher.overpayment.confirm'
     _description = 'Confirm Payment Voucher PO Overpayment'
