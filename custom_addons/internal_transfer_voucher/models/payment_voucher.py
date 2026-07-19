@@ -1414,6 +1414,44 @@ class AccountPaymentVoucher(models.Model):
             skip_po_allocation_sync=True,
         )).write(prepared_vals)
 
+    def _link_posted_purchase_order(self, purchase_order, amount):
+        """Link a posted voucher to a PO without changing its journal entry.
+
+        This method is intentionally narrow and is called only by the PO linking
+        wizard. Normal form editing of posted vouchers remains blocked.
+        """
+        self.ensure_one()
+        if self.state != 'posted':
+            raise UserError(_("Only posted payment vouchers can use this linking action."))
+        if purchase_order.company_id != self.company_id:
+            raise ValidationError(_("The Purchase Order and payment voucher must belong to the same company."))
+        if purchase_order.partner_id.commercial_partner_id != self.partner_id.commercial_partner_id:
+            raise ValidationError(_("The Purchase Order must belong to the same vendor as the payment voucher."))
+        if self.po_allocation_ids.filtered(lambda line: line.purchase_order_id == purchase_order):
+            raise ValidationError(_("This payment voucher is already linked to this Purchase Order."))
+
+        allocated = sum(self.po_allocation_ids.mapped('amount'))
+        precision = self.currency_id.decimal_places
+        if float_compare(allocated + amount, self.amount, precision_digits=precision) > 0:
+            raise ValidationError(_("The total Purchase Order allocation cannot exceed the voucher amount."))
+
+        # Bypass the normal posted-voucher write guard only for the selector link.
+        super(AccountPaymentVoucher, self.with_context(
+            allow_posted_po_link=True,
+            skip_po_selector_sync=True,
+            skip_po_allocation_sync=True,
+        )).write({'purchase_order_ids': [(4, purchase_order.id)]})
+
+        self.env['account.payment.voucher.po.allocation'].with_context(
+            allow_posted_po_link=True,
+        ).create({
+            'voucher_id': self.id,
+            'purchase_order_id': purchase_order.id,
+            'amount': amount,
+        })
+        self.invalidate_recordset(['purchase_order_ids', 'po_allocation_ids'])
+        return True
+
     @api.model
     def retrieve_dashboard(self):
         company_domain = [('company_id', 'in', self.env.companies.ids)]
@@ -1649,7 +1687,7 @@ class AccountPaymentVoucherPOAllocation(models.Model):
         vouchers = self.env['account.payment.voucher'].browse(
             [vals.get('voucher_id') for vals in vals_list if vals.get('voucher_id')]
         )
-        if any(v.state != 'draft' for v in vouchers):
+        if any(v.state != 'draft' for v in vouchers) and not self.env.context.get('allow_posted_po_link'):
             raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
         records = super().create(vals_list)
         records._sync_voucher_purchase_orders(records.mapped('voucher_id'))
@@ -1657,7 +1695,7 @@ class AccountPaymentVoucherPOAllocation(models.Model):
 
     def write(self, vals):
         vouchers = self.mapped('voucher_id')
-        if any(v.state != 'draft' for v in vouchers):
+        if any(v.state != 'draft' for v in vouchers) and not self.env.context.get('allow_posted_po_link'):
             raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
         result = super().write(vals)
         self._sync_voucher_purchase_orders(vouchers | self.mapped('voucher_id'))
@@ -1665,7 +1703,7 @@ class AccountPaymentVoucherPOAllocation(models.Model):
 
     def unlink(self):
         vouchers = self.mapped('voucher_id')
-        if any(v.state != 'draft' for v in vouchers):
+        if any(v.state != 'draft' for v in vouchers) and not self.env.context.get('allow_posted_po_link'):
             raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
         result = super().unlink()
         self._sync_voucher_purchase_orders(vouchers)

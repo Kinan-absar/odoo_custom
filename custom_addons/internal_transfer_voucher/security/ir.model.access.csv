@@ -12,3 +12,4 @@ access_cash_plan_run_user,cash.plan.run user,model_cash_plan_run,account.group_a
 access_cash_plan_run_manager,cash.plan.run manager,model_cash_plan_run,account.group_account_manager,1,1,1,1
 access_cash_plan_line_user,cash.plan.line user,model_cash_plan_line,account.group_account_user,1,1,1,0
 access_cash_plan_line_manager,cash.plan.line manager,model_cash_plan_line,account.group_account_manager,1,1,1,1
+access_purchase_order_link_payment_voucher_wizard,purchase.order.link.payment.voucher.wizard,model_purchase_order_link_payment_voucher_wizard,account.group_account_user,1,1,1,1

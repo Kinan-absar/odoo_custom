@@ -24,11 +24,18 @@
                             <field name="amount_paid_residual" widget="monetary" readonly="1"/>
                         </group>
                     </group>
-                    <button name="action_new_payment_voucher"
-                            type="object"
-                            string="Add a line"
-                            class="btn-link"
-                            icon="fa-plus"/>
+                    <div class="d-flex gap-2 mb-2">
+                        <button name="action_new_payment_voucher"
+                                type="object"
+                                string="Create Payment Voucher"
+                                class="btn-primary"
+                                icon="fa-plus"/>
+                        <button name="action_link_existing_payment_voucher"
+                                type="object"
+                                string="Link Existing Voucher"
+                                class="btn-secondary"
+                                icon="fa-link"/>
+                    </div>
                     <field name="payment_voucher_allocation_ids" nolabel="1" readonly="1">
                         <list create="0" delete="0">
                             <field name="voucher_id" string="Payment Voucher"/>

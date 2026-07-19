@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_purchase_order_link_payment_voucher_wizard_form" model="ir.ui.view">
+        <field name="name">purchase.order.link.payment.voucher.wizard.form</field>
+        <field name="model">purchase.order.link.payment.voucher.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Link Existing Payment Voucher">
+                <group>
+                    <field name="purchase_order_id"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="company_id" invisible="1"/>
+                    <field name="voucher_id" options="{'no_create': True, 'no_open': True}"/>
+                </group>
+                <group string="Voucher Allocation" invisible="not voucher_id">
+                    <field name="voucher_currency_id" invisible="1"/>
+                    <field name="voucher_amount"/>
+                    <field name="already_allocated"/>
+                    <field name="available_to_allocate"/>
+                    <field name="amount"/>
+                </group>
+                <div class="alert alert-info" role="alert">
+                    This links the posted voucher to the Purchase Order for tracking and reporting only. The posted journal entry is not changed.
+                </div>
+                <footer>
+                    <button name="action_link_voucher" type="object" string="Link Voucher" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_purchase_order_link_payment_voucher_wizard" model="ir.actions.act_window">
+        <field name="name">Link Existing Payment Voucher</field>
+        <field name="res_model">purchase.order.link.payment.voucher.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

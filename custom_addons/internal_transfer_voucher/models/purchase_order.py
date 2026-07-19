@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 
 
 class PurchaseOrder(models.Model):
@@ -112,6 +112,19 @@ class PurchaseOrder(models.Model):
                     'amount': default_amount,
                 })],
                 'default_amount': default_amount,
+            },
+        }
+
+    def action_link_existing_payment_voucher(self):
+        self.ensure_one()
+        return {
+            'name': _('Link Existing Payment Voucher'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'purchase.order.link.payment.voucher.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_purchase_order_id': self.id,
             },
         }
 
