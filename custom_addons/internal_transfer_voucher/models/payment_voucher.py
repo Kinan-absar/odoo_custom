@@ -1538,10 +1538,32 @@ class AccountPaymentVoucherPOAllocation(models.Model):
                 }
 
     def init(self):
-        """Remove incomplete rows left by earlier failed development upgrades."""
+        """Clean incomplete rows and restore PO selectors from valid allocations.
+
+        Earlier builds could clear the voucher Many2many while leaving the
+        allocation rows intact.  Rebuilding the relation here repairs those
+        already-created vouchers automatically when the module is upgraded.
+        """
         self.env.cr.execute("""
             DELETE FROM account_payment_voucher_po_allocation_v2
              WHERE voucher_id IS NULL OR purchase_order_id IS NULL
+        """)
+        self.env.cr.execute("""
+            INSERT INTO account_payment_voucher_purchase_order_rel_v2
+                        (voucher_id, purchase_order_id)
+            SELECT DISTINCT allocation.voucher_id, allocation.purchase_order_id
+              FROM account_payment_voucher_po_allocation_v2 allocation
+              JOIN account_payment_voucher voucher
+                ON voucher.id = allocation.voucher_id
+              JOIN purchase_order po
+                ON po.id = allocation.purchase_order_id
+             WHERE voucher.company_id = po.company_id
+               AND NOT EXISTS (
+                    SELECT 1
+                      FROM account_payment_voucher_purchase_order_rel_v2 relation
+                     WHERE relation.voucher_id = allocation.voucher_id
+                       AND relation.purchase_order_id = allocation.purchase_order_id
+               )
         """)
 
     _sql_constraints = [
@@ -1561,43 +1583,32 @@ class AccountPaymentVoucherPOAllocation(models.Model):
             if line.purchase_order_id.partner_id.commercial_partner_id != line.voucher_id.partner_id.commercial_partner_id:
                 raise ValidationError(_("The Purchase Order must belong to the same vendor as the payment voucher."))
 
-    def _sync_voucher_purchase_orders(self, vouchers):
-        if self.env.context.get('skip_po_selector_sync'):
-            return
-        for voucher in vouchers:
-            orders = voucher.po_allocation_ids.mapped('purchase_order_id')
-            if voucher.purchase_order_id:
-                orders |= voucher.purchase_order_id
-            voucher.with_context(skip_po_selector_sync=True).write({
-                'purchase_order_ids': [(6, 0, orders.ids)],
-            })
-
     @api.model_create_multi
     def create(self, vals_list):
+        # IMPORTANT: purchase_order_ids on the voucher is the selector/source of
+        # truth.  Do not write that Many2many from allocation-line callbacks.
+        # During a parent voucher save Odoo creates One2many rows while the
+        # parent's relational cache is still being flushed; writing the selector
+        # from here can therefore replace it with an empty value.  That was the
+        # reason the selected PO disappeared after Save/Post.
         vouchers = self.env['account.payment.voucher'].browse(
             [vals.get('voucher_id') for vals in vals_list if vals.get('voucher_id')]
         )
         if any(v.state != 'draft' for v in vouchers):
             raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
-        records = super().create(vals_list)
-        records._sync_voucher_purchase_orders(records.mapped('voucher_id'))
-        return records
+        return super().create(vals_list)
 
     def write(self, vals):
         vouchers = self.mapped('voucher_id')
         if any(v.state != 'draft' for v in vouchers):
             raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
-        result = super().write(vals)
-        self._sync_voucher_purchase_orders(vouchers | self.mapped('voucher_id'))
-        return result
+        return super().write(vals)
 
     def unlink(self):
         vouchers = self.mapped('voucher_id')
         if any(v.state != 'draft' for v in vouchers):
             raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
-        result = super().unlink()
-        self._sync_voucher_purchase_orders(vouchers)
-        return result
+        return super().unlink()
 class AccountPaymentVoucherOverpaymentConfirm(models.TransientModel):
     _name = 'account.payment.voucher.overpayment.confirm'
     _description = 'Confirm Payment Voucher PO Overpayment'
