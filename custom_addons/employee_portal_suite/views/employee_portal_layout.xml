@@ -1389,16 +1389,8 @@
                                         <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
                                     </t>
 
-                                    <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
-                                        <a href="/my/employee/treasury/payments" class="ep-sub-link">Payment Approvals</a>
-                                    </t>
-
                                 </div>
                             </div>
-                        </t>
-
-                        <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
-                            <a href="/my/employee/treasury/plans" class="ep-link">Weekly Cash Plans</a>
                         </t>
 
                         <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
