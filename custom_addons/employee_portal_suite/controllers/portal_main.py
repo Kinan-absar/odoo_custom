@@ -167,30 +167,3 @@ class EmployeePortalMain(CustomerPortal):
             "attendance_checked_in": attendance_checked_in,
             "can_use_attendance": can_use_attendance,
         })
-
-    # ---------------------------------------------------------
-    # PETTY CASH
-    # ---------------------------------------------------------
-    @http.route("/my/employee/petty-cash", type="http", auth="user", website=True)
-    def portal_petty_cash_list(self, **kw):
-        user = request.env.user
-
-        if not self._safe_has_group("petty_cash_management.group_portal_petty_cash_user"):
-            return request.redirect("/my")
-
-        records = request.env["petty.cash"].search([
-            ("user_id", "=", user.id)
-        ])
-
-        return request.render("employee_portal_suite.portal_petty_cash_list", {
-            "records": records,
-        })
-
-    @http.route("/my/employee/petty-cash/new", type="http", auth="user", website=True)
-    def portal_petty_cash_new(self, **kw):
-        if not request.env.self._safe_has_group("petty_cash_management.group_portal_petty_cash_user"):
-            return request.redirect("/my")
-
-        return request.render("employee_portal_suite.portal_petty_cash_new")
-
-  
