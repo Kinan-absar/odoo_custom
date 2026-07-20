@@ -58,7 +58,7 @@ class PortalTreasury(http.Controller):
             key: Line.search_count(self._payment_domain(key))
             for key in ('pending', 'approved', 'held', 'rejected', 'all')
         }
-        return request.render('employee_portal_suite.portal_treasury_payment_list', {
+        return request.render('eps_itv_treasury_bridge.portal_treasury_payment_list', {
             'lines': lines,
             'counts': counts,
             'current_status': status,
@@ -74,7 +74,7 @@ class PortalTreasury(http.Controller):
         runs = request.env['cash.plan.run'].sudo().search(
             self._company_domain(), order='date_from desc, id desc'
         )
-        return request.render('employee_portal_suite.portal_treasury_plan_list', {
+        return request.render('eps_itv_treasury_bridge.portal_treasury_plan_list', {
             'runs': runs,
             'page_name': 'treasury_plans',
         })
@@ -86,7 +86,7 @@ class PortalTreasury(http.Controller):
         run = self._get_run(run_id)
         if not run:
             return request.not_found()
-        return request.render('employee_portal_suite.portal_treasury_plan_detail_clean_v3', {
+        return request.render('eps_itv_treasury_bridge.portal_treasury_plan_detail_clean_v3', {
             'run': run,
             'page_name': 'treasury_plans',
         })

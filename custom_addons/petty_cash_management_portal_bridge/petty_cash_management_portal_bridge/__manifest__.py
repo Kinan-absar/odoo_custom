@@ -1,6 +1,6 @@
 {
     'name': 'Petty Cash Management - Employee Portal Bridge',
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.0.1',
     'summary': 'Exposes Petty Cash Management inside the Employee Portal Suite portal.',
     'description': """
 Integration bridge between Petty Cash Management and Employee Portal Suite.
