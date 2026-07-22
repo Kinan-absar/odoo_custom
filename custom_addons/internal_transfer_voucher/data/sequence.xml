@@ -6,6 +6,7 @@
         <field name="code">internal.transfer</field>
         <field name="prefix">IT/%(year)s/</field>
         <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
     </record>
 
     <record id="seq_payment_voucher" model="ir.sequence">
@@ -13,6 +14,7 @@
         <field name="code">payment.voucher</field>
         <field name="prefix">PV/%(year)s/</field>
         <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
     </record>
 
     <record id="seq_receipt_voucher" model="ir.sequence">
@@ -20,5 +22,6 @@
         <field name="code">receipt.voucher</field>
         <field name="prefix">RV/%(year)s/</field>
         <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
     </record>
 </odoo>

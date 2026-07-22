@@ -80,4 +80,16 @@
     </record>
 
 
+
+    <!-- Can view the Instant Salary Report in read-only mode -->
+    <record id="group_salary_report_viewer" model="res.groups">
+        <field name="name">Employee Portal: Salary Report Viewer</field>
+    </record>
+
+
+    <!-- Can upload PDF reports that are visible to selected portal groups -->
+    <record id="group_portal_report_uploader" model="res.groups">
+        <field name="name">Employee Portal: Report Uploader</field>
+    </record>
+
 </odoo>

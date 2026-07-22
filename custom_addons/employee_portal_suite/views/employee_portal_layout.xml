@@ -181,6 +181,15 @@
                         border-bottom: 1px solid var(--border-light);
                     }
 
+                    .ep-mobile-topbar {
+                        display: flex;
+                        justify-content: flex-end;
+                        align-items: center;
+                        padding: 14px 20px;
+                        background: var(--surface);
+                        border-bottom: 1px solid var(--border-light);
+                    }
+
                     .nav-btn {
                         color: var(--text-muted);
                         text-align: center;
@@ -243,6 +252,151 @@
                     }
 
                     .fab-item:hover { background: var(--surface-2); }
+                }
+
+                /* ================================================================
+                   NOTIFICATION BELL
+                   ================================================================ */
+
+                .ep-bell-wrap {
+                    position: relative;
+                }
+
+                .ep-bell-btn {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    border: 1px solid var(--border-light);
+                    background: var(--surface);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: var(--text-secondary);
+                    font-size: 16px;
+                    cursor: pointer;
+                    position: relative;
+                    transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast) var(--ease-spring);
+                }
+
+                .ep-bell-btn:hover {
+                    background: var(--surface-2);
+                    color: var(--app-primary);
+                }
+
+                .ep-bell-btn.has-unread {
+                    color: var(--app-primary);
+                }
+
+                .ep-bell-dot {
+                    position: absolute;
+                    top: 6px;
+                    right: 7px;
+                    width: 9px;
+                    height: 9px;
+                    border-radius: 50%;
+                    background: var(--app-accent);
+                    border: 2px solid var(--surface);
+                    animation: ep-bell-dot-pulse 1.6s infinite;
+                }
+
+                @keyframes ep-bell-dot-pulse {
+                    0% { box-shadow: 0 0 0 0 rgba(245,158,11,0.55); }
+                    70% { box-shadow: 0 0 0 7px rgba(245,158,11,0); }
+                    100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+                }
+
+                .ep-bell-panel {
+                    position: absolute;
+                    top: calc(100% + 10px);
+                    right: 0;
+                    width: 320px;
+                    max-width: 90vw;
+                    background: var(--surface);
+                    border-radius: var(--radius-lg);
+                    box-shadow: var(--shadow-lg);
+                    border: 1px solid var(--border-light);
+                    padding: 8px;
+                    z-index: 2200;
+                    display: none;
+
+                    opacity: 0;
+                    transform: translateY(8px) scale(0.97);
+                    transition: opacity var(--dur-base) var(--ease-smooth),
+                                transform var(--dur-base) var(--ease-spring);
+                }
+
+                .ep-bell-panel.show {
+                    display: block;
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+
+                .ep-bell-panel-header {
+                    padding: 10px 12px 8px;
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: var(--text-primary);
+                    border-bottom: 1px solid var(--border-light);
+                    margin-bottom: 4px;
+                }
+
+                .ep-bell-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 11px 12px;
+                    text-decoration: none !important;
+                    color: var(--text-primary);
+                    border-radius: var(--radius-md);
+                    transition: background var(--dur-fast);
+                }
+
+                .ep-bell-item:hover {
+                    background: var(--surface-2);
+                }
+
+                .ep-bell-item-icon {
+                    width: 34px;
+                    height: 34px;
+                    border-radius: var(--radius-sm);
+                    background: rgba(245,158,11,0.12);
+                    color: #B45309;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 14px;
+                    flex-shrink: 0;
+                }
+
+                .ep-bell-item-label {
+                    font-size: 13.5px;
+                    font-weight: 600;
+                    flex: 1;
+                }
+
+                .ep-bell-item-count {
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: #B45309;
+                    background: rgba(245,158,11,0.14);
+                    border-radius: 20px;
+                    padding: 2px 8px;
+                }
+
+                .ep-bell-empty {
+                    padding: 24px 14px;
+                    text-align: center;
+                    color: var(--text-muted);
+                    font-size: 13px;
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    .ep-bell-dot { animation: none; }
+                }
+
+                /* Compact persistent mobile top bar (every page) */
+                .ep-mobile-topbar {
+                    display: none;
                 }
 
                 /* ================================================================
@@ -774,6 +928,50 @@
                 line-height: 1.5;
             }
 
+
+            .portal-announcement-attachments {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 12px;
+            }
+
+            .portal-announcement-file {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 12px;
+                border-radius: 10px;
+                background: rgba(79, 70, 229, 0.06);
+                border: 1px solid var(--border-light);
+                font-size: 12.5px;
+                font-weight: 600;
+                text-decoration: none;
+                color: var(--text-primary);
+            }
+
+            .portal-announcement-file:hover {
+                text-decoration: none;
+                background: rgba(79, 70, 229, 0.11);
+            }
+
+            .portal-announcement-download {
+                display: inline-flex;
+                align-items: center;
+                padding: 8px 10px;
+                border-radius: 10px;
+                border: 1px solid var(--border-light);
+                font-size: 12.5px;
+                font-weight: 600;
+                text-decoration: none;
+                color: var(--text-secondary);
+            }
+
+            .portal-announcement-download:hover {
+                text-decoration: none;
+                color: var(--text-primary);
+            }
+
             /* Mobile optimization */
             @media (max-width: 768px) {
                 .portal-announcement-wrapper {
@@ -1134,6 +1332,11 @@
 }
             </style>
 
+            <t t-set="ep_notif_summary"
+                t-value="request.env['portal.report.seen'].sudo()._get_notification_summary(request.env.user) if not request.env.user.has_group('employee_portal_suite.group_attendance_only') else {}"/>
+            <t t-set="ep_notif_unread_total"
+                t-value="sum(v.get('new', 0) for v in ep_notif_summary.values())"/>
+
             <!-- ================================================================
                  DESKTOP NAVBAR
                  ================================================================ -->
@@ -1200,6 +1403,7 @@
                     </t>
                 </div><!-- /ep-nav-links -->
                 <div class="d-flex align-items-center gap-3">
+                    <t t-call="employee_portal_suite.ep_notification_bell"/>
                     <div class="text-end d-none d-lg-block">
                         <h6 class="mb-0 fw-bold" t-out="request.env.user.partner_id.name"/>
                         <p class="mb-0 text-muted small" t-out="request.env.user.partner_id.company_name"/>
@@ -1223,8 +1427,20 @@
                             <span style="color:var(--app-primary);">!</span>
                         </div>
                     </div>
-                    <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"
-                        style="width:42px;height:42px;border-radius:14px;box-shadow:0 4px 12px rgba(79,70,229,0.30);object-fit:cover;"/>
+                    <div class="d-flex align-items-center gap-2">
+                        <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                            <t t-call="employee_portal_suite.ep_notification_bell"/>
+                        </t>
+                        <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"
+                            style="width:42px;height:42px;border-radius:14px;box-shadow:0 4px 12px rgba(79,70,229,0.30);object-fit:cover;"/>
+                    </div>
+                </div>
+            </t>
+
+            <!-- Compact topbar (bell only) for every other mobile page -->
+            <t t-if="request.httprequest.path != '/my/employee' and not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                <div class="ep-mobile-topbar mobile-only">
+                    <t t-call="employee_portal_suite.ep_notification_bell"/>
                 </div>
             </t>
 
@@ -1243,6 +1459,18 @@
                                 <div>
                                     <t t-raw="ann.message"/>
                                 </div>
+
+                                <t t-if="ann.attachment_ids">
+                                    <div class="portal-announcement-attachments">
+                                        <t t-foreach="ann.attachment_ids" t-as="attachment">
+                                            <t t-set="view_url" t-value="'/my/employee/announcements/%s/attachments/%s/view' % (ann.id, attachment.id)"/>
+                                            <a class="portal-announcement-file" t-att-href="view_url" target="_blank">
+                                                <i class="fa fa-paperclip me-1"/>
+                                                <t t-esc="attachment.name"/>
+                                            </a>
+                                        </t>
+                                    </div>
+                                </t>
                             </div>
                         </t>
 
@@ -1451,6 +1679,19 @@
                     if (menu) menu.classList.toggle('show');
                 }
 
+                function toggleEpBell(event) {
+                    event.stopPropagation();
+                    var wrap = event.currentTarget.closest('.ep-bell-wrap');
+                    if (!wrap) return;
+                    var panel = wrap.querySelector('.ep-bell-panel');
+                    if (!panel) return;
+                    var isOpen = panel.classList.contains('show');
+                    document.querySelectorAll('.ep-bell-panel').forEach(function(p){
+                        p.classList.remove('show');
+                    });
+                    if (!isOpen) panel.classList.add('show');
+                }
+
                 document.addEventListener('click', function(e) {
                     document.querySelectorAll('.ep-dropdown-menu').forEach(function(m){
                         m.style.display = 'none';
@@ -1467,9 +1708,62 @@
                     if (app &amp;&amp; !e.target.closest('#approvalMenu') &amp;&amp; !e.target.closest('#approvalBtn')) {
                         app.classList.remove('show');
                     }
+
+                    if (!e.target.closest('.ep-bell-wrap')) {
+                        document.querySelectorAll('.ep-bell-panel').forEach(function(p){
+                            p.classList.remove('show');
+                        });
+                    }
                 });
             </script>
 
         </t>
+    </template>
+
+    <!-- ================================================================
+         NOTIFICATION BELL (shared by desktop navbar + mobile topbar)
+         Expects `ep_notif_summary` (dict from _get_notification_summary)
+         and `ep_notif_unread_total` (sum of all 'new' counts) in scope.
+         Uses no element IDs since this template can render more than once
+         per page (desktop nav + mobile topbar both exist in the DOM, CSS
+         just hides one via media query) — toggleEpBell() finds the panel
+         relative to the clicked button instead.
+         ================================================================ -->
+    <template id="ep_notification_bell">
+        <div class="ep-bell-wrap">
+            <div t-att-class="'ep-bell-btn has-unread' if ep_notif_unread_total else 'ep-bell-btn'"
+                onclick="toggleEpBell(event)">
+                <i class="fa fa-bell-o"></i>
+                <t t-if="ep_notif_unread_total &gt; 0">
+                    <span class="ep-bell-dot"></span>
+                </t>
+            </div>
+
+            <div class="ep-bell-panel">
+                <div class="ep-bell-panel-header">Notifications</div>
+
+                <t t-set="ep_unread_items"
+                    t-value="[(k, v) for k, v in ep_notif_summary.items() if v.get('new', 0) &gt; 0]"/>
+
+                <t t-if="ep_unread_items">
+                    <t t-foreach="ep_unread_items" t-as="ep_item">
+                        <a t-att-href="ep_item[1]['url']" class="ep-bell-item">
+                            <div class="ep-bell-item-icon">
+                                <i class="fa fa-bell"></i>
+                            </div>
+                            <span class="ep-bell-item-label">
+                                <t t-esc="ep_item[1]['label']"/>
+                            </span>
+                            <span class="ep-bell-item-count">
+                                <t t-esc="ep_item[1]['new']"/> new
+                            </span>
+                        </a>
+                    </t>
+                </t>
+                <t t-if="not ep_unread_items">
+                    <div class="ep-bell-empty">You're all caught up.</div>
+                </t>
+            </div>
+        </div>
     </template>
 </odoo>

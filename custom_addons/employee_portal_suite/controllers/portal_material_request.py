@@ -184,7 +184,7 @@ class EmployeePortalMaterialRequests(http.Controller):
         for f in files:
             if not f or f.filename.strip() == "":
                 continue
-
+            filename = f.filename.strip()
             file_content = f.read()
 
             request.env["ir.attachment"].sudo().create({
@@ -318,6 +318,10 @@ class EmployeePortalMaterialRequests(http.Controller):
                 return any(term in value.lower() for value in values)
 
             shown_reqs = [r for r in shown_reqs if _matches_search(r)]
+
+        # Clear the "new approval" badge on the dashboard/header bell now that
+        # the user has opened the material approvals list.
+        request.env['portal.report.seen'].sudo()._mark_seen(user.id, 'mr_approval')
 
         return request.render("employee_portal_suite.portal_material_approvals_list", {
             "pending_reqs": pending_list,

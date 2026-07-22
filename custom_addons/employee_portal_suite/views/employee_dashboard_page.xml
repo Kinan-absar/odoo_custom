@@ -27,7 +27,7 @@
 
                 border-radius: 24px;
                 padding: 20px;
-                height: 140px;
+                min-height: 140px;
 
                 display: flex;
                 flex-direction: column;
@@ -118,6 +118,12 @@
 
             .card-bottom {
                 display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+
+            .card-bottom-number-row {
+                display: flex;
                 justify-content: space-between;
                 align-items: center;
             }
@@ -143,6 +149,54 @@
                 0% { box-shadow: 0 0 0 0 rgba(245,158,11,0.6); }
                 70% { box-shadow: 0 0 0 10px rgba(245,158,11,0); }
                 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+            }
+
+
+            /* ================================================================
+            NEW REPORT NOTIFICATION PILL
+            ================================================================ */
+
+            .card-new-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                margin-top: 6px;
+                padding: 3px 9px 3px 7px;
+                border-radius: 20px;
+                font-size: 11px;
+                font-weight: 600;
+                color: #B45309;
+                background: rgba(245,158,11,0.14);
+                width: fit-content;
+
+                animation: card-new-pill-in 0.35s cubic-bezier(.34,1.56,.64,1);
+            }
+
+            .card-new-pill .card-new-pill-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #F59E0B;
+                flex-shrink: 0;
+                animation: pulse 1.5s infinite;
+            }
+
+            @keyframes card-new-pill-in {
+                0% {
+                    opacity: 0;
+                    transform: translateY(-4px) scale(0.9);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .card-new-pill,
+                .card-new-pill .card-new-pill-dot {
+                    animation: none;
+                }
             }
 
 
@@ -401,9 +455,11 @@
                                 <span class="card-title">Requests</span>
                             </div>
                             <div class="card-bottom">
-                                <span class="card-number">
-                                    <t t-esc="my_request_count"/>
-                                </span>
+                                <div class="card-bottom-number-row">
+                                    <span class="card-number">
+                                        <t t-esc="my_request_count"/>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </a>
@@ -421,9 +477,11 @@
                                 <span class="card-title">Materials</span>
                             </div>
                             <div class="card-bottom">
-                                <span class="card-number">
-                                    <t t-esc="my_material_count"/>
-                                </span>
+                                <div class="card-bottom-number-row">
+                                    <span class="card-number">
+                                        <t t-esc="my_material_count"/>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </a>
@@ -447,11 +505,22 @@
                                     <span class="card-title">ER Approvals</span>
                                 </div>
                                 <div class="card-bottom">
-                                    <span class="card-number">
-                                        <t t-esc="employee_pending_count"/>
-                                    </span>
-                                    <t t-if="employee_pending_count &gt; 0">
-                                        <span class="badge-pulse bg-success"></span>
+                                    <div class="card-bottom-number-row">
+                                        <span class="card-number">
+                                            <t t-esc="employee_pending_count"/>
+                                        </span>
+                                        <t t-if="employee_pending_count &gt; 0">
+                                            <span class="badge-pulse bg-success"></span>
+                                        </t>
+                                    </div>
+                                    <t t-if="new_employee_pending_count &gt; 0">
+                                        <span class="card-new-pill">
+                                            <span class="card-new-pill-dot"></span>
+                                            <t t-if="new_employee_pending_count == 1">New approval waiting</t>
+                                            <t t-if="new_employee_pending_count &gt; 1">
+                                                <t t-esc="new_employee_pending_count"/> new approvals waiting
+                                            </t>
+                                        </span>
                                     </t>
                                 </div>
                             </div>
@@ -478,11 +547,22 @@
                                     <span class="card-title">MR Approvals</span>
                                 </div>
                                 <div class="card-bottom">
-                                    <span class="card-number">
-                                        <t t-esc="material_pending_count"/>
-                                    </span>
-                                    <t t-if="material_pending_count &gt; 0">
-                                        <span class="badge-pulse"></span>
+                                    <div class="card-bottom-number-row">
+                                        <span class="card-number">
+                                            <t t-esc="material_pending_count"/>
+                                        </span>
+                                        <t t-if="material_pending_count &gt; 0">
+                                            <span class="badge-pulse"></span>
+                                        </t>
+                                    </div>
+                                    <t t-if="new_material_pending_count &gt; 0">
+                                        <span class="card-new-pill">
+                                            <span class="card-new-pill-dot"></span>
+                                            <t t-if="new_material_pending_count == 1">New approval waiting</t>
+                                            <t t-if="new_material_pending_count &gt; 1">
+                                                <t t-esc="new_material_pending_count"/> new approvals waiting
+                                            </t>
+                                        </span>
                                     </t>
                                 </div>
                             </div>
@@ -502,13 +582,89 @@
                                 <span class="card-title">Signatures</span>
                             </div>
                             <div class="card-bottom">
-                                <span class="card-number">
-                                    <t t-esc="pending_sign_count"/>
-                                </span>
+                                <div class="card-bottom-number-row">
+                                    <span class="card-number">
+                                        <t t-esc="pending_sign_count"/>
+                                    </span>
+                                </div>
+                                <t t-if="new_pending_sign_count &gt; 0">
+                                    <span class="card-new-pill">
+                                        <span class="card-new-pill-dot"></span>
+                                        <t t-if="new_pending_sign_count == 1">New document to sign</t>
+                                        <t t-if="new_pending_sign_count &gt; 1">
+                                            <t t-esc="new_pending_sign_count"/> new documents to sign
+                                        </t>
+                                    </span>
+                                </t>
                             </div>
                         </div>
                     </a>
                 </div>
+
+                <!-- SALARY REPORTS (read-only portal viewer group) -->
+                <t t-if="request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')">
+                    <div class="col-6 col-md-6">
+                        <a href="/my/employee/salary-reports" class="dashboard-link">
+                            <div class="dashboard-card">
+                                <div class="card-top">
+                                    <div class="card-icon bg-success-soft">
+                                        <i class="fa fa-money"></i>
+                                    </div>
+                                    <span class="card-title">Salary Reports</span>
+                                </div>
+                                <div class="card-bottom">
+                                    <div class="card-bottom-number-row">
+                                        <span class="card-number">
+                                            <t t-esc="salary_report_count"/>
+                                        </span>
+                                    </div>
+                                    <t t-if="new_salary_report_count &gt; 0">
+                                        <span class="card-new-pill">
+                                            <span class="card-new-pill-dot"></span>
+                                            <t t-if="new_salary_report_count == 1">New report added</t>
+                                            <t t-if="new_salary_report_count &gt; 1">
+                                                <t t-esc="new_salary_report_count"/> new reports added
+                                            </t>
+                                        </span>
+                                    </t>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </t>
+
+
+                <!-- PORTAL REPORTS (visible by selected portal groups) -->
+                <t t-if="portal_report_count &gt; 0">
+                    <div class="col-6 col-md-6">
+                        <a href="/my/employee/reports" class="dashboard-link">
+                            <div class="dashboard-card">
+                                <div class="card-top">
+                                    <div class="card-icon bg-primary-soft">
+                                        <i class="fa fa-folder-open-o"></i>
+                                    </div>
+                                    <span class="card-title">Reports</span>
+                                </div>
+                                <div class="card-bottom">
+                                    <div class="card-bottom-number-row">
+                                        <span class="card-number">
+                                            <t t-esc="portal_report_count"/>
+                                        </span>
+                                    </div>
+                                    <t t-if="new_portal_report_count &gt; 0">
+                                        <span class="card-new-pill">
+                                            <span class="card-new-pill-dot"></span>
+                                            <t t-if="new_portal_report_count == 1">New report added</t>
+                                            <t t-if="new_portal_report_count &gt; 1">
+                                                <t t-esc="new_portal_report_count"/> new reports added
+                                            </t>
+                                        </span>
+                                    </t>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </t>
 
                 <!-- ATTENDANCE (only for group_portal_attendance_user) -->
                 <t t-if="can_use_attendance">
@@ -524,14 +680,16 @@
                                 <span class="card-title">Attendance</span>
                             </div>
                             <div class="card-bottom">
-                                <span class="card-number"
-                                    t-att-style="'font-size:18px; color:#059669;' if attendance_checked_in else 'font-size:18px;'">
-                                    <t t-if="attendance_checked_in">Active</t>
-                                    <t t-if="not attendance_checked_in">Check In</t>
-                                </span>
-                                <t t-if="attendance_checked_in">
-                                    <span class="badge-pulse bg-success"></span>
-                                </t>
+                                <div class="card-bottom-number-row">
+                                    <span class="card-number"
+                                        t-att-style="'font-size:18px; color:#059669;' if attendance_checked_in else 'font-size:18px;'">
+                                        <t t-if="attendance_checked_in">Active</t>
+                                        <t t-if="not attendance_checked_in">Check In</t>
+                                    </span>
+                                    <t t-if="attendance_checked_in">
+                                        <span class="badge-pulse bg-success"></span>
+                                    </t>
+                                </div>
                             </div>
                         </div>
                     </a>

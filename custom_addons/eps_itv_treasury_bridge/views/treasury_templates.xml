@@ -1,0 +1,349 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<odoo>
+  <template id="portal_treasury_payment_list" name="CEO Payment Approvals">
+    <t t-call="employee_portal_suite.employee_portal_layout">
+      <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h3 class="mb-1">Payment Approvals</h3>
+            <p class="text-muted mb-0">Review, adjust, approve, hold, or reject planned outgoing payments.</p>
+          </div>
+          <a href="/my/employee/treasury/plans" class="btn btn-outline-primary btn-sm">Weekly Cash Plans</a>
+        </div>
+        <div t-if="message" class="alert alert-success">
+          <t t-esc="message"/>
+        </div>
+        <div t-if="error" class="alert alert-danger">
+          <t t-esc="error"/>
+        </div>
+        <div class="btn-group mb-3">
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'pending' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=pending">Pending <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('pending', 0)"/></span></t></a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'approved' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=approved">Approved <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('approved', 0)"/></span></t></a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'held' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=held">On Hold <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('held', 0)"/></span></t></a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'rejected' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=rejected">Rejected <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('rejected', 0)"/></span></t></a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'all' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=all">All <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('all', 0)"/></span></t></a>
+        </div>
+        <div class="card border-0 shadow-sm">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Payment</th>
+                  <th>Weekly Plan</th>
+                  <th>Partner / Project</th>
+                  <th>Requested</th>
+                  <th>Approved</th>
+                  <th>Status</th>
+                  <th style="min-width:300px">CEO Review</th>
+                </tr>
+              </thead>
+              <tbody>
+                <t t-foreach="lines" t-as="line">
+                  <tr>
+                    <td>
+                      <t t-esc="line.planned_date"/>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">
+                        <t t-esc="line.name"/>
+                      </div>
+                      <small class="text-muted">
+                        <t t-esc="line.category_id.name"/>
+                      </small>
+                    </td>
+                    <td>
+                      <a t-att-href="'/my/employee/treasury/plans/%s' % line.run_id.id">
+                        <t t-esc="line.run_id.name"/>
+                      </a>
+                    </td>
+                    <td>
+                      <div t-if="line.partner_id">
+                        <t t-esc="line.partner_id.name"/>
+                      </div>
+                      <small t-if="line.project_id" class="text-muted">
+                        <t t-esc="line.project_id.name"/>
+                      </small>
+                    </td>
+                    <td>
+                      <span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                    </td>
+                    <td>
+                      <span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                    </td>
+                    <td>
+                      <span class="badge text-bg-secondary">
+                        <t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
+                      </span>
+                    </td>
+                    <td>
+                      <form t-if="line.ceo_decision in ('pending', 'held')" t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div class="input-group input-group-sm mb-2">
+                          <span class="input-group-text">Approved amount</span>
+                          <input type="number" step="0.01" min="0" name="approved_amount" class="form-control" t-att-value="line.approved_amount or line.forecast_amount"/>
+                        </div>
+                        <textarea name="comment" class="form-control form-control-sm mb-2" rows="2" placeholder="CEO comment">
+                          <t t-esc="line.ceo_comment or ''"/>
+                        </textarea>
+                        <button name="decision" value="approved" class="btn btn-success btn-sm">Approve</button>
+                        <button name="decision" value="held" class="btn btn-warning btn-sm ms-1">Hold</button>
+                        <button name="decision" value="rejected" class="btn btn-outline-danger btn-sm ms-1">Reject</button>
+                      </form>
+                      <div t-else="" class="small">
+                        <div t-if="line.ceo_comment" class="text-muted">
+                          <t t-esc="line.ceo_comment"/>
+                        </div>
+                        <div t-if="line.ceo_approved_by" class="text-muted">Reviewed by <t t-esc="line.ceo_approved_by.name"/></div>
+                      </div>
+                    </td>
+                  </tr>
+                </t>
+                <tr t-if="not lines">
+                  <td colspan="8" class="text-center text-muted py-5">No payments found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </t>
+  </template>
+  <template id="portal_treasury_plan_list" name="CEO Weekly Cash Plans">
+    <t t-call="employee_portal_suite.employee_portal_layout">
+      <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h3 class="mb-1">Weekly Cash Plans</h3>
+            <p class="text-muted mb-0">Read-only view of complete weekly inflows, outflows, and cash position.</p>
+          </div>
+          <a href="/my/employee/treasury/payments" class="btn btn-outline-primary btn-sm">Payment Approvals</a>
+        </div>
+        <div class="card border-0 shadow-sm">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Plan</th>
+                  <th>Week</th>
+                  <th>Opening</th>
+                  <th>Forecast In</th>
+                  <th>Forecast Out</th>
+                  <th>Forecast Closing</th>
+                  <th>Status</th>
+                  <th/>
+                </tr>
+              </thead>
+              <tbody>
+                <t t-foreach="runs" t-as="run">
+                  <tr>
+                    <td class="fw-semibold">
+                      <t t-esc="run.name"/>
+                    </td>
+                    <td><t t-esc="run.date_from"/> – <t t-esc="run.date_to"/></td>
+                    <td>
+                      <span t-field="run.opening_balance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                    </td>
+                    <td class="text-success">
+                      <span t-field="run.forecast_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                    </td>
+                    <td class="text-danger">
+                      <span t-field="run.forecast_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                    </td>
+                    <td>
+                      <span t-field="run.forecast_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                    </td>
+                    <td>
+                      <span class="badge text-bg-secondary">
+                        <t t-esc="dict(run._fields['state'].selection).get(run.state)"/>
+                      </span>
+                    </td>
+                    <td class="text-end">
+                      <a t-att-href="'/my/employee/treasury/plans/%s' % run.id" class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                  </tr>
+                </t>
+                <tr t-if="not runs">
+                  <td colspan="8" class="text-center text-muted py-5">No weekly cash plans found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </t>
+  </template>
+  <template id="portal_treasury_plan_detail_clean_v3" name="CEO Weekly Cash Plan Detail">
+    <t t-call="employee_portal_suite.employee_portal_layout">
+      <div class="container py-4">
+        <a href="/my/employee/treasury/plans" class="text-decoration-none">← Weekly Cash Plans</a>
+        <div class="d-flex justify-content-between align-items-start mt-3 mb-3">
+          <div>
+            <h2 class="mb-1">
+              <t t-esc="run.name"/>
+            </h2>
+            <div class="text-muted"><t t-esc="run.date_from"/> – <t t-esc="run.date_to"/></div>
+          </div>
+          <span class="badge rounded-pill text-bg-primary fs-6">
+            <t t-esc="dict(run._fields['state'].selection).get(run.state)"/>
+          </span>
+        </div>
+        <div class="row g-3 mb-4">
+          <div class="col-12 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <small class="text-muted">Opening cash</small>
+                <div class="fs-4 fw-bold">
+                  <span t-field="run.opening_balance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-9">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-header bg-white">
+                <strong>Forecast vs Actual</strong>
+                <div class="small text-muted">Variance = Actual − Forecast</div>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Cash measure</th>
+                      <th class="text-end">Forecast</th>
+                      <th class="text-end">Actual</th>
+                      <th class="text-end">Variance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Inflows</td>
+                      <td class="text-end text-success">
+                        <span t-field="run.forecast_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td class="text-end text-success">
+                        <span t-field="run.actual_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td t-attf-class="text-end fw-semibold #{'text-success' if (run.actual_inflow - run.forecast_inflow) &gt;= 0 else 'text-danger'}">
+                        <span t-field="run.portal_variance_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Outflows</td>
+                      <td class="text-end text-danger">
+                        <span t-field="run.forecast_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td class="text-end text-danger">
+                        <span t-field="run.actual_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td t-attf-class="text-end fw-semibold #{'text-success' if (run.actual_outflow - run.forecast_outflow) &lt;= 0 else 'text-danger'}">
+                        <span t-field="run.portal_variance_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Net cash flow</td>
+                      <td class="text-end">
+                        <span t-field="run.forecast_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td class="text-end">
+                        <span t-field="run.actual_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td t-attf-class="text-end fw-semibold #{'text-success' if (run.actual_net - run.forecast_net) &gt;= 0 else 'text-danger'}">
+                        <span t-field="run.portal_variance_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                    </tr>
+                    <tr class="table-light fw-bold">
+                      <td>Closing cash balance</td>
+                      <td class="text-end">
+                        <span t-field="run.forecast_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td class="text-end">
+                        <span t-field="run.actual_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td t-attf-class="text-end #{'text-success' if run.forecast_variance &gt;= 0 else 'text-danger'}">
+                        <span t-field="run.forecast_variance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white">
+            <strong>All planned cash movements</strong>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Flow</th>
+                  <th>Description</th>
+                  <th>Partner / Project</th>
+                  <th>Forecast</th>
+                  <th>CEO Approved</th>
+                  <th>Actual</th>
+                  <th>Variance</th>
+                  <th>Decision / Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <t t-foreach="run.line_ids" t-as="line">
+                  <tr>
+                    <td>
+                      <t t-esc="line.planned_date"/>
+                    </td>
+                    <td>
+                      <span t-attf-class="badge #{'text-bg-success' if line.flow_type == 'in' else 'text-bg-danger'}">
+                        <t t-esc="'Receipt' if line.flow_type == 'in' else 'Payment'"/>
+                      </span>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">
+                        <t t-esc="line.name"/>
+                      </div>
+                      <small class="text-muted">
+                        <t t-esc="line.category_id.name"/>
+                      </small>
+                    </td>
+                    <td>
+                      <div t-if="line.partner_id">
+                        <t t-esc="line.partner_id.name"/>
+                      </div>
+                      <small t-if="line.project_id" class="text-muted">
+                        <t t-esc="line.project_id.name"/>
+                      </small>
+                    </td>
+                    <td>
+                      <span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                    </td>
+                    <td>
+                      <span t-if="line.flow_type == 'out'" t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                      <span t-else="" class="text-muted">Not required</span>
+                    </td>
+                    <td>
+                      <span t-field="line.actual_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                    </td>
+                    <td t-attf-class="#{'text-success' if ((line.flow_type == 'in' and line.variance_amount &gt;= 0) or (line.flow_type == 'out' and line.variance_amount &lt;= 0)) else 'text-danger'}">
+                      <span t-field="line.variance_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                    </td>
+                    <td>
+                      <span t-if="line.flow_type == 'out'" class="badge text-bg-secondary">
+                        <t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
+                      </span>
+                      <span t-else="" class="badge text-bg-info">
+                        <t t-esc="dict(line._fields['state'].selection).get(line.state)"/>
+                      </span>
+                    </td>
+                  </tr>
+                </t>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </t>
+  </template>
+</odoo>

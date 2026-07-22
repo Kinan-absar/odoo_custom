@@ -150,6 +150,50 @@ $color-danger:  #dc3545;
     a, .btn { pointer-events: auto; }
 }
 
+
+.eps_announcement_attachments {
+    margin-top: 8px;
+}
+
+.eps_announcement_image {
+    display: block;
+    max-width: 100%;
+    max-height: 180px;
+    border-radius: 7px;
+    border: 1px solid rgba(0,0,0,0.10);
+    object-fit: contain;
+    margin-top: 6px;
+}
+
+.eps_announcement_file {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 8px;
+    margin-top: 6px;
+    border-radius: 7px;
+    background: rgba(0,0,0,0.04);
+    font-size: 12px;
+}
+
+.eps_announcement_file_name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.eps_announcement_file_actions {
+    display: flex;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.eps_announcement_file_actions a {
+    pointer-events: auto;
+}
+
 // ─── Mobile ───────────────────────────────────────────────────────────────────
 @media screen and (max-width: 768px) {
     .o_home_menu {

@@ -125,20 +125,12 @@
                                     <!-- PENDING -->
                                     <t t-elif="'🟡' in your_status">
                                         <a class="btn btn-sm btn-primary"
-                                           t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1"
-                                        target="_blank">
+                                           t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1">
                                             Sign
                                         </a>
                                     </t>
 
-                                    <!-- SIGNED -->
-                                    <t t-else="">
-                                        <a class="btn btn-sm btn-primary"
-                                        t-attf-href="/my/signature/{{ item.id }}?access_token={{ doc['access_token'] }}"
-                                        target="_blank">
-                                            View
-                                        </a>
-                                    </t>
+
                                     <!-- DOWNLOAD FINAL PDF (FIXED TOKEN!) -->
                                     <t t-if="item.sign_request_id.state == 'signed'">
                                         <a class="btn btn-sm btn-outline-secondary ms-1"
@@ -207,19 +199,12 @@
 
                         <t t-elif="'🟡' in your_status">
                             <a class="btn btn-sm btn-primary"
-                               t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1"
-                               target="_blank">
+                               t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1">
                                 Sign
                             </a>
                         </t>
 
-                        <t t-else="">
-                            <a class="btn btn-sm btn-outline-primary"
-                               t-attf-href="/my/signature/{{ item.id }}?access_token={{ doc['access_token'] }}"
-                               target="_blank">
-                                View
-                            </a>
-                        </t>
+
 
                         <t t-if="item.sign_request_id.state == 'signed'">
                             <a class="btn btn-sm btn-outline-secondary"

@@ -1,8 +1,9 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class AccountInternalTransfer(models.Model):
+    _check_company_auto = True
     _name = 'account.internal.transfer'
     _description = 'Internal Transfer'
     _inherit = ['mail.thread', 'mail.activity.mixin']
@@ -202,15 +203,30 @@ class AccountInternalTransfer(models.Model):
                     'name': rec.description or rec.name,
                 }))
 
-            move = self.env['account.move'].create({
-                'date': rec.date,
-                'journal_id': rec.source_journal_id.id,
-                'ref': rec.description or rec.name,
-                'line_ids': lines,
-            })
+            if rec.move_id and rec.move_id.state == 'draft':
+                move = rec.move_id
+                move_vals = {
+                    'date': rec.date,
+                    'journal_id': rec.source_journal_id.id,
+                    'ref': rec.description or rec.name,
+                }
+                # Avoid deleting/recreating protected tax lines on repost.
+                has_tax_lines = bool(move.line_ids.filtered(
+                    lambda line: line.tax_line_id or line.tax_ids or line.tax_repartition_line_id
+                ))
+                if not has_tax_lines:
+                    move_vals['line_ids'] = [(5, 0, 0)] + lines
+                move.write(move_vals)
+            else:
+                move = self.env['account.move'].create({
+                    'date': rec.date,
+                    'journal_id': rec.source_journal_id.id,
+                    'ref': rec.description or rec.name,
+                    'line_ids': lines,
+                })
+                rec.move_id = move.id
 
             move.action_post()
-            rec.move_id = move.id
             rec.state = 'posted'
 
     def action_cancel(self):
@@ -224,18 +240,17 @@ class AccountInternalTransfer(models.Model):
             if rec.state not in ('posted', 'cancel'):
                 continue
 
-            if rec.move_id:
-                rec.move_id.button_draft()
-                rec.move_id.unlink()
+            if rec.move_id and rec.move_id.state == 'posted':
+                # Keep the linked custom move and reuse it on repost. Avoid
+                # button_draft() because it may trigger tax-line rebuild validation.
+                rec.move_id.sudo().write({'state': 'draft'})
 
-            rec.move_id = False
             rec.state = 'draft'
-
 
     @api.model
     def create(self, vals):
         if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code(
+            vals['name'] = self.env['ir.sequence'].sudo().next_by_code(
                 'internal.transfer'
             ) or 'New'
         return super().create(vals)

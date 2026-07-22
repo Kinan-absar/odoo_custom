@@ -30,4 +30,22 @@
         </field>
     </record>
 
+
+    <!-- PORTAL REPORTS: portal users only see reports shared with one of their groups -->
+    <record id="portal_report_document_group_rule" model="ir.rule">
+        <field name="name">Portal Reports: Visible Portal Groups Only</field>
+        <field name="model_id" ref="model_portal_report_document"/>
+        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_employee'))]"/>
+        <field name="domain_force">[('active', '=', True), ('allowed_group_ids', 'in', user.groups_id.ids)]</field>
+    </record>
+
+    <!-- PORTAL REPORT SEEN MARKERS: every user (incl. portal) can only access their own marker rows -->
+    <record id="portal_report_seen_own_rule" model="ir.rule">
+        <field name="name">Portal Report Seen: Own Records Only</field>
+        <field name="model_id" ref="model_portal_report_seen"/>
+        <field name="groups" eval="[]"/>
+        <field name="domain_force">[('user_id', '=', user.id)]</field>
+    </record>
+
 </odoo>
+

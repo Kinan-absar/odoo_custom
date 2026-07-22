@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="portal_salary_report_list" name="Portal Salary Reports">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="container mt-4 mb-5">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <h3 class="mb-1">Salary Reports</h3>
+                        <p class="text-muted mb-0">Read-only salary report viewer.</p>
+                    </div>
+                    <a href="/my/employee" class="btn btn-light">Back</a>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Report</th>
+                                    <th>Period</th>
+                                    <th class="text-end">Employees</th>
+                                    <th class="text-end">Gross</th>
+                                    <th class="text-end">Net</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="not reports">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">No salary reports are available.</td>
+                                    </tr>
+                                </t>
+                                <t t-foreach="reports" t-as="report">
+                                    <tr>
+                                        <td><t t-esc="report.name"/></td>
+                                        <td><t t-esc="report.date_from"/> to <t t-esc="report.date_to"/></td>
+                                        <td class="text-end"><t t-esc="report.total_employees"/></td>
+                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(report.total_gross_salary)"/></td>
+                                        <td class="text-end fw-bold"><t t-esc="'{:,.2f}'.format(report.total_net_salary)"/></td>
+                                        <td><span class="badge bg-secondary"><t t-esc="dict(report._fields['state'].selection).get(report.state)"/></span></td>
+                                        <td class="text-end">
+                                            <a t-att-href="'/my/employee/salary-reports/%s' % report.id" class="btn btn-sm btn-primary">View</a>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <t t-call="portal.pager"/>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_salary_report_detail" name="Portal Salary Report Detail">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="container mt-4 mb-5">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <h3 class="mb-1">Salary Report</h3>
+                        <p class="text-muted mb-0">
+                            Period: <strong><t t-esc="report.date_from"/> to <t t-esc="report.date_to"/></strong>
+                            <t t-if="report.work_location_ids">
+                                | Work Location Filter: <strong><t t-esc="', '.join(report.work_location_ids.mapped('name'))"/></strong>
+                            </t>
+                        </p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/my/employee/salary-reports" class="btn btn-light">Back</a>
+                        <a t-att-href="'/my/employee/salary-reports/%s/print' % report.id" class="btn btn-primary">Print PDF</a>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Employees</small><strong><t t-esc="report.total_employees"/></strong></div></div>
+                    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Gross</small><strong><t t-esc="'{:,.2f}'.format(report.total_gross_salary)"/></strong></div></div>
+                    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Deductions</small><strong><t t-esc="'{:,.2f}'.format(report.total_attendance_deductions + report.total_other_deductions)"/></strong></div></div>
+                    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Net</small><strong><t t-esc="'{:,.2f}'.format(report.total_net_salary)"/></strong></div></div>
+                </div>
+
+                <t t-set="row_num" t-value="0"/>
+                <t t-foreach="groups" t-as="group">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <strong>Work Location: <t t-esc="group['name']"/></strong>
+                            <span class="text-muted"><t t-esc="group['employee_count']"/> Employees</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0 align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Employee</th>
+                                        <th class="text-end">Gross Salary</th>
+                                        <th class="text-end">Deductions</th>
+                                        <th class="text-end">Reimbursements</th>
+                                        <th class="text-end">Net Salary</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="group['lines']" t-as="line">
+                                        <t t-set="row_num" t-value="row_num + 1"/>
+                                        <tr>
+                                            <td><t t-esc="row_num"/></td>
+                                            <td><t t-esc="line.employee_id.name"/></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.gross_salary)"/></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.attendance_deduction + line.other_deductions)"/></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.reimbursements)"/></td>
+                                            <td class="text-end fw-bold"><t t-esc="'{:,.2f}'.format(line.net_salary)"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                                <tfoot class="table-light fw-bold">
+                                    <tr>
+                                        <td colspan="2">Subtotal — <t t-esc="group['name']"/></td>
+                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(group['gross_salary'])"/></td>
+                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(group['deductions'])"/></td>
+                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(group['reimbursements'])"/></td>
+                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(group['net_salary'])"/></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-header bg-dark text-white">
+                        <strong>Grand Total</strong>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-end">Employees</th>
+                                    <th class="text-end">Gross Salary</th>
+                                    <th class="text-end">Deductions</th>
+                                    <th class="text-end">Reimbursements</th>
+                                    <th class="text-end">Net Salary</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="fw-bold">
+                                    <td class="text-end"><t t-esc="report.total_employees"/></td>
+                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(report.total_gross_salary)"/></td>
+                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(report.total_attendance_deductions + report.total_other_deductions)"/></td>
+                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(sum(report.line_ids.mapped('reimbursements')))"/></td>
+                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(report.total_net_salary)"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>

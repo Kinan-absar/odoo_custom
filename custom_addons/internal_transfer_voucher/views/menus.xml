@@ -34,4 +34,11 @@
     <record id="menu_internal_transfer" model="ir.ui.menu">
         <field name="active" eval="False"/>
     </record>
+
+    <menuitem id="menu_cash_planning_root" name="Cash Planning" parent="menu_vouchers_root" sequence="30" groups="account.group_account_user"/>
+    <menuitem id="menu_cash_plan_run" name="Weekly Planner" parent="menu_cash_planning_root" action="action_cash_plan_run" sequence="10"/>
+    <menuitem id="menu_cash_plan_payments" name="Planned Payments" parent="menu_cash_planning_root" action="action_cash_plan_payments" sequence="20"/>
+    <menuitem id="menu_cash_plan_receipts" name="Planned Receipts" parent="menu_cash_planning_root" action="action_cash_plan_receipts" sequence="30"/>
+    <menuitem id="menu_cash_plan_analysis" name="Cash Forecast Analysis" parent="menu_cash_planning_root" action="action_cash_plan_line" sequence="40"/>
+    <menuitem id="menu_cash_plan_category" name="Categories" parent="menu_cash_planning_root" action="action_cash_plan_category" sequence="90" groups="account.group_account_manager"/>
 </odoo>

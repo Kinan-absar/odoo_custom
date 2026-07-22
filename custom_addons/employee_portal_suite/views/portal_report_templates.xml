@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="portal_reports_list" name="Portal Reports List">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <style>
+                .portal-report-table-card {
+                    background: #fff;
+                    border-radius: 18px;
+                    padding: 0;
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+                    border: 1px solid rgba(0,0,0,0.06);
+                    overflow: hidden;
+                }
+                .portal-report-table th {
+                    font-size: 12px;
+                    color: #6b7280;
+                    text-transform: uppercase;
+                    letter-spacing: .04em;
+                    border-bottom: 1px solid #e5e7eb;
+                    background: #f9fafb;
+                }
+                .portal-report-table td {
+                    vertical-align: middle;
+                    border-top: 1px solid #f3f4f6;
+                }
+                .portal-report-title-link {
+                    color: #111827;
+                    font-weight: 700;
+                    text-decoration: none;
+                }
+                .portal-report-title-link:hover {
+                    text-decoration: underline;
+                }
+                .portal-report-desc {
+                    font-size: 12px;
+                    color: #6b7280;
+                    max-width: 520px;
+                }
+            </style>
+
+            <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
+                <div>
+                    <h4 class="mb-1">Reports</h4>
+                    <div class="text-muted small">PDF reports shared with your portal group.</div>
+                </div>
+            </div>
+
+            <t t-if="reports">
+                <div class="portal-report-table-card">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 portal-report-table">
+                            <thead>
+                                <tr>
+                                    <th>Report</th>
+                                    <th>Date</th>
+                                    <th>File</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="reports" t-as="report">
+                                    <tr>
+                                        <td>
+                                            <a class="portal-report-title-link" t-att-href="'/my/employee/reports/%s' % report.id">
+                                                <t t-esc="report.name"/>
+                                            </a>
+                                            <t t-if="report.description">
+                                                <div class="portal-report-desc text-truncate"><t t-esc="report.description"/></div>
+                                            </t>
+                                        </td>
+                                        <td>
+                                            <span t-esc="report.date.strftime('%d %b %Y') if report.date else ''"/>
+                                        </td>
+                                        <td>
+                                            <t t-if="report.filename">
+                                                <i class="fa fa-file-pdf-o me-1 text-danger"></i>
+                                                <span t-esc="report.filename"/>
+                                            </t>
+                                        </td>
+                                        <td class="text-end">
+                                            <a t-att-href="'/my/employee/reports/%s' % report.id" class="btn btn-outline-primary btn-sm">
+                                                <i class="fa fa-eye me-1"></i> Open
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <t t-call="portal.pager"/>
+                </div>
+            </t>
+            <t t-if="not reports">
+                <div class="alert alert-info mt-3">No reports are available for your portal group yet.</div>
+            </t>
+        </t>
+    </template>
+
+    <template id="portal_report_detail" name="Portal Report Detail">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <style>
+                .portal-report-detail-card {
+                    background: #fff;
+                    border-radius: 18px;
+                    padding: 18px;
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+                    border: 1px solid rgba(0,0,0,0.06);
+                }
+                .portal-report-viewer {
+                    width: 100%;
+                    height: 820px;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 12px;
+                    background: #f9fafb;
+                }
+            </style>
+
+            <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
+                <div>
+                    <a href="/my/employee/reports" class="text-muted small text-decoration-none">
+                        <i class="fa fa-chevron-left me-1"></i> Back to Reports
+                    </a>
+                    <h4 class="mb-1 mt-2"><t t-esc="report.name"/></h4>
+                    <div class="text-muted small">
+                        <i class="fa fa-calendar-o me-1"></i>
+                        <t t-esc="report.date.strftime('%d %b %Y') if report.date else ''"/>
+                        <t t-if="report.filename">
+                            <span class="mx-2">•</span>
+                            <i class="fa fa-file-pdf-o me-1"></i>
+                            <t t-esc="report.filename"/>
+                        </t>
+                    </div>
+                </div>
+                <a t-att-href="'/my/employee/reports/%s/download' % report.id" class="btn btn-primary">
+                    <i class="fa fa-download me-1"></i> Download PDF
+                </a>
+            </div>
+
+            <div class="portal-report-detail-card mb-4">
+                <t t-if="report.description">
+                    <p class="text-muted mb-3"><t t-esc="report.description"/></p>
+                </t>
+                <iframe class="portal-report-viewer" t-att-src="'/my/employee/reports/%s/view' % report.id"></iframe>
+            </div>
+        </t>
+    </template>
+
+</odoo>

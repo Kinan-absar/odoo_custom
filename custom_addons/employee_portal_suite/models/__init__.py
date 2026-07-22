@@ -8,4 +8,8 @@ from . import hr_work_location
 from . import project_project
 from . import portal_announcement
 from . import hr_attendance
+from . import hr_employee_payroll_fields
 from . import attendance_salary_report
+
+from . import portal_report_document
+from . import portal_report_seen

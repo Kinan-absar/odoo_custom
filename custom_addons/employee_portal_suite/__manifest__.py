@@ -1,6 +1,6 @@
 {
     'name': 'Employee Portal Suite',
-    'version': '1.0',
+    'version': '18.0.1.1.0',
     'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
 
     'description': """
@@ -9,7 +9,7 @@
     Features Included:
 
     ✔ Employee Portal (/my/employee)
-    ✔ Clean custom portal layout and navigation
+    ✔ Clean custom portal layout and navigation 
     ✔ Employee Requests workflow (Employee → Manager → HR → Finance → CEO)
     ✔ Material Requests workflow (Employee → Purchase Rep → Store Manager → Project Manager → Director → CEO)
     ✔ Full approval timeline visible in backend + portal
@@ -50,6 +50,7 @@
         'sign',
         'project',
         'account',
+        'hr_payroll',
     ],
 
     # ------------------------------------------------------------------
@@ -79,6 +80,7 @@
         'views/account_move_views.xml',
         'views/portal_announcement_views.xml',
         'views/menus.xml',
+        'views/portal_report_document_views.xml',
         
         # --------------------------------------------------
         # EMPLOYEE PORTAL (FRONTEND)
@@ -112,7 +114,12 @@
         'views/project_project_views.xml',
         'views/employee_portal_attendance.xml',
         'views/hr_attendance_views.xml',
+        'reports/report_salary_report.xml',
+        'views/hr_employee_payroll_views.xml',
         'views/attendance_salary_report_views.xml',
+        'views/salary_report_viewer_views.xml',
+        'views/portal_salary_report_templates.xml',
+        'views/portal_report_templates.xml',
 
     ],
 
@@ -120,6 +127,9 @@
     #  ASSETS (JS)
     # ------------------------------------------------------------------
     'assets': {
+        'web.assets_frontend': [
+            'employee_portal_suite/static/src/js/sign_redirect.js',
+        ],
         'web.assets_backend': [
             'employee_portal_suite/static/src/js/material_request_dashboard.js',
             'employee_portal_suite/static/src/js/employee_request_dashboard.js',

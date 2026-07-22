@@ -9,7 +9,9 @@
         <field name="name">construction.dashboard.form</field>
         <field name="model">construction.dashboard</field>
         <field name="arch" type="xml">
-            <form string="Construction Dashboard" class="o_construction_dashboard">
+            <form string="Construction Dashboard" class="o_construction_dashboard" create="false"
+      delete="false"
+      duplicate="false">
 
                 <!-- ── Top Header Bar ── -->
                 <div class="ccm_dashboard_header">
@@ -239,6 +241,7 @@
         <field name="res_model">construction.dashboard</field>
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_construction_dashboard_form"/>
+        <field name="res_id" ref="construction_dashboard_main"/>
         <field name="target">current</field>
     </record>
 

@@ -6,7 +6,7 @@ import { ListController } from "@web/views/list/list_controller";
 import { useService } from "@web/core/utils/hooks";
 import { user } from "@web/core/user";
 import { Component, onWillStart, useState } from "@odoo/owl";
-import { Domain } from "@web/core/domain";
+import { _t } from "@web/core/l10n/translation";
 
 // ─── Dashboard Component ────────────────────────────────────────────────────
 
@@ -78,10 +78,30 @@ class PaymentVoucherListController extends ListController {
 
     onDashboardFilter(domain) {
         this.dashboardState.domain = domain;
-        // Merge dashboard domain into the model's domain and reload
-        const baseDomain = this.props.domain || [];
-        const fullDomain = Domain.and([baseDomain, domain]).toList();
-        this.model.load({ domain: fullDomain });
+
+        // Remove any previous dashboard-originated filter so clicking a new
+        // card replaces the old one instead of stacking on top of it.
+        const previous = this.env.searchModel.getSearchItems(
+            (searchItem) => searchItem.isFromPaymentVoucherDashboard
+        );
+        for (const item of previous) {
+            if (item.isActive) {
+                this.env.searchModel.toggleSearchItem(item.id);
+            }
+        }
+
+        // Add the dashboard domain as a real search-model filter. This keeps
+        // it merged with whatever is in the search bar (text search, other
+        // filters, group-by, favorites) instead of overwriting it.
+        if (domain && domain.length) {
+            this.env.searchModel.createNewFilters([
+                {
+                    description: _t("Dashboard filter"),
+                    domain,
+                    isFromPaymentVoucherDashboard: true,
+                },
+            ]);
+        }
     }
 }
 

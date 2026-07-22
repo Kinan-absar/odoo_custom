@@ -1,6 +1,6 @@
 {
     'name': 'Petty Cash Management',
-    'version': '1.0',
+    'version': '18.0.1.1.0',
     'author': 'Kinan',
     'website': 'absar-alomran.com',
     'category': 'Accounting',
@@ -32,8 +32,13 @@
         - Chatter integration for comments and tracking
         - Security groups for Users and Accountants
         - Footer totals for untaxed amount, VAT, and total amount
+
+        This module is fully standalone (backend only). If you also use Employee
+        Portal Suite and want employees to submit/view petty cash reports from the
+        employee portal, install the separate "Petty Cash Management - Employee
+        Portal Bridge" module as well.
         """,
-    'depends': ['portal', 'website', 'base', 'account', 'mail', 'web'],
+    'depends': ['base', 'account', 'mail', 'web'],
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
@@ -47,7 +52,6 @@
         'views/res_config_settings_views.xml',
         'views/menus.xml',                # <-- menu referencing action (must load last)
         'wizard/petty_cash_import_wizard_views.xml',
-        'views/portal_petty_cash_templates.xml',
     ],
     'images': ['images/main_screenshot.png'],
     'license': 'OPL-1',

@@ -229,6 +229,10 @@ class EmployeePortalRequests(http.Controller):
         if search:
             shown_reqs = [r for r in shown_reqs if search.lower() in (r.name or "").lower()]
 
+        # Clear the "new approval" badge on the dashboard/header bell now that
+        # the user has opened the approvals list.
+        request.env['portal.report.seen'].sudo()._mark_seen(user.id, 'er_approval')
+
         return request.render("employee_portal_suite.portal_employee_approvals_list", {
             "pending_reqs": pending_list,
             "approved_reqs": approved_list,
