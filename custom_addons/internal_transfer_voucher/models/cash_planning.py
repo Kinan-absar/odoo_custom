@@ -132,15 +132,24 @@ class CashPlanLine(models.Model):
         'payment_voucher_id.po_allocation_ids.purchase_order_id',
     )
     def _compute_linked_purchase_order_ids(self):
+        """Return only the PO(s) that actually belong to this payment.
+
+        Before a Payment Voucher exists, the planned payment selection is the
+        source of truth. Once a voucher is created, its current PO allocation is
+        the source of truth, so an old PO removed from the voucher is not still
+        shown to the CEO from the original plan.
+        """
         for rec in self:
-            orders = rec.purchase_order_ids
             voucher = rec.payment_voucher_id
-            if voucher:
-                orders |= voucher.purchase_order_ids
-                if voucher.purchase_order_id:
-                    orders |= voucher.purchase_order_id
-                if voucher.po_allocation_ids:
-                    orders |= voucher.po_allocation_ids.mapped('purchase_order_id')
+            if not voucher:
+                rec.linked_purchase_order_ids = rec.purchase_order_ids
+                continue
+
+            orders = voucher.po_allocation_ids.mapped('purchase_order_id')
+            if not orders:
+                orders = voucher.purchase_order_ids
+            if not orders and voucher.purchase_order_id:
+                orders = voucher.purchase_order_id
             rec.linked_purchase_order_ids = orders
 
     @api.depends('payment_voucher_id.state', 'payment_voucher_id.amount', 'receipt_voucher_id.state',
