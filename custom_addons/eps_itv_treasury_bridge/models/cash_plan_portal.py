@@ -41,3 +41,20 @@ class CashPlan(models.Model):
             record.portal_variance_outflow = record.actual_outflow - record.forecast_outflow
             record.portal_variance_net = record.actual_net - record.forecast_net
             record.portal_variance_closing = record.actual_closing - record.forecast_closing
+
+
+class CashPlanLinePortal(models.Model):
+    _inherit = "cash.plan.line"
+
+    portal_purchase_order_ids = fields.Many2many(
+        "purchase.order",
+        string="Portal Purchase Orders",
+        compute="_compute_portal_purchase_order_ids",
+    )
+
+    @api.depends("linked_purchase_order_ids")
+    def _compute_portal_purchase_order_ids(self):
+        for record in self:
+            record.portal_purchase_order_ids = record.linked_purchase_order_ids.filtered(
+                lambda po: po.company_id == record.company_id
+            )

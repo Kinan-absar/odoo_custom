@@ -32,6 +32,7 @@
                   <th>Payment</th>
                   <th>Weekly Plan</th>
                   <th>Partner / Project</th>
+                  <th>Purchase Order</th>
                   <th>Requested</th>
                   <th>Approved</th>
                   <th>Status</th>
@@ -64,6 +65,19 @@
                       <small t-if="line.project_id" class="text-muted">
                         <t t-esc="line.project_id.name"/>
                       </small>
+                    </td>
+                    <td>
+                      <t t-if="line.portal_purchase_order_ids">
+                        <div t-foreach="line.portal_purchase_order_ids" t-as="po" class="mb-1">
+                          <a t-att-href="'/my/employee/purchase-order/%s/signed' % po.id"
+                             class="btn btn-sm btn-outline-primary py-0 px-2"
+                             target="_blank" rel="noopener">
+                            <i class="fa fa-file-signature me-1"/>
+                            <t t-esc="po.name"/>
+                          </a>
+                        </div>
+                      </t>
+                      <span t-else="" class="text-muted small">No PO linked</span>
                     </td>
                     <td>
                       <span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
@@ -100,7 +114,7 @@
                   </tr>
                 </t>
                 <tr t-if="not lines">
-                  <td colspan="8" class="text-center text-muted py-5">No payments found.</td>
+                  <td colspan="9" class="text-center text-muted py-5">No payments found.</td>
                 </tr>
               </tbody>
             </table>

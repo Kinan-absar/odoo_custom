@@ -111,6 +111,12 @@ class CashPlanLine(models.Model):
     destination_journal_id = fields.Many2one('account.journal', domain="[('company_id', '=', company_id), ('default_account_id', '!=', False)]")
     account_id = fields.Many2one('account.account', domain="[('company_ids', 'in', company_id)]")
     purchase_order_ids = fields.Many2many('purchase.order', string='Purchase Orders', domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id)]")
+    linked_purchase_order_ids = fields.Many2many(
+        'purchase.order',
+        string='Linked Purchase Orders',
+        compute='_compute_linked_purchase_order_ids',
+        help='Purchase Orders selected on the plan or on its generated Payment Voucher.',
+    )
     bill_ids = fields.Many2many('account.move', 'cash_plan_line_bill_rel', 'line_id', 'move_id', string='Vendor Bills', domain="[('partner_id', '=', partner_id), ('move_type', '=', 'in_invoice'), ('state', '=', 'posted'), ('company_id', '=', company_id)]")
     invoice_ids = fields.Many2many('account.move', 'cash_plan_line_invoice_rel', 'line_id', 'move_id', string='Customer Invoices', domain="[('partner_id', '=', partner_id), ('move_type', '=', 'out_invoice'), ('state', '=', 'posted'), ('company_id', '=', company_id)]")
     description = fields.Text()
@@ -118,6 +124,24 @@ class CashPlanLine(models.Model):
     payment_voucher_id = fields.Many2one('account.payment.voucher', readonly=True, copy=False)
     receipt_voucher_id = fields.Many2one('account.receipt.voucher', readonly=True, copy=False)
     internal_transfer_id = fields.Many2one('account.internal.transfer', readonly=True, copy=False)
+
+    @api.depends(
+        'purchase_order_ids',
+        'payment_voucher_id.purchase_order_ids',
+        'payment_voucher_id.purchase_order_id',
+        'payment_voucher_id.po_allocation_ids.purchase_order_id',
+    )
+    def _compute_linked_purchase_order_ids(self):
+        for rec in self:
+            orders = rec.purchase_order_ids
+            voucher = rec.payment_voucher_id
+            if voucher:
+                orders |= voucher.purchase_order_ids
+                if voucher.purchase_order_id:
+                    orders |= voucher.purchase_order_id
+                if voucher.po_allocation_ids:
+                    orders |= voucher.po_allocation_ids.mapped('purchase_order_id')
+            rec.linked_purchase_order_ids = orders
 
     @api.depends('payment_voucher_id.state', 'payment_voucher_id.amount', 'receipt_voucher_id.state',
                  'receipt_voucher_id.amount', 'internal_transfer_id.state', 'internal_transfer_id.amount', 'forecast_amount')

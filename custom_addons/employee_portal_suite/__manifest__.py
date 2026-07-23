@@ -1,6 +1,6 @@
 {
     'name': 'Employee Portal Suite',
-    'version': '18.0.1.1.0',
+    'version': '18.0.1.1.1',
     'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
 
     'description': """
@@ -108,6 +108,7 @@
         'views/portal_material_approvals_list.xml',
         'views/portal_manager_request_detail.xml',
         'views/portal_sign_documents.xml',
+        'views/portal_purchase_order_signed.xml',
         'views/purchase_order_views.xml',
         'views/sign_portal_clean.xml',
         'views/hr_work_location_views.xml',
