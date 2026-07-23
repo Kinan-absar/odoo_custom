@@ -58,12 +58,22 @@ class MaterialRequest(models.Model):
             tracking=True
     )
 
+    available_project_ids = fields.Many2many(
+        "project.project",
+        string="Available Projects",
+        compute="_compute_available_projects",
+    )
+
+    project_selection_locked = fields.Boolean(
+        string="Project Selection Locked",
+        compute="_compute_available_projects",
+    )
+
     project_id = fields.Many2one(
         "project.project",
         string="Project",
-        compute="_compute_project_from_employee",
-        store=True,
-        tracking=True
+        tracking=True,
+        domain="[('id', 'in', available_project_ids)]",
     )
     store_manager_user_id = fields.Many2one(
         "res.users",
@@ -447,17 +457,42 @@ class MaterialRequest(models.Model):
     # Rejection info
     state_before_reject = fields.Char()
     rejected_by = fields.Many2one('res.users')
-    #new
-    @api.depends("employee_id")
-    def _compute_project_from_employee(self):
+    # Employee project routing
+    @api.depends(
+        "employee_id",
+        "employee_id.material_project_ids",
+        "employee_id.work_location_id",
+        "employee_id.work_location_id.project_id",
+    )
+    def _compute_available_projects(self):
+        for rec in self:
+            projects = (
+                rec.employee_id._get_material_request_projects()
+                if rec.employee_id
+                else self.env["project.project"]
+            )
+            rec.available_project_ids = projects
+            rec.project_selection_locked = len(projects) <= 1
+
+    @api.onchange("employee_id")
+    def _onchange_employee_material_projects(self):
         for rec in self:
             employee = rec.employee_id
-            if employee and employee.work_location_id:
-                rec.work_location_id = employee.work_location_id
-                rec.project_id = employee.work_location_id.project_id
-            else:
-                rec.work_location_id = False
+            rec.work_location_id = employee.work_location_id if employee else False
+            projects = employee._get_material_request_projects() if employee else self.env["project.project"]
+            if len(projects) == 1:
+                rec.project_id = projects.id
+            elif rec.project_id not in projects:
                 rec.project_id = False
+
+    @api.constrains("employee_id", "project_id")
+    def _check_employee_project(self):
+        for rec in self:
+            if not rec.employee_id or not rec.project_id:
+                continue
+            allowed = rec.employee_id._get_material_request_projects()
+            if rec.project_id not in allowed:
+                raise ValidationError(_("The selected project is not assigned to this employee."))
            
     @api.depends("project_id")
     def _compute_project_approvers(self):
@@ -542,6 +577,14 @@ class MaterialRequest(models.Model):
     def create(self, vals):
         if vals.get("name", _("New")) == _("New"):
             vals["name"] = self.env["ir.sequence"].next_by_code("material.request.seq") or _("New")
+
+        employee = self.env["hr.employee"].browse(vals.get("employee_id")) if vals.get("employee_id") else False
+        if employee:
+            vals.setdefault("work_location_id", employee.work_location_id.id if employee.work_location_id else False)
+            projects = employee._get_material_request_projects()
+            if not vals.get("project_id") and len(projects) == 1:
+                vals["project_id"] = projects.id
+
         return super().create(vals)
 
     # ---------------------------------------------------------
@@ -665,6 +708,8 @@ class MaterialRequest(models.Model):
             # 🔴 REQUIRED: at least one material line
             if not rec.line_ids:
                 raise UserError(_("You must add at least one material line before submitting the request."))
+            if not rec.project_id:
+                raise UserError(_("You must select the project for this Material Request before submitting it."))
 
             rec.state = "purchase"
             rec.message_post(body="Material Request submitted.")

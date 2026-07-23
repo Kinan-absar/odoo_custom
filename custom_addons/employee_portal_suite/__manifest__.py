@@ -66,6 +66,7 @@
         'data/request_sequence.xml',
         'data/attendance_automation.xml',
         'views/hr_employee_user_domain.xml',
+        'views/hr_employee_project_views.xml',
 
         # --------------------------------------------------
         # REPORTS

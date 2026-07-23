@@ -65,6 +65,30 @@
           enctype="multipart/form-data" style="display:block;">
         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
+        <t t-if="error_message">
+            <div class="alert alert-danger" role="alert"><t t-esc="error_message"/></div>
+        </t>
+
+        <div class="form-group mt-3">
+            <label>Project <span class="text-danger">*</span></label>
+            <t t-if="single_project">
+                <input type="hidden" name="project_id" t-att-value="single_project.id"/>
+                <input type="text" class="form-control" t-att-value="single_project.display_name" readonly="readonly"/>
+                <small class="text-muted">This is the only project assigned to you.</small>
+            </t>
+            <t t-elif="projects">
+                <select name="project_id" class="form-select" required="1">
+                    <option value="">Select project…</option>
+                    <t t-foreach="projects" t-as="project">
+                        <option t-att-value="project.id"><t t-esc="project.display_name"/></option>
+                    </t>
+                </select>
+            </t>
+            <t t-else="">
+                <div class="alert alert-warning mb-0">No project is assigned to your employee profile. Please contact HR.</div>
+            </t>
+        </div>
+
         <div class="form-group mt-3">
             <label>Worksite <span class="text-danger">*</span></label>
             <input type="text" name="worksite" class="form-control" required="1"/>
@@ -165,6 +189,30 @@
           style="display:none; direction:rtl; text-align:right;">
         <input type="hidden" name="csrf_token"
                t-att-value="request.csrf_token()"/>
+
+        <t t-if="error_message">
+            <div class="alert alert-danger" role="alert"><t t-esc="error_message"/></div>
+        </t>
+
+        <div class="form-group mt-3">
+            <label>المشروع <span class="text-danger">*</span></label>
+            <t t-if="single_project">
+                <input type="hidden" name="project_id" t-att-value="single_project.id"/>
+                <input type="text" class="form-control" t-att-value="single_project.display_name" readonly="readonly"/>
+                <small class="text-muted">هذا هو المشروع الوحيد المعيّن لك.</small>
+            </t>
+            <t t-elif="projects">
+                <select name="project_id" class="form-select" required="1">
+                    <option value="">اختر المشروع…</option>
+                    <t t-foreach="projects" t-as="project">
+                        <option t-att-value="project.id"><t t-esc="project.display_name"/></option>
+                    </t>
+                </select>
+            </t>
+            <t t-else="">
+                <div class="alert alert-warning mb-0">لا يوجد مشروع معيّن لملف الموظف. يرجى التواصل مع الموارد البشرية.</div>
+            </t>
+        </div>
 
         <div class="form-group mt-3">
             <label>الموقع <span class="text-danger">*</span></label>

@@ -158,6 +158,12 @@
                                     <!-- Editable ONLY for Portal Admins -->
                                     <field name="employee_id"
                                         groups="employee_portal_suite.group_employee_portal_admin"/>
+                                    <field name="available_project_ids" invisible="1"/>
+                                    <field name="project_selection_locked" invisible="1"/>
+                                    <field name="project_id"
+                                           options="{'no_create': True}"
+                                           readonly="project_selection_locked"
+                                           required="1"/>
                                     <field name="request_date"/>
                                     <field name="worksite"/>
                                     <field name="delivery_date"/>
