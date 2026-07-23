@@ -154,6 +154,12 @@ class CashPlanLineCEO(models.Model):
                 raise UserError(_('Receipts do not require CEO approval.'))
             if line.state == 'executed':
                 raise UserError(_('An executed payment cannot be resubmitted.'))
+            if not line.partner_id:
+                raise UserError(_('Select the supplier before submitting this planned payment to the CEO.'))
+            if line.transaction_type == 'supplier' and not line.purchase_order_ids:
+                raise UserError(_(
+                    'Select the exact Purchase Order or Purchase Orders to be paid before submitting this planned payment to the CEO.'
+                ))
             line.write({
                 'state': 'planned',
                 'ceo_decision': 'pending',
@@ -211,6 +217,8 @@ class CashPlanLineCEO(models.Model):
         if self.flow_type == 'out':
             if self.ceo_decision not in ('approved', 'adjusted') or self.approved_amount <= 0:
                 raise UserError(_('This planned payment must be approved by the CEO before execution.'))
+            if self.transaction_type == 'supplier' and not self.purchase_order_ids:
+                raise UserError(_('Select the exact Purchase Order or Purchase Orders before creating the Payment Voucher.'))
             amount = self.approved_amount
         else:
             amount = self.forecast_amount

@@ -110,7 +110,13 @@ class CashPlanLine(models.Model):
     journal_id = fields.Many2one('account.journal', domain="[('company_id', '=', company_id), ('default_account_id', '!=', False)]")
     destination_journal_id = fields.Many2one('account.journal', domain="[('company_id', '=', company_id), ('default_account_id', '!=', False)]")
     account_id = fields.Many2one('account.account', domain="[('company_ids', 'in', company_id)]")
-    purchase_order_ids = fields.Many2many('purchase.order', string='Purchase Orders', domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id)]")
+    purchase_order_ids = fields.Many2many(
+        'purchase.order',
+        string='Purchase Order(s) to Pay',
+        tracking=True,
+        domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]",
+        help='Select the exact confirmed Purchase Order or Purchase Orders covered by this planned payment before submitting it to the CEO.',
+    )
     linked_purchase_order_ids = fields.Many2many(
         'purchase.order',
         string='Linked Purchase Orders',
@@ -207,6 +213,37 @@ class CashPlanLine(models.Model):
             if partner:
                 parts.append(partner.display_name)
         return ' - '.join(filter(None, parts)) or _('Planned Cash Movement')
+
+
+    @api.onchange('partner_id', 'company_id', 'transaction_type', 'flow_type')
+    def _onchange_planned_payment_purchase_orders(self):
+        """Never retain a PO that does not belong to the current planned payment."""
+        for rec in self:
+            if rec.flow_type != 'out' or rec.transaction_type != 'supplier' or not rec.partner_id:
+                rec.purchase_order_ids = [(5, 0, 0)]
+                continue
+            valid_orders = rec.purchase_order_ids.filtered(
+                lambda po: po.partner_id == rec.partner_id
+                and po.company_id == rec.company_id
+                and po.state in ('purchase', 'done')
+            )
+            if valid_orders != rec.purchase_order_ids:
+                rec.purchase_order_ids = [(6, 0, valid_orders.ids)]
+
+    @api.constrains('purchase_order_ids', 'partner_id', 'company_id', 'transaction_type', 'flow_type')
+    def _check_planned_payment_purchase_orders(self):
+        for rec in self:
+            if rec.flow_type != 'out' or rec.transaction_type != 'supplier':
+                continue
+            invalid = rec.purchase_order_ids.filtered(
+                lambda po: po.partner_id != rec.partner_id
+                or po.company_id != rec.company_id
+                or po.state not in ('purchase', 'done')
+            )
+            if invalid:
+                raise ValidationError(_(
+                    'Every selected Purchase Order must be confirmed and must belong to the selected supplier and company.'
+                ))
 
     @api.constrains('forecast_amount')
     def _check_amount(self):
