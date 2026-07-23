@@ -133,9 +133,12 @@ class EmployeePortalMaterialRequests(http.Controller):
             return request.redirect("/my")
 
         uoms = request.env["uom.uom"].sudo().search([])
+        projects = emp.sudo()._get_material_request_projects()
 
         return request.render("employee_portal_suite.employee_material_request_new_form", {
             "uoms": uoms,
+            "projects": projects,
+            "single_project": projects[:1] if len(projects) == 1 else False,
         })
 
     # ---------------------------------------------------------
@@ -147,9 +150,21 @@ class EmployeePortalMaterialRequests(http.Controller):
         if not emp:
             return request.redirect("/my")
 
+        projects = emp.sudo()._get_material_request_projects()
+        project_id = int(post.get("project_id") or 0)
+        selected_project = request.env["project.project"].sudo().browse(project_id)
+        if not selected_project.exists() or selected_project not in projects:
+            return request.render("employee_portal_suite.employee_material_request_new_form", {
+                "uoms": request.env["uom.uom"].sudo().search([]),
+                "projects": projects,
+                "single_project": projects[:1] if len(projects) == 1 else False,
+                "error_message": _("Please select one of the projects configured on your work location."),
+            })
+
         # Create main request
         rec = request.env["material.request"].sudo().create({
             "employee_id": emp.id,
+            "project_id": selected_project.id,
             "worksite": post.get("worksite"),
             "delivery_date": post.get("delivery_date"),
         })

@@ -460,8 +460,8 @@ class MaterialRequest(models.Model):
     # Employee project routing
     @api.depends(
         "employee_id",
-        "employee_id.material_project_ids",
         "employee_id.work_location_id",
+        "employee_id.work_location_id.project_line_ids.project_id",
         "employee_id.work_location_id.project_id",
     )
     def _compute_available_projects(self):
@@ -492,7 +492,7 @@ class MaterialRequest(models.Model):
                 continue
             allowed = rec.employee_id._get_material_request_projects()
             if rec.project_id not in allowed:
-                raise ValidationError(_("The selected project is not assigned to this employee."))
+                raise ValidationError(_("The selected project is not configured on this employee's work location."))
            
     @api.depends("project_id")
     def _compute_project_approvers(self):

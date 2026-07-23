@@ -1,32 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-
     <record id="view_hr_work_location_form_inherit_project" model="ir.ui.view">
-        <field name="name">hr.work.location.form.inherit.project</field>
+        <field name="name">hr.work.location.form.inherit.projects</field>
         <field name="model">hr.work.location</field>
         <field name="inherit_id" ref="hr.hr_work_location_form_view"/>
         <field name="arch" type="xml">
-            <xpath expr="//sheet/group" position="inside">
-
-                <group string="Project">
-                    <field name="project_id"/>
+            <xpath expr="//sheet/group[1]" position="after">
+                <group string="Projects and Geolocation" col="1">
+                    <field name="project_line_ids" nolabel="1">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="company_id" column_invisible="True"/>
+                            <field name="project_id" options="{'no_create': True}"/>
+                            <field name="geo_enforce"/>
+                            <field name="geo_latitude" optional="show"/>
+                            <field name="geo_longitude" optional="show"/>
+                            <field name="geo_radius" optional="show"/>
+                        </list>
+                        <form string="Work Location Project">
+                            <group>
+                                <field name="company_id" invisible="1"/>
+                                <field name="project_id" options="{'no_create': True}"/>
+                                <field name="geo_enforce"/>
+                            </group>
+                            <group string="Project Geolocation" invisible="not geo_enforce">
+                                <field name="geo_latitude" placeholder="e.g. 24.7136"/>
+                                <field name="geo_longitude" placeholder="e.g. 46.6753"/>
+                                <field name="geo_radius"/>
+                            </group>
+                        </form>
+                    </field>
                 </group>
-
-                <group string="Geofencing">
-                    <field name="geo_enforce"/>
-                    <field name="geo_latitude"
-                           invisible="not geo_enforce"
-                           placeholder="e.g. 24.7136"/>
-                    <field name="geo_longitude"
-                           invisible="not geo_enforce"
-                           placeholder="e.g. 46.6753"/>
-                    <field name="geo_radius"
-                           invisible="not geo_enforce"
-                           help="Employees must check in within this distance (metres) from the coordinates above."/>
-                </group>
-
+                <field name="project_id" invisible="1"/>
+                <field name="geo_enforce" invisible="1"/>
+                <field name="geo_latitude" invisible="1"/>
+                <field name="geo_longitude" invisible="1"/>
+                <field name="geo_radius" invisible="1"/>
             </xpath>
         </field>
     </record>
-
 </odoo>

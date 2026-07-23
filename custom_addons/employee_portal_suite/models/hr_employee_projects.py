@@ -4,23 +4,18 @@ from odoo import fields, models
 class HrEmployee(models.Model):
     _inherit = "hr.employee"
 
+    # Retained as a hidden compatibility field because earlier releases created
+    # this relation. It is no longer used for Material Request routing.
     material_project_ids = fields.Many2many(
         "project.project",
         "hr_employee_material_project_rel",
         "employee_id",
         "project_id",
-        string="Assigned Projects",
-        help=(
-            "Projects this employee may use when creating Material Requests. "
-            "When empty, the project linked to the employee's work location is used "
-            "for backward compatibility."
-        ),
+        string="Deprecated Assigned Projects",
     )
 
     def _get_material_request_projects(self):
         self.ensure_one()
-        if self.material_project_ids:
-            return self.material_project_ids
-        if self.work_location_id and self.work_location_id.project_id:
-            return self.work_location_id.project_id
+        if self.work_location_id:
+            return self.work_location_id._get_material_request_projects()
         return self.env["project.project"]

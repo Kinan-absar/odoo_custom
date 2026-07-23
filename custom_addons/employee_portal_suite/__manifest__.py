@@ -1,6 +1,6 @@
 {
     'name': 'Employee Portal Suite',
-    'version': '18.0.1.1.1',
+    'version': '18.0.1.1.2',
     'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
 
     'description': """
@@ -20,7 +20,7 @@
     ✔ PDF reports for all request types
     ✔ GPS Attendance with geofencing (Check-In / Check-Out)
     ✔ Automatic checkout cron for missed attendance
-    ✔ Work location GPS configuration per employee
+    ✔ Multiple projects per work location with project-specific GPS configuration
     ✔ Backend menus for Requests, Attendance, and Material Requests
     ✔ Secure access using custom portal user, manager, HR, finance, and approval groups
     ✔ Completely isolated portal permissions (employees only see their own records)

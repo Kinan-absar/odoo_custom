@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <!-- Keep the previous XML ID upgrade-safe, but do not expose the obsolete
+         employee-level project field. Projects are configured on Work Location. -->
     <record id="hr_employee_form_material_projects" model="ir.ui.view">
-        <field name="name">hr.employee.form.material.projects</field>
+        <field name="name">hr.employee.form.material.projects.compatibility</field>
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='work_location_id']" position="after">
-                <field name="material_project_ids"
-                       string="Assigned Projects"
-                       widget="many2many_tags"
-                       options="{'no_create': True}"/>
+                <field name="material_project_ids" invisible="1"/>
             </xpath>
         </field>
     </record>
