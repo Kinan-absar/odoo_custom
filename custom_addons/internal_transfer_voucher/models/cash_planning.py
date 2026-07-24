@@ -123,6 +123,18 @@ class CashPlanLine(models.Model):
         compute='_compute_linked_purchase_order_ids',
         help='Purchase Orders selected on the plan or on its generated Payment Voucher.',
     )
+    po_amount_paid = fields.Monetary(
+        string='PO Amount Paid',
+        compute='_compute_po_payment_summary',
+        currency_field='currency_id',
+        help='Total amount already paid against the selected Purchase Order(s), converted to the weekly plan currency.',
+    )
+    po_balance_due = fields.Monetary(
+        string='PO Due Balance',
+        compute='_compute_po_payment_summary',
+        currency_field='currency_id',
+        help='Total remaining balance on the selected Purchase Order(s), converted to the weekly plan currency.',
+    )
     bill_ids = fields.Many2many('account.move', 'cash_plan_line_bill_rel', 'line_id', 'move_id', string='Vendor Bills', domain="[('partner_id', '=', partner_id), ('move_type', '=', 'in_invoice'), ('state', '=', 'posted'), ('company_id', '=', company_id)]")
     invoice_ids = fields.Many2many('account.move', 'cash_plan_line_invoice_rel', 'line_id', 'move_id', string='Customer Invoices', domain="[('partner_id', '=', partner_id), ('move_type', '=', 'out_invoice'), ('state', '=', 'posted'), ('company_id', '=', company_id)]")
     description = fields.Text()
@@ -130,6 +142,36 @@ class CashPlanLine(models.Model):
     payment_voucher_id = fields.Many2one('account.payment.voucher', readonly=True, copy=False)
     receipt_voucher_id = fields.Many2one('account.receipt.voucher', readonly=True, copy=False)
     internal_transfer_id = fields.Many2one('account.internal.transfer', readonly=True, copy=False)
+
+    @api.depends(
+        'purchase_order_ids',
+        'purchase_order_ids.amount_paid',
+        'purchase_order_ids.amount_paid_residual',
+        'purchase_order_ids.currency_id',
+        'planned_date',
+        'currency_id',
+        'company_id',
+    )
+    def _compute_po_payment_summary(self):
+        for line in self:
+            paid = 0.0
+            due = 0.0
+            conversion_date = line.planned_date or fields.Date.context_today(line)
+            for order in line.purchase_order_ids:
+                paid += order.currency_id._convert(
+                    order.amount_paid,
+                    line.currency_id,
+                    line.company_id,
+                    conversion_date,
+                )
+                due += order.currency_id._convert(
+                    order.amount_paid_residual,
+                    line.currency_id,
+                    line.company_id,
+                    conversion_date,
+                )
+            line.po_amount_paid = paid
+            line.po_balance_due = due
 
     @api.depends(
         'purchase_order_ids',

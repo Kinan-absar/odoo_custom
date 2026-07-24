@@ -1,5 +1,6 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
+from markupsafe import Markup, escape
 
 
 class CashPlanRunCEO(models.Model):
@@ -185,6 +186,86 @@ class CashPlanLineCEO(models.Model):
     def action_approve(self):
         raise UserError(_('Planned payments must be approved by the CEO from the Employee Portal.'))
 
+    def _weekly_plan_notification_users(self):
+        self.ensure_one()
+        group = self.env.ref(
+            'internal_transfer_voucher.group_weekly_payment_plan_manager',
+            raise_if_not_found=False,
+        )
+        if not group:
+            return self.env['res.users']
+        return group.sudo().users.filtered(
+            lambda user: user.active
+            and not user.share
+            and self.company_id in user.company_ids
+        )
+
+    def _notify_weekly_plan_group(self, decision, reviewer):
+        self.ensure_one()
+        users = self._weekly_plan_notification_users()
+        if not users:
+            return
+
+        decision_labels = {
+            'approved': _('approved'),
+            'adjusted': _('approved with an adjusted amount'),
+            'rejected': _('rejected'),
+            'held': _('placed on hold'),
+        }
+        decision_label = decision_labels.get(decision, decision)
+        backend_url = '/web#id=%s&model=cash.plan.line&view_type=form' % self.id
+        amount_text = ('%s %.2f' % (self.currency_id.symbol or self.currency_id.name, self.approved_amount)) if decision in ('approved', 'adjusted') else ''
+        amount_line = Markup('<br/><strong>%s:</strong> %s') % (
+            escape(_('Approved Amount')),
+            escape(amount_text),
+        ) if amount_text else Markup('')
+        comment_line = Markup('<br/><strong>%s:</strong> %s') % (
+            escape(_('CEO Comment')),
+            escape(self.ceo_comment),
+        ) if self.ceo_comment else Markup('')
+
+        body = Markup(
+            '<strong>%s</strong><br/>'
+            '%s <strong>%s</strong> %s %s.'
+            '%s%s<br/>'
+            '<a href="%s">%s</a>'
+        ) % (
+            escape(_('CEO Payment Decision')),
+            escape(_('Planned payment')),
+            escape(self.display_name),
+            escape(_('was')),
+            escape(decision_label),
+            amount_line,
+            comment_line,
+            escape(backend_url),
+            escape(_('Open Planned Payment')),
+        )
+
+        self.sudo().message_post(
+            body=body,
+            partner_ids=users.mapped('partner_id').ids,
+            subtype_xmlid='mail.mt_comment',
+            author_id=reviewer.partner_id.id,
+        )
+
+        if decision in ('approved', 'adjusted'):
+            existing_users = self.sudo().activity_ids.filtered(
+                lambda activity: activity.activity_type_id == self.env.ref('mail.mail_activity_data_todo')
+                and activity.user_id in users
+                and activity.summary == _('Execute approved payment')
+            ).mapped('user_id')
+            for user in users - existing_users:
+                self.sudo().activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    user_id=user.id,
+                    summary=_('Execute approved payment'),
+                    note=Markup('%s<br/><a href="%s">%s</a>') % (
+                        escape(_('The CEO approved this planned payment. Please proceed with execution.')),
+                        escape(backend_url),
+                        escape(_('Open Planned Payment')),
+                    ),
+                )
+
     def action_ceo_decide(self, decision, approved_amount=None, comment=None, reviewer=None):
         if decision not in ('approved', 'adjusted', 'rejected', 'held'):
             raise ValidationError(_('Invalid CEO decision.'))
@@ -210,6 +291,7 @@ class CashPlanLineCEO(models.Model):
                 'state': ('approved' if final_decision in ('approved', 'adjusted') else
                           'planned' if final_decision == 'held' else 'cancel'),
             })
+            line._notify_weekly_plan_group(final_decision, reviewer)
         return True
 
     def action_execute(self):
