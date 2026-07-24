@@ -7,7 +7,7 @@
         <search>
             <field name="name" string="Voucher"/>
             <field name="partner_id"/>
-            <field name="purchase_order_id"/>
+            <field name="purchase_order_ids"/>
             <field name="journal_id"/>
             <field name="description" string="Notes"/>
             <field name="amount"/>
@@ -38,7 +38,7 @@
             <field name="name"/>
             <field name="date"/>
             <field name="partner_id"/>
-            <field name="purchase_order_id"/>
+            <field name="purchase_order_numbers" string="Purchase Orders"/>
             <field name="amount"/>
             <field name="journal_id"/>
             <field name="payment_method"/>
@@ -118,10 +118,12 @@
                         <group string="Payment Information">
                             <field name="date"/>
                             <field name="partner_id"/>
-                            <field name="purchase_order_id"
-                                   domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]"
-                                   options="{'no_create': True}"
-                                   invisible="payment_method == 'journal_transfer' or not is_payable_account"/>
+                            <field name="purchase_order_id" invisible="1"/>
+                            <field name="purchase_order_ids"
+                                   widget="many2many_tags"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   readonly="state != 'draft'"
+                                   placeholder="Select one or more Purchase Orders..."/>
                             <field name="amount"/>
                             <field name="currency_id"
                                    groups="base.group_multi_currency"/>
@@ -147,6 +149,30 @@
                                    string="Analytic"
                                    groups="analytic.group_analytic_accounting"
                                    invisible="payment_method == 'journal_transfer'"/>
+                        </group>
+                    </group>
+
+                    <!-- Clean multi-PO selector above; only allocation amounts are edited here. -->
+                    <group string="PO Allocation Amounts"
+                           invisible="payment_method == 'journal_transfer' or not is_payable_account or not purchase_order_ids">
+                        <field name="po_allocation_ids" nolabel="1" colspan="4" readonly="state != 'draft'">
+                            <list editable="bottom" create="0" delete="0">
+                                <field name="purchase_order_id" string="Purchase Order" readonly="1"/>
+                                <field name="po_total" string="PO Total" widget="monetary" readonly="1"/>
+                                <field name="po_paid_before" string="Previously Paid" widget="monetary" readonly="1"/>
+                                <field name="po_balance_before" string="Available Balance" widget="monetary" readonly="1"/>
+                                <field name="amount" string="This Payment" widget="monetary" sum="Total Allocated"/>
+                                <field name="projected_paid" string="Paid After" widget="monetary" readonly="1" optional="hide"/>
+                                <field name="overpayment_amount" string="Overpayment" widget="monetary" readonly="1" decoration-danger="overpayment_amount &gt; 0"/>
+                                <field name="currency_id" column_invisible="True"/>
+                                <field name="po_currency_id" column_invisible="True"/>
+                                <field name="company_id" column_invisible="True"/>
+                            </list>
+                        </field>
+                        <group colspan="2"/>
+                        <group colspan="2">
+                            <field name="po_allocated_amount" string="Total Allocated" readonly="1"/>
+                            <field name="po_unallocated_amount" string="Remaining" readonly="1"/>
                         </group>
                     </group>
 

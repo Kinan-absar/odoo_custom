@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools import float_compare
 
 
 class AccountPaymentVoucher(models.Model):
@@ -96,16 +97,56 @@ class AccountPaymentVoucher(models.Model):
     # Purchase Order Tracking
     # -------------------------
 
+    # Kept for backward compatibility with vouchers created by earlier versions.
+    # New vouchers should use po_allocation_ids so one payment can be split safely
+    # between several purchase orders without counting the full amount on each PO.
     purchase_order_id = fields.Many2one(
         'purchase.order',
-        string='Purchase Order',
+        string='Legacy Purchase Order',
         check_company=True,
         domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]",
         tracking=True,
-        help="Optionally link this payment voucher to a specific Purchase Order. "
-             "This lets you track how much has been paid against that order. "
-             "For Cash/Cheque/Bank Transfer vouchers, the full voucher amount is counted "
-             "as paid towards the selected order once the voucher is posted.",
+        copy=False,
+        help="Legacy single-PO link retained so existing vouchers remain intact.",
+    )
+
+    po_allocation_ids = fields.One2many(
+        'account.payment.voucher.po.allocation',
+        'voucher_id',
+        string='Purchase Order Allocations',
+        copy=True,
+    )
+
+    purchase_order_ids = fields.Many2many(
+        'purchase.order',
+        'account_payment_voucher_purchase_order_rel_v2',
+        'voucher_id',
+        'purchase_order_id',
+        string='Purchase Orders',
+        domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]",
+        tracking=True,
+        copy=False,
+        help='Select one or more Purchase Orders covered by this payment.',
+    )
+
+    purchase_order_numbers = fields.Char(
+        string='Purchase Orders',
+        compute='_compute_purchase_order_numbers',
+        store=True,
+    )
+
+    po_allocated_amount = fields.Monetary(
+        string='Allocated to Purchase Orders',
+        compute='_compute_po_allocation_totals',
+        store=True,
+        currency_field='currency_id',
+    )
+
+    po_unallocated_amount = fields.Monetary(
+        string='Unallocated PO Amount',
+        compute='_compute_po_allocation_totals',
+        store=True,
+        currency_field='currency_id',
     )
 
     reconciled_bill_ids = fields.Many2many(
@@ -602,6 +643,185 @@ class AccountPaymentVoucher(models.Model):
         if self.payment_method != 'journal_transfer':
             self.line_ids = [(5, 0, 0)]
 
+    @api.depends('purchase_order_ids', 'purchase_order_ids.name')
+    def _compute_purchase_order_numbers(self):
+        for voucher in self:
+            voucher.purchase_order_numbers = ', '.join(voucher.purchase_order_ids.mapped('name'))
+
+    @api.onchange('purchase_order_ids')
+    def _onchange_purchase_order_ids_build_allocations(self):
+        """Display PO allocation rows immediately without requiring a save.
+
+        Existing persisted allocation rows are updated in place. Only genuinely
+        new Purchase Orders receive virtual rows. This prevents the web client
+        from sending a delete-all/create-all command set that can briefly create
+        two rows for the same PO and trigger the unique constraint.
+        """
+        Allocation = self.env['account.payment.voucher.po.allocation']
+        for voucher in self:
+            selected_orders = voucher.purchase_order_ids
+            selected_ids = set(selected_orders._origin.ids or selected_orders.ids)
+
+            existing_by_po = {}
+            for line in voucher.po_allocation_ids:
+                po = line.purchase_order_id
+                po_id = po._origin.id or (po.id if isinstance(po.id, int) else False)
+                if po_id and po_id not in existing_by_po:
+                    existing_by_po[po_id] = line
+
+            displayed_lines = Allocation.browse()
+            for order in selected_orders:
+                po_id = order._origin.id or (order.id if isinstance(order.id, int) else False)
+                if not po_id:
+                    continue
+                line = existing_by_po.get(po_id)
+                if not line:
+                    line = Allocation.new({
+                        'voucher_id': voucher.id or False,
+                        'purchase_order_id': po_id,
+                        'amount': voucher.amount if len(selected_ids) == 1 else 0.0,
+                    })
+                displayed_lines |= line
+
+            voucher.po_allocation_ids = displayed_lines
+
+    @api.onchange('amount')
+    def _onchange_amount_allocate_single_po(self):
+        """For one selected PO, default the full voucher amount immediately."""
+        for voucher in self:
+            if len(voucher.purchase_order_ids) == 1 and len(voucher.po_allocation_ids) == 1:
+                voucher.po_allocation_ids[0].amount = voucher.amount
+
+    def _apply_m2m_commands(self, current_ids, commands):
+        """Return the resulting IDs after applying standard M2M commands."""
+        result = list(current_ids)
+        for command in commands or []:
+            if not isinstance(command, (list, tuple)) or not command:
+                continue
+            operation = command[0]
+            record_id = command[1] if len(command) > 1 else 0
+            payload = command[2] if len(command) > 2 else False
+            if operation == 4 and record_id and record_id not in result:
+                result.append(record_id)
+            elif operation in (2, 3) and record_id in result:
+                result.remove(record_id)
+            elif operation == 5:
+                result = []
+            elif operation == 6:
+                result = list(payload or [])
+        return result
+
+    def _normalise_po_allocation_commands(self, vals, selected_order_ids):
+        """Build one safe allocation command per selected PO.
+
+        The browser may submit virtual allocation rows created by onchange while
+        persisted rows for the same PO already exist. This method converts that
+        payload into updates of existing rows plus creates only for missing POs,
+        so no temporary duplicate can reach PostgreSQL.
+        """
+        self.ensure_one()
+        selected_order_ids = list(dict.fromkeys(int(po_id) for po_id in selected_order_ids if po_id))
+        selected_set = set(selected_order_ids)
+
+        requested_amounts = {}
+        incoming = vals.get('po_allocation_ids') or []
+        existing_by_id = {line.id: line for line in self.po_allocation_ids if line.id}
+
+        for command in incoming:
+            if not isinstance(command, (list, tuple)) or not command:
+                continue
+            operation = command[0]
+            record_id = command[1] if len(command) > 1 else 0
+            payload = command[2] if len(command) > 2 and isinstance(command[2], dict) else {}
+            po_id = payload.get('purchase_order_id')
+            if isinstance(po_id, (list, tuple)):
+                po_id = po_id[0] if po_id else False
+            if not po_id and record_id in existing_by_id:
+                po_id = existing_by_id[record_id].purchase_order_id.id
+            if po_id and 'amount' in payload:
+                requested_amounts[int(po_id)] = payload['amount']
+
+        # Keep only one persisted row per PO. Any historical duplicate is removed.
+        persisted_by_po = {}
+        commands = []
+        for line in self.po_allocation_ids.sorted('id'):
+            po_id = line.purchase_order_id.id
+            if not po_id or po_id not in selected_set or po_id in persisted_by_po:
+                commands.append((2, line.id, 0))
+                continue
+            persisted_by_po[po_id] = line
+            update_vals = {}
+            if po_id in requested_amounts:
+                update_vals['amount'] = requested_amounts[po_id]
+            if update_vals:
+                commands.append((1, line.id, update_vals))
+
+        single_default = vals.get('amount', self.amount) if len(selected_order_ids) == 1 else 0.0
+        for po_id in selected_order_ids:
+            if po_id in persisted_by_po:
+                continue
+            commands.append((0, 0, {
+                'purchase_order_id': po_id,
+                'amount': requested_amounts.get(po_id, single_default),
+            }))
+        return commands
+
+    def _prepare_po_values_for_write(self, vals):
+        """Sanitise selector/allocation values before the ORM writes them."""
+        vals = dict(vals)
+        current_ids = self.purchase_order_ids.ids
+        if 'purchase_order_ids' in vals:
+            selected_ids = self._apply_m2m_commands(current_ids, vals['purchase_order_ids'])
+            vals['po_allocation_ids'] = self._normalise_po_allocation_commands(vals, selected_ids)
+        elif 'po_allocation_ids' in vals:
+            vals['po_allocation_ids'] = self._normalise_po_allocation_commands(vals, current_ids)
+        elif 'amount' in vals and len(current_ids) == 1 and len(self.po_allocation_ids) == 1:
+            vals['po_allocation_ids'] = [(1, self.po_allocation_ids.id, {'amount': vals['amount']})]
+        return vals
+
+    def _apply_single_po_full_amount(self):
+        """Ensure a single selected PO defaults to the full voucher amount."""
+        for voucher in self:
+            if len(voucher.purchase_order_ids) == 1 and len(voucher.po_allocation_ids) == 1:
+                line = voucher.po_allocation_ids[0]
+                if voucher.currency_id.is_zero(line.amount) and not voucher.currency_id.is_zero(voucher.amount):
+                    line.with_context(skip_po_selector_sync=True).write({'amount': voucher.amount})
+
+    @api.depends('po_allocation_ids.amount', 'amount')
+    def _compute_po_allocation_totals(self):
+        for rec in self:
+            allocated = sum(rec.po_allocation_ids.mapped('amount'))
+            rec.po_allocated_amount = allocated
+            rec.po_unallocated_amount = rec.amount - allocated
+
+    @api.constrains('po_allocation_ids', 'po_allocation_ids.amount',
+                    'po_allocation_ids.purchase_order_id', 'amount',
+                    'partner_id', 'company_id')
+    def _check_po_allocations(self):
+        for rec in self:
+            if not rec.po_allocation_ids:
+                continue
+
+            orders = rec.po_allocation_ids.mapped('purchase_order_id')
+            if len(orders) != len(rec.po_allocation_ids):
+                raise ValidationError(_("The same Purchase Order cannot be allocated twice on one voucher."))
+
+            wrong_partner = orders.filtered(lambda po: po.partner_id.commercial_partner_id != rec.partner_id.commercial_partner_id)
+            if wrong_partner:
+                raise ValidationError(_("All selected Purchase Orders must belong to the voucher vendor."))
+
+            wrong_company = orders.filtered(lambda po: po.company_id != rec.company_id)
+            if wrong_company:
+                raise ValidationError(_("All selected Purchase Orders must belong to the voucher company."))
+
+            allocated = sum(rec.po_allocation_ids.mapped('amount'))
+            if rec.currency_id.compare_amounts(allocated, rec.amount) > 0:
+                raise ValidationError(_(
+                    "The total Purchase Order allocation (%(allocated)s) cannot exceed the voucher amount (%(amount)s).",
+                    allocated=allocated,
+                    amount=rec.amount,
+                ))
+
     @api.onchange('purchase_order_id')
     def _onchange_purchase_order_id(self):
         """When a Purchase Order is picked, default the partner and suggest
@@ -802,13 +1022,62 @@ class AccountPaymentVoucher(models.Model):
     # Actions
     # -------------------------
 
+    def _get_po_overpayment_lines(self):
+        self.ensure_one()
+        result = []
+        for line in self.po_allocation_ids:
+            if not line.purchase_order_id:
+                continue
+            if line.po_currency_id.compare_amounts(line.overpayment_amount, 0.0) > 0:
+                result.append(line)
+        return self.env['account.payment.voucher.po.allocation'].browse([line.id for line in result if line.id]) or result
+
+    def _open_po_overpayment_confirmation(self, lines):
+        self.ensure_one()
+        details = []
+        for line in lines:
+            details.append(_(
+                '%(po)s: PO total %(total).2f, previously paid %(paid).2f, this payment %(current).2f, overpayment %(over).2f %(currency)s',
+                po=line.purchase_order_id.name,
+                total=line.po_total,
+                paid=line.po_paid_before,
+                current=line.amount_in_po_currency,
+                over=line.overpayment_amount,
+                currency=line.po_currency_id.name,
+            ))
+        wizard = self.env['account.payment.voucher.overpayment.confirm'].create({
+            'voucher_id': self.id,
+            'message': '\n'.join(details),
+        })
+        return {
+            'name': _('Confirm Purchase Order Overpayment'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.payment.voucher.overpayment.confirm',
+            'view_mode': 'form',
+            'res_id': wizard.id,
+            'target': 'new',
+        }
+
     def action_post(self):
         for rec in self:
             if rec.state != 'draft':
                 continue
 
+            # A voucher linked to one PO always allocates its full amount to that PO.
+            # Apply this before calculating overpayment and before the positive-allocation check.
+            rec._apply_single_po_full_amount()
+            rec.invalidate_recordset(['po_allocation_ids'])
+
+            if not self.env.context.get('skip_po_overpayment_confirmation'):
+                overpayment_lines = rec._get_po_overpayment_lines()
+                if overpayment_lines:
+                    return rec._open_po_overpayment_confirmation(overpayment_lines)
+
             if not rec.journal_id.default_account_id:
                 raise UserError(_("The selected journal has no default account."))
+
+            if rec.po_allocation_ids and any(line.amount <= 0 for line in rec.po_allocation_ids):
+                raise UserError(_("Enter an allocated amount greater than zero for every selected Purchase Order."))
 
             if rec.payment_method == 'journal_transfer':
                 rec._post_journal_transfer()
@@ -1084,12 +1353,45 @@ class AccountPaymentVoucher(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        for vals in vals_list:
+        prepared_vals_list = []
+        for original_vals in vals_list:
+            vals = dict(original_vals)
             if vals.get('name', 'New') == 'New':
                 vals['name'] = self.env['ir.sequence'].sudo().next_by_code(
                     'payment.voucher'
                 ) or 'New'
-        return super().create(vals_list)
+
+            # On a new voucher there are no persisted allocation rows. Deduplicate
+            # the browser payload and create exactly one row per selected PO.
+            selected_ids = self._apply_m2m_commands([], vals.get('purchase_order_ids', []))
+            requested_amounts = {}
+            for command in vals.get('po_allocation_ids', []) or []:
+                if isinstance(command, (list, tuple)) and command and command[0] == 0:
+                    payload = command[2] if len(command) > 2 and isinstance(command[2], dict) else {}
+                    po_id = payload.get('purchase_order_id')
+                    if isinstance(po_id, (list, tuple)):
+                        po_id = po_id[0] if po_id else False
+                    if po_id:
+                        requested_amounts[int(po_id)] = payload.get('amount', 0.0)
+            selected_ids = list(dict.fromkeys(selected_ids))
+            if selected_ids:
+                single_default = vals.get('amount', 0.0) if len(selected_ids) == 1 else 0.0
+                vals['po_allocation_ids'] = [
+                    (0, 0, {
+                        'purchase_order_id': po_id,
+                        'amount': requested_amounts.get(po_id, single_default),
+                    })
+                    for po_id in selected_ids
+                ]
+            else:
+                vals['po_allocation_ids'] = []
+            prepared_vals_list.append(vals)
+
+        records = super(AccountPaymentVoucher, self.with_context(
+            skip_po_selector_sync=True,
+            skip_po_allocation_sync=True,
+        )).create(prepared_vals_list)
+        return records
 
     def write(self, vals):
         for rec in self:
@@ -1099,7 +1401,57 @@ class AccountPaymentVoucher(models.Model):
                     raise UserError(_("You cannot modify a posted payment voucher."))
                 if 'bill_ids' in vals and rec.bill_reconciled and not self.env.context.get('skip_bill_reconcile_lock'):
                     raise UserError(_("You cannot change selected bills after this voucher has been fully reconciled."))
-        return super().write(vals)
+
+        # Prepare each record separately because its current allocations may differ.
+        if len(self) > 1 and ({'purchase_order_ids', 'po_allocation_ids', 'amount'} & set(vals)):
+            result = True
+            for rec in self:
+                result = rec.write(vals) and result
+            return result
+
+        prepared_vals = self._prepare_po_values_for_write(vals) if self else vals
+        return super(AccountPaymentVoucher, self.with_context(
+            skip_po_selector_sync=True,
+            skip_po_allocation_sync=True,
+        )).write(prepared_vals)
+
+    def _link_posted_purchase_order(self, purchase_order, amount):
+        """Link a posted voucher to a PO without changing its journal entry.
+
+        This method is intentionally narrow and is called only by the PO linking
+        wizard. Normal form editing of posted vouchers remains blocked.
+        """
+        self.ensure_one()
+        if self.state != 'posted':
+            raise UserError(_("Only posted payment vouchers can use this linking action."))
+        if purchase_order.company_id != self.company_id:
+            raise ValidationError(_("The Purchase Order and payment voucher must belong to the same company."))
+        if purchase_order.partner_id.commercial_partner_id != self.partner_id.commercial_partner_id:
+            raise ValidationError(_("The Purchase Order must belong to the same vendor as the payment voucher."))
+        if self.po_allocation_ids.filtered(lambda line: line.purchase_order_id == purchase_order):
+            raise ValidationError(_("This payment voucher is already linked to this Purchase Order."))
+
+        allocated = sum(self.po_allocation_ids.mapped('amount'))
+        precision = self.currency_id.decimal_places
+        if float_compare(allocated + amount, self.amount, precision_digits=precision) > 0:
+            raise ValidationError(_("The total Purchase Order allocation cannot exceed the voucher amount."))
+
+        # Bypass the normal posted-voucher write guard only for the selector link.
+        super(AccountPaymentVoucher, self.with_context(
+            allow_posted_po_link=True,
+            skip_po_selector_sync=True,
+            skip_po_allocation_sync=True,
+        )).write({'purchase_order_ids': [(4, purchase_order.id)]})
+
+        self.env['account.payment.voucher.po.allocation'].with_context(
+            allow_posted_po_link=True,
+        ).create({
+            'voucher_id': self.id,
+            'purchase_order_id': purchase_order.id,
+            'amount': amount,
+        })
+        self.invalidate_recordset(['purchase_order_ids', 'po_allocation_ids'])
+        return True
 
     @api.model
     def retrieve_dashboard(self):
@@ -1135,6 +1487,241 @@ class AccountPaymentVoucher(models.Model):
             'total_posted_amount': total_posted_amount,
             'currency_symbol': self.env.company.currency_id.symbol or '',
         }
+
+
+class AccountPaymentVoucherPOAllocation(models.Model):
+    _name = 'account.payment.voucher.po.allocation'
+    _description = 'Payment Voucher Purchase Order Allocation'
+    # Use a dedicated fresh table. A previous failed development upgrade may
+    # have left the default table partially created without voucher_id.
+    _table = 'account_payment_voucher_po_allocation_v2'
+    _order = 'id'
+    _check_company_auto = True
+
+    voucher_id = fields.Many2one(
+        'account.payment.voucher',
+        required=True,
+        ondelete='cascade',
+        index=True,
+        check_company=True,
+    )
+    purchase_order_id = fields.Many2one(
+        'purchase.order',
+        string='Purchase Order',
+        required=False,
+        ondelete='restrict',
+        index=True,
+        check_company=True,
+    )
+    amount = fields.Monetary(
+        string='Allocated Amount',
+        required=True,
+        currency_field='currency_id',
+    )
+    currency_id = fields.Many2one(
+        related='voucher_id.currency_id',
+        store=True,
+        readonly=True,
+    )
+    company_id = fields.Many2one(
+        related='voucher_id.company_id',
+        store=True,
+        readonly=True,
+    )
+    partner_id = fields.Many2one(
+        related='voucher_id.partner_id',
+        store=True,
+        readonly=True,
+    )
+    voucher_state = fields.Selection(
+        related='voucher_id.state',
+        string='Status',
+        store=True,
+        readonly=True,
+    )
+    po_currency_id = fields.Many2one(
+        related='purchase_order_id.currency_id',
+        readonly=True,
+    )
+    po_total = fields.Monetary(
+        related='purchase_order_id.amount_total',
+        string='PO Total',
+        currency_field='po_currency_id',
+        readonly=True,
+    )
+    po_balance_due = fields.Monetary(
+        related='purchase_order_id.amount_paid_residual',
+        string='PO Balance Due',
+        currency_field='po_currency_id',
+        readonly=True,
+    )
+
+    po_paid_before = fields.Monetary(
+        string='Previously Paid',
+        compute='_compute_po_payment_status',
+        currency_field='po_currency_id',
+    )
+    po_balance_before = fields.Monetary(
+        string='Available Balance',
+        compute='_compute_po_payment_status',
+        currency_field='po_currency_id',
+    )
+    amount_in_po_currency = fields.Monetary(
+        string='This Payment (PO Currency)',
+        compute='_compute_po_payment_status',
+        currency_field='po_currency_id',
+    )
+    projected_paid = fields.Monetary(
+        string='Paid After This Payment',
+        compute='_compute_po_payment_status',
+        currency_field='po_currency_id',
+    )
+    overpayment_amount = fields.Monetary(
+        string='Overpayment',
+        compute='_compute_po_payment_status',
+        currency_field='po_currency_id',
+    )
+
+    @api.depends('purchase_order_id', 'amount', 'voucher_id.date', 'voucher_id.currency_id',
+                 'purchase_order_id.amount_total', 'purchase_order_id.payment_voucher_allocation_ids.amount',
+                 'purchase_order_id.payment_voucher_allocation_ids.voucher_id.state')
+    def _compute_po_payment_status(self):
+        for line in self:
+            order = line.purchase_order_id
+            voucher = line.voucher_id
+            if not order or not voucher:
+                line.po_paid_before = 0.0
+                line.po_balance_before = 0.0
+                line.amount_in_po_currency = 0.0
+                line.projected_paid = 0.0
+                line.overpayment_amount = 0.0
+                continue
+
+            paid_before = 0.0
+            allocations = order.payment_voucher_allocation_ids.filtered(
+                lambda alloc: alloc.voucher_id.state == 'posted' and alloc.voucher_id != voucher
+            )
+            for alloc in allocations:
+                paid_before += alloc.voucher_id.currency_id._convert(
+                    alloc.amount,
+                    order.currency_id,
+                    order.company_id,
+                    alloc.voucher_id.date or fields.Date.context_today(order),
+                )
+            legacy = order.legacy_payment_voucher_ids.filtered(
+                lambda old: old.state == 'posted' and old != voucher and not old.po_allocation_ids
+            )
+            for old in legacy:
+                paid_before += old.currency_id._convert(
+                    old.amount,
+                    order.currency_id,
+                    order.company_id,
+                    old.date or fields.Date.context_today(order),
+                )
+
+            current = voucher.currency_id._convert(
+                line.amount,
+                order.currency_id,
+                order.company_id,
+                voucher.date or fields.Date.context_today(voucher),
+            )
+            balance = order.amount_total - paid_before
+            projected = paid_before + current
+            line.po_paid_before = paid_before
+            line.po_balance_before = balance
+            line.amount_in_po_currency = current
+            line.projected_paid = projected
+            line.overpayment_amount = max(projected - order.amount_total, 0.0)
+
+    @api.onchange('amount', 'purchase_order_id')
+    def _onchange_warn_po_overpayment(self):
+        for line in self:
+            if line.purchase_order_id and line.overpayment_amount > 0:
+                return {
+                    'warning': {
+                        'title': _('Purchase Order Overpayment'),
+                        'message': _(
+                            '%(po)s will be overpaid by %(amount).2f %(currency)s. You may continue editing; confirmation will be required when posting.',
+                            po=line.purchase_order_id.name,
+                            amount=line.overpayment_amount,
+                            currency=line.po_currency_id.name,
+                        ),
+                    }
+                }
+
+    def init(self):
+        """Remove incomplete rows left by earlier failed development upgrades."""
+        self.env.cr.execute("""
+            DELETE FROM account_payment_voucher_po_allocation_v2
+             WHERE voucher_id IS NULL OR purchase_order_id IS NULL
+        """)
+
+    _sql_constraints = [
+        ('voucher_po_unique', 'unique(voucher_id, purchase_order_id)',
+         'The same Purchase Order cannot be allocated twice on one voucher.'),
+        ('allocation_amount_nonnegative', 'check(amount >= 0)',
+         'The allocated amount cannot be negative.'),
+    ]
+
+    @api.constrains('purchase_order_id', 'voucher_id')
+    def _check_order_matches_voucher(self):
+        for line in self:
+            if not line.purchase_order_id or not line.voucher_id:
+                continue
+            if line.purchase_order_id.company_id != line.voucher_id.company_id:
+                raise ValidationError(_("The Purchase Order and payment voucher must belong to the same company."))
+            if line.purchase_order_id.partner_id.commercial_partner_id != line.voucher_id.partner_id.commercial_partner_id:
+                raise ValidationError(_("The Purchase Order must belong to the same vendor as the payment voucher."))
+
+    def _sync_voucher_purchase_orders(self, vouchers):
+        """Compatibility no-op.
+
+        The Purchase Orders selector is the canonical source. Allocation rows
+        must never write back to it while the parent voucher is being saved,
+        otherwise recursive writes can recreate duplicate rows.
+        """
+        return
+
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        vouchers = self.env['account.payment.voucher'].browse(
+            [vals.get('voucher_id') for vals in vals_list if vals.get('voucher_id')]
+        )
+        if any(v.state != 'draft' for v in vouchers) and not self.env.context.get('allow_posted_po_link'):
+            raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
+        records = super().create(vals_list)
+        records._sync_voucher_purchase_orders(records.mapped('voucher_id'))
+        return records
+
+    def write(self, vals):
+        vouchers = self.mapped('voucher_id')
+        if any(v.state != 'draft' for v in vouchers) and not self.env.context.get('allow_posted_po_link'):
+            raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
+        result = super().write(vals)
+        self._sync_voucher_purchase_orders(vouchers | self.mapped('voucher_id'))
+        return result
+
+    def unlink(self):
+        vouchers = self.mapped('voucher_id')
+        if any(v.state != 'draft' for v in vouchers) and not self.env.context.get('allow_posted_po_link'):
+            raise UserError(_("Purchase Order allocations can only be changed while the voucher is in Draft."))
+        result = super().unlink()
+        self._sync_voucher_purchase_orders(vouchers)
+        return result
+class AccountPaymentVoucherOverpaymentConfirm(models.TransientModel):
+    _name = 'account.payment.voucher.overpayment.confirm'
+    _description = 'Confirm Payment Voucher PO Overpayment'
+
+    voucher_id = fields.Many2one('account.payment.voucher', required=True, readonly=True)
+    message = fields.Text(string='Overpayment Details', readonly=True)
+
+    def action_confirm(self):
+        self.ensure_one()
+        self.voucher_id.with_context(skip_po_overpayment_confirmation=True).action_post()
+        return {'type': 'ir.actions.act_window_close'}
+
+
 class AccountPaymentVoucherLine(models.Model):
     _name = 'account.payment.voucher.line'
     _description = 'Payment Voucher Destination Journal'

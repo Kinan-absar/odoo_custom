@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="portal_signed_po_not_found" name="Signed PO Not Found">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="container py-4">
+                <div class="alert alert-warning rounded-3">
+                    <h5 class="mb-2">Signed Purchase Order Not Found</h5>
+                    <p class="mb-0">
+                        No Sign document could be matched to
+                        <strong t-esc="purchase_order.name"/>.
+                    </p>
+                </div>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary">Back</a>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_signed_po_not_ready" name="Signed PO Not Ready">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="container py-4">
+                <div class="alert alert-info rounded-3">
+                    <h5 class="mb-2">Purchase Order Signature In Progress</h5>
+                    <p class="mb-1">
+                        <strong t-esc="purchase_order.name"/> is linked to a Sign request,
+                        but the final signed PDF is not available yet.
+                    </p>
+                    <small class="text-muted">
+                        Current Sign status: <span t-esc="sign_request.state"/>.
+                    </small>
+                </div>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary">Back</a>
+            </div>
+        </t>
+    </template>
+</odoo>

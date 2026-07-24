@@ -1,0 +1,492 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<odoo>
+  <template id="portal_treasury_payment_list" name="CEO Payment Approvals">
+    <t t-call="employee_portal_suite.employee_portal_layout">
+      <style>
+        .eps-treasury-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-treasury-table th, .eps-treasury-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
+        .eps-treasury-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
+        .eps-treasury-table .eps-money, .eps-treasury-table .eps-date, .eps-treasury-table .eps-status { white-space: nowrap; }
+        .eps-treasury-table .eps-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .eps-treasury-table .badge { font-size: 10px; padding: .25em .45em; font-weight: 600; }
+        .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
+        .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
+        .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
+        .eps-col-date { width: 6%; }
+        .eps-col-payment { width: 9%; }
+        .eps-col-plan { width: 7%; }
+        .eps-col-partner { width: 11%; }
+        .eps-col-po { width: 8%; }
+        .eps-col-money { width: 7%; }
+        .eps-col-status { width: 11%; }
+        .eps-col-review { width: 20%; }
+        .eps-col-status .badge { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .eps-icon-btn { min-width: 28px; }
+        .eps-summary-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-summary-table th, .eps-summary-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
+        .eps-summary-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
+        .eps-weekly-col-date { width: 8%; }
+        .eps-weekly-col-flow { width: 6%; }
+        .eps-weekly-col-description { width: 10%; }
+        .eps-weekly-col-partner { width: 15%; }
+        .eps-weekly-col-money { width: 8%; }
+        .eps-weekly-col-status { width: 13%; }
+        .eps-weekly-col-status .badge { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        @media (max-width: 1200px) {
+          .eps-treasury-table { font-size: 10.5px; }
+          .eps-treasury-table th { font-size: 9.8px; }
+          .eps-treasury-table th, .eps-treasury-table td { padding: .25rem .28rem; }
+        }
+      </style>
+      <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h3 class="mb-1">Payment Approvals</h3>
+            <p class="text-muted mb-0">Review, adjust, approve, hold, or reject planned outgoing payments.</p>
+          </div>
+          <a href="/my/employee/treasury/plans" class="btn btn-outline-primary btn-sm">Weekly Cash Plans</a>
+        </div>
+        <div t-if="message" class="alert alert-success">
+          <t t-esc="message"/>
+        </div>
+        <div t-if="error" class="alert alert-danger">
+          <t t-esc="error"/>
+        </div>
+        <div class="btn-group mb-3">
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'pending' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=pending">Pending <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('pending', 0)"/></span></t></a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'approved' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=approved">Approved <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('approved', 0)"/></span></t></a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'held' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=held">On Hold <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('held', 0)"/></span></t></a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'rejected' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=rejected">Rejected <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('rejected', 0)"/></span></t></a>
+          <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'all' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=all">All <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('all', 0)"/></span></t></a>
+        </div>
+        <div class="card border-0 shadow-sm">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 eps-treasury-table">
+              <thead class="table-light">
+                <tr>
+                  <th class="eps-col-date">Date</th>
+                  <th class="eps-col-payment">Payment</th>
+                  <th class="eps-col-plan">Weekly Plan</th>
+                  <th class="eps-col-partner">Partner / Project</th>
+                  <th class="eps-col-po">Purchase Order</th>
+                  <th class="eps-col-money">PO Paid</th>
+                  <th class="eps-col-money">PO Due</th>
+                  <th class="eps-col-money">Requested</th>
+                  <th class="eps-col-money">Approved</th>
+                  <th class="eps-col-status">Status</th>
+                  <th class="eps-col-review">CEO Review</th>
+                </tr>
+              </thead>
+              <tbody>
+                <t t-foreach="lines" t-as="line">
+                  <tr>
+                    <td>
+                      <t t-esc="line.planned_date"/>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">
+                        <t t-esc="line.name"/>
+                      </div>
+                      <small class="text-muted">
+                        <t t-esc="line.category_id.name"/>
+                      </small>
+                    </td>
+                    <td>
+                      <a t-att-href="'/my/employee/treasury/plans/%s' % line.run_id.id">
+                        <t t-esc="line.run_id.name"/>
+                      </a>
+                    </td>
+                    <td>
+                      <div t-if="line.partner_id" class="eps-truncate" t-att-title="line.partner_id.name">
+                        <t t-esc="line.partner_id.name"/>
+                      </div>
+                      <small t-if="line.project_id" class="text-muted eps-truncate" t-att-title="line.project_id.name">
+                        <t t-esc="line.project_id.name"/>
+                      </small>
+                    </td>
+                    <td>
+                      <t t-if="line.portal_purchase_order_ids">
+                        <div t-foreach="line.portal_purchase_order_ids" t-as="po" class="mb-1">
+                          <a t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id"
+                             class="btn btn-sm btn-outline-primary py-0 px-2"
+                             title="View Purchase Order"
+                             target="_blank" rel="noopener">
+                            <i class="fa fa-eye me-1"/>
+                            <t t-esc="po.name"/>
+                          </a>
+                        </div>
+                      </t>
+                      <span t-else="" class="text-muted small">No PO linked</span>
+                    </td>
+                    <td>
+                      <span t-if="line.purchase_order_ids" t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                      <span t-else="" class="text-muted">—</span>
+                    </td>
+                    <td>
+                      <span t-if="line.purchase_order_ids" t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                      <span t-else="" class="text-muted">—</span>
+                    </td>
+                    <td>
+                      <span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                    </td>
+                    <td>
+                      <span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                    </td>
+                    <td class="eps-status eps-col-status">
+                      <span class="badge text-bg-secondary" t-att-title="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)">
+                        <t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
+                      </span>
+                    </td>
+                    <td>
+                      <form t-if="line.ceo_decision in ('pending', 'held')" t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div class="input-group input-group-sm mb-2">
+                          <span class="input-group-text">Amount</span>
+                          <input type="number" step="0.01" min="0" name="approved_amount" class="form-control" t-att-value="line.approved_amount or line.forecast_amount"/>
+                        </div>
+                        <textarea name="comment" class="form-control form-control-sm mb-2" rows="2" placeholder="CEO comment">
+                          <t t-esc="line.ceo_comment or ''"/>
+                        </textarea>
+                        <button name="decision" value="approved" class="btn btn-success btn-sm eps-icon-btn" title="Approve" aria-label="Approve"><i class="fa fa-check"/></button>
+                        <button name="decision" value="held" class="btn btn-warning btn-sm eps-icon-btn ms-1" title="Hold" aria-label="Hold"><i class="fa fa-pause"/></button>
+                        <button name="decision" value="rejected" class="btn btn-outline-danger btn-sm eps-icon-btn ms-1" title="Reject" aria-label="Reject"><i class="fa fa-times"/></button>
+                      </form>
+                      <div t-else="" class="small">
+                        <div t-if="line.ceo_comment" class="text-muted">
+                          <t t-esc="line.ceo_comment"/>
+                        </div>
+                        <div t-if="line.ceo_approved_by" class="text-muted">Reviewed by CEO</div>
+                      </div>
+                    </td>
+                  </tr>
+                </t>
+                <tr t-if="not lines">
+                  <td colspan="11" class="text-center text-muted py-5">No payments found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </t>
+  </template>
+  <template id="portal_treasury_plan_list" name="CEO Weekly Cash Plans">
+    <t t-call="employee_portal_suite.employee_portal_layout">
+      <style>
+        .eps-treasury-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-treasury-table th, .eps-treasury-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
+        .eps-treasury-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
+        .eps-treasury-table .eps-money, .eps-treasury-table .eps-date, .eps-treasury-table .eps-status { white-space: nowrap; }
+        .eps-treasury-table .eps-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .eps-treasury-table .badge { font-size: 10px; padding: .25em .45em; font-weight: 600; }
+        .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
+        .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
+        .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
+        .eps-col-date { width: 6%; }
+        .eps-col-payment { width: 9%; }
+        .eps-col-plan { width: 7%; }
+        .eps-col-partner { width: 11%; }
+        .eps-col-po { width: 8%; }
+        .eps-col-money { width: 7%; }
+        .eps-col-status { width: 11%; }
+        .eps-col-review { width: 20%; }
+        .eps-col-status .badge { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .eps-icon-btn { min-width: 28px; }
+        .eps-summary-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-summary-table th, .eps-summary-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
+        .eps-summary-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
+        .eps-weekly-col-date { width: 8%; }
+        .eps-weekly-col-flow { width: 6%; }
+        .eps-weekly-col-description { width: 10%; }
+        .eps-weekly-col-partner { width: 15%; }
+        .eps-weekly-col-money { width: 8%; }
+        .eps-weekly-col-status { width: 13%; }
+        .eps-weekly-col-status .badge { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        @media (max-width: 1200px) {
+          .eps-treasury-table { font-size: 10.5px; }
+          .eps-treasury-table th { font-size: 9.8px; }
+          .eps-treasury-table th, .eps-treasury-table td { padding: .25rem .28rem; }
+        }
+      </style>
+      <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h3 class="mb-1">Weekly Cash Plans</h3>
+            <p class="text-muted mb-0">Read-only view of complete weekly inflows, outflows, and cash position.</p>
+          </div>
+          <a href="/my/employee/treasury/payments" class="btn btn-outline-primary btn-sm">Payment Approvals</a>
+        </div>
+        <div class="card border-0 shadow-sm">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 eps-treasury-table">
+              <thead class="table-light">
+                <tr>
+                  <th>Plan</th>
+                  <th>Week</th>
+                  <th>Opening</th>
+                  <th>Forecast In</th>
+                  <th>Forecast Out</th>
+                  <th>Forecast Closing</th>
+                  <th>Status</th>
+                  <th/>
+                </tr>
+              </thead>
+              <tbody>
+                <t t-foreach="runs" t-as="run">
+                  <tr>
+                    <td class="fw-semibold">
+                      <t t-esc="run.name"/>
+                    </td>
+                    <td><t t-esc="run.date_from"/> – <t t-esc="run.date_to"/></td>
+                    <td>
+                      <span t-field="run.opening_balance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                    </td>
+                    <td class="text-success">
+                      <span t-field="run.forecast_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                    </td>
+                    <td class="text-danger">
+                      <span t-field="run.forecast_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                    </td>
+                    <td>
+                      <span t-field="run.forecast_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                    </td>
+                    <td>
+                      <span class="badge text-bg-secondary">
+                        <t t-esc="dict(run._fields['state'].selection).get(run.state)"/>
+                      </span>
+                    </td>
+                    <td class="text-end">
+                      <a t-att-href="'/my/employee/treasury/plans/%s' % run.id" class="btn btn-sm btn-outline-primary eps-icon-btn" title="View plan" aria-label="View plan"><i class="fa fa-eye"/></a>
+                    </td>
+                  </tr>
+                </t>
+                <tr t-if="not runs">
+                  <td colspan="8" class="text-center text-muted py-5">No weekly cash plans found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </t>
+  </template>
+  <template id="portal_treasury_plan_detail_clean_v3" name="CEO Weekly Cash Plan Detail">
+    <t t-call="employee_portal_suite.employee_portal_layout">
+      <style>
+        .eps-treasury-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-treasury-table th, .eps-treasury-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
+        .eps-treasury-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
+        .eps-treasury-table .eps-money, .eps-treasury-table .eps-date, .eps-treasury-table .eps-status { white-space: nowrap; }
+        .eps-treasury-table .eps-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .eps-treasury-table .badge { font-size: 10px; padding: .25em .45em; font-weight: 600; }
+        .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
+        .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
+        .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
+        .eps-col-date { width: 6%; }
+        .eps-col-payment { width: 9%; }
+        .eps-col-plan { width: 7%; }
+        .eps-col-partner { width: 11%; }
+        .eps-col-po { width: 8%; }
+        .eps-col-money { width: 7%; }
+        .eps-col-status { width: 11%; }
+        .eps-col-review { width: 20%; }
+        .eps-col-status .badge { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .eps-icon-btn { min-width: 28px; }
+        .eps-summary-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-summary-table th, .eps-summary-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
+        .eps-summary-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
+        .eps-weekly-col-date { width: 8%; }
+        .eps-weekly-col-flow { width: 6%; }
+        .eps-weekly-col-description { width: 10%; }
+        .eps-weekly-col-partner { width: 15%; }
+        .eps-weekly-col-money { width: 8%; }
+        .eps-weekly-col-status { width: 13%; }
+        .eps-weekly-col-status .badge { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        @media (max-width: 1200px) {
+          .eps-treasury-table { font-size: 10.5px; }
+          .eps-treasury-table th { font-size: 9.8px; }
+          .eps-treasury-table th, .eps-treasury-table td { padding: .25rem .28rem; }
+        }
+      </style>
+      <div class="container py-4">
+        <a href="/my/employee/treasury/plans" class="text-decoration-none">← Weekly Cash Plans</a>
+        <div class="d-flex justify-content-between align-items-start mt-3 mb-3">
+          <div>
+            <h2 class="mb-1">
+              <t t-esc="run.name"/>
+            </h2>
+            <div class="text-muted"><t t-esc="run.date_from"/> – <t t-esc="run.date_to"/></div>
+          </div>
+          <span class="badge rounded-pill text-bg-primary fs-6">
+            <t t-esc="dict(run._fields['state'].selection).get(run.state)"/>
+          </span>
+        </div>
+        <div class="row g-3 mb-4">
+          <div class="col-12 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <small class="text-muted">Opening cash</small>
+                <div class="fs-4 fw-bold">
+                  <span t-field="run.opening_balance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-9">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-header bg-white">
+                <strong>Forecast vs Actual</strong>
+                <div class="small text-muted">Variance = Actual − Forecast</div>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0 eps-summary-table">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Cash measure</th>
+                      <th class="text-end">Forecast</th>
+                      <th class="text-end">Actual</th>
+                      <th class="text-end">Variance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Inflows</td>
+                      <td class="text-end text-success">
+                        <span t-field="run.forecast_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td class="text-end text-success">
+                        <span t-field="run.actual_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td t-attf-class="text-end fw-semibold #{'text-success' if (run.actual_inflow - run.forecast_inflow) &gt;= 0 else 'text-danger'}">
+                        <span t-field="run.portal_variance_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Outflows</td>
+                      <td class="text-end text-danger">
+                        <span t-field="run.forecast_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td class="text-end text-danger">
+                        <span t-field="run.actual_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td t-attf-class="text-end fw-semibold #{'text-success' if (run.actual_outflow - run.forecast_outflow) &lt;= 0 else 'text-danger'}">
+                        <span t-field="run.portal_variance_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Net cash flow</td>
+                      <td class="text-end">
+                        <span t-field="run.forecast_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td class="text-end">
+                        <span t-field="run.actual_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td t-attf-class="text-end fw-semibold #{'text-success' if (run.actual_net - run.forecast_net) &gt;= 0 else 'text-danger'}">
+                        <span t-field="run.portal_variance_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                    </tr>
+                    <tr class="table-light fw-bold">
+                      <td>Closing cash balance</td>
+                      <td class="text-end">
+                        <span t-field="run.forecast_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td class="text-end">
+                        <span t-field="run.actual_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td t-attf-class="text-end #{'text-success' if run.forecast_variance &gt;= 0 else 'text-danger'}">
+                        <span t-field="run.forecast_variance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white">
+            <strong>All planned cash movements</strong>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0 eps-treasury-table">
+              <thead class="table-light">
+                <tr>
+                  <th class="eps-weekly-col-date">Date</th>
+                  <th class="eps-weekly-col-flow">Flow</th>
+                  <th class="eps-weekly-col-description">Description</th>
+                  <th class="eps-weekly-col-partner">Partner / Project</th>
+                  <th class="eps-weekly-col-money">PO Paid</th>
+                  <th class="eps-weekly-col-money">PO Due</th>
+                  <th class="eps-weekly-col-money">Forecast</th>
+                  <th class="eps-weekly-col-money">CEO Amt.</th>
+                  <th class="eps-weekly-col-money">Actual</th>
+                  <th class="eps-weekly-col-money">Variance</th>
+                  <th class="eps-weekly-col-status">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <t t-foreach="run.line_ids" t-as="line">
+                  <tr>
+                    <td>
+                      <t t-esc="line.planned_date"/>
+                    </td>
+                    <td>
+                      <span t-attf-class="badge #{'text-bg-success' if line.flow_type == 'in' else 'text-bg-danger'}">
+                        <t t-esc="'Receipt' if line.flow_type == 'in' else 'Payment'"/>
+                      </span>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">
+                        <t t-esc="line.name"/>
+                      </div>
+                      <small class="text-muted">
+                        <t t-esc="line.category_id.name"/>
+                      </small>
+                    </td>
+                    <td>
+                      <div t-if="line.partner_id" class="eps-truncate" t-att-title="line.partner_id.name">
+                        <t t-esc="line.partner_id.name"/>
+                      </div>
+                      <small t-if="line.project_id" class="text-muted eps-truncate" t-att-title="line.project_id.name">
+                        <t t-esc="line.project_id.name"/>
+                      </small>
+                    </td>
+                    <td>
+                      <span t-if="line.purchase_order_ids" t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                      <span t-else="" class="text-muted">—</span>
+                    </td>
+                    <td>
+                      <span t-if="line.purchase_order_ids" t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                      <span t-else="" class="text-muted">—</span>
+                    </td>
+                    <td>
+                      <span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                    </td>
+                    <td>
+                      <span t-if="line.flow_type == 'out'" t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                      <span t-else="" class="text-muted">Not required</span>
+                    </td>
+                    <td>
+                      <span t-field="line.actual_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                    </td>
+                    <td t-attf-class="#{'text-success' if ((line.flow_type == 'in' and line.variance_amount &gt;= 0) or (line.flow_type == 'out' and line.variance_amount &lt;= 0)) else 'text-danger'}">
+                      <span t-field="line.variance_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                    </td>
+                    <td class="eps-status eps-weekly-col-status">
+                      <span t-if="line.flow_type == 'out'" class="badge text-bg-secondary" t-att-title="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)">
+                        <t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
+                      </span>
+                      <span t-else="" class="badge text-bg-info">
+                        <t t-esc="dict(line._fields['state'].selection).get(line.state)"/>
+                      </span>
+                    </td>
+                  </tr>
+                </t>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </t>
+  </template>
+</odoo>

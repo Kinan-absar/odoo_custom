@@ -33,7 +33,7 @@ class PortalPettyCash(CustomerPortal):
         ])
 
         return request.render(
-            'petty_cash_management.portal_petty_cash_list',
+            'petty_cash_management_portal_bridge.portal_petty_cash_list',
             {
                 'reports': reports,
                 'page_name': 'petty_cash',
@@ -55,7 +55,7 @@ class PortalPettyCash(CustomerPortal):
         categories = request.env['petty.cash.category'].sudo().search([])
 
         return request.render(
-            'petty_cash_management.portal_petty_cash_detail',
+            'petty_cash_management_portal_bridge.portal_petty_cash_detail',
             {
                 'report': report,
                 'categories': categories,   # 🔥 THIS WAS MISSING

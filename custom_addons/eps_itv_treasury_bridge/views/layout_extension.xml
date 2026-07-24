@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="employee_portal_layout_treasury"
+              inherit_id="employee_portal_suite.employee_portal_layout">
+
+        <!-- "Payment Approvals" inside the existing Approvals dropdown -->
+        <xpath expr="//a[text()='Material Approvals']" position="after">
+            <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
+                <a href="/my/employee/treasury/payments" class="ep-sub-link">Payment Approvals</a>
+            </t>
+        </xpath>
+
+        <!-- "Weekly Cash Plans" top-level nav link, right after the Approvals dropdown -->
+        <xpath expr="//div[@id='app-d']/ancestor::t[1]" position="after">
+            <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
+                <a href="/my/employee/treasury/plans" class="ep-link">Weekly Cash Plans</a>
+            </t>
+        </xpath>
+    </template>
+</odoo>

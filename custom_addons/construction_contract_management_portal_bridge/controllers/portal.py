@@ -92,7 +92,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             'status_filter': status_filter,
             'direction_filter': direction_filter,
         })
-        return request.render("construction_contract_management.portal_employee_contracts", values)
+        return request.render("construction_contract_management_portal_bridge.portal_employee_contracts", values)
 
     @http.route(['/my/employee/contract/<int:contract_id>'], type='http', auth='user', website=True)
     def portal_employee_contract_detail(self, contract_id, access_token=None, report_type=None, download=False, **kw):
@@ -108,7 +108,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 download=download,
             )
 
-        return request.render("construction_contract_management.portal_employee_contract_detail", {
+        return request.render("construction_contract_management_portal_bridge.portal_employee_contract_detail", {
             'contract': contract,
             'page_name': 'construction_contract',
         })
@@ -195,7 +195,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             'project_filter': project_filter,
             'direction_filter': direction_filter,
         })
-        return request.render("construction_contract_management.portal_employee_ipcs", values)
+        return request.render("construction_contract_management_portal_bridge.portal_employee_ipcs", values)
 
     @http.route(['/my/employee/ipc/<int:ipc_id>'], type='http', auth='user', website=True)
     def portal_employee_ipc_detail(self, ipc_id, access_token=None, report_type=None, download=False, **kw):
@@ -212,7 +212,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 download=download,
             )
 
-        return request.render("construction_contract_management.portal_employee_ipc_detail", {
+        return request.render("construction_contract_management_portal_bridge.portal_employee_ipc_detail", {
             'ipc': ipc_sudo,
             'page_name': 'construction_ipc',
         })
@@ -297,7 +297,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             'project_filter': project_filter,
             'direction_filter': direction_filter,
         })
-        return request.render("construction_contract_management.portal_employee_variations", values)
+        return request.render("construction_contract_management_portal_bridge.portal_employee_variations", values)
 
     @http.route(['/my/employee/variation/<int:variation_id>'], type='http', auth='user', website=True)
     def portal_employee_variation_detail(self, variation_id, access_token=None, report_type=None, download=False, **kw):
@@ -317,7 +317,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
 
         section_options = boq_lines.filtered(lambda l: l.display_type == 'line_section').mapped('description')
         section_options = [s for s in section_options if s]
-        return request.render("construction_contract_management.portal_employee_variation_detail", {
+        return request.render("construction_contract_management_portal_bridge.portal_employee_variation_detail", {
             'variation': variation_sudo,
             'boq_lines': boq_lines,
             'section_options': section_options,   # 👈 ADD THIS
@@ -503,7 +503,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             'project_filter': project_filter,
             'direction_filter': direction_filter,
         })
-        return request.render("construction_contract_management.portal_employee_measurements", values)
+        return request.render("construction_contract_management_portal_bridge.portal_employee_measurements", values)
 
     # =========================================================
     # NEW MEASUREMENT
@@ -527,7 +527,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 contract_id = int(post.get('contract_id'))
                 if contract_id not in allowed_contract_ids:
                     return request.render(
-                        "construction_contract_management.portal_employee_measurement_new",
+                        "construction_contract_management_portal_bridge.portal_employee_measurement_new",
                         _measurement_new_values("You are not allowed to create a measurement for this contract.")
                     )
                 vals = {
@@ -550,11 +550,11 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             except Exception as e:
                 _logger.error("Error creating measurement: %s", str(e), exc_info=True)
                 return request.render(
-                    "construction_contract_management.portal_employee_measurement_new",
+                    "construction_contract_management_portal_bridge.portal_employee_measurement_new",
                     _measurement_new_values("Could not create the measurement. Please check the entered data and try again.")
                 )
 
-        return request.render("construction_contract_management.portal_employee_measurement_new", _measurement_new_values())
+        return request.render("construction_contract_management_portal_bridge.portal_employee_measurement_new", _measurement_new_values())
 
     # =========================================================
     # MEASUREMENT DETAIL
@@ -628,7 +628,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             'success': success,
             'page_name': 'construction_measurement',
         })
-        return request.render("construction_contract_management.portal_employee_measurement_detail", values)
+        return request.render("construction_contract_management_portal_bridge.portal_employee_measurement_detail", values)
 
     # =========================================================
     # SAVE / SUBMIT MEASUREMENT LINES
