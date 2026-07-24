@@ -2,6 +2,31 @@
 <odoo>
   <template id="portal_treasury_payment_list" name="CEO Payment Approvals">
     <t t-call="employee_portal_suite.employee_portal_layout">
+      <style>
+        .eps-treasury-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-treasury-table th, .eps-treasury-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
+        .eps-treasury-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
+        .eps-treasury-table .eps-money, .eps-treasury-table .eps-date, .eps-treasury-table .eps-status { white-space: nowrap; }
+        .eps-treasury-table .eps-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .eps-treasury-table .badge { font-size: 10px; padding: .25em .45em; font-weight: 600; }
+        .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
+        .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
+        .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
+        .eps-col-date { width: 7%; }
+        .eps-col-payment { width: 10%; }
+        .eps-col-plan { width: 8%; }
+        .eps-col-partner { width: 12%; }
+        .eps-col-po { width: 9%; }
+        .eps-col-money { width: 8%; }
+        .eps-col-status { width: 7%; }
+        .eps-col-review { width: 19%; }
+        .eps-icon-btn { min-width: 28px; }
+        @media (max-width: 1200px) {
+          .eps-treasury-table { font-size: 10.5px; }
+          .eps-treasury-table th { font-size: 9.8px; }
+          .eps-treasury-table th, .eps-treasury-table td { padding: .25rem .28rem; }
+        }
+      </style>
       <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <div>
@@ -25,20 +50,20 @@
         </div>
         <div class="card border-0 shadow-sm">
           <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 eps-treasury-table">
               <thead class="table-light">
                 <tr>
-                  <th>Date</th>
-                  <th>Payment</th>
-                  <th>Weekly Plan</th>
-                  <th>Partner / Project</th>
-                  <th>Purchase Order</th>
-                  <th>PO Paid</th>
-                  <th>PO Due</th>
-                  <th>Requested</th>
-                  <th>Approved</th>
-                  <th>Status</th>
-                  <th style="min-width:300px">CEO Review</th>
+                  <th class="eps-col-date">Date</th>
+                  <th class="eps-col-payment">Payment</th>
+                  <th class="eps-col-plan">Weekly Plan</th>
+                  <th class="eps-col-partner">Partner / Project</th>
+                  <th class="eps-col-po">Purchase Order</th>
+                  <th class="eps-col-money">PO Paid</th>
+                  <th class="eps-col-money">PO Due</th>
+                  <th class="eps-col-money">Requested</th>
+                  <th class="eps-col-money">Approved</th>
+                  <th class="eps-col-status">Status</th>
+                  <th class="eps-col-review">CEO Review</th>
                 </tr>
               </thead>
               <tbody>
@@ -61,10 +86,10 @@
                       </a>
                     </td>
                     <td>
-                      <div t-if="line.partner_id">
+                      <div t-if="line.partner_id" class="eps-truncate" t-att-title="line.partner_id.name">
                         <t t-esc="line.partner_id.name"/>
                       </div>
-                      <small t-if="line.project_id" class="text-muted">
+                      <small t-if="line.project_id" class="text-muted eps-truncate" t-att-title="line.project_id.name">
                         <t t-esc="line.project_id.name"/>
                       </small>
                     </td>
@@ -104,21 +129,21 @@
                       <form t-if="line.ceo_decision in ('pending', 'held')" t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <div class="input-group input-group-sm mb-2">
-                          <span class="input-group-text">Approved amount</span>
+                          <span class="input-group-text">Amount</span>
                           <input type="number" step="0.01" min="0" name="approved_amount" class="form-control" t-att-value="line.approved_amount or line.forecast_amount"/>
                         </div>
                         <textarea name="comment" class="form-control form-control-sm mb-2" rows="2" placeholder="CEO comment">
                           <t t-esc="line.ceo_comment or ''"/>
                         </textarea>
-                        <button name="decision" value="approved" class="btn btn-success btn-sm">Approve</button>
-                        <button name="decision" value="held" class="btn btn-warning btn-sm ms-1">Hold</button>
-                        <button name="decision" value="rejected" class="btn btn-outline-danger btn-sm ms-1">Reject</button>
+                        <button name="decision" value="approved" class="btn btn-success btn-sm eps-icon-btn" title="Approve" aria-label="Approve"><i class="fa fa-check"/></button>
+                        <button name="decision" value="held" class="btn btn-warning btn-sm eps-icon-btn ms-1" title="Hold" aria-label="Hold"><i class="fa fa-pause"/></button>
+                        <button name="decision" value="rejected" class="btn btn-outline-danger btn-sm eps-icon-btn ms-1" title="Reject" aria-label="Reject"><i class="fa fa-times"/></button>
                       </form>
                       <div t-else="" class="small">
                         <div t-if="line.ceo_comment" class="text-muted">
                           <t t-esc="line.ceo_comment"/>
                         </div>
-                        <div t-if="line.ceo_approved_by" class="text-muted">Reviewed by <t t-esc="line.ceo_approved_by.name"/></div>
+                        <div t-if="line.ceo_approved_by" class="text-muted">Reviewed by CEO</div>
                       </div>
                     </td>
                   </tr>
@@ -135,6 +160,31 @@
   </template>
   <template id="portal_treasury_plan_list" name="CEO Weekly Cash Plans">
     <t t-call="employee_portal_suite.employee_portal_layout">
+      <style>
+        .eps-treasury-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-treasury-table th, .eps-treasury-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
+        .eps-treasury-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
+        .eps-treasury-table .eps-money, .eps-treasury-table .eps-date, .eps-treasury-table .eps-status { white-space: nowrap; }
+        .eps-treasury-table .eps-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .eps-treasury-table .badge { font-size: 10px; padding: .25em .45em; font-weight: 600; }
+        .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
+        .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
+        .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
+        .eps-col-date { width: 7%; }
+        .eps-col-payment { width: 10%; }
+        .eps-col-plan { width: 8%; }
+        .eps-col-partner { width: 12%; }
+        .eps-col-po { width: 9%; }
+        .eps-col-money { width: 8%; }
+        .eps-col-status { width: 7%; }
+        .eps-col-review { width: 19%; }
+        .eps-icon-btn { min-width: 28px; }
+        @media (max-width: 1200px) {
+          .eps-treasury-table { font-size: 10.5px; }
+          .eps-treasury-table th { font-size: 9.8px; }
+          .eps-treasury-table th, .eps-treasury-table td { padding: .25rem .28rem; }
+        }
+      </style>
       <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <div>
@@ -145,7 +195,7 @@
         </div>
         <div class="card border-0 shadow-sm">
           <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 eps-treasury-table">
               <thead class="table-light">
                 <tr>
                   <th>Plan</th>
@@ -183,7 +233,7 @@
                       </span>
                     </td>
                     <td class="text-end">
-                      <a t-att-href="'/my/employee/treasury/plans/%s' % run.id" class="btn btn-sm btn-outline-primary">View</a>
+                      <a t-att-href="'/my/employee/treasury/plans/%s' % run.id" class="btn btn-sm btn-outline-primary eps-icon-btn" title="View plan" aria-label="View plan"><i class="fa fa-eye"/></a>
                     </td>
                   </tr>
                 </t>
@@ -199,6 +249,31 @@
   </template>
   <template id="portal_treasury_plan_detail_clean_v3" name="CEO Weekly Cash Plan Detail">
     <t t-call="employee_portal_suite.employee_portal_layout">
+      <style>
+        .eps-treasury-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-treasury-table th, .eps-treasury-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
+        .eps-treasury-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
+        .eps-treasury-table .eps-money, .eps-treasury-table .eps-date, .eps-treasury-table .eps-status { white-space: nowrap; }
+        .eps-treasury-table .eps-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .eps-treasury-table .badge { font-size: 10px; padding: .25em .45em; font-weight: 600; }
+        .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
+        .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
+        .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
+        .eps-col-date { width: 7%; }
+        .eps-col-payment { width: 10%; }
+        .eps-col-plan { width: 8%; }
+        .eps-col-partner { width: 12%; }
+        .eps-col-po { width: 9%; }
+        .eps-col-money { width: 8%; }
+        .eps-col-status { width: 7%; }
+        .eps-col-review { width: 19%; }
+        .eps-icon-btn { min-width: 28px; }
+        @media (max-width: 1200px) {
+          .eps-treasury-table { font-size: 10.5px; }
+          .eps-treasury-table th { font-size: 9.8px; }
+          .eps-treasury-table th, .eps-treasury-table td { padding: .25rem .28rem; }
+        }
+      </style>
       <div class="container py-4">
         <a href="/my/employee/treasury/plans" class="text-decoration-none">← Weekly Cash Plans</a>
         <div class="d-flex justify-content-between align-items-start mt-3 mb-3">
@@ -299,7 +374,7 @@
             <strong>All planned cash movements</strong>
           </div>
           <div class="table-responsive">
-            <table class="table align-middle mb-0">
+            <table class="table align-middle mb-0 eps-treasury-table">
               <thead class="table-light">
                 <tr>
                   <th>Date</th>
@@ -309,10 +384,10 @@
                   <th>PO Paid</th>
                   <th>PO Due</th>
                   <th>Forecast</th>
-                  <th>CEO Approved</th>
+                  <th>CEO Amt.</th>
                   <th>Actual</th>
                   <th>Variance</th>
-                  <th>Decision / Status</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -335,10 +410,10 @@
                       </small>
                     </td>
                     <td>
-                      <div t-if="line.partner_id">
+                      <div t-if="line.partner_id" class="eps-truncate" t-att-title="line.partner_id.name">
                         <t t-esc="line.partner_id.name"/>
                       </div>
-                      <small t-if="line.project_id" class="text-muted">
+                      <small t-if="line.project_id" class="text-muted eps-truncate" t-att-title="line.project_id.name">
                         <t t-esc="line.project_id.name"/>
                       </small>
                     </td>
