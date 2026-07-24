@@ -573,19 +573,20 @@ class MaterialRequest(models.Model):
     # ---------------------------------------------------------
     # CREATE SEQUENCE
     # ---------------------------------------------------------
-    @api.model
-    def create(self, vals):
-        if vals.get("name", _("New")) == _("New"):
-            vals["name"] = self.env["ir.sequence"].next_by_code("material.request.seq") or _("New")
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get("name", _("New")) == _("New"):
+                vals["name"] = self.env["ir.sequence"].next_by_code("material.request.seq") or _("New")
 
-        employee = self.env["hr.employee"].browse(vals.get("employee_id")) if vals.get("employee_id") else False
-        if employee:
-            vals.setdefault("work_location_id", employee.work_location_id.id if employee.work_location_id else False)
-            projects = employee._get_material_request_projects()
-            if not vals.get("project_id") and len(projects) == 1:
-                vals["project_id"] = projects.id
+            employee = self.env["hr.employee"].browse(vals.get("employee_id")) if vals.get("employee_id") else False
+            if employee:
+                vals.setdefault("work_location_id", employee.work_location_id.id if employee.work_location_id else False)
+                projects = employee._get_material_request_projects()
+                if not vals.get("project_id") and len(projects) == 1:
+                    vals["project_id"] = projects.id
 
-        return super().create(vals)
+        return super().create(vals_list)
 
     # ---------------------------------------------------------
     # GENERIC STATE ADVANCE

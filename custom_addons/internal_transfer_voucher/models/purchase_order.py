@@ -21,6 +21,8 @@ class PurchaseOrder(models.Model):
         'account.payment.voucher',
         string='Payment Vouchers',
         compute='_compute_payment_totals',
+        store=True,
+        compute_sudo=True,
         readonly=True,
     )
 
@@ -29,6 +31,7 @@ class PurchaseOrder(models.Model):
         compute='_compute_payment_totals',
         currency_field='currency_id',
         store=True,
+        compute_sudo=True,
         help='Total amount allocated from posted payment vouchers to this Purchase Order.',
     )
 
@@ -37,12 +40,14 @@ class PurchaseOrder(models.Model):
         compute='_compute_payment_totals',
         currency_field='currency_id',
         store=True,
+        compute_sudo=True,
     )
 
     payment_voucher_count = fields.Integer(
         string='Payment Voucher Count',
         compute='_compute_payment_totals',
         store=True,
+        compute_sudo=True,
     )
 
     @api.depends(

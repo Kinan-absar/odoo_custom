@@ -16,6 +16,16 @@ class EmployeePortalMain(CustomerPortal):
             return False
         return request.env.user.has_group(xmlid)
 
+    def _has_read_access(self, model_name):
+        """Return whether the current user can read an optional model."""
+        if not self._model_exists(model_name):
+            return False
+        try:
+            request.env[model_name].check_access('read')
+            return True
+        except AccessError:
+            return False
+
     def _construction_portal_available(self):
         """Construction Contract Management is optional for Employee Portal Suite."""
         required_models = (
@@ -94,7 +104,7 @@ class EmployeePortalMain(CustomerPortal):
         variation_count = 0
         measurement_count = 0
         
-        if self._construction_portal_available() and request.env['construction.contract'].check_access_rights('read', raise_exception=False):
+        if self._construction_portal_available() and self._has_read_access('construction.contract'):
             contract_count = request.env['construction.contract'].search_count([])
             ipc_count = request.env['construction.ipc'].search_count([])
             variation_count = request.env['construction.variation'].search_count([])

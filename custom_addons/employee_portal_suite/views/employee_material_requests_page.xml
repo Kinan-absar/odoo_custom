@@ -69,7 +69,7 @@
                                 <td><t t-esc="req.request_date"/></td>
                                 <td><t t-esc="req.worksite"/></td>
                                 <td><t t-esc="req.delivery_date"/></td>
-                                <td><t t-raw="status_badge(req)"/></td>
+                                <td><t t-out="status_badge(req)"/></td>
                                 <td>
                                     <a t-att-href="'/my/employee/material/%s' % req.id"
                                     class="btn btn-secondary btn-sm">View</a>
@@ -98,7 +98,7 @@
                             </div>
 
                             <div>
-                                <t t-raw="status_badge(req)"/>
+                                <t t-out="status_badge(req)"/>
                             </div>
                         </div>
 

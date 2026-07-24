@@ -247,13 +247,14 @@ class AccountInternalTransfer(models.Model):
 
             rec.state = 'draft'
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].sudo().next_by_code(
-                'internal.transfer'
-            ) or 'New'
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'New') == 'New':
+                vals['name'] = self.env['ir.sequence'].sudo().next_by_code(
+                    'internal.transfer'
+                ) or 'New'
+        return super().create(vals_list)
 
     @api.constrains('has_bank_fees', 'analytic_distribution')
     def _check_analytic_required(self):

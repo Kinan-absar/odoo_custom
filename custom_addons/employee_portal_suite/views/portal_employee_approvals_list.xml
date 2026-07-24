@@ -83,7 +83,7 @@
                                                 <td><t t-esc="req.employee_id.name"/></td>
                                                 <td><t t-esc="req.get_request_type_display()"/></td>
 
-                                                <td><t t-raw="status_badge(req)"/></td>
+                                                <td><t t-out="status_badge(req)"/></td>
 
                                                 <td>
                                                     <small class="text-muted">
@@ -137,7 +137,7 @@
                                             </div>
 
                                             <div>
-                                                <t t-raw="status_badge(req)"/>
+                                                <t t-out="status_badge(req)"/>
                                             </div>
 
                                         </div>
