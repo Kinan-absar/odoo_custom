@@ -91,7 +91,7 @@
                                     <td><t t-esc="req.worksite"/></td>
 
                                     <td>
-                                        <t t-raw="status_badge(req)"/>
+                                        <t t-out="status_badge(req)"/>
                                     </td>
 
                                     <td>
@@ -167,7 +167,7 @@
                                 </div>
 
                                 <div>
-                                    <t t-raw="status_badge(req)"/>
+                                    <t t-out="status_badge(req)"/>
                                 </div>
 
                             </div>

@@ -29,11 +29,12 @@ class ConstructionMeasurement(models.Model):
         ('rejected', 'Rejected'),
     ], default='draft', tracking=True)
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code('construction.measurement') or 'New'
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'New') == 'New':
+                vals['name'] = self.env['ir.sequence'].next_by_code('construction.measurement') or 'New'
+        return super().create(vals_list)
 
     def _get_report_base_filename(self):
         self.ensure_one()

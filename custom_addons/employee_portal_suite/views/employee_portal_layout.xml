@@ -1483,7 +1483,7 @@
                                     <t t-esc="ann.name"/>
                                 </div>
                                 <div>
-                                    <t t-raw="ann.message"/>
+                                    <t t-out="ann.message"/>
                                 </div>
 
                                 <t t-if="ann.attachment_ids">
@@ -1509,7 +1509,7 @@
                  ================================================================ -->
             <main>
                 <div id="wrap" class="container mt-3 mb-5">
-                    <t t-raw="0"/>
+                    <t t-out="0"/>
                 </div>
             </main>
 

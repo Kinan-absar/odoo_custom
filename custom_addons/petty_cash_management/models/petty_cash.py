@@ -290,11 +290,12 @@ class PettyCash(models.Model):
 
         return res
     #reference
-    @api.model
-    def create(self, vals):
-        if vals.get('name', '/') == '/' or not vals.get('name'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('petty.cash') or '/'
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', '/') == '/' or not vals.get('name'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('petty.cash') or '/'
+        return super().create(vals_list)
         #import
     def action_open_import_wizard(self):
         if self.state != 'draft':

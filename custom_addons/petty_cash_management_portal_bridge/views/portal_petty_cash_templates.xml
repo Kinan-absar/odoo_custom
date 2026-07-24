@@ -48,7 +48,7 @@
                                                   t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
                                         </td>
                                         <td>
-                                            <t t-raw="status_badge(report)"/>
+                                            <t t-out="status_badge(report)"/>
                                         </td>
                                     </tr>
                                 </t>
@@ -73,7 +73,7 @@
                                 </div>
 
                                 <div>
-                                    <t t-raw="status_badge(report)"/>
+                                    <t t-out="status_badge(report)"/>
                                 </div>
                             </div>
 
@@ -202,7 +202,7 @@
                                    class="btn btn-outline-primary btn-sm rounded-pill">
                                     Print PDF
                                 </a>
-                                <t t-raw="status_badge(report)"/>
+                                <t t-out="status_badge(report)"/>
                             </div>
                         </div>
 

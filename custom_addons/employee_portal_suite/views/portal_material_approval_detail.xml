@@ -28,7 +28,7 @@
                 </div>
 
                 <div class="text-end">
-                    <t t-raw="status_badge(request_rec)"/>
+                    <t t-out="status_badge(request_rec)"/>
 
                     <t t-if="request_rec.state in ['approved','rejected']">
                         <a t-att-href="'/my/employee/material/pdf/%s' % request_rec.id"
@@ -702,7 +702,7 @@
             <t t-esc="msg.date"/>
         </small>
         <div class="mt-1">
-            <t t-raw="msg.body"/>
+            <t t-out="msg.body"/>
         </div>
     </div>
 </t>
