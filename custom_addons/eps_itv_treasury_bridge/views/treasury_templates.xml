@@ -12,15 +12,26 @@
         .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
         .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
         .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
-        .eps-col-date { width: 7%; }
-        .eps-col-payment { width: 10%; }
-        .eps-col-plan { width: 8%; }
-        .eps-col-partner { width: 12%; }
-        .eps-col-po { width: 9%; }
-        .eps-col-money { width: 8%; }
-        .eps-col-status { width: 7%; }
-        .eps-col-review { width: 19%; }
+        .eps-col-date { width: 6%; }
+        .eps-col-payment { width: 9%; }
+        .eps-col-plan { width: 7%; }
+        .eps-col-partner { width: 11%; }
+        .eps-col-po { width: 8%; }
+        .eps-col-money { width: 7%; }
+        .eps-col-status { width: 11%; }
+        .eps-col-review { width: 20%; }
+        .eps-col-status .badge { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .eps-icon-btn { min-width: 28px; }
+        .eps-summary-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-summary-table th, .eps-summary-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
+        .eps-summary-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
+        .eps-weekly-col-date { width: 8%; }
+        .eps-weekly-col-flow { width: 6%; }
+        .eps-weekly-col-description { width: 10%; }
+        .eps-weekly-col-partner { width: 15%; }
+        .eps-weekly-col-money { width: 8%; }
+        .eps-weekly-col-status { width: 13%; }
+        .eps-weekly-col-status .badge { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         @media (max-width: 1200px) {
           .eps-treasury-table { font-size: 10.5px; }
           .eps-treasury-table th { font-size: 9.8px; }
@@ -96,10 +107,11 @@
                     <td>
                       <t t-if="line.portal_purchase_order_ids">
                         <div t-foreach="line.portal_purchase_order_ids" t-as="po" class="mb-1">
-                          <a t-att-href="'/my/employee/purchase-order/%s/signed' % po.id"
+                          <a t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id"
                              class="btn btn-sm btn-outline-primary py-0 px-2"
+                             title="View Purchase Order"
                              target="_blank" rel="noopener">
-                            <i class="fa fa-file-signature me-1"/>
+                            <i class="fa fa-eye me-1"/>
                             <t t-esc="po.name"/>
                           </a>
                         </div>
@@ -120,8 +132,8 @@
                     <td>
                       <span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
                     </td>
-                    <td>
-                      <span class="badge text-bg-secondary">
+                    <td class="eps-status eps-col-status">
+                      <span class="badge text-bg-secondary" t-att-title="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)">
                         <t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
                       </span>
                     </td>
@@ -170,15 +182,26 @@
         .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
         .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
         .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
-        .eps-col-date { width: 7%; }
-        .eps-col-payment { width: 10%; }
-        .eps-col-plan { width: 8%; }
-        .eps-col-partner { width: 12%; }
-        .eps-col-po { width: 9%; }
-        .eps-col-money { width: 8%; }
-        .eps-col-status { width: 7%; }
-        .eps-col-review { width: 19%; }
+        .eps-col-date { width: 6%; }
+        .eps-col-payment { width: 9%; }
+        .eps-col-plan { width: 7%; }
+        .eps-col-partner { width: 11%; }
+        .eps-col-po { width: 8%; }
+        .eps-col-money { width: 7%; }
+        .eps-col-status { width: 11%; }
+        .eps-col-review { width: 20%; }
+        .eps-col-status .badge { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .eps-icon-btn { min-width: 28px; }
+        .eps-summary-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-summary-table th, .eps-summary-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
+        .eps-summary-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
+        .eps-weekly-col-date { width: 8%; }
+        .eps-weekly-col-flow { width: 6%; }
+        .eps-weekly-col-description { width: 10%; }
+        .eps-weekly-col-partner { width: 15%; }
+        .eps-weekly-col-money { width: 8%; }
+        .eps-weekly-col-status { width: 13%; }
+        .eps-weekly-col-status .badge { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         @media (max-width: 1200px) {
           .eps-treasury-table { font-size: 10.5px; }
           .eps-treasury-table th { font-size: 9.8px; }
@@ -259,15 +282,26 @@
         .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
         .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
         .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
-        .eps-col-date { width: 7%; }
-        .eps-col-payment { width: 10%; }
-        .eps-col-plan { width: 8%; }
-        .eps-col-partner { width: 12%; }
-        .eps-col-po { width: 9%; }
-        .eps-col-money { width: 8%; }
-        .eps-col-status { width: 7%; }
-        .eps-col-review { width: 19%; }
+        .eps-col-date { width: 6%; }
+        .eps-col-payment { width: 9%; }
+        .eps-col-plan { width: 7%; }
+        .eps-col-partner { width: 11%; }
+        .eps-col-po { width: 8%; }
+        .eps-col-money { width: 7%; }
+        .eps-col-status { width: 11%; }
+        .eps-col-review { width: 20%; }
+        .eps-col-status .badge { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .eps-icon-btn { min-width: 28px; }
+        .eps-summary-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-summary-table th, .eps-summary-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
+        .eps-summary-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
+        .eps-weekly-col-date { width: 8%; }
+        .eps-weekly-col-flow { width: 6%; }
+        .eps-weekly-col-description { width: 10%; }
+        .eps-weekly-col-partner { width: 15%; }
+        .eps-weekly-col-money { width: 8%; }
+        .eps-weekly-col-status { width: 13%; }
+        .eps-weekly-col-status .badge { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         @media (max-width: 1200px) {
           .eps-treasury-table { font-size: 10.5px; }
           .eps-treasury-table th { font-size: 9.8px; }
@@ -305,7 +339,7 @@
                 <div class="small text-muted">Variance = Actual − Forecast</div>
               </div>
               <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0">
+                <table class="table table-sm align-middle mb-0 eps-summary-table">
                   <thead class="table-light">
                     <tr>
                       <th>Cash measure</th>
@@ -377,17 +411,17 @@
             <table class="table align-middle mb-0 eps-treasury-table">
               <thead class="table-light">
                 <tr>
-                  <th>Date</th>
-                  <th>Flow</th>
-                  <th>Description</th>
-                  <th>Partner / Project</th>
-                  <th>PO Paid</th>
-                  <th>PO Due</th>
-                  <th>Forecast</th>
-                  <th>CEO Amt.</th>
-                  <th>Actual</th>
-                  <th>Variance</th>
-                  <th>Status</th>
+                  <th class="eps-weekly-col-date">Date</th>
+                  <th class="eps-weekly-col-flow">Flow</th>
+                  <th class="eps-weekly-col-description">Description</th>
+                  <th class="eps-weekly-col-partner">Partner / Project</th>
+                  <th class="eps-weekly-col-money">PO Paid</th>
+                  <th class="eps-weekly-col-money">PO Due</th>
+                  <th class="eps-weekly-col-money">Forecast</th>
+                  <th class="eps-weekly-col-money">CEO Amt.</th>
+                  <th class="eps-weekly-col-money">Actual</th>
+                  <th class="eps-weekly-col-money">Variance</th>
+                  <th class="eps-weekly-col-status">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -438,8 +472,8 @@
                     <td t-attf-class="#{'text-success' if ((line.flow_type == 'in' and line.variance_amount &gt;= 0) or (line.flow_type == 'out' and line.variance_amount &lt;= 0)) else 'text-danger'}">
                       <span t-field="line.variance_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
                     </td>
-                    <td>
-                      <span t-if="line.flow_type == 'out'" class="badge text-bg-secondary">
+                    <td class="eps-status eps-weekly-col-status">
+                      <span t-if="line.flow_type == 'out'" class="badge text-bg-secondary" t-att-title="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)">
                         <t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
                       </span>
                       <span t-else="" class="badge text-bg-info">

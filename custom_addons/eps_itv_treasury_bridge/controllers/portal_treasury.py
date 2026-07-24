@@ -3,6 +3,7 @@ from urllib.parse import quote
 from odoo import http
 from odoo.http import request
 from odoo.exceptions import ValidationError, UserError
+from odoo.addons.purchase.controllers.portal import CustomerPortal as PurchaseCustomerPortal
 
 
 class PortalTreasury(http.Controller):
@@ -131,3 +132,30 @@ class PortalTreasury(http.Controller):
             return request.redirect(
                 '/my/employee/treasury/payments?status=pending&error=%s' % quote(str(exc))
             )
+
+
+class PortalTreasuryPurchaseOrder(PurchaseCustomerPortal):
+    """CEO-only read view using Odoo's standard Purchase Order portal page."""
+
+    @http.route(
+        '/my/employee/treasury/purchase-order/<int:order_id>',
+        type='http', auth='user', website=True
+    )
+    def treasury_purchase_order_view(self, order_id, **kw):
+        user = request.env.user
+        if not user.has_group('employee_portal_suite.group_employee_portal_ceo'):
+            return request.redirect('/my/employee')
+
+        order = request.env['purchase.order'].sudo().browse(order_id).exists()
+        if not order or order.company_id not in user.company_ids:
+            return request.not_found()
+
+        # Build the same values used by Odoo's vendor Purchase Order portal page.
+        # No access token is exposed, keeping this CEO route read-only and internal.
+        values = self._purchase_order_get_page_view_values(order, None, **kw)
+        values.update({
+            'res_company': order.company_id,
+            'page_name': 'purchase',
+            'treasury_ceo_view': True,
+        })
+        return request.render('purchase.portal_my_purchase_order', values)

@@ -1,6 +1,6 @@
 {
     'name': 'Employee Portal Treasury Bridge',
-    'version': '18.0.1.0.5',
+    'version': '18.0.1.0.6',
     'summary': 'Adds CEO Payment Approvals & Weekly Cash Plans to the Employee Portal, '
                 'connecting Employee Portal Suite with the Internal Transfer Voucher app.',
     'description': """
@@ -24,6 +24,7 @@ Adds:
     'depends': [
         'employee_portal_suite',
         'internal_transfer_voucher',
+        'purchase',
     ],
 
     'data': [
