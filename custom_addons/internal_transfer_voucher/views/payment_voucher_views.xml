@@ -112,11 +112,15 @@
                     <field name="is_payable_account" invisible="1"/>
                     <field name="bill_reconciled" invisible="1"/>
                     <field name="company_id" invisible="1"/>
+                    <field name="planned_cash_line_id" invisible="1"/>
 
                     <!-- Main Info -->
                     <group>
                         <group string="Payment Information">
                             <field name="date"/>
+                            <field name="cash_plan_run_id" readonly="planned_cash_line_id" options="{'no_create': True}"/>
+                            <field name="planned_cash_line_id" readonly="1" invisible="not planned_cash_line_id"/>
+                            <field name="is_unplanned_cash_payment" readonly="1" invisible="not cash_plan_run_id"/>
                             <field name="partner_id"/>
                             <field name="purchase_order_id" invisible="1"/>
                             <field name="purchase_order_ids"

@@ -35,10 +35,10 @@
         <field name="active" eval="False"/>
     </record>
 
-    <menuitem id="menu_cash_planning_root" name="Cash Planning" parent="menu_vouchers_root" sequence="30" groups="internal_transfer_voucher.group_weekly_payment_plan_manager"/>
-    <menuitem id="menu_cash_plan_run" name="Weekly Planner" parent="menu_cash_planning_root" action="action_cash_plan_run" sequence="10" groups="internal_transfer_voucher.group_weekly_payment_plan_manager"/>
-    <menuitem id="menu_cash_plan_payments" name="Planned Payments" parent="menu_cash_planning_root" action="action_cash_plan_payments" sequence="20" groups="internal_transfer_voucher.group_weekly_payment_plan_manager"/>
-    <menuitem id="menu_cash_plan_receipts" name="Planned Receipts" parent="menu_cash_planning_root" action="action_cash_plan_receipts" sequence="30" groups="internal_transfer_voucher.group_weekly_payment_plan_manager"/>
-    <menuitem id="menu_cash_plan_analysis" name="Cash Forecast Analysis" parent="menu_cash_planning_root" action="action_cash_plan_line" sequence="40" groups="internal_transfer_voucher.group_weekly_payment_plan_manager"/>
-    <menuitem id="menu_cash_plan_category" name="Categories" parent="menu_cash_planning_root" action="action_cash_plan_category" sequence="90" groups="internal_transfer_voucher.group_weekly_payment_plan_manager"/>
+    <menuitem id="menu_cash_planning_root" name="Cash Planning" parent="menu_vouchers_root" sequence="30" groups="internal_transfer_voucher.group_weekly_payment_plan_manager,internal_transfer_voucher.group_payment_execution_manager"/>
+    <menuitem id="menu_cash_plan_run" name="Weekly Planner" parent="menu_cash_planning_root" action="action_cash_plan_run" sequence="10" groups="internal_transfer_voucher.group_weekly_payment_plan_manager,internal_transfer_voucher.group_payment_execution_manager"/>
+    <menuitem id="menu_cash_plan_payments" name="Planned Payments" parent="menu_cash_planning_root" action="action_cash_plan_payments" sequence="20" groups="internal_transfer_voucher.group_weekly_payment_plan_manager,internal_transfer_voucher.group_payment_execution_manager"/>
+    <menuitem id="menu_cash_plan_receipts" name="Planned Receipts" parent="menu_cash_planning_root" action="action_cash_plan_receipts" sequence="30" groups="internal_transfer_voucher.group_weekly_payment_plan_manager,internal_transfer_voucher.group_payment_execution_manager"/>
+    <menuitem id="menu_cash_plan_analysis" name="Cash Forecast Analysis" parent="menu_cash_planning_root" action="action_cash_plan_line" sequence="40" groups="internal_transfer_voucher.group_weekly_payment_plan_manager,internal_transfer_voucher.group_payment_execution_manager"/>
+    <menuitem id="menu_cash_plan_category" name="Categories" parent="menu_cash_planning_root" action="action_cash_plan_category" sequence="90" groups="internal_transfer_voucher.group_weekly_payment_plan_manager,internal_transfer_voucher.group_payment_execution_manager"/>
 </odoo>

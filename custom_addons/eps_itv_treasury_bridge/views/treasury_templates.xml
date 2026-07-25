@@ -373,6 +373,22 @@
                         <span t-field="run.portal_variance_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
                       </td>
                     </tr>
+                    <tr class="small text-muted">
+                      <td class="ps-4">Planned actual payments</td>
+                      <td class="text-end">—</td>
+                      <td class="text-end">
+                        <span t-field="run.planned_actual_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td class="text-end">—</td>
+                    </tr>
+                    <tr class="small text-muted">
+                      <td class="ps-4">Unplanned actual payments</td>
+                      <td class="text-end">—</td>
+                      <td class="text-end">
+                        <span t-field="run.unplanned_actual_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                      </td>
+                      <td class="text-end">—</td>
+                    </tr>
                     <tr>
                       <td>Net cash flow</td>
                       <td class="text-end">

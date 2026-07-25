@@ -38,6 +38,9 @@ class CashPlanRun(models.Model):
     forecast_outflow = fields.Monetary(compute='_compute_totals', store=True)
     actual_inflow = fields.Monetary(compute='_compute_totals', store=True)
     actual_outflow = fields.Monetary(compute='_compute_totals', store=True)
+    planned_actual_outflow = fields.Monetary(compute='_compute_totals', store=True)
+    unplanned_actual_outflow = fields.Monetary(compute='_compute_totals', store=True)
+    payment_voucher_ids = fields.One2many('account.payment.voucher', 'cash_plan_run_id', string='Payment Vouchers', readonly=True)
     forecast_net = fields.Monetary(compute='_compute_totals', store=True)
     actual_net = fields.Monetary(compute='_compute_totals', store=True)
     forecast_closing = fields.Monetary(compute='_compute_totals', store=True)
@@ -53,14 +56,21 @@ class CashPlanRun(models.Model):
         return super().create(vals_list)
 
     @api.depends('opening_balance', 'budget_amount', 'line_ids.flow_type', 'line_ids.forecast_amount',
-                 'line_ids.actual_amount', 'line_ids.state')
+                 'line_ids.actual_amount', 'line_ids.state',
+                 'payment_voucher_ids.state', 'payment_voucher_ids.amount',
+                 'payment_voucher_ids.planned_cash_line_id')
     def _compute_totals(self):
         for rec in self:
             active_lines = rec.line_ids.filtered(lambda l: l.state != 'cancel')
             rec.forecast_inflow = sum(active_lines.filtered(lambda l: l.flow_type == 'in').mapped('forecast_amount'))
             rec.forecast_outflow = sum(active_lines.filtered(lambda l: l.flow_type == 'out').mapped('forecast_amount'))
             rec.actual_inflow = sum(active_lines.filtered(lambda l: l.flow_type == 'in').mapped('actual_amount'))
-            rec.actual_outflow = sum(active_lines.filtered(lambda l: l.flow_type == 'out').mapped('actual_amount'))
+            rec.planned_actual_outflow = sum(active_lines.filtered(lambda l: l.flow_type == 'out').mapped('actual_amount'))
+            unplanned_vouchers = rec.payment_voucher_ids.filtered(
+                lambda voucher: voucher.state == 'posted' and not voucher.planned_cash_line_id
+            )
+            rec.unplanned_actual_outflow = sum(unplanned_vouchers.mapped('amount'))
+            rec.actual_outflow = rec.planned_actual_outflow + rec.unplanned_actual_outflow
             rec.forecast_net = rec.forecast_inflow - rec.forecast_outflow
             rec.actual_net = rec.actual_inflow - rec.actual_outflow
             rec.forecast_closing = rec.opening_balance + rec.forecast_net
@@ -138,7 +148,7 @@ class CashPlanLine(models.Model):
     bill_ids = fields.Many2many('account.move', 'cash_plan_line_bill_rel', 'line_id', 'move_id', string='Vendor Bills', domain="[('partner_id', '=', partner_id), ('move_type', '=', 'in_invoice'), ('state', '=', 'posted'), ('company_id', '=', company_id)]")
     invoice_ids = fields.Many2many('account.move', 'cash_plan_line_invoice_rel', 'line_id', 'move_id', string='Customer Invoices', domain="[('partner_id', '=', partner_id), ('move_type', '=', 'out_invoice'), ('state', '=', 'posted'), ('company_id', '=', company_id)]")
     description = fields.Text()
-    state = fields.Selection([('planned', 'Planned'), ('approved', 'Approved'), ('executed', 'Executed'), ('cancel', 'Cancelled')], default='planned', tracking=True)
+    state = fields.Selection([('planned', 'Planned'), ('approved', 'Approved'), ('awaiting_payment', 'Awaiting Payment'), ('marked_paid', 'Marked as Paid'), ('executed', 'Paid'), ('cancel', 'Cancelled')], default='planned', tracking=True)
     payment_voucher_id = fields.Many2one('account.payment.voucher', readonly=True, copy=False)
     receipt_voucher_id = fields.Many2one('account.receipt.voucher', readonly=True, copy=False)
     internal_transfer_id = fields.Many2one('account.internal.transfer', readonly=True, copy=False)
