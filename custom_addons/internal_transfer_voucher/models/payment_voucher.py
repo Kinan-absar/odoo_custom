@@ -77,61 +77,6 @@ class AccountPaymentVoucher(models.Model):
         copy=False
     )
 
-    planned_cash_line_id = fields.Many2one(
-        'cash.plan.line',
-        string='Planned Payment',
-        readonly=True,
-        copy=False,
-        index=True,
-        ondelete='set null',
-        help='Set automatically when this voucher is created from a planned payment.',
-    )
-
-    cash_plan_run_id = fields.Many2one(
-        'cash.plan.run',
-        string='Weekly Cash Plan',
-        copy=False,
-        index=True,
-        ondelete='set null',
-        domain="[('company_id', '=', company_id), ('date_from', '<=', date), ('date_to', '>=', date)]",
-        help='Automatically selected from the voucher date. Manual vouchers are reported as unplanned actual payments for this week.',
-    )
-
-    is_unplanned_cash_payment = fields.Boolean(
-        string='Unplanned Actual Payment',
-        compute='_compute_is_unplanned_cash_payment',
-        store=True,
-    )
-
-    @api.depends('cash_plan_run_id', 'planned_cash_line_id')
-    def _compute_is_unplanned_cash_payment(self):
-        for voucher in self:
-            voucher.is_unplanned_cash_payment = bool(
-                voucher.cash_plan_run_id and not voucher.planned_cash_line_id
-            )
-
-    @api.model
-    def _matching_cash_plan_run(self, company_id, payment_date):
-        if not company_id or not payment_date:
-            return self.env['cash.plan.run']
-        return self.env['cash.plan.run'].search([
-            ('company_id', '=', company_id),
-            ('date_from', '<=', payment_date),
-            ('date_to', '>=', payment_date),
-            ('state', '!=', 'cancel'),
-        ], order='date_from desc, id desc', limit=1)
-
-    @api.onchange('date', 'company_id')
-    def _onchange_cash_plan_run_by_date(self):
-        for voucher in self:
-            if voucher.planned_cash_line_id:
-                voucher.cash_plan_run_id = voucher.planned_cash_line_id.run_id
-            else:
-                voucher.cash_plan_run_id = voucher._matching_cash_plan_run(
-                    voucher.company_id.id,
-                    voucher.date,
-                )
-
 
     # -------------------------
     # Vendor Bill Matching / Reconciliation
@@ -1416,18 +1361,6 @@ class AccountPaymentVoucher(models.Model):
                     'payment.voucher'
                 ) or 'New'
 
-            planned_line_id = vals.get('planned_cash_line_id')
-            if planned_line_id:
-                planned_line = self.env['cash.plan.line'].browse(planned_line_id).exists()
-                if planned_line:
-                    vals['cash_plan_run_id'] = planned_line.run_id.id
-            elif not vals.get('cash_plan_run_id'):
-                company_id = vals.get('company_id') or self.env.company.id
-                payment_date = vals.get('date') or fields.Date.context_today(self)
-                matching_run = self._matching_cash_plan_run(company_id, payment_date)
-                if matching_run:
-                    vals['cash_plan_run_id'] = matching_run.id
-
             # On a new voucher there are no persisted allocation rows. Deduplicate
             # the browser payload and create exactly one row per selected PO.
             selected_ids = self._apply_m2m_commands([], vals.get('purchase_order_ids', []))
@@ -1475,16 +1408,6 @@ class AccountPaymentVoucher(models.Model):
             for rec in self:
                 result = rec.write(vals) and result
             return result
-
-        vals = dict(vals)
-        if not self.env.context.get('skip_cash_plan_auto_link') and ({'date', 'company_id'} & set(vals)):
-            for rec in self:
-                if rec.planned_cash_line_id:
-                    vals['cash_plan_run_id'] = rec.planned_cash_line_id.run_id.id
-                elif 'cash_plan_run_id' not in vals:
-                    company_id = vals.get('company_id', rec.company_id.id)
-                    payment_date = vals.get('date', rec.date)
-                    vals['cash_plan_run_id'] = self._matching_cash_plan_run(company_id, payment_date).id or False
 
         prepared_vals = self._prepare_po_values_for_write(vals) if self else vals
         return super(AccountPaymentVoucher, self.with_context(

@@ -38,9 +38,6 @@ class CashPlanRun(models.Model):
     forecast_outflow = fields.Monetary(compute='_compute_totals', store=True)
     actual_inflow = fields.Monetary(compute='_compute_totals', store=True)
     actual_outflow = fields.Monetary(compute='_compute_totals', store=True)
-    planned_actual_outflow = fields.Monetary(compute='_compute_totals', store=True)
-    unplanned_actual_outflow = fields.Monetary(compute='_compute_totals', store=True)
-    payment_voucher_ids = fields.One2many('account.payment.voucher', 'cash_plan_run_id', string='Payment Vouchers', readonly=True)
     forecast_net = fields.Monetary(compute='_compute_totals', store=True)
     actual_net = fields.Monetary(compute='_compute_totals', store=True)
     forecast_closing = fields.Monetary(compute='_compute_totals', store=True)
@@ -56,21 +53,14 @@ class CashPlanRun(models.Model):
         return super().create(vals_list)
 
     @api.depends('opening_balance', 'budget_amount', 'line_ids.flow_type', 'line_ids.forecast_amount',
-                 'line_ids.actual_amount', 'line_ids.state',
-                 'payment_voucher_ids.state', 'payment_voucher_ids.amount',
-                 'payment_voucher_ids.planned_cash_line_id')
+                 'line_ids.actual_amount', 'line_ids.state')
     def _compute_totals(self):
         for rec in self:
             active_lines = rec.line_ids.filtered(lambda l: l.state != 'cancel')
             rec.forecast_inflow = sum(active_lines.filtered(lambda l: l.flow_type == 'in').mapped('forecast_amount'))
             rec.forecast_outflow = sum(active_lines.filtered(lambda l: l.flow_type == 'out').mapped('forecast_amount'))
             rec.actual_inflow = sum(active_lines.filtered(lambda l: l.flow_type == 'in').mapped('actual_amount'))
-            rec.planned_actual_outflow = sum(active_lines.filtered(lambda l: l.flow_type == 'out').mapped('actual_amount'))
-            unplanned_vouchers = rec.payment_voucher_ids.filtered(
-                lambda voucher: voucher.state == 'posted' and not voucher.planned_cash_line_id
-            )
-            rec.unplanned_actual_outflow = sum(unplanned_vouchers.mapped('amount'))
-            rec.actual_outflow = rec.planned_actual_outflow + rec.unplanned_actual_outflow
+            rec.actual_outflow = sum(active_lines.filtered(lambda l: l.flow_type == 'out').mapped('actual_amount'))
             rec.forecast_net = rec.forecast_inflow - rec.forecast_outflow
             rec.actual_net = rec.actual_inflow - rec.actual_outflow
             rec.forecast_closing = rec.opening_balance + rec.forecast_net
@@ -125,7 +115,7 @@ class CashPlanLine(models.Model):
         string='Purchase Order(s) to Pay',
         tracking=True,
         domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]",
-        help='Optional. Select the confirmed Purchase Order or Purchase Orders covered by this payment when applicable.',
+        help='Select the exact confirmed Purchase Order or Purchase Orders covered by this planned payment before submitting it to the CEO.',
     )
     linked_purchase_order_ids = fields.Many2many(
         'purchase.order',
@@ -148,7 +138,7 @@ class CashPlanLine(models.Model):
     bill_ids = fields.Many2many('account.move', 'cash_plan_line_bill_rel', 'line_id', 'move_id', string='Vendor Bills', domain="[('partner_id', '=', partner_id), ('move_type', '=', 'in_invoice'), ('state', '=', 'posted'), ('company_id', '=', company_id)]")
     invoice_ids = fields.Many2many('account.move', 'cash_plan_line_invoice_rel', 'line_id', 'move_id', string='Customer Invoices', domain="[('partner_id', '=', partner_id), ('move_type', '=', 'out_invoice'), ('state', '=', 'posted'), ('company_id', '=', company_id)]")
     description = fields.Text()
-    state = fields.Selection([('planned', 'Planned'), ('approved', 'Approved'), ('awaiting_payment', 'Awaiting Payment'), ('marked_paid', 'Marked as Paid'), ('executed', 'Paid'), ('cancel', 'Cancelled')], default='planned', tracking=True)
+    state = fields.Selection([('planned', 'Draft'), ('approved', 'Awaiting Payment'), ('paid', 'Paid'), ('executed', 'Paid'), ('cancel', 'Cancelled')], default='planned', tracking=True)
     payment_voucher_id = fields.Many2one('account.payment.voucher', readonly=True, copy=False)
     receipt_voucher_id = fields.Many2one('account.receipt.voucher', readonly=True, copy=False)
     internal_transfer_id = fields.Many2one('account.internal.transfer', readonly=True, copy=False)
@@ -215,7 +205,7 @@ class CashPlanLine(models.Model):
     def _compute_actual(self):
         for rec in self:
             actual = 0.0
-            if rec.payment_voucher_id and rec.payment_voucher_id.state == 'posted':
+            if rec.payment_voucher_id and (rec.payment_voucher_id.state == 'posted' or rec.state in ('paid', 'executed')):
                 actual = rec.payment_voucher_id.amount
             elif rec.receipt_voucher_id and rec.receipt_voucher_id.state == 'posted':
                 actual = rec.receipt_voucher_id.amount
@@ -234,29 +224,6 @@ class CashPlanLine(models.Model):
     def write(self, vals):
         if 'name' in vals and not vals.get('name'):
             vals['name'] = _('Planned Cash Movement')
-
-        # Accounting control: after submission to the CEO, business data is
-        # frozen until the record is explicitly reset to draft. Workflow
-        # methods use the bypass context only for controlled state changes.
-        if not self.env.context.get('cash_plan_workflow_write'):
-            protected_fields = {
-                'name', 'run_id', 'planned_date', 'flow_type', 'transaction_type',
-                'category_id', 'partner_id', 'project_id', 'forecast_amount',
-                'priority', 'funding_status', 'journal_id',
-                'destination_journal_id', 'account_id', 'purchase_order_ids',
-                'bill_ids', 'invoice_ids', 'description',
-            }
-            attempted = protected_fields.intersection(vals)
-            for line in self:
-                locked = (
-                    line.flow_type == 'out'
-                    and line.ceo_decision not in ('not_sent', 'not_required')
-                )
-                if locked and attempted:
-                    raise UserError(_(
-                        'This planned payment was submitted for CEO approval and can no longer be changed. '
-                        'Reset it to draft before editing.'
-                    ))
         return super().write(vals)
 
     @api.onchange('category_id', 'partner_id', 'transaction_type', 'flow_type')
@@ -323,7 +290,7 @@ class CashPlanLine(models.Model):
     @api.constrains('forecast_amount')
     def _check_amount(self):
         for rec in self:
-            if rec.forecast_amount <= 0:
+            if rec.forecast_amount <= 0 and not rec.is_unplanned_actual:
                 raise ValidationError(_('Forecast amount must be greater than zero.'))
 
     def action_approve(self):

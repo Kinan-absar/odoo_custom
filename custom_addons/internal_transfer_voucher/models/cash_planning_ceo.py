@@ -85,8 +85,6 @@ class CashPlanLineCEO(models.Model):
     execution_amount = fields.Monetary(string='Execution Amount', compute='_compute_execution_amount', store=True)
     run_state = fields.Selection(related='run_id.state', string='Weekly Plan Status', readonly=True)
     run_ceo_status = fields.Selection(related='run_id.ceo_status', string='Weekly CEO Status', readonly=True)
-    marked_paid_by = fields.Many2one('res.users', string='Marked Paid By', readonly=True, copy=False, tracking=True)
-    marked_paid_date = fields.Datetime(string='Marked Paid On', readonly=True, copy=False, tracking=True)
 
     def init(self):
         # Repair data created by the earlier weekly-plan approval workflow.
@@ -107,14 +105,6 @@ class CashPlanLineCEO(models.Model):
              WHERE flow_type = 'out'
                AND state = 'cancel'
                AND COALESCE(ceo_decision, '') = 'pending'
-        """)
-        self.env.cr.execute("""
-            UPDATE cash_plan_line
-               SET state = 'awaiting_payment'
-             WHERE flow_type = 'out'
-               AND state = 'approved'
-               AND ceo_decision IN ('approved', 'adjusted')
-               AND payment_voucher_id IS NULL
         """)
 
     @api.depends('flow_type', 'forecast_amount', 'approved_amount', 'ceo_decision')
@@ -163,10 +153,14 @@ class CashPlanLineCEO(models.Model):
         for line in self:
             if line.flow_type != 'out':
                 raise UserError(_('Receipts do not require CEO approval.'))
-            if line.state == 'executed':
+            if line.state in ('paid', 'executed'):
                 raise UserError(_('An executed payment cannot be resubmitted.'))
             if not line.partner_id:
                 raise UserError(_('Select the supplier before submitting this planned payment to the CEO.'))
+            if line.transaction_type == 'supplier' and not line.purchase_order_ids:
+                raise UserError(_(
+                    'Select the exact Purchase Order or Purchase Orders to be paid before submitting this planned payment to the CEO.'
+                ))
             line.with_context(cash_plan_workflow_write=True).write({
                 'state': 'planned',
                 'ceo_decision': 'pending',
@@ -179,7 +173,7 @@ class CashPlanLineCEO(models.Model):
 
     def action_reset_to_draft(self):
         for line in self:
-            if line.state == 'executed':
+            if line.state in ('paid', 'executed'):
                 raise UserError(_('An executed movement cannot be reset to draft.'))
             values = {'state': 'planned', 'ceo_comment': False, 'ceo_approved_by': False, 'ceo_approved_date': False}
             if line.flow_type == 'out':
@@ -195,20 +189,6 @@ class CashPlanLineCEO(models.Model):
     def _weekly_plan_notification_users(self):
         self.ensure_one()
         group = self.env.ref(
-            'internal_transfer_voucher.group_weekly_payment_plan_manager',
-            raise_if_not_found=False,
-        )
-        if not group:
-            return self.env['res.users']
-        return group.sudo().users.filtered(
-            lambda user: user.active
-            and not user.share
-            and self.company_id in user.company_ids
-        )
-
-    def _payment_execution_users(self):
-        self.ensure_one()
-        group = self.env.ref(
             'internal_transfer_voucher.group_payment_execution_manager',
             raise_if_not_found=False,
         )
@@ -219,45 +199,6 @@ class CashPlanLineCEO(models.Model):
             and not user.share
             and self.company_id in user.company_ids
         )
-
-    def _notify_execution_managers(self, reviewer):
-        self.ensure_one()
-        users = self._payment_execution_users()
-        if not users:
-            return
-        backend_url = '/web#id=%s&model=cash.plan.line&view_type=form' % self.id
-        body = Markup(
-            '<strong>%s</strong><br/>%s <strong>%s</strong>.<br/><a href="%s">%s</a>'
-        ) % (
-            escape(_('Payment ready for execution')),
-            escape(_('The CEO approved planned payment')),
-            escape(self.display_name),
-            escape(backend_url),
-            escape(_('Open Planned Payment')),
-        )
-        self.sudo().message_post(
-            body=body,
-            partner_ids=users.mapped('partner_id').ids,
-            subtype_xmlid='mail.mt_comment',
-            author_id=reviewer.partner_id.id,
-        )
-        activity_type = self.env.ref('mail.mail_activity_data_todo')
-        existing_users = self.sudo().activity_ids.filtered(
-            lambda activity: activity.activity_type_id == activity_type
-            and activity.user_id in users
-            and activity.summary == _('Mark approved payment as paid')
-        ).mapped('user_id')
-        for user in users - existing_users:
-            self.sudo().activity_schedule(
-                'mail.mail_activity_data_todo',
-                user_id=user.id,
-                summary=_('Mark approved payment as paid'),
-                note=Markup('%s<br/><a href="%s">%s</a>') % (
-                    escape(_('The CEO approved this payment. Confirm it as paid, then create the Payment Voucher.')),
-                    escape(backend_url),
-                    escape(_('Open Planned Payment')),
-                ),
-            )
 
     def _notify_weekly_plan_group(self, decision, reviewer):
         self.ensure_one()
@@ -347,76 +288,19 @@ class CashPlanLineCEO(models.Model):
                 'ceo_comment': comment or False,
                 'ceo_approved_by': reviewer.id,
                 'ceo_approved_date': fields.Datetime.now(),
-                'state': ('awaiting_payment' if final_decision in ('approved', 'adjusted') else
+                'state': ('approved' if final_decision in ('approved', 'adjusted') else
                           'planned' if final_decision == 'held' else 'cancel'),
-                'marked_paid_by': False,
-                'marked_paid_date': False,
             })
             line._notify_weekly_plan_group(final_decision, reviewer)
-            if final_decision in ('approved', 'adjusted'):
-                line._notify_execution_managers(reviewer)
-        return True
-
-    def action_mark_as_paid(self):
-        if not self.env.user.has_group('internal_transfer_voucher.group_payment_execution_manager'):
-            raise UserError(_('Only Payment Execution Managers can mark an approved payment as paid.'))
-        for line in self:
-            if line.flow_type != 'out':
-                raise UserError(_('Only planned payments can be marked as paid.'))
-            if line.ceo_decision not in ('approved', 'adjusted') or line.state != 'awaiting_payment':
-                raise UserError(_('The payment must be approved by the CEO and awaiting payment.'))
-            line.with_context(cash_plan_workflow_write=True).write({
-                'state': 'marked_paid',
-                'marked_paid_by': self.env.user.id,
-                'marked_paid_date': fields.Datetime.now(),
-            })
-            activity_type = self.env.ref('mail.mail_activity_data_todo')
-            line.sudo().activity_ids.filtered(
-                lambda activity: activity.activity_type_id == activity_type
-                and activity.user_id == self.env.user
-                and activity.summary == _('Mark approved payment as paid')
-            ).action_done()
-
-            users = line._payment_execution_users()
-            backend_url = '/web#id=%s&model=cash.plan.line&view_type=form' % line.id
-            line.sudo().message_post(
-                body=Markup('<strong>%s</strong><br/>%s<br/><a href="%s">%s</a>') % (
-                    escape(_('Payment marked as paid')),
-                    escape(_('Create the Payment Voucher to complete the payment record.')),
-                    escape(backend_url),
-                    escape(_('Open Planned Payment')),
-                ),
-                partner_ids=users.mapped('partner_id').ids,
-                subtype_xmlid='mail.mt_comment',
-                author_id=self.env.user.partner_id.id,
-            )
-            existing_users = line.sudo().activity_ids.filtered(
-                lambda activity: activity.activity_type_id == activity_type
-                and activity.user_id in users
-                and activity.summary == _('Create Payment Voucher')
-            ).mapped('user_id')
-            for user in users - existing_users:
-                line.sudo().activity_schedule(
-                    'mail.mail_activity_data_todo',
-                    user_id=user.id,
-                    summary=_('Create Payment Voucher'),
-                    note=Markup('%s<br/><a href="%s">%s</a>') % (
-                        escape(_('The payment was marked as paid. Create its Payment Voucher.')),
-                        escape(backend_url),
-                        escape(_('Open Planned Payment')),
-                    ),
-                )
         return True
 
     def action_execute(self):
         self.ensure_one()
         if self.flow_type == 'out':
-            if not self.env.user.has_group('internal_transfer_voucher.group_payment_execution_manager'):
-                raise UserError(_('Only Payment Execution Managers can create the Payment Voucher.'))
             if self.ceo_decision not in ('approved', 'adjusted') or self.approved_amount <= 0:
                 raise UserError(_('This planned payment must be approved by the CEO before execution.'))
-            if self.state != 'marked_paid':
-                raise UserError(_('Mark the approved payment as paid before creating its Payment Voucher.'))
+            if self.transaction_type == 'supplier' and not self.purchase_order_ids:
+                raise UserError(_('Select the exact Purchase Order or Purchase Orders before creating the Payment Voucher.'))
             amount = self.approved_amount
         else:
             amount = self.forecast_amount
@@ -455,8 +339,6 @@ class CashPlanLineCEO(models.Model):
                 'account_id': self.account_id.id if self.account_id else False,
                 'bill_ids': [(6, 0, self.bill_ids.ids)],
                 'purchase_order_ids': [(6, 0, self.purchase_order_ids.ids)],
-                'planned_cash_line_id': self.id,
-                'cash_plan_run_id': self.run_id.id,
             })
             self.payment_voucher_id = voucher
             action = self._document_action('account.payment.voucher', voucher.id)
@@ -474,5 +356,5 @@ class CashPlanLineCEO(models.Model):
             })
             self.receipt_voucher_id = voucher
             action = self._document_action('account.receipt.voucher', voucher.id)
-        self.with_context(cash_plan_workflow_write=True).write({'state': 'executed'})
+        self.state = 'executed'
         return action
