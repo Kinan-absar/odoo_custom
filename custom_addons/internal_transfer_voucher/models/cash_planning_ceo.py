@@ -165,10 +165,6 @@ class CashPlanLineCEO(models.Model):
                 raise UserError(_('An executed payment cannot be resubmitted.'))
             if not line.partner_id:
                 raise UserError(_('Select the supplier before submitting this planned payment to the CEO.'))
-            if line.transaction_type == 'supplier' and not line.purchase_order_ids:
-                raise UserError(_(
-                    'Select the exact Purchase Order or Purchase Orders to be paid before submitting this planned payment to the CEO.'
-                ))
             line.write({
                 'state': 'planned',
                 'ceo_decision': 'pending',
@@ -376,7 +372,7 @@ class CashPlanLineCEO(models.Model):
                     user_id=user.id,
                     summary=_('Create Payment Voucher'),
                     note=Markup('%s<br/><a href="%s">%s</a>') % (
-                        escape(_('This planned payment was marked as paid. Create and post its Payment Voucher.')),
+                        escape(_('This planned payment was marked as paid. Create its draft Payment Voucher.')),
                         escape(backend_url),
                         escape(_('Open Planned Payment')),
                     ),
@@ -396,8 +392,6 @@ class CashPlanLineCEO(models.Model):
             raise UserError(_('The Payment Execution Manager must mark this payment as paid first.'))
         if self.payment_voucher_id:
             return self.action_open_document()
-        if self.transaction_type == 'supplier' and not self.purchase_order_ids:
-            raise UserError(_('Select the exact Purchase Order or Purchase Orders before creating the Payment Voucher.'))
         if not self.partner_id:
             raise UserError(_('Select a partner for the planned payment.'))
         if not self.journal_id:

@@ -115,7 +115,7 @@ class CashPlanLine(models.Model):
         string='Purchase Order(s) to Pay',
         tracking=True,
         domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]",
-        help='Select the exact confirmed Purchase Order or Purchase Orders covered by this planned payment before submitting it to the CEO.',
+        help='Optional: select the confirmed Purchase Order or Purchase Orders covered by this planned payment when applicable.',
     )
     linked_purchase_order_ids = fields.Many2many(
         'purchase.order',
