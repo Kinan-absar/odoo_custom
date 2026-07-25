@@ -83,6 +83,8 @@ class CashPlanLineCEO(models.Model):
     ceo_approved_by = fields.Many2one('res.users', string='CEO Reviewed By', readonly=True, copy=False)
     ceo_approved_date = fields.Datetime(string='CEO Reviewed On', readonly=True, copy=False)
     execution_amount = fields.Monetary(string='Execution Amount', compute='_compute_execution_amount', store=True)
+    payment_marked_by = fields.Many2one('res.users', string='Marked as Paid By', readonly=True, copy=False)
+    payment_marked_date = fields.Datetime(string='Marked as Paid On', readonly=True, copy=False)
     run_state = fields.Selection(related='run_id.state', string='Weekly Plan Status', readonly=True)
     run_ceo_status = fields.Selection(related='run_id.ceo_status', string='Weekly CEO Status', readonly=True)
 
@@ -121,6 +123,10 @@ class CashPlanLineCEO(models.Model):
     def create(self, vals_list):
         records = super().create(vals_list)
         for record in records:
+            if record.is_unplanned:
+                # Unplanned Actuals are raised directly by the Accountant and never go
+                # through the CEO approval flow.
+                continue
             if record.flow_type == 'in':
                 record.write({'ceo_decision': 'not_required', 'approved_amount': record.forecast_amount})
             else:
@@ -131,6 +137,8 @@ class CashPlanLineCEO(models.Model):
         result = super().write(vals)
         if 'flow_type' in vals or 'forecast_amount' in vals:
             for line in self:
+                if line.is_unplanned:
+                    continue
                 if line.flow_type == 'in' and (
                     line.ceo_decision != 'not_required' or
                     line.currency_id.compare_amounts(line.approved_amount, line.forecast_amount) != 0
@@ -157,10 +165,6 @@ class CashPlanLineCEO(models.Model):
                 raise UserError(_('An executed payment cannot be resubmitted.'))
             if not line.partner_id:
                 raise UserError(_('Select the supplier before submitting this planned payment to the CEO.'))
-            if line.transaction_type == 'supplier' and not line.purchase_order_ids:
-                raise UserError(_(
-                    'Select the exact Purchase Order or Purchase Orders to be paid before submitting this planned payment to the CEO.'
-                ))
             line.write({
                 'state': 'planned',
                 'ceo_decision': 'pending',
@@ -189,7 +193,7 @@ class CashPlanLineCEO(models.Model):
     def _weekly_plan_notification_users(self):
         self.ensure_one()
         group = self.env.ref(
-            'internal_transfer_voucher.group_weekly_payment_plan_manager',
+            'internal_transfer_voucher.group_payment_execution_manager',
             raise_if_not_found=False,
         )
         if not group:
@@ -294,67 +298,141 @@ class CashPlanLineCEO(models.Model):
             line._notify_weekly_plan_group(final_decision, reviewer)
         return True
 
-    def action_execute(self):
+    def _check_group(self, xmlid, error_message):
         self.ensure_one()
-        if self.flow_type == 'out':
-            if self.ceo_decision not in ('approved', 'adjusted') or self.approved_amount <= 0:
-                raise UserError(_('This planned payment must be approved by the CEO before execution.'))
-            if self.transaction_type == 'supplier' and not self.purchase_order_ids:
-                raise UserError(_('Select the exact Purchase Order or Purchase Orders before creating the Payment Voucher.'))
-            amount = self.approved_amount
-        else:
-            amount = self.forecast_amount
+        if self.env.su:
+            return
+        if not self.env.user.has_group(xmlid):
+            raise UserError(_(error_message))
 
+    def _group_users(self, xmlid):
+        self.ensure_one()
+        group = self.env.ref(xmlid, raise_if_not_found=False)
+        if not group:
+            return self.env['res.users']
+        return group.sudo().users.filtered(
+            lambda user: user.active and not user.share and self.company_id in user.company_ids
+        )
+
+    def action_mark_as_paid(self):
+        """Payment Execution Managers confirm that the bank/cash execution is complete.
+
+        This step does not create the accounting Payment Voucher. It hands the item to
+        Weekly Payment Plan Managers, who receive a notification and create the voucher.
+        """
+        self.ensure_one()
+        self._check_group(
+            'internal_transfer_voucher.group_payment_execution_manager',
+            'Only a Payment Execution Manager can mark this payment as paid.',
+        )
+        if self.flow_type != 'out':
+            raise UserError(_('Only planned payments can be marked as paid.'))
+        if self.ceo_decision not in ('approved', 'adjusted') or self.approved_amount <= 0:
+            raise UserError(_('This planned payment must be approved by the CEO before it can be marked as paid.'))
         if self.state == 'cancel':
-            raise UserError(_('Cancelled planning lines cannot be executed.'))
-        if self.payment_voucher_id or self.receipt_voucher_id or self.internal_transfer_id:
-            return self.action_open_document()
-        if not self.journal_id:
-            raise UserError(_('Select the expected journal before execution.'))
+            raise UserError(_('Cancelled planned payments cannot be marked as paid.'))
+        if self.state == 'executed':
+            return True
 
-        common = {
+        self.write({
+            'state': 'executed',
+            'payment_marked_by': self.env.user.id,
+            'payment_marked_date': fields.Datetime.now(),
+        })
+
+        users = self._group_users('internal_transfer_voucher.group_weekly_payment_plan_manager')
+        if users:
+            backend_url = '/web#id=%s&model=cash.plan.line&view_type=form' % self.id
+            body = Markup(
+                '<strong>%s</strong><br/>%s <strong>%s</strong> %s.<br/>'
+                '<a href="%s">%s</a>'
+            ) % (
+                escape(_('Payment Marked as Paid')),
+                escape(_('The Payment Execution Manager marked planned payment')),
+                escape(self.display_name),
+                escape(_('as paid. Please create the Payment Voucher.')),
+                escape(backend_url),
+                escape(_('Open Planned Payment')),
+            )
+            self.sudo().message_post(
+                body=body,
+                partner_ids=users.mapped('partner_id').ids,
+                subtype_xmlid='mail.mt_comment',
+                author_id=self.env.user.partner_id.id,
+            )
+            todo = self.env.ref('mail.mail_activity_data_todo')
+            existing_users = self.sudo().activity_ids.filtered(
+                lambda activity: activity.activity_type_id == todo
+                and activity.user_id in users
+                and activity.summary == _('Create Payment Voucher')
+            ).mapped('user_id')
+            for user in users - existing_users:
+                self.sudo().activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    user_id=user.id,
+                    summary=_('Create Payment Voucher'),
+                    note=Markup('%s<br/><a href="%s">%s</a>') % (
+                        escape(_('This planned payment was marked as paid. Create its draft Payment Voucher.')),
+                        escape(backend_url),
+                        escape(_('Open Planned Payment')),
+                    ),
+                )
+        return True
+
+    def action_create_payment_voucher(self):
+        """Weekly Payment Plan Managers create the accounting voucher after execution."""
+        self.ensure_one()
+        self._check_group(
+            'internal_transfer_voucher.group_weekly_payment_plan_manager',
+            'Only a Weekly Payment Plan Manager can create the Payment Voucher from this planned payment.',
+        )
+        if self.flow_type != 'out':
+            raise UserError(_('This action is only available for planned payments.'))
+        if self.state != 'executed':
+            raise UserError(_('The Payment Execution Manager must mark this payment as paid first.'))
+        if self.payment_voucher_id:
+            return self.action_open_document()
+        if not self.partner_id:
+            raise UserError(_('Select a partner for the planned payment.'))
+        if not self.journal_id:
+            raise UserError(_('Select the payment journal before creating the Payment Voucher.'))
+
+        amount = self.approved_amount
+        voucher = self.env['account.payment.voucher'].with_context(skip_cash_plan_autolink=True).create({
             'date': self.planned_date,
             'amount': amount,
             'currency_id': self.currency_id.id,
             'company_id': self.company_id.id,
             'description': self.description or self.name,
-        }
-        if self.transaction_type == 'transfer':
-            if not self.destination_journal_id:
-                raise UserError(_('Select a destination journal.'))
-            transfer = self.env['account.internal.transfer'].create({
-                **common,
-                'source_journal_id': self.journal_id.id,
-                'line_ids': [(0, 0, {'journal_id': self.destination_journal_id.id, 'amount': amount})],
-            })
-            self.internal_transfer_id = transfer
-            action = self._document_action('account.internal.transfer', transfer.id)
-        elif self.flow_type == 'out':
-            if not self.partner_id:
-                raise UserError(_('Select a partner for the planned payment.'))
-            voucher = self.env['account.payment.voucher'].create({
-                **common,
-                'partner_id': self.partner_id.id,
-                'journal_id': self.journal_id.id,
-                'account_id': self.account_id.id if self.account_id else False,
-                'bill_ids': [(6, 0, self.bill_ids.ids)],
-                'purchase_order_ids': [(6, 0, self.purchase_order_ids.ids)],
-            })
-            self.payment_voucher_id = voucher
-            action = self._document_action('account.payment.voucher', voucher.id)
-        else:
-            if not self.partner_id:
-                raise UserError(_('Select a partner for the planned receipt.'))
-            if not self.account_id:
-                raise UserError(_('Select an income or receivable account.'))
-            voucher = self.env['account.receipt.voucher'].create({
-                **common,
-                'partner_id': self.partner_id.id,
-                'journal_id': self.journal_id.id,
-                'account_id': self.account_id.id,
-                'invoice_ids': [(6, 0, self.invoice_ids.ids)],
-            })
-            self.receipt_voucher_id = voucher
-            action = self._document_action('account.receipt.voucher', voucher.id)
-        self.state = 'executed'
+            'partner_id': self.partner_id.id,
+            'journal_id': self.journal_id.id,
+            'account_id': self.account_id.id if self.account_id else False,
+            'bill_ids': [(6, 0, self.bill_ids.ids)],
+            'purchase_order_ids': [(6, 0, self.purchase_order_ids.ids)],
+        })
+        self.payment_voucher_id = voucher
+        voucher.cash_plan_line_id = self.id
+
+        # Create the voucher only. Posting remains a separate accountant action
+        # from the Payment Voucher form, so the new voucher stays in Draft.
+        action = self._document_action('account.payment.voucher', voucher.id)
+
+        self.sudo().activity_ids.filtered(
+            lambda activity: activity.summary == _('Create Payment Voucher')
+        ).action_done()
         return action
+
+    def action_execute(self):
+        """Keep the original execution action for receipts/transfers only.
+
+        Planned outbound payments now use the explicit two-step handoff:
+        Mark as Paid -> Create Payment Voucher.
+        """
+        self.ensure_one()
+        if self.flow_type == 'out':
+            raise UserError(_(
+                'Use Mark as Paid first (Payment Execution Managers), then Create Payment Voucher '
+                '(Weekly Payment Plan Managers).'
+            ))
+        return super().action_execute()
+

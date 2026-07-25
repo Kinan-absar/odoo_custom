@@ -115,7 +115,7 @@ class CashPlanLine(models.Model):
         string='Purchase Order(s) to Pay',
         tracking=True,
         domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]",
-        help='Select the exact confirmed Purchase Order or Purchase Orders covered by this planned payment before submitting it to the CEO.',
+        help='Optional: select the confirmed Purchase Order or Purchase Orders covered by this planned payment when applicable.',
     )
     linked_purchase_order_ids = fields.Many2many(
         'purchase.order',
@@ -138,10 +138,49 @@ class CashPlanLine(models.Model):
     bill_ids = fields.Many2many('account.move', 'cash_plan_line_bill_rel', 'line_id', 'move_id', string='Vendor Bills', domain="[('partner_id', '=', partner_id), ('move_type', '=', 'in_invoice'), ('state', '=', 'posted'), ('company_id', '=', company_id)]")
     invoice_ids = fields.Many2many('account.move', 'cash_plan_line_invoice_rel', 'line_id', 'move_id', string='Customer Invoices', domain="[('partner_id', '=', partner_id), ('move_type', '=', 'out_invoice'), ('state', '=', 'posted'), ('company_id', '=', company_id)]")
     description = fields.Text()
-    state = fields.Selection([('planned', 'Planned'), ('approved', 'Approved'), ('executed', 'Executed'), ('cancel', 'Cancelled')], default='planned', tracking=True)
+    state = fields.Selection([
+        ('planned', 'Planned'),
+        ('approved', 'Awaiting Payment'),
+        ('executed', 'Paid'),
+        ('cancel', 'Cancelled'),
+    ], default='planned', tracking=True)
     payment_voucher_id = fields.Many2one('account.payment.voucher', readonly=True, copy=False)
     receipt_voucher_id = fields.Many2one('account.receipt.voucher', readonly=True, copy=False)
     internal_transfer_id = fields.Many2one('account.internal.transfer', readonly=True, copy=False)
+    is_unplanned = fields.Boolean(
+        string='Unplanned Actual',
+        default=False,
+        copy=False,
+        readonly=True,
+        help='Automatically set when this record was created from a Payment Voucher that was '
+             'raised directly by the Accountant, without going through the planning / CEO approval flow.',
+    )
+    is_locked = fields.Boolean(
+        string='Locked',
+        compute='_compute_is_locked',
+        store=True,
+        help='Once a planned payment has been submitted to the CEO, its content can no longer be '
+             'edited until it is reset back to Draft.',
+    )
+
+    @api.depends('flow_type', 'ceo_decision', 'state')
+    def _compute_is_locked(self):
+        for rec in self:
+            rec.is_locked = (
+                rec.flow_type == 'out'
+                and rec.ceo_decision not in ('not_sent', 'not_required', False)
+                and rec.state != 'cancel'
+            )
+
+    # Fields that make up the content of a planned payment. Once the record has been
+    # submitted to the CEO (is_locked = True) these can no longer be changed until the
+    # record is reset to draft via action_reset_to_draft().
+    _LOCKED_PROTECTED_FIELDS = {
+        'name', 'planned_date', 'flow_type', 'transaction_type', 'category_id',
+        'partner_id', 'project_id', 'forecast_amount', 'priority', 'funding_status',
+        'journal_id', 'destination_journal_id', 'account_id', 'purchase_order_ids',
+        'bill_ids', 'invoice_ids', 'description', 'run_id',
+    }
 
     @api.depends(
         'purchase_order_ids',
@@ -224,6 +263,14 @@ class CashPlanLine(models.Model):
     def write(self, vals):
         if 'name' in vals and not vals.get('name'):
             vals['name'] = _('Planned Cash Movement')
+        locked_fields = self._LOCKED_PROTECTED_FIELDS.intersection(vals.keys())
+        if locked_fields and not self.env.context.get('allow_locked_write'):
+            locked_recs = self.filtered('is_locked')
+            if locked_recs:
+                raise UserError(_(
+                    'This planned payment has already been submitted to the CEO and can no longer be '
+                    'changed. Reset it to draft first if you need to edit it.'
+                ))
         return super().write(vals)
 
     @api.onchange('category_id', 'partner_id', 'transaction_type', 'flow_type')
@@ -290,7 +337,7 @@ class CashPlanLine(models.Model):
     @api.constrains('forecast_amount')
     def _check_amount(self):
         for rec in self:
-            if rec.forecast_amount <= 0:
+            if not rec.is_unplanned and rec.forecast_amount <= 0:
                 raise ValidationError(_('Forecast amount must be greater than zero.'))
 
     def action_approve(self):
@@ -331,8 +378,10 @@ class CashPlanLine(models.Model):
             vals = {**common, 'partner_id': self.partner_id.id, 'journal_id': self.journal_id.id,
                     'account_id': self.account_id.id if self.account_id else False,
                     'bill_ids': [(6, 0, self.bill_ids.ids)], 'purchase_order_ids': [(6, 0, self.purchase_order_ids.ids)]}
-            voucher = self.env['account.payment.voucher'].create(vals)
+            voucher = self.env['account.payment.voucher'].with_context(
+                skip_cash_plan_autolink=True).create(vals)
             self.payment_voucher_id = voucher
+            voucher.cash_plan_line_id = self.id
             action = self._document_action('account.payment.voucher', voucher.id)
         else:
             if not self.partner_id:
