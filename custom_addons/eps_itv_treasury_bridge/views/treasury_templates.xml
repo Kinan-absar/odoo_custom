@@ -37,11 +37,27 @@
           .eps-treasury-table th { font-size: 9.8px; }
           .eps-treasury-table th, .eps-treasury-table td { padding: .25rem .28rem; }
         }
+
+        .eps-mobile-filter { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: .25rem; }
+        .eps-mobile-filter .btn { white-space: nowrap; }
+        .eps-mobile-card { border-radius: .85rem; }
+        .eps-mobile-label { color: #6c757d; font-size: .75rem; margin-bottom: .12rem; }
+        .eps-mobile-value { font-size: .92rem; overflow-wrap: anywhere; }
+        .eps-mobile-money { font-weight: 700; font-size: 1rem; }
+        .eps-mobile-actions .btn { min-height: 44px; font-weight: 600; }
+        .eps-mobile-actions textarea { min-height: 72px; }
+        .eps-mobile-po { white-space: normal; text-align: left; }
+        @media (max-width: 767.98px) {
+          .eps-page-head { align-items: stretch !important; flex-direction: column; gap: .75rem; }
+          .eps-page-head .btn { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+          .eps-page-title { font-size: 1.45rem; }
+          .container.py-4 { padding-top: 1rem !important; padding-bottom: 1.5rem !important; }
+        }
       </style>
       <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 eps-page-head">
           <div>
-            <h3 class="mb-1">Payment Approvals</h3>
+            <h3 class="mb-1 eps-page-title">Payment Approvals</h3>
             <p class="text-muted mb-0">Review, adjust, approve, hold, or reject planned outgoing payments.</p>
           </div>
           <a href="/my/employee/treasury/plans" class="btn btn-outline-primary btn-sm">Weekly Cash Plans</a>
@@ -52,14 +68,14 @@
         <div t-if="error" class="alert alert-danger">
           <t t-esc="error"/>
         </div>
-        <div class="btn-group mb-3">
+        <div class="btn-group mb-3 eps-mobile-filter w-100" role="group" aria-label="Payment status filters">
           <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'pending' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=pending">Pending <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('pending', 0)"/></span></t></a>
           <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'approved' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=approved">Approved <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('approved', 0)"/></span></t></a>
           <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'held' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=held">On Hold <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('held', 0)"/></span></t></a>
           <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'rejected' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=rejected">Rejected <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('rejected', 0)"/></span></t></a>
           <a t-attf-class="btn btn-sm #{'btn-primary' if current_status == 'all' else 'btn-outline-primary'}" href="/my/employee/treasury/payments?status=all">All <t t-if="counts"><span class="badge text-bg-light ms-1"><t t-esc="counts.get('all', 0)"/></span></t></a>
         </div>
-        <div class="card border-0 shadow-sm">
+        <div class="card border-0 shadow-sm d-none d-lg-block">
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0 eps-treasury-table">
               <thead class="table-light">
@@ -167,6 +183,88 @@
             </table>
           </div>
         </div>
+        <div class="d-lg-none">
+          <t t-foreach="lines" t-as="line">
+            <div class="card border-0 shadow-sm mb-3 eps-mobile-card">
+              <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                  <div class="min-w-0">
+                    <div class="fw-bold eps-mobile-value"><t t-esc="line.name"/></div>
+                    <div class="text-muted small"><t t-esc="line.category_id.name"/></div>
+                  </div>
+                  <span class="badge rounded-pill text-bg-secondary flex-shrink-0">
+                    <t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
+                  </span>
+                </div>
+                <div class="row g-3 mb-3">
+                  <div class="col-6">
+                    <div class="eps-mobile-label">Planned date</div>
+                    <div class="eps-mobile-value"><t t-esc="line.planned_date"/></div>
+                  </div>
+                  <div class="col-6">
+                    <div class="eps-mobile-label">Weekly plan</div>
+                    <a class="eps-mobile-value" t-att-href="'/my/employee/treasury/plans/%s' % line.run_id.id"><t t-esc="line.run_id.name"/></a>
+                  </div>
+                  <div class="col-12">
+                    <div class="eps-mobile-label">Partner / Project</div>
+                    <div class="eps-mobile-value fw-semibold" t-if="line.partner_id"><t t-esc="line.partner_id.name"/></div>
+                    <div class="eps-mobile-value text-muted" t-if="line.project_id"><t t-esc="line.project_id.name"/></div>
+                    <div class="eps-mobile-value text-muted" t-if="not line.partner_id and not line.project_id">Not specified</div>
+                  </div>
+                  <div class="col-6">
+                    <div class="eps-mobile-label">Requested</div>
+                    <div class="eps-mobile-money"><span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
+                  </div>
+                  <div class="col-6">
+                    <div class="eps-mobile-label">Approved</div>
+                    <div class="eps-mobile-money"><span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
+                  </div>
+                  <div class="col-6" t-if="line.purchase_order_ids">
+                    <div class="eps-mobile-label">PO paid</div>
+                    <div class="eps-mobile-value"><span t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
+                  </div>
+                  <div class="col-6" t-if="line.purchase_order_ids">
+                    <div class="eps-mobile-label">PO due</div>
+                    <div class="eps-mobile-value"><span t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
+                  </div>
+                  <div class="col-12">
+                    <div class="eps-mobile-label">Purchase order</div>
+                    <t t-if="line.portal_purchase_order_ids">
+                      <div class="d-grid gap-2">
+                        <a t-foreach="line.portal_purchase_order_ids" t-as="po"
+                           t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id"
+                           class="btn btn-outline-primary btn-sm eps-mobile-po"
+                           target="_blank" rel="noopener">
+                          <i class="fa fa-eye me-2"/><t t-esc="po.name"/>
+                        </a>
+                      </div>
+                    </t>
+                    <span t-else="" class="text-muted eps-mobile-value">No PO linked</span>
+                  </div>
+                </div>
+                <form class="eps-mobile-actions" t-if="line.ceo_decision in ('pending', 'held')" t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
+                  <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                  <label class="form-label fw-semibold mb-1">Approved amount</label>
+                  <input type="number" step="0.01" min="0" name="approved_amount" class="form-control mb-2" t-att-value="line.approved_amount or line.forecast_amount"/>
+                  <label class="form-label fw-semibold mb-1">CEO comment</label>
+                  <textarea name="comment" class="form-control mb-3" rows="3" placeholder="Add a comment"><t t-esc="line.ceo_comment or ''"/></textarea>
+                  <div class="d-grid gap-2">
+                    <button name="decision" value="approved" class="btn btn-success"><i class="fa fa-check me-2"/>Approve</button>
+                    <div class="row g-2">
+                      <div class="col-6"><button name="decision" value="held" class="btn btn-warning w-100"><i class="fa fa-pause me-2"/>Hold</button></div>
+                      <div class="col-6"><button name="decision" value="rejected" class="btn btn-outline-danger w-100"><i class="fa fa-times me-2"/>Reject</button></div>
+                    </div>
+                  </div>
+                </form>
+                <div t-else="" class="border-top pt-3 small">
+                  <div t-if="line.ceo_comment" class="mb-1"><span class="text-muted">Comment: </span><t t-esc="line.ceo_comment"/></div>
+                  <div t-if="line.ceo_approved_by" class="text-muted">Reviewed by CEO</div>
+                </div>
+              </div>
+            </div>
+          </t>
+          <div t-if="not lines" class="card border-0 shadow-sm"><div class="card-body text-center text-muted py-5">No payments found.</div></div>
+        </div>
       </div>
     </t>
   </template>
@@ -207,16 +305,32 @@
           .eps-treasury-table th { font-size: 9.8px; }
           .eps-treasury-table th, .eps-treasury-table td { padding: .25rem .28rem; }
         }
+
+        .eps-mobile-filter { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: .25rem; }
+        .eps-mobile-filter .btn { white-space: nowrap; }
+        .eps-mobile-card { border-radius: .85rem; }
+        .eps-mobile-label { color: #6c757d; font-size: .75rem; margin-bottom: .12rem; }
+        .eps-mobile-value { font-size: .92rem; overflow-wrap: anywhere; }
+        .eps-mobile-money { font-weight: 700; font-size: 1rem; }
+        .eps-mobile-actions .btn { min-height: 44px; font-weight: 600; }
+        .eps-mobile-actions textarea { min-height: 72px; }
+        .eps-mobile-po { white-space: normal; text-align: left; }
+        @media (max-width: 767.98px) {
+          .eps-page-head { align-items: stretch !important; flex-direction: column; gap: .75rem; }
+          .eps-page-head .btn { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+          .eps-page-title { font-size: 1.45rem; }
+          .container.py-4 { padding-top: 1rem !important; padding-bottom: 1.5rem !important; }
+        }
       </style>
       <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 eps-page-head">
           <div>
-            <h3 class="mb-1">Weekly Cash Plans</h3>
+            <h3 class="mb-1 eps-page-title">Weekly Cash Plans</h3>
             <p class="text-muted mb-0">Read-only view of complete weekly inflows, outflows, and cash position.</p>
           </div>
           <a href="/my/employee/treasury/payments" class="btn btn-outline-primary btn-sm">Payment Approvals</a>
         </div>
-        <div class="card border-0 shadow-sm">
+        <div class="card border-0 shadow-sm d-none d-lg-block">
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0 eps-treasury-table">
               <thead class="table-light">
@@ -267,6 +381,29 @@
             </table>
           </div>
         </div>
+        <div class="d-lg-none">
+          <t t-foreach="runs" t-as="run">
+            <div class="card border-0 shadow-sm mb-3 eps-mobile-card">
+              <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                  <div>
+                    <div class="fw-bold"><t t-esc="run.name"/></div>
+                    <div class="small text-muted"><t t-esc="run.date_from"/> – <t t-esc="run.date_to"/></div>
+                  </div>
+                  <span class="badge rounded-pill text-bg-secondary"><t t-esc="dict(run._fields['state'].selection).get(run.state)"/></span>
+                </div>
+                <div class="row g-3 mb-3">
+                  <div class="col-6"><div class="eps-mobile-label">Opening</div><div class="eps-mobile-value"><span t-field="run.opening_balance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div>
+                  <div class="col-6"><div class="eps-mobile-label">Forecast closing</div><div class="eps-mobile-money"><span t-field="run.forecast_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div>
+                  <div class="col-6"><div class="eps-mobile-label">Forecast in</div><div class="eps-mobile-value text-success"><span t-field="run.forecast_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div>
+                  <div class="col-6"><div class="eps-mobile-label">Forecast out</div><div class="eps-mobile-value text-danger"><span t-field="run.forecast_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div>
+                </div>
+                <a t-att-href="'/my/employee/treasury/plans/%s' % run.id" class="btn btn-outline-primary w-100"><i class="fa fa-eye me-2"/>View plan</a>
+              </div>
+            </div>
+          </t>
+          <div t-if="not runs" class="card border-0 shadow-sm"><div class="card-body text-center text-muted py-5">No weekly cash plans found.</div></div>
+        </div>
       </div>
     </t>
   </template>
@@ -307,10 +444,26 @@
           .eps-treasury-table th { font-size: 9.8px; }
           .eps-treasury-table th, .eps-treasury-table td { padding: .25rem .28rem; }
         }
+
+        .eps-mobile-filter { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: .25rem; }
+        .eps-mobile-filter .btn { white-space: nowrap; }
+        .eps-mobile-card { border-radius: .85rem; }
+        .eps-mobile-label { color: #6c757d; font-size: .75rem; margin-bottom: .12rem; }
+        .eps-mobile-value { font-size: .92rem; overflow-wrap: anywhere; }
+        .eps-mobile-money { font-weight: 700; font-size: 1rem; }
+        .eps-mobile-actions .btn { min-height: 44px; font-weight: 600; }
+        .eps-mobile-actions textarea { min-height: 72px; }
+        .eps-mobile-po { white-space: normal; text-align: left; }
+        @media (max-width: 767.98px) {
+          .eps-page-head { align-items: stretch !important; flex-direction: column; gap: .75rem; }
+          .eps-page-head .btn { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+          .eps-page-title { font-size: 1.45rem; }
+          .container.py-4 { padding-top: 1rem !important; padding-bottom: 1.5rem !important; }
+        }
       </style>
       <div class="container py-4">
         <a href="/my/employee/treasury/plans" class="text-decoration-none">← Weekly Cash Plans</a>
-        <div class="d-flex justify-content-between align-items-start mt-3 mb-3">
+        <div class="d-flex justify-content-between align-items-start mt-3 mb-3 eps-page-head">
           <div>
             <h2 class="mb-1">
               <t t-esc="run.name"/>
@@ -338,7 +491,7 @@
                 <strong>Forecast vs Actual</strong>
                 <div class="small text-muted">Variance = Actual − Forecast</div>
               </div>
-              <div class="table-responsive">
+              <div class="table-responsive d-none d-md-block">
                 <table class="table table-sm align-middle mb-0 eps-summary-table">
                   <thead class="table-light">
                     <tr>
@@ -400,6 +553,13 @@
                   </tbody>
                 </table>
               </div>
+              <div class="d-md-none p-3">
+                <div class="row g-3">
+                  <div class="col-12"><div class="border rounded-3 p-3"><div class="fw-semibold mb-2">Inflows</div><div class="row"><div class="col-4"><div class="eps-mobile-label">Forecast</div><div class="small text-success"><span t-field="run.forecast_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div><div class="col-4"><div class="eps-mobile-label">Actual</div><div class="small text-success"><span t-field="run.actual_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div><div class="col-4"><div class="eps-mobile-label">Variance</div><div t-attf-class="small fw-semibold #{'text-success' if (run.actual_inflow - run.forecast_inflow) &gt;= 0 else 'text-danger'}"><span t-field="run.portal_variance_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div></div></div></div>
+                  <div class="col-12"><div class="border rounded-3 p-3"><div class="fw-semibold mb-2">Outflows</div><div class="row"><div class="col-4"><div class="eps-mobile-label">Forecast</div><div class="small text-danger"><span t-field="run.forecast_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div><div class="col-4"><div class="eps-mobile-label">Actual</div><div class="small text-danger"><span t-field="run.actual_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div><div class="col-4"><div class="eps-mobile-label">Variance</div><div t-attf-class="small fw-semibold #{'text-success' if (run.actual_outflow - run.forecast_outflow) &lt;= 0 else 'text-danger'}"><span t-field="run.portal_variance_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div></div></div></div>
+                  <div class="col-12"><div class="border rounded-3 p-3"><div class="fw-semibold mb-2">Closing cash balance</div><div class="row"><div class="col-4"><div class="eps-mobile-label">Forecast</div><div class="small"><span t-field="run.forecast_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div><div class="col-4"><div class="eps-mobile-label">Actual</div><div class="small"><span t-field="run.actual_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div><div class="col-4"><div class="eps-mobile-label">Variance</div><div t-attf-class="small fw-semibold #{'text-success' if run.forecast_variance &gt;= 0 else 'text-danger'}"><span t-field="run.forecast_variance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div></div></div></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -407,7 +567,7 @@
           <div class="card-header bg-white">
             <strong>All planned cash movements</strong>
           </div>
-          <div class="table-responsive">
+          <div class="table-responsive d-none d-lg-block">
             <table class="table align-middle mb-0 eps-treasury-table">
               <thead class="table-light">
                 <tr>
@@ -484,6 +644,27 @@
                 </t>
               </tbody>
             </table>
+          </div>
+          <div class="d-lg-none p-3">
+            <t t-foreach="run.line_ids" t-as="line">
+              <div class="border rounded-3 p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                  <div><div class="fw-bold eps-mobile-value"><t t-esc="line.name"/></div><div class="small text-muted"><t t-esc="line.category_id.name"/></div></div>
+                  <span t-attf-class="badge #{'text-bg-success' if line.flow_type == 'in' else 'text-bg-danger'}"><t t-esc="'Receipt' if line.flow_type == 'in' else 'Payment'"/></span>
+                </div>
+                <div class="row g-3">
+                  <div class="col-6"><div class="eps-mobile-label">Date</div><div class="eps-mobile-value"><t t-esc="line.planned_date"/></div></div>
+                  <div class="col-6"><div class="eps-mobile-label">Status</div><div><span t-if="line.flow_type == 'out'" class="badge text-bg-secondary"><t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/></span><span t-else="" class="badge text-bg-info"><t t-esc="dict(line._fields['state'].selection).get(line.state)"/></span></div></div>
+                  <div class="col-12"><div class="eps-mobile-label">Partner / Project</div><div class="eps-mobile-value" t-if="line.partner_id"><t t-esc="line.partner_id.name"/></div><div class="small text-muted" t-if="line.project_id"><t t-esc="line.project_id.name"/></div><div class="text-muted" t-if="not line.partner_id and not line.project_id">Not specified</div></div>
+                  <div class="col-6"><div class="eps-mobile-label">Forecast</div><div class="eps-mobile-value"><span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
+                  <div class="col-6"><div class="eps-mobile-label">CEO amount</div><div class="eps-mobile-value" t-if="line.flow_type == 'out'"><span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div><div class="text-muted" t-else="">Not required</div></div>
+                  <div class="col-6"><div class="eps-mobile-label">Actual</div><div class="eps-mobile-value"><span t-field="line.actual_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
+                  <div class="col-6"><div class="eps-mobile-label">Variance</div><div t-attf-class="eps-mobile-value fw-semibold #{'text-success' if ((line.flow_type == 'in' and line.variance_amount &gt;= 0) or (line.flow_type == 'out' and line.variance_amount &lt;= 0)) else 'text-danger'}"><span t-field="line.variance_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
+                  <div class="col-6" t-if="line.purchase_order_ids"><div class="eps-mobile-label">PO paid</div><div class="eps-mobile-value"><span t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
+                  <div class="col-6" t-if="line.purchase_order_ids"><div class="eps-mobile-label">PO due</div><div class="eps-mobile-value"><span t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
+                </div>
+              </div>
+            </t>
           </div>
         </div>
       </div>
