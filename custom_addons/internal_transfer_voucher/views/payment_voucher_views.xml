@@ -113,8 +113,15 @@
                     <field name="bill_reconciled" invisible="1"/>
                     <field name="company_id" invisible="1"/>
 
+                    <div class="alert alert-warning" role="alert" invisible="not is_unplanned_actual">
+                        This voucher was created directly and was automatically matched to its
+                        Weekly Cash Plan as an <strong>Unplanned Actual</strong> — see the
+                        "Weekly Plan Line" below.
+                    </div>
+
                     <!-- Main Info -->
                     <group>
+                        <field name="cash_plan_line_id" readonly="1" invisible="not cash_plan_line_id"/>
                         <group string="Payment Information">
                             <field name="date"/>
                             <field name="partner_id"/>

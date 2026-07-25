@@ -121,6 +121,10 @@ class CashPlanLineCEO(models.Model):
     def create(self, vals_list):
         records = super().create(vals_list)
         for record in records:
+            if record.is_unplanned:
+                # Unplanned Actuals are raised directly by the Accountant and never go
+                # through the CEO approval flow.
+                continue
             if record.flow_type == 'in':
                 record.write({'ceo_decision': 'not_required', 'approved_amount': record.forecast_amount})
             else:
@@ -131,6 +135,8 @@ class CashPlanLineCEO(models.Model):
         result = super().write(vals)
         if 'flow_type' in vals or 'forecast_amount' in vals:
             for line in self:
+                if line.is_unplanned:
+                    continue
                 if line.flow_type == 'in' and (
                     line.ceo_decision != 'not_required' or
                     line.currency_id.compare_amounts(line.approved_amount, line.forecast_amount) != 0
@@ -153,7 +159,7 @@ class CashPlanLineCEO(models.Model):
         for line in self:
             if line.flow_type != 'out':
                 raise UserError(_('Receipts do not require CEO approval.'))
-            if line.state in ('paid', 'executed'):
+            if line.state == 'executed':
                 raise UserError(_('An executed payment cannot be resubmitted.'))
             if not line.partner_id:
                 raise UserError(_('Select the supplier before submitting this planned payment to the CEO.'))
@@ -161,7 +167,7 @@ class CashPlanLineCEO(models.Model):
                 raise UserError(_(
                     'Select the exact Purchase Order or Purchase Orders to be paid before submitting this planned payment to the CEO.'
                 ))
-            line.with_context(cash_plan_workflow_write=True).write({
+            line.write({
                 'state': 'planned',
                 'ceo_decision': 'pending',
                 'approved_amount': 0.0,
@@ -173,14 +179,14 @@ class CashPlanLineCEO(models.Model):
 
     def action_reset_to_draft(self):
         for line in self:
-            if line.state in ('paid', 'executed'):
+            if line.state == 'executed':
                 raise UserError(_('An executed movement cannot be reset to draft.'))
             values = {'state': 'planned', 'ceo_comment': False, 'ceo_approved_by': False, 'ceo_approved_date': False}
             if line.flow_type == 'out':
                 values.update({'ceo_decision': 'not_sent', 'approved_amount': 0.0})
             else:
                 values.update({'ceo_decision': 'not_required', 'approved_amount': line.forecast_amount})
-            line.with_context(cash_plan_workflow_write=True).write(values)
+            line.write(values)
         return True
 
     def action_approve(self):
@@ -190,6 +196,9 @@ class CashPlanLineCEO(models.Model):
         self.ensure_one()
         group = self.env.ref(
             'internal_transfer_voucher.group_payment_execution_manager',
+            raise_if_not_found=False,
+        ) or self.env.ref(
+            'internal_transfer_voucher.group_weekly_payment_plan_manager',
             raise_if_not_found=False,
         )
         if not group:
@@ -282,7 +291,7 @@ class CashPlanLineCEO(models.Model):
                 if amount <= 0:
                     raise ValidationError(_('Approved amount must be greater than zero.'))
                 final_decision = 'approved' if line.currency_id.compare_amounts(amount, line.forecast_amount) == 0 else 'adjusted'
-            line.with_context(cash_plan_workflow_write=True).write({
+            line.write({
                 'approved_amount': amount,
                 'ceo_decision': final_decision,
                 'ceo_comment': comment or False,
@@ -294,6 +303,27 @@ class CashPlanLineCEO(models.Model):
             line._notify_weekly_plan_group(final_decision, reviewer)
         return True
 
+    def _check_execution_access(self):
+        """Only Payment Execution Managers (or a Weekly Payment Plan Manager acting as
+        fallback when no dedicated group has been configured) may mark a payment as paid /
+        create its voucher."""
+        self.ensure_one()
+        if self.flow_type != 'out':
+            return
+        execution_group = self.env.ref(
+            'internal_transfer_voucher.group_payment_execution_manager', raise_if_not_found=False
+        )
+        if not execution_group:
+            return
+        user = self.env.user
+        if self.env.su:
+            return
+        if user.has_group('internal_transfer_voucher.group_payment_execution_manager'):
+            return
+        if user.has_group('internal_transfer_voucher.group_weekly_payment_plan_manager'):
+            return
+        raise UserError(_('Only a Payment Execution Manager can mark this payment as paid.'))
+
     def action_execute(self):
         self.ensure_one()
         if self.flow_type == 'out':
@@ -304,6 +334,8 @@ class CashPlanLineCEO(models.Model):
             amount = self.approved_amount
         else:
             amount = self.forecast_amount
+
+        self._check_execution_access()
 
         if self.state == 'cancel':
             raise UserError(_('Cancelled planning lines cannot be executed.'))
@@ -332,7 +364,8 @@ class CashPlanLineCEO(models.Model):
         elif self.flow_type == 'out':
             if not self.partner_id:
                 raise UserError(_('Select a partner for the planned payment.'))
-            voucher = self.env['account.payment.voucher'].create({
+            voucher = self.env['account.payment.voucher'].with_context(
+                skip_cash_plan_autolink=True).create({
                 **common,
                 'partner_id': self.partner_id.id,
                 'journal_id': self.journal_id.id,
@@ -341,7 +374,17 @@ class CashPlanLineCEO(models.Model):
                 'purchase_order_ids': [(6, 0, self.purchase_order_ids.ids)],
             })
             self.payment_voucher_id = voucher
-            action = self._document_action('account.payment.voucher', voucher.id)
+            voucher.cash_plan_line_id = self.id
+            # "Mark as Paid": try to post the voucher immediately so the weekly plan's
+            # Actual / Variance figures update right away. If the voucher needs more info
+            # (e.g. an overpayment confirmation) just leave it in draft and open it so the
+            # execution manager can complete and post it manually.
+            try:
+                post_action = voucher.action_post()
+                action = post_action if isinstance(post_action, dict) else self._document_action(
+                    'account.payment.voucher', voucher.id)
+            except (UserError, ValidationError):
+                action = self._document_action('account.payment.voucher', voucher.id)
         else:
             if not self.partner_id:
                 raise UserError(_('Select a partner for the planned receipt.'))

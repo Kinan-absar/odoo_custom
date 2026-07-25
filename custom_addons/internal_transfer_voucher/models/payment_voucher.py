@@ -129,6 +129,25 @@ class AccountPaymentVoucher(models.Model):
         help='Select one or more Purchase Orders covered by this payment.',
     )
 
+    cash_plan_line_id = fields.Many2one(
+        'cash.plan.line',
+        string='Weekly Plan Line',
+        readonly=True,
+        copy=False,
+        help='The Weekly Cash Plan line this voucher settles — either the planned payment it '
+             'was raised from, or the automatically-created "Unplanned Actual" line if this '
+             'voucher was created directly by the Accountant.',
+    )
+
+    is_unplanned_actual = fields.Boolean(
+        string='Unplanned Actual',
+        related='cash_plan_line_id.is_unplanned',
+        store=True,
+        help='This voucher was created directly, without going through a planned payment / CEO '
+             'approval. It was automatically matched to its Weekly Cash Plan by date so the plan\'s '
+             'Total Actual and Variance stay accurate.',
+    )
+
     purchase_order_numbers = fields.Char(
         string='Purchase Orders',
         compute='_compute_purchase_order_numbers',
@@ -1391,7 +1410,73 @@ class AccountPaymentVoucher(models.Model):
             skip_po_selector_sync=True,
             skip_po_allocation_sync=True,
         )).create(prepared_vals_list)
+        if not self.env.context.get('skip_cash_plan_autolink'):
+            records._auto_link_unplanned_cash_plan()
         return records
+
+    def _get_or_create_unplanned_category(self, company_id):
+        category = self.env.ref('internal_transfer_voucher.cat_out_unplanned', raise_if_not_found=False)
+        if category:
+            return category
+        Category = self.env['cash.plan.category'].sudo()
+        category = Category.search([
+            ('flow_type', '=', 'out'),
+            ('name', '=', _('Unplanned Actual')),
+            '|', ('company_id', '=', False), ('company_id', '=', company_id),
+        ], limit=1)
+        if category:
+            return category
+        return Category.create({
+            'name': _('Unplanned Actual'),
+            'flow_type': 'out',
+            'sequence': 99,
+        })
+
+    def _auto_link_unplanned_cash_plan(self):
+        """A voucher created directly by the Accountant (i.e. not raised from a Planned
+        Payment via action_execute) is matched, by date and company, to the Weekly Cash
+        Plan it falls into. A hidden "Unplanned Actual" cash.plan.line is created so the
+        plan's Total Actual and Variance update automatically, without requiring the
+        Accountant to go through the planning / CEO approval flow first. Linking a
+        Purchase Order to the voucher is optional and, if present, is carried over for
+        reference.
+        """
+        CashPlanLine = self.env['cash.plan.line'].sudo()
+        CashPlanRun = self.env['cash.plan.run'].sudo()
+        for rec in self:
+            if not rec.id or rec.cash_plan_line_id:
+                continue
+            if CashPlanLine.search_count([('payment_voucher_id', '=', rec.id)]):
+                continue
+            run = CashPlanRun.search([
+                ('company_id', '=', rec.company_id.id),
+                ('date_from', '<=', rec.date),
+                ('date_to', '>=', rec.date),
+                ('state', '!=', 'cancel'),
+            ], order='date_from desc', limit=1)
+            if not run:
+                continue
+            category = rec._get_or_create_unplanned_category(rec.company_id.id)
+            line = CashPlanLine.create({
+                'run_id': run.id,
+                'name': _('Unplanned Actual - %s') % (rec.partner_id.display_name or rec.name),
+                'planned_date': rec.date,
+                'flow_type': 'out',
+                'transaction_type': 'other',
+                'category_id': category.id,
+                'partner_id': rec.partner_id.id,
+                'forecast_amount': 0.0,
+                'is_unplanned': True,
+                'state': 'executed',
+                'ceo_decision': 'not_required',
+                'journal_id': rec.journal_id.id,
+                'account_id': rec.account_id.id if rec.account_id else False,
+                'purchase_order_ids': [(6, 0, rec.purchase_order_ids.ids)],
+                'payment_voucher_id': rec.id,
+                'description': _('Automatically created from Payment Voucher %s (created directly, '
+                                  'outside the weekly planning flow).') % rec.name,
+            })
+            rec.cash_plan_line_id = line.id
 
     def write(self, vals):
         for rec in self:

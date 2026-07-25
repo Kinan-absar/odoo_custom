@@ -15,4 +15,5 @@
   <record id="cat_out_cash" model="cash.plan.category"><field name="name">Cash</field><field name="flow_type">out</field></record>
   <record id="cat_out_loans" model="cash.plan.category"><field name="name">Loans</field><field name="flow_type">out</field></record>
   <record id="cat_out_other" model="cash.plan.category"><field name="name">Other Expenses</field><field name="flow_type">out</field></record>
+  <record id="cat_out_unplanned" model="cash.plan.category"><field name="name">Unplanned Actual</field><field name="flow_type">out</field><field name="sequence">99</field></record>
 </odoo>
