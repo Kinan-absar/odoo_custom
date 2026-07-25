@@ -125,7 +125,7 @@ class CashPlanLine(models.Model):
         string='Purchase Order(s) to Pay',
         tracking=True,
         domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]",
-        help='Select the exact confirmed Purchase Order or Purchase Orders covered by this planned payment before submitting it to the CEO.',
+        help='Optional. Select the confirmed Purchase Order or Purchase Orders covered by this payment when applicable.',
     )
     linked_purchase_order_ids = fields.Many2many(
         'purchase.order',
@@ -234,6 +234,29 @@ class CashPlanLine(models.Model):
     def write(self, vals):
         if 'name' in vals and not vals.get('name'):
             vals['name'] = _('Planned Cash Movement')
+
+        # Accounting control: after submission to the CEO, business data is
+        # frozen until the record is explicitly reset to draft. Workflow
+        # methods use the bypass context only for controlled state changes.
+        if not self.env.context.get('cash_plan_workflow_write'):
+            protected_fields = {
+                'name', 'run_id', 'planned_date', 'flow_type', 'transaction_type',
+                'category_id', 'partner_id', 'project_id', 'forecast_amount',
+                'priority', 'funding_status', 'journal_id',
+                'destination_journal_id', 'account_id', 'purchase_order_ids',
+                'bill_ids', 'invoice_ids', 'description',
+            }
+            attempted = protected_fields.intersection(vals)
+            for line in self:
+                locked = (
+                    line.flow_type == 'out'
+                    and line.ceo_decision not in ('not_sent', 'not_required')
+                )
+                if locked and attempted:
+                    raise UserError(_(
+                        'This planned payment was submitted for CEO approval and can no longer be changed. '
+                        'Reset it to draft before editing.'
+                    ))
         return super().write(vals)
 
     @api.onchange('category_id', 'partner_id', 'transaction_type', 'flow_type')

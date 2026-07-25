@@ -167,7 +167,7 @@ class CashPlanLineCEO(models.Model):
                 raise UserError(_('An executed payment cannot be resubmitted.'))
             if not line.partner_id:
                 raise UserError(_('Select the supplier before submitting this planned payment to the CEO.'))
-            line.write({
+            line.with_context(cash_plan_workflow_write=True).write({
                 'state': 'planned',
                 'ceo_decision': 'pending',
                 'approved_amount': 0.0,
@@ -186,7 +186,7 @@ class CashPlanLineCEO(models.Model):
                 values.update({'ceo_decision': 'not_sent', 'approved_amount': 0.0})
             else:
                 values.update({'ceo_decision': 'not_required', 'approved_amount': line.forecast_amount})
-            line.write(values)
+            line.with_context(cash_plan_workflow_write=True).write(values)
         return True
 
     def action_approve(self):
@@ -341,7 +341,7 @@ class CashPlanLineCEO(models.Model):
                 if amount <= 0:
                     raise ValidationError(_('Approved amount must be greater than zero.'))
                 final_decision = 'approved' if line.currency_id.compare_amounts(amount, line.forecast_amount) == 0 else 'adjusted'
-            line.write({
+            line.with_context(cash_plan_workflow_write=True).write({
                 'approved_amount': amount,
                 'ceo_decision': final_decision,
                 'ceo_comment': comment or False,
@@ -365,7 +365,7 @@ class CashPlanLineCEO(models.Model):
                 raise UserError(_('Only planned payments can be marked as paid.'))
             if line.ceo_decision not in ('approved', 'adjusted') or line.state != 'awaiting_payment':
                 raise UserError(_('The payment must be approved by the CEO and awaiting payment.'))
-            line.write({
+            line.with_context(cash_plan_workflow_write=True).write({
                 'state': 'marked_paid',
                 'marked_paid_by': self.env.user.id,
                 'marked_paid_date': fields.Datetime.now(),
@@ -474,5 +474,5 @@ class CashPlanLineCEO(models.Model):
             })
             self.receipt_voucher_id = voucher
             action = self._document_action('account.receipt.voucher', voucher.id)
-        self.state = 'executed'
+        self.with_context(cash_plan_workflow_write=True).write({'state': 'executed'})
         return action

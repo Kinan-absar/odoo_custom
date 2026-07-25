@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <odoo>
     <!-- Multi-company safety rules: users see/use only vouchers from currently allowed companies. -->
     <record id="rule_payment_voucher_multi_company" model="ir.rule">
@@ -63,4 +63,4 @@
         <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
         <field name="groups" eval="[(4, ref('internal_transfer_voucher.group_weekly_payment_plan_manager'))]"/>
     </record>
-</odoo>
+<record id="rule_cash_plan_run_execution_multi_company" model="ir.rule"><field name="name">Weekly Cash Plan Execution: multi-company</field><field name="model_id" ref="model_cash_plan_run"/><field name="domain_force">[('company_id', 'in', company_ids)]</field><field name="groups" eval="[(4, ref('internal_transfer_voucher.group_payment_execution_manager'))]"/></record><record id="rule_cash_plan_line_execution_multi_company" model="ir.rule"><field name="name">Cash Planning Line Execution: multi-company</field><field name="model_id" ref="model_cash_plan_line"/><field name="domain_force">[('company_id', 'in', company_ids)]</field><field name="groups" eval="[(4, ref('internal_transfer_voucher.group_payment_execution_manager'))]"/></record><record id="rule_cash_plan_category_execution_multi_company" model="ir.rule"><field name="name">Cash Planning Category Execution: multi-company</field><field name="model_id" ref="model_cash_plan_category"/><field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field><field name="groups" eval="[(4, ref('internal_transfer_voucher.group_payment_execution_manager'))]"/></record></odoo>

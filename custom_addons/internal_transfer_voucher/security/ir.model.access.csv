@@ -16,3 +16,4 @@ access_purchase_order_link_payment_voucher_wizard,purchase.order.link.payment.vo
 
 access_cash_plan_run_execution_manager,cash.plan.run execution manager,model_cash_plan_run,internal_transfer_voucher.group_payment_execution_manager,1,0,0,0
 access_cash_plan_line_execution_manager,cash.plan.line execution manager,model_cash_plan_line,internal_transfer_voucher.group_payment_execution_manager,1,1,0,0
+access_cash_plan_category_execution_manager,cash.plan.category execution manager,model_cash_plan_category,internal_transfer_voucher.group_payment_execution_manager,1,0,0,0
