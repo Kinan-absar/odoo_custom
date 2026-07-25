@@ -419,13 +419,9 @@ class CashPlanLineCEO(models.Model):
         self.payment_voucher_id = voucher
         voucher.cash_plan_line_id = self.id
 
-        try:
-            post_action = voucher.action_post()
-            action = post_action if isinstance(post_action, dict) else self._document_action(
-                'account.payment.voucher', voucher.id
-            )
-        except (UserError, ValidationError):
-            action = self._document_action('account.payment.voucher', voucher.id)
+        # Create the voucher only. Posting remains a separate accountant action
+        # from the Payment Voucher form, so the new voucher stays in Draft.
+        action = self._document_action('account.payment.voucher', voucher.id)
 
         self.sudo().activity_ids.filtered(
             lambda activity: activity.summary == _('Create Payment Voucher')
