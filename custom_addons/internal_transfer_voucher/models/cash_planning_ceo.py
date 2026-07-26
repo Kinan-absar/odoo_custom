@@ -188,7 +188,18 @@ class CashPlanLineCEO(models.Model):
         return True
 
     def action_approve(self):
-        raise UserError(_('Planned payments must be approved by the CEO from the Employee Portal.'))
+        """Allow Payment Execution Managers to approve a pending planned payment."""
+        for line in self:
+            line._check_group(
+                'internal_transfer_voucher.group_payment_execution_manager',
+                'Only the CEO or a Payment Execution Manager can approve this planned payment.',
+            )
+            line.action_ceo_decide(
+                'approved',
+                approved_amount=line.forecast_amount,
+                reviewer=self.env.user,
+            )
+        return True
 
     def _weekly_plan_notification_users(self):
         self.ensure_one()
