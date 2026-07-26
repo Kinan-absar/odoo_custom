@@ -531,40 +531,72 @@
   <template id="portal_treasury_plan_detail_clean_v3" name="CEO Weekly Cash Plan Detail">
     <t t-call="employee_portal_suite.employee_portal_layout">
       <style>
-        .eps-treasury-table { font-size: 11.5px; table-layout: auto; width: 100%; }
-        .eps-treasury-table th, .eps-treasury-table td { padding: .55rem .5rem; vertical-align: middle; line-height: 1.3; }
-        .eps-treasury-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; color: var(--text-secondary, #6B7280); white-space: nowrap; }
-        .eps-treasury-table thead tr { border-bottom: 2px solid var(--app-primary, #4F46E5); }
-        .eps-treasury-table thead { background: var(--surface-2, #F8F8FB); }
-        .eps-treasury-table tbody tr { transition: background .15s ease; }
-        .eps-treasury-table tbody tr:hover { background: rgba(79,70,229,0.04); }
-        .eps-treasury-table .eps-money, .eps-treasury-table .eps-date, .eps-treasury-table .eps-status { white-space: nowrap; }
-        .eps-treasury-table .eps-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .eps-treasury-table .eps-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; display: block; white-space: nowrap; }
-        .eps-treasury-table .eps-amount-muted { font-weight: 400; color: var(--text-muted, #9CA3AF); text-align: right; display: block; white-space: nowrap; }
-        .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
-        .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
-        .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
-        .eps-col-date { white-space: nowrap; }
-        .eps-col-payment { min-width: 130px; }
-        .eps-col-plan { min-width: 90px; }
-        .eps-col-partner { max-width: 170px; }
-        .eps-col-po { max-width: 150px; }
-        .eps-col-money { white-space: nowrap; }
-        .eps-col-status { white-space: nowrap; }
-        .eps-col-review { min-width: 230px; }
-        .eps-icon-btn { min-width: 28px; border-radius: 8px; }
-        .eps-summary-table { font-size: 11.5px; table-layout: auto; width: 100%; }
-        .eps-summary-table th, .eps-summary-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
-        .eps-summary-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
-        .eps-weekly-col-date { white-space: nowrap; }
-        .eps-weekly-col-flow { white-space: nowrap; }
-        .eps-weekly-col-description { max-width: 150px; }
-        .eps-weekly-col-partner { max-width: 170px; }
-        .eps-weekly-col-money { white-space: nowrap; }
-        .eps-weekly-col-status { white-space: nowrap; }
+        /* ============================================================
+           Weekly Cash Plan Detail — ledger-style redesign
+           ============================================================ */
+        .ept-page a.ept-back { color: var(--text-secondary, #6B7280); font-weight: 600; font-size: 13.5px; text-decoration: none !important; display: inline-flex; align-items: center; gap: 6px; }
+        .ept-page a.ept-back:hover { color: var(--app-primary, #4F46E5); }
 
-        /* --- Status pill badges --- */
+        /* --- Hero --- */
+        .ept-hero { background: linear-gradient(135deg, var(--app-primary-light, #6366F1) 0%, var(--app-primary-dark, #3730A3) 100%); border-radius: 26px; padding: 28px 30px; color: #fff; position: relative; overflow: hidden; box-shadow: 0 20px 45px rgba(79,70,229,.25); margin-top: 14px; }
+        .ept-hero::after { content: ''; position: absolute; top: -60%; right: -10%; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.20), transparent 70%); pointer-events: none; }
+        .ept-hero-row { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; }
+        .ept-hero-name { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 4px 0; color: #fff; }
+        .ept-hero-dates { font-size: 13.5px; opacity: .85; font-weight: 500; }
+        .ept-hero-state { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.28); color: #fff; padding: .5em 1em; border-radius: 999px; font-size: 12.5px; font-weight: 700; letter-spacing: .02em; display: inline-flex; align-items: center; gap: 8px; backdrop-filter: blur(6px); }
+        .ept-hero-state .eps-badge-dot { background: #fff; }
+
+        .ept-flow-strip { position: relative; z-index: 1; display: flex; align-items: center; gap: 18px; margin-top: 26px; flex-wrap: wrap; }
+        .ept-flow-step { background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16); border-radius: 16px; padding: 12px 18px; min-width: 150px; }
+        .ept-flow-step-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; opacity: .75; font-weight: 700; }
+        .ept-flow-step-value { font-size: 19px; font-weight: 800; margin-top: 2px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .ept-flow-step.ept-flow-final { background: #fff; color: var(--app-primary-dark, #3730A3); }
+        .ept-flow-step.ept-flow-final .ept-flow-step-label { color: var(--app-primary, #4F46E5); opacity: 1; }
+        .ept-flow-delta { font-size: 11px; font-weight: 700; margin-top: 3px; }
+        .ept-flow-arrow { font-size: 18px; opacity: .55; }
+        @media (max-width: 767.98px) {
+          .ept-flow-strip { gap: 10px; }
+          .ept-flow-step { min-width: 42%; padding: 10px 14px; }
+          .ept-flow-arrow { display: none; }
+          .ept-hero { padding: 22px 20px; }
+          .ept-hero-name { font-size: 21px; }
+        }
+
+        /* --- KPI cards --- */
+        .ept-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 18px; }
+        .ept-kpi-card { background: var(--surface, #fff); border-radius: 20px; padding: 18px 20px; box-shadow: var(--shadow-sm, 0 4px 12px rgba(26,27,46,.08)); border: 1px solid var(--border-light, rgba(0,0,0,.05)); }
+        .ept-kpi-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 12px; }
+        .ept-kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-secondary, #6B7280); }
+        .ept-kpi-value { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary, #1A1B2E); margin-top: 2px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .ept-kpi-sub { font-size: 12px; font-weight: 600; margin-top: 5px; }
+
+        /* --- Forecast vs Actual comparison --- */
+        .ept-card { background: var(--surface, #fff); border-radius: 20px; box-shadow: var(--shadow-sm, 0 4px 12px rgba(26,27,46,.08)); border: 1px solid var(--border-light, rgba(0,0,0,.05)); margin-top: 22px; overflow: hidden; }
+        .ept-card-head { padding: 18px 22px; border-bottom: 1px solid var(--border-light, rgba(0,0,0,.05)); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+        .ept-card-head strong { font-size: 15px; }
+        .ept-card-body { padding: 20px 22px 22px; }
+
+        .ept-compare-row + .ept-compare-row { margin-top: 20px; }
+        .ept-compare-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+        .ept-compare-label { font-weight: 700; font-size: 13.5px; }
+        .ept-compare-variance { font-size: 11.5px; font-weight: 700; padding: .2em .65em; border-radius: 999px; }
+        .ept-bar-line { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .ept-bar-line:last-child { margin-bottom: 0; }
+        .ept-bar-tag { width: 58px; flex-shrink: 0; font-size: 10.5px; font-weight: 700; color: var(--text-muted, #9CA3AF); text-transform: uppercase; letter-spacing: .03em; }
+        .ept-bar-track { flex: 1; height: 10px; border-radius: 999px; background: rgba(107,114,128,.10); overflow: hidden; min-width: 60px; }
+        .ept-bar-fill { height: 100%; border-radius: 999px; }
+        .ept-bar-fill.ept-fill-forecast { background: linear-gradient(90deg, #A5B4FC, #818CF8); }
+        .ept-bar-fill.ept-fill-actual-in { background: linear-gradient(90deg, #6EE7B7, #10B981); }
+        .ept-bar-fill.ept-fill-actual-out { background: linear-gradient(90deg, #FCA5A5, #EF4444); }
+        .ept-bar-val { width: 130px; flex-shrink: 0; text-align: right; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+        .ept-closing-row { margin-top: 22px; padding-top: 20px; border-top: 1px dashed var(--border-light, rgba(0,0,0,.10)); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+        .ept-closing-label { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-secondary, #6B7280); }
+        .ept-closing-figures { display: flex; align-items: baseline; gap: 22px; flex-wrap: wrap; }
+        .ept-closing-figure-value { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .ept-closing-figure-sub { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted, #9CA3AF); font-weight: 700; }
+
+        /* --- Status / flow badges (shared) --- */
         .eps-badge { padding: .3em .68em; border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: .01em; display: inline-flex; align-items: center; gap: .35em; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
         .eps-badge .eps-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
         .eps-badge-pending  { background: rgba(245,158,11,0.14); color: #B45309; }
@@ -575,272 +607,334 @@
         .eps-badge-info     { background: rgba(79,70,229,0.13);  color: #4338CA; }
         .eps-badge-done     { background: rgba(13,148,136,0.14); color: #0F766E; }
 
-        /* --- Filter pills (payment status tabs) --- */
-        .eps-pill-filter { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: .2rem; }
-        .eps-pill { flex-shrink: 0; padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--text-secondary, #6B7280); background: var(--surface, #fff); border: 1px solid var(--border-light, rgba(0,0,0,.06)); text-decoration: none !important; display: inline-flex; align-items: center; gap: 7px; transition: all .18s ease; box-shadow: 0 1px 2px rgba(26,27,46,.03); }
-        .eps-pill:hover { color: var(--app-primary, #4F46E5); border-color: rgba(79,70,229,.25); }
-        .eps-pill-active { background: var(--app-primary, #4F46E5); border-color: var(--app-primary, #4F46E5); color: #fff !important; box-shadow: 0 6px 16px rgba(79,70,229,.25); }
-        .eps-pill-count { font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: rgba(0,0,0,.06); }
-        .eps-pill-active .eps-pill-count { background: rgba(255,255,255,.22); color: #fff; }
+        /* --- Ledger timeline --- */
+        .ept-ledger-head { display: grid; grid-template-columns: 52px minmax(170px,1.6fr) minmax(140px,1.2fr) 118px 108px 108px 108px 108px 148px; gap: 10px; padding: 0 22px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-secondary, #6B7280); }
+        .ept-ledger-head > div:nth-child(n+4) { text-align: right; }
+        .ept-ledger-head > div:nth-child(2), .ept-ledger-head > div:nth-child(3) { text-align: left; }
+        .ept-ledger-head > div:last-child { text-align: left; }
 
-        /* --- Card wrapper polish --- */
-        .eps-card-table { border-radius: 20px; overflow: hidden; }
-        .eps-card-table .card-header { background: var(--surface, #fff); border-bottom: 1px solid var(--border-light, rgba(0,0,0,.06)); padding: 1rem 1.25rem; }
+        .ept-day-block + .ept-day-block { border-top: 1px solid var(--border-light, rgba(0,0,0,.05)); }
+        .ept-day-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 22px; background: var(--surface-2, #F8F8FB); flex-wrap: wrap; }
+        .ept-day-date { font-weight: 700; font-size: 13.5px; }
+        .ept-day-date .ept-day-dow { color: var(--text-muted, #9CA3AF); font-weight: 500; margin-left: 6px; }
+        .ept-day-meta { display: flex; align-items: center; gap: 16px; font-size: 12px; flex-wrap: wrap; }
+        .ept-day-meta .ept-day-balance { color: var(--text-secondary, #6B7280); font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .ept-day-net { font-weight: 700; padding: .2em .6em; border-radius: 999px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .ept-day-net.ept-pos { background: rgba(16,185,129,.13); color: #047857; }
+        .ept-day-net.ept-neg { background: rgba(239,68,68,.13); color: #B91C1C; }
 
-        /* --- Review action buttons --- */
-        .eps-review-btn { border-radius: 8px; font-weight: 600; }
+        .ept-row { display: grid; grid-template-columns: 52px minmax(170px,1.6fr) minmax(140px,1.2fr) 118px 108px 108px 108px 108px 148px; gap: 10px; padding: 12px 22px; align-items: center; transition: background .15s ease; }
+        .ept-row:hover { background: rgba(79,70,229,0.035); }
+        .ept-row + .ept-row { border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); }
+        .ept-flow-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+        .ept-flow-icon.ept-flow-in { background: rgba(16,185,129,.14); color: #047857; }
+        .ept-flow-icon.ept-flow-out { background: rgba(239,68,68,.14); color: #B91C1C; }
+        .ept-row-title { font-weight: 600; font-size: 13px; }
+        .ept-row-sub { font-size: 11.5px; color: var(--text-muted, #9CA3AF); }
+        .ept-row-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ept-po-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; color: var(--app-primary, #4F46E5); background: rgba(79,70,229,.08); border-radius: 8px; padding: .18em .5em; text-decoration: none !important; }
+        .ept-po-chip:hover { background: rgba(79,70,229,.16); }
+        .ept-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; font-size: 12.5px; }
+        .ept-amount-muted { color: var(--text-muted, #9CA3AF); font-weight: 400; text-align: right; white-space: nowrap; font-size: 12.5px; }
 
-        /* --- Weekly-plan flow bar --- */
-        .eps-flow-bar { height: 6px; border-radius: 999px; overflow: hidden; display: flex; background: rgba(107,114,128,.12); min-width: 70px; }
-        .eps-flow-bar-in { background: #10B981; height: 100%; }
-        .eps-flow-bar-out { background: #EF4444; height: 100%; }
-        .eps-flow-legend { font-size: 10px; color: var(--text-muted, #9CA3AF); margin-top: 2px; white-space: nowrap; }
-
-        .eps-mobile-filter { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: .25rem; }
-        .eps-mobile-filter .btn { white-space: nowrap; }
-        .eps-mobile-card { border-radius: .85rem; position: relative; overflow: hidden; }
-        .eps-mobile-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent-color, #9CA3AF); }
-        .eps-mobile-label { color: #6c757d; font-size: .75rem; margin-bottom: .12rem; }
-        .eps-mobile-value { font-size: .92rem; overflow-wrap: anywhere; }
-        .eps-mobile-money { font-weight: 700; font-size: 1rem; font-variant-numeric: tabular-nums; }
-        .eps-mobile-actions .btn { min-height: 44px; font-weight: 600; border-radius: 10px; }
-        .eps-mobile-actions textarea { min-height: 72px; border-radius: 10px; }
-        .eps-mobile-po { white-space: normal; text-align: left; }
         @media (max-width: 1200px) {
-          .eps-treasury-table { font-size: 10.5px; }
-          .eps-treasury-table th { font-size: 9.5px; }
-          .eps-treasury-table th, .eps-treasury-table td { padding: .4rem .32rem; }
+          .ept-ledger-head, .ept-row { grid-template-columns: 46px minmax(140px,1.5fr) minmax(120px,1.1fr) 104px 96px 96px 96px 96px 128px; font-size: 11.5px; }
         }
+
+        /* --- Mobile ledger --- */
+        .ept-mobile-day-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 4px; margin-top: 18px; }
+        .ept-mobile-day-header:first-child { margin-top: 4px; }
+        .ept-mobile-card { border-radius: 16px; position: relative; overflow: hidden; }
+        .ept-mobile-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+        .ept-mobile-card.ept-flow-in::before { background: #10B981; }
+        .ept-mobile-card.ept-flow-out::before { background: #EF4444; }
+        .ept-mobile-label { color: #6c757d; font-size: .72rem; margin-bottom: .1rem; }
+        .ept-mobile-value { font-size: .9rem; overflow-wrap: anywhere; }
+
         @media (max-width: 767.98px) {
-          .eps-page-head { align-items: stretch !important; flex-direction: column; gap: .75rem; }
-          .eps-page-head .btn { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; }
-          .eps-page-title { font-size: 1.45rem; }
           .container.py-4 { padding-top: 1rem !important; padding-bottom: 1.5rem !important; }
         }
-
-        .eps-summary-table thead tr { border-bottom: 2px solid var(--app-primary, #4F46E5); }
-        .eps-summary-table thead { background: var(--surface-2, #F8F8FB); }
-        .eps-summary-table th { text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary, #6B7280); font-size: 10px; }
-        .eps-summary-table tbody tr:hover { background: rgba(79,70,229,0.04); }
-        .eps-summary-table .eps-amount { font-variant-numeric: tabular-nums; }
-        .eps-kpi-card { border-radius: 20px; }
-        .eps-kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary, #6B7280); font-weight: 700; }
-        .eps-flow-type-in { background: rgba(16,185,129,0.14); color: #047857; }
-        .eps-flow-type-out { background: rgba(239,68,68,0.14); color: #B91C1C; }
       </style>
-      <div class="container py-4">
-        <a href="/my/employee/treasury/plans" class="text-decoration-none">← Weekly Cash Plans</a>
-        <div class="d-flex justify-content-between align-items-start mt-3 mb-3 eps-page-head">
-          <div>
-            <h2 class="mb-1">
-              <t t-esc="run.name"/>
-            </h2>
-            <div class="text-muted"><t t-esc="run.date_from"/> – <t t-esc="run.date_to"/></div>
-          </div>
-          <t t-set="state_cls" t-value="{'draft': 'eps-badge-muted', 'submitted': 'eps-badge-info', 'approved': 'eps-badge-approved', 'in_progress': 'eps-badge-pending', 'done': 'eps-badge-done', 'cancel': 'eps-badge-rejected'}.get(run.state, 'eps-badge-muted')"/>
-          <span t-attf-class="eps-badge #{state_cls}" style="font-size: 13px; padding: .45em .9em;">
-            <span class="eps-badge-dot"/>
-            <t t-esc="dict(run._fields['state'].selection).get(run.state)"/>
-          </span>
-        </div>
-        <div class="row g-3 mb-4">
-          <div class="col-12 col-lg-3">
-            <div class="card border-0 shadow-sm h-100 eps-kpi-card">
-              <div class="card-body">
-                <div class="eps-kpi-label">Opening cash</div>
-                <div class="fs-4 fw-bold">
-                  <span t-field="run.opening_balance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
-                </div>
-              </div>
+
+      <div class="container py-4 ept-page">
+        <a href="/my/employee/treasury/plans" class="ept-back"><i class="fa fa-arrow-left"/> Weekly Cash Plans</a>
+
+        <div class="ept-hero">
+          <div class="ept-hero-row">
+            <div>
+              <h1 class="ept-hero-name"><t t-esc="run.name"/></h1>
+              <div class="ept-hero-dates"><t t-esc="run.date_from.strftime('%d %b %Y') if run.date_from else ''"/> – <t t-esc="run.date_to.strftime('%d %b %Y') if run.date_to else ''"/></div>
             </div>
+            <span class="ept-hero-state">
+              <span class="eps-badge-dot"/>
+              <t t-esc="dict(run._fields['state'].selection).get(run.state)"/>
+            </span>
           </div>
-          <div class="col-12 col-lg-9">
-            <div class="card border-0 shadow-sm h-100 eps-card-table">
-              <div class="card-header bg-white">
-                <strong>Forecast vs Actual</strong>
-                <div class="small text-muted">Variance = Actual − Forecast</div>
-              </div>
-              <div class="table-responsive d-none d-md-block">
-                <table class="table table-sm align-middle mb-0 eps-summary-table">
-                  <thead>
-                    <tr>
-                      <th>Cash measure</th>
-                      <th class="text-end">Forecast</th>
-                      <th class="text-end">Actual</th>
-                      <th class="text-end">Variance</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Inflows</td>
-                      <td class="text-end text-success">
-                        <span class="eps-amount" t-field="run.forecast_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
-                      </td>
-                      <td class="text-end text-success">
-                        <span class="eps-amount" t-field="run.actual_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
-                      </td>
-                      <td t-attf-class="text-end fw-semibold #{'text-success' if (run.actual_inflow - run.forecast_inflow) &gt;= 0 else 'text-danger'}">
-                        <span class="eps-amount" t-field="run.portal_variance_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Outflows</td>
-                      <td class="text-end text-danger">
-                        <span class="eps-amount" t-field="run.forecast_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
-                      </td>
-                      <td class="text-end text-danger">
-                        <span class="eps-amount" t-field="run.actual_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
-                      </td>
-                      <td t-attf-class="text-end fw-semibold #{'text-success' if (run.actual_outflow - run.forecast_outflow) &lt;= 0 else 'text-danger'}">
-                        <span class="eps-amount" t-field="run.portal_variance_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Net cash flow</td>
-                      <td class="text-end">
-                        <span class="eps-amount" t-field="run.forecast_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
-                      </td>
-                      <td class="text-end">
-                        <span class="eps-amount" t-field="run.actual_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
-                      </td>
-                      <td t-attf-class="text-end fw-semibold #{'text-success' if (run.actual_net - run.forecast_net) &gt;= 0 else 'text-danger'}">
-                        <span class="eps-amount" t-field="run.portal_variance_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
-                      </td>
-                    </tr>
-                    <tr class="table-light fw-bold">
-                      <td>Closing cash balance</td>
-                      <td class="text-end">
-                        <span class="eps-amount" t-field="run.forecast_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
-                      </td>
-                      <td class="text-end">
-                        <span class="eps-amount" t-field="run.actual_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
-                      </td>
-                      <td t-attf-class="text-end #{'text-success' if run.forecast_variance &gt;= 0 else 'text-danger'}">
-                        <span class="eps-amount" t-field="run.forecast_variance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div class="d-md-none p-3">
-                <div class="row g-3">
-                  <div class="col-12"><div class="border rounded-3 p-3"><div class="fw-semibold mb-2">Inflows</div><div class="row"><div class="col-4"><div class="eps-mobile-label">Forecast</div><div class="small text-success"><span t-field="run.forecast_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div><div class="col-4"><div class="eps-mobile-label">Actual</div><div class="small text-success"><span t-field="run.actual_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div><div class="col-4"><div class="eps-mobile-label">Variance</div><div t-attf-class="small fw-semibold #{'text-success' if (run.actual_inflow - run.forecast_inflow) &gt;= 0 else 'text-danger'}"><span t-field="run.portal_variance_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div></div></div></div>
-                  <div class="col-12"><div class="border rounded-3 p-3"><div class="fw-semibold mb-2">Outflows</div><div class="row"><div class="col-4"><div class="eps-mobile-label">Forecast</div><div class="small text-danger"><span t-field="run.forecast_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div><div class="col-4"><div class="eps-mobile-label">Actual</div><div class="small text-danger"><span t-field="run.actual_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div><div class="col-4"><div class="eps-mobile-label">Variance</div><div t-attf-class="small fw-semibold #{'text-success' if (run.actual_outflow - run.forecast_outflow) &lt;= 0 else 'text-danger'}"><span t-field="run.portal_variance_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div></div></div></div>
-                  <div class="col-12"><div class="border rounded-3 p-3"><div class="fw-semibold mb-2">Closing cash balance</div><div class="row"><div class="col-4"><div class="eps-mobile-label">Forecast</div><div class="small"><span t-field="run.forecast_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div><div class="col-4"><div class="eps-mobile-label">Actual</div><div class="small"><span t-field="run.actual_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div><div class="col-4"><div class="eps-mobile-label">Variance</div><div t-attf-class="small fw-semibold #{'text-success' if run.forecast_variance &gt;= 0 else 'text-danger'}"><span t-field="run.forecast_variance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div></div></div></div></div>
-                </div>
+          <div class="ept-flow-strip">
+            <div class="ept-flow-step">
+              <div class="ept-flow-step-label">Opening cash</div>
+              <div class="ept-flow-step-value"><span t-field="run.opening_balance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div>
+            </div>
+            <div class="ept-flow-arrow">→</div>
+            <div class="ept-flow-step">
+              <div class="ept-flow-step-label">Forecast closing</div>
+              <div class="ept-flow-step-value"><span t-field="run.forecast_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div>
+            </div>
+            <div class="ept-flow-arrow">→</div>
+            <div class="ept-flow-step ept-flow-final">
+              <div class="ept-flow-step-label">Actual closing</div>
+              <div class="ept-flow-step-value"><span t-field="run.actual_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div>
+              <div t-attf-class="ept-flow-delta #{'text-success' if run.forecast_variance &gt;= 0 else 'text-danger'}">
+                <t t-esc="'▲' if run.forecast_variance &gt;= 0 else '▼'"/>
+                <span t-field="run.forecast_variance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/> vs forecast
               </div>
             </div>
           </div>
         </div>
-        <div class="card border-0 shadow-sm mb-4 eps-card-table">
-          <div class="card-header bg-white">
-            <strong>All planned cash movements</strong>
+
+        <div class="ept-kpi-grid">
+          <div class="ept-kpi-card">
+            <div class="ept-kpi-icon" style="background: rgba(79,70,229,.12); color: #4F46E5;"><i class="fa fa-university"/></div>
+            <div class="ept-kpi-label">Opening cash</div>
+            <div class="ept-kpi-value"><span t-field="run.opening_balance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div>
+            <div class="ept-kpi-sub text-muted">Start-of-week balance</div>
           </div>
-          <div class="table-responsive d-none d-lg-block">
-            <table class="table align-middle mb-0 eps-treasury-table">
-              <thead>
-                <tr>
-                  <th class="eps-weekly-col-date">Date</th>
-                  <th class="eps-weekly-col-flow">Flow</th>
-                  <th class="eps-weekly-col-description">Description</th>
-                  <th class="eps-weekly-col-partner">Partner / Project</th>
-                  <th class="eps-weekly-col-money text-end">PO Paid</th>
-                  <th class="eps-weekly-col-money text-end">PO Due</th>
-                  <th class="eps-weekly-col-money text-end">Forecast</th>
-                  <th class="eps-weekly-col-money text-end">CEO Amt.</th>
-                  <th class="eps-weekly-col-money text-end">Actual</th>
-                  <th class="eps-weekly-col-money text-end">Variance</th>
-                  <th class="eps-weekly-col-status">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <t t-foreach="run.line_ids" t-as="line">
+          <div class="ept-kpi-card">
+            <div class="ept-kpi-icon" style="background: rgba(99,102,241,.12); color: #6366F1;"><i class="fa fa-bullseye"/></div>
+            <div class="ept-kpi-label">Forecast closing</div>
+            <div class="ept-kpi-value"><span t-field="run.forecast_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div>
+            <div t-attf-class="ept-kpi-sub #{'text-success' if (run.forecast_closing - run.opening_balance) &gt;= 0 else 'text-danger'}">
+              <t t-esc="'+' if (run.forecast_closing - run.opening_balance) &gt;= 0 else ''"/><span t-esc="'{:,.2f}'.format(run.forecast_closing - run.opening_balance)"/> vs opening
+            </div>
+          </div>
+          <div class="ept-kpi-card">
+            <div class="ept-kpi-icon" style="background: rgba(16,185,129,.12); color: #10B981;"><i class="fa fa-flag-checkered"/></div>
+            <div class="ept-kpi-label">Actual closing</div>
+            <div class="ept-kpi-value"><span t-field="run.actual_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div>
+            <div t-attf-class="ept-kpi-sub #{'text-success' if run.forecast_variance &gt;= 0 else 'text-danger'}">
+              <span t-field="run.forecast_variance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/> variance
+            </div>
+          </div>
+          <div class="ept-kpi-card">
+            <div class="ept-kpi-icon" style="background: rgba(245,158,11,.13); color: #F59E0B;"><i class="fa fa-exchange"/></div>
+            <div class="ept-kpi-label">Net actual flow</div>
+            <div class="ept-kpi-value"><span t-field="run.actual_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div>
+            <div class="ept-kpi-sub">
+              <span class="text-success">+<span t-field="run.actual_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></span>
+              ·
+              <span class="text-danger">-<span t-field="run.actual_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ept-card">
+          <div class="ept-card-head">
+            <strong>Forecast vs Actual</strong>
+            <span class="small text-muted">Variance = Actual − Forecast</span>
+          </div>
+          <div class="ept-card-body">
+            <t t-set="in_max" t-value="max(abs(run.forecast_inflow or 0.0), abs(run.actual_inflow or 0.0), 1.0)"/>
+            <t t-set="out_max" t-value="max(abs(run.forecast_outflow or 0.0), abs(run.actual_outflow or 0.0), 1.0)"/>
+            <div class="ept-compare-row">
+              <div class="ept-compare-top">
+                <span class="ept-compare-label">Inflows</span>
+                <span t-attf-class="ept-compare-variance #{'eps-badge-approved' if (run.actual_inflow - run.forecast_inflow) &gt;= 0 else 'eps-badge-rejected'}">
+                  <span t-field="run.portal_variance_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                </span>
+              </div>
+              <div class="ept-bar-line">
+                <span class="ept-bar-tag">Forecast</span>
+                <div class="ept-bar-track"><div class="ept-bar-fill ept-fill-forecast" t-attf-style="width: #{abs(run.forecast_inflow or 0.0) / in_max * 100}%;"/></div>
+                <span class="ept-bar-val"><span t-field="run.forecast_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></span>
+              </div>
+              <div class="ept-bar-line">
+                <span class="ept-bar-tag">Actual</span>
+                <div class="ept-bar-track"><div class="ept-bar-fill ept-fill-actual-in" t-attf-style="width: #{abs(run.actual_inflow or 0.0) / in_max * 100}%;"/></div>
+                <span class="ept-bar-val"><span t-field="run.actual_inflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></span>
+              </div>
+            </div>
+            <div class="ept-compare-row">
+              <div class="ept-compare-top">
+                <span class="ept-compare-label">Outflows</span>
+                <span t-attf-class="ept-compare-variance #{'eps-badge-approved' if (run.actual_outflow - run.forecast_outflow) &lt;= 0 else 'eps-badge-rejected'}">
+                  <span t-field="run.portal_variance_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/>
+                </span>
+              </div>
+              <div class="ept-bar-line">
+                <span class="ept-bar-tag">Forecast</span>
+                <div class="ept-bar-track"><div class="ept-bar-fill ept-fill-forecast" t-attf-style="width: #{abs(run.forecast_outflow or 0.0) / out_max * 100}%;"/></div>
+                <span class="ept-bar-val"><span t-field="run.forecast_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></span>
+              </div>
+              <div class="ept-bar-line">
+                <span class="ept-bar-tag">Actual</span>
+                <div class="ept-bar-track"><div class="ept-bar-fill ept-fill-actual-out" t-attf-style="width: #{abs(run.actual_outflow or 0.0) / out_max * 100}%;"/></div>
+                <span class="ept-bar-val"><span t-field="run.actual_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></span>
+              </div>
+            </div>
+
+            <div class="ept-closing-row">
+              <div>
+                <div class="ept-closing-label">Net cash flow</div>
+                <div class="ept-closing-figures">
+                  <div><div class="ept-closing-figure-value"><span t-field="run.forecast_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div><div class="ept-closing-figure-sub">Forecast</div></div>
+                  <div><div class="ept-closing-figure-value"><span t-field="run.actual_net" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div><div class="ept-closing-figure-sub">Actual</div></div>
+                </div>
+              </div>
+              <div>
+                <div class="ept-closing-label">Closing balance</div>
+                <div class="ept-closing-figures">
+                  <div><div class="ept-closing-figure-value"><span t-field="run.forecast_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div><div class="ept-closing-figure-sub">Forecast</div></div>
+                  <div><div class="ept-closing-figure-value"><span t-field="run.actual_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div><div class="ept-closing-figure-sub">Actual</div></div>
+                </div>
+              </div>
+              <span t-attf-class="ept-compare-variance #{'eps-badge-approved' if run.forecast_variance &gt;= 0 else 'eps-badge-rejected'}" style="font-size: 13px; padding: .4em .9em;">
+                <span t-field="run.forecast_variance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/> variance
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ept-card">
+          <div class="ept-card-head">
+            <strong>Daily Ledger</strong>
+            <span class="small text-muted">Movements grouped by planned date, with running cash balance</span>
+          </div>
+
+          <div class="d-none d-lg-block">
+            <div class="ept-ledger-head">
+              <div/>
+              <div>Description</div>
+              <div>Partner / Project</div>
+              <div>PO paid / due</div>
+              <div>Forecast</div>
+              <div>CEO Amt.</div>
+              <div>Actual</div>
+              <div>Variance</div>
+              <div>Status</div>
+            </div>
+            <t t-foreach="day_groups" t-as="day">
+              <div class="ept-day-block">
+                <div class="ept-day-header">
+                  <div class="ept-day-date">
+                    <t t-esc="day['date'].strftime('%d %b %Y') if day['date'] else ''"/>
+                    <span class="ept-day-dow"><t t-esc="day['date'].strftime('%A') if day['date'] else ''"/></span>
+                  </div>
+                  <div class="ept-day-meta">
+                    <span class="ept-day-balance"><t t-esc="day['opening_fmt']"/> → <t t-esc="day['closing_fmt']"/></span>
+                    <span t-attf-class="ept-day-net #{'ept-pos' if day['net'] &gt;= 0 else 'ept-neg'}">
+                      <t t-esc="'+' if day['net'] &gt;= 0 else ''"/><t t-esc="day['net_fmt']"/>
+                    </span>
+                  </div>
+                </div>
+                <t t-foreach="day['lines']" t-as="line">
                   <t t-set="ceo_badge_cls" t-value="{'pending': 'eps-badge-pending', 'approved': 'eps-badge-approved', 'adjusted': 'eps-badge-approved', 'held': 'eps-badge-held', 'rejected': 'eps-badge-rejected'}.get(line.ceo_decision, 'eps-badge-muted')"/>
                   <t t-set="line_state_cls" t-value="{'planned': 'eps-badge-info', 'approved': 'eps-badge-approved', 'executed': 'eps-badge-done', 'cancel': 'eps-badge-rejected'}.get(line.state, 'eps-badge-muted')"/>
-                  <tr>
-                    <td>
-                      <t t-esc="line.planned_date"/>
-                    </td>
-                    <td>
-                      <span t-attf-class="eps-badge #{'eps-flow-type-in' if line.flow_type == 'in' else 'eps-flow-type-out'}">
-                        <span class="eps-badge-dot"/>
-                        <t t-esc="'Receipt' if line.flow_type == 'in' else 'Payment'"/>
-                      </span>
-                    </td>
-                    <td>
-                      <div class="fw-semibold">
-                        <t t-esc="line.name"/>
+                  <div class="ept-row">
+                    <div>
+                      <div t-attf-class="ept-flow-icon #{'ept-flow-in' if line.flow_type == 'in' else 'ept-flow-out'}" t-att-title="'Receipt' if line.flow_type == 'in' else 'Payment'">
+                        <i t-attf-class="fa #{'fa-arrow-down' if line.flow_type == 'in' else 'fa-arrow-up'}"/>
                       </div>
-                      <small class="text-muted">
-                        <t t-esc="line.category_id.name"/>
-                      </small>
-                    </td>
-                    <td>
-                      <div t-if="line.partner_id" class="eps-truncate" t-att-title="line.partner_id.name">
-                        <t t-esc="line.partner_id.name"/>
-                      </div>
-                      <small t-if="line.project_id" class="text-muted eps-truncate" t-att-title="line.project_id.name">
-                        <t t-esc="line.project_id.name"/>
-                      </small>
-                    </td>
-                    <td>
-                      <span t-if="line.purchase_order_ids" class="eps-amount" t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
-                      <span t-else="" class="eps-amount-muted">—</span>
-                    </td>
-                    <td>
-                      <span t-if="line.purchase_order_ids" class="eps-amount" t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
-                      <span t-else="" class="eps-amount-muted">—</span>
-                    </td>
-                    <td>
-                      <span class="eps-amount" t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
-                    </td>
-                    <td>
-                      <span t-if="line.flow_type == 'out'" class="eps-amount" t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
-                      <span t-else="" class="eps-amount-muted">Not required</span>
-                    </td>
-                    <td>
-                      <span class="eps-amount" t-field="line.actual_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
-                    </td>
-                    <td t-attf-class="eps-amount #{'text-success' if ((line.flow_type == 'in' and line.variance_amount &gt;= 0) or (line.flow_type == 'out' and line.variance_amount &lt;= 0)) else 'text-danger'}">
+                    </div>
+                    <div>
+                      <div class="ept-row-title ept-row-truncate" t-att-title="line.name"><t t-esc="line.name"/></div>
+                      <div class="ept-row-sub ept-row-truncate"><t t-esc="line.category_id.name"/></div>
+                    </div>
+                    <div>
+                      <div t-if="line.partner_id" class="ept-row-title ept-row-truncate" t-att-title="line.partner_id.name"><t t-esc="line.partner_id.name"/></div>
+                      <div t-if="line.project_id" class="ept-row-sub ept-row-truncate" t-att-title="line.project_id.name"><t t-esc="line.project_id.name"/></div>
+                      <div t-if="not line.partner_id and not line.project_id" class="ept-row-sub">Not specified</div>
+                    </div>
+                    <div>
+                      <t t-if="line.purchase_order_ids">
+                        <a t-foreach="line.portal_purchase_order_ids" t-as="po" t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id" class="ept-po-chip d-block mb-1" target="_blank" rel="noopener">
+                          <i class="fa fa-eye"/> <t t-esc="po.name"/>
+                        </a>
+                        <div class="ept-row-sub" style="font-size: 10px;">
+                          Paid <span t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/> · Due <span t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                        </div>
+                      </t>
+                      <span t-else="" class="ept-amount-muted">—</span>
+                    </div>
+                    <div class="ept-amount"><span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
+                    <div>
+                      <span t-if="line.flow_type == 'out'" class="ept-amount"><span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></span>
+                      <span t-else="" class="ept-amount-muted">Not required</span>
+                    </div>
+                    <div class="ept-amount"><span t-field="line.actual_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
+                    <div t-attf-class="ept-amount #{'text-success' if ((line.flow_type == 'in' and line.variance_amount &gt;= 0) or (line.flow_type == 'out' and line.variance_amount &lt;= 0)) else 'text-danger'}">
                       <span t-field="line.variance_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
-                    </td>
-                    <td class="eps-status eps-weekly-col-status">
+                    </div>
+                    <div>
                       <span t-if="line.flow_type == 'out'" t-attf-class="eps-badge #{ceo_badge_cls}" t-att-title="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)">
-                        <span class="eps-badge-dot"/>
-                        <t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
+                        <span class="eps-badge-dot"/><t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
                       </span>
                       <span t-else="" t-attf-class="eps-badge #{line_state_cls}">
-                        <span class="eps-badge-dot"/>
-                        <t t-esc="dict(line._fields['state'].selection).get(line.state)"/>
+                        <span class="eps-badge-dot"/><t t-esc="dict(line._fields['state'].selection).get(line.state)"/>
                       </span>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 </t>
-              </tbody>
-            </table>
-          </div>
-          <div class="d-lg-none p-3">
-            <t t-foreach="run.line_ids" t-as="line">
-              <t t-set="ceo_badge_cls" t-value="{'pending': 'eps-badge-pending', 'approved': 'eps-badge-approved', 'adjusted': 'eps-badge-approved', 'held': 'eps-badge-held', 'rejected': 'eps-badge-rejected'}.get(line.ceo_decision, 'eps-badge-muted')"/>
-              <t t-set="line_state_cls" t-value="{'planned': 'eps-badge-info', 'approved': 'eps-badge-approved', 'executed': 'eps-badge-done', 'cancel': 'eps-badge-rejected'}.get(line.state, 'eps-badge-muted')"/>
-              <div class="border rounded-3 p-3 mb-3">
-                <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
-                  <div><div class="fw-bold eps-mobile-value"><t t-esc="line.name"/></div><div class="small text-muted"><t t-esc="line.category_id.name"/></div></div>
-                  <span t-attf-class="eps-badge #{'eps-flow-type-in' if line.flow_type == 'in' else 'eps-flow-type-out'}"><span class="eps-badge-dot"/><t t-esc="'Receipt' if line.flow_type == 'in' else 'Payment'"/></span>
-                </div>
-                <div class="row g-3">
-                  <div class="col-6"><div class="eps-mobile-label">Date</div><div class="eps-mobile-value"><t t-esc="line.planned_date"/></div></div>
-                  <div class="col-6"><div class="eps-mobile-label">Status</div><div><span t-if="line.flow_type == 'out'" t-attf-class="eps-badge #{ceo_badge_cls}"><span class="eps-badge-dot"/><t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/></span><span t-else="" t-attf-class="eps-badge #{line_state_cls}"><span class="eps-badge-dot"/><t t-esc="dict(line._fields['state'].selection).get(line.state)"/></span></div></div>
-                  <div class="col-12"><div class="eps-mobile-label">Partner / Project</div><div class="eps-mobile-value" t-if="line.partner_id"><t t-esc="line.partner_id.name"/></div><div class="small text-muted" t-if="line.project_id"><t t-esc="line.project_id.name"/></div><div class="text-muted" t-if="not line.partner_id and not line.project_id">Not specified</div></div>
-                  <div class="col-6"><div class="eps-mobile-label">Forecast</div><div class="eps-mobile-value"><span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
-                  <div class="col-6"><div class="eps-mobile-label">CEO amount</div><div class="eps-mobile-value" t-if="line.flow_type == 'out'"><span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div><div class="text-muted" t-else="">Not required</div></div>
-                  <div class="col-6"><div class="eps-mobile-label">Actual</div><div class="eps-mobile-value"><span t-field="line.actual_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
-                  <div class="col-6"><div class="eps-mobile-label">Variance</div><div t-attf-class="eps-mobile-value fw-semibold #{'text-success' if ((line.flow_type == 'in' and line.variance_amount &gt;= 0) or (line.flow_type == 'out' and line.variance_amount &lt;= 0)) else 'text-danger'}"><span t-field="line.variance_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
-                  <div class="col-6" t-if="line.purchase_order_ids"><div class="eps-mobile-label">PO paid</div><div class="eps-mobile-value"><span t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
-                  <div class="col-6" t-if="line.purchase_order_ids"><div class="eps-mobile-label">PO due</div><div class="eps-mobile-value"><span t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
-                </div>
               </div>
             </t>
+            <div t-if="not day_groups" class="text-center text-muted py-5">No planned cash movements found.</div>
+          </div>
+
+          <div class="d-lg-none p-3">
+            <t t-foreach="day_groups" t-as="day">
+              <div class="ept-mobile-day-header">
+                <div>
+                  <div class="fw-bold"><t t-esc="day['date'].strftime('%d %b %Y') if day['date'] else ''"/></div>
+                  <div class="small text-muted"><t t-esc="day['date'].strftime('%A') if day['date'] else ''"/> · <t t-esc="day['opening_fmt']"/> → <t t-esc="day['closing_fmt']"/></div>
+                </div>
+                <span t-attf-class="ept-day-net #{'ept-pos' if day['net'] &gt;= 0 else 'ept-neg'}">
+                  <t t-esc="'+' if day['net'] &gt;= 0 else ''"/><t t-esc="day['net_fmt']"/>
+                </span>
+              </div>
+              <t t-foreach="day['lines']" t-as="line">
+                <t t-set="ceo_badge_cls" t-value="{'pending': 'eps-badge-pending', 'approved': 'eps-badge-approved', 'adjusted': 'eps-badge-approved', 'held': 'eps-badge-held', 'rejected': 'eps-badge-rejected'}.get(line.ceo_decision, 'eps-badge-muted')"/>
+                <t t-set="line_state_cls" t-value="{'planned': 'eps-badge-info', 'approved': 'eps-badge-approved', 'executed': 'eps-badge-done', 'cancel': 'eps-badge-rejected'}.get(line.state, 'eps-badge-muted')"/>
+                <div t-attf-class="card border-0 shadow-sm mb-3 ept-mobile-card #{'ept-flow-in' if line.flow_type == 'in' else 'ept-flow-out'}">
+                  <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                      <div class="d-flex align-items-start gap-2">
+                        <div t-attf-class="ept-flow-icon #{'ept-flow-in' if line.flow_type == 'in' else 'ept-flow-out'}">
+                          <i t-attf-class="fa #{'fa-arrow-down' if line.flow_type == 'in' else 'fa-arrow-up'}"/>
+                        </div>
+                        <div>
+                          <div class="fw-bold ept-mobile-value"><t t-esc="line.name"/></div>
+                          <div class="text-muted small"><t t-esc="line.category_id.name"/></div>
+                        </div>
+                      </div>
+                      <span t-if="line.flow_type == 'out'" t-attf-class="eps-badge #{ceo_badge_cls} flex-shrink-0">
+                        <span class="eps-badge-dot"/><t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
+                      </span>
+                      <span t-else="" t-attf-class="eps-badge #{line_state_cls} flex-shrink-0">
+                        <span class="eps-badge-dot"/><t t-esc="dict(line._fields['state'].selection).get(line.state)"/>
+                      </span>
+                    </div>
+                    <div class="row g-3">
+                      <div class="col-12" t-if="line.partner_id or line.project_id">
+                        <div class="ept-mobile-label">Partner / Project</div>
+                        <div class="ept-mobile-value" t-if="line.partner_id"><t t-esc="line.partner_id.name"/></div>
+                        <div class="small text-muted" t-if="line.project_id"><t t-esc="line.project_id.name"/></div>
+                      </div>
+                      <div class="col-6"><div class="ept-mobile-label">Forecast</div><div class="ept-mobile-value"><span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
+                      <div class="col-6"><div class="ept-mobile-label">CEO amount</div><div class="ept-mobile-value" t-if="line.flow_type == 'out'"><span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div><div class="text-muted" t-else="">Not required</div></div>
+                      <div class="col-6"><div class="ept-mobile-label">Actual</div><div class="ept-mobile-value"><span t-field="line.actual_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
+                      <div class="col-6"><div class="ept-mobile-label">Variance</div><div t-attf-class="ept-mobile-value fw-semibold #{'text-success' if ((line.flow_type == 'in' and line.variance_amount &gt;= 0) or (line.flow_type == 'out' and line.variance_amount &lt;= 0)) else 'text-danger'}"><span t-field="line.variance_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
+                      <div class="col-6" t-if="line.purchase_order_ids"><div class="ept-mobile-label">PO paid</div><div class="ept-mobile-value"><span t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
+                      <div class="col-6" t-if="line.purchase_order_ids"><div class="ept-mobile-label">PO due</div><div class="ept-mobile-value"><span t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div></div>
+                      <div class="col-12" t-if="line.portal_purchase_order_ids">
+                        <a t-foreach="line.portal_purchase_order_ids" t-as="po" t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id" class="btn btn-outline-primary btn-sm w-100 mb-1" target="_blank" rel="noopener">
+                          <i class="fa fa-eye me-2"/><t t-esc="po.name"/>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </t>
+            </t>
+            <div t-if="not day_groups" class="card border-0 shadow-sm"><div class="card-body text-center text-muted py-5">No planned cash movements found.</div></div>
           </div>
         </div>
       </div>

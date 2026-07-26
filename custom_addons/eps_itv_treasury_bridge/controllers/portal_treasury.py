@@ -1,3 +1,4 @@
+from itertools import groupby
 from urllib.parse import quote
 
 from odoo import http
@@ -87,10 +88,56 @@ class PortalTreasury(http.Controller):
         run = self._get_run(run_id)
         if not run:
             return request.not_found()
+        day_groups = self._build_day_groups(run)
         return request.render('eps_itv_treasury_bridge.portal_treasury_plan_detail_clean_v3', {
             'run': run,
+            'day_groups': day_groups,
             'page_name': 'treasury_plans',
         })
+
+    def _fmt_amount(self, currency, amount):
+        amount_str = '{:,.2f}'.format(amount or 0.0)
+        symbol = currency.symbol or currency.name or ''
+        if currency.position == 'before':
+            return '%s%s' % (symbol, amount_str)
+        return '%s %s' % (amount_str, symbol)
+
+    def _build_day_groups(self, run):
+        """Group the run's lines by planned_date and roll a running cash
+        balance day-over-day so the portal can render a ledger-style timeline.
+        Lines are already ordered by planned_date via the model's _order.
+        """
+        currency = run.currency_id
+        running = run.opening_balance
+        day_groups = []
+        for date, lines_iter in groupby(run.line_ids, key=lambda l: l.planned_date):
+            lines = list(lines_iter)
+            forecast_in = sum(l.forecast_amount for l in lines if l.flow_type == 'in')
+            forecast_out = sum(l.forecast_amount for l in lines if l.flow_type == 'out')
+            actual_in = sum(l.actual_amount for l in lines if l.flow_type == 'in')
+            actual_out = sum(l.actual_amount for l in lines if l.flow_type == 'out')
+            day_opening = running
+            running += (actual_in - actual_out)
+            net = actual_in - actual_out
+            day_groups.append({
+                'date': date,
+                'lines': lines,
+                'forecast_in': forecast_in,
+                'forecast_out': forecast_out,
+                'actual_in': actual_in,
+                'actual_out': actual_out,
+                'net': net,
+                'opening': day_opening,
+                'closing': running,
+                'forecast_in_fmt': self._fmt_amount(currency, forecast_in),
+                'forecast_out_fmt': self._fmt_amount(currency, forecast_out),
+                'actual_in_fmt': self._fmt_amount(currency, actual_in),
+                'actual_out_fmt': self._fmt_amount(currency, actual_out),
+                'net_fmt': self._fmt_amount(currency, net),
+                'opening_fmt': self._fmt_amount(currency, day_opening),
+                'closing_fmt': self._fmt_amount(currency, running),
+            })
+        return day_groups
 
     @http.route(
         '/my/employee/treasury/lines/<int:line_id>/review',
