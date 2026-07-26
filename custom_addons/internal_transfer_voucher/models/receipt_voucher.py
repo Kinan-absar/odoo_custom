@@ -496,6 +496,11 @@ class AccountReceiptVoucher(models.Model):
             move.action_post()
             rec.state = 'posted'
 
+            # Recreate a missing Unplanned Actual after a direct receipt voucher is
+            # reset and reused. Existing planned-receipt links remain untouched.
+            if not rec.cash_plan_line_id:
+                rec._auto_link_unplanned_cash_plan()
+
     def action_cancel(self):
         for rec in self:
             if rec.state == 'posted':
@@ -520,6 +525,13 @@ class AccountReceiptVoucher(models.Model):
                 # can delete/rebuild dynamic tax lines and trigger Odoo's tax report
                 # protection. Keep the existing move linked and reuse it on repost.
                 rec.move_id.sudo().write({'state': 'draft'})
+
+            # Remove only the automatically-generated Unplanned Actual when a
+            # direct receipt voucher is reset. A real planned-receipt link is retained.
+            old_plan_line = rec.cash_plan_line_id
+            if old_plan_line and old_plan_line.is_unplanned:
+                rec.with_context(skip_cash_plan_link_lock=True).write({'cash_plan_line_id': False})
+                old_plan_line.sudo().unlink()
 
             rec.state = 'draft'
 

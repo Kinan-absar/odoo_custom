@@ -1103,6 +1103,14 @@ class AccountPaymentVoucher(models.Model):
             else:
                 rec._post_account_payment()
 
+            # A reused direct voucher may have lost its former automatically-created
+            # Unplanned Actual line (for example after reset/reclassification). Rebuild
+            # the correct line after successful posting, using the voucher's current
+            # date, partner, amount and company. Planned links are preserved because
+            # they already populate cash_plan_line_id.
+            if rec.state == 'posted' and not rec.cash_plan_line_id:
+                rec._auto_link_unplanned_cash_plan()
+
     def _post_account_payment(self):
         """Cash / Cheque / Bank Transfer — pay against an account."""
         rec = self
@@ -1353,6 +1361,15 @@ class AccountPaymentVoucher(models.Model):
                 # We only need to reuse the same linked move on repost, so safely put
                 # the same move back to draft without touching its lines.
                 rec.move_id.sudo().write({'state': 'draft'})
+
+            # A direct voucher's Unplanned Actual represents an executed cash
+            # movement. Once the voucher is reset, remove only that generated line so
+            # it no longer appears as an actual and so this voucher can be safely reused.
+            # Never remove a genuine planned-payment link.
+            old_plan_line = rec.cash_plan_line_id
+            if old_plan_line and old_plan_line.is_unplanned:
+                rec.with_context(skip_cash_plan_link_lock=True).write({'cash_plan_line_id': False})
+                old_plan_line.sudo().unlink()
 
             rec.state = 'draft'
 
