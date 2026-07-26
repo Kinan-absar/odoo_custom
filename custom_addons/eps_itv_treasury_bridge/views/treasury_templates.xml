@@ -3,7 +3,7 @@
   <template id="portal_treasury_payment_list" name="CEO Payment Approvals">
     <t t-call="employee_portal_suite.employee_portal_layout">
       <style>
-        .eps-treasury-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-treasury-table { font-size: 11.5px; table-layout: auto; width: 100%; }
         .eps-treasury-table th, .eps-treasury-table td { padding: .55rem .5rem; vertical-align: middle; line-height: 1.3; }
         .eps-treasury-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; color: var(--text-secondary, #6B7280); white-space: nowrap; }
         .eps-treasury-table thead tr { border-bottom: 2px solid var(--app-primary, #4F46E5); }
@@ -12,29 +12,29 @@
         .eps-treasury-table tbody tr:hover { background: rgba(79,70,229,0.04); }
         .eps-treasury-table .eps-money, .eps-treasury-table .eps-date, .eps-treasury-table .eps-status { white-space: nowrap; }
         .eps-treasury-table .eps-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .eps-treasury-table .eps-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; display: block; }
-        .eps-treasury-table .eps-amount-muted { font-weight: 400; color: var(--text-muted, #9CA3AF); text-align: right; display: block; }
+        .eps-treasury-table .eps-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; display: block; white-space: nowrap; }
+        .eps-treasury-table .eps-amount-muted { font-weight: 400; color: var(--text-muted, #9CA3AF); text-align: right; display: block; white-space: nowrap; }
         .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
         .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
         .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
-        .eps-col-date { width: 6%; }
-        .eps-col-payment { width: 9%; }
-        .eps-col-plan { width: 7%; }
-        .eps-col-partner { width: 11%; }
-        .eps-col-po { width: 8%; }
-        .eps-col-money { width: 7%; }
-        .eps-col-status { width: 11%; }
-        .eps-col-review { width: 20%; }
+        .eps-col-date { white-space: nowrap; }
+        .eps-col-payment { min-width: 130px; }
+        .eps-col-plan { min-width: 90px; }
+        .eps-col-partner { max-width: 170px; }
+        .eps-col-po { max-width: 150px; }
+        .eps-col-money { white-space: nowrap; }
+        .eps-col-status { white-space: nowrap; }
+        .eps-col-review { min-width: 230px; }
         .eps-icon-btn { min-width: 28px; border-radius: 8px; }
-        .eps-summary-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-summary-table { font-size: 11.5px; table-layout: auto; width: 100%; }
         .eps-summary-table th, .eps-summary-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
         .eps-summary-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
-        .eps-weekly-col-date { width: 8%; }
-        .eps-weekly-col-flow { width: 6%; }
-        .eps-weekly-col-description { width: 10%; }
-        .eps-weekly-col-partner { width: 15%; }
-        .eps-weekly-col-money { width: 8%; }
-        .eps-weekly-col-status { width: 13%; }
+        .eps-weekly-col-date { white-space: nowrap; }
+        .eps-weekly-col-flow { white-space: nowrap; }
+        .eps-weekly-col-description { max-width: 150px; }
+        .eps-weekly-col-partner { max-width: 170px; }
+        .eps-weekly-col-money { white-space: nowrap; }
+        .eps-weekly-col-status { white-space: nowrap; }
 
         /* --- Status pill badges --- */
         .eps-badge { padding: .3em .68em; border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: .01em; display: inline-flex; align-items: center; gap: .35em; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
@@ -328,7 +328,7 @@
   <template id="portal_treasury_plan_list" name="CEO Weekly Cash Plans">
     <t t-call="employee_portal_suite.employee_portal_layout">
       <style>
-        .eps-treasury-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-treasury-table { font-size: 11.5px; table-layout: auto; width: 100%; }
         .eps-treasury-table th, .eps-treasury-table td { padding: .55rem .5rem; vertical-align: middle; line-height: 1.3; }
         .eps-treasury-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; color: var(--text-secondary, #6B7280); white-space: nowrap; }
         .eps-treasury-table thead tr { border-bottom: 2px solid var(--app-primary, #4F46E5); }
@@ -337,29 +337,29 @@
         .eps-treasury-table tbody tr:hover { background: rgba(79,70,229,0.04); }
         .eps-treasury-table .eps-money, .eps-treasury-table .eps-date, .eps-treasury-table .eps-status { white-space: nowrap; }
         .eps-treasury-table .eps-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .eps-treasury-table .eps-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; display: block; }
-        .eps-treasury-table .eps-amount-muted { font-weight: 400; color: var(--text-muted, #9CA3AF); text-align: right; display: block; }
+        .eps-treasury-table .eps-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; display: block; white-space: nowrap; }
+        .eps-treasury-table .eps-amount-muted { font-weight: 400; color: var(--text-muted, #9CA3AF); text-align: right; display: block; white-space: nowrap; }
         .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
         .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
         .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
-        .eps-col-date { width: 6%; }
-        .eps-col-payment { width: 9%; }
-        .eps-col-plan { width: 7%; }
-        .eps-col-partner { width: 11%; }
-        .eps-col-po { width: 8%; }
-        .eps-col-money { width: 7%; }
-        .eps-col-status { width: 11%; }
-        .eps-col-review { width: 20%; }
+        .eps-col-date { white-space: nowrap; }
+        .eps-col-payment { min-width: 130px; }
+        .eps-col-plan { min-width: 90px; }
+        .eps-col-partner { max-width: 170px; }
+        .eps-col-po { max-width: 150px; }
+        .eps-col-money { white-space: nowrap; }
+        .eps-col-status { white-space: nowrap; }
+        .eps-col-review { min-width: 230px; }
         .eps-icon-btn { min-width: 28px; border-radius: 8px; }
-        .eps-summary-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-summary-table { font-size: 11.5px; table-layout: auto; width: 100%; }
         .eps-summary-table th, .eps-summary-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
         .eps-summary-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
-        .eps-weekly-col-date { width: 8%; }
-        .eps-weekly-col-flow { width: 6%; }
-        .eps-weekly-col-description { width: 10%; }
-        .eps-weekly-col-partner { width: 15%; }
-        .eps-weekly-col-money { width: 8%; }
-        .eps-weekly-col-status { width: 13%; }
+        .eps-weekly-col-date { white-space: nowrap; }
+        .eps-weekly-col-flow { white-space: nowrap; }
+        .eps-weekly-col-description { max-width: 150px; }
+        .eps-weekly-col-partner { max-width: 170px; }
+        .eps-weekly-col-money { white-space: nowrap; }
+        .eps-weekly-col-status { white-space: nowrap; }
 
         /* --- Status pill badges --- */
         .eps-badge { padding: .3em .68em; border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: .01em; display: inline-flex; align-items: center; gap: .35em; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
@@ -531,7 +531,7 @@
   <template id="portal_treasury_plan_detail_clean_v3" name="CEO Weekly Cash Plan Detail">
     <t t-call="employee_portal_suite.employee_portal_layout">
       <style>
-        .eps-treasury-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-treasury-table { font-size: 11.5px; table-layout: auto; width: 100%; }
         .eps-treasury-table th, .eps-treasury-table td { padding: .55rem .5rem; vertical-align: middle; line-height: 1.3; }
         .eps-treasury-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; color: var(--text-secondary, #6B7280); white-space: nowrap; }
         .eps-treasury-table thead tr { border-bottom: 2px solid var(--app-primary, #4F46E5); }
@@ -540,29 +540,29 @@
         .eps-treasury-table tbody tr:hover { background: rgba(79,70,229,0.04); }
         .eps-treasury-table .eps-money, .eps-treasury-table .eps-date, .eps-treasury-table .eps-status { white-space: nowrap; }
         .eps-treasury-table .eps-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .eps-treasury-table .eps-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; display: block; }
-        .eps-treasury-table .eps-amount-muted { font-weight: 400; color: var(--text-muted, #9CA3AF); text-align: right; display: block; }
+        .eps-treasury-table .eps-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; display: block; white-space: nowrap; }
+        .eps-treasury-table .eps-amount-muted { font-weight: 400; color: var(--text-muted, #9CA3AF); text-align: right; display: block; white-space: nowrap; }
         .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
         .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
         .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
-        .eps-col-date { width: 6%; }
-        .eps-col-payment { width: 9%; }
-        .eps-col-plan { width: 7%; }
-        .eps-col-partner { width: 11%; }
-        .eps-col-po { width: 8%; }
-        .eps-col-money { width: 7%; }
-        .eps-col-status { width: 11%; }
-        .eps-col-review { width: 20%; }
+        .eps-col-date { white-space: nowrap; }
+        .eps-col-payment { min-width: 130px; }
+        .eps-col-plan { min-width: 90px; }
+        .eps-col-partner { max-width: 170px; }
+        .eps-col-po { max-width: 150px; }
+        .eps-col-money { white-space: nowrap; }
+        .eps-col-status { white-space: nowrap; }
+        .eps-col-review { min-width: 230px; }
         .eps-icon-btn { min-width: 28px; border-radius: 8px; }
-        .eps-summary-table { font-size: 11.5px; table-layout: fixed; width: 100%; }
+        .eps-summary-table { font-size: 11.5px; table-layout: auto; width: 100%; }
         .eps-summary-table th, .eps-summary-table td { padding: .32rem .38rem; vertical-align: middle; line-height: 1.2; }
         .eps-summary-table th { font-size: 10.5px; white-space: nowrap; font-weight: 600; }
-        .eps-weekly-col-date { width: 8%; }
-        .eps-weekly-col-flow { width: 6%; }
-        .eps-weekly-col-description { width: 10%; }
-        .eps-weekly-col-partner { width: 15%; }
-        .eps-weekly-col-money { width: 8%; }
-        .eps-weekly-col-status { width: 13%; }
+        .eps-weekly-col-date { white-space: nowrap; }
+        .eps-weekly-col-flow { white-space: nowrap; }
+        .eps-weekly-col-description { max-width: 150px; }
+        .eps-weekly-col-partner { max-width: 170px; }
+        .eps-weekly-col-money { white-space: nowrap; }
+        .eps-weekly-col-status { white-space: nowrap; }
 
         /* --- Status pill badges --- */
         .eps-badge { padding: .3em .68em; border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: .01em; display: inline-flex; align-items: center; gap: .35em; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
