@@ -1362,6 +1362,12 @@ class AccountPaymentVoucher(models.Model):
                 # the same move back to draft without touching its lines.
                 rec.move_id.sudo().write({'state': 'draft'})
 
+            # Put the voucher itself in draft before unlinking the generated
+            # cash-plan line. Unlinking that line may clear its voucher relation through
+            # the ORM; doing so while the voucher still says 'posted' is blocked by the
+            # posted-voucher write guard.
+            rec.write({'state': 'draft'})
+
             # A direct voucher's Unplanned Actual represents an executed cash
             # movement. Once the voucher is reset, remove only that generated line so
             # it no longer appears as an actual and so this voucher can be safely reused.
@@ -1370,8 +1376,6 @@ class AccountPaymentVoucher(models.Model):
             if old_plan_line and old_plan_line.is_unplanned:
                 rec.with_context(skip_cash_plan_link_lock=True).write({'cash_plan_line_id': False})
                 old_plan_line.sudo().unlink()
-
-            rec.state = 'draft'
 
     # -------------------------
     # Deletion Protection

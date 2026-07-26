@@ -526,14 +526,18 @@ class AccountReceiptVoucher(models.Model):
                 # protection. Keep the existing move linked and reuse it on repost.
                 rec.move_id.sudo().write({'state': 'draft'})
 
+            # Put the voucher itself in draft before unlinking the generated
+            # cash-plan line. Unlinking that line may clear its voucher relation through
+            # the ORM; doing so while the voucher still says 'posted' is blocked by the
+            # posted-voucher write guard.
+            rec.write({'state': 'draft'})
+
             # Remove only the automatically-generated Unplanned Actual when a
             # direct receipt voucher is reset. A real planned-receipt link is retained.
             old_plan_line = rec.cash_plan_line_id
             if old_plan_line and old_plan_line.is_unplanned:
                 rec.with_context(skip_cash_plan_link_lock=True).write({'cash_plan_line_id': False})
                 old_plan_line.sudo().unlink()
-
-            rec.state = 'draft'
 
     # -------------------------
     # Deletion Protection
