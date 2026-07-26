@@ -71,6 +71,24 @@ class AccountReceiptVoucher(models.Model):
         copy=False
     )
 
+    cash_plan_line_id = fields.Many2one(
+        'cash.plan.line',
+        string='Weekly Plan Line',
+        readonly=True,
+        copy=False,
+        help='The Weekly Cash Plan line this voucher settles — either the planned receipt it '
+             'was raised from, or the automatically-created Unplanned Actual line when this '
+             'voucher was created directly.',
+    )
+
+    is_unplanned_actual = fields.Boolean(
+        string='Unplanned Actual',
+        related='cash_plan_line_id.is_unplanned',
+        store=True,
+        help='This receipt voucher was created directly, outside the weekly planning flow, and '
+             'was automatically matched to a Weekly Cash Plan by date.',
+    )
+
 
     # -------------------------
     # Customer Invoice Matching / Reconciliation
@@ -521,12 +539,93 @@ class AccountReceiptVoucher(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        for vals in vals_list:
+        prepared_vals_list = []
+        for original_vals in vals_list:
+            vals = dict(original_vals)
             if vals.get('name', 'New') == 'New':
                 vals['name'] = self.env['ir.sequence'].sudo().next_by_code(
                     'receipt.voucher'
                 ) or 'New'
-        return super().create(vals_list)
+            prepared_vals_list.append(vals)
+
+        records = super().create(prepared_vals_list)
+        if not self.env.context.get('skip_cash_plan_autolink'):
+            records._auto_link_unplanned_cash_plan()
+        return records
+
+    def _get_or_create_unplanned_category(self, company_id):
+        category = self.env.ref(
+            'internal_transfer_voucher.cat_in_unplanned',
+            raise_if_not_found=False,
+        )
+        if category and (not category.company_id or category.company_id.id == company_id):
+            return category
+
+        Category = self.env['cash.plan.category'].sudo()
+        category = Category.search([
+            ('flow_type', '=', 'in'),
+            ('name', '=', _('Unplanned Actual')),
+            '|', ('company_id', '=', False), ('company_id', '=', company_id),
+        ], limit=1)
+        if category:
+            return category
+        return Category.create({
+            'name': _('Unplanned Actual'),
+            'flow_type': 'in',
+            'sequence': 99,
+            'company_id': company_id,
+        })
+
+    def _auto_link_unplanned_cash_plan(self):
+        """Link directly-created receipts to the weekly plan covering their date.
+
+        Receipt vouchers raised from an existing planned receipt use the context flag
+        ``skip_cash_plan_autolink`` and are linked back to that planned line explicitly.
+        A direct receipt instead creates one executed incoming line with zero forecast,
+        allowing Actual Inflow, Actual Closing and Variance to update automatically.
+        """
+        CashPlanLine = self.env['cash.plan.line'].sudo()
+        CashPlanRun = self.env['cash.plan.run'].sudo()
+        for rec in self:
+            if not rec.id or rec.cash_plan_line_id:
+                continue
+            if CashPlanLine.search_count([('receipt_voucher_id', '=', rec.id)]):
+                continue
+
+            run = CashPlanRun.search([
+                ('company_id', '=', rec.company_id.id),
+                ('date_from', '<=', rec.date),
+                ('date_to', '>=', rec.date),
+                ('state', '!=', 'cancel'),
+            ], order='date_from desc', limit=1)
+            if not run:
+                continue
+
+            category = rec._get_or_create_unplanned_category(rec.company_id.id)
+            line = CashPlanLine.create({
+                'run_id': run.id,
+                'name': _('Unplanned Actual Receipt - %s') % (
+                    rec.partner_id.display_name or rec.name
+                ),
+                'planned_date': rec.date,
+                'flow_type': 'in',
+                'transaction_type': 'other',
+                'category_id': category.id,
+                'partner_id': rec.partner_id.id,
+                'forecast_amount': 0.0,
+                'is_unplanned': True,
+                'state': 'executed',
+                'ceo_decision': 'not_required',
+                'journal_id': rec.journal_id.id,
+                'account_id': rec.account_id.id,
+                'invoice_ids': [(6, 0, rec.invoice_ids.ids)],
+                'receipt_voucher_id': rec.id,
+                'description': _(
+                    'Automatically created from Receipt Voucher %s (created directly, '
+                    'outside the weekly planning flow).'
+                ) % rec.name,
+            })
+            rec.cash_plan_line_id = line.id
 
     def write(self, vals):
         for rec in self:

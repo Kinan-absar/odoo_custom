@@ -45,6 +45,7 @@
                 <field name="allocated_amount"/>
                 <field name="remaining_to_reconcile"/>
                 <field name="invoice_reconciliation_state" widget="badge" decoration-success="invoice_reconciliation_state == 'reconciled'" decoration-warning="invoice_reconciliation_state == 'partial'" decoration-info="invoice_reconciliation_state == 'ready'" decoration-danger="invoice_reconciliation_state == 'no_invoices'" decoration-primary="invoice_reconciliation_state == 'not_applicable'"/>
+                <field name="is_unplanned_actual" string="Unplanned" widget="boolean_toggle" readonly="1" optional="show"/>
                 <field name="state"/>
                 <field name="company_id" optional="hide"/>
             </list>
@@ -113,6 +114,11 @@
 
                     <field name="is_receivable_account" invisible="1"/>
                     <field name="invoice_reconciled" invisible="1"/>
+                    <field name="is_unplanned_actual" invisible="1"/>
+
+                    <div class="alert alert-info" role="alert" invisible="not is_unplanned_actual">
+                        This receipt was created directly and has been recorded automatically as an Unplanned Actual in the weekly cash plan covering its receipt date.
+                    </div>
 
                     <group>
                         <group string="Receipt Information">
@@ -162,6 +168,10 @@
                             <field name="remaining_to_reconcile" readonly="1"/>
                             <field name="difference_amount" readonly="1"/>
                         </group>
+                    </group>
+
+                    <group string="Weekly Cash Plan" invisible="not cash_plan_line_id">
+                        <field name="cash_plan_line_id" readonly="1"/>
                     </group>
 
                     <!-- Generated Journal Entry -->

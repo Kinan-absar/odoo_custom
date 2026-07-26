@@ -152,7 +152,7 @@ class CashPlanLine(models.Model):
         default=False,
         copy=False,
         readonly=True,
-        help='Automatically set when this record was created from a Payment Voucher that was '
+        help='Automatically set when this record was created from a Payment or Receipt Voucher that was '
              'raised directly by the Accountant, without going through the planning / CEO approval flow.',
     )
     is_locked = fields.Boolean(
@@ -388,10 +388,13 @@ class CashPlanLine(models.Model):
                 raise UserError(_('Select a partner for the planned receipt.'))
             if not self.account_id:
                 raise UserError(_('Select an income or receivable account.'))
-            voucher = self.env['account.receipt.voucher'].create({
+            voucher = self.env['account.receipt.voucher'].with_context(
+                skip_cash_plan_autolink=True
+            ).create({
                 **common, 'partner_id': self.partner_id.id, 'journal_id': self.journal_id.id,
                 'account_id': self.account_id.id, 'invoice_ids': [(6, 0, self.invoice_ids.ids)]})
             self.receipt_voucher_id = voucher
+            voucher.cash_plan_line_id = self.id
             action = self._document_action('account.receipt.voucher', voucher.id)
         self.state = 'executed'
         return action
