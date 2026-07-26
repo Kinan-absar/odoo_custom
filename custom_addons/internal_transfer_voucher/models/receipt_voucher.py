@@ -631,6 +631,8 @@ class AccountReceiptVoucher(models.Model):
         for rec in self:
             if rec.state == 'posted':
                 allowed_fields = {'state', 'move_id', 'invoice_ids'}
+                if self.env.context.get('skip_cash_plan_link_lock'):
+                    allowed_fields.add('cash_plan_line_id')
                 if not set(vals.keys()).issubset(allowed_fields):
                     raise UserError(_("You cannot modify a posted receipt voucher."))
                 if 'invoice_ids' in vals and rec.invoice_reconciled and not self.env.context.get('skip_invoice_reconcile_lock'):

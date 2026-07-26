@@ -1482,6 +1482,8 @@ class AccountPaymentVoucher(models.Model):
         for rec in self:
             if rec.state == 'posted':
                 allowed_fields = {'state', 'move_id', 'bill_ids'}
+                if self.env.context.get('skip_cash_plan_link_lock'):
+                    allowed_fields.add('cash_plan_line_id')
                 if not set(vals.keys()).issubset(allowed_fields):
                     raise UserError(_("You cannot modify a posted payment voucher."))
                 if 'bill_ids' in vals and rec.bill_reconciled and not self.env.context.get('skip_bill_reconcile_lock'):
