@@ -62,22 +62,22 @@
         .eps-badge-muted    { background: rgba(107,114,128,0.13); color: #4B5563; }
 
         /* --- Ledger --- */
-        .ept-ledger-head { display: grid; grid-template-columns: 52px minmax(190px,1.4fr) minmax(160px,1.1fr) 150px 106px 106px 140px; gap: 14px; padding: 0 24px 14px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-secondary, #6B7280); }
-        .ept-ledger-head > div:nth-child(5), .ept-ledger-head > div:nth-child(6) { text-align: right; }
+        .ept-ledger-head { display: grid; grid-template-columns: minmax(230px,1.55fr) minmax(240px,1.45fr) 118px 118px 140px; gap: 18px; padding: 0 26px 13px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-secondary, #6B7280); }
+        .ept-ledger-head > div:nth-child(3), .ept-ledger-head > div:nth-child(4) { text-align: right; }
 
         .ept-day-block + .ept-day-block { border-top: 1px solid var(--border-light, rgba(0,0,0,.05)); }
-        .ept-day-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 9px 24px; background: var(--surface-2, #F8F8FB); flex-wrap: wrap; }
+        .ept-day-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 22px; background: var(--surface-2, #F8F8FB); flex-wrap: wrap; }
         .ept-day-date { font-weight: 700; font-size: 13.5px; }
         .ept-day-date .ept-day-dow { color: var(--text-muted, #9CA3AF); font-weight: 500; margin-left: 6px; }
         .ept-day-meta { display: flex; align-items: center; gap: 14px; font-size: 12px; flex-wrap: wrap; color: var(--text-secondary, #6B7280); }
         .ept-day-meta strong { color: var(--text-primary, #1A1B2E); font-variant-numeric: tabular-nums; }
 
-        .ept-row { display: grid; grid-template-columns: 52px minmax(190px,1.4fr) minmax(160px,1.1fr) 150px 106px 106px 140px; gap: 14px; padding: 16px 24px; align-items: center; }
+        .ept-row { display: grid; grid-template-columns: minmax(230px,1.55fr) minmax(240px,1.45fr) 118px 118px 140px; gap: 18px; padding: 17px 26px; align-items: center; }
         .ept-row-wrap:hover .ept-row { background: rgba(79,70,229,0.035); }
         .ept-row-wrap + .ept-row-wrap { border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); }
         .ept-flow-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
-        .ept-row-title { font-weight: 650; font-size: 13.5px; line-height: 1.35; }
-        .ept-row-sub { font-size: 12px; line-height: 1.35; color: var(--text-muted, #9CA3AF); }
+        .ept-row-title { font-weight: 600; font-size: 13px; }
+        .ept-row-sub { font-size: 11.5px; color: var(--text-muted, #9CA3AF); }
         .ept-row-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ept-po-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; color: var(--app-primary, #4F46E5); background: rgba(79,70,229,.08); border-radius: 8px; padding: .18em .5em; text-decoration: none !important; }
         .ept-po-chip:hover { background: rgba(79,70,229,.16); }
@@ -95,7 +95,7 @@
         .ept-review-note { padding: 10px 22px 14px 74px; background: var(--surface-2, #F8F8FB); border-top: 1px dashed var(--border-light, rgba(0,0,0,.08)); font-size: 12px; color: var(--text-secondary, #6B7280); }
 
         @media (max-width: 1200px) {
-          .ept-ledger-head, .ept-row { grid-template-columns: 46px minmax(150px,1.3fr) minmax(130px,1fr) 130px 96px 96px 120px; font-size: 11.5px; }
+          .ept-ledger-head, .ept-row { grid-template-columns: minmax(190px,1.4fr) minmax(200px,1.25fr) 100px 100px 118px; font-size: 11.5px; }
         }
         @media (max-width: 991.98px) {
           .ept-ledger-head { display: none; }
@@ -187,10 +187,8 @@
 
           <div class="d-none d-lg-block mt-2">
             <div class="ept-ledger-head">
-              <div/>
               <div>Payment</div>
-              <div>Plan &amp; Partner</div>
-              <div>PO paid / due</div>
+              <div>Plan, partner &amp; PO</div>
               <div>Requested</div>
               <div>Approved</div>
               <div>Status</div>
@@ -212,30 +210,23 @@
                   <t t-set="icon_cls" t-value="{'pending': ('rgba(245,158,11,.14)','#B45309','fa-clock-o'), 'approved': ('rgba(16,185,129,.14)','#047857','fa-check'), 'adjusted': ('rgba(16,185,129,.14)','#047857','fa-check'), 'held': ('rgba(234,88,12,.14)','#C2410C','fa-pause'), 'rejected': ('rgba(239,68,68,.14)','#B91C1C','fa-times')}.get(line.ceo_decision, ('rgba(107,114,128,.13)','#4B5563','fa-question'))"/>
                   <div class="ept-row-wrap">
                     <div class="ept-row">
-                      <div>
-                        <div class="ept-flow-icon" t-attf-style="background: #{icon_cls[0]}; color: #{icon_cls[1]};">
+                      <div class="d-flex align-items-center gap-3 min-w-0">
+                        <div class="ept-flow-icon flex-shrink-0" t-attf-style="background: #{icon_cls[0]}; color: #{icon_cls[1]};">
                           <i t-attf-class="fa #{icon_cls[2]}"/>
                         </div>
-                      </div>
-                      <div>
-                        <div class="ept-row-title ept-row-truncate" t-att-title="line.name"><t t-esc="line.name"/></div>
-                        <div class="ept-row-sub ept-row-truncate"><t t-esc="line.category_id.name"/></div>
+                        <div class="min-w-0">
+                          <div class="ept-row-title ept-row-truncate" t-att-title="line.name"><t t-esc="line.name"/></div>
+                          <div class="ept-row-sub ept-row-truncate"><t t-esc="line.category_id.name"/></div>
+                        </div>
                       </div>
                       <div>
                         <a class="ept-row-title ept-row-truncate d-block" t-att-href="'/my/employee/treasury/plans/%s' % line.run_id.id" t-att-title="line.run_id.name"><t t-esc="line.run_id.name"/></a>
                         <div class="ept-row-sub ept-row-truncate" t-if="line.partner_id" t-att-title="line.partner_id.name"><t t-esc="line.partner_id.name"/></div>
                         <div class="ept-row-sub ept-row-truncate" t-if="line.project_id" t-att-title="line.project_id.name"><t t-esc="line.project_id.name"/></div>
-                      </div>
-                      <div>
-                        <t t-if="line.portal_purchase_order_ids">
-                          <a t-foreach="line.portal_purchase_order_ids" t-as="po" t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id" class="ept-po-chip d-block mb-1" target="_blank" rel="noopener">
-                            <i class="fa fa-eye"/> <t t-esc="po.name"/>
-                          </a>
-                          <div class="ept-row-sub" style="font-size: 10px;" t-if="line.purchase_order_ids">
-                            Paid <span t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/> · Due <span t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
-                          </div>
-                        </t>
-                        <span t-else="" class="ept-amount-muted">—</span>
+                        <div class="mt-1" t-if="line.portal_purchase_order_ids">
+                          <a t-foreach="line.portal_purchase_order_ids" t-as="po" t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id" class="ept-po-chip me-1 mb-1" target="_blank" rel="noopener"><i class="fa fa-eye"/> <t t-esc="po.name"/></a>
+                          <div class="ept-row-sub" style="font-size:10px;" t-if="line.purchase_order_ids">Paid <span t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/> · Due <span t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
+                        </div>
                       </div>
                       <div class="ept-amount"><span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
                       <div class="ept-amount"><span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
@@ -375,9 +366,9 @@
   <template id="portal_treasury_plan_list" name="CEO Weekly Cash Plans">
     <t t-call="employee_portal_suite.employee_portal_layout">
       <style>
-        .eps-treasury-table { font-size: 12.5px; table-layout: auto; width: 100%; }
-        .eps-treasury-table th, .eps-treasury-table td { padding: .78rem .65rem; vertical-align: middle; line-height: 1.45; }
-        .eps-treasury-table th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; color: var(--text-secondary, #6B7280); white-space: nowrap; }
+        .eps-treasury-table { font-size: 12px; table-layout: auto; width: 100%; }
+        .eps-treasury-table th, .eps-treasury-table td { padding: .7rem .55rem; vertical-align: middle; line-height: 1.4; }
+        .eps-treasury-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; color: var(--text-secondary, #6B7280); white-space: nowrap; }
         .eps-treasury-table thead tr { border-bottom: 2px solid var(--app-primary, #4F46E5); }
         .eps-treasury-table thead { background: var(--surface-2, #F8F8FB); }
         .eps-treasury-table tbody tr { transition: background .15s ease; border-bottom: 1px solid var(--border-light, rgba(0,0,0,.06)); }
@@ -386,7 +377,7 @@
         .eps-treasury-table .eps-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .eps-treasury-table .eps-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; display: block; white-space: nowrap; }
         .eps-treasury-table .eps-amount-muted { font-weight: 400; color: var(--text-muted, #9CA3AF); text-align: right; display: block; white-space: nowrap; }
-        .eps-treasury-table .btn { font-size: 11px; padding: .3rem .5rem; line-height: 1.3; }
+        .eps-treasury-table .btn { font-size: 10.5px; padding: .16rem .35rem; line-height: 1.25; }
         .eps-treasury-table .form-control, .eps-treasury-table .input-group-text { font-size: 10.5px; padding: .22rem .35rem; }
         .eps-treasury-table textarea.form-control { min-height: 42px; resize: vertical; }
         .eps-col-date { white-space: nowrap; }
@@ -655,13 +646,11 @@
         .eps-badge-done     { background: rgba(13,148,136,0.14); color: #0F766E; }
 
         /* --- Ledger timeline --- */
-        .ept-ledger-head { display: grid; grid-template-columns: 52px minmax(170px,1.6fr) minmax(140px,1.15fr) 150px 106px 106px 106px 106px 148px; gap: 14px; padding: 0 24px 14px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-secondary, #6B7280); }
-        .ept-ledger-head > div:nth-child(n+5) { text-align: right; }
-        .ept-ledger-head > div:nth-child(2), .ept-ledger-head > div:nth-child(3), .ept-ledger-head > div:nth-child(4) { text-align: left; }
-        .ept-ledger-head > div:last-child { text-align: left; }
+        .ept-ledger-head { display: grid; grid-template-columns: minmax(240px,1.55fr) minmax(230px,1.35fr) 112px 112px 148px 145px; gap: 18px; padding: 0 26px 13px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-secondary, #6B7280); }
+        .ept-ledger-head > div:nth-child(3), .ept-ledger-head > div:nth-child(4), .ept-ledger-head > div:nth-child(5) { text-align: right; }
 
         .ept-day-block + .ept-day-block { border-top: 1px solid var(--border-light, rgba(0,0,0,.05)); }
-        .ept-day-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 9px 24px; background: var(--surface-2, #F8F8FB); flex-wrap: wrap; }
+        .ept-day-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 22px; background: var(--surface-2, #F8F8FB); flex-wrap: wrap; }
         .ept-day-date { font-weight: 700; font-size: 13.5px; }
         .ept-day-date .ept-day-dow { color: var(--text-muted, #9CA3AF); font-weight: 500; margin-left: 6px; }
         .ept-day-meta { display: flex; align-items: center; gap: 16px; font-size: 12px; flex-wrap: wrap; }
@@ -670,7 +659,7 @@
         .ept-day-net.ept-pos { background: rgba(16,185,129,.13); color: #047857; }
         .ept-day-net.ept-neg { background: rgba(239,68,68,.13); color: #B91C1C; }
 
-        .ept-row { display: grid; grid-template-columns: 52px minmax(170px,1.6fr) minmax(140px,1.15fr) 150px 106px 106px 106px 106px 148px; gap: 14px; padding: 16px 24px; align-items: center; transition: background .15s ease; }
+        .ept-row { display: grid; grid-template-columns: minmax(240px,1.55fr) minmax(230px,1.35fr) 112px 112px 148px 145px; gap: 18px; padding: 17px 26px; align-items: center; transition: background .15s ease; }
         .ept-row:hover { background: rgba(79,70,229,0.035); }
         .ept-row + .ept-row { border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); }
         .ept-flow-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
@@ -685,7 +674,7 @@
         .ept-amount-muted { color: var(--text-muted, #9CA3AF); font-weight: 400; text-align: right; white-space: nowrap; font-size: 12.5px; }
 
         @media (max-width: 1200px) {
-          .ept-ledger-head, .ept-row { grid-template-columns: 46px minmax(140px,1.5fr) minmax(120px,1.1fr) 104px 96px 96px 96px 96px 128px; font-size: 11.5px; }
+          .ept-ledger-head, .ept-row { grid-template-columns: minmax(200px,1.4fr) minmax(190px,1.2fr) 96px 96px 128px 120px; font-size: 11.5px; }
         }
 
         /* --- Mobile ledger --- */
@@ -849,14 +838,11 @@
 
           <div class="d-none d-lg-block">
             <div class="ept-ledger-head">
-              <div/>
-              <div>Description</div>
-              <div>Partner / Project</div>
-              <div>PO paid / due</div>
+              <div>Movement</div>
+              <div>Partner, project &amp; PO</div>
               <div>Forecast</div>
-              <div>CEO Amt.</div>
-              <div>Actual</div>
-              <div>Variance</div>
+              <div>CEO Amount</div>
+              <div>Actual / Variance</div>
               <div>Status</div>
             </div>
             <t t-foreach="day_groups" t-as="day">
@@ -877,39 +863,32 @@
                   <t t-set="ceo_badge_cls" t-value="{'pending': 'eps-badge-pending', 'approved': 'eps-badge-approved', 'adjusted': 'eps-badge-approved', 'held': 'eps-badge-held', 'rejected': 'eps-badge-rejected'}.get(line.ceo_decision, 'eps-badge-muted')"/>
                   <t t-set="line_state_cls" t-value="{'planned': 'eps-badge-info', 'approved': 'eps-badge-approved', 'executed': 'eps-badge-done', 'cancel': 'eps-badge-rejected'}.get(line.state, 'eps-badge-muted')"/>
                   <div class="ept-row">
-                    <div>
-                      <div t-attf-class="ept-flow-icon #{'ept-flow-in' if line.flow_type == 'in' else 'ept-flow-out'}" t-att-title="'Receipt' if line.flow_type == 'in' else 'Payment'">
+                    <div class="d-flex align-items-center gap-3 min-w-0">
+                      <div t-attf-class="ept-flow-icon flex-shrink-0 #{'ept-flow-in' if line.flow_type == 'in' else 'ept-flow-out'}" t-att-title="'Receipt' if line.flow_type == 'in' else 'Payment'">
                         <i t-attf-class="fa #{'fa-arrow-down' if line.flow_type == 'in' else 'fa-arrow-up'}"/>
                       </div>
-                    </div>
-                    <div>
-                      <div class="ept-row-title ept-row-truncate" t-att-title="line.name"><t t-esc="line.name"/></div>
-                      <div class="ept-row-sub ept-row-truncate"><t t-esc="line.category_id.name"/></div>
+                      <div class="min-w-0">
+                        <div class="ept-row-title ept-row-truncate" t-att-title="line.name"><t t-esc="line.name"/></div>
+                        <div class="ept-row-sub ept-row-truncate"><t t-esc="line.category_id.name"/></div>
+                      </div>
                     </div>
                     <div>
                       <div t-if="line.partner_id" class="ept-row-title ept-row-truncate" t-att-title="line.partner_id.name"><t t-esc="line.partner_id.name"/></div>
                       <div t-if="line.project_id" class="ept-row-sub ept-row-truncate" t-att-title="line.project_id.name"><t t-esc="line.project_id.name"/></div>
                       <div t-if="not line.partner_id and not line.project_id" class="ept-row-sub">Not specified</div>
-                    </div>
-                    <div>
-                      <t t-if="line.purchase_order_ids">
-                        <a t-foreach="line.portal_purchase_order_ids" t-as="po" t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id" class="ept-po-chip d-block mb-1" target="_blank" rel="noopener">
-                          <i class="fa fa-eye"/> <t t-esc="po.name"/>
-                        </a>
-                        <div class="ept-row-sub" style="font-size: 10px;">
-                          Paid <span t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/> · Due <span t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
-                        </div>
-                      </t>
-                      <span t-else="" class="ept-amount-muted">—</span>
+                      <div class="mt-1" t-if="line.purchase_order_ids">
+                        <a t-foreach="line.portal_purchase_order_ids" t-as="po" t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id" class="ept-po-chip me-1 mb-1" target="_blank" rel="noopener"><i class="fa fa-eye"/> <t t-esc="po.name"/></a>
+                        <div class="ept-row-sub" style="font-size:10px;">Paid <span t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/> · Due <span t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
+                      </div>
                     </div>
                     <div class="ept-amount"><span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
                     <div>
                       <span t-if="line.flow_type == 'out'" class="ept-amount"><span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></span>
                       <span t-else="" class="ept-amount-muted">Not required</span>
                     </div>
-                    <div class="ept-amount"><span t-field="line.actual_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
-                    <div t-attf-class="ept-amount #{'text-success' if ((line.flow_type == 'in' and line.variance_amount &gt;= 0) or (line.flow_type == 'out' and line.variance_amount &lt;= 0)) else 'text-danger'}">
-                      <span t-field="line.variance_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/>
+                    <div class="text-end">
+                      <div class="ept-amount"><span t-field="line.actual_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
+                      <div t-attf-class="ept-row-sub fw-semibold #{'text-success' if ((line.flow_type == 'in' and line.variance_amount &gt;= 0) or (line.flow_type == 'out' and line.variance_amount &lt;= 0)) else 'text-danger'}">Variance <span t-field="line.variance_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
                     </div>
                     <div>
                       <span t-if="line.flow_type == 'out'" t-attf-class="eps-badge #{ceo_badge_cls}" t-att-title="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)">

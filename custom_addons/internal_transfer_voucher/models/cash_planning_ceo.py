@@ -406,7 +406,7 @@ class CashPlanLineCEO(models.Model):
         return True
 
     def action_create_payment_voucher(self):
-        """Authorized execution or weekly-plan managers create the draft accounting voucher."""
+        """Execution or Weekly Payment Plan Managers create the draft accounting voucher."""
         self.ensure_one()
         self._check_any_group(
             [
@@ -460,7 +460,8 @@ class CashPlanLineCEO(models.Model):
         self.ensure_one()
         if self.flow_type == 'out':
             raise UserError(_(
-                'Use Mark as Paid first, then Create Payment Voucher from the planned payment.'
+                'Use Mark as Paid first (Payment Execution Managers), then Create Payment Voucher '
+                '(Weekly Payment Plan Managers).'
             ))
         return super().action_execute()
 
