@@ -56,18 +56,44 @@ class PortalTreasury(http.Controller):
 
         Line = request.env['cash.plan.line'].sudo()
         lines = Line.search(self._payment_domain(status), order='planned_date asc, priority desc, id desc')
-        counts = {
-            key: Line.search_count(self._payment_domain(key))
-            for key in ('pending', 'approved', 'held', 'rejected', 'all')
-        }
+        company_currency = request.env.company.currency_id
+        counts = {}
+        amounts_fmt = {}
+        for key in ('pending', 'approved', 'held', 'rejected', 'all'):
+            key_lines = Line.search(self._payment_domain(key))
+            counts[key] = len(key_lines)
+            currency = key_lines[:1].currency_id or company_currency
+            amounts_fmt[key] = self._fmt_amount(currency, sum(key_lines.mapped('forecast_amount')))
+        day_groups = self._build_payment_day_groups(lines)
         return request.render('eps_itv_treasury_bridge.portal_treasury_payment_list', {
             'lines': lines,
+            'day_groups': day_groups,
             'counts': counts,
+            'amounts_fmt': amounts_fmt,
             'current_status': status,
             'page_name': 'treasury_payments',
             'message': kw.get('message'),
             'error': kw.get('error'),
         })
+
+    def _build_payment_day_groups(self, lines):
+        """Group a payment-line recordset by planned_date for the ledger-style
+        approvals list. Lines are expected to already be ordered by date."""
+        day_groups = []
+        for date, lines_iter in groupby(lines, key=lambda l: l.planned_date):
+            group_lines = list(lines_iter)
+            currency = group_lines[0].currency_id
+            requested_total = sum(l.forecast_amount for l in group_lines)
+            approved_total = sum(l.approved_amount for l in group_lines)
+            day_groups.append({
+                'date': date,
+                'lines': group_lines,
+                'requested_total': requested_total,
+                'approved_total': approved_total,
+                'requested_total_fmt': self._fmt_amount(currency, requested_total),
+                'approved_total_fmt': self._fmt_amount(currency, approved_total),
+            })
+        return day_groups
 
     @http.route('/my/employee/treasury/plans', type='http', auth='user', website=True)
     def treasury_plans(self, **kw):
