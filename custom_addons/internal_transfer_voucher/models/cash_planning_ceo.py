@@ -202,17 +202,14 @@ class CashPlanLineCEO(models.Model):
         return True
 
     def _weekly_plan_notification_users(self):
+        """CEO decisions go only to Payment Execution Managers.
+
+        Weekly Payment Plan Managers receive their separate handoff only after
+        the payment is marked as paid, when the draft voucher must be created.
+        """
         self.ensure_one()
-        group = self.env.ref(
+        return self._group_users(
             'internal_transfer_voucher.group_payment_execution_manager',
-            raise_if_not_found=False,
-        )
-        if not group:
-            return self.env['res.users']
-        return group.sudo().users.filtered(
-            lambda user: user.active
-            and not user.share
-            and self.company_id in user.company_ids
         )
 
     def _notify_weekly_plan_group(self, decision, reviewer):

@@ -72,7 +72,9 @@
         .ept-day-meta { display: flex; align-items: center; gap: 14px; font-size: 12px; flex-wrap: wrap; color: var(--text-secondary, #6B7280); }
         .ept-day-meta strong { color: var(--text-primary, #1A1B2E); font-variant-numeric: tabular-nums; }
 
-        .ept-row { display: grid; grid-template-columns: minmax(230px,1.55fr) minmax(240px,1.45fr) 118px 118px 140px; gap: 18px; padding: 17px 26px; align-items: center; }
+        .ept-day-block { border-top: 0 !important; }
+        .ept-day-block + .ept-day-block { border-top: 0 !important; }
+        .ept-row { display: grid; grid-template-columns: minmax(230px,1.55fr) minmax(240px,1.45fr) 118px 118px 140px; gap: 18px; padding: 14px 26px; align-items: center; border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); }
         .ept-row-wrap:hover .ept-row { background: rgba(79,70,229,0.035); }
         .ept-row-wrap + .ept-row-wrap { border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); }
         .ept-flow-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
@@ -175,7 +177,7 @@
         <div class="ept-card">
           <div class="ept-card-head">
             <strong>Payment Ledger</strong>
-            <span class="small text-muted">Grouped by planned date</span>
+            <span class="small text-muted">Clean payment overview</span>
           </div>
           <div class="ept-pill-filter">
             <a t-attf-class="ept-pill #{'ept-pill-active' if current_status == 'pending' else ''}" href="/my/employee/treasury/payments?status=pending">Pending <span class="ept-pill-count"><t t-esc="counts.get('pending', 0)"/></span></a>
@@ -195,16 +197,6 @@
             </div>
             <t t-foreach="day_groups" t-as="day">
               <div class="ept-day-block">
-                <div class="ept-day-header">
-                  <div class="ept-day-date">
-                    <t t-esc="day['date'].strftime('%d %b %Y') if day['date'] else ''"/>
-                    <span class="ept-day-dow"><t t-esc="day['date'].strftime('%A') if day['date'] else ''"/></span>
-                  </div>
-                  <div class="ept-day-meta">
-                    <span>Requested <strong><t t-esc="day['requested_total_fmt']"/></strong></span>
-                    <span>Approved <strong><t t-esc="day['approved_total_fmt']"/></strong></span>
-                  </div>
-                </div>
                 <t t-foreach="day['lines']" t-as="line">
                   <t t-set="badge_cls" t-value="{'pending': 'eps-badge-pending', 'approved': 'eps-badge-approved', 'adjusted': 'eps-badge-approved', 'held': 'eps-badge-held', 'rejected': 'eps-badge-rejected'}.get(line.ceo_decision, 'eps-badge-muted')"/>
                   <t t-set="icon_cls" t-value="{'pending': ('rgba(245,158,11,.14)','#B45309','fa-clock-o'), 'approved': ('rgba(16,185,129,.14)','#047857','fa-check'), 'adjusted': ('rgba(16,185,129,.14)','#047857','fa-check'), 'held': ('rgba(234,88,12,.14)','#C2410C','fa-pause'), 'rejected': ('rgba(239,68,68,.14)','#B91C1C','fa-times')}.get(line.ceo_decision, ('rgba(107,114,128,.13)','#4B5563','fa-question'))"/>
@@ -216,7 +208,7 @@
                         </div>
                         <div class="min-w-0">
                           <div class="ept-row-title ept-row-truncate" t-att-title="line.name"><t t-esc="line.name"/></div>
-                          <div class="ept-row-sub ept-row-truncate"><t t-esc="line.category_id.name"/></div>
+                          <div class="ept-row-sub ept-row-truncate"><t t-esc="line.category_id.name"/> · <t t-esc="line.planned_date.strftime('%d %b') if line.planned_date else ''"/></div>
                         </div>
                       </div>
                       <div>
@@ -269,16 +261,6 @@
 
           <div class="d-lg-none p-3">
             <t t-foreach="day_groups" t-as="day">
-              <div class="d-flex justify-content-between align-items-center py-2 px-1">
-                <div>
-                  <div class="fw-bold"><t t-esc="day['date'].strftime('%d %b %Y') if day['date'] else ''"/></div>
-                  <div class="small text-muted"><t t-esc="day['date'].strftime('%A') if day['date'] else ''"/></div>
-                </div>
-                <div class="small text-muted text-end">
-                  Req. <strong class="text-dark"><t t-esc="day['requested_total_fmt']"/></strong><br/>
-                  App. <strong class="text-dark"><t t-esc="day['approved_total_fmt']"/></strong>
-                </div>
-              </div>
               <t t-foreach="day['lines']" t-as="line">
                 <t t-set="badge_cls" t-value="{'pending': 'eps-badge-pending', 'approved': 'eps-badge-approved', 'adjusted': 'eps-badge-approved', 'held': 'eps-badge-held', 'rejected': 'eps-badge-rejected'}.get(line.ceo_decision, 'eps-badge-muted')"/>
                 <t t-set="accent_color" t-value="{'pending': '#F59E0B', 'approved': '#10B981', 'adjusted': '#10B981', 'held': '#EA580C', 'rejected': '#EF4444'}.get(line.ceo_decision, '#9CA3AF')"/>
@@ -659,7 +641,9 @@
         .ept-day-net.ept-pos { background: rgba(16,185,129,.13); color: #047857; }
         .ept-day-net.ept-neg { background: rgba(239,68,68,.13); color: #B91C1C; }
 
-        .ept-row { display: grid; grid-template-columns: minmax(240px,1.55fr) minmax(230px,1.35fr) 112px 112px 148px 145px; gap: 18px; padding: 17px 26px; align-items: center; transition: background .15s ease; }
+        .ept-day-block { border-top: 0 !important; }
+        .ept-day-block + .ept-day-block { border-top: 0 !important; }
+        .ept-row { display: grid; grid-template-columns: minmax(240px,1.55fr) minmax(230px,1.35fr) 112px 112px 148px 145px; gap: 18px; padding: 14px 26px; align-items: center; border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); transition: background .15s ease; }
         .ept-row:hover { background: rgba(79,70,229,0.035); }
         .ept-row + .ept-row { border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); }
         .ept-flow-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
@@ -833,7 +817,7 @@
         <div class="ept-card">
           <div class="ept-card-head">
             <strong>Daily Ledger</strong>
-            <span class="small text-muted">Movements grouped by planned date, with running cash balance</span>
+            <span class="small text-muted">Forecast, approval and actual amounts</span>
           </div>
 
           <div class="d-none d-lg-block">
@@ -847,18 +831,6 @@
             </div>
             <t t-foreach="day_groups" t-as="day">
               <div class="ept-day-block">
-                <div class="ept-day-header">
-                  <div class="ept-day-date">
-                    <t t-esc="day['date'].strftime('%d %b %Y') if day['date'] else ''"/>
-                    <span class="ept-day-dow"><t t-esc="day['date'].strftime('%A') if day['date'] else ''"/></span>
-                  </div>
-                  <div class="ept-day-meta">
-                    <span class="ept-day-balance"><t t-esc="day['opening_fmt']"/> → <t t-esc="day['closing_fmt']"/></span>
-                    <span t-attf-class="ept-day-net #{'ept-pos' if day['net'] &gt;= 0 else 'ept-neg'}">
-                      <t t-esc="'+' if day['net'] &gt;= 0 else ''"/><t t-esc="day['net_fmt']"/>
-                    </span>
-                  </div>
-                </div>
                 <t t-foreach="day['lines']" t-as="line">
                   <t t-set="ceo_badge_cls" t-value="{'pending': 'eps-badge-pending', 'approved': 'eps-badge-approved', 'adjusted': 'eps-badge-approved', 'held': 'eps-badge-held', 'rejected': 'eps-badge-rejected'}.get(line.ceo_decision, 'eps-badge-muted')"/>
                   <t t-set="line_state_cls" t-value="{'planned': 'eps-badge-info', 'approved': 'eps-badge-approved', 'executed': 'eps-badge-done', 'cancel': 'eps-badge-rejected'}.get(line.state, 'eps-badge-muted')"/>
@@ -869,7 +841,7 @@
                       </div>
                       <div class="min-w-0">
                         <div class="ept-row-title ept-row-truncate" t-att-title="line.name"><t t-esc="line.name"/></div>
-                        <div class="ept-row-sub ept-row-truncate"><t t-esc="line.category_id.name"/></div>
+                        <div class="ept-row-sub ept-row-truncate"><t t-esc="line.category_id.name"/> · <t t-esc="line.planned_date.strftime('%d %b') if line.planned_date else ''"/></div>
                       </div>
                     </div>
                     <div>
@@ -907,15 +879,6 @@
 
           <div class="d-lg-none p-3">
             <t t-foreach="day_groups" t-as="day">
-              <div class="ept-mobile-day-header">
-                <div>
-                  <div class="fw-bold"><t t-esc="day['date'].strftime('%d %b %Y') if day['date'] else ''"/></div>
-                  <div class="small text-muted"><t t-esc="day['date'].strftime('%A') if day['date'] else ''"/> · <t t-esc="day['opening_fmt']"/> → <t t-esc="day['closing_fmt']"/></div>
-                </div>
-                <span t-attf-class="ept-day-net #{'ept-pos' if day['net'] &gt;= 0 else 'ept-neg'}">
-                  <t t-esc="'+' if day['net'] &gt;= 0 else ''"/><t t-esc="day['net_fmt']"/>
-                </span>
-              </div>
               <t t-foreach="day['lines']" t-as="line">
                 <t t-set="ceo_badge_cls" t-value="{'pending': 'eps-badge-pending', 'approved': 'eps-badge-approved', 'adjusted': 'eps-badge-approved', 'held': 'eps-badge-held', 'rejected': 'eps-badge-rejected'}.get(line.ceo_decision, 'eps-badge-muted')"/>
                 <t t-set="line_state_cls" t-value="{'planned': 'eps-badge-info', 'approved': 'eps-badge-approved', 'executed': 'eps-badge-done', 'cancel': 'eps-badge-rejected'}.get(line.state, 'eps-badge-muted')"/>
