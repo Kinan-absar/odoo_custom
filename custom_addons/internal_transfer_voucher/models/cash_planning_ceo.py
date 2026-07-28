@@ -360,6 +360,13 @@ class CashPlanLineCEO(models.Model):
             'payment_marked_date': fields.Datetime.now(),
         })
 
+        # Completing the execution step must also close the original execution
+        # activity/notification created after CEO approval. Otherwise the item
+        # continues to appear as pending even though it has been marked paid.
+        self.sudo().activity_ids.filtered(
+            lambda activity: activity.summary == _('Execute approved payment')
+        ).action_done()
+
         users = self._group_users(
             'internal_transfer_voucher.group_weekly_payment_plan_manager',
             exclude_xmlids=['internal_transfer_voucher.group_payment_execution_manager'],
