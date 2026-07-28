@@ -496,6 +496,11 @@ class AccountReceiptVoucher(models.Model):
             move.action_post()
             rec.state = 'posted'
 
+            # Recreate a missing Unplanned Actual after a direct receipt voucher is
+            # reset and reused. Existing planned-receipt links remain untouched.
+            if not rec.cash_plan_line_id:
+                rec._auto_link_unplanned_cash_plan()
+
     def action_cancel(self):
         for rec in self:
             if rec.state == 'posted':
@@ -521,7 +526,18 @@ class AccountReceiptVoucher(models.Model):
                 # protection. Keep the existing move linked and reuse it on repost.
                 rec.move_id.sudo().write({'state': 'draft'})
 
-            rec.state = 'draft'
+            # Put the voucher itself in draft before unlinking the generated
+            # cash-plan line. Unlinking that line may clear its voucher relation through
+            # the ORM; doing so while the voucher still says 'posted' is blocked by the
+            # posted-voucher write guard.
+            rec.write({'state': 'draft'})
+
+            # Remove only the automatically-generated Unplanned Actual when a
+            # direct receipt voucher is reset. A real planned-receipt link is retained.
+            old_plan_line = rec.cash_plan_line_id
+            if old_plan_line and old_plan_line.is_unplanned:
+                rec.with_context(skip_cash_plan_link_lock=True).write({'cash_plan_line_id': False})
+                old_plan_line.sudo().unlink()
 
     # -------------------------
     # Deletion Protection
@@ -631,6 +647,8 @@ class AccountReceiptVoucher(models.Model):
         for rec in self:
             if rec.state == 'posted':
                 allowed_fields = {'state', 'move_id', 'invoice_ids'}
+                if self.env.context.get('skip_cash_plan_link_lock'):
+                    allowed_fields.add('cash_plan_line_id')
                 if not set(vals.keys()).issubset(allowed_fields):
                     raise UserError(_("You cannot modify a posted receipt voucher."))
                 if 'invoice_ids' in vals and rec.invoice_reconciled and not self.env.context.get('skip_invoice_reconcile_lock'):

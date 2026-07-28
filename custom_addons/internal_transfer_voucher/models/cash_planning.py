@@ -399,6 +399,21 @@ class CashPlanLine(models.Model):
         self.state = 'executed'
         return action
 
+    def action_link_existing_voucher(self):
+        self.ensure_one()
+        if self.state == 'cancel':
+            raise UserError(_('A cancelled planned movement cannot be linked to a voucher.'))
+        if self.payment_voucher_id or self.receipt_voucher_id or self.internal_transfer_id:
+            raise UserError(_('This planned movement already has an executed document linked to it.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Link Existing Voucher'),
+            'res_model': 'cash.plan.link.voucher.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_line_id': self.id},
+        }
+
     def _document_action(self, model, res_id):
         return {'type': 'ir.actions.act_window', 'res_model': model, 'res_id': res_id,
                 'view_mode': 'form', 'target': 'current'}
