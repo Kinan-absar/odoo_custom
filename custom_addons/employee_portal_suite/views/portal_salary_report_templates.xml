@@ -69,6 +69,7 @@
                     </div>
                     <div class="d-flex gap-2">
                         <a href="/my/employee/salary-reports" class="btn btn-light">Back</a>
+                        <a t-att-href="'/my/employee/salary-reports/%s/excel' % report.id" class="btn btn-success">Export Excel</a>
                         <a t-att-href="'/my/employee/salary-reports/%s/print' % report.id" class="btn btn-primary">Print PDF</a>
                     </div>
                 </div>
@@ -83,6 +84,11 @@
                     <div class="alert alert-warning alert-dismissible fade show" role="alert">
                         Salary line deleted from this report.
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </t>
+                <t t-if="request.params.get('locked') or report.batch_created">
+                    <div class="alert alert-info" role="alert">
+                        This salary report is locked because its payroll batch has already been created. Deductions, reimbursements, and report lines can no longer be changed from the portal.
                     </div>
                 </t>
 
@@ -123,21 +129,26 @@
                                             <td class="text-end"><t t-esc="'{:,.2f}'.format(line.gross_salary)"/></td>
                                             <td class="text-end"><t t-esc="'{:,.2f}'.format(line.attendance_deduction)"/></td>
                                             <td class="text-end" style="min-width: 135px;">
-                                                <input type="number" name="other_deductions" min="0" step="0.01" t-att-value="line.other_deductions" t-att-form="'salary-line-update-%s' % line.id" class="form-control form-control-sm text-end ms-auto" style="width: 105px;"/>
+                                                <input t-if="can_edit_salary_lines" type="number" name="other_deductions" min="0" step="0.01" t-att-value="line.other_deductions" t-att-form="'salary-line-update-%s' % line.id" class="form-control form-control-sm text-end ms-auto" style="width: 105px;"/>
+                                                <span t-else="" class="text-muted"><t t-esc="'{:,.2f}'.format(line.other_deductions)"/></span>
                                             </td>
                                             <td class="text-end" style="min-width: 135px;">
-                                                <input type="number" name="reimbursements" min="0" step="0.01" t-att-value="line.reimbursements" t-att-form="'salary-line-update-%s' % line.id" class="form-control form-control-sm text-end ms-auto" style="width: 105px;"/>
+                                                <input t-if="can_edit_salary_lines" type="number" name="reimbursements" min="0" step="0.01" t-att-value="line.reimbursements" t-att-form="'salary-line-update-%s' % line.id" class="form-control form-control-sm text-end ms-auto" style="width: 105px;"/>
+                                                <span t-else="" class="text-muted"><t t-esc="'{:,.2f}'.format(line.reimbursements)"/></span>
                                             </td>
                                             <td class="text-end fw-bold"><t t-esc="'{:,.2f}'.format(line.net_salary)"/></td>
                                             <td class="text-end" style="min-width: 150px;">
-                                                <form t-att-id="'salary-line-update-%s' % line.id" t-att-action="'/my/employee/salary-reports/%s/lines/%s/update' % (report.id, line.id)" method="post" class="d-inline">
-                                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
-                                                </form>
-                                                <form t-att-action="'/my/employee/salary-reports/%s/lines/%s/delete' % (report.id, line.id)" method="post" class="d-inline ms-1" onsubmit="return confirm('Delete this employee salary line from the report?');">
-                                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                                                </form>
+                                                <t t-if="can_edit_salary_lines">
+                                                    <form t-att-id="'salary-line-update-%s' % line.id" t-att-action="'/my/employee/salary-reports/%s/lines/%s/update' % (report.id, line.id)" method="post" class="d-inline">
+                                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                                    </form>
+                                                    <form t-att-action="'/my/employee/salary-reports/%s/lines/%s/delete' % (report.id, line.id)" method="post" class="d-inline ms-1" onsubmit="return confirm('Delete this employee salary line from the report?');">
+                                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                                    </form>
+                                                </t>
+                                                <span t-else="" class="badge text-bg-secondary">Locked</span>
                                             </td>
                                         </tr>
                                     </t>
