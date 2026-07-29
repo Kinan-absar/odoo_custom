@@ -285,6 +285,10 @@ class CashPlanLineCEO(models.Model):
         for line in self:
             if line.flow_type != 'out':
                 raise UserError(_('Receipts do not require CEO approval.'))
+            if decision in ('approved', 'adjusted') and not line.run_id:
+                raise UserError(_(
+                    'This planned payment must be added to a weekly plan before it can be approved.'
+                ))
             if line.ceo_decision not in ('pending', 'held'):
                 raise UserError(_('Only payments pending CEO review or currently on hold can be reviewed.'))
             amount = 0.0
