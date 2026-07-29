@@ -285,6 +285,10 @@ class CashPlanLineCEO(models.Model):
         for line in self:
             if line.flow_type != 'out':
                 raise UserError(_('Receipts do not require CEO approval.'))
+            if decision in ('approved', 'adjusted') and not line.run_id:
+                raise UserError(_(
+                    'This planned payment must be added to a weekly plan before it can be approved.'
+                ))
             if line.ceo_decision not in ('pending', 'held'):
                 raise UserError(_('Only payments pending CEO review or currently on hold can be reviewed.'))
             amount = 0.0
@@ -432,7 +436,7 @@ class CashPlanLineCEO(models.Model):
 
         amount = self.approved_amount
         voucher = self.env['account.payment.voucher'].with_context(skip_cash_plan_autolink=True).create({
-            'date': self.planned_date,
+            'date': self.planned_date or fields.Date.context_today(self),
             'amount': amount,
             'currency_id': self.currency_id.id,
             'company_id': self.company_id.id,

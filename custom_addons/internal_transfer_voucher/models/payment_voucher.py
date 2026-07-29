@@ -1454,34 +1454,20 @@ class AccountPaymentVoucher(models.Model):
         })
 
     def _auto_link_unplanned_cash_plan(self):
-        """A voucher created directly by the Accountant (i.e. not raised from a Planned
-        Payment via action_execute) is matched, by date and company, to the Weekly Cash
-        Plan it falls into. A hidden "Unplanned Actual" cash.plan.line is created so the
-        plan's Total Actual and Variance update automatically, without requiring the
-        Accountant to go through the planning / CEO approval flow first. Linking a
-        Purchase Order to the voucher is optional and, if present, is carried over for
-        reference.
+        """Create an unplanned actual in the payment backlog without assigning a weekly plan.
+
+        Weekly plans now contain only movements explicitly added by an authorized user.
         """
         CashPlanLine = self.env['cash.plan.line'].sudo()
-        CashPlanRun = self.env['cash.plan.run'].sudo()
         for rec in self:
             if not rec.id or rec.cash_plan_line_id:
                 continue
             if CashPlanLine.search_count([('payment_voucher_id', '=', rec.id)]):
                 continue
-            run = CashPlanRun.search([
-                ('company_id', '=', rec.company_id.id),
-                ('date_from', '<=', rec.date),
-                ('date_to', '>=', rec.date),
-                ('state', '!=', 'cancel'),
-            ], order='date_from desc', limit=1)
-            if not run:
-                continue
             category = rec._get_or_create_unplanned_category(rec.company_id.id)
             line = CashPlanLine.create({
-                'run_id': run.id,
+                'company_id': rec.company_id.id,
                 'name': _('Unplanned Actual - %s') % (rec.partner_id.display_name or rec.name),
-                'planned_date': rec.date,
                 'flow_type': 'out',
                 'transaction_type': 'other',
                 'category_id': category.id,
@@ -1494,8 +1480,7 @@ class AccountPaymentVoucher(models.Model):
                 'account_id': rec.account_id.id if rec.account_id else False,
                 'purchase_order_ids': [(6, 0, rec.purchase_order_ids.ids)],
                 'payment_voucher_id': rec.id,
-                'description': _('Automatically created from Payment Voucher %s (created directly, '
-                                  'outside the weekly planning flow).') % rec.name,
+                'description': _('Created from Payment Voucher %s and kept outside weekly plans until explicitly added.') % rec.name,
             })
             rec.cash_plan_line_id = line.id
 

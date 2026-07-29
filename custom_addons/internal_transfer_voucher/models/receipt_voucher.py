@@ -593,37 +593,17 @@ class AccountReceiptVoucher(models.Model):
         })
 
     def _auto_link_unplanned_cash_plan(self):
-        """Link directly-created receipts to the weekly plan covering their date.
-
-        Receipt vouchers raised from an existing planned receipt use the context flag
-        ``skip_cash_plan_autolink`` and are linked back to that planned line explicitly.
-        A direct receipt instead creates one executed incoming line with zero forecast,
-        allowing Actual Inflow, Actual Closing and Variance to update automatically.
-        """
+        """Create an unplanned receipt in the backlog without assigning a weekly plan."""
         CashPlanLine = self.env['cash.plan.line'].sudo()
-        CashPlanRun = self.env['cash.plan.run'].sudo()
         for rec in self:
             if not rec.id or rec.cash_plan_line_id:
                 continue
             if CashPlanLine.search_count([('receipt_voucher_id', '=', rec.id)]):
                 continue
-
-            run = CashPlanRun.search([
-                ('company_id', '=', rec.company_id.id),
-                ('date_from', '<=', rec.date),
-                ('date_to', '>=', rec.date),
-                ('state', '!=', 'cancel'),
-            ], order='date_from desc', limit=1)
-            if not run:
-                continue
-
             category = rec._get_or_create_unplanned_category(rec.company_id.id)
             line = CashPlanLine.create({
-                'run_id': run.id,
-                'name': _('Unplanned Actual Receipt - %s') % (
-                    rec.partner_id.display_name or rec.name
-                ),
-                'planned_date': rec.date,
+                'company_id': rec.company_id.id,
+                'name': _('Unplanned Actual Receipt - %s') % (rec.partner_id.display_name or rec.name),
                 'flow_type': 'in',
                 'transaction_type': 'other',
                 'category_id': category.id,
@@ -636,10 +616,7 @@ class AccountReceiptVoucher(models.Model):
                 'account_id': rec.account_id.id,
                 'invoice_ids': [(6, 0, rec.invoice_ids.ids)],
                 'receipt_voucher_id': rec.id,
-                'description': _(
-                    'Automatically created from Receipt Voucher %s (created directly, '
-                    'outside the weekly planning flow).'
-                ) % rec.name,
+                'description': _('Created from Receipt Voucher %s and kept outside weekly plans until explicitly added.') % rec.name,
             })
             rec.cash_plan_line_id = line.id
 
