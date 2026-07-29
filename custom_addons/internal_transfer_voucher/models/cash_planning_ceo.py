@@ -432,7 +432,7 @@ class CashPlanLineCEO(models.Model):
 
         amount = self.approved_amount
         voucher = self.env['account.payment.voucher'].with_context(skip_cash_plan_autolink=True).create({
-            'date': self.planned_date,
+            'date': self.planned_date or fields.Date.context_today(self),
             'amount': amount,
             'currency_id': self.currency_id.id,
             'company_id': self.company_id.id,

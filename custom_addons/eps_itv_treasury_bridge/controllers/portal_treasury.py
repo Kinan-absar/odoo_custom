@@ -1,7 +1,7 @@
 from itertools import groupby
 from urllib.parse import quote
 
-from odoo import http
+from odoo import http, fields
 from odoo.http import request
 from odoo.exceptions import ValidationError, UserError
 from odoo.addons.purchase.controllers.portal import CustomerPortal as PurchaseCustomerPortal
@@ -56,6 +56,10 @@ class PortalTreasury(http.Controller):
 
         Line = request.env['cash.plan.line'].sudo()
         lines = Line.search(self._payment_domain(status), order='planned_date asc, priority desc, id desc')
+        available_runs = request.env['cash.plan.run'].sudo().search(
+            self._company_domain() + [('state', 'not in', ['done', 'cancel'])],
+            order='date_from desc, id desc'
+        )
         company_currency = request.env.company.currency_id
         counts = {}
         amounts_fmt = {}
@@ -71,6 +75,8 @@ class PortalTreasury(http.Controller):
             'counts': counts,
             'amounts_fmt': amounts_fmt,
             'current_status': status,
+            'available_runs': available_runs,
+            'today': fields.Date.context_today(request.env.user),
             'page_name': 'treasury_payments',
             'message': kw.get('message'),
             'error': kw.get('error'),
@@ -80,7 +86,7 @@ class PortalTreasury(http.Controller):
         """Group a payment-line recordset by planned_date for the ledger-style
         approvals list. Lines are expected to already be ordered by date."""
         day_groups = []
-        for date, lines_iter in groupby(lines, key=lambda l: l.planned_date):
+        for date, lines_iter in groupby(lines, key=lambda l: l.planned_date or False):
             group_lines = list(lines_iter)
             currency = group_lines[0].currency_id
             requested_total = sum(l.forecast_amount for l in group_lines)
@@ -205,6 +211,27 @@ class PortalTreasury(http.Controller):
             return request.redirect(
                 '/my/employee/treasury/payments?status=pending&error=%s' % quote(str(exc))
             )
+
+    @http.route(
+        '/my/employee/treasury/lines/<int:line_id>/add-to-plan',
+        type='http', auth='user', website=True, methods=['POST'], csrf=True
+    )
+    def treasury_line_add_to_plan(self, line_id, **post):
+        if not self._is_ceo():
+            return request.redirect('/my/employee')
+        line = self._get_line(line_id)
+        if not line:
+            return request.not_found()
+        try:
+            run_id = int(post.get('run_id') or 0)
+            run = self._get_run(run_id)
+            if not run:
+                raise UserError('Select a valid weekly plan.')
+            line._assign_to_weekly_plan(run, request.env.user)
+            return request.redirect('/my/employee/treasury/payments?status=all&message=%s' % quote('Payment added to the weekly plan.'))
+        except (ValueError, ValidationError, UserError) as exc:
+            return request.redirect('/my/employee/treasury/payments?status=all&error=%s' % quote(str(exc)))
+
 
 
 class PortalTreasuryPurchaseOrder(PurchaseCustomerPortal):

@@ -212,7 +212,7 @@
                         </div>
                       </div>
                       <div>
-                        <a class="ept-row-title ept-row-truncate d-block" t-att-href="'/my/employee/treasury/plans/%s' % line.run_id.id" t-att-title="line.run_id.name"><t t-esc="line.run_id.name"/></a>
+                        <a t-if="line.run_id" class="ept-row-title ept-row-truncate d-block" t-att-href="'/my/employee/treasury/plans/%s' % line.run_id.id" t-att-title="line.run_id.name"><t t-esc="line.run_id.name"/></a><span t-else="" class="ept-row-sub">Not added to a weekly plan</span>
                         <div class="ept-row-sub ept-row-truncate" t-if="line.partner_id" t-att-title="line.partner_id.name"><t t-esc="line.partner_id.name"/></div>
                         <div class="ept-row-sub ept-row-truncate" t-if="line.project_id" t-att-title="line.project_id.name"><t t-esc="line.project_id.name"/></div>
                         <div class="mt-1" t-if="line.portal_purchase_order_ids">
@@ -226,6 +226,15 @@
                         <span t-attf-class="eps-badge #{badge_cls}" t-att-title="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)">
                           <span class="eps-badge-dot"/><t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
                         </span>
+                        <form t-if="not line.run_id and available_runs" t-att-action="'/my/employee/treasury/lines/%s/add-to-plan' % line.id" method="post" class="mt-2">
+                          <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                          <select name="run_id" class="form-select form-select-sm mb-1" required="required">
+                            <option value="">Select plan</option>
+                            <option t-foreach="available_runs" t-as="available_run" t-att-value="available_run.id" t-att-selected="available_run.date_from &lt;= today and available_run.date_to &gt;= today"><t t-esc="available_run.name"/> · <t t-esc="available_run.date_from"/>–<t t-esc="available_run.date_to"/></option>
+                          </select>
+                          <button class="btn btn-primary btn-sm w-100"><i class="fa fa-plus me-1"/>Add to Plan</button>
+                        </form>
+                        <div t-if="line.run_id and line.added_to_plan_on" class="ept-row-sub mt-1">Added <t t-esc="line.planned_date"/></div>
                       </div>
                     </div>
                     <div class="ept-review-panel" t-if="line.ceo_decision in ('pending', 'held')">
@@ -278,7 +287,7 @@
                     <div class="row g-3 mb-3">
                       <div class="col-6">
                         <div class="ept-mobile-label">Weekly plan</div>
-                        <a class="ept-mobile-value" t-att-href="'/my/employee/treasury/plans/%s' % line.run_id.id"><t t-esc="line.run_id.name"/></a>
+                        <a t-if="line.run_id" class="ept-mobile-value" t-att-href="'/my/employee/treasury/plans/%s' % line.run_id.id"><t t-esc="line.run_id.name"/></a><span t-else="" class="ept-mobile-value text-muted">Not added</span>
                       </div>
                       <div class="col-12">
                         <div class="ept-mobile-label">Partner / Project</div>
@@ -317,6 +326,15 @@
                         <span t-else="" class="text-muted ept-mobile-value">No PO linked</span>
                       </div>
                     </div>
+                    <form t-if="not line.run_id and available_runs" t-att-action="'/my/employee/treasury/lines/%s/add-to-plan' % line.id" method="post" class="mb-3">
+                      <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                      <label class="ept-mobile-label">Add to weekly plan</label>
+                      <select name="run_id" class="form-select mb-2" required="required">
+                        <option value="">Select plan</option>
+                        <option t-foreach="available_runs" t-as="available_run" t-att-value="available_run.id" t-att-selected="available_run.date_from &lt;= today and available_run.date_to &gt;= today"><t t-esc="available_run.name"/> · <t t-esc="available_run.date_from"/>–<t t-esc="available_run.date_to"/></option>
+                      </select>
+                      <button class="btn btn-primary w-100"><i class="fa fa-plus me-1"/>Add to Plan</button>
+                    </form>
                     <form class="ept-mobile-actions" t-if="line.ceo_decision in ('pending', 'held')" t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
                       <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                       <label class="form-label fw-semibold mb-1">Approved amount</label>

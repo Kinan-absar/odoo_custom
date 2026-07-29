@@ -89,10 +89,21 @@ class CashPlanLine(models.Model):
     _order = 'planned_date, priority, id'
 
     name = fields.Char(required=True, tracking=True, default=lambda self: _('Planned Cash Movement'))
-    run_id = fields.Many2one('cash.plan.run', required=True, ondelete='cascade', index=True)
-    company_id = fields.Many2one(related='run_id.company_id', store=True)
-    currency_id = fields.Many2one(related='run_id.currency_id', store=True)
-    planned_date = fields.Date(required=True, tracking=True)
+    run_id = fields.Many2one(
+        'cash.plan.run', string='Weekly Plan', ondelete='set null', index=True, tracking=True,
+        help='Optional. A planned payment appears in a weekly plan only after it is explicitly added.'
+    )
+    company_id = fields.Many2one(
+        'res.company', required=True, default=lambda self: self.env.company, index=True
+    )
+    currency_id = fields.Many2one(related='company_id.currency_id', store=True, readonly=True)
+    planned_date = fields.Date(
+        string='Added to Plan Date', tracking=True, copy=False,
+        help='Set automatically to the date the payment is added to a weekly plan.'
+    )
+    added_to_plan_on = fields.Datetime(string='Added to Plan On', readonly=True, copy=False, tracking=True)
+    added_to_plan_by = fields.Many2one('res.users', string='Added to Plan By', readonly=True, copy=False, tracking=True)
+    is_in_weekly_plan = fields.Boolean(string='In Weekly Plan', compute='_compute_is_in_weekly_plan', store=True)
     flow_type = fields.Selection([('out', 'Payment'), ('in', 'Receipt')], required=True, tracking=True)
     transaction_type = fields.Selection([
         ('supplier', 'Supplier / Subcontractor'), ('expense', 'Expense'), ('payroll', 'Payroll / Manpower'),
@@ -162,6 +173,64 @@ class CashPlanLine(models.Model):
         help='Once a planned payment has been submitted to the CEO, its content can no longer be '
              'edited until it is reset back to Draft.',
     )
+
+
+    @api.depends('run_id')
+    def _compute_is_in_weekly_plan(self):
+        for rec in self:
+            rec.is_in_weekly_plan = bool(rec.run_id)
+
+    def _assign_to_weekly_plan(self, run, added_by=None):
+        self.ensure_one()
+        if not run:
+            raise UserError(_('Select a weekly plan.'))
+        if run.company_id != self.company_id:
+            raise UserError(_('The selected weekly plan belongs to another company.'))
+        if run.state in ('done', 'cancel'):
+            raise UserError(_('You cannot add a payment to a completed or cancelled weekly plan.'))
+        today = fields.Date.context_today(self)
+        self.with_context(allow_locked_write=True).write({
+            'run_id': run.id,
+            'planned_date': today,
+            'added_to_plan_on': fields.Datetime.now(),
+            'added_to_plan_by': (added_by or self.env.user).id,
+        })
+        return True
+
+    def action_add_to_plan(self):
+        self.ensure_one()
+        self._check_any_group(
+            ['internal_transfer_voucher.group_payment_execution_manager'],
+            'Only a Payment Execution Manager can add this payment to a weekly plan from the backend.',
+        )
+        if self.flow_type != 'out':
+            raise UserError(_('Only planned payments can be added through this action.'))
+        if self.run_id:
+            raise UserError(_('This planned payment is already included in %s.') % self.run_id.display_name)
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Add to Weekly Plan'),
+            'res_model': 'cash.plan.add.to.run.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_line_id': self.id},
+        }
+
+    def action_remove_from_plan(self):
+        for line in self:
+            line._check_any_group(
+                ['internal_transfer_voucher.group_payment_execution_manager'],
+                'Only a Payment Execution Manager can remove this payment from a weekly plan from the backend.',
+            )
+            if line.run_id and line.run_id.state in ('done', 'cancel'):
+                raise UserError(_('You cannot remove a payment from a completed or cancelled weekly plan.'))
+            line.with_context(allow_locked_write=True).write({
+                'run_id': False,
+                'planned_date': False,
+                'added_to_plan_on': False,
+                'added_to_plan_by': False,
+            })
+        return True
 
     @api.depends('flow_type', 'ceo_decision', 'state')
     def _compute_is_locked(self):
@@ -356,7 +425,7 @@ class CashPlanLine(models.Model):
             raise UserError(_('Select the expected journal before execution.'))
 
         common = {
-            'date': self.planned_date,
+            'date': self.planned_date or fields.Date.context_today(self),
             'amount': self.forecast_amount,
             'currency_id': self.currency_id.id,
             'company_id': self.company_id.id,
