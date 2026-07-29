@@ -228,9 +228,21 @@ class PortalTreasury(http.Controller):
             if not run:
                 raise UserError('Select a valid weekly plan.')
             line._assign_to_weekly_plan(run, request.env.user)
-            return request.redirect('/my/employee/treasury/payments?status=all&message=%s' % quote('Payment added to the weekly plan.'))
+            return_status = (post.get('return_status') or 'pending').strip().lower()
+            if return_status not in self.VALID_FILTERS:
+                return_status = 'pending'
+            return request.redirect(
+                '/my/employee/treasury/payments?status=%s&message=%s'
+                % (return_status, quote('Payment added to the weekly plan.'))
+            )
         except (ValueError, ValidationError, UserError) as exc:
-            return request.redirect('/my/employee/treasury/payments?status=all&error=%s' % quote(str(exc)))
+            return_status = (post.get('return_status') or 'pending').strip().lower()
+            if return_status not in self.VALID_FILTERS:
+                return_status = 'pending'
+            return request.redirect(
+                '/my/employee/treasury/payments?status=%s&error=%s'
+                % (return_status, quote(str(exc)))
+            )
 
 
 

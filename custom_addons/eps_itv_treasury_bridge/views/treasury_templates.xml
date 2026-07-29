@@ -83,6 +83,8 @@
         .ept-row-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ept-po-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; color: var(--app-primary, #4F46E5); background: rgba(79,70,229,.08); border-radius: 8px; padding: .18em .5em; text-decoration: none !important; }
         .ept-po-chip:hover { background: rgba(79,70,229,.16); }
+        .ept-plan-badge .eps-badge { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.25; }
+        .js-plan-budget-select { width: 100%; min-width: 0; font-size: 11px; }
         .ept-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; font-size: 12.5px; }
         .ept-amount-muted { color: var(--text-muted, #9CA3AF); font-weight: 400; text-align: right; white-space: nowrap; font-size: 12.5px; }
         .ept-plan-badge { margin-top: 6px; }
@@ -239,6 +241,7 @@
                         <div t-else="" class="ept-plan-badge"><span class="eps-badge eps-badge-muted"><span class="eps-badge-dot"/>Not in weekly plan</span></div>
                         <form t-if="not line.run_id and available_runs" t-att-action="'/my/employee/treasury/lines/%s/add-to-plan' % line.id" method="post" class="mt-2 js-add-plan-form" t-att-data-payment-amount="line.forecast_amount">
                           <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                          <input type="hidden" name="return_status" t-att-value="current_status"/>
                           <select name="run_id" class="form-select form-select-sm mb-1 js-plan-budget-select" required="required">
                             <option value="">Select plan</option>
                             <option t-foreach="available_runs" t-as="available_run" t-att-value="available_run.id" t-att-selected="available_run.date_from &lt;= today and available_run.date_to &gt;= today" t-att-data-budget="available_run.budget_amount" t-att-data-planned="available_run.forecast_outflow" t-att-data-remaining="available_run.budget_remaining" t-att-data-currency="available_run.currency_id.symbol or available_run.currency_id.name"><t t-esc="available_run.name"/> · <t t-esc="available_run.date_from"/>–<t t-esc="available_run.date_to"/></option>
@@ -674,6 +677,8 @@
 
         /* --- KPI cards --- */
         .ept-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 18px; }
+        .ept-budget-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+        @media (max-width: 767.98px) { .ept-budget-grid { grid-template-columns: 1fr; } }
         .ept-kpi-card { background: var(--surface, #fff); border-radius: 20px; padding: 18px 20px; box-shadow: var(--shadow-sm, 0 4px 12px rgba(26,27,46,.08)); border: 1px solid var(--border-light, rgba(0,0,0,.05)); }
         .ept-kpi-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 12px; }
         .ept-kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-secondary, #6B7280); }
@@ -718,7 +723,7 @@
         .eps-badge-done     { background: rgba(13,148,136,0.14); color: #0F766E; }
 
         /* --- Ledger timeline --- */
-        .ept-ledger-head { display: grid; grid-template-columns: minmax(240px,1.55fr) minmax(230px,1.35fr) 112px 112px 148px 145px; gap: 18px; padding: 0 26px 13px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-secondary, #6B7280); }
+        .ept-ledger-head { display: grid; grid-template-columns: minmax(225px,1.45fr) minmax(215px,1.25fr) 108px 108px 138px 190px; gap: 18px; padding: 0 26px 13px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-secondary, #6B7280); }
         .ept-ledger-head > div:nth-child(3), .ept-ledger-head > div:nth-child(4), .ept-ledger-head > div:nth-child(5) { text-align: right; }
 
         .ept-day-block + .ept-day-block { border-top: 1px solid var(--border-light, rgba(0,0,0,.05)); }
@@ -733,7 +738,7 @@
 
         .ept-day-block { border-top: 0 !important; }
         .ept-day-block + .ept-day-block { border-top: 0 !important; }
-        .ept-row { display: grid; grid-template-columns: minmax(240px,1.55fr) minmax(230px,1.35fr) 112px 112px 148px 145px; gap: 18px; padding: 14px 26px; align-items: center; border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); transition: background .15s ease; }
+        .ept-row { display: grid; grid-template-columns: minmax(225px,1.45fr) minmax(215px,1.25fr) 108px 108px 138px 190px; gap: 18px; padding: 14px 26px; align-items: center; border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); transition: background .15s ease; }
         .ept-row:hover { background: rgba(79,70,229,0.035); }
         .ept-row + .ept-row { border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); }
         .ept-flow-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
@@ -748,7 +753,7 @@
         .ept-amount-muted { color: var(--text-muted, #9CA3AF); font-weight: 400; text-align: right; white-space: nowrap; font-size: 12.5px; }
 
         @media (max-width: 1200px) {
-          .ept-ledger-head, .ept-row { grid-template-columns: minmax(200px,1.4fr) minmax(190px,1.2fr) 96px 96px 128px 120px; font-size: 11.5px; }
+          .ept-ledger-head, .ept-row { grid-template-columns: minmax(185px,1.3fr) minmax(175px,1.1fr) 92px 92px 118px 175px; font-size: 11.5px; }
         }
 
         /* --- Mobile ledger --- */
