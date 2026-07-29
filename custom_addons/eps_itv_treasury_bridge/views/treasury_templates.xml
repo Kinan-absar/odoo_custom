@@ -85,6 +85,13 @@
         .ept-po-chip:hover { background: rgba(79,70,229,.16); }
         .ept-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; font-size: 12.5px; }
         .ept-amount-muted { color: var(--text-muted, #9CA3AF); font-weight: 400; text-align: right; white-space: nowrap; font-size: 12.5px; }
+        .ept-plan-badge { margin-top: 6px; }
+        .ept-budget-preview { margin-top: 6px; padding: 8px 9px; border-radius: 10px; background: var(--surface-2, #F8F8FB); border: 1px solid var(--border-light, rgba(0,0,0,.06)); font-size: 10.5px; line-height: 1.55; color: var(--text-secondary, #6B7280); }
+        .ept-budget-preview strong { color: var(--text-primary, #1A1B2E); font-variant-numeric: tabular-nums; }
+        .ept-budget-preview .ept-after-over { color: #B91C1C; font-weight: 700; }
+        .ept-budget-preview .ept-after-ok { color: #047857; font-weight: 700; }
+        .ept-budget-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+        @media (max-width: 767.98px) { .ept-budget-grid { grid-template-columns: 1fr; } }
 
         /* --- Review panel (expands under a pending/held row) --- */
         .ept-review-panel { background: var(--surface-2, #F8F8FB); border-top: 1px dashed var(--border-light, rgba(0,0,0,.08)); padding: 14px 22px 16px 74px; }
@@ -226,13 +233,23 @@
                         <span t-attf-class="eps-badge #{badge_cls}" t-att-title="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)">
                           <span class="eps-badge-dot"/><t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
                         </span>
-                        <form t-if="not line.run_id and available_runs" t-att-action="'/my/employee/treasury/lines/%s/add-to-plan' % line.id" method="post" class="mt-2">
+                        <div t-if="line.run_id" class="ept-plan-badge">
+                          <span class="eps-badge eps-badge-approved"><span class="eps-badge-dot"/>Added to <t t-esc="line.run_id.name"/></span>
+                        </div>
+                        <div t-else="" class="ept-plan-badge"><span class="eps-badge eps-badge-muted"><span class="eps-badge-dot"/>Not in weekly plan</span></div>
+                        <form t-if="not line.run_id and available_runs" t-att-action="'/my/employee/treasury/lines/%s/add-to-plan' % line.id" method="post" class="mt-2 js-add-plan-form" t-att-data-payment-amount="line.forecast_amount">
                           <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                          <select name="run_id" class="form-select form-select-sm mb-1" required="required">
+                          <select name="run_id" class="form-select form-select-sm mb-1 js-plan-budget-select" required="required">
                             <option value="">Select plan</option>
-                            <option t-foreach="available_runs" t-as="available_run" t-att-value="available_run.id" t-att-selected="available_run.date_from &lt;= today and available_run.date_to &gt;= today"><t t-esc="available_run.name"/> · <t t-esc="available_run.date_from"/>–<t t-esc="available_run.date_to"/></option>
+                            <option t-foreach="available_runs" t-as="available_run" t-att-value="available_run.id" t-att-selected="available_run.date_from &lt;= today and available_run.date_to &gt;= today" t-att-data-budget="available_run.budget_amount" t-att-data-planned="available_run.forecast_outflow" t-att-data-remaining="available_run.budget_remaining" t-att-data-currency="available_run.currency_id.symbol or available_run.currency_id.name"><t t-esc="available_run.name"/> · <t t-esc="available_run.date_from"/>–<t t-esc="available_run.date_to"/></option>
                           </select>
-                          <button class="btn btn-primary btn-sm w-100"><i class="fa fa-plus me-1"/>Add to Plan</button>
+                          <div class="ept-budget-preview js-budget-preview d-none">
+                            <div>Budget: <strong class="js-budget-value"/></div>
+                            <div>Already planned: <strong class="js-planned-value"/></div>
+                            <div>Remaining: <strong class="js-remaining-value"/></div>
+                            <div>After adding: <strong class="js-after-value"/></div>
+                          </div>
+                          <button class="btn btn-primary btn-sm w-100 mt-1"><i class="fa fa-plus me-1"/>Add to Plan</button>
                         </form>
                         <div t-if="line.run_id and line.added_to_plan_on" class="ept-row-sub mt-1">Added <t t-esc="line.planned_date"/></div>
                       </div>
@@ -326,13 +343,23 @@
                         <span t-else="" class="text-muted ept-mobile-value">No PO linked</span>
                       </div>
                     </div>
-                    <form t-if="not line.run_id and available_runs" t-att-action="'/my/employee/treasury/lines/%s/add-to-plan' % line.id" method="post" class="mb-3">
+                    <div class="mb-3">
+                      <span t-if="line.run_id" class="eps-badge eps-badge-approved"><span class="eps-badge-dot"/>Added to <t t-esc="line.run_id.name"/></span>
+                      <span t-else="" class="eps-badge eps-badge-muted"><span class="eps-badge-dot"/>Not in weekly plan</span>
+                    </div>
+                    <form t-if="not line.run_id and available_runs" t-att-action="'/my/employee/treasury/lines/%s/add-to-plan' % line.id" method="post" class="mb-3 js-add-plan-form" t-att-data-payment-amount="line.forecast_amount">
                       <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                       <label class="ept-mobile-label">Add to weekly plan</label>
-                      <select name="run_id" class="form-select mb-2" required="required">
+                      <select name="run_id" class="form-select mb-2 js-plan-budget-select" required="required">
                         <option value="">Select plan</option>
-                        <option t-foreach="available_runs" t-as="available_run" t-att-value="available_run.id" t-att-selected="available_run.date_from &lt;= today and available_run.date_to &gt;= today"><t t-esc="available_run.name"/> · <t t-esc="available_run.date_from"/>–<t t-esc="available_run.date_to"/></option>
+                        <option t-foreach="available_runs" t-as="available_run" t-att-value="available_run.id" t-att-selected="available_run.date_from &lt;= today and available_run.date_to &gt;= today" t-att-data-budget="available_run.budget_amount" t-att-data-planned="available_run.forecast_outflow" t-att-data-remaining="available_run.budget_remaining" t-att-data-currency="available_run.currency_id.symbol or available_run.currency_id.name"><t t-esc="available_run.name"/> · <t t-esc="available_run.date_from"/>–<t t-esc="available_run.date_to"/></option>
                       </select>
+                      <div class="ept-budget-preview js-budget-preview d-none mb-2">
+                        <div>Budget: <strong class="js-budget-value"/></div>
+                        <div>Already planned: <strong class="js-planned-value"/></div>
+                        <div>Remaining: <strong class="js-remaining-value"/></div>
+                        <div>After adding: <strong class="js-after-value"/></div>
+                      </div>
                       <button class="btn btn-primary w-100"><i class="fa fa-plus me-1"/>Add to Plan</button>
                     </form>
                     <form class="ept-mobile-actions" t-if="line.ceo_decision in ('pending', 'held')" t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
@@ -361,6 +388,51 @@
           </div>
         </div>
       </div>
+      <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+          function money(value, currency) {
+            var number = Number(value || 0);
+            return (currency ? currency + ' ' : '') + number.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+          }
+          document.querySelectorAll('.js-add-plan-form').forEach(function (form) {
+            var select = form.querySelector('.js-plan-budget-select');
+            var preview = form.querySelector('.js-budget-preview');
+            if (!select || !preview) { return; }
+            function refresh() {
+              var option = select.options[select.selectedIndex];
+              if (!option || !option.value) { preview.classList.add('d-none'); return; }
+              var budget = Number(option.dataset.budget || 0);
+              var planned = Number(option.dataset.planned || 0);
+              var remaining = Number(option.dataset.remaining || 0);
+              var payment = Number(form.dataset.paymentAmount || 0);
+              var after = remaining - payment;
+              var currency = option.dataset.currency || '';
+              preview.querySelector('.js-budget-value').textContent = money(budget, currency);
+              preview.querySelector('.js-planned-value').textContent = money(planned, currency);
+              preview.querySelector('.js-remaining-value').textContent = money(remaining, currency);
+              var afterNode = preview.querySelector('.js-after-value');
+              afterNode.textContent = money(after, currency);
+              afterNode.classList.toggle('ept-after-over', after &lt; 0);
+              afterNode.classList.toggle('ept-after-ok', after &gt;= 0);
+              preview.classList.remove('d-none');
+            }
+            select.addEventListener('change', refresh);
+            refresh();
+            form.addEventListener('submit', function (event) {
+              var option = select.options[select.selectedIndex];
+              if (!option || !option.value) { return; }
+              var remaining = Number(option.dataset.remaining || 0);
+              var payment = Number(form.dataset.paymentAmount || 0);
+              if (payment &gt; remaining) {
+                var exceeded = payment - remaining;
+                var currency = option.dataset.currency || '';
+                var ok = window.confirm('This payment exceeds the remaining weekly budget by ' + money(exceeded, currency) + '. Add it anyway?');
+                if (!ok) { event.preventDefault(); }
+              }
+            });
+          });
+        });
+      </script>
     </t>
   </template>
   <template id="portal_treasury_plan_list" name="CEO Weekly Cash Plans">
@@ -727,6 +799,27 @@
                 <span t-field="run.forecast_variance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/> vs forecast
               </div>
             </div>
+          </div>
+        </div>
+
+        <div class="ept-budget-grid">
+          <div class="ept-kpi-card">
+            <div class="ept-kpi-icon" style="background: rgba(79,70,229,.12); color: #4F46E5;"><i class="fa fa-money"/></div>
+            <div class="ept-kpi-label">Weekly budget</div>
+            <div class="ept-kpi-value"><span t-field="run.budget_amount" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div>
+            <div class="ept-kpi-sub text-muted">Approved spending limit</div>
+          </div>
+          <div class="ept-kpi-card">
+            <div class="ept-kpi-icon" style="background: rgba(245,158,11,.13); color: #B45309;"><i class="fa fa-list-alt"/></div>
+            <div class="ept-kpi-label">Planned payments</div>
+            <div class="ept-kpi-value"><span t-field="run.forecast_outflow" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div>
+            <div class="ept-kpi-sub text-muted">Payments added to this plan</div>
+          </div>
+          <div class="ept-kpi-card">
+            <div class="ept-kpi-icon" style="background: rgba(16,185,129,.12); color: #047857;"><i class="fa fa-battery-three-quarters"/></div>
+            <div class="ept-kpi-label">Remaining budget</div>
+            <div t-attf-class="ept-kpi-value #{'text-danger' if run.budget_remaining &lt; 0 else 'text-success'}"><span t-field="run.budget_remaining" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div>
+            <div t-attf-class="ept-kpi-sub #{'text-danger' if run.budget_remaining &lt; 0 else 'text-muted'}"><t t-esc="'Over budget' if run.budget_remaining &lt; 0 else 'Available for more payments'"/></div>
           </div>
         </div>
 
