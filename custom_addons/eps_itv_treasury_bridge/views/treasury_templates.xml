@@ -298,9 +298,8 @@
                         </div>
                       </form>
                     </div>
-                    <div class="ept-review-note" t-if="line.ceo_decision not in ('pending', 'held') and (line.ceo_comment or line.ceo_approved_by)">
-                      <span t-if="line.ceo_comment"><i class="fa fa-comment-o me-1"/><t t-esc="line.ceo_comment"/></span>
-                      <span t-if="line.ceo_approved_by" class="text-muted ms-2">Reviewed by CEO</span>
+                    <div class="ept-review-note" t-if="line.ceo_decision not in ('pending', 'held') and line.ceo_comment">
+                      <span><i class="fa fa-comment-o me-1"/><t t-esc="line.ceo_comment"/></span>
                     </div>
                   </div>
                 </t>
@@ -395,9 +394,8 @@
                         </div>
                       </div>
                     </form>
-                    <div t-else="" class="border-top pt-3 small">
-                      <div t-if="line.ceo_comment" class="mb-1"><span class="text-muted">Comment: </span><t t-esc="line.ceo_comment"/></div>
-                      <div t-if="line.ceo_approved_by" class="text-muted">Reviewed by CEO</div>
+                    <div t-if="line.ceo_decision not in ('pending', 'held') and line.ceo_comment" class="border-top pt-3 small">
+                      <div><span class="text-muted">Comment: </span><t t-esc="line.ceo_comment"/></div>
                     </div>
                   </div>
                 </div>
