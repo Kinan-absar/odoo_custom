@@ -485,6 +485,38 @@ class CashPlanLine(models.Model):
         self.state = 'executed'
         return action
 
+
+    @api.model
+    def _assign_existing_unplanned_actuals_by_voucher_date(self):
+        """Migration helper used on module upgrade for already-created direct vouchers."""
+        lines = self.sudo().search([('is_unplanned', '=', True)])
+        for line in lines:
+            voucher = line.payment_voucher_id or line.receipt_voucher_id
+            if not voucher or not voucher.date or not voucher.company_id:
+                continue
+            run = self.env['cash.plan.run'].sudo().search([
+                ('company_id', '=', voucher.company_id.id),
+                ('date_from', '<=', voucher.date),
+                ('date_to', '>=', voucher.date),
+                ('state', '!=', 'cancel'),
+            ], order='date_from desc, id desc', limit=1)
+            values = {
+                'run_id': run.id if run else False,
+                'planned_date': voucher.date,
+            }
+            if line.payment_voucher_id:
+                values['description'] = _(
+                    'Created directly from Payment Voucher %s. The voucher date automatically selects the matching '
+                    'Weekly Cash Plan; this line remains classified as an Unplanned Actual.'
+                ) % voucher.name
+            else:
+                values['description'] = _(
+                    'Created directly from Receipt Voucher %s. The voucher date automatically selects the matching '
+                    'Weekly Cash Plan; this line remains classified as an Unplanned Actual.'
+                ) % voucher.name
+            line.with_context(allow_locked_write=True).write(values)
+        return True
+
     def action_link_existing_voucher(self):
         self.ensure_one()
         if self.state == 'cancel':
