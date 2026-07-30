@@ -1,13 +1,14 @@
 from odoo import http, fields, _
 from odoo.http import request
 import base64
+from markupsafe import Markup, escape
 
 def _mr_status_badge(rec):
     state = rec.state
 
     # FULLY APPROVED
     if state == "approved":
-        return '<span class="badge bg-success">Fully Approved</span>'
+        return Markup('<span class="badge bg-success">Fully Approved</span>')
 
     # REJECTED
     if state == "rejected":
@@ -29,7 +30,7 @@ def _mr_status_badge(rec):
         }
         reason = reasons.get(rec.state_before_reject) or "No reason"
 
-        return f'<span class="badge bg-danger">Rejected — {lbl} Stage ({reason})</span>'
+        return Markup('<span class="badge bg-danger">Rejected — %s Stage (%s)</span>') % (escape(lbl), escape(reason))
         # CLARIFICATION OVERRIDE
     if rec.needs_clarification and rec.clarification_stage:
         stage_labels = {
@@ -40,7 +41,7 @@ def _mr_status_badge(rec):
             'ceo': 'CEO',
         }
         clar_label = stage_labels.get(rec.clarification_stage, rec.clarification_stage)
-        return f'<span class="badge bg-info text-dark">🚩 Clarification — {clar_label}</span>'
+        return Markup('<span class="badge bg-info text-dark">🚩 Clarification — %s</span>') % escape(clar_label)
 
     # PENDING STAGE BADGES
     stage_badges = {
@@ -52,9 +53,9 @@ def _mr_status_badge(rec):
     }
 
     if state in stage_badges:
-        return f'<span class="badge bg-warning text-dark">{stage_badges[state]}</span>'
+        return Markup('<span class="badge bg-warning text-dark">%s</span>') % escape(stage_badges[state])
 
-    return '<span class="badge bg-secondary">Unknown</span>'
+    return Markup('<span class="badge bg-secondary">Unknown</span>')
 
 class EmployeePortalMaterialRequests(http.Controller):
 
@@ -233,7 +234,9 @@ class EmployeePortalMaterialRequests(http.Controller):
         ):
             return request.redirect('/my')
 
-        current_filter = kw.get("filter", "all")
+        current_filter = kw.get("filter", "pending")
+        if current_filter not in {"pending", "approved", "rejected", "all"}:
+            current_filter = "pending"
         search = (kw.get("search") or "").strip()
 
         # ---------------------------------------------------------
@@ -373,6 +376,7 @@ class EmployeePortalMaterialRequests(http.Controller):
         )
         attachments = all_attachments - accounting_attachments - quotation_attachments
         is_purchase_rep = request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep")
+        is_ceo = request.env.user.has_group("employee_portal_suite.group_employee_portal_ceo")
 
         can_submit_accounting_docs = bool(
             accounting_attachments
@@ -386,6 +390,7 @@ class EmployeePortalMaterialRequests(http.Controller):
             "quotation_attachments": quotation_attachments,
             "can_submit_accounting_docs": can_submit_accounting_docs,
             "is_purchase_rep": is_purchase_rep,
+            "can_view_quotations": is_purchase_rep or is_ceo,
             "status_badge": _mr_status_badge,
         })
 

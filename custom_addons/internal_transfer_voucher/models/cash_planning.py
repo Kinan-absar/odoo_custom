@@ -232,6 +232,23 @@ class CashPlanLine(models.Model):
             })
         return True
 
+    @api.model
+    def retrieve_dashboard(self):
+        """Counts for the Planned Payments status cards in the backend list."""
+        base = [('flow_type', '=', 'out')]
+        count = self.search_count
+        return {
+            'all_count': count(base),
+            'not_sent_count': count(base + [('ceo_decision', '=', 'not_sent')]),
+            'pending_count': count(base + [('ceo_decision', '=', 'pending')]),
+            'approved_count': count(base + [('ceo_decision', 'in', ('approved', 'adjusted'))]),
+            'held_count': count(base + [('ceo_decision', '=', 'held')]),
+            'rejected_count': count(base + [('ceo_decision', '=', 'rejected')]),
+            'paid_count': count(base + [('state', '=', 'executed')]),
+            'added_to_plan_count': count(base + [('run_id', '!=', False)]),
+            'not_added_to_plan_count': count(base + [('run_id', '=', False)]),
+        }
+
     @api.depends('flow_type', 'ceo_decision', 'state')
     def _compute_is_locked(self):
         for rec in self:
