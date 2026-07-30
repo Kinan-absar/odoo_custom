@@ -234,7 +234,9 @@ class EmployeePortalMaterialRequests(http.Controller):
         ):
             return request.redirect('/my')
 
-        current_filter = kw.get("filter", "all")
+        current_filter = kw.get("filter", "pending")
+        if current_filter not in {"pending", "approved", "rejected", "all"}:
+            current_filter = "pending"
         search = (kw.get("search") or "").strip()
 
         # ---------------------------------------------------------

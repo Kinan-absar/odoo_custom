@@ -23,10 +23,10 @@
                         <select id="approvalFilter"
                                 class="form-select form-select-sm"
                                 style="width:auto;">
-                            <option value="all" t-att-selected="current_filter == 'all'">All</option>
                             <option value="pending" t-att-selected="current_filter == 'pending'">Pending</option>
                             <option value="approved" t-att-selected="current_filter == 'approved'">Approved</option>
                             <option value="rejected" t-att-selected="current_filter == 'rejected'">Rejected</option>
+                            <option value="all" t-att-selected="current_filter == 'all'">All</option>
                         </select>
                     </div>
                 </div>
@@ -62,7 +62,19 @@
             <!-- Table -->
             <!-- DESKTOP TABLE -->
             <div class="table-responsive d-none d-md-block">
-                <table class="table table-hover table-sm align-middle mb-0">
+                <table class="table table-hover table-sm align-middle mb-0 material-approvals-table">
+                    <!-- One fixed column definition is shared by Pending, Approved, Rejected and All. -->
+                    <colgroup>
+                        <col style="width: 7.5%;"/>
+                        <col style="width: 20%;"/>
+                        <col style="width: 25%;"/>
+                        <col style="width: 9%;"/>
+                        <col style="width: 8%;"/>
+                        <col style="width: 13%;"/>
+                        <col style="width: 10%;"/>
+                        <col style="width: 5%;"/>
+                        <col style="width: 7.5%;"/>
+                    </colgroup>
 
                     <thead class="table-light">
                         <tr>
@@ -126,7 +138,7 @@
 
                                     <td class="text-end">
                                         <a t-att-href="'/my/employee/material/approvals/%s' % req.id"
-                                        class="btn btn-outline-primary btn-sm">
+                                        class="btn btn-outline-primary btn-sm text-nowrap">
                                             Review
                                         </a>
                                     </td>
@@ -226,6 +238,27 @@
 </div>
 
 
+            <style>
+                .material-approvals-table {
+                    width: 100%;
+                    table-layout: fixed;
+                }
+                .material-approvals-table th,
+                .material-approvals-table td {
+                    vertical-align: middle;
+                    overflow-wrap: anywhere;
+                }
+                .material-approvals-table .badge {
+                    max-width: 100%;
+                    white-space: normal;
+                    line-height: 1.2;
+                }
+                .material-approvals-table th:last-child,
+                .material-approvals-table td:last-child {
+                    white-space: nowrap;
+                }
+            </style>
+
             <!-- FILTERING JS -->
             <script>
             document.addEventListener("DOMContentLoaded", function() {
@@ -245,7 +278,7 @@
 
                 input.addEventListener("input", function() {
                     if (this.value.trim() === "") {
-                        const filter = new URLSearchParams(window.location.search).get('filter') || 'all';
+                        const filter = new URLSearchParams(window.location.search).get('filter') || 'pending';
                         window.location.href = "/my/employee/material/approvals?filter=" + filter;
                     }
                 });
