@@ -8,7 +8,7 @@ from odoo.addons.purchase.controllers.portal import CustomerPortal as PurchaseCu
 
 
 class PortalTreasury(http.Controller):
-    VALID_FILTERS = {'pending', 'approved', 'held', 'rejected', 'all'}
+    VALID_FILTERS = {'pending', 'approved', 'held', 'rejected', 'added', 'not_added', 'all'}
 
     def _is_ceo(self):
         return request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
@@ -38,6 +38,10 @@ class PortalTreasury(http.Controller):
             domain.append(('ceo_decision', '=', 'held'))
         elif status == 'rejected':
             domain.append(('ceo_decision', '=', 'rejected'))
+        elif status == 'added':
+            domain.append(('run_id', '!=', False))
+        elif status == 'not_added':
+            domain.append(('run_id', '=', False))
         return domain
 
     @http.route('/my/employee/treasury', type='http', auth='user', website=True)
@@ -63,7 +67,7 @@ class PortalTreasury(http.Controller):
         company_currency = request.env.company.currency_id
         counts = {}
         amounts_fmt = {}
-        for key in ('pending', 'approved', 'held', 'rejected', 'all'):
+        for key in ('pending', 'approved', 'held', 'rejected', 'added', 'not_added', 'all'):
             key_lines = Line.search(self._payment_domain(key))
             counts[key] = len(key_lines)
             currency = key_lines[:1].currency_id or company_currency

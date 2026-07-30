@@ -92,6 +92,7 @@
         .ept-budget-preview strong { color: var(--text-primary, #1A1B2E); font-variant-numeric: tabular-nums; }
         .ept-budget-preview .ept-after-over { color: #B91C1C; font-weight: 700; }
         .ept-budget-preview .ept-after-ok { color: #047857; font-weight: 700; }
+        .ept-confirm-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } .ept-confirm-grid > div { padding:10px 12px; border:1px solid var(--border-light, rgba(0,0,0,.08)); border-radius:10px; background:var(--surface-2,#F8F8FB); display:flex; justify-content:space-between; gap:12px; } .ept-confirm-grid strong { white-space:nowrap; font-variant-numeric:tabular-nums; } .ept-after-over { color:#B91C1C; } .ept-after-ok { color:#047857; } @media(max-width:575px){.ept-confirm-grid{grid-template-columns:1fr;}}
         .ept-budget-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
         @media (max-width: 767.98px) { .ept-budget-grid { grid-template-columns: 1fr; } }
 
@@ -192,6 +193,18 @@
             <div class="ept-kpi-value"><t t-esc="counts.get('rejected', 0)"/></div>
             <div class="ept-kpi-sub"><t t-esc="amounts_fmt.get('rejected')"/></div>
           </a>
+          <a href="/my/employee/treasury/payments?status=added" t-attf-class="ept-kpi-card #{'ept-kpi-active' if current_status == 'added' else ''}">
+            <div class="ept-kpi-icon" style="background: rgba(16,185,129,.14); color: #047857;"><i class="fa fa-calendar-check-o"/></div>
+            <div class="ept-kpi-label">Added to Plan</div>
+            <div class="ept-kpi-value"><t t-esc="counts.get('added', 0)"/></div>
+            <div class="ept-kpi-sub"><t t-esc="amounts_fmt.get('added')"/></div>
+          </a>
+          <a href="/my/employee/treasury/payments?status=not_added" t-attf-class="ept-kpi-card #{'ept-kpi-active' if current_status == 'not_added' else ''}">
+            <div class="ept-kpi-icon" style="background: rgba(107,114,128,.14); color: #4B5563;"><i class="fa fa-calendar-o"/></div>
+            <div class="ept-kpi-label">Not Added</div>
+            <div class="ept-kpi-value"><t t-esc="counts.get('not_added', 0)"/></div>
+            <div class="ept-kpi-sub"><t t-esc="amounts_fmt.get('not_added')"/></div>
+          </a>
         </div>
 
         <div class="ept-card">
@@ -204,6 +217,8 @@
             <a t-attf-class="ept-pill #{'ept-pill-active' if current_status == 'approved' else ''}" href="/my/employee/treasury/payments?status=approved">Approved <span class="ept-pill-count"><t t-esc="counts.get('approved', 0)"/></span></a>
             <a t-attf-class="ept-pill #{'ept-pill-active' if current_status == 'held' else ''}" href="/my/employee/treasury/payments?status=held">On hold <span class="ept-pill-count"><t t-esc="counts.get('held', 0)"/></span></a>
             <a t-attf-class="ept-pill #{'ept-pill-active' if current_status == 'rejected' else ''}" href="/my/employee/treasury/payments?status=rejected">Rejected <span class="ept-pill-count"><t t-esc="counts.get('rejected', 0)"/></span></a>
+            <a t-attf-class="ept-pill #{'ept-pill-active' if current_status == 'added' else ''}" href="/my/employee/treasury/payments?status=added">Added to Plan <span class="ept-pill-count"><t t-esc="counts.get('added', 0)"/></span></a>
+            <a t-attf-class="ept-pill #{'ept-pill-active' if current_status == 'not_added' else ''}" href="/my/employee/treasury/payments?status=not_added">Not Added <span class="ept-pill-count"><t t-esc="counts.get('not_added', 0)"/></span></a>
             <a t-attf-class="ept-pill #{'ept-pill-active' if current_status == 'all' else ''}" href="/my/employee/treasury/payments?status=all">All <span class="ept-pill-count"><t t-esc="counts.get('all', 0)"/></span></a>
           </div>
 
@@ -257,12 +272,6 @@
                             <option value="">Select plan</option>
                             <option t-foreach="available_runs" t-as="available_run" t-att-value="available_run.id" t-att-selected="available_run.date_from &lt;= today and available_run.date_to &gt;= today" t-att-data-budget="available_run.budget_amount" t-att-data-planned="available_run.forecast_outflow" t-att-data-remaining="available_run.budget_remaining" t-att-data-currency="available_run.currency_id.symbol or available_run.currency_id.name"><t t-esc="available_run.name"/> · <t t-esc="available_run.date_from"/>–<t t-esc="available_run.date_to"/></option>
                           </select>
-                          <div class="ept-budget-preview js-budget-preview d-none">
-                            <div>Budget: <strong class="js-budget-value"/></div>
-                            <div>Already planned: <strong class="js-planned-value"/></div>
-                            <div>Remaining: <strong class="js-remaining-value"/></div>
-                            <div>After adding: <strong class="js-after-value"/></div>
-                          </div>
                           <button class="btn btn-primary btn-sm w-100 mt-1"><i class="fa fa-plus me-1"/>Add to Plan</button>
                         </form>
                         <div t-if="line.run_id and line.added_to_plan_on" class="ept-row-sub mt-1">Added <t t-esc="line.planned_date"/></div>
@@ -369,12 +378,6 @@
                         <option value="">Select plan</option>
                         <option t-foreach="available_runs" t-as="available_run" t-att-value="available_run.id" t-att-selected="available_run.date_from &lt;= today and available_run.date_to &gt;= today" t-att-data-budget="available_run.budget_amount" t-att-data-planned="available_run.forecast_outflow" t-att-data-remaining="available_run.budget_remaining" t-att-data-currency="available_run.currency_id.symbol or available_run.currency_id.name"><t t-esc="available_run.name"/> · <t t-esc="available_run.date_from"/>–<t t-esc="available_run.date_to"/></option>
                       </select>
-                      <div class="ept-budget-preview js-budget-preview d-none mb-2">
-                        <div>Budget: <strong class="js-budget-value"/></div>
-                        <div>Already planned: <strong class="js-planned-value"/></div>
-                        <div>Remaining: <strong class="js-remaining-value"/></div>
-                        <div>After adding: <strong class="js-after-value"/></div>
-                      </div>
                       <button class="btn btn-primary w-100"><i class="fa fa-plus me-1"/>Add to Plan</button>
                     </form>
                     <form class="ept-mobile-actions" t-if="line.ceo_decision in ('pending', 'held')" t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
@@ -410,18 +413,22 @@
           <div class="ept-module-modal-head">
             <div class="ept-module-modal-icon"><i class="fa fa-exclamation-triangle"/></div>
             <div>
-              <h3 id="eptBudgetModalTitle" class="ept-module-modal-title">Weekly budget will be exceeded</h3>
-              <div class="small text-muted mt-1">Review the impact before adding this payment.</div>
+              <h3 id="eptBudgetModalTitle" class="ept-module-modal-title">Confirm adding to weekly plan</h3>
+              <div class="small text-muted mt-1">Review the plan totals before continuing.</div>
             </div>
           </div>
           <div class="ept-module-modal-body">
-            This payment exceeds the remaining weekly budget by
-            <span class="ept-module-modal-amount js-budget-modal-amount"/>.
-            You may cancel and select another plan, or continue and add it anyway.
+            <div class="ept-confirm-grid">
+              <div>Payment to add <strong class="js-confirm-payment"/></div>
+              <div>Already planned <strong class="js-confirm-planned"/></div>
+              <div>Remaining before adding <strong class="js-confirm-remaining"/></div>
+              <div>Remaining after adding <strong class="js-confirm-after"/></div>
+            </div>
+            <div class="ept-inline-warning js-confirm-warning mt-3 d-none"><i class="fa fa-exclamation-triangle me-1"/>This payment exceeds the remaining budget by <span class="js-budget-modal-amount"/>.</div>
           </div>
           <div class="ept-module-modal-actions">
             <button type="button" class="btn btn-light js-budget-modal-cancel">Cancel</button>
-            <button type="button" class="btn btn-primary js-budget-modal-confirm"><i class="fa fa-plus me-1"/>Add Anyway</button>
+            <button type="button" class="btn btn-primary js-budget-modal-confirm"><i class="fa fa-plus me-1"/>Confirm Add</button>
           </div>
         </div>
       </div>
@@ -433,43 +440,31 @@
           }
           document.querySelectorAll('.js-add-plan-form').forEach(function (form) {
             var select = form.querySelector('.js-plan-budget-select');
-            var preview = form.querySelector('.js-budget-preview');
-            if (!select || !preview) { return; }
-            function refresh() {
+            if (!select) { return; }
+            form.addEventListener('submit', function (event) {
+              if (form.dataset.confirmed === '1') { return; }
               var option = select.options[select.selectedIndex];
-              if (!option || !option.value) { preview.classList.add('d-none'); return; }
-              var budget = Number(option.dataset.budget || 0);
+              if (!option || !option.value) { return; }
+              event.preventDefault();
               var planned = Number(option.dataset.planned || 0);
               var remaining = Number(option.dataset.remaining || 0);
               var payment = Number(form.dataset.paymentAmount || 0);
               var after = remaining - payment;
               var currency = option.dataset.currency || '';
-              preview.querySelector('.js-budget-value').textContent = money(budget, currency);
-              preview.querySelector('.js-planned-value').textContent = money(planned, currency);
-              preview.querySelector('.js-remaining-value').textContent = money(remaining, currency);
-              var afterNode = preview.querySelector('.js-after-value');
+              var modal = document.getElementById('eptBudgetConfirmModal');
+              modal.querySelector('.js-confirm-payment').textContent = money(payment, currency);
+              modal.querySelector('.js-confirm-planned').textContent = money(planned, currency);
+              modal.querySelector('.js-confirm-remaining').textContent = money(remaining, currency);
+              var afterNode = modal.querySelector('.js-confirm-after');
               afterNode.textContent = money(after, currency);
               afterNode.classList.toggle('ept-after-over', after &lt; 0);
               afterNode.classList.toggle('ept-after-ok', after &gt;= 0);
-              preview.classList.remove('d-none');
-            }
-            select.addEventListener('change', refresh);
-            refresh();
-            form.addEventListener('submit', function (event) {
-              var option = select.options[select.selectedIndex];
-              if (!option || !option.value || form.dataset.confirmed === '1') { return; }
-              var remaining = Number(option.dataset.remaining || 0);
-              var payment = Number(form.dataset.paymentAmount || 0);
-              if (payment &gt; remaining) {
-                event.preventDefault();
-                var exceeded = payment - remaining;
-                var currency = option.dataset.currency || '';
-                var modal = document.getElementById('eptBudgetConfirmModal');
-                modal.querySelector('.js-budget-modal-amount').textContent = money(exceeded, currency);
-                modal._pendingForm = form;
-                modal.classList.add('is-open');
-                modal.setAttribute('aria-hidden', 'false');
-              }
+              var warning = modal.querySelector('.js-confirm-warning');
+              warning.classList.toggle('d-none', after &gt;= 0);
+              modal.querySelector('.js-budget-modal-amount').textContent = money(Math.max(0, payment - remaining), currency);
+              modal._pendingForm = form;
+              modal.classList.add('is-open');
+              modal.setAttribute('aria-hidden', 'false');
             });
           });
           var budgetModal = document.getElementById('eptBudgetConfirmModal');

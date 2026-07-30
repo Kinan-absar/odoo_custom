@@ -373,6 +373,7 @@ class EmployeePortalMaterialRequests(http.Controller):
         )
         attachments = all_attachments - accounting_attachments - quotation_attachments
         is_purchase_rep = request.env.user.has_group("employee_portal_suite.group_mr_purchase_rep")
+        is_ceo = request.env.user.has_group("employee_portal_suite.group_employee_portal_ceo")
 
         can_submit_accounting_docs = bool(
             accounting_attachments
@@ -386,6 +387,7 @@ class EmployeePortalMaterialRequests(http.Controller):
             "quotation_attachments": quotation_attachments,
             "can_submit_accounting_docs": can_submit_accounting_docs,
             "is_purchase_rep": is_purchase_rep,
+            "can_view_quotations": is_purchase_rep or is_ceo,
             "status_badge": _mr_status_badge,
         })
 
