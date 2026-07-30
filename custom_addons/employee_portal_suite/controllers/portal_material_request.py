@@ -1,13 +1,14 @@
 from odoo import http, fields, _
 from odoo.http import request
 import base64
+from markupsafe import Markup, escape
 
 def _mr_status_badge(rec):
     state = rec.state
 
     # FULLY APPROVED
     if state == "approved":
-        return '<span class="badge bg-success">Fully Approved</span>'
+        return Markup('<span class="badge bg-success">Fully Approved</span>')
 
     # REJECTED
     if state == "rejected":
@@ -29,7 +30,7 @@ def _mr_status_badge(rec):
         }
         reason = reasons.get(rec.state_before_reject) or "No reason"
 
-        return f'<span class="badge bg-danger">Rejected — {lbl} Stage ({reason})</span>'
+        return Markup('<span class="badge bg-danger">Rejected — %s Stage (%s)</span>') % (escape(lbl), escape(reason))
         # CLARIFICATION OVERRIDE
     if rec.needs_clarification and rec.clarification_stage:
         stage_labels = {
@@ -40,7 +41,7 @@ def _mr_status_badge(rec):
             'ceo': 'CEO',
         }
         clar_label = stage_labels.get(rec.clarification_stage, rec.clarification_stage)
-        return f'<span class="badge bg-info text-dark">🚩 Clarification — {clar_label}</span>'
+        return Markup('<span class="badge bg-info text-dark">🚩 Clarification — %s</span>') % escape(clar_label)
 
     # PENDING STAGE BADGES
     stage_badges = {
@@ -52,9 +53,9 @@ def _mr_status_badge(rec):
     }
 
     if state in stage_badges:
-        return f'<span class="badge bg-warning text-dark">{stage_badges[state]}</span>'
+        return Markup('<span class="badge bg-warning text-dark">%s</span>') % escape(stage_badges[state])
 
-    return '<span class="badge bg-secondary">Unknown</span>'
+    return Markup('<span class="badge bg-secondary">Unknown</span>')
 
 class EmployeePortalMaterialRequests(http.Controller):
 
