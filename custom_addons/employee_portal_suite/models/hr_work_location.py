@@ -42,22 +42,19 @@ class HrWorkLocation(models.Model):
                 projects = location.project_id
             location.project_ids = projects
 
-    def _get_project_lines_for_employee(self, employee=None):
+    def _get_material_request_projects(self):
         self.ensure_one()
-        lines = self.project_line_ids
-        if employee:
-            employee_lines = lines.filtered(lambda line: line.employee_id == employee)
-            if employee_lines:
-                return employee_lines
-            return lines.filtered(lambda line: not line.employee_id)
-        return lines
-
-    def _get_material_request_projects(self, employee=None):
-        self.ensure_one()
-        projects = self._get_project_lines_for_employee(employee).mapped("project_id")
+        projects = self.project_line_ids.mapped("project_id")
         if not projects and self.project_id:
             projects = self.project_id
         return projects
+
+    def _get_project_lines_for_employee(self, employee=None):
+        self.ensure_one()
+        lines = self.project_line_ids
+        if employee and employee.material_project_ids:
+            lines = lines.filtered(lambda line: line.project_id in employee.material_project_ids)
+        return lines
 
     @staticmethod
     def _haversine_distance(lat1, lon1, lat2, lon2):
@@ -143,13 +140,6 @@ class HrWorkLocationProject(models.Model):
         store=True,
         readonly=True,
     )
-    employee_id = fields.Many2one(
-        "hr.employee",
-        string="Employee",
-        ondelete="cascade",
-        domain="[('work_location_id', '=', work_location_id), ('company_id', 'in', [False, company_id])]",
-        help="Leave empty only for a project that should be available to every employee in this work location.",
-    )
     project_id = fields.Many2one(
         "project.project",
         string="Project",
@@ -165,16 +155,10 @@ class HrWorkLocationProject(models.Model):
     _sql_constraints = [
         (
             "work_location_project_unique",
-            "unique(work_location_id, employee_id, project_id)",
-            "The same project cannot be added twice for the same employee in one work location.",
+            "unique(work_location_id, project_id)",
+            "The same project cannot be added twice to one work location.",
         )
     ]
-
-    @api.constrains("employee_id", "work_location_id")
-    def _check_employee_work_location(self):
-        for line in self:
-            if line.employee_id and line.employee_id.work_location_id != line.work_location_id:
-                raise ValidationError(_("The selected employee must belong to this work location."))
 
     @api.constrains("geo_enforce", "geo_latitude", "geo_longitude", "geo_radius")
     def _check_geofence_values(self):
