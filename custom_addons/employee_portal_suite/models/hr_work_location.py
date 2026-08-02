@@ -52,7 +52,9 @@ class HrWorkLocation(models.Model):
     def _get_project_lines_for_employee(self, employee=None):
         self.ensure_one()
         lines = self.project_line_ids
-        if employee and employee.material_project_ids:
+        if employee:
+            # Never fall back to every project in the shared Work Location.
+            # An employee with no explicit assignment has no project lines.
             lines = lines.filtered(lambda line: line.project_id in employee.material_project_ids)
         return lines
 
