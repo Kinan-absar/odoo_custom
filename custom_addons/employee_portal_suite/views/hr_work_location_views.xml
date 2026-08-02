@@ -11,6 +11,8 @@
                         <list editable="bottom">
                             <field name="sequence" widget="handle"/>
                             <field name="company_id" column_invisible="True"/>
+                            <field name="work_location_id" column_invisible="True"/>
+                            <field name="employee_id" options="{'no_create': True}"/>
                             <field name="project_id" options="{'no_create': True}"/>
                             <field name="geo_enforce"/>
                             <field name="geo_latitude" optional="show"/>
@@ -20,6 +22,8 @@
                         <form string="Work Location Project">
                             <group>
                                 <field name="company_id" invisible="1"/>
+                                <field name="work_location_id" invisible="1"/>
+                                <field name="employee_id" options="{'no_create': True}"/>
                                 <field name="project_id" options="{'no_create': True}"/>
                                 <field name="geo_enforce"/>
                             </group>

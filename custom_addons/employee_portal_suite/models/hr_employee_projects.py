@@ -17,5 +17,5 @@ class HrEmployee(models.Model):
     def _get_material_request_projects(self):
         self.ensure_one()
         if self.work_location_id:
-            return self.work_location_id._get_material_request_projects()
+            return self.work_location_id._get_material_request_projects(employee=self)
         return self.env["project.project"]

@@ -82,7 +82,7 @@ class EmployeePortalAttendance(http.Controller):
             'error_message': error_message,
             'page_name': 'attendance',
             'geo_enforce': (
-                employee.work_location_id.sudo().has_project_geofencing()
+                employee.work_location_id.sudo().has_project_geofencing(employee=employee)
                 if employee.work_location_id else False
             ),
             # Pass a callable so the XML template can convert UTC → local time.
@@ -120,7 +120,7 @@ class EmployeePortalAttendance(http.Controller):
         # Geolocation validation
         # ------------------------------------------------------------------
         work_location = employee.work_location_id
-        if work_location and work_location.sudo().has_project_geofencing():
+        if work_location and work_location.sudo().has_project_geofencing(employee=employee):
             try:
                 emp_lat = float(post.get('geo_lat', ''))
                 emp_lon = float(post.get('geo_lon', ''))
@@ -129,7 +129,7 @@ class EmployeePortalAttendance(http.Controller):
                 return request.redirect('/my/employee/attendance?error=geo_required')
 
             in_range, distance, radius = work_location.sudo().check_employee_in_any_project_range(
-                emp_lat, emp_lon
+                emp_lat, emp_lon, employee=employee
             )
             if not in_range:
                 return request.redirect(
@@ -175,11 +175,11 @@ class EmployeePortalAttendance(http.Controller):
         # ------------------------------------------------------------------
         outside_location = False
         work_location = employee.work_location_id
-        if work_location and work_location.sudo().has_project_geofencing():
+        if work_location and work_location.sudo().has_project_geofencing(employee=employee):
             try:
                 emp_lat = float(post.get('geo_lat', ''))
                 emp_lon = float(post.get('geo_lon', ''))
-                in_range, _distance, _radius = work_location.sudo().check_employee_in_any_project_range(emp_lat, emp_lon)
+                in_range, _distance, _radius = work_location.sudo().check_employee_in_any_project_range(emp_lat, emp_lon, employee=employee)
                 if not in_range:
                     outside_location = True
             except (TypeError, ValueError):
