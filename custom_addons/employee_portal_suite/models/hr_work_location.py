@@ -42,22 +42,10 @@ class HrWorkLocation(models.Model):
                 projects = location.project_id
             location.project_ids = projects
 
-    def _get_material_request_projects(self, employee=None):
-        """Projects available at this Work Location.
-
-        If `employee` is passed, only project lines that are either open to
-        everyone (no employee restriction on the line) or explicitly include
-        this employee are returned. Without an employee, every configured
-        project is returned (legacy/admin-wide behaviour).
-        """
+    def _get_material_request_projects(self):
         self.ensure_one()
-        lines = self.project_line_ids
-        if employee:
-            lines = lines.filtered(
-                lambda line: not line.employee_ids or employee in line.employee_ids
-            )
-        projects = lines.mapped("project_id")
-        if not projects and not employee and self.project_id:
+        projects = self.project_line_ids.mapped("project_id")
+        if not projects and self.project_id:
             projects = self.project_id
         return projects
 
@@ -73,34 +61,27 @@ class HrWorkLocation(models.Model):
         )
         return radius * 2 * math.atan2(math.sqrt(value), math.sqrt(1 - value))
 
-    def _get_enforced_project_locations(self, employee=None):
+    def _get_enforced_project_locations(self):
         self.ensure_one()
-        lines = self.project_line_ids.filtered(
+        return self.project_line_ids.filtered(
             lambda line: line.geo_enforce and line.geo_radius > 0
             and (line.geo_latitude or line.geo_longitude)
         )
-        if employee:
-            lines = lines.filtered(
-                lambda line: not line.employee_ids or employee in line.employee_ids
-            )
-        return lines
 
-    def has_project_geofencing(self, employee=None):
+    def has_project_geofencing(self):
         self.ensure_one()
-        return bool(self._get_enforced_project_locations(employee=employee)) or bool(
+        return bool(self._get_enforced_project_locations()) or bool(
             self.geo_enforce and self.geo_radius and (self.geo_latitude or self.geo_longitude)
         )
 
-    def check_employee_in_any_project_range(self, employee_lat, employee_lon, employee=None):
+    def check_employee_in_any_project_range(self, employee_lat, employee_lon):
         """Return (allowed, closest_distance, allowed_radius).
 
         An employee assigned to a work location containing several projects may
-        check in from any configured project geofence that applies to them
-        (i.e. the line has no employee restriction, or explicitly includes
-        this employee).
+        check in from any configured project geofence.
         """
         self.ensure_one()
-        lines = self._get_enforced_project_locations(employee=employee)
+        lines = self._get_enforced_project_locations()
         if lines:
             checks = []
             for line in lines:
@@ -163,20 +144,6 @@ class HrWorkLocationProject(models.Model):
     geo_latitude = fields.Float(string="Latitude", digits=(10, 7))
     geo_longitude = fields.Float(string="Longitude", digits=(10, 7))
     geo_radius = fields.Integer(string="Allowed Radius (meters)", default=200)
-    employee_ids = fields.Many2many(
-        "hr.employee",
-        "hr_work_location_project_employee_rel",
-        "work_location_project_id",
-        "employee_id",
-        string="Specific Employees",
-        domain="[('work_location_id', '=', work_location_id)]",
-        help=(
-            "Leave empty so this project row applies to every employee at "
-            "this Work Location (default). Pick specific employees to "
-            "restrict this project row to only them — other employees at "
-            "the same Work Location won't see or be geofenced by it."
-        ),
-    )
 
     _sql_constraints = [
         (
