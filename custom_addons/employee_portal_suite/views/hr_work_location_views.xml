@@ -11,9 +11,13 @@
                         <list editable="bottom">
                             <field name="sequence" widget="handle"/>
                             <field name="company_id" column_invisible="True"/>
-                            <field name="work_location_id" column_invisible="True"/>
-                            <field name="employee_id" options="{'no_create': True}"/>
                             <field name="project_id" options="{'no_create': True}"/>
+                            <field
+                                name="employee_ids"
+                                widget="many2many_tags"
+                                placeholder="All employees at this location"
+                                optional="show"
+                            />
                             <field name="geo_enforce"/>
                             <field name="geo_latitude" optional="show"/>
                             <field name="geo_longitude" optional="show"/>
@@ -23,8 +27,12 @@
                             <group>
                                 <field name="company_id" invisible="1"/>
                                 <field name="work_location_id" invisible="1"/>
-                                <field name="employee_id" options="{'no_create': True}"/>
                                 <field name="project_id" options="{'no_create': True}"/>
+                                <field
+                                    name="employee_ids"
+                                    widget="many2many_tags"
+                                    placeholder="All employees at this location"
+                                />
                                 <field name="geo_enforce"/>
                             </group>
                             <group string="Project Geolocation" invisible="not geo_enforce">
