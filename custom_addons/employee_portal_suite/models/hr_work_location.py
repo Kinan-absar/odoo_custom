@@ -42,21 +42,24 @@ class HrWorkLocation(models.Model):
                 projects = location.project_id
             location.project_ids = projects
 
-    def _get_material_request_projects(self):
-        self.ensure_one()
-        projects = self.project_line_ids.mapped("project_id")
-        if not projects and self.project_id:
-            projects = self.project_id
-        return projects
+    def _get_material_request_projects(self, employee=None):
+        """Projects available at this Work Location.
 
-    def _get_project_lines_for_employee(self, employee=None):
+        If `employee` is passed, only project lines that are either open to
+        everyone (no employee restriction on the line) or explicitly include
+        this employee are returned. Without an employee, every configured
+        project is returned (legacy/admin-wide behaviour).
+        """
         self.ensure_one()
         lines = self.project_line_ids
         if employee:
-            # Never fall back to every project in the shared Work Location.
-            # An employee with no explicit assignment has no project lines.
-            lines = lines.filtered(lambda line: line.project_id in employee.material_project_ids)
-        return lines
+            lines = lines.filtered(
+                lambda line: not line.employee_ids or employee in line.employee_ids
+            )
+        projects = lines.mapped("project_id")
+        if not projects and not employee and self.project_id:
+            projects = self.project_id
+        return projects
 
     @staticmethod
     def _haversine_distance(lat1, lon1, lat2, lon2):
@@ -72,14 +75,19 @@ class HrWorkLocation(models.Model):
 
     def _get_enforced_project_locations(self, employee=None):
         self.ensure_one()
-        return self._get_project_lines_for_employee(employee).filtered(
+        lines = self.project_line_ids.filtered(
             lambda line: line.geo_enforce and line.geo_radius > 0
             and (line.geo_latitude or line.geo_longitude)
         )
+        if employee:
+            lines = lines.filtered(
+                lambda line: not line.employee_ids or employee in line.employee_ids
+            )
+        return lines
 
     def has_project_geofencing(self, employee=None):
         self.ensure_one()
-        return bool(self._get_enforced_project_locations(employee)) or bool(
+        return bool(self._get_enforced_project_locations(employee=employee)) or bool(
             self.geo_enforce and self.geo_radius and (self.geo_latitude or self.geo_longitude)
         )
 
@@ -87,10 +95,12 @@ class HrWorkLocation(models.Model):
         """Return (allowed, closest_distance, allowed_radius).
 
         An employee assigned to a work location containing several projects may
-        check in from any configured project geofence.
+        check in from any configured project geofence that applies to them
+        (i.e. the line has no employee restriction, or explicitly includes
+        this employee).
         """
         self.ensure_one()
-        lines = self._get_enforced_project_locations(employee)
+        lines = self._get_enforced_project_locations(employee=employee)
         if lines:
             checks = []
             for line in lines:
@@ -116,10 +126,10 @@ class HrWorkLocation(models.Model):
 
         return True, None, None
 
-    def check_employee_in_range(self, employee_lat, employee_lon, employee=None):
+    def check_employee_in_range(self, employee_lat, employee_lon):
         """Backward-compatible two-value helper."""
         allowed, distance, _radius = self.check_employee_in_any_project_range(
-            employee_lat, employee_lon, employee=employee
+            employee_lat, employee_lon
         )
         return allowed, distance
 
@@ -153,6 +163,20 @@ class HrWorkLocationProject(models.Model):
     geo_latitude = fields.Float(string="Latitude", digits=(10, 7))
     geo_longitude = fields.Float(string="Longitude", digits=(10, 7))
     geo_radius = fields.Integer(string="Allowed Radius (meters)", default=200)
+    employee_ids = fields.Many2many(
+        "hr.employee",
+        "hr_work_location_project_employee_rel",
+        "work_location_project_id",
+        "employee_id",
+        string="Specific Employees",
+        domain="[('work_location_id', '=', work_location_id)]",
+        help=(
+            "Leave empty so this project row applies to every employee at "
+            "this Work Location (default). Pick specific employees to "
+            "restrict this project row to only them — other employees at "
+            "the same Work Location won't see or be geofenced by it."
+        ),
+    )
 
     _sql_constraints = [
         (
