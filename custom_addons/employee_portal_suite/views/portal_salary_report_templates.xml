@@ -7,7 +7,7 @@
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div>
                         <h3 class="mb-1">Salary Reports</h3>
-                        <p class="text-muted mb-0">Read-only salary report viewer.</p>
+                        <p class="text-muted mb-0">View salary reports and adjust manual deductions or reimbursements.</p>
                     </div>
                     <a href="/my/employee" class="btn btn-light">Back</a>
                 </div>
@@ -69,9 +69,28 @@
                     </div>
                     <div class="d-flex gap-2">
                         <a href="/my/employee/salary-reports" class="btn btn-light">Back</a>
+                        <a t-att-href="'/my/employee/salary-reports/%s/excel' % report.id" class="btn btn-success">Export Excel</a>
                         <a t-att-href="'/my/employee/salary-reports/%s/print' % report.id" class="btn btn-primary">Print PDF</a>
                     </div>
                 </div>
+
+                <t t-if="request.params.get('updated')">
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        Salary line updated. The net salary and report totals were recalculated.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </t>
+                <t t-if="request.params.get('deleted')">
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        Salary line deleted from this report.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </t>
+                <t t-if="request.params.get('locked') or report.batch_created">
+                    <div class="alert alert-info" role="alert">
+                        This salary report is locked because its payroll batch has already been created. Deductions, reimbursements, and report lines can no longer be changed from the portal.
+                    </div>
+                </t>
 
                 <div class="row g-3 mb-4">
                     <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Employees</small><strong><t t-esc="report.total_employees"/></strong></div></div>
@@ -94,9 +113,11 @@
                                         <th>#</th>
                                         <th>Employee</th>
                                         <th class="text-end">Gross Salary</th>
-                                        <th class="text-end">Deductions</th>
+                                        <th class="text-end">Attendance Deduction</th>
+                                        <th class="text-end">Other Deductions</th>
                                         <th class="text-end">Reimbursements</th>
                                         <th class="text-end">Net Salary</th>
+                                        <th class="text-end">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -106,9 +127,29 @@
                                             <td><t t-esc="row_num"/></td>
                                             <td><t t-esc="line.employee_id.name"/></td>
                                             <td class="text-end"><t t-esc="'{:,.2f}'.format(line.gross_salary)"/></td>
-                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.attendance_deduction + line.other_deductions)"/></td>
-                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.reimbursements)"/></td>
+                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.attendance_deduction)"/></td>
+                                            <td class="text-end" style="min-width: 135px;">
+                                                <input t-if="can_edit_salary_lines" type="number" name="other_deductions" min="0" step="0.01" t-att-value="line.other_deductions" t-att-form="'salary-line-update-%s' % line.id" class="form-control form-control-sm text-end ms-auto" style="width: 105px;"/>
+                                                <span t-else="" class="text-muted"><t t-esc="'{:,.2f}'.format(line.other_deductions)"/></span>
+                                            </td>
+                                            <td class="text-end" style="min-width: 135px;">
+                                                <input t-if="can_edit_salary_lines" type="number" name="reimbursements" min="0" step="0.01" t-att-value="line.reimbursements" t-att-form="'salary-line-update-%s' % line.id" class="form-control form-control-sm text-end ms-auto" style="width: 105px;"/>
+                                                <span t-else="" class="text-muted"><t t-esc="'{:,.2f}'.format(line.reimbursements)"/></span>
+                                            </td>
                                             <td class="text-end fw-bold"><t t-esc="'{:,.2f}'.format(line.net_salary)"/></td>
+                                            <td class="text-end" style="min-width: 150px;">
+                                                <t t-if="can_edit_salary_lines">
+                                                    <form t-att-id="'salary-line-update-%s' % line.id" t-att-action="'/my/employee/salary-reports/%s/lines/%s/update' % (report.id, line.id)" method="post" class="d-inline">
+                                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                                    </form>
+                                                    <form t-att-action="'/my/employee/salary-reports/%s/lines/%s/delete' % (report.id, line.id)" method="post" class="d-inline ms-1" onsubmit="return confirm('Delete this employee salary line from the report?');">
+                                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                                    </form>
+                                                </t>
+                                                <span t-else="" class="badge text-bg-secondary">Locked</span>
+                                            </td>
                                         </tr>
                                     </t>
                                 </tbody>
@@ -116,9 +157,11 @@
                                     <tr>
                                         <td colspan="2">Subtotal — <t t-esc="group['name']"/></td>
                                         <td class="text-end"><t t-esc="'{:,.2f}'.format(group['gross_salary'])"/></td>
-                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(group['deductions'])"/></td>
+                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(sum(group['lines'].mapped('attendance_deduction')))"/></td>
+                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(sum(group['lines'].mapped('other_deductions')))"/></td>
                                         <td class="text-end"><t t-esc="'{:,.2f}'.format(group['reimbursements'])"/></td>
                                         <td class="text-end"><t t-esc="'{:,.2f}'.format(group['net_salary'])"/></td>
+                                        <td></td>
                                     </tr>
                                 </tfoot>
                             </table>

@@ -25,7 +25,7 @@
         </div>
 
         <div>
-            <t t-raw="status_badge(request_rec)"/>
+            <t t-out="status_badge(request_rec)"/>
         </div>
     </div>
 
@@ -63,6 +63,13 @@
                     <div class="text-muted">Employee</div>
                     <div class="fw-semibold">
                         <t t-esc="request_rec.employee_id.name"/>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="text-muted">Project</div>
+                    <div class="fw-semibold">
+                        <t t-esc="request_rec.project_id.display_name or '-'"/>
                     </div>
                 </div>
 
@@ -317,7 +324,7 @@
             <t t-esc="msg.date"/>
         </small>
         <div class="mt-1">
-            <t t-raw="msg.body"/>
+            <t t-out="msg.body"/>
         </div>
     </div>
 </t>

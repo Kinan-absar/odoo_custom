@@ -44,3 +44,4 @@ portal_report_document_admin,portal.report.document.admin,model_portal_report_do
 portal_report_document_employee,portal.report.document.employee,model_portal_report_document,employee_portal_suite.group_employee_portal_employee,1,0,0,0
 portal_report_seen_user,portal.report.seen.user,model_portal_report_seen,base.group_user,1,1,1,0
 portal_report_seen_portal,portal.report.seen.portal,model_portal_report_seen,base.group_portal,1,1,1,0
+access_hr_work_location_project_user,hr.work.location.project user,model_hr_work_location_project,base.group_user,1,1,1,1

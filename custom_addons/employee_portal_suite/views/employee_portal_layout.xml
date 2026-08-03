@@ -60,6 +60,32 @@
                     color: var(--text-primary);
                     -webkit-font-smoothing: antialiased;
                     -moz-osx-font-smoothing: grayscale;
+                    position: relative;
+                }
+
+                body::before {
+                    content: "";
+                    position: fixed;
+                    inset: 0;
+                    background-image: url('/web/image/res.company/<t t-esc="request.env.company.id"/>/logo');
+                    background-repeat: no-repeat;
+                    background-position: center;
+                    background-size: min(55vw, 420px);
+                    opacity: 0.05;
+                    filter: grayscale(1);
+                    z-index: 0;
+                    pointer-events: none;
+                }
+
+                .ep-navbar, main, .ep-bottom-nav, .ep-bell-wrap {
+                    position: relative;
+                    z-index: 1;
+                }
+
+                @media (max-width: 768px) {
+                    body::before {
+                        background-size: min(75vw, 300px);
+                    }
                 }
 
                 main {
@@ -1457,7 +1483,7 @@
                                     <t t-esc="ann.name"/>
                                 </div>
                                 <div>
-                                    <t t-raw="ann.message"/>
+                                    <t t-out="ann.message"/>
                                 </div>
 
                                 <t t-if="ann.attachment_ids">
@@ -1483,7 +1509,7 @@
                  ================================================================ -->
             <main>
                 <div id="wrap" class="container mt-3 mb-5">
-                    <t t-raw="0"/>
+                    <t t-out="0"/>
                 </div>
             </main>
 

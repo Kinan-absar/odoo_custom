@@ -24,7 +24,7 @@
                     </div>
 
                     <div>
-                        <t t-raw="status_badge(request_rec)"/>
+                        <t t-out="status_badge(request_rec)"/>
                     </div>
                 </div>
 

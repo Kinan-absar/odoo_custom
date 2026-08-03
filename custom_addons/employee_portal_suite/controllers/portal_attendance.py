@@ -81,10 +81,7 @@ class EmployeePortalAttendance(http.Controller):
             'success_message': success_message,
             'error_message': error_message,
             'page_name': 'attendance',
-            'geo_enforce': (
-                employee.work_location_id.geo_enforce
-                if employee.work_location_id else False
-            ),
+            'geo_enforce': employee.sudo().has_project_geofencing(),
             # Pass a callable so the XML template can convert UTC → local time.
             # Usage in QWeb: t-esc="fmt_dt(att.check_in, '%I:%M %p')"
             'fmt_dt': lambda dt, fmt='%I:%M %p': (
@@ -119,8 +116,7 @@ class EmployeePortalAttendance(http.Controller):
         # ------------------------------------------------------------------
         # Geolocation validation
         # ------------------------------------------------------------------
-        work_location = employee.work_location_id
-        if work_location and work_location.geo_enforce:
+        if employee.sudo().has_project_geofencing():
             try:
                 emp_lat = float(post.get('geo_lat', ''))
                 emp_lon = float(post.get('geo_lon', ''))
@@ -128,11 +124,13 @@ class EmployeePortalAttendance(http.Controller):
                 # Browser did not send coordinates — reject if enforcement is on
                 return request.redirect('/my/employee/attendance?error=geo_required')
 
-            in_range, distance = work_location.check_employee_in_range(emp_lat, emp_lon)
+            in_range, distance, radius = employee.sudo().check_employee_in_any_project_range(
+                emp_lat, emp_lon
+            )
             if not in_range:
                 return request.redirect(
                     '/my/employee/attendance?error=geo_out_of_range&distance=%d&radius=%d'
-                    % (distance, work_location.geo_radius)
+                    % (distance or 0, radius or 0)
                 )
 
         try:
@@ -172,12 +170,11 @@ class EmployeePortalAttendance(http.Controller):
         # but flag the record when the employee is outside the allowed zone)
         # ------------------------------------------------------------------
         outside_location = False
-        work_location = employee.work_location_id
-        if work_location and work_location.geo_enforce:
+        if employee.sudo().has_project_geofencing():
             try:
                 emp_lat = float(post.get('geo_lat', ''))
                 emp_lon = float(post.get('geo_lon', ''))
-                in_range, _distance = work_location.check_employee_in_range(emp_lat, emp_lon)
+                in_range, _distance, _radius = employee.sudo().check_employee_in_any_project_range(emp_lat, emp_lon)
                 if not in_range:
                     outside_location = True
             except (TypeError, ValueError):
