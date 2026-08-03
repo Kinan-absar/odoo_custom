@@ -461,8 +461,8 @@ class MaterialRequest(models.Model):
     @api.depends(
         "employee_id",
         "employee_id.work_location_id",
+        "employee_id.work_location_id.project_line_ids.employee_id",
         "employee_id.work_location_id.project_line_ids.project_id",
-        "employee_id.work_location_id.project_line_ids.employee_ids",
         "employee_id.work_location_id.project_id",
     )
     def _compute_available_projects(self):

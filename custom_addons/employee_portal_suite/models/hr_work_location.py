@@ -42,22 +42,20 @@ class HrWorkLocation(models.Model):
                 projects = location.project_id
             location.project_ids = projects
 
-    def _get_material_request_projects(self, employee=None):
-        """Projects available at this Work Location.
-
-        If `employee` is passed, only project lines that are either open to
-        everyone (no employee restriction on the line) or explicitly include
-        this employee are returned. Without an employee, every configured
-        project is returned (legacy/admin-wide behaviour).
-        """
+    def _get_project_lines_for_employee(self, employee=None):
         self.ensure_one()
         lines = self.project_line_ids
         if employee:
-            lines = lines.filtered(
-                lambda line: not line.employee_ids or employee in line.employee_ids
-            )
-        projects = lines.mapped("project_id")
-        if not projects and not employee and self.project_id:
+            employee_lines = lines.filtered(lambda line: line.employee_id == employee)
+            if employee_lines:
+                return employee_lines
+            return lines.filtered(lambda line: not line.employee_id)
+        return lines
+
+    def _get_material_request_projects(self, employee=None):
+        self.ensure_one()
+        projects = self._get_project_lines_for_employee(employee).mapped("project_id")
+        if not projects and self.project_id:
             projects = self.project_id
         return projects
 
@@ -75,19 +73,14 @@ class HrWorkLocation(models.Model):
 
     def _get_enforced_project_locations(self, employee=None):
         self.ensure_one()
-        lines = self.project_line_ids.filtered(
+        return self._get_project_lines_for_employee(employee).filtered(
             lambda line: line.geo_enforce and line.geo_radius > 0
             and (line.geo_latitude or line.geo_longitude)
         )
-        if employee:
-            lines = lines.filtered(
-                lambda line: not line.employee_ids or employee in line.employee_ids
-            )
-        return lines
 
     def has_project_geofencing(self, employee=None):
         self.ensure_one()
-        return bool(self._get_enforced_project_locations(employee=employee)) or bool(
+        return bool(self._get_enforced_project_locations(employee)) or bool(
             self.geo_enforce and self.geo_radius and (self.geo_latitude or self.geo_longitude)
         )
 
@@ -95,12 +88,10 @@ class HrWorkLocation(models.Model):
         """Return (allowed, closest_distance, allowed_radius).
 
         An employee assigned to a work location containing several projects may
-        check in from any configured project geofence that applies to them
-        (i.e. the line has no employee restriction, or explicitly includes
-        this employee).
+        check in from any configured project geofence.
         """
         self.ensure_one()
-        lines = self._get_enforced_project_locations(employee=employee)
+        lines = self._get_enforced_project_locations(employee)
         if lines:
             checks = []
             for line in lines:
@@ -126,10 +117,10 @@ class HrWorkLocation(models.Model):
 
         return True, None, None
 
-    def check_employee_in_range(self, employee_lat, employee_lon):
+    def check_employee_in_range(self, employee_lat, employee_lon, employee=None):
         """Backward-compatible two-value helper."""
         allowed, distance, _radius = self.check_employee_in_any_project_range(
-            employee_lat, employee_lon
+            employee_lat, employee_lon, employee=employee
         )
         return allowed, distance
 
@@ -152,6 +143,13 @@ class HrWorkLocationProject(models.Model):
         store=True,
         readonly=True,
     )
+    employee_id = fields.Many2one(
+        "hr.employee",
+        string="Employee",
+        ondelete="cascade",
+        domain="[('work_location_id', '=', work_location_id), ('company_id', 'in', [False, company_id])]",
+        help="Leave empty only for a project that should be available to every employee in this work location.",
+    )
     project_id = fields.Many2one(
         "project.project",
         string="Project",
@@ -163,28 +161,20 @@ class HrWorkLocationProject(models.Model):
     geo_latitude = fields.Float(string="Latitude", digits=(10, 7))
     geo_longitude = fields.Float(string="Longitude", digits=(10, 7))
     geo_radius = fields.Integer(string="Allowed Radius (meters)", default=200)
-    employee_ids = fields.Many2many(
-        "hr.employee",
-        "hr_work_location_project_employee_rel",
-        "work_location_project_id",
-        "employee_id",
-        string="Specific Employees",
-        domain="[('work_location_id', '=', work_location_id)]",
-        help=(
-            "Leave empty so this project row applies to every employee at "
-            "this Work Location (default). Pick specific employees to "
-            "restrict this project row to only them — other employees at "
-            "the same Work Location won't see or be geofenced by it."
-        ),
-    )
 
     _sql_constraints = [
         (
             "work_location_project_unique",
-            "unique(work_location_id, project_id)",
-            "The same project cannot be added twice to one work location.",
+            "unique(work_location_id, employee_id, project_id)",
+            "The same project cannot be added twice for the same employee in one work location.",
         )
     ]
+
+    @api.constrains("employee_id", "work_location_id")
+    def _check_employee_work_location(self):
+        for line in self:
+            if line.employee_id and line.employee_id.work_location_id != line.work_location_id:
+                raise ValidationError(_("The selected employee must belong to this work location."))
 
     @api.constrains("geo_enforce", "geo_latitude", "geo_longitude", "geo_radius")
     def _check_geofence_values(self):
