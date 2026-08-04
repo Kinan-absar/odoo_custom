@@ -91,13 +91,14 @@ class HrWorkLocation(models.Model):
             self.geo_enforce and self.geo_radius and (self.geo_latitude or self.geo_longitude)
         )
 
-    def check_employee_in_any_project_range(self, employee_lat, employee_lon, employee=None):
-        """Return (allowed, closest_distance, allowed_radius).
+    def find_matching_project_geofence(self, employee_lat, employee_lon, employee=None):
+        """Return details for the nearest applicable geofence.
 
-        An employee assigned to a work location containing several projects may
-        check in from any configured project geofence that applies to them
-        (i.e. the line has no employee restriction, or explicitly includes
-        this employee).
+        The returned dictionary contains ``allowed``, ``distance``, ``radius``
+        and, for project geofences, ``project_line`` and ``project``. If more
+        than one project radius contains the employee, the nearest project is
+        selected. This method is the single source of truth used by attendance
+        check-in/check-out so the exact matched project can be stored.
         """
         self.ensure_one()
         lines = self._get_enforced_project_locations(employee=employee)
@@ -110,10 +111,15 @@ class HrWorkLocation(models.Model):
                     employee_lat,
                     employee_lon,
                 )
-                checks.append((distance <= line.geo_radius, distance, line.geo_radius))
-            valid = [check for check in checks if check[0]]
-            selected = min(valid or checks, key=lambda check: check[1])
-            return selected[0], round(selected[1]), selected[2]
+                checks.append({
+                    'allowed': distance <= line.geo_radius,
+                    'distance': round(distance),
+                    'radius': line.geo_radius,
+                    'project_line': line,
+                    'project': line.project_id,
+                })
+            valid = [check for check in checks if check['allowed']]
+            return min(valid or checks, key=lambda check: check['distance'])
 
         if self.geo_enforce and self.geo_radius and (self.geo_latitude or self.geo_longitude):
             distance = self._haversine_distance(
@@ -122,9 +128,28 @@ class HrWorkLocation(models.Model):
                 employee_lat,
                 employee_lon,
             )
-            return distance <= self.geo_radius, round(distance), self.geo_radius
+            return {
+                'allowed': distance <= self.geo_radius,
+                'distance': round(distance),
+                'radius': self.geo_radius,
+                'project_line': self.env['hr.work.location.project'],
+                'project': self.project_id,
+            }
 
-        return True, None, None
+        return {
+            'allowed': True,
+            'distance': None,
+            'radius': None,
+            'project_line': self.env['hr.work.location.project'],
+            'project': self.env['project.project'],
+        }
+
+    def check_employee_in_any_project_range(self, employee_lat, employee_lon, employee=None):
+        """Backward-compatible three-value geofence helper."""
+        match = self.find_matching_project_geofence(
+            employee_lat, employee_lon, employee=employee
+        )
+        return match['allowed'], match['distance'], match['radius']
 
     def check_employee_in_range(self, employee_lat, employee_lon):
         """Backward-compatible two-value helper."""

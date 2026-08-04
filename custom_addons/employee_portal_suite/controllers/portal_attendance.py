@@ -114,8 +114,12 @@ class EmployeePortalAttendance(http.Controller):
             return request.redirect('/my/employee/attendance?error=already_checked_in')
 
         # ------------------------------------------------------------------
-        # Geolocation validation
+        # Geolocation validation and exact project detection
         # ------------------------------------------------------------------
+        attendance_vals = {
+            'employee_id': employee.id,
+            'check_in': fields.Datetime.now(),
+        }
         if employee.sudo().has_project_geofencing():
             try:
                 emp_lat = float(post.get('geo_lat', ''))
@@ -124,20 +128,30 @@ class EmployeePortalAttendance(http.Controller):
                 # Browser did not send coordinates — reject if enforcement is on
                 return request.redirect('/my/employee/attendance?error=geo_required')
 
-            in_range, distance, radius = employee.sudo().check_employee_in_any_project_range(
-                emp_lat, emp_lon
-            )
-            if not in_range:
+            match = employee.sudo().find_matching_project_geofence(emp_lat, emp_lon)
+            if not match['allowed']:
                 return request.redirect(
                     '/my/employee/attendance?error=geo_out_of_range&distance=%d&radius=%d'
-                    % (distance or 0, radius or 0)
+                    % (match['distance'] or 0, match['radius'] or 0)
                 )
 
-        try:
-            request.env['hr.attendance'].sudo().create({
-                'employee_id': employee.id,
-                'check_in': fields.Datetime.now(),
+            attendance_vals.update({
+                'check_in_geo_latitude': emp_lat,
+                'check_in_geo_longitude': emp_lon,
+                'check_in_project_distance': match['distance'] or 0.0,
+                'check_in_project_id': match['project'].id if match['project'] else False,
+                'check_in_project_location_id': (
+                    match['project_line'].id if match['project_line'] else False
+                ),
+                # Populate Odoo's native GPS fields too, so the standard
+                # Attendance form no longer shows an empty Location section.
+                'in_latitude': emp_lat,
+                'in_longitude': emp_lon,
+                'in_mode': 'portal',
             })
+
+        try:
+            request.env['hr.attendance'].sudo().create(attendance_vals)
             return request.redirect('/my/employee/attendance?success=checked_in')
         except Exception:
             return request.redirect('/my/employee/attendance?error=check_in_failed')
@@ -170,12 +184,14 @@ class EmployeePortalAttendance(http.Controller):
         # but flag the record when the employee is outside the allowed zone)
         # ------------------------------------------------------------------
         outside_location = False
+        checkout_match = None
+        emp_lat = emp_lon = None
         if employee.sudo().has_project_geofencing():
             try:
                 emp_lat = float(post.get('geo_lat', ''))
                 emp_lon = float(post.get('geo_lon', ''))
-                in_range, _distance, _radius = employee.sudo().check_employee_in_any_project_range(emp_lat, emp_lon)
-                if not in_range:
+                checkout_match = employee.sudo().find_matching_project_geofence(emp_lat, emp_lon)
+                if not checkout_match['allowed']:
                     outside_location = True
             except (TypeError, ValueError):
                 # Coordinates not provided or invalid — flag conservatively
@@ -183,6 +199,28 @@ class EmployeePortalAttendance(http.Controller):
 
         try:
             vals = {'check_out': fields.Datetime.now()}
+            if emp_lat is not None and emp_lon is not None:
+                vals.update({
+                    'check_out_geo_latitude': emp_lat,
+                    'check_out_geo_longitude': emp_lon,
+                    'out_latitude': emp_lat,
+                    'out_longitude': emp_lon,
+                    'out_mode': 'portal',
+                })
+            if checkout_match:
+                vals.update({
+                    'check_out_project_distance': checkout_match['distance'] or 0.0,
+                    'check_out_project_id': (
+                        checkout_match['project'].id
+                        if checkout_match['allowed'] and checkout_match['project']
+                        else False
+                    ),
+                    'check_out_project_location_id': (
+                        checkout_match['project_line'].id
+                        if checkout_match['allowed'] and checkout_match['project_line']
+                        else False
+                    ),
+                })
             if outside_location:
                 vals['checkout_outside_location'] = True
             open_attendance.sudo().with_context(from_portal_checkout=True).write(vals)

@@ -237,6 +237,7 @@ class AttendanceSalaryReport(models.Model):
         attendance_worked_hours = 0.0
         attendance_count = 0
         days_worked = 0.0
+        project_hours_summary = ''
         if use_attendance:
             start_dt = datetime.combine(self.date_from, time.min)
             attendances = self.env['hr.attendance'].sudo().search([
@@ -252,6 +253,20 @@ class AttendanceSalaryReport(models.Model):
             days_worked = len(set(
                 att.check_in.date() for att in attendances if att.check_in
             ))
+
+            # Project allocation comes from the project automatically detected
+            # and stored on each attendance at check-in.
+            project_hours = {}
+            for attendance in attendances:
+                project = attendance.payroll_project_id
+                project_name = project.display_name if project else _('No Detected Project')
+                project_hours[project_name] = (
+                    project_hours.get(project_name, 0.0) + attendance.worked_hours
+                )
+            project_hours_summary = ' | '.join(
+                '%s: %.2f h' % (name, hours)
+                for name, hours in sorted(project_hours.items())
+            )
 
         # For calendar employees: credit full expected hours
         worked_hours = attendance_worked_hours if use_attendance else expected_hours
@@ -284,6 +299,7 @@ class AttendanceSalaryReport(models.Model):
             'unpaid_leave_days': unpaid_leave_days,
             'public_holiday_days': public_holiday_days,
             'attendance_count': attendance_count,
+            'project_hours_summary': project_hours_summary,
         }
 
     # ── Salary helpers ────────────────────────────────────────────────────────
@@ -527,6 +543,10 @@ class AttendanceSalaryReportLine(models.Model):
     reimbursements = fields.Monetary(string='Reimbursements', currency_field='currency_id')
     net_salary = fields.Monetary(string='Estimated Net', currency_field='currency_id', compute='_compute_amounts', store=True)
     attendance_count = fields.Integer(string='Check-ins', readonly=True)
+    project_hours_summary = fields.Char(
+        string='Project Hours', readonly=True,
+        help='Worked hours grouped by the project detected at attendance check-in.',
+    )
 
     @api.depends(
         'gross_salary', 'basic_salary',

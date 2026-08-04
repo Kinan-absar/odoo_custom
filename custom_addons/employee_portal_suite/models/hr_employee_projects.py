@@ -33,3 +33,17 @@ class HrEmployee(models.Model):
         return self.work_location_id.sudo().check_employee_in_any_project_range(
             employee_lat, employee_lon, employee=self
         )
+    def find_matching_project_geofence(self, employee_lat, employee_lon):
+        self.ensure_one()
+        if not self.work_location_id:
+            return {
+                'allowed': True,
+                'distance': None,
+                'radius': None,
+                'project_line': self.env['hr.work.location.project'],
+                'project': self.env['project.project'],
+            }
+        return self.work_location_id.sudo().find_matching_project_geofence(
+            employee_lat, employee_lon, employee=self
+        )
+
