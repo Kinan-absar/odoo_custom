@@ -15,6 +15,7 @@
                 <field name="employee_id"              string="Employee"/>
                 <field name="check_in"                 string="Check In"/>
                 <field name="check_out"                string="Check Out"/>
+                <field name="check_in_work_location_id" string="Work Location" optional="show"/>
                 <field name="check_in_project_id"      string="Check-in Project" optional="show"/>
                 <field name="check_out_project_id"     string="Check-out Project" optional="hide"/>
                 <field name="worked_hours"             string="Worked Hours" widget="float_time"/>
@@ -45,9 +46,11 @@
                         <field name="employee_id"/>
                         <field name="check_in"/>
                         <field name="check_out"/>
+                        <field name="check_in_work_location_id"/>
                         <field name="check_in_project_id"/>
                         <field name="check_in_project_location_id"/>
                         <field name="check_in_project_distance"/>
+                        <field name="check_out_work_location_id"/>
                         <field name="check_out_project_id"/>
                         <field name="check_out_project_location_id"/>
                         <field name="check_out_project_distance"/>
@@ -158,7 +161,8 @@
         <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='check_out']" position="after">
-                <field name="check_in_project_id" readonly="1"/>
+                <field name="check_in_work_location_id" readonly="1"/>
+                        <field name="check_in_project_id" readonly="1"/>
             </xpath>
             <xpath expr="//group[@name='check_in_group']" position="inside">
                 <group string="Detected Project">
@@ -168,7 +172,8 @@
             </xpath>
             <xpath expr="//group[@name='check_out_group']" position="inside">
                 <group string="Detected Project">
-                    <field name="check_out_project_id" readonly="1"/>
+                    <field name="check_out_work_location_id" readonly="1"/>
+                        <field name="check_out_project_id" readonly="1"/>
                     <field name="check_out_project_location_id" readonly="1"/>
                     <field name="check_out_project_distance" readonly="1"/>
                 </group>
@@ -182,6 +187,7 @@
         <field name="inherit_id" ref="hr_attendance.view_attendance_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='check_out']" position="after">
+                <field name="check_in_work_location_id" string="Work Location" optional="show"/>
                 <field name="check_in_project_id" string="Project" optional="show"/>
                 <field name="check_out_project_id" string="Check-out Project" optional="hide"/>
             </xpath>

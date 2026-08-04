@@ -188,7 +188,7 @@ class AttendanceSalaryReport(models.Model):
         if self.department_ids:
             domain.append(('department_id', 'in', self.department_ids.ids))
         if self.work_location_ids:
-            domain.append(('work_location_id', 'in', self.work_location_ids.ids))
+            domain.extend(['|', ('work_location_ids', 'in', self.work_location_ids.ids), ('work_location_id', 'in', self.work_location_ids.ids)])
         if not self.include_inactive:
             domain.append(('active', '=', True))
         return self.env['hr.employee'].sudo().search(domain, order='name')

@@ -143,6 +143,9 @@ class EmployeePortalAttendance(http.Controller):
                 'check_in_project_location_id': (
                     match['project_line'].id if match['project_line'] else False
                 ),
+                'check_in_work_location_id': (
+                    match['work_location'].id if match.get('work_location') else False
+                ),
                 # Populate Odoo's native GPS fields too, so the standard
                 # Attendance form no longer shows an empty Location section.
                 'in_latitude': emp_lat,
@@ -218,6 +221,11 @@ class EmployeePortalAttendance(http.Controller):
                     'check_out_project_location_id': (
                         checkout_match['project_line'].id
                         if checkout_match['allowed'] and checkout_match['project_line']
+                        else False
+                    ),
+                    'check_out_work_location_id': (
+                        checkout_match['work_location'].id
+                        if checkout_match['allowed'] and checkout_match.get('work_location')
                         else False
                     ),
                 })

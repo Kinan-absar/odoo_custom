@@ -45,17 +45,10 @@ class HrWorkLocation(models.Model):
     def _get_material_request_projects(self, employee=None):
         """Projects available at this Work Location.
 
-        If `employee` is passed, only project lines that are either open to
-        everyone (no employee restriction on the line) or explicitly include
-        this employee are returned. Without an employee, every configured
-        project is returned (legacy/admin-wide behaviour).
+        Projects are shared by every employee assigned to this Work Location.
         """
         self.ensure_one()
         lines = self.project_line_ids
-        if employee:
-            lines = lines.filtered(
-                lambda line: not line.employee_ids or employee in line.employee_ids
-            )
         projects = lines.mapped("project_id")
         if not projects and not employee and self.project_id:
             projects = self.project_id
@@ -79,10 +72,6 @@ class HrWorkLocation(models.Model):
             lambda line: line.geo_enforce and line.geo_radius > 0
             and (line.geo_latitude or line.geo_longitude)
         )
-        if employee:
-            lines = lines.filtered(
-                lambda line: not line.employee_ids or employee in line.employee_ids
-            )
         return lines
 
     def has_project_geofencing(self, employee=None):
@@ -188,20 +177,7 @@ class HrWorkLocationProject(models.Model):
     geo_latitude = fields.Float(string="Latitude", digits=(10, 7))
     geo_longitude = fields.Float(string="Longitude", digits=(10, 7))
     geo_radius = fields.Integer(string="Allowed Radius (meters)", default=200)
-    employee_ids = fields.Many2many(
-        "hr.employee",
-        "hr_work_location_project_employee_rel",
-        "work_location_project_id",
-        "employee_id",
-        string="Specific Employees",
-        domain="[('work_location_id', '=', work_location_id)]",
-        help=(
-            "Leave empty so this project row applies to every employee at "
-            "this Work Location (default). Pick specific employees to "
-            "restrict this project row to only them — other employees at "
-            "the same Work Location won't see or be geofenced by it."
-        ),
-    )
+
 
     _sql_constraints = [
         (

@@ -43,6 +43,10 @@ class HrAttendance(models.Model):
         "hr.work.location.project", string="Check-in Project Site",
         readonly=True, index=True, ondelete="set null",
     )
+    check_in_work_location_id = fields.Many2one(
+        "hr.work.location", string="Check-in Work Location",
+        readonly=True, index=True, ondelete="set null",
+    )
     check_in_project_distance = fields.Float(
         string="Check-in Distance (m)", readonly=True,
     )
@@ -58,6 +62,10 @@ class HrAttendance(models.Model):
     )
     check_out_project_location_id = fields.Many2one(
         "hr.work.location.project", string="Check-out Project Site",
+        readonly=True, index=True, ondelete="set null",
+    )
+    check_out_work_location_id = fields.Many2one(
+        "hr.work.location", string="Check-out Work Location",
         readonly=True, index=True, ondelete="set null",
     )
     check_out_project_distance = fields.Float(
