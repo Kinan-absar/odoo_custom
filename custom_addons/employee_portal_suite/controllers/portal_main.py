@@ -1,12 +1,7 @@
-import json
-import logging
-
-from odoo import _, fields, http
+from odoo import http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 from odoo.exceptions import AccessError, MissingError, ValidationError
-
-_logger = logging.getLogger(__name__)
 
 
 class EmployeePortalMain(CustomerPortal):
@@ -182,60 +177,3 @@ class EmployeePortalMain(CustomerPortal):
             "attendance_checked_in": attendance_checked_in,
             "can_use_attendance": can_use_attendance,
         })
-
-    @http.route(
-        '/my/employee/test-native-notification',
-        type='http',
-        auth='user',
-        website=True,
-        methods=['POST'],
-        csrf=True,
-    )
-    def test_native_notification(self, **post):
-        """Queue a portal notification for the currently logged-in user.
-
-        The portal JavaScript polls for queued notifications. While the Odoo
-        mobile app remains alive (foreground or background but not suspended),
-        it displays the notification through the native mobile bridge when
-        available, and otherwise through the browser Notification API.
-        """
-        user = request.env.user
-        request.env['portal.mobile.notification'].sudo().create({
-            'user_id': user.id,
-            'title': _('Employee Portal test'),
-            'message': _('The portal notification listener is working.'),
-            'target_url': '/my/employee',
-        })
-        _logger.info('Queued portal mobile notification test for user %s', user.id)
-        return request.redirect('/my/employee?native_test=queued')
-
-    @http.route(
-        '/my/employee/notifications/poll',
-        type='http',
-        auth='user',
-        methods=['GET'],
-        csrf=False,
-    )
-    def poll_portal_notifications(self, **kw):
-        """Return undelivered portal notifications for the logged-in user."""
-        user = request.env.user
-        notifications = request.env['portal.mobile.notification'].sudo().search([
-            ('user_id', '=', user.id),
-            ('delivered', '=', False),
-        ], order='id asc', limit=20)
-
-        payload = [{
-            'id': notification.id,
-            'title': notification.title,
-            'message': notification.message,
-            'target_url': notification.target_url or '/my/employee',
-        } for notification in notifications]
-
-        if notifications:
-            notifications.write({
-                'delivered': True,
-                'delivered_at': fields.Datetime.now(),
-            })
-
-        return request.make_json_response({'notifications': payload})
-
