@@ -117,7 +117,7 @@ class AbsarApprovalStage(models.Model):
     user_ids = fields.Many2many('res.users', 'absar_stage_user_rel', 'stage_id', 'user_id', string='Approvers')
     group_ids = fields.Many2many('res.groups', 'absar_stage_group_rel', 'stage_id', 'group_id', string='Approver Groups')
     approver_field_id = fields.Many2one(
-        'ir.model.fields', string='Approver Field', ondelete='restrict',
+        'ir.model.fields', string='Approver Field', ondelete='set null',
         domain="[('model_id', '=', parent.model_id), ('relation', '=', 'res.users'), ('ttype', 'in', ('many2one', 'many2many', 'one2many'))]",
         help='A relational field on the target model whose value contains res.users records.',
     )
