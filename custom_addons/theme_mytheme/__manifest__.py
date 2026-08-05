@@ -14,7 +14,7 @@ A modern website theme for Odoo 18 featuring:
 - Custom "Feature Cards" building-block snippet for the website editor
 """,
     'category': 'Theme/Creative',
-    'version': '1.0',
+    'version': '18.0.1.0.0',
     'author': 'Your Company',
     'license': 'LGPL-3',
     'depends': ['website'],
@@ -36,6 +36,6 @@ A modern website theme for Odoo 18 featuring:
     'images': [
         'static/description/cover.png',
     ],
-    'application': False,
+    'application': True,
     'installable': True,
 }
