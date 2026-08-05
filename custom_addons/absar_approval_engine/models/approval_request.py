@@ -85,15 +85,41 @@ class AbsarApprovalRequest(models.Model):
             ).mapped('user_id')
 
     def _search_current_approvers(self, operator, value):
-        # Domains coming from XML commonly use uid as a scalar. Odoo's
-        # ``in`` and ``not in`` operators require an iterable, so normalize
-        # the value before forwarding the condition to request lines.
-        if operator in ('in', 'not in') and not isinstance(value, (list, tuple, set)):
-            value = [value]
-        return [
-            ('line_ids.user_id', operator, value),
-            ('line_ids.state', '=', 'pending'),
-        ]
+        """Search the computed current approvers without relational rewriting.
+
+        Returning a domain such as ``('line_ids.user_id', '=', uid)`` is not
+        safe here. While traversing the one2many, Odoo may rewrite it into
+        ``('user_id', 'in', uid)`` on the line model; ``uid`` is an integer and
+        the ``in`` operator requires a collection. Resolve the matching request
+        IDs explicitly instead.
+        """
+        supported = ('=', '==', '!=', '<>', 'in', 'not in')
+        if operator not in supported:
+            raise UserError(_('Unsupported operator for current approvers: %s') % operator)
+
+        if isinstance(value, models.BaseModel):
+            user_ids = value.ids
+        elif isinstance(value, (list, tuple, set)):
+            user_ids = [item.id if isinstance(item, models.BaseModel) else item for item in value]
+        elif value:
+            user_ids = [value.id if isinstance(value, models.BaseModel) else value]
+        else:
+            user_ids = []
+
+        user_ids = [int(user_id) for user_id in user_ids if user_id]
+        matching_request_ids = []
+        if user_ids:
+            lines = self.env['absar.approval.request.line'].sudo().search([
+                ('user_id', 'in', user_ids),
+                ('state', '=', 'pending'),
+                ('request_id.state', '=', 'in_progress'),
+            ])
+            matching_request_ids = lines.filtered(
+                lambda line: line.stage_id == line.request_id.stage_id
+            ).mapped('request_id').ids
+
+        negative = operator in ('!=', '<>', 'not in')
+        return [('id', 'not in' if negative else 'in', matching_request_ids)]
 
     @api.depends('state', 'stage_id', 'line_ids.state', 'line_ids.user_id', 'requester_id')
     def _compute_permissions(self):
