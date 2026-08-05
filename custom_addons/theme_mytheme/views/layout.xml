@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Inject the Poppins Google Font into every website page's <head> -->
+    <template id="o_aurora_fonts" inherit_id="website.layout" name="Aurora Theme Fonts">
+        <xpath expr="//head" position="inside">
+            <link rel="preconnect" href="https://fonts.googleapis.com"/>
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;display=swap"
+                  rel="stylesheet"/>
+        </xpath>
+    </template>
+
+</odoo>
