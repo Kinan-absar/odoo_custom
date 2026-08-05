@@ -1,6 +1,6 @@
 {
     'name': 'Employee Portal Suite',
-    'version': '18.0.1.4.3',
+    'version': '18.0.1.4.4',
     'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
 
     'description': """
@@ -131,6 +131,7 @@
     'assets': {
         'web.assets_frontend': [
             'employee_portal_suite/static/src/js/sign_redirect.js',
+            'employee_portal_suite/static/src/js/portal_mobile_notifications.js',
         ],
         'web.assets_backend': [
             'employee_portal_suite/static/src/js/material_request_dashboard.js',

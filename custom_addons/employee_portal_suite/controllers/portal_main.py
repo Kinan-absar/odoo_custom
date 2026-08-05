@@ -1,6 +1,7 @@
+import json
 import logging
 
-from odoo import _, http
+from odoo import _, fields, http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 from odoo.exceptions import AccessError, MissingError, ValidationError
@@ -191,45 +192,50 @@ class EmployeePortalMain(CustomerPortal):
         csrf=True,
     )
     def test_native_notification(self, **post):
-        """Send both Odoo bus and mail notifications to the logged-in portal user.
+        """Queue a portal notification for the currently logged-in user.
 
-        The bus message tests an active Odoo session. ``message_notify`` tests
-        Odoo's standard notification delivery route, including any registered
-        mobile/web-push subscription supported by the database.
+        The portal JavaScript polls for queued notifications. While the Odoo
+        mobile app remains alive (foreground or background but not suspended),
+        it displays the notification through the native mobile bridge when
+        available, and otherwise through the browser Notification API.
         """
         user = request.env.user
-        partner = user.partner_id.sudo()
-        results = []
+        request.env['portal.mobile.notification'].sudo().create({
+            'user_id': user.id,
+            'title': _('Employee Portal test'),
+            'message': _('The portal notification listener is working.'),
+            'target_url': '/my/employee',
+        })
+        _logger.info('Queued portal mobile notification test for user %s', user.id)
+        return request.redirect('/my/employee?native_test=queued')
 
-        if not partner:
-            return request.redirect('/my/employee?native_test=no_partner')
+    @http.route(
+        '/my/employee/notifications/poll',
+        type='http',
+        auth='user',
+        methods=['GET'],
+        csrf=False,
+    )
+    def poll_portal_notifications(self, **kw):
+        """Return undelivered portal notifications for the logged-in user."""
+        user = request.env.user
+        notifications = request.env['portal.mobile.notification'].sudo().search([
+            ('user_id', '=', user.id),
+            ('delivered', '=', False),
+        ], order='id asc', limit=20)
 
-        try:
-            request.env['bus.bus'].sudo()._sendone(
-                partner,
-                'simple_notification',
-                {
-                    'title': _('Employee Portal test'),
-                    'message': _('This is the live Odoo notification test.'),
-                    'type': 'success',
-                    'sticky': True,
-                },
-            )
-            results.append('bus')
-        except Exception:
-            _logger.exception('Portal bus notification test failed for user %s', user.id)
+        payload = [{
+            'id': notification.id,
+            'title': notification.title,
+            'message': notification.message,
+            'target_url': notification.target_url or '/my/employee',
+        } for notification in notifications]
 
-        try:
-            request.env['mail.thread'].sudo().message_notify(
-                partner_ids=partner.ids,
-                subject=_('Employee Portal notification test'),
-                body=_('<p>This is a native Odoo notification test for your portal account.</p>'),
-                force_send=True,
-            )
-            results.append('mail')
-        except Exception:
-            _logger.exception('Portal mail/push notification test failed for user %s', user.id)
+        if notifications:
+            notifications.write({
+                'delivered': True,
+                'delivered_at': fields.Datetime.now(),
+            })
 
-        status = '-'.join(results) if results else 'error'
-        return request.redirect('/my/employee?native_test=%s' % status)
+        return request.make_json_response({'notifications': payload})
 

@@ -698,27 +698,31 @@
 
             </div>
 
-            <!-- Native notification diagnostic (development test) -->
-            <div class="recent-activity mt-4" id="portal-native-notification-test">
-                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div class="mt-4" style="background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:22px;padding:20px;box-shadow:0 8px 25px rgba(0,0,0,.05);">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
                     <div>
-                        <div class="section-title mb-1">Portal Native Notification Test</div>
-                        <div class="text-muted small">
-                            Sends one live in-app notification and one standard Odoo notification to the currently logged-in portal user.
+                        <div style="font-size:16px;font-weight:700;color:#111827;">Portal app notification test</div>
+                        <div style="font-size:13px;color:#6B7280;margin-top:4px;max-width:680px;">
+                            Enable notification permission once, then send the test. The portal checks every 10 seconds while the Odoo app remains alive.
                         </div>
-                        <t t-if="request.params.get('native_test')">
-                            <div class="alert alert-info mt-3 mb-0 py-2" role="alert">
-                                Test result: <strong><t t-esc="request.params.get('native_test')"/></strong>.
-                                Check the Odoo app, notification center, email, and Odoo.sh logs.
+                        <div id="eps-notification-permission-status" style="font-size:12px;color:#4F46E5;margin-top:8px;"></div>
+                        <t t-if="request.params.get('native_test') == 'queued'">
+                            <div style="font-size:13px;color:#059669;margin-top:8px;font-weight:600;">
+                                Test queued. Keep the phone on this database and wait up to 20 seconds.
                             </div>
                         </t>
                     </div>
-                    <form action="/my/employee/test-native-notification" method="post" class="m-0 flex-shrink-0">
-                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                        <button type="submit" class="btn btn-primary px-4">
-                            <i class="fa fa-bell-o me-2"/>Send Test Notification
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button type="button" id="eps-enable-notifications" class="btn btn-outline-primary">
+                            <i class="fa fa-bell-o me-1"></i> Enable notifications
                         </button>
-                    </form>
+                        <form action="/my/employee/test-native-notification" method="post" style="margin:0;">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-paper-plane-o me-1"></i> Send test notification
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
 
