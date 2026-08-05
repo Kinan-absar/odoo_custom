@@ -85,7 +85,15 @@ class AbsarApprovalRequest(models.Model):
             ).mapped('user_id')
 
     def _search_current_approvers(self, operator, value):
-        return [('line_ids.user_id', operator, value), ('line_ids.state', '=', 'pending')]
+        # Domains coming from XML commonly use uid as a scalar. Odoo's
+        # ``in`` and ``not in`` operators require an iterable, so normalize
+        # the value before forwarding the condition to request lines.
+        if operator in ('in', 'not in') and not isinstance(value, (list, tuple, set)):
+            value = [value]
+        return [
+            ('line_ids.user_id', operator, value),
+            ('line_ids.state', '=', 'pending'),
+        ]
 
     @api.depends('state', 'stage_id', 'line_ids.state', 'line_ids.user_id', 'requester_id')
     def _compute_permissions(self):
