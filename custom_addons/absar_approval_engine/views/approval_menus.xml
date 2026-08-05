@@ -1,0 +1,11 @@
+<odoo>
+    <menuitem id="menu_absar_approval_root" name="Approvals" sequence="45" groups="absar_approval_engine.group_approval_user"/>
+    <menuitem id="menu_absar_my_approvals" name="My Approvals" parent="menu_absar_approval_root" action="action_absar_my_approvals" sequence="10"/>
+    <menuitem id="menu_absar_my_requests" name="My Requests" parent="menu_absar_approval_root" action="action_absar_my_requests" sequence="20"/>
+    <menuitem id="menu_absar_delegations" name="Delegations" parent="menu_absar_approval_root" action="action_absar_approval_delegations" sequence="30"/>
+    <menuitem id="menu_absar_reporting" name="Reporting" parent="menu_absar_approval_root" sequence="80" groups="absar_approval_engine.group_approval_auditor"/>
+    <menuitem id="menu_absar_all_requests" name="All Requests" parent="menu_absar_reporting" action="action_absar_all_requests" sequence="10"/>
+    <menuitem id="menu_absar_audit" name="Audit Log" parent="menu_absar_reporting" action="action_absar_approval_audit" sequence="20"/>
+    <menuitem id="menu_absar_configuration" name="Configuration" parent="menu_absar_approval_root" sequence="90" groups="absar_approval_engine.group_approval_manager"/>
+    <menuitem id="menu_absar_workflows" name="Workflows" parent="menu_absar_configuration" action="action_absar_approval_workflows" sequence="10"/>
+</odoo>
