@@ -1,7 +1,11 @@
-from odoo import http
+import logging
+
+from odoo import _, http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 from odoo.exceptions import AccessError, MissingError, ValidationError
+
+_logger = logging.getLogger(__name__)
 
 
 class EmployeePortalMain(CustomerPortal):
@@ -177,3 +181,55 @@ class EmployeePortalMain(CustomerPortal):
             "attendance_checked_in": attendance_checked_in,
             "can_use_attendance": can_use_attendance,
         })
+
+    @http.route(
+        '/my/employee/test-native-notification',
+        type='http',
+        auth='user',
+        website=True,
+        methods=['POST'],
+        csrf=True,
+    )
+    def test_native_notification(self, **post):
+        """Send both Odoo bus and mail notifications to the logged-in portal user.
+
+        The bus message tests an active Odoo session. ``message_notify`` tests
+        Odoo's standard notification delivery route, including any registered
+        mobile/web-push subscription supported by the database.
+        """
+        user = request.env.user
+        partner = user.partner_id.sudo()
+        results = []
+
+        if not partner:
+            return request.redirect('/my/employee?native_test=no_partner')
+
+        try:
+            request.env['bus.bus'].sudo()._sendone(
+                partner,
+                'simple_notification',
+                {
+                    'title': _('Employee Portal test'),
+                    'message': _('This is the live Odoo notification test.'),
+                    'type': 'success',
+                    'sticky': True,
+                },
+            )
+            results.append('bus')
+        except Exception:
+            _logger.exception('Portal bus notification test failed for user %s', user.id)
+
+        try:
+            request.env['mail.thread'].sudo().message_notify(
+                partner_ids=partner.ids,
+                subject=_('Employee Portal notification test'),
+                body=_('<p>This is a native Odoo notification test for your portal account.</p>'),
+                force_send=True,
+            )
+            results.append('mail')
+        except Exception:
+            _logger.exception('Portal mail/push notification test failed for user %s', user.id)
+
+        status = '-'.join(results) if results else 'error'
+        return request.redirect('/my/employee?native_test=%s' % status)
+

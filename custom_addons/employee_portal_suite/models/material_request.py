@@ -374,6 +374,15 @@ class MaterialRequest(models.Model):
         return False
 
     def write(self, vals):
+        vals = dict(vals)
+        if "project_id" in vals or "employee_id" in vals:
+            for rec in self:
+                employee = self.env["hr.employee"].browse(vals.get("employee_id")) if vals.get("employee_id") else rec.employee_id
+                project = self.env["project.project"].browse(vals.get("project_id")) if vals.get("project_id") else (False if "project_id" in vals else rec.project_id)
+                location = employee._find_project_location(project) if employee and project else False
+                # For multi-record writes, only set the shared value when all records resolve identically.
+                if len(self) == 1:
+                    vals["work_location_id"] = location.id if location else False
 
         if "needs_clarification" in vals:
             for rec in self:
@@ -460,10 +469,10 @@ class MaterialRequest(models.Model):
     # Employee project routing
     @api.depends(
         "employee_id",
+        "employee_id.work_location_ids",
+        "employee_id.work_location_ids.project_line_ids.project_id",
         "employee_id.work_location_id",
         "employee_id.work_location_id.project_line_ids.project_id",
-        "employee_id.work_location_id.project_line_ids.employee_ids",
-        "employee_id.work_location_id.project_id",
     )
     def _compute_available_projects(self):
         for rec in self:
@@ -479,12 +488,23 @@ class MaterialRequest(models.Model):
     def _onchange_employee_material_projects(self):
         for rec in self:
             employee = rec.employee_id
-            rec.work_location_id = employee.work_location_id if employee else False
             projects = employee._get_material_request_projects() if employee else self.env["project.project"]
             if len(projects) == 1:
                 rec.project_id = projects.id
+                rec.work_location_id = employee._find_project_location(projects)
             elif rec.project_id not in projects:
                 rec.project_id = False
+                rec.work_location_id = False
+            elif rec.project_id:
+                rec.work_location_id = employee._find_project_location(rec.project_id)
+
+    @api.onchange("project_id")
+    def _onchange_project_work_location(self):
+        for rec in self:
+            rec.work_location_id = (
+                rec.employee_id._find_project_location(rec.project_id)
+                if rec.employee_id and rec.project_id else False
+            )
 
     @api.constrains("employee_id", "project_id")
     def _check_employee_project(self):
@@ -493,7 +513,7 @@ class MaterialRequest(models.Model):
                 continue
             allowed = rec.employee_id._get_material_request_projects()
             if rec.project_id not in allowed:
-                raise ValidationError(_("The selected project is not configured on this employee's work location."))
+                raise ValidationError(_("The selected project is not configured in any of this employee's work locations."))
            
     @api.depends("project_id")
     def _compute_project_approvers(self):
@@ -582,10 +602,12 @@ class MaterialRequest(models.Model):
 
             employee = self.env["hr.employee"].browse(vals.get("employee_id")) if vals.get("employee_id") else False
             if employee:
-                vals.setdefault("work_location_id", employee.work_location_id.id if employee.work_location_id else False)
                 projects = employee._get_material_request_projects()
                 if not vals.get("project_id") and len(projects) == 1:
                     vals["project_id"] = projects.id
+                project = self.env["project.project"].browse(vals.get("project_id")) if vals.get("project_id") else False
+                location = employee._find_project_location(project) if project else False
+                vals["work_location_id"] = location.id if location else False
 
         return super().create(vals_list)
 

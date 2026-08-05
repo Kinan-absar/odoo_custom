@@ -86,6 +86,8 @@
                                     <field name="days_worked" readonly="1" optional="show" string="Days In"/>
                                     <field name="final_worked_hours" widget="float_time" sum="Worked"
                                            readonly="1" optional="show" string="Worked Hrs"/>
+                                    <field name="project_hours_summary" readonly="1"
+                                           optional="show" string="Project Hours"/>
 
                                     <!-- Absence -->
                                     <field name="approved_leave_days" sum="Leave" readonly="1" optional="hide"/>
@@ -148,6 +150,7 @@
                                             <field name="days_worked" readonly="1"/>
                                             <field name="attendance_worked_hours" widget="float_time" readonly="1"/>
                                             <field name="final_worked_hours" widget="float_time" readonly="1"/>
+                                            <field name="project_hours_summary" readonly="1"/>
                                             <field name="approved_leave_days" readonly="1"/>
                                             <field name="unpaid_leave_days" readonly="1"/>
                                             <field name="public_holiday_days" readonly="1"/>
