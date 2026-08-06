@@ -243,6 +243,19 @@ class HrAttendance(models.Model):
                 author_id=self.env.ref('base.user_root').partner_id.id,
             )
 
+            if employee and employee.user_id:
+                self.env['portal.push.subscription']._send_push_to_users(
+                    employee.user_id,
+                    "You were automatically checked out",
+                    f"We closed your open attendance at {time_str} because you didn't check out. Tap to review.",
+                    url=self._attendance_portal_url(),
+                    tag='attendance-auto-checkout',
+                )
+
+    def _attendance_portal_url(self):
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '')
+        return f"{base_url}/my/employee/attendance"
+
     # ------------------------------------------------------------------
     # NOTIFICATION: outside-location checkout (unchanged)
     # ------------------------------------------------------------------
@@ -284,4 +297,41 @@ class HrAttendance(models.Model):
                 body="Attendance exception has been marked as resolved.",
                 message_type='comment',
                 subtype_xmlid='mail.mt_note',
+            )
+
+    # ------------------------------------------------------------------
+    # DAILY CHECK-IN REMINDER
+    # Pushes a reminder to every portal attendance user who has not yet
+    # checked in today. Scheduled by the ir.cron in
+    # data/attendance_automation.xml.
+    # ------------------------------------------------------------------
+    @api.model
+    def _send_checkin_reminders(self):
+        group = self.env.ref(
+            'employee_portal_suite.group_portal_attendance_user', raise_if_not_found=False
+        )
+        if not group:
+            return
+
+        today_start = fields.Datetime.to_string(
+            fields.Datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        )
+        already_checked_in_employee_ids = self.sudo().search([
+            ('check_in', '>=', today_start),
+        ]).mapped('employee_id.id')
+
+        users_to_remind = group.users.filtered(
+            lambda u: u.employee_id and u.employee_id.id not in already_checked_in_employee_ids
+        )
+        if not users_to_remind:
+            return
+
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '')
+        for user in users_to_remind:
+            self.env['portal.push.subscription']._send_push_to_users(
+                user,
+                "Don't forget to check in",
+                "You haven't checked in yet today. Tap to check in from the portal.",
+                url=f"{base_url}/my/employee/attendance",
+                tag='attendance-checkin-reminder',
             )

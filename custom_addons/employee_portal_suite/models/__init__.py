@@ -14,3 +14,4 @@ from . import attendance_salary_report
 
 from . import portal_report_document
 from . import portal_report_seen
+from . import portal_push_subscription

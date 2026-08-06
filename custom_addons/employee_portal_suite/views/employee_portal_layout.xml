@@ -1679,6 +1679,22 @@
             </div>
 
             <!-- ================================================================
+                 WEB PUSH OPT-IN BANNER
+                 Shown by push_notifications.js on first visit if the browser
+                 supports Push and permission hasn't been granted/denied yet.
+                 ================================================================ -->
+            <div id="ep-push-banner" style="display:none; position:fixed; left:12px; right:12px; bottom:calc(var(--nav-height) + 18px); z-index:4000; background:var(--surface); border:1px solid var(--border-light); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); padding:14px 16px; align-items:center; gap:12px; max-width:420px; margin:0 auto;">
+                <i class="fa fa-bell" style="color:var(--app-primary); font-size:18px;"></i>
+                <div style="flex:1; font-size:13px; color:var(--text-primary); font-weight:600;">
+                    Turn on notifications to get approvals, announcements and attendance reminders on this device.
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" onclick="epEnablePushNotifications()">Enable</button>
+                <button type="button" class="btn btn-light btn-sm" onclick="epDismissPushBanner()">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+
+            <!-- ================================================================
                  JAVASCRIPT
                  ================================================================ -->
             <script>

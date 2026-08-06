@@ -677,15 +677,27 @@ class MaterialRequest(models.Model):
     # NOTIFY / ACTIVITY HELPERS
     # ---------------------------------------------------------
     def _notify_user(self, user, subject, body):
-        if not user or not user.partner_id.email:
+        if not user:
             return
-        mail_values = {
-            "subject": subject,
-            "body_html": f"<p>{body}</p>",
-            "email_to": user.partner_id.email,
-            "author_id": self.env.user.partner_id.id,
-        }
-        self.env["mail.mail"].sudo().create(mail_values).send()
+        if user.partner_id.email:
+            mail_values = {
+                "subject": subject,
+                "body_html": f"<p>{body}</p>",
+                "email_to": user.partner_id.email,
+                "author_id": self.env.user.partner_id.id,
+            }
+            self.env["mail.mail"].sudo().create(mail_values).send()
+
+        self.env['portal.push.subscription']._send_push_to_users(
+            user, subject, body, url=self._get_portal_url(for_user=user)
+        )
+
+    def _get_portal_url(self, for_user=None):
+        self.ensure_one()
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '')
+        if for_user and for_user != self.employee_id.user_id:
+            return f"{base_url}/my/employee/material/approvals/{self.id}"
+        return f"{base_url}/my/employee/material/{self.id}"
 
     def _schedule_activity(self, user, summary, note):
         self.activity_schedule(

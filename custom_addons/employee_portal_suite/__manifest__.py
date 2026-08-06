@@ -54,6 +54,15 @@
     ],
 
     # ------------------------------------------------------------------
+    #  PYTHON DEPENDENCIES (Web Push notifications)
+    #  Install with: pip install pywebpush
+    #  (pywebpush pulls in 'cryptography', used to generate the VAPID keys)
+    # ------------------------------------------------------------------
+    'external_dependencies': {
+        'python': ['pywebpush', 'cryptography'],
+    },
+
+    # ------------------------------------------------------------------
     #  DATA FILES LOADED IN ORDER
     # ------------------------------------------------------------------
     'data': [
@@ -131,6 +140,7 @@
     'assets': {
         'web.assets_frontend': [
             'employee_portal_suite/static/src/js/sign_redirect.js',
+            'employee_portal_suite/static/src/js/push_notifications.js',
         ],
         'web.assets_backend': [
             'employee_portal_suite/static/src/js/material_request_dashboard.js',
