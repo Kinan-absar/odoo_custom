@@ -1,0 +1,20 @@
+{
+    'name': 'Absar Approval Integrations',
+    'version': '18.0.2.0.0',
+    'category': 'Productivity/Approvals',
+    'summary': 'Connect configurable approvals to Absar business modules',
+    'author': 'Absar Al Omran',
+    'license': 'LGPL-3',
+    'depends': [
+        'absar_approval_engine',
+        'employee_portal_suite',
+        'petty_cash_management',
+        'customer_vendor_portal',
+        'construction_contract_management',
+        'internal_transfer_voucher',
+        'purchase',
+    ],
+    'data': ['data/server_actions.xml'],
+    'installable': True,
+    'application': False,
+}
