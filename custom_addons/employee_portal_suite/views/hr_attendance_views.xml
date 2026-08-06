@@ -15,6 +15,9 @@
                 <field name="employee_id"              string="Employee"/>
                 <field name="check_in"                 string="Check In"/>
                 <field name="check_out"                string="Check Out"/>
+                <field name="check_in_work_location_id" string="Work Location" optional="show"/>
+                <field name="check_in_project_id"      string="Check-in Project" optional="show"/>
+                <field name="check_out_project_id"     string="Check-out Project" optional="hide"/>
                 <field name="worked_hours"             string="Worked Hours" widget="float_time"/>
                 <field name="auto_checked_out"         string="Auto Checkout"/>
                 <field name="checkout_outside_location" string="Outside Location"/>
@@ -43,6 +46,14 @@
                         <field name="employee_id"/>
                         <field name="check_in"/>
                         <field name="check_out"/>
+                        <field name="check_in_work_location_id"/>
+                        <field name="check_in_project_id"/>
+                        <field name="check_in_project_location_id"/>
+                        <field name="check_in_project_distance"/>
+                        <field name="check_out_work_location_id"/>
+                        <field name="check_out_project_id"/>
+                        <field name="check_out_project_location_id"/>
+                        <field name="check_out_project_distance"/>
                         <field name="worked_hours" widget="float_time"/>
                         <field name="auto_checked_out"
                                string="Automatically Checked Out"
@@ -64,6 +75,7 @@
         <field name="arch" type="xml">
             <search string="Search Attendance">
                 <field name="employee_id" string="Employee"/>
+                <field name="check_in_project_id" string="Project"/>
                 <separator/>
                 <filter string="Auto Checked Out"
                         name="auto_checked_out"
@@ -73,6 +85,7 @@
                         domain="[('checkout_outside_location','=',True)]"/>
                 <group expand="0" string="Group By">
                     <filter string="Employee"       name="group_employee" context="{'group_by': 'employee_id'}"/>
+                    <filter string="Project" name="group_project" context="{'group_by': 'check_in_project_id'}"/>
                     <filter string="Check-In Date"  name="group_date"     context="{'group_by': 'check_in:day'}"/>
                 </group>
             </search>
@@ -139,5 +152,60 @@
               action="action_attendance_outside_location"
               sequence="30"
               groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
+
+
+    <!-- Add detected project information to Odoo's standard Attendance views. -->
+    <record id="view_hr_attendance_project_standard_form" model="ir.ui.view">
+        <field name="name">hr.attendance.project.standard.form</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='check_out']" position="after">
+                <field name="check_in_work_location_id" readonly="1"/>
+                        <field name="check_in_project_id" readonly="1"/>
+            </xpath>
+            <xpath expr="//group[@name='check_in_group']" position="inside">
+                <group string="Detected Project">
+                    <field name="check_in_project_location_id" readonly="1"/>
+                    <field name="check_in_project_distance" readonly="1"/>
+                </group>
+            </xpath>
+            <xpath expr="//group[@name='check_out_group']" position="inside">
+                <group string="Detected Project">
+                    <field name="check_out_work_location_id" readonly="1"/>
+                        <field name="check_out_project_id" readonly="1"/>
+                    <field name="check_out_project_location_id" readonly="1"/>
+                    <field name="check_out_project_distance" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_hr_attendance_project_standard_list" model="ir.ui.view">
+        <field name="name">hr.attendance.project.standard.list</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.view_attendance_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='check_out']" position="after">
+                <field name="check_in_work_location_id" string="Work Location" optional="show"/>
+                <field name="check_in_project_id" string="Project" optional="show"/>
+                <field name="check_out_project_id" string="Check-out Project" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_hr_attendance_project_standard_search" model="ir.ui.view">
+        <field name="name">hr.attendance.project.standard.search</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='employee_id']" position="after">
+                <field name="check_in_project_id" string="Project"/>
+            </xpath>
+            <xpath expr="//filter[@name='employee']" position="after">
+                <filter string="Project" name="project" context="{'group_by': 'check_in_project_id'}"/>
+            </xpath>
+        </field>
+    </record>
 
 </odoo>

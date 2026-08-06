@@ -42,10 +42,15 @@ class HrWorkLocation(models.Model):
                 projects = location.project_id
             location.project_ids = projects
 
-    def _get_material_request_projects(self):
+    def _get_material_request_projects(self, employee=None):
+        """Projects available at this Work Location.
+
+        Projects are shared by every employee assigned to this Work Location.
+        """
         self.ensure_one()
-        projects = self.project_line_ids.mapped("project_id")
-        if not projects and self.project_id:
+        lines = self.project_line_ids
+        projects = lines.mapped("project_id")
+        if not projects and not employee and self.project_id:
             projects = self.project_id
         return projects
 
@@ -61,27 +66,31 @@ class HrWorkLocation(models.Model):
         )
         return radius * 2 * math.atan2(math.sqrt(value), math.sqrt(1 - value))
 
-    def _get_enforced_project_locations(self):
+    def _get_enforced_project_locations(self, employee=None):
         self.ensure_one()
-        return self.project_line_ids.filtered(
+        lines = self.project_line_ids.filtered(
             lambda line: line.geo_enforce and line.geo_radius > 0
             and (line.geo_latitude or line.geo_longitude)
         )
+        return lines
 
-    def has_project_geofencing(self):
+    def has_project_geofencing(self, employee=None):
         self.ensure_one()
-        return bool(self._get_enforced_project_locations()) or bool(
+        return bool(self._get_enforced_project_locations(employee=employee)) or bool(
             self.geo_enforce and self.geo_radius and (self.geo_latitude or self.geo_longitude)
         )
 
-    def check_employee_in_any_project_range(self, employee_lat, employee_lon):
-        """Return (allowed, closest_distance, allowed_radius).
+    def find_matching_project_geofence(self, employee_lat, employee_lon, employee=None):
+        """Return details for the nearest applicable geofence.
 
-        An employee assigned to a work location containing several projects may
-        check in from any configured project geofence.
+        The returned dictionary contains ``allowed``, ``distance``, ``radius``
+        and, for project geofences, ``project_line`` and ``project``. If more
+        than one project radius contains the employee, the nearest project is
+        selected. This method is the single source of truth used by attendance
+        check-in/check-out so the exact matched project can be stored.
         """
         self.ensure_one()
-        lines = self._get_enforced_project_locations()
+        lines = self._get_enforced_project_locations(employee=employee)
         if lines:
             checks = []
             for line in lines:
@@ -91,10 +100,15 @@ class HrWorkLocation(models.Model):
                     employee_lat,
                     employee_lon,
                 )
-                checks.append((distance <= line.geo_radius, distance, line.geo_radius))
-            valid = [check for check in checks if check[0]]
-            selected = min(valid or checks, key=lambda check: check[1])
-            return selected[0], round(selected[1]), selected[2]
+                checks.append({
+                    'allowed': distance <= line.geo_radius,
+                    'distance': round(distance),
+                    'radius': line.geo_radius,
+                    'project_line': line,
+                    'project': line.project_id,
+                })
+            valid = [check for check in checks if check['allowed']]
+            return min(valid or checks, key=lambda check: check['distance'])
 
         if self.geo_enforce and self.geo_radius and (self.geo_latitude or self.geo_longitude):
             distance = self._haversine_distance(
@@ -103,9 +117,28 @@ class HrWorkLocation(models.Model):
                 employee_lat,
                 employee_lon,
             )
-            return distance <= self.geo_radius, round(distance), self.geo_radius
+            return {
+                'allowed': distance <= self.geo_radius,
+                'distance': round(distance),
+                'radius': self.geo_radius,
+                'project_line': self.env['hr.work.location.project'],
+                'project': self.project_id,
+            }
 
-        return True, None, None
+        return {
+            'allowed': True,
+            'distance': None,
+            'radius': None,
+            'project_line': self.env['hr.work.location.project'],
+            'project': self.env['project.project'],
+        }
+
+    def check_employee_in_any_project_range(self, employee_lat, employee_lon, employee=None):
+        """Backward-compatible three-value geofence helper."""
+        match = self.find_matching_project_geofence(
+            employee_lat, employee_lon, employee=employee
+        )
+        return match['allowed'], match['distance'], match['radius']
 
     def check_employee_in_range(self, employee_lat, employee_lon):
         """Backward-compatible two-value helper."""
@@ -144,6 +177,7 @@ class HrWorkLocationProject(models.Model):
     geo_latitude = fields.Float(string="Latitude", digits=(10, 7))
     geo_longitude = fields.Float(string="Longitude", digits=(10, 7))
     geo_radius = fields.Integer(string="Allowed Radius (meters)", default=200)
+
 
     _sql_constraints = [
         (
