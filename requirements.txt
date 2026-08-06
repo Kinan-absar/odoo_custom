@@ -1,2 +1,2 @@
 pywebpush
-cryptography
+cryptography<42
