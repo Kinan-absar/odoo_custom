@@ -5,7 +5,6 @@ from odoo.exceptions import UserError
 class AbsarApprovalEngineMixin(models.AbstractModel):
     _name = 'absar.approval.engine.mixin'
     _description = 'Approval Engine Mixin'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     approval_request_ids = fields.Many2many(
         'absar.approval.request', compute='_compute_approval_summary',
