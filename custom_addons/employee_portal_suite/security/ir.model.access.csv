@@ -45,5 +45,3 @@ portal_report_document_employee,portal.report.document.employee,model_portal_rep
 portal_report_seen_user,portal.report.seen.user,model_portal_report_seen,base.group_user,1,1,1,0
 portal_report_seen_portal,portal.report.seen.portal,model_portal_report_seen,base.group_portal,1,1,1,0
 access_hr_work_location_project_user,hr.work.location.project user,model_hr_work_location_project,base.group_user,1,1,1,1
-portal_push_subscription_portal,portal.push.subscription.portal,model_portal_push_subscription,base.group_portal,1,1,1,1
-portal_push_subscription_user,portal.push.subscription.user,model_portal_push_subscription,base.group_user,1,1,1,1

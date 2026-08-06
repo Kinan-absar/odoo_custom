@@ -46,34 +46,6 @@ class PortalAnnouncement(models.Model):
         ('danger', 'Red'),
     ], default='primary')
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        announcements = super().create(vals_list)
-        for ann in announcements:
-            if ann.active and ann.target in ('portal', 'both'):
-                ann._notify_push()
-        return announcements
-
-    def _notify_push(self):
-        """Push a notification to every portal user this announcement is visible to."""
-        self.ensure_one()
-        domain = [('groups_id', 'in', [self.env.ref('employee_portal_suite.group_employee_portal').id])]
-        if self.group_ids:
-            domain = [('groups_id', 'in', self.group_ids.ids)]
-        users = self.env['res.users'].sudo().search(domain)
-        if not users:
-            return
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '')
-        import re
-        plain_message = re.sub('<[^<]+?>', '', self.message or '')
-        self.env['portal.push.subscription']._send_push_to_users(
-            users,
-            self.name,
-            plain_message[:180],
-            url=f"{base_url}/my/employee",
-            tag='employee-portal-announcement',
-        )
-
     @api.model
     def _get_visible_announcements_for_current_user(self, target="backend", limit=0):
         """Return active announcements visible to the current user and target."""
