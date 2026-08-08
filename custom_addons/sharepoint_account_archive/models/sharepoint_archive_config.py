@@ -189,6 +189,16 @@ class SharePointArchiveConfig(models.Model):
                     raise
         return current
 
+    def _delete_item_by_path(self, path):
+        self.ensure_one()
+        item = self._get_item_by_path(path)
+        if not item:
+            return False
+        drive_id = quote(self._ensure_ready(), safe='')
+        item_id = quote(item['id'], safe='')
+        self._graph('DELETE', '/drives/%s/items/%s' % (drive_id, item_id))
+        return True
+
     def _upload_bytes(self, parent_item_id, filename, content, mimetype='application/octet-stream'):
         self.ensure_one()
         if len(content) > MAX_SIMPLE_UPLOAD:

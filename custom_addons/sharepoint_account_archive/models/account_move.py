@@ -85,20 +85,51 @@ class AccountMove(models.Model):
             cron._notify_progress(done=done, remaining=remaining)
         return True
 
+    def _sharepoint_folder_path(self, config):
+        self.ensure_one()
+        move_date = self.date or fields.Date.context_today(self)
+        month_folder = '%02d - %s' % (move_date.month, move_date.strftime('%B'))
+        reference = self.name if self.name and self.name != '/' else 'MOVE-%s' % self.id
+        return '/'.join([
+            config.root_folder,
+            str(move_date.year),
+            month_folder,
+            config._document_type_folder(self),
+            config._safe_name(reference),
+        ])
+
+    def action_sharepoint_unarchive(self):
+        for move in self:
+            if move.sharepoint_archive_state != 'archived':
+                raise UserError(_('Only entries already archived to SharePoint can be unarchived.'))
+            config = self.env['sharepoint.archive.config']._get_for_company(move.company_id)
+            if not config:
+                raise UserError(_('No active SharePoint archive configuration exists for %s.') % move.company_id.display_name)
+            folder_path = move._sharepoint_folder_path(config)
+            try:
+                deleted = config._delete_item_by_path(folder_path)
+                if not deleted:
+                    raise UserError(_('The SharePoint archive folder was not found: %s') % folder_path)
+                move.write({
+                    'sharepoint_archive_state': 'not_required',
+                    'sharepoint_archived_at': False,
+                    'sharepoint_web_url': False,
+                    'sharepoint_error': False,
+                })
+                move.message_post(body=_('Removed from SharePoint archive: %s') % folder_path)
+            except Exception as exc:
+                _logger.exception('SharePoint unarchive failed for account.move %s', move.id)
+                if isinstance(exc, UserError):
+                    raise
+                raise UserError(_('SharePoint unarchive failed: %s') % exc) from exc
+        return True
+
     def _sharepoint_archive_one(self, config, raise_errors=False):
         self.ensure_one()
         self.write({'sharepoint_attempts': self.sharepoint_attempts + 1})
         try:
-            move_date = self.date or fields.Date.context_today(self)
-            month_folder = '%02d - %s' % (move_date.month, move_date.strftime('%B'))
             reference = self.name if self.name and self.name != '/' else 'MOVE-%s' % self.id
-            folder_path = '/'.join([
-                config.root_folder,
-                str(move_date.year),
-                month_folder,
-                config._document_type_folder(self),
-                config._safe_name(reference),
-            ])
+            folder_path = self._sharepoint_folder_path(config)
             folder = config._ensure_folder_path(folder_path)
 
             pdf_bytes = self._sharepoint_render_archive_pdf()
