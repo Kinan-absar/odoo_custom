@@ -40,3 +40,8 @@ OAuth uses the client-credentials flow and `https://graph.microsoft.com/.default
 - Added Historical JV Archive wizard for queuing posted journal entries by date range and optional journal.
 - Historical queue skips records already archived in SharePoint.
 - Moved SharePoint Archive fields on journal entries to the Other Info tab.
+
+
+## Internal Transfer / Payment Voucher integration
+
+When `internal_transfer_voucher` is installed, the archive automatically finds `account.payment.voucher` records whose `move_id` points to the journal entry being archived. The Payment Voucher PDF and its binary chatter attachments are uploaded into the same SharePoint JV folder. The integration is optional and does not make `internal_transfer_voucher` a hard dependency.

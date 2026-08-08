@@ -140,20 +140,19 @@ class AccountMove(models.Model):
                 'application/pdf',
             )
 
+            used_names = {('%s.pdf' % config._safe_name(reference)).lower()}
+
             if config.include_attachments:
-                attachments = self.env['ir.attachment'].search([
-                    ('res_model', '=', 'account.move'),
-                    ('res_id', '=', self.id),
-                    ('type', '=', 'binary'),
-                ])
-                used_names = set()
-                for attachment in attachments:
-                    if not attachment.datas:
-                        continue
-                    filename = config._safe_name(attachment.name or ('Attachment-%s' % attachment.id))
-                    filename = self._sharepoint_unique_filename(filename, used_names, attachment.id)
-                    content = base64.b64decode(attachment.datas)
-                    config._upload_bytes(folder['id'], filename, content, attachment.mimetype)
+                self._sharepoint_upload_record_attachments(
+                    config, folder['id'], 'account.move', self.id, used_names
+                )
+
+            # Optional integration with the Internal Transfer / Payment Voucher app.
+            # account.payment.voucher.move_id is a direct link to this journal entry,
+            # so no date/reference guessing is required.
+            self._sharepoint_upload_related_payment_vouchers(
+                config, folder['id'], used_names
+            )
 
             self.write({
                 'sharepoint_archive_state': 'archived',
@@ -174,6 +173,58 @@ class AccountMove(models.Model):
                     raise
                 raise UserError(_('SharePoint archive failed: %s') % exc) from exc
             return False
+
+
+    def _sharepoint_upload_record_attachments(self, config, folder_id, res_model, res_id, used_names):
+        attachments = self.env['ir.attachment'].search([
+            ('res_model', '=', res_model),
+            ('res_id', '=', res_id),
+            ('type', '=', 'binary'),
+        ])
+        for attachment in attachments:
+            if not attachment.datas:
+                continue
+            filename = config._safe_name(attachment.name or ('Attachment-%s' % attachment.id))
+            filename = self._sharepoint_unique_filename(filename, used_names, attachment.id)
+            content = base64.b64decode(attachment.datas)
+            config._upload_bytes(folder_id, filename, content, attachment.mimetype)
+
+    def _sharepoint_upload_related_payment_vouchers(self, config, folder_id, used_names):
+        self.ensure_one()
+        if 'account.payment.voucher' not in self.env:
+            return
+
+        vouchers = self.env['account.payment.voucher'].sudo().search([
+            ('move_id', '=', self.id),
+        ])
+        if not vouchers:
+            return
+
+        report = self.env.ref(
+            'internal_transfer_voucher.action_payment_voucher_pdf',
+            raise_if_not_found=False,
+        )
+        for voucher in vouchers:
+            if report:
+                pdf, _content_type = self.env['ir.actions.report']._render_qweb_pdf(
+                    report.report_name,
+                    res_ids=voucher.ids,
+                )
+                voucher_ref = voucher.name or ('PAYMENT-VOUCHER-%s' % voucher.id)
+                filename = config._safe_name('Payment Voucher - %s.pdf' % voucher_ref)
+                filename = self._sharepoint_unique_filename(
+                    filename, used_names, 'PV%s' % voucher.id
+                )
+                config._upload_bytes(folder_id, filename, pdf, 'application/pdf')
+
+            if config.include_attachments:
+                self._sharepoint_upload_record_attachments(
+                    config,
+                    folder_id,
+                    'account.payment.voucher',
+                    voucher.id,
+                    used_names,
+                )
 
     def _sharepoint_render_archive_pdf(self):
         self.ensure_one()

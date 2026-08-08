@@ -1,6 +1,6 @@
 {
     'name': 'SharePoint Accounting Archive',
-    'version': '18.0.1.2.0',
+    'version': '18.0.1.4.0',
     'category': 'Accounting/Accounting',
     'summary': 'Archive posted accounting entries and attachments to Microsoft SharePoint',
     'author': 'Custom',
