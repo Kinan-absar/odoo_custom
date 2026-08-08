@@ -35,3 +35,8 @@ OAuth uses the client-credentials flow and `https://graph.microsoft.com/.default
 - Failed records are retried by the cron and can also be reset with the Retry SharePoint button.
 - Simple upload is intentionally limited to 250 MB per file. Accounting attachments are normally far below this.
 - Client secrets are stored in the Odoo database. Restrict access to System administrators and rotate the secret according to your security policy.
+
+## 18.0.1.1.0
+- Added Historical JV Archive wizard for queuing posted journal entries by date range and optional journal.
+- Historical queue skips records already archived in SharePoint.
+- Moved SharePoint Archive fields on journal entries to the Other Info tab.

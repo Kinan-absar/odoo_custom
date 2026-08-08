@@ -18,7 +18,7 @@
                         groups="account.group_account_manager"
                         invisible="sharepoint_archive_state != 'failed'"/>
             </xpath>
-            <xpath expr="//sheet" position="inside">
+            <xpath expr="//page[@name='other_info']" position="inside">
                 <group string="SharePoint Archive" groups="account.group_account_manager">
                     <field name="sharepoint_archive_state" widget="badge"/>
                     <field name="sharepoint_archived_at" invisible="sharepoint_archive_state != 'archived'"/>
