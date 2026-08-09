@@ -82,9 +82,13 @@
             <xpath expr="//notebook" position="inside">
                 <page string="Telegram" name="employee_portal_telegram">
                     <group>
-                        <field name="telegram_connected" readonly="1"/>
-                        <field name="telegram_chat_id" readonly="1"/>
-                        <field name="telegram_username" readonly="1"/>
+                        <div class="alert alert-info" role="alert" invisible="telegram_connected">
+                            Connect Telegram to receive approval and attendance notifications. The connection link expires after 15 minutes and can only be used once.
+                        </div>
+                        <button name="action_connect_telegram" type="object" string="Connect Telegram" class="btn-primary" invisible="telegram_connected"/>
+                        <div invisible="not telegram_connected">
+                            <span class="text-success">Telegram is connected. No connection button is shown while connected.</span>
+                        </div>
                         <button name="action_disconnect_telegram" type="object" string="Disconnect Telegram" class="btn-secondary" invisible="not telegram_connected"/>
                     </group>
                 </page>

@@ -1,5 +1,6 @@
 import logging
 import secrets
+from datetime import timedelta
 from html import escape
 
 import requests
@@ -16,6 +17,7 @@ class ResUsers(models.Model):
     telegram_chat_id = fields.Char(string='Telegram Chat ID', copy=False, readonly=True)
     telegram_username = fields.Char(string='Telegram Username', copy=False, readonly=True)
     telegram_link_token = fields.Char(string='Telegram Link Token', copy=False, readonly=True)
+    telegram_link_token_expires_at = fields.Datetime(string='Telegram Link Token Expires At', copy=False, readonly=True)
     telegram_connected = fields.Boolean(string='Telegram Connected', compute='_compute_telegram_connected')
 
     @api.depends('telegram_chat_id')
@@ -25,15 +27,38 @@ class ResUsers(models.Model):
 
     def _ensure_telegram_link_token(self):
         self.ensure_one()
-        if not self.telegram_link_token:
-            self.sudo().write({'telegram_link_token': secrets.token_urlsafe(24)})
+        now = fields.Datetime.now()
+        if (not self.telegram_link_token or not self.telegram_link_token_expires_at
+                or self.telegram_link_token_expires_at <= now):
+            self.sudo().write({
+                'telegram_link_token': secrets.token_urlsafe(24),
+                'telegram_link_token_expires_at': now + timedelta(minutes=15),
+            })
         return self.telegram_link_token
+
+    def action_connect_telegram(self):
+        self.ensure_one()
+        # A connected user should not see/use the connect action again.
+        if self.telegram_connected:
+            return {'type': 'ir.actions.act_window_close'}
+        config = self.env['employee.portal.telegram.config'].sudo().search([
+            ('active', '=', True), ('enabled', '=', True),
+        ], order='id desc', limit=1)
+        if not config or not config.bot_username:
+            raise UserError(_('Telegram notifications are not configured or enabled.'))
+        token = self._ensure_telegram_link_token()
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f"https://t.me/{config.bot_username.lstrip('@')}?start={token}",
+            'target': 'new',
+        }
 
     def action_disconnect_telegram(self):
         self.sudo().write({
             'telegram_chat_id': False,
             'telegram_username': False,
             'telegram_link_token': False,
+            'telegram_link_token_expires_at': False,
         })
         return True
 

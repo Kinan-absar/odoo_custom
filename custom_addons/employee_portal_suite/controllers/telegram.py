@@ -48,6 +48,7 @@ class EmployeePortalTelegramController(http.Controller):
                 if token:
                     user = request.env['res.users'].sudo().search([
                         ('telegram_link_token', '=', token),
+                        ('telegram_link_token_expires_at', '>=', request.env.cr.now()),
                         ('active', '=', True),
                     ], limit=1)
                     if user:
@@ -55,6 +56,7 @@ class EmployeePortalTelegramController(http.Controller):
                             'telegram_chat_id': str(chat['id']),
                             'telegram_username': chat.get('username') or False,
                             'telegram_link_token': False,
+                            'telegram_link_token_expires_at': False,
                         })
                         config._telegram_api('sendMessage', {
                             'chat_id': chat['id'],
