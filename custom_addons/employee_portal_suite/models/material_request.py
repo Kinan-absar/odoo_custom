@@ -677,15 +677,19 @@ class MaterialRequest(models.Model):
     # NOTIFY / ACTIVITY HELPERS
     # ---------------------------------------------------------
     def _notify_user(self, user, subject, body):
-        if not user or not user.partner_id.email:
+        if not user:
             return
-        mail_values = {
-            "subject": subject,
-            "body_html": f"<p>{body}</p>",
-            "email_to": user.partner_id.email,
-            "author_id": self.env.user.partner_id.id,
-        }
-        self.env["mail.mail"].sudo().create(mail_values).send()
+        if user.partner_id.email:
+            mail_values = {
+                "subject": subject,
+                "body_html": f"<p>{body}</p>",
+                "email_to": user.partner_id.email,
+                "author_id": self.env.user.partner_id.id,
+            }
+            self.env["mail.mail"].sudo().create(mail_values).send()
+        self.env['employee.portal.telegram.service'].sudo().send_to_user(
+            user, subject, body, f"/my/employee/material/approvals/{self.id}"
+        )
 
     def _schedule_activity(self, user, summary, note):
         self.activity_schedule(
@@ -830,6 +834,13 @@ class MaterialRequest(models.Model):
 
             rec.message_post(body="Material Request fully approved.")
             rec.activity_ids.action_done()
+            if rec.employee_id.user_id:
+                rec.env['employee.portal.telegram.service'].sudo().send_to_user(
+                    rec.employee_id.user_id,
+                    f"Material Request {rec.name} approved",
+                    f"Your Material Request {rec.name} has been fully approved.",
+                    f"/my/employee/material/{rec.id}"
+                )
 
     def action_reject(self):
         for rec in self:
@@ -860,6 +871,13 @@ class MaterialRequest(models.Model):
 
             rec.message_post(body="Material Request rejected.")
             rec.activity_ids.action_done()
+            if rec.employee_id.user_id:
+                rec.env['employee.portal.telegram.service'].sudo().send_to_user(
+                    rec.employee_id.user_id,
+                    f"Material Request {rec.name} rejected",
+                    f"Your Material Request {rec.name} has been rejected.",
+                    f"/my/employee/material/{rec.id}"
+                )
 
     def get_rejection_reason(self):
         self.ensure_one()

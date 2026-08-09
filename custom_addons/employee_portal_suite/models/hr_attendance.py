@@ -243,6 +243,14 @@ class HrAttendance(models.Model):
                 author_id=self.env.ref('base.user_root').partner_id.id,
             )
 
+            if employee and employee.user_id:
+                self.env['employee.portal.telegram.service'].sudo().send_to_user(
+                    employee.user_id,
+                    'Automatic clock-out',
+                    f'You were automatically checked out by the system at {time_str} because no manual clock-out was recorded.',
+                    '/my/employee/attendance',
+                )
+
     # ------------------------------------------------------------------
     # NOTIFICATION: outside-location checkout (unchanged)
     # ------------------------------------------------------------------
