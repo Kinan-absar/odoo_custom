@@ -16,5 +16,6 @@ from . import portal_report_document
 from . import portal_report_seen
 
 from . import telegram_integration
+from . import telegram_session
 
 from . import telegram_notifications

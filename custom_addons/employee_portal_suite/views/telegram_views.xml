@@ -74,24 +74,17 @@
               sequence="90"
               groups="base.group_system"/>
 
+    <!-- Internal users connect from the top-right user menu.
+         Keep the former inherited form view inactive on upgrades so there is
+         only one connection entry point. -->
     <record id="view_users_form_telegram_employee_portal" model="ir.ui.view">
         <field name="name">res.users.form.telegram.employee.portal</field>
         <field name="model">res.users</field>
         <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="active" eval="False"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
-                <page string="Telegram" name="employee_portal_telegram">
-                    <group>
-                        <div class="alert alert-info" role="alert" invisible="telegram_connected">
-                            Connect Telegram to receive approval and attendance notifications. The connection link expires after 15 minutes and can only be used once.
-                        </div>
-                        <button name="action_connect_telegram" type="object" string="Connect Telegram" class="btn-primary" invisible="telegram_connected"/>
-                        <div invisible="not telegram_connected">
-                            <span class="text-success">Telegram is connected. No connection button is shown while connected.</span>
-                        </div>
-                        <button name="action_disconnect_telegram" type="object" string="Disconnect Telegram" class="btn-secondary" invisible="not telegram_connected"/>
-                    </group>
-                </page>
+                <page string="Telegram" name="employee_portal_telegram"/>
             </xpath>
         </field>
     </record>
