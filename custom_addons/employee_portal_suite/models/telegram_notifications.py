@@ -284,6 +284,15 @@ class TelegramApprovalReminderMixin(models.AbstractModel):
 
     @api.model
     def _cron_approval_reminders_for_model(self):
+        """Process only reminders/escalations that are actually due.
+
+        The previous implementation loaded every request in an approval state on
+        every cron run.  On a busy database that could keep the scheduled action
+        alive long enough to block module upgrades.  This version uses date
+        domains, small batches and records an attempted reminder timestamp so a
+        temporarily unreachable Telegram recipient cannot be retried in a tight
+        loop every cron cycle.
+        """
         config = self.env['employee.portal.telegram.config'].sudo().search([
             ('active', '=', True),
             ('enabled', '=', True),
@@ -292,46 +301,80 @@ class TelegramApprovalReminderMixin(models.AbstractModel):
         if not config:
             return
 
-        records = self.sudo().search([('state', 'in', self._telegram_approval_states())])
+        states = self._telegram_approval_states()
+        if not states:
+            return
+
         now = fields.Datetime.now()
         first_after = timedelta(hours=max(config.approval_reminder_hours, 1))
         repeat_after = timedelta(hours=max(config.approval_repeat_hours, 1))
         escalate_after = timedelta(hours=max(config.approval_escalation_hours, 1))
+        first_cutoff = now - first_after
+        repeat_cutoff = now - repeat_after
         service = self.env['employee.portal.telegram.service'].sudo()
+
+        entered_due = [
+            '|',
+            '&', ('telegram_stage_entered_at', '!=', False), ('telegram_stage_entered_at', '<=', first_cutoff),
+            '&', ('telegram_stage_entered_at', '=', False), ('write_date', '<=', first_cutoff),
+        ]
+        reminder_due = [
+            '|',
+            ('telegram_last_approval_reminder_at', '=', False),
+            ('telegram_last_approval_reminder_at', '<=', repeat_cutoff),
+        ]
+        reminder_domain = [('state', 'in', states)] + entered_due + reminder_due
+
+        # A small batch is intentional: approval reminders are not time-critical
+        # to the minute, and keeping cron runs short is more important on Odoo.sh.
+        records = self.sudo().search(
+            reminder_domain,
+            order='telegram_last_approval_reminder_at asc, telegram_stage_entered_at asc, id asc',
+            limit=25,
+        )
 
         for rec in records:
             entered = rec.telegram_stage_entered_at or rec.write_date or rec.create_date
-            if not entered or now - entered < first_after:
-                continue
+            sent_any = False
+            for user in rec._telegram_current_approvers():
+                sent_any = service.send_to_user(
+                    user,
+                    'Approval still pending',
+                    f'{rec.name} has been waiting for {rec._telegram_stage_label()} since {fields.Datetime.to_string(entered)}.',
+                    rec._telegram_approval_path(),
+                ) or sent_any
 
-            due = not rec.telegram_last_approval_reminder_at or (now - rec.telegram_last_approval_reminder_at >= repeat_after)
-            if due:
-                sent_any = False
-                for user in rec._telegram_current_approvers():
-                    sent_any = service.send_to_user(
-                        user,
-                        'Approval still pending',
-                        f'{rec.name} has been waiting for {rec._telegram_stage_label()} since {fields.Datetime.to_string(entered)}.',
-                        rec._telegram_approval_path(),
-                    ) or sent_any
-                if sent_any:
-                    rec.write({
-                        'telegram_last_approval_reminder_at': now,
-                        'telegram_approval_reminder_count': rec.telegram_approval_reminder_count + 1,
-                    })
+            vals = {'telegram_last_approval_reminder_at': now}
+            if sent_any:
+                vals['telegram_approval_reminder_count'] = rec.telegram_approval_reminder_count + 1
+            rec.sudo().write(vals)
 
-            if (
-                not rec.telegram_escalation_sent
-                and config.approval_escalation_user_id
-                and now - entered >= escalate_after
-            ):
+        # Escalation is a separate, small query so it is not delayed by the
+        # repeat-reminder interval.  Nothing is escalated unless a recipient is set.
+        if config.approval_escalation_user_id:
+            escalation_cutoff = now - escalate_after
+            escalation_entered_due = [
+                '|',
+                '&', ('telegram_stage_entered_at', '!=', False), ('telegram_stage_entered_at', '<=', escalation_cutoff),
+                '&', ('telegram_stage_entered_at', '=', False), ('write_date', '<=', escalation_cutoff),
+            ]
+            escalation_domain = [
+                ('state', 'in', states),
+                ('telegram_escalation_sent', '=', False),
+            ] + escalation_entered_due
+            escalation_records = self.sudo().search(
+                escalation_domain,
+                order='telegram_stage_entered_at asc, id asc',
+                limit=25,
+            )
+            for rec in escalation_records:
                 if service.send_to_user(
                     config.approval_escalation_user_id,
                     'Approval escalation',
                     f'{rec.name} is still waiting for {rec._telegram_stage_label()} and has exceeded the configured escalation time.',
                     rec._telegram_approval_path(),
                 ):
-                    rec.write({'telegram_escalation_sent': True})
+                    rec.sudo().write({'telegram_escalation_sent': True})
 
 
 class EmployeeRequestTelegramReminders(models.Model):

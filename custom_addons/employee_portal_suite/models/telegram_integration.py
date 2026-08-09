@@ -168,7 +168,7 @@ class EmployeePortalTelegramService(models.AbstractModel):
                 }]]
             }
         try:
-            config._telegram_api('sendMessage', payload)
+            config._telegram_api('sendMessage', payload, timeout=3)
             return True
         except Exception:
             _logger.exception('Failed to send Telegram notification to user %s', user.id)
