@@ -23,8 +23,26 @@
                             <field name="webhook_secret" readonly="1" password="True"/>
                         </group>
                     </group>
+                    <separator string="Notification Rules"/>
+                    <group>
+                        <group string="Approvals">
+                            <field name="requester_stage_notifications"/>
+                            <field name="approval_reminders_enabled"/>
+                            <field name="approval_reminder_hours" invisible="not approval_reminders_enabled"/>
+                            <field name="approval_repeat_hours" invisible="not approval_reminders_enabled"/>
+                            <field name="approval_escalation_hours" invisible="not approval_reminders_enabled"/>
+                            <field name="approval_escalation_user_id" invisible="not approval_reminders_enabled"/>
+                        </group>
+                        <group string="Attendance">
+                            <field name="attendance_reminders_enabled"/>
+                            <field name="clock_in_before_minutes" invisible="not attendance_reminders_enabled"/>
+                            <field name="missing_clock_in_after_minutes" invisible="not attendance_reminders_enabled"/>
+                            <field name="clock_out_before_minutes" invisible="not attendance_reminders_enabled"/>
+                            <field name="missing_clock_out_after_minutes" invisible="not attendance_reminders_enabled"/>
+                        </group>
+                    </group>
                     <div class="alert alert-info" role="alert">
-                        Employees and approvers connect their Telegram account from the Employee Portal. Telegram is used only for notifications; approvals remain inside Odoo.
+                        Employees and approvers connect their Telegram account from the Employee Portal. Telegram is used only for notifications; approvals remain inside Odoo. Attendance reminders use each employee's Odoo working schedule and are skipped on non-working days.
                     </div>
                 </sheet>
             </form>

@@ -698,7 +698,7 @@
 
 
                 <!-- TELEGRAM NOTIFICATIONS -->
-                <t t-if="request.env['employee.portal.telegram.config'].sudo().search_count([('active','=',True),('enabled','=',True)]) &gt; 0">
+                <t t-if="not request.env.user.telegram_connected and request.env['employee.portal.telegram.config'].sudo().search_count([('active','=',True),('enabled','=',True)]) &gt; 0">
                     <div class="col-12 col-md-6">
                         <a href="/my/employee/telegram/connect" class="dashboard-link">
                             <div class="dashboard-card">
