@@ -696,6 +696,34 @@
                 </div>
                 </t>
 
+
+                <!-- TELEGRAM NOTIFICATIONS -->
+                <t t-if="request.env['employee.portal.telegram.config'].sudo().search_count([('active','=',True),('enabled','=',True)]) &gt; 0">
+                    <div class="col-12 col-md-6">
+                        <a href="/my/employee/telegram/connect" class="dashboard-link">
+                            <div class="dashboard-card">
+                                <div class="card-top">
+                                    <div class="card-icon bg-primary-soft">
+                                        <i class="fa fa-paper-plane"></i>
+                                    </div>
+                                    <span class="card-title">Telegram Notifications</span>
+                                </div>
+                                <div class="card-bottom">
+                                    <div class="card-bottom-number-row">
+                                        <span class="card-number" style="font-size:18px;">
+                                            <t t-if="request.env.user.telegram_connected">Connected</t>
+                                            <t t-if="not request.env.user.telegram_connected">Connect</t>
+                                        </span>
+                                        <t t-if="request.env.user.telegram_connected">
+                                            <span class="badge-pulse bg-success"></span>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </t>
+
             </div>
            <div class="recent-activity mt-4">
 
