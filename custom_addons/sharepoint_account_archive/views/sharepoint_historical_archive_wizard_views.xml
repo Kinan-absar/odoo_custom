@@ -4,15 +4,16 @@
         <field name="name">sharepoint.historical.archive.wizard.form</field>
         <field name="model">sharepoint.historical.archive.wizard</field>
         <field name="arch" type="xml">
-            <form string="Archive Historical Journal Vouchers">
+            <form string="Archive Historical Accounting Documents">
                 <group>
                     <field name="company_id"/>
                     <field name="date_from"/>
                     <field name="date_to"/>
+                    <field name="document_type"/>
                     <field name="journal_id" options="{'no_create': True}"/>
                 </group>
                 <div class="alert alert-info" role="alert">
-                    Only posted Journal Entries / JVs are queued. Entries already archived in SharePoint are skipped. The scheduled archive job processes the queue in batches.
+                    Only posted accounting documents are queued. Already archived documents are skipped. "All Enabled Document Types" includes every document type enabled in the SharePoint Archive configuration. The scheduled archive job processes the queue in batches.
                 </div>
                 <footer>
                     <button name="action_queue_archive" type="object" string="Queue for SharePoint Archive" class="btn-primary"/>
@@ -23,7 +24,7 @@
     </record>
 
     <record id="action_sharepoint_historical_archive_wizard" model="ir.actions.act_window">
-        <field name="name">Archive Historical JVs</field>
+        <field name="name">Archive Historical Documents</field>
         <field name="res_model">sharepoint.historical.archive.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>

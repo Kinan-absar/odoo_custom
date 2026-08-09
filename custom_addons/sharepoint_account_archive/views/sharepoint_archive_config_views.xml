@@ -22,7 +22,7 @@
             <form string="SharePoint Accounting Archive">
                 <header>
                     <button name="action_test_connection" type="object" string="Test &amp; Resolve Connection" class="btn-primary"/>
-                    <button name="%(action_sharepoint_historical_archive_wizard)d" type="action" string="Archive Historical JVs" class="btn-secondary" groups="account.group_account_manager"/>
+                    <button name="%(action_sharepoint_historical_archive_wizard)d" type="action" string="Archive Historical Documents" class="btn-secondary" groups="account.group_account_manager"/>
                 </header>
                 <sheet>
                     <group>

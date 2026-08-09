@@ -45,3 +45,9 @@ OAuth uses the client-credentials flow and `https://graph.microsoft.com/.default
 ## Internal Transfer / Payment Voucher integration
 
 When `internal_transfer_voucher` is installed, the archive automatically finds `account.payment.voucher` records whose `move_id` points to the journal entry being archived. The Payment Voucher PDF and its binary chatter attachments are uploaded into the same SharePoint JV folder. The integration is optional and does not make `internal_transfer_voucher` a hard dependency.
+
+## 18.0.1.5.0
+- Historical archive wizard now supports Journal Vouchers, Vendor Bills, Vendor Credit Notes, Customer Invoices, Customer Credit Notes, or All Enabled Document Types.
+- "All" respects the document-type switches in SharePoint Archive configuration.
+- Historical archive notifications show counts by accounting document type.
+- Vendor and customer credit notes are filed in their own SharePoint folders.

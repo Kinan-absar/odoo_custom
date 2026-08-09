@@ -213,10 +213,14 @@ class SharePointArchiveConfig(models.Model):
         return self._graph('PUT', path, data=content, content_type=mimetype or 'application/octet-stream')
 
     def _document_type_folder(self, move):
-        if move.move_type in ('in_invoice', 'in_refund'):
+        if move.move_type == 'in_invoice':
             return 'Vendor Bills'
-        if move.move_type in ('out_invoice', 'out_refund'):
+        if move.move_type == 'in_refund':
+            return 'Vendor Credit Notes'
+        if move.move_type == 'out_invoice':
             return 'Customer Invoices'
+        if move.move_type == 'out_refund':
+            return 'Customer Credit Notes'
         return 'Journal Vouchers'
 
     def _move_is_enabled(self, move):
