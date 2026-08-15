@@ -157,7 +157,7 @@ class VendorInvoice(models.Model):
             raise_if_not_found=False
         )
         if group:
-            for user in group.users.filtered(lambda u: u.active):
+            for user in group.user_ids.filtered(lambda u: u.active):
                 record.activity_schedule(
                     'mail.mail_activity_data_todo',
                     user_id=user.id,

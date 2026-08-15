@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Customer & Vendor Portal Extension',
-    'version': '2.0.0',
+    'version': '19.0.2.0.0',
     'author': 'Kinan',
     'website': 'https://absar-alomran.com',
     'category': 'Portal',

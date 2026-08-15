@@ -662,7 +662,7 @@ class MaterialRequest(models.Model):
             # -------------------------------------------------
             group = self.env.ref(group_xmlid, raise_if_not_found=False)
             if group:
-                for user in group.users:
+                for user in group.user_ids:
                     rec._notify_user(
                         user,
                         f"Material Request {rec.name} requires your approval",
@@ -746,7 +746,7 @@ class MaterialRequest(models.Model):
             # Notify Purchase Representative group
             group = self.env.ref("employee_portal_suite.group_mr_purchase_rep", raise_if_not_found=False)
             if group:
-                for user in group.users:
+                for user in group.user_ids:
                     rec._notify_user(
                         user,
                         "New Material Request Awaiting Approval",

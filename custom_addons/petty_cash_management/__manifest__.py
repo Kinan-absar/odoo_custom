@@ -1,6 +1,6 @@
 {
     'name': 'Petty Cash Management',
-    'version': '18.0.1.1.0',
+    'version': '19.0.1.1.0',
     'author': 'Kinan',
     'website': 'absar-alomran.com',
     'category': 'Accounting',

@@ -1,6 +1,6 @@
 {
     "name": "Send to Sign for Purchase Orders",
-    "version": "1.0.0",
+    "version": "19.0.1.0.0",
     "summary": "Digital signing workflow for purchase orders using Odoo Sign.",
     "description": """
         Digital Signing Workflow for Purchase Orders

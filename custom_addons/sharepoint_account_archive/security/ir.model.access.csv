@@ -1,4 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_sharepoint_archive_config_system,sharepoint.archive.config system,model_sharepoint_archive_config,base.group_system,1,1,1,1
-access_sharepoint_archive_config_account_manager,sharepoint.archive.config account manager,model_sharepoint_archive_config,account.group_account_manager,1,0,0,0
-access_sharepoint_historical_archive_wizard_account_manager,sharepoint.historical.archive.wizard account manager,model_sharepoint_historical_archive_wizard,account.group_account_manager,1,1,1,1

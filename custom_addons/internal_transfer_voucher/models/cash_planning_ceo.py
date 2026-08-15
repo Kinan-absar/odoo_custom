@@ -322,13 +322,13 @@ class CashPlanLineCEO(models.Model):
         group = self.env.ref(xmlid, raise_if_not_found=False)
         if not group:
             return self.env['res.users']
-        users = group.sudo().users.filtered(
+        users = group.sudo().user_ids.filtered(
             lambda user: user.active and not user.share and self.company_id in user.company_ids
         )
         for exclude_xmlid in (exclude_xmlids or []):
             excluded_group = self.env.ref(exclude_xmlid, raise_if_not_found=False)
             if excluded_group:
-                users -= excluded_group.sudo().users
+                users -= excluded_group.sudo().user_ids
         return users
 
     def _check_any_group(self, xmlids, error_message):

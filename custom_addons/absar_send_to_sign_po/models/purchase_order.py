@@ -149,7 +149,7 @@ class PurchaseOrderLine(models.Model):
 
         line_meaningful_fields = {
             'product_qty', 'price_unit', 'product_id',
-            'date_planned', 'discount', 'taxes_id', 'product_uom',
+            'date_planned', 'discount', 'taxes_id', 'product_uom_id',
         }
 
         if set(vals.keys()) & line_meaningful_fields:
