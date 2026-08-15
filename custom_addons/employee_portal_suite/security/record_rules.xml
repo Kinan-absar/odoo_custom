@@ -36,7 +36,7 @@
         <field name="name">Portal Reports: Visible Portal Groups Only</field>
         <field name="model_id" ref="model_portal_report_document"/>
         <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_employee'))]"/>
-        <field name="domain_force">[('active', '=', True), ('allowed_group_ids', 'in', user.groups_id.ids)]</field>
+        <field name="domain_force">[('active', '=', True), ('allowed_group_ids', 'in', user.group_ids.ids)]</field>
     </record>
 
     <!-- PORTAL REPORT SEEN MARKERS: every user (incl. portal) can only access their own marker rows -->

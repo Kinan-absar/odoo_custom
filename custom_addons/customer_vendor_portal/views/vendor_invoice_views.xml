@@ -113,7 +113,7 @@
                 <filter string="Under Review" name="filter_review" domain="[('state','=','review')]"/>
                 <filter string="Approved" name="filter_approved" domain="[('state','=','approved')]"/>
                 <filter string="Rejected" name="filter_rejected" domain="[('state','=','rejected')]"/>
-                <group expand="0" string="Group By">
+                <group>
                     <filter string="Vendor" name="group_partner" context="{'group_by':'partner_id'}"/>
                     <filter string="Status" name="group_state" context="{'group_by':'state'}"/>
                     <filter string="Purchase Order" name="group_po" context="{'group_by':'po_id'}"/>

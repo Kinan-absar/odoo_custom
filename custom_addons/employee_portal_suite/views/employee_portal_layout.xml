@@ -1477,7 +1477,7 @@
                 <div class="portal-announcement-wrapper">
                     <t t-foreach="portal_announcements" t-as="ann">
 
-                        <t t-if="not ann.group_ids or request.env.user.groups_id &amp; ann.group_ids">
+                        <t t-if="not ann.group_ids or request.env.user.group_ids &amp; ann.group_ids">
                             <div t-attf-class="portal-announcement alert alert-#{ann.color}">
                                 <div class="fw-bold mb-1">
                                     <t t-esc="ann.name"/>
