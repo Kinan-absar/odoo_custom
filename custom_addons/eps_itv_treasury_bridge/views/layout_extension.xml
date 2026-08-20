@@ -3,18 +3,44 @@
     <template id="employee_portal_layout_treasury"
               inherit_id="employee_portal_suite.employee_portal_layout">
 
-        <!-- "Payment Approvals" inside the existing Approvals dropdown -->
-        <xpath expr="//a[text()='Material Approvals']" position="after">
+        <!-- Desktop: keep treasury approvals inside the new left-rail Approvals group. -->
+        <xpath expr="//div[@id='ep-group-approvals']//a[@href='/my/employee/material/approvals']" position="after">
             <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
-                <a href="/my/employee/treasury/payments" class="ep-sub-link">Payment Approvals</a>
+                <a href="/my/employee/treasury/payments"
+                   t-att-class="'ep-rail-sublink active' if request.httprequest.path.startswith('/my/employee/treasury/payments') else 'ep-rail-sublink'">
+                    Payment Approvals
+                </a>
             </t>
         </xpath>
 
-        <!-- "Weekly Cash Plans" top-level nav link, right after the Approvals dropdown -->
-        <xpath expr="//div[@id='app-d']/ancestor::t[1]" position="after">
+        <!-- Desktop: Weekly Cash Plans is a first-class destination on the new left rail. -->
+        <xpath expr="//div[@id='ep-group-approvals']" position="after">
             <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
-                <a href="/my/employee/treasury/plans" class="ep-link">Weekly Cash Plans</a>
+                <a href="/my/employee/treasury/plans"
+                   t-att-class="'ep-rail-link active' if request.httprequest.path.startswith('/my/employee/treasury/plans') else 'ep-rail-link'">
+                    <i class="fa fa-line-chart"/> Weekly Cash Plans
+                </a>
             </t>
         </xpath>
+
+        <!-- Mobile: add both treasury destinations to the existing Approvals bottom-sheet menu. -->
+        <xpath expr="//div[@id='approvalMenu']//a[@href='/my/employee/material/approvals']" position="after">
+            <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
+                <a href="/my/employee/treasury/payments" class="fab-item">
+                    <i class="fa fa-check-square-o"/>
+                    <span>Payment Approvals</span>
+                </a>
+                <a href="/my/employee/treasury/plans" class="fab-item">
+                    <i class="fa fa-line-chart"/>
+                    <span>Weekly Cash Plans</span>
+                </a>
+            </t>
+        </xpath>
+
+        <!-- Make the mobile Approvals button active on treasury pages too. -->
+        <xpath expr="//div[@id='approvalBtn']" position="attributes">
+            <attribute name="t-att-class">'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') or request.httprequest.path.startswith('/my/employee/treasury/') else 'nav-btn'</attribute>
+        </xpath>
+
     </template>
 </odoo>
