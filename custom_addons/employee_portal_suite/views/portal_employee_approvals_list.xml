@@ -13,7 +13,7 @@
                         <div class="material-header">
 
                             <div class="material-header-top">
-                                <div><h4 class="mb-0 fw-semibold">Approval Center</h4><small class="text-muted">Employee Requests</small></div>
+                                <h4 class="mb-0 fw-semibold">Employee Requests Approval</h4>
 
                                 <div class="d-flex align-items-center gap-2">
                                     <label class="mb-0 fw-semibold small text-muted">Show:</label>

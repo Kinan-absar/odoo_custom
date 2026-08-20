@@ -6,7 +6,7 @@
 
         <div class="container mt-4">
 
-            <div><h3 class="mb-1">Signatures</h3><p class="text-muted mb-0">Review documents that require your signature.</p></div>
+            <h3>Documents to Sign</h3>
 
             <!-- FILTER BUTTONS -->
             <div class="btn-group mt-3 mb-3">
