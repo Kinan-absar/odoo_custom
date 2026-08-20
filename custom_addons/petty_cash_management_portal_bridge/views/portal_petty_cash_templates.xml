@@ -4,7 +4,7 @@
     <template id="portal_petty_cash_list" name="Petty Cash List">
         <t t-call="employee_portal_suite.employee_portal_layout">
 
-            <div class="container py-4">
+            <div class="ep-page-section py-2">
 
                 <div class="material-header">
                     <div class="material-header-top">
@@ -170,7 +170,7 @@
     <template id="portal_petty_cash_detail" name="Petty Cash Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
 
-            <div class="container py-4">
+            <div class="ep-page-section py-2">
 
                 <a href="/my/employee/petty-cash"
                    class="text-decoration-none small text-muted">
@@ -268,7 +268,7 @@
                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
 
                                         <a class="text-decoration-none"
-                                           t-att-href="'/web/content/%s' % att.id"
+                                           t-att-href="'/my/employee/petty-cash/attachment/%s/view' % att.id"
                                            target="_blank">
                                             📎 <t t-esc="att.name"/>
                                         </a>
@@ -467,6 +467,42 @@
 </style>
 
         </t>
+    </template>
+
+    <template id="employee_portal_layout_petty_cash" inherit_id="employee_portal_suite.employee_portal_layout">
+        <xpath expr="//div[@id='ep-nav-slot-operations-extra']" position="inside">
+            <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                <a href="/my/employee/petty-cash" t-att-class="'ep-link active' if ep_path.startswith('/my/employee/petty-cash') else 'ep-link'">
+                    <i class="fa fa-money"></i><span>Petty Cash</span>
+                </a>
+            </t>
+        </xpath>
+        <xpath expr="//t[@t-set='has_extended_nav']" position="attributes">
+            <attribute name="t-value">not is_attendance_only and (request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo') or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or request.env.user.has_group('employee_portal_suite.group_mr_projects_director') or request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user'))</attribute>
+        </xpath>
+        <xpath expr="//div[@id='ep-mobile-operations-slot']" position="inside">
+            <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                <a href="/my/employee/petty-cash" t-att-class="'nav-btn active' if ep_path.startswith('/my/employee/petty-cash') else 'nav-btn'">
+                    <i class="fa fa-money"></i><span>Cash</span>
+                </a>
+            </t>
+        </xpath>
+    </template>
+
+    <template id="employee_portal_dashboard_petty_cash" inherit_id="employee_portal_suite.employee_portal_dashboard">
+        <xpath expr="//div[@id='ep-dashboard-card-grid']" position="inside">
+            <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                <t t-set="ep_petty_count" t-value="request.env['petty.cash'].sudo().search_count([('user_id','=',request.env.user.id)])"/>
+                <div class="col-6 col-md-6">
+                    <a href="/my/employee/petty-cash" class="dashboard-link">
+                        <div class="dashboard-card">
+                            <div class="card-top"><div class="card-icon bg-warning-soft"><i class="fa fa-money"></i></div><span class="card-title">Petty Cash</span></div>
+                            <div class="card-bottom"><div class="card-bottom-number-row"><span class="card-number"><t t-esc="ep_petty_count"/></span></div><span class="small text-muted">My cash expense reports</span></div>
+                        </div>
+                    </a>
+                </div>
+            </t>
+        </xpath>
     </template>
 
 </odoo>

@@ -3,7 +3,7 @@
     <!-- Contracts List -->
     <template id="portal_employee_contracts" name="Employee Portal - Contracts">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container construction-portal-page mt-4">
+            <div class="ep-page-section construction-portal-page mt-4">
                 <div class="row">
                     <div class="col-12">
                         <h3>Construction Contracts</h3>
@@ -141,7 +141,7 @@
     <!-- Contract Detail - FIXED -->
     <template id="portal_employee_contract_detail" name="Employee Portal - Contract Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container construction-portal-page">
+            <div class="ep-page-section construction-portal-page">
                 <div class="row mt-4">
                     <div class="col-md-8">
                         <h3 class="mb-3">

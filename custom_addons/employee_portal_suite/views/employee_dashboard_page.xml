@@ -513,7 +513,7 @@
 
 
             </style>
-            <div class="row mt-4 g-3">
+            <div id="ep-dashboard-card-grid" class="row mt-4 g-3">
                 <t t-if="not request.env.user.telegram_connected and request.env['employee.portal.telegram.config'].sudo().search_count([('active','=',True),('enabled','=',True)]) &gt; 0">
                     <div class="col-12">
                         <div class="telegram-connect-banner">

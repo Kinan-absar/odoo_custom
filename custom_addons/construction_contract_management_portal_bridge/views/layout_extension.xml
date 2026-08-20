@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="employee_portal_layout_construction" inherit_id="employee_portal_suite.employee_portal_layout">
+        <xpath expr="//div[@id='ep-nav-slot-sections-extra']" position="inside">
+            <t t-if="request.env.ref('construction_contract_management.group_construction_portal', raise_if_not_found=False) and request.env.user.has_group('construction_contract_management.group_construction_portal')">
+                <div class="ep-nav-section">
+                    <div class="ep-nav-section-label">Construction</div>
+                    <div class="ep-nav-links">
+                        <a href="/my/employee/contracts" t-att-class="'ep-link active' if ep_path.startswith('/my/employee/contract') else 'ep-link'"><i class="fa fa-file-text-o"></i><span>Contracts</span></a>
+                        <a href="/my/employee/ipcs" t-att-class="'ep-link active' if ep_path.startswith('/my/employee/ipc') else 'ep-link'"><i class="fa fa-money"></i><span>IPCs</span></a>
+                        <a href="/my/employee/variations" t-att-class="'ep-link active' if ep_path.startswith('/my/employee/variation') else 'ep-link'"><i class="fa fa-exchange"></i><span>Variations</span></a>
+                        <a href="/my/employee/measurements" t-att-class="'ep-link active' if ep_path.startswith('/my/employee/measurement') else 'ep-link'"><i class="fa fa-bar-chart"></i><span>Measurements</span></a>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+    </template>
+</odoo>

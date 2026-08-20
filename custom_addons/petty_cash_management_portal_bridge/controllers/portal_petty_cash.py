@@ -172,7 +172,7 @@ class PortalPettyCash(CustomerPortal):
                 'datas': base64.b64encode(file.read()),
                 'res_model': 'petty.cash',
                 'res_id': report.id,
-                'public': True,   # ← THIS IS THE MAGIC FIX
+                'public': False,
             })
 
             # 🔥 IMPORTANT
@@ -180,8 +180,27 @@ class PortalPettyCash(CustomerPortal):
 
         return request.redirect(f'/my/employee/petty-cash/{report_id}?success=uploaded')
 
+    @http.route('/my/employee/petty-cash/attachment/<int:attachment_id>/view',
+                type='http', auth='user', website=True)
+    def portal_view_attachment(self, attachment_id, **kw):
+        attachment = request.env['ir.attachment'].sudo().browse(attachment_id).exists()
+        if not attachment or attachment.res_model != 'petty.cash':
+            return request.not_found()
+
+        report = request.env['petty.cash'].sudo().browse(attachment.res_id).exists()
+        if not report or report.user_id != request.env.user:
+            return request.not_found()
+
+        data = base64.b64decode(attachment.datas or b'')
+        headers = [
+            ('Content-Type', attachment.mimetype or 'application/octet-stream'),
+            ('Content-Length', str(len(data))),
+            ('Content-Disposition', 'inline; filename="%s"' % (attachment.name or 'attachment')),
+        ]
+        return request.make_response(data, headers=headers)
+
     @http.route('/my/employee/petty-cash/attachment/<int:attachment_id>/delete',
-            type='http', auth='user', website=True)
+            type='http', auth='user', website=True, methods=['POST'])
     def portal_delete_attachment(self, attachment_id, **kw):
 
         attachment = request.env['ir.attachment'].sudo().browse(attachment_id)

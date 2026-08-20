@@ -4,7 +4,7 @@
     <template id="portal_material_approvals_list" name="Material Approvals Page">
         <t t-call="employee_portal_suite.employee_portal_layout">
 
-            <div class="container mt-4">
+            <div class="ep-page-section mt-4">
 
     <div class="card shadow-sm border-0">
         <div class="card-body">

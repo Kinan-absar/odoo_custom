@@ -1358,27 +1358,52 @@
 }
             </style>
 
+            <!-- Portal shell overrides live in a separate stable stylesheet so bridge modules
+                 can inherit semantic slots instead of depending on visual implementation details. -->
+            <link rel="stylesheet" type="text/css" href="/employee_portal_suite/static/src/css/portal_premium_shell.css"/>
+
             <t t-set="ep_notif_summary"
                 t-value="request.env['portal.report.seen'].sudo()._get_notification_summary(request.env.user) if not request.env.user.has_group('employee_portal_suite.group_attendance_only') else {}"/>
             <t t-set="ep_notif_unread_total"
                 t-value="sum(v.get('new', 0) for v in ep_notif_summary.values())"/>
 
             <!-- ================================================================
-                 DESKTOP NAVBAR
+                 DESKTOP ERP SIDEBAR
+                 Stable extension slots are intentionally exposed for bridge modules.
                  ================================================================ -->
-            <nav class="ep-navbar">
-                <div class="ep-nav-links">
-                    <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-                        <a href="/my" class="ep-link">Dashboard</a>
+            <t t-set="ep_path" t-value="request.httprequest.path"/>
+            <nav class="ep-navbar ep-sidebar" aria-label="Employee Portal">
+                <div class="ep-sidebar-brand">
+                    <div class="ep-brand-mark">
+                        <img t-att-src="'/web/image/res.company/%s/logo' % request.env.company.id" alt="Company"/>
+                    </div>
+                    <div class="ep-brand-copy">
+                        <span class="ep-brand-eyebrow">Employee Portal</span>
+                        <strong t-out="request.env.company.name"/>
+                    </div>
+                </div>
 
-                        <div class="ep-dropdown">
-                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests &#9662;</button>
-                            <div id="req-d" class="ep-dropdown-menu">
-                                <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
-                                <a href="/my/employee/requests/new" class="ep-sub-link text-primary">+ New Employee Request</a>
-                                <hr class="my-1"/>
-                                <a href="/my/employee/material" class="ep-sub-link">Material Requests</a>
-                                <a href="/my/employee/material/new" class="ep-sub-link text-primary">+ New Material Request</a>
+                <div class="ep-sidebar-scroll">
+                    <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                        <div class="ep-nav-section">
+                            <div class="ep-nav-section-label">Workspace</div>
+                            <div id="ep-nav-slot-workspace" class="ep-nav-links">
+                                <a href="/my/employee"
+                                   t-att-class="'ep-link active' if ep_path == '/my/employee' else 'ep-link'">
+                                    <i class="fa fa-th-large"></i><span>Overview</span>
+                                </a>
+                                <a href="/my/employee/requests"
+                                   t-att-class="'ep-link active' if ep_path.startswith('/my/employee/requests') else 'ep-link'">
+                                    <i class="fa fa-file-text-o"></i><span>Employee Requests</span>
+                                </a>
+                                <a href="/my/employee/material"
+                                   t-att-class="'ep-link active' if ep_path.startswith('/my/employee/material') and not ep_path.startswith('/my/employee/material/approvals') else 'ep-link'">
+                                    <i class="fa fa-cubes"></i><span>Material Requests</span>
+                                </a>
+                                <a href="/my/employee/sign"
+                                   t-att-class="'ep-link active' if ep_path.startswith('/my/employee/sign') else 'ep-link'">
+                                    <i class="fa fa-pencil-square-o"></i><span>Signatures</span>
+                                </a>
                             </div>
                         </div>
 
@@ -1392,19 +1417,20 @@
                             or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
                             or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
                         ">
-                            <div class="ep-dropdown">
-                                <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals &#9662;</button>
-                                <div id="app-d" class="ep-dropdown-menu">
-
+                            <div class="ep-nav-section">
+                                <div class="ep-nav-section-label">Approvals</div>
+                                <div id="ep-nav-slot-approvals" class="ep-nav-links">
                                     <t t-if="
                                         request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
                                         or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
                                         or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
                                         or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
                                     ">
-                                        <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
+                                        <a href="/my/employee/approvals"
+                                           t-att-class="'ep-link active' if ep_path.startswith('/my/employee/approvals') else 'ep-link'">
+                                            <i class="fa fa-check-square-o"></i><span>Employee Approvals</span>
+                                        </a>
                                     </t>
-
                                     <t t-if="
                                         request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
                                         or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
@@ -1412,30 +1438,60 @@
                                         or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
                                         or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
                                     ">
-                                        <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
+                                        <a href="/my/employee/material/approvals"
+                                           t-att-class="'ep-link active' if ep_path.startswith('/my/employee/material/approvals') else 'ep-link'">
+                                            <i class="fa fa-tasks"></i><span>Material Approvals</span>
+                                        </a>
                                     </t>
-
                                 </div>
                             </div>
                         </t>
 
-                        <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
-                            <a href="/my/employee/petty-cash" class="ep-link">Petty Cash</a>
-                            <a href="/my/employee/attendance" class="ep-link">Attendance</a>
-                        </t>
-                    </t><!-- /not attendance_only -->
-                    <t t-if="request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-                        <a href="/my/employee/attendance" class="ep-link">Attendance</a>
+                        <div class="ep-nav-section">
+                            <div class="ep-nav-section-label">Operations</div>
+                            <div id="ep-nav-slot-operations" class="ep-nav-links">
+                                <a href="/my/employee/attendance"
+                                   t-att-class="'ep-link active' if ep_path.startswith('/my/employee/attendance') else 'ep-link'">
+                                    <i class="fa fa-clock-o"></i><span>Attendance</span>
+                                </a>
+                                <t t-if="request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')">
+                                    <a href="/my/employee/salary-reports"
+                                       t-att-class="'ep-link active' if ep_path.startswith('/my/employee/salary-reports') else 'ep-link'">
+                                        <i class="fa fa-bar-chart"></i><span>Salary Reports</span>
+                                    </a>
+                                </t>
+                                <div id="ep-nav-slot-operations-extra"></div>
+                            </div>
+                        </div>
+                        <div id="ep-nav-slot-sections-extra"></div>
                     </t>
-                </div><!-- /ep-nav-links -->
-                <div class="d-flex align-items-center gap-3">
-                    <t t-call="employee_portal_suite.ep_notification_bell"/>
-                    <div class="text-end d-none d-lg-block">
-                        <h6 class="mb-0 fw-bold" t-out="request.env.user.partner_id.name"/>
-                        <p class="mb-0 text-muted small" t-out="request.env.user.partner_id.company_name"/>
+
+                    <t t-if="request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                        <div class="ep-nav-section">
+                            <div class="ep-nav-section-label">Workspace</div>
+                            <div class="ep-nav-links">
+                                <a href="/my/employee/attendance" class="ep-link active">
+                                    <i class="fa fa-clock-o"></i><span>Attendance</span>
+                                </a>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+
+                <div class="ep-sidebar-footer">
+                    <div class="ep-profile-row">
+                        <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="ep-profile-avatar"/>
+                        <div class="ep-profile-copy">
+                            <strong t-out="request.env.user.partner_id.name"/>
+                            <span t-out="request.env.user.partner_id.company_name or request.env.company.name"/>
+                        </div>
+                        <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                            <t t-call="employee_portal_suite.ep_notification_bell"/>
+                        </t>
                     </div>
-                    <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="rounded-circle border" width="40" height="40"/>
-                    <a href="/web/session/logout" class="btn btn-sm btn-outline-danger ms-2">Logout</a>
+                    <a href="/web/session/logout" class="ep-logout-link">
+                        <i class="fa fa-sign-out"></i><span>Sign out</span>
+                    </a>
                 </div>
             </nav>
 
@@ -1530,7 +1586,6 @@
        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-       or request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')
        )
    "/>
 
@@ -1640,17 +1695,12 @@
                                     <span>Material Approvals</span>
                                 </a>
                             </t>
+                            <div id="ep-mobile-approval-slot"></div>
 
                         </div>
                     </t>
 
-                    <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
-                        <a href="/my/employee/petty-cash"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/petty-cash') else 'nav-btn'">
-                            <i class="fa fa-money"></i>
-                            <span>Cash</span>
-                        </a>
-                    </t>
+<div id="ep-mobile-operations-slot"></div>
                        </t>
                     
 

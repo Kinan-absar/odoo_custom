@@ -3,7 +3,7 @@
 
     <template id="portal_salary_report_list" name="Portal Salary Reports">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container mt-4 mb-5">
+            <div class="ep-page-section mt-4 mb-5">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div>
                         <h3 class="mb-1">Salary Reports</h3>
@@ -56,7 +56,7 @@
 
     <template id="portal_salary_report_detail" name="Portal Salary Report Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container mt-4 mb-5">
+            <div class="ep-page-section mt-4 mb-5">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div>
                         <h3 class="mb-1">Salary Report</h3>

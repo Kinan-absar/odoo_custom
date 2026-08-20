@@ -4,7 +4,7 @@
 <template id="portal_sign_documents_page">
     <t t-call="employee_portal_suite.employee_portal_layout">
 
-        <div class="container mt-4">
+        <div class="ep-page-section mt-4">
 
             <h3>Documents to Sign</h3>
 

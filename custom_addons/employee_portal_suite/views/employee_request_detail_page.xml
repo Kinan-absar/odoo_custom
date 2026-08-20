@@ -4,7 +4,7 @@
     <template id="employee_request_detail_page" name="Employee Request Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
 
-            <div class="container mt-3 employee-req-detail">
+            <div class="ep-page-section mt-3 employee-req-detail">
 
                 <!-- BACK BUTTON -->
                 <div class="mb-4">

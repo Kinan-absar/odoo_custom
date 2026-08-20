@@ -2,7 +2,7 @@
 <odoo>
     <template id="portal_signed_po_not_found" name="Signed PO Not Found">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container py-4">
+            <div class="ep-page-section py-4">
                 <div class="alert alert-warning rounded-3">
                     <h5 class="mb-2">Signed Purchase Order Not Found</h5>
                     <p class="mb-0">
@@ -17,7 +17,7 @@
 
     <template id="portal_signed_po_not_ready" name="Signed PO Not Ready">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="container py-4">
+            <div class="ep-page-section py-4">
                 <div class="alert alert-info rounded-3">
                     <h5 class="mb-2">Purchase Order Signature In Progress</h5>
                     <p class="mb-1">
