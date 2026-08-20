@@ -155,7 +155,10 @@ class AttendanceSalaryReport(models.Model):
                 'date_to': self.date_to,
                 'payslip_run_id': batch.id,
             }
-            if line.contract_id and 'contract_id' in Payslip._fields:
+            if line.contract_id and 'version_id' in Payslip._fields:
+                # Odoo 19 renamed hr.contract -> hr.version and hr.payslip.contract_id -> version_id
+                vals['version_id'] = line.contract_id
+            elif line.contract_id and 'contract_id' in Payslip._fields:
                 vals['contract_id'] = line.contract_id
             if self.struct_id and 'struct_id' in Payslip._fields:
                 vals['struct_id'] = self.struct_id.id
@@ -305,15 +308,24 @@ class AttendanceSalaryReport(models.Model):
     # ── Salary helpers ────────────────────────────────────────────────────────
 
     def _get_contract(self, employee):
-        if 'hr.contract' not in self.env.registry:
+        # Odoo 19 renamed the hr.contract model to hr.version; support both
+        # so this module keeps working whether it runs on 18 (hr.contract)
+        # or 19 (hr.version).
+        model_name = False
+        if 'hr.version' in self.env.registry:
+            model_name = 'hr.version'
+        elif 'hr.contract' in self.env.registry:
+            model_name = 'hr.contract'
+        if not model_name:
             return False
         domain = [('employee_id', '=', employee.id)]
-        Contract = self.env['hr.contract']
+        Contract = self.env[model_name]
         if 'company_id' in Contract._fields:
             domain.append(('company_id', '=', self.company_id.id))
         if 'state' in Contract._fields:
             domain.append(('state', 'in', ['open', 'close']))
-        return Contract.sudo().search(domain, order='date_start desc, id desc', limit=1)[:1]
+        order = 'date_start desc, id desc' if 'date_start' in Contract._fields else 'id desc'
+        return Contract.sudo().search(domain, order=order, limit=1)[:1]
 
     def _salary_components(self, employee, contract=False):
         """

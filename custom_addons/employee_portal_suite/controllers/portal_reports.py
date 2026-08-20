@@ -13,7 +13,7 @@ class EmployeePortalReports(CustomerPortal):
     def _portal_report_domain(self):
         return [
             ('active', '=', True),
-            ('allowed_group_ids', 'in', request.env.user.groups_id.ids),
+            ('allowed_group_ids', 'in', request.env.user.group_ids.ids),
         ]
 
     def _get_accessible_report(self, report_id):

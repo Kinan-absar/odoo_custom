@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_employee_portal_telegram_config_form" model="ir.ui.view">
+        <field name="name">employee.portal.telegram.config.form</field>
+        <field name="model">employee.portal.telegram.config</field>
+        <field name="arch" type="xml">
+            <form string="Telegram Notifications">
+                <header>
+                    <button name="action_test_bot" type="object" string="Test Bot" class="btn-secondary"/>
+                    <button name="action_configure_webhook" type="object" string="Configure Webhook &amp; Enable" class="btn-primary"/>
+                    <button name="action_disable_webhook" type="object" string="Disable Telegram" class="btn-secondary" invisible="not enabled"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Telegram Bot">
+                            <field name="name"/>
+                            <field name="enabled"/>
+                            <field name="bot_token" password="True"/>
+                            <field name="bot_username" placeholder="absar_approvals_bot"/>
+                        </group>
+                        <group string="Webhook">
+                            <field name="webhook_url" readonly="1" widget="url"/>
+                            <field name="webhook_secret" readonly="1" password="True"/>
+                        </group>
+                    </group>
+                    <separator string="Notification Rules"/>
+                    <group>
+                        <group string="Approvals">
+                            <field name="requester_stage_notifications"/>
+                            <field name="approval_reminders_enabled"/>
+                            <field name="approval_reminder_hours" invisible="not approval_reminders_enabled"/>
+                            <field name="approval_repeat_hours" invisible="not approval_reminders_enabled"/>
+                            <field name="approval_escalation_hours" invisible="not approval_reminders_enabled"/>
+                            <field name="approval_escalation_user_id" invisible="not approval_reminders_enabled"/>
+                        </group>
+                        <group string="Attendance">
+                            <field name="attendance_reminders_enabled"/>
+                            <field name="clock_in_before_minutes" invisible="not attendance_reminders_enabled"/>
+                            <field name="missing_clock_in_after_minutes" invisible="not attendance_reminders_enabled"/>
+                            <field name="clock_out_before_minutes" invisible="not attendance_reminders_enabled"/>
+                            <field name="missing_clock_out_after_minutes" invisible="not attendance_reminders_enabled"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        Employees and approvers connect their Telegram account from the Employee Portal. Telegram is used only for notifications; approvals remain inside Odoo. Attendance reminders use each employee's Odoo working schedule and are skipped on non-working days.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_employee_portal_telegram_config_list" model="ir.ui.view">
+        <field name="name">employee.portal.telegram.config.list</field>
+        <field name="model">employee.portal.telegram.config</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="enabled"/>
+                <field name="bot_username"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_employee_portal_telegram_config" model="ir.actions.act_window">
+        <field name="name">Telegram Notifications</field>
+        <field name="res_model">employee.portal.telegram.config</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_employee_portal_telegram_config"
+              name="Telegram Notifications"
+              parent="menu_employee_portal_root"
+              action="action_employee_portal_telegram_config"
+              sequence="90"
+              groups="base.group_system"/>
+
+    <!-- Internal users connect from the top-right user menu.
+         Keep the former inherited form view inactive on upgrades so there is
+         only one connection entry point. -->
+    <record id="view_users_form_telegram_employee_portal" model="ir.ui.view">
+        <field name="name">res.users.form.telegram.employee.portal</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="active" eval="False"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Telegram" name="employee_portal_telegram"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

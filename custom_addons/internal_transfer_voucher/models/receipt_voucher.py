@@ -71,6 +71,24 @@ class AccountReceiptVoucher(models.Model):
         copy=False
     )
 
+    cash_plan_line_id = fields.Many2one(
+        'cash.plan.line',
+        string='Weekly Plan Line',
+        readonly=True,
+        copy=False,
+        help='The Weekly Cash Plan line this voucher settles — either the planned receipt it '
+             'was raised from, or the automatically-created Unplanned Actual line when this '
+             'voucher was created directly.',
+    )
+
+    is_unplanned_actual = fields.Boolean(
+        string='Unplanned Actual',
+        related='cash_plan_line_id.is_unplanned',
+        store=True,
+        help='This receipt voucher was created directly, outside the weekly planning flow, and '
+             'was automatically matched to a Weekly Cash Plan by date.',
+    )
+
 
     # -------------------------
     # Customer Invoice Matching / Reconciliation
@@ -478,6 +496,12 @@ class AccountReceiptVoucher(models.Model):
             move.action_post()
             rec.state = 'posted'
 
+            # Recreate a missing Unplanned Actual after a direct receipt voucher is
+            # reset and reused. Existing planned-receipt links remain untouched.
+            if not rec.cash_plan_line_id:
+                rec._auto_link_unplanned_cash_plan()
+            rec._sync_unplanned_cash_plan_by_date()
+
     def action_cancel(self):
         for rec in self:
             if rec.state == 'posted':
@@ -503,7 +527,18 @@ class AccountReceiptVoucher(models.Model):
                 # protection. Keep the existing move linked and reuse it on repost.
                 rec.move_id.sudo().write({'state': 'draft'})
 
-            rec.state = 'draft'
+            # Put the voucher itself in draft before unlinking the generated
+            # cash-plan line. Unlinking that line may clear its voucher relation through
+            # the ORM; doing so while the voucher still says 'posted' is blocked by the
+            # posted-voucher write guard.
+            rec.write({'state': 'draft'})
+
+            # Remove only the automatically-generated Unplanned Actual when a
+            # direct receipt voucher is reset. A real planned-receipt link is retained.
+            old_plan_line = rec.cash_plan_line_id
+            if old_plan_line and old_plan_line.is_unplanned:
+                rec.with_context(skip_cash_plan_link_lock=True).write({'cash_plan_line_id': False})
+                old_plan_line.sudo().unlink()
 
     # -------------------------
     # Deletion Protection
@@ -521,22 +556,122 @@ class AccountReceiptVoucher(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        for vals in vals_list:
+        prepared_vals_list = []
+        for original_vals in vals_list:
+            vals = dict(original_vals)
             if vals.get('name', 'New') == 'New':
                 vals['name'] = self.env['ir.sequence'].sudo().next_by_code(
                     'receipt.voucher'
                 ) or 'New'
-        return super().create(vals_list)
+            prepared_vals_list.append(vals)
+
+        records = super().create(prepared_vals_list)
+        if not self.env.context.get('skip_cash_plan_autolink'):
+            records._auto_link_unplanned_cash_plan()
+        return records
+
+    def _get_or_create_unplanned_category(self, company_id):
+        category = self.env.ref(
+            'internal_transfer_voucher.cat_in_unplanned',
+            raise_if_not_found=False,
+        )
+        if category and (not category.company_id or category.company_id.id == company_id):
+            return category
+
+        Category = self.env['cash.plan.category'].sudo()
+        category = Category.search([
+            ('flow_type', '=', 'in'),
+            ('name', '=', _('Unplanned Actual')),
+            '|', ('company_id', '=', False), ('company_id', '=', company_id),
+        ], limit=1)
+        if category:
+            return category
+        return Category.create({
+            'name': _('Unplanned Actual'),
+            'flow_type': 'in',
+            'sequence': 99,
+            'company_id': company_id,
+        })
+
+    def _find_weekly_plan_for_voucher_date(self):
+        self.ensure_one()
+        if not self.date or not self.company_id:
+            return self.env['cash.plan.run']
+        return self.env['cash.plan.run'].sudo().search([
+            ('company_id', '=', self.company_id.id),
+            ('date_from', '<=', self.date),
+            ('date_to', '>=', self.date),
+            ('state', '!=', 'cancel'),
+        ], order='date_from desc, id desc', limit=1)
+
+    def _sync_unplanned_cash_plan_by_date(self):
+        """Place a directly-created receipt in the weekly plan covering its voucher date."""
+        for rec in self:
+            line = rec.cash_plan_line_id
+            if not line or not line.is_unplanned:
+                continue
+            run = rec._find_weekly_plan_for_voucher_date()
+            line.sudo().with_context(allow_locked_write=True).write({
+                'run_id': run.id if run else False,
+                'planned_date': rec.date or False,
+                'company_id': rec.company_id.id,
+                'partner_id': rec.partner_id.id,
+                'journal_id': rec.journal_id.id,
+                'account_id': rec.account_id.id,
+                'description': _(
+                    'Created directly from Receipt Voucher %s. The voucher date automatically '
+                    'selects the matching Weekly Cash Plan; this line remains classified as an Unplanned Actual.'
+                ) % rec.name,
+            })
+
+    def _auto_link_unplanned_cash_plan(self):
+        """Create an unplanned receipt and assign it to the weekly plan covering the voucher date."""
+        CashPlanLine = self.env['cash.plan.line'].sudo()
+        for rec in self:
+            if not rec.id or rec.cash_plan_line_id:
+                continue
+            if CashPlanLine.search_count([('receipt_voucher_id', '=', rec.id)]):
+                continue
+            category = rec._get_or_create_unplanned_category(rec.company_id.id)
+            run = rec._find_weekly_plan_for_voucher_date()
+            line = CashPlanLine.create({
+                'company_id': rec.company_id.id,
+                'run_id': run.id if run else False,
+                'planned_date': rec.date or False,
+                'name': _('Unplanned Actual Receipt - %s') % (rec.partner_id.display_name or rec.name),
+                'flow_type': 'in',
+                'transaction_type': 'other',
+                'category_id': category.id,
+                'partner_id': rec.partner_id.id,
+                'forecast_amount': 0.0,
+                'is_unplanned': True,
+                'state': 'executed',
+                'ceo_decision': 'not_required',
+                'journal_id': rec.journal_id.id,
+                'account_id': rec.account_id.id,
+                'invoice_ids': [(6, 0, rec.invoice_ids.ids)],
+                'receipt_voucher_id': rec.id,
+                'description': _(
+                    'Created directly from Receipt Voucher %s. The voucher date automatically selects the matching '
+                    'Weekly Cash Plan; this line remains classified as an Unplanned Actual.'
+                ) % rec.name,
+            })
+            rec.cash_plan_line_id = line.id
 
     def write(self, vals):
         for rec in self:
             if rec.state == 'posted':
                 allowed_fields = {'state', 'move_id', 'invoice_ids'}
+                if self.env.context.get('skip_cash_plan_link_lock'):
+                    allowed_fields.add('cash_plan_line_id')
                 if not set(vals.keys()).issubset(allowed_fields):
                     raise UserError(_("You cannot modify a posted receipt voucher."))
                 if 'invoice_ids' in vals and rec.invoice_reconciled and not self.env.context.get('skip_invoice_reconcile_lock'):
                     raise UserError(_('You cannot change selected invoices after this voucher has been fully reconciled.'))
-        return super().write(vals)
+        result = super().write(vals)
+        if {'date', 'company_id', 'partner_id', 'journal_id', 'account_id'} & set(vals):
+            self._sync_unplanned_cash_plan_by_date()
+        return result
 
 
     @api.onchange('company_id')

@@ -1,6 +1,6 @@
 {
     'name': 'Employee Portal Suite',
-    'version': '18.0.1.4.0',
+    'version': '19.0.1.10.3',
     'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
 
     'description': """
@@ -20,6 +20,7 @@
     ✔ PDF reports for all request types
     ✔ GPS Attendance with geofencing (Check-In / Check-Out)
     ✔ Automatic checkout cron for missed attendance
+    ✔ Telegram approval, stage-change, attendance, reminder, and escalation notifications
     ✔ Multiple work locations per employee with project-specific GPS configuration
     ✔ Backend menus for Requests, Attendance, and Material Requests
     ✔ Secure access using custom portal user, manager, HR, finance, and approval groups
@@ -81,6 +82,7 @@
         'views/account_move_views.xml',
         'views/portal_announcement_views.xml',
         'views/menus.xml',
+        'views/telegram_views.xml',
         'views/portal_report_document_views.xml',
         
         # --------------------------------------------------
@@ -130,12 +132,14 @@
     # ------------------------------------------------------------------
     'assets': {
         'web.assets_frontend': [
+            'employee_portal_suite/static/src/css/stitch_workspace.css',
             'employee_portal_suite/static/src/js/sign_redirect.js',
         ],
         'web.assets_backend': [
             'employee_portal_suite/static/src/js/material_request_dashboard.js',
             'employee_portal_suite/static/src/js/employee_request_dashboard.js',
             'employee_portal_suite/static/src/js/home_announcements.js',
+            'employee_portal_suite/static/src/js/telegram_user_menu.js',
             'employee_portal_suite/static/src/xml/material_request_dashboard.xml',
             'employee_portal_suite/static/src/xml/employee_request_dashboard.xml',
             'employee_portal_suite/static/src/xml/home_announcements.xml',

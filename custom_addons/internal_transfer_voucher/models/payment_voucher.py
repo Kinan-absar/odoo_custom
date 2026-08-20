@@ -129,6 +129,25 @@ class AccountPaymentVoucher(models.Model):
         help='Select one or more Purchase Orders covered by this payment.',
     )
 
+    cash_plan_line_id = fields.Many2one(
+        'cash.plan.line',
+        string='Weekly Plan Line',
+        readonly=True,
+        copy=False,
+        help='The Weekly Cash Plan line this voucher settles — either the planned payment it '
+             'was raised from, or the automatically-created "Unplanned Actual" line if this '
+             'voucher was created directly by the Accountant.',
+    )
+
+    is_unplanned_actual = fields.Boolean(
+        string='Unplanned Actual',
+        related='cash_plan_line_id.is_unplanned',
+        store=True,
+        help='This voucher was created directly, without going through a planned payment / CEO '
+             'approval. It was automatically matched to its Weekly Cash Plan by date so the plan\'s '
+             'Total Actual and Variance stay accurate.',
+    )
+
     purchase_order_numbers = fields.Char(
         string='Purchase Orders',
         compute='_compute_purchase_order_numbers',
@@ -1084,6 +1103,16 @@ class AccountPaymentVoucher(models.Model):
             else:
                 rec._post_account_payment()
 
+            # A reused direct voucher may have lost its former automatically-created
+            # Unplanned Actual line (for example after reset/reclassification). Rebuild
+            # the correct line after successful posting, using the voucher's current
+            # date, partner, amount and company. Planned links are preserved because
+            # they already populate cash_plan_line_id.
+            if rec.state == 'posted' and not rec.cash_plan_line_id:
+                rec._auto_link_unplanned_cash_plan()
+            if rec.state == 'posted':
+                rec._sync_unplanned_cash_plan_by_date()
+
     def _post_account_payment(self):
         """Cash / Cheque / Bank Transfer — pay against an account."""
         rec = self
@@ -1335,7 +1364,20 @@ class AccountPaymentVoucher(models.Model):
                 # the same move back to draft without touching its lines.
                 rec.move_id.sudo().write({'state': 'draft'})
 
-            rec.state = 'draft'
+            # Put the voucher itself in draft before unlinking the generated
+            # cash-plan line. Unlinking that line may clear its voucher relation through
+            # the ORM; doing so while the voucher still says 'posted' is blocked by the
+            # posted-voucher write guard.
+            rec.write({'state': 'draft'})
+
+            # A direct voucher's Unplanned Actual represents an executed cash
+            # movement. Once the voucher is reset, remove only that generated line so
+            # it no longer appears as an actual and so this voucher can be safely reused.
+            # Never remove a genuine planned-payment link.
+            old_plan_line = rec.cash_plan_line_id
+            if old_plan_line and old_plan_line.is_unplanned:
+                rec.with_context(skip_cash_plan_link_lock=True).write({'cash_plan_line_id': False})
+                old_plan_line.sudo().unlink()
 
     # -------------------------
     # Deletion Protection
@@ -1391,12 +1433,99 @@ class AccountPaymentVoucher(models.Model):
             skip_po_selector_sync=True,
             skip_po_allocation_sync=True,
         )).create(prepared_vals_list)
+        if not self.env.context.get('skip_cash_plan_autolink'):
+            records._auto_link_unplanned_cash_plan()
         return records
+
+    def _get_or_create_unplanned_category(self, company_id):
+        category = self.env.ref('internal_transfer_voucher.cat_out_unplanned', raise_if_not_found=False)
+        if category:
+            return category
+        Category = self.env['cash.plan.category'].sudo()
+        category = Category.search([
+            ('flow_type', '=', 'out'),
+            ('name', '=', _('Unplanned Actual')),
+            '|', ('company_id', '=', False), ('company_id', '=', company_id),
+        ], limit=1)
+        if category:
+            return category
+        return Category.create({
+            'name': _('Unplanned Actual'),
+            'flow_type': 'out',
+            'sequence': 99,
+        })
+
+    def _find_weekly_plan_for_voucher_date(self):
+        self.ensure_one()
+        if not self.date or not self.company_id:
+            return self.env['cash.plan.run']
+        return self.env['cash.plan.run'].sudo().search([
+            ('company_id', '=', self.company_id.id),
+            ('date_from', '<=', self.date),
+            ('date_to', '>=', self.date),
+            ('state', '!=', 'cancel'),
+        ], order='date_from desc, id desc', limit=1)
+
+    def _sync_unplanned_cash_plan_by_date(self):
+        """Place a directly-created actual in the weekly plan covering its voucher date."""
+        for rec in self:
+            line = rec.cash_plan_line_id
+            if not line or not line.is_unplanned:
+                continue
+            run = rec._find_weekly_plan_for_voucher_date()
+            line.sudo().with_context(allow_locked_write=True).write({
+                'run_id': run.id if run else False,
+                'planned_date': rec.date or False,
+                'company_id': rec.company_id.id,
+                'partner_id': rec.partner_id.id,
+                'journal_id': rec.journal_id.id,
+                'account_id': rec.account_id.id if rec.account_id else False,
+                'description': _(
+                    'Created directly from Payment Voucher %s. The voucher date automatically '
+                    'selects the matching Weekly Cash Plan; this line remains classified as an Unplanned Actual.'
+                ) % rec.name,
+            })
+
+    def _auto_link_unplanned_cash_plan(self):
+        """Create an unplanned actual and assign it to the weekly plan covering the voucher date."""
+        CashPlanLine = self.env['cash.plan.line'].sudo()
+        for rec in self:
+            if not rec.id or rec.cash_plan_line_id:
+                continue
+            if CashPlanLine.search_count([('payment_voucher_id', '=', rec.id)]):
+                continue
+            category = rec._get_or_create_unplanned_category(rec.company_id.id)
+            run = rec._find_weekly_plan_for_voucher_date()
+            line = CashPlanLine.create({
+                'company_id': rec.company_id.id,
+                'run_id': run.id if run else False,
+                'planned_date': rec.date or False,
+                'name': _('Unplanned Actual - %s') % (rec.partner_id.display_name or rec.name),
+                'flow_type': 'out',
+                'transaction_type': 'other',
+                'category_id': category.id,
+                'partner_id': rec.partner_id.id,
+                'forecast_amount': 0.0,
+                'is_unplanned': True,
+                'state': 'executed',
+                'ceo_decision': 'not_required',
+                'journal_id': rec.journal_id.id,
+                'account_id': rec.account_id.id if rec.account_id else False,
+                'purchase_order_ids': [(6, 0, rec.purchase_order_ids.ids)],
+                'payment_voucher_id': rec.id,
+                'description': _(
+                    'Created directly from Payment Voucher %s. The voucher date automatically selects the matching '
+                    'Weekly Cash Plan; this line remains classified as an Unplanned Actual.'
+                ) % rec.name,
+            })
+            rec.cash_plan_line_id = line.id
 
     def write(self, vals):
         for rec in self:
             if rec.state == 'posted':
                 allowed_fields = {'state', 'move_id', 'bill_ids'}
+                if self.env.context.get('skip_cash_plan_link_lock'):
+                    allowed_fields.add('cash_plan_line_id')
                 if not set(vals.keys()).issubset(allowed_fields):
                     raise UserError(_("You cannot modify a posted payment voucher."))
                 if 'bill_ids' in vals and rec.bill_reconciled and not self.env.context.get('skip_bill_reconcile_lock'):
@@ -1410,10 +1539,13 @@ class AccountPaymentVoucher(models.Model):
             return result
 
         prepared_vals = self._prepare_po_values_for_write(vals) if self else vals
-        return super(AccountPaymentVoucher, self.with_context(
+        result = super(AccountPaymentVoucher, self.with_context(
             skip_po_selector_sync=True,
             skip_po_allocation_sync=True,
         )).write(prepared_vals)
+        if {'date', 'company_id', 'partner_id', 'journal_id', 'account_id'} & set(prepared_vals):
+            self._sync_unplanned_cash_plan_by_date()
+        return result
 
     def _link_posted_purchase_order(self, purchase_order, amount):
         """Link a posted voucher to a PO without changing its journal entry.

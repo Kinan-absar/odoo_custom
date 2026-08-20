@@ -1,12 +1,14 @@
+from itertools import groupby
 from urllib.parse import quote
 
-from odoo import http
+from odoo import http, fields
 from odoo.http import request
 from odoo.exceptions import ValidationError, UserError
+from odoo.addons.purchase.controllers.portal import CustomerPortal as PurchaseCustomerPortal
 
 
 class PortalTreasury(http.Controller):
-    VALID_FILTERS = {'pending', 'approved', 'held', 'rejected', 'all'}
+    VALID_FILTERS = {'pending', 'approved', 'held', 'rejected', 'added', 'not_added', 'all'}
 
     def _is_ceo(self):
         return request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
@@ -36,6 +38,10 @@ class PortalTreasury(http.Controller):
             domain.append(('ceo_decision', '=', 'held'))
         elif status == 'rejected':
             domain.append(('ceo_decision', '=', 'rejected'))
+        elif status == 'added':
+            domain.append(('run_id', '!=', False))
+        elif status == 'not_added':
+            domain.append(('run_id', '=', False))
         return domain
 
     @http.route('/my/employee/treasury', type='http', auth='user', website=True)
@@ -54,18 +60,50 @@ class PortalTreasury(http.Controller):
 
         Line = request.env['cash.plan.line'].sudo()
         lines = Line.search(self._payment_domain(status), order='planned_date asc, priority desc, id desc')
-        counts = {
-            key: Line.search_count(self._payment_domain(key))
-            for key in ('pending', 'approved', 'held', 'rejected', 'all')
-        }
+        available_runs = request.env['cash.plan.run'].sudo().search(
+            self._company_domain() + [('state', 'not in', ['done', 'cancel'])],
+            order='date_from desc, id desc'
+        )
+        company_currency = request.env.company.currency_id
+        counts = {}
+        amounts_fmt = {}
+        for key in ('pending', 'approved', 'held', 'rejected', 'added', 'not_added', 'all'):
+            key_lines = Line.search(self._payment_domain(key))
+            counts[key] = len(key_lines)
+            currency = key_lines[:1].currency_id or company_currency
+            amounts_fmt[key] = self._fmt_amount(currency, sum(key_lines.mapped('forecast_amount')))
+        day_groups = self._build_payment_day_groups(lines)
         return request.render('eps_itv_treasury_bridge.portal_treasury_payment_list', {
             'lines': lines,
+            'day_groups': day_groups,
             'counts': counts,
+            'amounts_fmt': amounts_fmt,
             'current_status': status,
+            'available_runs': available_runs,
+            'today': fields.Date.context_today(request.env.user),
             'page_name': 'treasury_payments',
             'message': kw.get('message'),
             'error': kw.get('error'),
         })
+
+    def _build_payment_day_groups(self, lines):
+        """Group a payment-line recordset by planned_date for the ledger-style
+        approvals list. Lines are expected to already be ordered by date."""
+        day_groups = []
+        for date, lines_iter in groupby(lines, key=lambda l: l.planned_date or False):
+            group_lines = list(lines_iter)
+            currency = group_lines[0].currency_id
+            requested_total = sum(l.forecast_amount for l in group_lines)
+            approved_total = sum(l.approved_amount for l in group_lines)
+            day_groups.append({
+                'date': date,
+                'lines': group_lines,
+                'requested_total': requested_total,
+                'approved_total': approved_total,
+                'requested_total_fmt': self._fmt_amount(currency, requested_total),
+                'approved_total_fmt': self._fmt_amount(currency, approved_total),
+            })
+        return day_groups
 
     @http.route('/my/employee/treasury/plans', type='http', auth='user', website=True)
     def treasury_plans(self, **kw):
@@ -86,10 +124,56 @@ class PortalTreasury(http.Controller):
         run = self._get_run(run_id)
         if not run:
             return request.not_found()
+        day_groups = self._build_day_groups(run)
         return request.render('eps_itv_treasury_bridge.portal_treasury_plan_detail_clean_v3', {
             'run': run,
+            'day_groups': day_groups,
             'page_name': 'treasury_plans',
         })
+
+    def _fmt_amount(self, currency, amount):
+        amount_str = '{:,.2f}'.format(amount or 0.0)
+        symbol = currency.symbol or currency.name or ''
+        if currency.position == 'before':
+            return '%s%s' % (symbol, amount_str)
+        return '%s %s' % (amount_str, symbol)
+
+    def _build_day_groups(self, run):
+        """Group the run's lines by planned_date and roll a running cash
+        balance day-over-day so the portal can render a ledger-style timeline.
+        Lines are already ordered by planned_date via the model's _order.
+        """
+        currency = run.currency_id
+        running = run.opening_balance
+        day_groups = []
+        for date, lines_iter in groupby(run.line_ids, key=lambda l: l.planned_date):
+            lines = list(lines_iter)
+            forecast_in = sum(l.forecast_amount for l in lines if l.flow_type == 'in')
+            forecast_out = sum(l.forecast_amount for l in lines if l.flow_type == 'out')
+            actual_in = sum(l.actual_amount for l in lines if l.flow_type == 'in')
+            actual_out = sum(l.actual_amount for l in lines if l.flow_type == 'out')
+            day_opening = running
+            running += (actual_in - actual_out)
+            net = actual_in - actual_out
+            day_groups.append({
+                'date': date,
+                'lines': lines,
+                'forecast_in': forecast_in,
+                'forecast_out': forecast_out,
+                'actual_in': actual_in,
+                'actual_out': actual_out,
+                'net': net,
+                'opening': day_opening,
+                'closing': running,
+                'forecast_in_fmt': self._fmt_amount(currency, forecast_in),
+                'forecast_out_fmt': self._fmt_amount(currency, forecast_out),
+                'actual_in_fmt': self._fmt_amount(currency, actual_in),
+                'actual_out_fmt': self._fmt_amount(currency, actual_out),
+                'net_fmt': self._fmt_amount(currency, net),
+                'opening_fmt': self._fmt_amount(currency, day_opening),
+                'closing_fmt': self._fmt_amount(currency, running),
+            })
+        return day_groups
 
     @http.route(
         '/my/employee/treasury/lines/<int:line_id>/review',
@@ -131,3 +215,63 @@ class PortalTreasury(http.Controller):
             return request.redirect(
                 '/my/employee/treasury/payments?status=pending&error=%s' % quote(str(exc))
             )
+
+    @http.route(
+        '/my/employee/treasury/lines/<int:line_id>/add-to-plan',
+        type='http', auth='user', website=True, methods=['POST'], csrf=True
+    )
+    def treasury_line_add_to_plan(self, line_id, **post):
+        if not self._is_ceo():
+            return request.redirect('/my/employee')
+        line = self._get_line(line_id)
+        if not line:
+            return request.not_found()
+        try:
+            run_id = int(post.get('run_id') or 0)
+            run = self._get_run(run_id)
+            if not run:
+                raise UserError('Select a valid weekly plan.')
+            line._assign_to_weekly_plan(run, request.env.user)
+            return_status = (post.get('return_status') or 'pending').strip().lower()
+            if return_status not in self.VALID_FILTERS:
+                return_status = 'pending'
+            return request.redirect(
+                '/my/employee/treasury/payments?status=%s&message=%s'
+                % (return_status, quote('Payment added to the weekly plan.'))
+            )
+        except (ValueError, ValidationError, UserError) as exc:
+            return_status = (post.get('return_status') or 'pending').strip().lower()
+            if return_status not in self.VALID_FILTERS:
+                return_status = 'pending'
+            return request.redirect(
+                '/my/employee/treasury/payments?status=%s&error=%s'
+                % (return_status, quote(str(exc)))
+            )
+
+
+
+class PortalTreasuryPurchaseOrder(PurchaseCustomerPortal):
+    """CEO-only read view using Odoo's standard Purchase Order portal page."""
+
+    @http.route(
+        '/my/employee/treasury/purchase-order/<int:order_id>',
+        type='http', auth='user', website=True
+    )
+    def treasury_purchase_order_view(self, order_id, **kw):
+        user = request.env.user
+        if not user.has_group('employee_portal_suite.group_employee_portal_ceo'):
+            return request.redirect('/my/employee')
+
+        order = request.env['purchase.order'].sudo().browse(order_id).exists()
+        if not order or order.company_id not in user.company_ids:
+            return request.not_found()
+
+        # Build the same values used by Odoo's vendor Purchase Order portal page.
+        # No access token is exposed, keeping this CEO route read-only and internal.
+        values = self._purchase_order_get_page_view_values(order, None, **kw)
+        values.update({
+            'res_company': order.company_id,
+            'page_name': 'purchase',
+            'treasury_ceo_view': True,
+        })
+        return request.render('purchase.portal_my_purchase_order', values)

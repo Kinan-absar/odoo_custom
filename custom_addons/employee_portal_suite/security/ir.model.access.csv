@@ -45,3 +45,5 @@ portal_report_document_employee,portal.report.document.employee,model_portal_rep
 portal_report_seen_user,portal.report.seen.user,model_portal_report_seen,base.group_user,1,1,1,0
 portal_report_seen_portal,portal.report.seen.portal,model_portal_report_seen,base.group_portal,1,1,1,0
 access_hr_work_location_project_user,hr.work.location.project user,model_hr_work_location_project,base.group_user,1,1,1,1
+access_employee_portal_telegram_config_admin,employee.portal.telegram.config admin,model_employee_portal_telegram_config,base.group_system,1,1,1,1
+access_employee_portal_telegram_config_portal_admin,employee.portal.telegram.config portal admin,model_employee_portal_telegram_config,employee_portal_suite.group_employee_portal_admin,1,1,1,1

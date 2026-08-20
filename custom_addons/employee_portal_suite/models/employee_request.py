@@ -147,15 +147,19 @@ class EmployeeRequest(models.Model):
     # NOTIFICATION HELPERS
     # ---------------------------------------------------------
     def _notify_user(self, user, subject, body):
-        if not user or not user.partner_id.email:
+        if not user:
             return
-        mail_values = {
-            'subject': subject,
-            'body_html': f"<p>{body}</p>",
-            'email_to': user.partner_id.email,
-            'author_id': self.env.user.partner_id.id,
-        }
-        self.env['mail.mail'].sudo().create(mail_values).send()
+        if user.partner_id.email:
+            mail_values = {
+                'subject': subject,
+                'body_html': f"<p>{body}</p>",
+                'email_to': user.partner_id.email,
+                'author_id': self.env.user.partner_id.id,
+            }
+            self.env['mail.mail'].sudo().create(mail_values).send()
+        self.env['employee.portal.telegram.service'].sudo().send_to_user(
+            user, subject, body, f"/my/employee/approvals/{self.id}"
+        )
 
     def _schedule_activity(self, user, summary, note):
         self.activity_schedule(
@@ -182,7 +186,7 @@ class EmployeeRequest(models.Model):
             # Notify next group
             group = self.env.ref(group_xmlid, raise_if_not_found=False)
             if group:
-                for user in group.users:
+                for user in group.user_ids:
                     rec._notify_user(
                         user,
                         f"Request {rec.name} requires your approval",
@@ -287,6 +291,13 @@ class EmployeeRequest(models.Model):
 
             rec.message_post(body="Request fully approved.")
             rec._close_activities()
+            if rec.employee_id.user_id:
+                rec.env['employee.portal.telegram.service'].sudo().send_to_user(
+                    rec.employee_id.user_id,
+                    f"Request {rec.name} approved",
+                    f"Your request {rec.name} has been fully approved.",
+                    f"/my/employee/requests/{rec.id}"
+                )
 
     # ---------------------------------------------------------
     # REJECTION ACTION — FIXED
@@ -319,6 +330,13 @@ class EmployeeRequest(models.Model):
 
             rec.message_post(body="Request rejected.")
             rec._close_activities()
+            if rec.employee_id.user_id:
+                rec.env['employee.portal.telegram.service'].sudo().send_to_user(
+                    rec.employee_id.user_id,
+                    f"Request {rec.name} rejected",
+                    f"Your request {rec.name} has been rejected.",
+                    f"/my/employee/requests/{rec.id}"
+                )
 
     def get_rejection_reason(self):
         self.ensure_one()
