@@ -1,6 +1,6 @@
 {
     'name': 'Employee Portal Suite',
-    'version': '19.0.1.10.0',
+    'version': '19.0.1.10.2',
     'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
 
     'description': """
@@ -132,6 +132,7 @@
     # ------------------------------------------------------------------
     'assets': {
         'web.assets_frontend': [
+            'employee_portal_suite/static/src/css/stitch_workspace.css',
             'employee_portal_suite/static/src/js/sign_redirect.js',
         ],
         'web.assets_backend': [
