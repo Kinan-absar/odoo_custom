@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="employee_portal_dashboard_construction" inherit_id="employee_portal_suite.employee_portal_dashboard">
-        <xpath expr="//div[@id='ep-dashboard-card-grid']" position="inside">
+        <xpath expr="//div[hasclass('row')]" position="inside">
             <t t-if="show_construction_cards">
                 <div class="construction-dashboard-section w-100">
                     <div class="row construction-dashboard-row">

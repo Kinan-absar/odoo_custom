@@ -4,7 +4,7 @@
 <template id="employee_material_request_detail_page" name="Material Request Detail">
 <t t-call="employee_portal_suite.employee_portal_layout">
 
-<div class="ep-page-section mt-3 employee-req-detail">
+<div class="container mt-3 employee-req-detail">
     <div class="mb-4">
     <a href="/my/employee/material" class="app-back-btn">
         <i class="fa fa-arrow-left"></i>

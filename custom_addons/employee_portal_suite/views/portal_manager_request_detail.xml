@@ -4,7 +4,7 @@
     <template id="portal_manager_request_detail" name="Manager Approval Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
 
-            <div class="ep-page-section mt-3 employee-req-detail">
+            <div class="container mt-3 employee-req-detail">
 
                 <!-- Back -->
                 <div class="mb-4">

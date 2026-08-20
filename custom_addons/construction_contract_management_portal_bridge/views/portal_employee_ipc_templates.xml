@@ -3,7 +3,7 @@
     <!-- IPCs List -->
     <template id="portal_employee_ipcs" name="Employee Portal - IPCs">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="ep-page-section construction-portal-page mt-4">
+            <div class="container construction-portal-page mt-4">
                 <div class="row">
                     <div class="col-12">
                         <h3>Interim Payment Certificates (IPCs)</h3>
@@ -162,7 +162,7 @@
     <!-- IPC Detail -->
     <template id="portal_employee_ipc_detail" name="Employee Portal - IPC Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="ep-page-section ipc-portal-page">
+            <div class="container ipc-portal-page">
                 <style type="text/css">
                     .ipc-portal-page {
                         font-size: 13px;

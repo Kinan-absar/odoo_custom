@@ -4,7 +4,7 @@
 <template id="employee_request_new_form" name="New Employee Request Form">
 <t t-call="employee_portal_suite.employee_portal_layout">
 
-<div class="ep-page-section my-4">
+<div class="container my-4">
     <h2 class="text-center mb-4">Employee Request</h2>
 
     <!-- Language Toggle -->

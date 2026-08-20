@@ -1,28 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="employee_portal_layout_treasury" inherit_id="employee_portal_suite.employee_portal_layout">
-        <xpath expr="//div[@id='ep-nav-slot-approvals']" position="inside">
+    <template id="employee_portal_layout_treasury"
+              inherit_id="employee_portal_suite.employee_portal_layout">
+
+        <!-- "Payment Approvals" inside the existing Approvals dropdown -->
+        <xpath expr="//a[text()='Material Approvals']" position="after">
             <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
-                <a href="/my/employee/treasury/payments" t-att-class="'ep-link active' if ep_path.startswith('/my/employee/treasury/payments') else 'ep-link'">
-                    <i class="fa fa-check-circle-o"></i><span>Payment Approvals</span>
-                </a>
+                <a href="/my/employee/treasury/payments" class="ep-sub-link">Payment Approvals</a>
             </t>
         </xpath>
-        <xpath expr="//div[@id='ep-nav-slot-operations-extra']" position="inside">
+
+        <!-- "Weekly Cash Plans" top-level nav link, right after the Approvals dropdown -->
+        <xpath expr="//div[@id='app-d']/ancestor::t[1]" position="after">
             <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
-                <a href="/my/employee/treasury/plans" t-att-class="'ep-link active' if ep_path.startswith('/my/employee/treasury/plans') else 'ep-link'">
-                    <i class="fa fa-line-chart"></i><span>Weekly Cash Plans</span>
-                </a>
+                <a href="/my/employee/treasury/plans" class="ep-link">Weekly Cash Plans</a>
             </t>
-        </xpath>
-        <xpath expr="//div[@id='ep-mobile-approval-slot']" position="inside">
-            <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
-                <a href="/my/employee/treasury/payments" class="fab-item"><i class="fa fa-check-circle-o"></i><span>Payment Approvals</span></a>
-                <a href="/my/employee/treasury/plans" class="fab-item"><i class="fa fa-line-chart"></i><span>Weekly Cash Plans</span></a>
-            </t>
-        </xpath>
-        <xpath expr="//div[@id='approvalBtn']" position="attributes">
-            <attribute name="t-att-class">'nav-btn active' if ep_path.startswith('/my/employee/approvals') or ep_path.startswith('/my/employee/material/approvals') or ep_path.startswith('/my/employee/treasury') else 'nav-btn'</attribute>
         </xpath>
     </template>
 </odoo>
