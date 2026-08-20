@@ -1,108 +1,885 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+
     <template id="employee_portal_dashboard" name="Employee Dashboard">
         <t t-call="employee_portal_suite.employee_portal_layout">
-            <div class="st-dashboard">
+            <style>
+           /* ================================================================
+            DASHBOARD LINK (remove underline everywhere)
+            ================================================================ */
+
+            .dashboard-link,
+            .dashboard-link:hover,
+            .dashboard-link:focus,
+            .dashboard-link:active {
+                text-decoration: none !important;
+                color: inherit !important;
+            }
+
+
+            /* ================================================================
+            DASHBOARD CARD – PREMIUM INTERACTIVE
+            ================================================================ */
+
+            .dashboard-card {
+                background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+                border: 1px solid rgba(0,0,0,0.04);
+
+                border-radius: 24px;
+                padding: 20px;
+                min-height: 140px;
+
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+
+                box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+
+                position: relative;
+                overflow: hidden;
+
+                transition:
+                    transform 0.25s cubic-bezier(.34,1.56,.64,1),
+                    box-shadow 0.25s ease,
+                    background 0.25s ease;
+            }
+
+            /* Soft gradient glow overlay */
+            .dashboard-card::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(
+                    135deg,
+                    rgba(79,70,229,0.08),
+                    transparent 60%
+                );
+                opacity: 0;
+                transition: opacity 0.25s ease;
+                pointer-events: none;
+            }
+
+            /* Hover (Desktop) */
+            .dashboard-card:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 18px 45px rgba(26,27,46,0.12);
+            }
+
+            .dashboard-card:hover::before {
+                opacity: 1;
+            }
+
+            /* Press (Mobile) */
+            .dashboard-card:active {
+                transform: scale(0.97);
+                box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+            }
+
+
+            /* ================================================================
+            CARD CONTENT
+            ================================================================ */
+
+            .card-top {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .card-icon {
+                width: 42px;
+                height: 42px;
+                border-radius: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+
+                transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
+            }
+
+            /* Icon micro interaction */
+            .dashboard-card:hover .card-icon {
+                transform: scale(1.08);
+            }
+
+            .card-title {
+                font-weight: 600;
+                font-size: 14px;
+                color: #374151;
+            }
+
+            .card-number {
+                font-size: 32px;
+                font-weight: 700;
+                letter-spacing: -1px;
+                color: #111827;
+            }
+
+            .card-bottom {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+
+            .card-bottom-number-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+
+            /* ================================================================
+            BADGES
+            ================================================================ */
+
+            .badge-pulse {
+                width: 10px;
+                height: 10px;
+                background: #F59E0B;
+                border-radius: 50%;
+                animation: pulse 1.5s infinite;
+            }
+
+            .badge-pulse.bg-success {
+                background: #10B981;
+            }
+
+            @keyframes pulse {
+                0% { box-shadow: 0 0 0 0 rgba(245,158,11,0.6); }
+                70% { box-shadow: 0 0 0 10px rgba(245,158,11,0); }
+                100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+            }
+
+
+            /* ================================================================
+            NEW REPORT NOTIFICATION PILL
+            ================================================================ */
+
+            .card-new-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                margin-top: 6px;
+                padding: 3px 9px 3px 7px;
+                border-radius: 20px;
+                font-size: 11px;
+                font-weight: 600;
+                color: #B45309;
+                background: rgba(245,158,11,0.14);
+                width: fit-content;
+
+                animation: card-new-pill-in 0.35s cubic-bezier(.34,1.56,.64,1);
+            }
+
+            .card-new-pill .card-new-pill-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #F59E0B;
+                flex-shrink: 0;
+                animation: pulse 1.5s infinite;
+            }
+
+            @keyframes card-new-pill-in {
+                0% {
+                    opacity: 0;
+                    transform: translateY(-4px) scale(0.9);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .card-new-pill,
+                .card-new-pill .card-new-pill-dot {
+                    animation: none;
+                }
+            }
+
+
+            /* ================================================================
+            SOFT ICON COLORS
+            ================================================================ */
+
+            .bg-warning-soft {
+                background: rgba(245,158,11,0.12);
+                color: #F59E0B;
+            }
+
+            .bg-primary-soft {
+                background: rgba(113,75,103,0.10);
+                color: #714B67;
+            }
+
+            .bg-indigo-soft {
+                background: rgba(79,70,229,0.12);
+                color: #4F46E5;
+            }
+
+            .bg-success-soft {
+                background: rgba(16,185,129,0.12);
+                color: #10B981;
+            }
+
+            .bg-dark-soft {
+                background: rgba(31,41,55,0.12);
+                color: #1F2937;
+            }
+
+
+            /* ================================================================
+            HERO – PREMIUM BUT CLEAN
+            ================================================================ */
+
+            .dashboard-hero {
+                background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+                color: white;
+                border-radius: 26px;
+                padding: 24px;
+
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+
+                box-shadow: 0 20px 40px rgba(79,70,229,0.25);
+
+                position: relative;
+                overflow: hidden;
+            }
+
+            /* Subtle inner glow */
+            .dashboard-hero::before {
+                content: '';
+                position: absolute;
+                top: -40%;
+                right: -20%;
+                width: 200px;
+                height: 200px;
+                background: radial-gradient(circle, rgba(255,255,255,0.25), transparent 70%);
+                opacity: 0.4;
+                pointer-events: none;
+            }
+
+            .hero-title {
+                font-size: 18px;
+                font-weight: 700;
+                letter-spacing: -0.02em;
+            }
+
+            .hero-sub {
+                font-size: 13px;
+                opacity: 0.9;
+                margin-top: 4px;
+            }
+
+            .hero-stat {
+                text-align: right;
+            }
+
+            .hero-stat-number {
+                font-size: 28px;
+                font-weight: 800;
+                display: block;
+            }
+
+            .hero-stat-label {
+                font-size: 11px;
+                opacity: 0.85;
+            }
+
+
+            /* ================================================================
+            SECTION TITLE
+            ================================================================ */
+
+            .section-title {
+                font-weight: 700;
+                font-size: 14px;
+                letter-spacing: -0.02em;
+                color: var(--text-primary);
+            }
+
+
+            /* ================================================================
+            RECENT ACTIVITY - PREMIUM INTERACTIVE STYLE
+            ================================================================ */
+
+            .recent-activity {
+                background: var(--surface);
+                border-radius: 22px;
+                padding: 18px;
+                box-shadow: var(--shadow-sm);
+            }
+
+            /* Clickable Activity Card */
+            .activity-card {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding: 12px 14px;
+                border-radius: 16px;
+
+                text-decoration: none !important;
+                color: inherit !important;
+
+                position: relative;
+                cursor: pointer;
+
+                transition:
+                    background 0.2s ease,
+                    transform 0.12s ease,
+                    box-shadow 0.2s ease;
+            }
+
+            /* Remove underline in all states */
+            .activity-card,
+            .activity-card:hover,
+            .activity-card:focus,
+            .activity-card:active {
+                text-decoration: none !important;
+                color: inherit !important;
+            }
+
+            /* Space between cards */
+            .activity-card + .activity-card {
+                margin-top: 8px;
+            }
+
+            /* Hover (Desktop) */
+            .activity-card:hover {
+                background: rgba(79,70,229,0.06);
+                box-shadow: 0 8px 22px rgba(79,70,229,0.08);
+                transform: translateY(-2px);
+            }
+
+            /* Active (Mobile press feel) */
+            .activity-card:active {
+                transform: scale(0.97);
+                background: rgba(79,70,229,0.12);
+            }
+
+            /* Left accent indicator */
+            .activity-card::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 10px;
+                bottom: 10px;
+                width: 3px;
+                border-radius: 4px;
+                background: var(--app-primary);
+                opacity: 0;
+                transition: opacity 0.2s ease;
+            }
+
+            .activity-card:hover::before {
+                opacity: 1;
+            }
+
+            /* Icon */
+            .activity-card i {
+                width: 36px;
+                height: 36px;
+                background: rgba(79,70,229,0.1);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--app-primary);
+                font-size: 14px;
+                flex-shrink: 0;
+            }
+
+            /* Content */
+            .activity-content {
+                flex: 1;
+            }
+
+            .activity-title {
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+            .activity-time {
+                font-size: 11px;
+                color: var(--text-muted);
+            }
+
+            /* Status badge */
+            .activity-status {
+                font-size: 10px;
+                padding: 5px 10px;
+                border-radius: 20px;
+                font-weight: 600;
+                background: rgba(0,0,0,0.05);
+                color: var(--text-secondary);
+            }
+
+            /* ================================================================
+            TELEGRAM CONNECT BANNER
+            ================================================================ */
+
+            .telegram-connect-banner {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 18px;
+                width: 100%;
+                padding: 16px 18px;
+                margin-bottom: 18px;
+                background: #f0fdf4;
+                border: 1px solid rgba(22, 163, 74, 0.18);
+                border-radius: 18px;
+            }
+
+            .telegram-connect-copy {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                min-width: 0;
+            }
+
+            .telegram-connect-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                background: rgba(22, 163, 74, 0.12);
+                color: #15803d;
+                font-size: 17px;
+            }
+
+            .telegram-connect-title {
+                margin: 0 0 3px 0;
+                font-size: 14px;
+                font-weight: 700;
+                color: #14532d;
+            }
+
+            .telegram-connect-description {
+                margin: 0;
+                font-size: 12px;
+                line-height: 1.45;
+                color: #4b6352;
+            }
+
+            .telegram-connect-button,
+            .telegram-connect-button:hover,
+            .telegram-connect-button:focus,
+            .telegram-connect-button:active {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 7px;
+                min-height: 40px;
+                padding: 9px 16px;
+                border-radius: 12px;
+                background: #16a34a;
+                color: #ffffff !important;
+                font-size: 13px;
+                font-weight: 700;
+                text-decoration: none !important;
+                white-space: nowrap;
+                box-shadow: 0 6px 16px rgba(22, 163, 74, 0.18);
+                transition: transform 0.15s ease, background 0.15s ease;
+            }
+
+            .telegram-connect-button:hover {
+                background: #15803d;
+                transform: translateY(-1px);
+            }
+
+            .telegram-connect-button:active {
+                transform: scale(0.98);
+            }
+
+            @media (max-width: 767.98px) {
+                .telegram-connect-banner {
+                    align-items: stretch;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+
+                .telegram-connect-button {
+                    width: 100%;
+                }
+            }
+
+
+            </style>
+            <div class="row mt-4 g-3">
                 <t t-if="not request.env.user.telegram_connected and request.env['employee.portal.telegram.config'].sudo().search_count([('active','=',True),('enabled','=',True)]) &gt; 0">
-                    <div class="telegram-connect-banner d-flex align-items-center justify-content-between gap-3 p-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="st-module-icon"><i class="fa fa-paper-plane"/></div>
-                            <div>
-                                <div class="fw-bold">Connect to Telegram</div>
-                                <div class="text-muted small">Receive approval alerts, attendance reminders and request updates.</div>
+                    <div class="col-12">
+                        <div class="telegram-connect-banner">
+                            <div class="telegram-connect-copy">
+                                <div class="telegram-connect-icon">
+                                    <i class="fa fa-paper-plane"></i>
+                                </div>
+                                <div>
+                                    <div class="telegram-connect-title">Connect to Telegram</div>
+                                    <p class="telegram-connect-description">
+                                        Connect Telegram to receive approval alerts, attendance reminders, request updates, and other important Employee Portal notifications.
+                                    </p>
+                                </div>
                             </div>
+                            <a href="/my/employee/telegram/connect" class="telegram-connect-button">
+                                <i class="fa fa-paper-plane"></i>
+                                <span>Connect with Telegram</span>
+                            </a>
                         </div>
-                        <a href="/my/employee/telegram/connect" class="btn btn-primary"><i class="fa fa-paper-plane me-1"/> Connect</a>
                     </div>
                 </t>
 
-                <section class="st-dashboard-head">
-                    <h1>Good morning, <t t-esc="request.env.user.partner_id.name.split(' ')[0]"/>.</h1>
-                    <p>Here's what needs your attention today.</p>
-                </section>
+                <div class="dashboard-hero mb-4">
 
-                <section>
-                    <div class="st-section-label">Needs your attention</div>
-                    <div class="st-attention-grid">
-                        <t t-if="employee_pending_count &gt; 0 and (request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo'))">
-                            <a href="/my/employee/approvals" class="st-attention-card">
-                                <div class="st-attention-top"><div class="st-attention-icon danger"><i class="fa fa-check-square-o"/></div><span class="badge bg-danger">Action required</span></div>
-                                <h3><t t-esc="employee_pending_count"/> Employee Request<t t-if="employee_pending_count != 1">s</t></h3>
-                                <p>Waiting for your review in the employee approval workflow.</p>
-                                <div class="st-card-action">Review Requests</div>
-                            </a>
-                        </t>
-                        <t t-if="material_pending_count &gt; 0 and (request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or request.env.user.has_group('employee_portal_suite.group_mr_projects_director') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo'))">
-                            <a href="/my/employee/material/approvals" class="st-attention-card">
-                                <div class="st-attention-top"><div class="st-attention-icon warn"><i class="fa fa-clipboard"/></div><span class="badge bg-warning">Pending</span></div>
-                                <h3><t t-esc="material_pending_count"/> Material Request<t t-if="material_pending_count != 1">s</t></h3>
-                                <p>Material requests are waiting for your approval stage.</p>
-                                <div class="st-card-action">Review Materials</div>
-                            </a>
-                        </t>
-                        <t t-if="pending_sign_count &gt; 0">
-                            <a href="/my/employee/sign" class="st-attention-card">
-                                <div class="st-attention-top"><div class="st-attention-icon warn"><i class="fa fa-pencil-square-o"/></div><span class="badge bg-warning">Signature</span></div>
-                                <h3><t t-esc="pending_sign_count"/> Document<t t-if="pending_sign_count != 1">s</t></h3>
-                                <p>Documents require your digital signature.</p>
-                                <div class="st-card-action">Open Signatures</div>
-                            </a>
-                        </t>
-                        <t t-if="can_use_attendance">
-                            <a href="/my/employee/attendance" class="st-attention-card">
-                                <div class="st-attention-top">
-                                    <div class="st-attention-icon"><i class="fa fa-clock-o"/></div>
-                                    <span t-att-class="'badge bg-success' if attendance_checked_in else 'badge bg-secondary'"><t t-if="attendance_checked_in">Active</t><t t-else="">Not checked in</t></span>
-                                </div>
-                                <h3>Attendance</h3>
-                                <p><t t-if="attendance_checked_in">You are currently checked in.</t><t t-else="">Start your workday from the attendance screen.</t></p>
-                                <div t-att-class="'st-card-action primary' if attendance_checked_in else 'st-card-action'"><t t-if="attendance_checked_in">Open Attendance</t><t t-else="">Check In</t></div>
-                            </a>
-                        </t>
-                        <t t-if="employee_pending_count == 0 and material_pending_count == 0 and pending_sign_count == 0 and not can_use_attendance">
-                            <div class="st-attention-card">
-                                <div class="st-attention-top"><div class="st-attention-icon"><i class="fa fa-check"/></div><span class="badge bg-success">Clear</span></div>
-                                <h3>You're all caught up</h3>
-                                <p>There are no pending approvals or signature actions assigned to you.</p>
-                                <div class="st-card-action">No action needed</div>
-                            </div>
-                        </t>
+                <div class="hero-left">
+                    <div class="hero-title">Your Workspace</div>
+                    <div class="hero-sub">
+                        You have 
+                        <strong><t t-esc="employee_pending_count + material_pending_count + pending_sign_count"/></strong>
+                        pending actions today.
                     </div>
-                </section>
-
-                <div class="st-dashboard-body">
-                    <section>
-                        <div class="st-section-label">Workspace</div>
-                        <div class="st-workspace-grid">
-                            <a href="/my/employee/requests" class="st-module-card"><div class="st-module-icon"><i class="fa fa-user-plus"/></div><div><div class="st-module-title">Employee Requests</div><div class="st-module-meta"><t t-esc="my_request_count"/> total requests</div></div><i class="fa fa-angle-right st-module-arrow"/></a>
-                            <a href="/my/employee/material" class="st-module-card"><div class="st-module-icon"><i class="fa fa-clipboard"/></div><div><div class="st-module-title">Material Requests</div><div class="st-module-meta"><t t-esc="my_material_count"/> total requests</div></div><i class="fa fa-angle-right st-module-arrow"/></a>
-                            <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')"><a href="/my/employee/petty-cash" class="st-module-card"><div class="st-module-icon"><i class="fa fa-money"/></div><div><div class="st-module-title">Petty Cash</div><div class="st-module-meta">Open petty cash workspace</div></div><i class="fa fa-angle-right st-module-arrow"/></a></t>
-                            <t t-if="request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')"><a href="/my/employee/salary-reports" class="st-module-card"><div class="st-module-icon"><i class="fa fa-id-card-o"/></div><div><div class="st-module-title">Salary Reports</div><div class="st-module-meta"><t t-esc="salary_report_count"/> reports available</div></div><i class="fa fa-angle-right st-module-arrow"/></a></t>
-                            <a href="/my/employee/sign" class="st-module-card"><div class="st-module-icon"><i class="fa fa-pencil-square-o"/></div><div><div class="st-module-title">Signatures</div><div class="st-module-meta"><t t-esc="pending_sign_count"/> awaiting signature</div></div><i class="fa fa-angle-right st-module-arrow"/></a>
-                            <t t-if="portal_report_count &gt; 0"><a href="/my/employee/reports" class="st-module-card"><div class="st-module-icon"><i class="fa fa-file-text-o"/></div><div><div class="st-module-title">Reports</div><div class="st-module-meta"><t t-esc="portal_report_count"/> reports available</div></div><i class="fa fa-angle-right st-module-arrow"/></a></t>
-                            <t t-if="can_use_attendance"><a href="/my/employee/attendance" class="st-module-card"><div class="st-module-icon"><i class="fa fa-calendar-check-o"/></div><div><div class="st-module-title">Attendance</div><div class="st-module-meta"><t t-if="attendance_checked_in">Currently checked in</t><t t-else="">Ready to check in</t></div></div><i class="fa fa-angle-right st-module-arrow"/></a></t>
-                            <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')"><a href="/my/employee/approvals" class="st-module-card"><div class="st-module-icon"><i class="fa fa-check-square-o"/></div><div><div class="st-module-title">Employee Approvals</div><div class="st-module-meta"><t t-esc="employee_pending_count"/> waiting</div></div><i class="fa fa-angle-right st-module-arrow"/></a></t>
-                            <t t-if="request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or request.env.user.has_group('employee_portal_suite.group_mr_projects_director') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')"><a href="/my/employee/material/approvals" class="st-module-card"><div class="st-module-icon"><i class="fa fa-tasks"/></div><div><div class="st-module-title">Material Approvals</div><div class="st-module-meta"><t t-esc="material_pending_count"/> waiting</div></div><i class="fa fa-angle-right st-module-arrow"/></a></t>
-                        </div>
-                    </section>
-
-                    <section>
-                        <div class="d-flex justify-content-between align-items-center"><div class="st-section-label">Recent activity</div></div>
-                        <div class="st-activity-panel">
-                            <t t-if="recent_activities">
-                                <t t-foreach="recent_activities" t-as="act">
-                                    <a t-att-href="'/my/employee/requests/%s' % act.id if act._name == 'employee.request' else '/my/employee/material/%s' % act.id" class="st-activity-item">
-                                        <div class="st-activity-time"><t t-esc="act.create_date.strftime('%d %b')"/><br/><t t-esc="act.create_date.strftime('%H:%M')"/></div>
-                                        <div class="st-activity-dot"><i t-att-class="'fa fa-file-text-o' if act._name == 'employee.request' else 'fa fa-clipboard'"/></div>
-                                        <div class="st-activity-copy"><strong><t t-esc="act.name"/> · <t t-esc="act.state.replace('_',' ').title()"/></strong><span><t t-if="act._name == 'employee.request'">Employee Request</t><t t-else="">Material Request</t></span></div>
-                                    </a>
-                                </t>
-                            </t>
-                            <t t-else=""><div class="st-empty">No recent activity yet.</div></t>
-                        </div>
-                    </section>
                 </div>
+
+                <div class="hero-right">
+                    <div class="hero-stat">
+                        <span class="hero-stat-number">
+                            <t t-esc="my_request_count + my_material_count"/>
+                        </span>
+                        <span class="hero-stat-label">Total Requests</span>
+                    </div>
+                </div>
+
             </div>
+
+                <!-- EMPLOYEE REQUESTS -->
+                <div class="col-6 col-md-6">
+                    <a href="/my/employee/requests" class="dashboard-link">
+                        <div class="dashboard-card">
+                            <div class="card-top">
+                                <div class="card-icon bg-primary-soft">
+                                    <i class="fa fa-file-text-o"></i>
+                                </div>
+                                <span class="card-title">Requests</span>
+                            </div>
+                            <div class="card-bottom">
+                                <div class="card-bottom-number-row">
+                                    <span class="card-number">
+                                        <t t-esc="my_request_count"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+
+                <!-- MATERIAL REQUESTS -->
+                <div class="col-6 col-md-6">
+                    <a href="/my/employee/material" class="dashboard-link">
+                        <div class="dashboard-card">
+                            <div class="card-top">
+                                <div class="card-icon bg-indigo-soft">
+                                    <i class="fa fa-cubes"></i>
+                                </div>
+                                <span class="card-title">Materials</span>
+                            </div>
+                            <div class="card-bottom">
+                                <div class="card-bottom-number-row">
+                                    <span class="card-number">
+                                        <t t-esc="my_material_count"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+
+                <!-- EMPLOYEE APPROVALS -->
+                <t t-if="
+                    request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                ">
+                    <div class="col-6 col-md-6">
+                        <a href="/my/employee/approvals" class="dashboard-link">
+                            <div class="dashboard-card">
+                                <div class="card-top">
+                                    <div class="card-icon bg-success-soft">
+                                        <i class="fa fa-user"></i>
+                                    </div>
+                                    <span class="card-title">ER Approvals</span>
+                                </div>
+                                <div class="card-bottom">
+                                    <div class="card-bottom-number-row">
+                                        <span class="card-number">
+                                            <t t-esc="employee_pending_count"/>
+                                        </span>
+                                        <t t-if="employee_pending_count &gt; 0">
+                                            <span class="badge-pulse bg-success"></span>
+                                        </t>
+                                    </div>
+                                    <t t-if="new_employee_pending_count &gt; 0">
+                                        <span class="card-new-pill">
+                                            <span class="card-new-pill-dot"></span>
+                                            <t t-if="new_employee_pending_count == 1">New approval waiting</t>
+                                            <t t-if="new_employee_pending_count &gt; 1">
+                                                <t t-esc="new_employee_pending_count"/> new approvals waiting
+                                            </t>
+                                        </span>
+                                    </t>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </t>
+
+
+                <!-- MATERIAL APPROVALS -->
+                <t t-if="
+                    request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                    or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                    or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                ">
+                    <div class="col-6 col-md-6">
+                        <a href="/my/employee/material/approvals" class="dashboard-link">
+                            <div class="dashboard-card">
+                                <div class="card-top">
+                                    <div class="card-icon bg-warning-soft">
+                                        <i class="fa fa-check-circle-o"></i>
+                                    </div>
+                                    <span class="card-title">MR Approvals</span>
+                                </div>
+                                <div class="card-bottom">
+                                    <div class="card-bottom-number-row">
+                                        <span class="card-number">
+                                            <t t-esc="material_pending_count"/>
+                                        </span>
+                                        <t t-if="material_pending_count &gt; 0">
+                                            <span class="badge-pulse"></span>
+                                        </t>
+                                    </div>
+                                    <t t-if="new_material_pending_count &gt; 0">
+                                        <span class="card-new-pill">
+                                            <span class="card-new-pill-dot"></span>
+                                            <t t-if="new_material_pending_count == 1">New approval waiting</t>
+                                            <t t-if="new_material_pending_count &gt; 1">
+                                                <t t-esc="new_material_pending_count"/> new approvals waiting
+                                            </t>
+                                        </span>
+                                    </t>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </t>
+
+
+                <!-- SIGNATURES -->
+                <div class="col-6 col-md-6">
+                    <a href="/my/employee/sign" class="dashboard-link">
+                        <div class="dashboard-card">
+                            <div class="card-top">
+                                <div class="card-icon bg-dark-soft">
+                                    <i class="fa fa-pencil-square-o"></i>
+                                </div>
+                                <span class="card-title">Signatures</span>
+                            </div>
+                            <div class="card-bottom">
+                                <div class="card-bottom-number-row">
+                                    <span class="card-number">
+                                        <t t-esc="pending_sign_count"/>
+                                    </span>
+                                </div>
+                                <t t-if="new_pending_sign_count &gt; 0">
+                                    <span class="card-new-pill">
+                                        <span class="card-new-pill-dot"></span>
+                                        <t t-if="new_pending_sign_count == 1">New document to sign</t>
+                                        <t t-if="new_pending_sign_count &gt; 1">
+                                            <t t-esc="new_pending_sign_count"/> new documents to sign
+                                        </t>
+                                    </span>
+                                </t>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- SALARY REPORTS (read-only portal viewer group) -->
+                <t t-if="request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')">
+                    <div class="col-6 col-md-6">
+                        <a href="/my/employee/salary-reports" class="dashboard-link">
+                            <div class="dashboard-card">
+                                <div class="card-top">
+                                    <div class="card-icon bg-success-soft">
+                                        <i class="fa fa-money"></i>
+                                    </div>
+                                    <span class="card-title">Salary Reports</span>
+                                </div>
+                                <div class="card-bottom">
+                                    <div class="card-bottom-number-row">
+                                        <span class="card-number">
+                                            <t t-esc="salary_report_count"/>
+                                        </span>
+                                    </div>
+                                    <t t-if="new_salary_report_count &gt; 0">
+                                        <span class="card-new-pill">
+                                            <span class="card-new-pill-dot"></span>
+                                            <t t-if="new_salary_report_count == 1">New report added</t>
+                                            <t t-if="new_salary_report_count &gt; 1">
+                                                <t t-esc="new_salary_report_count"/> new reports added
+                                            </t>
+                                        </span>
+                                    </t>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </t>
+
+
+                <!-- PORTAL REPORTS (visible by selected portal groups) -->
+                <t t-if="portal_report_count &gt; 0">
+                    <div class="col-6 col-md-6">
+                        <a href="/my/employee/reports" class="dashboard-link">
+                            <div class="dashboard-card">
+                                <div class="card-top">
+                                    <div class="card-icon bg-primary-soft">
+                                        <i class="fa fa-folder-open-o"></i>
+                                    </div>
+                                    <span class="card-title">Reports</span>
+                                </div>
+                                <div class="card-bottom">
+                                    <div class="card-bottom-number-row">
+                                        <span class="card-number">
+                                            <t t-esc="portal_report_count"/>
+                                        </span>
+                                    </div>
+                                    <t t-if="new_portal_report_count &gt; 0">
+                                        <span class="card-new-pill">
+                                            <span class="card-new-pill-dot"></span>
+                                            <t t-if="new_portal_report_count == 1">New report added</t>
+                                            <t t-if="new_portal_report_count &gt; 1">
+                                                <t t-esc="new_portal_report_count"/> new reports added
+                                            </t>
+                                        </span>
+                                    </t>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </t>
+
+                <!-- ATTENDANCE (only for group_portal_attendance_user) -->
+                <t t-if="can_use_attendance">
+                <div class="col-6 col-md-6">
+                    <a href="/my/employee/attendance" class="dashboard-link">
+                        <div class="dashboard-card"
+                            t-att-style="'background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid rgba(16,185,129,0.18);' if attendance_checked_in else ''">
+                            <div class="card-top">
+                                <div class="card-icon"
+                                    t-att-style="'background: rgba(16,185,129,0.15); color: #059669;' if attendance_checked_in else 'background: rgba(99,102,241,0.10); color: #6366F1;'">
+                                    <i t-att-class="'fa ' + ('fa-clock-o' if attendance_checked_in else 'fa-sign-in')"></i>
+                                </div>
+                                <span class="card-title">Attendance</span>
+                            </div>
+                            <div class="card-bottom">
+                                <div class="card-bottom-number-row">
+                                    <span class="card-number"
+                                        t-att-style="'font-size:18px; color:#059669;' if attendance_checked_in else 'font-size:18px;'">
+                                        <t t-if="attendance_checked_in">Active</t>
+                                        <t t-if="not attendance_checked_in">Check In</t>
+                                    </span>
+                                    <t t-if="attendance_checked_in">
+                                        <span class="badge-pulse bg-success"></span>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                </t>
+
+
+            </div>
+           <div class="recent-activity mt-4">
+
+            <div class="section-title mb-3">Recent Activity</div>
+
+            <t t-if="recent_activities">
+                <t t-foreach="recent_activities" t-as="act">
+
+                    <a t-att-href="
+                            '/my/employee/requests/%s' % act.id
+                            if act._name == 'employee.request'
+                            else '/my/employee/material/%s' % act.id
+                        "
+                    class="activity-card">
+
+                        <!-- ICON -->
+                        <div class="activity-icon">
+                            <t t-if="act._name == 'employee.request'">
+                                <i class="fa fa-file-text-o"></i>
+                            </t>
+                            <t t-if="act._name == 'material.request'">
+                                <i class="fa fa-cubes"></i>
+                            </t>
+                        </div>
+
+                        <!-- CONTENT -->
+                        <div class="activity-content">
+
+                            <div class="activity-title">
+                                <t t-if="act._name == 'employee.request'">
+                                    Employee Request
+                                </t>
+                                <t t-if="act._name == 'material.request'">
+                                    Material Request
+                                </t>
+                                <strong><t t-esc="act.name"/></strong>
+                            </div>
+
+                            <div class="activity-time">
+                                <t t-esc="act.create_date.strftime('%d %b %Y - %H:%M')"/>
+                            </div>
+
+                        </div>
+
+                        <!-- STATUS -->
+                        <div class="activity-status"
+                            t-att-class="'activity-status state-' + act.state">
+                            <t t-esc="act.state.replace('_',' ').title()"/>
+                        </div>
+
+                    </a>
+
+                </t>
+            </t>
+
+            <t t-if="not recent_activities">
+                <div class="text-muted small">
+                    No recent activity yet.
+                </div>
+            </t>
+
+        </div>
+
+
+
+
+
+
         </t>
     </template>
+
 </odoo>
