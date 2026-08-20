@@ -140,7 +140,7 @@
         }
       </style>
 
-      <div class="py-4 ept-page">
+      <div class="container py-4 ept-page">
         <div t-if="message" class="alert alert-success mt-3"><t t-esc="message"/></div>
         <div t-if="error" class="alert alert-danger mt-3"><t t-esc="error"/></div>
 
@@ -578,7 +578,7 @@
         }
 
       </style>
-      <div class="py-4">
+      <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-3 eps-page-head">
           <div>
             <h3 class="mb-1 eps-page-title">Weekly Cash Plans</h3>
@@ -820,7 +820,7 @@
         }
       </style>
 
-      <div class="py-4 ept-page">
+      <div class="container py-4 ept-page">
         <a href="/my/employee/treasury/plans" class="ept-back"><i class="fa fa-arrow-left"/> Weekly Cash Plans</a>
 
         <div class="ept-hero">

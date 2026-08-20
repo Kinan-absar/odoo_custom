@@ -4,7 +4,7 @@
     <template id="portal_petty_cash_list" name="Petty Cash List">
         <t t-call="employee_portal_suite.employee_portal_layout">
 
-            <div class="py-4">
+            <div class="container py-4">
 
                 <div class="material-header">
                     <div class="material-header-top">
@@ -104,9 +104,9 @@
         text-decoration: none !important;
         color: inherit;
         box-shadow: var(--shadow-sm);
-        border: 1px solid var(--line);
-        transition: transform var(--dur-fast) var(--ease),
-                    box-shadow var(--dur-fast) var(--ease);
+        border: 1px solid var(--border-light);
+        transition: transform var(--dur-fast) var(--ease-smooth),
+                    box-shadow var(--dur-fast) var(--ease-smooth);
         position: relative;
         overflow: hidden;
     }
@@ -170,7 +170,7 @@
     <template id="portal_petty_cash_detail" name="Petty Cash Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
 
-            <div class="py-4">
+            <div class="container py-4">
 
                 <a href="/my/employee/petty-cash"
                    class="text-decoration-none small text-muted">
