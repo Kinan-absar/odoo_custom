@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="employee_portal_layout_construction" inherit_id="employee_portal_suite.employee_portal_layout">
-        <xpath expr="//a[@href='/my/employee/material'][hasclass('stitch-nav-link')]" position="after">
+        <xpath expr="//aside[@class='stitch-sidebar']//a[@href='/my/employee/material']" position="after">
             <t t-if="request.env.user.has_group('construction_contract_management.group_construction_portal')">
                 <div class="stitch-nav-section">Construction</div>
                 <a href="/my/employee/contracts" t-att-class="'stitch-nav-link active' if request.httprequest.path.startswith('/my/employee/contract') else 'stitch-nav-link'"><i class="fa fa-file-text-o"/><span>Contracts</span></a>
