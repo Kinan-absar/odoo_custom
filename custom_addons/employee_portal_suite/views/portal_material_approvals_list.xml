@@ -14,7 +14,7 @@
 
                 <!-- Top Row -->
                 <div class="material-header-top">
-                    <h4 class="mb-0 fw-semibold">Material Requests Approval</h4>
+                    <div><h4 class="mb-0 fw-semibold">Approval Center</h4><small class="text-muted">Material Requests</small></div>
 
                     <!-- Filter Dropdown -->
                     <div class="d-flex align-items-center gap-2">
