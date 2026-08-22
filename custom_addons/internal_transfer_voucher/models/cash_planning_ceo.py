@@ -202,17 +202,14 @@ class CashPlanLineCEO(models.Model):
         return True
 
     def _weekly_plan_notification_users(self):
+        """CEO decisions go only to Payment Execution Managers.
+
+        Weekly Payment Plan Managers receive their separate handoff only after
+        the payment is marked as paid, when the draft voucher must be created.
+        """
         self.ensure_one()
-        group = self.env.ref(
+        return self._group_users(
             'internal_transfer_voucher.group_payment_execution_manager',
-            raise_if_not_found=False,
-        )
-        if not group:
-            return self.env['res.users']
-        return group.sudo().users.filtered(
-            lambda user: user.active
-            and not user.share
-            and self.company_id in user.company_ids
         )
 
     def _notify_weekly_plan_group(self, decision, reviewer):
@@ -288,6 +285,10 @@ class CashPlanLineCEO(models.Model):
         for line in self:
             if line.flow_type != 'out':
                 raise UserError(_('Receipts do not require CEO approval.'))
+            if decision in ('approved', 'adjusted') and not line.run_id:
+                raise UserError(_(
+                    'This planned payment must be added to a weekly plan before it can be approved.'
+                ))
             if line.ceo_decision not in ('pending', 'held'):
                 raise UserError(_('Only payments pending CEO review or currently on hold can be reviewed.'))
             amount = 0.0
@@ -316,14 +317,26 @@ class CashPlanLineCEO(models.Model):
         if not self.env.user.has_group(xmlid):
             raise UserError(_(error_message))
 
-    def _group_users(self, xmlid):
+    def _group_users(self, xmlid, exclude_xmlids=None):
         self.ensure_one()
         group = self.env.ref(xmlid, raise_if_not_found=False)
         if not group:
             return self.env['res.users']
-        return group.sudo().users.filtered(
+        users = group.sudo().users.filtered(
             lambda user: user.active and not user.share and self.company_id in user.company_ids
         )
+        for exclude_xmlid in (exclude_xmlids or []):
+            excluded_group = self.env.ref(exclude_xmlid, raise_if_not_found=False)
+            if excluded_group:
+                users -= excluded_group.sudo().users
+        return users
+
+    def _check_any_group(self, xmlids, error_message):
+        self.ensure_one()
+        if self.env.su:
+            return
+        if not any(self.env.user.has_group(xmlid) for xmlid in xmlids):
+            raise UserError(_(error_message))
 
     def action_mark_as_paid(self):
         """Payment Execution Managers confirm that the bank/cash execution is complete.
@@ -351,7 +364,17 @@ class CashPlanLineCEO(models.Model):
             'payment_marked_date': fields.Datetime.now(),
         })
 
-        users = self._group_users('internal_transfer_voucher.group_weekly_payment_plan_manager')
+        # Completing the execution step must also close the original execution
+        # activity/notification created after CEO approval. Otherwise the item
+        # continues to appear as pending even though it has been marked paid.
+        self.sudo().activity_ids.filtered(
+            lambda activity: activity.summary == _('Execute approved payment')
+        ).action_done()
+
+        users = self._group_users(
+            'internal_transfer_voucher.group_weekly_payment_plan_manager',
+            exclude_xmlids=['internal_transfer_voucher.group_payment_execution_manager'],
+        )
         if users:
             backend_url = '/web#id=%s&model=cash.plan.line&view_type=form' % self.id
             body = Markup(
@@ -391,11 +414,14 @@ class CashPlanLineCEO(models.Model):
         return True
 
     def action_create_payment_voucher(self):
-        """Weekly Payment Plan Managers create the accounting voucher after execution."""
+        """Execution or Weekly Payment Plan Managers create the draft accounting voucher."""
         self.ensure_one()
-        self._check_group(
-            'internal_transfer_voucher.group_weekly_payment_plan_manager',
-            'Only a Weekly Payment Plan Manager can create the Payment Voucher from this planned payment.',
+        self._check_any_group(
+            [
+                'internal_transfer_voucher.group_weekly_payment_plan_manager',
+                'internal_transfer_voucher.group_payment_execution_manager',
+            ],
+            'Only a Weekly Payment Plan Manager or Payment Execution Manager can create the Payment Voucher from this planned payment.',
         )
         if self.flow_type != 'out':
             raise UserError(_('This action is only available for planned payments.'))
@@ -410,7 +436,7 @@ class CashPlanLineCEO(models.Model):
 
         amount = self.approved_amount
         voucher = self.env['account.payment.voucher'].with_context(skip_cash_plan_autolink=True).create({
-            'date': self.planned_date,
+            'date': self.planned_date or fields.Date.context_today(self),
             'amount': amount,
             'currency_id': self.currency_id.id,
             'company_id': self.company_id.id,
