@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <function model="cash.plan.line" name="_assign_existing_unplanned_actuals_by_voucher_date"/>
-</odoo>
