@@ -1438,21 +1438,32 @@ class AccountPaymentVoucher(models.Model):
         return records
 
     def _get_or_create_unplanned_category(self, company_id):
-        category = self.env.ref('internal_transfer_voucher.cat_out_unplanned', raise_if_not_found=False)
-        if category:
+        """Return a shared or same-company Unplanned Actual category.
+
+        Never reuse a category belonging to another company merely because it
+        has the module XML ID.  This prevents cross-company record-rule errors
+        when vouchers are created while another allowed company is active.
+        """
+        category = self.env.ref(
+            'internal_transfer_voucher.cat_out_unplanned',
+            raise_if_not_found=False,
+        )
+        if category and (not category.company_id or category.company_id.id == company_id):
             return category
+
         Category = self.env['cash.plan.category'].sudo()
         category = Category.search([
             ('flow_type', '=', 'out'),
             ('name', '=', _('Unplanned Actual')),
             '|', ('company_id', '=', False), ('company_id', '=', company_id),
-        ], limit=1)
+        ], order='company_id asc, id asc', limit=1)
         if category:
             return category
         return Category.create({
             'name': _('Unplanned Actual'),
             'flow_type': 'out',
             'sequence': 99,
+            'company_id': company_id,
         })
 
     def _find_weekly_plan_for_voucher_date(self):
