@@ -59,7 +59,7 @@ class PortalAnnouncement(models.Model):
         # limit=0 means no limit in Odoo search
         announcements = self.sudo().search(domain, order="sequence desc, id desc", limit=limit or False)
 
-        user_groups = self.env.user.group_ids
+        user_groups = self.env.user.groups_id
         return announcements.filtered(lambda ann: not ann.group_ids or bool(user_groups & ann.group_ids))
 
     def _user_can_access(self, user, target="portal"):
@@ -74,7 +74,7 @@ class PortalAnnouncement(models.Model):
             return False
         if self.target not in (target, "both"):
             return False
-        if self.group_ids and not bool(user.group_ids & self.group_ids):
+        if self.group_ids and not bool(user.groups_id & self.group_ids):
             return False
         return True
 

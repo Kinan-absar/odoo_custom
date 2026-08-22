@@ -1400,11 +1400,9 @@
                                 <a href="/my/employee/approvals" t-att-class="'stitch-nav-link active' if request.httprequest.path.startswith('/my/employee/approvals') else 'stitch-nav-link'"><i class="fa fa-check-square-o"/><span>Employee Approvals</span></a>
                             </t>
                             <t t-if="request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or request.env.user.has_group('employee_portal_suite.group_mr_projects_director') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
-                                <a href="/my/employee/material/approvals" t-att-class="'stitch-nav-link active' if request.httprequest.path.startswith('/my/employee/material/approvals') else 'stitch-nav-link'"><i class="fa fa-tasks"/>Material Approvals</a>
+                                <a href="/my/employee/material/approvals" t-att-class="'stitch-nav-link active' if request.httprequest.path.startswith('/my/employee/material/approvals') else 'stitch-nav-link'"><i class="fa fa-tasks"/><span>Material Approvals</span></a>
                             </t>
                         </t>
-                        <!-- Compatibility anchor used by eps_itv_treasury_bridge's original, stable inheritance. -->
-                        <t><div id="app-d" style="display:none"/></t>
                     </t>
                     <t t-if="request.env.user.has_group('employee_portal_suite.group_attendance_only')">
                         <div class="stitch-nav-section">Workspace</div>
@@ -1466,7 +1464,7 @@
                 <div class="portal-announcement-wrapper">
                     <t t-foreach="portal_announcements" t-as="ann">
 
-                        <t t-if="not ann.group_ids or request.env.user.group_ids &amp; ann.group_ids">
+                        <t t-if="not ann.group_ids or request.env.user.groups_id &amp; ann.group_ids">
                             <div t-attf-class="portal-announcement alert alert-#{ann.color}">
                                 <div class="fw-bold mb-1">
                                     <t t-esc="ann.name"/>

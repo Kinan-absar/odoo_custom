@@ -247,7 +247,7 @@
                 <filter name="not_batched" string="Not Batched" domain="[('state', '!=', 'batch_created')]"/>
                 <filter name="batched" string="Batch Created" domain="[('state', '=', 'batch_created')]"/>
                 <filter name="draft" string="Not Generated" domain="[('state', '=', 'draft')]"/>
-                <group>
+                <group expand="0" string="Group By">
                     <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
                     <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
                 </group>

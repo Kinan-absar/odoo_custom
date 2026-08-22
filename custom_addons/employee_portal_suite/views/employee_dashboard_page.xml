@@ -84,9 +84,6 @@
                             <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')"><a href="/my/employee/approvals" class="st-module-card"><div class="st-module-icon"><i class="fa fa-check-square-o"/></div><div><div class="st-module-title">Employee Approvals</div><div class="st-module-meta"><t t-esc="employee_pending_count"/> waiting</div></div><i class="fa fa-angle-right st-module-arrow"/></a></t>
                             <t t-if="request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or request.env.user.has_group('employee_portal_suite.group_mr_projects_director') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')"><a href="/my/employee/material/approvals" class="st-module-card"><div class="st-module-icon"><i class="fa fa-tasks"/></div><div><div class="st-module-title">Material Approvals</div><div class="st-module-meta"><t t-esc="material_pending_count"/> waiting</div></div><i class="fa fa-angle-right st-module-arrow"/></a></t>
                         </div>
-                        <!-- Backward-compatible extension host for installed bridge modules.
-                             Existing bridge templates inherit the dashboard through //div[hasclass('row')]. -->
-                        <div class="row st-legacy-bridge-grid"></div>
                     </section>
 
                     <section>

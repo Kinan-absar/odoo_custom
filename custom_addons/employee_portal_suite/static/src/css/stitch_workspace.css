@@ -97,22 +97,3 @@ html[dir="rtl"] .stitch-sidebar{inset-inline-start:auto;inset-inline-end:0;borde
 
 html[dir="rtl"] .ept-page .ept-back i{transform:scaleX(-1)}
 html[dir="rtl"] .mobile-request-card::before{left:auto!important;right:0!important}
-
-
-/* Odoo-safe compatibility layer for original portal bridge templates.
-   Keep bridge XML inheritance unchanged; style their existing output here. */
-.st-legacy-bridge-grid{margin:14px 0 0!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.st-legacy-bridge-grid>[class*="col-"]{width:auto!important;max-width:none!important;flex:none!important;padding:0!important;margin:0!important}
-.st-legacy-bridge-grid .dashboard-link,.st-legacy-bridge-grid .construction-dashboard-card-link{text-decoration:none!important;color:inherit!important;display:block;height:100%}
-.st-legacy-bridge-grid .dashboard-card,.st-legacy-bridge-grid .construction-dashboard-card{height:100%!important;min-height:96px!important;padding:17px 20px!important;background:#fff!important;border:1px solid var(--st-border)!important;border-radius:10px!important;box-shadow:none!important;color:var(--st-text)!important}
-.st-legacy-bridge-grid .dashboard-card:hover,.st-legacy-bridge-grid .construction-dashboard-card:hover{border-color:#9991c7!important;background:#fdfcff!important;transform:none!important}
-.st-legacy-bridge-grid .card-top,.st-legacy-bridge-grid .construction-card-top{display:flex!important;align-items:center!important;gap:12px!important}
-.st-legacy-bridge-grid .card-icon,.st-legacy-bridge-grid .construction-card-icon{width:36px!important;height:36px!important;display:grid!important;place-items:center!important;border-radius:6px!important;background:#eeecf7!important;color:#3e394d!important}
-.st-legacy-bridge-grid .card-title,.st-legacy-bridge-grid .construction-card-title{font-size:15px!important;font-weight:700!important;color:var(--st-text)!important}
-.st-legacy-bridge-grid .card-bottom,.st-legacy-bridge-grid .construction-card-bottom{margin-top:10px!important;display:flex!important;align-items:center!important;justify-content:space-between!important}
-.st-legacy-bridge-grid .card-number,.st-legacy-bridge-grid .construction-card-number{font-size:18px!important;font-weight:700!important;color:var(--st-primary-dark)!important}
-.st-legacy-bridge-grid .construction-card-arrow{color:var(--st-muted)!important}
-.stitch-sidebar .ep-sub-link,.stitch-sidebar .ep-link{position:relative;display:flex!important;align-items:center;gap:12px;min-height:45px;padding:10px 13px;color:#343241!important;text-decoration:none!important;border-radius:7px;font-size:14px;font-weight:500}
-.stitch-sidebar .ep-sub-link:hover,.stitch-sidebar .ep-link:hover{background:#ebe8fa!important;color:var(--st-primary-dark)!important}
-.stitch-sidebar>a.ep-link{margin:3px 8px}
-@media (max-width:768px){.st-legacy-bridge-grid{grid-template-columns:1fr!important;gap:10px!important}.stitch-sidebar .ep-sub-link,.stitch-sidebar .ep-link{display:none!important}}
