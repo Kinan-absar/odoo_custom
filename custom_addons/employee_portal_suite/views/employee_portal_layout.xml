@@ -211,9 +211,18 @@
                         display: flex;
                         justify-content: flex-end;
                         align-items: center;
+                        gap: 12px;
                         padding: 14px 20px;
                         background: var(--surface);
                         border-bottom: 1px solid var(--border-light);
+                    }
+
+                    .ep-mobile-avatar {
+                        width: 38px;
+                        height: 38px;
+                        border-radius: 12px;
+                        object-fit: cover;
+                        box-shadow: 0 3px 10px rgba(79,70,229,0.22);
                     }
 
                     .nav-btn {
@@ -423,6 +432,17 @@
                 /* Compact persistent mobile top bar (every page) */
                 .ep-mobile-topbar {
                     display: none;
+                }
+
+                @media (max-width: 768px) {
+                    .ep-bell-panel {
+                        position: fixed;
+                        top: 66px;
+                        left: 12px;
+                        right: 12px;
+                        width: auto;
+                        max-width: none;
+                    }
                 }
 
                 /* ================================================================
@@ -1427,35 +1447,19 @@
             </header>
 
             <!-- ================================================================
-                 MOBILE APP HEADER (home page only)
+                 MOBILE TOP BAR (bell + avatar, consistent across every page —
+                 the dashboard content itself provides the "Good morning" greeting,
+                 so this stays a slim utility bar instead of duplicating it)
                  ================================================================ -->
-            <t t-if="request.httprequest.path == '/my/employee'">
-                <div class="mobile-app-header mobile-only">
-                    <div>
-                        <div style="font-size:12px; color:var(--text-muted); font-weight:500; margin-bottom:3px;">
-                            Welcome back
-                        </div>
-                        <div style="font-size:20px; font-weight:700; color:var(--text-primary); letter-spacing:-0.03em;">
-                            <t t-esc="request.env.user.partner_id.name.split(' ')[0]"/>
-                            <span style="color:var(--app-primary);">!</span>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-                            <t t-call="employee_portal_suite.ep_notification_bell"/>
-                        </t>
-                        <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"
-                            style="width:42px;height:42px;border-radius:14px;box-shadow:0 4px 12px rgba(79,70,229,0.30);object-fit:cover;"/>
-                    </div>
+            <t t-if="request.httprequest.path == '/my/employee' or not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                <div class="ep-mobile-topbar mobile-only">
+                    <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                        <t t-call="employee_portal_suite.ep_notification_bell"/>
+                    </t>
+                    <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="ep-mobile-avatar"/>
                 </div>
             </t>
 
-            <!-- Compact topbar (bell only) for every other mobile page -->
-            <t t-if="request.httprequest.path != '/my/employee' and not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-                <div class="ep-mobile-topbar mobile-only">
-                    <t t-call="employee_portal_suite.ep_notification_bell"/>
-                </div>
-            </t>
 
             <t t-set="portal_announcements"
                 t-value="request.env['portal.announcement']._get_visible_announcements_for_current_user(target='portal', limit=5)"/>
