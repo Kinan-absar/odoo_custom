@@ -4,7 +4,7 @@ from odoo.exceptions import UserError
 
 class CashPlanAddToRunWizard(models.TransientModel):
     _name = 'cash.plan.add.to.run.wizard'
-    _description = 'Add Planned Payment to Weekly Plan'
+    _description = 'Add Planned Cash Movement to Weekly Plan'
 
     line_id = fields.Many2one('cash.plan.line', required=True, readonly=True)
     company_id = fields.Many2one(related='line_id.company_id', readonly=True)
@@ -32,6 +32,6 @@ class CashPlanAddToRunWizard(models.TransientModel):
     def action_confirm(self):
         self.ensure_one()
         if not self.line_id:
-            raise UserError(_('The planned payment no longer exists.'))
+            raise UserError(_('The planned cash movement no longer exists.'))
         self.line_id._assign_to_weekly_plan(self.run_id, self.env.user)
         return {'type': 'ir.actions.act_window_close'}
