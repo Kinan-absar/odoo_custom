@@ -13,6 +13,34 @@ class CashPlanCategory(models.Model):
     active = fields.Boolean(default=True)
     company_id = fields.Many2one('res.company', default=lambda self: self.env.company)
 
+    @api.model
+    def _make_default_categories_shared(self):
+        """Keep module-provided categories usable by every allowed company.
+
+        Categories created manually by users remain company-specific.  The
+        predefined XML categories are configuration/master data and must not
+        inherit whichever company happened to be active when the module was
+        first installed.
+        """
+        xmlids = [
+            'cat_in_sales', 'cat_in_customer', 'cat_in_loan', 'cat_in_other',
+            'cat_out_supplier', 'cat_out_subcontractor', 'cat_out_payroll',
+            'cat_out_manpower', 'cat_out_rent', 'cat_out_legal',
+            'cat_out_insurance', 'cat_out_cash', 'cat_out_loans',
+            'cat_out_other', 'cat_out_unplanned', 'cat_in_unplanned',
+        ]
+        categories = self.env['cash.plan.category']
+        for xmlid in xmlids:
+            category = self.env.ref(
+                'internal_transfer_voucher.%s' % xmlid,
+                raise_if_not_found=False,
+            )
+            if category:
+                categories |= category
+        if categories:
+            categories.sudo().write({'company_id': False})
+        return True
+
 
 class CashPlanRun(models.Model):
     _name = 'cash.plan.run'

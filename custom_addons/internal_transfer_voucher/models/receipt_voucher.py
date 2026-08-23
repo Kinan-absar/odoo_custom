@@ -571,6 +571,12 @@ class AccountReceiptVoucher(models.Model):
         return records
 
     def _get_or_create_unplanned_category(self, company_id):
+        """Return a shared or same-company Unplanned Actual category.
+
+        Never reuse a category belonging to another company merely because it
+        has the module XML ID.  This prevents cross-company record-rule errors
+        when vouchers are created while another allowed company is active.
+        """
         category = self.env.ref(
             'internal_transfer_voucher.cat_in_unplanned',
             raise_if_not_found=False,
@@ -583,7 +589,7 @@ class AccountReceiptVoucher(models.Model):
             ('flow_type', '=', 'in'),
             ('name', '=', _('Unplanned Actual')),
             '|', ('company_id', '=', False), ('company_id', '=', company_id),
-        ], limit=1)
+        ], order='company_id asc, id asc', limit=1)
         if category:
             return category
         return Category.create({
@@ -656,7 +662,7 @@ class AccountReceiptVoucher(models.Model):
                     'Weekly Cash Plan; this line remains classified as an Unplanned Actual.'
                 ) % rec.name,
             })
-            rec.cash_plan_line_id = line.id
+            rec.with_context(skip_cash_plan_link_lock=True).write({'cash_plan_line_id': line.id})
 
     def write(self, vals):
         for rec in self:
