@@ -98,6 +98,12 @@
                 box-shadow: 0 14px 30px rgba(0,0,0,0.2);
             }
 
+            .attendance-hero form {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+            }
+
             .attendance-btn:active {
                 transform: scale(0.97);
             }

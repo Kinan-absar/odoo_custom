@@ -1,6 +1,9 @@
+import logging
+
 from odoo import http
 from odoo.http import request
 
+_logger = logging.getLogger(__name__)
 
 # Fields the employee is allowed to self-edit from the portal.
 # Kept as an explicit whitelist so a form-tampering attempt can never write
@@ -17,10 +20,6 @@ CONTACT_FIELDS = [
 EMERGENCY_FIELDS = [
     'emergency_contact',
     'emergency_phone',
-]
-BANK_FIELDS = [
-    'acc_number',
-    'bank_id',
 ]
 
 
@@ -60,7 +59,9 @@ class EmployeePortalProfile(http.Controller):
             return request.redirect('/my/employee')
 
         employee = employee.sudo()
+        had_error = False
 
+        # --- Contact info + emergency contact -------------------------------
         try:
             vals = {}
             for f in CONTACT_FIELDS:
@@ -79,15 +80,23 @@ class EmployeePortalProfile(http.Controller):
 
             if vals:
                 employee.write(vals)
+        except Exception:
+            _logger.exception('Employee portal: failed to save contact/emergency info for employee %s', employee.id)
+            had_error = True
 
-            # Bank details: update the linked res.partner.bank record if the
-            # employee model supports it, creating one on first save.
+        # --- Bank details -----------------------------------------------------
+        # Kept in its own try/except so a bank-account issue never blocks the
+        # contact info above from saving.
+        try:
             if self._field_exists(employee, 'bank_account_id'):
                 acc_number = (post.get('acc_number') or '').strip()
                 bank_name = (post.get('bank_name') or '').strip()
 
                 if acc_number:
-                    bank_partner = employee.address_home_id or employee.work_contact_id or user.partner_id
+                    # address_home_id is a base hr.employee field; user.partner_id
+                    # always exists, so this fallback chain is safe on any instance.
+                    bank_partner = employee.address_home_id or user.partner_id
+
                     bank_id = False
                     if bank_name:
                         existing_bank = request.env['res.bank'].sudo().search(
@@ -107,7 +116,10 @@ class EmployeePortalProfile(http.Controller):
                             'partner_id': bank_partner.id,
                         })
                         employee.write({'bank_account_id': new_bank_acc.id})
-
-            return request.redirect('/my/employee/profile?success=1')
         except Exception:
+            _logger.exception('Employee portal: failed to save bank details for employee %s', employee.id)
+            had_error = True
+
+        if had_error:
             return request.redirect('/my/employee/profile?error=1')
+        return request.redirect('/my/employee/profile?success=1')

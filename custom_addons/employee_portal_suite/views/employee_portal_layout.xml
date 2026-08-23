@@ -1497,7 +1497,7 @@
                 <div id="wrap" class="container mt-3 mb-5">
                     <t t-out="0"/>
                 </div>
-                <link rel="stylesheet" href="/employee_portal_suite/static/src/css/stitch_workspace.css?v=1.0"/>
+                <link rel="stylesheet" href="/employee_portal_suite/static/src/css/stitch_workspace.css?v=1.4"/>
             </main>
 
             <!-- ================================================================
