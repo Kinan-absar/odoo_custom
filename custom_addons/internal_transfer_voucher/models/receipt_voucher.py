@@ -662,7 +662,7 @@ class AccountReceiptVoucher(models.Model):
                     'Weekly Cash Plan; this line remains classified as an Unplanned Actual.'
                 ) % rec.name,
             })
-            rec.cash_plan_line_id = line.id
+            rec.with_context(skip_cash_plan_link_lock=True).write({'cash_plan_line_id': line.id})
 
     def write(self, vals):
         for rec in self:
