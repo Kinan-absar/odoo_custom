@@ -429,11 +429,6 @@
                     .ep-bell-dot { animation: none; }
                 }
 
-                /* Compact persistent mobile top bar (every page) */
-                .ep-mobile-topbar {
-                    display: none;
-                }
-
                 @media (max-width: 768px) {
                     .ep-bell-panel {
                         position: fixed;
@@ -1430,10 +1425,10 @@
                     </t>
                 </nav>
                 <div class="stitch-sidebar-foot">
-                    <div class="stitch-user">
+                    <a href="/my/employee/profile" class="stitch-user" style="text-decoration:none !important;">
                         <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"/>
                         <div><div class="stitch-user-name" t-out="request.env.user.partner_id.name"/><div class="stitch-user-company" t-out="request.env.user.partner_id.company_name or request.env.company.name"/></div>
-                    </div>
+                    </a>
                     <a href="/web/session/logout" class="stitch-logout"><i class="fa fa-sign-out"/><span>Logout</span></a>
                 </div>
             </aside>
@@ -1442,7 +1437,7 @@
                 <div class="stitch-page-title">Employee Workspace</div>
                 <div class="stitch-top-actions">
                     <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')"><t t-call="employee_portal_suite.ep_notification_bell"/></t>
-                    <div class="stitch-profile-pill"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"/><span>Profile</span></div>
+                    <a href="/my/employee/profile" class="stitch-profile-pill" style="text-decoration:none !important;"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"/><span>Profile</span></a>
                 </div>
             </header>
 
@@ -1456,7 +1451,7 @@
                     <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
                         <t t-call="employee_portal_suite.ep_notification_bell"/>
                     </t>
-                    <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="ep-mobile-avatar"/>
+                    <a href="/my/employee/profile"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="ep-mobile-avatar"/></a>
                 </div>
             </t>
 

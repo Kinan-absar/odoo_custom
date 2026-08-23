@@ -90,6 +90,7 @@
         # --------------------------------------------------
         'views/employee_portal_layout.xml',
         'views/employee_dashboard_page.xml',
+        'views/portal_employee_profile.xml',
 
         # Employee Requests
         'views/employee_requests_page.xml',
