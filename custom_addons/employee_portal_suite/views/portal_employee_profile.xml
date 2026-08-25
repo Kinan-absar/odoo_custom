@@ -133,8 +133,158 @@
                                 <label>ZIP / Postal Code</label>
                                 <input type="text" name="private_zip" class="form-control" t-att-value="employee.private_zip"/>
                             </div>
+                            <t t-if="'km_home_work' in available_personal_fields">
+                                <div class="profile-field">
+                                    <label>Home-Work Distance (km)</label>
+                                    <input type="number" step="0.1" min="0" name="km_home_work" class="form-control" t-att-value="employee.km_home_work"/>
+                                </div>
+                            </t>
+                            <t t-if="'private_car_plate' in available_personal_fields">
+                                <div class="profile-field">
+                                    <label>Private Car Plate</label>
+                                    <input type="text" name="private_car_plate" class="form-control" t-att-value="employee.private_car_plate"/>
+                                </div>
+                            </t>
                         </div>
                     </div>
+
+                    <!-- PERSONAL DETAILS -->
+                    <t t-if="available_personal_fields">
+                        <div class="profile-card">
+                            <h3>Personal Details</h3>
+                            <p class="section-sub">Additional information used for HR records.</p>
+                            <div class="profile-field-grid">
+                                <t t-if="'birthday' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Date of Birth</label>
+                                        <input type="date" name="birthday" class="form-control" t-att-value="employee.birthday"/>
+                                    </div>
+                                </t>
+                                <t t-if="'gender' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Gender</label>
+                                        <select name="gender" class="form-control">
+                                            <option value="">Select...</option>
+                                            <option value="male" t-att-selected="'selected' if employee.gender == 'male' else None">Male</option>
+                                            <option value="female" t-att-selected="'selected' if employee.gender == 'female' else None">Female</option>
+                                            <option value="other" t-att-selected="'selected' if employee.gender == 'other' else None">Other</option>
+                                        </select>
+                                    </div>
+                                </t>
+                                <t t-if="'place_of_birth' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Place of Birth</label>
+                                        <input type="text" name="place_of_birth" class="form-control" t-att-value="employee.place_of_birth"/>
+                                    </div>
+                                </t>
+                                <t t-if="'country_of_birth' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Country of Birth</label>
+                                        <select name="country_of_birth" class="form-control">
+                                            <option value="">Select...</option>
+                                            <t t-foreach="request.env['res.country'].sudo().search([], order='name')" t-as="country">
+                                                <option t-att-value="country.id" t-att-selected="'selected' if employee.country_of_birth and employee.country_of_birth.id == country.id else None" t-esc="country.name"/>
+                                            </t>
+                                        </select>
+                                    </div>
+                                </t>
+                                <t t-if="'marital' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Marital Status</label>
+                                        <select name="marital" class="form-control">
+                                            <t t-foreach="marital_options" t-as="opt">
+                                                <option t-att-value="opt[0]" t-att-selected="'selected' if employee.marital == opt[0] else None" t-esc="opt[1]"/>
+                                            </t>
+                                        </select>
+                                    </div>
+                                </t>
+                                <t t-if="'spouse_complete_name' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Spouse Name</label>
+                                        <input type="text" name="spouse_complete_name" class="form-control" t-att-value="employee.spouse_complete_name"/>
+                                    </div>
+                                </t>
+                                <t t-if="'children' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Number of Children</label>
+                                        <input type="number" min="0" name="children" class="form-control" t-att-value="employee.children"/>
+                                    </div>
+                                </t>
+                                <t t-if="'country_id' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Nationality</label>
+                                        <select name="country_id" class="form-control">
+                                            <option value="">Select...</option>
+                                            <t t-foreach="request.env['res.country'].sudo().search([], order='name')" t-as="country">
+                                                <option t-att-value="country.id" t-att-selected="'selected' if employee.country_id and employee.country_id.id == country.id else None" t-esc="country.name"/>
+                                            </t>
+                                        </select>
+                                    </div>
+                                </t>
+                                <t t-if="'identification_id' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Identification No.</label>
+                                        <input type="text" name="identification_id" class="form-control" t-att-value="employee.identification_id"/>
+                                    </div>
+                                </t>
+                                <t t-if="'ssn_no' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>SSN No.</label>
+                                        <input type="text" name="ssn_no" class="form-control" t-att-value="employee.ssn_no"/>
+                                    </div>
+                                </t>
+                                <t t-if="'passport_id' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Passport No.</label>
+                                        <input type="text" name="passport_id" class="form-control" t-att-value="employee.passport_id"/>
+                                    </div>
+                                </t>
+                                <t t-if="'permit_no' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Work Permit No.</label>
+                                        <input type="text" name="permit_no" class="form-control" t-att-value="employee.permit_no"/>
+                                    </div>
+                                </t>
+                                <t t-if="'visa_no' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Visa No.</label>
+                                        <input type="text" name="visa_no" class="form-control" t-att-value="employee.visa_no"/>
+                                    </div>
+                                </t>
+                                <t t-if="'visa_expire' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Visa Expiration</label>
+                                        <input type="date" name="visa_expire" class="form-control" t-att-value="employee.visa_expire"/>
+                                    </div>
+                                </t>
+                                <t t-if="'certificate' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Certificate Level</label>
+                                        <select name="certificate" class="form-control">
+                                            <option value="">Select...</option>
+                                            <option value="graduate" t-att-selected="'selected' if employee.certificate == 'graduate' else None">Graduate</option>
+                                            <option value="bachelor" t-att-selected="'selected' if employee.certificate == 'bachelor' else None">Bachelor</option>
+                                            <option value="master" t-att-selected="'selected' if employee.certificate == 'master' else None">Master</option>
+                                            <option value="doctor" t-att-selected="'selected' if employee.certificate == 'doctor' else None">Doctor</option>
+                                            <option value="other" t-att-selected="'selected' if employee.certificate == 'other' else None">Other</option>
+                                        </select>
+                                    </div>
+                                </t>
+                                <t t-if="'study_field' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>Field of Study</label>
+                                        <input type="text" name="study_field" class="form-control" t-att-value="employee.study_field"/>
+                                    </div>
+                                </t>
+                                <t t-if="'study_school' in available_personal_fields">
+                                    <div class="profile-field">
+                                        <label>School</label>
+                                        <input type="text" name="study_school" class="form-control" t-att-value="employee.study_school"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
 
                     <!-- EMERGENCY CONTACT -->
                     <t t-if="has_emergency_fields">

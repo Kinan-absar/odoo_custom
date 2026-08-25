@@ -351,7 +351,7 @@
                     box-shadow: var(--shadow-lg);
                     border: 1px solid var(--border-light);
                     padding: 8px;
-                    z-index: 2200;
+                    z-index: 9999;
                     display: none;
 
                     opacity: 0;
@@ -364,6 +364,18 @@
                     display: block;
                     opacity: 1;
                     transform: translateY(0) scale(1);
+                }
+
+                .ep-bell-backdrop {
+                    display: none;
+                }
+
+                .ep-bell-backdrop.show {
+                    display: block;
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(20, 18, 30, 0.32);
+                    z-index: 9998;
                 }
 
                 .ep-bell-panel-header {
@@ -1497,7 +1509,7 @@
                 <div id="wrap" class="container mt-3 mb-5">
                     <t t-out="0"/>
                 </div>
-                <link rel="stylesheet" href="/employee_portal_suite/static/src/css/stitch_workspace.css?v=1.4"/>
+                <link rel="stylesheet" href="/employee_portal_suite/static/src/css/stitch_workspace.css?v=1.5"/>
             </main>
 
             <!-- ================================================================
@@ -1697,12 +1709,28 @@
                     var wrap = event.currentTarget.closest('.ep-bell-wrap');
                     if (!wrap) return;
                     var panel = wrap.querySelector('.ep-bell-panel');
+                    var backdrop = wrap.querySelector('.ep-bell-backdrop');
                     if (!panel) return;
                     var isOpen = panel.classList.contains('show');
                     document.querySelectorAll('.ep-bell-panel').forEach(function(p){
                         p.classList.remove('show');
                     });
-                    if (!isOpen) panel.classList.add('show');
+                    document.querySelectorAll('.ep-bell-backdrop').forEach(function(b){
+                        b.classList.remove('show');
+                    });
+                    if (!isOpen) {
+                        panel.classList.add('show');
+                        if (backdrop) backdrop.classList.add('show');
+                    }
+                }
+
+                function closeEpBell() {
+                    document.querySelectorAll('.ep-bell-panel').forEach(function(p){
+                        p.classList.remove('show');
+                    });
+                    document.querySelectorAll('.ep-bell-backdrop').forEach(function(b){
+                        b.classList.remove('show');
+                    });
                 }
 
                 document.addEventListener('click', function(e) {
@@ -1726,6 +1754,9 @@
                         document.querySelectorAll('.ep-bell-panel').forEach(function(p){
                             p.classList.remove('show');
                         });
+                        document.querySelectorAll('.ep-bell-backdrop').forEach(function(b){
+                            b.classList.remove('show');
+                        });
                     }
                 });
             </script>
@@ -1744,6 +1775,7 @@
          ================================================================ -->
     <template id="ep_notification_bell">
         <div class="ep-bell-wrap">
+            <div class="ep-bell-backdrop" onclick="closeEpBell()"></div>
             <div t-att-class="'ep-bell-btn has-unread' if ep_notif_unread_total else 'ep-bell-btn'"
                 onclick="toggleEpBell(event)">
                 <i class="fa fa-bell-o"></i>

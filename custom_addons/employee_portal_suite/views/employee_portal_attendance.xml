@@ -98,102 +98,8 @@
                 box-shadow: 0 14px 30px rgba(0,0,0,0.2);
             }
 
-            .attendance-hero form {
-                width: 100%;
-                display: flex;
-                justify-content: center;
-            }
-
             .attendance-btn:active {
                 transform: scale(0.97);
-            }
-
-            /* Slide-to-confirm control */
-            .slide-track {
-                position: relative;
-                width: 100%;
-                max-width: 320px;
-                height: 58px;
-                border-radius: 29px;
-                background: rgba(255,255,255,0.16);
-                border: 1px solid rgba(255,255,255,0.28);
-                overflow: hidden;
-                touch-action: pan-y;
-                user-select: none;
-                -webkit-user-select: none;
-            }
-
-            .slide-fill {
-                position: absolute;
-                top: 0; left: 0; bottom: 0;
-                width: 58px;
-                background: rgba(255,255,255,0.14);
-                border-radius: 29px;
-                pointer-events: none;
-                transition: width 0.05s linear;
-            }
-
-            .slide-track.settling .slide-fill,
-            .slide-track.settling .slide-handle {
-                transition: width 0.28s cubic-bezier(.22,1,.36,1), transform 0.28s cubic-bezier(.22,1,.36,1);
-            }
-
-            .slide-label {
-                position: absolute;
-                inset: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 14px;
-                font-weight: 700;
-                letter-spacing: 0.01em;
-                pointer-events: none;
-                opacity: 0.95;
-                transition: opacity 0.15s ease;
-            }
-
-            .slide-label i {
-                margin-inline-start: 8px;
-                font-size: 12px;
-                opacity: 0.85;
-                animation: slide-hint 1.6s ease-in-out infinite;
-            }
-
-            @keyframes slide-hint {
-                0%, 100% { transform: translateX(0); opacity: 0.5; }
-                50% { transform: translateX(4px); opacity: 0.95; }
-            }
-
-            .slide-handle {
-                position: absolute;
-                top: 3px;
-                left: 3px;
-                width: 52px;
-                height: 52px;
-                border-radius: 50%;
-                background: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 18px;
-                cursor: grab;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.18);
-                touch-action: none;
-                z-index: 2;
-            }
-
-            .btn-checkin .slide-handle,
-            #checkin-slide .slide-handle { color: #4F46E5; }
-            #checkout-slide .slide-handle { color: #059669; }
-
-            .slide-handle:active { cursor: grabbing; }
-
-            .slide-track.done .slide-label { opacity: 0; }
-
-            .slide-track.disabled { opacity: 0.7; pointer-events: none; }
-
-            @media (prefers-reduced-motion: reduce) {
-                .slide-label i { animation: none; }
             }
 
             /* Today Stats */
@@ -375,90 +281,6 @@
                     </div>
                 </t>
 
-                <!-- Shared slide-to-confirm control (used by both Check In and Check Out below) -->
-                <script>
-                function initSlideControl(track, handle, fill, label, onComplete) {
-                    var maxX = 0;
-                    var dragging = false;
-                    var startX = 0;
-                    var startLeft = 0;
-                    var done = false;
-
-                    function setX(x) {
-                        x = Math.max(0, Math.min(x, maxX));
-                        handle.style.transform = 'translateX(' + x + 'px)';
-                        fill.style.width = (58 + x) + 'px';
-                    }
-
-                    function measure() {
-                        maxX = track.clientWidth - handle.clientWidth - 6;
-                    }
-                    measure();
-                    window.addEventListener('resize', measure);
-
-                    function pointerDown(e) {
-                        if (done) return;
-                        dragging = true;
-                        track.classList.remove('settling');
-                        startX = (e.touches ? e.touches[0].clientX : e.clientX);
-                        startLeft = handle.style.transform ? parseInt(handle.style.transform.replace(/[^0-9.-]/g, '')) : 0;
-                        document.addEventListener('mousemove', pointerMove);
-                        document.addEventListener('mouseup', pointerUp);
-                        document.addEventListener('touchmove', pointerMove, { passive: false });
-                        document.addEventListener('touchend', pointerUp);
-                    }
-
-                    function pointerMove(e) {
-                        if (!dragging) return;
-                        e.preventDefault &amp;&amp; e.preventDefault();
-                        var clientX = (e.touches ? e.touches[0].clientX : e.clientX);
-                        setX(startLeft + (clientX - startX));
-                    }
-
-                    function pointerUp() {
-                        if (!dragging) return;
-                        dragging = false;
-                        document.removeEventListener('mousemove', pointerMove);
-                        document.removeEventListener('mouseup', pointerUp);
-                        document.removeEventListener('touchmove', pointerMove);
-                        document.removeEventListener('touchend', pointerUp);
-
-                        track.classList.add('settling');
-                        var current = handle.style.transform ? parseInt(handle.style.transform.replace(/[^0-9.-]/g, '')) : 0;
-                        if (current >= maxX * 0.82) {
-                            finish();
-                        } else {
-                            setX(0);
-                        }
-                    }
-
-                    function finish() {
-                        done = true;
-                        setX(maxX);
-                        track.classList.add('done');
-                        onComplete();
-                    }
-
-                    // Tap / click on the handle also completes the action
-                    // (keeps the control keyboard- and screen-reader-friendly).
-                    function tapComplete(e) {
-                        if (done || dragging) return;
-                        track.classList.add('settling');
-                        finish();
-                    }
-
-                    handle.addEventListener('mousedown', pointerDown);
-                    handle.addEventListener('touchstart', pointerDown, { passive: true });
-                    handle.addEventListener('click', tapComplete);
-                    handle.addEventListener('keydown', function (e) {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            tapComplete();
-                        }
-                    });
-                }
-                </script>
-
                 <!-- STATUS HERO CARD -->
                 <t t-if="is_checked_in">
                     <div class="attendance-hero checked-in">
@@ -476,43 +298,40 @@
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                             <input type="hidden" id="checkout_geo_lat" name="geo_lat" value=""/>
                             <input type="hidden" id="checkout_geo_lon" name="geo_lon" value=""/>
-                            <div class="slide-track" id="checkout-slide" t-att-data-geo-enforce="'1' if geo_enforce else '0'">
-                                <div class="slide-fill" id="checkout-fill"></div>
-                                <span class="slide-label" id="checkout-label">Slide to check out <i class="fa fa-chevron-right"></i></span>
-                                <div class="slide-handle" id="checkout-handle" tabindex="0" role="button" aria-label="Slide to check out">
-                                    <i class="fa fa-sign-out"></i>
-                                </div>
-                            </div>
+                            <button type="button" id="checkout-btn" class="attendance-btn btn-checkout"
+                                    t-att-data-geo-enforce="'1' if geo_enforce else '0'">
+                                <i class="fa fa-sign-out"></i>
+                                Check Out
+                            </button>
                         </form>
                         <script>
                         (function () {
-                            var track  = document.getElementById('checkout-slide');
-                            var handle = document.getElementById('checkout-handle');
-                            var fill   = document.getElementById('checkout-fill');
-                            var label  = document.getElementById('checkout-label');
-                            var form   = document.getElementById('checkout-form');
-                            var latIn  = document.getElementById('checkout_geo_lat');
-                            var lonIn  = document.getElementById('checkout_geo_lon');
-                            var geoEnforce = track.getAttribute('data-geo-enforce') === '1';
+                            var btn   = document.getElementById('checkout-btn');
+                            var form  = document.getElementById('checkout-form');
+                            var latIn = document.getElementById('checkout_geo_lat');
+                            var lonIn = document.getElementById('checkout_geo_lon');
+                            var geoEnforce = btn.getAttribute('data-geo-enforce') === '1';
 
-                            function completeAction() {
-                                track.classList.add('disabled');
+                            btn.addEventListener('click', function () {
                                 if (!geoEnforce || !navigator.geolocation) {
                                     form.submit();
                                     return;
                                 }
+                                btn.disabled = true;
                                 navigator.geolocation.getCurrentPosition(
                                     function (pos) {
                                         latIn.value = pos.coords.latitude;
                                         lonIn.value = pos.coords.longitude;
                                         form.submit();
                                     },
-                                    function () { form.submit(); },
+                                    function () {
+                                        // Could not get location — submit anyway;
+                                        // server will flag as outside if coords missing
+                                        form.submit();
+                                    },
                                     { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
                                 );
-                            }
-
-                            initSlideControl(track, handle, fill, label, completeAction);
+                            });
                         })();
                         </script>
                     </div>
@@ -533,41 +352,40 @@
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                             <input type="hidden" id="geo_lat" name="geo_lat" value=""/>
                             <input type="hidden" id="geo_lon" name="geo_lon" value=""/>
-                            <div class="slide-track" id="checkin-slide" t-att-data-geo-enforce="'1' if geo_enforce else '0'">
-                                <div class="slide-fill" id="checkin-fill"></div>
-                                <span class="slide-label" id="checkin-label">Slide to check in <i class="fa fa-chevron-right"></i></span>
-                                <div class="slide-handle" id="checkin-handle" tabindex="0" role="button" aria-label="Slide to check in">
-                                    <i class="fa fa-sign-in"></i>
-                                </div>
-                            </div>
+                            <button id="checkin-btn" type="button" class="attendance-btn btn-checkin"
+                                    t-att-data-geo-enforce="'1' if geo_enforce else '0'">
+                                <i class="fa fa-sign-in"></i>
+                                Check In
+                            </button>
                         </form>
 
                         <script>
                         (function () {
-                            var track  = document.getElementById('checkin-slide');
-                            var handle = document.getElementById('checkin-handle');
-                            var fill   = document.getElementById('checkin-fill');
-                            var label  = document.getElementById('checkin-label');
-                            var form   = document.getElementById('checkin-form');
+                            var btn = document.getElementById('checkin-btn');
+                            var form = document.getElementById('checkin-form');
                             var latInput = document.getElementById('geo_lat');
                             var lonInput = document.getElementById('geo_lon');
                             var subText  = document.getElementById('geo-status-sub');
                             var iconEl   = document.getElementById('geo-status-icon');
-                            var geoEnforce = track.getAttribute('data-geo-enforce') === '1';
 
-                            function completeAction() {
-                                track.classList.add('disabled');
+                            var geoEnforce = btn.getAttribute('data-geo-enforce') === '1';
+
+                            btn.addEventListener('click', function () {
                                 if (!geoEnforce) {
+                                    // No geofencing required — submit directly
                                     form.submit();
                                     return;
                                 }
+
                                 if (!navigator.geolocation) {
                                     subText.textContent = 'Geolocation is not supported by your browser.';
-                                    track.classList.remove('disabled', 'done');
                                     return;
                                 }
+
+                                btn.disabled = true;
                                 subText.textContent = 'Detecting your location…';
                                 iconEl.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+
                                 navigator.geolocation.getCurrentPosition(
                                     function (position) {
                                         latInput.value = position.coords.latitude;
@@ -576,7 +394,7 @@
                                         form.submit();
                                     },
                                     function (err) {
-                                        track.classList.remove('disabled', 'done');
+                                        btn.disabled = false;
                                         iconEl.innerHTML = '<i class="fa fa-user-o"></i>';
                                         if (err.code === err.PERMISSION_DENIED) {
                                             subText.textContent = 'Location access denied. Please allow location and try again.';
@@ -586,9 +404,7 @@
                                     },
                                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                                 );
-                            }
-
-                            initSlideControl(track, handle, fill, label, completeAction);
+                            });
                         })();
                         </script>
                     </div>
