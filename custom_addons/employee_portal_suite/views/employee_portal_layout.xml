@@ -211,18 +211,9 @@
                         display: flex;
                         justify-content: flex-end;
                         align-items: center;
-                        gap: 12px;
                         padding: 14px 20px;
                         background: var(--surface);
                         border-bottom: 1px solid var(--border-light);
-                    }
-
-                    .ep-mobile-avatar {
-                        width: 38px;
-                        height: 38px;
-                        border-radius: 12px;
-                        object-fit: cover;
-                        box-shadow: 0 3px 10px rgba(79,70,229,0.22);
                     }
 
                     .nav-btn {
@@ -351,7 +342,7 @@
                     box-shadow: var(--shadow-lg);
                     border: 1px solid var(--border-light);
                     padding: 8px;
-                    z-index: 9999;
+                    z-index: 2200;
                     display: none;
 
                     opacity: 0;
@@ -364,18 +355,6 @@
                     display: block;
                     opacity: 1;
                     transform: translateY(0) scale(1);
-                }
-
-                .ep-bell-backdrop {
-                    display: none;
-                }
-
-                .ep-bell-backdrop.show {
-                    display: block;
-                    position: fixed;
-                    inset: 0;
-                    background: rgba(20, 18, 30, 0.32);
-                    z-index: 9998;
                 }
 
                 .ep-bell-panel-header {
@@ -441,15 +420,9 @@
                     .ep-bell-dot { animation: none; }
                 }
 
-                @media (max-width: 768px) {
-                    .ep-bell-panel {
-                        position: fixed;
-                        top: 66px;
-                        left: 12px;
-                        right: 12px;
-                        width: auto;
-                        max-width: none;
-                    }
+                /* Compact persistent mobile top bar (every page) */
+                .ep-mobile-topbar {
+                    display: none;
                 }
 
                 /* ================================================================
@@ -1391,82 +1364,111 @@
                 t-value="sum(v.get('new', 0) for v in ep_notif_summary.values())"/>
 
             <!-- ================================================================
-                 STITCH DESKTOP APPLICATION SHELL
+                 DESKTOP NAVBAR
                  ================================================================ -->
-            <aside class="stitch-sidebar">
-                <div class="stitch-brand">
-                    <div class="stitch-brand-mark">
-                        <img t-att-src="'/web/image/res.company/%s/logo' % request.env.company.id" alt="Company"/>
-                    </div>
-                    <div>
-                        <div class="stitch-brand-title">Absar Portal</div>
-                        <div class="stitch-brand-sub">Employee Workspace</div>
-                    </div>
-                </div>
-                <nav class="stitch-nav">
+            <nav class="ep-navbar">
+                <div class="ep-nav-links">
                     <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-                        <div class="stitch-nav-section">Workspace</div>
-                        <a href="/my/employee" t-att-class="'stitch-nav-link active' if request.httprequest.path in ['/my','/my/employee'] else 'stitch-nav-link'"><i class="fa fa-th-large"/><span>Home</span></a>
-                        <a href="/my/employee/requests" t-att-class="'stitch-nav-link active' if request.httprequest.path.startswith('/my/employee/requests') else 'stitch-nav-link'"><i class="fa fa-user-plus"/><span>Employee Requests</span></a>
-                        <a href="/my/employee/material" t-att-class="'stitch-nav-link active' if request.httprequest.path.startswith('/my/employee/material') and not request.httprequest.path.startswith('/my/employee/material/approvals') else 'stitch-nav-link'"><i class="fa fa-clipboard"/><span>Material Requests</span></a>
-                        <t t-if="request.env.user.has_group('employee_portal_suite.group_portal_attendance_user')">
-                            <a href="/my/employee/attendance" t-att-class="'stitch-nav-link active' if request.httprequest.path.startswith('/my/employee/attendance') else 'stitch-nav-link'"><i class="fa fa-calendar-check-o"/><span>Attendance</span></a>
-                        </t>
-                        <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
-                            <a href="/my/employee/petty-cash" t-att-class="'stitch-nav-link active' if request.httprequest.path.startswith('/my/employee/petty-cash') else 'stitch-nav-link'"><i class="fa fa-money"/><span>Petty Cash</span></a>
-                        </t>
-                        <div class="stitch-nav-section">Documents</div>
-                        <a href="/my/employee/sign" t-att-class="'stitch-nav-link active' if request.httprequest.path.startswith('/my/employee/sign') else 'stitch-nav-link'"><i class="fa fa-pencil-square-o"/><span>Signatures</span></a>
-                        <t t-if="request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')">
-                            <a href="/my/employee/salary-reports" t-att-class="'stitch-nav-link active' if request.httprequest.path.startswith('/my/employee/salary-reports') else 'stitch-nav-link'"><i class="fa fa-id-card-o"/><span>Salary Reports</span></a>
-                        </t>
-                        <a href="/my/employee/reports" t-att-class="'stitch-nav-link active' if request.httprequest.path.startswith('/my/employee/reports') else 'stitch-nav-link'"><i class="fa fa-file-text-o"/><span>Reports</span></a>
-                        <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo') or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')">
-                            <div class="stitch-nav-section">Management</div>
-                            <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
-                                <a href="/my/employee/approvals" t-att-class="'stitch-nav-link active' if request.httprequest.path.startswith('/my/employee/approvals') else 'stitch-nav-link'"><i class="fa fa-check-square-o"/><span>Employee Approvals</span></a>
-                            </t>
-                            <t t-if="request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or request.env.user.has_group('employee_portal_suite.group_mr_projects_director') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
-                                <a href="/my/employee/material/approvals" t-att-class="'stitch-nav-link active' if request.httprequest.path.startswith('/my/employee/material/approvals') else 'stitch-nav-link'"><i class="fa fa-tasks"/><span>Material Approvals</span></a>
-                            </t>
-                        </t>
-                    </t>
-                    <t t-if="request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-                        <div class="stitch-nav-section">Workspace</div>
-                        <a href="/my/employee/attendance" class="stitch-nav-link active"><i class="fa fa-calendar-check-o"/><span>Attendance</span></a>
-                    </t>
-                </nav>
-                <div class="stitch-sidebar-foot">
-                    <a href="/my/employee/profile" class="stitch-user" style="text-decoration:none !important;">
-                        <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"/>
-                        <div><div class="stitch-user-name" t-out="request.env.user.partner_id.name"/><div class="stitch-user-company" t-out="request.env.user.partner_id.company_name or request.env.company.name"/></div>
-                    </a>
-                    <a href="/web/session/logout" class="stitch-logout"><i class="fa fa-sign-out"/><span>Logout</span></a>
-                </div>
-            </aside>
+                        <a href="/my" class="ep-link">Dashboard</a>
 
-            <header class="stitch-topbar">
-                <div class="stitch-page-title">Employee Workspace</div>
-                <div class="stitch-top-actions">
-                    <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')"><t t-call="employee_portal_suite.ep_notification_bell"/></t>
-                    <a href="/my/employee/profile" class="stitch-profile-pill" style="text-decoration:none !important;"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"/><span>Profile</span></a>
+                        <div class="ep-dropdown">
+                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests &#9662;</button>
+                            <div id="req-d" class="ep-dropdown-menu">
+                                <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
+                                <a href="/my/employee/requests/new" class="ep-sub-link text-primary">+ New Employee Request</a>
+                                <hr class="my-1"/>
+                                <a href="/my/employee/material" class="ep-sub-link">Material Requests</a>
+                                <a href="/my/employee/material/new" class="ep-sub-link text-primary">+ New Material Request</a>
+                            </div>
+                        </div>
+
+                        <t t-if="
+                            request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                            or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                        ">
+                            <div class="ep-dropdown">
+                                <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals &#9662;</button>
+                                <div id="app-d" class="ep-dropdown-menu">
+
+                                    <t t-if="
+                                        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
+                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
+                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                                    ">
+                                        <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
+                                    </t>
+
+                                    <t t-if="
+                                        request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
+                                        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
+                                        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
+                                        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
+                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
+                                    ">
+                                        <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
+                                    </t>
+
+                                </div>
+                            </div>
+                        </t>
+
+                        <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                            <a href="/my/employee/petty-cash" class="ep-link">Petty Cash</a>
+                            <a href="/my/employee/attendance" class="ep-link">Attendance</a>
+                        </t>
+                    </t><!-- /not attendance_only -->
+                    <t t-if="request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                        <a href="/my/employee/attendance" class="ep-link">Attendance</a>
+                    </t>
+                </div><!-- /ep-nav-links -->
+                <div class="d-flex align-items-center gap-3">
+                    <t t-call="employee_portal_suite.ep_notification_bell"/>
+                    <div class="text-end d-none d-lg-block">
+                        <h6 class="mb-0 fw-bold" t-out="request.env.user.partner_id.name"/>
+                        <p class="mb-0 text-muted small" t-out="request.env.user.partner_id.company_name"/>
+                    </div>
+                    <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="rounded-circle border" width="40" height="40"/>
+                    <a href="/web/session/logout" class="btn btn-sm btn-outline-danger ms-2">Logout</a>
                 </div>
-            </header>
+            </nav>
 
             <!-- ================================================================
-                 MOBILE TOP BAR (bell + avatar, consistent across every page —
-                 the dashboard content itself provides the "Good morning" greeting,
-                 so this stays a slim utility bar instead of duplicating it)
+                 MOBILE APP HEADER (home page only)
                  ================================================================ -->
-            <t t-if="request.httprequest.path == '/my/employee' or not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-                <div class="ep-mobile-topbar mobile-only">
-                    <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-                        <t t-call="employee_portal_suite.ep_notification_bell"/>
-                    </t>
-                    <a href="/my/employee/profile"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" class="ep-mobile-avatar"/></a>
+            <t t-if="request.httprequest.path == '/my/employee'">
+                <div class="mobile-app-header mobile-only">
+                    <div>
+                        <div style="font-size:12px; color:var(--text-muted); font-weight:500; margin-bottom:3px;">
+                            Welcome back
+                        </div>
+                        <div style="font-size:20px; font-weight:700; color:var(--text-primary); letter-spacing:-0.03em;">
+                            <t t-esc="request.env.user.partner_id.name.split(' ')[0]"/>
+                            <span style="color:var(--app-primary);">!</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                            <t t-call="employee_portal_suite.ep_notification_bell"/>
+                        </t>
+                        <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"
+                            style="width:42px;height:42px;border-radius:14px;box-shadow:0 4px 12px rgba(79,70,229,0.30);object-fit:cover;"/>
+                    </div>
                 </div>
             </t>
 
+            <!-- Compact topbar (bell only) for every other mobile page -->
+            <t t-if="request.httprequest.path != '/my/employee' and not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                <div class="ep-mobile-topbar mobile-only">
+                    <t t-call="employee_portal_suite.ep_notification_bell"/>
+                </div>
+            </t>
 
             <t t-set="portal_announcements"
                 t-value="request.env['portal.announcement']._get_visible_announcements_for_current_user(target='portal', limit=5)"/>
@@ -1509,7 +1511,6 @@
                 <div id="wrap" class="container mt-3 mb-5">
                     <t t-out="0"/>
                 </div>
-                <link rel="stylesheet" href="/employee_portal_suite/static/src/css/stitch_workspace.css?v=1.5"/>
             </main>
 
             <!-- ================================================================
@@ -1709,28 +1710,12 @@
                     var wrap = event.currentTarget.closest('.ep-bell-wrap');
                     if (!wrap) return;
                     var panel = wrap.querySelector('.ep-bell-panel');
-                    var backdrop = wrap.querySelector('.ep-bell-backdrop');
                     if (!panel) return;
                     var isOpen = panel.classList.contains('show');
                     document.querySelectorAll('.ep-bell-panel').forEach(function(p){
                         p.classList.remove('show');
                     });
-                    document.querySelectorAll('.ep-bell-backdrop').forEach(function(b){
-                        b.classList.remove('show');
-                    });
-                    if (!isOpen) {
-                        panel.classList.add('show');
-                        if (backdrop) backdrop.classList.add('show');
-                    }
-                }
-
-                function closeEpBell() {
-                    document.querySelectorAll('.ep-bell-panel').forEach(function(p){
-                        p.classList.remove('show');
-                    });
-                    document.querySelectorAll('.ep-bell-backdrop').forEach(function(b){
-                        b.classList.remove('show');
-                    });
+                    if (!isOpen) panel.classList.add('show');
                 }
 
                 document.addEventListener('click', function(e) {
@@ -1754,9 +1739,6 @@
                         document.querySelectorAll('.ep-bell-panel').forEach(function(p){
                             p.classList.remove('show');
                         });
-                        document.querySelectorAll('.ep-bell-backdrop').forEach(function(b){
-                            b.classList.remove('show');
-                        });
                     }
                 });
             </script>
@@ -1775,7 +1757,6 @@
          ================================================================ -->
     <template id="ep_notification_bell">
         <div class="ep-bell-wrap">
-            <div class="ep-bell-backdrop" onclick="closeEpBell()"></div>
             <div t-att-class="'ep-bell-btn has-unread' if ep_notif_unread_total else 'ep-bell-btn'"
                 onclick="toggleEpBell(event)">
                 <i class="fa fa-bell-o"></i>
