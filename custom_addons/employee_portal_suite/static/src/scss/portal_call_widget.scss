@@ -221,8 +221,8 @@
     }
 
     #epc-panel {
-        width: min(340px, calc(100vw - 24px));
-        max-width: calc(100vw - 24px);
+        width: calc(100vw - 24px);
+        max-width: 340px;
     }
 
     #epc-incoming,
