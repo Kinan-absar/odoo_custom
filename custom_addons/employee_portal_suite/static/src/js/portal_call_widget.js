@@ -56,6 +56,9 @@
             this.screenTrack = null;
             this._cameraTrackBeforeShare = null;
             this._addingPeople = false;
+            this.speakerEnabled = false;
+            this.speakerSinkId = null;
+            this.defaultSinkId = null;
             this._buildUI();
             this._loadContacts();
             this._startPolling();
@@ -101,6 +104,7 @@
                     <div class="epc-active-actions">
                         <button id="epc-mute" class="epc-round-control" title="Mute"><i class="fa fa-microphone"></i><span>Mute</span></button>
                         <button id="epc-add-people" class="epc-round-control" title="Add people"><i class="fa fa-user-plus"></i><span>Add people</span></button>
+                        <button id="epc-speaker" class="epc-round-control epc-mobile-only" title="Speaker"><i class="fa fa-volume-up"></i><span>Speaker</span></button>
                         <button id="epc-share-screen" class="epc-round-control epc-desktop-only" title="Share screen"><i class="fa fa-desktop"></i><span>Share screen</span></button>
                         <button id="epc-hangup" class="epc-round-control epc-hangup-control" title="Hang up"><i class="fa fa-phone"></i><span>Hang up</span></button>
                     </div>
@@ -127,6 +131,7 @@
             document.getElementById("epc-reject").addEventListener("click", () => this._rejectIncoming());
             document.getElementById("epc-hangup").addEventListener("click", () => this._hangup());
             document.getElementById("epc-mute").addEventListener("click", () => this._toggleMute());
+            document.getElementById("epc-speaker").addEventListener("click", () => this._toggleSpeaker());
             document.getElementById("epc-add-people").addEventListener("click", (ev) => {
                 // Stop the global outside-click handler from immediately closing
                 // the picker on the same click that opens it.
@@ -584,6 +589,58 @@
             }
         }
 
+
+        async _toggleSpeaker() {
+            const btn = document.getElementById("epc-speaker");
+            if (!btn) return;
+
+            // Keep the control visible on mobile even when the browser cannot
+            // programmatically route audio. Capability affects behavior, not UI.
+            const mediaEls = Array.from(document.querySelectorAll("#epc-active audio, #epc-active video"));
+            const canRoute = mediaEls.some((el) => typeof el.setSinkId === "function");
+            if (!canRoute || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                alert("This phone browser does not allow Odoo to switch between earpiece and speaker. Use the phone/browser audio controls instead.");
+                return;
+            }
+
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const outputs = devices.filter((d) => d.kind === "audiooutput");
+                if (!outputs.length) {
+                    alert("No selectable audio outputs were exposed by this phone browser.");
+                    return;
+                }
+
+                if (!this.defaultSinkId) {
+                    const def = outputs.find((d) => d.deviceId === "default") || outputs[0];
+                    this.defaultSinkId = def.deviceId;
+                }
+                if (!this.speakerSinkId) {
+                    const speaker = outputs.find((d) => /speaker|loudspeaker/i.test(d.label || ""));
+                    this.speakerSinkId = speaker ? speaker.deviceId : null;
+                }
+
+                if (!this.speakerEnabled && !this.speakerSinkId) {
+                    alert("Your phone exposes audio output control, but it does not expose a separate loudspeaker device to the browser.");
+                    return;
+                }
+
+                const targetSink = this.speakerEnabled ? this.defaultSinkId : this.speakerSinkId;
+                for (const el of mediaEls) {
+                    if (typeof el.setSinkId === "function") {
+                        await el.setSinkId(targetSink);
+                    }
+                }
+                this.speakerEnabled = !this.speakerEnabled;
+                btn.classList.toggle("epc-control-active", this.speakerEnabled);
+                const label = btn.querySelector("span");
+                if (label) label.textContent = this.speakerEnabled ? "Speaker on" : "Speaker";
+            } catch (e) {
+                console.warn("[EPC] Speaker routing unavailable", e);
+                alert("This phone/browser did not allow Odoo to change the audio output.");
+            }
+        }
+
         _isDesktopScreenShareSupported() {
             return window.innerWidth > 768 &&
                 !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
@@ -743,6 +800,13 @@
                 this.screenStream = null;
             }
             this._cameraTrackBeforeShare = null;
+            this.speakerEnabled = false;
+            const speakerBtn = document.getElementById("epc-speaker");
+            if (speakerBtn) {
+                speakerBtn.classList.remove("epc-control-active");
+                const speakerLabel = speakerBtn.querySelector("span");
+                if (speakerLabel) speakerLabel.textContent = "Speaker";
+            }
             const shareBtn = document.getElementById("epc-share-screen");
             if (shareBtn) {
                 shareBtn.classList.remove("epc-control-active");
@@ -816,6 +880,9 @@
                     let audio = document.getElementById(`epc-remote-${peerId}`);
                     if (!audio) { audio = document.createElement("audio"); audio.id = `epc-remote-${peerId}`; audio.autoplay = true; audio.style.display = "none"; document.getElementById("epc-active").appendChild(audio); }
                     audio.srcObject = ev.streams[0];
+                    if (this.speakerEnabled && this.speakerSinkId && typeof audio.setSinkId === "function") {
+                        audio.setSinkId(this.speakerSinkId).catch(() => {});
+                    }
                 }
                 const status = document.querySelector("#epc-active .epc-active-status");
                 if (status) status.textContent = `${this.peerConnections.size + 1} people in meeting`;

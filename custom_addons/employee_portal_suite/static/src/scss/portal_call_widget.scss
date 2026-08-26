@@ -437,6 +437,16 @@
         max-width: none;
     }
 
+    .epc-active-actions {
+        gap: 12px;
+        justify-content: space-between;
+    }
+
+    .epc-active-actions .epc-round-control {
+        min-width: 58px;
+        flex: 1 1 0;
+    }
+
     #epc-incoming,
     #epc-active {
         left: 14px;
@@ -490,6 +500,12 @@
     outline: none;
 }
 
+/* Speaker control is intentionally mobile-only. It remains visible even when
+   the browser cannot route audio programmatically; JS explains that limitation. */
+.epc-mobile-only {
+    display: none;
+}
+
 /* Desktop-only screen sharing. Mobile/tablet deliberately never expose it. */
 .epc-desktop-only {
     display: inline-flex;
@@ -538,6 +554,10 @@
 #epc-panel.epc-meeting-picker .epc-btn-small { border-radius: 999px; padding: 7px 15px; font-weight: 600; }
 
 @media (max-width: 768px) {
+    #epc-speaker.epc-mobile-only {
+        display: inline-flex !important;
+    }
+
     #epc-share-screen,
     .epc-desktop-only {
         display: none !important;
