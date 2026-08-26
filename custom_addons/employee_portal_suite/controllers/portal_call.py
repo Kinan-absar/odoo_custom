@@ -92,6 +92,8 @@ class PortalCallController(http.Controller):
             'caller_id': user.id,
             'callee_id': target.id,
             'call_type': call_type if call_type in ('audio', 'video') else 'audio',
+            'participant_ids': [(6, 0, [user.id, target.id])],
+            'active_participant_ids': [(6, 0, [user.id])],
         })
         self._queue_signal(session, target, 'incoming', {
             'caller_id': user.id,
@@ -103,21 +105,28 @@ class PortalCallController(http.Controller):
     @http.route('/employee_portal/call/accept', type='json', auth='user', csrf=False)
     def call_accept(self, uuid):
         session = self._get_session(uuid)
-        if not session or session.state != 'ringing':
+        if not session or session.state not in ('ringing', 'ongoing'):
             return {'error': 'invalid_session'}
-        session.write({'state': 'ongoing', 'answered_date': fields.Datetime.now()})
-        other = session._other_party(self._user())
-        self._queue_signal(session, other, 'accepted', {})
+        user = self._user()
+        session.write({'state': 'ongoing', 'answered_date': session.answered_date or fields.Datetime.now(), 'active_participant_ids': [(4, user.id)]})
+        for other in session.active_participant_ids.filtered(lambda u: u.id != user.id):
+            self._queue_signal(session, other, 'accepted', {'user_id': user.id, 'user_name': user.name})
         return {'ok': True}
 
     @http.route('/employee_portal/call/reject', type='json', auth='user', csrf=False)
     def call_reject(self, uuid):
         session = self._get_session(uuid)
-        if not session or session.state != 'ringing':
+        if not session or session.state not in ('ringing', 'ongoing'):
             return {'error': 'invalid_session'}
-        session.write({'state': 'rejected', 'end_date': fields.Datetime.now()})
-        other = session._other_party(self._user())
-        self._queue_signal(session, other, 'rejected', {})
+        user = self._user()
+        if session.state == 'ongoing':
+            session.write({'active_participant_ids': [(3, user.id)]})
+            for other in session.active_participant_ids:
+                self._queue_signal(session, other, 'participant_left', {'user_id': user.id, 'user_name': user.name})
+        else:
+            session.write({'state': 'rejected', 'end_date': fields.Datetime.now()})
+            other = session._other_party(user)
+            self._queue_signal(session, other, 'rejected', {'user_id': user.id})
         return {'ok': True}
 
     @http.route('/employee_portal/call/end', type='json', auth='user', csrf=False)
@@ -125,19 +134,48 @@ class PortalCallController(http.Controller):
         session = self._get_session(uuid)
         if not session or session.state not in ('ringing', 'ongoing'):
             return {'error': 'invalid_session'}
-        new_state = 'ended' if session.state == 'ongoing' else 'missed'
-        session.write({'state': new_state, 'end_date': fields.Datetime.now()})
-        other = session._other_party(self._user())
-        self._queue_signal(session, other, 'ended' if new_state == 'ended' else 'cancelled', {})
+        user = self._user()
+        session.write({'active_participant_ids': [(3, user.id)]})
+        remaining = session.active_participant_ids
+        for other in remaining:
+            self._queue_signal(session, other, 'participant_left', {'user_id': user.id, 'user_name': user.name})
+        if len(remaining) < 2:
+            session.write({'state': 'ended' if session.answered_date else 'missed', 'end_date': fields.Datetime.now()})
+            for other in remaining:
+                self._queue_signal(session, other, 'ended', {})
         return {'ok': True}
+
+    @http.route('/employee_portal/call/add_participants', type='json', auth='user', csrf=False)
+    def call_add_participants(self, uuid, user_ids):
+        session = self._get_session(uuid)
+        if not session or session.state not in ('ringing', 'ongoing'):
+            return {'error': 'invalid_session'}
+        added = []
+        inviter = self._user()
+        for uid in set(int(x) for x in (user_ids or [])):
+            target = request.env['res.users'].sudo().browse(uid).exists()
+            if not target or target.id == inviter.id or target.id in session.participant_ids.ids or not self._is_callable_user(target):
+                continue
+            session.write({'participant_ids': [(4, target.id)]})
+            self._queue_signal(session, target, 'incoming', {
+                'caller_id': inviter.id, 'caller_name': inviter.name, 'call_type': session.call_type, 'meeting': True,
+            })
+            added.append(target.id)
+        return {'ok': True, 'added': added}
 
     @http.route('/employee_portal/call/signal', type='json', auth='user', csrf=False)
     def call_signal(self, uuid, signal_type, data):
         session = self._get_session(uuid)
         if not session or session.state not in ('ringing', 'ongoing'):
             return {'error': 'invalid_session'}
-        other = session._other_party(self._user())
-        self._queue_signal(session, other, 'signal', {'signal_type': signal_type, 'data': data})
+        sender = self._user()
+        target_user_id = int((data or {}).get('_target_user_id') or 0) if isinstance(data, dict) else 0
+        clean_data = dict(data or {}) if isinstance(data, dict) else data
+        if isinstance(clean_data, dict):
+            clean_data.pop('_target_user_id', None)
+        targets = session.active_participant_ids.filtered(lambda u: u.id != sender.id and (not target_user_id or u.id == target_user_id))
+        for other in targets:
+            self._queue_signal(session, other, 'signal', {'signal_type': signal_type, 'data': clean_data, 'sender_id': sender.id, 'sender_name': sender.name})
         return {'ok': True}
 
     # ------------------------------------------------------------------
@@ -188,7 +226,7 @@ class PortalCallController(http.Controller):
 
             # Never resurrect an incoming event for a call that is no longer
             # ringing (missed/rejected/ended).
-            if s.event == 'incoming' and session.state != 'ringing':
+            if s.event == 'incoming' and session.state not in ('ringing', 'ongoing'):
                 continue
             if s.event == 'accepted' and session.state != 'ongoing':
                 continue

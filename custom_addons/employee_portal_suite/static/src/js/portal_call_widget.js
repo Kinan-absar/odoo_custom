@@ -38,7 +38,9 @@
         constructor() {
             this.lastId = 0;
             this.pollTimer = null;
-            this.pc = null;
+            this.pc = null; // legacy alias for first peer
+            this.peerConnections = new Map();
+            this.peerNames = new Map();
             this.localStream = null;
             this.currentUuid = null;
             this.currentCallType = "audio";
@@ -93,6 +95,7 @@
                     </div>
                     <div class="epc-active-actions">
                         <button id="epc-mute" class="epc-round-control" title="Mute"><i class="fa fa-microphone"></i><span>Mute</span></button>
+                        <button id="epc-add-people" class="epc-round-control" title="Add people"><i class="fa fa-user-plus"></i><span>Add people</span></button>
                         <button id="epc-hangup" class="epc-round-control epc-hangup-control" title="Hang up"><i class="fa fa-phone"></i><span>Hang up</span></button>
                     </div>
                 </div>
@@ -118,6 +121,13 @@
             document.getElementById("epc-reject").addEventListener("click", () => this._rejectIncoming());
             document.getElementById("epc-hangup").addEventListener("click", () => this._hangup());
             document.getElementById("epc-mute").addEventListener("click", () => this._toggleMute());
+            document.getElementById("epc-add-people").addEventListener("click", () => {
+                this._addingPeople = true;
+                const panel = document.getElementById("epc-panel");
+                panel.querySelector(".epc-panel-header span").textContent = "Add people to meeting";
+                panel.classList.remove("epc-hidden");
+                this._renderContacts();
+            });
             document.getElementById("epc-contact-search").addEventListener("input", () => this._renderContacts());
 
             // Browsers only allow notification permission prompts and audio-context
@@ -259,9 +269,9 @@
                 identity.innerHTML = `<span class="epc-contact-name">${this._escape(c.name)}</span>` +
                     `<span class="epc-contact-type">${this._escape(detail || "Employee")}</span>`;
                 const callBtn = document.createElement("button");
-                callBtn.textContent = "Call";
+                callBtn.textContent = this.currentUuid && this._addingPeople ? "Add" : "Call";
                 callBtn.className = "epc-btn epc-btn-small";
-                callBtn.addEventListener("click", () => this._startCall(c.user_id));
+                callBtn.addEventListener("click", () => this.currentUuid && this._addingPeople ? this._addParticipant(c.user_id) : this._startCall(c.user_id));
                 row.appendChild(identity);
                 row.appendChild(callBtn);
                 list.appendChild(row);
@@ -421,22 +431,28 @@
             if (evt.event === "incoming") {
                 this.currentUuid = evt.uuid;
                 this.currentCallType = evt.payload.call_type || "audio";
+                this._incomingCallerId = Number(evt.payload.caller_id || 0);
                 const callerName = evt.payload.caller_name || "Unknown";
+                this.peerNames.set(this._incomingCallerId, callerName);
                 this._setPeerName(callerName);
                 document.querySelector("#epc-incoming .epc-incoming-name").textContent = callerName;
-                document.querySelector("#epc-incoming .epc-incoming-sub").textContent =
-                    this.currentCallType === "video" ? "Incoming video call" : "Incoming audio call";
+                document.querySelector("#epc-incoming .epc-incoming-sub").textContent = evt.payload.meeting ? "Meeting invitation" : (this.currentCallType === "video" ? "Incoming video call" : "Incoming audio call");
                 document.getElementById("epc-incoming").classList.remove("epc-hidden");
-                this._startRinging();
-                this._notifyIncoming(callerName);
+                this._startRinging(); this._notifyIncoming(callerName);
             } else if (evt.event === "signal" && evt.uuid === this.currentUuid) {
                 await this._handleSignal(evt.payload);
             } else if (evt.event === "accepted" && evt.uuid === this.currentUuid) {
-                document.querySelector("#epc-active .epc-active-status").textContent = "Connected";
+                const uid = Number(evt.payload.user_id || 0);
+                if (uid) {
+                    this.peerNames.set(uid, evt.payload.user_name || "Employee");
+                    await this._createOfferTo(uid);
+                }
+                document.querySelector("#epc-active .epc-active-status").textContent = "Meeting connected";
                 this._startCallTimer();
-                await this._createOfferIfCaller();
+            } else if (evt.event === "participant_left" && evt.uuid === this.currentUuid) {
+                this._removePeer(Number(evt.payload.user_id || 0));
             } else if (["rejected", "ended", "cancelled"].includes(evt.event) && evt.uuid === this.currentUuid) {
-                this._teardown();
+                if (evt.event === "ended") this._teardown();
             }
         }
 
@@ -465,6 +481,19 @@
             }
         }
 
+        async _addParticipant(userId) {
+            if (!this.currentUuid) return;
+            const res = await rpc("/employee_portal/call/add_participants", {uuid: this.currentUuid, user_ids: [userId]});
+            if (res && res.added && res.added.length) {
+                const c = this.contacts.find(x => Number(x.user_id) === Number(userId));
+                if (c) this.peerNames.set(Number(userId), c.name);
+                document.querySelector("#epc-active .epc-active-status").textContent = `Invited ${c ? c.name : "employee"}…`;
+            }
+            this._addingPeople = false;
+            document.querySelector("#epc-panel .epc-panel-header span").textContent = "Call an employee";
+            document.getElementById("epc-panel").classList.add("epc-hidden");
+        }
+
         async _acceptIncoming() {
             if (!this.currentUuid) return;
             this._stopRinging();
@@ -472,8 +501,7 @@
             document.getElementById("epc-incoming").classList.add("epc-hidden");
             this._iAmCaller = false;
             await this._prepareLocalMedia();
-            await this._createPeerConnection();
-            this._showActive("Connecting…");
+            this._showActive("Joining meeting…");
             this._startCallTimer();
             await rpc("/employee_portal/call/accept", { uuid: this.currentUuid });
         }
@@ -528,7 +556,9 @@
             this._stopCallTimer();
             if (this.pc) {
                 this.pc.close();
-                this.pc = null;
+                this.pc = null; // legacy alias for first peer
+            this.peerConnections = new Map();
+            this.peerNames = new Map();
             }
             if (this.localStream) {
                 this.localStream.getTracks().forEach((t) => t.stop());
@@ -560,68 +590,62 @@
             }
         }
 
-        async _createPeerConnection() {
-            try {
-                const res = await rpc("/employee_portal/call/ice_servers", {});
-                this.iceServers = res.iceServers || this.iceServers;
-            } catch (e) {
-                /* fall back to default STUN */
-            }
-            this.pc = new RTCPeerConnection({ iceServers: this.iceServers });
-            this.localStream.getTracks().forEach((t) => this.pc.addTrack(t, this.localStream));
-            this.pc.ontrack = (ev) => {
-                document.getElementById("epc-remote-video").srcObject = ev.streams[0];
-                const status = document.querySelector("#epc-active .epc-active-status");
-                if (status) status.textContent = "Connected";
-                if (!this.callStartedAt) this._startCallTimer();
-            };
-            this.pc.onicecandidate = (ev) => {
-                if (ev.candidate) {
-                    rpc("/employee_portal/call/signal", {
-                        uuid: this.currentUuid,
-                        signal_type: "ice",
-                        data: ev.candidate,
-                    });
-                }
-            };
+        async _getIceServers() {
+            try { const res = await rpc("/employee_portal/call/ice_servers", {}); this.iceServers = res.iceServers || this.iceServers; } catch (e) {}
         }
 
-        async _createOfferIfCaller() {
-            if (!this._iAmCaller) return;
-            await this._createPeerConnection();
-            const offer = await this.pc.createOffer();
-            await this.pc.setLocalDescription(offer);
-            await rpc("/employee_portal/call/signal", {
-                uuid: this.currentUuid,
-                signal_type: "offer",
-                data: offer,
-            });
+        async _createPeerConnection(peerId) {
+            peerId = Number(peerId);
+            if (this.peerConnections.has(peerId)) return this.peerConnections.get(peerId);
+            await this._getIceServers();
+            const pc = new RTCPeerConnection({ iceServers: this.iceServers });
+            this.peerConnections.set(peerId, pc);
+            if (!this.pc) this.pc = pc;
+            this.localStream.getTracks().forEach((t) => pc.addTrack(t, this.localStream));
+            pc.ontrack = (ev) => {
+                let audio = document.getElementById(`epc-remote-${peerId}`);
+                if (!audio) { audio = document.createElement("audio"); audio.id = `epc-remote-${peerId}`; audio.autoplay = true; audio.style.display = "none"; document.getElementById("epc-active").appendChild(audio); }
+                audio.srcObject = ev.streams[0];
+                const status = document.querySelector("#epc-active .epc-active-status");
+                if (status) status.textContent = `${this.peerConnections.size + 1} people in meeting`;
+                if (!this.callStartedAt) this._startCallTimer();
+            };
+            pc.onicecandidate = (ev) => { if (ev.candidate) rpc("/employee_portal/call/signal", {uuid:this.currentUuid, signal_type:"ice", data:{...ev.candidate.toJSON(), _target_user_id:peerId}}); };
+            return pc;
+        }
+
+        async _createOfferTo(peerId) {
+            if (!peerId) return;
+            if (!this.localStream) await this._prepareLocalMedia();
+            const pc = await this._createPeerConnection(peerId);
+            const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
+            await rpc("/employee_portal/call/signal", {uuid:this.currentUuid, signal_type:"offer", data:{type:offer.type, sdp:offer.sdp, _target_user_id:peerId}});
         }
 
         async _handleSignal(payload) {
             if (!payload) return;
+            const peerId = Number(payload.sender_id || 0);
+            if (!peerId) return;
+            if (payload.sender_name) this.peerNames.set(peerId, payload.sender_name);
             const { signal_type, data } = payload;
+            const pc = await this._createPeerConnection(peerId);
             if (signal_type === "offer") {
-                if (!this.pc) await this._createPeerConnection();
-                await this.pc.setRemoteDescription(new RTCSessionDescription(data));
-                const answer = await this.pc.createAnswer();
-                await this.pc.setLocalDescription(answer);
-                await rpc("/employee_portal/call/signal", {
-                    uuid: this.currentUuid,
-                    signal_type: "answer",
-                    data: answer,
-                });
+                await pc.setRemoteDescription(new RTCSessionDescription(data));
+                const answer = await pc.createAnswer(); await pc.setLocalDescription(answer);
+                await rpc("/employee_portal/call/signal", {uuid:this.currentUuid, signal_type:"answer", data:{type:answer.type, sdp:answer.sdp, _target_user_id:peerId}});
             } else if (signal_type === "answer") {
-                if (this.pc) await this.pc.setRemoteDescription(new RTCSessionDescription(data));
+                await pc.setRemoteDescription(new RTCSessionDescription(data));
             } else if (signal_type === "ice") {
-                if (this.pc) {
-                    try {
-                        await this.pc.addIceCandidate(new RTCIceCandidate(data));
-                    } catch (e) {
-                        /* candidate arrived before remote description; safe to ignore */
-                    }
-                }
+                try { await pc.addIceCandidate(new RTCIceCandidate(data)); } catch (e) {}
             }
+        }
+
+        _removePeer(peerId) {
+            const pc = this.peerConnections.get(peerId); if (pc) pc.close();
+            this.peerConnections.delete(peerId);
+            const audio = document.getElementById(`epc-remote-${peerId}`); if (audio) audio.remove();
+            const status = document.querySelector("#epc-active .epc-active-status");
+            if (status && this.currentUuid) status.textContent = `${this.peerConnections.size + 1} people in meeting`;
         }
     }
 

@@ -52,6 +52,8 @@ class PortalCallSession(models.Model):
     uuid = fields.Char(required=True, index=True, copy=False, default=lambda self: str(uuid_lib.uuid4()))
     caller_id = fields.Many2one('res.users', required=True, ondelete='cascade')
     callee_id = fields.Many2one('res.users', required=True, ondelete='cascade')
+    participant_ids = fields.Many2many('res.users', 'portal_call_session_user_rel', 'session_id', 'user_id', string='Participants')
+    active_participant_ids = fields.Many2many('res.users', 'portal_call_session_active_user_rel', 'session_id', 'user_id', string='Active Participants')
     call_type = fields.Selection([('audio', 'Audio'), ('video', 'Video')], default='audio', required=True)
     state = fields.Selection([
         ('ringing', 'Ringing'),
@@ -70,7 +72,7 @@ class PortalCallSession(models.Model):
 
     def _is_participant(self, user):
         self.ensure_one()
-        return user.id in (self.caller_id.id, self.callee_id.id)
+        return user.id in self.participant_ids.ids or user.id in (self.caller_id.id, self.callee_id.id)
 
     @api.autovacuum
     def _gc_stale_ringing_sessions(self):
@@ -108,6 +110,8 @@ class PortalCallSignal(models.Model):
         ('rejected', 'Rejected'),
         ('ended', 'Ended'),
         ('cancelled', 'Cancelled (no answer)'),
+        ('participant_joined', 'Participant Joined'),
+        ('participant_left', 'Participant Left'),
     ], required=True)
     payload = fields.Text(help='JSON-encoded payload (SDP offer/answer, ICE candidate, caller info, ...).')
     consumed = fields.Boolean(default=False, index=True)

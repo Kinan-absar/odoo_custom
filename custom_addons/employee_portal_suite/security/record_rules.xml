@@ -52,7 +52,7 @@
         <field name="name">Portal Call Session: Participants Only</field>
         <field name="model_id" ref="model_portal_call_session"/>
         <field name="groups" eval="[]"/>
-        <field name="domain_force">['|', ('caller_id', '=', user.id), ('callee_id', '=', user.id)]</field>
+        <field name="domain_force">[('participant_ids', 'in', [user.id])]</field>
     </record>
 
     <!-- CALLING: admins can view all call sessions (for the Call History menu) -->
