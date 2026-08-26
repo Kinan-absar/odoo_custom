@@ -47,5 +47,53 @@
         <field name="domain_force">[('user_id', '=', user.id)]</field>
     </record>
 
+    <!-- CALLING: users (portal or internal) only ever see call sessions they are part of -->
+    <record id="portal_call_session_participant_rule" model="ir.rule">
+        <field name="name">Portal Call Session: Participants Only</field>
+        <field name="model_id" ref="model_portal_call_session"/>
+        <field name="groups" eval="[]"/>
+        <field name="domain_force">[('participant_ids', 'in', [user.id])]</field>
+    </record>
+
+    <!-- CALLING: admins can view all call sessions (for the Call History menu) -->
+    <record id="portal_call_session_admin_rule" model="ir.rule">
+        <field name="name">Portal Call Session: Admin Full Read Access</field>
+        <field name="model_id" ref="model_portal_call_session"/>
+        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!-- CALLING: signals are only ever visible to their intended recipient -->
+    <record id="portal_call_signal_recipient_rule" model="ir.rule">
+        <field name="name">Portal Call Signal: Recipient Only</field>
+        <field name="model_id" ref="model_portal_call_signal"/>
+        <field name="groups" eval="[]"/>
+        <field name="domain_force">[('recipient_id', '=', user.id)]</field>
+    </record>
+
+    <!-- CALLING: portal users only see contact entries where they are the portal side -->
+    <record id="portal_call_contact_portal_rule" model="ir.rule">
+        <field name="name">Portal Call Contact: Portal Side Only</field>
+        <field name="model_id" ref="model_portal_call_contact"/>
+        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal'))]"/>
+        <field name="domain_force">[('portal_user_id', '=', user.id)]</field>
+    </record>
+
+    <!-- CALLING: internal users only see contact entries where they are the internal side,
+         except admins who manage the full allow-list -->
+    <record id="portal_call_contact_internal_rule" model="ir.rule">
+        <field name="name">Portal Call Contact: Internal Side Only</field>
+        <field name="model_id" ref="model_portal_call_contact"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('internal_user_id', '=', user.id)]</field>
+    </record>
+
+    <record id="portal_call_contact_admin_rule" model="ir.rule">
+        <field name="name">Portal Call Contact: Admin Full Access</field>
+        <field name="model_id" ref="model_portal_call_contact"/>
+        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
 </odoo>
 

@@ -1,6 +1,6 @@
 {
     'name': 'Employee Portal Suite',
-    'version': '18.0.1.10.0',
+    'version': '18.0.1.15.5',
     'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
 
     'description': """
@@ -88,6 +88,7 @@
         # --------------------------------------------------
         # EMPLOYEE PORTAL (FRONTEND)
         # --------------------------------------------------
+        'views/portal_call_views.xml',
         'views/employee_portal_layout.xml',
         'views/employee_dashboard_page.xml',
 
@@ -133,18 +134,22 @@
     'assets': {
         'web.assets_frontend': [
             'employee_portal_suite/static/src/js/sign_redirect.js',
+            'employee_portal_suite/static/src/js/portal_call_widget.js',
+            'employee_portal_suite/static/src/scss/portal_call_widget.scss',
         ],
         'web.assets_backend': [
             'employee_portal_suite/static/src/js/material_request_dashboard.js',
             'employee_portal_suite/static/src/js/employee_request_dashboard.js',
             'employee_portal_suite/static/src/js/home_announcements.js',
             'employee_portal_suite/static/src/js/telegram_user_menu.js',
+            'employee_portal_suite/static/src/js/portal_call_widget.js',
             'employee_portal_suite/static/src/xml/material_request_dashboard.xml',
             'employee_portal_suite/static/src/xml/employee_request_dashboard.xml',
             'employee_portal_suite/static/src/xml/home_announcements.xml',
             'employee_portal_suite/static/src/scss/material_request_dashboard.scss',
             'employee_portal_suite/static/src/scss/employee_request_dashboard.scss',
             'employee_portal_suite/static/src/scss/home_announcements.scss',
+            'employee_portal_suite/static/src/scss/portal_call_widget.scss',
         ],
     },
     'images': ['static/description/icon.png'],
