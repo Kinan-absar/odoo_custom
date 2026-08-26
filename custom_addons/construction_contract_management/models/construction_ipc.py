@@ -26,6 +26,15 @@ class ConstructionIPC(models.Model):
     current_work_value = fields.Monetary(currency_field='currency_id', compute='_compute_amounts', store=True)
     cumulative_certified_value = fields.Monetary(currency_field='currency_id', compute='_compute_amounts', store=True)
     retention_amount = fields.Monetary(currency_field='currency_id', compute='_compute_amounts', store=True)
+    deduct_advance = fields.Boolean(
+        string='Deduct Down Payment in this IPC',
+        default=True,
+        tracking=True,
+        help=(
+            'If enabled, the contractual advance/down payment is recovered from this IPC. '
+            'Disable it to invoice this IPC without deducting the down payment.'
+        ),
+    )
     advance_recovery_amount = fields.Monetary(currency_field='currency_id', compute='_compute_amounts', store=True)
     deduction_amount = fields.Monetary(currency_field='currency_id', default=0.0)
     vat_amount = fields.Monetary(currency_field='currency_id', compute='_compute_amounts', store=True)
@@ -75,6 +84,7 @@ class ConstructionIPC(models.Model):
         'contract_id.advance_amount',
         'contract_id.advance_recovered',
         'contract_id.vat_percent',
+        'deduct_advance',
         'deduction_amount',
     )
     def _compute_amounts(self):
@@ -99,7 +109,7 @@ class ConstructionIPC(models.Model):
                 (rec.contract_id.advance_amount or 0.0) - (rec.contract_id.advance_recovered or 0.0),
                 0.0
             )
-            actual_recovery = min(proposed_recovery, remaining_advance)
+            actual_recovery = min(proposed_recovery, remaining_advance) if rec.deduct_advance else 0.0
 
             taxable_base = current_work - actual_recovery
             vat_amount = taxable_base * vat_percent
