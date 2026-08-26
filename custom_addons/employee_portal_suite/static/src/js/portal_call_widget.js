@@ -59,9 +59,10 @@
                 <button id="epc-fab" title="Call" aria-label="Call">📞</button>
                 <div id="epc-panel" class="epc-hidden">
                     <div class="epc-panel-header">
-                        <span>Call a contact</span>
+                        <span>Call a user</span>
                         <button id="epc-panel-close">&times;</button>
                     </div>
+                    <div class="epc-search-wrap"><input id="epc-contact-search" type="search" placeholder="Search users…" autocomplete="off"/></div>
                     <div id="epc-contact-list"><div class="epc-empty">Loading…</div></div>
                 </div>
                 <div id="epc-incoming" class="epc-hidden">
@@ -95,6 +96,7 @@
             document.getElementById("epc-reject").addEventListener("click", () => this._rejectIncoming());
             document.getElementById("epc-hangup").addEventListener("click", () => this._hangup());
             document.getElementById("epc-mute").addEventListener("click", () => this._toggleMute());
+            document.getElementById("epc-contact-search").addEventListener("input", () => this._renderContacts());
         }
 
         async _loadContacts() {
@@ -103,20 +105,35 @@
             } catch (e) {
                 this.contacts = [];
             }
+            this._renderContacts();
+        }
+
+        _renderContacts() {
             const list = document.getElementById("epc-contact-list");
+            const search = document.getElementById("epc-contact-search");
+            const term = (search ? search.value : "").trim().toLowerCase();
+            const contacts = this.contacts.filter((c) =>
+                !term || (c.name || "").toLowerCase().includes(term) ||
+                (c.user_type || "").toLowerCase().includes(term)
+            );
+
             list.innerHTML = "";
-            if (!this.contacts.length) {
-                list.innerHTML = '<div class="epc-empty">No call contacts configured yet.</div>';
+            if (!contacts.length) {
+                list.innerHTML = `<div class="epc-empty">${term ? "No matching users." : "No other active users found."}</div>`;
                 return;
             }
-            this.contacts.forEach((c) => {
+            contacts.forEach((c) => {
                 const row = document.createElement("div");
                 row.className = "epc-contact-row";
-                row.innerHTML = `<span>${this._escape(c.name)}</span>`;
+                const identity = document.createElement("div");
+                identity.className = "epc-contact-identity";
+                identity.innerHTML = `<span class="epc-contact-name">${this._escape(c.name)}</span>` +
+                    `<span class="epc-contact-type">${this._escape(c.user_type || "User")}</span>`;
                 const callBtn = document.createElement("button");
                 callBtn.textContent = "Call";
                 callBtn.className = "epc-btn epc-btn-small";
                 callBtn.addEventListener("click", () => this._startCall(c.user_id));
+                row.appendChild(identity);
                 row.appendChild(callBtn);
                 list.appendChild(row);
             });

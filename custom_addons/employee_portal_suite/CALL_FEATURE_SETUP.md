@@ -1,60 +1,49 @@
 # Portal Calling Feature — Setup & Notes
 
-This adds 1:1 audio/video calling between portal users and internal users.
-It is **not** Odoo's Discuss/RTC system — it's a small, self-contained
-WebRTC feature built specifically so it works on both the portal frontend
-and the backend.
+This adds 1:1 audio/video calling between Odoo users using the Employee Portal Suite.
+It is a self-contained WebRTC feature and does not use Odoo Discuss/RTC.
 
-## What was added
-- Models: `portal.call.session`, `portal.call.signal`, `portal.call.contact`
-- Controller: `controllers/portal_call.py` (JSON-RPC endpoints under `/employee_portal/call/*`)
-- Widget: `static/src/js/portal_call_widget.js` + matching SCSS, loaded in
-  both `web.assets_frontend` and `web.assets_backend`
-- Backend menu (**Employee Portal > Call Contacts**, **Call History**) —
-  visible only to `group_employee_portal_admin`
+## Calling directory
+
+No manual Call Contact pairing is required anymore.
+
+Every active Odoo user with either of these standard user types appears automatically in the call directory:
+- Internal User (`base.group_user`)
+- Portal User (`base.group_portal`)
+
+Supported calling combinations:
+- Portal → Internal
+- Internal → Portal
+- Portal → Portal
+- Internal → Internal
+
+The current user is excluded from their own directory. The call panel includes a search box and labels users as Portal or Internal.
+
+## Backend
+
+Employee Portal > Call History remains available to Employee Portal administrators.
+The old Call Contacts model is retained only for database/backward compatibility and is no longer used to authorize or populate calls.
 
 ## Required setup after install/upgrade
-1. Upgrade the module (`-u employee_portal_suite`).
-2. As an admin, go to **Employee Portal > Call Contacts** and create an
-   allow-list entry for each portal user ↔ internal user pair that should
-   be able to call each other. **Nobody can call anybody until this entry
-   exists** — this is intentional (see "Security model" below).
-3. Deploy over **HTTPS**. `getUserMedia`/WebRTC will not work over plain
-   HTTP except on `localhost`.
-4. If your users are behind restrictive corporate NAT/firewalls, a public
-   STUN server alone (the default, Google's) may not be enough to connect.
-   Add a TURN server via these `ir.config_parameter` keys:
-   - `employee_portal_suite.turn_url` (e.g. `turn:turn.example.com:3478`)
+
+1. Upgrade `employee_portal_suite`.
+2. Deploy over HTTPS. WebRTC media APIs do not work over plain HTTP except localhost.
+3. If users are behind restrictive NAT/firewalls, configure a TURN server using:
+   - `employee_portal_suite.turn_url`
    - `employee_portal_suite.turn_username`
    - `employee_portal_suite.turn_credential`
 
 ## Security model
-- Calling is opt-in via an explicit allow-list (`portal.call.contact`),
-  not a free-for-all directory — a portal user can never discover or ring
-  an internal user unless an admin has paired them.
-- Every session/signal row is scoped by `ir.rule` so a user (portal or
-  internal) can only ever see call sessions/signals where they are a
-  participant. Admins get a bypass rule for the Call History menu only.
-- The JSON controllers use `csrf=False` (a deliberate choice, not an
-  oversight) because every mutating action is independently re-validated
-  against session participancy / the allow-list — CSRF protection would be
-  redundant defense-in-depth here, not the primary guard.
 
-## Known limitations / what to test before relying on this in production
-- **Signalling is polled** (every 2s) rather than pushed via the mail bus,
-  by design, to avoid any dependency on Discuss/RTC internals. This adds
-  ~1-2s of latency to ringing and call setup — the audio/video itself is
-  peer-to-peer WebRTC once connected and unaffected by this.
-- Only 1:1 calls are supported (no group calls).
-- No call recording, no ringtone/sound cues, no "busy" state if a user is
-  already on another call — first call wins, a second incoming call while
-  on a call will currently just overwrite the incoming-call UI. Fine for
-  an MVP; worth hardening if this becomes a heavily used feature.
-- The frontend widget mounts only on portal pages that use
-  `employee_portal_layout` (via the `#epc-mount-marker` element it looks
-  for) — if you have other portal templates that don't extend that layout,
-  the call button won't appear there.
-- Not yet tested against a live Odoo 18 instance — the models/controllers/
-  security follow Odoo's standard patterns and the JS has been syntax-
-  checked, but please test the full ring → accept → connect → hang-up flow
-  end-to-end (ideally two different browsers/devices) before rolling out.
+- Only authenticated active Portal/Internal users are returned by the call directory.
+- A caller cannot call themselves.
+- Call session access remains participant-scoped.
+- Signalling rows remain recipient-scoped.
+- Admins can read Call History.
+
+## Known limitations
+
+- Signalling is polled every 2 seconds rather than pushed through the Odoo mail bus.
+- Calls are 1:1 only; no group calls.
+- No call recording or busy-state handling yet.
+- Frontend calling mounts on pages using the Employee Portal layout; backend calling mounts in the Odoo web client.

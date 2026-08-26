@@ -8,25 +8,12 @@ _logger = logging.getLogger(__name__)
 
 
 class PortalCallController(http.Controller):
-    """JSON-RPC signalling endpoints for the portal <-> internal calling feature.
+    """JSON-RPC signalling endpoints for calling between portal/internal users.
 
-    Design notes:
-    - auth='user' means both portal and internal users can call these (portal
-      users ARE res.users records with the portal group).
-    - csrf=False: these are pure JSON-RPC actions gated entirely by session
-      auth + explicit ownership checks below (never by model ACLs alone),
-      so CSRF token exchange isn't needed. Every mutating action re-checks
-      that the caller is an actual participant of the session/contact.
-    - Signalling is a polled queue (portal.call.signal), not the mail bus,
-      so this has zero dependency on Discuss/RTC internals and behaves
-      identically on frontend and backend. Expect ~1-2s of added latency
-      on ringing/offer/answer exchange; the media itself is peer-to-peer
-      WebRTC once connected and is not affected by polling speed.
+    Any active Odoo Portal user or Internal User can call any other active
+    Portal/Internal user. There is no per-pair allow-list requirement.
     """
 
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
     def _user(self):
         return request.env.user
 
@@ -44,36 +31,42 @@ class PortalCallController(http.Controller):
             'payload': json.dumps(payload or {}),
         })
 
-    def _is_allowed_pair(self, user_a, user_b):
-        Contact = request.env['portal.call.contact'].sudo()
-        return bool(Contact.search([
-            ('active', '=', True),
-            '|',
-            '&', ('portal_user_id', '=', user_a.id), ('internal_user_id', '=', user_b.id),
-            '&', ('portal_user_id', '=', user_b.id), ('internal_user_id', '=', user_a.id),
-        ], limit=1))
+    def _is_callable_user(self, user):
+        """Only active Portal or Internal users belong in the call directory."""
+        return bool(
+            user
+            and user.active
+            and (
+                user.has_group('base.group_portal')
+                or user.has_group('base.group_user')
+            )
+        )
 
     # ------------------------------------------------------------------
-    # Contacts
+    # Directory
     # ------------------------------------------------------------------
     @http.route('/employee_portal/call/contacts', type='json', auth='user', csrf=False)
     def call_contacts(self):
         user = self._user()
-        Contact = request.env['portal.call.contact'].sudo()
-        if user.has_group('base.group_portal'):
-            contacts = Contact.search([('portal_user_id', '=', user.id), ('active', '=', True)])
-            return [{
-                'user_id': c.internal_user_id.id,
-                'name': c.internal_user_id.name,
-                'note': c.note or '',
-            } for c in contacts]
-        else:
-            contacts = Contact.search([('internal_user_id', '=', user.id), ('active', '=', True)])
-            return [{
-                'user_id': c.portal_user_id.id,
-                'name': c.portal_user_id.name,
-                'note': c.note or '',
-            } for c in contacts]
+        portal_group = request.env.ref('base.group_portal')
+        internal_group = request.env.ref('base.group_user')
+
+        users = request.env['res.users'].sudo().search([
+            ('active', '=', True),
+            ('id', '!=', user.id),
+            ('groups_id', 'in', [portal_group.id, internal_group.id]),
+        ], order='name asc')
+
+        result = []
+        for contact in users:
+            is_portal = contact.has_group('base.group_portal')
+            result.append({
+                'user_id': contact.id,
+                'name': contact.name,
+                'user_type': 'Portal' if is_portal else 'Internal',
+                'note': 'Portal User' if is_portal else 'Internal User',
+            })
+        return result
 
     # ------------------------------------------------------------------
     # Call lifecycle
@@ -84,8 +77,8 @@ class PortalCallController(http.Controller):
         target = request.env['res.users'].sudo().browse(int(target_user_id)).exists()
         if not target or target.id == user.id:
             return {'error': 'invalid_target'}
-        if not self._is_allowed_pair(user, target):
-            return {'error': 'not_allowed'}
+        if not self._is_callable_user(target):
+            return {'error': 'not_callable'}
 
         session = request.env['portal.call.session'].sudo().create({
             'caller_id': user.id,
