@@ -154,7 +154,8 @@
             btn.setAttribute("aria-label", "Calls");
             btn.innerHTML = '<i class="fa fa-phone"></i>';
             item.appendChild(btn);
-            systray.appendChild(item);
+            // Put Calls at the leading edge of the systray, beside Odoo status indicator.
+            systray.insertBefore(item, systray.firstElementChild);
             btn.addEventListener("click", (ev) => {
                 ev.stopPropagation();
                 this._togglePanel(btn);
