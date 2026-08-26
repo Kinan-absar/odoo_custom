@@ -44,6 +44,12 @@
             this.currentCallType = "audio";
             this.iceServers = [{ urls: ["stun:stun.l.google.com:19302"] }];
             this.contacts = [];
+            this.currentPeerName = "";
+            this.ringTimer = null;
+            this.ringContext = null;
+            this.ringGain = null;
+            this.callStartedAt = null;
+            this.callTimer = null;
             this._buildUI();
             this._loadContacts();
             this._startPolling();
@@ -66,21 +72,28 @@
                     <div id="epc-contact-list"><div class="epc-empty">Loading…</div></div>
                 </div>
                 <div id="epc-incoming" class="epc-hidden">
+                    <div class="epc-call-avatar epc-incoming-avatar"><i class="fa fa-phone"></i></div>
                     <div class="epc-incoming-name"></div>
-                    <div class="epc-incoming-sub">Incoming call…</div>
+                    <div class="epc-incoming-sub">Incoming audio call</div>
                     <div class="epc-incoming-actions">
-                        <button id="epc-accept" class="epc-btn epc-btn-accept">Accept</button>
-                        <button id="epc-reject" class="epc-btn epc-btn-reject">Decline</button>
+                        <button id="epc-reject" class="epc-call-action epc-call-action-decline" title="Decline"><i class="fa fa-phone"></i><span>Decline</span></button>
+                        <button id="epc-accept" class="epc-call-action epc-call-action-accept" title="Accept"><i class="fa fa-phone"></i><span>Accept</span></button>
                     </div>
                 </div>
-                <div id="epc-active" class="epc-hidden">
-                    <div class="epc-active-name"></div>
-                    <div class="epc-active-status">Connecting…</div>
-                    <video id="epc-remote-video" autoplay playsinline></video>
-                    <video id="epc-local-video" autoplay playsinline muted></video>
+                <div id="epc-active" class="epc-hidden epc-audio-call">
+                    <div class="epc-active-stage">
+                        <div class="epc-call-avatar epc-active-avatar"><span id="epc-peer-initial">?</span></div>
+                        <div class="epc-active-name">Employee</div>
+                        <div class="epc-active-status">Connecting…</div>
+                        <div class="epc-call-timer">00:00</div>
+                    </div>
+                    <div class="epc-video-stage epc-hidden">
+                        <video id="epc-remote-video" autoplay playsinline></video>
+                        <video id="epc-local-video" autoplay playsinline muted></video>
+                    </div>
                     <div class="epc-active-actions">
-                        <button id="epc-mute" class="epc-btn">Mute</button>
-                        <button id="epc-hangup" class="epc-btn epc-btn-reject">Hang up</button>
+                        <button id="epc-mute" class="epc-round-control" title="Mute"><i class="fa fa-microphone"></i><span>Mute</span></button>
+                        <button id="epc-hangup" class="epc-round-control epc-hangup-control" title="Hang up"><i class="fa fa-phone"></i><span>Hang up</span></button>
                     </div>
                 </div>
             `;
@@ -106,6 +119,15 @@
             document.getElementById("epc-hangup").addEventListener("click", () => this._hangup());
             document.getElementById("epc-mute").addEventListener("click", () => this._toggleMute());
             document.getElementById("epc-contact-search").addEventListener("input", () => this._renderContacts());
+
+            // Browsers only allow notification permission prompts and audio-context
+            // activation from a user gesture. Any first interaction with the calling
+            // UI unlocks both so future incoming calls can ring/notify in background tabs.
+            document.addEventListener("pointerdown", (ev) => {
+                if (ev.target.closest(".epc-header-btn, .epc-backend-systray-btn, #epc-panel, #epc-incoming, #epc-active")) {
+                    this._unlockCallAlerts();
+                }
+            }, { passive: true });
 
             document.addEventListener("click", (ev) => {
                 const panel = document.getElementById("epc-panel");
@@ -163,6 +185,7 @@
         }
 
         _togglePanel(anchor) {
+            this._unlockCallAlerts(true);
             const panel = document.getElementById("epc-panel");
             const opening = panel.classList.contains("epc-hidden");
             if (opening) {
@@ -240,6 +263,130 @@
         }
 
         // ------------------------------------------------------------
+        // Incoming-call alerts (ringtone + browser notification)
+        // ------------------------------------------------------------
+        async _unlockCallAlerts(requestNotification) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx && !this.ringContext) {
+                    this.ringContext = new AudioCtx();
+                    this.ringGain = this.ringContext.createGain();
+                    this.ringGain.gain.value = 0.0001;
+                    this.ringGain.connect(this.ringContext.destination);
+                }
+                if (this.ringContext && this.ringContext.state === "suspended") {
+                    await this.ringContext.resume();
+                }
+            } catch (e) {
+                // Sound is optional; browser may block it until a later gesture.
+            }
+            if (requestNotification && "Notification" in window && Notification.permission === "default") {
+                try {
+                    await Notification.requestPermission();
+                } catch (e) {
+                    // Some browsers may reject permission requests in embedded contexts.
+                }
+            }
+        }
+
+        _startRinging() {
+            this._stopRinging();
+            if (!this.ringContext || this.ringContext.state !== "running" || !this.ringGain) return;
+            const playBurst = () => {
+                if (!this.currentUuid || document.getElementById("epc-incoming").classList.contains("epc-hidden")) return;
+                try {
+                    const now = this.ringContext.currentTime;
+                    const osc1 = this.ringContext.createOscillator();
+                    const osc2 = this.ringContext.createOscillator();
+                    const gain = this.ringContext.createGain();
+                    osc1.frequency.value = 440;
+                    osc2.frequency.value = 480;
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.03);
+                    gain.gain.setValueAtTime(0.12, now + 0.55);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.72);
+                    osc1.connect(gain);
+                    osc2.connect(gain);
+                    gain.connect(this.ringGain);
+                    this.ringGain.gain.value = 1.0;
+                    osc1.start(now);
+                    osc2.start(now);
+                    osc1.stop(now + 0.75);
+                    osc2.stop(now + 0.75);
+                } catch (e) {
+                    // Ignore audio-device failures.
+                }
+            };
+            playBurst();
+            this.ringTimer = setInterval(playBurst, 1800);
+        }
+
+        _stopRinging() {
+            if (this.ringTimer) {
+                clearInterval(this.ringTimer);
+                this.ringTimer = null;
+            }
+            if (this.ringGain) this.ringGain.gain.value = 0.0001;
+        }
+
+        _notifyIncoming(name) {
+            if (!("Notification" in window) || Notification.permission !== "granted") return;
+            try {
+                const notice = new Notification(`Incoming call from ${name || "Employee"}`, {
+                    body: "Open Odoo to accept or decline the call.",
+                    tag: `epc-${this.currentUuid || "incoming"}`,
+                    renotify: true,
+                    requireInteraction: true,
+                });
+                notice.onclick = () => {
+                    window.focus();
+                    notice.close();
+                };
+                this._activeNotification = notice;
+            } catch (e) {
+                // Native notifications are best-effort only.
+            }
+        }
+
+        _closeNotification() {
+            if (this._activeNotification) {
+                try { this._activeNotification.close(); } catch (e) { /* no-op */ }
+                this._activeNotification = null;
+            }
+        }
+
+        _setPeerName(name) {
+            this.currentPeerName = name || "Employee";
+            const activeName = document.querySelector("#epc-active .epc-active-name");
+            if (activeName) activeName.textContent = this.currentPeerName;
+            const initial = document.getElementById("epc-peer-initial");
+            if (initial) initial.textContent = (this.currentPeerName.trim().charAt(0) || "?").toUpperCase();
+        }
+
+        _startCallTimer() {
+            this._stopCallTimer();
+            this.callStartedAt = Date.now();
+            const timer = document.querySelector("#epc-active .epc-call-timer");
+            const tick = () => {
+                if (!timer || !this.callStartedAt) return;
+                const seconds = Math.max(0, Math.floor((Date.now() - this.callStartedAt) / 1000));
+                const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
+                const secs = String(seconds % 60).padStart(2, "0");
+                timer.textContent = `${mins}:${secs}`;
+            };
+            tick();
+            this.callTimer = setInterval(tick, 1000);
+        }
+
+        _stopCallTimer() {
+            if (this.callTimer) clearInterval(this.callTimer);
+            this.callTimer = null;
+            this.callStartedAt = null;
+            const timer = document.querySelector("#epc-active .epc-call-timer");
+            if (timer) timer.textContent = "00:00";
+        }
+
+        // ------------------------------------------------------------
         // Polling loop
         // ------------------------------------------------------------
         _startPolling() {
@@ -262,13 +409,19 @@
             if (evt.event === "incoming") {
                 this.currentUuid = evt.uuid;
                 this.currentCallType = evt.payload.call_type || "audio";
-                document.querySelector("#epc-incoming .epc-incoming-name").textContent =
-                    evt.payload.caller_name || "Unknown";
+                const callerName = evt.payload.caller_name || "Unknown";
+                this._setPeerName(callerName);
+                document.querySelector("#epc-incoming .epc-incoming-name").textContent = callerName;
+                document.querySelector("#epc-incoming .epc-incoming-sub").textContent =
+                    this.currentCallType === "video" ? "Incoming video call" : "Incoming audio call";
                 document.getElementById("epc-incoming").classList.remove("epc-hidden");
+                this._startRinging();
+                this._notifyIncoming(callerName);
             } else if (evt.event === "signal" && evt.uuid === this.currentUuid) {
                 await this._handleSignal(evt.payload);
             } else if (evt.event === "accepted" && evt.uuid === this.currentUuid) {
                 document.querySelector("#epc-active .epc-active-status").textContent = "Connected";
+                this._startCallTimer();
                 await this._createOfferIfCaller();
             } else if (["rejected", "ended", "cancelled"].includes(evt.event) && evt.uuid === this.currentUuid) {
                 this._teardown();
@@ -290,6 +443,8 @@
                 }
                 this.currentUuid = res.uuid;
                 this._iAmCaller = true;
+                const contact = this.contacts.find((c) => Number(c.user_id) === Number(targetUserId));
+                this._setPeerName(contact ? contact.name : "Employee");
                 document.getElementById("epc-panel").classList.add("epc-hidden");
                 await this._prepareLocalMedia();
                 this._showActive("Calling…");
@@ -300,16 +455,21 @@
 
         async _acceptIncoming() {
             if (!this.currentUuid) return;
+            this._stopRinging();
+            this._closeNotification();
             document.getElementById("epc-incoming").classList.add("epc-hidden");
             this._iAmCaller = false;
             await this._prepareLocalMedia();
             await this._createPeerConnection();
             this._showActive("Connecting…");
+            this._startCallTimer();
             await rpc("/employee_portal/call/accept", { uuid: this.currentUuid });
         }
 
         async _rejectIncoming() {
             if (!this.currentUuid) return;
+            this._stopRinging();
+            this._closeNotification();
             await rpc("/employee_portal/call/reject", { uuid: this.currentUuid });
             document.getElementById("epc-incoming").classList.add("epc-hidden");
             this.currentUuid = null;
@@ -324,15 +484,36 @@
 
         _toggleMute() {
             if (!this.localStream) return;
-            this.localStream.getAudioTracks().forEach((t) => (t.enabled = !t.enabled));
+            const tracks = this.localStream.getAudioTracks();
+            if (!tracks.length) return;
+            const willMute = tracks.some((t) => t.enabled);
+            tracks.forEach((t) => (t.enabled = !willMute));
+            const btn = document.getElementById("epc-mute");
+            if (btn) {
+                btn.classList.toggle("epc-control-active", willMute);
+                btn.querySelector("i").className = willMute ? "fa fa-microphone-slash" : "fa fa-microphone";
+                const label = btn.querySelector("span");
+                if (label) label.textContent = willMute ? "Unmute" : "Mute";
+            }
         }
 
         _showActive(status) {
-            document.getElementById("epc-active").classList.remove("epc-hidden");
+            const active = document.getElementById("epc-active");
+            active.classList.remove("epc-hidden");
+            active.classList.toggle("epc-video-call", this.currentCallType === "video");
+            active.classList.toggle("epc-audio-call", this.currentCallType !== "video");
+            const videoStage = active.querySelector(".epc-video-stage");
+            const audioStage = active.querySelector(".epc-active-stage");
+            if (videoStage) videoStage.classList.toggle("epc-hidden", this.currentCallType !== "video");
+            if (audioStage) audioStage.classList.toggle("epc-video-name-overlay", this.currentCallType === "video");
+            this._setPeerName(this.currentPeerName);
             document.querySelector("#epc-active .epc-active-status").textContent = status;
         }
 
         _teardown() {
+            this._stopRinging();
+            this._closeNotification();
+            this._stopCallTimer();
             if (this.pc) {
                 this.pc.close();
                 this.pc = null;
@@ -341,9 +522,14 @@
                 this.localStream.getTracks().forEach((t) => t.stop());
                 this.localStream = null;
             }
+            const remoteVideo = document.getElementById("epc-remote-video");
+            const localVideo = document.getElementById("epc-local-video");
+            if (remoteVideo) remoteVideo.srcObject = null;
+            if (localVideo) localVideo.srcObject = null;
             document.getElementById("epc-active").classList.add("epc-hidden");
             document.getElementById("epc-incoming").classList.add("epc-hidden");
             this.currentUuid = null;
+            this.currentPeerName = "";
         }
 
         // ------------------------------------------------------------
@@ -373,6 +559,9 @@
             this.localStream.getTracks().forEach((t) => this.pc.addTrack(t, this.localStream));
             this.pc.ontrack = (ev) => {
                 document.getElementById("epc-remote-video").srcObject = ev.streams[0];
+                const status = document.querySelector("#epc-active .epc-active-status");
+                if (status) status.textContent = "Connected";
+                if (!this.callStartedAt) this._startCallTimer();
             };
             this.pc.onicecandidate = (ev) => {
                 if (ev.candidate) {

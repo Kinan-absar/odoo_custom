@@ -124,51 +124,172 @@
 #epc-active {
     position: fixed;
     z-index: 7400;
-    bottom: 100px;
-    right: 24px;
-    width: 280px;
+    bottom: 28px;
+    right: 28px;
+    width: 340px;
     background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 16px 40px rgba(26, 27, 46, 0.18);
-    padding: 16px;
+    border-radius: 22px;
+    box-shadow: 0 22px 60px rgba(20, 24, 45, 0.22);
+    padding: 24px;
     text-align: center;
+    overflow: hidden;
+    border: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+#epc-incoming {
+    padding-top: 28px;
+}
+
+.epc-call-avatar {
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #EEF2FF, #E0E7FF);
+    color: #4F46E5;
+    font-size: 30px;
+    font-weight: 700;
+    box-shadow: 0 10px 28px rgba(79, 70, 229, 0.16);
+}
+
+.epc-incoming-avatar {
+    animation: epc-ring-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes epc-ring-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.18), 0 10px 28px rgba(79, 70, 229, 0.12); }
+    50% { box-shadow: 0 0 0 14px rgba(79, 70, 229, 0), 0 10px 28px rgba(79, 70, 229, 0.18); }
 }
 
 .epc-incoming-name,
 .epc-active-name {
+    color: #111827;
+    font-size: 20px;
     font-weight: 700;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
 }
 
 .epc-incoming-sub,
 .epc-active-status {
     color: #6B7280;
     font-size: 13px;
-    margin-bottom: 12px;
+    margin-bottom: 4px;
+}
+
+.epc-call-timer {
+    color: #9CA3AF;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    margin-top: 5px;
 }
 
 .epc-incoming-actions,
 .epc-active-actions {
     display: flex;
     justify-content: center;
-    gap: 8px;
+    align-items: flex-start;
+    gap: 30px;
+    margin-top: 22px;
+}
+
+.epc-call-action,
+.epc-round-control {
+    border: 0;
+    background: transparent;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 7px;
+    color: #6B7280;
+    cursor: pointer;
+    padding: 0;
+    min-width: 66px;
+    font-size: 12px;
+}
+
+.epc-call-action i,
+.epc-round-control i {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F3F4F6;
+    color: #111827;
+    font-size: 18px;
+    transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.epc-call-action:hover i,
+.epc-round-control:hover i {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+.epc-call-action-accept i {
+    background: #16A34A;
+    color: #fff;
+}
+
+.epc-call-action-decline i,
+.epc-hangup-control i {
+    background: #DC2626;
+    color: #fff;
+    transform: rotate(135deg);
+}
+
+.epc-call-action-decline:hover i,
+.epc-hangup-control:hover i {
+    transform: rotate(135deg) translateY(1px);
+}
+
+.epc-control-active i {
+    background: #111827;
+    color: #fff;
+}
+
+.epc-active-stage {
+    padding: 8px 0 4px;
+}
+
+.epc-video-stage {
+    position: relative;
+    height: 280px;
+    margin: -24px -24px 0;
+    background: #111827;
 }
 
 #epc-remote-video {
     width: 100%;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    background: #111;
-    max-height: 160px;
+    height: 100%;
+    object-fit: cover;
+    background: #111827;
 }
 
 #epc-local-video {
-    width: 70px;
+    width: 92px;
+    height: 124px;
+    object-fit: cover;
     position: absolute;
-    top: 8px;
-    right: 8px;
-    border-radius: 6px;
-    border: 2px solid #fff;
+    top: 14px;
+    right: 14px;
+    border-radius: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.88);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
+}
+
+#epc-active.epc-video-call {
+    padding-top: 24px;
+}
+
+#epc-active.epc-video-call .epc-active-stage {
+    padding-top: 12px;
 }
 
 .epc-search-wrap {
@@ -227,11 +348,22 @@
 
     #epc-incoming,
     #epc-active {
-        left: 12px;
-        right: 12px;
-        bottom: 96px;
+        left: 14px;
+        right: 14px;
+        bottom: 92px;
         width: auto;
         max-width: none;
+        border-radius: 24px;
+        padding: 24px 20px;
+    }
+
+    #epc-incoming {
+        padding-top: 28px;
+    }
+
+    .epc-video-stage {
+        height: 360px;
+        margin: -24px -20px 0;
     }
 }
 
