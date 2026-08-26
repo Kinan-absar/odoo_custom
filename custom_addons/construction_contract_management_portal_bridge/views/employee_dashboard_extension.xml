@@ -1,87 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="employee_portal_dashboard_construction" inherit_id="employee_portal_suite.employee_portal_dashboard">
-        <!--
-            The Employee Portal dashboard was redesigned and no longer contains
-            the old `st-dashboard-body` wrapper. Insert the construction cards
-            directly into the current dashboard grid instead.
-        -->
-        <xpath expr="//div[hasclass('row') and hasclass('mt-4') and hasclass('g-3')]" position="inside">
+        <xpath expr="//div[hasclass('row')]" position="inside">
             <t t-if="show_construction_cards">
-                <!-- Contracts -->
-                <div class="col-6 col-md-6">
-                    <a href="/my/employee/contracts" class="dashboard-link">
-                        <div class="dashboard-card">
-                            <div class="card-top">
-                                <div class="card-icon bg-primary-soft">
-                                    <i class="fa fa-file-text-o"></i>
-                                </div>
-                                <span class="card-title">Contracts</span>
-                            </div>
-                            <div class="card-bottom">
-                                <div class="card-bottom-number-row">
-                                    <span class="card-number"><t t-esc="contract_count or 0"/></span>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
+                <div class="construction-dashboard-section w-100">
+                    <div class="row construction-dashboard-row">
 
-                <!-- IPCs -->
-                <div class="col-6 col-md-6">
-                    <a href="/my/employee/ipcs" class="dashboard-link">
-                        <div class="dashboard-card">
-                            <div class="card-top">
-                                <div class="card-icon bg-success-soft">
-                                    <i class="fa fa-money"></i>
+                        <!-- Contracts -->
+                        <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
+                            <a href="/my/employee/contracts" class="construction-dashboard-card-link">
+                                <div class="construction-dashboard-card construction-card-primary">
+                                    <div class="construction-card-top">
+                                        <div class="construction-card-icon">
+                                            <i class="fa fa-file-text"></i>
+                                        </div>
+                                        <div class="construction-card-title">Contracts</div>
+                                    </div>
+                                    <div class="construction-card-bottom">
+                                        <div class="construction-card-number">
+                                            <t t-esc="contract_count or 0"/>
+                                        </div>
+                                        <div class="construction-card-arrow">
+                                            <i class="fa fa-arrow-right"></i>
+                                        </div>
+                                    </div>
                                 </div>
-                                <span class="card-title">IPCs</span>
-                            </div>
-                            <div class="card-bottom">
-                                <div class="card-bottom-number-row">
-                                    <span class="card-number"><t t-esc="ipc_count or 0"/></span>
-                                </div>
-                            </div>
+                            </a>
                         </div>
-                    </a>
-                </div>
 
-                <!-- Variations -->
-                <div class="col-6 col-md-6">
-                    <a href="/my/employee/variations" class="dashboard-link">
-                        <div class="dashboard-card">
-                            <div class="card-top">
-                                <div class="card-icon bg-warning-soft">
-                                    <i class="fa fa-exchange"></i>
+                        <!-- IPCs -->
+                        <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
+                            <a href="/my/employee/ipcs" class="construction-dashboard-card-link">
+                                <div class="construction-dashboard-card construction-card-success">
+                                    <div class="construction-card-top">
+                                        <div class="construction-card-icon">
+                                            <i class="fa fa-money"></i>
+                                        </div>
+                                        <div class="construction-card-title">IPCs</div>
+                                    </div>
+                                    <div class="construction-card-bottom">
+                                        <div class="construction-card-number">
+                                            <t t-esc="ipc_count or 0"/>
+                                        </div>
+                                        <div class="construction-card-arrow">
+                                            <i class="fa fa-arrow-right"></i>
+                                        </div>
+                                    </div>
                                 </div>
-                                <span class="card-title">Variations</span>
-                            </div>
-                            <div class="card-bottom">
-                                <div class="card-bottom-number-row">
-                                    <span class="card-number"><t t-esc="variation_count or 0"/></span>
-                                </div>
-                            </div>
+                            </a>
                         </div>
-                    </a>
-                </div>
 
-                <!-- Measurements -->
-                <div class="col-6 col-md-6">
-                    <a href="/my/employee/measurements" class="dashboard-link">
-                        <div class="dashboard-card">
-                            <div class="card-top">
-                                <div class="card-icon bg-indigo-soft">
-                                    <i class="fa fa-bar-chart"></i>
+                        <!-- Variations -->
+                        <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
+                            <a href="/my/employee/variations" class="construction-dashboard-card-link">
+                                <div class="construction-dashboard-card construction-card-warning">
+                                    <div class="construction-card-top">
+                                        <div class="construction-card-icon">
+                                            <i class="fa fa-exchange"></i>
+                                        </div>
+                                        <div class="construction-card-title">Variations</div>
+                                    </div>
+                                    <div class="construction-card-bottom">
+                                        <div class="construction-card-number">
+                                            <t t-esc="variation_count or 0"/>
+                                        </div>
+                                        <div class="construction-card-arrow">
+                                            <i class="fa fa-arrow-right"></i>
+                                        </div>
+                                    </div>
                                 </div>
-                                <span class="card-title">Measurements</span>
-                            </div>
-                            <div class="card-bottom">
-                                <div class="card-bottom-number-row">
-                                    <span class="card-number"><t t-esc="measurement_count or 0"/></span>
-                                </div>
-                            </div>
+                            </a>
                         </div>
-                    </a>
+
+                        <!-- Measurements -->
+                        <div class="col-6 col-lg-3 mb-4 construction-dashboard-card-col">
+                            <a href="/my/employee/measurements" class="construction-dashboard-card-link">
+                                <div class="construction-dashboard-card construction-card-info">
+                                    <div class="construction-card-top">
+                                        <div class="construction-card-icon">
+                                            <i class="fa fa-bar-chart"></i>
+                                        </div>
+                                        <div class="construction-card-title">Measurements</div>
+                                    </div>
+                                    <div class="construction-card-bottom">
+                                        <div class="construction-card-number">
+                                            <t t-esc="measurement_count or 0"/>
+                                        </div>
+                                        <div class="construction-card-arrow">
+                                            <i class="fa fa-arrow-right"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                    </div>
                 </div>
             </t>
         </xpath>
