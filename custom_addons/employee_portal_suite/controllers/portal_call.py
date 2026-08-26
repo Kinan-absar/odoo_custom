@@ -47,6 +47,7 @@ class PortalCallController(http.Controller):
     def _is_allowed_pair(self, user_a, user_b):
         Contact = request.env['portal.call.contact'].sudo()
         return bool(Contact.search([
+            ('active', '=', True),
             '|',
             '&', ('portal_user_id', '=', user_a.id), ('internal_user_id', '=', user_b.id),
             '&', ('portal_user_id', '=', user_b.id), ('internal_user_id', '=', user_a.id),
@@ -59,15 +60,15 @@ class PortalCallController(http.Controller):
     def call_contacts(self):
         user = self._user()
         Contact = request.env['portal.call.contact'].sudo()
-        if user.has_group('employee_portal_suite.group_employee_portal'):
-            contacts = Contact.search([('portal_user_id', '=', user.id)])
+        if user.has_group('base.group_portal'):
+            contacts = Contact.search([('portal_user_id', '=', user.id), ('active', '=', True)])
             return [{
                 'user_id': c.internal_user_id.id,
                 'name': c.internal_user_id.name,
                 'note': c.note or '',
             } for c in contacts]
         else:
-            contacts = Contact.search([('internal_user_id', '=', user.id)])
+            contacts = Contact.search([('internal_user_id', '=', user.id), ('active', '=', True)])
             return [{
                 'user_id': c.portal_user_id.id,
                 'name': c.portal_user_id.name,

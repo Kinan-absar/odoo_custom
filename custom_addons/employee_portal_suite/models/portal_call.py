@@ -18,7 +18,8 @@ class PortalCallContact(models.Model):
     portal_user_id = fields.Many2one(
         'res.users', string='Portal User', required=True, ondelete='cascade',
         domain=lambda self: [
-            ('groups_id', 'in', [self.env.ref('employee_portal_suite.group_employee_portal').id]),
+            ('groups_id', 'in', [self.env.ref('base.group_portal').id]),
+            ('active', '=', True),
         ],
     )
     internal_user_id = fields.Many2one(
