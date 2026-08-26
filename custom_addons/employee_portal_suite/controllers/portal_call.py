@@ -6,6 +6,8 @@ from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
+CALL_RING_TIMEOUT_SECONDS = 45
+
 
 class PortalCallController(http.Controller):
     """JSON-RPC signalling endpoints for calling between portal/internal users.
@@ -144,22 +146,62 @@ class PortalCallController(http.Controller):
     @http.route('/employee_portal/call/poll', type='json', auth='user', csrf=False)
     def call_poll(self, last_id=0):
         user = self._user()
+        Session = request.env['portal.call.session'].sudo()
         Signal = request.env['portal.call.signal'].sudo()
+
+        # A ringing call is temporary. If nobody answers within the timeout,
+        # close it as missed so an abandoned browser/tab can never leave a
+        # permanent "Incoming call" popup behind.
+        stale_before = fields.Datetime.subtract(
+            fields.Datetime.now(), seconds=CALL_RING_TIMEOUT_SECONDS
+        )
+        stale_sessions = Session.search([
+            ('state', '=', 'ringing'),
+            ('start_date', '<', stale_before),
+            '|',
+            ('caller_id', '=', user.id),
+            ('callee_id', '=', user.id),
+        ])
+        for session in stale_sessions:
+            # Writing state first prevents the other participant's poll from
+            # expiring and signalling the same session a second time.
+            session.write({
+                'state': 'missed',
+                'end_date': fields.Datetime.now(),
+            })
+            other = session._other_party(user)
+            self._queue_signal(session, other, 'cancelled', {})
+
+        # Only unread mailbox rows are returned. Previously consumed=True rows
+        # were still fetched whenever a page reloaded with last_id=0, which
+        # replayed old incoming calls indefinitely.
         signals = Signal.search([
             ('recipient_id', '=', user.id),
+            ('consumed', '=', False),
             ('id', '>', int(last_id or 0)),
         ], order='id asc', limit=50)
         result = []
         max_id = int(last_id or 0)
         for s in signals:
             max_id = max(max_id, s.id)
+            session = s.session_id
+
+            # Never resurrect an incoming event for a call that is no longer
+            # ringing (missed/rejected/ended).
+            if s.event == 'incoming' and session.state != 'ringing':
+                continue
+            if s.event == 'accepted' and session.state != 'ongoing':
+                continue
+            if s.event == 'signal' and session.state not in ('ringing', 'ongoing'):
+                continue
+
             try:
                 payload = json.loads(s.payload or '{}')
             except ValueError:
                 payload = {}
             result.append({
                 'id': s.id,
-                'uuid': s.session_id.uuid,
+                'uuid': session.uuid,
                 'event': s.event,
                 'payload': payload,
             })

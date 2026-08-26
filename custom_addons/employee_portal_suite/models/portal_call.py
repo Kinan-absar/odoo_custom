@@ -72,6 +72,20 @@ class PortalCallSession(models.Model):
         self.ensure_one()
         return user.id in (self.caller_id.id, self.callee_id.id)
 
+    @api.autovacuum
+    def _gc_stale_ringing_sessions(self):
+        """Close abandoned ringing sessions that were never answered."""
+        stale_before = fields.Datetime.subtract(fields.Datetime.now(), minutes=5)
+        stale = self.sudo().search([
+            ('state', '=', 'ringing'),
+            ('start_date', '<', stale_before),
+        ])
+        if stale:
+            stale.write({
+                'state': 'missed',
+                'end_date': fields.Datetime.now(),
+            })
+
 
 class PortalCallSignal(models.Model):
     """Lightweight signalling mailbox, polled by the client-side JS.
