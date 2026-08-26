@@ -32,15 +32,13 @@ class PortalCallController(http.Controller):
         })
 
     def _is_callable_user(self, user):
-        """Only active Portal or Internal users belong in the call directory."""
-        return bool(
-            user
-            and user.active
-            and (
-                user.has_group('base.group_portal')
-                or user.has_group('base.group_user')
-            )
-        )
+        """A callable target must be an active Odoo user linked to an active employee."""
+        if not user or not user.active:
+            return False
+        return bool(request.env['hr.employee'].sudo().search_count([
+            ('active', '=', True),
+            ('user_id', '=', user.id),
+        ]))
 
     # ------------------------------------------------------------------
     # Directory
@@ -48,23 +46,31 @@ class PortalCallController(http.Controller):
     @http.route('/employee_portal/call/contacts', type='json', auth='user', csrf=False)
     def call_contacts(self):
         user = self._user()
-        portal_group = request.env.ref('base.group_portal')
-        internal_group = request.env.ref('base.group_user')
 
-        users = request.env['res.users'].sudo().search([
+        # Build the directory from HR employees, not from res.users. This keeps
+        # vendor/customer portal accounts out of the calling directory while
+        # still supporting employees whose login type is Portal or Internal.
+        employees = request.env['hr.employee'].sudo().search([
             ('active', '=', True),
-            ('id', '!=', user.id),
-            ('groups_id', 'in', [portal_group.id, internal_group.id]),
+            ('user_id', '!=', False),
+            ('user_id.active', '=', True),
+            ('user_id', '!=', user.id),
         ], order='name asc')
 
         result = []
-        for contact in users:
+        seen_user_ids = set()
+        for employee in employees:
+            contact = employee.user_id
+            if not contact or contact.id in seen_user_ids:
+                continue
+            seen_user_ids.add(contact.id)
             is_portal = contact.has_group('base.group_portal')
             result.append({
                 'user_id': contact.id,
-                'name': contact.name,
-                'user_type': 'Portal' if is_portal else 'Internal',
-                'note': 'Portal User' if is_portal else 'Internal User',
+                'name': employee.name or contact.name,
+                'user_type': 'Portal Employee' if is_portal else 'Internal Employee',
+                'department': employee.department_id.name or '',
+                'note': employee.job_title or '',
             })
         return result
 

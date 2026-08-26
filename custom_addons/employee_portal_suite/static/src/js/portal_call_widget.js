@@ -59,10 +59,10 @@
                 <button id="epc-fab" class="epc-fallback-fab epc-hidden" title="Call" aria-label="Call"><i class="fa fa-phone"></i></button>
                 <div id="epc-panel" class="epc-hidden">
                     <div class="epc-panel-header">
-                        <span>Call a user</span>
+                        <span>Call an employee</span>
                         <button id="epc-panel-close">&times;</button>
                     </div>
-                    <div class="epc-search-wrap"><input id="epc-contact-search" type="search" placeholder="Search users…" autocomplete="off"/></div>
+                    <div class="epc-search-wrap"><input id="epc-contact-search" type="search" placeholder="Search employees…" autocomplete="off"/></div>
                     <div id="epc-contact-list"><div class="epc-empty">Loading…</div></div>
                 </div>
                 <div id="epc-incoming" class="epc-hidden">
@@ -86,33 +86,17 @@
             `;
             document.body.appendChild(root);
 
-            // On employee portal pages, place the call control directly beside
-            // every notification bell (desktop and mobile versions both exist
-            // in the DOM and CSS chooses the visible header). Backend pages do
-            // not have that header, so they keep a floating fallback button.
+            // Portal: place the phone directly beside every notification bell.
             const bellWraps = Array.from(document.querySelectorAll(".ep-bell-wrap"));
-            if (bellWraps.length) {
-                bellWraps.forEach((bellWrap) => {
-                    if (bellWrap.parentElement && bellWrap.parentElement.querySelector(":scope > .epc-header-btn")) return;
-                    const btn = document.createElement("button");
-                    btn.type = "button";
-                    btn.className = "epc-header-btn";
-                    btn.title = "Calls";
-                    btn.setAttribute("aria-label", "Calls");
-                    btn.innerHTML = '<i class="fa fa-phone"></i>';
-                    bellWrap.insertAdjacentElement("beforebegin", btn);
-                    btn.addEventListener("click", (ev) => {
-                        ev.stopPropagation();
-                        this._togglePanel(btn);
-                    });
-                });
-            } else {
-                const fab = document.getElementById("epc-fab");
-                fab.classList.remove("epc-hidden");
-                fab.addEventListener("click", (ev) => {
-                    ev.stopPropagation();
-                    this._togglePanel(fab);
-                });
+            bellWraps.forEach((bellWrap) => this._addPortalHeaderButton(bellWrap));
+
+            // Backend: Odoo builds the systray after the web client starts, so
+            // inject the phone into .o_menu_systray and keep watching until the
+            // navbar exists. No bottom-right floating button is used anymore.
+            this._ensureBackendSystrayButton();
+            if (document.querySelector(".o_web_client")) {
+                this._systrayObserver = new MutationObserver(() => this._ensureBackendSystrayButton());
+                this._systrayObserver.observe(document.body, { childList: true, subtree: true });
             }
             document.getElementById("epc-panel-close").addEventListener("click", () => {
                 document.getElementById("epc-panel").classList.add("epc-hidden");
@@ -137,6 +121,43 @@
                 if (!panel.classList.contains("epc-hidden") && this._panelAnchor) {
                     this._positionPanel(this._panelAnchor);
                 }
+            });
+        }
+
+        _addPortalHeaderButton(bellWrap) {
+            if (!bellWrap || !bellWrap.parentElement) return;
+            if (bellWrap.parentElement.querySelector(":scope > .epc-header-btn")) return;
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "epc-header-btn";
+            btn.title = "Calls";
+            btn.setAttribute("aria-label", "Calls");
+            btn.innerHTML = '<i class="fa fa-phone"></i>';
+            bellWrap.insertAdjacentElement("beforebegin", btn);
+            btn.addEventListener("click", (ev) => {
+                ev.stopPropagation();
+                this._togglePanel(btn);
+            });
+        }
+
+        _ensureBackendSystrayButton() {
+            if (!document.querySelector(".o_web_client")) return;
+            const systray = document.querySelector(".o_menu_systray");
+            if (!systray || systray.querySelector(".epc-backend-systray-item")) return;
+
+            const item = document.createElement("div");
+            item.className = "o_menu_systray_item epc-backend-systray-item";
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "epc-backend-systray-btn";
+            btn.title = "Calls";
+            btn.setAttribute("aria-label", "Calls");
+            btn.innerHTML = '<i class="fa fa-phone"></i>';
+            item.appendChild(btn);
+            systray.appendChild(item);
+            btn.addEventListener("click", (ev) => {
+                ev.stopPropagation();
+                this._togglePanel(btn);
             });
         }
 
@@ -183,12 +204,14 @@
             const term = (search ? search.value : "").trim().toLowerCase();
             const contacts = this.contacts.filter((c) =>
                 !term || (c.name || "").toLowerCase().includes(term) ||
-                (c.user_type || "").toLowerCase().includes(term)
+                (c.user_type || "").toLowerCase().includes(term) ||
+                (c.department || "").toLowerCase().includes(term) ||
+                (c.note || "").toLowerCase().includes(term)
             );
 
             list.innerHTML = "";
             if (!contacts.length) {
-                list.innerHTML = `<div class="epc-empty">${term ? "No matching users." : "No other active users found."}</div>`;
+                list.innerHTML = `<div class="epc-empty">${term ? "No matching employees." : "No other active employees found."}</div>`;
                 return;
             }
             contacts.forEach((c) => {
@@ -196,8 +219,9 @@
                 row.className = "epc-contact-row";
                 const identity = document.createElement("div");
                 identity.className = "epc-contact-identity";
+                const detail = [c.department, c.note, c.user_type].filter(Boolean).join(" · ");
                 identity.innerHTML = `<span class="epc-contact-name">${this._escape(c.name)}</span>` +
-                    `<span class="epc-contact-type">${this._escape(c.user_type || "User")}</span>`;
+                    `<span class="epc-contact-type">${this._escape(detail || "Employee")}</span>`;
                 const callBtn = document.createElement("button");
                 callBtn.textContent = "Call";
                 callBtn.className = "epc-btn epc-btn-small";

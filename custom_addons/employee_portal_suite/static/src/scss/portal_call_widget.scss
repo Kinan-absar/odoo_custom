@@ -234,3 +234,30 @@
         max-width: none;
     }
 }
+
+/* Odoo backend systray call control */
+.epc-backend-systray-item {
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+}
+
+.epc-backend-systray-btn {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    min-width: 40px;
+    height: 100%;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.epc-backend-systray-btn:hover,
+.epc-backend-systray-btn:focus {
+    background: rgba(0, 0, 0, 0.05);
+    outline: none;
+}
