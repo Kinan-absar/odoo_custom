@@ -5,12 +5,12 @@
         <field name="name">portal.call.contact.list</field>
         <field name="model">portal.call.contact</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="portal_user_id"/>
                 <field name="internal_user_id"/>
                 <field name="note"/>
                 <field name="active" widget="boolean_toggle"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -42,7 +42,7 @@
         <field name="name">portal.call.session.list</field>
         <field name="model">portal.call.session</field>
         <field name="arch" type="xml">
-            <tree create="0" edit="0" delete="0">
+            <list create="0" edit="0" delete="0">
                 <field name="caller_id"/>
                 <field name="callee_id"/>
                 <field name="call_type"/>
@@ -50,7 +50,7 @@
                 <field name="start_date"/>
                 <field name="answered_date"/>
                 <field name="end_date"/>
-            </tree>
+            </list>
         </field>
     </record>
 
