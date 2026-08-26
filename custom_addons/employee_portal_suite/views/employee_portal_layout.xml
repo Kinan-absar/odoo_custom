@@ -212,15 +212,24 @@
                         padding: 20px 20px 16px;
                         background: var(--surface);
                         border-bottom: 1px solid var(--border-light);
+                        position: relative;
+                        z-index: 6000;
+                        overflow: visible !important;
+                        isolation: auto;
                     }
 
                     .ep-mobile-topbar {
                         display: flex;
                         justify-content: flex-end;
                         align-items: center;
+                        gap: 8px;
                         padding: 14px 20px;
                         background: var(--surface);
                         border-bottom: 1px solid var(--border-light);
+                        position: relative;
+                        z-index: 6000;
+                        overflow: visible !important;
+                        isolation: auto;
                     }
 
                     .nav-btn {
@@ -293,6 +302,8 @@
 
                 .ep-bell-wrap {
                     position: relative;
+                    z-index: 6100;
+                    overflow: visible !important;
                 }
 
                 .ep-bell-btn {
@@ -349,7 +360,7 @@
                     box-shadow: var(--shadow-lg);
                     border: 1px solid var(--border-light);
                     padding: 8px;
-                    z-index: 2200;
+                    z-index: 7000;
                     display: none;
 
                     opacity: 0;
@@ -425,6 +436,14 @@
 
                 @media (prefers-reduced-motion: reduce) {
                     .ep-bell-dot { animation: none; }
+                }
+
+                @media (max-width: 768px) {
+                    .mobile-app-header .ep-bell-panel,
+                    .ep-mobile-topbar .ep-bell-panel {
+                        z-index: 7000;
+                        max-width: calc(100vw - 32px);
+                    }
                 }
 
                 /* Compact persistent mobile top bar (every page) */

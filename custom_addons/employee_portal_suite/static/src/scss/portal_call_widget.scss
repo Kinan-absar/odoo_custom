@@ -1,8 +1,6 @@
 #epc-root {
-    position: fixed;
-    z-index: 1600;
-    right: 24px;
-    bottom: 24px;
+    position: static;
+    z-index: 7200;
     font-family: inherit;
 }
 
@@ -10,22 +8,55 @@
     display: none !important;
 }
 
+.epc-header-btn,
 #epc-fab {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    background: #fff;
+    color: #4F46E5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0;
+    flex: 0 0 auto;
+    transition: background 150ms ease, color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+
+.epc-header-btn:hover,
+#epc-fab:hover {
+    background: #F8F8FB;
+    color: #3730A3;
+    transform: translateY(-1px);
+}
+
+.epc-header-btn:focus-visible,
+#epc-fab:focus-visible {
+    outline: 3px solid rgba(79, 70, 229, 0.18);
+    outline-offset: 2px;
+}
+
+#epc-fab.epc-fallback-fab {
+    position: fixed;
+    z-index: 7200;
+    right: 24px;
+    bottom: 24px;
     width: 56px;
     height: 56px;
-    border-radius: 50%;
-    border: none;
     background: #4F46E5;
     color: #fff;
-    font-size: 22px;
+    font-size: 20px;
     box-shadow: 0 10px 30px rgba(79, 70, 229, 0.40), 0 3px 8px rgba(79, 70, 229, 0.20);
-    cursor: pointer;
 }
 
 #epc-panel {
-    position: absolute;
-    bottom: 68px;
-    right: 0;
+    position: fixed;
+    top: 72px;
+    right: 16px;
+    z-index: 7300;
     width: 320px;
     max-height: 430px;
     overflow: hidden;
@@ -92,6 +123,7 @@
 #epc-incoming,
 #epc-active {
     position: fixed;
+    z-index: 7400;
     bottom: 100px;
     right: 24px;
     width: 280px;
@@ -179,4 +211,26 @@
 .epc-contact-type {
     color: #6B7280;
     font-size: 11px;
+}
+
+@media (max-width: 768px) {
+    .epc-header-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+
+    #epc-panel {
+        width: min(340px, calc(100vw - 24px));
+        max-width: calc(100vw - 24px);
+    }
+
+    #epc-incoming,
+    #epc-active {
+        left: 12px;
+        right: 12px;
+        bottom: 96px;
+        width: auto;
+        max-width: none;
+    }
 }

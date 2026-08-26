@@ -56,7 +56,7 @@
             const root = document.createElement("div");
             root.id = "epc-root";
             root.innerHTML = `
-                <button id="epc-fab" title="Call" aria-label="Call">📞</button>
+                <button id="epc-fab" class="epc-fallback-fab epc-hidden" title="Call" aria-label="Call"><i class="fa fa-phone"></i></button>
                 <div id="epc-panel" class="epc-hidden">
                     <div class="epc-panel-header">
                         <span>Call a user</span>
@@ -86,9 +86,34 @@
             `;
             document.body.appendChild(root);
 
-            document.getElementById("epc-fab").addEventListener("click", () => {
-                document.getElementById("epc-panel").classList.toggle("epc-hidden");
-            });
+            // On employee portal pages, place the call control directly beside
+            // every notification bell (desktop and mobile versions both exist
+            // in the DOM and CSS chooses the visible header). Backend pages do
+            // not have that header, so they keep a floating fallback button.
+            const bellWraps = Array.from(document.querySelectorAll(".ep-bell-wrap"));
+            if (bellWraps.length) {
+                bellWraps.forEach((bellWrap) => {
+                    if (bellWrap.parentElement && bellWrap.parentElement.querySelector(":scope > .epc-header-btn")) return;
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "epc-header-btn";
+                    btn.title = "Calls";
+                    btn.setAttribute("aria-label", "Calls");
+                    btn.innerHTML = '<i class="fa fa-phone"></i>';
+                    bellWrap.insertAdjacentElement("beforebegin", btn);
+                    btn.addEventListener("click", (ev) => {
+                        ev.stopPropagation();
+                        this._togglePanel(btn);
+                    });
+                });
+            } else {
+                const fab = document.getElementById("epc-fab");
+                fab.classList.remove("epc-hidden");
+                fab.addEventListener("click", (ev) => {
+                    ev.stopPropagation();
+                    this._togglePanel(fab);
+                });
+            }
             document.getElementById("epc-panel-close").addEventListener("click", () => {
                 document.getElementById("epc-panel").classList.add("epc-hidden");
             });
@@ -97,6 +122,50 @@
             document.getElementById("epc-hangup").addEventListener("click", () => this._hangup());
             document.getElementById("epc-mute").addEventListener("click", () => this._toggleMute());
             document.getElementById("epc-contact-search").addEventListener("input", () => this._renderContacts());
+
+            document.addEventListener("click", (ev) => {
+                const panel = document.getElementById("epc-panel");
+                if (!panel.classList.contains("epc-hidden") &&
+                    !ev.target.closest("#epc-panel") &&
+                    !ev.target.closest(".epc-header-btn") &&
+                    !ev.target.closest("#epc-fab")) {
+                    panel.classList.add("epc-hidden");
+                }
+            });
+            window.addEventListener("resize", () => {
+                const panel = document.getElementById("epc-panel");
+                if (!panel.classList.contains("epc-hidden") && this._panelAnchor) {
+                    this._positionPanel(this._panelAnchor);
+                }
+            });
+        }
+
+        _togglePanel(anchor) {
+            const panel = document.getElementById("epc-panel");
+            const opening = panel.classList.contains("epc-hidden");
+            if (opening) {
+                this._panelAnchor = anchor;
+                panel.classList.remove("epc-hidden");
+                this._positionPanel(anchor);
+                const search = document.getElementById("epc-contact-search");
+                if (search) setTimeout(() => search.focus(), 0);
+            } else {
+                panel.classList.add("epc-hidden");
+            }
+        }
+
+        _positionPanel(anchor) {
+            const panel = document.getElementById("epc-panel");
+            if (!anchor || !panel) return;
+            const rect = anchor.getBoundingClientRect();
+            const gap = 10;
+            const edge = 12;
+            panel.style.top = `${Math.max(edge, rect.bottom + gap)}px`;
+            panel.style.bottom = "auto";
+            panel.style.right = `${Math.max(edge, window.innerWidth - rect.right)}px`;
+            panel.style.left = "auto";
+            const maxHeight = Math.max(220, window.innerHeight - rect.bottom - gap - edge);
+            panel.style.maxHeight = `${Math.min(430, maxHeight)}px`;
         }
 
         async _loadContacts() {
