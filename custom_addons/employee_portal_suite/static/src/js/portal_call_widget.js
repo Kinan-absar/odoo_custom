@@ -52,6 +52,10 @@
             this.ringGain = null;
             this.callStartedAt = null;
             this.callTimer = null;
+            this.screenStream = null;
+            this.screenTrack = null;
+            this._cameraTrackBeforeShare = null;
+            this._addingPeople = false;
             this._buildUI();
             this._loadContacts();
             this._startPolling();
@@ -96,6 +100,7 @@
                     <div class="epc-active-actions">
                         <button id="epc-mute" class="epc-round-control" title="Mute"><i class="fa fa-microphone"></i><span>Mute</span></button>
                         <button id="epc-add-people" class="epc-round-control" title="Add people"><i class="fa fa-user-plus"></i><span>Add people</span></button>
+                        <button id="epc-share-screen" class="epc-round-control epc-desktop-only" title="Share screen"><i class="fa fa-desktop"></i><span>Share screen</span></button>
                         <button id="epc-hangup" class="epc-round-control epc-hangup-control" title="Hang up"><i class="fa fa-phone"></i><span>Hang up</span></button>
                     </div>
                 </div>
@@ -116,17 +121,33 @@
             }
             document.getElementById("epc-panel-close").addEventListener("click", () => {
                 document.getElementById("epc-panel").classList.add("epc-hidden");
+                this._addingPeople = false;
+                document.querySelector("#epc-panel .epc-panel-header span").textContent = "Call an employee";
             });
             document.getElementById("epc-accept").addEventListener("click", () => this._acceptIncoming());
             document.getElementById("epc-reject").addEventListener("click", () => this._rejectIncoming());
             document.getElementById("epc-hangup").addEventListener("click", () => this._hangup());
             document.getElementById("epc-mute").addEventListener("click", () => this._toggleMute());
-            document.getElementById("epc-add-people").addEventListener("click", () => {
+            document.getElementById("epc-add-people").addEventListener("click", (ev) => {
+                // Stop the global outside-click handler from immediately closing
+                // the picker on the same click that opens it.
+                ev.preventDefault();
+                ev.stopPropagation();
                 this._addingPeople = true;
                 const panel = document.getElementById("epc-panel");
                 panel.querySelector(".epc-panel-header span").textContent = "Add people to meeting";
+                const search = document.getElementById("epc-contact-search");
+                if (search) search.value = "";
+                this._panelAnchor = ev.currentTarget;
                 panel.classList.remove("epc-hidden");
+                this._positionPanel(ev.currentTarget);
                 this._renderContacts();
+                if (search) setTimeout(() => search.focus(), 0);
+            });
+            document.getElementById("epc-share-screen").addEventListener("click", (ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                this._toggleScreenShare();
             });
             document.getElementById("epc-contact-search").addEventListener("input", () => this._renderContacts());
 
@@ -146,9 +167,14 @@
                     !ev.target.closest(".epc-header-btn") &&
                     !ev.target.closest("#epc-fab")) {
                     panel.classList.add("epc-hidden");
+                    this._addingPeople = false;
+                    const title = panel.querySelector(".epc-panel-header span");
+                    if (title) title.textContent = "Call an employee";
                 }
             });
+            this._updateScreenShareAvailability();
             window.addEventListener("resize", () => {
+                this._updateScreenShareAvailability();
                 const panel = document.getElementById("epc-panel");
                 if (!panel.classList.contains("epc-hidden") && this._panelAnchor) {
                     this._positionPanel(this._panelAnchor);
@@ -537,6 +563,133 @@
             }
         }
 
+        _isDesktopScreenShareSupported() {
+            return window.innerWidth > 768 &&
+                !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
+        }
+
+        _updateScreenShareAvailability() {
+            const btn = document.getElementById("epc-share-screen");
+            if (!btn) return;
+            const supported = this._isDesktopScreenShareSupported();
+            btn.classList.toggle("epc-hidden", !supported);
+            btn.disabled = !supported;
+        }
+
+        async _toggleScreenShare() {
+            if (this.screenTrack) {
+                await this._stopScreenShare();
+            } else {
+                await this._startScreenShare();
+            }
+        }
+
+        async _startScreenShare() {
+            if (!this.currentUuid || !this._isDesktopScreenShareSupported()) return;
+            try {
+                this.screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
+                    audio: false,
+                });
+                this.screenTrack = this.screenStream.getVideoTracks()[0];
+                if (!this.screenTrack) return;
+
+                const shareTrack = this.screenTrack;
+                const renegotiate = [];
+                for (const [peerId, pc] of this.peerConnections.entries()) {
+                    const videoSender = pc.getSenders().find((sender) => sender.track && sender.track.kind === "video");
+                    if (videoSender) {
+                        if (!this._cameraTrackBeforeShare) this._cameraTrackBeforeShare = videoSender.track;
+                        await videoSender.replaceTrack(shareTrack);
+                    } else {
+                        pc.addTrack(shareTrack, this.screenStream);
+                        renegotiate.push(peerId);
+                    }
+                }
+
+                // Audio-only meetings need a fresh SDP offer because screen video
+                // adds a new transceiver. Existing video calls can use replaceTrack.
+                for (const peerId of renegotiate) {
+                    await this._renegotiatePeer(peerId);
+                }
+
+                shareTrack.addEventListener("ended", () => {
+                    if (this.screenTrack === shareTrack) this._stopScreenShare();
+                }, { once: true });
+
+                const btn = document.getElementById("epc-share-screen");
+                if (btn) {
+                    btn.classList.add("epc-control-active");
+                    btn.querySelector("i").className = "fa fa-stop-circle";
+                    const label = btn.querySelector("span");
+                    if (label) label.textContent = "Stop sharing";
+                }
+                const status = document.querySelector("#epc-active .epc-active-status");
+                if (status) status.textContent = "You are sharing your screen";
+            } catch (e) {
+                // User cancelling the browser picker is normal; do not show an error.
+                if (e && e.name !== "NotAllowedError" && e.name !== "AbortError") {
+                    console.error("[EPC] Screen share failed", e);
+                    alert("Could not start screen sharing.");
+                }
+            }
+        }
+
+        async _stopScreenShare() {
+            const oldTrack = this.screenTrack;
+            if (!oldTrack) return;
+            this.screenTrack = null;
+
+            const renegotiate = [];
+            for (const [peerId, pc] of this.peerConnections.entries()) {
+                const sender = pc.getSenders().find((item) => item.track === oldTrack);
+                if (!sender) continue;
+                if (this.currentCallType === "video" && this._cameraTrackBeforeShare) {
+                    await sender.replaceTrack(this._cameraTrackBeforeShare);
+                } else {
+                    try { pc.removeTrack(sender); } catch (e) { /* no-op */ }
+                    renegotiate.push(peerId);
+                }
+            }
+
+            try { oldTrack.stop(); } catch (e) { /* no-op */ }
+            if (this.screenStream) {
+                this.screenStream.getTracks().forEach((track) => {
+                    if (track !== oldTrack) {
+                        try { track.stop(); } catch (e) { /* no-op */ }
+                    }
+                });
+            }
+            this.screenStream = null;
+            this._cameraTrackBeforeShare = null;
+
+            for (const peerId of renegotiate) {
+                await this._renegotiatePeer(peerId);
+            }
+
+            const btn = document.getElementById("epc-share-screen");
+            if (btn) {
+                btn.classList.remove("epc-control-active");
+                btn.querySelector("i").className = "fa fa-desktop";
+                const label = btn.querySelector("span");
+                if (label) label.textContent = "Share screen";
+            }
+            const status = document.querySelector("#epc-active .epc-active-status");
+            if (status && this.currentUuid) status.textContent = `${this.peerConnections.size + 1} people in meeting`;
+        }
+
+        async _renegotiatePeer(peerId) {
+            const pc = this.peerConnections.get(Number(peerId));
+            if (!pc || pc.signalingState === "closed") return;
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            await rpc("/employee_portal/call/signal", {
+                uuid: this.currentUuid,
+                signal_type: "offer",
+                data: { type: offer.type, sdp: offer.sdp, _target_user_id: Number(peerId) },
+            });
+        }
+
         _showActive(status) {
             const active = document.getElementById("epc-active");
             active.classList.remove("epc-hidden");
@@ -559,6 +712,22 @@
                 this.pc = null; // legacy alias for first peer
             this.peerConnections = new Map();
             this.peerNames = new Map();
+            }
+            if (this.screenTrack) {
+                try { this.screenTrack.stop(); } catch (e) { /* no-op */ }
+                this.screenTrack = null;
+            }
+            if (this.screenStream) {
+                this.screenStream.getTracks().forEach((t) => { try { t.stop(); } catch (e) { /* no-op */ } });
+                this.screenStream = null;
+            }
+            this._cameraTrackBeforeShare = null;
+            const shareBtn = document.getElementById("epc-share-screen");
+            if (shareBtn) {
+                shareBtn.classList.remove("epc-control-active");
+                shareBtn.querySelector("i").className = "fa fa-desktop";
+                const label = shareBtn.querySelector("span");
+                if (label) label.textContent = "Share screen";
             }
             if (this.localStream) {
                 this.localStream.getTracks().forEach((t) => t.stop());
@@ -602,10 +771,31 @@
             this.peerConnections.set(peerId, pc);
             if (!this.pc) this.pc = pc;
             this.localStream.getTracks().forEach((t) => pc.addTrack(t, this.localStream));
+            if (this.screenTrack && this.currentCallType !== "video") {
+                pc.addTrack(this.screenTrack, this.screenStream);
+            } else if (this.screenTrack && this.currentCallType === "video") {
+                const videoSender = pc.getSenders().find((sender) => sender.track && sender.track.kind === "video");
+                if (videoSender) {
+                    if (!this._cameraTrackBeforeShare) this._cameraTrackBeforeShare = videoSender.track;
+                    await videoSender.replaceTrack(this.screenTrack);
+                }
+            }
             pc.ontrack = (ev) => {
-                let audio = document.getElementById(`epc-remote-${peerId}`);
-                if (!audio) { audio = document.createElement("audio"); audio.id = `epc-remote-${peerId}`; audio.autoplay = true; audio.style.display = "none"; document.getElementById("epc-active").appendChild(audio); }
-                audio.srcObject = ev.streams[0];
+                if (ev.track && ev.track.kind === "video") {
+                    const remoteVideo = document.getElementById("epc-remote-video");
+                    const stage = document.querySelector("#epc-active .epc-video-stage");
+                    if (remoteVideo) remoteVideo.srcObject = ev.streams[0];
+                    if (stage) stage.classList.remove("epc-hidden");
+                    if (ev.track) {
+                        ev.track.addEventListener("ended", () => {
+                            if (this.currentCallType !== "video" && stage) stage.classList.add("epc-hidden");
+                        }, { once: true });
+                    }
+                } else {
+                    let audio = document.getElementById(`epc-remote-${peerId}`);
+                    if (!audio) { audio = document.createElement("audio"); audio.id = `epc-remote-${peerId}`; audio.autoplay = true; audio.style.display = "none"; document.getElementById("epc-active").appendChild(audio); }
+                    audio.srcObject = ev.streams[0];
+                }
                 const status = document.querySelector("#epc-active .epc-active-status");
                 if (status) status.textContent = `${this.peerConnections.size + 1} people in meeting`;
                 if (!this.callStartedAt) this._startCallTimer();

@@ -424,3 +424,31 @@
     background: rgba(0, 0, 0, 0.05);
     outline: none;
 }
+
+/* Desktop-only screen sharing. Mobile/tablet deliberately never expose it. */
+.epc-desktop-only {
+    display: inline-flex;
+}
+
+@media (max-width: 768px) {
+    #epc-share-screen,
+    .epc-desktop-only {
+        display: none !important;
+    }
+}
+
+/* When a remote participant shares a screen during an audio meeting, the
+   existing video stage becomes the shared-screen canvas. */
+#epc-active.epc-audio-call .epc-video-stage:not(.epc-hidden) {
+    display: block;
+    height: 52vh;
+    max-height: 430px;
+    margin: 12px 0 0;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #111827;
+}
+
+#epc-active.epc-audio-call .epc-video-stage:not(.epc-hidden) #epc-local-video {
+    display: none;
+}

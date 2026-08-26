@@ -1,6 +1,6 @@
 {
     'name': 'Employee Portal Suite',
-    'version': '18.0.1.15.0',
+    'version': '18.0.1.15.1',
     'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
 
     'description': """
