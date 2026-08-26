@@ -207,8 +207,20 @@
             const edge = 12;
             panel.style.top = `${Math.max(edge, rect.bottom + gap)}px`;
             panel.style.bottom = "auto";
-            panel.style.right = `${Math.max(edge, window.innerWidth - rect.right)}px`;
-            panel.style.left = "auto";
+            if (window.innerWidth <= 768) {
+                // On phones anchor the directory to the viewport, not to the icon.
+                // This prevents the panel from being pushed outside the screen when
+                // the call icon is close to either edge of the mobile header.
+                panel.style.left = `${edge}px`;
+                panel.style.right = `${edge}px`;
+                panel.style.width = "auto";
+                panel.style.maxWidth = "none";
+            } else {
+                panel.style.right = `${Math.max(edge, window.innerWidth - rect.right)}px`;
+                panel.style.left = "auto";
+                panel.style.width = "";
+                panel.style.maxWidth = "";
+            }
             const maxHeight = Math.max(220, window.innerHeight - rect.bottom - gap - edge);
             panel.style.maxHeight = `${Math.min(430, maxHeight)}px`;
         }

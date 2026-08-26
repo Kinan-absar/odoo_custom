@@ -342,8 +342,34 @@
     }
 
     #epc-panel {
-        width: calc(100vw - 24px);
-        max-width: 340px;
+        left: 12px;
+        right: 12px;
+        width: auto;
+        max-width: none;
+        box-sizing: border-box;
+        border-radius: 18px;
+    }
+
+    .epc-panel-header,
+    .epc-search-wrap,
+    .epc-contact-row {
+        box-sizing: border-box;
+        width: 100%;
+    }
+
+    .epc-contact-row {
+        gap: 10px;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .epc-contact-identity {
+        flex: 1 1 auto;
+        overflow: hidden;
+    }
+
+    .epc-contact-name {
+        max-width: none;
     }
 
     #epc-incoming,
