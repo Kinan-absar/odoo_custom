@@ -412,7 +412,7 @@
 
     #epc-panel.epc-meeting-picker #epc-contact-list {
         max-height: calc(68vh - 125px);
-        padding-bottom: max(8px, env(safe-area-inset-bottom));
+        padding-bottom: 8px;
     }
 
     .epc-panel-header,
