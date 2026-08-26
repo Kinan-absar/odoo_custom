@@ -69,6 +69,7 @@
             root.id = "epc-root";
             root.innerHTML = `
                 <button id="epc-fab" class="epc-fallback-fab epc-hidden" title="Call" aria-label="Call"><i class="fa fa-phone"></i></button>
+                <div id="epc-picker-backdrop" class="epc-hidden"></div>
                 <div id="epc-panel" class="epc-hidden">
                     <div class="epc-panel-header">
                         <span>Call an employee</span>
@@ -119,11 +120,9 @@
                 this._systrayObserver = new MutationObserver(() => this._ensureBackendSystrayButton());
                 this._systrayObserver.observe(document.body, { childList: true, subtree: true });
             }
-            document.getElementById("epc-panel-close").addEventListener("click", () => {
-                document.getElementById("epc-panel").classList.add("epc-hidden");
-                this._addingPeople = false;
-                document.querySelector("#epc-panel .epc-panel-header span").textContent = "Call an employee";
-            });
+            const closePicker = () => this._closeContactPanel();
+            document.getElementById("epc-panel-close").addEventListener("click", closePicker);
+            document.getElementById("epc-picker-backdrop").addEventListener("click", closePicker);
             document.getElementById("epc-accept").addEventListener("click", () => this._acceptIncoming());
             document.getElementById("epc-reject").addEventListener("click", () => this._rejectIncoming());
             document.getElementById("epc-hangup").addEventListener("click", () => this._hangup());
@@ -135,7 +134,9 @@
                 ev.stopPropagation();
                 this._addingPeople = true;
                 const panel = document.getElementById("epc-panel");
-                panel.querySelector(".epc-panel-header span").textContent = "Add people to meeting";
+                panel.classList.add("epc-meeting-picker");
+                document.getElementById("epc-picker-backdrop").classList.remove("epc-hidden");
+                panel.querySelector(".epc-panel-header span").textContent = "Add people";
                 const search = document.getElementById("epc-contact-search");
                 if (search) search.value = "";
                 this._panelAnchor = ev.currentTarget;
@@ -166,10 +167,7 @@
                     !ev.target.closest("#epc-panel") &&
                     !ev.target.closest(".epc-header-btn") &&
                     !ev.target.closest("#epc-fab")) {
-                    panel.classList.add("epc-hidden");
-                    this._addingPeople = false;
-                    const title = panel.querySelector(".epc-panel-header span");
-                    if (title) title.textContent = "Call an employee";
+                    this._closeContactPanel();
                 }
             });
             this._updateScreenShareAvailability();
@@ -235,12 +233,37 @@
             }
         }
 
+        _closeContactPanel() {
+            const panel = document.getElementById("epc-panel");
+            if (panel) {
+                panel.classList.add("epc-hidden");
+                panel.classList.remove("epc-meeting-picker");
+                const title = panel.querySelector(".epc-panel-header span");
+                if (title) title.textContent = "Call an employee";
+            }
+            const backdrop = document.getElementById("epc-picker-backdrop");
+            if (backdrop) backdrop.classList.add("epc-hidden");
+            this._addingPeople = false;
+        }
+
         _positionPanel(anchor) {
             const panel = document.getElementById("epc-panel");
             if (!anchor || !panel) return;
             const rect = anchor.getBoundingClientRect();
             const gap = 10;
             const edge = 12;
+            if (this._addingPeople) {
+                panel.style.left = "50%";
+                panel.style.right = "auto";
+                panel.style.width = "420px";
+                panel.style.maxWidth = "calc(100vw - 32px)";
+                panel.style.top = "50%";
+                panel.style.bottom = "auto";
+                panel.style.transform = "translate(-50%, -50%)";
+                panel.style.maxHeight = `${Math.min(560, window.innerHeight - 48)}px`;
+                return;
+            }
+            panel.style.transform = "none";
             panel.style.top = `${Math.max(edge, rect.bottom + gap)}px`;
             panel.style.bottom = "auto";
             if (window.innerWidth <= 768) {
@@ -515,9 +538,7 @@
                 if (c) this.peerNames.set(Number(userId), c.name);
                 document.querySelector("#epc-active .epc-active-status").textContent = `Invited ${c ? c.name : "employee"}…`;
             }
-            this._addingPeople = false;
-            document.querySelector("#epc-panel .epc-panel-header span").textContent = "Call an employee";
-            document.getElementById("epc-panel").classList.add("epc-hidden");
+            this._closeContactPanel();
         }
 
         async _acceptIncoming() {

@@ -334,6 +334,48 @@
     font-size: 11px;
 }
 
+
+/* Meeting participant picker */
+#epc-picker-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 7440;
+    background: rgba(15, 23, 42, 0.34);
+    backdrop-filter: blur(3px);
+}
+
+#epc-panel.epc-meeting-picker {
+    z-index: 7450;
+    border-radius: 22px;
+    border: 1px solid rgba(15, 23, 42, 0.07);
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
+}
+
+#epc-panel.epc-meeting-picker .epc-panel-header {
+    padding: 18px 20px 14px;
+    font-size: 18px;
+    color: #111827;
+}
+
+#epc-panel.epc-meeting-picker .epc-panel-header button {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #F3F4F6;
+    color: #4B5563;
+    line-height: 1;
+}
+
+#epc-panel.epc-meeting-picker .epc-search-wrap { padding: 12px 16px; }
+#epc-panel.epc-meeting-picker #epc-contact-search {
+    border-radius: 12px;
+    padding: 11px 13px;
+    background: #F9FAFB;
+}
+#epc-panel.epc-meeting-picker .epc-contact-row { padding: 12px 16px; gap: 14px; }
+#epc-panel.epc-meeting-picker .epc-contact-name { font-weight: 650; color: #1F2937; }
+#epc-panel.epc-meeting-picker .epc-btn-small { border-radius: 999px; padding: 7px 15px; font-weight: 600; }
+
 @media (max-width: 768px) {
     .epc-header-btn {
         width: 40px;
@@ -348,6 +390,29 @@
         max-width: none;
         box-sizing: border-box;
         border-radius: 18px;
+    }
+
+
+    #epc-panel.epc-meeting-picker {
+        left: 10px !important;
+        right: 10px !important;
+        top: auto !important;
+        bottom: 10px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 68vh !important;
+        transform: none !important;
+        border-radius: 24px;
+    }
+
+    #epc-panel.epc-meeting-picker .epc-panel-header {
+        padding: 16px 18px 12px;
+        font-size: 17px;
+    }
+
+    #epc-panel.epc-meeting-picker #epc-contact-list {
+        max-height: calc(68vh - 125px);
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
     }
 
     .epc-panel-header,
@@ -429,6 +494,48 @@
 .epc-desktop-only {
     display: inline-flex;
 }
+
+
+/* Meeting participant picker */
+#epc-picker-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 7440;
+    background: rgba(15, 23, 42, 0.34);
+    backdrop-filter: blur(3px);
+}
+
+#epc-panel.epc-meeting-picker {
+    z-index: 7450;
+    border-radius: 22px;
+    border: 1px solid rgba(15, 23, 42, 0.07);
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
+}
+
+#epc-panel.epc-meeting-picker .epc-panel-header {
+    padding: 18px 20px 14px;
+    font-size: 18px;
+    color: #111827;
+}
+
+#epc-panel.epc-meeting-picker .epc-panel-header button {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #F3F4F6;
+    color: #4B5563;
+    line-height: 1;
+}
+
+#epc-panel.epc-meeting-picker .epc-search-wrap { padding: 12px 16px; }
+#epc-panel.epc-meeting-picker #epc-contact-search {
+    border-radius: 12px;
+    padding: 11px 13px;
+    background: #F9FAFB;
+}
+#epc-panel.epc-meeting-picker .epc-contact-row { padding: 12px 16px; gap: 14px; }
+#epc-panel.epc-meeting-picker .epc-contact-name { font-weight: 650; color: #1F2937; }
+#epc-panel.epc-meeting-picker .epc-btn-small { border-radius: 999px; padding: 7px 15px; font-weight: 600; }
 
 @media (max-width: 768px) {
     #epc-share-screen,
