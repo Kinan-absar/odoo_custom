@@ -47,6 +47,7 @@
             this.iceServers = [{ urls: ["stun:stun.l.google.com:19302"] }];
             this.contacts = [];
             this.currentPeerName = "";
+            this.currentPeerAvatar = "";
             this.ringTimer = null;
             this.ringContext = null;
             this.ringGain = null;
@@ -59,6 +60,8 @@
             this.speakerEnabled = false;
             this.speakerSinkId = null;
             this.defaultSinkId = null;
+            this.pendingIceCandidates = new Map();
+            this.participants = [];
             this._buildUI();
             this._loadContacts();
             this._startPolling();
@@ -82,7 +85,7 @@
                     <div id="epc-contact-list"><div class="epc-empty">Loading…</div></div>
                 </div>
                 <div id="epc-incoming" class="epc-hidden">
-                    <div class="epc-call-avatar epc-incoming-avatar"><i class="fa fa-phone"></i></div>
+                    <div class="epc-call-avatar epc-incoming-avatar"><img id="epc-incoming-photo" class="epc-avatar-photo epc-hidden" alt=""/><span id="epc-incoming-fallback"><i class="fa fa-phone"></i></span></div>
                     <div class="epc-incoming-name"></div>
                     <div class="epc-incoming-sub">Incoming audio call</div>
                     <div class="epc-incoming-actions">
@@ -92,7 +95,7 @@
                 </div>
                 <div id="epc-active" class="epc-hidden epc-audio-call">
                     <div class="epc-active-stage">
-                        <div class="epc-call-avatar epc-active-avatar"><span id="epc-peer-initial">?</span></div>
+                        <div class="epc-call-avatar epc-active-avatar"><img id="epc-peer-photo" class="epc-avatar-photo epc-hidden" alt=""/><span id="epc-peer-initial">?</span></div>
                         <div class="epc-active-name">Employee</div>
                         <div class="epc-active-status">Connecting…</div>
                         <div class="epc-call-timer">00:00</div>
@@ -100,6 +103,11 @@
                     <div class="epc-video-stage epc-hidden">
                         <video id="epc-remote-video" autoplay playsinline></video>
                         <video id="epc-local-video" autoplay playsinline muted></video>
+                        <button id="epc-fullscreen" class="epc-fullscreen-btn" type="button" title="Full screen" aria-label="Full screen"><i class="fa fa-expand"></i></button>
+                    </div>
+                    <div class="epc-participants-wrap">
+                        <div class="epc-participants-title"><span>In meeting</span><span id="epc-participant-count">1</span></div>
+                        <div id="epc-participant-list" class="epc-participant-list"></div>
                     </div>
                     <div class="epc-active-actions">
                         <button id="epc-mute" class="epc-round-control" title="Mute"><i class="fa fa-microphone"></i><span>Mute</span></button>
@@ -154,6 +162,11 @@
                 ev.preventDefault();
                 ev.stopPropagation();
                 this._toggleScreenShare();
+            });
+            document.getElementById("epc-fullscreen").addEventListener("click", (ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                this._toggleFullscreen();
             });
             document.getElementById("epc-contact-search").addEventListener("input", () => this._renderContacts());
 
@@ -320,8 +333,10 @@
                 const identity = document.createElement("div");
                 identity.className = "epc-contact-identity";
                 const detail = [c.department, c.note, c.user_type].filter(Boolean).join(" · ");
-                identity.innerHTML = `<span class="epc-contact-name">${this._escape(c.name)}</span>` +
-                    `<span class="epc-contact-type">${this._escape(detail || "Employee")}</span>`;
+                const initial = (c.name || "?").trim().charAt(0).toUpperCase() || "?";
+                const avatar = c.avatar ? `<img class="epc-contact-avatar" src="${c.avatar}" alt=""/>` : `<span class="epc-contact-avatar epc-avatar-fallback">${this._escape(initial)}</span>`;
+                identity.innerHTML = avatar + `<span class="epc-contact-text"><span class="epc-contact-name">${this._escape(c.name)}</span>` +
+                    `<span class="epc-contact-type">${this._escape(detail || "Employee")}</span></span>`;
                 const callBtn = document.createElement("button");
                 callBtn.textContent = this.currentUuid && this._addingPeople ? "Add" : "Call";
                 callBtn.className = "epc-btn epc-btn-small";
@@ -431,12 +446,21 @@
             }
         }
 
-        _setPeerName(name) {
+        _setPeerName(name, avatar = "") {
             this.currentPeerName = name || "Employee";
+            if (avatar) this.currentPeerAvatar = avatar;
             const activeName = document.querySelector("#epc-active .epc-active-name");
             if (activeName) activeName.textContent = this.currentPeerName;
             const initial = document.getElementById("epc-peer-initial");
-            if (initial) initial.textContent = (this.currentPeerName.trim().charAt(0) || "?").toUpperCase();
+            const photo = document.getElementById("epc-peer-photo");
+            if (this.currentPeerAvatar && photo) {
+                photo.src = this.currentPeerAvatar;
+                photo.classList.remove("epc-hidden");
+                if (initial) initial.classList.add("epc-hidden");
+            } else {
+                if (photo) { photo.removeAttribute("src"); photo.classList.add("epc-hidden"); }
+                if (initial) { initial.classList.remove("epc-hidden"); initial.textContent = (this.currentPeerName.trim().charAt(0) || "?").toUpperCase(); }
+            }
         }
 
         _startCallTimer() {
@@ -488,7 +512,11 @@
                 this._incomingCallerId = Number(evt.payload.caller_id || 0);
                 const callerName = evt.payload.caller_name || "Unknown";
                 this.peerNames.set(this._incomingCallerId, callerName);
-                this._setPeerName(callerName);
+                this._setPeerName(callerName, evt.payload.caller_avatar || "");
+                const incomingPhoto = document.getElementById("epc-incoming-photo");
+                const incomingFallback = document.getElementById("epc-incoming-fallback");
+                if (evt.payload.caller_avatar && incomingPhoto) { incomingPhoto.src = evt.payload.caller_avatar; incomingPhoto.classList.remove("epc-hidden"); if (incomingFallback) incomingFallback.classList.add("epc-hidden"); }
+                else { if (incomingPhoto) incomingPhoto.classList.add("epc-hidden"); if (incomingFallback) incomingFallback.classList.remove("epc-hidden"); }
                 document.querySelector("#epc-incoming .epc-incoming-name").textContent = callerName;
                 document.querySelector("#epc-incoming .epc-incoming-sub").textContent = evt.payload.meeting ? "Meeting invitation" : (this.currentCallType === "video" ? "Incoming video call" : "Incoming audio call");
                 document.getElementById("epc-incoming").classList.remove("epc-hidden");
@@ -503,8 +531,10 @@
                 }
                 document.querySelector("#epc-active .epc-active-status").textContent = "Meeting connected";
                 this._startCallTimer();
+                await this._refreshParticipants();
             } else if (evt.event === "participant_left" && evt.uuid === this.currentUuid) {
                 this._removePeer(Number(evt.payload.user_id || 0));
+                await this._refreshParticipants();
             } else if (["rejected", "ended", "cancelled"].includes(evt.event) && evt.uuid === this.currentUuid) {
                 if (evt.event === "ended") this._teardown();
             }
@@ -526,7 +556,7 @@
                 this.currentUuid = res.uuid;
                 this._iAmCaller = true;
                 const contact = this.contacts.find((c) => Number(c.user_id) === Number(targetUserId));
-                this._setPeerName(contact ? contact.name : "Employee");
+                this._setPeerName(contact ? contact.name : "Employee", contact ? (contact.avatar || "") : "");
                 document.getElementById("epc-panel").classList.add("epc-hidden");
                 await this._prepareLocalMedia();
                 this._showActive("Calling…");
@@ -542,6 +572,7 @@
                 const c = this.contacts.find(x => Number(x.user_id) === Number(userId));
                 if (c) this.peerNames.set(Number(userId), c.name);
                 document.querySelector("#epc-active .epc-active-status").textContent = `Invited ${c ? c.name : "employee"}…`;
+                await this._refreshParticipants();
             }
             this._closeContactPanel();
         }
@@ -556,6 +587,7 @@
             this._showActive("Joining meeting…");
             this._startCallTimer();
             await rpc("/employee_portal/call/accept", { uuid: this.currentUuid });
+            await this._refreshParticipants();
         }
 
         async _rejectIncoming() {
@@ -673,6 +705,18 @@
                 if (!this.screenTrack) return;
 
                 const shareTrack = this.screenTrack;
+
+                // Show the shared display to the person who is sharing as well.
+                // The main stage is muted locally so the preview can never echo audio.
+                const localSharePreview = document.getElementById("epc-remote-video");
+                const localShareStage = document.querySelector("#epc-active .epc-video-stage");
+                if (localSharePreview) {
+                    localSharePreview.muted = true;
+                    localSharePreview.srcObject = this.screenStream;
+                    try { await localSharePreview.play(); } catch (e) { /* autoplay can be browser-controlled */ }
+                }
+                if (localShareStage) localShareStage.classList.remove("epc-hidden");
+
                 const renegotiate = [];
                 for (const [peerId, pc] of this.peerConnections.entries()) {
                     const videoSender = pc.getSenders().find((sender) => sender.track && sender.track.kind === "video");
@@ -741,6 +785,31 @@
             this.screenStream = null;
             this._cameraTrackBeforeShare = null;
 
+            // Clear the sharer's own preview immediately. Without this, the video
+            // element keeps rendering the final captured frame after the display
+            // track has ended.
+            const localSharePreview = document.getElementById("epc-remote-video");
+            const localShareStage = document.querySelector("#epc-active .epc-video-stage");
+            if (localSharePreview && localSharePreview.srcObject) {
+                try { localSharePreview.pause(); } catch (e) { /* no-op */ }
+                localSharePreview.srcObject = null;
+                localSharePreview.muted = false;
+                try { localSharePreview.removeAttribute("src"); localSharePreview.load(); } catch (e) { /* no-op */ }
+            }
+            if (this.currentCallType !== "video" && localShareStage) localShareStage.classList.add("epc-hidden");
+
+            // Explicitly notify all peers that screen sharing ended. Removing a
+            // WebRTC sender/renegotiating does not consistently fire `ended` on
+            // every browser, which is why remote clients could retain a frozen
+            // final frame.
+            try {
+                await rpc("/employee_portal/call/signal", {
+                    uuid: this.currentUuid,
+                    signal_type: "screen_stopped",
+                    data: {},
+                });
+            } catch (e) { /* best effort; SDP renegotiation still follows */ }
+
             for (const peerId of renegotiate) {
                 await this._renegotiatePeer(peerId);
             }
@@ -779,6 +848,7 @@
             if (audioStage) audioStage.classList.toggle("epc-video-name-overlay", this.currentCallType === "video");
             this._setPeerName(this.currentPeerName);
             document.querySelector("#epc-active .epc-active-status").textContent = status;
+            this._refreshParticipants().catch(() => {});
         }
 
         _teardown() {
@@ -807,6 +877,16 @@
                 const speakerLabel = speakerBtn.querySelector("span");
                 if (speakerLabel) speakerLabel.textContent = "Speaker";
             }
+            const remoteVideo = document.getElementById("epc-remote-video");
+            const videoStage = document.querySelector("#epc-active .epc-video-stage");
+            if (remoteVideo) {
+                try { remoteVideo.pause(); } catch (e) { /* no-op */ }
+                remoteVideo.srcObject = null;
+                remoteVideo.muted = false;
+                try { remoteVideo.removeAttribute("src"); remoteVideo.load(); } catch (e) { /* no-op */ }
+            }
+            if (videoStage) videoStage.classList.add("epc-hidden");
+
             const shareBtn = document.getElementById("epc-share-screen");
             if (shareBtn) {
                 shareBtn.classList.remove("epc-control-active");
@@ -818,14 +898,85 @@
                 this.localStream.getTracks().forEach((t) => t.stop());
                 this.localStream = null;
             }
-            const remoteVideo = document.getElementById("epc-remote-video");
             const localVideo = document.getElementById("epc-local-video");
-            if (remoteVideo) remoteVideo.srcObject = null;
             if (localVideo) localVideo.srcObject = null;
             document.getElementById("epc-active").classList.add("epc-hidden");
             document.getElementById("epc-incoming").classList.add("epc-hidden");
             this.currentUuid = null;
             this.currentPeerName = "";
+            this.currentPeerAvatar = "";
+            this.pendingIceCandidates = new Map();
+            this.participants = [];
+            this._renderParticipants();
+        }
+
+        async _refreshParticipants() {
+            if (!this.currentUuid) return;
+            try {
+                const res = await rpc("/employee_portal/call/participants", { uuid: this.currentUuid });
+                if (res && Array.isArray(res.participants)) {
+                    this.participants = res.participants;
+                    res.participants.forEach((p) => {
+                        if (!p.is_self && p.user_id && p.name) this.peerNames.set(Number(p.user_id), p.name);
+                    });
+                    this._renderParticipants();
+                }
+            } catch (e) {
+                console.warn("[EPC] Could not refresh participants", e);
+            }
+        }
+
+        _renderParticipants() {
+            const list = document.getElementById("epc-participant-list");
+            const count = document.getElementById("epc-participant-count");
+            if (!list || !count) return;
+            const active = (this.participants || []).filter((p) => p.active);
+            count.textContent = String(active.length || (this.currentUuid ? 1 : 0));
+            list.innerHTML = "";
+            active.forEach((p) => {
+                const row = document.createElement("div");
+                row.className = "epc-participant-chip";
+                const initial = (p.name || "?").trim().charAt(0).toUpperCase() || "?";
+                const avatar = p.avatar ? `<img class="epc-participant-avatar epc-participant-photo" src="${p.avatar}" alt=""/>` : `<span class="epc-participant-avatar">${this._escape(initial)}</span>`;
+                row.innerHTML = `${avatar}<span class="epc-participant-name"></span>${p.is_self ? '<span class="epc-you-badge">You</span>' : ''}`;
+                row.querySelector(".epc-participant-name").textContent = p.name || "Employee";
+                list.appendChild(row);
+            });
+            if (!active.length && this.currentUuid) {
+                list.innerHTML = '<div class="epc-participant-chip"><span class="epc-participant-avatar">Y</span><span class="epc-participant-name">You</span></div>';
+            }
+        }
+
+        async _toggleFullscreen() {
+            const stage = document.querySelector("#epc-active .epc-video-stage");
+            if (!stage || stage.classList.contains("epc-hidden")) return;
+            try {
+                if (document.fullscreenElement || document.webkitFullscreenElement) {
+                    if (document.exitFullscreen) await document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                    return;
+                }
+                if (stage.requestFullscreen) await stage.requestFullscreen();
+                else if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
+            } catch (e) {
+                console.warn("[EPC] Fullscreen was not available", e);
+            }
+        }
+
+        _queueIceCandidate(peerId, candidate) {
+            peerId = Number(peerId);
+            if (!this.pendingIceCandidates.has(peerId)) this.pendingIceCandidates.set(peerId, []);
+            this.pendingIceCandidates.get(peerId).push(candidate);
+        }
+
+        async _flushIceCandidates(peerId, pc) {
+            peerId = Number(peerId);
+            const queued = this.pendingIceCandidates.get(peerId) || [];
+            if (!queued.length || !pc.remoteDescription) return;
+            this.pendingIceCandidates.delete(peerId);
+            for (const candidate of queued) {
+                try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) { console.warn("[EPC] ICE candidate rejected", e); }
+            }
         }
 
         // ------------------------------------------------------------
@@ -909,18 +1060,43 @@
             const pc = await this._createPeerConnection(peerId);
             if (signal_type === "offer") {
                 await pc.setRemoteDescription(new RTCSessionDescription(data));
-                const answer = await pc.createAnswer(); await pc.setLocalDescription(answer);
+                await this._flushIceCandidates(peerId, pc);
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
                 await rpc("/employee_portal/call/signal", {uuid:this.currentUuid, signal_type:"answer", data:{type:answer.type, sdp:answer.sdp, _target_user_id:peerId}});
             } else if (signal_type === "answer") {
                 await pc.setRemoteDescription(new RTCSessionDescription(data));
+                await this._flushIceCandidates(peerId, pc);
             } else if (signal_type === "ice") {
-                try { await pc.addIceCandidate(new RTCIceCandidate(data)); } catch (e) {}
+                if (!pc.remoteDescription || !pc.remoteDescription.type) {
+                    this._queueIceCandidate(peerId, data);
+                } else {
+                    try { await pc.addIceCandidate(new RTCIceCandidate(data)); } catch (e) {
+                        this._queueIceCandidate(peerId, data);
+                    }
+                }
+            } else if (signal_type === "screen_stopped") {
+                // Browsers do not all emit a remote track `ended` event when a
+                // sender removes a screen track. Clear the stage explicitly so a
+                // stale screenshot cannot remain visible after sharing stops.
+                if (this.currentCallType !== "video") {
+                    const remoteVideo = document.getElementById("epc-remote-video");
+                    const stage = document.querySelector("#epc-active .epc-video-stage");
+                    if (remoteVideo) {
+                        try { remoteVideo.pause(); } catch (e) { /* no-op */ }
+                        remoteVideo.srcObject = null;
+                        remoteVideo.muted = false;
+                        try { remoteVideo.removeAttribute("src"); remoteVideo.load(); } catch (e) { /* no-op */ }
+                    }
+                    if (stage) stage.classList.add("epc-hidden");
+                }
             }
         }
 
         _removePeer(peerId) {
             const pc = this.peerConnections.get(peerId); if (pc) pc.close();
             this.peerConnections.delete(peerId);
+            this.pendingIceCandidates.delete(Number(peerId));
             const audio = document.getElementById(`epc-remote-${peerId}`); if (audio) audio.remove();
             const status = document.querySelector("#epc-active .epc-active-status");
             if (status && this.currentUuid) status.textContent = `${this.peerConnections.size + 1} people in meeting`;
