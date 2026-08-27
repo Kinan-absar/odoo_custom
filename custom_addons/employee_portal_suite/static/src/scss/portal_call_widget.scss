@@ -685,3 +685,40 @@
     .epc-participant-list { max-width: 100%; }
     .epc-fullscreen-btn { width: 36px; height: 36px; }
 }
+
+/* Employee profile pictures in calling UI */
+.epc-call-avatar img,
+.epc-contact-avatar img,
+.epc-participant-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+}
+.epc-contact-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+.epc-contact-avatar {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #E0E7FF;
+    color: #4338CA;
+    font-weight: 700;
+}
+.epc-contact-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+.epc-call-avatar { overflow: hidden; }
+.epc-participant-avatar { overflow: hidden; }

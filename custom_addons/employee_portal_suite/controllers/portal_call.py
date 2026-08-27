@@ -73,6 +73,7 @@ class PortalCallController(http.Controller):
                 'user_type': 'Portal Employee' if is_portal else 'Internal Employee',
                 'department': employee.department_id.name or '',
                 'note': employee.job_title or '',
+                'avatar_url': f'/web/image/res.users/{contact.id}/avatar_128',
             })
         return result
 
@@ -99,6 +100,7 @@ class PortalCallController(http.Controller):
             'caller_id': user.id,
             'caller_name': user.name,
             'call_type': session.call_type,
+            'avatar_url': f'/web/image/res.users/{user.id}/avatar_128',
         })
         return {'uuid': session.uuid}
 
@@ -159,6 +161,7 @@ class PortalCallController(http.Controller):
             session.write({'participant_ids': [(4, target.id)]})
             self._queue_signal(session, target, 'incoming', {
                 'caller_id': inviter.id, 'caller_name': inviter.name, 'call_type': session.call_type, 'meeting': True,
+                'avatar_url': f'/web/image/res.users/{inviter.id}/avatar_128',
             })
             added.append(target.id)
         return {'ok': True, 'added': added}
@@ -178,6 +181,7 @@ class PortalCallController(http.Controller):
                 'name': user.name or 'Employee',
                 'active': user.id in active_ids,
                 'is_self': user.id == current.id,
+                'avatar_url': f'/web/image/res.users/{user.id}/avatar_128',
             })
         return {'participants': participants}
 
