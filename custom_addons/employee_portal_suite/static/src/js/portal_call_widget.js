@@ -689,6 +689,18 @@
                 if (!this.screenTrack) return;
 
                 const shareTrack = this.screenTrack;
+
+                // Show the shared display to the person who is sharing as well.
+                // The main stage is muted locally so the preview can never echo audio.
+                const localSharePreview = document.getElementById("epc-remote-video");
+                const localShareStage = document.querySelector("#epc-active .epc-video-stage");
+                if (localSharePreview) {
+                    localSharePreview.muted = true;
+                    localSharePreview.srcObject = this.screenStream;
+                    try { await localSharePreview.play(); } catch (e) { /* autoplay can be browser-controlled */ }
+                }
+                if (localShareStage) localShareStage.classList.remove("epc-hidden");
+
                 const renegotiate = [];
                 for (const [peerId, pc] of this.peerConnections.entries()) {
                     const videoSender = pc.getSenders().find((sender) => sender.track && sender.track.kind === "video");
@@ -757,6 +769,31 @@
             this.screenStream = null;
             this._cameraTrackBeforeShare = null;
 
+            // Clear the sharer's own preview immediately. Without this, the video
+            // element keeps rendering the final captured frame after the display
+            // track has ended.
+            const localSharePreview = document.getElementById("epc-remote-video");
+            const localShareStage = document.querySelector("#epc-active .epc-video-stage");
+            if (localSharePreview && localSharePreview.srcObject) {
+                try { localSharePreview.pause(); } catch (e) { /* no-op */ }
+                localSharePreview.srcObject = null;
+                localSharePreview.muted = false;
+                try { localSharePreview.removeAttribute("src"); localSharePreview.load(); } catch (e) { /* no-op */ }
+            }
+            if (this.currentCallType !== "video" && localShareStage) localShareStage.classList.add("epc-hidden");
+
+            // Explicitly notify all peers that screen sharing ended. Removing a
+            // WebRTC sender/renegotiating does not consistently fire `ended` on
+            // every browser, which is why remote clients could retain a frozen
+            // final frame.
+            try {
+                await rpc("/employee_portal/call/signal", {
+                    uuid: this.currentUuid,
+                    signal_type: "screen_stopped",
+                    data: {},
+                });
+            } catch (e) { /* best effort; SDP renegotiation still follows */ }
+
             for (const peerId of renegotiate) {
                 await this._renegotiatePeer(peerId);
             }
@@ -824,6 +861,16 @@
                 const speakerLabel = speakerBtn.querySelector("span");
                 if (speakerLabel) speakerLabel.textContent = "Speaker";
             }
+            const remoteVideo = document.getElementById("epc-remote-video");
+            const videoStage = document.querySelector("#epc-active .epc-video-stage");
+            if (remoteVideo) {
+                try { remoteVideo.pause(); } catch (e) { /* no-op */ }
+                remoteVideo.srcObject = null;
+                remoteVideo.muted = false;
+                try { remoteVideo.removeAttribute("src"); remoteVideo.load(); } catch (e) { /* no-op */ }
+            }
+            if (videoStage) videoStage.classList.add("epc-hidden");
+
             const shareBtn = document.getElementById("epc-share-screen");
             if (shareBtn) {
                 shareBtn.classList.remove("epc-control-active");
@@ -835,9 +882,7 @@
                 this.localStream.getTracks().forEach((t) => t.stop());
                 this.localStream = null;
             }
-            const remoteVideo = document.getElementById("epc-remote-video");
             const localVideo = document.getElementById("epc-local-video");
-            if (remoteVideo) remoteVideo.srcObject = null;
             if (localVideo) localVideo.srcObject = null;
             document.getElementById("epc-active").classList.add("epc-hidden");
             document.getElementById("epc-incoming").classList.add("epc-hidden");
@@ -1011,6 +1056,21 @@
                     try { await pc.addIceCandidate(new RTCIceCandidate(data)); } catch (e) {
                         this._queueIceCandidate(peerId, data);
                     }
+                }
+            } else if (signal_type === "screen_stopped") {
+                // Browsers do not all emit a remote track `ended` event when a
+                // sender removes a screen track. Clear the stage explicitly so a
+                // stale screenshot cannot remain visible after sharing stops.
+                if (this.currentCallType !== "video") {
+                    const remoteVideo = document.getElementById("epc-remote-video");
+                    const stage = document.querySelector("#epc-active .epc-video-stage");
+                    if (remoteVideo) {
+                        try { remoteVideo.pause(); } catch (e) { /* no-op */ }
+                        remoteVideo.srcObject = null;
+                        remoteVideo.muted = false;
+                        try { remoteVideo.removeAttribute("src"); remoteVideo.load(); } catch (e) { /* no-op */ }
+                    }
+                    if (stage) stage.classList.add("epc-hidden");
                 }
             }
         }
