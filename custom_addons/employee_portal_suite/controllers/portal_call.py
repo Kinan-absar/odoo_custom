@@ -2,7 +2,6 @@ import json
 import logging
 
 from odoo import fields, http
-from odoo.tools import image_data_uri
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
@@ -43,17 +42,6 @@ class PortalCallController(http.Controller):
             ('user_id', '=', user.id),
         ]))
 
-    def _employee_avatar(self, user):
-        """Return the linked employee's small profile photo as a data URI."""
-        employee = request.env['hr.employee'].sudo().search([
-            ('active', '=', True), ('user_id', '=', user.id),
-        ], limit=1)
-        if employee and employee.image_128:
-            return image_data_uri(employee.image_128)
-        if getattr(user, 'avatar_128', False):
-            return image_data_uri(user.avatar_128)
-        return ''
-
     # ------------------------------------------------------------------
     # Directory
     # ------------------------------------------------------------------
@@ -85,7 +73,6 @@ class PortalCallController(http.Controller):
                 'user_type': 'Portal Employee' if is_portal else 'Internal Employee',
                 'department': employee.department_id.name or '',
                 'note': employee.job_title or '',
-                'avatar': image_data_uri(employee.image_128) if employee.image_128 else (image_data_uri(contact.avatar_128) if contact.avatar_128 else ''),
             })
         return result
 
@@ -111,7 +98,6 @@ class PortalCallController(http.Controller):
         self._queue_signal(session, target, 'incoming', {
             'caller_id': user.id,
             'caller_name': user.name,
-            'caller_avatar': self._employee_avatar(user),
             'call_type': session.call_type,
         })
         return {'uuid': session.uuid}
@@ -172,7 +158,7 @@ class PortalCallController(http.Controller):
                 continue
             session.write({'participant_ids': [(4, target.id)]})
             self._queue_signal(session, target, 'incoming', {
-                'caller_id': inviter.id, 'caller_name': inviter.name, 'caller_avatar': self._employee_avatar(inviter), 'call_type': session.call_type, 'meeting': True,
+                'caller_id': inviter.id, 'caller_name': inviter.name, 'call_type': session.call_type, 'meeting': True,
             })
             added.append(target.id)
         return {'ok': True, 'added': added}
@@ -192,7 +178,6 @@ class PortalCallController(http.Controller):
                 'name': user.name or 'Employee',
                 'active': user.id in active_ids,
                 'is_self': user.id == current.id,
-                'avatar': self._employee_avatar(user),
             })
         return {'participants': participants}
 
