@@ -59,6 +59,8 @@
             this.speakerEnabled = false;
             this.speakerSinkId = null;
             this.defaultSinkId = null;
+            this.pendingIceCandidates = new Map();
+            this.participants = [];
             this._buildUI();
             this._loadContacts();
             this._startPolling();
@@ -100,6 +102,11 @@
                     <div class="epc-video-stage epc-hidden">
                         <video id="epc-remote-video" autoplay playsinline></video>
                         <video id="epc-local-video" autoplay playsinline muted></video>
+                        <button id="epc-fullscreen" class="epc-fullscreen-btn" type="button" title="Full screen" aria-label="Full screen"><i class="fa fa-expand"></i></button>
+                    </div>
+                    <div class="epc-participants-wrap">
+                        <div class="epc-participants-title"><span>In meeting</span><span id="epc-participant-count">1</span></div>
+                        <div id="epc-participant-list" class="epc-participant-list"></div>
                     </div>
                     <div class="epc-active-actions">
                         <button id="epc-mute" class="epc-round-control" title="Mute"><i class="fa fa-microphone"></i><span>Mute</span></button>
@@ -154,6 +161,11 @@
                 ev.preventDefault();
                 ev.stopPropagation();
                 this._toggleScreenShare();
+            });
+            document.getElementById("epc-fullscreen").addEventListener("click", (ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                this._toggleFullscreen();
             });
             document.getElementById("epc-contact-search").addEventListener("input", () => this._renderContacts());
 
@@ -503,8 +515,10 @@
                 }
                 document.querySelector("#epc-active .epc-active-status").textContent = "Meeting connected";
                 this._startCallTimer();
+                await this._refreshParticipants();
             } else if (evt.event === "participant_left" && evt.uuid === this.currentUuid) {
                 this._removePeer(Number(evt.payload.user_id || 0));
+                await this._refreshParticipants();
             } else if (["rejected", "ended", "cancelled"].includes(evt.event) && evt.uuid === this.currentUuid) {
                 if (evt.event === "ended") this._teardown();
             }
@@ -542,6 +556,7 @@
                 const c = this.contacts.find(x => Number(x.user_id) === Number(userId));
                 if (c) this.peerNames.set(Number(userId), c.name);
                 document.querySelector("#epc-active .epc-active-status").textContent = `Invited ${c ? c.name : "employee"}…`;
+                await this._refreshParticipants();
             }
             this._closeContactPanel();
         }
@@ -556,6 +571,7 @@
             this._showActive("Joining meeting…");
             this._startCallTimer();
             await rpc("/employee_portal/call/accept", { uuid: this.currentUuid });
+            await this._refreshParticipants();
         }
 
         async _rejectIncoming() {
@@ -779,6 +795,7 @@
             if (audioStage) audioStage.classList.toggle("epc-video-name-overlay", this.currentCallType === "video");
             this._setPeerName(this.currentPeerName);
             document.querySelector("#epc-active .epc-active-status").textContent = status;
+            this._refreshParticipants().catch(() => {});
         }
 
         _teardown() {
@@ -826,6 +843,77 @@
             document.getElementById("epc-incoming").classList.add("epc-hidden");
             this.currentUuid = null;
             this.currentPeerName = "";
+            this.pendingIceCandidates = new Map();
+            this.participants = [];
+            this._renderParticipants();
+        }
+
+        async _refreshParticipants() {
+            if (!this.currentUuid) return;
+            try {
+                const res = await rpc("/employee_portal/call/participants", { uuid: this.currentUuid });
+                if (res && Array.isArray(res.participants)) {
+                    this.participants = res.participants;
+                    res.participants.forEach((p) => {
+                        if (!p.is_self && p.user_id && p.name) this.peerNames.set(Number(p.user_id), p.name);
+                    });
+                    this._renderParticipants();
+                }
+            } catch (e) {
+                console.warn("[EPC] Could not refresh participants", e);
+            }
+        }
+
+        _renderParticipants() {
+            const list = document.getElementById("epc-participant-list");
+            const count = document.getElementById("epc-participant-count");
+            if (!list || !count) return;
+            const active = (this.participants || []).filter((p) => p.active);
+            count.textContent = String(active.length || (this.currentUuid ? 1 : 0));
+            list.innerHTML = "";
+            active.forEach((p) => {
+                const row = document.createElement("div");
+                row.className = "epc-participant-chip";
+                const initial = (p.name || "?").trim().charAt(0).toUpperCase() || "?";
+                row.innerHTML = `<span class="epc-participant-avatar">${initial}</span><span class="epc-participant-name"></span>${p.is_self ? '<span class="epc-you-badge">You</span>' : ''}`;
+                row.querySelector(".epc-participant-name").textContent = p.name || "Employee";
+                list.appendChild(row);
+            });
+            if (!active.length && this.currentUuid) {
+                list.innerHTML = '<div class="epc-participant-chip"><span class="epc-participant-avatar">Y</span><span class="epc-participant-name">You</span></div>';
+            }
+        }
+
+        async _toggleFullscreen() {
+            const stage = document.querySelector("#epc-active .epc-video-stage");
+            if (!stage || stage.classList.contains("epc-hidden")) return;
+            try {
+                if (document.fullscreenElement || document.webkitFullscreenElement) {
+                    if (document.exitFullscreen) await document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                    return;
+                }
+                if (stage.requestFullscreen) await stage.requestFullscreen();
+                else if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
+            } catch (e) {
+                console.warn("[EPC] Fullscreen was not available", e);
+            }
+        }
+
+        _queueIceCandidate(peerId, candidate) {
+            peerId = Number(peerId);
+            if (!this.pendingIceCandidates.has(peerId)) this.pendingIceCandidates.set(peerId, []);
+            this.pendingIceCandidates.get(peerId).push(candidate);
+        }
+
+        async _flushIceCandidates(peerId, pc) {
+            peerId = Number(peerId);
+            const queued = this.pendingIceCandidates.get(peerId) || [];
+            if (!queued.length || !pc.remoteDescription) return;
+            this.pendingIceCandidates.delete(peerId);
+            for (const candidate of queued) {
+                try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) { console.warn("[EPC] ICE candidate rejected", e); }
+            }
         }
 
         // ------------------------------------------------------------
@@ -909,18 +997,28 @@
             const pc = await this._createPeerConnection(peerId);
             if (signal_type === "offer") {
                 await pc.setRemoteDescription(new RTCSessionDescription(data));
-                const answer = await pc.createAnswer(); await pc.setLocalDescription(answer);
+                await this._flushIceCandidates(peerId, pc);
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
                 await rpc("/employee_portal/call/signal", {uuid:this.currentUuid, signal_type:"answer", data:{type:answer.type, sdp:answer.sdp, _target_user_id:peerId}});
             } else if (signal_type === "answer") {
                 await pc.setRemoteDescription(new RTCSessionDescription(data));
+                await this._flushIceCandidates(peerId, pc);
             } else if (signal_type === "ice") {
-                try { await pc.addIceCandidate(new RTCIceCandidate(data)); } catch (e) {}
+                if (!pc.remoteDescription || !pc.remoteDescription.type) {
+                    this._queueIceCandidate(peerId, data);
+                } else {
+                    try { await pc.addIceCandidate(new RTCIceCandidate(data)); } catch (e) {
+                        this._queueIceCandidate(peerId, data);
+                    }
+                }
             }
         }
 
         _removePeer(peerId) {
             const pc = this.peerConnections.get(peerId); if (pc) pc.close();
             this.peerConnections.delete(peerId);
+            this.pendingIceCandidates.delete(Number(peerId));
             const audio = document.getElementById(`epc-remote-${peerId}`); if (audio) audio.remove();
             const status = document.querySelector("#epc-active .epc-active-status");
             if (status && this.currentUuid) status.textContent = `${this.peerConnections.size + 1} people in meeting`;

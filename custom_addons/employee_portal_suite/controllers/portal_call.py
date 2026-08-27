@@ -163,6 +163,24 @@ class PortalCallController(http.Controller):
             added.append(target.id)
         return {'ok': True, 'added': added}
 
+
+    @http.route('/employee_portal/call/participants', type='json', auth='user', csrf=False)
+    def call_participants(self, uuid):
+        session = self._get_session(uuid)
+        if not session or session.state not in ('ringing', 'ongoing'):
+            return {'error': 'invalid_session', 'participants': []}
+        current = self._user()
+        active_ids = set(session.active_participant_ids.ids)
+        participants = []
+        for user in session.participant_ids.sorted(key=lambda u: (u.name or '').lower()):
+            participants.append({
+                'user_id': user.id,
+                'name': user.name or 'Employee',
+                'active': user.id in active_ids,
+                'is_self': user.id == current.id,
+            })
+        return {'participants': participants}
+
     @http.route('/employee_portal/call/signal', type='json', auth='user', csrf=False)
     def call_signal(self, uuid, signal_type, data):
         session = self._get_session(uuid)
