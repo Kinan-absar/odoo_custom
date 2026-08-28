@@ -101,29 +101,62 @@ class PortalCallController(http.Controller):
     # ------------------------------------------------------------------
     # Call lifecycle
     # ------------------------------------------------------------------
-    @http.route('/employee_portal/call/start', type='json', auth='user', csrf=False)
-    def call_start(self, target_user_id, call_type='audio'):
-        user = self._user()
-        target = request.env['res.users'].sudo().browse(int(target_user_id)).exists()
-        if not target or target.id == user.id:
-            return {'error': 'invalid_target'}
-        if not self._is_callable_user(target):
-            return {'error': 'not_callable'}
+    def _notify_telegram_incoming(self, target, caller, is_group=False):
+        """Best-effort Telegram alert using the portal's existing bot integration."""
+        try:
+            title = 'Incoming Odoo Group Call' if is_group else 'Incoming Odoo Call'
+            body = '%s invited you to a group call.' % caller.name if is_group else '%s is calling you.' % caller.name
+            request.env['employee.portal.telegram.service'].sudo().send_to_user(
+                target, title, body + ' Open Odoo to answer.', path='/my/employee'
+            )
+        except Exception:
+            _logger.exception('Could not send Telegram incoming-call notification to user %s', target.id)
 
+    @http.route('/employee_portal/call/start', type='json', auth='user', csrf=False)
+    def call_start(self, target_user_id=None, target_user_ids=None, call_type='audio'):
+        user = self._user()
+        raw_ids = list(target_user_ids or [])
+        if target_user_id:
+            raw_ids.append(target_user_id)
+
+        target_ids = []
+        for raw_id in raw_ids:
+            try:
+                uid = int(raw_id)
+            except (TypeError, ValueError):
+                continue
+            if uid and uid != user.id and uid not in target_ids:
+                target_ids.append(uid)
+
+        targets = []
+        for uid in target_ids:
+            target = request.env['res.users'].sudo().browse(uid).exists()
+            if target and self._is_callable_user(target):
+                targets.append(target)
+        if not targets:
+            return {'error': 'invalid_target'}
+
+        is_group = len(targets) > 1
+        participant_ids = [user.id] + [target.id for target in targets]
         session = request.env['portal.call.session'].sudo().create({
             'caller_id': user.id,
-            'callee_id': target.id,
+            # callee_id is retained for backward compatibility with the model;
+            # participant_ids is the authoritative membership for meetings.
+            'callee_id': targets[0].id,
             'call_type': call_type if call_type in ('audio', 'video') else 'audio',
-            'participant_ids': [(6, 0, [user.id, target.id])],
+            'participant_ids': [(6, 0, participant_ids)],
             'active_participant_ids': [(6, 0, [user.id])],
         })
-        self._queue_signal(session, target, 'incoming', {
-            'caller_id': user.id,
-            'caller_name': user.name,
-            'caller_avatar_url': '/employee_portal/call/avatar/%s' % user.id,
-            'call_type': session.call_type,
-        })
-        return {'uuid': session.uuid}
+        for target in targets:
+            self._queue_signal(session, target, 'incoming', {
+                'caller_id': user.id,
+                'caller_name': user.name,
+                'caller_avatar_url': '/employee_portal/call/avatar/%s' % user.id,
+                'call_type': session.call_type,
+                'meeting': is_group,
+            })
+            self._notify_telegram_incoming(target, user, is_group=is_group)
+        return {'uuid': session.uuid, 'invited': [target.id for target in targets], 'meeting': is_group}
 
     @http.route('/employee_portal/call/accept', type='json', auth='user', csrf=False)
     def call_accept(self, uuid):
@@ -142,10 +175,20 @@ class PortalCallController(http.Controller):
         if not session or session.state not in ('ringing', 'ongoing'):
             return {'error': 'invalid_session'}
         user = self._user()
-        if session.state == 'ongoing':
-            session.write({'active_participant_ids': [(3, user.id)]})
+        is_group = len(session.participant_ids) > 2
+        if session.state == 'ongoing' or is_group:
+            # In a meeting, one invitee declining/leaving must never terminate
+            # the session for everyone else. Remove only that participant.
+            session.write({
+                'active_participant_ids': [(3, user.id)],
+                'participant_ids': [(3, user.id)],
+            })
             for other in session.active_participant_ids:
-                self._queue_signal(session, other, 'participant_left', {'user_id': user.id, 'user_name': user.name})
+                self._queue_signal(session, other, 'participant_left', {
+                    'user_id': user.id, 'user_name': user.name, 'declined': session.state == 'ringing'
+                })
+            if len(session.participant_ids) < 2:
+                session.write({'state': 'ended' if session.answered_date else 'missed', 'end_date': fields.Datetime.now()})
         else:
             session.write({'state': 'rejected', 'end_date': fields.Datetime.now()})
             other = session._other_party(user)
@@ -183,6 +226,7 @@ class PortalCallController(http.Controller):
             self._queue_signal(session, target, 'incoming', {
                 'caller_id': inviter.id, 'caller_name': inviter.name, 'caller_avatar_url': '/employee_portal/call/avatar/%s' % inviter.id, 'call_type': session.call_type, 'meeting': True,
             })
+            self._notify_telegram_incoming(target, inviter, is_group=True)
             added.append(target.id)
         return {'ok': True, 'added': added}
 

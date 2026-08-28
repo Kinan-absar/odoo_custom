@@ -797,3 +797,18 @@
         font-size: 15px;
     }
 }
+
+
+/* v17.6 - pre-call group selection */
+.epc-call-mode-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-bottom:1px solid #eef0f4;background:#fafbfc}
+.epc-group-mode-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid #d8dce5;background:#fff;color:#4b5563;border-radius:9px;padding:6px 9px;font-size:12px;font-weight:650;cursor:pointer}
+.epc-group-mode-btn:hover,.epc-group-mode-btn.epc-control-active{border-color:#714b67;color:#714b67;background:#f8f3f7}
+.epc-group-actions{display:flex;align-items:center;gap:8px;font-size:11px;color:#6b7280}
+.epc-group-actions .epc-btn{height:28px;min-width:auto;padding:4px 9px}
+.epc-group-actions .epc-btn:disabled{opacity:.45;cursor:not-allowed}
+.epc-group-call-mode .epc-contact-row{cursor:pointer}
+.epc-group-call-mode .epc-contact-row.epc-contact-selected{background:#f5eef4}
+.epc-group-select-btn{min-width:30px!important;width:30px!important;height:28px!important;padding:0!important;border-radius:50%!important}
+.epc-group-select-btn.epc-selected{background:#714b67!important;border-color:#714b67!important;color:#fff!important}
+#epc-panel.epc-meeting-picker .epc-call-mode-bar{display:none}
+@media(max-width:768px){.epc-call-mode-bar{padding:6px 8px}.epc-group-mode-btn{padding:5px 8px}.epc-group-actions{gap:6px}.epc-group-actions #epc-group-count{display:none}}
