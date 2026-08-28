@@ -401,8 +401,14 @@
                     callBtn.title = selected ? "Remove from group call" : "Add to group call";
                     callBtn.className = "epc-btn epc-btn-small epc-contact-call-btn epc-group-select-btn" + (selected ? " epc-selected" : "");
                     row.classList.toggle("epc-contact-selected", selected);
-                    callBtn.addEventListener("click", () => this._toggleGroupSelection(c.user_id));
+                    callBtn.addEventListener("click", (ev) => {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        this._toggleGroupSelection(c.user_id);
+                    });
                     row.addEventListener("click", (ev) => {
+                        ev.preventDefault();
+                        ev.stopPropagation();
                         if (!ev.target.closest("button")) this._toggleGroupSelection(c.user_id);
                     });
                 } else {
