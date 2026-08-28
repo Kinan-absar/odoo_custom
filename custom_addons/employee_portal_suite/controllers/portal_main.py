@@ -184,20 +184,83 @@ class EmployeePortalMain(CustomerPortal):
         employee = user.employee_id.sudo()
         if not employee:
             return request.redirect('/my/employee')
+
         saved = False
         if request.httprequest.method == 'POST':
             vals = {}
-            partner_vals = {}
-            for field_name in ('work_phone', 'mobile_phone', 'work_email'):
+
+            # Work email/login is intentionally NOT writable from the portal.
+            # It is the employee's account identity and must remain admin-controlled.
+            for field_name in ('work_phone', 'mobile_phone'):
                 if field_name in employee._fields:
                     vals[field_name] = (post.get(field_name) or '').strip()
-            partner_vals['phone'] = (post.get('work_phone') or '').strip()
-            partner_vals['mobile'] = (post.get('mobile_phone') or '').strip()
-            partner_vals['email'] = (post.get('work_email') or '').strip()
+
+            # Employee-maintained private/contact information. Only write fields
+            # that actually exist in this Odoo database so localization/custom
+            # HR fields do not make the portal brittle.
+            char_fields = (
+                'private_street', 'private_street2', 'private_city', 'private_zip',
+                'private_email', 'private_phone', 'private_car_plate',
+                'emergency_contact', 'emergency_phone', 'spouse_complete_name',
+                'identification_id', 'ssnid', 'passport_id', 'place_of_birth',
+                'study_field', 'study_school', 'visa_no', 'permit_no',
+                'iqama_no', 'iqama_number',
+            )
+            date_fields = (
+                'spouse_birthdate', 'birthday', 'visa_expire',
+                'work_permit_expiration_date', 'iqama_expiration_date',
+            )
+            integer_fields = ('children', 'km_home_work')
+            many2one_fields = ('private_country_id', 'private_state_id', 'country_id', 'country_of_birth')
+            selection_fields = ('marital', 'gender', 'certificate')
+
+            for field_name in char_fields + date_fields:
+                if field_name in employee._fields and field_name in post:
+                    vals[field_name] = (post.get(field_name) or '').strip() or False
+
+            for field_name in integer_fields:
+                if field_name in employee._fields and field_name in post:
+                    raw = (post.get(field_name) or '').strip()
+                    try:
+                        vals[field_name] = int(float(raw)) if raw else 0
+                    except (TypeError, ValueError):
+                        pass
+
+            for field_name in many2one_fields:
+                if field_name in employee._fields and field_name in post:
+                    raw = (post.get(field_name) or '').strip()
+                    vals[field_name] = int(raw) if raw.isdigit() else False
+
+            for field_name in selection_fields:
+                if field_name in employee._fields and field_name in post:
+                    raw = (post.get(field_name) or '').strip()
+                    allowed = dict(employee._fields[field_name]._description_selection(request.env))
+                    if not raw or raw in allowed:
+                        vals[field_name] = raw or False
+
+            if 'is_non_resident' in employee._fields:
+                vals['is_non_resident'] = post.get('is_non_resident') == 'on'
+
             if vals:
                 employee.write(vals)
-            user.partner_id.sudo().write(partner_vals)
+
+            # Keep only phone/mobile mirrored to the user contact. Never change
+            # partner email/login from this self-service form.
+            partner_vals = {}
+            if 'work_phone' in post:
+                partner_vals['phone'] = (post.get('work_phone') or '').strip()
+            if 'mobile_phone' in post:
+                partner_vals['mobile'] = (post.get('mobile_phone') or '').strip()
+            if partner_vals:
+                user.partner_id.sudo().write(partner_vals)
             saved = True
+
+        countries = request.env['res.country'].sudo().search([], order='name')
+        states = request.env['res.country.state'].sudo().search([], order='name')
         return request.render('employee_portal_suite.employee_profile_edit', {
-            'employee': employee, 'saved': saved,
+            'employee': employee,
+            'saved': saved,
+            'countries': countries,
+            'states': states,
+            'login_email': user.login or user.partner_id.email or '',
         })

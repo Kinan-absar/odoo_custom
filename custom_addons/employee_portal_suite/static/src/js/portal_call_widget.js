@@ -331,11 +331,12 @@
                 row.className = "epc-contact-row";
                 const identity = document.createElement("div");
                 identity.className = "epc-contact-identity";
-                const detail = [c.department, c.note, c.user_type].filter(Boolean).join(" · ");
-                identity.innerHTML = `<span class="epc-contact-photo-wrap"><img class="epc-contact-photo" src="${this._escape(c.avatar_url || "")}" alt="" onerror="this.style.display=\'none\'"/><span class="epc-contact-photo-fallback">${this._escape((c.name || "?").charAt(0).toUpperCase())}</span></span><span class="epc-contact-copy"><span class="epc-contact-name">${this._escape(c.name)}</span><span class="epc-contact-type">${this._escape(detail || "Employee")}</span></span>`;
+                identity.innerHTML = `<span class="epc-contact-photo-wrap"><img class="epc-contact-photo" src="${this._escape(c.avatar_url || "")}" alt="" onerror="this.style.display=\'none\'"/><span class="epc-contact-photo-fallback">${this._escape((c.name || "?").charAt(0).toUpperCase())}</span></span><span class="epc-contact-name">${this._escape(c.name)}</span>`;
                 const callBtn = document.createElement("button");
-                callBtn.textContent = this.currentUuid && this._addingPeople ? "Add" : "Call";
-                callBtn.className = "epc-btn epc-btn-small";
+                const adding = this.currentUuid && this._addingPeople;
+                callBtn.innerHTML = adding ? '<i class="fa fa-user-plus"></i><span>Add</span>' : '<i class="fa fa-phone"></i><span>Call</span>';
+                callBtn.title = adding ? "Add to meeting" : "Call";
+                callBtn.className = "epc-btn epc-btn-small epc-contact-call-btn";
                 callBtn.addEventListener("click", () => this.currentUuid && this._addingPeople ? this._addParticipant(c.user_id) : this._startCall(c.user_id));
                 row.appendChild(identity);
                 row.appendChild(callBtn);
