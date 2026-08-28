@@ -755,3 +755,45 @@
     #epc-panel:not(.epc-meeting-picker) .epc-contact-photo-wrap{width:26px;height:26px;flex-basis:26px}
     #epc-panel:not(.epc-meeting-picker) .epc-contact-call-btn{min-width:32px;width:32px;height:30px;padding:0;border-radius:9px}
 }
+
+
+/* v17.3 - compact active call controls and safer portal spacing. */
+.epc-active-actions {
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 18px;
+    padding: 0 18px;
+}
+.epc-active-actions .epc-round-control {
+    min-width: 46px;
+    width: 46px;
+    flex: 0 0 46px;
+    gap: 0;
+}
+.epc-active-actions .epc-round-control > span {
+    display: none !important;
+}
+.epc-active-actions .epc-round-control i {
+    width: 46px;
+    height: 46px;
+    font-size: 16px;
+}
+@media (max-width: 768px) {
+    .epc-active-actions {
+        justify-content: center;
+        gap: 14px;
+        padding: 0 16px;
+        margin-top: 16px;
+    }
+    .epc-active-actions .epc-round-control {
+        min-width: 44px;
+        width: 44px;
+        flex: 0 0 44px;
+    }
+    .epc-active-actions .epc-round-control i {
+        width: 44px;
+        height: 44px;
+        font-size: 15px;
+    }
+}
