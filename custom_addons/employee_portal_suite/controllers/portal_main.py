@@ -1,3 +1,4 @@
+import base64
 from odoo import http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
@@ -186,33 +187,33 @@ class EmployeePortalMain(CustomerPortal):
             return request.redirect('/my/employee')
 
         saved = False
+        bank_changed = False
         if request.httprequest.method == 'POST':
             vals = {}
 
-            # Work email/login is intentionally NOT writable from the portal.
-            # It is the employee's account identity and must remain admin-controlled.
+            # The login/work email is intentionally admin-controlled and never
+            # writable from employee self-service.
             for field_name in ('work_phone', 'mobile_phone'):
-                if field_name in employee._fields:
+                if field_name in employee._fields and field_name in post:
                     vals[field_name] = (post.get(field_name) or '').strip()
 
-            # Employee-maintained private/contact information. Only write fields
-            # that actually exist in this Odoo database so localization/custom
-            # HR fields do not make the portal brittle.
+            # Exact Odoo 18 hr.employee private-information technical fields.
             char_fields = (
                 'private_street', 'private_street2', 'private_city', 'private_zip',
                 'private_email', 'private_phone', 'private_car_plate',
                 'emergency_contact', 'emergency_phone', 'spouse_complete_name',
                 'identification_id', 'ssnid', 'passport_id', 'place_of_birth',
                 'study_field', 'study_school', 'visa_no', 'permit_no',
-                'iqama_no', 'iqama_number',
             )
             date_fields = (
                 'spouse_birthdate', 'birthday', 'visa_expire',
-                'work_permit_expiration_date', 'iqama_expiration_date',
+                'work_permit_expiration_date',
             )
-            integer_fields = ('children', 'km_home_work')
-            many2one_fields = ('private_country_id', 'private_state_id', 'country_id', 'country_of_birth')
-            selection_fields = ('marital', 'gender', 'certificate')
+            integer_fields = ('children', 'distance_home_work')
+            many2one_fields = (
+                'private_country_id', 'private_state_id', 'country_id', 'country_of_birth',
+            )
+            selection_fields = ('marital', 'gender', 'certificate', 'distance_home_work_unit')
 
             for field_name in char_fields + date_fields:
                 if field_name in employee._fields and field_name in post:
@@ -238,14 +239,44 @@ class EmployeePortalMain(CustomerPortal):
                     if not raw or raw in allowed:
                         vals[field_name] = raw or False
 
-            if 'is_non_resident' in employee._fields:
-                vals['is_non_resident'] = post.get('is_non_resident') == 'on'
-
             if vals:
                 employee.write(vals)
 
-            # Keep only phone/mobile mirrored to the user contact. Never change
-            # partner email/login from this self-service form.
+            # Optional work-permit attachment (exact Odoo 18 field: has_work_permit).
+            uploaded_permit = request.httprequest.files.get('work_permit_file')
+            if uploaded_permit and 'has_work_permit' in employee._fields:
+                content = uploaded_permit.read()
+                if content:
+                    employee.write({'has_work_permit': base64.b64encode(content)})
+
+            # Odoo 18 uses hr.employee.bank_account_id (res.partner.bank).
+            # Employees may submit/change their IBAN/account number, but the
+            # new account is deliberately left UNTRUSTED so Finance/HR must
+            # review it before Payroll can send money to it.
+            if 'bank_account_id' in employee._fields and 'bank_account_number' in post:
+                submitted = (post.get('bank_account_number') or '').strip()
+                current = employee.bank_account_id.sudo()
+                current_number = (current.acc_number or '').strip() if current else ''
+                if submitted != current_number:
+                    if not submitted:
+                        employee.write({'bank_account_id': False})
+                        bank_changed = True
+                    else:
+                        partner = employee.work_contact_id.sudo()
+                        if not partner:
+                            employee._create_work_contacts()
+                            partner = employee.work_contact_id.sudo()
+                        new_bank = request.env['res.partner.bank'].sudo().create({
+                            'acc_number': submitted,
+                            'partner_id': partner.id,
+                        })
+                        # Never auto-trust a bank account submitted from portal.
+                        if 'allow_out_payment' in new_bank._fields and new_bank.allow_out_payment:
+                            new_bank.allow_out_payment = False
+                        employee.write({'bank_account_id': new_bank.id})
+                        bank_changed = True
+
+            # Mirror only business phone numbers to the user's contact.
             partner_vals = {}
             if 'work_phone' in post:
                 partner_vals['phone'] = (post.get('work_phone') or '').strip()
@@ -257,10 +288,15 @@ class EmployeePortalMain(CustomerPortal):
 
         countries = request.env['res.country'].sudo().search([], order='name')
         states = request.env['res.country.state'].sudo().search([], order='name')
+        bank_account = employee.bank_account_id.sudo() if 'bank_account_id' in employee._fields else False
+        company_is_saudi = bool(employee.company_id.country_id.code == 'SA')
         return request.render('employee_portal_suite.employee_profile_edit', {
             'employee': employee,
             'saved': saved,
+            'bank_changed': bank_changed,
+            'bank_account': bank_account,
             'countries': countries,
             'states': states,
             'login_email': user.login or user.partner_id.email or '',
+            'company_is_saudi': company_is_saudi,
         })

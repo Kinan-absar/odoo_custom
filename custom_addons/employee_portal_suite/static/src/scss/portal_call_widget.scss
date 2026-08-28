@@ -704,3 +704,54 @@
 .epc-contact-call-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:68px;border-radius:10px;padding:6px 10px}
 .epc-contact-call-btn i{font-size:12px}
 @media(max-width:768px){#epc-panel:not(.epc-meeting-picker) .epc-contact-row{padding:7px 10px}.epc-contact-call-btn{min-width:42px;padding:7px}.epc-contact-call-btn span{display:none}}
+
+
+/* v17.2 - truly compact employee call directory: avatar | name | action, one line. */
+#epc-panel:not(.epc-meeting-picker) #epc-contact-list{max-height:340px}
+#epc-panel:not(.epc-meeting-picker) .epc-contact-row{
+    min-height:40px;
+    height:40px;
+    padding:4px 10px;
+    gap:8px;
+    flex-wrap:nowrap;
+}
+#epc-panel:not(.epc-meeting-picker) .epc-contact-identity{
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:8px;
+    flex:1 1 auto;
+    min-width:0;
+    overflow:hidden;
+}
+#epc-panel:not(.epc-meeting-picker) .epc-contact-photo-wrap{
+    width:28px;
+    height:28px;
+    flex:0 0 28px;
+    border-radius:50%;
+    font-size:11px;
+}
+#epc-panel:not(.epc-meeting-picker) .epc-contact-name{
+    display:block;
+    flex:1 1 auto;
+    max-width:none;
+    font-size:13px;
+    line-height:1.15;
+    font-weight:650;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+#epc-panel:not(.epc-meeting-picker) .epc-contact-call-btn{
+    min-width:58px;
+    height:30px;
+    padding:4px 9px;
+    border-radius:9px;
+    flex:0 0 auto;
+    font-size:12px;
+}
+@media(max-width:768px){
+    #epc-panel:not(.epc-meeting-picker) .epc-contact-row{height:38px;min-height:38px;padding:4px 8px}
+    #epc-panel:not(.epc-meeting-picker) .epc-contact-photo-wrap{width:26px;height:26px;flex-basis:26px}
+    #epc-panel:not(.epc-meeting-picker) .epc-contact-call-btn{min-width:32px;width:32px;height:30px;padding:0;border-radius:9px}
+}
