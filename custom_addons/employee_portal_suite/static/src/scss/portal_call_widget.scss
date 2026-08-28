@@ -812,3 +812,74 @@
 .epc-group-select-btn.epc-selected{background:#714b67!important;border-color:#714b67!important;color:#fff!important}
 #epc-panel.epc-meeting-picker .epc-call-mode-bar{display:none}
 @media(max-width:768px){.epc-call-mode-bar{padding:6px 8px}.epc-group-mode-btn{padding:5px 8px}.epc-group-actions{gap:6px}.epc-group-actions #epc-group-count{display:none}}
+
+/* v17.8 - compact Add People meeting picker: avatar | name | Add on one line. */
+#epc-panel.epc-meeting-picker #epc-contact-list {
+    max-height: 340px;
+    overflow-y: auto;
+}
+#epc-panel.epc-meeting-picker .epc-contact-row {
+    min-height: 42px;
+    height: 42px;
+    padding: 5px 12px;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+#epc-panel.epc-meeting-picker .epc-contact-identity {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+}
+#epc-panel.epc-meeting-picker .epc-contact-photo-wrap {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    border-radius: 50%;
+    font-size: 11px;
+}
+#epc-panel.epc-meeting-picker .epc-contact-name {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.15;
+    font-weight: 650;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#epc-panel.epc-meeting-picker .epc-contact-call-btn {
+    min-width: 58px;
+    height: 30px;
+    padding: 4px 9px;
+    border-radius: 9px;
+    flex: 0 0 auto;
+    font-size: 12px;
+}
+@media (max-width: 768px) {
+    #epc-panel.epc-meeting-picker .epc-contact-row {
+        min-height: 40px;
+        height: 40px;
+        padding: 5px 10px;
+    }
+    #epc-panel.epc-meeting-picker .epc-contact-photo-wrap {
+        width: 26px;
+        height: 26px;
+        flex-basis: 26px;
+    }
+    #epc-panel.epc-meeting-picker .epc-contact-call-btn {
+        min-width: 32px;
+        width: 32px;
+        height: 30px;
+        padding: 0;
+    }
+    #epc-panel.epc-meeting-picker .epc-contact-call-btn span {
+        display: none;
+    }
+}
