@@ -512,6 +512,8 @@
             }
 
 
+
+            .needs-attention{background:#fff;border:1px solid #e6e8f0;border-radius:22px;padding:22px;box-shadow:0 8px 24px rgba(15,23,42,.05)}.attention-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px}.attention-kicker{font-size:11px;font-weight:800;letter-spacing:.08em;color:#64748b}.attention-title{font-size:21px;margin:3px 0 0}.attention-total{font-size:12px;font-weight:700;color:#4f46e5;background:#eef2ff;padding:7px 10px;border-radius:999px}.attention-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.attention-item{display:flex;align-items:center;gap:12px;border:1px solid #e8eaf2;border-radius:15px;padding:15px;color:#111827;text-decoration:none!important;background:#fff}.attention-item:hover{border-color:#c7c9f8;box-shadow:0 8px 20px rgba(79,70,229,.08)}.attention-item strong,.attention-item small{display:block}.attention-item strong{font-size:13px}.attention-item small{font-size:11px;color:#64748b;margin-top:3px}.attention-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#ecfdf5;color:#10b981;flex:0 0 38px}.attention-icon.warning{background:#fff7ed;color:#f59e0b}.attention-icon.dark{background:#f1f5f9;color:#334155}.attention-clear{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:16px;background:#f8fafc;border-radius:14px;color:#334155}.attention-clear i{font-size:24px;color:#10b981}.attention-clear strong,.attention-clear small{display:block}.attention-clear small{color:#64748b}@media(min-width:769px){.needs-attention{margin-top:34px}}@media(max-width:900px){.attention-grid{grid-template-columns:1fr}.attention-head{align-items:center}.needs-attention{padding:18px}}
             </style>
             <div class="row mt-4 g-3">
                 <t t-if="not request.env.user.telegram_connected and request.env['employee.portal.telegram.config'].sudo().search_count([('active','=',True),('enabled','=',True)]) &gt; 0">
@@ -536,27 +538,15 @@
                     </div>
                 </t>
 
-                <div class="dashboard-hero mb-4">
-
-                <div class="hero-left">
-                    <div class="hero-title">Your Workspace</div>
-                    <div class="hero-sub">
-                        You have 
-                        <strong><t t-esc="employee_pending_count + material_pending_count + pending_sign_count"/></strong>
-                        pending actions today.
+                <section class="needs-attention mb-4">
+                    <div class="attention-head"><div><div class="attention-kicker">NEEDS YOUR ATTENTION</div><h3 class="attention-title">Things waiting for you</h3></div><div class="attention-total"><t t-esc="employee_pending_count + material_pending_count + pending_sign_count"/> pending</div></div>
+                    <div class="attention-grid">
+                        <t t-if="employee_pending_count &gt; 0"><a href="/my/employee/approvals" class="attention-item"><span class="attention-icon"><i class="fa fa-user"/></span><span><strong><t t-esc="employee_pending_count"/> Employee Request<t t-if="employee_pending_count != 1">s</t></strong><small>Waiting for your approval</small></span><i class="fa fa-angle-right ms-auto"/></a></t>
+                        <t t-if="material_pending_count &gt; 0"><a href="/my/employee/material/approvals" class="attention-item"><span class="attention-icon warning"><i class="fa fa-cubes"/></span><span><strong><t t-esc="material_pending_count"/> Material Request<t t-if="material_pending_count != 1">s</t></strong><small>Waiting for your action</small></span><i class="fa fa-angle-right ms-auto"/></a></t>
+                        <t t-if="pending_sign_count &gt; 0"><a href="/my/employee/sign" class="attention-item"><span class="attention-icon dark"><i class="fa fa-pencil-square-o"/></span><span><strong><t t-esc="pending_sign_count"/> Document<t t-if="pending_sign_count != 1">s</t></strong><small>Requires your signature</small></span><i class="fa fa-angle-right ms-auto"/></a></t>
+                        <t t-if="employee_pending_count + material_pending_count + pending_sign_count == 0"><div class="attention-clear"><i class="fa fa-check-circle"/><div><strong>You're all caught up</strong><small>No pending actions right now.</small></div></div></t>
                     </div>
-                </div>
-
-                <div class="hero-right">
-                    <div class="hero-stat">
-                        <span class="hero-stat-number">
-                            <t t-esc="my_request_count + my_material_count"/>
-                        </span>
-                        <span class="hero-stat-label">Total Requests</span>
-                    </div>
-                </div>
-
-            </div>
+                </section>
 
                 <!-- EMPLOYEE REQUESTS -->
                 <div class="col-6 col-md-6">

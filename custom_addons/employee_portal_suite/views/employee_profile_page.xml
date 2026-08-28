@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+<template id="employee_profile_edit" name="Employee Profile">
+<t t-call="employee_portal_suite.employee_portal_layout">
+<style>
+.ep-profile-page{max-width:1080px;margin:22px auto 0}.ep-profile-card{background:#fff;border:1px solid #e8eaf2;border-radius:22px;padding:28px;box-shadow:0 10px 30px rgba(15,23,42,.06)}.ep-profile-head{display:flex;align-items:center;gap:16px;margin-bottom:26px;padding-bottom:22px;border-bottom:1px solid #eef0f5}.ep-profile-head img{width:72px;height:72px;border-radius:20px;object-fit:cover}.ep-profile-title{margin:0;font-size:24px;font-weight:800}.ep-profile-role{color:#64748b;margin-top:3px}.ep-profile-section{margin-top:28px}.ep-profile-section:first-of-type{margin-top:0}.ep-profile-section-title{font-size:12px;font-weight:800;letter-spacing:.06em;color:#475569;text-transform:uppercase;padding-bottom:9px;border-bottom:1px solid #e8eaf2;margin-bottom:16px}.ep-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px}.ep-profile-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.ep-profile-field label{display:block;font-size:12px;font-weight:700;color:#64748b;margin-bottom:7px}.ep-profile-field input,.ep-profile-field select{width:100%;height:44px;border:1px solid #dfe3ec;border-radius:11px;padding:0 12px;background:#fff;color:#111827}.ep-profile-field input[type=file]{padding:9px 12px;height:auto}.ep-profile-field input:focus,.ep-profile-field select:focus{outline:0;border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.09)}.ep-profile-readonly{background:#f8fafc!important;color:#64748b!important;cursor:not-allowed}.ep-profile-hint{font-size:11px;color:#94a3b8;margin-top:5px}.ep-profile-actions{display:flex;justify-content:flex-end;margin-top:26px;padding-top:20px;border-top:1px solid #eef0f5}.ep-profile-save{border:0;border-radius:12px;background:#4f46e5;color:#fff;padding:12px 22px;font-weight:700}.ep-profile-bank-state{font-size:11px;margin-top:6px}.ep-profile-bank-state.ok{color:#15803d}.ep-profile-bank-state.warn{color:#b45309}.ep-profile-inline{display:grid;grid-template-columns:1fr 110px;gap:8px}.ep-profile-note{border:1px solid #e0e7ff;background:#f5f7ff;color:#475569;border-radius:12px;padding:11px 13px;font-size:12px;margin-bottom:16px}@media(max-width:768px){.ep-profile-page{margin-top:10px}.ep-profile-grid,.ep-profile-grid.three{grid-template-columns:1fr}.ep-profile-card{padding:20px;border-radius:18px}.ep-profile-head img{width:60px;height:60px;border-radius:16px}.ep-profile-inline{grid-template-columns:1fr 90px}}
+</style>
+<div class="ep-profile-page"><div class="ep-profile-card">
+<div class="ep-profile-head"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"/><div><h2 class="ep-profile-title"><t t-esc="employee.name"/></h2><div class="ep-profile-role"><t t-esc="employee.job_title or 'Employee'"/><t t-if="employee.department_id"> · <t t-esc="employee.department_id.name"/></t></div></div></div>
+<t t-if="saved"><div class="alert alert-success">Your information has been updated.<t t-if="bank_changed"> Your new bank account requires Finance/HR verification before payroll can use it.</t></div></t>
+<form method="post" action="/my/employee/profile" enctype="multipart/form-data"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+<div class="ep-profile-section"><div class="ep-profile-section-title">Work information</div><div class="ep-profile-grid">
+<div class="ep-profile-field"><label>Full name</label><input class="ep-profile-readonly" t-att-value="employee.name" readonly="readonly"/></div>
+<div class="ep-profile-field"><label>Department</label><input class="ep-profile-readonly" t-att-value="employee.department_id.name or ''" readonly="readonly"/></div>
+<div class="ep-profile-field"><label>Email / Login</label><input class="ep-profile-readonly" type="email" t-att-value="login_email" readonly="readonly"/><div class="ep-profile-hint">Your login email can only be changed by Administration.</div></div>
+<div class="ep-profile-field"><label>Job title</label><input class="ep-profile-readonly" t-att-value="employee.job_title or ''" readonly="readonly"/></div>
+<div class="ep-profile-field"><label>Work phone</label><input name="work_phone" t-att-value="employee.work_phone or request.env.user.partner_id.phone or ''"/></div>
+<div class="ep-profile-field"><label>Work mobile</label><input name="mobile_phone" t-att-value="employee.mobile_phone or request.env.user.partner_id.mobile or ''"/></div>
+</div></div>
+
+<div class="ep-profile-section"><div class="ep-profile-section-title">Private contact</div><div class="ep-profile-grid">
+<div class="ep-profile-field"><label>Private street</label><input name="private_street" t-att-value="employee.private_street or ''"/></div>
+<div class="ep-profile-field"><label>Street 2</label><input name="private_street2" t-att-value="employee.private_street2 or ''"/></div>
+<div class="ep-profile-field"><label>City</label><input name="private_city" t-att-value="employee.private_city or ''"/></div>
+<div class="ep-profile-field"><label>ZIP</label><input name="private_zip" t-att-value="employee.private_zip or ''"/></div>
+<div class="ep-profile-field"><label>State</label><select name="private_state_id"><option value="">-</option><t t-foreach="states" t-as="st"><option t-att-value="st.id" t-att-selected="employee.private_state_id.id == st.id"><t t-esc="st.name"/></option></t></select></div>
+<div class="ep-profile-field"><label>Country</label><select name="private_country_id"><option value="">-</option><t t-foreach="countries" t-as="c"><option t-att-value="c.id" t-att-selected="employee.private_country_id.id == c.id"><t t-esc="c.name"/></option></t></select></div>
+<div class="ep-profile-field"><label>Private email</label><input type="email" name="private_email" t-att-value="employee.private_email or ''"/></div>
+<div class="ep-profile-field"><label>Private phone</label><input name="private_phone" t-att-value="employee.private_phone or ''"/></div>
+<div class="ep-profile-field"><label>Bank account / IBAN</label><input name="bank_account_number" t-att-value="bank_account.acc_number if bank_account else ''" autocomplete="off"/><t t-if="bank_account"><div t-attf-class="ep-profile-bank-state #{'ok' if ('allow_out_payment' in bank_account._fields and bank_account.allow_out_payment) else 'warn'}"><t t-if="'allow_out_payment' in bank_account._fields and bank_account.allow_out_payment">Verified / trusted for outgoing payments.</t><t t-else="">Pending Finance/HR verification for payroll.</t></div></t><div class="ep-profile-hint">Changing this creates a new untrusted bank account for Finance/HR review.</div></div>
+<div class="ep-profile-field"><label>Private car plate</label><input name="private_car_plate" t-att-value="employee.private_car_plate or ''"/></div>
+<div class="ep-profile-field"><label>Home-work distance</label><div class="ep-profile-inline"><input type="number" min="0" name="distance_home_work" t-att-value="employee.distance_home_work or 0"/><select name="distance_home_work_unit"><t t-foreach="employee._fields['distance_home_work_unit']._description_selection(request.env)" t-as="opt"><option t-att-value="opt[0]" t-att-selected="employee.distance_home_work_unit == opt[0]"><t t-esc="opt[1]"/></option></t></select></div></div>
+</div></div>
+
+<div class="ep-profile-section"><div class="ep-profile-section-title">Emergency</div><div class="ep-profile-grid">
+<div class="ep-profile-field"><label>Contact name</label><input name="emergency_contact" t-att-value="employee.emergency_contact or ''"/></div>
+<div class="ep-profile-field"><label>Contact phone</label><input name="emergency_phone" t-att-value="employee.emergency_phone or ''"/></div>
+</div></div>
+
+<div class="ep-profile-section"><div class="ep-profile-section-title">Family status</div><div class="ep-profile-grid">
+<div class="ep-profile-field"><label>Marital status</label><select name="marital"><t t-foreach="employee._fields['marital']._description_selection(request.env)" t-as="opt"><option t-att-value="opt[0]" t-att-selected="employee.marital == opt[0]"><t t-esc="opt[1]"/></option></t></select></div>
+<div class="ep-profile-field"><label>Spouse complete name</label><input name="spouse_complete_name" t-att-value="employee.spouse_complete_name or ''"/></div>
+<div class="ep-profile-field"><label>Spouse birthdate</label><input type="date" name="spouse_birthdate" t-att-value="employee.spouse_birthdate or ''"/></div>
+<div class="ep-profile-field"><label>Number of dependent children</label><input type="number" min="0" name="children" t-att-value="employee.children or 0"/></div>
+</div></div>
+
+<div class="ep-profile-section"><div class="ep-profile-section-title">Citizenship &amp; identification</div><div class="ep-profile-grid">
+<div class="ep-profile-field"><label>Nationality (Country)</label><select name="country_id"><option value="">-</option><t t-foreach="countries" t-as="c"><option t-att-value="c.id" t-att-selected="employee.country_id.id == c.id"><t t-esc="c.name"/></option></t></select></div>
+<div class="ep-profile-field"><label>Identification No</label><input name="identification_id" t-att-value="employee.identification_id or ''"/></div>
+<div class="ep-profile-field"><label>SSN No</label><input name="ssnid" t-att-value="employee.ssnid or ''"/></div>
+<div class="ep-profile-field"><label>Passport No</label><input name="passport_id" t-att-value="employee.passport_id or ''"/></div>
+<div class="ep-profile-field"><label>Gender</label><select name="gender"><option value="">-</option><t t-foreach="employee._fields['gender']._description_selection(request.env)" t-as="opt"><option t-att-value="opt[0]" t-att-selected="employee.gender == opt[0]"><t t-esc="opt[1]"/></option></t></select></div>
+<div class="ep-profile-field"><label>Date of birth</label><input type="date" name="birthday" t-att-value="employee.birthday or ''"/></div>
+<div class="ep-profile-field"><label>Place of birth</label><input name="place_of_birth" t-att-value="employee.place_of_birth or ''"/></div>
+<div class="ep-profile-field"><label>Country of birth</label><select name="country_of_birth"><option value="">-</option><t t-foreach="countries" t-as="c"><option t-att-value="c.id" t-att-selected="employee.country_of_birth.id == c.id"><t t-esc="c.name"/></option></t></select></div>
+</div></div>
+
+<div class="ep-profile-section"><div class="ep-profile-section-title">Education</div><div class="ep-profile-grid">
+<div class="ep-profile-field"><label>Certificate level</label><select name="certificate"><option value="">-</option><t t-foreach="employee._fields['certificate']._description_selection(request.env)" t-as="opt"><option t-att-value="opt[0]" t-att-selected="employee.certificate == opt[0]"><t t-esc="opt[1]"/></option></t></select></div>
+<div class="ep-profile-field"><label>Field of study</label><input name="study_field" t-att-value="employee.study_field or ''"/></div>
+<div class="ep-profile-field"><label>School</label><input name="study_school" t-att-value="employee.study_school or ''"/></div>
+</div></div>
+
+<div class="ep-profile-section"><div class="ep-profile-section-title">Work permit<t t-if="company_is_saudi"> / Saudi residency</t></div>
+<t t-if="company_is_saudi"><div class="ep-profile-note">For Saudi employees, Odoo uses the Visa fields in this Private Information section for residency details in the employee form; the Saudi payroll localization may additionally require a Saudi National / IQAMA ID in the Payroll tab for WPS.</div></t>
+<div class="ep-profile-grid">
+<div class="ep-profile-field"><label><t t-if="company_is_saudi">Iqama No</t><t t-else="">Visa No</t></label><input name="visa_no" t-att-value="employee.visa_no or ''"/></div>
+<div class="ep-profile-field"><label>Work Permit No</label><input name="permit_no" t-att-value="employee.permit_no or ''"/></div>
+<div class="ep-profile-field"><label><t t-if="company_is_saudi">Iqama Expiration Date</t><t t-else="">Visa Expiration Date</t></label><input type="date" name="visa_expire" t-att-value="employee.visa_expire or ''"/></div>
+<div class="ep-profile-field"><label>Work Permit Expiration Date</label><input type="date" name="work_permit_expiration_date" t-att-value="employee.work_permit_expiration_date or ''"/></div>
+<div class="ep-profile-field"><label>Work Permit document</label><input type="file" name="work_permit_file"/><div class="ep-profile-hint"><t t-if="employee.has_work_permit">A work permit document is already stored. Uploading a new file replaces it.</t><t t-else="">Upload the employee work permit if applicable.</t></div></div>
+</div></div>
+
+<div class="ep-profile-actions"><button class="ep-profile-save" type="submit">Save changes</button></div>
+</form></div></div>
+</t>
+</template>
+</odoo>

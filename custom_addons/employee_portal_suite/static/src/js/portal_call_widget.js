@@ -61,6 +61,8 @@
             this.defaultSinkId = null;
             this.pendingIceCandidates = new Map();
             this.participants = [];
+            this.groupCallMode = false;
+            this.groupSelection = new Set();
             this._buildUI();
             this._loadContacts();
             this._startPolling();
@@ -81,10 +83,17 @@
                         <button id="epc-panel-close">&times;</button>
                     </div>
                     <div class="epc-search-wrap"><input id="epc-contact-search" type="search" placeholder="Search employees…" autocomplete="off"/></div>
+                    <div id="epc-call-mode-bar" class="epc-call-mode-bar">
+                        <button id="epc-group-mode" type="button" class="epc-group-mode-btn"><i class="fa fa-users"></i><span>Group call</span></button>
+                        <div id="epc-group-actions" class="epc-group-actions epc-hidden">
+                            <span id="epc-group-count">0 selected</span>
+                            <button id="epc-start-group" type="button" class="epc-btn epc-btn-small" disabled><i class="fa fa-phone"></i><span>Start call</span></button>
+                        </div>
+                    </div>
                     <div id="epc-contact-list"><div class="epc-empty">Loading…</div></div>
                 </div>
                 <div id="epc-incoming" class="epc-hidden">
-                    <div class="epc-call-avatar epc-incoming-avatar"><i class="fa fa-phone"></i></div>
+                    <div class="epc-call-avatar epc-incoming-avatar"><img id="epc-incoming-photo" class="epc-avatar-photo epc-hidden" alt=""/><span id="epc-incoming-fallback"><i class="fa fa-phone"></i></span></div>
                     <div class="epc-incoming-name"></div>
                     <div class="epc-incoming-sub">Incoming audio call</div>
                     <div class="epc-incoming-actions">
@@ -94,7 +103,7 @@
                 </div>
                 <div id="epc-active" class="epc-hidden epc-audio-call">
                     <div class="epc-active-stage">
-                        <div class="epc-call-avatar epc-active-avatar"><span id="epc-peer-initial">?</span></div>
+                        <div class="epc-call-avatar epc-active-avatar"><img id="epc-peer-photo" class="epc-avatar-photo epc-hidden" alt=""/><span id="epc-peer-initial">?</span></div>
                         <div class="epc-active-name">Employee</div>
                         <div class="epc-active-status">Connecting…</div>
                         <div class="epc-call-timer">00:00</div>
@@ -168,6 +177,17 @@
                 this._toggleFullscreen();
             });
             document.getElementById("epc-contact-search").addEventListener("input", () => this._renderContacts());
+            document.getElementById("epc-group-mode").addEventListener("click", (ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                if (this._addingPeople || this.currentUuid) return;
+                this._setGroupCallMode(!this.groupCallMode);
+            });
+            document.getElementById("epc-start-group").addEventListener("click", (ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                this._startGroupCall();
+            });
 
             // Browsers only allow notification permission prompts and audio-context
             // activation from a user gesture. Any first interaction with the calling
@@ -240,6 +260,7 @@
             const panel = document.getElementById("epc-panel");
             const opening = panel.classList.contains("epc-hidden");
             if (opening) {
+                if (!this.currentUuid) this._setGroupCallMode(false);
                 this._panelAnchor = anchor;
                 panel.classList.remove("epc-hidden");
                 this._positionPanel(anchor);
@@ -261,6 +282,45 @@
             const backdrop = document.getElementById("epc-picker-backdrop");
             if (backdrop) backdrop.classList.add("epc-hidden");
             this._addingPeople = false;
+            this._setGroupCallMode(false);
+        }
+
+        _setGroupCallMode(enabled) {
+            this.groupCallMode = Boolean(enabled) && !this.currentUuid && !this._addingPeople;
+            if (!this.groupCallMode) this.groupSelection.clear();
+            const panel = document.getElementById("epc-panel");
+            const modeBtn = document.getElementById("epc-group-mode");
+            const actions = document.getElementById("epc-group-actions");
+            if (panel) {
+                panel.classList.toggle("epc-group-call-mode", this.groupCallMode);
+                const title = panel.querySelector(".epc-panel-header span");
+                if (title && !this._addingPeople) title.textContent = this.groupCallMode ? "Start group call" : "Call an employee";
+            }
+            if (modeBtn) {
+                modeBtn.classList.toggle("epc-control-active", this.groupCallMode);
+                const span = modeBtn.querySelector("span");
+                if (span) span.textContent = this.groupCallMode ? "Cancel group" : "Group call";
+            }
+            if (actions) actions.classList.toggle("epc-hidden", !this.groupCallMode);
+            this._updateGroupSelectionUI();
+            this._renderContacts();
+        }
+
+        _updateGroupSelectionUI() {
+            const count = document.getElementById("epc-group-count");
+            const start = document.getElementById("epc-start-group");
+            const n = this.groupSelection.size;
+            if (count) count.textContent = `${n} selected`;
+            if (start) start.disabled = n < 2;
+        }
+
+        _toggleGroupSelection(userId) {
+            const uid = Number(userId);
+            if (!uid) return;
+            if (this.groupSelection.has(uid)) this.groupSelection.delete(uid);
+            else this.groupSelection.add(uid);
+            this._updateGroupSelectionUI();
+            this._renderContacts();
         }
 
         _positionPanel(anchor) {
@@ -331,13 +391,32 @@
                 row.className = "epc-contact-row";
                 const identity = document.createElement("div");
                 identity.className = "epc-contact-identity";
-                const detail = [c.department, c.note, c.user_type].filter(Boolean).join(" · ");
-                identity.innerHTML = `<span class="epc-contact-name">${this._escape(c.name)}</span>` +
-                    `<span class="epc-contact-type">${this._escape(detail || "Employee")}</span>`;
+                identity.innerHTML = `<span class="epc-contact-photo-wrap"><img class="epc-contact-photo" src="${this._escape(c.avatar_url || "")}" alt="" onerror="this.style.display=\'none\'"/><span class="epc-contact-photo-fallback">${this._escape((c.name || "?").charAt(0).toUpperCase())}</span></span><span class="epc-contact-name">${this._escape(c.name)}</span>`;
                 const callBtn = document.createElement("button");
-                callBtn.textContent = this.currentUuid && this._addingPeople ? "Add" : "Call";
-                callBtn.className = "epc-btn epc-btn-small";
-                callBtn.addEventListener("click", () => this.currentUuid && this._addingPeople ? this._addParticipant(c.user_id) : this._startCall(c.user_id));
+                const adding = this.currentUuid && this._addingPeople;
+                const groupSelecting = !adding && this.groupCallMode;
+                const selected = groupSelecting && this.groupSelection.has(Number(c.user_id));
+                if (groupSelecting) {
+                    callBtn.innerHTML = selected ? '<i class="fa fa-check"></i>' : '<i class="fa fa-plus"></i>';
+                    callBtn.title = selected ? "Remove from group call" : "Add to group call";
+                    callBtn.className = "epc-btn epc-btn-small epc-contact-call-btn epc-group-select-btn" + (selected ? " epc-selected" : "");
+                    row.classList.toggle("epc-contact-selected", selected);
+                    callBtn.addEventListener("click", (ev) => {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        this._toggleGroupSelection(c.user_id);
+                    });
+                    row.addEventListener("click", (ev) => {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        if (!ev.target.closest("button")) this._toggleGroupSelection(c.user_id);
+                    });
+                } else {
+                    callBtn.innerHTML = adding ? '<i class="fa fa-user-plus"></i><span>Add</span>' : '<i class="fa fa-phone"></i><span>Call</span>';
+                    callBtn.title = adding ? "Add to meeting" : "Call";
+                    callBtn.className = "epc-btn epc-btn-small epc-contact-call-btn";
+                    callBtn.addEventListener("click", () => this.currentUuid && this._addingPeople ? this._addParticipant(c.user_id) : this._startCall(c.user_id));
+                }
                 row.appendChild(identity);
                 row.appendChild(callBtn);
                 list.appendChild(row);
@@ -449,6 +528,9 @@
             if (activeName) activeName.textContent = this.currentPeerName;
             const initial = document.getElementById("epc-peer-initial");
             if (initial) initial.textContent = (this.currentPeerName.trim().charAt(0) || "?").toUpperCase();
+            const contact = this.contacts.find((c) => c.name === this.currentPeerName);
+            const photo = document.getElementById("epc-peer-photo");
+            if (photo) { if (contact && contact.avatar_url) { photo.src = contact.avatar_url; photo.classList.remove("epc-hidden"); if (initial) initial.classList.add("epc-hidden"); photo.onerror = () => { photo.classList.add("epc-hidden"); if (initial) initial.classList.remove("epc-hidden"); }; } else { photo.classList.add("epc-hidden"); if (initial) initial.classList.remove("epc-hidden"); } }
         }
 
         _startCallTimer() {
@@ -502,6 +584,9 @@
                 this.peerNames.set(this._incomingCallerId, callerName);
                 this._setPeerName(callerName);
                 document.querySelector("#epc-incoming .epc-incoming-name").textContent = callerName;
+                const incomingPhoto = document.getElementById("epc-incoming-photo");
+                const incomingFallback = document.getElementById("epc-incoming-fallback");
+                if (incomingPhoto && evt.payload.caller_avatar_url) { incomingPhoto.src = evt.payload.caller_avatar_url; incomingPhoto.classList.remove("epc-hidden"); if (incomingFallback) incomingFallback.classList.add("epc-hidden"); incomingPhoto.onerror = () => { incomingPhoto.classList.add("epc-hidden"); if (incomingFallback) incomingFallback.classList.remove("epc-hidden"); }; }
                 document.querySelector("#epc-incoming .epc-incoming-sub").textContent = evt.payload.meeting ? "Meeting invitation" : (this.currentCallType === "video" ? "Incoming video call" : "Incoming audio call");
                 document.getElementById("epc-incoming").classList.remove("epc-hidden");
                 this._startRinging(); this._notifyIncoming(callerName);
@@ -546,6 +631,34 @@
                 this._showActive("Calling…");
             } catch (e) {
                 alert("Could not start call.");
+            }
+        }
+
+        async _startGroupCall() {
+            const userIds = Array.from(this.groupSelection);
+            if (userIds.length < 2) return;
+            try {
+                const res = await rpc("/employee_portal/call/start", {
+                    target_user_ids: userIds,
+                    call_type: "audio",
+                });
+                if (res.error) {
+                    alert("Could not start group call: " + res.error);
+                    return;
+                }
+                this.currentUuid = res.uuid;
+                this._iAmCaller = true;
+                this.currentPeerName = "Group call";
+                this._setPeerName("Group call");
+                this.groupSelection.clear();
+                this.groupCallMode = false;
+                this._closeContactPanel();
+                await this._prepareLocalMedia();
+                this._showActive(`Calling ${userIds.length} employees…`);
+                await this._refreshParticipants();
+            } catch (e) {
+                console.error("[EPC] Could not start group call", e);
+                alert("Could not start group call.");
             }
         }
 
@@ -920,7 +1033,7 @@
                 const row = document.createElement("div");
                 row.className = "epc-participant-chip";
                 const initial = (p.name || "?").trim().charAt(0).toUpperCase() || "?";
-                row.innerHTML = `<span class="epc-participant-avatar">${initial}</span><span class="epc-participant-name"></span>${p.is_self ? '<span class="epc-you-badge">You</span>' : ''}`;
+                row.innerHTML = `<span class="epc-participant-avatar"><img src="${this._escape(p.avatar_url || "")}" alt="" onerror="this.style.display=\'none\'"/><span>${initial}</span></span><span class="epc-participant-name"></span>${p.is_self ? '<span class="epc-you-badge">You</span>' : ''}`;
                 row.querySelector(".epc-participant-name").textContent = p.name || "Employee";
                 list.appendChild(row);
             });
