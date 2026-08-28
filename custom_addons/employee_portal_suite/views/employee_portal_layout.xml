@@ -111,7 +111,7 @@
                     .ep-navbar { display:none !important; }
                     .ep-desktop-sidebar{display:flex;position:fixed;left:0;top:0;bottom:0;width:260px;background:#fff;border-right:1px solid var(--border-light);z-index:1500;flex-direction:column;padding:22px 14px;}
                     .ep-sidebar-brand{display:flex;align-items:center;gap:11px;padding:5px 10px 22px;font-weight:800;color:var(--text-primary);font-size:16px}.ep-sidebar-brand img{width:38px;height:38px;object-fit:contain;border-radius:10px}
-                    .ep-sidebar-nav{display:flex;flex-direction:column;gap:4px;overflow:auto}.ep-sidebar-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;color:var(--text-secondary);text-decoration:none!important;font-weight:600;font-size:13.5px}.ep-sidebar-link:hover,.ep-sidebar-link.active{background:rgba(79,70,229,.08);color:var(--app-primary)}.ep-sidebar-link i{width:20px;text-align:center;font-size:16px}
+                    .ep-sidebar-nav{display:flex;flex-direction:column;gap:4px;overflow:auto}.ep-sidebar-section{margin-top:14px}.ep-sidebar-section:first-of-type{margin-top:8px}.ep-sidebar-section-title{padding:0 12px 6px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}.ep-sidebar-section-links{display:flex;flex-direction:column;gap:3px}.ep-sidebar-section.ep-empty{display:none!important}.ep-sidebar-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;color:var(--text-secondary);text-decoration:none!important;font-weight:600;font-size:13.5px}.ep-sidebar-link:hover,.ep-sidebar-link.active{background:rgba(79,70,229,.08);color:var(--app-primary)}.ep-sidebar-link i{width:20px;text-align:center;font-size:16px}
                     .ep-sidebar-bottom{margin-top:auto;border-top:1px solid var(--border-light);padding-top:14px}.ep-sidebar-profile{position:relative}.ep-sidebar-profile-btn{width:100%;border:0;background:transparent;display:flex;align-items:center;gap:10px;padding:9px;border-radius:12px;text-align:left}.ep-sidebar-profile-btn:hover{background:var(--surface-2)}.ep-sidebar-profile-btn img{width:38px;height:38px;border-radius:12px;object-fit:cover}.ep-sidebar-profile-name{font-weight:700;font-size:13px;color:var(--text-primary)}.ep-sidebar-profile-role{font-size:11px;color:var(--text-muted)}.ep-profile-menu{display:none;position:absolute;left:0;right:0;bottom:58px;background:#fff;border:1px solid var(--border-light);border-radius:13px;padding:6px;box-shadow:var(--shadow-lg)}.ep-profile-menu.show{display:block}.ep-profile-menu a{display:flex;align-items:center;gap:9px;padding:10px;border-radius:9px;text-decoration:none!important;color:var(--text-primary);font-size:13px;font-weight:600}.ep-profile-menu a:hover{background:var(--surface-2);color:var(--app-primary)}
                     main,.portal-announcement-wrapper{margin-left:260px}.ep-desktop-top-actions{display:flex;position:fixed;right:28px;top:16px;z-index:1450;align-items:center;gap:8px} main{padding-top:88px!important}
                 }
@@ -1402,21 +1402,71 @@
 
             <aside class="ep-desktop-sidebar">
                 <div class="ep-sidebar-brand"><img t-att-src="'/web/image/res.company/%s/logo' % request.env.company.id"/><span>Employee Portal</span></div>
-                <nav class="ep-sidebar-nav">
+                <nav class="ep-sidebar-nav" id="ep-desktop-sidebar-nav">
                     <a href="/my/employee" class="ep-sidebar-link"><i class="fa fa-home"/>Home</a>
                     <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-                        <a href="/my/employee/requests" class="ep-sidebar-link"><i class="fa fa-file-text-o"/>Employee Requests</a>
-                        <a href="/my/employee/material" class="ep-sidebar-link"><i class="fa fa-cubes"/>Material Requests</a>
-                        <a href="/my/employee/sign" class="ep-sidebar-link"><i class="fa fa-pencil-square-o"/>Signatures</a>
-                        <a href="/my/employee/reports" class="ep-sidebar-link"><i class="fa fa-folder-open-o"/>Reports</a>
-                        <t t-if="request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')"><a href="/my/employee/salary-reports" class="ep-sidebar-link"><i class="fa fa-money"/>Salary Reports</a></t>
-                        <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')"><a href="/my/employee/approvals" class="ep-sidebar-link"><i class="fa fa-check-square-o"/>ER Approvals</a></t>
-                        <t t-if="request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or request.env.user.has_group('employee_portal_suite.group_mr_projects_director') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')"><a href="/my/employee/material/approvals" class="ep-sidebar-link"><i class="fa fa-check-circle-o"/>MR Approvals</a></t>
-                        <t t-if="request.env.user.has_group('employee_portal_suite.group_portal_attendance_user')"><a href="/my/employee/attendance" class="ep-sidebar-link"><i class="fa fa-clock-o"/>Attendance</a></t>
-                        <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')"><a href="/my/employee/petty-cash" class="ep-sidebar-link"><i class="fa fa-money"/>Petty Cash</a></t>
+                        <div class="ep-sidebar-section" id="ep-section-my-work">
+                            <div class="ep-sidebar-section-title">My Work</div>
+                            <div class="ep-sidebar-section-links">
+                                <a href="/my/employee/requests" class="ep-sidebar-link"><i class="fa fa-file-text-o"/>Employee Requests</a>
+                                <a href="/my/employee/material" class="ep-sidebar-link"><i class="fa fa-cubes"/>Material Requests</a>
+                                <t t-if="request.env.user.has_group('employee_portal_suite.group_portal_attendance_user')"><a href="/my/employee/attendance" class="ep-sidebar-link"><i class="fa fa-clock-o"/>Attendance</a></t>
+                            </div>
+                        </div>
+                        <div class="ep-sidebar-section" id="ep-section-approvals">
+                            <div class="ep-sidebar-section-title">Approvals</div>
+                            <div class="ep-sidebar-section-links">
+                                <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')"><a href="/my/employee/approvals" class="ep-sidebar-link"><i class="fa fa-check-square-o"/>ER Approvals</a></t>
+                                <t t-if="request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or request.env.user.has_group('employee_portal_suite.group_mr_projects_director') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')"><a href="/my/employee/material/approvals" class="ep-sidebar-link"><i class="fa fa-check-circle-o"/>MR Approvals</a></t>
+                                <a href="/my/employee/sign" class="ep-sidebar-link"><i class="fa fa-pencil-square-o"/>Signatures</a>
+                            </div>
+                        </div>
+                        <div class="ep-sidebar-section ep-empty" id="ep-section-contracts-projects">
+                            <div class="ep-sidebar-section-title">Contracts &amp; Projects</div>
+                            <div class="ep-sidebar-section-links"></div>
+                        </div>
+                        <div class="ep-sidebar-section ep-empty" id="ep-section-weekly-plan">
+                            <div class="ep-sidebar-section-title">Weekly Plan</div>
+                            <div class="ep-sidebar-section-links"></div>
+                        </div>
+                        <div class="ep-sidebar-section" id="ep-section-reports">
+                            <div class="ep-sidebar-section-title">Reports</div>
+                            <div class="ep-sidebar-section-links">
+                                <t t-if="request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')"><a href="/my/employee/salary-reports" class="ep-sidebar-link"><i class="fa fa-money"/>Salary Reports</a></t>
+                                <t t-if="ep_notif_summary.get('portal_report', {}).get('count', 0) &gt; 0"><a href="/my/employee/reports" class="ep-sidebar-link"><i class="fa fa-folder-open-o"/>Reports</a></t>
+                            </div>
+                        </div>
                     </t>
                     <t t-if="request.env.user.has_group('employee_portal_suite.group_attendance_only')"><a href="/my/employee/attendance" class="ep-sidebar-link"><i class="fa fa-clock-o"/>Attendance</a></t>
                 </nav>
+                <script type="text/javascript">
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var nav = document.getElementById('ep-desktop-sidebar-nav');
+                        if (!nav) return;
+                        var targets = {
+                            'contracts': 'ep-section-contracts-projects', 'ipcs': 'ep-section-contracts-projects',
+                            'variations': 'ep-section-contracts-projects', 'measurements': 'ep-section-contracts-projects',
+                            'payment approvals': 'ep-section-weekly-plan', 'weekly cash plans': 'ep-section-weekly-plan',
+                            'petty cash': 'ep-section-reports'
+                        };
+                        function organize() {
+                            Array.from(nav.querySelectorAll('a.ep-sidebar-link')).forEach(function (link) {
+                                var text = (link.textContent || '').trim().toLowerCase();
+                                var sectionId = targets[text];
+                                if (!sectionId) return;
+                                var section = document.getElementById(sectionId);
+                                var holder = section &amp;&amp; section.querySelector('.ep-sidebar-section-links');
+                                if (holder &amp;&amp; link.parentElement !== holder) holder.appendChild(link);
+                            });
+                            nav.querySelectorAll('.ep-sidebar-section').forEach(function(section) {
+                                var holder = section.querySelector('.ep-sidebar-section-links');
+                                section.classList.toggle('ep-empty', !holder || !holder.querySelector('a.ep-sidebar-link'));
+                            });
+                        }
+                        organize();
+                        new MutationObserver(organize).observe(nav, {childList:true, subtree:true});
+                    });
+                </script>
                 <div class="ep-sidebar-bottom"><div class="ep-sidebar-profile">
                     <button type="button" class="ep-sidebar-profile-btn" onclick="document.getElementById('ep-profile-menu').classList.toggle('show')"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"/><span><span class="ep-sidebar-profile-name d-block" t-esc="request.env.user.name"/><span class="ep-sidebar-profile-role d-block" t-esc="request.env.user.employee_id.job_title or 'Employee'"/></span><i class="fa fa-angle-up ms-auto"/></button>
                     <div id="ep-profile-menu" class="ep-profile-menu"><a href="/my/employee/profile"><i class="fa fa-user"/>Edit info</a><a href="/web/session/logout"><i class="fa fa-sign-out"/>Logout</a></div>
