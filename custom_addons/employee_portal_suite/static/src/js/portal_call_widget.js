@@ -84,7 +84,7 @@
                     <div id="epc-contact-list"><div class="epc-empty">Loading…</div></div>
                 </div>
                 <div id="epc-incoming" class="epc-hidden">
-                    <div class="epc-call-avatar epc-incoming-avatar" id="epc-incoming-avatar"><i class="fa fa-phone"></i></div>
+                    <div class="epc-call-avatar epc-incoming-avatar"><img id="epc-incoming-photo" class="epc-avatar-photo epc-hidden" alt=""/><span id="epc-incoming-fallback"><i class="fa fa-phone"></i></span></div>
                     <div class="epc-incoming-name"></div>
                     <div class="epc-incoming-sub">Incoming audio call</div>
                     <div class="epc-incoming-actions">
@@ -94,7 +94,7 @@
                 </div>
                 <div id="epc-active" class="epc-hidden epc-audio-call">
                     <div class="epc-active-stage">
-                        <div class="epc-call-avatar epc-active-avatar" id="epc-active-avatar"><span id="epc-peer-initial">?</span></div>
+                        <div class="epc-call-avatar epc-active-avatar"><img id="epc-peer-photo" class="epc-avatar-photo epc-hidden" alt=""/><span id="epc-peer-initial">?</span></div>
                         <div class="epc-active-name">Employee</div>
                         <div class="epc-active-status">Connecting…</div>
                         <div class="epc-call-timer">00:00</div>
@@ -332,9 +332,7 @@
                 const identity = document.createElement("div");
                 identity.className = "epc-contact-identity";
                 const detail = [c.department, c.note, c.user_type].filter(Boolean).join(" · ");
-                const initial = ((c.name || "?").trim().charAt(0) || "?").toUpperCase();
-                identity.innerHTML = `<span class="epc-contact-avatar"><span>${this._escape(initial)}</span></span><span class="epc-contact-text"><span class="epc-contact-name">${this._escape(c.name)}</span><span class="epc-contact-type">${this._escape(detail || "Employee")}</span></span>`;
-                this._applyAvatar(identity.querySelector(".epc-contact-avatar"), c.avatar_url, initial);
+                identity.innerHTML = `<span class="epc-contact-photo-wrap"><img class="epc-contact-photo" src="${this._escape(c.avatar_url || "")}" alt="" onerror="this.style.display=\'none\'"/><span class="epc-contact-photo-fallback">${this._escape((c.name || "?").charAt(0).toUpperCase())}</span></span><span class="epc-contact-copy"><span class="epc-contact-name">${this._escape(c.name)}</span><span class="epc-contact-type">${this._escape(detail || "Employee")}</span></span>`;
                 const callBtn = document.createElement("button");
                 callBtn.textContent = this.currentUuid && this._addingPeople ? "Add" : "Call";
                 callBtn.className = "epc-btn epc-btn-small";
@@ -349,20 +347,6 @@
             const d = document.createElement("div");
             d.textContent = s || "";
             return d.innerHTML;
-        }
-
-        _applyAvatar(container, url, fallbackText) {
-            if (!container) return;
-            container.innerHTML = `<span>${this._escape(fallbackText || "?")}</span>`;
-            if (!url) return;
-            const img = document.createElement("img");
-            img.alt = "";
-            img.src = url;
-            img.addEventListener("load", () => {
-                container.innerHTML = "";
-                container.appendChild(img);
-            }, { once: true });
-            img.addEventListener("error", () => {}, { once: true });
         }
 
         // ------------------------------------------------------------
@@ -458,12 +442,15 @@
             }
         }
 
-        _setPeerName(name, avatarUrl) {
+        _setPeerName(name) {
             this.currentPeerName = name || "Employee";
             const activeName = document.querySelector("#epc-active .epc-active-name");
             if (activeName) activeName.textContent = this.currentPeerName;
-            const fallback = (this.currentPeerName.trim().charAt(0) || "?").toUpperCase();
-            this._applyAvatar(document.getElementById("epc-active-avatar"), avatarUrl, fallback);
+            const initial = document.getElementById("epc-peer-initial");
+            if (initial) initial.textContent = (this.currentPeerName.trim().charAt(0) || "?").toUpperCase();
+            const contact = this.contacts.find((c) => c.name === this.currentPeerName);
+            const photo = document.getElementById("epc-peer-photo");
+            if (photo) { if (contact && contact.avatar_url) { photo.src = contact.avatar_url; photo.classList.remove("epc-hidden"); if (initial) initial.classList.add("epc-hidden"); photo.onerror = () => { photo.classList.add("epc-hidden"); if (initial) initial.classList.remove("epc-hidden"); }; } else { photo.classList.add("epc-hidden"); if (initial) initial.classList.remove("epc-hidden"); } }
         }
 
         _startCallTimer() {
@@ -515,9 +502,11 @@
                 this._incomingCallerId = Number(evt.payload.caller_id || 0);
                 const callerName = evt.payload.caller_name || "Unknown";
                 this.peerNames.set(this._incomingCallerId, callerName);
-                this._setPeerName(callerName, evt.payload.avatar_url);
-                this._applyAvatar(document.getElementById("epc-incoming-avatar"), evt.payload.avatar_url, (callerName.trim().charAt(0) || "?").toUpperCase());
+                this._setPeerName(callerName);
                 document.querySelector("#epc-incoming .epc-incoming-name").textContent = callerName;
+                const incomingPhoto = document.getElementById("epc-incoming-photo");
+                const incomingFallback = document.getElementById("epc-incoming-fallback");
+                if (incomingPhoto && evt.payload.caller_avatar_url) { incomingPhoto.src = evt.payload.caller_avatar_url; incomingPhoto.classList.remove("epc-hidden"); if (incomingFallback) incomingFallback.classList.add("epc-hidden"); incomingPhoto.onerror = () => { incomingPhoto.classList.add("epc-hidden"); if (incomingFallback) incomingFallback.classList.remove("epc-hidden"); }; }
                 document.querySelector("#epc-incoming .epc-incoming-sub").textContent = evt.payload.meeting ? "Meeting invitation" : (this.currentCallType === "video" ? "Incoming video call" : "Incoming audio call");
                 document.getElementById("epc-incoming").classList.remove("epc-hidden");
                 this._startRinging(); this._notifyIncoming(callerName);
@@ -556,7 +545,7 @@
                 this.currentUuid = res.uuid;
                 this._iAmCaller = true;
                 const contact = this.contacts.find((c) => Number(c.user_id) === Number(targetUserId));
-                this._setPeerName(contact ? contact.name : "Employee", contact ? contact.avatar_url : null);
+                this._setPeerName(contact ? contact.name : "Employee");
                 document.getElementById("epc-panel").classList.add("epc-hidden");
                 await this._prepareLocalMedia();
                 this._showActive("Calling…");
@@ -936,8 +925,7 @@
                 const row = document.createElement("div");
                 row.className = "epc-participant-chip";
                 const initial = (p.name || "?").trim().charAt(0).toUpperCase() || "?";
-                row.innerHTML = `<span class="epc-participant-avatar"><span>${initial}</span></span><span class="epc-participant-name"></span>${p.is_self ? '<span class="epc-you-badge">You</span>' : ''}`;
-                this._applyAvatar(row.querySelector(".epc-participant-avatar"), p.avatar_url, initial);
+                row.innerHTML = `<span class="epc-participant-avatar"><img src="${this._escape(p.avatar_url || "")}" alt="" onerror="this.style.display=\'none\'"/><span>${initial}</span></span><span class="epc-participant-name"></span>${p.is_self ? '<span class="epc-you-badge">You</span>' : ''}`;
                 row.querySelector(".epc-participant-name").textContent = p.name || "Employee";
                 list.appendChild(row);
             });

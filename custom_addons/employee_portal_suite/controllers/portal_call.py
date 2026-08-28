@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 
@@ -42,6 +43,26 @@ class PortalCallController(http.Controller):
             ('user_id', '=', user.id),
         ]))
 
+    @http.route('/employee_portal/call/avatar/<int:user_id>', type='http', auth='user', csrf=False)
+    def call_avatar(self, user_id):
+        """Serve employee avatars to authenticated users without exposing res.users read access."""
+        employee = request.env['hr.employee'].sudo().search([
+            ('active', '=', True), ('user_id', '=', user_id), ('user_id.active', '=', True),
+        ], limit=1)
+        if not employee:
+            return request.not_found()
+        image = employee.image_128 or employee.user_id.partner_id.avatar_128
+        if not image:
+            return request.not_found()
+        try:
+            content = base64.b64decode(image)
+        except Exception:
+            return request.not_found()
+        return request.make_response(content, headers=[
+            ('Content-Type', 'image/png'),
+            ('Cache-Control', 'private, max-age=3600'),
+        ])
+
     # ------------------------------------------------------------------
     # Directory
     # ------------------------------------------------------------------
@@ -73,7 +94,7 @@ class PortalCallController(http.Controller):
                 'user_type': 'Portal Employee' if is_portal else 'Internal Employee',
                 'department': employee.department_id.name or '',
                 'note': employee.job_title or '',
-                'avatar_url': f'/web/image/res.users/{contact.id}/avatar_128',
+                'avatar_url': '/employee_portal/call/avatar/%s' % contact.id,
             })
         return result
 
@@ -99,8 +120,8 @@ class PortalCallController(http.Controller):
         self._queue_signal(session, target, 'incoming', {
             'caller_id': user.id,
             'caller_name': user.name,
+            'caller_avatar_url': '/employee_portal/call/avatar/%s' % user.id,
             'call_type': session.call_type,
-            'avatar_url': f'/web/image/res.users/{user.id}/avatar_128',
         })
         return {'uuid': session.uuid}
 
@@ -160,8 +181,7 @@ class PortalCallController(http.Controller):
                 continue
             session.write({'participant_ids': [(4, target.id)]})
             self._queue_signal(session, target, 'incoming', {
-                'caller_id': inviter.id, 'caller_name': inviter.name, 'call_type': session.call_type, 'meeting': True,
-                'avatar_url': f'/web/image/res.users/{inviter.id}/avatar_128',
+                'caller_id': inviter.id, 'caller_name': inviter.name, 'caller_avatar_url': '/employee_portal/call/avatar/%s' % inviter.id, 'call_type': session.call_type, 'meeting': True,
             })
             added.append(target.id)
         return {'ok': True, 'added': added}
@@ -181,7 +201,7 @@ class PortalCallController(http.Controller):
                 'name': user.name or 'Employee',
                 'active': user.id in active_ids,
                 'is_self': user.id == current.id,
-                'avatar_url': f'/web/image/res.users/{user.id}/avatar_128',
+                'avatar_url': '/employee_portal/call/avatar/%s' % user.id,
             })
         return {'participants': participants}
 

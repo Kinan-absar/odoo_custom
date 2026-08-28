@@ -177,3 +177,27 @@ class EmployeePortalMain(CustomerPortal):
             "attendance_checked_in": attendance_checked_in,
             "can_use_attendance": can_use_attendance,
         })
+
+    @http.route('/my/employee/profile', type='http', auth='user', website=True, methods=['GET', 'POST'], csrf=True)
+    def employee_profile(self, **post):
+        user = request.env.user
+        employee = user.employee_id.sudo()
+        if not employee:
+            return request.redirect('/my/employee')
+        saved = False
+        if request.httprequest.method == 'POST':
+            vals = {}
+            partner_vals = {}
+            for field_name in ('work_phone', 'mobile_phone', 'work_email'):
+                if field_name in employee._fields:
+                    vals[field_name] = (post.get(field_name) or '').strip()
+            partner_vals['phone'] = (post.get('work_phone') or '').strip()
+            partner_vals['mobile'] = (post.get('mobile_phone') or '').strip()
+            partner_vals['email'] = (post.get('work_email') or '').strip()
+            if vals:
+                employee.write(vals)
+            user.partner_id.sudo().write(partner_vals)
+            saved = True
+        return request.render('employee_portal_suite.employee_profile_edit', {
+            'employee': employee, 'saved': saved,
+        })
