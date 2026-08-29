@@ -54,3 +54,7 @@ portal_call_signal_internal_access,portal_call_signal_internal_access,model_port
 portal_call_contact_portal_access,portal_call_contact_portal_access,model_portal_call_contact,employee_portal_suite.group_employee_portal,1,0,0,0
 portal_call_contact_internal_access,portal_call_contact_internal_access,model_portal_call_contact,base.group_user,1,0,0,0
 portal_call_contact_admin_access,portal_call_contact_admin_access,model_portal_call_contact,employee_portal_suite.group_employee_portal_admin,1,1,1,1
+portal_chat_thread_internal,portal.chat.thread internal,model_portal_chat_thread,base.group_user,1,0,0,0
+portal_chat_thread_portal,portal.chat.thread portal,model_portal_chat_thread,base.group_portal,1,0,0,0
+portal_chat_read_internal,portal.chat.read internal,model_portal_chat_read,base.group_user,1,0,0,0
+portal_chat_read_portal,portal.chat.read portal,model_portal_chat_read,base.group_portal,1,0,0,0

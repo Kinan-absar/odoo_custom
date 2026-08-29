@@ -67,6 +67,13 @@
             this.presenceTimer = null;
             this.callHistory = [];
             this.historyTimer = null;
+            this.chatThreads = [];
+            this.chatTimer = null;
+            this.unreadChatCount = 0;
+            this.currentChatThreadId = null;
+            this.currentChatThread = null;
+            this.chatSelectionMode = false;
+            this.chatSelection = new Set();
             this.panelView = "people";
             this.unreadMissedCount = 0;
             this._lastLocalActivity = Date.now();
@@ -81,6 +88,7 @@
             this._loadContacts();
             this._startPresenceHeartbeat();
             this._startHistoryRefresh();
+            this._startChatRefresh();
             this._startPolling();
         }
 
@@ -101,6 +109,7 @@
                     <div id="epc-panel-tabs" class="epc-panel-tabs">
                         <button id="epc-tab-people" type="button" class="epc-panel-tab epc-active"><i class="fa fa-users"></i><span>People</span></button>
                         <button id="epc-tab-history" type="button" class="epc-panel-tab"><i class="fa fa-history"></i><span>Recent</span><span id="epc-tab-missed" class="epc-tab-badge epc-hidden">0</span></button>
+                        <button id="epc-tab-chat" type="button" class="epc-panel-tab"><i class="fa fa-comments"></i><span>Messages</span><span id="epc-tab-chat-unread" class="epc-tab-badge epc-hidden">0</span></button>
                     </div>
                     <div id="epc-people-view">
                     <div class="epc-search-wrap"><input id="epc-contact-search" type="search" placeholder="Search employees…" autocomplete="off"/></div>
@@ -115,6 +124,22 @@
                     </div>
                     <div id="epc-history-view" class="epc-hidden">
                         <div id="epc-history-list"><div class="epc-empty">Loading recent calls…</div></div>
+                    </div>
+                    <div id="epc-chat-view" class="epc-hidden">
+                        <div id="epc-chat-thread-list-wrap">
+                            <div class="epc-chat-toolbar"><button id="epc-new-chat" type="button" class="epc-btn epc-btn-small"><i class="fa fa-plus"></i><span>New chat</span></button></div>
+                            <div id="epc-chat-thread-list"><div class="epc-empty">Loading messages…</div></div>
+                        </div>
+                        <div id="epc-chat-new-wrap" class="epc-hidden">
+                            <div class="epc-chat-subheader"><button id="epc-chat-new-back" type="button" class="epc-icon-btn"><i class="fa fa-arrow-left"></i></button><strong>New conversation</strong><button id="epc-chat-new-start" type="button" class="epc-btn epc-btn-small" disabled>Start</button></div>
+                            <div class="epc-search-wrap"><input id="epc-chat-contact-search" type="search" placeholder="Search employees…" autocomplete="off"/></div>
+                            <div id="epc-chat-contact-list"></div>
+                        </div>
+                        <div id="epc-chat-conversation" class="epc-hidden">
+                            <div class="epc-chat-subheader"><button id="epc-chat-back" type="button" class="epc-icon-btn"><i class="fa fa-arrow-left"></i></button><strong id="epc-chat-title">Conversation</strong><button id="epc-chat-call" type="button" class="epc-icon-btn" title="Call"><i class="fa fa-phone"></i></button></div>
+                            <div id="epc-chat-messages" class="epc-chat-messages"></div>
+                            <form id="epc-chat-compose" class="epc-chat-compose"><textarea id="epc-chat-input" rows="1" placeholder="Write a message…"></textarea><button type="submit" class="epc-chat-send" title="Send"><i class="fa fa-paper-plane"></i></button></form>
+                        </div>
                     </div>
                 </div>
                 <div id="epc-incoming" class="epc-hidden">
@@ -170,6 +195,14 @@
             document.getElementById("epc-picker-backdrop").addEventListener("click", closePicker);
             document.getElementById("epc-tab-people").addEventListener("click", (ev) => { ev.stopPropagation(); this._showPanelView("people"); });
             document.getElementById("epc-tab-history").addEventListener("click", (ev) => { ev.stopPropagation(); this._showPanelView("history", true); });
+            document.getElementById("epc-tab-chat").addEventListener("click", (ev) => { ev.stopPropagation(); this._showPanelView("chat"); });
+            document.getElementById("epc-new-chat").addEventListener("click", (ev) => { ev.stopPropagation(); this._openNewChatSelector(); });
+            document.getElementById("epc-chat-new-back").addEventListener("click", (ev) => { ev.stopPropagation(); this._closeNewChatSelector(); });
+            document.getElementById("epc-chat-new-start").addEventListener("click", (ev) => { ev.stopPropagation(); this._startSelectedChat(); });
+            document.getElementById("epc-chat-contact-search").addEventListener("input", () => this._renderChatContacts());
+            document.getElementById("epc-chat-back").addEventListener("click", (ev) => { ev.stopPropagation(); this._closeChatConversation(); });
+            document.getElementById("epc-chat-call").addEventListener("click", (ev) => { ev.stopPropagation(); this._callCurrentChat(); });
+            document.getElementById("epc-chat-compose").addEventListener("submit", (ev) => { ev.preventDefault(); ev.stopPropagation(); this._sendChatMessage(); });
             document.getElementById("epc-accept").addEventListener("click", () => this._acceptIncoming());
             document.getElementById("epc-reject").addEventListener("click", () => this._rejectIncoming());
             document.getElementById("epc-hangup").addEventListener("click", () => this._hangup());
@@ -317,28 +350,39 @@
 
         _showPanelView(view, markSeen) {
             if (this._addingPeople) view = "people";
-            this.panelView = view === "history" ? "history" : "people";
+            this.panelView = ["people", "history", "chat"].includes(view) ? view : "people";
             const people = document.getElementById("epc-people-view");
             const history = document.getElementById("epc-history-view");
+            const chat = document.getElementById("epc-chat-view");
             const peopleTab = document.getElementById("epc-tab-people");
             const historyTab = document.getElementById("epc-tab-history");
+            const chatTab = document.getElementById("epc-tab-chat");
             if (people) people.classList.toggle("epc-hidden", this.panelView !== "people");
             if (history) history.classList.toggle("epc-hidden", this.panelView !== "history");
+            if (chat) chat.classList.toggle("epc-hidden", this.panelView !== "chat");
             if (peopleTab) peopleTab.classList.toggle("epc-active", this.panelView === "people");
             if (historyTab) historyTab.classList.toggle("epc-active", this.panelView === "history");
+            if (chatTab) chatTab.classList.toggle("epc-active", this.panelView === "chat");
             if (this.panelView === "history") {
                 this._renderCallHistory();
                 if (markSeen) this._markMissedCallsSeen();
+            } else if (this.panelView === "chat") {
+                this._renderChatThreads();
             }
+        }
+
+        _refreshMainAttentionBadge() {
+            const total = Math.max(0, Number(this.unreadMissedCount || 0)) + Math.max(0, Number(this.unreadChatCount || 0));
+            document.querySelectorAll(".epc-call-badge").forEach((badge) => {
+                badge.textContent = total > 99 ? "99+" : String(total);
+                badge.classList.toggle("epc-hidden", total === 0);
+            });
         }
 
         _setMissedBadge(count) {
             const n = Math.max(0, Number(count || 0));
             this.unreadMissedCount = n;
-            document.querySelectorAll(".epc-call-badge").forEach((badge) => {
-                badge.textContent = n > 99 ? "99+" : String(n);
-                badge.classList.toggle("epc-hidden", n === 0);
-            });
+            this._refreshMainAttentionBadge();
             const tabBadge = document.getElementById("epc-tab-missed");
             if (tabBadge) {
                 tabBadge.textContent = n > 99 ? "99+" : String(n);
@@ -456,6 +500,191 @@
                 this._showActive(`Calling ${userIds.length} employees…`);
                 await this._refreshParticipants();
             } catch (e) { alert("Could not start group call."); }
+        }
+
+        _startChatRefresh() {
+            const refresh = async () => {
+                await this._refreshChatThreads();
+                if (this.currentChatThreadId) await this._refreshOpenChat(false);
+                this.chatTimer = setTimeout(refresh, 5000);
+            };
+            refresh();
+        }
+
+        async _refreshChatThreads() {
+            try {
+                const res = await rpc("/employee_portal/chat/threads", {});
+                this.chatThreads = (res && res.threads) || [];
+                this._setChatUnreadBadge((res && res.unread_total) || 0);
+                if (this.panelView === "chat" && !this.currentChatThreadId && !this.chatSelectionMode) this._renderChatThreads();
+            } catch (e) {
+                // Messaging must never interfere with calling.
+            }
+        }
+
+        _setChatUnreadBadge(count) {
+            const n = Math.max(0, Number(count || 0));
+            this.unreadChatCount = n;
+            this._refreshMainAttentionBadge();
+            const badge = document.getElementById("epc-tab-chat-unread");
+            if (badge) {
+                badge.textContent = n > 99 ? "99+" : String(n);
+                badge.classList.toggle("epc-hidden", n === 0);
+            }
+        }
+
+        _renderChatThreads() {
+            const list = document.getElementById("epc-chat-thread-list");
+            if (!list) return;
+            list.innerHTML = "";
+            if (!this.chatThreads.length) {
+                list.innerHTML = '<div class="epc-empty">No conversations yet.</div>';
+                return;
+            }
+            this.chatThreads.forEach((thread) => {
+                const row = document.createElement("button");
+                row.type = "button";
+                row.className = "epc-chat-thread-row" + (thread.unread ? " epc-chat-thread-unread" : "");
+                const initial = this._escape((thread.name || "?").charAt(0).toUpperCase());
+                const avatar = thread.is_group
+                    ? '<span class="epc-chat-thread-avatar epc-chat-group-avatar"><i class="fa fa-users"></i></span>'
+                    : `<span class="epc-chat-thread-avatar"><img src="${this._escape(thread.avatar_url || "")}" alt="" onerror="this.style.display='none'"/><span>${initial}</span></span>`;
+                row.innerHTML = `${avatar}<span class="epc-chat-thread-copy"><strong>${this._escape(thread.name || "Conversation")}</strong><small>${this._escape(thread.preview || "Start a conversation")}</small></span>${thread.unread ? `<span class="epc-chat-unread-count">${Math.min(99, Number(thread.unread))}</span>` : ""}`;
+                row.addEventListener("click", (ev) => { ev.stopPropagation(); this._openChatThread(thread.id); });
+                list.appendChild(row);
+            });
+        }
+
+        _openNewChatSelector() {
+            this.chatSelectionMode = true;
+            this.chatSelection.clear();
+            const wrap = document.getElementById("epc-chat-new-wrap");
+            const threads = document.getElementById("epc-chat-thread-list-wrap");
+            const convo = document.getElementById("epc-chat-conversation");
+            if (threads) threads.classList.add("epc-hidden");
+            if (convo) convo.classList.add("epc-hidden");
+            if (wrap) wrap.classList.remove("epc-hidden");
+            const search = document.getElementById("epc-chat-contact-search");
+            if (search) search.value = "";
+            this._renderChatContacts();
+        }
+
+        _closeNewChatSelector() {
+            this.chatSelectionMode = false;
+            this.chatSelection.clear();
+            const wrap = document.getElementById("epc-chat-new-wrap");
+            const threads = document.getElementById("epc-chat-thread-list-wrap");
+            if (wrap) wrap.classList.add("epc-hidden");
+            if (threads) threads.classList.remove("epc-hidden");
+            this._renderChatThreads();
+        }
+
+        _renderChatContacts() {
+            const list = document.getElementById("epc-chat-contact-list");
+            const search = document.getElementById("epc-chat-contact-search");
+            if (!list) return;
+            const term = (search ? search.value : "").trim().toLowerCase();
+            const contacts = this.contacts.filter((c) => !term || (c.name || "").toLowerCase().includes(term));
+            list.innerHTML = "";
+            contacts.forEach((c) => {
+                const uid = Number(c.user_id);
+                const selected = this.chatSelection.has(uid);
+                const row = document.createElement("button");
+                row.type = "button";
+                row.className = "epc-chat-contact-row" + (selected ? " epc-selected" : "");
+                row.innerHTML = `<span class="epc-chat-contact-avatar"><img src="${this._escape(c.avatar_url || "")}" alt="" onerror="this.style.display='none'"/><span>${this._escape((c.name || "?").charAt(0).toUpperCase())}</span></span><span class="epc-chat-contact-name">${this._escape(c.name || "Employee")}</span><span class="epc-chat-contact-check"><i class="fa ${selected ? "fa-check-circle" : "fa-circle-o"}"></i></span>`;
+                row.addEventListener("click", (ev) => {
+                    ev.preventDefault(); ev.stopPropagation();
+                    if (selected) this.chatSelection.delete(uid); else this.chatSelection.add(uid);
+                    this._renderChatContacts();
+                    const start = document.getElementById("epc-chat-new-start");
+                    if (start) start.disabled = this.chatSelection.size < 1;
+                });
+                list.appendChild(row);
+            });
+            const start = document.getElementById("epc-chat-new-start");
+            if (start) start.disabled = this.chatSelection.size < 1;
+        }
+
+        async _startSelectedChat() {
+            const ids = Array.from(this.chatSelection);
+            if (!ids.length) return;
+            try {
+                const res = await rpc("/employee_portal/chat/start", { participant_ids: ids });
+                if (res && res.thread_id) {
+                    this.chatSelectionMode = false;
+                    this.chatSelection.clear();
+                    await this._refreshChatThreads();
+                    await this._openChatThread(res.thread_id);
+                }
+            } catch (e) { alert("Could not start conversation."); }
+        }
+
+        async _openChatThread(threadId) {
+            this.currentChatThreadId = Number(threadId);
+            const threads = document.getElementById("epc-chat-thread-list-wrap");
+            const selector = document.getElementById("epc-chat-new-wrap");
+            const convo = document.getElementById("epc-chat-conversation");
+            if (threads) threads.classList.add("epc-hidden");
+            if (selector) selector.classList.add("epc-hidden");
+            if (convo) convo.classList.remove("epc-hidden");
+            await this._refreshOpenChat(true);
+        }
+
+        _closeChatConversation() {
+            this.currentChatThreadId = null;
+            this.currentChatThread = null;
+            const threads = document.getElementById("epc-chat-thread-list-wrap");
+            const convo = document.getElementById("epc-chat-conversation");
+            if (convo) convo.classList.add("epc-hidden");
+            if (threads) threads.classList.remove("epc-hidden");
+            this._refreshChatThreads();
+        }
+
+        async _refreshOpenChat(scrollToBottom) {
+            if (!this.currentChatThreadId) return;
+            try {
+                const res = await rpc("/employee_portal/chat/messages", { thread_id: this.currentChatThreadId, limit: 100 });
+                if (!res || res.error) return;
+                this.currentChatThread = res.thread;
+                const known = this.chatThreads.find((t) => Number(t.id) === Number(this.currentChatThreadId));
+                const title = document.getElementById("epc-chat-title");
+                if (title) title.textContent = known ? known.name : (res.thread.name || "Conversation");
+                const box = document.getElementById("epc-chat-messages");
+                if (!box) return;
+                const wasNearBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 90;
+                box.innerHTML = "";
+                (res.messages || []).forEach((msg) => {
+                    const item = document.createElement("div");
+                    item.className = "epc-chat-message " + (msg.mine ? "epc-chat-message-mine" : "epc-chat-message-other");
+                    item.innerHTML = `${msg.mine ? "" : `<div class="epc-chat-message-author">${this._escape(msg.author || "Employee")}</div>`}<div class="epc-chat-bubble">${this._escape(msg.body || "").replace(/\n/g, "<br/>")}</div>`;
+                    box.appendChild(item);
+                });
+                if (scrollToBottom || wasNearBottom) box.scrollTop = box.scrollHeight;
+                await this._refreshChatThreads();
+            } catch (e) {}
+        }
+
+        async _sendChatMessage() {
+            const input = document.getElementById("epc-chat-input");
+            const text = (input ? input.value : "").trim();
+            if (!text || !this.currentChatThreadId) return;
+            if (input) input.value = "";
+            try {
+                await rpc("/employee_portal/chat/send", { thread_id: this.currentChatThreadId, body: text });
+                await this._refreshOpenChat(true);
+            } catch (e) {
+                if (input) input.value = text;
+            }
+        }
+
+        _callCurrentChat() {
+            if (!this.currentChatThread) return;
+            const contactIds = new Set((this.contacts || []).map((c) => Number(c.user_id)));
+            const others = (this.currentChatThread.participant_ids || []).map(Number).filter((uid) => contactIds.has(uid));
+            if (!others.length) return;
+            if (others.length === 1) this._startCall(others[0]);
+            else this._startHistoryGroupCall(others);
         }
 
         _setGroupCallMode(enabled) {
@@ -866,8 +1095,10 @@
                 this._clearReconnectTimer(peerId, false);
                 const watchdog = setTimeout(() => {
                     const current = this.peerConnections.get(peerId);
-                    if (current && !["connected", "closed"].includes(current.connectionState)) {
+                    if (current && !["connected", "closed"].includes(this._peerHealth(current))) {
                         this._scheduleReconnect(peerId, false);
+                    } else if (current) {
+                        this._handlePeerConnectionState(peerId, current);
                     }
                 }, 6500);
                 this.reconnectTimers.set(peerId, watchdog);
@@ -877,11 +1108,25 @@
             }
         }
 
+        _peerHealth(pc) {
+            if (!pc) return "new";
+            const connection = pc.connectionState || "new";
+            const ice = pc.iceConnectionState || "new";
+            // Browsers do not always update these two state machines together.
+            // Treat either healthy state as authoritative so the UI cannot stay
+            // stuck on Reconnecting after media has already recovered.
+            if (["connected", "completed"].includes(connection) || ["connected", "completed"].includes(ice)) return "connected";
+            if (connection === "failed" || ice === "failed") return "failed";
+            if (connection === "disconnected" || ice === "disconnected") return "disconnected";
+            if (connection === "closed" || ice === "closed") return "closed";
+            return connection !== "new" ? connection : ice;
+        }
+
         _handlePeerConnectionState(peerId, pc) {
             if (!this.currentUuid || !pc) return;
-            const state = pc.connectionState || pc.iceConnectionState || "new";
+            const state = this._peerHealth(pc);
             const previous = this.peerConnectionStates.get(Number(peerId));
-            if (state === "connected" || state === "completed") {
+            if (state === "connected") {
                 this._clearReconnectTimer(peerId, true);
                 this.peerConnectionStates.set(Number(peerId), "connected");
                 if (previous === "reconnecting" || previous === "disconnected" || previous === "failed") {
@@ -890,7 +1135,7 @@
                         if (this.currentUuid && !Array.from(this.peerConnectionStates.values()).some((v) => ["reconnecting", "disconnected", "failed"].includes(v))) {
                             this._restoreMeetingStatus();
                         }
-                    }, 1200);
+                    }, 600);
                 } else {
                     this._restoreMeetingStatus();
                 }
@@ -907,8 +1152,10 @@
             if (!this.currentUuid || !navigator.onLine) return;
             for (const [peerId, pc] of this.peerConnections.entries()) {
                 if (!pc || pc.signalingState === "closed") continue;
-                const state = pc.connectionState || pc.iceConnectionState || "new";
-                if (force || ["disconnected", "failed"].includes(state)) {
+                const state = this._peerHealth(pc);
+                if (state === "connected") {
+                    this._handlePeerConnectionState(peerId, pc);
+                } else if (force || ["disconnected", "failed"].includes(state)) {
                     this._scheduleReconnect(peerId, force);
                 }
             }
@@ -1504,8 +1751,9 @@
                         audio.setSinkId(this.speakerSinkId).catch(() => {});
                     }
                 }
-                const status = document.querySelector("#epc-active .epc-active-status");
-                if (status) status.textContent = `${this.peerConnections.size + 1} people in meeting`;
+                if (!Array.from(this.peerConnectionStates.values()).some((v) => ["reconnecting", "disconnected", "failed"].includes(v))) {
+                    this._restoreMeetingStatus();
+                }
                 if (!this.callStartedAt) this._startCallTimer();
             };
             pc.onicecandidate = (ev) => { if (ev.candidate) rpc("/employee_portal/call/signal", {uuid:this.currentUuid, signal_type:"ice", data:{...ev.candidate.toJSON(), _target_user_id:peerId}}); };

@@ -21,3 +21,5 @@ from . import telegram_session
 from . import telegram_notifications
 
 from . import portal_call
+
+from . import portal_chat
