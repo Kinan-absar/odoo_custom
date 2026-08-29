@@ -622,7 +622,17 @@
             try {
                 const res = await rpc("/employee_portal/chat/threads", {});
                 this.chatThreads = (res && res.threads) || [];
-                this._setChatUnreadBadge((res && res.unread_total) || 0);
+                let unreadTotal = Number((res && res.unread_total) || 0);
+                if (this.currentChatThreadId) {
+                    const openThread = this.chatThreads.find(
+                        (thread) => Number(thread.id) === Number(this.currentChatThreadId)
+                    );
+                    if (openThread) {
+                        unreadTotal = Math.max(0, unreadTotal - Number(openThread.unread || 0));
+                        openThread.unread = 0;
+                    }
+                }
+                this._setChatUnreadBadge(unreadTotal);
                 if (this.panelView === "chat" && !this.currentChatThreadId && !this.chatSelectionMode) this._renderChatThreads();
             } catch (e) {
                 // Messaging must never interfere with calling.

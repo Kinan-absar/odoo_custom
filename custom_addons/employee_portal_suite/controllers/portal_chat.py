@@ -76,7 +76,14 @@ class PortalChatController(http.Controller):
                     'discuss_channel_id': channel.id,
                     'last_message_date': channel.last_interest_dt or fields.Datetime.now(),
                 })
-            else:
+            # Once a native Discuss conversation is exposed to an employee
+            # portal participant it becomes an explicitly portal-linked channel.
+            channel.sudo().write({
+                'is_employee_portal_channel': True,
+                'employee_portal_thread_id': thread.id,
+            })
+
+            if thread:
                 vals = {}
                 if set(thread.participant_ids.ids) != set(all_user_ids):
                     vals['participant_ids'] = [(6, 0, all_user_ids)]

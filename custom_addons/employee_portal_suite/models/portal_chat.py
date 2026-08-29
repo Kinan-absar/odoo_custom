@@ -67,6 +67,10 @@ class PortalChatThread(models.Model):
 
         self._migrate_legacy_messages_to_discuss(channel)
         self.sudo().write({'discuss_channel_id': channel.id})
+        channel.sudo().write({
+            'is_employee_portal_channel': True,
+            'employee_portal_thread_id': self.id,
+        })
 
         # Make the migrated conversation visible in native Discuss immediately.
         channel.channel_member_ids.sudo().write({'unpin_dt': False})
@@ -79,10 +83,25 @@ class PortalChatThread(models.Model):
         return channel
 
     def _ensure_discuss_channel(self):
-        """Return/create the canonical native Discuss conversation for this thread."""
+        """Return/create the canonical native Discuss conversation.
+
+        New conversations are created through native Discuss membership APIs.
+        In particular, recipients are added with ``_add_members`` rather than by
+        writing ``channel_member_ids`` directly. Odoo 18 uses that path to emit
+        ``discuss.channel/joined`` on each new member's personal bus, which lets
+        an already-open Discuss client subscribe to the new channel immediately.
+        """
         self.ensure_one()
         if self.discuss_channel_id:
-            return self.discuss_channel_id.sudo()
+            channel = self.discuss_channel_id.sudo()
+            vals = {}
+            if not channel.is_employee_portal_channel:
+                vals['is_employee_portal_channel'] = True
+            if channel.employee_portal_thread_id != self:
+                vals['employee_portal_thread_id'] = self.id
+            if vals:
+                channel.write(vals)
+            return channel
 
         users = self.participant_ids.sudo().filtered(lambda user: user.active and user.partner_id)
         partner_ids = users.partner_id.ids
@@ -90,13 +109,9 @@ class PortalChatThread(models.Model):
             return self.env['discuss.channel']
 
         Channel = self.env['discuss.channel'].sudo()
-        if self.is_group or len(partner_ids) > 2:
-            channel = Channel.create_group(partner_ids, name=self.name or '')
-        else:
-            # Do not call channel_get() through sudo: Odoo's channel_get adds the
-            # environment user to the DM, which would add the superuser instead
-            # of one of the intended employee partners. Find/reuse an exact DM
-            # between these two partners, otherwise create it explicitly.
+        # Reuse an exact native DM when one already exists.
+        channel = self.env['discuss.channel']
+        if not self.is_group and len(partner_ids) == 2:
             self.env['discuss.channel'].flush_model()
             self.env['discuss.channel.member'].flush_model()
             self.env.cr.execute("""
@@ -106,10 +121,8 @@ class PortalChatThread(models.Model):
                  WHERE C.channel_type = 'chat'
                    AND M.partner_id IN %s
                    AND NOT EXISTS (
-                       SELECT 1
-                         FROM discuss_channel_member M2
-                        WHERE M2.channel_id = C.id
-                          AND M2.partner_id NOT IN %s
+                       SELECT 1 FROM discuss_channel_member M2
+                        WHERE M2.channel_id = C.id AND M2.partner_id NOT IN %s
                    )
               GROUP BY M.channel_id
                 HAVING ARRAY_AGG(DISTINCT M.partner_id ORDER BY M.partner_id) = %s
@@ -118,25 +131,34 @@ class PortalChatThread(models.Model):
             row = self.env.cr.fetchone()
             if row:
                 channel = Channel.browse(row[0])
-                channel.channel_member_ids.sudo().write({'unpin_dt': False})
-                channel.sudo().write({'last_interest_dt': fields.Datetime.now()})
-                channel.sudo()._broadcast(partner_ids)
-            else:
-                channel = Channel.create({
-                    'channel_member_ids': [
-                        Command.create({
-                            'partner_id': partner_id,
-                            'unpin_dt': False,
-                            'last_interest_dt': fields.Datetime.now(),
-                        })
-                        for partner_id in partner_ids
-                    ],
-                    'channel_type': 'chat',
-                    'name': ', '.join(users.partner_id.mapped('name')),
-                })
-                channel.sudo()._broadcast(partner_ids)
+
+        if not channel:
+            # Create with the request/current employee as the initial persona.
+            # discuss.channel.create() natively adds env.user; then _add_members()
+            # emits the joined event for every remaining recipient.
+            current_partner = self.env.user.partner_id
+            if current_partner.id not in partner_ids:
+                current_partner = users[:1].partner_id
+            create_env = Channel.with_user(current_partner.user_ids[:1] or self.env.user).sudo()
+            channel = create_env.create({
+                'channel_type': 'group' if self.is_group or len(partner_ids) > 2 else 'chat',
+                'name': self.name or ', '.join(users.partner_id.mapped('name')),
+                'is_employee_portal_channel': True,
+            })
+            existing = channel.channel_member_ids.partner_id
+            missing = users.partner_id - existing
+            if missing:
+                channel.with_user(create_env.env.user).sudo()._add_members(
+                    partners=missing,
+                    post_joined_message=False,
+                    open_chat_window=False,
+                )
+        else:
+            channel.channel_member_ids.sudo().write({'unpin_dt': False})
+            channel.sudo()._broadcast(partner_ids)
 
         return self._bind_discuss_channel(channel)
+
 
 
 class PortalChatRead(models.Model):

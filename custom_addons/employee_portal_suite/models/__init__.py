@@ -25,3 +25,5 @@ from . import portal_call
 from . import portal_chat
 
 from . import res_partner_discuss
+
+from . import discuss_channel_portal
