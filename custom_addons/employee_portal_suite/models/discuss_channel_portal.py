@@ -69,6 +69,10 @@ class DiscussChannel(models.Model):
             'default_display_mode': default_display_mode or False,
             'name': safe_name,
             'is_employee_portal_channel': True,
+            # Odoo 18's native /mail/attachment/upload route blocks every
+            # non-internal user unless this flag is enabled on the channel.
+            # Thread access/membership is still checked by Odoo before upload.
+            'allow_public_upload': True,
         })
         channel._broadcast(partners.ids)
         return channel
@@ -146,8 +150,24 @@ class DiscussChannel(models.Model):
             if channel.is_employee_portal_channel != should_expose:
                 channel.with_context(skip_ep_channel_refresh=True).write({
                     'is_employee_portal_channel': should_expose,
+                    'allow_public_upload': should_expose,
                 })
         return True
+
+    def init(self):
+        """Enable native attachment upload on existing Employee Portal chats.
+
+        Odoo 18 intentionally rejects /mail/attachment/upload for non-internal
+        users when discuss.channel.allow_public_upload is false. Existing portal
+        channels predate this setting, so update them during module upgrade.
+        The native route still validates thread create access/membership first.
+        """
+        self.env.cr.execute("""
+            UPDATE discuss_channel
+               SET allow_public_upload = TRUE
+             WHERE is_employee_portal_channel = TRUE
+               AND COALESCE(allow_public_upload, FALSE) = FALSE
+        """)
 
     def message_post(self, **kwargs):
         message = super().message_post(**kwargs)
