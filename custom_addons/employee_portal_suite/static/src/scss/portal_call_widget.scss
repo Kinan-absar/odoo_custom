@@ -922,7 +922,8 @@
 .epc-backend-systray-btn {
     position: relative;
 }
-.epc-call-badge {
+.epc-call-badge,
+.epc-message-badge {
     position: absolute;
     top: 1px;
     right: 0;
@@ -1062,14 +1063,15 @@
 }
 .epc-history-call-btn:hover { background: #E0E7FF; }
 @media (max-width: 768px) {
-    .epc-call-badge { top: 0; right: -2px; }
+    .epc-call-badge, .epc-message-badge { top: 0; right: -2px; }
     #epc-history-list { max-height: 360px; }
     .epc-history-row { min-height: 52px; padding: 6px 9px; }
     .epc-history-meta { gap: 5px; }
 }
 
 /* v17.11 - Match Odoo backend systray notification counters. */
-.epc-backend-systray-btn .epc-call-badge {
+.epc-backend-systray-btn .epc-call-badge,
+.epc-backend-systray-btn .epc-message-badge {
     top: 2px;
     right: -3px;
     min-width: 18px;
