@@ -155,7 +155,11 @@ class DiscussChannel(models.Model):
         for channel in self.sudo().filtered('is_employee_portal_channel'):
             if not message or message.model != 'discuss.channel' or message.res_id != channel.id:
                 continue
-            if message.message_type not in ('comment', 'email') or not message.body:
+            if message.message_type not in ('comment', 'email'):
+                continue
+            # Native Discuss allows attachment-only messages. Those must trigger
+            # the same Telegram alert as text messages.
+            if not message.body and not message.attachment_ids:
                 continue
             author_partner = message.author_id
             recipients = channel.channel_member_ids.partner_id - author_partner
@@ -167,6 +171,10 @@ class DiscussChannel(models.Model):
             ]).mapped('user_id').ids)
             users = users.filtered(lambda u: u.id in emp_user_ids)
             preview = tools.html2plaintext(message.body or '').strip().replace('\n', ' ')[:160]
+            if message.attachment_ids:
+                names = ', '.join(message.attachment_ids.mapped('name')[:3])
+                attachment_note = ('Attachment: ' if len(message.attachment_ids) == 1 else 'Attachments: ') + names
+                preview = (preview + (' - ' if preview else '') + attachment_note)[:220]
             sender = author_partner.name or 'Employee'
             service = self.env['employee.portal.telegram.service'].sudo()
             for user in users:

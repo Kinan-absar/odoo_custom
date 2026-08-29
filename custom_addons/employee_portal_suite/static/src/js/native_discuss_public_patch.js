@@ -1,12 +1,26 @@
 /** @odoo-module **/
 
 import { Discuss } from "@mail/core/public_web/discuss";
+import { Composer } from "@mail/core/common/composer";
 import { patch } from "@web/core/utils/patch";
 import { onMounted, onWillUnmount } from "@odoo/owl";
 
 function employeePortalMeta(name) {
     return document.querySelector(`meta[name="${name}"]`)?.getAttribute("content") || "";
 }
+
+
+// Odoo public Discuss disables some composer capabilities for generic public/guest pages.
+// Employee Portal Discuss is authenticated and channel membership is validated server-side,
+// so keep the native attachment uploader available here as it is in backend Discuss.
+patch(Composer.prototype, {
+    get allowUpload() {
+        if (employeePortalMeta("employee-portal-discuss")) {
+            return true;
+        }
+        return super.allowUpload;
+    },
+});
 
 patch(Discuss.prototype, {
     setup() {

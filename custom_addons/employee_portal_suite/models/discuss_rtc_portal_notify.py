@@ -25,11 +25,26 @@ class DiscussChannelMember(models.Model):
                 continue
             session = member.rtc_inviting_session_id
             caller = session.channel_member_id.partner_id if session else self.partner_id
+            is_video = bool(session and session.is_camera_on)
             member._bus_send('employee_portal.native_rtc_invitation', {
                 'channel_id': channel.id,
                 'caller_name': caller.name or channel.display_name,
                 'caller_avatar': image_data_uri(caller.avatar_128) if caller.avatar_128 else False,
-                'is_video': bool(session and session.is_camera_on),
+                'is_video': is_video,
                 'open_url': '/my/employee/discuss/channel/%s' % channel.id,
             })
+
+            # Mirror the native RTC invitation to the employee's connected Telegram.
+            # This is alert-only; Odoo Discuss remains authoritative for the call.
+            try:
+                call_kind = 'video call' if is_video else 'call'
+                self.env['employee.portal.telegram.service'].sudo().send_to_user(
+                    user,
+                    'Incoming %s from %s' % (call_kind, caller.name or 'Employee'),
+                    'Open Employee Portal to answer.',
+                    path='/my/employee/discuss/channel/%s' % channel.id,
+                )
+            except Exception:
+                # Telegram must never interrupt native RTC invitation delivery.
+                pass
         return invited
