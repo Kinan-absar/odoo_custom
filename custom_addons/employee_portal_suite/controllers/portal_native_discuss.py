@@ -1,7 +1,7 @@
 from odoo import Command, fields, http
 from odoo.http import request
 from odoo.addons.mail.tools.discuss import Store
-from odoo.tools import image_data_uri
+from odoo.tools.image import image_data_uri
 
 
 class EmployeePortalNativeDiscussController(http.Controller):
