@@ -368,21 +368,11 @@
                 changed = true;
             }
 
-            if (!systray.querySelector(".epc-backend-message-item")) {
-                const messageItem = document.createElement("div");
-                messageItem.className = "o_menu_systray_item epc-backend-systray-item epc-backend-message-item";
-                const messageBtn = document.createElement("button");
-                messageBtn.type = "button";
-                messageBtn.className = "epc-backend-systray-btn epc-backend-message-btn";
-                messageBtn.title = "Employee Messages";
-                messageBtn.setAttribute("aria-label", "Employee Messages");
-                messageBtn.innerHTML = '<i class="fa fa-comments"></i><span class="epc-message-badge epc-hidden">0</span>';
-                messageItem.appendChild(messageBtn);
-                systray.insertBefore(messageItem, callItem);
-                messageBtn.addEventListener("click", (ev) => {
-                    ev.stopPropagation();
-                    this._togglePanel(messageBtn, "messages");
-                });
+            // Backend messaging is now native Odoo Discuss. Remove the old custom
+            // Employee Messages systray entry if an older asset left it behind.
+            const legacyMessageItem = systray.querySelector(".epc-backend-message-item");
+            if (legacyMessageItem) {
+                legacyMessageItem.remove();
                 changed = true;
             }
 

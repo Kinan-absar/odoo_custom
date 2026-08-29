@@ -22,11 +22,86 @@ class PortalChatController(http.Controller):
         ], limit=1)
         return employee.name or user.name or 'Employee'
 
+    def _users_for_channel(self, channel):
+        """Return active employee users represented by a private Discuss channel."""
+        partners = channel.sudo().channel_member_ids.partner_id.filtered(lambda p: p.active)
+        if len(partners) < 2:
+            return request.env['res.users']
+        users = request.env['res.users'].sudo().search([
+            ('active', '=', True),
+            ('partner_id', 'in', partners.ids),
+        ])
+        by_partner = {u.partner_id.id: u for u in users if self._is_employee_user(u)}
+        # Do not expose mixed/customer Discuss chats in the employee portal.
+        if any(partner.id not in by_partner for partner in partners):
+            return request.env['res.users']
+        return request.env['res.users'].sudo().browse([by_partner[p.id].id for p in partners])
+
+    def _sync_discuss_threads(self, user):
+        """Discover native Discuss chats started by internal users.
+
+        This is what makes the integration truly two-way: an internal employee can
+        start a normal Odoo Discuss DM/group and the portal employee will discover
+        the same conversation in the custom portal Messages UI.
+        """
+        Member = request.env['discuss.channel.member'].sudo()
+        memberships = Member.search([
+            ('partner_id', '=', user.partner_id.id),
+            ('channel_id.channel_type', 'in', ['chat', 'group']),
+        ])
+        Thread = request.env['portal.chat.thread'].sudo()
+        for channel in memberships.channel_id:
+            users = self._users_for_channel(channel)
+            if user not in users or len(users) < 2:
+                continue
+
+            thread = Thread.search([('discuss_channel_id', '=', channel.id)], limit=1)
+            all_user_ids = sorted(users.ids)
+            is_group = channel.channel_type == 'group' or len(all_user_ids) > 2
+            direct_key = False if is_group else '%s:%s' % (all_user_ids[0], all_user_ids[1])
+
+            if not thread and direct_key:
+                thread = Thread.search([('direct_key', '=', direct_key)], limit=1)
+                if thread and not thread.discuss_channel_id:
+                    thread._bind_discuss_channel(channel)
+
+            if not thread:
+                other_users = users.filtered(lambda u: u.id != user.id)
+                direct_name = self._employee_name(other_users[:1]) if other_users else 'Conversation'
+                thread = Thread.create({
+                    'name': (channel.name if is_group else direct_name) or 'Conversation',
+                    'participant_ids': [(6, 0, all_user_ids)],
+                    'is_group': is_group,
+                    'direct_key': direct_key,
+                    'discuss_channel_id': channel.id,
+                    'last_message_date': channel.last_interest_dt or fields.Datetime.now(),
+                })
+            else:
+                vals = {}
+                if set(thread.participant_ids.ids) != set(all_user_ids):
+                    vals['participant_ids'] = [(6, 0, all_user_ids)]
+                if thread.is_group != is_group:
+                    vals['is_group'] = is_group
+                if is_group and channel.name and thread.name != channel.name:
+                    vals['name'] = channel.name
+                if vals:
+                    thread.write(vals)
+
     def _thread(self, thread_id):
         thread = request.env['portal.chat.thread'].sudo().browse(int(thread_id or 0)).exists()
-        if not thread or self._user().id not in thread.participant_ids.ids:
+        user = self._user()
+        if not thread or user.id not in thread.participant_ids.ids:
+            return None
+        channel = thread._ensure_discuss_channel()
+        if not channel:
+            return None
+        # Membership in Discuss is authoritative once the wrapper is linked.
+        if user.partner_id.id not in channel.channel_member_ids.partner_id.ids:
             return None
         return thread
+
+    def _channel(self, thread):
+        return thread._ensure_discuss_channel() if thread else request.env['discuss.channel']
 
     def _read_state(self, thread, user, create=False):
         Read = request.env['portal.chat.read'].sudo()
@@ -36,10 +111,13 @@ class PortalChatController(http.Controller):
         return state
 
     def _unread_count(self, thread, user):
+        channel = self._channel(thread)
+        if not channel:
+            return 0
         state = self._read_state(thread, user, create=False)
         domain = [
-            ('model', '=', 'portal.chat.thread'),
-            ('res_id', '=', thread.id),
+            ('model', '=', 'discuss.channel'),
+            ('res_id', '=', channel.id),
             ('message_type', '=', 'comment'),
             ('author_id', '!=', user.partner_id.id),
         ]
@@ -52,18 +130,29 @@ class PortalChatController(http.Controller):
         user = self._user()
         if not self._is_employee_user(user):
             return {'threads': [], 'unread_total': 0}
+
+        self._sync_discuss_threads(user)
         threads = request.env['portal.chat.thread'].sudo().search([
             ('participant_ids', 'in', [user.id]),
-        ], order='last_message_date desc, id desc', limit=60)
+        ], order='discuss_last_interest_dt desc, last_message_date desc, id desc', limit=60)
+
         result = []
         unread_total = 0
         Message = request.env['mail.message'].sudo()
         for thread in threads:
-            others = thread.participant_ids.filtered(lambda u: u.id != user.id)
+            channel = self._channel(thread)
+            if not channel or user.partner_id.id not in channel.channel_member_ids.partner_id.ids:
+                continue
+            users = self._users_for_channel(channel)
+            if not users:
+                continue
+            others = users.filtered(lambda u: u.id != user.id)
             names = [self._employee_name(u) for u in others]
-            display_name = thread.name if thread.is_group else (names[0] if names else thread.name)
+            display_name = (channel.name or thread.name) if thread.is_group else (names[0] if names else thread.name)
             last = Message.search([
-                ('model', '=', 'portal.chat.thread'), ('res_id', '=', thread.id), ('message_type', '=', 'comment'),
+                ('model', '=', 'discuss.channel'),
+                ('res_id', '=', channel.id),
+                ('message_type', '=', 'comment'),
             ], order='id desc', limit=1)
             preview = tools.html2plaintext(last.body or '').strip().replace('\n', ' ')[:100] if last else ''
             unread = self._unread_count(thread, user)
@@ -73,12 +162,13 @@ class PortalChatController(http.Controller):
                 'id': thread.id,
                 'name': display_name,
                 'is_group': thread.is_group,
-                'participant_count': len(thread.participant_ids),
-                'participant_ids': thread.participant_ids.ids,
+                'participant_count': len(users),
+                'participant_ids': users.ids,
                 'preview': preview,
                 'unread': unread,
-                'last_message_date': fields.Datetime.to_string(thread.last_message_date) if thread.last_message_date else '',
+                'last_message_date': fields.Datetime.to_string(channel.last_interest_dt) if channel.last_interest_dt else '',
                 'avatar_url': '/employee_portal/call/avatar/%s' % avatar_uid,
+                'discuss_channel_id': channel.id,
             })
         return {'threads': result, 'unread_total': unread_total}
 
@@ -99,6 +189,7 @@ class PortalChatController(http.Controller):
                     ids.append(uid)
         if not ids:
             return {'error': 'no_participants'}
+
         all_ids = sorted([user.id] + ids)
         Thread = request.env['portal.chat.thread'].sudo()
         is_group = len(all_ids) > 2
@@ -122,8 +213,12 @@ class PortalChatController(http.Controller):
                 'participant_ids': [(6, 0, all_ids)],
                 'is_group': True,
             })
+
+        channel = thread._ensure_discuss_channel()
+        if not channel:
+            return {'error': 'discuss_channel_failed'}
         self._read_state(thread, user, create=True)
-        return {'thread_id': thread.id}
+        return {'thread_id': thread.id, 'discuss_channel_id': channel.id}
 
     @http.route('/employee_portal/chat/messages', type='json', auth='user', csrf=False)
     def chat_messages(self, thread_id=None, limit=80):
@@ -131,9 +226,10 @@ class PortalChatController(http.Controller):
         if not thread:
             return {'error': 'not_found', 'messages': []}
         user = self._user()
+        channel = self._channel(thread)
         messages = request.env['mail.message'].sudo().search([
-            ('model', '=', 'portal.chat.thread'),
-            ('res_id', '=', thread.id),
+            ('model', '=', 'discuss.channel'),
+            ('res_id', '=', channel.id),
             ('message_type', '=', 'comment'),
         ], order='id desc', limit=min(int(limit or 80), 150))
         rows = []
@@ -148,10 +244,12 @@ class PortalChatController(http.Controller):
                 'date': fields.Datetime.to_string(msg.date) if msg.date else '',
                 'avatar_url': '/employee_portal/call/avatar/%s' % author_user.id if author_user else '',
             })
+
         state = self._read_state(thread, user, create=True)
         state.write({'last_read_at': fields.Datetime.now()})
+        users = self._users_for_channel(channel)
         participants = []
-        for participant in thread.participant_ids:
+        for participant in users:
             participants.append({
                 'user_id': participant.id,
                 'name': self._employee_name(participant),
@@ -161,11 +259,12 @@ class PortalChatController(http.Controller):
         return {
             'thread': {
                 'id': thread.id,
-                'name': thread.name,
+                'name': (channel.name or thread.name) if thread.is_group else thread.name,
                 'is_group': thread.is_group,
-                'participant_ids': thread.participant_ids.ids,
-                'participant_count': len(thread.participant_ids),
+                'participant_ids': users.ids,
+                'participant_count': len(users),
                 'participants': participants,
+                'discuss_channel_id': channel.id,
             },
             'messages': rows,
         }
@@ -177,7 +276,8 @@ class PortalChatController(http.Controller):
         if not thread or not text:
             return {'error': 'invalid'}
         user = self._user()
-        message = thread.sudo().message_post(
+        channel = self._channel(thread)
+        message = channel.sudo().message_post(
             body=Markup.escape(text).replace('\n', Markup('<br/>')),
             message_type='comment',
             subtype_xmlid='mail.mt_comment',
@@ -186,7 +286,7 @@ class PortalChatController(http.Controller):
         thread.sudo().write({'last_message_date': fields.Datetime.now()})
         state = self._read_state(thread, user, create=True)
         state.write({'last_read_at': fields.Datetime.now()})
-        return {'ok': True, 'message_id': message.id}
+        return {'ok': True, 'message_id': message.id, 'discuss_channel_id': channel.id}
 
     @http.route('/employee_portal/chat/mark_read', type='json', auth='user', csrf=False)
     def chat_mark_read(self, thread_id=None):
