@@ -241,7 +241,87 @@ class EmployeePortalNativeDiscussController(http.Controller):
         return request.render('mail.discuss_public_channel_template', {
             'data': store.get_result(),
             'session_info': channel_user.env['ir.http'].session_info(),
+            'employee_portal_discuss': True,
+            'employee_portal_back_url': '/my/employee/discuss',
+            'employee_portal_home_url': '/my/employee',
         })
+
+    @http.route('/employee_portal/discuss/available_people', type='json', auth='user')
+    def employee_discuss_available_people(self, channel_id=None):
+        user = self._employee_user()
+        if not user:
+            return {'people': []}
+        try:
+            channel_id = int(channel_id or 0)
+        except (TypeError, ValueError):
+            channel_id = 0
+        channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
+        if not self._is_allowed_channel(channel, user):
+            return {'people': []}
+        existing_ids = set(self._channel_users(channel).ids)
+        people = []
+        for emp_user in self._employee_users():
+            if emp_user.id == user.id or emp_user.id in existing_ids:
+                continue
+            people.append({
+                'id': emp_user.id,
+                'name': emp_user.name,
+                'avatar': self._user_avatar(emp_user),
+            })
+        return {'people': people}
+
+    @http.route('/employee_portal/discuss/add_people', type='json', auth='user')
+    def employee_discuss_add_people(self, channel_id=None, user_ids=None):
+        user = self._employee_user()
+        if not user:
+            return {'ok': False, 'error': 'Employee access required.'}
+        try:
+            channel_id = int(channel_id or 0)
+        except (TypeError, ValueError):
+            channel_id = 0
+        channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
+        if not self._is_allowed_channel(channel, user):
+            return {'ok': False, 'error': 'Conversation not available.'}
+        try:
+            wanted_ids = {int(x) for x in (user_ids or []) if x}
+        except (TypeError, ValueError):
+            wanted_ids = set()
+        if not wanted_ids:
+            return {'ok': False, 'error': 'Select at least one employee.'}
+        allowed = self._employee_users().filtered(lambda u: u.id != user.id and u.id in wanted_ids)
+        if not allowed:
+            return {'ok': False, 'error': 'No valid employees selected.'}
+
+        existing_users = self._channel_users(channel)
+        new_users = allowed - existing_users
+        if not new_users:
+            return {'ok': True, 'channel_id': channel.id}
+
+        # A native 2-person `chat` cannot accept a third member. Promote it to
+        # a new native `group` with the existing correspondent plus the selected employees.
+        if channel.channel_type == 'chat':
+            current_others = existing_users.filtered(lambda u: u.id != user.id)
+            targets = current_others | new_users
+            group = self._get_or_create_channel(user, targets)
+            if not group:
+                return {'ok': False, 'error': 'Unable to create group conversation.'}
+            return {
+                'ok': True,
+                'channel_id': group.id,
+                'redirect': f'/my/employee/discuss/channel/{group.id}',
+            }
+
+        # For a native group, use Odoo's own member-add path so joined events,
+        # member count and realtime channel state are broadcast normally.
+        channel.with_user(user).sudo()._add_members(
+            partners=new_users.partner_id,
+            inviting_partner=user.partner_id,
+        )
+        channel.sudo().write({
+            'is_employee_portal_channel': True,
+            'last_interest_dt': fields.Datetime.now(),
+        })
+        return {'ok': True, 'channel_id': channel.id}
 
     @http.route('/employee_portal/discuss/unread', type='json', auth='user')
     def employee_discuss_unread(self):

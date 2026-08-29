@@ -79,4 +79,13 @@
             </div>
         </t>
     </template>
+
+    <template id="employee_native_discuss_public_bootstrap" inherit_id="mail.discuss_public_channel_template" name="Employee Native Discuss Bootstrap">
+        <xpath expr="//head" position="inside">
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-discuss" content="1"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-back-url" content="/my/employee/discuss"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-home-url" content="/my/employee"/>
+        </xpath>
+    </template>
+
 </odoo>
