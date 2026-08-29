@@ -83,6 +83,7 @@
             this.peerConnectionStates = new Map();
             this._networkOffline = !navigator.onLine;
             this._buildUI();
+            this._bindChatViewport();
             this._bindPresenceActivity();
             this._bindNetworkRecovery();
             this._loadContacts();
@@ -327,6 +328,10 @@
                 this._panelAnchor = anchor;
                 panel.classList.remove("epc-hidden");
                 this._positionPanel(anchor);
+                if (this.panelView === "chat" && this.currentChatThreadId) {
+                    this._syncChatConversationLayout();
+                    window.requestAnimationFrame(() => this._refreshOpenChat(false));
+                }
                 const search = document.getElementById("epc-contact-search");
                 if (search) setTimeout(() => search.focus(), 0);
             } else {
@@ -369,7 +374,12 @@
                 this._renderCallHistory();
                 if (markSeen) this._markMissedCallsSeen();
             } else if (this.panelView === "chat") {
-                this._renderChatThreads();
+                if (this.currentChatThreadId) {
+                    this._syncChatConversationLayout();
+                    window.requestAnimationFrame(() => this._refreshOpenChat(false));
+                } else {
+                    this._renderChatThreads();
+                }
             }
         }
 
@@ -624,17 +634,48 @@
 
         async _openChatThread(threadId) {
             this.currentChatThreadId = Number(threadId);
+            this.chatSelectionMode = false;
+            this._syncChatConversationLayout();
+            await this._refreshOpenChat(true);
+            this._updateChatViewportMetrics();
+            const input = document.getElementById("epc-chat-input");
+            if (input && window.innerWidth > 768) window.setTimeout(() => input.focus(), 0);
+        }
+
+        _syncChatConversationLayout() {
             const threads = document.getElementById("epc-chat-thread-list-wrap");
             const selector = document.getElementById("epc-chat-new-wrap");
             const convo = document.getElementById("epc-chat-conversation");
+            const panel = document.getElementById("epc-panel");
+            if (!this.currentChatThreadId) return;
             if (threads) threads.classList.add("epc-hidden");
             if (selector) selector.classList.add("epc-hidden");
             if (convo) convo.classList.remove("epc-hidden");
-            const panel = document.getElementById("epc-panel");
             if (panel) panel.classList.add("epc-chat-conversation-open");
-            await this._refreshOpenChat(true);
-            const input = document.getElementById("epc-chat-input");
-            if (input) window.setTimeout(() => input.focus(), 0);
+            this._updateChatViewportMetrics();
+        }
+
+        _bindChatViewport() {
+            this._chatViewportHandler = () => {
+                if (!this.currentChatThreadId || this.panelView !== "chat") return;
+                this._updateChatViewportMetrics();
+            };
+            window.addEventListener("resize", this._chatViewportHandler, { passive: true });
+            window.addEventListener("orientationchange", this._chatViewportHandler, { passive: true });
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener("resize", this._chatViewportHandler, { passive: true });
+                window.visualViewport.addEventListener("scroll", this._chatViewportHandler, { passive: true });
+            }
+        }
+
+        _updateChatViewportMetrics() {
+            const panel = document.getElementById("epc-panel");
+            if (!panel) return;
+            const vv = window.visualViewport;
+            const visibleHeight = vv ? vv.height : window.innerHeight;
+            const offsetTop = vv ? vv.offsetTop : 0;
+            panel.style.setProperty("--epc-chat-visible-height", `${Math.max(260, visibleHeight)}px`);
+            panel.style.setProperty("--epc-chat-visible-top", `${Math.max(0, offsetTop)}px`);
         }
 
         _closeChatConversation() {
@@ -660,6 +701,7 @@
                 if (title) title.textContent = known ? known.name : (res.thread.name || "Conversation");
                 const box = document.getElementById("epc-chat-messages");
                 if (!box) return;
+                const previousScrollTop = box.scrollTop;
                 const wasNearBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 90;
                 box.innerHTML = "";
                 (res.messages || []).forEach((msg) => {
@@ -668,7 +710,11 @@
                     item.innerHTML = `${msg.mine ? "" : `<div class="epc-chat-message-author">${this._escape(msg.author || "Employee")}</div>`}<div class="epc-chat-bubble">${this._escape(msg.body || "").replace(/\n/g, "<br/>")}</div>`;
                     box.appendChild(item);
                 });
-                if (scrollToBottom || wasNearBottom) box.scrollTop = box.scrollHeight;
+                if (scrollToBottom || wasNearBottom) {
+                    box.scrollTop = box.scrollHeight;
+                } else {
+                    box.scrollTop = Math.min(previousScrollTop, Math.max(0, box.scrollHeight - box.clientHeight));
+                }
                 await this._refreshChatThreads();
             } catch (e) {}
         }
