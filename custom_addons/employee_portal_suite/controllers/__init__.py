@@ -15,3 +15,7 @@ from . import portal_purchase_order
 from . import telegram
 
 from . import portal_call
+
+from . import portal_chat
+
+from . import portal_native_discuss

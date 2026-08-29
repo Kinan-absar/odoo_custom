@@ -1,0 +1,46 @@
+.ep-native-comm-actions { display:flex; align-items:center; gap:8px; }
+.ep-native-comm-btn { position:relative; width:44px; height:44px; border-radius:50%; background:#fff; display:inline-flex; align-items:center; justify-content:center; color:#4f46e5; text-decoration:none !important; box-shadow:0 4px 14px rgba(26,27,46,.08); border:1px solid rgba(0,0,0,.05); font-size:17px; }
+.ep-native-comm-btn:hover { color:#3730a3; transform:translateY(-1px); }
+.ep-native-unread-badge { position:absolute; right:-3px; top:-4px; min-width:20px; height:20px; padding:0 5px; border-radius:10px; background:#ef4444; color:#fff; border:2px solid #fff; align-items:center; justify-content:center; font-size:10px; font-weight:800; line-height:1; }
+.ep-native-discuss-hub { max-width:980px; }
+.ep-native-discuss-head { display:flex; justify-content:space-between; align-items:center; gap:18px; margin-bottom:18px; }
+.ep-native-discuss-head h2 { margin:2px 0 4px; }
+.ep-native-discuss-head p { color:#6b7280; margin:0; }
+.ep-native-discuss-kicker { color:#4f46e5; font-size:10px; font-weight:800; letter-spacing:.12em; }
+.ep-native-new-chat { display:none; background:#fff; border-radius:18px; padding:18px; margin-bottom:18px; box-shadow:0 6px 20px rgba(26,27,46,.08); }
+.ep-native-new-chat.show { display:block; }
+.ep-native-people-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; max-height:280px; overflow:auto; }
+.ep-native-person-option { display:flex; align-items:center; gap:10px; padding:9px 11px; border:1px solid rgba(0,0,0,.07); border-radius:12px; cursor:pointer; margin:0; }
+.ep-native-person-option img { width:34px; height:34px; object-fit:cover; border-radius:50%; }
+.ep-native-person-option span { font-weight:600; font-size:13px; }
+.ep-native-thread-list { background:#fff; border-radius:20px; overflow:hidden; box-shadow:0 8px 28px rgba(26,27,46,.08); }
+.ep-native-thread { min-height:68px; display:flex; align-items:center; gap:12px; padding:10px 14px; text-decoration:none !important; color:#1a1b2e !important; border-bottom:1px solid rgba(0,0,0,.05); }
+.ep-native-thread:last-child { border-bottom:0; }
+.ep-native-thread:hover { background:#f8f8fb; }
+.ep-native-thread-avatar { width:42px; height:42px; border-radius:50%; background:#eef2ff; display:flex; align-items:center; justify-content:center; flex:0 0 42px; color:#4f46e5; }
+.ep-native-thread-avatar img { width:42px; height:42px; object-fit:cover; border-radius:50%; }
+.ep-native-thread-copy { min-width:0; flex:1; display:flex; flex-direction:column; }
+.ep-native-thread-copy strong { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ep-native-thread-copy small { color:#9ca3af; }
+.ep-native-thread-unread { min-width:22px; height:22px; padding:0 6px; border-radius:11px; background:#4f46e5; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; }
+.ep-native-thread-arrow { color:#c2c7d0; }
+.ep-native-empty { padding:54px 20px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px; color:#9ca3af; }
+.ep-native-empty i { font-size:34px; color:#c7c9e9; }
+.ep-native-empty strong { color:#374151; }
+@media (max-width:768px) {
+  .ep-native-comm-btn { width:42px; height:42px; }
+  .ep-native-discuss-head { align-items:flex-start; }
+  .ep-native-people-grid { grid-template-columns:1fr; }
+  .ep-native-discuss-hub { padding-top:8px !important; }
+}
+
+/* v19.9 - native Discuss presence and single communication entry point */
+.ep-native-person-copy { min-width:0; display:flex; flex-direction:column; gap:2px; }
+.ep-native-person-copy > span:first-child { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ep-native-presence { display:inline-flex; align-items:center; gap:5px; color:#8a929f; font-size:11px; font-weight:600; }
+.ep-native-presence-dot { width:7px; height:7px; flex:0 0 7px; border-radius:50%; background:#aeb4bd; }
+.ep-native-presence-online { color:#168a52 !important; }
+.ep-native-presence-online .ep-native-presence-dot { background:#22b573; box-shadow:0 0 0 2px rgba(34,181,115,.13); }
+.ep-native-presence-away { color:#a66a00 !important; }
+.ep-native-presence-away .ep-native-presence-dot { background:#e7a72e; box-shadow:0 0 0 2px rgba(231,167,46,.13); }
+.ep-native-presence-offline { color:#8a929f !important; }

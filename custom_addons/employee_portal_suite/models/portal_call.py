@@ -54,6 +54,18 @@ class PortalCallSession(models.Model):
     callee_id = fields.Many2one('res.users', required=True, ondelete='cascade')
     participant_ids = fields.Many2many('res.users', 'portal_call_session_user_rel', 'session_id', 'user_id', string='Participants')
     active_participant_ids = fields.Many2many('res.users', 'portal_call_session_active_user_rel', 'session_id', 'user_id', string='Active Participants')
+    joined_participant_ids = fields.Many2many(
+        'res.users', 'portal_call_session_joined_user_rel', 'session_id', 'user_id',
+        string='Participants Who Joined', help='Persistent history of users who actually joined the call.'
+    )
+    declined_participant_ids = fields.Many2many(
+        'res.users', 'portal_call_session_declined_user_rel', 'session_id', 'user_id',
+        string='Participants Who Declined', help='Persistent history of invited users who explicitly declined.'
+    )
+    missed_seen_user_ids = fields.Many2many(
+        'res.users', 'portal_call_session_missed_seen_user_rel', 'session_id', 'user_id',
+        string='Missed Call Seen By', help='Users who have opened Recent Calls after missing this call.'
+    )
     call_type = fields.Selection([('audio', 'Audio'), ('video', 'Video')], default='audio', required=True)
     state = fields.Selection([
         ('ringing', 'Ringing'),
@@ -125,3 +137,22 @@ class PortalCallSignal(models.Model):
             ('create_date', '<', fields.Datetime.subtract(fields.Datetime.now(), hours=6)),
         ]
         self.sudo().search(domain).unlink()
+
+
+class PortalCallPresence(models.Model):
+    _name = 'portal.call.presence'
+    _description = 'Employee Call Presence'
+    _rec_name = 'user_id'
+
+    user_id = fields.Many2one('res.users', required=True, ondelete='cascade', index=True)
+    last_seen = fields.Datetime(index=True)
+    last_activity = fields.Datetime(index=True)
+
+    _sql_constraints = [
+        ('portal_call_presence_user_uniq', 'unique(user_id)', 'Only one presence record is allowed per user.'),
+    ]
+
+    @api.autovacuum
+    def _gc_old_presence(self):
+        stale_before = fields.Datetime.subtract(fields.Datetime.now(), days=30)
+        self.sudo().search([('last_seen', '<', stale_before)]).unlink()

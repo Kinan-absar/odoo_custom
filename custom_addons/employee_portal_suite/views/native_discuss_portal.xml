@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="ep_native_communication_actions">
+        <div class="ep-native-comm-actions" t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+            <a class="ep-native-comm-btn ep-native-message-btn" href="/my/employee/discuss" title="Messages">
+                <i class="fa fa-comments"/>
+                <span class="ep-native-unread-badge" style="display:none">0</span>
+            </a>
+        </div>
+    </template>
+
+    <template id="employee_native_discuss_hub" name="Employee Discuss">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="container ep-native-discuss-hub">
+                <div class="ep-native-discuss-head">
+                    <div>
+                        <div class="ep-native-discuss-kicker">COMMUNICATION</div>
+                        <h2>Messages</h2>
+                        <p>All employee conversations in native Odoo Discuss</p>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="document.getElementById('ep-native-new-chat').classList.toggle('show')">
+                        <i class="fa fa-plus me-1"/> New
+                    </button>
+                </div>
+
+                <div id="ep-native-new-chat" class="ep-native-new-chat">
+                    <form action="/my/employee/discuss/start" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Select employees</label>
+                            <div class="ep-native-people-grid">
+                                <t t-foreach="employees" t-as="emp_user">
+                                    <label class="ep-native-person-option">
+                                        <input type="checkbox" name="participant_ids" t-att-value="emp_user['id']"/>
+                                        <img t-if="emp_user['avatar']" t-att-src="emp_user['avatar']"/><span t-if="not emp_user['avatar']" class="ep-native-avatar-fallback"><i class="fa fa-user"/></span>
+                                        <span class="ep-native-person-copy"><span t-esc="emp_user['name']"/><small t-att-class="'ep-native-presence ep-native-presence-%s' % emp_user['presence']"><span class="ep-native-presence-dot"></span><t t-esc="emp_user['presence_label']"/></small></span>
+                                    </label>
+                                </t>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Group name <span class="text-muted">(optional)</span></label>
+                            <input class="form-control" type="text" name="group_name" placeholder="Team / meeting name"/>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Start conversation</button>
+                    </form>
+                </div>
+
+                <div class="ep-native-thread-list">
+                    <t t-if="channels">
+                        <t t-foreach="channels" t-as="ch">
+                            <a class="ep-native-thread" t-att-href="'/my/employee/discuss/channel/%s' % ch['id']">
+                                <div class="ep-native-thread-avatar">
+                                    <img t-if="ch['avatar']" t-att-src="ch['avatar']"/>
+                                    <i t-if="not ch['avatar']" class="fa fa-users"/>
+                                </div>
+                                <div class="ep-native-thread-copy">
+                                    <strong t-esc="ch['name']"/>
+                                    <small t-if="ch['is_group']">Group conversation</small>
+                                    <small t-if="not ch['is_group']" t-att-class="'ep-native-presence ep-native-presence-%s' % ch['presence']"><span class="ep-native-presence-dot"></span><t t-esc="ch['presence_label']"/></small>
+                                </div>
+                                <span t-if="ch['unread']" class="ep-native-thread-unread" t-esc="ch['unread']"/>
+                                <i class="fa fa-chevron-right ep-native-thread-arrow"/>
+                            </a>
+                        </t>
+                    </t>
+                    <div t-if="not channels" class="ep-native-empty">
+                        <i class="fa fa-comments-o"/>
+                        <strong>No conversations yet</strong>
+                        <span>Start a conversation with an employee.</span>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="employee_native_discuss_public_bootstrap" inherit_id="mail.discuss_public_channel_template" name="Employee Native Discuss Bootstrap">
+        <xpath expr="//head" position="inside">
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-discuss" content="1"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-back-url" content="/my/employee/discuss"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-home-url" content="/my/employee"/>
+        </xpath>
+    </template>
+
+</odoo>

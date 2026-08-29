@@ -63,6 +63,79 @@ class PortalCallController(http.Controller):
             ('Cache-Control', 'private, max-age=3600'),
         ])
 
+    def _presence_map(self, user_ids):
+        """Return lightweight call availability for employee users.
+
+        Presence is intentionally separate from Odoo Discuss presence so it works
+        identically for internal and portal employees. The browser sends a small
+        heartbeat every 15 seconds while Odoo is open.
+        """
+        user_ids = [int(uid) for uid in user_ids if uid]
+        if not user_ids:
+            return {}
+
+        now = fields.Datetime.now()
+        online_before = fields.Datetime.subtract(now, seconds=90)
+        active_before = fields.Datetime.subtract(now, minutes=2)
+
+        Presence = request.env['portal.call.presence'].sudo()
+        rows = Presence.search([('user_id', 'in', user_ids)])
+        by_user = {row.user_id.id: row for row in rows}
+
+        Session = request.env['portal.call.session'].sudo()
+        busy_sessions = Session.search([
+            ('state', 'in', ['ringing', 'ongoing']),
+            ('active_participant_ids', 'in', user_ids),
+        ])
+        busy_ids = set(busy_sessions.mapped('active_participant_ids').ids) & set(user_ids)
+
+        result = {}
+        for uid in user_ids:
+            row = by_user.get(uid)
+            recently_seen = bool(row and row.last_seen and row.last_seen >= online_before)
+            if uid in busy_ids and recently_seen:
+                result[uid] = 'in_call'
+            elif not recently_seen:
+                result[uid] = 'offline'
+            elif row.last_activity and row.last_activity >= active_before:
+                result[uid] = 'online'
+            else:
+                result[uid] = 'away'
+        return result
+
+    @http.route('/employee_portal/call/presence', type='json', auth='user', csrf=False)
+    def call_presence(self, active=False):
+        """Heartbeat for Online/Away/Offline plus current In Call state."""
+        user = self._user()
+        if not self._is_callable_user(user):
+            return {'ok': False, 'statuses': {}}
+
+        Presence = request.env['portal.call.presence'].sudo()
+        presence = Presence.search([('user_id', '=', user.id)], limit=1)
+        now = fields.Datetime.now()
+        vals = {'last_seen': now}
+        if active:
+            vals['last_activity'] = now
+        if presence:
+            presence.write(vals)
+        else:
+            vals['user_id'] = user.id
+            # First heartbeat is an interaction with Odoo, so avoid showing Away
+            # immediately if the client did not yet report an activity event.
+            vals.setdefault('last_activity', now)
+            Presence.create(vals)
+
+        employees = request.env['hr.employee'].sudo().search([
+            ('active', '=', True),
+            ('user_id', '!=', False),
+            ('user_id.active', '=', True),
+        ])
+        statuses = self._presence_map(employees.mapped('user_id').ids)
+        return {
+            'ok': True,
+            'statuses': {str(uid): status for uid, status in statuses.items()},
+        }
+
     # ------------------------------------------------------------------
     # Directory
     # ------------------------------------------------------------------
@@ -80,6 +153,7 @@ class PortalCallController(http.Controller):
             ('user_id', '!=', user.id),
         ], order='name asc')
 
+        presence = self._presence_map(employees.mapped('user_id').ids)
         result = []
         seen_user_ids = set()
         for employee in employees:
@@ -95,6 +169,7 @@ class PortalCallController(http.Controller):
                 'department': employee.department_id.name or '',
                 'note': employee.job_title or '',
                 'avatar_url': '/employee_portal/call/avatar/%s' % contact.id,
+                'presence': presence.get(contact.id, 'offline'),
             })
         return result
 
@@ -111,6 +186,18 @@ class PortalCallController(http.Controller):
             )
         except Exception:
             _logger.exception('Could not send Telegram incoming-call notification to user %s', target.id)
+
+
+    def _notify_telegram_missed(self, targets, caller, is_group=False):
+        """Best-effort Telegram missed-call alert after a ringing call ends unanswered."""
+        service = request.env['employee.portal.telegram.service'].sudo()
+        title = 'Missed Odoo Group Call' if is_group else 'Missed Odoo Call'
+        for target in targets:
+            try:
+                body = '%s called you and the call was not answered.' % (caller.name or 'Employee')
+                service.send_to_user(target, title, body, path='/my/employee')
+            except Exception:
+                _logger.exception('Could not send Telegram missed-call notification to user %s', target.id)
 
     @http.route('/employee_portal/call/start', type='json', auth='user', csrf=False)
     def call_start(self, target_user_id=None, target_user_ids=None, call_type='audio'):
@@ -146,6 +233,7 @@ class PortalCallController(http.Controller):
             'call_type': call_type if call_type in ('audio', 'video') else 'audio',
             'participant_ids': [(6, 0, participant_ids)],
             'active_participant_ids': [(6, 0, [user.id])],
+            'joined_participant_ids': [(6, 0, [user.id])],
         })
         for target in targets:
             self._queue_signal(session, target, 'incoming', {
@@ -164,7 +252,12 @@ class PortalCallController(http.Controller):
         if not session or session.state not in ('ringing', 'ongoing'):
             return {'error': 'invalid_session'}
         user = self._user()
-        session.write({'state': 'ongoing', 'answered_date': session.answered_date or fields.Datetime.now(), 'active_participant_ids': [(4, user.id)]})
+        session.write({
+            'state': 'ongoing',
+            'answered_date': session.answered_date or fields.Datetime.now(),
+            'active_participant_ids': [(4, user.id)],
+            'joined_participant_ids': [(4, user.id)],
+        })
         for other in session.active_participant_ids.filtered(lambda u: u.id != user.id):
             self._queue_signal(session, other, 'accepted', {'user_id': user.id, 'user_name': user.name})
         return {'ok': True}
@@ -181,7 +274,9 @@ class PortalCallController(http.Controller):
             # the session for everyone else. Remove only that participant.
             session.write({
                 'active_participant_ids': [(3, user.id)],
-                'participant_ids': [(3, user.id)],
+                # Keep participant_ids as the permanent invitation roster so
+                # Recent Calls can still show who was invited after the meeting.
+                'declined_participant_ids': [(4, user.id)],
             })
             for other in session.active_participant_ids:
                 self._queue_signal(session, other, 'participant_left', {
@@ -190,7 +285,11 @@ class PortalCallController(http.Controller):
             if len(session.participant_ids) < 2:
                 session.write({'state': 'ended' if session.answered_date else 'missed', 'end_date': fields.Datetime.now()})
         else:
-            session.write({'state': 'rejected', 'end_date': fields.Datetime.now()})
+            session.write({
+                'state': 'rejected',
+                'end_date': fields.Datetime.now(),
+                'declined_participant_ids': [(4, user.id)],
+            })
             other = session._other_party(user)
             self._queue_signal(session, other, 'rejected', {'user_id': user.id})
         return {'ok': True}
@@ -201,8 +300,21 @@ class PortalCallController(http.Controller):
         if not session or session.state not in ('ringing', 'ongoing'):
             return {'error': 'invalid_session'}
         user = self._user()
+        was_ringing = session.state == 'ringing' and not session.answered_date
         session.write({'active_participant_ids': [(3, user.id)]})
         remaining = session.active_participant_ids
+
+        # If the caller cancels while the call is still ringing, invitees have
+        # not joined active_participant_ids yet. Notify the permanent invitation
+        # roster so every incoming popup/ringtone is dismissed immediately.
+        if was_ringing and user.id == session.caller_id.id:
+            invitees = session.participant_ids.filtered(lambda u: u.id != user.id)
+            session.write({'state': 'missed', 'end_date': fields.Datetime.now()})
+            for other in invitees:
+                self._queue_signal(session, other, 'cancelled', {'user_id': user.id})
+            self._notify_telegram_missed(invitees, user, is_group=len(session.participant_ids) > 2)
+            return {'ok': True}
+
         for other in remaining:
             self._queue_signal(session, other, 'participant_left', {'user_id': user.id, 'user_name': user.name})
         if len(remaining) < 2:
@@ -295,6 +407,8 @@ class PortalCallController(http.Controller):
             })
             other = session._other_party(user)
             self._queue_signal(session, other, 'cancelled', {})
+            invitees = session.participant_ids.filtered(lambda u: u.id != session.caller_id.id)
+            self._notify_telegram_missed(invitees, session.caller_id, is_group=len(session.participant_ids) > 2)
 
         # Only unread mailbox rows are returned. Previously consumed=True rows
         # were still fetched whenever a page reloaded with last_id=0, which
@@ -332,6 +446,114 @@ class PortalCallController(http.Controller):
         if signals:
             signals.write({'consumed': True})
         return {'last_id': max_id, 'events': result}
+
+    # ------------------------------------------------------------------
+    # Recent calls / missed calls
+    # ------------------------------------------------------------------
+    def _history_status_for_user(self, session, user):
+        """Return the user's own view of a session status."""
+        if user.id == session.caller_id.id:
+            if session.state == 'ringing':
+                return 'ringing'
+            if session.state == 'rejected':
+                return 'declined'
+            if session.state == 'missed' and not session.answered_date:
+                return 'no_answer'
+            if session.state == 'ongoing':
+                return 'ongoing'
+            return 'completed' if session.answered_date else 'no_answer'
+
+        if user.id in session.declined_participant_ids.ids:
+            return 'declined'
+        if user.id in session.joined_participant_ids.ids:
+            return 'ongoing' if session.state == 'ongoing' else 'completed'
+        if session.state in ('ended', 'missed', 'rejected'):
+            return 'missed'
+        return 'ringing'
+
+    def _is_missed_for_user(self, session, user):
+        return user.id != session.caller_id.id and self._history_status_for_user(session, user) == 'missed'
+
+    @http.route('/employee_portal/call/history', type='json', auth='user', csrf=False)
+    def call_history(self, limit=40):
+        user = self._user()
+        if not self._is_callable_user(user):
+            return {'calls': [], 'unread_missed_count': 0}
+        try:
+            limit = max(1, min(int(limit or 40), 100))
+        except (TypeError, ValueError):
+            limit = 40
+
+        Session = request.env['portal.call.session'].sudo()
+        sessions = Session.search([
+            '|', '|',
+            ('participant_ids', 'in', user.id),
+            ('caller_id', '=', user.id),
+            ('callee_id', '=', user.id),
+        ], order='start_date desc, id desc', limit=limit)
+
+        rows = []
+        unread_missed = 0
+        now = fields.Datetime.now()
+        for session in sessions:
+            # Older sessions created before participant history fields existed
+            # still remain readable through caller/callee.
+            participants = session.participant_ids
+            if not participants:
+                participants = session.caller_id | session.callee_id
+            other_users = participants.filtered(lambda u: u.id != user.id)
+            status = self._history_status_for_user(session, user)
+            missed = status == 'missed'
+            seen = user.id in session.missed_seen_user_ids.ids
+            if missed and not seen:
+                unread_missed += 1
+
+            is_group = len(participants) > 2
+            other_names = [u.name or 'Employee' for u in other_users]
+            if is_group:
+                if other_names:
+                    title = other_names[0] + ((' + %s others' % (len(other_names) - 1)) if len(other_names) > 1 else '')
+                else:
+                    title = 'Group call'
+            else:
+                title = other_names[0] if other_names else (session.caller_id.name or 'Employee')
+
+            end = session.end_date or (now if session.state == 'ongoing' else None)
+            duration = 0
+            if session.answered_date and end:
+                duration = max(0, int((end - session.answered_date).total_seconds()))
+
+            rows.append({
+                'uuid': session.uuid,
+                'direction': 'outgoing' if session.caller_id.id == user.id else 'incoming',
+                'status': status,
+                'missed_unread': bool(missed and not seen),
+                'is_group': is_group,
+                'title': title,
+                'started_at': fields.Datetime.to_string(session.start_date) if session.start_date else '',
+                'duration_seconds': duration,
+                'callback_user_ids': other_users.ids,
+                'avatar_url': ('/employee_portal/call/avatar/%s' % other_users[0].id) if len(other_users) == 1 else '',
+            })
+        return {'calls': rows, 'unread_missed_count': unread_missed}
+
+    @http.route('/employee_portal/call/history/mark_seen', type='json', auth='user', csrf=False)
+    def call_history_mark_seen(self):
+        user = self._user()
+        if not self._is_callable_user(user):
+            return {'ok': False}
+        Session = request.env['portal.call.session'].sudo()
+        sessions = Session.search([
+            '|', '|',
+            ('participant_ids', 'in', user.id),
+            ('caller_id', '=', user.id),
+            ('callee_id', '=', user.id),
+            ('state', 'in', ['ended', 'missed', 'rejected']),
+        ])
+        for session in sessions:
+            if self._is_missed_for_user(session, user) and user.id not in session.missed_seen_user_ids.ids:
+                session.write({'missed_seen_user_ids': [(4, user.id)]})
+        return {'ok': True}
 
     # ------------------------------------------------------------------
     # ICE servers
