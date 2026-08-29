@@ -103,6 +103,62 @@ class PortalChatController(http.Controller):
     def _channel(self, thread):
         return thread._ensure_discuss_channel() if thread else request.env['discuss.channel']
 
+
+    def _announce_discuss_channel(self, channel, author_user=None):
+        """Push a native Discuss join/header event to internal employee members.
+
+        Portal-created private channels can exist in the database before an already
+        open backend Discuss store knows about them. Odoo normally sends
+        ``discuss.channel/joined`` when add_members() creates membership. Our
+        portal wrapper can bind/create channels outside that exact UI flow, so we
+        explicitly emit the same event on each internal member's personal bus.
+        This makes the backend load the thread before the native new_message event.
+        """
+        channel = channel.sudo().exists()
+        if not channel:
+            return
+        members = channel.channel_member_ids.sudo().filtered(lambda m: m.partner_id)
+        # Keep members pinned so chat/group channels are part of Discuss' active set.
+        members.filtered(lambda m: m.unpin_dt).write({'unpin_dt': False})
+        for member in members:
+            target_users = member.partner_id.user_ids.filtered(
+                lambda u: u.active and u._is_internal()
+            )
+            if not target_users:
+                continue
+            payload = {
+                'channel': {
+                    **channel._channel_basic_info(),
+                    'model': 'discuss.channel',
+                    'is_pinned': True,
+                },
+                'open_chat_window': False,
+            }
+            # This is intentionally sent through the member listener, matching
+            # Odoo's native discuss.channel._add_members() behavior.
+            member._bus_send('discuss.channel/joined', payload)
+        # Also broadcast the full channel Store header on each user's personal bus.
+        channel._broadcast(members.partner_id.ids)
+
+    def _mark_native_channel_seen(self, channel, user):
+        """Keep native Discuss member read state aligned with the portal UI."""
+        channel = channel.sudo().exists()
+        if not channel or not user or not user.partner_id:
+            return
+        member = channel.channel_member_ids.sudo().filtered(
+            lambda m: m.partner_id.id == user.partner_id.id
+        )[:1]
+        if not member:
+            return
+        latest = request.env['mail.message'].sudo().search([
+            ('model', '=', 'discuss.channel'),
+            ('res_id', '=', channel.id),
+            ('message_type', '=', 'comment'),
+        ], order='id desc', limit=1)
+        if latest:
+            member._set_last_seen_message(latest, notify=True)
+            member._set_new_message_separator(latest.id + 1, sync=True)
+
     def _read_state(self, thread, user, create=False):
         Read = request.env['portal.chat.read'].sudo()
         state = Read.search([('thread_id', '=', thread.id), ('user_id', '=', user.id)], limit=1)
@@ -247,6 +303,7 @@ class PortalChatController(http.Controller):
 
         state = self._read_state(thread, user, create=True)
         state.write({'last_read_at': fields.Datetime.now()})
+        self._mark_native_channel_seen(channel, user)
         users = self._users_for_channel(channel)
         participants = []
         for participant in users:
@@ -278,26 +335,22 @@ class PortalChatController(http.Controller):
         user = self._user()
         channel = self._channel(thread)
 
-        # A native Discuss tab that was already open may not yet be listening to
-        # a conversation first created from the portal. Broadcast the channel
-        # header to every member before posting, so the browser subscribes to
-        # the channel and receives the following new-message bus event live.
-        member_partner_ids = channel.sudo().channel_member_ids.partner_id.ids
-        channel.sudo().channel_member_ids.write({'unpin_dt': False})
-        channel.sudo()._broadcast(member_partner_ids)
+        # Make sure an already-open backend Discuss store knows the private
+        # channel before Odoo emits its native discuss.channel/new_message event.
+        self._announce_discuss_channel(channel, author_user=user)
 
-        message = channel.sudo().message_post(
+        # Keep the request user as the current persona while using sudo access.
+        # Discuss' post hooks use the current persona to set sender-side seen state.
+        message = channel.with_user(user).sudo().message_post(
             body=Markup.escape(text).replace('\n', Markup('<br/>')),
             message_type='comment',
             subtype_xmlid='mail.mt_comment',
             author_id=user.partner_id.id,
         )
 
-        # Re-broadcast the updated header as a personal-bus fallback. Native
-        # message_post already emits discuss.channel/new_message; this ensures
-        # clients that only learned about the channel in this transaction also
-        # get its latest state without a manual page refresh.
-        channel.sudo()._broadcast(member_partner_ids)
+        # Re-announce after posting so personal-bus subscribers also receive the
+        # fresh unread/member Store values in the same transaction.
+        self._announce_discuss_channel(channel, author_user=user)
         thread.sudo().write({'last_message_date': fields.Datetime.now()})
         state = self._read_state(thread, user, create=True)
         state.write({'last_read_at': fields.Datetime.now()})
@@ -308,6 +361,8 @@ class PortalChatController(http.Controller):
         thread = self._thread(thread_id)
         if not thread:
             return {'ok': False}
-        state = self._read_state(thread, self._user(), create=True)
+        user = self._user()
+        state = self._read_state(thread, user, create=True)
         state.write({'last_read_at': fields.Datetime.now()})
+        self._mark_native_channel_seen(self._channel(thread), user)
         return {'ok': True}
