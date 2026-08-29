@@ -331,3 +331,55 @@ class EmployeePortalNativeDiscussController(http.Controller):
         channels = self._portal_channels(user)
         members = channels.channel_member_ids.filtered(lambda m: m.partner_id.id == user.partner_id.id)
         return {'unread': sum(int(m.message_unread_counter or 0) for m in members)}
+
+    @http.route('/employee_portal/discuss/call/poll', type='json', auth='user', csrf=False)
+    def employee_discuss_call_poll(self):
+        """Expose native Discuss RTC invitations to the employee portal shell.
+
+        This does not create or join calls.  It only mirrors Odoo's native
+        rtc_inviting_session_id state so a portal employee can see that a call
+        is ringing before opening the public Discuss page.
+        """
+        user = self._employee_user()
+        if not user:
+            return {'call': False}
+        member = request.env['discuss.channel.member'].sudo().search([
+            ('partner_id', '=', user.partner_id.id),
+            ('rtc_inviting_session_id', '!=', False),
+        ], order='id desc', limit=1)
+        if not member or not self._is_allowed_channel(member.channel_id, user):
+            return {'call': False}
+        session = member.rtc_inviting_session_id.sudo()
+        caller_member = session.channel_member_id.sudo()
+        caller_partner = caller_member.partner_id.sudo()
+        caller_user = caller_partner.user_ids.filtered(lambda u: u.active)[:1]
+        return {
+            'call': {
+                'channel_id': member.channel_id.id,
+                'channel_name': self._channel_label(member.channel_id, user),
+                'caller_name': caller_partner.name or self._channel_label(member.channel_id, user),
+                'caller_avatar': self._user_avatar(caller_user) if caller_user else False,
+                'is_video': bool(session.is_camera_on),
+                'open_url': '/my/employee/discuss/channel/%s' % member.channel_id.id,
+            }
+        }
+
+    @http.route('/employee_portal/discuss/call/decline', type='json', auth='user', csrf=False)
+    def employee_discuss_call_decline(self, channel_id=None):
+        """Decline only the current employee's native RTC invitation."""
+        user = self._employee_user()
+        if not user:
+            return {'ok': False}
+        try:
+            channel_id = int(channel_id or 0)
+        except (TypeError, ValueError):
+            return {'ok': False}
+        member = request.env['discuss.channel.member'].sudo().search([
+            ('channel_id', '=', channel_id),
+            ('partner_id', '=', user.partner_id.id),
+            ('rtc_inviting_session_id', '!=', False),
+        ], limit=1)
+        if not member or not self._is_allowed_channel(member.channel_id, user):
+            return {'ok': False}
+        member.channel_id.sudo()._rtc_cancel_invitations(member_ids=member.ids)
+        return {'ok': True}
