@@ -1,94 +1,70 @@
 .ep-native-discuss-public {
   overflow: hidden;
+  height: var(--ep-discuss-height, 100vh);
+  max-height: var(--ep-discuss-height, 100vh);
 }
+
 .ep-native-discuss-public .o-mail-Discuss {
-  min-height: 100vh;
-  height: 100vh;
+  min-height: 0 !important;
+  height: var(--ep-discuss-height, 100vh) !important;
+  max-height: var(--ep-discuss-height, 100vh) !important;
+  overflow: hidden !important;
 }
+
 .ep-native-discuss-toolbar {
   min-height: 52px;
   background: #fff;
   position: relative;
   z-index: 20;
+  flex: 0 0 auto;
 }
+
 .ep-native-discuss-toolbar .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 36px;
 }
-.ep-native-people-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1080;
-  background: rgba(17, 24, 39, .42);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
+
+/* Keep the thread scrollable and reserve a real row for Odoo's native Composer. */
+.ep-native-discuss-public .o-mail-Discuss-content {
+  min-height: 0 !important;
+  overflow: hidden !important;
 }
-.ep-native-people-dialog {
-  width: 100%;
-  max-width: 520px;
-  max-height: calc(100vh - 32px);
+
+.ep-native-discuss-public .o-mail-Discuss-main,
+.ep-native-discuss-public .o-mail-Discuss-core,
+.ep-native-discuss-public .o-mail-Discuss-threadContainer {
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.ep-native-discuss-public .o-mail-Discuss-threadContainer {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.ep-native-discuss-public .o-mail-Thread {
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ep-native-discuss-public .o-mail-Composer {
+  flex: 0 0 auto !important;
+  position: relative;
+  z-index: 5;
   background: #fff;
-  border-radius: 18px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
-.ep-native-people-body {
-  overflow-y: auto;
-  min-height: 120px;
-}
-.ep-native-person-row {
-  border-radius: 12px;
-  min-height: 54px;
-  border: 1px solid transparent;
-  margin-bottom: 4px;
-}
-.ep-native-person-row:hover,
-.ep-native-person-row.is-selected {
-  background: #f5f3ff;
-  border-color: #ddd6fe;
-}
-.ep-native-person-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex: 0 0 36px;
-}
-.ep-native-person-fallback {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #eef2ff;
-  color: #4f46e5;
-}
+
 @media (max-width: 767.98px) {
-  .ep-native-discuss-public .o-mail-Discuss-content {
-    height: 100vh !important;
-    max-height: 100vh !important;
-  }
   .ep-native-discuss-public .o-mail-Discuss-header {
     min-height: 54px;
   }
-  .ep-native-discuss-public .o-mail-Discuss-main,
-  .ep-native-discuss-public .o-mail-Discuss-core,
-  .ep-native-discuss-public .o-mail-Discuss-threadContainer {
-    min-height: 0;
-  }
+
   .ep-native-discuss-public .o-mail-Composer {
-    padding-bottom: .5rem;
-  }
-  .ep-native-people-overlay {
-    padding: 0;
-    align-items: flex-end;
-  }
-  .ep-native-people-dialog {
-    width: 100%;
-    max-height: 82vh;
-    border-radius: 18px 18px 0 0;
+    padding-bottom: 10px !important;
   }
 }

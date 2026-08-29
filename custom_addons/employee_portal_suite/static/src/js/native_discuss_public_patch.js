@@ -2,8 +2,7 @@
 
 import { Discuss } from "@mail/core/public_web/discuss";
 import { patch } from "@web/core/utils/patch";
-import { rpc } from "@web/core/network/rpc";
-import { useState } from "@odoo/owl";
+import { onMounted, onWillUnmount } from "@odoo/owl";
 
 function employeePortalMeta(name) {
     return document.querySelector(`meta[name="${name}"]`)?.getAttribute("content") || "";
@@ -15,20 +14,15 @@ patch(Discuss.prototype, {
         const storeService = this.env.services["mail.store"];
         const originalPublicPage = storeService?.inPublicPage;
 
-        // Odoo's stock public Discuss intentionally opens the selected thread in a
-        // ChatWindow on small screens. For employee portal users we want the normal
-        // full Discuss thread immediately, like the internal Discuss app. Temporarily
-        // disable the public-page flag only while Discuss registers its setup hooks.
+        // Odoo's stock public Discuss opens the selected thread in a separate
+        // ChatWindow on small screens. Employee Portal should behave like the
+        // internal Discuss app: the selected conversation is the main thread.
         if (isEmployeePortalDiscuss && storeService) {
             storeService.inPublicPage = false;
         }
         super.setup(...arguments);
         if (isEmployeePortalDiscuss && storeService) {
             storeService.inPublicPage = originalPublicPage;
-            // The public bootstrap stores the URL channel separately. Because we
-            // suppress Odoo's small-screen ChatWindow hook for employee portal
-            // Discuss, explicitly make that bootstrapped channel the main Discuss
-            // thread so /channel/<id> opens the conversation immediately.
             if (!this.store.discuss.thread && this.store.discuss_public_thread) {
                 this.store.discuss.thread = this.store.discuss_public_thread;
             }
@@ -36,19 +30,44 @@ patch(Discuss.prototype, {
             document.body.classList.add("ep-native-discuss-public");
         }
 
-        this.epDiscuss = useState({
-            enabled: isEmployeePortalDiscuss,
-            peopleOpen: false,
-            peopleLoading: false,
-            people: [],
-            selected: {},
-            error: "",
-            saving: false,
-        });
-    },
+        this.isEmployeePortalDiscuss = isEmployeePortalDiscuss;
 
-    get isEmployeePortalDiscuss() {
-        return Boolean(this.epDiscuss?.enabled);
+        if (isEmployeePortalDiscuss) {
+            this._epApplyViewportHeight = () => {
+                const viewport = window.visualViewport;
+                const height = Math.max(
+                    320,
+                    Math.round(viewport?.height || window.innerHeight || document.documentElement.clientHeight)
+                );
+                document.documentElement.style.setProperty("--ep-discuss-height", `${height}px`);
+                if (this.root?.el) {
+                    this.root.el.style.height = `${height}px`;
+                    this.root.el.style.minHeight = "0";
+                    this.root.el.style.maxHeight = `${height}px`;
+                }
+                if (this.contentRef?.el) {
+                    this.contentRef.el.style.height = "100%";
+                    this.contentRef.el.style.maxHeight = "100%";
+                    this.contentRef.el.style.overflow = "hidden";
+                }
+            };
+
+            onMounted(() => {
+                this._epApplyViewportHeight();
+                window.setTimeout(this._epApplyViewportHeight, 80);
+                window.setTimeout(this._epApplyViewportHeight, 300);
+                window.visualViewport?.addEventListener("resize", this._epApplyViewportHeight);
+                window.visualViewport?.addEventListener("scroll", this._epApplyViewportHeight);
+                window.addEventListener("orientationchange", this._epApplyViewportHeight);
+            });
+            onWillUnmount(() => {
+                window.visualViewport?.removeEventListener("resize", this._epApplyViewportHeight);
+                window.visualViewport?.removeEventListener("scroll", this._epApplyViewportHeight);
+                window.removeEventListener("orientationchange", this._epApplyViewportHeight);
+                document.documentElement.style.removeProperty("--ep-discuss-height");
+                document.body.classList.remove("ep-native-discuss-public");
+            });
+        }
     },
 
     goEmployeeMessages() {
@@ -59,72 +78,6 @@ patch(Discuss.prototype, {
         window.location.href = employeePortalMeta("employee-portal-home-url") || "/my/employee";
     },
 
-    async openEmployeePeople() {
-        if (!this.thread?.id || !this.isEmployeePortalDiscuss) {
-            return;
-        }
-        this.epDiscuss.peopleOpen = true;
-        this.epDiscuss.peopleLoading = true;
-        this.epDiscuss.error = "";
-        this.epDiscuss.selected = {};
-        try {
-            const result = await rpc("/employee_portal/discuss/available_people", {
-                channel_id: this.thread.id,
-            });
-            this.epDiscuss.people = result?.people || [];
-        } catch (error) {
-            this.epDiscuss.error = "Unable to load employees.";
-        } finally {
-            this.epDiscuss.peopleLoading = false;
-        }
-    },
-
-    closeEmployeePeople() {
-        this.epDiscuss.peopleOpen = false;
-        this.epDiscuss.error = "";
-        this.epDiscuss.selected = {};
-    },
-
-    toggleEmployeePerson(userId) {
-        this.epDiscuss.selected = {
-            ...this.epDiscuss.selected,
-            [userId]: !this.epDiscuss.selected[userId],
-        };
-    },
-
-    async addSelectedEmployees() {
-        const userIds = Object.entries(this.epDiscuss.selected)
-            .filter(([, selected]) => selected)
-            .map(([id]) => Number(id));
-        if (!userIds.length || !this.thread?.id) {
-            this.epDiscuss.error = "Select at least one employee.";
-            return;
-        }
-        this.epDiscuss.saving = true;
-        this.epDiscuss.error = "";
-        try {
-            const result = await rpc("/employee_portal/discuss/add_people", {
-                channel_id: this.thread.id,
-                user_ids: userIds,
-            });
-            if (!result?.ok) {
-                this.epDiscuss.error = result?.error || "Unable to add employees.";
-                return;
-            }
-            if (result.redirect) {
-                window.location.href = result.redirect;
-                return;
-            }
-            // Reload the native Discuss Store so Odoo's own member panel / RTC state
-            // immediately reflects the newly-added employee.
-            window.location.reload();
-        } catch (error) {
-            this.epDiscuss.error = "Unable to add employees.";
-        } finally {
-            this.epDiscuss.saving = false;
-        }
-    },
-
     async toggleEmployeeFullscreen() {
         try {
             if (!document.fullscreenElement) {
@@ -133,7 +86,7 @@ patch(Discuss.prototype, {
                 await document.exitFullscreen?.();
             }
         } catch (_) {
-            // Fullscreen is optional (not supported by every mobile browser).
+            // Fullscreen is optional.
         }
     },
 });
