@@ -363,6 +363,8 @@
             if (peopleTab) peopleTab.classList.toggle("epc-active", this.panelView === "people");
             if (historyTab) historyTab.classList.toggle("epc-active", this.panelView === "history");
             if (chatTab) chatTab.classList.toggle("epc-active", this.panelView === "chat");
+            const panel = document.getElementById("epc-panel");
+            if (panel && this.panelView !== "chat") panel.classList.remove("epc-chat-conversation-open");
             if (this.panelView === "history") {
                 this._renderCallHistory();
                 if (markSeen) this._markMissedCallsSeen();
@@ -628,7 +630,11 @@
             if (threads) threads.classList.add("epc-hidden");
             if (selector) selector.classList.add("epc-hidden");
             if (convo) convo.classList.remove("epc-hidden");
+            const panel = document.getElementById("epc-panel");
+            if (panel) panel.classList.add("epc-chat-conversation-open");
             await this._refreshOpenChat(true);
+            const input = document.getElementById("epc-chat-input");
+            if (input) window.setTimeout(() => input.focus(), 0);
         }
 
         _closeChatConversation() {
@@ -636,7 +642,9 @@
             this.currentChatThread = null;
             const threads = document.getElementById("epc-chat-thread-list-wrap");
             const convo = document.getElementById("epc-chat-conversation");
+            const panel = document.getElementById("epc-panel");
             if (convo) convo.classList.add("epc-hidden");
+            if (panel) panel.classList.remove("epc-chat-conversation-open");
             if (threads) threads.classList.remove("epc-hidden");
             this._refreshChatThreads();
         }
