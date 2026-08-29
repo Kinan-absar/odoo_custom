@@ -136,10 +136,12 @@
                         <div id="epc-chat-new-wrap" class="epc-hidden">
                             <div class="epc-chat-subheader"><button id="epc-chat-new-back" type="button" class="epc-icon-btn"><i class="fa fa-arrow-left"></i></button><strong>New conversation</strong><button id="epc-chat-new-start" type="button" class="epc-btn epc-btn-small" disabled>Start</button></div>
                             <div class="epc-search-wrap"><input id="epc-chat-contact-search" type="search" placeholder="Search employees…" autocomplete="off"/></div>
+                            <div id="epc-chat-group-name-wrap" class="epc-chat-group-name-wrap epc-hidden"><input id="epc-chat-group-name" type="text" maxlength="120" placeholder="Group name (optional)" autocomplete="off"/></div>
                             <div id="epc-chat-contact-list"></div>
                         </div>
                         <div id="epc-chat-conversation" class="epc-hidden">
-                            <div class="epc-chat-subheader"><button id="epc-chat-back" type="button" class="epc-icon-btn"><i class="fa fa-arrow-left"></i></button><strong id="epc-chat-title">Conversation</strong><button id="epc-chat-call" type="button" class="epc-icon-btn" title="Call"><i class="fa fa-phone"></i></button></div>
+                            <div class="epc-chat-subheader"><button id="epc-chat-back" type="button" class="epc-icon-btn"><i class="fa fa-arrow-left"></i></button><strong id="epc-chat-title">Conversation</strong><button id="epc-chat-members" type="button" class="epc-icon-btn epc-hidden" title="Participants"><i class="fa fa-users"></i></button><button id="epc-chat-call" type="button" class="epc-icon-btn" title="Call"><i class="fa fa-phone"></i></button></div>
+                            <div id="epc-chat-members-panel" class="epc-chat-members-panel epc-hidden"></div>
                             <div id="epc-chat-messages" class="epc-chat-messages"></div>
                             <form id="epc-chat-compose" class="epc-chat-compose"><textarea id="epc-chat-input" rows="1" placeholder="Write a message…"></textarea><button type="submit" class="epc-chat-send" title="Send"><i class="fa fa-paper-plane"></i></button></form>
                         </div>
@@ -203,6 +205,7 @@
             document.getElementById("epc-chat-new-start").addEventListener("click", (ev) => { ev.stopPropagation(); this._startSelectedChat(); });
             document.getElementById("epc-chat-contact-search").addEventListener("input", () => this._renderChatContacts());
             document.getElementById("epc-chat-back").addEventListener("click", (ev) => { ev.stopPropagation(); this._closeChatConversation(); });
+            document.getElementById("epc-chat-members").addEventListener("click", (ev) => { ev.stopPropagation(); this._toggleChatMembers(); });
             document.getElementById("epc-chat-call").addEventListener("click", (ev) => { ev.stopPropagation(); this._callCurrentChat(); });
             document.getElementById("epc-chat-compose").addEventListener("submit", (ev) => { ev.preventDefault(); ev.stopPropagation(); this._sendChatMessage(); });
             const chatInput = document.getElementById("epc-chat-input");
@@ -718,13 +721,20 @@
             });
             const start = document.getElementById("epc-chat-new-start");
             if (start) start.disabled = this.chatSelection.size < 1;
+            const groupNameWrap = document.getElementById("epc-chat-group-name-wrap");
+            const groupName = document.getElementById("epc-chat-group-name");
+            const isGroup = this.chatSelection.size >= 2;
+            if (groupNameWrap) groupNameWrap.classList.toggle("epc-hidden", !isGroup);
+            if (!isGroup && groupName) groupName.value = "";
         }
 
         async _startSelectedChat() {
             const ids = Array.from(this.chatSelection);
             if (!ids.length) return;
             try {
-                const res = await rpc("/employee_portal/chat/start", { participant_ids: ids });
+                const groupNameInput = document.getElementById("epc-chat-group-name");
+                const groupName = ids.length >= 2 && groupNameInput ? groupNameInput.value.trim() : "";
+                const res = await rpc("/employee_portal/chat/start", { participant_ids: ids, name: groupName });
                 if (res && res.thread_id) {
                     this.chatSelectionMode = false;
                     this.chatSelection.clear();
@@ -792,6 +802,7 @@
             const convo = document.getElementById("epc-chat-conversation");
             const subheader = convo ? convo.querySelector(".epc-chat-subheader") : null;
             const messages = document.getElementById("epc-chat-messages");
+            const membersPanel = document.getElementById("epc-chat-members-panel");
             const compose = document.getElementById("epc-chat-compose");
 
             // Portal-mobile chat is a self-contained viewport. Keep the composer
@@ -843,8 +854,9 @@
                 const headerHeight = header ? header.getBoundingClientRect().height : 0;
                 const tabsHeight = tabs ? tabs.getBoundingClientRect().height : 0;
                 const subheaderHeight = subheader ? subheader.getBoundingClientRect().height : 44;
+                const membersHeight = membersPanel && !membersPanel.classList.contains("epc-hidden") ? membersPanel.getBoundingClientRect().height : 0;
                 const composerHeight = 58;
-                const messageHeight = Math.max(100, usableHeight - headerHeight - tabsHeight - subheaderHeight - composerHeight);
+                const messageHeight = Math.max(100, usableHeight - headerHeight - tabsHeight - subheaderHeight - membersHeight - composerHeight);
                 messages.style.flex = "0 0 auto";
                 messages.style.height = `${Math.floor(messageHeight)}px`;
                 messages.style.maxHeight = `${Math.floor(messageHeight)}px`;
@@ -883,6 +895,8 @@
             const convo = document.getElementById("epc-chat-conversation");
             const panel = document.getElementById("epc-panel");
             if (convo) convo.classList.add("epc-hidden");
+            const membersPanel = document.getElementById("epc-chat-members-panel");
+            if (membersPanel) membersPanel.classList.add("epc-hidden");
             if (panel) panel.classList.remove("epc-chat-conversation-open");
             this._resetChatViewportInlineStyles();
             if (threads) threads.classList.remove("epc-hidden");
@@ -898,6 +912,7 @@
                 const known = this.chatThreads.find((t) => Number(t.id) === Number(this.currentChatThreadId));
                 const title = document.getElementById("epc-chat-title");
                 if (title) title.textContent = known ? known.name : (res.thread.name || "Conversation");
+                this._renderChatMembers();
                 const box = document.getElementById("epc-chat-messages");
                 if (!box) return;
                 const previousScrollTop = box.scrollTop;
@@ -979,6 +994,37 @@
             } catch (e) {
                 if (input) input.value = text;
             }
+        }
+
+        _renderChatMembers() {
+            const panel = document.getElementById("epc-chat-members-panel");
+            const button = document.getElementById("epc-chat-members");
+            if (!panel || !button) return;
+            const thread = this.currentChatThread || {};
+            const members = thread.participants || [];
+            const isGroup = Boolean(thread.is_group);
+            button.classList.toggle("epc-hidden", !isGroup);
+            if (!isGroup) {
+                panel.classList.add("epc-hidden");
+                panel.innerHTML = "";
+                return;
+            }
+            panel.innerHTML = members.map((member) => {
+                const initial = this._escape((member.name || "?").charAt(0).toUpperCase());
+                const avatar = member.avatar_url
+                    ? `<span class="epc-chat-member-avatar"><img src="${this._escape(member.avatar_url)}" alt="" onerror="this.style.display='none'"/><span>${initial}</span></span>`
+                    : `<span class="epc-chat-member-avatar"><span>${initial}</span></span>`;
+                const me = member.is_me ? '<small>You</small>' : '';
+                return `<div class="epc-chat-member-row">${avatar}<span class="epc-chat-member-copy"><strong>${this._escape(member.name || "Employee")}</strong>${me}</span></div>`;
+            }).join("");
+        }
+
+        _toggleChatMembers() {
+            const panel = document.getElementById("epc-chat-members-panel");
+            if (!panel || !this.currentChatThread || !this.currentChatThread.is_group) return;
+            this._renderChatMembers();
+            panel.classList.toggle("epc-hidden");
+            this._updateChatViewportMetrics();
         }
 
         _callCurrentChat() {
