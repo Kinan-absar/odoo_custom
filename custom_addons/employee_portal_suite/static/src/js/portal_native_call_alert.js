@@ -26,6 +26,27 @@ function removeAlert() {
     activeChannelId = 0;
 }
 
+
+function positionAlert(root) {
+    if (!root) return;
+    const mobile = window.matchMedia("(max-width: 768px)").matches;
+    let top = mobile ? 12 : 76;
+    if (mobile) {
+        const header = document.querySelector(".mobile-app-header:not([style*='display: none']), .ep-mobile-topbar");
+        if (header) {
+            const rect = header.getBoundingClientRect();
+            top = Math.max(12, Math.round(rect.bottom + 10));
+        }
+    } else {
+        const actions = document.querySelector(".ep-desktop-top-actions");
+        if (actions) {
+            const rect = actions.getBoundingClientRect();
+            top = Math.max(76, Math.round(rect.bottom + 12));
+        }
+    }
+    root.style.setProperty("--ep-native-call-top", `${top}px`);
+}
+
 function showAlert(call) {
     if (!isEmployeePortalShell() || !call?.channel_id) return;
     if (activeChannelId === call.channel_id && document.getElementById("ep-native-call-alert")) return;
@@ -48,6 +69,10 @@ function showAlert(call) {
         finally { removeAlert(); }
     });
     document.body.appendChild(root);
+    positionAlert(root);
+    const reposition = () => positionAlert(root);
+    window.addEventListener("resize", reposition, { passive: true });
+    window.visualViewport?.addEventListener("resize", reposition, { passive: true });
 }
 
 const portalNativeCallAlertService = {

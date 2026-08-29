@@ -2,7 +2,7 @@
     position: fixed;
     z-index: 1085;
     right: 24px;
-    top: 24px;
+    top: var(--ep-native-call-top, 76px);
     width: 390px;
     max-width: calc(100% - 32px);
     display: flex;
@@ -81,7 +81,7 @@
 
 @media (max-width: 767px) {
     .ep-native-call-alert {
-        top: 16px;
+        top: var(--ep-native-call-top, 76px);
         left: 16px;
         right: 16px;
         width: auto;
