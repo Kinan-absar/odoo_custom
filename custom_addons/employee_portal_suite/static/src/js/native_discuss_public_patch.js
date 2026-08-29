@@ -25,6 +25,13 @@ patch(Discuss.prototype, {
         super.setup(...arguments);
         if (isEmployeePortalDiscuss && storeService) {
             storeService.inPublicPage = originalPublicPage;
+            // The public bootstrap stores the URL channel separately. Because we
+            // suppress Odoo's small-screen ChatWindow hook for employee portal
+            // Discuss, explicitly make that bootstrapped channel the main Discuss
+            // thread so /channel/<id> opens the conversation immediately.
+            if (!this.store.discuss.thread && this.store.discuss_public_thread) {
+                this.store.discuss.thread = this.store.discuss_public_thread;
+            }
             this.store.discuss.activeTab = "main";
             document.body.classList.add("ep-native-discuss-public");
         }

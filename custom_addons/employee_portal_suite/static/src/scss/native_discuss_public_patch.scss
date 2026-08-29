@@ -2,8 +2,8 @@
   overflow: hidden;
 }
 .ep-native-discuss-public .o-mail-Discuss {
-  min-height: 100dvh;
-  height: 100dvh;
+  min-height: 100vh;
+  height: 100vh;
 }
 .ep-native-discuss-toolbar {
   min-height: 52px;
@@ -30,7 +30,7 @@
 .ep-native-people-dialog {
   width: 100%;
   max-width: 520px;
-  max-height: calc(100dvh - 32px);
+  max-height: calc(100vh - 32px);
   background: #fff;
   border-radius: 18px;
   overflow: hidden;
@@ -68,8 +68,8 @@
 }
 @media (max-width: 767.98px) {
   .ep-native-discuss-public .o-mail-Discuss-content {
-    height: 100dvh !important;
-    max-height: 100dvh !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
   }
   .ep-native-discuss-public .o-mail-Discuss-header {
     min-height: 54px;
@@ -80,7 +80,7 @@
     min-height: 0;
   }
   .ep-native-discuss-public .o-mail-Composer {
-    padding-bottom: max(.5rem, env(safe-area-inset-bottom));
+    padding-bottom: .5rem;
   }
   .ep-native-people-overlay {
     padding: 0;
@@ -88,7 +88,7 @@
   }
   .ep-native-people-dialog {
     width: 100%;
-    max-height: 82dvh;
+    max-height: 82vh;
     border-radius: 18px 18px 0 0;
   }
 }
