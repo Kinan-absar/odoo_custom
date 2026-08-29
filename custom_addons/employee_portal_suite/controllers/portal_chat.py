@@ -115,8 +115,10 @@ class PortalChatController(http.Controller):
                 })
         else:
             names = [self._employee_name(request.env['res.users'].sudo().browse(uid)) for uid in ids]
+            requested_name = (name or '').strip()
+            default_name = ', '.join(names[:3]) + (' +%s' % (len(names)-3) if len(names) > 3 else '')
             thread = Thread.create({
-                'name': (name or ', '.join(names[:3]) + (' +%s' % (len(names)-3) if len(names) > 3 else ''))[:120],
+                'name': (requested_name or default_name or 'Group chat')[:120],
                 'participant_ids': [(6, 0, all_ids)],
                 'is_group': True,
             })
@@ -148,8 +150,23 @@ class PortalChatController(http.Controller):
             })
         state = self._read_state(thread, user, create=True)
         state.write({'last_read_at': fields.Datetime.now()})
+        participants = []
+        for participant in thread.participant_ids:
+            participants.append({
+                'user_id': participant.id,
+                'name': self._employee_name(participant),
+                'avatar_url': '/employee_portal/call/avatar/%s' % participant.id,
+                'is_me': participant.id == user.id,
+            })
         return {
-            'thread': {'id': thread.id, 'name': thread.name, 'is_group': thread.is_group, 'participant_ids': thread.participant_ids.ids},
+            'thread': {
+                'id': thread.id,
+                'name': thread.name,
+                'is_group': thread.is_group,
+                'participant_ids': thread.participant_ids.ids,
+                'participant_count': len(thread.participant_ids),
+                'participants': participants,
+            },
             'messages': rows,
         }
 

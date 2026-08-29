@@ -75,6 +75,8 @@
             this.chatSelectionMode = false;
             this.chatSelection = new Set();
             this.panelView = "people";
+            this.callPanelView = "people";
+            this.panelMode = "calls";
             this.unreadMissedCount = 0;
             this._lastLocalActivity = Date.now();
             this.selfUserId = null;
@@ -110,7 +112,7 @@
                     <div id="epc-panel-tabs" class="epc-panel-tabs">
                         <button id="epc-tab-people" type="button" class="epc-panel-tab epc-active"><i class="fa fa-users"></i><span>People</span></button>
                         <button id="epc-tab-history" type="button" class="epc-panel-tab"><i class="fa fa-history"></i><span>Recent</span><span id="epc-tab-missed" class="epc-tab-badge epc-hidden">0</span></button>
-                        <button id="epc-tab-chat" type="button" class="epc-panel-tab"><i class="fa fa-comments"></i><span>Messages</span><span id="epc-tab-chat-unread" class="epc-tab-badge epc-hidden">0</span></button>
+                        <button id="epc-tab-chat" type="button" class="epc-panel-tab epc-hidden" aria-hidden="true"><i class="fa fa-comments"></i><span>Messages</span><span id="epc-tab-chat-unread" class="epc-tab-badge epc-hidden">0</span></button>
                     </div>
                     <div id="epc-people-view">
                     <div class="epc-search-wrap"><input id="epc-contact-search" type="search" placeholder="Search employees…" autocomplete="off"/></div>
@@ -134,10 +136,12 @@
                         <div id="epc-chat-new-wrap" class="epc-hidden">
                             <div class="epc-chat-subheader"><button id="epc-chat-new-back" type="button" class="epc-icon-btn"><i class="fa fa-arrow-left"></i></button><strong>New conversation</strong><button id="epc-chat-new-start" type="button" class="epc-btn epc-btn-small" disabled>Start</button></div>
                             <div class="epc-search-wrap"><input id="epc-chat-contact-search" type="search" placeholder="Search employees…" autocomplete="off"/></div>
+                            <div id="epc-chat-group-name-wrap" class="epc-chat-group-name-wrap epc-hidden"><input id="epc-chat-group-name" type="text" maxlength="120" placeholder="Group name (optional)" autocomplete="off"/></div>
                             <div id="epc-chat-contact-list"></div>
                         </div>
                         <div id="epc-chat-conversation" class="epc-hidden">
-                            <div class="epc-chat-subheader"><button id="epc-chat-back" type="button" class="epc-icon-btn"><i class="fa fa-arrow-left"></i></button><strong id="epc-chat-title">Conversation</strong><button id="epc-chat-call" type="button" class="epc-icon-btn" title="Call"><i class="fa fa-phone"></i></button></div>
+                            <div class="epc-chat-subheader"><button id="epc-chat-back" type="button" class="epc-icon-btn"><i class="fa fa-arrow-left"></i></button><strong id="epc-chat-title">Conversation</strong><button id="epc-chat-members" type="button" class="epc-icon-btn epc-hidden" title="Participants"><i class="fa fa-users"></i></button><button id="epc-chat-call" type="button" class="epc-icon-btn" title="Call"><i class="fa fa-phone"></i></button></div>
+                            <div id="epc-chat-members-panel" class="epc-chat-members-panel epc-hidden"></div>
                             <div id="epc-chat-messages" class="epc-chat-messages"></div>
                             <form id="epc-chat-compose" class="epc-chat-compose"><textarea id="epc-chat-input" rows="1" placeholder="Write a message…"></textarea><button type="submit" class="epc-chat-send" title="Send"><i class="fa fa-paper-plane"></i></button></form>
                         </div>
@@ -196,12 +200,12 @@
             document.getElementById("epc-picker-backdrop").addEventListener("click", closePicker);
             document.getElementById("epc-tab-people").addEventListener("click", (ev) => { ev.stopPropagation(); this._showPanelView("people"); });
             document.getElementById("epc-tab-history").addEventListener("click", (ev) => { ev.stopPropagation(); this._showPanelView("history", true); });
-            document.getElementById("epc-tab-chat").addEventListener("click", (ev) => { ev.stopPropagation(); this._showPanelView("chat"); });
             document.getElementById("epc-new-chat").addEventListener("click", (ev) => { ev.stopPropagation(); this._openNewChatSelector(); });
             document.getElementById("epc-chat-new-back").addEventListener("click", (ev) => { ev.stopPropagation(); this._closeNewChatSelector(); });
             document.getElementById("epc-chat-new-start").addEventListener("click", (ev) => { ev.stopPropagation(); this._startSelectedChat(); });
             document.getElementById("epc-chat-contact-search").addEventListener("input", () => this._renderChatContacts());
             document.getElementById("epc-chat-back").addEventListener("click", (ev) => { ev.stopPropagation(); this._closeChatConversation(); });
+            document.getElementById("epc-chat-members").addEventListener("click", (ev) => { ev.stopPropagation(); this._toggleChatMembers(); });
             document.getElementById("epc-chat-call").addEventListener("click", (ev) => { ev.stopPropagation(); this._callCurrentChat(); });
             document.getElementById("epc-chat-compose").addEventListener("submit", (ev) => { ev.preventDefault(); ev.stopPropagation(); this._sendChatMessage(); });
             const chatInput = document.getElementById("epc-chat-input");
@@ -232,7 +236,9 @@
                 ev.preventDefault();
                 ev.stopPropagation();
                 this._addingPeople = true;
+                this.panelMode = "calls";
                 this._showPanelView("people", false);
+                this._applyPanelMode();
                 const panel = document.getElementById("epc-panel");
                 panel.classList.add("epc-meeting-picker");
                 document.getElementById("epc-picker-backdrop").classList.remove("epc-hidden");
@@ -272,7 +278,7 @@
             // activation from a user gesture. Any first interaction with the calling
             // UI unlocks both so future incoming calls can ring/notify in background tabs.
             document.addEventListener("pointerdown", (ev) => {
-                if (ev.target.closest(".epc-header-btn, .epc-backend-systray-btn, #epc-panel, #epc-incoming, #epc-active")) {
+                if (ev.target.closest(".epc-header-btn, .epc-backend-systray-btn, .epc-backend-message-btn, #epc-panel, #epc-incoming, #epc-active")) {
                     this._unlockCallAlerts();
                 }
             }, { passive: true });
@@ -282,6 +288,8 @@
                 if (!panel.classList.contains("epc-hidden") &&
                     !ev.target.closest("#epc-panel") &&
                     !ev.target.closest(".epc-header-btn") &&
+                    !ev.target.closest(".epc-backend-systray-btn") &&
+                    !ev.target.closest(".epc-backend-message-btn") &&
                     !ev.target.closest("#epc-fab")) {
                     this._closeContactPanel();
                 }
@@ -298,62 +306,129 @@
 
         _addPortalHeaderButton(bellWrap) {
             if (!bellWrap || !bellWrap.parentElement) return;
-            if (bellWrap.parentElement.querySelector(":scope > .epc-header-btn")) return;
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = "epc-header-btn";
-            btn.title = "Calls";
-            btn.setAttribute("aria-label", "Calls");
-            btn.innerHTML = '<i class="fa fa-phone"></i><span class="epc-call-badge epc-hidden">0</span>';
-            bellWrap.insertAdjacentElement("beforebegin", btn);
-            btn.addEventListener("click", (ev) => {
-                ev.stopPropagation();
-                this._togglePanel(btn);
-            });
+            const parent = bellWrap.parentElement;
+
+            let callBtn = parent.querySelector(":scope > .epc-call-header-btn");
+            if (!callBtn) {
+                callBtn = document.createElement("button");
+                callBtn.type = "button";
+                callBtn.className = "epc-header-btn epc-call-header-btn";
+                callBtn.title = "Calls";
+                callBtn.setAttribute("aria-label", "Calls");
+                callBtn.innerHTML = '<i class="fa fa-phone"></i><span class="epc-call-badge epc-hidden">0</span>';
+                bellWrap.insertAdjacentElement("beforebegin", callBtn);
+                callBtn.addEventListener("click", (ev) => {
+                    ev.stopPropagation();
+                    this._togglePanel(callBtn, "calls");
+                });
+            }
+
+            if (!parent.querySelector(":scope > .epc-message-header-btn")) {
+                const messageBtn = document.createElement("button");
+                messageBtn.type = "button";
+                messageBtn.className = "epc-header-btn epc-message-header-btn";
+                messageBtn.title = "Messages";
+                messageBtn.setAttribute("aria-label", "Messages");
+                messageBtn.innerHTML = '<i class="fa fa-comments"></i><span class="epc-message-badge epc-hidden">0</span>';
+                callBtn.insertAdjacentElement("beforebegin", messageBtn);
+                messageBtn.addEventListener("click", (ev) => {
+                    ev.stopPropagation();
+                    this._togglePanel(messageBtn, "messages");
+                });
+            }
+            this._refreshMainAttentionBadge();
         }
 
         _ensureBackendSystrayButton() {
             if (!document.querySelector(".o_web_client")) return;
             const systray = document.querySelector(".o_menu_systray");
-            if (!systray || systray.querySelector(".epc-backend-systray-item")) return;
+            if (!systray) return;
 
-            const item = document.createElement("div");
-            item.className = "o_menu_systray_item epc-backend-systray-item";
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = "epc-backend-systray-btn";
-            btn.title = "Calls";
-            btn.setAttribute("aria-label", "Calls");
-            btn.innerHTML = '<i class="fa fa-phone"></i><span class="epc-call-badge epc-hidden">0</span>';
-            item.appendChild(btn);
-            this._setMissedBadge(this.unreadMissedCount);
-            // Put Calls at the leading edge of the systray, beside Odoo status indicator.
-            systray.insertBefore(item, systray.firstElementChild);
-            btn.addEventListener("click", (ev) => {
-                ev.stopPropagation();
-                this._togglePanel(btn);
-            });
+            // IMPORTANT: this method is called by a childList MutationObserver.
+            // Only touch the DOM when an item is actually missing; otherwise a
+            // badge text rewrite would retrigger the observer forever and keep
+            // the Odoo web client stuck on its loading screen.
+            let changed = false;
+            let callItem = systray.querySelector(".epc-backend-systray-item:not(.epc-backend-message-item)");
+            if (!callItem) {
+                callItem = document.createElement("div");
+                callItem.className = "o_menu_systray_item epc-backend-systray-item";
+                const callBtn = document.createElement("button");
+                callBtn.type = "button";
+                callBtn.className = "epc-backend-systray-btn";
+                callBtn.title = "Calls";
+                callBtn.setAttribute("aria-label", "Calls");
+                callBtn.innerHTML = '<i class="fa fa-phone"></i><span class="epc-call-badge epc-hidden">0</span>';
+                callItem.appendChild(callBtn);
+                systray.insertBefore(callItem, systray.firstElementChild);
+                callBtn.addEventListener("click", (ev) => {
+                    ev.stopPropagation();
+                    this._togglePanel(callBtn, "calls");
+                });
+                changed = true;
+            }
+
+            if (!systray.querySelector(".epc-backend-message-item")) {
+                const messageItem = document.createElement("div");
+                messageItem.className = "o_menu_systray_item epc-backend-systray-item epc-backend-message-item";
+                const messageBtn = document.createElement("button");
+                messageBtn.type = "button";
+                messageBtn.className = "epc-backend-systray-btn epc-backend-message-btn";
+                messageBtn.title = "Employee Messages";
+                messageBtn.setAttribute("aria-label", "Employee Messages");
+                messageBtn.innerHTML = '<i class="fa fa-comments"></i><span class="epc-message-badge epc-hidden">0</span>';
+                messageItem.appendChild(messageBtn);
+                systray.insertBefore(messageItem, callItem);
+                messageBtn.addEventListener("click", (ev) => {
+                    ev.stopPropagation();
+                    this._togglePanel(messageBtn, "messages");
+                });
+                changed = true;
+            }
+
+            if (changed) this._refreshMainAttentionBadge();
         }
 
-        _togglePanel(anchor) {
+        _togglePanel(anchor, mode) {
             this._unlockCallAlerts(true);
             const panel = document.getElementById("epc-panel");
+            const requestedMode = mode === "messages" ? "messages" : "calls";
             const opening = panel.classList.contains("epc-hidden");
-            if (opening) {
+            const switchingMode = !opening && this.panelMode !== requestedMode;
+
+            if (opening || switchingMode) {
+                this.panelMode = requestedMode;
                 if (!this.currentUuid) this._setGroupCallMode(false);
-                if (!this._addingPeople) this._showPanelView(this.panelView || "people", false);
+                if (requestedMode === "messages") {
+                    this._showPanelView("chat", false);
+                } else if (!this._addingPeople) {
+                    this._showPanelView(this.callPanelView || "people", false);
+                }
+                this._applyPanelMode();
                 this._panelAnchor = anchor;
                 panel.classList.remove("epc-hidden");
                 this._positionPanel(anchor);
-                if (this.panelView === "chat" && this.currentChatThreadId) {
+                if (requestedMode === "messages" && this.currentChatThreadId) {
                     this._syncChatConversationLayout();
                     window.requestAnimationFrame(() => this._refreshOpenChat(false));
                 }
-                const search = document.getElementById("epc-contact-search");
+                const search = requestedMode === "calls" ? document.getElementById("epc-contact-search") : null;
                 if (search) setTimeout(() => search.focus(), 0);
             } else {
                 panel.classList.add("epc-hidden");
+                this._resetChatViewportInlineStyles();
             }
+        }
+
+        _applyPanelMode() {
+            const panel = document.getElementById("epc-panel");
+            if (!panel) return;
+            const title = panel.querySelector(".epc-panel-header span");
+            const tabs = document.getElementById("epc-panel-tabs");
+            const messageMode = this.panelMode === "messages";
+            panel.classList.toggle("epc-message-panel", messageMode);
+            if (title && !this._addingPeople) title.textContent = messageMode ? "Messages" : "Calls";
+            if (tabs) tabs.classList.toggle("epc-hidden", messageMode);
         }
 
         _closeContactPanel() {
@@ -362,7 +437,7 @@
                 panel.classList.add("epc-hidden");
                 panel.classList.remove("epc-meeting-picker");
                 const title = panel.querySelector(".epc-panel-header span");
-                if (title) title.textContent = "Calls";
+                if (title) title.textContent = this.panelMode === "messages" ? "Messages" : "Calls";
             }
             const backdrop = document.getElementById("epc-picker-backdrop");
             if (backdrop) backdrop.classList.add("epc-hidden");
@@ -374,6 +449,7 @@
         _showPanelView(view, markSeen) {
             if (this._addingPeople) view = "people";
             this.panelView = ["people", "history", "chat"].includes(view) ? view : "people";
+            if (this.panelView === "people" || this.panelView === "history") this.callPanelView = this.panelView;
             const people = document.getElementById("epc-people-view");
             const history = document.getElementById("epc-history-view");
             const chat = document.getElementById("epc-chat-view");
@@ -387,6 +463,7 @@
             if (historyTab) historyTab.classList.toggle("epc-active", this.panelView === "history");
             if (chatTab) chatTab.classList.toggle("epc-active", this.panelView === "chat");
             const panel = document.getElementById("epc-panel");
+            this._applyPanelMode();
             if (panel && this.panelView !== "chat") {
                 panel.classList.remove("epc-chat-conversation-open");
                 this._resetChatViewportInlineStyles();
@@ -405,10 +482,17 @@
         }
 
         _refreshMainAttentionBadge() {
-            const total = Math.max(0, Number(this.unreadMissedCount || 0)) + Math.max(0, Number(this.unreadChatCount || 0));
+            const missed = Math.max(0, Number(this.unreadMissedCount || 0));
+            const unread = Math.max(0, Number(this.unreadChatCount || 0));
             document.querySelectorAll(".epc-call-badge").forEach((badge) => {
-                badge.textContent = total > 99 ? "99+" : String(total);
-                badge.classList.toggle("epc-hidden", total === 0);
+                const text = missed > 99 ? "99+" : String(missed);
+                if (badge.textContent !== text) badge.textContent = text;
+                badge.classList.toggle("epc-hidden", missed === 0);
+            });
+            document.querySelectorAll(".epc-message-badge").forEach((badge) => {
+                const text = unread > 99 ? "99+" : String(unread);
+                if (badge.textContent !== text) badge.textContent = text;
+                badge.classList.toggle("epc-hidden", unread === 0);
             });
         }
 
@@ -637,13 +721,20 @@
             });
             const start = document.getElementById("epc-chat-new-start");
             if (start) start.disabled = this.chatSelection.size < 1;
+            const groupNameWrap = document.getElementById("epc-chat-group-name-wrap");
+            const groupName = document.getElementById("epc-chat-group-name");
+            const isGroup = this.chatSelection.size >= 2;
+            if (groupNameWrap) groupNameWrap.classList.toggle("epc-hidden", !isGroup);
+            if (!isGroup && groupName) groupName.value = "";
         }
 
         async _startSelectedChat() {
             const ids = Array.from(this.chatSelection);
             if (!ids.length) return;
             try {
-                const res = await rpc("/employee_portal/chat/start", { participant_ids: ids });
+                const groupNameInput = document.getElementById("epc-chat-group-name");
+                const groupName = ids.length >= 2 && groupNameInput ? groupNameInput.value.trim() : "";
+                const res = await rpc("/employee_portal/chat/start", { participant_ids: ids, name: groupName });
                 if (res && res.thread_id) {
                     this.chatSelectionMode = false;
                     this.chatSelection.clear();
@@ -711,6 +802,7 @@
             const convo = document.getElementById("epc-chat-conversation");
             const subheader = convo ? convo.querySelector(".epc-chat-subheader") : null;
             const messages = document.getElementById("epc-chat-messages");
+            const membersPanel = document.getElementById("epc-chat-members-panel");
             const compose = document.getElementById("epc-chat-compose");
 
             // Portal-mobile chat is a self-contained viewport. Keep the composer
@@ -762,8 +854,9 @@
                 const headerHeight = header ? header.getBoundingClientRect().height : 0;
                 const tabsHeight = tabs ? tabs.getBoundingClientRect().height : 0;
                 const subheaderHeight = subheader ? subheader.getBoundingClientRect().height : 44;
+                const membersHeight = membersPanel && !membersPanel.classList.contains("epc-hidden") ? membersPanel.getBoundingClientRect().height : 0;
                 const composerHeight = 58;
-                const messageHeight = Math.max(100, usableHeight - headerHeight - tabsHeight - subheaderHeight - composerHeight);
+                const messageHeight = Math.max(100, usableHeight - headerHeight - tabsHeight - subheaderHeight - membersHeight - composerHeight);
                 messages.style.flex = "0 0 auto";
                 messages.style.height = `${Math.floor(messageHeight)}px`;
                 messages.style.maxHeight = `${Math.floor(messageHeight)}px`;
@@ -802,6 +895,8 @@
             const convo = document.getElementById("epc-chat-conversation");
             const panel = document.getElementById("epc-panel");
             if (convo) convo.classList.add("epc-hidden");
+            const membersPanel = document.getElementById("epc-chat-members-panel");
+            if (membersPanel) membersPanel.classList.add("epc-hidden");
             if (panel) panel.classList.remove("epc-chat-conversation-open");
             this._resetChatViewportInlineStyles();
             if (threads) threads.classList.remove("epc-hidden");
@@ -817,16 +912,39 @@
                 const known = this.chatThreads.find((t) => Number(t.id) === Number(this.currentChatThreadId));
                 const title = document.getElementById("epc-chat-title");
                 if (title) title.textContent = known ? known.name : (res.thread.name || "Conversation");
+                this._renderChatMembers();
                 const box = document.getElementById("epc-chat-messages");
                 if (!box) return;
                 const previousScrollTop = box.scrollTop;
                 const wasNearBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 90;
                 box.innerHTML = "";
+                let previousAuthorKey = null;
+                let previousDayKey = null;
                 (res.messages || []).forEach((msg) => {
+                    const dt = this._chatMessageDate(msg.date);
+                    const dayKey = dt ? `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}` : (msg.date || "");
+                    if (dayKey !== previousDayKey) {
+                        const separator = document.createElement("div");
+                        separator.className = "epc-chat-date-separator";
+                        separator.innerHTML = `<span>${this._escape(this._chatDateLabel(dt, msg.date))}</span>`;
+                        box.appendChild(separator);
+                        previousDayKey = dayKey;
+                        previousAuthorKey = null;
+                    }
+
+                    const authorKey = `${msg.mine ? "mine" : "other"}:${Number(msg.author_user_id || 0)}:${msg.author || ""}`;
+                    const grouped = previousAuthorKey === authorKey;
                     const item = document.createElement("div");
-                    item.className = "epc-chat-message " + (msg.mine ? "epc-chat-message-mine" : "epc-chat-message-other");
-                    item.innerHTML = `${msg.mine ? "" : `<div class="epc-chat-message-author">${this._escape(msg.author || "Employee")}</div>`}<div class="epc-chat-bubble">${this._escape(msg.body || "").replace(/\n/g, "<br/>")}</div>`;
+                    item.className = "epc-chat-message " +
+                        (msg.mine ? "epc-chat-message-mine" : "epc-chat-message-other") +
+                        (grouped ? " epc-chat-message-grouped" : " epc-chat-message-group-start");
+                    const author = (!msg.mine && !grouped)
+                        ? `<div class="epc-chat-message-author">${this._escape(msg.author || "Employee")}</div>`
+                        : "";
+                    const time = this._escape(this._chatTimeLabel(dt, msg.date));
+                    item.innerHTML = `${author}<div class="epc-chat-bubble">${this._escape(msg.body || "").replace(/\n/g, "<br/>")}<span class="epc-chat-message-time">${time}</span></div>`;
                     box.appendChild(item);
+                    previousAuthorKey = authorKey;
                 });
                 if (scrollToBottom || wasNearBottom) {
                     box.scrollTop = box.scrollHeight;
@@ -835,6 +953,34 @@
                 }
                 await this._refreshChatThreads();
             } catch (e) {}
+        }
+
+        _chatMessageDate(raw) {
+            if (!raw) return null;
+            // Odoo JSON datetimes are UTC strings without a timezone suffix.
+            // Add Z so the browser displays them in the employee's local time.
+            const value = String(raw).trim().replace(" ", "T");
+            const dt = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(value) ? value : `${value}Z`);
+            return Number.isNaN(dt.getTime()) ? null : dt;
+        }
+
+        _chatTimeLabel(dt, raw) {
+            if (!dt) return raw ? String(raw).slice(11, 16) : "";
+            return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(dt);
+        }
+
+        _chatDateLabel(dt, raw) {
+            if (!dt) return raw ? String(raw).slice(0, 10) : "";
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const day = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+            const diffDays = Math.round((today - day) / 86400000);
+            if (diffDays === 0) return "Today";
+            if (diffDays === 1) return "Yesterday";
+            const sameYear = dt.getFullYear() === now.getFullYear();
+            return new Intl.DateTimeFormat(undefined, sameYear
+                ? { month: "short", day: "numeric" }
+                : { year: "numeric", month: "short", day: "numeric" }).format(dt);
         }
 
         async _sendChatMessage() {
@@ -848,6 +994,37 @@
             } catch (e) {
                 if (input) input.value = text;
             }
+        }
+
+        _renderChatMembers() {
+            const panel = document.getElementById("epc-chat-members-panel");
+            const button = document.getElementById("epc-chat-members");
+            if (!panel || !button) return;
+            const thread = this.currentChatThread || {};
+            const members = thread.participants || [];
+            const isGroup = Boolean(thread.is_group);
+            button.classList.toggle("epc-hidden", !isGroup);
+            if (!isGroup) {
+                panel.classList.add("epc-hidden");
+                panel.innerHTML = "";
+                return;
+            }
+            panel.innerHTML = members.map((member) => {
+                const initial = this._escape((member.name || "?").charAt(0).toUpperCase());
+                const avatar = member.avatar_url
+                    ? `<span class="epc-chat-member-avatar"><img src="${this._escape(member.avatar_url)}" alt="" onerror="this.style.display='none'"/><span>${initial}</span></span>`
+                    : `<span class="epc-chat-member-avatar"><span>${initial}</span></span>`;
+                const me = member.is_me ? '<small>You</small>' : '';
+                return `<div class="epc-chat-member-row">${avatar}<span class="epc-chat-member-copy"><strong>${this._escape(member.name || "Employee")}</strong>${me}</span></div>`;
+            }).join("");
+        }
+
+        _toggleChatMembers() {
+            const panel = document.getElementById("epc-chat-members-panel");
+            if (!panel || !this.currentChatThread || !this.currentChatThread.is_group) return;
+            this._renderChatMembers();
+            panel.classList.toggle("epc-hidden");
+            this._updateChatViewportMetrics();
         }
 
         _callCurrentChat() {

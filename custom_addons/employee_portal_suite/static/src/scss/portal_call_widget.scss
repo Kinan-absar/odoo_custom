@@ -922,7 +922,8 @@
 .epc-backend-systray-btn {
     position: relative;
 }
-.epc-call-badge {
+.epc-call-badge,
+.epc-message-badge {
     position: absolute;
     top: 1px;
     right: 0;
@@ -1062,14 +1063,15 @@
 }
 .epc-history-call-btn:hover { background: #E0E7FF; }
 @media (max-width: 768px) {
-    .epc-call-badge { top: 0; right: -2px; }
+    .epc-call-badge, .epc-message-badge { top: 0; right: -2px; }
     #epc-history-list { max-height: 360px; }
     .epc-history-row { min-height: 52px; padding: 6px 9px; }
     .epc-history-meta { gap: 5px; }
 }
 
 /* v17.11 - Match Odoo backend systray notification counters. */
-.epc-backend-systray-btn .epc-call-badge {
+.epc-backend-systray-btn .epc-call-badge,
+.epc-backend-systray-btn .epc-message-badge {
     top: 2px;
     right: -3px;
     min-width: 18px;
@@ -1137,7 +1139,17 @@
 .epc-chat-message-mine { align-self: flex-end; align-items: flex-end; }
 .epc-chat-message-other { align-self: flex-start; align-items: flex-start; }
 .epc-chat-message-author { padding-left: 7px; color: #7A8496; font-size: 9px; font-weight: 600; }
+.epc-chat-date-separator {
+    width: 100%; display: flex; align-items: center; justify-content: center; margin: 8px 0 5px;
+    color: #8A94A6; font-size: 9px; font-weight: 600;
+}
+.epc-chat-date-separator span { padding: 3px 8px; border-radius: 10px; background: #EEF1F5; }
+.epc-chat-message-group-start { margin-top: 4px; }
+.epc-chat-message-grouped { margin-top: -4px; }
 .epc-chat-bubble { padding: 7px 10px; border-radius: 13px; font-size: 12px; line-height: 1.35; word-break: break-word; }
+.epc-chat-message-time {
+    display: inline-block; margin-left: 7px; font-size: 8px; line-height: 1; opacity: .62; white-space: nowrap; vertical-align: baseline;
+}
 .epc-chat-message-mine .epc-chat-bubble { background: #4F46E5; color: #fff; border-bottom-right-radius: 4px; }
 .epc-chat-message-other .epc-chat-bubble { background: #fff; color: #1F2937; box-shadow: 0 1px 3px rgba(15,23,42,.08); border-bottom-left-radius: 4px; }
 .epc-chat-compose { padding: 8px; border-top: 1px solid rgba(15,23,42,.06); display: flex; align-items: flex-end; gap: 7px; background: #fff; }
@@ -1196,3 +1208,17 @@
         min-height: 120px;
     }
 }
+
+
+/* v17.23 - Proper group chat header, naming and participant list. */
+.epc-chat-group-name-wrap { padding: 0 10px 8px; background: #fff; }
+.epc-chat-group-name-wrap input { width: 100%; height: 36px; border: 1px solid #D9DDE6; border-radius: 10px; padding: 0 10px; font-size: 12px; outline: none; box-sizing: border-box; }
+.epc-chat-group-name-wrap input:focus { border-color: #6366F1; box-shadow: 0 0 0 2px rgba(99,102,241,.10); }
+.epc-chat-members-panel { max-height: 170px; overflow-y: auto; padding: 4px 8px; border-bottom: 1px solid rgba(15,23,42,.06); background: #F8FAFC; }
+.epc-chat-member-row { min-height: 38px; display: flex; align-items: center; gap: 8px; padding: 4px 2px; }
+.epc-chat-member-avatar { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 50%; overflow: hidden; position: relative; display: inline-flex; align-items: center; justify-content: center; background: #EEF2FF; color: #4F46E5; font-size: 10px; font-weight: 800; }
+.epc-chat-member-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; }
+.epc-chat-member-avatar > span { position: relative; z-index: 1; }
+.epc-chat-member-copy { min-width: 0; flex: 1 1 auto; display: flex; align-items: center; gap: 6px; }
+.epc-chat-member-copy strong { font-size: 12px; color: #1F2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.epc-chat-member-copy small { color: #8A94A6; font-size: 9px; }
