@@ -1139,7 +1139,17 @@
 .epc-chat-message-mine { align-self: flex-end; align-items: flex-end; }
 .epc-chat-message-other { align-self: flex-start; align-items: flex-start; }
 .epc-chat-message-author { padding-left: 7px; color: #7A8496; font-size: 9px; font-weight: 600; }
+.epc-chat-date-separator {
+    width: 100%; display: flex; align-items: center; justify-content: center; margin: 8px 0 5px;
+    color: #8A94A6; font-size: 9px; font-weight: 600;
+}
+.epc-chat-date-separator span { padding: 3px 8px; border-radius: 10px; background: #EEF1F5; }
+.epc-chat-message-group-start { margin-top: 4px; }
+.epc-chat-message-grouped { margin-top: -4px; }
 .epc-chat-bubble { padding: 7px 10px; border-radius: 13px; font-size: 12px; line-height: 1.35; word-break: break-word; }
+.epc-chat-message-time {
+    display: inline-block; margin-left: 7px; font-size: 8px; line-height: 1; opacity: .62; white-space: nowrap; vertical-align: baseline;
+}
 .epc-chat-message-mine .epc-chat-bubble { background: #4F46E5; color: #fff; border-bottom-right-radius: 4px; }
 .epc-chat-message-other .epc-chat-bubble { background: #fff; color: #1F2937; box-shadow: 0 1px 3px rgba(15,23,42,.08); border-bottom-left-radius: 4px; }
 .epc-chat-compose { padding: 8px; border-top: 1px solid rgba(15,23,42,.06); display: flex; align-items: flex-end; gap: 7px; background: #fff; }

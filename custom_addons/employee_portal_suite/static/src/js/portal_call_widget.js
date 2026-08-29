@@ -903,11 +903,33 @@
                 const previousScrollTop = box.scrollTop;
                 const wasNearBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 90;
                 box.innerHTML = "";
+                let previousAuthorKey = null;
+                let previousDayKey = null;
                 (res.messages || []).forEach((msg) => {
+                    const dt = this._chatMessageDate(msg.date);
+                    const dayKey = dt ? `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}` : (msg.date || "");
+                    if (dayKey !== previousDayKey) {
+                        const separator = document.createElement("div");
+                        separator.className = "epc-chat-date-separator";
+                        separator.innerHTML = `<span>${this._escape(this._chatDateLabel(dt, msg.date))}</span>`;
+                        box.appendChild(separator);
+                        previousDayKey = dayKey;
+                        previousAuthorKey = null;
+                    }
+
+                    const authorKey = `${msg.mine ? "mine" : "other"}:${Number(msg.author_user_id || 0)}:${msg.author || ""}`;
+                    const grouped = previousAuthorKey === authorKey;
                     const item = document.createElement("div");
-                    item.className = "epc-chat-message " + (msg.mine ? "epc-chat-message-mine" : "epc-chat-message-other");
-                    item.innerHTML = `${msg.mine ? "" : `<div class="epc-chat-message-author">${this._escape(msg.author || "Employee")}</div>`}<div class="epc-chat-bubble">${this._escape(msg.body || "").replace(/\n/g, "<br/>")}</div>`;
+                    item.className = "epc-chat-message " +
+                        (msg.mine ? "epc-chat-message-mine" : "epc-chat-message-other") +
+                        (grouped ? " epc-chat-message-grouped" : " epc-chat-message-group-start");
+                    const author = (!msg.mine && !grouped)
+                        ? `<div class="epc-chat-message-author">${this._escape(msg.author || "Employee")}</div>`
+                        : "";
+                    const time = this._escape(this._chatTimeLabel(dt, msg.date));
+                    item.innerHTML = `${author}<div class="epc-chat-bubble">${this._escape(msg.body || "").replace(/\n/g, "<br/>")}<span class="epc-chat-message-time">${time}</span></div>`;
                     box.appendChild(item);
+                    previousAuthorKey = authorKey;
                 });
                 if (scrollToBottom || wasNearBottom) {
                     box.scrollTop = box.scrollHeight;
@@ -916,6 +938,34 @@
                 }
                 await this._refreshChatThreads();
             } catch (e) {}
+        }
+
+        _chatMessageDate(raw) {
+            if (!raw) return null;
+            // Odoo JSON datetimes are UTC strings without a timezone suffix.
+            // Add Z so the browser displays them in the employee's local time.
+            const value = String(raw).trim().replace(" ", "T");
+            const dt = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(value) ? value : `${value}Z`);
+            return Number.isNaN(dt.getTime()) ? null : dt;
+        }
+
+        _chatTimeLabel(dt, raw) {
+            if (!dt) return raw ? String(raw).slice(11, 16) : "";
+            return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(dt);
+        }
+
+        _chatDateLabel(dt, raw) {
+            if (!dt) return raw ? String(raw).slice(0, 10) : "";
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const day = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+            const diffDays = Math.round((today - day) / 86400000);
+            if (diffDays === 0) return "Today";
+            if (diffDays === 1) return "Yesterday";
+            const sameYear = dt.getFullYear() === now.getFullYear();
+            return new Intl.DateTimeFormat(undefined, sameYear
+                ? { month: "short", day: "numeric" }
+                : { year: "numeric", month: "short", day: "numeric" }).format(dt);
         }
 
         async _sendChatMessage() {
