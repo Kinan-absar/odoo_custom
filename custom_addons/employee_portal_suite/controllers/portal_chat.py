@@ -277,12 +277,27 @@ class PortalChatController(http.Controller):
             return {'error': 'invalid'}
         user = self._user()
         channel = self._channel(thread)
+
+        # A native Discuss tab that was already open may not yet be listening to
+        # a conversation first created from the portal. Broadcast the channel
+        # header to every member before posting, so the browser subscribes to
+        # the channel and receives the following new-message bus event live.
+        member_partner_ids = channel.sudo().channel_member_ids.partner_id.ids
+        channel.sudo().channel_member_ids.write({'unpin_dt': False})
+        channel.sudo()._broadcast(member_partner_ids)
+
         message = channel.sudo().message_post(
             body=Markup.escape(text).replace('\n', Markup('<br/>')),
             message_type='comment',
             subtype_xmlid='mail.mt_comment',
             author_id=user.partner_id.id,
         )
+
+        # Re-broadcast the updated header as a personal-bus fallback. Native
+        # message_post already emits discuss.channel/new_message; this ensures
+        # clients that only learned about the channel in this transaction also
+        # get its latest state without a manual page refresh.
+        channel.sudo()._broadcast(member_partner_ids)
         thread.sudo().write({'last_message_date': fields.Datetime.now()})
         state = self._read_state(thread, user, create=True)
         state.write({'last_read_at': fields.Datetime.now()})

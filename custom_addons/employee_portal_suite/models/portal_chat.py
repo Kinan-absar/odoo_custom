@@ -93,9 +93,48 @@ class PortalChatThread(models.Model):
         if self.is_group or len(partner_ids) > 2:
             channel = Channel.create_group(partner_ids, name=self.name or '')
         else:
-            # channel_get reuses Odoo's canonical 1-to-1 Discuss conversation when
-            # these two employees already spoke in native Discuss.
-            channel = Channel.channel_get(list(partner_ids), pin=True, force_open=False)
+            # Do not call channel_get() through sudo: Odoo's channel_get adds the
+            # environment user to the DM, which would add the superuser instead
+            # of one of the intended employee partners. Find/reuse an exact DM
+            # between these two partners, otherwise create it explicitly.
+            self.env['discuss.channel'].flush_model()
+            self.env['discuss.channel.member'].flush_model()
+            self.env.cr.execute("""
+                SELECT M.channel_id
+                  FROM discuss_channel C
+                  JOIN discuss_channel_member M ON M.channel_id = C.id
+                 WHERE C.channel_type = 'chat'
+                   AND M.partner_id IN %s
+                   AND NOT EXISTS (
+                       SELECT 1
+                         FROM discuss_channel_member M2
+                        WHERE M2.channel_id = C.id
+                          AND M2.partner_id NOT IN %s
+                   )
+              GROUP BY M.channel_id
+                HAVING ARRAY_AGG(DISTINCT M.partner_id ORDER BY M.partner_id) = %s
+                 LIMIT 1
+            """, (tuple(partner_ids), tuple(partner_ids), sorted(partner_ids)))
+            row = self.env.cr.fetchone()
+            if row:
+                channel = Channel.browse(row[0])
+                channel.channel_member_ids.sudo().write({'unpin_dt': False})
+                channel.sudo().write({'last_interest_dt': fields.Datetime.now()})
+                channel.sudo()._broadcast(partner_ids)
+            else:
+                channel = Channel.create({
+                    'channel_member_ids': [
+                        Command.create({
+                            'partner_id': partner_id,
+                            'unpin_dt': False,
+                            'last_interest_dt': fields.Datetime.now(),
+                        })
+                        for partner_id in partner_ids
+                    ],
+                    'channel_type': 'chat',
+                    'name': ', '.join(users.partner_id.mapped('name')),
+                })
+                channel.sudo()._broadcast(partner_ids)
 
         return self._bind_discuss_channel(channel)
 
