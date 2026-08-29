@@ -1,6 +1,7 @@
-from odoo import fields, http
+from odoo import Command, fields, http
 from odoo.http import request
 from odoo.addons.mail.tools.discuss import Store
+from odoo.tools import image_data_uri
 
 
 class EmployeePortalNativeDiscussController(http.Controller):
@@ -82,12 +83,19 @@ class EmployeePortalNativeDiscussController(http.Controller):
             return channel.name or ', '.join(others.mapped('name')) or 'Group'
         return others[:1].name or channel.name or 'Conversation'
 
+    def _user_avatar(self, user):
+        """Return an inline avatar so portal record rules cannot block employee photos."""
+        if not user or not user.partner_id:
+            return False
+        avatar = user.partner_id.sudo().avatar_128
+        return image_data_uri(avatar) if avatar else False
+
     def _channel_avatar(self, channel, user):
         users = self._channel_users(channel)
         others = users.filtered(lambda u: u.id != user.id)
         if channel.channel_type == 'group' or len(users) > 2:
             return False
-        return f'/web/image/res.partner/{others[:1].partner_id.id}/avatar_128' if others else False
+        return self._user_avatar(others[:1]) if others else False
 
     def _find_exact_dm(self, partner_ids):
         partner_ids = sorted(set(int(pid) for pid in partner_ids if pid))
@@ -113,30 +121,47 @@ class EmployeePortalNativeDiscussController(http.Controller):
         return request.env['discuss.channel'].sudo().browse(row[0]) if row else request.env['discuss.channel']
 
     def _get_or_create_channel(self, user, target_users, name=None):
-        all_users = (user | target_users).filtered(lambda u: u.active and u.partner_id)
-        partner_ids = all_users.partner_id.ids
-        if len(partner_ids) < 2:
+        """Use Odoo's native DM creation path and a true group for 3+ people."""
+        target_users = target_users.filtered(lambda u: u.active and u.partner_id and u.id != user.id)
+        if not target_users:
             return request.env['discuss.channel']
-        is_group = len(partner_ids) > 2
-        channel = request.env['discuss.channel']
-        if not is_group:
-            channel = self._find_exact_dm(partner_ids)
-        if not channel:
-            channel = request.env['discuss.channel'].sudo().create({
-                'channel_type': 'group' if is_group else 'chat',
-                'name': (name or '').strip() or (', '.join(target_users.mapped('name')) if is_group else target_users[:1].name),
+
+        # Direct conversation: delegate completely to native Odoo channel_get().
+        # sudo keeps the current uid in Odoo 18, so the portal employee remains
+        # the current persona while ACLs are bypassed for the server-side bridge.
+        if len(target_users) == 1:
+            target_partner_id = target_users.partner_id.id
+            channel = request.env['discuss.channel'].sudo().channel_get([target_partner_id])
+            channel.sudo().write({
                 'is_employee_portal_channel': True,
+                'last_interest_dt': fields.Datetime.now(),
             })
-            existing = channel.channel_member_ids.partner_id
-            missing = all_users.partner_id - existing
-            if missing:
-                channel.sudo()._add_members(
-                    partners=missing,
-                    post_joined_message=False,
-                    open_chat_window=False,
-                )
-        channel.sudo().write({'is_employee_portal_channel': True, 'last_interest_dt': fields.Datetime.now()})
-        channel.channel_member_ids.sudo().write({'unpin_dt': False})
+            member = channel.channel_member_ids.filtered(
+                lambda m: m.partner_id.id == user.partner_id.id
+            )[:1]
+            if member:
+                member.sudo().write({'unpin_dt': False})
+            return channel
+
+        # Group conversation: create a native `group` channel with every member
+        # on the initial create. Never create a `chat` and then append members.
+        all_users = (user | target_users).filtered(lambda u: u.active and u.partner_id)
+        partner_ids = sorted(set(all_users.partner_id.ids))
+        now = fields.Datetime.now()
+        channel = request.env['discuss.channel'].sudo().create({
+            'channel_type': 'group',
+            'name': (name or '').strip() or ', '.join(target_users.mapped('name')),
+            'is_employee_portal_channel': True,
+            'channel_member_ids': [
+                Command.create({
+                    'partner_id': partner_id,
+                    'unpin_dt': False if partner_id == user.partner_id.id else now,
+                    'last_interest_dt': now,
+                })
+                for partner_id in partner_ids
+            ],
+        })
+        channel.sudo()._broadcast(partner_ids)
         return channel
 
     @http.route('/my/employee/discuss', type='http', auth='user', website=True, methods=['GET'])
@@ -156,9 +181,16 @@ class EmployeePortalNativeDiscussController(http.Controller):
                 'unread': int(member.message_unread_counter or 0),
                 'last_interest_dt': channel.last_interest_dt,
             })
+        employee_rows = []
+        for emp_user in self._employee_users().filtered(lambda u: u.id != user.id):
+            employee_rows.append({
+                'id': emp_user.id,
+                'name': emp_user.name,
+                'avatar': self._user_avatar(emp_user),
+            })
         values = {
             'channels': rows,
-            'employees': self._employee_users().filtered(lambda u: u.id != user.id),
+            'employees': employee_rows,
             'call_mode': kwargs.get('mode') == 'call',
         }
         # Keep all normal portal layout counters/notification context.

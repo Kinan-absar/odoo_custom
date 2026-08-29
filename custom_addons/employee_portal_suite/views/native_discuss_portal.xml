@@ -36,9 +36,9 @@
                             <div class="ep-native-people-grid">
                                 <t t-foreach="employees" t-as="emp_user">
                                     <label class="ep-native-person-option">
-                                        <input type="checkbox" name="participant_ids" t-att-value="emp_user.id"/>
-                                        <img t-att-src="'/web/image/res.partner/%s/avatar_128' % emp_user.partner_id.id"/>
-                                        <span t-esc="emp_user.name"/>
+                                        <input type="checkbox" name="participant_ids" t-att-value="emp_user['id']"/>
+                                        <img t-if="emp_user['avatar']" t-att-src="emp_user['avatar']"/><span t-if="not emp_user['avatar']" class="ep-native-avatar-fallback"><i class="fa fa-user"/></span>
+                                        <span t-esc="emp_user['name']"/>
                                     </label>
                                 </t>
                             </div>
