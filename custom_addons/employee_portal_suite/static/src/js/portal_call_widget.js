@@ -74,6 +74,10 @@
             this.currentChatThread = null;
             this.chatSelectionMode = false;
             this.chatSelection = new Set();
+            this.pendingChatAttachments = [];
+            this.replyToMessage = null;
+            this._typingStopTimer = null;
+            this._lastTypingSent = false;
             this.panelView = "people";
             this.callPanelView = "people";
             this.panelMode = "calls";
@@ -140,10 +144,13 @@
                             <div id="epc-chat-contact-list"></div>
                         </div>
                         <div id="epc-chat-conversation" class="epc-hidden">
-                            <div class="epc-chat-subheader"><button id="epc-chat-back" type="button" class="epc-icon-btn"><i class="fa fa-arrow-left"></i></button><strong id="epc-chat-title">Conversation</strong><button id="epc-chat-members" type="button" class="epc-icon-btn epc-hidden" title="Participants"><i class="fa fa-users"></i></button><button id="epc-chat-call" type="button" class="epc-icon-btn" title="Call"><i class="fa fa-phone"></i></button></div>
+                            <div class="epc-chat-subheader"><button id="epc-chat-back" type="button" class="epc-icon-btn"><i class="fa fa-arrow-left"></i></button><strong id="epc-chat-title">Conversation</strong><button id="epc-chat-members" type="button" class="epc-icon-btn epc-hidden" title="Participants"><i class="fa fa-users"></i></button><button id="epc-chat-video" type="button" class="epc-icon-btn" title="Video call"><i class="fa fa-video-camera"></i></button><button id="epc-chat-call" type="button" class="epc-icon-btn" title="Audio call"><i class="fa fa-phone"></i></button></div>
                             <div id="epc-chat-members-panel" class="epc-chat-members-panel epc-hidden"></div>
                             <div id="epc-chat-messages" class="epc-chat-messages"></div>
-                            <form id="epc-chat-compose" class="epc-chat-compose"><textarea id="epc-chat-input" rows="1" placeholder="Write a message…"></textarea><button type="submit" class="epc-chat-send" title="Send"><i class="fa fa-paper-plane"></i></button></form>
+                            <div id="epc-chat-typing" class="epc-chat-typing epc-hidden"></div>
+                            <div id="epc-chat-reply-bar" class="epc-chat-reply-bar epc-hidden"><span><strong id="epc-chat-reply-author"></strong><small id="epc-chat-reply-text"></small></span><button id="epc-chat-reply-cancel" type="button"><i class="fa fa-times"></i></button></div>
+                            <div id="epc-chat-attachment-preview" class="epc-chat-attachment-preview epc-hidden"></div>
+                            <form id="epc-chat-compose" class="epc-chat-compose"><button id="epc-chat-attach" type="button" class="epc-chat-compose-tool" title="Attach file"><i class="fa fa-paperclip"></i></button><input id="epc-chat-file" type="file" class="epc-hidden"/><textarea id="epc-chat-input" rows="1" placeholder="Write a message… Use @Name to mention"></textarea><button type="submit" class="epc-chat-send" title="Send"><i class="fa fa-paper-plane"></i></button></form>
                         </div>
                     </div>
                 </div>
@@ -206,7 +213,11 @@
             document.getElementById("epc-chat-contact-search").addEventListener("input", () => this._renderChatContacts());
             document.getElementById("epc-chat-back").addEventListener("click", (ev) => { ev.stopPropagation(); this._closeChatConversation(); });
             document.getElementById("epc-chat-members").addEventListener("click", (ev) => { ev.stopPropagation(); this._toggleChatMembers(); });
-            document.getElementById("epc-chat-call").addEventListener("click", (ev) => { ev.stopPropagation(); this._callCurrentChat(); });
+            document.getElementById("epc-chat-call").addEventListener("click", (ev) => { ev.stopPropagation(); this._callCurrentChat("audio"); });
+            document.getElementById("epc-chat-video").addEventListener("click", (ev) => { ev.stopPropagation(); this._callCurrentChat("video"); });
+            document.getElementById("epc-chat-attach").addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); document.getElementById("epc-chat-file").click(); });
+            document.getElementById("epc-chat-file").addEventListener("change", (ev) => this._handleChatFile(ev));
+            document.getElementById("epc-chat-reply-cancel").addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); this._setReplyTo(null); });
             document.getElementById("epc-chat-compose").addEventListener("submit", (ev) => { ev.preventDefault(); ev.stopPropagation(); this._sendChatMessage(); });
             const chatInput = document.getElementById("epc-chat-input");
             if (chatInput) {
@@ -219,6 +230,8 @@
                         this._sendChatMessage();
                     }
                 });
+                chatInput.addEventListener("input", () => this._notifyChatTyping(true));
+                chatInput.addEventListener("blur", () => this._notifyChatTyping(false));
                 chatInput.addEventListener("focus", () => {
                     if (!this._isPortalMobileChat()) return;
                     window.setTimeout(() => this._updateChatViewportMetrics(), 60);
@@ -368,21 +381,11 @@
                 changed = true;
             }
 
-            if (!systray.querySelector(".epc-backend-message-item")) {
-                const messageItem = document.createElement("div");
-                messageItem.className = "o_menu_systray_item epc-backend-systray-item epc-backend-message-item";
-                const messageBtn = document.createElement("button");
-                messageBtn.type = "button";
-                messageBtn.className = "epc-backend-systray-btn epc-backend-message-btn";
-                messageBtn.title = "Employee Messages";
-                messageBtn.setAttribute("aria-label", "Employee Messages");
-                messageBtn.innerHTML = '<i class="fa fa-comments"></i><span class="epc-message-badge epc-hidden">0</span>';
-                messageItem.appendChild(messageBtn);
-                systray.insertBefore(messageItem, callItem);
-                messageBtn.addEventListener("click", (ev) => {
-                    ev.stopPropagation();
-                    this._togglePanel(messageBtn, "messages");
-                });
+            // Backend messaging is now native Odoo Discuss. Remove the old custom
+            // Employee Messages systray entry if an older asset left it behind.
+            const legacyMessageItem = systray.querySelector(".epc-backend-message-item");
+            if (legacyMessageItem) {
+                legacyMessageItem.remove();
                 changed = true;
             }
 
@@ -604,12 +607,13 @@
             });
         }
 
-        async _startHistoryGroupCall(userIds) {
+        async _startHistoryGroupCall(userIds, callType = "audio") {
             if (!userIds || userIds.length < 2) return;
             try {
-                const res = await rpc("/employee_portal/call/start", { target_user_ids: userIds, call_type: "audio" });
+                const res = await rpc("/employee_portal/call/start", { target_user_ids: userIds, call_type: callType });
                 if (res.error) { alert("Could not start group call: " + res.error); return; }
                 this.currentUuid = res.uuid;
+                this.currentCallType = callType;
                 this._iAmCaller = true;
                 this._setPeerName("Group call");
                 this._closeContactPanel();
@@ -632,7 +636,17 @@
             try {
                 const res = await rpc("/employee_portal/chat/threads", {});
                 this.chatThreads = (res && res.threads) || [];
-                this._setChatUnreadBadge((res && res.unread_total) || 0);
+                let unreadTotal = Number((res && res.unread_total) || 0);
+                if (this.currentChatThreadId) {
+                    const openThread = this.chatThreads.find(
+                        (thread) => Number(thread.id) === Number(this.currentChatThreadId)
+                    );
+                    if (openThread) {
+                        unreadTotal = Math.max(0, unreadTotal - Number(openThread.unread || 0));
+                        openThread.unread = 0;
+                    }
+                }
+                this._setChatUnreadBadge(unreadTotal);
                 if (this.panelView === "chat" && !this.currentChatThreadId && !this.chatSelectionMode) this._renderChatThreads();
             } catch (e) {
                 // Messaging must never interfere with calling.
@@ -804,6 +818,9 @@
             const messages = document.getElementById("epc-chat-messages");
             const membersPanel = document.getElementById("epc-chat-members-panel");
             const compose = document.getElementById("epc-chat-compose");
+            const typingLine = document.getElementById("epc-chat-typing");
+            const replyBar = document.getElementById("epc-chat-reply-bar");
+            const attachmentPreview = document.getElementById("epc-chat-attachment-preview");
 
             // Portal-mobile chat is a self-contained viewport. Keep the composer
             // inside the visible browser area even when Safari/Chrome bars or the
@@ -856,7 +873,10 @@
                 const subheaderHeight = subheader ? subheader.getBoundingClientRect().height : 44;
                 const membersHeight = membersPanel && !membersPanel.classList.contains("epc-hidden") ? membersPanel.getBoundingClientRect().height : 0;
                 const composerHeight = 58;
-                const messageHeight = Math.max(100, usableHeight - headerHeight - tabsHeight - subheaderHeight - membersHeight - composerHeight);
+                const typingHeight = typingLine && !typingLine.classList.contains("epc-hidden") ? typingLine.getBoundingClientRect().height : 0;
+                const replyHeight = replyBar && !replyBar.classList.contains("epc-hidden") ? replyBar.getBoundingClientRect().height : 0;
+                const attachmentHeight = attachmentPreview && !attachmentPreview.classList.contains("epc-hidden") ? attachmentPreview.getBoundingClientRect().height : 0;
+                const messageHeight = Math.max(100, usableHeight - headerHeight - tabsHeight - subheaderHeight - membersHeight - typingHeight - replyHeight - attachmentHeight - composerHeight);
                 messages.style.flex = "0 0 auto";
                 messages.style.height = `${Math.floor(messageHeight)}px`;
                 messages.style.maxHeight = `${Math.floor(messageHeight)}px`;
@@ -889,8 +909,11 @@
         }
 
         _closeChatConversation() {
+            this._notifyChatTyping(false);
             this.currentChatThreadId = null;
             this.currentChatThread = null;
+            this.pendingChatAttachments = [];
+            this._setReplyTo(null);
             const threads = document.getElementById("epc-chat-thread-list-wrap");
             const convo = document.getElementById("epc-chat-conversation");
             const panel = document.getElementById("epc-panel");
@@ -942,10 +965,39 @@
                         ? `<div class="epc-chat-message-author">${this._escape(msg.author || "Employee")}</div>`
                         : "";
                     const time = this._escape(this._chatTimeLabel(dt, msg.date));
-                    item.innerHTML = `${author}<div class="epc-chat-bubble">${this._escape(msg.body || "").replace(/\n/g, "<br/>")}<span class="epc-chat-message-time">${time}</span></div>`;
+                    const reply = msg.reply_to
+                        ? `<button type="button" class="epc-chat-reply-preview" data-jump-message="${Number(msg.reply_to.id)}"><strong>${this._escape(msg.reply_to.author || "Employee")}</strong><span>${this._escape(msg.reply_to.body || "Message")}</span></button>`
+                        : "";
+                    const attachments = (msg.attachments || []).map((att) =>
+                        `<a class="epc-chat-attachment" href="${this._escape(att.url || "#")}" target="_blank"><i class="fa fa-paperclip"></i><span>${this._escape(att.name || "Attachment")}</span><small>${att.size ? this._escape(this._formatFileSize(att.size)) : ""}</small></a>`
+                    ).join("");
+                    const reactions = (msg.reactions || []).map((reaction) =>
+                        `<button type="button" class="epc-chat-reaction-chip${reaction.mine ? " epc-mine" : ""}" data-reaction="${this._escape(reaction.content)}" data-mine="${reaction.mine ? "1" : "0"}"><span>${this._escape(reaction.content)}</span><small>${Number(reaction.count || 0)}</small></button>`
+                    ).join("");
+                    const reactionChoices = ["👍","❤️","😂","🎉","😮","😢","🙏"].map((emoji) =>
+                        `<button type="button" data-add-reaction="${emoji}">${emoji}</button>`
+                    ).join("");
+                    const seen = msg.mine && (msg.read_by || []).length
+                        ? `<div class="epc-chat-seen">Seen by ${this._escape((msg.read_by || []).join(", "))}</div>`
+                        : "";
+                    item.innerHTML = `${author}<div class="epc-chat-bubble">${reply}<div class="epc-chat-body">${this._escape(msg.body || "").replace(/\n/g, "<br/>")}</div>${attachments}<span class="epc-chat-message-time">${time}</span></div><div class="epc-chat-message-tools"><button type="button" class="epc-chat-reply-action" title="Reply"><i class="fa fa-reply"></i></button><span class="epc-chat-reactions">${reactions}</span><span class="epc-chat-reaction-picker">${reactionChoices}</span></div>${seen}`;
+                    item.querySelector(".epc-chat-reply-action")?.addEventListener("click", (ev) => { ev.stopPropagation(); this._setReplyTo(msg); });
+                    item.querySelectorAll("[data-reaction]").forEach((btn) => btn.addEventListener("click", (ev) => {
+                        ev.stopPropagation(); this._toggleChatReaction(msg.id, btn.dataset.reaction, btn.dataset.mine === "1");
+                    }));
+                    item.querySelectorAll("[data-add-reaction]").forEach((btn) => btn.addEventListener("click", (ev) => {
+                        ev.stopPropagation(); const existing = (msg.reactions || []).find((r) => r.content === btn.dataset.addReaction); this._toggleChatReaction(msg.id, btn.dataset.addReaction, Boolean(existing && existing.mine));
+                    }));
                     box.appendChild(item);
                     previousAuthorKey = authorKey;
                 });
+                const typingLine = document.getElementById("epc-chat-typing");
+                const typingNames = (res.typing || []).filter(Boolean);
+                if (typingLine) {
+                    typingLine.textContent = typingNames.length ? `${typingNames.join(", ")} ${typingNames.length > 1 ? "are" : "is"} typing…` : "";
+                    typingLine.classList.toggle("epc-hidden", !typingNames.length);
+                }
+                this._updateChatViewportMetrics();
                 if (scrollToBottom || wasNearBottom) {
                     box.scrollTop = box.scrollHeight;
                 } else {
@@ -953,6 +1005,14 @@
                 }
                 await this._refreshChatThreads();
             } catch (e) {}
+        }
+
+        _formatFileSize(bytes) {
+            const n = Number(bytes || 0);
+            if (!n) return "";
+            if (n < 1024) return `${n} B`;
+            if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
+            return `${(n / (1024 * 1024)).toFixed(1)} MB`;
         }
 
         _chatMessageDate(raw) {
@@ -986,13 +1046,118 @@
         async _sendChatMessage() {
             const input = document.getElementById("epc-chat-input");
             const text = (input ? input.value : "").trim();
-            if (!text || !this.currentChatThreadId) return;
+            if ((!text && !this.pendingChatAttachments.length) || !this.currentChatThreadId) return;
+            const original = input ? input.value : "";
             if (input) input.value = "";
+            const attachmentIds = this.pendingChatAttachments.map((a) => Number(a.id)).filter(Boolean);
+            const replyToId = this.replyToMessage ? Number(this.replyToMessage.id) : null;
             try {
-                await rpc("/employee_portal/chat/send", { thread_id: this.currentChatThreadId, body: text });
+                await rpc("/employee_portal/chat/send", {
+                    thread_id: this.currentChatThreadId,
+                    body: text,
+                    reply_to_id: replyToId,
+                    attachment_ids: attachmentIds,
+                });
+                this.pendingChatAttachments = [];
+                this._renderPendingChatAttachments();
+                this._setReplyTo(null);
+                this._notifyChatTyping(false);
                 await this._refreshOpenChat(true);
             } catch (e) {
-                if (input) input.value = text;
+                if (input) input.value = original;
+            }
+        }
+
+        async _handleChatFile(ev) {
+            const input = ev && ev.target;
+            const file = input && input.files && input.files[0];
+            if (!file || !this.currentChatThreadId) return;
+            if (file.size > 10 * 1024 * 1024) {
+                alert("Attachments are limited to 10 MB.");
+                input.value = "";
+                return;
+            }
+            try {
+                const data = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(String(reader.result || ""));
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+                const res = await rpc("/employee_portal/chat/upload", {
+                    thread_id: this.currentChatThreadId,
+                    filename: file.name,
+                    mimetype: file.type || "application/octet-stream",
+                    data,
+                });
+                if (res && res.attachment) {
+                    this.pendingChatAttachments.push(res.attachment);
+                    this._renderPendingChatAttachments();
+                } else if (res && res.error) {
+                    alert(res.error === "file_too_large" ? "Attachment is too large." : "Could not attach file.");
+                }
+            } catch (e) {
+                alert("Could not attach file.");
+            } finally {
+                input.value = "";
+            }
+        }
+
+        _renderPendingChatAttachments() {
+            const wrap = document.getElementById("epc-chat-attachment-preview");
+            if (!wrap) return;
+            wrap.classList.toggle("epc-hidden", !this.pendingChatAttachments.length);
+            wrap.innerHTML = this.pendingChatAttachments.map((att, idx) =>
+                `<span class="epc-chat-pending-file"><i class="fa fa-paperclip"></i><span>${this._escape(att.name || "Attachment")}</span><button type="button" data-remove-attachment="${idx}"><i class="fa fa-times"></i></button></span>`
+            ).join("");
+            wrap.querySelectorAll("[data-remove-attachment]").forEach((btn) => btn.addEventListener("click", (ev) => {
+                ev.preventDefault(); ev.stopPropagation();
+                this.pendingChatAttachments.splice(Number(btn.dataset.removeAttachment), 1);
+                this._renderPendingChatAttachments();
+            }));
+            this._updateChatViewportMetrics();
+        }
+
+        _setReplyTo(message) {
+            this.replyToMessage = message || null;
+            const bar = document.getElementById("epc-chat-reply-bar");
+            if (!bar) return;
+            bar.classList.toggle("epc-hidden", !message);
+            if (message) {
+                const a = document.getElementById("epc-chat-reply-author");
+                const t = document.getElementById("epc-chat-reply-text");
+                if (a) a.textContent = `Reply to ${message.author || "Employee"}`;
+                if (t) t.textContent = message.body || "Attachment";
+                const input = document.getElementById("epc-chat-input");
+                if (input) input.focus();
+            }
+            this._updateChatViewportMetrics();
+        }
+
+        async _toggleChatReaction(messageId, content, mine) {
+            try {
+                await rpc("/employee_portal/chat/reaction", {
+                    thread_id: this.currentChatThreadId,
+                    message_id: messageId,
+                    content,
+                    action: mine ? "remove" : "add",
+                });
+                await this._refreshOpenChat(false);
+            } catch (e) {}
+        }
+
+        _notifyChatTyping(isTyping) {
+            if (!this.currentChatThreadId) return;
+            window.clearTimeout(this._typingStopTimer);
+            if (Boolean(isTyping) !== this._lastTypingSent) {
+                this._lastTypingSent = Boolean(isTyping);
+                rpc("/employee_portal/chat/typing", {
+                    thread_id: this.currentChatThreadId,
+                    typing: Boolean(isTyping),
+                }).catch(() => {});
+            }
+            if (isTyping) {
+                this._typingStopTimer = window.setTimeout(() => this._notifyChatTyping(false), 3500);
             }
         }
 
@@ -1027,13 +1192,13 @@
             this._updateChatViewportMetrics();
         }
 
-        _callCurrentChat() {
+        _callCurrentChat(callType = "audio") {
             if (!this.currentChatThread) return;
             const contactIds = new Set((this.contacts || []).map((c) => Number(c.user_id)));
             const others = (this.currentChatThread.participant_ids || []).map(Number).filter((uid) => contactIds.has(uid));
             if (!others.length) return;
-            if (others.length === 1) this._startCall(others[0]);
-            else this._startHistoryGroupCall(others);
+            if (others.length === 1) this._startCall(others[0], callType);
+            else this._startHistoryGroupCall(others, callType);
         }
 
         _setGroupCallMode(enabled) {
@@ -1574,17 +1739,18 @@
         // ------------------------------------------------------------
         // Call actions
         // ------------------------------------------------------------
-        async _startCall(targetUserId) {
+        async _startCall(targetUserId, callType = "audio") {
             try {
                 const res = await rpc("/employee_portal/call/start", {
                     target_user_id: targetUserId,
-                    call_type: "audio",
+                    call_type: callType,
                 });
                 if (res.error) {
                     alert("Could not start call: " + res.error);
                     return;
                 }
                 this.currentUuid = res.uuid;
+                this.currentCallType = callType;
                 this._iAmCaller = true;
                 const contact = this.contacts.find((c) => Number(c.user_id) === Number(targetUserId));
                 this._setPeerName(contact ? contact.name : "Employee");

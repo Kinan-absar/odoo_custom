@@ -187,6 +187,18 @@ class PortalCallController(http.Controller):
         except Exception:
             _logger.exception('Could not send Telegram incoming-call notification to user %s', target.id)
 
+
+    def _notify_telegram_missed(self, targets, caller, is_group=False):
+        """Best-effort Telegram missed-call alert after a ringing call ends unanswered."""
+        service = request.env['employee.portal.telegram.service'].sudo()
+        title = 'Missed Odoo Group Call' if is_group else 'Missed Odoo Call'
+        for target in targets:
+            try:
+                body = '%s called you and the call was not answered.' % (caller.name or 'Employee')
+                service.send_to_user(target, title, body, path='/my/employee')
+            except Exception:
+                _logger.exception('Could not send Telegram missed-call notification to user %s', target.id)
+
     @http.route('/employee_portal/call/start', type='json', auth='user', csrf=False)
     def call_start(self, target_user_id=None, target_user_ids=None, call_type='audio'):
         user = self._user()
@@ -300,6 +312,7 @@ class PortalCallController(http.Controller):
             session.write({'state': 'missed', 'end_date': fields.Datetime.now()})
             for other in invitees:
                 self._queue_signal(session, other, 'cancelled', {'user_id': user.id})
+            self._notify_telegram_missed(invitees, user, is_group=len(session.participant_ids) > 2)
             return {'ok': True}
 
         for other in remaining:
@@ -394,6 +407,8 @@ class PortalCallController(http.Controller):
             })
             other = session._other_party(user)
             self._queue_signal(session, other, 'cancelled', {})
+            invitees = session.participant_ids.filtered(lambda u: u.id != session.caller_id.id)
+            self._notify_telegram_missed(invitees, session.caller_id, is_group=len(session.participant_ids) > 2)
 
         # Only unread mailbox rows are returned. Previously consumed=True rows
         # were still fetched whenever a page reloaded with last_id=0, which
