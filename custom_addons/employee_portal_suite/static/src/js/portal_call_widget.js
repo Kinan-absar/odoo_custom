@@ -65,11 +65,16 @@
             this.groupCallMode = false;
             this.groupSelection = new Set();
             this.presenceTimer = null;
+            this.callHistory = [];
+            this.historyTimer = null;
+            this.panelView = "people";
+            this.unreadMissedCount = 0;
             this._lastLocalActivity = Date.now();
             this._buildUI();
             this._bindPresenceActivity();
             this._loadContacts();
             this._startPresenceHeartbeat();
+            this._startHistoryRefresh();
             this._startPolling();
         }
 
@@ -84,9 +89,14 @@
                 <div id="epc-picker-backdrop" class="epc-hidden"></div>
                 <div id="epc-panel" class="epc-hidden">
                     <div class="epc-panel-header">
-                        <span>Call an employee</span>
+                        <span>Calls</span>
                         <button id="epc-panel-close">&times;</button>
                     </div>
+                    <div id="epc-panel-tabs" class="epc-panel-tabs">
+                        <button id="epc-tab-people" type="button" class="epc-panel-tab epc-active"><i class="fa fa-users"></i><span>People</span></button>
+                        <button id="epc-tab-history" type="button" class="epc-panel-tab"><i class="fa fa-history"></i><span>Recent</span><span id="epc-tab-missed" class="epc-tab-badge epc-hidden">0</span></button>
+                    </div>
+                    <div id="epc-people-view">
                     <div class="epc-search-wrap"><input id="epc-contact-search" type="search" placeholder="Search employees…" autocomplete="off"/></div>
                     <div id="epc-call-mode-bar" class="epc-call-mode-bar">
                         <button id="epc-group-mode" type="button" class="epc-group-mode-btn"><i class="fa fa-users"></i><span>Group call</span></button>
@@ -96,6 +106,10 @@
                         </div>
                     </div>
                     <div id="epc-contact-list"><div class="epc-empty">Loading…</div></div>
+                    </div>
+                    <div id="epc-history-view" class="epc-hidden">
+                        <div id="epc-history-list"><div class="epc-empty">Loading recent calls…</div></div>
+                    </div>
                 </div>
                 <div id="epc-incoming" class="epc-hidden">
                     <div class="epc-call-avatar epc-incoming-avatar"><img id="epc-incoming-photo" class="epc-avatar-photo epc-hidden" alt=""/><span id="epc-incoming-fallback"><i class="fa fa-phone"></i></span></div>
@@ -148,6 +162,8 @@
             const closePicker = () => this._closeContactPanel();
             document.getElementById("epc-panel-close").addEventListener("click", closePicker);
             document.getElementById("epc-picker-backdrop").addEventListener("click", closePicker);
+            document.getElementById("epc-tab-people").addEventListener("click", (ev) => { ev.stopPropagation(); this._showPanelView("people"); });
+            document.getElementById("epc-tab-history").addEventListener("click", (ev) => { ev.stopPropagation(); this._showPanelView("history", true); });
             document.getElementById("epc-accept").addEventListener("click", () => this._acceptIncoming());
             document.getElementById("epc-reject").addEventListener("click", () => this._rejectIncoming());
             document.getElementById("epc-hangup").addEventListener("click", () => this._hangup());
@@ -159,6 +175,7 @@
                 ev.preventDefault();
                 ev.stopPropagation();
                 this._addingPeople = true;
+                this._showPanelView("people", false);
                 const panel = document.getElementById("epc-panel");
                 panel.classList.add("epc-meeting-picker");
                 document.getElementById("epc-picker-backdrop").classList.remove("epc-hidden");
@@ -230,7 +247,7 @@
             btn.className = "epc-header-btn";
             btn.title = "Calls";
             btn.setAttribute("aria-label", "Calls");
-            btn.innerHTML = '<i class="fa fa-phone"></i>';
+            btn.innerHTML = '<i class="fa fa-phone"></i><span class="epc-call-badge epc-hidden">0</span>';
             bellWrap.insertAdjacentElement("beforebegin", btn);
             btn.addEventListener("click", (ev) => {
                 ev.stopPropagation();
@@ -250,8 +267,9 @@
             btn.className = "epc-backend-systray-btn";
             btn.title = "Calls";
             btn.setAttribute("aria-label", "Calls");
-            btn.innerHTML = '<i class="fa fa-phone"></i>';
+            btn.innerHTML = '<i class="fa fa-phone"></i><span class="epc-call-badge epc-hidden">0</span>';
             item.appendChild(btn);
+            this._setMissedBadge(this.unreadMissedCount);
             // Put Calls at the leading edge of the systray, beside Odoo status indicator.
             systray.insertBefore(item, systray.firstElementChild);
             btn.addEventListener("click", (ev) => {
@@ -266,6 +284,7 @@
             const opening = panel.classList.contains("epc-hidden");
             if (opening) {
                 if (!this.currentUuid) this._setGroupCallMode(false);
+                if (!this._addingPeople) this._showPanelView(this.panelView || "people", false);
                 this._panelAnchor = anchor;
                 panel.classList.remove("epc-hidden");
                 this._positionPanel(anchor);
@@ -282,12 +301,155 @@
                 panel.classList.add("epc-hidden");
                 panel.classList.remove("epc-meeting-picker");
                 const title = panel.querySelector(".epc-panel-header span");
-                if (title) title.textContent = "Call an employee";
+                if (title) title.textContent = "Calls";
             }
             const backdrop = document.getElementById("epc-picker-backdrop");
             if (backdrop) backdrop.classList.add("epc-hidden");
             this._addingPeople = false;
             this._setGroupCallMode(false);
+        }
+
+        _showPanelView(view, markSeen) {
+            if (this._addingPeople) view = "people";
+            this.panelView = view === "history" ? "history" : "people";
+            const people = document.getElementById("epc-people-view");
+            const history = document.getElementById("epc-history-view");
+            const peopleTab = document.getElementById("epc-tab-people");
+            const historyTab = document.getElementById("epc-tab-history");
+            if (people) people.classList.toggle("epc-hidden", this.panelView !== "people");
+            if (history) history.classList.toggle("epc-hidden", this.panelView !== "history");
+            if (peopleTab) peopleTab.classList.toggle("epc-active", this.panelView === "people");
+            if (historyTab) historyTab.classList.toggle("epc-active", this.panelView === "history");
+            if (this.panelView === "history") {
+                this._renderCallHistory();
+                if (markSeen) this._markMissedCallsSeen();
+            }
+        }
+
+        _setMissedBadge(count) {
+            const n = Math.max(0, Number(count || 0));
+            this.unreadMissedCount = n;
+            document.querySelectorAll(".epc-call-badge").forEach((badge) => {
+                badge.textContent = n > 99 ? "99+" : String(n);
+                badge.classList.toggle("epc-hidden", n === 0);
+            });
+            const tabBadge = document.getElementById("epc-tab-missed");
+            if (tabBadge) {
+                tabBadge.textContent = n > 99 ? "99+" : String(n);
+                tabBadge.classList.toggle("epc-hidden", n === 0);
+            }
+        }
+
+        _startHistoryRefresh() {
+            const refresh = async () => {
+                await this._refreshCallHistory();
+                this.historyTimer = setTimeout(refresh, 15000);
+            };
+            refresh();
+        }
+
+        async _refreshCallHistory() {
+            try {
+                const res = await rpc("/employee_portal/call/history", { limit: 40 });
+                this.callHistory = (res && res.calls) || [];
+                this._setMissedBadge((res && res.unread_missed_count) || 0);
+                if (this.panelView === "history") this._renderCallHistory();
+            } catch (e) {
+                // History is secondary; never interrupt calling if it cannot load.
+            }
+        }
+
+        async _markMissedCallsSeen() {
+            try {
+                await rpc("/employee_portal/call/history/mark_seen", {});
+                this._setMissedBadge(0);
+                this.callHistory.forEach((item) => { if (item.status === "missed") item.missed_unread = false; });
+                this._renderCallHistory();
+            } catch (e) {}
+        }
+
+        _formatCallDuration(seconds) {
+            const total = Math.max(0, Number(seconds || 0));
+            if (!total) return "";
+            const mins = Math.floor(total / 60);
+            const secs = total % 60;
+            return mins ? `${mins}m ${String(secs).padStart(2, "0")}s` : `${secs}s`;
+        }
+
+        _formatCallTime(value) {
+            if (!value) return "";
+            const iso = value.includes("T") ? value : value.replace(" ", "T") + "Z";
+            const date = new Date(iso);
+            if (Number.isNaN(date.getTime())) return value;
+            const now = new Date();
+            const sameDay = date.toDateString() === now.toDateString();
+            return sameDay
+                ? date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                : date.toLocaleDateString([], { month: "short", day: "numeric" }) + " " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        }
+
+        _historyStatusLabel(item) {
+            const labels = {
+                completed: item.direction === "outgoing" ? "Outgoing" : "Incoming",
+                ongoing: "In progress",
+                missed: "Missed",
+                declined: "Declined",
+                no_answer: "No answer",
+                ringing: item.direction === "outgoing" ? "Calling" : "Incoming",
+            };
+            return labels[item.status] || "Call";
+        }
+
+        _renderCallHistory() {
+            const list = document.getElementById("epc-history-list");
+            if (!list) return;
+            list.innerHTML = "";
+            if (!this.callHistory.length) {
+                list.innerHTML = '<div class="epc-empty">No recent calls yet.</div>';
+                return;
+            }
+            this.callHistory.forEach((item) => {
+                const row = document.createElement("div");
+                row.className = "epc-history-row" + (item.missed_unread ? " epc-history-unread" : "");
+                const iconClass = item.is_group ? "fa-users" : (item.direction === "outgoing" ? "fa-phone" : "fa-phone");
+                const statusClass = `epc-history-${this._escape(item.status || "completed")}`;
+                const initial = this._escape((item.title || "?").charAt(0).toUpperCase());
+                const avatar = item.avatar_url
+                    ? `<span class="epc-history-avatar"><img src="${this._escape(item.avatar_url)}" alt="" onerror="this.style.display='none'"/><span>${initial}</span></span>`
+                    : `<span class="epc-history-avatar epc-history-group-avatar"><i class="fa ${iconClass}"></i></span>`;
+                const duration = this._formatCallDuration(item.duration_seconds);
+                row.innerHTML = `${avatar}<div class="epc-history-copy"><div class="epc-history-name">${this._escape(item.title || "Employee")}</div><div class="epc-history-meta"><span class="${statusClass}">${this._escape(this._historyStatusLabel(item))}</span><span>${this._escape(this._formatCallTime(item.started_at))}</span>${duration ? `<span>${this._escape(duration)}</span>` : ""}</div></div>`;
+                const callbackIds = (item.callback_user_ids || []).map(Number).filter(Boolean);
+                if (callbackIds.length) {
+                    const callBtn = document.createElement("button");
+                    callBtn.type = "button";
+                    callBtn.className = "epc-history-call-btn";
+                    callBtn.title = item.is_group ? "Call group again" : "Call again";
+                    callBtn.innerHTML = '<i class="fa fa-phone"></i>';
+                    callBtn.addEventListener("click", (ev) => {
+                        ev.stopPropagation();
+                        if (callbackIds.length > 1) this._startHistoryGroupCall(callbackIds);
+                        else this._startCall(callbackIds[0]);
+                    });
+                    row.appendChild(callBtn);
+                }
+                list.appendChild(row);
+            });
+        }
+
+        async _startHistoryGroupCall(userIds) {
+            if (!userIds || userIds.length < 2) return;
+            try {
+                const res = await rpc("/employee_portal/call/start", { target_user_ids: userIds, call_type: "audio" });
+                if (res.error) { alert("Could not start group call: " + res.error); return; }
+                this.currentUuid = res.uuid;
+                this._iAmCaller = true;
+                this._setPeerName("Group call");
+                this._closeContactPanel();
+                await this._prepareLocalMedia();
+                this._showActive(`Calling ${userIds.length} employees…`);
+                await this._refreshParticipants();
+            } catch (e) { alert("Could not start group call."); }
         }
 
         _setGroupCallMode(enabled) {
@@ -299,7 +461,7 @@
             if (panel) {
                 panel.classList.toggle("epc-group-call-mode", this.groupCallMode);
                 const title = panel.querySelector(".epc-panel-header span");
-                if (title && !this._addingPeople) title.textContent = this.groupCallMode ? "Start group call" : "Call an employee";
+                if (title && !this._addingPeople) title.textContent = this.groupCallMode ? "Start group call" : "Calls";
             }
             if (modeBtn) {
                 modeBtn.classList.toggle("epc-control-active", this.groupCallMode);
@@ -646,6 +808,7 @@
                 await this._refreshParticipants();
             } else if (["rejected", "ended", "cancelled"].includes(evt.event) && evt.uuid === this.currentUuid) {
                 if (evt.event === "ended") this._teardown();
+                setTimeout(() => this._refreshCallHistory(), 300);
             }
         }
 
@@ -734,6 +897,7 @@
             await rpc("/employee_portal/call/reject", { uuid: this.currentUuid });
             document.getElementById("epc-incoming").classList.add("epc-hidden");
             this.currentUuid = null;
+            setTimeout(() => this._refreshCallHistory(), 300);
         }
 
         async _hangup() {
@@ -741,6 +905,7 @@
                 await rpc("/employee_portal/call/end", { uuid: this.currentUuid });
             }
             this._teardown();
+            setTimeout(() => this._refreshCallHistory(), 300);
         }
 
         _toggleMute() {

@@ -54,6 +54,18 @@ class PortalCallSession(models.Model):
     callee_id = fields.Many2one('res.users', required=True, ondelete='cascade')
     participant_ids = fields.Many2many('res.users', 'portal_call_session_user_rel', 'session_id', 'user_id', string='Participants')
     active_participant_ids = fields.Many2many('res.users', 'portal_call_session_active_user_rel', 'session_id', 'user_id', string='Active Participants')
+    joined_participant_ids = fields.Many2many(
+        'res.users', 'portal_call_session_joined_user_rel', 'session_id', 'user_id',
+        string='Participants Who Joined', help='Persistent history of users who actually joined the call.'
+    )
+    declined_participant_ids = fields.Many2many(
+        'res.users', 'portal_call_session_declined_user_rel', 'session_id', 'user_id',
+        string='Participants Who Declined', help='Persistent history of invited users who explicitly declined.'
+    )
+    missed_seen_user_ids = fields.Many2many(
+        'res.users', 'portal_call_session_missed_seen_user_rel', 'session_id', 'user_id',
+        string='Missed Call Seen By', help='Users who have opened Recent Calls after missing this call.'
+    )
     call_type = fields.Selection([('audio', 'Audio'), ('video', 'Video')], default='audio', required=True)
     state = fields.Selection([
         ('ringing', 'Ringing'),

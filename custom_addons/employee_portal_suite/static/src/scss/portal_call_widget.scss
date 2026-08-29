@@ -916,3 +916,154 @@
     .epc-presence-label { display: none; }
     .epc-presence { margin-left: 0; }
 }
+
+/* v17.10 - Recent calls and missed-call badge. */
+.epc-header-btn,
+.epc-backend-systray-btn {
+    position: relative;
+}
+.epc-call-badge {
+    position: absolute;
+    top: 1px;
+    right: 0;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #DC2626;
+    color: #fff;
+    border: 2px solid #fff;
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+.epc-panel-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+    background: #FAFAFC;
+}
+.epc-panel-tab {
+    position: relative;
+    flex: 1 1 0;
+    border: 0;
+    background: transparent;
+    color: #6B7280;
+    border-radius: 9px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+}
+.epc-panel-tab.epc-active {
+    background: #fff;
+    color: #4F46E5;
+    box-shadow: 0 1px 4px rgba(15,23,42,.08);
+}
+.epc-tab-badge {
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border-radius: 9px;
+    background: #DC2626;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    line-height: 1;
+}
+#epc-panel.epc-meeting-picker #epc-panel-tabs { display: none; }
+#epc-history-list {
+    max-height: 360px;
+    overflow-y: auto;
+}
+.epc-history-row {
+    min-height: 54px;
+    padding: 7px 10px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border-bottom: 1px solid rgba(15,23,42,.05);
+    box-sizing: border-box;
+}
+.epc-history-row.epc-history-unread { background: #FFF7F7; }
+.epc-history-avatar {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #EEF2FF;
+    color: #4F46E5;
+    font-size: 12px;
+    font-weight: 800;
+}
+.epc-history-avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 2;
+}
+.epc-history-avatar > span { position: relative; z-index: 1; }
+.epc-history-group-avatar { background: #F3F4F6; color: #4B5563; }
+.epc-history-copy { min-width: 0; flex: 1 1 auto; }
+.epc-history-name {
+    font-size: 13px;
+    line-height: 1.2;
+    font-weight: 650;
+    color: #1F2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.epc-history-meta {
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #9CA3AF;
+    font-size: 10px;
+    white-space: nowrap;
+}
+.epc-history-meta span + span::before { content: "·"; margin-right: 6px; color: #D1D5DB; }
+.epc-history-missed { color: #DC2626; font-weight: 700; }
+.epc-history-declined,
+.epc-history-no_answer { color: #B45309; font-weight: 650; }
+.epc-history-ongoing { color: #16A34A; font-weight: 650; }
+.epc-history-call-btn {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border: 0;
+    border-radius: 50%;
+    background: #EEF2FF;
+    color: #4F46E5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.epc-history-call-btn:hover { background: #E0E7FF; }
+@media (max-width: 768px) {
+    .epc-call-badge { top: 0; right: -2px; }
+    #epc-history-list { max-height: 360px; }
+    .epc-history-row { min-height: 52px; padding: 6px 9px; }
+    .epc-history-meta { gap: 5px; }
+}
