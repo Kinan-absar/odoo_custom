@@ -63,7 +63,25 @@ function showAlert(call) {
             <button type="button" class="ep-native-call-answer" aria-label="Answer"><i class="fa fa-phone"></i><span>Answer</span></button>
         </div>`;
     root.querySelector("strong").textContent = call.caller_name || "Incoming call";
-    root.querySelector(".ep-native-call-answer").addEventListener("click", () => window.location.assign(call.open_url));
+    if (call.caller_avatar) {
+        const avatarWrap = root.querySelector(".ep-native-call-avatar");
+        avatarWrap.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = call.caller_avatar;
+        img.alt = call.caller_name || "Caller";
+        img.className = "ep-native-call-avatar-image";
+        img.addEventListener("error", () => {
+            avatarWrap.innerHTML = '<i class="fa fa-user"></i>';
+        }, { once: true });
+        avatarWrap.appendChild(img);
+    }
+    root.querySelector(".ep-native-call-answer").addEventListener("click", () => {
+        const url = new URL(call.open_url, window.location.origin);
+        url.searchParams.set("auto_answer", "1");
+        url.searchParams.set("auto_video", call.is_video ? "1" : "0");
+        removeAlert();
+        window.location.assign(url.toString());
+    });
     root.querySelector(".ep-native-call-decline").addEventListener("click", async () => {
         try { await jsonRpc("/employee_portal/discuss/call/decline", { channel_id: call.channel_id }); }
         finally { removeAlert(); }

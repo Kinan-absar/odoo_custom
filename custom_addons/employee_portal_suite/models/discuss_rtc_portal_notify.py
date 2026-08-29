@@ -1,4 +1,5 @@
 from odoo import models
+from odoo.tools.image import image_data_uri
 
 
 class DiscussChannelMember(models.Model):
@@ -27,6 +28,7 @@ class DiscussChannelMember(models.Model):
             member._bus_send('employee_portal.native_rtc_invitation', {
                 'channel_id': channel.id,
                 'caller_name': caller.name or channel.display_name,
+                'caller_avatar': image_data_uri(caller.avatar_128) if caller.avatar_128 else False,
                 'is_video': bool(session and session.is_camera_on),
                 'open_url': '/my/employee/discuss/channel/%s' % channel.id,
             })
