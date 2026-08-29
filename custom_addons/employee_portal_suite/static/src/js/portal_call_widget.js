@@ -746,22 +746,32 @@
                 convo.style.overflow = "hidden";
             }
             if (subheader) { subheader.style.flex = "0 0 auto"; }
+            if (compose) {
+                compose.style.display = "flex";
+                compose.style.flex = "0 0 58px";
+                compose.style.height = "58px";
+                compose.style.minHeight = "58px";
+                compose.style.maxHeight = "58px";
+                compose.style.boxSizing = "border-box";
+                compose.style.position = "relative";
+                compose.style.bottom = "auto";
+                compose.style.zIndex = "10";
+                compose.style.background = "#fff";
+            }
             if (messages) {
-                messages.style.flex = "1 1 auto";
-                messages.style.height = "auto";
-                messages.style.minHeight = "0";
+                const headerHeight = header ? header.getBoundingClientRect().height : 0;
+                const tabsHeight = tabs ? tabs.getBoundingClientRect().height : 0;
+                const subheaderHeight = subheader ? subheader.getBoundingClientRect().height : 44;
+                const composerHeight = 58;
+                const messageHeight = Math.max(100, usableHeight - headerHeight - tabsHeight - subheaderHeight - composerHeight);
+                messages.style.flex = "0 0 auto";
+                messages.style.height = `${Math.floor(messageHeight)}px`;
+                messages.style.maxHeight = `${Math.floor(messageHeight)}px`;
+                messages.style.minHeight = "100px";
                 messages.style.overflowY = "auto";
                 messages.style.overscrollBehavior = "contain";
                 messages.style.webkitOverflowScrolling = "touch";
                 messages.style.touchAction = "pan-y";
-            }
-            if (compose) {
-                compose.style.display = "flex";
-                compose.style.flex = "0 0 auto";
-                compose.style.position = "relative";
-                compose.style.bottom = "auto";
-                compose.style.zIndex = "5";
-                compose.style.background = "#fff";
             }
         }
 
@@ -781,8 +791,8 @@
             clear(chatView, ["flex", "minHeight", "height", "overflow"]);
             clear(convo, ["display", "flexDirection", "flex", "height", "minHeight", "overflow"]);
             clear(subheader, ["flex"]);
-            clear(messages, ["flex", "height", "minHeight", "overflowY", "overscrollBehavior", "webkitOverflowScrolling", "touchAction"]);
-            clear(compose, ["display", "flex", "position", "bottom", "zIndex", "background"]);
+            clear(messages, ["flex", "height", "maxHeight", "minHeight", "overflowY", "overscrollBehavior", "webkitOverflowScrolling", "touchAction"]);
+            clear(compose, ["display", "flex", "height", "minHeight", "maxHeight", "boxSizing", "position", "bottom", "zIndex", "background"]);
         }
 
         _closeChatConversation() {
