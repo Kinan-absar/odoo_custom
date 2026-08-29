@@ -33,3 +33,14 @@
   .ep-native-people-grid { grid-template-columns:1fr; }
   .ep-native-discuss-hub { padding-top:8px !important; }
 }
+
+/* v19.9 - native Discuss presence and single communication entry point */
+.ep-native-person-copy { min-width:0; display:flex; flex-direction:column; gap:2px; }
+.ep-native-person-copy > span:first-child { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ep-native-presence { display:inline-flex; align-items:center; gap:5px; color:#8a929f; font-size:11px; font-weight:600; }
+.ep-native-presence-dot { width:7px; height:7px; flex:0 0 7px; border-radius:50%; background:#aeb4bd; }
+.ep-native-presence-online { color:#168a52 !important; }
+.ep-native-presence-online .ep-native-presence-dot { background:#22b573; box-shadow:0 0 0 2px rgba(34,181,115,.13); }
+.ep-native-presence-away { color:#a66a00 !important; }
+.ep-native-presence-away .ep-native-presence-dot { background:#e7a72e; box-shadow:0 0 0 2px rgba(231,167,46,.13); }
+.ep-native-presence-offline { color:#8a929f !important; }

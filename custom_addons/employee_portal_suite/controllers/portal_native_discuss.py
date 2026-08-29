@@ -97,6 +97,33 @@ class EmployeePortalNativeDiscussController(http.Controller):
             return False
         return self._user_avatar(others[:1]) if others else False
 
+    def _discuss_presence(self, user):
+        """Return Odoo Discuss presence for an employee user.
+
+        This intentionally uses res.partner.im_status, which is the presence
+        value consumed by native Discuss, rather than the old custom portal
+        call-presence model.
+        """
+        if not user or not user.partner_id:
+            return 'offline', 'Offline'
+        status = (user.partner_id.sudo().im_status or 'offline').lower()
+        labels = {
+            'online': 'Online',
+            'away': 'Away',
+            'offline': 'Offline',
+            'bot': 'Online',
+        }
+        if status not in labels:
+            status = 'offline'
+        return status, labels[status]
+
+    def _channel_presence(self, channel, user):
+        users = self._channel_users(channel)
+        others = users.filtered(lambda u: u.id != user.id)
+        if channel.channel_type == 'group' or len(users) > 2 or not others:
+            return 'offline', ''
+        return self._discuss_presence(others[:1])
+
     def _find_exact_dm(self, partner_ids):
         partner_ids = sorted(set(int(pid) for pid in partner_ids if pid))
         if len(partner_ids) != 2:
@@ -173,25 +200,31 @@ class EmployeePortalNativeDiscussController(http.Controller):
         rows = []
         for channel in channels:
             member = channel.channel_member_ids.filtered(lambda m: m.partner_id.id == user.partner_id.id)[:1]
+            is_group = channel.channel_type == 'group' or len(self._channel_users(channel)) > 2
+            presence, presence_label = self._channel_presence(channel, user)
             rows.append({
                 'id': channel.id,
                 'name': self._channel_label(channel, user),
                 'avatar': self._channel_avatar(channel, user),
-                'is_group': channel.channel_type == 'group' or len(self._channel_users(channel)) > 2,
+                'is_group': is_group,
+                'presence': presence,
+                'presence_label': presence_label,
                 'unread': int(member.message_unread_counter or 0),
                 'last_interest_dt': channel.last_interest_dt,
             })
         employee_rows = []
         for emp_user in self._employee_users().filtered(lambda u: u.id != user.id):
+            presence, presence_label = self._discuss_presence(emp_user)
             employee_rows.append({
                 'id': emp_user.id,
                 'name': emp_user.name,
                 'avatar': self._user_avatar(emp_user),
+                'presence': presence,
+                'presence_label': presence_label,
             })
         values = {
             'channels': rows,
             'employees': employee_rows,
-            'call_mode': kwargs.get('mode') == 'call',
         }
         # Keep all normal portal layout counters/notification context.
         try:
