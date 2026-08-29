@@ -26,12 +26,7 @@
   min-height: 36px;
 }
 
-/* Keep the thread scrollable and reserve a real row for Odoo's native Composer. */
-.ep-native-discuss-public .o-mail-Discuss-content {
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
+.ep-native-discuss-public .o-mail-Discuss-content,
 .ep-native-discuss-public .o-mail-Discuss-main,
 .ep-native-discuss-public .o-mail-Discuss-core,
 .ep-native-discuss-public .o-mail-Discuss-threadContainer {
@@ -60,11 +55,24 @@
 }
 
 @media (max-width: 767.98px) {
+  .ep-native-discuss-public .o-mail-Discuss {
+    position: fixed !important;
+    top: var(--ep-discuss-top, 0px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+  }
+
   .ep-native-discuss-public .o-mail-Discuss-header {
     min-height: 54px;
   }
 
   .ep-native-discuss-public .o-mail-Composer {
-    padding-bottom: 10px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .ep-native-discuss-public.ep-native-discuss-keyboard .o-mail-Composer,
+  .ep-native-discuss-public .ep-native-discuss-keyboard .o-mail-Composer {
+    padding-bottom: 4px !important;
   }
 }

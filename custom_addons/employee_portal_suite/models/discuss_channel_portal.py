@@ -1,4 +1,7 @@
-from odoo import api, fields, models, tools
+from odoo import Command, api, fields, models, tools
+
+
+from odoo.addons.mail.tools.discuss import Store
 
 
 class DiscussChannel(models.Model):
@@ -14,6 +17,61 @@ class DiscussChannel(models.Model):
     )
 
 
+
+    @api.model
+    @api.returns('self', lambda channels: Store(channels).get_result())
+    def create_group(self, partners_to, default_display_mode=False, name=''):
+        """Create native Discuss groups for authenticated Employee Portal users.
+
+        Odoo's native ChannelInvitation calls ``discuss.channel.create_group``.
+        Portal users do not normally have create ACL on Discuss channels, so the
+        standard method cannot complete even though the native UI can select
+        employees. Keep native Discuss as the source of truth, but perform the
+        creation as sudo after strictly validating that every participant is an
+        active employee and that the current portal employee is included.
+        """
+        is_employee_portal = bool(
+            self.env.user.share
+            and self.env['hr.employee'].sudo().search_count([
+                ('active', '=', True), ('user_id', '=', self.env.user.id),
+            ])
+            and not self.env.user.has_group('employee_portal_suite.group_attendance_only')
+        )
+        if not is_employee_portal:
+            return super().create_group(
+                partners_to, default_display_mode=default_display_mode, name=name
+            )
+
+        try:
+            partner_ids = {int(pid) for pid in (partners_to or []) if pid}
+        except (TypeError, ValueError):
+            partner_ids = set()
+        current_partner = self.env.user.partner_id
+        partner_ids.add(current_partner.id)
+        if len(partner_ids) < 2:
+            return self.env['discuss.channel']
+
+        employee_partner_ids = set(self.env['hr.employee'].sudo().search([
+            ('active', '=', True),
+            ('user_id', '!=', False),
+            ('user_id.active', '=', True),
+        ]).mapped('user_id.partner_id').ids)
+        if not partner_ids.issubset(employee_partner_ids):
+            return self.env['discuss.channel']
+
+        partners = self.env['res.partner'].sudo().browse(sorted(partner_ids)).exists()
+        safe_name = (name or '').strip()
+        channel = self.sudo().create({
+            'channel_member_ids': [
+                Command.create({'partner_id': partner.id}) for partner in partners
+            ],
+            'channel_type': 'group',
+            'default_display_mode': default_display_mode or False,
+            'name': safe_name,
+            'is_employee_portal_channel': True,
+        })
+        channel._broadcast(partners.ids)
+        return channel
 
     def add_members(self, partner_ids=None, guest_ids=None, invite_to_rtc_call=False,
                     open_chat_window=False, post_joined_message=True):
