@@ -351,6 +351,7 @@
             if (backdrop) backdrop.classList.add("epc-hidden");
             this._addingPeople = false;
             this._setGroupCallMode(false);
+            this._resetChatViewportInlineStyles();
         }
 
         _showPanelView(view, markSeen) {
@@ -369,7 +370,10 @@
             if (historyTab) historyTab.classList.toggle("epc-active", this.panelView === "history");
             if (chatTab) chatTab.classList.toggle("epc-active", this.panelView === "chat");
             const panel = document.getElementById("epc-panel");
-            if (panel && this.panelView !== "chat") panel.classList.remove("epc-chat-conversation-open");
+            if (panel && this.panelView !== "chat") {
+                panel.classList.remove("epc-chat-conversation-open");
+                this._resetChatViewportInlineStyles();
+            }
             if (this.panelView === "history") {
                 this._renderCallHistory();
                 if (markSeen) this._markMissedCallsSeen();
@@ -671,11 +675,31 @@
         _updateChatViewportMetrics() {
             const panel = document.getElementById("epc-panel");
             if (!panel) return;
+            const mobile = window.matchMedia("(max-width: 768px)").matches;
+            if (!mobile || !this.currentChatThreadId || this.panelView !== "chat") {
+                this._resetChatViewportInlineStyles();
+                return;
+            }
             const vv = window.visualViewport;
             const visibleHeight = vv ? vv.height : window.innerHeight;
             const offsetTop = vv ? vv.offsetTop : 0;
-            panel.style.setProperty("--epc-chat-visible-height", `${Math.max(260, visibleHeight)}px`);
-            panel.style.setProperty("--epc-chat-visible-top", `${Math.max(0, offsetTop)}px`);
+            const usableHeight = Math.max(300, Math.floor(visibleHeight - 16));
+            panel.style.top = `${Math.max(8, Math.floor(offsetTop + 8))}px`;
+            panel.style.bottom = "auto";
+            panel.style.left = "8px";
+            panel.style.right = "8px";
+            panel.style.width = "auto";
+            panel.style.height = `${usableHeight}px`;
+            panel.style.maxHeight = "none";
+            panel.style.transform = "none";
+        }
+
+        _resetChatViewportInlineStyles() {
+            const panel = document.getElementById("epc-panel");
+            if (!panel) return;
+            ["top", "bottom", "left", "right", "width", "height", "maxHeight", "transform"].forEach((key) => {
+                panel.style[key] = "";
+            });
         }
 
         _closeChatConversation() {
@@ -686,6 +710,7 @@
             const panel = document.getElementById("epc-panel");
             if (convo) convo.classList.add("epc-hidden");
             if (panel) panel.classList.remove("epc-chat-conversation-open");
+            this._resetChatViewportInlineStyles();
             if (threads) threads.classList.remove("epc-hidden");
             this._refreshChatThreads();
         }
