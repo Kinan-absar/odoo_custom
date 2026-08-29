@@ -1067,3 +1067,17 @@
     .epc-history-row { min-height: 52px; padding: 6px 9px; }
     .epc-history-meta { gap: 5px; }
 }
+
+/* v17.11 - Match Odoo backend systray notification counters. */
+.epc-backend-systray-btn .epc-call-badge {
+    top: 2px;
+    right: -3px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border: 0;
+    border-radius: 9px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+}

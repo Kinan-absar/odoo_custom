@@ -807,7 +807,14 @@
                 this._removePeer(Number(evt.payload.user_id || 0));
                 await this._refreshParticipants();
             } else if (["rejected", "ended", "cancelled"].includes(evt.event) && evt.uuid === this.currentUuid) {
-                if (evt.event === "ended") this._teardown();
+                // A remote decline/cancel/end must also dismiss a still-ringing
+                // incoming call. Previously cancelled/rejected only refreshed
+                // history, leaving the recipient popup visible until Decline.
+                this._stopRinging();
+                this._closeNotification();
+                const incoming = document.getElementById("epc-incoming");
+                if (incoming) incoming.classList.add("epc-hidden");
+                this._teardown();
                 setTimeout(() => this._refreshCallHistory(), 300);
             }
         }

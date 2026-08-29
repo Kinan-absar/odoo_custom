@@ -288,8 +288,20 @@ class PortalCallController(http.Controller):
         if not session or session.state not in ('ringing', 'ongoing'):
             return {'error': 'invalid_session'}
         user = self._user()
+        was_ringing = session.state == 'ringing' and not session.answered_date
         session.write({'active_participant_ids': [(3, user.id)]})
         remaining = session.active_participant_ids
+
+        # If the caller cancels while the call is still ringing, invitees have
+        # not joined active_participant_ids yet. Notify the permanent invitation
+        # roster so every incoming popup/ringtone is dismissed immediately.
+        if was_ringing and user.id == session.caller_id.id:
+            invitees = session.participant_ids.filtered(lambda u: u.id != user.id)
+            session.write({'state': 'missed', 'end_date': fields.Datetime.now()})
+            for other in invitees:
+                self._queue_signal(session, other, 'cancelled', {'user_id': user.id})
+            return {'ok': True}
+
         for other in remaining:
             self._queue_signal(session, other, 'participant_left', {'user_id': user.id, 'user_name': user.name})
         if len(remaining) < 2:
