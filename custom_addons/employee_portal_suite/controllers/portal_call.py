@@ -63,6 +63,79 @@ class PortalCallController(http.Controller):
             ('Cache-Control', 'private, max-age=3600'),
         ])
 
+    def _presence_map(self, user_ids):
+        """Return lightweight call availability for employee users.
+
+        Presence is intentionally separate from Odoo Discuss presence so it works
+        identically for internal and portal employees. The browser sends a small
+        heartbeat every 15 seconds while Odoo is open.
+        """
+        user_ids = [int(uid) for uid in user_ids if uid]
+        if not user_ids:
+            return {}
+
+        now = fields.Datetime.now()
+        online_before = fields.Datetime.subtract(now, seconds=90)
+        active_before = fields.Datetime.subtract(now, minutes=2)
+
+        Presence = request.env['portal.call.presence'].sudo()
+        rows = Presence.search([('user_id', 'in', user_ids)])
+        by_user = {row.user_id.id: row for row in rows}
+
+        Session = request.env['portal.call.session'].sudo()
+        busy_sessions = Session.search([
+            ('state', 'in', ['ringing', 'ongoing']),
+            ('active_participant_ids', 'in', user_ids),
+        ])
+        busy_ids = set(busy_sessions.mapped('active_participant_ids').ids) & set(user_ids)
+
+        result = {}
+        for uid in user_ids:
+            row = by_user.get(uid)
+            recently_seen = bool(row and row.last_seen and row.last_seen >= online_before)
+            if uid in busy_ids and recently_seen:
+                result[uid] = 'in_call'
+            elif not recently_seen:
+                result[uid] = 'offline'
+            elif row.last_activity and row.last_activity >= active_before:
+                result[uid] = 'online'
+            else:
+                result[uid] = 'away'
+        return result
+
+    @http.route('/employee_portal/call/presence', type='json', auth='user', csrf=False)
+    def call_presence(self, active=False):
+        """Heartbeat for Online/Away/Offline plus current In Call state."""
+        user = self._user()
+        if not self._is_callable_user(user):
+            return {'ok': False, 'statuses': {}}
+
+        Presence = request.env['portal.call.presence'].sudo()
+        presence = Presence.search([('user_id', '=', user.id)], limit=1)
+        now = fields.Datetime.now()
+        vals = {'last_seen': now}
+        if active:
+            vals['last_activity'] = now
+        if presence:
+            presence.write(vals)
+        else:
+            vals['user_id'] = user.id
+            # First heartbeat is an interaction with Odoo, so avoid showing Away
+            # immediately if the client did not yet report an activity event.
+            vals.setdefault('last_activity', now)
+            Presence.create(vals)
+
+        employees = request.env['hr.employee'].sudo().search([
+            ('active', '=', True),
+            ('user_id', '!=', False),
+            ('user_id.active', '=', True),
+        ])
+        statuses = self._presence_map(employees.mapped('user_id').ids)
+        return {
+            'ok': True,
+            'statuses': {str(uid): status for uid, status in statuses.items()},
+        }
+
     # ------------------------------------------------------------------
     # Directory
     # ------------------------------------------------------------------
@@ -80,6 +153,7 @@ class PortalCallController(http.Controller):
             ('user_id', '!=', user.id),
         ], order='name asc')
 
+        presence = self._presence_map(employees.mapped('user_id').ids)
         result = []
         seen_user_ids = set()
         for employee in employees:
@@ -95,6 +169,7 @@ class PortalCallController(http.Controller):
                 'department': employee.department_id.name or '',
                 'note': employee.job_title or '',
                 'avatar_url': '/employee_portal/call/avatar/%s' % contact.id,
+                'presence': presence.get(contact.id, 'offline'),
             })
         return result
 

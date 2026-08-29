@@ -883,3 +883,36 @@
         display: none;
     }
 }
+
+/* v17.9 - lightweight employee presence in the call directory. */
+.epc-presence {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+    margin-left: 2px;
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 600;
+    color: #7a8290;
+    white-space: nowrap;
+}
+.epc-presence-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #9ca3af;
+    box-shadow: 0 0 0 2px rgba(156, 163, 175, .12);
+}
+.epc-presence-online { color: #168a52; }
+.epc-presence-online .epc-presence-dot { background: #22b573; box-shadow: 0 0 0 2px rgba(34, 181, 115, .13); }
+.epc-presence-away { color: #a66a00; }
+.epc-presence-away .epc-presence-dot { background: #e7a72e; box-shadow: 0 0 0 2px rgba(231, 167, 46, .13); }
+.epc-presence-in_call { color: #b4232d; }
+.epc-presence-in_call .epc-presence-dot { background: #df3442; box-shadow: 0 0 0 2px rgba(223, 52, 66, .13); }
+.epc-presence-offline { color: #8a929f; }
+.epc-presence-offline .epc-presence-dot { background: #aeb4bd; }
+@media (max-width: 768px) {
+    .epc-presence-label { display: none; }
+    .epc-presence { margin-left: 0; }
+}

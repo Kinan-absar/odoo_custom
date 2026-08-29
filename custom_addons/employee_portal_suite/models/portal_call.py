@@ -125,3 +125,22 @@ class PortalCallSignal(models.Model):
             ('create_date', '<', fields.Datetime.subtract(fields.Datetime.now(), hours=6)),
         ]
         self.sudo().search(domain).unlink()
+
+
+class PortalCallPresence(models.Model):
+    _name = 'portal.call.presence'
+    _description = 'Employee Call Presence'
+    _rec_name = 'user_id'
+
+    user_id = fields.Many2one('res.users', required=True, ondelete='cascade', index=True)
+    last_seen = fields.Datetime(index=True)
+    last_activity = fields.Datetime(index=True)
+
+    _sql_constraints = [
+        ('portal_call_presence_user_uniq', 'unique(user_id)', 'Only one presence record is allowed per user.'),
+    ]
+
+    @api.autovacuum
+    def _gc_old_presence(self):
+        stale_before = fields.Datetime.subtract(fields.Datetime.now(), days=30)
+        self.sudo().search([('last_seen', '<', stale_before)]).unlink()

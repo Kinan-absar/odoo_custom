@@ -13,6 +13,7 @@
     "use strict";
 
     const POLL_INTERVAL_MS = 2000;
+    const PRESENCE_INTERVAL_MS = 15000;
 
     async function rpc(route, params) {
         const resp = await fetch(route, {
@@ -63,8 +64,12 @@
             this.participants = [];
             this.groupCallMode = false;
             this.groupSelection = new Set();
+            this.presenceTimer = null;
+            this._lastLocalActivity = Date.now();
             this._buildUI();
+            this._bindPresenceActivity();
             this._loadContacts();
+            this._startPresenceHeartbeat();
             this._startPolling();
         }
 
@@ -361,6 +366,39 @@
             panel.style.maxHeight = `${Math.min(430, maxHeight)}px`;
         }
 
+        _bindPresenceActivity() {
+            const mark = () => { this._lastLocalActivity = Date.now(); };
+            ['mousedown', 'keydown', 'touchstart', 'scroll'].forEach((eventName) => {
+                window.addEventListener(eventName, mark, { passive: true });
+            });
+            window.addEventListener('mousemove', mark, { passive: true });
+        }
+
+        _startPresenceHeartbeat() {
+            const beat = async () => {
+                const active = (Date.now() - this._lastLocalActivity) < 60000;
+                try {
+                    const res = await rpc('/employee_portal/call/presence', { active });
+                    const statuses = (res && res.statuses) || {};
+                    if (this.contacts && this.contacts.length) {
+                        this.contacts.forEach((contact) => {
+                            contact.presence = statuses[String(contact.user_id)] || contact.presence || 'offline';
+                        });
+                        const panel = document.getElementById('epc-panel');
+                        if (panel && !panel.classList.contains('epc-hidden')) this._renderContacts();
+                    }
+                } catch (e) {
+                    // Presence is informational only and must never interrupt calls.
+                }
+                this.presenceTimer = setTimeout(beat, PRESENCE_INTERVAL_MS);
+            };
+            beat();
+        }
+
+        _presenceLabel(status) {
+            return ({ online: 'Online', away: 'Away', offline: 'Offline', in_call: 'In call' })[status] || 'Offline';
+        }
+
         async _loadContacts() {
             try {
                 this.contacts = await rpc("/employee_portal/call/contacts", {});
@@ -391,7 +429,9 @@
                 row.className = "epc-contact-row";
                 const identity = document.createElement("div");
                 identity.className = "epc-contact-identity";
-                identity.innerHTML = `<span class="epc-contact-photo-wrap"><img class="epc-contact-photo" src="${this._escape(c.avatar_url || "")}" alt="" onerror="this.style.display=\'none\'"/><span class="epc-contact-photo-fallback">${this._escape((c.name || "?").charAt(0).toUpperCase())}</span></span><span class="epc-contact-name">${this._escape(c.name)}</span>`;
+                const presence = c.presence || 'offline';
+                const presenceLabel = this._presenceLabel(presence);
+                identity.innerHTML = `<span class="epc-contact-photo-wrap"><img class="epc-contact-photo" src="${this._escape(c.avatar_url || "")}" alt="" onerror="this.style.display=\'none\'"/><span class="epc-contact-photo-fallback">${this._escape((c.name || "?").charAt(0).toUpperCase())}</span></span><span class="epc-contact-name">${this._escape(c.name)}</span><span class="epc-presence epc-presence-${this._escape(presence)}" title="${this._escape(presenceLabel)}"><span class="epc-presence-dot"></span><span class="epc-presence-label">${this._escape(presenceLabel)}</span></span>`;
                 const callBtn = document.createElement("button");
                 const adding = this.currentUuid && this._addingPeople;
                 const groupSelecting = !adding && this.groupCallMode;
