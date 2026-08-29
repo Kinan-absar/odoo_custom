@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="ep_native_communication_actions">
+        <div class="ep-native-comm-actions" t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+            <a class="ep-native-comm-btn" href="/my/employee/discuss?mode=call" title="Calls">
+                <i class="fa fa-phone"/>
+            </a>
+            <a class="ep-native-comm-btn ep-native-message-btn" href="/my/employee/discuss" title="Messages">
+                <i class="fa fa-comments"/>
+                <span class="ep-native-unread-badge" style="display:none">0</span>
+            </a>
+        </div>
+    </template>
+
+    <template id="employee_native_discuss_hub" name="Employee Discuss">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="container ep-native-discuss-hub">
+                <div class="ep-native-discuss-head">
+                    <div>
+                        <div class="ep-native-discuss-kicker">COMMUNICATION</div>
+                        <h2 t-if="not call_mode">Messages</h2>
+                        <h2 t-if="call_mode">Calls</h2>
+                        <p t-if="not call_mode">Native Odoo Discuss conversations</p>
+                        <p t-if="call_mode">Choose an employee or group, then use the native Discuss call controls.</p>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="document.getElementById('ep-native-new-chat').classList.toggle('show')">
+                        <i class="fa fa-plus me-1"/> <t t-if="call_mode">New call</t><t t-if="not call_mode">New chat</t>
+                    </button>
+                </div>
+
+                <div id="ep-native-new-chat" class="ep-native-new-chat">
+                    <form action="/my/employee/discuss/start" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Select employees</label>
+                            <div class="ep-native-people-grid">
+                                <t t-foreach="employees" t-as="emp_user">
+                                    <label class="ep-native-person-option">
+                                        <input type="checkbox" name="participant_ids" t-att-value="emp_user.id"/>
+                                        <img t-att-src="'/web/image/res.partner/%s/avatar_128' % emp_user.partner_id.id"/>
+                                        <span t-esc="emp_user.name"/>
+                                    </label>
+                                </t>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Group name <span class="text-muted">(optional)</span></label>
+                            <input class="form-control" type="text" name="group_name" placeholder="Team / meeting name"/>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <t t-if="call_mode">Open native Discuss</t><t t-if="not call_mode">Start conversation</t>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="ep-native-thread-list">
+                    <t t-if="channels">
+                        <t t-foreach="channels" t-as="ch">
+                            <a class="ep-native-thread" t-att-href="'/my/employee/discuss/channel/%s' % ch['id']">
+                                <div class="ep-native-thread-avatar">
+                                    <img t-if="ch['avatar']" t-att-src="ch['avatar']"/>
+                                    <i t-if="not ch['avatar']" class="fa fa-users"/>
+                                </div>
+                                <div class="ep-native-thread-copy">
+                                    <strong t-esc="ch['name']"/>
+                                    <small><t t-if="ch['is_group']">Group conversation</t><t t-if="not ch['is_group']">Direct conversation</t></small>
+                                </div>
+                                <span t-if="ch['unread']" class="ep-native-thread-unread" t-esc="ch['unread']"/>
+                                <i class="fa fa-chevron-right ep-native-thread-arrow"/>
+                            </a>
+                        </t>
+                    </t>
+                    <div t-if="not channels" class="ep-native-empty">
+                        <i class="fa fa-comments-o"/>
+                        <strong>No conversations yet</strong>
+                        <span>Start a conversation with an employee.</span>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

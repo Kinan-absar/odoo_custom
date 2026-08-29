@@ -1,0 +1,221 @@
+from odoo import fields, http
+from odoo.http import request
+from odoo.addons.mail.tools.discuss import Store
+
+
+class EmployeePortalNativeDiscussController(http.Controller):
+
+    def _employee_user(self):
+        user = request.env.user
+        if user._is_public() or not user.active:
+            return False
+        employee = request.env['hr.employee'].sudo().search([
+            ('active', '=', True), ('user_id', '=', user.id),
+        ], limit=1)
+        if not employee:
+            return False
+        if user.has_group('employee_portal_suite.group_attendance_only'):
+            return False
+        return user
+
+    def _employee_users(self):
+        employees = request.env['hr.employee'].sudo().search([
+            ('active', '=', True), ('user_id', '!=', False),
+        ])
+        users = employees.mapped('user_id').filtered(lambda u: u.active and u.partner_id)
+        return users.sorted(lambda u: (u.name or '').lower())
+
+    def _channel_users(self, channel):
+        partners = channel.sudo().channel_member_ids.partner_id.filtered(lambda p: p.active)
+        if not partners:
+            return request.env['res.users']
+        users = request.env['res.users'].sudo().search([
+            ('active', '=', True), ('partner_id', 'in', partners.ids),
+        ])
+        employee_user_ids = set(self._employee_users().ids)
+        return users.filtered(lambda u: u.id in employee_user_ids)
+
+    def _is_allowed_channel(self, channel, user):
+        channel = channel.sudo().exists()
+        if not channel or channel.channel_type not in ('chat', 'group'):
+            return False
+        if user.partner_id not in channel.channel_member_ids.partner_id:
+            return False
+        users = self._channel_users(channel)
+        if user not in users or len(users) < 2:
+            return False
+        # Native internal-only Discuss chats remain backend-only. Portal exposure is
+        # explicit or automatic when at least one employee participant is a portal user.
+        return bool(channel.is_employee_portal_channel or any(u.share for u in users))
+
+    def _ensure_legacy_channels(self, user):
+        # One-time compatibility bridge for conversations created by the old portal
+        # chat implementation. It only ensures their canonical Discuss channel exists;
+        # the old frontend is no longer used.
+        legacy = request.env['portal.chat.thread'].sudo().search([
+            ('participant_ids', 'in', [user.id]),
+        ])
+        for thread in legacy:
+            try:
+                thread._ensure_discuss_channel()
+            except Exception:
+                continue
+
+    def _portal_channels(self, user):
+        self._ensure_legacy_channels(user)
+        members = request.env['discuss.channel.member'].sudo().search([
+            ('partner_id', '=', user.partner_id.id),
+            ('channel_id.channel_type', 'in', ('chat', 'group')),
+        ])
+        channels = members.channel_id.filtered(lambda c: self._is_allowed_channel(c, user))
+        ordered = sorted(
+            channels,
+            key=lambda c: c.last_interest_dt or fields.Datetime.from_string('1970-01-01 00:00:00'),
+            reverse=True,
+        )
+        return request.env['discuss.channel'].sudo().browse([c.id for c in ordered])
+
+    def _channel_label(self, channel, user):
+        users = self._channel_users(channel)
+        others = users.filtered(lambda u: u.id != user.id)
+        if channel.channel_type == 'group' or len(users) > 2:
+            return channel.name or ', '.join(others.mapped('name')) or 'Group'
+        return others[:1].name or channel.name or 'Conversation'
+
+    def _channel_avatar(self, channel, user):
+        users = self._channel_users(channel)
+        others = users.filtered(lambda u: u.id != user.id)
+        if channel.channel_type == 'group' or len(users) > 2:
+            return False
+        return f'/web/image/res.partner/{others[:1].partner_id.id}/avatar_128' if others else False
+
+    def _find_exact_dm(self, partner_ids):
+        partner_ids = sorted(set(int(pid) for pid in partner_ids if pid))
+        if len(partner_ids) != 2:
+            return request.env['discuss.channel']
+        request.env['discuss.channel'].flush_model()
+        request.env['discuss.channel.member'].flush_model()
+        request.env.cr.execute("""
+            SELECT c.id
+              FROM discuss_channel c
+              JOIN discuss_channel_member m ON m.channel_id = c.id
+             WHERE c.channel_type = 'chat'
+               AND m.partner_id IN %s
+               AND NOT EXISTS (
+                    SELECT 1 FROM discuss_channel_member mx
+                     WHERE mx.channel_id = c.id AND mx.partner_id NOT IN %s
+               )
+          GROUP BY c.id
+            HAVING ARRAY_AGG(DISTINCT m.partner_id ORDER BY m.partner_id) = %s
+             LIMIT 1
+        """, (tuple(partner_ids), tuple(partner_ids), partner_ids))
+        row = request.env.cr.fetchone()
+        return request.env['discuss.channel'].sudo().browse(row[0]) if row else request.env['discuss.channel']
+
+    def _get_or_create_channel(self, user, target_users, name=None):
+        all_users = (user | target_users).filtered(lambda u: u.active and u.partner_id)
+        partner_ids = all_users.partner_id.ids
+        if len(partner_ids) < 2:
+            return request.env['discuss.channel']
+        is_group = len(partner_ids) > 2
+        channel = request.env['discuss.channel']
+        if not is_group:
+            channel = self._find_exact_dm(partner_ids)
+        if not channel:
+            channel = request.env['discuss.channel'].sudo().create({
+                'channel_type': 'group' if is_group else 'chat',
+                'name': (name or '').strip() or (', '.join(target_users.mapped('name')) if is_group else target_users[:1].name),
+                'is_employee_portal_channel': True,
+            })
+            existing = channel.channel_member_ids.partner_id
+            missing = all_users.partner_id - existing
+            if missing:
+                channel.sudo()._add_members(
+                    partners=missing,
+                    post_joined_message=False,
+                    open_chat_window=False,
+                )
+        channel.sudo().write({'is_employee_portal_channel': True, 'last_interest_dt': fields.Datetime.now()})
+        channel.channel_member_ids.sudo().write({'unpin_dt': False})
+        return channel
+
+    @http.route('/my/employee/discuss', type='http', auth='user', website=True, methods=['GET'])
+    def employee_discuss_hub(self, **kwargs):
+        user = self._employee_user()
+        if not user:
+            return request.redirect('/my/employee')
+        channels = self._portal_channels(user)
+        rows = []
+        for channel in channels:
+            member = channel.channel_member_ids.filtered(lambda m: m.partner_id.id == user.partner_id.id)[:1]
+            rows.append({
+                'id': channel.id,
+                'name': self._channel_label(channel, user),
+                'avatar': self._channel_avatar(channel, user),
+                'is_group': channel.channel_type == 'group' or len(self._channel_users(channel)) > 2,
+                'unread': int(member.message_unread_counter or 0),
+                'last_interest_dt': channel.last_interest_dt,
+            })
+        values = {
+            'channels': rows,
+            'employees': self._employee_users().filtered(lambda u: u.id != user.id),
+            'call_mode': kwargs.get('mode') == 'call',
+        }
+        # Keep all normal portal layout counters/notification context.
+        try:
+            values.update(request.env['ir.http']._prepare_portal_layout_values())
+        except Exception:
+            pass
+        return request.render('employee_portal_suite.employee_native_discuss_hub', values)
+
+    @http.route('/my/employee/discuss/start', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def employee_discuss_start(self, participant_ids=None, group_name=None, **post):
+        user = self._employee_user()
+        if not user:
+            return request.redirect('/my/employee')
+        raw_ids = request.httprequest.form.getlist('participant_ids')
+        try:
+            ids = [int(x) for x in raw_ids if x]
+        except (TypeError, ValueError):
+            ids = []
+        allowed = self._employee_users().filtered(lambda u: u.id != user.id)
+        targets = allowed.filtered(lambda u: u.id in ids)
+        channel = self._get_or_create_channel(user, targets, name=group_name)
+        if not channel:
+            return request.redirect('/my/employee/discuss')
+        return request.redirect(f'/my/employee/discuss/channel/{channel.id}')
+
+    @http.route('/my/employee/discuss/channel/<int:channel_id>', type='http', auth='user', website=True, methods=['GET'])
+    def employee_discuss_channel(self, channel_id, **kwargs):
+        user = self._employee_user()
+        if not user:
+            return request.redirect('/my/employee')
+        channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
+        if not self._is_allowed_channel(channel, user):
+            return request.not_found()
+        channel.sudo().write({'is_employee_portal_channel': True})
+
+        # Use Odoo's real public Discuss frontend and Store. This is the same native
+        # frontend Odoo uses for /discuss/channel and it includes the native RTC stack.
+        channel_user = channel.with_user(user)
+        store = Store()
+        store.add({
+            'companyName': request.env.company.name,
+            'inPublicPage': True,
+            'employeePortalDiscuss': True,
+            'employeePortalBackUrl': '/my/employee/discuss',
+            'discuss_public_thread': Store.one(channel_user),
+        })
+        return request.render('mail.discuss_public_channel_template', {
+            'data': store.get_result(),
+            'session_info': channel_user.env['ir.http'].session_info(),
+        })
+
+    @http.route('/employee_portal/discuss/unread', type='json', auth='user')
+    def employee_discuss_unread(self):
+        user = self._employee_user()
+        if not user:
+            return {'unread': 0}
+        channels = self._portal_channels(user)
+        members = channels.channel_member_ids.filtered(lambda m: m.partner_id.id == user.partner_id.id)
+        return {'unread': sum(int(m.message_unread_counter or 0) for m in members)}
