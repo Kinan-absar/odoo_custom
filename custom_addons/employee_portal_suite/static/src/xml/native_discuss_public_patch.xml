@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="employee_portal_suite.NativeDiscussPortalPatch"
+       t-inherit="mail.Discuss" t-inherit-mode="extension">
+        <xpath expr="//div[contains(@class, 'o-mail-Discuss-content')]/div[contains(@class, 'o-mail-Discuss-header')]" position="before">
+            <div t-if="isEmployeePortalDiscuss" class="ep-native-discuss-toolbar d-flex align-items-center gap-2 px-2 py-2 border-bottom">
+                <button type="button" class="btn btn-light ep-native-discuss-back" t-on-click="goEmployeeMessages" title="Back to Messages">
+                    <i class="fa fa-arrow-left"/><span class="d-none d-sm-inline ms-1">Messages</span>
+                </button>
+                <button type="button" class="btn btn-light" t-on-click="goEmployeePortal" title="Employee Portal">
+                    <i class="fa fa-home"/><span class="d-none d-md-inline ms-1">Portal</span>
+                </button>
+                <span class="flex-grow-1"/>
+                <button t-if="thread and ['chat', 'group'].includes(thread.channel_type)" type="button" class="btn btn-light" t-on-click="openEmployeePeople" title="Add employee">
+                    <i class="fa fa-user-plus"/><span class="d-none d-md-inline ms-1">Add people</span>
+                </button>
+                <button type="button" class="btn btn-light d-none d-md-inline-flex" t-on-click="toggleEmployeeFullscreen" title="Full screen">
+                    <i class="fa fa-expand"/>
+                </button>
+            </div>
+        </xpath>
+        <xpath expr="//MessagingMenu" position="attributes">
+            <attribute name="t-if">ui.isSmall and !isEmployeePortalDiscuss</attribute>
+        </xpath>
+        <xpath expr="//div[contains(@class, 'o-mail-Discuss')]" position="inside">
+            <div t-if="isEmployeePortalDiscuss and epDiscuss.peopleOpen" class="ep-native-people-overlay">
+                <div class="ep-native-people-dialog shadow-lg">
+                    <div class="d-flex align-items-center px-3 py-3 border-bottom">
+                        <div>
+                            <h5 class="m-0">Add people</h5>
+                            <small class="text-muted" t-if="thread?.channel_type === 'chat'">Adding someone to a direct chat creates a group conversation.</small>
+                        </div>
+                        <span class="flex-grow-1"/>
+                        <button type="button" class="btn btn-light rounded-circle" t-on-click="closeEmployeePeople"><i class="fa fa-times"/></button>
+                    </div>
+                    <div class="ep-native-people-body p-2">
+                        <div t-if="epDiscuss.peopleLoading" class="text-center text-muted py-4"><i class="fa fa-spinner fa-spin me-2"/>Loading employees…</div>
+                        <div t-elif="!epDiscuss.people.length" class="text-center text-muted py-4">No more employees available.</div>
+                        <t t-else="">
+                            <button t-foreach="epDiscuss.people" t-as="person" t-key="person.id" type="button"
+                                    class="ep-native-person-row btn w-100 text-start d-flex align-items-center gap-2"
+                                    t-att-class="{'is-selected': epDiscuss.selected[person.id]}"
+                                    t-on-click="() => toggleEmployeePerson(person.id)">
+                                <img t-if="person.avatar" t-att-src="person.avatar" class="ep-native-person-avatar"/>
+                                <span t-else="" class="ep-native-person-avatar ep-native-person-fallback"><i class="fa fa-user"/></span>
+                                <strong class="text-truncate" t-esc="person.name"/>
+                                <span class="flex-grow-1"/>
+                                <i t-if="epDiscuss.selected[person.id]" class="fa fa-check-circle text-primary"/>
+                            </button>
+                        </t>
+                    </div>
+                    <div class="px-3 py-2 border-top">
+                        <div t-if="epDiscuss.error" class="alert alert-danger py-2 mb-2" t-esc="epDiscuss.error"/>
+                        <button type="button" class="btn btn-primary w-100" t-att-disabled="epDiscuss.saving" t-on-click="addSelectedEmployees">
+                            <i t-if="epDiscuss.saving" class="fa fa-spinner fa-spin me-1"/>Add selected
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </t>
+</templates>
