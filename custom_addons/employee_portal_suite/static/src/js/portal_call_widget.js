@@ -204,6 +204,23 @@
             document.getElementById("epc-chat-back").addEventListener("click", (ev) => { ev.stopPropagation(); this._closeChatConversation(); });
             document.getElementById("epc-chat-call").addEventListener("click", (ev) => { ev.stopPropagation(); this._callCurrentChat(); });
             document.getElementById("epc-chat-compose").addEventListener("submit", (ev) => { ev.preventDefault(); ev.stopPropagation(); this._sendChatMessage(); });
+            const chatInput = document.getElementById("epc-chat-input");
+            if (chatInput) {
+                // Desktop: Enter sends, Shift+Enter inserts a new line.
+                // Portal mobile keeps the normal mobile keyboard Enter behaviour.
+                chatInput.addEventListener("keydown", (ev) => {
+                    if (ev.key === "Enter" && !ev.shiftKey && !ev.isComposing && window.matchMedia("(min-width: 769px)").matches) {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        this._sendChatMessage();
+                    }
+                });
+                chatInput.addEventListener("focus", () => {
+                    if (!this._isPortalMobileChat()) return;
+                    window.setTimeout(() => this._updateChatViewportMetrics(), 60);
+                    window.setTimeout(() => this._updateChatViewportMetrics(), 280);
+                });
+            }
             document.getElementById("epc-accept").addEventListener("click", () => this._acceptIncoming());
             document.getElementById("epc-reject").addEventListener("click", () => this._rejectIncoming());
             document.getElementById("epc-hangup").addEventListener("click", () => this._hangup());
@@ -672,34 +689,100 @@
             }
         }
 
+        _isPortalMobileChat() {
+            return !document.querySelector(".o_web_client") && window.matchMedia("(max-width: 768px)").matches;
+        }
+
         _updateChatViewportMetrics() {
             const panel = document.getElementById("epc-panel");
             if (!panel) return;
-            const mobile = window.matchMedia("(max-width: 768px)").matches;
-            if (!mobile || !this.currentChatThreadId || this.panelView !== "chat") {
+            if (!this._isPortalMobileChat() || !this.currentChatThreadId || this.panelView !== "chat") {
                 this._resetChatViewportInlineStyles();
                 return;
             }
+
             const vv = window.visualViewport;
             const visibleHeight = vv ? vv.height : window.innerHeight;
             const offsetTop = vv ? vv.offsetTop : 0;
-            const usableHeight = Math.max(300, Math.floor(visibleHeight - 16));
-            panel.style.top = `${Math.max(8, Math.floor(offsetTop + 8))}px`;
+            const usableHeight = Math.max(260, Math.floor(visibleHeight - 12));
+            const header = panel.querySelector(".epc-panel-header");
+            const tabs = document.getElementById("epc-panel-tabs");
+            const chatView = document.getElementById("epc-chat-view");
+            const convo = document.getElementById("epc-chat-conversation");
+            const subheader = convo ? convo.querySelector(".epc-chat-subheader") : null;
+            const messages = document.getElementById("epc-chat-messages");
+            const compose = document.getElementById("epc-chat-compose");
+
+            // Portal-mobile chat is a self-contained viewport. Keep the composer
+            // inside the visible browser area even when Safari/Chrome bars or the
+            // software keyboard resize the visual viewport.
+            panel.style.position = "fixed";
+            panel.style.top = `${Math.max(6, Math.floor(offsetTop + 6))}px`;
             panel.style.bottom = "auto";
-            panel.style.left = "8px";
-            panel.style.right = "8px";
+            panel.style.left = "6px";
+            panel.style.right = "6px";
             panel.style.width = "auto";
             panel.style.height = `${usableHeight}px`;
             panel.style.maxHeight = "none";
             panel.style.transform = "none";
+            panel.style.display = "flex";
+            panel.style.flexDirection = "column";
+            panel.style.overflow = "hidden";
+
+            if (header) { header.style.flex = "0 0 auto"; }
+            if (tabs) { tabs.style.flex = "0 0 auto"; }
+            if (chatView) {
+                chatView.style.flex = "1 1 auto";
+                chatView.style.minHeight = "0";
+                chatView.style.height = "auto";
+                chatView.style.overflow = "hidden";
+            }
+            if (convo) {
+                convo.style.display = "flex";
+                convo.style.flexDirection = "column";
+                convo.style.flex = "1 1 auto";
+                convo.style.height = "100%";
+                convo.style.minHeight = "0";
+                convo.style.overflow = "hidden";
+            }
+            if (subheader) { subheader.style.flex = "0 0 auto"; }
+            if (messages) {
+                messages.style.flex = "1 1 auto";
+                messages.style.height = "auto";
+                messages.style.minHeight = "0";
+                messages.style.overflowY = "auto";
+                messages.style.overscrollBehavior = "contain";
+                messages.style.webkitOverflowScrolling = "touch";
+                messages.style.touchAction = "pan-y";
+            }
+            if (compose) {
+                compose.style.display = "flex";
+                compose.style.flex = "0 0 auto";
+                compose.style.position = "relative";
+                compose.style.bottom = "auto";
+                compose.style.zIndex = "5";
+                compose.style.background = "#fff";
+            }
         }
 
         _resetChatViewportInlineStyles() {
             const panel = document.getElementById("epc-panel");
-            if (!panel) return;
-            ["top", "bottom", "left", "right", "width", "height", "maxHeight", "transform"].forEach((key) => {
-                panel.style[key] = "";
-            });
+            const chatView = document.getElementById("epc-chat-view");
+            const convo = document.getElementById("epc-chat-conversation");
+            const messages = document.getElementById("epc-chat-messages");
+            const compose = document.getElementById("epc-chat-compose");
+            const header = panel ? panel.querySelector(".epc-panel-header") : null;
+            const tabs = document.getElementById("epc-panel-tabs");
+            const subheader = convo ? convo.querySelector(".epc-chat-subheader") : null;
+            const clear = (el, keys) => { if (el) keys.forEach((key) => { el.style[key] = ""; }); };
+            clear(panel, ["position", "top", "bottom", "left", "right", "width", "height", "maxHeight", "transform", "display", "flexDirection", "overflow"]);
+            clear(header, ["flex"]);
+            clear(tabs, ["flex"]);
+            clear(chatView, ["flex", "minHeight", "height", "overflow"]);
+            clear(convo, ["display", "flexDirection", "flex", "height", "minHeight", "overflow"]);
+            clear(subheader, ["flex"]);
+            clear(messages, ["flex", "height", "minHeight", "overflowY", "overscrollBehavior", "webkitOverflowScrolling", "touchAction"]);
+            clear(compose, ["display", "flex", "position", "bottom", "zIndex", "background"]);
         }
 
         _closeChatConversation() {
