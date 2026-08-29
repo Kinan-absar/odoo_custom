@@ -341,7 +341,12 @@
             const systray = document.querySelector(".o_menu_systray");
             if (!systray) return;
 
-            let callItem = systray.querySelector(".epc-backend-systray-item");
+            // IMPORTANT: this method is called by a childList MutationObserver.
+            // Only touch the DOM when an item is actually missing; otherwise a
+            // badge text rewrite would retrigger the observer forever and keep
+            // the Odoo web client stuck on its loading screen.
+            let changed = false;
+            let callItem = systray.querySelector(".epc-backend-systray-item:not(.epc-backend-message-item)");
             if (!callItem) {
                 callItem = document.createElement("div");
                 callItem.className = "o_menu_systray_item epc-backend-systray-item";
@@ -357,6 +362,7 @@
                     ev.stopPropagation();
                     this._togglePanel(callBtn, "calls");
                 });
+                changed = true;
             }
 
             if (!systray.querySelector(".epc-backend-message-item")) {
@@ -374,8 +380,10 @@
                     ev.stopPropagation();
                     this._togglePanel(messageBtn, "messages");
                 });
+                changed = true;
             }
-            this._refreshMainAttentionBadge();
+
+            if (changed) this._refreshMainAttentionBadge();
         }
 
         _togglePanel(anchor, mode) {
@@ -474,11 +482,13 @@
             const missed = Math.max(0, Number(this.unreadMissedCount || 0));
             const unread = Math.max(0, Number(this.unreadChatCount || 0));
             document.querySelectorAll(".epc-call-badge").forEach((badge) => {
-                badge.textContent = missed > 99 ? "99+" : String(missed);
+                const text = missed > 99 ? "99+" : String(missed);
+                if (badge.textContent !== text) badge.textContent = text;
                 badge.classList.toggle("epc-hidden", missed === 0);
             });
             document.querySelectorAll(".epc-message-badge").forEach((badge) => {
-                badge.textContent = unread > 99 ? "99+" : String(unread);
+                const text = unread > 99 ? "99+" : String(unread);
+                if (badge.textContent !== text) badge.textContent = text;
                 badge.classList.toggle("epc-hidden", unread === 0);
             });
         }
