@@ -70,8 +70,14 @@
             this.panelView = "people";
             this.unreadMissedCount = 0;
             this._lastLocalActivity = Date.now();
+            this.selfUserId = null;
+            this.reconnectTimers = new Map();
+            this.reconnectAttempts = new Map();
+            this.peerConnectionStates = new Map();
+            this._networkOffline = !navigator.onLine;
             this._buildUI();
             this._bindPresenceActivity();
+            this._bindNetworkRecovery();
             this._loadContacts();
             this._startPresenceHeartbeat();
             this._startHistoryRefresh();
@@ -759,6 +765,156 @@
         }
 
         // ------------------------------------------------------------
+        // Network / WebRTC recovery
+        // ------------------------------------------------------------
+        _bindNetworkRecovery() {
+            window.addEventListener("offline", () => {
+                this._networkOffline = true;
+                if (this.currentUuid) this._setCallStatus("Connection lost - waiting for network...");
+            });
+            window.addEventListener("online", () => {
+                this._networkOffline = false;
+                if (!this.currentUuid) return;
+                this._setCallStatus("Reconnecting...");
+                // A network change can leave a peer connection reporting
+                // "connected" for a short time even though the old ICE path is
+                // dead. Force an ICE restart for every current peer.
+                setTimeout(() => this._retryDisconnectedPeers(true), 300);
+            });
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === "visible" && this.currentUuid && navigator.onLine) {
+                    this._retryDisconnectedPeers(false);
+                }
+            });
+        }
+
+        _setCallStatus(text) {
+            const status = document.querySelector("#epc-active .epc-active-status");
+            if (status && this.currentUuid) status.textContent = text;
+        }
+
+        _restoreMeetingStatus() {
+            if (!this.currentUuid) return;
+            const activeCount = (this.participants || []).filter((p) => p.active).length;
+            const count = activeCount || (this.peerConnections.size + 1);
+            this._setCallStatus(`${Math.max(1, count)} people in meeting`);
+        }
+
+        _clearReconnectTimer(peerId, resetAttempts=false) {
+            peerId = Number(peerId);
+            const timer = this.reconnectTimers.get(peerId);
+            if (timer) clearTimeout(timer);
+            this.reconnectTimers.delete(peerId);
+            if (resetAttempts) this.reconnectAttempts.delete(peerId);
+        }
+
+        _scheduleReconnect(peerId, immediate=false) {
+            peerId = Number(peerId);
+            if (!this.currentUuid || !peerId) return;
+            const pc = this.peerConnections.get(peerId);
+            if (!pc || pc.signalingState === "closed") return;
+            this._clearReconnectTimer(peerId, false);
+            this.peerConnectionStates.set(peerId, "reconnecting");
+            this._setCallStatus(this._networkOffline ? "Connection lost - waiting for network..." : "Reconnecting...");
+
+            // Avoid both sides creating restart offers at the same instant. The
+            // lower user id takes the first attempt; the other side is a delayed
+            // fallback in case the preferred peer is the one that lost network.
+            const preferredInitiator = !this.selfUserId || this.selfUserId < peerId;
+            const attempt = this.reconnectAttempts.get(peerId) || 0;
+            let delay = immediate ? 250 : (preferredInitiator ? 1200 : 5000);
+            if (attempt > 0) delay = Math.min(10000, delay + (attempt * 1500));
+            const timer = setTimeout(() => this._restartIceTo(peerId), delay);
+            this.reconnectTimers.set(peerId, timer);
+        }
+
+        async _restartIceTo(peerId) {
+            peerId = Number(peerId);
+            this.reconnectTimers.delete(peerId);
+            if (!this.currentUuid || !navigator.onLine) {
+                if (this.currentUuid) this._scheduleReconnect(peerId, false);
+                return;
+            }
+            const pc = this.peerConnections.get(peerId);
+            if (!pc || pc.signalingState === "closed") return;
+
+            const attempts = (this.reconnectAttempts.get(peerId) || 0) + 1;
+            this.reconnectAttempts.set(peerId, attempts);
+            this._setCallStatus(`Reconnecting...${attempts > 1 ? ` (${attempts})` : ""}`);
+            try {
+                if (typeof pc.restartIce === "function") pc.restartIce();
+                // Do not stack an ICE restart on top of an SDP exchange already
+                // in progress. A received offer will itself carry fresh ICE.
+                if (pc.signalingState !== "stable") {
+                    this._scheduleReconnect(peerId, false);
+                    return;
+                }
+                const offer = await pc.createOffer({ iceRestart: true });
+                await pc.setLocalDescription(offer);
+                await rpc("/employee_portal/call/signal", {
+                    uuid: this.currentUuid,
+                    signal_type: "offer",
+                    data: {
+                        type: offer.type,
+                        sdp: offer.sdp,
+                        _target_user_id: peerId,
+                        _ice_restart: true,
+                    },
+                });
+                // If the state never returns to connected, try again with
+                // backoff. Successful connection clears this timer below.
+                this._clearReconnectTimer(peerId, false);
+                const watchdog = setTimeout(() => {
+                    const current = this.peerConnections.get(peerId);
+                    if (current && !["connected", "closed"].includes(current.connectionState)) {
+                        this._scheduleReconnect(peerId, false);
+                    }
+                }, 6500);
+                this.reconnectTimers.set(peerId, watchdog);
+            } catch (e) {
+                console.warn("[EPC] ICE restart failed", peerId, e);
+                this._scheduleReconnect(peerId, false);
+            }
+        }
+
+        _handlePeerConnectionState(peerId, pc) {
+            if (!this.currentUuid || !pc) return;
+            const state = pc.connectionState || pc.iceConnectionState || "new";
+            const previous = this.peerConnectionStates.get(Number(peerId));
+            if (state === "connected" || state === "completed") {
+                this._clearReconnectTimer(peerId, true);
+                this.peerConnectionStates.set(Number(peerId), "connected");
+                if (previous === "reconnecting" || previous === "disconnected" || previous === "failed") {
+                    this._setCallStatus("Connected");
+                    setTimeout(() => {
+                        if (this.currentUuid && !Array.from(this.peerConnectionStates.values()).some((v) => ["reconnecting", "disconnected", "failed"].includes(v))) {
+                            this._restoreMeetingStatus();
+                        }
+                    }, 1200);
+                } else {
+                    this._restoreMeetingStatus();
+                }
+            } else if (state === "disconnected") {
+                this.peerConnectionStates.set(Number(peerId), "disconnected");
+                this._scheduleReconnect(peerId, false);
+            } else if (state === "failed") {
+                this.peerConnectionStates.set(Number(peerId), "failed");
+                this._scheduleReconnect(peerId, true);
+            }
+        }
+
+        _retryDisconnectedPeers(force=false) {
+            if (!this.currentUuid || !navigator.onLine) return;
+            for (const [peerId, pc] of this.peerConnections.entries()) {
+                if (!pc || pc.signalingState === "closed") continue;
+                const state = pc.connectionState || pc.iceConnectionState || "new";
+                if (force || ["disconnected", "failed"].includes(state)) {
+                    this._scheduleReconnect(peerId, force);
+                }
+            }
+        }
+
+        // ------------------------------------------------------------
         // Polling loop
         // ------------------------------------------------------------
         _startPolling() {
@@ -1164,12 +1320,17 @@
             this._stopRinging();
             this._closeNotification();
             this._stopCallTimer();
-            if (this.pc) {
-                this.pc.close();
-                this.pc = null; // legacy alias for first peer
+            for (const timer of this.reconnectTimers.values()) clearTimeout(timer);
+            this.reconnectTimers = new Map();
+            this.reconnectAttempts = new Map();
+            this.peerConnectionStates = new Map();
+            for (const pc of this.peerConnections.values()) {
+                try { pc.close(); } catch (e) { /* no-op */ }
+            }
+            this.pc = null; // legacy alias for first peer
             this.peerConnections = new Map();
             this.peerNames = new Map();
-            }
+            this.selfUserId = null;
             if (this.screenTrack) {
                 try { this.screenTrack.stop(); } catch (e) { /* no-op */ }
                 this.screenTrack = null;
@@ -1225,6 +1386,7 @@
                 if (res && Array.isArray(res.participants)) {
                     this.participants = res.participants;
                     res.participants.forEach((p) => {
+                        if (p.is_self && p.user_id) this.selfUserId = Number(p.user_id);
                         if (!p.is_self && p.user_id && p.name) this.peerNames.set(Number(p.user_id), p.name);
                     });
                     this._renderParticipants();
@@ -1347,6 +1509,14 @@
                 if (!this.callStartedAt) this._startCallTimer();
             };
             pc.onicecandidate = (ev) => { if (ev.candidate) rpc("/employee_portal/call/signal", {uuid:this.currentUuid, signal_type:"ice", data:{...ev.candidate.toJSON(), _target_user_id:peerId}}); };
+            pc.onconnectionstatechange = () => this._handlePeerConnectionState(peerId, pc);
+            pc.oniceconnectionstatechange = () => {
+                // Some Safari/WebKit versions expose useful failure state here
+                // before connectionState changes. Feed both into one recovery path.
+                if (["disconnected", "failed", "connected", "completed"].includes(pc.iceConnectionState)) {
+                    this._handlePeerConnectionState(peerId, pc);
+                }
+            };
             return pc;
         }
 
@@ -1366,14 +1536,22 @@
             const { signal_type, data } = payload;
             const pc = await this._createPeerConnection(peerId);
             if (signal_type === "offer") {
+                // A reconnect offer can cross a normal renegotiation. Roll back
+                // our uncommitted local offer so the remote restart offer wins.
+                this._clearReconnectTimer(peerId, false);
+                if (pc.signalingState !== "stable") {
+                    try { await pc.setLocalDescription({ type: "rollback" }); } catch (e) { /* browser may already be stable */ }
+                }
                 await pc.setRemoteDescription(new RTCSessionDescription(data));
                 await this._flushIceCandidates(peerId, pc);
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
                 await rpc("/employee_portal/call/signal", {uuid:this.currentUuid, signal_type:"answer", data:{type:answer.type, sdp:answer.sdp, _target_user_id:peerId}});
             } else if (signal_type === "answer") {
-                await pc.setRemoteDescription(new RTCSessionDescription(data));
-                await this._flushIceCandidates(peerId, pc);
+                if (pc.signalingState === "have-local-offer") {
+                    await pc.setRemoteDescription(new RTCSessionDescription(data));
+                    await this._flushIceCandidates(peerId, pc);
+                }
             } else if (signal_type === "ice") {
                 if (!pc.remoteDescription || !pc.remoteDescription.type) {
                     this._queueIceCandidate(peerId, data);
@@ -1401,6 +1579,8 @@
         }
 
         _removePeer(peerId) {
+            this._clearReconnectTimer(peerId, true);
+            this.peerConnectionStates.delete(Number(peerId));
             const pc = this.peerConnections.get(peerId); if (pc) pc.close();
             this.peerConnections.delete(peerId);
             this.pendingIceCandidates.delete(Number(peerId));
