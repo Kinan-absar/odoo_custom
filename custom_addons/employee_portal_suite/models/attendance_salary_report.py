@@ -18,6 +18,11 @@ class AttendanceSalaryReport(models.Model):
                                     domain="[('company_id', '=', company_id)]")
     department_ids = fields.Many2many('hr.department', string='Departments',
                                     domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
+    employee_tag_ids = fields.Many2many(
+        'hr.employee.category',
+        string='Tags',
+        help='Filter employees by the Tags set on the employee profile.',
+    )
     work_location_ids = fields.Many2many('hr.work.location', string='Work Locations')
     include_inactive = fields.Boolean(string='Include Archived Employees')
     line_ids = fields.One2many('employee.attendance.salary.report.line', 'report_id', string='Lines')
@@ -187,6 +192,8 @@ class AttendanceSalaryReport(models.Model):
             domain.append(('id', 'in', self.employee_ids.ids))
         if self.department_ids:
             domain.append(('department_id', 'in', self.department_ids.ids))
+        if self.employee_tag_ids:
+            domain.append(('category_ids', 'in', self.employee_tag_ids.ids))
         if self.work_location_ids:
             domain.extend(['|', ('work_location_ids', 'in', self.work_location_ids.ids), ('work_location_id', 'in', self.work_location_ids.ids)])
         if not self.include_inactive:
