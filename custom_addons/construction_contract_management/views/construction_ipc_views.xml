@@ -39,7 +39,12 @@
                             string="Create Invoice/Bill"
                             type="object"
                             class="btn-primary"
-                            invisible="state not in ['approved','done'] or move_id"/>
+                            invisible="state not in ['approved','done'] or (move_id and payment_status not in ['reversed','cancelled'])"/>
+                    <button name="action_link_existing_move"
+                            string="Link Existing Invoice/Bill"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state not in ['approved','done'] or (move_id and payment_status not in ['reversed','cancelled'])"/>
                     <button name="%(construction_contract_management.action_report_construction_ipc)d"
                             string="Print"
                             type="action"
@@ -118,6 +123,7 @@
                                 <group>
                                     <field name="deduct_advance" readonly="state not in ['draft', 'under_review']"/>
                                     <field name="advance_recovery_amount" readonly="1"/>
+                                    <field name="deduct_retention_on_invoice" readonly="state not in ['draft', 'under_review']"/>
                                     <field name="vat_amount" readonly="1"/>
                                     <field name="gross_with_vat" readonly="1"/>
                                     <field name="retention_amount" readonly="1"/>
@@ -125,6 +131,7 @@
                                     <field name="net_amount" readonly="1"/>
                                     <field name="payment_status" readonly="1"/>
                                     <field name="move_id" readonly="1"/>
+                                    <field name="move_history_ids" widget="many2many_tags" readonly="1"/>
                                 </group>
                             </group>
                         </page>

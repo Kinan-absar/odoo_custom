@@ -43,7 +43,27 @@ class ConstructionIPC(models.Model):
 
     advance_recovery_posted = fields.Boolean(default=False)
 
-    move_id = fields.Many2one('account.move', string='Invoice/Bill', copy=False, readonly=True)
+    deduct_retention_on_invoice = fields.Boolean(
+        string='Deduct Retention on Invoice/Bill',
+        default=True,
+        tracking=True,
+        help=(
+            'If enabled, the retention is added to the generated invoice/bill as a negative, '
+            'non-tax line. Disable it when the tax invoice/bill should be issued for the full '
+            'work amount and the retention will be held/accounted for separately.'
+        ),
+    )
+
+    move_id = fields.Many2one('account.move', string='Current Invoice/Bill', copy=False, readonly=True)
+    move_history_ids = fields.Many2many(
+        'account.move',
+        'construction_ipc_account_move_rel',
+        'ipc_id',
+        'move_id',
+        string='Linked Invoice/Bill History',
+        copy=False,
+        readonly=True,
+    )
     move_count = fields.Integer(compute='_compute_move_count')
     payment_status = fields.Selection([
         ('no_move', 'Not Invoiced'),
@@ -66,7 +86,30 @@ class ConstructionIPC(models.Model):
 
     def _compute_move_count(self):
         for rec in self:
-            rec.move_count = 1 if rec.move_id else 0
+            moves = rec.move_history_ids
+            if rec.move_id:
+                moves |= rec.move_id
+            rec.move_count = len(moves)
+
+    def _all_linked_moves(self):
+        self.ensure_one()
+        moves = self.move_history_ids
+        if self.move_id:
+            moves |= self.move_id
+        return moves
+
+    def _current_move_can_be_replaced(self):
+        self.ensure_one()
+        if not self.move_id:
+            return True
+        return self.move_id.state == 'cancel' or self.move_id.payment_state == 'reversed'
+
+    def _set_current_move(self, move):
+        self.ensure_one()
+        if self.move_id:
+            self.move_history_ids = [(4, self.move_id.id)]
+        self.move_history_ids = [(4, move.id)]
+        self.move_id = move.id
 
     @api.depends('move_id', 'move_id.state', 'move_id.payment_state')
     def _compute_payment_status(self):
@@ -225,7 +268,7 @@ class ConstructionIPC(models.Model):
                 missing.append('Work Account')
             if rec.advance_recovery_amount > 0 and not contract.advance_account_id:
                 missing.append('Advance Recovery Account')
-            if rec.retention_amount > 0 and not contract.retention_account_id:
+            if rec.deduct_retention_on_invoice and rec.retention_amount > 0 and not contract.retention_account_id:
                 missing.append('Retention Account')
             if not contract.tax_id:
                 missing.append('VAT Tax')
@@ -241,8 +284,11 @@ class ConstructionIPC(models.Model):
             if rec.state not in ['approved', 'done']:
                 raise ValidationError('Only approved or done IPCs can create invoice/bill.')
 
-            if rec.move_id:
-                raise ValidationError('Invoice/Bill already created for this IPC.')
+            if rec.move_id and not rec._current_move_can_be_replaced():
+                raise ValidationError(
+                    'An active invoice/bill is already linked to this IPC. '
+                    'A replacement can only be created when the current document is reversed or cancelled.'
+                )
 
             rec._check_accounting_setup()
 
@@ -270,8 +316,10 @@ class ConstructionIPC(models.Model):
                     'tax_ids': [(6, 0, contract.tax_id.ids)],
                 }))
 
-            # 3) Retention line (optional, no VAT)
-            if rec.retention_amount > 0:
+            # 3) Retention line (optional, no VAT). The IPC still tracks the
+            # contractual retention when this is disabled; it is simply not
+            # deducted from the tax invoice/bill.
+            if rec.deduct_retention_on_invoice and rec.retention_amount > 0:
                 invoice_line_vals.append((0, 0, {
                     'name': f'{rec.name} - Retention',
                     'quantity': 1.0,
@@ -291,19 +339,48 @@ class ConstructionIPC(models.Model):
             }
 
             move = self.env['account.move'].create(move_vals)
-            rec.move_id = move.id
+            rec._set_current_move(move)
+
+    def action_link_existing_move(self):
+        self.ensure_one()
+        if self.state not in ['approved', 'done']:
+            raise ValidationError('Only approved or done IPCs can link an invoice/bill.')
+        if not self._current_move_can_be_replaced():
+            raise ValidationError(
+                'An active invoice/bill is already linked to this IPC. '
+                'You can replace it only after it is reversed or cancelled.'
+            )
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Link Existing Invoice/Bill',
+            'res_model': 'construction.ipc.link.move.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_ipc_id': self.id},
+        }
 
     def action_view_move(self):
         self.ensure_one()
-        if not self.move_id:
+        moves = self._all_linked_moves()
+        if not moves:
             raise ValidationError('No invoice/bill linked to this IPC.')
+
+        if len(moves) == 1:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': 'Invoice/Bill',
+                'res_model': 'account.move',
+                'res_id': moves.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
 
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Invoice/Bill',
+            'name': 'Linked Invoices/Bills',
             'res_model': 'account.move',
-            'res_id': self.move_id.id,
-            'view_mode': 'form',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', moves.ids)],
             'target': 'current',
         }
 
@@ -311,6 +388,57 @@ class ConstructionIPC(models.Model):
         """Return the base filename for PDF reports"""
         self.ensure_one()
         return f"IPC_{self.name}"
+class ConstructionIPCLinkMoveWizard(models.TransientModel):
+    _name = 'construction.ipc.link.move.wizard'
+    _description = 'Link Existing Invoice/Bill to IPC'
+
+    ipc_id = fields.Many2one('construction.ipc', required=True, readonly=True)
+    partner_id = fields.Many2one(related='ipc_id.contract_id.partner_id', readonly=True)
+    company_id = fields.Many2one(related='ipc_id.company_id', readonly=True)
+    expected_move_type = fields.Selection([
+        ('out_invoice', 'Customer Invoice'),
+        ('in_invoice', 'Vendor Bill'),
+    ], compute='_compute_expected_move_type')
+    move_id = fields.Many2one(
+        'account.move',
+        string='Invoice/Bill to Link',
+        required=True,
+        domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('move_type', '=', expected_move_type)]",
+    )
+
+    @api.depends('ipc_id.contract_direction')
+    def _compute_expected_move_type(self):
+        for rec in self:
+            rec.expected_move_type = (
+                'out_invoice' if rec.ipc_id.contract_direction == 'inbound' else 'in_invoice'
+            )
+
+    def action_link(self):
+        self.ensure_one()
+        ipc = self.ipc_id
+        move = self.move_id
+
+        if not ipc._current_move_can_be_replaced():
+            raise ValidationError(
+                'An active invoice/bill is already linked to this IPC. '
+                'Reverse or cancel it before linking a replacement.'
+            )
+
+        expected_type = 'out_invoice' if ipc.contract_direction == 'inbound' else 'in_invoice'
+        if move.move_type != expected_type:
+            raise ValidationError('The selected document type does not match the IPC contract direction.')
+        if move.company_id != ipc.company_id:
+            raise ValidationError('The selected invoice/bill belongs to a different company.')
+        if move.partner_id.commercial_partner_id != ipc.contract_id.partner_id.commercial_partner_id:
+            raise ValidationError('The selected invoice/bill belongs to a different partner.')
+
+        ipc._set_current_move(move)
+        ipc.message_post(
+            body=f'Linked existing invoice/bill {move.display_name} as the current accounting document.'
+        )
+        return {'type': 'ir.actions.act_window_close'}
+
+
 class ConstructionIPCLine(models.Model):
     _name = 'construction.ipc.line'
     _description = 'Construction IPC Line'
