@@ -51,6 +51,8 @@ class ConstructionIPC(models.Model):
         ('partial', 'Partially Paid'),
         ('in_payment', 'In Payment'),
         ('paid', 'Paid'),
+        ('reversed', 'Reversed'),
+        ('invoicing_legacy', 'Legacy Invoicing'),
         ('cancelled', 'Cancelled'),
     ], string='Payment Status', compute='_compute_payment_status', store=True)
 
