@@ -194,15 +194,51 @@ class CashPlanLineCEO(models.Model):
         return True
 
     def action_reset_to_draft(self):
-        """Request a one-time reset approval from Payment Execution Managers.
-
-        Weekly Payment Plan Managers cannot unlock a CEO-reviewed planned payment
-        directly.  Every click creates a fresh approval request/activity.  A prior
-        approved reset never authorizes a later reset.
-        """
+        """Reset directly for Execution Managers; otherwise request one-time approval."""
         for line in self:
             if line.state == 'executed':
                 raise UserError(_('An executed movement cannot be reset to draft.'))
+
+            is_execution_manager = self.env.user.has_group(
+                'internal_transfer_voucher.group_payment_execution_manager'
+            )
+            if is_execution_manager:
+                now = fields.Datetime.now()
+                values = {
+                    'state': 'planned',
+                    'ceo_comment': False,
+                    'ceo_approved_by': False,
+                    'ceo_approved_date': False,
+                    'reset_request_pending': False,
+                    'reset_approved_by': self.env.user.id,
+                    'reset_approved_on': now,
+                }
+                if line.flow_type == 'out':
+                    values.update({'ceo_decision': 'not_sent', 'approved_amount': 0.0})
+                else:
+                    values.update({'ceo_decision': 'not_required', 'approved_amount': line.forecast_amount})
+                line.with_context(allow_locked_write=True).write(values)
+
+                # If somebody had already requested this reset, close all related
+                # approval activities when the Execution Manager performs it.
+                todo = self.env.ref('mail.mail_activity_data_todo')
+                activities = line.sudo().activity_ids.filtered(
+                    lambda activity: activity.activity_type_id == todo
+                    and activity.summary == _('Approve Reset to Draft')
+                )
+                if activities:
+                    activities.action_feedback(feedback=_('Reset to draft completed.'))
+
+                line.sudo().message_post(
+                    body=Markup('<strong>%s</strong><br/>%s') % (
+                        escape(_('Reset to Draft')),
+                        escape(_('The planned payment was reset to draft by %s.') % self.env.user.display_name),
+                    ),
+                    subtype_xmlid='mail.mt_comment',
+                    author_id=self.env.user.partner_id.id,
+                )
+                continue
+
             line._check_group(
                 'internal_transfer_voucher.group_weekly_payment_plan_manager',
                 'Only a Weekly Payment Plan Manager can request a reset to draft.',
@@ -240,7 +276,6 @@ class CashPlanLineCEO(models.Model):
                 author_id=self.env.user.partner_id.id,
             )
 
-            todo = self.env.ref('mail.mail_activity_data_todo')
             for user in users:
                 line.sudo().activity_schedule(
                     'mail.mail_activity_data_todo',
