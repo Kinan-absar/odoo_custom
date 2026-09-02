@@ -88,6 +88,24 @@ class CashPlanLineCEO(models.Model):
     run_state = fields.Selection(related='run_id.state', string='Weekly Plan Status', readonly=True)
     run_ceo_status = fields.Selection(related='run_id.ceo_status', string='Weekly CEO Status', readonly=True)
 
+    # A reset approval is intentionally one-time.  Each new reset request must be
+    # approved again by a Payment Execution Manager.
+    reset_request_pending = fields.Boolean(
+        string='Reset to Draft Requested', default=False, readonly=True, copy=False, tracking=True
+    )
+    reset_requested_by = fields.Many2one(
+        'res.users', string='Reset Requested By', readonly=True, copy=False, tracking=True
+    )
+    reset_requested_on = fields.Datetime(
+        string='Reset Requested On', readonly=True, copy=False, tracking=True
+    )
+    reset_approved_by = fields.Many2one(
+        'res.users', string='Reset Approved By', readonly=True, copy=False, tracking=True
+    )
+    reset_approved_on = fields.Datetime(
+        string='Reset Approved On', readonly=True, copy=False, tracking=True
+    )
+
     def init(self):
         # Repair data created by the earlier weekly-plan approval workflow.
         self.env.cr.execute("""
@@ -176,15 +194,113 @@ class CashPlanLineCEO(models.Model):
         return True
 
     def action_reset_to_draft(self):
+        """Request a one-time reset approval from Payment Execution Managers.
+
+        Weekly Payment Plan Managers cannot unlock a CEO-reviewed planned payment
+        directly.  Every click creates a fresh approval request/activity.  A prior
+        approved reset never authorizes a later reset.
+        """
         for line in self:
             if line.state == 'executed':
                 raise UserError(_('An executed movement cannot be reset to draft.'))
-            values = {'state': 'planned', 'ceo_comment': False, 'ceo_approved_by': False, 'ceo_approved_date': False}
+            line._check_group(
+                'internal_transfer_voucher.group_weekly_payment_plan_manager',
+                'Only a Weekly Payment Plan Manager can request a reset to draft.',
+            )
+            if line.reset_request_pending:
+                raise UserError(_('A reset to draft request is already waiting for approval.'))
+
+            users = line._group_users('internal_transfer_voucher.group_payment_execution_manager')
+            if not users:
+                raise UserError(_('No Payment Execution Manager is available for this company.'))
+
+            now = fields.Datetime.now()
+            line.with_context(allow_locked_write=True).write({
+                'reset_request_pending': True,
+                'reset_requested_by': self.env.user.id,
+                'reset_requested_on': now,
+                'reset_approved_by': False,
+                'reset_approved_on': False,
+            })
+
+            backend_url = '/web#id=%s&model=cash.plan.line&view_type=form' % line.id
+            body = Markup(
+                '<strong>%s</strong><br/>%s <strong>%s</strong>.<br/><a href="%s">%s</a>'
+            ) % (
+                escape(_('Reset to Draft Requested')),
+                escape(_('A Weekly Payment Plan Manager requested a reset to draft for planned payment')),
+                escape(line.display_name),
+                escape(backend_url),
+                escape(_('Open Planned Payment')),
+            )
+            line.sudo().message_post(
+                body=body,
+                partner_ids=users.mapped('partner_id').ids,
+                subtype_xmlid='mail.mt_comment',
+                author_id=self.env.user.partner_id.id,
+            )
+
+            todo = self.env.ref('mail.mail_activity_data_todo')
+            for user in users:
+                line.sudo().activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    user_id=user.id,
+                    summary=_('Approve Reset to Draft'),
+                    note=Markup('%s<br/><a href="%s">%s</a>') % (
+                        escape(_('A reset to draft was requested. Review the planned payment and approve the reset.')),
+                        escape(backend_url),
+                        escape(_('Open Planned Payment')),
+                    ),
+                )
+        return True
+
+    def action_approve_reset_to_draft(self):
+        """Approve the current request, reset the payment, and close its activities."""
+        for line in self:
+            line._check_group(
+                'internal_transfer_voucher.group_payment_execution_manager',
+                'Only a Payment Execution Manager can approve a reset to draft.',
+            )
+            if not line.reset_request_pending:
+                raise UserError(_('There is no pending reset to draft request.'))
+            if line.state == 'executed':
+                raise UserError(_('An executed movement cannot be reset to draft.'))
+
+            now = fields.Datetime.now()
+            values = {
+                'state': 'planned',
+                'ceo_comment': False,
+                'ceo_approved_by': False,
+                'ceo_approved_date': False,
+                'reset_request_pending': False,
+                'reset_approved_by': self.env.user.id,
+                'reset_approved_on': now,
+            }
             if line.flow_type == 'out':
                 values.update({'ceo_decision': 'not_sent', 'approved_amount': 0.0})
             else:
                 values.update({'ceo_decision': 'not_required', 'approved_amount': line.forecast_amount})
-            line.write(values)
+            line.with_context(allow_locked_write=True).write(values)
+
+            # Completing the approval also completes every activity generated by
+            # this reset request, so no stale notification remains for other
+            # Payment Execution Managers.
+            todo = self.env.ref('mail.mail_activity_data_todo')
+            activities = line.sudo().activity_ids.filtered(
+                lambda activity: activity.activity_type_id == todo
+                and activity.summary == _('Approve Reset to Draft')
+            )
+            if activities:
+                activities.action_feedback(feedback=_('Reset to draft approved and completed.'))
+
+            line.sudo().message_post(
+                body=Markup('<strong>%s</strong><br/>%s') % (
+                    escape(_('Reset to Draft Approved')),
+                    escape(_('The planned payment was reset to draft by %s.') % self.env.user.display_name),
+                ),
+                subtype_xmlid='mail.mt_comment',
+                author_id=self.env.user.partner_id.id,
+            )
         return True
 
     def action_approve(self):
