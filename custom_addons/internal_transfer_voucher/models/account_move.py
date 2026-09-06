@@ -33,7 +33,7 @@ class AccountMove(models.Model):
                 'res_model': 'account.payment.voucher',
                 'view_mode': 'form',
                 'view_id': self.env.ref('internal_transfer_voucher.view_payment_voucher_form').id,
-                'target': 'current',
+                'target': 'new',
                 'context': {
                     'default_company_id': company.id,
                     'default_partner_id': partner.id,
@@ -57,7 +57,7 @@ class AccountMove(models.Model):
             'res_model': 'account.receipt.voucher',
             'view_mode': 'form',
             'view_id': self.env.ref('internal_transfer_voucher.view_receipt_voucher_form').id,
-            'target': 'current',
+            'target': 'new',
             'context': {
                 'default_company_id': company.id,
                 'default_partner_id': partner.id,

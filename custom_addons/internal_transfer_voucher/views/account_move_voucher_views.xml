@@ -5,13 +5,25 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
-            <!-- Replace Odoo's standard Register Payment/Pay action with our voucher action. -->
-            <xpath expr="//button[@name='action_register_payment']" position="replace">
+            <!--
+                Odoo 18 can contain more than one action_register_payment button in
+                account.move (different visibility branches). Hide the standard
+                buttons and add our voucher button beside the first one instead of
+                replacing only one occurrence.
+            -->
+            <xpath expr="(//button[@name='action_register_payment'])[1]" position="before">
                 <button name="action_open_voucher_payment"
                         string="Pay"
                         type="object"
                         class="oe_highlight"
                         invisible="move_type not in ('out_invoice', 'in_invoice') or state != 'posted' or payment_state not in ('not_paid', 'partial')"/>
+            </xpath>
+
+            <xpath expr="(//button[@name='action_register_payment'])[1]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="(//button[@name='action_register_payment'])[2]" position="attributes">
+                <attribute name="invisible">1</attribute>
             </xpath>
         </field>
     </record>
