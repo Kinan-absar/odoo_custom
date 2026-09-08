@@ -25,6 +25,39 @@ class PortalPettyCash(CustomerPortal):
             'petty_cash_management.group_portal_petty_cash_approver'
         )
 
+    def _get_report_attachments(self, report):
+        """Return the single report-level attachment shown in both portal views.
+
+        The petty cash flow uses one combined file for the whole report.  Use
+        Odoo's main attachment as the canonical source, because that is also
+        what remains visible from the backend chatter.  Older reports are
+        supported by falling back to the legacy M2M/direct/chatter links.
+        """
+        Attachment = request.env['ir.attachment'].sudo()
+        Message = request.env['mail.message'].sudo()
+
+        main_attachment = report.message_main_attachment_id.sudo()
+        if main_attachment:
+            return main_attachment
+
+        candidates = report.attachment_ids.sudo()
+        candidates |= Attachment.search([
+            ('res_model', '=', 'petty.cash'),
+            ('res_id', '=', report.id),
+        ])
+
+        messages = Message.search([
+            ('model', '=', 'petty.cash'),
+            ('res_id', '=', report.id),
+        ])
+        candidates |= messages.mapped('attachment_ids').sudo()
+
+        # There is only one combined report attachment.  For legacy records
+        # with more than one file, display the most recently added one.
+        if candidates:
+            return candidates.sorted(key=lambda a: a.id, reverse=True)[:1]
+        return Attachment.browse()
+
     def _get_report_for_view(self, report_id, allow_owner=True, allow_approver=True):
         report = request.env['petty.cash'].sudo().browse(report_id).exists()
         if not report:
@@ -74,6 +107,7 @@ class PortalPettyCash(CustomerPortal):
             domain.append(('state', '=', status))
 
         reports = request.env['petty.cash'].sudo().search(domain, order='id desc')
+        attachment_counts = {report.id: len(self._get_report_attachments(report)) for report in reports}
         pending_count = request.env['petty.cash'].sudo().search_count([('state', '=', 'submitted')])
 
         return request.render(
@@ -82,6 +116,7 @@ class PortalPettyCash(CustomerPortal):
                 'reports': reports,
                 'status': status,
                 'pending_count': pending_count,
+                'attachment_counts': attachment_counts,
                 'page_name': 'petty_cash_approvals',
                 'status_badge': _petty_status_badge,
             }
@@ -100,12 +135,14 @@ class PortalPettyCash(CustomerPortal):
         is_approver_view = self._is_portal_approver() and not is_owner
 
         categories = request.env['petty.cash.category'].sudo().search([]) if is_owner and report.state == 'draft' else request.env['petty.cash.category']
+        attachments = self._get_report_attachments(report)
 
         return request.render(
             'petty_cash_management_portal_bridge.portal_petty_cash_detail',
             {
                 'report': report,
                 'categories': categories,
+                'attachments': attachments,
                 'status_badge': _petty_status_badge,
                 'is_owner': is_owner,
                 'is_approver_view': is_approver_view,
@@ -167,17 +204,6 @@ class PortalPettyCash(CustomerPortal):
         }
         line = request.env['petty.cash.line'].sudo().create(line_vals)
 
-        attachment = post.get('attachment')
-        if attachment:
-            att = request.env['ir.attachment'].sudo().create({
-                'name': attachment.filename,
-                'datas': base64.b64encode(attachment.read()),
-                'res_model': 'petty.cash.line',
-                'res_id': line.id,
-                'public': False,
-            })
-            line.attachment_ids = [(4, att.id)]
-
         return request.redirect('/my/employee/petty-cash/%s' % report.id)
 
     @http.route('/my/employee/petty-cash/<int:report_id>/submit', type='http', auth='user', website=True, methods=['POST'])
@@ -210,7 +236,14 @@ class PortalPettyCash(CustomerPortal):
                 'res_id': report.id,
                 'public': False,
             })
-            report.attachment_ids = [(4, attachment.id)]
+
+            # Keep the legacy relation for backward compatibility, but make
+            # Odoo's main attachment the canonical single report attachment.
+            # This is the same attachment source visible in backend chatter.
+            report.sudo().write({
+                'attachment_ids': [(6, 0, [attachment.id])],
+                'message_main_attachment_id': attachment.id,
+            })
 
         return request.redirect(f'/my/employee/petty-cash/{report_id}?success=uploaded')
 
@@ -223,13 +256,19 @@ class PortalPettyCash(CustomerPortal):
         report = False
         if attachment.res_model == 'petty.cash':
             report = request.env['petty.cash'].sudo().browse(attachment.res_id).exists()
-        elif attachment.res_model == 'petty.cash.line':
-            line = request.env['petty.cash.line'].sudo().browse(attachment.res_id).exists()
-            report = line.petty_cash_id if line else False
-
         if not report:
             # Also support attachments linked through the report M2M relation.
             report = request.env['petty.cash'].sudo().search([('attachment_ids', 'in', attachment.id)], limit=1)
+
+        if not report:
+            # Chatter attachments can be linked to mail.message rather than directly
+            # to petty.cash, depending on how they were uploaded in the backend.
+            message = request.env['mail.message'].sudo().search([
+                ('model', '=', 'petty.cash'),
+                ('attachment_ids', 'in', attachment.id),
+            ], limit=1)
+            if message and message.res_id:
+                report = request.env['petty.cash'].sudo().browse(message.res_id).exists()
 
         if not report or not self._get_report_for_view(report.id):
             raise NotFound()
@@ -254,6 +293,9 @@ class PortalPettyCash(CustomerPortal):
         if report.state != 'draft':
             return request.redirect(f'/my/employee/petty-cash/{report.id}')
 
+        if report.message_main_attachment_id.id == attachment.id:
+            report.sudo().write({'message_main_attachment_id': False})
+        report.sudo().write({'attachment_ids': [(3, attachment.id)]})
         attachment.unlink()
         return request.redirect(f'/my/employee/petty-cash/{report.id}')
 
@@ -283,20 +325,3 @@ class PortalPettyCash(CustomerPortal):
 
         request.env['petty.cash'].browse(report.id).action_portal_refuse()
         return request.redirect(f'/my/employee/petty-cash/{report.id}?decision=rejected')
-
-    @http.route(['/my/employee/petty-cash/<int:report_id>/print'], type='http', auth='user', website=True)
-    def portal_print_petty_cash_report(self, report_id, **kwargs):
-        report = self._get_report_for_view(report_id)
-        if not report:
-            return request.redirect('/my')
-
-        pdf, _ = request.env['ir.actions.report'].sudo()._render_qweb_pdf(
-            'petty_cash_management.petty_cash_report_action',
-            res_ids=report.ids
-        )
-        headers = [
-            ('Content-Type', 'application/pdf'),
-            ('Content-Length', str(len(pdf))),
-            ('Content-Disposition', 'attachment; filename="%s.pdf"' % (report.name or 'Petty Cash Report')),
-        ]
-        return request.make_response(pdf, headers=headers)
