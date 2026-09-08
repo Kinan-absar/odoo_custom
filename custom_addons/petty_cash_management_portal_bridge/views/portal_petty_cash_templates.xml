@@ -172,7 +172,7 @@
 
             <div class="container py-4">
 
-                <a href="/my/employee/petty-cash"
+                <a t-att-href="back_url"
                    class="text-decoration-none small text-muted">
                     ← Back
                 </a>
@@ -186,6 +186,18 @@
                 <t t-if="request.params.get('success') == 'uploaded'">
                     <div class="alert alert-success mt-3 rounded-3">
                         Attachment uploaded successfully.
+                    </div>
+                </t>
+
+                <t t-if="request.params.get('decision') == 'approved'">
+                    <div class="alert alert-success mt-3 rounded-3">
+                        Petty cash report approved successfully.
+                    </div>
+                </t>
+
+                <t t-if="request.params.get('decision') == 'rejected'">
+                    <div class="alert alert-danger mt-3 rounded-3">
+                        Petty cash report rejected.
                     </div>
                 </t>
 
@@ -208,6 +220,10 @@
 
                         <div class="row mt-3 small">
                             <div class="col-md-4">
+                                <strong>Submitted By:</strong><br/>
+                                <t t-esc="report.user_id.name"/>
+                            </div>
+                            <div class="col-md-4">
                                 <strong>Date:</strong><br/>
                                 <t t-esc="report.date"/>
                             </div>
@@ -222,7 +238,7 @@
                     </div>
                 </div>
 
-                <t t-if="report.state == 'draft'">
+                <t t-if="is_owner and report.state == 'draft'">
                     <div class="card shadow-sm border-0 rounded-4 mb-4 table-responsive-mobile">
                         <div class="card-body">
 
@@ -268,12 +284,12 @@
                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
 
                                         <a class="text-decoration-none"
-                                           t-att-href="'/web/content/%s' % att.id"
+                                           t-att-href="'/my/employee/petty-cash/attachment/%s/download' % att.id"
                                            target="_blank">
                                             📎 <t t-esc="att.name"/>
                                         </a>
 
-                                        <t t-if="report.state == 'draft'">
+                                        <t t-if="is_owner and report.state == 'draft'">
                                             <form t-att-action="'/my/employee/petty-cash/attachment/%s/delete' % att.id"
                                                   method="post"
                                                   class="d-inline">
@@ -357,7 +373,7 @@
                                         </tr>
                                     </t>
 
-                                    <t t-if="report.state == 'draft'">
+                                    <t t-if="is_owner and report.state == 'draft'">
                                         <tr>
                                             <td>
                                                 <input type="date"
@@ -412,7 +428,7 @@
                     </div>
                 </div>
 
-                <t t-if="report.state == 'draft'">
+                <t t-if="is_owner and report.state == 'draft'">
                     <form t-att-action="'/my/employee/petty-cash/%s/submit' % report.id"
                           method="post"
                           class="text-end">
@@ -426,6 +442,25 @@
                             Submit Report
                         </button>
                     </form>
+                </t>
+
+                <t t-if="can_approve">
+                    <div class="card shadow-sm border-0 rounded-4 mb-4">
+                        <div class="card-body d-flex justify-content-end gap-2 flex-wrap">
+                            <form t-att-action="'/my/employee/petty-cash/%s/reject' % report.id" method="post" class="m-0">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button type="submit" class="btn btn-outline-danger rounded-pill px-4">
+                                    Reject Report
+                                </button>
+                            </form>
+                            <form t-att-action="'/my/employee/petty-cash/%s/approve' % report.id" method="post" class="m-0">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button type="submit" class="btn btn-success rounded-pill px-4">
+                                    Approve Report
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </t>
 
             </div>
@@ -466,6 +501,97 @@
 }
 </style>
 
+        </t>
+    </template>
+
+
+    <template id="portal_petty_cash_approvals" name="Petty Cash Approvals">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="container py-4">
+                <div class="material-header">
+                    <div class="material-header-top flex-wrap gap-3">
+                        <div>
+                            <h2 class="mb-1 fw-semibold">Petty Cash Approvals</h2>
+                            <div class="text-muted small">Review submitted reports, attachments and expense lines before approval.</div>
+                        </div>
+                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                            <t t-esc="pending_count"/> Pending
+                        </span>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap mb-3">
+                    <a t-att-class="'btn btn-sm rounded-pill ' + ('btn-primary' if status == 'submitted' else 'btn-outline-secondary')" href="/my/employee/petty-cash/approvals?status=submitted">Pending</a>
+                    <a t-att-class="'btn btn-sm rounded-pill ' + ('btn-primary' if status == 'approved' else 'btn-outline-secondary')" href="/my/employee/petty-cash/approvals?status=approved">Approved</a>
+                    <a t-att-class="'btn btn-sm rounded-pill ' + ('btn-primary' if status == 'refused' else 'btn-outline-secondary')" href="/my/employee/petty-cash/approvals?status=refused">Rejected</a>
+                    <a t-att-class="'btn btn-sm rounded-pill ' + ('btn-primary' if status == 'all' else 'btn-outline-secondary')" href="/my/employee/petty-cash/approvals?status=all">All</a>
+                </div>
+
+                <div class="card shadow-sm border-0 rounded-4 d-none d-md-block">
+                    <div class="card-body p-0">
+                        <table class="table table-hover table-sm mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Reference</th>
+                                    <th>Submitted By</th>
+                                    <th>Date</th>
+                                    <th>Total</th>
+                                    <th>Attachments</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="not reports">
+                                    <tr><td colspan="6" class="text-center text-muted py-5">No reports found.</td></tr>
+                                </t>
+                                <t t-foreach="reports" t-as="report">
+                                    <tr>
+                                        <td class="ps-4">
+                                            <a class="fw-semibold text-decoration-none" t-att-href="'/my/employee/petty-cash/%s' % report.id">
+                                                <t t-esc="report.name"/>
+                                            </a>
+                                        </td>
+                                        <td><t t-esc="report.user_id.name"/></td>
+                                        <td><t t-esc="report.date"/></td>
+                                        <td class="fw-semibold">
+                                            <span t-field="report.amount_total" t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                        </td>
+                                        <td><t t-esc="len(report.attachment_ids)"/></td>
+                                        <td><t t-out="status_badge(report)"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="d-md-none">
+                    <t t-if="not reports">
+                        <div class="card border-0 shadow-sm rounded-4"><div class="card-body text-center text-muted py-5">No reports found.</div></div>
+                    </t>
+                    <t t-foreach="reports" t-as="report">
+                        <a t-att-href="'/my/employee/petty-cash/%s' % report.id" class="mobile-request-card">
+                            <div class="mobile-request-top">
+                                <div>
+                                    <div class="mobile-request-id"><t t-esc="report.name"/></div>
+                                    <div class="mobile-request-date"><t t-esc="report.user_id.name"/> · <t t-esc="report.date"/></div>
+                                </div>
+                                <div><t t-out="status_badge(report)"/></div>
+                            </div>
+                            <div class="mobile-request-body">
+                                <div>
+                                    <span class="label">Total</span>
+                                    <span class="fw-semibold" t-field="report.amount_total" t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                </div>
+                                <div>
+                                    <span class="label">Attachments</span>
+                                    <span class="fw-semibold"><t t-esc="len(report.attachment_ids)"/></span>
+                                </div>
+                            </div>
+                        </a>
+                    </t>
+                </div>
+            </div>
         </t>
     </template>
 

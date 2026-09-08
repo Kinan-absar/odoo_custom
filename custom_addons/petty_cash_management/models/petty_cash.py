@@ -113,23 +113,57 @@ class PettyCash(models.Model):
                 raise UserError("You do not have permission to submit petty cash reports.")
 
     def action_approve(self):
+        if not (
+            self.env.user.has_group('petty_cash_management.group_petty_cash_accountant')
+            or self.env.user.has_group('petty_cash_management.group_portal_petty_cash_approver')
+        ):
+            raise UserError("Only petty cash accountants or portal petty cash approvers can approve reports.")
+
         for rec in self:
             if rec.state != 'submitted':
                 raise UserError("Only submitted reports can be approved.")
             rec.state = 'approved'
             rec.message_post(body="Petty Cash Report approved.")
-            if not self.env.user.has_group('petty_cash_management.group_petty_cash_accountant'):
-                raise UserError("Only accountants can approve petty cash reports.")
-
 
     def action_refuse(self):
+        if not (
+            self.env.user.has_group('petty_cash_management.group_petty_cash_accountant')
+            or self.env.user.has_group('petty_cash_management.group_portal_petty_cash_approver')
+        ):
+            raise UserError("Only petty cash accountants or portal petty cash approvers can reject reports.")
+
         for rec in self:
             if rec.state != 'submitted':
                 raise UserError("Only submitted reports can be refused.")
             rec.state = 'refused'
             rec.message_post(body="Petty Cash Report was refused.")
-            if not self.env.user.has_group('petty_cash_management.group_petty_cash_accountant'):
-                raise UserError("Only accountants can reject petty cash reports.")
+
+
+    def action_portal_approve(self):
+        """Approve from the employee portal without granting portal users generic write access."""
+        if not self.env.user.has_group('petty_cash_management.group_portal_petty_cash_approver'):
+            raise UserError("You do not have permission to approve petty cash reports.")
+
+        reports = self.sudo()
+        for rec in reports:
+            if rec.state != 'submitted':
+                raise UserError("Only submitted reports can be approved.")
+            rec.state = 'approved'
+            rec.message_post(body="Petty Cash Report approved from the employee portal.")
+        return True
+
+    def action_portal_refuse(self):
+        """Reject from the employee portal without granting portal users generic write access."""
+        if not self.env.user.has_group('petty_cash_management.group_portal_petty_cash_approver'):
+            raise UserError("You do not have permission to reject petty cash reports.")
+
+        reports = self.sudo()
+        for rec in reports:
+            if rec.state != 'submitted':
+                raise UserError("Only submitted reports can be refused.")
+            rec.state = 'refused'
+            rec.message_post(body="Petty Cash Report rejected from the employee portal.")
+        return True
 
 
     def action_reset_to_draft(self):
