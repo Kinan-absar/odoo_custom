@@ -26,37 +26,34 @@ class PortalPettyCash(CustomerPortal):
         )
 
     def _get_report_attachments(self, report):
-        """Return the single report-level attachment shown in both portal views.
+        """Return report-level attachments visible in backend chatter/portal.
 
-        The petty cash flow uses one combined file for the whole report.  Use
-        Odoo's main attachment as the canonical source, because that is also
-        what remains visible from the backend chatter.  Older reports are
-        supported by falling back to the legacy M2M/direct/chatter links.
+        ``petty.cash`` has its own ``attachment_ids`` M2M and also inherits
+        ``mail.thread``.  In this Odoo version there is no
+        ``message_main_attachment_id`` field on the model, so attachments are
+        resolved from the real ir.attachment links instead.
         """
         Attachment = request.env['ir.attachment'].sudo()
         Message = request.env['mail.message'].sudo()
 
-        main_attachment = report.message_main_attachment_id.sudo()
-        if main_attachment:
-            return main_attachment
-
         candidates = report.attachment_ids.sudo()
+
+        # Files uploaded from the portal (and many chatter uploads) are linked
+        # directly to the petty cash report through res_model/res_id.
         candidates |= Attachment.search([
             ('res_model', '=', 'petty.cash'),
             ('res_id', '=', report.id),
         ])
 
+        # Keep compatibility with chatter attachments that Odoo links to a
+        # mail.message instead of directly to the business record.
         messages = Message.search([
             ('model', '=', 'petty.cash'),
             ('res_id', '=', report.id),
         ])
         candidates |= messages.mapped('attachment_ids').sudo()
 
-        # There is only one combined report attachment.  For legacy records
-        # with more than one file, display the most recently added one.
-        if candidates:
-            return candidates.sorted(key=lambda a: a.id, reverse=True)[:1]
-        return Attachment.browse()
+        return candidates.sorted(key=lambda a: a.id, reverse=True)
 
     def _get_report_for_view(self, report_id, allow_owner=True, allow_approver=True):
         report = request.env['petty.cash'].sudo().browse(report_id).exists()
@@ -237,12 +234,12 @@ class PortalPettyCash(CustomerPortal):
                 'public': False,
             })
 
-            # Keep the legacy relation for backward compatibility, but make
-            # Odoo's main attachment the canonical single report attachment.
-            # This is the same attachment source visible in backend chatter.
+            # Keep the report's explicit attachment relation in sync with the
+            # same ir.attachment that is linked to petty.cash for chatter.
+            # The portal flow uses one report-level upload, so replace the
+            # previous portal-selected file in this relation.
             report.sudo().write({
                 'attachment_ids': [(6, 0, [attachment.id])],
-                'message_main_attachment_id': attachment.id,
             })
 
         return request.redirect(f'/my/employee/petty-cash/{report_id}?success=uploaded')
@@ -293,8 +290,6 @@ class PortalPettyCash(CustomerPortal):
         if report.state != 'draft':
             return request.redirect(f'/my/employee/petty-cash/{report.id}')
 
-        if report.message_main_attachment_id.id == attachment.id:
-            report.sudo().write({'message_main_attachment_id': False})
         report.sudo().write({'attachment_ids': [(3, attachment.id)]})
         attachment.unlink()
         return request.redirect(f'/my/employee/petty-cash/{report.id}')
