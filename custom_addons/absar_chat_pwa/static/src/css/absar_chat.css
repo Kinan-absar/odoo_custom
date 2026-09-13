@@ -31,3 +31,4 @@ button,input,textarea{font:inherit}.ac-app{height:100dvh;display:grid;grid-templ
   #ac-audio-call::after,#ac-video-call::after,#ac-chat-info::after{display:none}
   .ac-conversation-actions .ac-icon-btn{width:38px;min-width:38px;padding:0}
 }
+.ac-pending-file.uploading{opacity:.72}.ac-uploading{font-size:9px;color:#7a8796}.ac-file-symbol{font-size:14px}.ac-pending-file button{font-size:16px;line-height:1}

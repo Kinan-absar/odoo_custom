@@ -33,7 +33,8 @@
             this.currentThread = null;
             this.currentMessages = [];
             this.replyTo = null;
-            this.pendingFiles = [];
+            this.pendingAttachments = [];
+            this.uploadingAttachments = 0;
             this.lastMessageIds = new Map();
             this.selectedPeople = new Set();
             this.modalMode = "new";
@@ -86,7 +87,7 @@
             $("#ac-message-input").addEventListener("input", () => { this.autogrowComposer(); this.handleTyping(true); });
             $("#ac-message-input").addEventListener("blur", () => this.handleTyping(false));
             $("#ac-attach").addEventListener("click", () => $("#ac-file-input").click());
-            $("#ac-file-input").addEventListener("change", (ev) => this.queueFiles(ev.target.files));
+            $("#ac-file-input").addEventListener("change", (ev) => this.handleFiles(ev.target.files));
             $("#ac-voice").addEventListener("click", () => this.toggleVoiceRecording());
             $("#ac-emoji").addEventListener("click", () => $("#ac-emoji-panel").classList.toggle("is-hidden"));
             $("#ac-reply-cancel").addEventListener("click", () => this.setReply(null));
@@ -314,44 +315,114 @@
             await this.refreshMessages(false);
         }
 
-        queueFiles(fileList) {
+        async handleFiles(fileList) {
             const files = Array.from(fileList || []);
-            this.pendingFiles.push(...files.filter(f => f.size <= 10 * 1024 * 1024));
             $("#ac-file-input").value = "";
+            for (const file of files) {
+                if (!file || !file.size) continue;
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`${file.name || "Attachment"} is larger than the 10 MB limit.`);
+                    continue;
+                }
+                await this.uploadAndQueueFile(file);
+            }
+        }
+
+        async uploadAndQueueFile(file) {
+            if (!this.currentThreadId) {
+                alert("Open a conversation before attaching a file.");
+                return null;
+            }
+            const placeholder = {
+                id: `upload-${Date.now()}-${Math.random()}`,
+                name: file.name || "Attachment",
+                size: file.size || 0,
+                mimetype: file.type || "application/octet-stream",
+                uploading: true,
+            };
+            this.pendingAttachments.push(placeholder);
+            this.uploadingAttachments += 1;
             this.renderPendingFiles();
+            try {
+                const data = await this.fileToDataUrl(file);
+                const result = await rpc("/employee_portal/chat/upload", {
+                    thread_id: this.currentThreadId,
+                    filename: file.name || "attachment",
+                    mimetype: file.type || "application/octet-stream",
+                    data,
+                });
+                if (!result || result.error || !result.attachment?.id) {
+                    throw new Error(result?.error || "upload_failed");
+                }
+                const idx = this.pendingAttachments.findIndex(a => a.id === placeholder.id);
+                if (idx >= 0) this.pendingAttachments[idx] = Object.assign({}, result.attachment, { uploading: false });
+                this.renderPendingFiles();
+                return result.attachment;
+            } catch (error) {
+                this.pendingAttachments = this.pendingAttachments.filter(a => a.id !== placeholder.id);
+                this.renderPendingFiles();
+                console.error("[Absar Chat] attachment upload failed", error);
+                alert(`Could not attach ${file.name || "file"}: ${error.message || error}`);
+                return null;
+            } finally {
+                this.uploadingAttachments = Math.max(0, this.uploadingAttachments - 1);
+                this.updateSendState();
+            }
         }
 
         renderPendingFiles() {
             const strip = $("#ac-attachment-strip");
-            strip.classList.toggle("is-hidden", !this.pendingFiles.length);
-            strip.innerHTML = this.pendingFiles.map((f, i) => `<span class="ac-pending-file"><i class="fa fa-paperclip"></i>${esc(f.name)}<button type="button" data-index="${i}"><i class="fa fa-times"></i></button></span>`).join("");
-            $$('button[data-index]', strip).forEach(btn => btn.addEventListener("click", () => { this.pendingFiles.splice(Number(btn.dataset.index), 1); this.renderPendingFiles(); }));
+            strip.classList.toggle("is-hidden", !this.pendingAttachments.length);
+            strip.innerHTML = this.pendingAttachments.map((a, i) => `<span class="ac-pending-file${a.uploading ? " uploading" : ""}"><span class="ac-file-symbol">📎</span><span>${esc(a.name || "Attachment")}</span>${a.uploading ? '<span class="ac-uploading">Uploading…</span>' : ''}<button type="button" data-index="${i}" aria-label="Remove attachment">×</button></span>`).join("");
+            $$('button[data-index]', strip).forEach(btn => btn.addEventListener("click", () => {
+                const idx = Number(btn.dataset.index);
+                if (this.pendingAttachments[idx]?.uploading) return;
+                this.pendingAttachments.splice(idx, 1);
+                this.renderPendingFiles();
+                this.updateSendState();
+            }));
+            this.updateSendState();
         }
 
-        async uploadFile(file) {
-            const data = await this.fileToDataUrl(file);
-            const result = await rpc("/employee_portal/chat/upload", { thread_id: this.currentThreadId, filename: file.name || "attachment", mimetype: file.type || "application/octet-stream", data });
-            if (result?.error) throw new Error(result.error);
-            return result.attachment.id;
-        }
+        fileToDataUrl(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || "")); reader.onerror = reject; reader.readAsDataURL(file); }); }
 
-        fileToDataUrl(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); }); }
+        updateSendState() {
+            const send = $("#ac-send");
+            if (send) send.disabled = this.uploadingAttachments > 0;
+        }
 
         async sendMessage() {
             if (!this.currentThreadId) return;
             const input = $("#ac-message-input");
             const body = input.value.trim();
-            if (!body && !this.pendingFiles.length) return;
+            if (this.uploadingAttachments > 0) {
+                alert("Please wait for the attachment upload to finish.");
+                return;
+            }
+            const attachmentIds = this.pendingAttachments.map(a => Number(a.id)).filter(Boolean);
+            if (!body && !attachmentIds.length) return;
             const send = $("#ac-send"); send.disabled = true;
             try {
-                const attachmentIds = [];
-                for (const file of this.pendingFiles) attachmentIds.push(await this.uploadFile(file));
-                const result = await rpc("/employee_portal/chat/send", { thread_id: this.currentThreadId, body, reply_to_id: this.replyTo?.id || false, attachment_ids: attachmentIds });
-                if (result?.error) throw new Error(result.error);
-                input.value = ""; this.autogrowComposer(); this.pendingFiles = []; this.renderPendingFiles(); this.setReply(null); this.handleTyping(false);
+                const result = await rpc("/employee_portal/chat/send", {
+                    thread_id: this.currentThreadId,
+                    body,
+                    reply_to_id: this.replyTo?.id || false,
+                    attachment_ids: attachmentIds,
+                });
+                if (!result || result.error) throw new Error(result?.error || "send_failed");
+                input.value = "";
+                this.autogrowComposer();
+                this.pendingAttachments = [];
+                this.renderPendingFiles();
+                this.setReply(null);
+                this.handleTyping(false);
                 await this.refreshMessages(true);
-            } catch (error) { alert(`Could not send message: ${error.message}`); }
-            finally { send.disabled = false; }
+            } catch (error) {
+                console.error("[Absar Chat] send failed", error);
+                alert(`Could not send message: ${error.message || error}`);
+            } finally {
+                send.disabled = false;
+            }
         }
 
         async handleTyping(typing) {
@@ -379,9 +450,8 @@
                     const blob = new Blob(this.recordingChunks, { type: this.recorder.mimeType || "audio/webm" });
                     const seconds = Math.max(1, Math.round((Date.now() - this.recordingStartedAt) / 1000));
                     const file = new File([blob], `Voice note ${new Date().toISOString().replace(/[:.]/g, "-")}.webm`, { type: blob.type || "audio/webm" });
-                    this.pendingFiles.push(file); this.renderPendingFiles();
                     stream.getTracks().forEach(t => t.stop()); btn.classList.remove("recording"); btn.title = "Voice note";
-                    if (seconds > 0) this.sendMessage();
+                    if (seconds > 0) this.uploadAndQueueFile(file).then(att => { if (att) this.sendMessage(); });
                 };
                 this.recordingStartedAt = Date.now(); this.recorder.start(); btn.classList.add("recording"); btn.title = "Stop recording";
             } catch (error) { alert(`Microphone access failed: ${error.message}`); }
@@ -391,12 +461,30 @@
             const participants = (this.currentThread?.participants || []).filter(p => !p.is_me).map(p => Number(p.user_id)).filter(Boolean);
             if (!participants.length) return;
             const caller = await this.waitForCaller();
-            if (!caller) { alert("Call service is still loading. Please try again."); return; }
+            if (!caller) { alert("Call service could not start. Please refresh Absar Chat once and try again."); return; }
             if (participants.length === 1) caller._startCall(participants[0], type);
             else caller._startHistoryGroupCall(participants, type);
         }
 
-        waitForCaller() { return new Promise(resolve => { let tries = 0; const check = () => { if (window.__employeePortalCaller) return resolve(window.__employeePortalCaller); if (++tries > 30) return resolve(null); setTimeout(check, 100); }; check(); }); }
+        waitForCaller() {
+            return new Promise(resolve => {
+                let tries = 0;
+                const check = () => {
+                    if (window.__employeePortalCaller) return resolve(window.__employeePortalCaller);
+                    if (typeof window.__ensureEmployeePortalCaller === "function") {
+                        try {
+                            const caller = window.__ensureEmployeePortalCaller();
+                            if (caller) return resolve(caller);
+                        } catch (error) {
+                            console.error("[Absar Chat] call engine bootstrap failed", error);
+                        }
+                    }
+                    if (++tries > 50) return resolve(null);
+                    setTimeout(check, 100);
+                };
+                check();
+            });
+        }
 
         async refreshCallHistory() {
             const box = $("#ac-call-history");

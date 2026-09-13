@@ -15,10 +15,10 @@
                 <link rel="icon" href="/absar_chat_pwa/static/icons/icon-192.png"/>
                 <link rel="apple-touch-icon" href="/absar_chat_pwa/static/icons/icon-192.png"/>
                 <link rel="stylesheet" href="/web/static/lib/fontawesome/css/font-awesome.css"/>
-                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/call_widget.css?v=18.0.3.1.0"/>
-                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/absar_chat.css?v=18.0.3.1.0"/>
-                <script src="/employee_portal_suite/static/src/js/portal_call_widget.js?v=18.0.1.19.16" defer="defer"></script>
-                <script src="/absar_chat_pwa/static/src/js/absar_chat.js?v=18.0.3.1.0" defer="defer"></script>
+                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/call_widget.css?v=18.0.3.2.0"/>
+                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/absar_chat.css?v=18.0.3.2.0"/>
+                <script src="/absar_chat_pwa/static/src/js/portal_call_bridge.js?v=18.0.3.2.0" defer="defer"></script>
+                <script src="/absar_chat_pwa/static/src/js/absar_chat.js?v=18.0.3.2.0" defer="defer"></script>
             </head>
             <body class="ac-body" data-epc-logged-in="1"
                   t-att-data-current-user-id="current_user.id"

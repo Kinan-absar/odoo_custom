@@ -81,13 +81,14 @@ class AbsarChatPWAController(EmployeePortalNativeDiscussController):
     def absar_chat_service_worker(self):
         # Never cache authenticated HTML, RPC, messages, attachments or call data.
         code = r"""
-const CACHE_NAME = 'absar-chat-static-v13';
+const CACHE_NAME = 'absar-chat-static-v14';
 const STATIC_ASSETS = [
   '/chat/manifest.webmanifest',
   '/absar_chat_pwa/static/icons/icon-192.png',
   '/absar_chat_pwa/static/icons/icon-512.png',
   '/absar_chat_pwa/static/src/css/absar_chat.css',
   '/absar_chat_pwa/static/src/css/call_widget.css',
+  '/absar_chat_pwa/static/src/js/portal_call_bridge.js',
   '/absar_chat_pwa/static/src/js/absar_chat.js'
 ];
 self.addEventListener('install', event => {
