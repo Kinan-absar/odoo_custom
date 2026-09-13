@@ -269,3 +269,47 @@
     // Expose only the install action to the native Owl toolbar patch.
     window.EmployeeDiscussPWA = { install: installChats };
 })();
+
+// Stable Chats shell navigation. The top-level PWA URL always remains
+// /my/employee/discuss; native Odoo Discuss runs only inside the same-origin frame.
+(() => {
+    const bind = () => {
+        const shell = document.querySelector('[data-ep-chats-shell]');
+        if (!shell || shell.dataset.epShellBound === '1') return;
+        shell.dataset.epShellBound = '1';
+        const pane = shell.querySelector('[data-ep-chat-pane]');
+        const frame = shell.querySelector('[data-ep-discuss-frame]');
+        const empty = shell.querySelector('[data-ep-chat-empty]');
+        const listPane = shell.querySelector('[data-ep-chats-list-pane]');
+        const openChat = () => {
+            shell.classList.add('ep-chat-open');
+            empty?.classList.add('d-none');
+            frame?.classList.add('show');
+        };
+        shell.querySelectorAll('[data-ep-thread]').forEach((link) => {
+            link.addEventListener('click', () => {
+                shell.querySelectorAll('[data-ep-thread]').forEach((row) => row.classList.remove('active'));
+                link.classList.add('active');
+                openChat();
+            });
+        });
+        shell.querySelector('[data-ep-chat-back]')?.addEventListener('click', () => {
+            shell.classList.remove('ep-chat-open');
+            frame?.classList.remove('show');
+            shell.querySelectorAll('[data-ep-thread]').forEach((row) => row.classList.remove('active'));
+            try { frame.src = 'about:blank'; } catch (_) {}
+        });
+        const wanted = Number(new URLSearchParams(window.location.search).get('open_channel') || 0);
+        if (wanted) {
+            const link = Array.from(shell.querySelectorAll('[data-ep-thread]')).find((row) => row.getAttribute('href')?.includes(`/channel/${wanted}`));
+            if (link) {
+                link.click();
+                const clean = new URL(window.location.href);
+                clean.searchParams.delete('open_channel');
+                window.history.replaceState({}, '', clean.pathname + clean.search + clean.hash);
+            }
+        }
+    };
+    document.addEventListener('DOMContentLoaded', bind);
+    window.addEventListener('pageshow', bind);
+})();

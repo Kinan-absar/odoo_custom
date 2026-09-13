@@ -1,41 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <templates xml:space="preserve">
-    <t t-name="employee_portal_suite.NativeDiscussPortalPatch"
-       t-inherit="mail.Discuss" t-inherit-mode="extension">
-
-        <!-- A real mobile back button.  This is part of the Owl template rather
-             than a DOM injection so it cannot disappear after a re-render. -->
-        <xpath expr="//div[contains(@class, 'o-mail-Discuss-header')]/t[@t-if='thread']/*[1]" position="before">
-            <button t-if="isEmployeePortalDiscuss and ui.isSmall and thread"
-                    type="button"
-                    class="btn btn-link ep-native-mobile-chat-back"
-                    title="Back to Chats"
-                    aria-label="Back to Chats"
-                    t-on-click="goEmployeeMessages">
-                <i class="fa fa-chevron-left" aria-hidden="true"/>
-                <span>Chats</span>
-            </button>
-        </xpath>
-
-        <!-- Native RTC video call beside Odoo's existing quick call actions. -->
-        <xpath expr="//div[contains(@class, 'o-mail-Discuss-headerActions')]/span[contains(@class, 'o-mail-Discuss-headerActionsGroup')][1]" position="after">
-            <button t-if="isEmployeePortalDiscuss and thread and ['chat', 'group', 'channel'].includes(thread.channel_type)"
-                    type="button"
-                    class="btn px-1 btn-group-item btn-secondary bg-inherit m-0 border-0 ep-native-video-call"
-                    title="Video call"
-                    aria-label="Video call"
-                    t-on-click="startEmployeeVideoCall">
-                <i class="fa fa-video-camera" aria-hidden="true"/>
-            </button>
-        </xpath>
-    </t>
-
-    <!-- Employee Chats is intentionally DM/group focused on mobile.  Keep Odoo's
-         native MessagingMenu and its Chat button, only remove the Channel tab. -->
-    <t t-name="employee_portal_suite.NativeMessagingMenuChatsOnly"
-       t-inherit="mail.MessagingMenu" t-inherit-mode="extension">
-        <xpath expr="//button[@t-foreach='tabs']" position="attributes">
-            <attribute name="t-foreach">tabs.filter((tab) => tab.id === 'chat')</attribute>
-        </xpath>
-    </t>
+    <!-- Intentionally minimal: the native Odoo Discuss templates are left intact.
+         All conversation features remain owned by Odoo. -->
 </templates>

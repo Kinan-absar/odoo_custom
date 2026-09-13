@@ -265,25 +265,21 @@ class EmployeePortalNativeDiscussController(http.Controller):
 
     @http.route('/my/employee/discuss', type='http', auth='user', website=True, methods=['GET'])
     def employee_discuss_entry(self, **kwargs):
-        """Native Discuss home with no conversation selected.
+        """Stable Chats/PWA root.
 
-        We deliberately do not render a separate hub UI.  The route uses the same
-        Odoo Discuss component as a channel page, while the frontend patch leaves
-        the native conversation area unselected.  Therefore PWA installation always
-        starts on a neutral Discuss home instead of the last person being viewed.
+        The top-level app never boots Odoo Discuss with a remembered thread.  It
+        renders the Chats navigation shell, and a selected conversation runs inside
+        a same-origin frame using Odoo's exact native public Discuss page.  This is
+        what guarantees that every app launch lands on Chats instead of the last
+        opened or last active conversation.
         """
         user = self._employee_user()
         if not user:
             return request.redirect('/my/employee')
-        channels = self._portal_channels(user)
-        if not channels:
-            # No native thread exists yet to bootstrap Odoo's public Discuss store.
-            # Keep the lightweight manager only for this empty-state edge case.
-            return request.render(
-                'employee_portal_suite.employee_native_discuss_hub',
-                self._discuss_home_values(user),
-            )
-        return self._render_native_discuss(channels[0], user, home=True)
+        return request.render(
+            'employee_portal_suite.employee_native_discuss_hub',
+            self._discuss_home_values(user),
+        )
 
     @http.route('/my/employee/discuss/manage', type='http', auth='user', website=True, methods=['GET'])
     def employee_discuss_hub(self, **kwargs):
@@ -310,7 +306,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
         channel = self._get_or_create_channel(user, targets, name=group_name)
         if not channel:
             return request.redirect('/my/employee/discuss')
-        return request.redirect(f'/my/employee/discuss/channel/{channel.id}')
+        return request.redirect(f'/my/employee/discuss?open_channel={channel.id}')
 
     @http.route('/my/employee/discuss/channel/<int:channel_id>', type='http', auth='user', website=True, methods=['GET'])
     def employee_discuss_channel(self, channel_id, **kwargs):
@@ -359,7 +355,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
         if not user:
             return request.not_found()
         script = '''
-const CACHE_NAME = "employee-native-discuss-pwa-v15";
+const CACHE_NAME = "employee-native-discuss-pwa-v16";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {

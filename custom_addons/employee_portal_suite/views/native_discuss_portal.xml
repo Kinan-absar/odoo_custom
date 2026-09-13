@@ -12,105 +12,78 @@
     <template id="employee_native_discuss_hub" name="Chats Home">
         <t t-call="web.layout">
             <t t-set="title">Chats</t>
-            <div class="ep-discuss-home-app">
-                <header class="ep-discuss-home-header">
-                    <div class="ep-discuss-home-brand">
-                        <img class="ep-discuss-home-logo" t-att-src="'/web/image/res.company/%s/logo_web' % company.id" alt="Company logo"/>
-                        <div>
-                            <h1>Chats</h1>
-                            <span>Company communication</span>
+            <div class="ep-chats-shell" data-ep-chats-shell="1">
+                <aside class="ep-chats-list-pane" data-ep-chats-list-pane="1">
+                    <div class="ep-chats-list-head">
+                        <div class="ep-chats-list-title">
+                            <span>Chats</span>
+                            <div class="ep-chats-list-actions">
+                                <button type="button" class="ep-chats-icon-action" data-ep-discuss-install="1" title="Install Chats" aria-label="Install Chats"><i class="fa fa-download"/></button>
+                                <button type="button" class="ep-chats-icon-action" data-ep-new-chat-toggle="1" title="New chat" aria-label="New chat"><i class="fa fa-plus"/></button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="ep-discuss-home-actions">
-                        <button type="button" class="btn ep-native-install-btn" data-ep-discuss-install="1" title="Install Chats">
-                            <i class="fa fa-download me-1"/> <span>Install</span>
-                        </button>
-                        <button type="button" class="btn btn-primary" data-ep-new-chat-toggle="1">
-                            <i class="fa fa-plus me-1"/> New chat
-                        </button>
-                    </div>
-                </header>
-
-                <main class="ep-discuss-home-main">
-                    <section class="ep-discuss-home-sidebar">
-                        <div class="ep-discuss-home-search">
+                        <div class="ep-chats-search">
                             <i class="fa fa-search"/>
                             <input type="search" placeholder="Search chats" autocomplete="off" data-ep-chat-search="1"/>
                         </div>
+                    </div>
 
-                        <div id="ep-native-new-chat" class="ep-native-new-chat">
-                            <form action="/my/employee/discuss/start" method="post">
-                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                <div class="ep-native-new-chat-title">Start a conversation</div>
-                                <div class="ep-native-people-grid">
-                                    <t t-foreach="employees" t-as="emp_user">
-                                        <label class="ep-native-person-option">
-                                            <input type="checkbox" name="participant_ids" t-att-value="emp_user['id']"/>
-                                            <img t-if="emp_user['avatar']" t-att-src="emp_user['avatar']"/>
-                                            <span t-if="not emp_user['avatar']" class="ep-native-avatar-fallback"><i class="fa fa-user"/></span>
-                                            <span class="ep-native-person-copy">
-                                                <span t-esc="emp_user['name']"/>
-                                                <small t-att-class="'ep-native-presence ep-native-presence-%s' % emp_user['presence']">
-                                                    <span class="ep-native-presence-dot"/><t t-esc="emp_user['presence_label']"/>
-                                                </small>
-                                            </span>
-                                        </label>
-                                    </t>
-                                </div>
-                                <input class="form-control mt-2" type="text" name="group_name" placeholder="Group name (optional)"/>
-                                <div class="d-flex gap-2 mt-2">
-                                    <button type="submit" class="btn btn-primary flex-grow-1">Start</button>
-                                    <button type="button" class="btn btn-light" data-ep-new-chat-close="1">Cancel</button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <div class="ep-native-thread-list" data-ep-thread-list="1">
-                            <t t-if="channels">
-                                <t t-foreach="channels" t-as="ch">
-                                    <a class="ep-native-thread" data-ep-thread="1" t-att-data-search="(ch['name'] or '').lower()" t-att-href="'/my/employee/discuss/channel/%s' % ch['id']">
-                                        <div class="ep-native-thread-avatar">
-                                            <img t-if="ch['avatar']" t-att-src="ch['avatar']"/>
-                                            <i t-if="not ch['avatar']" class="fa fa-users"/>
-                                        </div>
-                                        <div class="ep-native-thread-copy">
-                                            <strong t-esc="ch['name']"/>
-                                            <small t-if="ch['is_group']">Group conversation</small>
-                                            <small t-if="not ch['is_group']" t-att-class="'ep-native-presence ep-native-presence-%s' % ch['presence']">
-                                                <span class="ep-native-presence-dot"/><t t-esc="ch['presence_label']"/>
-                                            </small>
-                                        </div>
-                                        <span t-if="ch['unread']" class="ep-native-thread-unread" t-esc="ch['unread']"/>
-                                        <i class="fa fa-chevron-right ep-native-thread-arrow"/>
-                                    </a>
+                    <div id="ep-native-new-chat" class="ep-native-new-chat ep-chats-new-chat">
+                        <form action="/my/employee/discuss/start" method="post">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <div class="ep-native-new-chat-title">New chat</div>
+                            <div class="ep-native-people-grid">
+                                <t t-foreach="employees" t-as="emp_user">
+                                    <label class="ep-native-person-option">
+                                        <input type="checkbox" name="participant_ids" t-att-value="emp_user['id']"/>
+                                        <img t-if="emp_user['avatar']" t-att-src="emp_user['avatar']"/>
+                                        <span t-if="not emp_user['avatar']" class="ep-native-avatar-fallback"><i class="fa fa-user"/></span>
+                                        <span class="ep-native-person-copy">
+                                            <span t-esc="emp_user['name']"/>
+                                            <small t-att-class="'ep-native-presence ep-native-presence-%s' % emp_user['presence']"><span class="ep-native-presence-dot"/><t t-esc="emp_user['presence_label']"/></small>
+                                        </span>
+                                    </label>
                                 </t>
-                            </t>
-                            <div t-if="not channels" class="ep-native-empty">
-                                <i class="fa fa-comments-o"/>
-                                <strong>No conversations yet</strong>
-                                <span>Start a conversation with an employee.</span>
                             </div>
-                            <div class="ep-native-empty d-none" data-ep-search-empty="1">
-                                <i class="fa fa-search"/>
-                                <strong>No matching chats</strong>
+                            <input class="form-control mt-2" type="text" name="group_name" placeholder="Group name (optional)"/>
+                            <div class="d-flex gap-2 mt-2">
+                                <button type="submit" class="btn btn-primary flex-grow-1">Start</button>
+                                <button type="button" class="btn btn-light" data-ep-new-chat-close="1">Cancel</button>
                             </div>
-                        </div>
-                    </section>
+                        </form>
+                    </div>
 
-                    <section class="ep-discuss-home-welcome">
-                        <div class="ep-discuss-home-welcome-inner">
-                            <img t-att-src="'/web/image/res.company/%s/logo_web' % company.id" alt="Company logo"/>
-                            <h2>Chats</h2>
-                            <p>Select a conversation to open the full Odoo Discuss experience.</p>
-                            <div class="ep-discuss-home-feature-row">
-                                <span><i class="fa fa-paperclip"/> Attachments</span>
-                                <span><i class="fa fa-microphone"/> Voice notes</span>
-                                <span><i class="fa fa-phone"/> Calls</span>
-                                <span><i class="fa fa-video-camera"/> Video</span>
-                            </div>
-                        </div>
-                    </section>
-                </main>
+                    <div class="ep-chats-thread-list" data-ep-thread-list="1">
+                        <t t-foreach="channels" t-as="ch">
+                            <a class="ep-chats-thread" data-ep-thread="1" t-att-data-search="(ch['name'] or '').lower()" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']" target="ep_discuss_frame">
+                                <div class="ep-chats-avatar">
+                                    <img t-if="ch['avatar']" t-att-src="ch['avatar']"/>
+                                    <i t-if="not ch['avatar']" class="fa fa-users"/>
+                                </div>
+                                <div class="ep-chats-thread-copy">
+                                    <strong t-esc="ch['name']"/>
+                                    <small t-if="ch['is_group']">Group conversation</small>
+                                    <small t-if="not ch['is_group']" t-att-class="'ep-native-presence ep-native-presence-%s' % ch['presence']"><span class="ep-native-presence-dot"/><t t-esc="ch['presence_label']"/></small>
+                                </div>
+                                <span t-if="ch['unread']" class="ep-native-thread-unread" t-esc="ch['unread']"/>
+                            </a>
+                        </t>
+                        <div t-if="not channels" class="ep-native-empty"><i class="fa fa-comments-o"/><strong>No conversations yet</strong><span>Start a conversation with an employee.</span></div>
+                        <div class="ep-native-empty d-none" data-ep-search-empty="1"><i class="fa fa-search"/><strong>No matching chats</strong></div>
+                    </div>
+                </aside>
+
+                <section class="ep-chats-conversation-pane" data-ep-chat-pane="1">
+                    <div class="ep-chats-mobile-bar">
+                        <button type="button" class="ep-chats-back" data-ep-chat-back="1"><i class="fa fa-chevron-left"/> <span>Chats</span></button>
+                    </div>
+                    <div class="ep-chats-empty-state" data-ep-chat-empty="1">
+                        <i class="fa fa-comments-o"/>
+                        <h3>Chats</h3>
+                        <p>Select a conversation to start messaging.</p>
+                    </div>
+                    <iframe name="ep_discuss_frame" class="ep-chats-frame" data-ep-discuss-frame="1" allow="camera; microphone; display-capture; autoplay; clipboard-read; clipboard-write"/>
+                </section>
             </div>
         </t>
     </template>
@@ -132,7 +105,8 @@
 
     <template id="employee_native_discuss_public_bootstrap" inherit_id="mail.discuss_public_channel_template" name="Employee Native Discuss Bootstrap">
         <xpath expr="//head" position="inside">
-            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-discuss" content="1"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-discuss" content="1"/>
+            <meta t-if="request.params.get('embedded')" name="employee-portal-discuss-embedded" content="1"/>
             <meta t-if="request.httprequest.path == '/my/employee/discuss'" name="employee-portal-discuss-home" content="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-back-url" content="/my/employee/discuss"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-home-url" content="/my/employee"/>
