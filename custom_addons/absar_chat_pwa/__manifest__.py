@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Chats PWA',
-    'version': '18.0.3.4.0',
+    'version': '18.0.3.5.0',
     'summary': 'Installable employee Chats app powered by Odoo Discuss',
     'category': 'Discuss',
     'author': 'ABSAR ALOMRAN',

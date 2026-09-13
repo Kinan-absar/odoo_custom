@@ -44,6 +44,7 @@
             this.recorder = null;
             this.recordingChunks = [];
             this.recordingStartedAt = null;
+            this.voiceCapture = null;
             this.messageTimer = null;
             this.threadTimer = null;
             this.presenceTimer = null;
@@ -490,60 +491,155 @@
 
         autogrowComposer() { const el = $("#ac-message-input"); el.style.height = "auto"; el.style.height = `${Math.min(120, el.scrollHeight)}px`; }
 
-        async toggleVoiceRecording() {
+        _mergeFloat32(chunks) {
+            const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+            const merged = new Float32Array(total);
+            let offset = 0;
+            for (const chunk of chunks) {
+                merged.set(chunk, offset);
+                offset += chunk.length;
+            }
+            return merged;
+        }
+
+        _downsampleMono(input, inputRate, outputRate = 16000) {
+            if (!input.length || inputRate <= outputRate) return input;
+            const ratio = inputRate / outputRate;
+            const outLength = Math.max(1, Math.round(input.length / ratio));
+            const output = new Float32Array(outLength);
+            let outIndex = 0;
+            let inIndex = 0;
+            while (outIndex < outLength) {
+                const nextIn = Math.min(input.length, Math.round((outIndex + 1) * ratio));
+                let sum = 0;
+                let count = 0;
+                for (let i = inIndex; i < nextIn; i++) {
+                    sum += input[i];
+                    count += 1;
+                }
+                output[outIndex] = count ? (sum / count) : 0;
+                outIndex += 1;
+                inIndex = nextIn;
+            }
+            return output;
+        }
+
+        _encodeWav(samples, sampleRate) {
+            const buffer = new ArrayBuffer(44 + samples.length * 2);
+            const view = new DataView(buffer);
+            const writeString = (offset, text) => {
+                for (let i = 0; i < text.length; i++) view.setUint8(offset + i, text.charCodeAt(i));
+            };
+            writeString(0, "RIFF");
+            view.setUint32(4, 36 + samples.length * 2, true);
+            writeString(8, "WAVE");
+            writeString(12, "fmt ");
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true); // PCM
+            view.setUint16(22, 1, true); // mono
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, "data");
+            view.setUint32(40, samples.length * 2, true);
+            let offset = 44;
+            for (let i = 0; i < samples.length; i++, offset += 2) {
+                const sample = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+            }
+            return new Blob([buffer], { type: "audio/wav" });
+        }
+
+        async _stopVoiceRecording() {
+            const capture = this.voiceCapture;
+            if (!capture) return;
+            this.voiceCapture = null;
+            clearTimeout(capture.maxTimer);
             const btn = $("#ac-voice");
-            if (this.recorder && this.recorder.state === "recording") {
-                try { this.recorder.requestData(); } catch (_) {}
-                this.recorder.stop();
+            btn.classList.remove("recording");
+            btn.title = "Voice note";
+            try { capture.processor.onaudioprocess = null; } catch (_) {}
+            try { capture.source.disconnect(); } catch (_) {}
+            try { capture.processor.disconnect(); } catch (_) {}
+            try { capture.silentGain.disconnect(); } catch (_) {}
+            try { capture.stream.getTracks().forEach(track => track.stop()); } catch (_) {}
+            try { await capture.context.close(); } catch (_) {}
+
+            try {
+                const merged = this._mergeFloat32(capture.chunks);
+                if (!merged.length) throw new Error("No audio was captured.");
+                const targetRate = Math.min(16000, capture.sampleRate);
+                const pcm = this._downsampleMono(merged, capture.sampleRate, targetRate);
+                const blob = this._encodeWav(pcm, targetRate);
+                if (!blob.size) throw new Error("The recording is empty.");
+                const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+                const file = new File([blob], `Voice note ${stamp}.wav`, { type: "audio/wav" });
+                const att = await this.uploadAndQueueFile(file);
+                if (att) await this.sendMessage();
+            } catch (error) {
+                console.error("[Chats] could not finalize voice note", error);
+                alert(`Could not send voice note: ${error.message || error}`);
+            }
+        }
+
+        async toggleVoiceRecording() {
+            if (this.voiceCapture) {
+                await this._stopVoiceRecording();
                 return;
             }
-            if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+            if (!navigator.mediaDevices?.getUserMedia) {
                 alert("Voice recording is not supported in this browser.");
                 return;
             }
+            const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextCtor) {
+                alert("Audio recording is not supported in this browser.");
+                return;
+            }
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                this.recordingChunks = [];
-                const candidates = [
-                    "audio/webm;codecs=opus",
-                    "audio/ogg;codecs=opus",
-                    "audio/mp4",
-                ];
-                const mimeType = candidates.find(type => MediaRecorder.isTypeSupported(type)) || "";
-                this.recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-                this.recorder.ondataavailable = ev => {
-                    if (ev.data && ev.data.size > 0) this.recordingChunks.push(ev.data);
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        channelCount: 1,
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                    },
+                });
+                const context = new AudioContextCtor();
+                if (context.state === "suspended") await context.resume();
+                const source = context.createMediaStreamSource(stream);
+                const processor = context.createScriptProcessor(4096, 1, 1);
+                const silentGain = context.createGain();
+                silentGain.gain.value = 0;
+                const chunks = [];
+                processor.onaudioprocess = event => {
+                    const input = event.inputBuffer.getChannelData(0);
+                    chunks.push(new Float32Array(input));
                 };
-                this.recorder.onerror = ev => {
-                    console.error("[Chats] voice recorder error", ev.error || ev);
-                };
-                this.recorder.onstop = async () => {
-                    try {
-                        const recordedType = this.recorder?.mimeType || mimeType || "audio/webm";
-                        const blob = new Blob(this.recordingChunks, { type: recordedType });
-                        const seconds = Math.max(1, Math.round((Date.now() - this.recordingStartedAt) / 1000));
-                        const ext = recordedType.includes("mp4") ? "m4a" : (recordedType.includes("ogg") ? "ogg" : "webm");
-                        stream.getTracks().forEach(t => t.stop());
-                        btn.classList.remove("recording");
-                        btn.title = "Voice note";
-                        this.recorder = null;
-                        if (!blob.size || seconds < 1) return;
-                        const file = new File([blob], `Voice note ${new Date().toISOString().replace(/[:.]/g, "-")}.${ext}`, { type: recordedType });
-                        const att = await this.uploadAndQueueFile(file);
-                        if (att) await this.sendMessage();
-                    } catch (error) {
-                        console.error("[Chats] could not finalize voice note", error);
-                        alert(`Could not send voice note: ${error.message || error}`);
-                    }
+                source.connect(processor);
+                processor.connect(silentGain);
+                silentGain.connect(context.destination);
+                const maxTimer = setTimeout(() => {
+                    if (this.voiceCapture) this._stopVoiceRecording();
+                }, 10 * 60 * 1000);
+                this.voiceCapture = {
+                    stream,
+                    context,
+                    source,
+                    processor,
+                    silentGain,
+                    chunks,
+                    sampleRate: context.sampleRate,
+                    maxTimer,
                 };
                 this.recordingStartedAt = Date.now();
-                // Emit chunks throughout the recording rather than a single final
-                // WebM blob. This avoids truncated voice notes on Chromium/WebKit.
-                this.recorder.start(500);
+                const btn = $("#ac-voice");
                 btn.classList.add("recording");
                 btn.title = "Stop recording";
             } catch (error) {
-                alert(`Microphone access failed: ${error.message}`);
+                console.error("[Chats] microphone access failed", error);
+                alert(`Microphone access failed: ${error.message || error}`);
             }
         }
 

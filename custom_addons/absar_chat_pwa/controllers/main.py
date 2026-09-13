@@ -122,7 +122,7 @@ class AbsarChatPWAController(EmployeePortalNativeDiscussController):
     @http.route('/chat/service-worker.js', type='http', auth='public', methods=['GET'])
     def absar_chat_service_worker(self):
         code = r"""
-const CACHE_NAME = 'chats-static-v16';
+const CACHE_NAME = 'chats-static-v17';
 const STATIC_ASSETS = [
   '/chat/manifest.webmanifest',
   '/absar_chat_pwa/static/src/css/absar_chat.css',
