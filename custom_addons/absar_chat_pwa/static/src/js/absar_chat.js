@@ -280,7 +280,7 @@
                 const mt = a.mimetype || "";
                 if (mt.startsWith("image/")) return `<a href="${previewUrl}" target="_blank"><img class="ac-image-preview" src="${previewUrl}" alt="${esc(a.name)}"/></a>`;
                 if (mt.startsWith("audio/")) return `<audio class="ac-audio-preview" controls preload="metadata" src="${previewUrl}"></audio>`;
-                return `<a class="ac-attachment" href="${esc(a.url)}" target="_blank"><i class="fa ${mt.includes('pdf') ? 'fa-file-pdf-o' : 'fa-file-o'}"></i><span class="ac-attachment-copy"><strong>${esc(a.name)}</strong><span>${this.formatBytes(a.size)}</span></span><i class="fa fa-download"></i></a>`;
+                return `<a class="ac-attachment" href="${previewUrl}" target="_blank"><i class="fa ${mt.includes('pdf') ? 'fa-file-pdf-o' : 'fa-file-o'}"></i><span class="ac-attachment-copy"><strong>${esc(a.name)}</strong><span>${this.formatBytes(a.size)}</span></span><i class="fa fa-download"></i></a>`;
             }).join("")}</div>`;
         }
 
