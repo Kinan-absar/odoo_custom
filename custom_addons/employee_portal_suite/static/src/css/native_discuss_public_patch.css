@@ -399,3 +399,48 @@
     max-width: 100% !important;
   }
 }
+
+/* v20.14 - Explicit mobile back navigation and native video call action. */
+.ep-native-mobile-chat-back,
+.ep-native-video-call {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+
+.ep-native-video-call {
+  width: 38px;
+  height: 38px;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  font-size: 17px;
+}
+
+.ep-native-video-call:hover {
+  background: rgba(15, 23, 42, 0.06) !important;
+}
+
+@media (max-width: 767.98px) {
+  .ep-native-mobile-chat-back {
+    flex: 0 0 auto;
+    gap: 5px;
+    min-height: 42px;
+    padding: 0 8px 0 2px !important;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2563eb !important;
+  }
+  .ep-native-mobile-chat-back i {
+    font-size: 16px;
+  }
+  .ep-native-video-call {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+  }
+}
