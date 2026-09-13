@@ -5,14 +5,24 @@ import { registry } from "@web/core/registry";
 
 const menuRegistry = registry.category("user_menuitems");
 
-// If the retired absar_chat_pwa module is still installed during migration,
-// hide its old /chat/ shortcut so internal users do not get sent to the obsolete UI.
-try {
-    if (menuRegistry.contains("absar_chats_pwa")) {
-        menuRegistry.remove("absar_chats_pwa");
+function removeRetiredAbsarChatShortcut() {
+    // absar_chat_pwa used this key for the retired /chat/ application.
+    // Keep only the native Discuss/PWA shortcut below.
+    try {
+        if (menuRegistry.contains("absar_chats_pwa")) {
+            menuRegistry.remove("absar_chats_pwa");
+        }
+    } catch (_) {
+        // The retired module may already be uninstalled.
     }
-} catch (_) {
-    // Safe on databases where that registry item never existed.
+}
+
+// Remove it now and again after all backend bundles have had a chance to register
+// their user-menu entries. This handles the migration period while the old addon
+// is still installed without touching any Odoo core menu.
+removeRetiredAbsarChatShortcut();
+for (const delay of [0, 250, 1000, 2500]) {
+    window.setTimeout(removeRetiredAbsarChatShortcut, delay);
 }
 
 function nativeChatsMenuItem() {

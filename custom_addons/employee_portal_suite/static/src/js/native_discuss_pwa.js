@@ -74,6 +74,35 @@
         }
     }
 
+
+    function bindHomePage() {
+        const newChat = document.getElementById('ep-native-new-chat');
+        document.querySelectorAll('[data-ep-new-chat-toggle]').forEach((button) => {
+            if (button.dataset.epBound === '1') return;
+            button.dataset.epBound = '1';
+            button.addEventListener('click', () => newChat?.classList.toggle('show'));
+        });
+        document.querySelectorAll('[data-ep-new-chat-close]').forEach((button) => {
+            if (button.dataset.epBound === '1') return;
+            button.dataset.epBound = '1';
+            button.addEventListener('click', () => newChat?.classList.remove('show'));
+        });
+        document.querySelectorAll('[data-ep-chat-search]').forEach((input) => {
+            if (input.dataset.epBound === '1') return;
+            input.dataset.epBound = '1';
+            input.addEventListener('input', () => {
+                const query = (input.value || '').trim().toLowerCase();
+                let visible = 0;
+                document.querySelectorAll('[data-ep-thread]').forEach((thread) => {
+                    const show = !query || (thread.dataset.search || '').includes(query);
+                    thread.classList.toggle('d-none', !show);
+                    if (show) visible += 1;
+                });
+                document.querySelector('[data-ep-search-empty]')?.classList.toggle('d-none', visible !== 0 || !query);
+            });
+        });
+    }
+
     function bindInstallButtons() {
         document.querySelectorAll('[data-ep-discuss-install]').forEach((button) => {
             if (button.dataset.epInstallBound === '1') return;
@@ -91,7 +120,7 @@
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/my/employee/discuss/sw.js', { scope: '/my/employee/discuss' }).catch((error) => {
+            navigator.serviceWorker.register('/my/employee/discuss/sw.js', { scope: '/my/employee/discuss/' }).catch((error) => {
                 console.warn('Chats PWA service worker registration failed', error);
             });
         }, { once: true });
@@ -107,10 +136,11 @@
         refreshInstallButtons();
     });
 
-    document.addEventListener('DOMContentLoaded', bindInstallButtons);
+    document.addEventListener('DOMContentLoaded', () => { bindInstallButtons(); bindHomePage(); });
     window.addEventListener('pageshow', () => {
         applyAppMode();
         bindInstallButtons();
+        bindHomePage();
     });
 
     // Expose only the install action to the native Owl toolbar patch.

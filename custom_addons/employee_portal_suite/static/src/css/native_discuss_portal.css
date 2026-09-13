@@ -117,3 +117,216 @@ body.ep-discuss-pwa-standalone {
   height: 48px;
   flex-basis: 48px;
 }
+
+/* v20.2 - Stable standalone Chats home. The PWA always starts here, with no
+   conversation preselected. Channel pages remain the real native Discuss UI. */
+.ep-discuss-home-app {
+  min-height: 100dvh;
+  background: #f7f8fa;
+  color: #172033;
+  display: flex;
+  flex-direction: column;
+}
+
+.ep-discuss-home-header {
+  height: 76px;
+  flex: 0 0 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 24px;
+  background: #fff;
+  border-bottom: 1px solid #e9edf3;
+}
+
+.ep-discuss-home-brand,
+.ep-discuss-home-actions {
+  display: flex;
+  align-items: center;
+}
+
+.ep-discuss-home-brand { gap: 12px; min-width: 0; }
+.ep-discuss-home-actions { gap: 8px; }
+
+.ep-discuss-home-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.ep-discuss-home-brand h1 {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.ep-discuss-home-brand span {
+  display: block;
+  margin-top: 4px;
+  color: #7b8495;
+  font-size: 11px;
+}
+
+.ep-discuss-home-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) 1fr;
+  max-width: 1360px;
+  width: 100%;
+  margin: 0 auto;
+  background: #fff;
+  border-left: 1px solid #edf0f4;
+  border-right: 1px solid #edf0f4;
+}
+
+.ep-discuss-home-sidebar {
+  min-width: 0;
+  border-right: 1px solid #edf0f4;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.ep-discuss-home-search {
+  margin: 14px 14px 10px;
+  height: 42px;
+  border-radius: 12px;
+  background: #f4f6f8;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 13px;
+  color: #8992a1;
+}
+
+.ep-discuss-home-search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #172033;
+  font-size: 13px;
+}
+
+.ep-discuss-home-app .ep-native-thread-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.ep-discuss-home-app .ep-native-thread {
+  min-height: 74px;
+  padding: 11px 14px;
+}
+
+.ep-discuss-home-app .ep-native-thread:hover {
+  background: #f7f9fb;
+}
+
+.ep-discuss-home-app .ep-native-new-chat {
+  margin: 0 14px 10px;
+  padding: 14px;
+  border: 1px solid #e7ebf0;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(23, 32, 51, .08);
+}
+
+.ep-native-new-chat-title {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.ep-discuss-home-welcome {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36px;
+  background:
+    radial-gradient(circle at 75% 20%, rgba(64, 112, 244, .06), transparent 32%),
+    #fbfcfd;
+}
+
+.ep-discuss-home-welcome-inner {
+  max-width: 560px;
+  text-align: center;
+  color: #667085;
+}
+
+.ep-discuss-home-welcome-inner > img {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  margin-bottom: 18px;
+}
+
+.ep-discuss-home-welcome h2 {
+  margin: 0 0 8px;
+  color: #172033;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+
+.ep-discuss-home-welcome p {
+  margin: 0 auto;
+  max-width: 440px;
+  font-size: 14px;
+}
+
+.ep-discuss-home-feature-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.ep-discuss-home-feature-row span {
+  padding: 7px 10px;
+  border: 1px solid #e8ecf2;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 11px;
+  color: #687386;
+}
+
+.ep-discuss-home-feature-row i { margin-right: 5px; }
+
+.ep-native-discuss-home-button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 4px 6px;
+  border-radius: 9px;
+}
+
+.ep-native-discuss-home-button:hover { background: #f2f4f7; }
+
+@media (max-width: 767.98px) {
+  .ep-discuss-home-header {
+    height: 68px;
+    flex-basis: 68px;
+    padding: 0 12px;
+  }
+  .ep-discuss-home-logo { width: 38px; height: 38px; }
+  .ep-discuss-home-brand h1 { font-size: 18px; }
+  .ep-discuss-home-brand span { display: none; }
+  .ep-discuss-home-actions .btn { padding: 8px 10px; font-size: 12px; }
+  .ep-discuss-home-main { display: block; border: 0; }
+  .ep-discuss-home-sidebar { height: calc(100dvh - 68px); border-right: 0; }
+  .ep-discuss-home-welcome { display: none; }
+  .ep-discuss-home-app .ep-native-thread { min-height: 72px; }
+}

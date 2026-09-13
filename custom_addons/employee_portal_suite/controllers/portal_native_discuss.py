@@ -192,23 +192,13 @@ class EmployeePortalNativeDiscussController(http.Controller):
         channel.sudo()._broadcast(partner_ids)
         return channel
 
-    @http.route('/my/employee/discuss', type='http', auth='user', website=True, methods=['GET'])
-    def employee_discuss_entry(self, **kwargs):
-        """Open native Discuss immediately instead of showing an intermediate hub."""
-        user = self._employee_user()
-        if not user:
-            return request.redirect('/my/employee')
-        channels = self._portal_channels(user)
-        if channels:
-            return request.redirect(f'/my/employee/discuss/channel/{channels[0].id}')
-        # Only users with no existing employee conversations ever see the manage page.
-        return request.redirect('/my/employee/discuss/manage')
+    def _discuss_home_values(self, user):
+        """Build the standalone Chats home page from the same native Discuss channels.
 
-    @http.route('/my/employee/discuss/manage', type='http', auth='user', website=True, methods=['GET'])
-    def employee_discuss_hub(self, **kwargs):
-        user = self._employee_user()
-        if not user:
-            return request.redirect('/my/employee')
+        The page is intentionally a neutral home route rather than a selected thread.
+        This gives the PWA a stable start URL so installing Chats never binds the app
+        to whichever conversation happened to be open at install time.
+        """
         channels = self._portal_channels(user)
         rows = []
         for channel in channels:
@@ -235,16 +225,32 @@ class EmployeePortalNativeDiscussController(http.Controller):
                 'presence': presence,
                 'presence_label': presence_label,
             })
-        values = {
+        return {
             'channels': rows,
             'employees': employee_rows,
+            'company': request.env.company.sudo(),
+            'current_user': user,
         }
-        # Keep all normal portal layout counters/notification context.
-        try:
-            values.update(request.env['ir.http']._prepare_portal_layout_values())
-        except Exception:
-            pass
-        return request.render('employee_portal_suite.employee_native_discuss_hub', values)
+
+    @http.route('/my/employee/discuss', type='http', auth='user', website=True, methods=['GET'])
+    def employee_discuss_entry(self, **kwargs):
+        """Stable Chats/PWA home: conversation list with no thread selected."""
+        user = self._employee_user()
+        if not user:
+            return request.redirect('/my/employee')
+        return request.render(
+            'employee_portal_suite.employee_native_discuss_hub',
+            self._discuss_home_values(user),
+        )
+
+    @http.route('/my/employee/discuss/manage', type='http', auth='user', website=True, methods=['GET'])
+    def employee_discuss_hub(self, **kwargs):
+        # Backward-compatible old URL. The standalone main page now owns chat
+        # management/new-conversation actions as well.
+        user = self._employee_user()
+        if not user:
+            return request.redirect('/my/employee')
+        return request.redirect('/my/employee/discuss')
 
     @http.route('/my/employee/discuss/start', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def employee_discuss_start(self, participant_ids=None, group_name=None, **post):
@@ -281,14 +287,14 @@ class EmployeePortalNativeDiscussController(http.Controller):
             'companyName': request.env.company.name,
             'inPublicPage': True,
             'employeePortalDiscuss': True,
-            'employeePortalBackUrl': '/my/employee/discuss/manage',
+            'employeePortalBackUrl': '/my/employee/discuss',
             'discuss_public_thread': Store.one(channel_user),
         })
         return request.render('mail.discuss_public_channel_template', {
             'data': store.get_result(),
             'session_info': channel_user.env['ir.http'].session_info(),
             'employee_portal_discuss': True,
-            'employee_portal_back_url': '/my/employee/discuss/manage',
+            'employee_portal_back_url': '/my/employee/discuss',
             'employee_portal_home_url': '/my/employee',
         })
 
@@ -304,7 +310,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
             "short_name": "Chats",
             "description": "Company employee communication powered by Odoo Discuss",
             "start_url": "/my/employee/discuss",
-            "scope": "/my/employee/discuss",
+            "scope": "/my/employee/discuss/",
+            "id": "/my/employee/discuss",
             "display": "standalone",
             "orientation": "any",
             "background_color": "#ffffff",
@@ -328,7 +335,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
         if not user:
             return request.not_found()
         script = '''
-const CACHE_NAME = "employee-native-discuss-pwa-v1";
+const CACHE_NAME = "employee-native-discuss-pwa-v2";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
@@ -346,7 +353,7 @@ self.addEventListener("fetch", (event) => {
         return request.make_response(script, headers=[
             ('Content-Type', 'application/javascript; charset=utf-8'),
             ('Cache-Control', 'no-store'),
-            ('Service-Worker-Allowed', '/my/employee/discuss'),
+            ('Service-Worker-Allowed', '/my/employee/discuss/'),
         ])
 
     @http.route('/employee_portal/discuss/available_people', type='json', auth='user')
