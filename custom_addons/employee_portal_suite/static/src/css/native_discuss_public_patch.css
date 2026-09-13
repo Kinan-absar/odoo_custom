@@ -530,3 +530,54 @@ body.ep-native-discuss-embedded .o-mail-Discuss-core,
 body.ep-native-discuss-embedded .o-mail-Discuss-threadContainer{width:100%!important;max-width:none!important}
 body.ep-native-discuss-embedded .ep-native-video-call,
 body.ep-native-discuss-embedded .ep-native-video-call-btn{display:none!important}
+
+
+/* v20.25 - Embedded conversation should feel like a real full-screen chat. */
+body.ep-native-discuss-embedded,
+body.ep-native-discuss-embedded #wrapwrap,
+body.ep-native-discuss-embedded main {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.ep-native-discuss-embedded .o-mail-Discuss,
+body.ep-native-discuss-embedded .o-mail-Discuss-content,
+body.ep-native-discuss-embedded .o-mail-Discuss-main,
+body.ep-native-discuss-embedded .o-mail-Discuss-core,
+body.ep-native-discuss-embedded .o-mail-Discuss-threadContainer,
+body.ep-native-discuss-embedded .o-mail-ThreadView,
+body.ep-native-discuss-embedded .o-mail-Thread,
+body.ep-native-discuss-embedded .o-mail-Composer {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+body.ep-native-discuss-embedded .o-mail-Discuss {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+body.ep-native-discuss-embedded .o-mail-Discuss-content,
+body.ep-native-discuss-embedded .o-mail-Discuss-main,
+body.ep-native-discuss-embedded .o-mail-Discuss-core {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+body.ep-native-discuss-embedded .o-mail-Discuss-header {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+@media (max-width: 767.98px) {
+  /* Keep the native add-participant (+) action visible beside the call controls. */
+  body.ep-native-discuss-embedded .o-mail-Discuss-header button[title*="Add" i],
+  body.ep-native-discuss-embedded .o-mail-Discuss-header button[aria-label*="Add" i],
+  body.ep-native-discuss-embedded .o-mail-Discuss-header button[title*="Invite" i],
+  body.ep-native-discuss-embedded .o-mail-Discuss-header button[aria-label*="Invite" i] {
+    display: inline-flex !important;
+  }
+}

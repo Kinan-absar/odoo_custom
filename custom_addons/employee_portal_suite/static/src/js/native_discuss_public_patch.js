@@ -44,11 +44,15 @@ function tidyEmbeddedMobileHeader(header) {
             el.style.setProperty("display", "none", "important");
             continue;
         }
-        // Keep only the actual audio/video call controls, plus avatar/name links if any.
+        // Keep the real audio/video call controls, identity controls, and the native
+        // add-participant (+) action. The rest of the busy desktop header stays hidden on mobile.
         const isCall = label.includes("call") || label.includes("video") || label.includes("camera") ||
             html.includes("fa-phone") || html.includes("fa-video") || html.includes("phone") || html.includes("video");
+        const isAddPeople = label.includes("add people") || label.includes("add person") ||
+            label.includes("add participant") || label.includes("invite") || label.includes("member") ||
+            label.includes("participant") || html.includes("user-plus") || html.includes("fa-user-plus");
         const identityControl = Boolean(el.querySelector("img")) || (el.textContent || "").trim().length > 1;
-        if (isCall || identityControl) {
+        if (isCall || isAddPeople || identityControl) {
             el.style.removeProperty("display");
         } else {
             el.style.setProperty("display", "none", "important");

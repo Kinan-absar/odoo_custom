@@ -212,7 +212,11 @@
                 .o-mail-Discuss-content,
                 .o-mail-Discuss-main,
                 .o-mail-Discuss-core,
-                .o-mail-Discuss-threadContainer { width: 100% !important; max-width: none !important; }
+                .o-mail-Discuss-threadContainer,
+                .o-mail-ThreadView,
+                .o-mail-Thread,
+                .o-mail-Composer { width: 100% !important; max-width: none !important; margin-left: 0 !important; margin-right: 0 !important; }
+                .o-mail-Discuss-header { width: 100% !important; max-width: none !important; }
                 /* Remove only our historical extra video action; keep Odoo/portal native call controls. */
                 .ep-native-video-call,
                 .ep-native-video-call-btn { display: none !important; }
