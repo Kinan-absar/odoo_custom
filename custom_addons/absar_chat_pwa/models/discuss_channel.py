@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
 from odoo.tools import html2plaintext
+from odoo.tools.image import image_data_uri
 
 class DiscussChannel(models.Model):
     _inherit = 'discuss.channel'
@@ -18,12 +19,12 @@ class DiscussChannel(models.Model):
         if self.channel_type == 'chat' and other_members:
             other_partner = other_members[0].partner_id
             name = other_partner.name
-            avatar_url = f"/web/image/res.partner/{other_partner.id}/avatar_128"
+            avatar_url = image_data_uri(other_partner.sudo().avatar_128) if other_partner.sudo().avatar_128 else "/web/static/img/avatar.png"
             partner_id = other_partner.id
             is_direct = True
         else:
             name = self.name or (", ".join(self.channel_member_ids.mapped('partner_id.name')) or "Group Chat")
-            avatar_url = f"/web/image/discuss.channel/{self.id}/avatar_128"
+            avatar_url = "/web/static/img/avatar.png"
             partner_id = False
             is_direct = False
 
@@ -31,8 +32,13 @@ class DiscussChannel(models.Model):
         member = self.channel_member_ids.filtered(lambda m: m.partner_id.id == current_partner_id)
         seen_message_id = member.seen_message_id.id if member and member.seen_message_id else 0
 
-        # Last message info
-        last_message = self.message_ids[:1] if self.message_ids else False
+        # Last message info. Query explicitly by descending id so previews are stable
+        # regardless of the one2many cache/order used by mail.thread.
+        last_message = self.env['mail.message'].sudo().search([
+            ('model', '=', 'discuss.channel'),
+            ('res_id', '=', self.id),
+            ('message_type', '!=', 'user_notification'),
+        ], order='id desc', limit=1)
         last_message_info = None
         unread_count = 0
 
@@ -94,7 +100,7 @@ class DiscussChannel(models.Model):
         if before_id:
             domain.append(('id', '<', int(before_id)))
 
-        messages = self.env['mail.message'].search(
+        messages = self.env['mail.message'].sudo().search(
             domain,
             limit=limit,
             order='id desc'
@@ -106,7 +112,7 @@ class DiscussChannel(models.Model):
                 'id': msg.id,
                 'author_id': msg.author_id.id if msg.author_id else False,
                 'author_name': msg.author_id.name if msg.author_id else (msg.email_from or "System"),
-                'author_avatar': f"/web/image/res.partner/{msg.author_id.id}/avatar_128" if msg.author_id else "/web/static/img/avatar.png",
+                'author_avatar': image_data_uri(msg.author_id.sudo().avatar_128) if msg.author_id and msg.author_id.sudo().avatar_128 else "/web/static/img/avatar.png",
                 'body': msg.body or "",
                 'date': fields.Datetime.to_string(msg.date),
                 'is_current_user': bool(msg.author_id and msg.author_id.id == current_partner_id),

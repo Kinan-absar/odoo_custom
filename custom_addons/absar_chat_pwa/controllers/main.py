@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-import json
 import logging
 from werkzeug.exceptions import Forbidden, NotFound
 
 from odoo import http, fields, _
 from odoo.http import request
 from odoo.tools import plaintext2html
+from odoo.tools.image import image_data_uri
 
 _logger = logging.getLogger(__name__)
 
@@ -28,7 +28,9 @@ class AbsarChatController(http.Controller):
         the user's real partner identity (request.env.user.partner_id).
         """
         user = request.env.user
-        if not user or user._is_public():
+        if not user or user._is_public() or not user.active:
+            return False
+        if user.has_group('employee_portal_suite.group_attendance_only'):
             return False
         employee = request.env['hr.employee'].sudo().search([
             ('user_id', '=', user.id),
@@ -62,13 +64,11 @@ class AbsarChatController(http.Controller):
             'employee_name': employee.name,
             'job_title': employee.job_title or '',
             'department': employee.department_id.name if employee.department_id else '',
-            'avatar_url': f"/web/image/hr.employee/{employee.id}/avatar_128",
+            'avatar_url': image_data_uri(user.partner_id.sudo().avatar_128) if user.partner_id.sudo().avatar_128 else '/web/static/img/avatar.png',
             'company_name': user.company_id.name,
         }
 
         return request.render('absar_chat_pwa.chat_page', {
-            'session_info': session_info,
-            'session_info_json': json.dumps(session_info),
         })
 
     @http.route('/chat/manifest.webmanifest', type='http', auth='public', methods=['GET'])
@@ -77,8 +77,8 @@ class AbsarChatController(http.Controller):
             "name": "Absar Chat",
             "short_name": "Absar Chat",
             "description": "Internal Company Communication - Powered by Odoo Discuss",
-            "start_url": "/chat",
-            "scope": "/chat",
+            "start_url": "/chat/",
+            "scope": "/chat/",
             "display": "standalone",
             "orientation": "portrait-primary",
             "background_color": "#090d16",
@@ -109,7 +109,7 @@ class AbsarChatController(http.Controller):
     @http.route('/chat/service-worker.js', type='http', auth='public', methods=['GET'])
     def absar_chat_service_worker(self):
         sw_code = """
-const CACHE_NAME = 'absar-chat-static-v2';
+const CACHE_NAME = 'absar-chat-static-v3';
 const STATIC_ASSETS = [
   '/chat/manifest.webmanifest',
   '/absar_chat_pwa/static/icons/icon-192.png',
@@ -182,7 +182,7 @@ self.addEventListener('fetch', (event) => {
             sw_code,
             headers=[
                 ('Content-Type', 'application/javascript; charset=utf-8'),
-                ('Service-Worker-Allowed', '/chat'),
+                ('Service-Worker-Allowed', '/chat/'),
                 ('Cache-Control', 'no-cache'),
             ]
         )
@@ -206,7 +206,7 @@ self.addEventListener('fetch', (event) => {
             'employee_name': employee.name,
             'job_title': employee.job_title or '',
             'department': employee.department_id.name if employee.department_id else '',
-            'avatar_url': f"/web/image/hr.employee/{employee.id}/avatar_128",
+            'avatar_url': image_data_uri(user.partner_id.sudo().avatar_128) if user.partner_id.sudo().avatar_128 else '/web/static/img/avatar.png',
             'company_name': user.company_id.name,
         }
 
@@ -221,19 +221,26 @@ self.addEventListener('fetch', (event) => {
         if not employee:
             raise Forbidden(_("Access Denied."))
 
-        partner = request.env.user.partner_id
-        domain = [
-            ('channel_member_ids.partner_id', '=', partner.id),
-            ('active', '=', True),
-        ]
+        user = request.env.user
+        partner = user.partner_id
 
-        # Respect existing employee_portal_suite channel isolation:
-        # Do not expose internal Discuss channels that the employee portal intentionally hides
-        if 'is_employee_portal_channel' in request.env['discuss.channel']._fields:
-            domain.append(('is_employee_portal_channel', '=', True))
-
-        channels = request.env['discuss.channel'].search(domain, order='write_date desc')
-        return [c._get_absar_chat_info(partner) for c in channels]
+        # Portal employees do not have generic ACL access to discuss.channel.  Reuse the
+        # same safe pattern as employee_portal_suite: resolve memberships with sudo, then
+        # explicitly filter to employee portal chat/group channels containing this partner.
+        members = request.env['discuss.channel.member'].sudo().search([
+            ('partner_id', '=', partner.id),
+            ('channel_id.channel_type', 'in', ('chat', 'group')),
+        ])
+        channels = members.channel_id.filtered(
+            lambda c: c.active
+            and partner in c.channel_member_ids.partner_id
+            and (not hasattr(c, 'is_employee_portal_channel') or c.is_employee_portal_channel)
+        )
+        channels = channels.sorted(
+            key=lambda c: c.last_interest_dt or fields.Datetime.from_string('1970-01-01 00:00:00'),
+            reverse=True,
+        )
+        return [c.sudo()._get_absar_chat_info(partner) for c in channels]
 
     @http.route('/chat/api/messages', type='json', auth='user')
     def get_messages(self, channel_id, limit=50, before_id=None):
@@ -245,7 +252,7 @@ self.addEventListener('fetch', (event) => {
             raise Forbidden(_("Access Denied."))
 
         partner = request.env.user.partner_id
-        channel = request.env['discuss.channel'].browse(int(channel_id)).exists()
+        channel = request.env['discuss.channel'].sudo().browse(int(channel_id)).exists()
 
         if not channel:
             raise NotFound(_("Conversation not found."))
@@ -272,7 +279,7 @@ self.addEventListener('fetch', (event) => {
             raise Forbidden(_("Access Denied."))
 
         partner = request.env.user.partner_id
-        channel = request.env['discuss.channel'].browse(int(channel_id)).exists()
+        channel = request.env['discuss.channel'].sudo().browse(int(channel_id)).exists()
 
         if not channel:
             raise NotFound(_("Conversation not found."))
@@ -293,6 +300,7 @@ self.addEventListener('fetch', (event) => {
         # and dispatches notifications across bus.bus to standard Odoo Discuss
         msg = channel.message_post(
             body=safe_body,
+            author_id=partner.id,
             message_type='comment',
             subtype_xmlid='mail.mt_comment'
         )
@@ -330,7 +338,7 @@ self.addEventListener('fetch', (event) => {
             raise Forbidden(_("Access Denied."))
 
         partner = request.env.user.partner_id
-        channel = request.env['discuss.channel'].browse(int(channel_id)).exists()
+        channel = request.env['discuss.channel'].sudo().browse(int(channel_id)).exists()
 
         if not channel or partner.id not in channel.channel_member_ids.mapped('partner_id.id'):
             return {'success': False}
