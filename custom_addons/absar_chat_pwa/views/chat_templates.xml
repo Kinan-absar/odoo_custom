@@ -6,16 +6,16 @@
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-                <meta name="theme-color" content="#0b1220"/>
+                <meta name="theme-color" content="#ffffff"/>
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
-                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
                 <meta name="apple-mobile-web-app-title" content="Absar Chat"/>
                 <title>Absar Chat</title>
                 <link rel="manifest" href="/chat/manifest.webmanifest"/>
                 <link rel="apple-touch-icon" href="/absar_chat_pwa/static/icons/icon-192.png"/>
                 <link rel="icon" href="/absar_chat_pwa/static/icons/icon-192.png"/>
-                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/absar_chat_home.css?v=18.0.2.1.0"/>
-                <script src="/absar_chat_pwa/static/src/js/absar_chat_home.js?v=18.0.2.1.0" defer="defer"></script>
+                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/absar_chat_home.css?v=18.0.2.2.0"/>
+                <script src="/absar_chat_pwa/static/src/js/absar_chat_home.js?v=18.0.2.2.0" defer="defer"></script>
                 <script>
                     if ('serviceWorker' in navigator) {
                         window.addEventListener('load', function () {
@@ -77,7 +77,7 @@
                                     </t>
                                 </t>
                                 <div t-if="not channels" class="ac-empty-list">
-                                    <div>💬</div><strong>No conversations yet</strong><span>Start a chat with an employee.</span>
+                                    <div class="ac-empty-symbol">◌</div><strong>No conversations yet</strong><span>Start a chat with an employee.</span>
                                 </div>
                             </div>
                         </aside>
@@ -86,7 +86,7 @@
                             <div class="ac-welcome-card">
                                 <div class="ac-welcome-logo"><img src="/absar_chat_pwa/static/icons/icon-192.png" alt="Absar Chat"/></div>
                                 <h1>Absar Chat</h1>
-                                <p>Select a conversation from the left. Conversations open in <strong>native Odoo Discuss</strong>, so attachments, replies, reactions, calls, screen sharing and the existing RTC features stay available.</p>
+                                <p>Open a conversation to use the same native Odoo Discuss experience already working in the Employee Portal, including attachments, replies, reactions, calls, screen sharing and RTC features.</p>
                                 <button type="button" class="ac-primary" id="ac-start-first">Start conversation</button>
                             </div>
                         </section>
@@ -138,20 +138,22 @@
     <template id="access_denied_page" name="Absar Chat - Access Restricted">
         &lt;!DOCTYPE html&gt;
         <html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Absar Chat</title>
-        <style>html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b1220;color:#fff}.d{min-height:100vh;display:grid;place-items:center;padding:24px}.c{max-width:460px;text-align:center;background:#111b2e;border:1px solid #22314b;border-radius:20px;padding:36px}.c p{color:#9fb0c8}.c a{display:inline-block;background:#2f6fed;color:#fff;text-decoration:none;padding:11px 18px;border-radius:10px}</style></head>
+        <style>html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f6f8fb;color:#172033}.d{min-height:100vh;display:grid;place-items:center;padding:24px}.c{max-width:460px;text-align:center;background:#fff;border:1px solid #e1e7ef;border-radius:20px;padding:36px;box-shadow:0 16px 45px rgba(23,32,51,.08)}.c p{color:#66758a}.c a{display:inline-block;background:#17365d;color:#fff;text-decoration:none;padding:11px 18px;border-radius:10px}</style></head>
         <body><div class="d"><div class="c"><h1 t-esc="title"/><p t-esc="message"/><a href="/my/employee">Employee Portal</a></div></div></body></html>
     </template>
 
-    <!-- Make /chat/channel/<id> use the exact Employee Portal native Discuss patches. -->
-    <template id="absar_chat_native_discuss_bootstrap" inherit_id="mail.discuss_public_channel_template" name="Absar Chat Native Discuss Bootstrap">
+    <!-- The conversation itself is the exact existing Employee Portal native Discuss route.
+         This extension only brands that already-working page when it was opened by Absar Chat. -->
+    <template id="absar_chat_native_discuss_branding" inherit_id="mail.discuss_public_channel_template" name="Absar Chat Native Discuss Branding">
         <xpath expr="//head" position="inside">
-            <meta t-if="request.httprequest.path.startswith('/chat/channel/')" name="employee-portal-discuss" content="1"/>
-            <meta t-if="request.httprequest.path.startswith('/chat/channel/')" name="employee-portal-back-url" content="/chat/"/>
-            <meta t-if="request.httprequest.path.startswith('/chat/channel/')" name="employee-portal-home-url" content="/my/employee"/>
-            <meta t-if="request.httprequest.path.startswith('/chat/channel/')" name="theme-color" content="#0b1220"/>
-            <link t-if="request.httprequest.path.startswith('/chat/channel/')" rel="manifest" href="/chat/manifest.webmanifest"/>
-            <link t-if="request.httprequest.path.startswith('/chat/channel/')" rel="apple-touch-icon" href="/absar_chat_pwa/static/icons/icon-192.png"/>
-            <script t-if="request.httprequest.path.startswith('/chat/channel/')" type="text/javascript">
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/') and request.params.get('absar_chat') == '1'" name="absar-chat-pwa" content="1"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/') and request.params.get('absar_chat') == '1'" name="theme-color" content="#ffffff"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/') and request.params.get('absar_chat') == '1'" rel="manifest" href="/chat/manifest.webmanifest"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/') and request.params.get('absar_chat') == '1'" rel="apple-touch-icon" href="/absar_chat_pwa/static/icons/icon-192.png"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/') and request.params.get('absar_chat') == '1'" rel="icon" href="/absar_chat_pwa/static/icons/icon-192.png"/>
+            <script t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/') and request.params.get('absar_chat') == '1'" type="text/javascript">
+                document.documentElement.classList.add('absar-chat-pwa-native');
+                document.documentElement.setAttribute('data-bs-theme', 'light');
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.register('/chat/service-worker.js', {scope: '/chat/'}).catch(function () {});
                 }

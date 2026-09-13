@@ -1,21 +1,22 @@
 # -*- coding: utf-8 -*-
 import json
+from urllib.parse import urlencode
 
 from odoo import http, _
 from odoo.http import request
-from odoo.addons.mail.tools.discuss import Store
 from odoo.addons.employee_portal_suite.controllers.portal_native_discuss import (
     EmployeePortalNativeDiscussController,
 )
 
 
 class AbsarChatPWAController(EmployeePortalNativeDiscussController):
-    """Standalone PWA shell around the already-working native Employee Discuss.
+    """Installable Absar Chat shell backed by the existing Employee Portal Discuss.
 
-    The hub is custom, but opening a conversation uses Odoo's real
-    ``mail.discuss_public_channel_template`` and Store. This intentionally reuses
-    Employee Portal Suite's filtering/security/channel creation helpers so Absar Chat
-    and /my/employee/discuss remain the same communication system.
+    The important rule here is that Absar Chat does *not* create a second Discuss
+    bootstrap.  A conversation is opened through the exact, already-proven
+    ``/my/employee/discuss/channel/<id>`` route from ``employee_portal_suite``.
+    The PWA manifest has root scope, so that native Discuss route remains inside
+    the installed Absar Chat window rather than falling back to a browser tab.
     """
 
     @http.route(['/chat', '/chat/'], type='http', auth='user', website=True, methods=['GET'])
@@ -87,6 +88,13 @@ class AbsarChatPWAController(EmployeePortalNativeDiscussController):
 
     @http.route('/chat/channel/<int:channel_id>', type='http', auth='user', website=True, methods=['GET'])
     def absar_chat_channel(self, channel_id, **kwargs):
+        """Bridge into the exact working Employee Portal native Discuss route.
+
+        We intentionally redirect instead of re-rendering ``mail.discuss_public_channel_template``
+        on a new URL. Odoo 18's Discuss client action restores its active thread from
+        the canonical public Discuss route; rendering it on ``/chat/channel/...`` caused
+        ``DiscussClientAction.parseActiveId`` to receive an invalid/null active id.
+        """
         user = self._employee_user()
         if not user:
             return request.redirect('/my/employee')
@@ -95,23 +103,14 @@ class AbsarChatPWAController(EmployeePortalNativeDiscussController):
         if not self._is_allowed_channel(channel, user):
             return request.not_found()
 
-        channel.sudo().write({'is_employee_portal_channel': True})
-        channel_user = channel.with_user(user)
-        store = Store()
-        store.add({
-            'companyName': request.env.company.name,
-            'inPublicPage': True,
-            'employeePortalDiscuss': True,
-            'employeePortalBackUrl': '/chat/',
-            'discuss_public_thread': Store.one(channel_user),
-        })
-        return request.render('mail.discuss_public_channel_template', {
-            'data': store.get_result(),
-            'session_info': channel_user.env['ir.http'].session_info(),
-            'employee_portal_discuss': True,
-            'employee_portal_back_url': '/chat/',
-            'employee_portal_home_url': '/my/employee',
-        })
+        # Preserve the call auto-answer flags used by the existing RTC patch.
+        params = {'absar_chat': '1'}
+        for key in ('auto_answer', 'auto_video'):
+            value = request.params.get(key)
+            if value in ('0', '1'):
+                params[key] = value
+        target = '/my/employee/discuss/channel/%s?%s' % (channel.id, urlencode(params))
+        return request.redirect(target)
 
     @http.route('/chat/manifest.webmanifest', type='http', auth='public', methods=['GET'])
     def absar_chat_manifest(self):
@@ -120,10 +119,14 @@ class AbsarChatPWAController(EmployeePortalNativeDiscussController):
             'short_name': 'Absar Chat',
             'description': 'Absar internal employee communication',
             'start_url': '/chat/',
-            'scope': '/chat/',
+            # Manifest scope deliberately includes the canonical Employee Portal Discuss
+            # conversation route used by Absar Chat, keeping it inside the installed PWA.
+            # The service worker itself stays scoped to /chat/ so it cannot interfere
+            # with normal Odoo/portal pages.
+            'scope': '/',
             'display': 'standalone',
-            'background_color': '#0b1220',
-            'theme_color': '#0b1220',
+            'background_color': '#f6f8fb',
+            'theme_color': '#ffffff',
             'icons': [
                 {
                     'src': '/absar_chat_pwa/static/icons/icon-192.png',
@@ -150,7 +153,7 @@ class AbsarChatPWAController(EmployeePortalNativeDiscussController):
     @http.route('/chat/service-worker.js', type='http', auth='public', methods=['GET'])
     def absar_chat_service_worker(self):
         code = r"""
-const CACHE_NAME = 'absar-chat-shell-v6';
+const CACHE_NAME = 'absar-chat-shell-v7';
 const STATIC_ASSETS = [
   '/chat/manifest.webmanifest',
   '/absar_chat_pwa/static/icons/icon-192.png',
@@ -168,11 +171,11 @@ self.addEventListener('activate', event => {
 });
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-  // Never cache authenticated navigation, JSON-RPC, websocket or Odoo Discuss data.
+  // Never cache authenticated navigation, JSON-RPC, websocket or Discuss data.
   if (event.request.mode === 'navigate' || url.pathname.startsWith('/web/') ||
       url.pathname.startsWith('/mail/') || url.pathname.startsWith('/discuss/') ||
-      url.pathname.startsWith('/employee_portal/') || url.pathname.startsWith('/websocket') ||
-      url.pathname.startsWith('/longpolling')) {
+      url.pathname.startsWith('/my/employee/') || url.pathname.startsWith('/employee_portal/') ||
+      url.pathname.startsWith('/websocket') || url.pathname.startsWith('/longpolling')) {
     return;
   }
   if (STATIC_ASSETS.includes(url.pathname)) {
