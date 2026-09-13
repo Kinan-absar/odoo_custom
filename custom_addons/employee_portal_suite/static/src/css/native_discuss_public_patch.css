@@ -444,3 +444,66 @@
     height: 40px;
   }
 }
+
+/* v20.15 - Stable Discuss home without mutating Odoo's remembered thread. */
+@media (min-width: 768px) {
+  .ep-native-discuss-public .ep-native-home-covered {
+    position: relative !important;
+  }
+  .ep-native-discuss-home-cover {
+    position: absolute;
+    inset: 0;
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    text-align: center;
+    color: #64748b;
+  }
+  .ep-native-discuss-home-cover > div {
+    max-width: 360px;
+    padding: 24px;
+  }
+  .ep-native-discuss-home-cover i {
+    font-size: 42px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+  }
+  .ep-native-discuss-home-cover h4 {
+    margin: 0 0 6px;
+    color: #334155;
+    font-weight: 700;
+  }
+  .ep-native-discuss-home-cover p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+/* The QWeb-rendered back/video actions must survive every Owl re-render. */
+.ep-native-mobile-chat-back,
+.ep-native-video-call {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+@media (max-width: 767.98px) {
+  .ep-native-discuss-home .o-mail-MessagingMenu {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    background: #fff !important;
+  }
+  .ep-native-discuss-home .o-mail-MessagingMenu-list {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}

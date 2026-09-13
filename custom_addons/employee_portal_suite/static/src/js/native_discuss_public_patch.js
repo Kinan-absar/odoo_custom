@@ -6,6 +6,7 @@ import { MessagingMenu } from "@mail/core/public_web/messaging_menu";
 import { Composer } from "@mail/core/common/composer";
 import { patch } from "@web/core/utils/patch";
 import { rpc } from "@web/core/network/rpc";
+import { useService } from "@web/core/utils/hooks";
 import { onMounted, onWillUnmount } from "@odoo/owl";
 
 function employeePortalMeta(name) {
@@ -194,80 +195,9 @@ function epEnhanceNativeSidebar() {
 }
 
 function epEnhanceConversationHeader(component) {
-    if (!employeePortalMeta("employee-portal-discuss")) return;
-    const root = component?.root?.el || document.querySelector(".o-mail-Discuss") || document.body;
-    const header = root.querySelector(".o-mail-Discuss-header");
-    if (!header) return;
-
-    // `discuss_public_thread` is only the server bootstrap record.  The actual
-    // visible conversation is `store.discuss.thread`; using the bootstrap record
-    // here would make the home screen look like an open chat again.
-    const hasThread = Boolean(component?.store?.discuss?.thread);
-    const isMobile = window.matchMedia("(max-width: 767.98px)").matches;
-
-    // Mobile navigation should be explicit and dependable.  The previous swipe
-    // gesture has been removed; every open conversation now gets a normal back
-    // button that returns to the canonical Chats/Discuss home.
-    let back = header.querySelector("[data-ep-mobile-chat-back]");
-    if (isMobile && hasThread) {
-        if (!back) {
-            back = document.createElement("button");
-            back.type = "button";
-            back.className = "btn btn-link ep-native-mobile-chat-back";
-            back.dataset.epMobileChatBack = "1";
-            back.setAttribute("aria-label", "Back to Chats");
-            back.setAttribute("title", "Back to Chats");
-            back.innerHTML = '<i class="fa fa-chevron-left" aria-hidden="true"></i><span>Chats</span>';
-            back.addEventListener("click", (ev) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                window.location.assign("/my/employee/discuss");
-            });
-            header.prepend(back);
-        }
-    } else {
-        back?.remove();
-    }
-
-    // Add a native-RTC video action next to the existing phone call control.  We
-    // deliberately do not create a second call system: EmployeePortalNativeRTC
-    // is only a small bridge to Odoo's own Rtc.joinCall(..., camera:true).
-    if (hasThread && !header.querySelector("[data-ep-native-video-call]")) {
-        const video = document.createElement("button");
-        video.type = "button";
-        video.className = "btn btn-link ep-native-video-call";
-        video.dataset.epNativeVideoCall = "1";
-        video.setAttribute("aria-label", "Video call");
-        video.setAttribute("title", "Video call");
-        video.innerHTML = '<i class="fa fa-video-camera" aria-hidden="true"></i>';
-        video.addEventListener("click", async (ev) => {
-            ev.preventDefault();
-            ev.stopPropagation();
-            video.disabled = true;
-            try {
-                if (!window.EmployeePortalNativeRTC?.videoCall) {
-                    throw new Error("Native Discuss video calling is still loading. Please try again.");
-                }
-                await window.EmployeePortalNativeRTC.videoCall();
-            } catch (error) {
-                console.error("Employee Portal: native video call failed", error);
-                window.alert(error?.message || "Unable to start video call.");
-            } finally {
-                video.disabled = false;
-            }
-        });
-
-        const phoneButton = Array.from(header.querySelectorAll("button")).find((button) => {
-            if (button === video || button.matches("[data-ep-mobile-chat-back]")) return false;
-            const label = `${button.getAttribute("title") || ""} ${button.getAttribute("aria-label") || ""}`.toLowerCase();
-            return Boolean(button.querySelector(".fa-phone")) || /(^|\s)(audio )?call(\s|$)/.test(label);
-        });
-        if (phoneButton?.parentNode) {
-            phoneButton.insertAdjacentElement("afterend", video);
-        } else {
-            header.appendChild(video);
-        }
-    }
+    // Back and video buttons are rendered by the Owl/QWeb extension.  Keeping
+    // this function as a no-op avoids duplicate controls from older DOM patches.
+    return;
 }
 
 
@@ -296,28 +226,11 @@ patch(Composer.prototype, {
 // using the public bootstrap thread, then the Discuss patch below clears the selected
 // thread after mount so the user still lands on a neutral Chats home.
 patch(DiscussClientAction.prototype, {
-    getActiveId(props) {
-        // The canonical Chats home must never inherit Odoo's remembered/last-active
-        // thread.  That remembered active id is exactly what caused the app to reopen
-        // whichever conversation was last used.  On the home route, always bootstrap
-        // from the server-provided public thread and ignore the restored client state.
-        if (employeePortalMeta("employee-portal-discuss-home")) {
-            const publicThread = this.store?.discuss_public_thread;
-            const publicActiveId = this.store?.Thread?.localIdToActiveId?.(publicThread?.localId);
-            return publicActiveId || "mail.box_inbox";
-        }
-        const activeId = super.getActiveId(props);
-        if (activeId) {
-            return activeId;
-        }
-        const publicThread = this.store?.discuss_public_thread;
-        const publicActiveId = this.store?.Thread?.localIdToActiveId?.(publicThread?.localId);
-        return publicActiveId || "mail.box_inbox";
-    },
-
     parseActiveId(rawActiveId) {
-        // Same rule as getActiveId(): the home route is independent of the last chat.
-        if (employeePortalMeta("employee-portal-discuss-home") || !rawActiveId) {
+        // Odoo 18 calls .split() here.  The public employee shell always has a
+        // bootstrap thread, but keep this defensive fallback so a transient null
+        // active id can never blank the entire Discuss application.
+        if (!rawActiveId && employeePortalMeta("employee-portal-discuss")) {
             const publicThread = this.store?.discuss_public_thread;
             rawActiveId =
                 this.store?.Thread?.localIdToActiveId?.(publicThread?.localId) ||
@@ -325,21 +238,8 @@ patch(DiscussClientAction.prototype, {
         }
         return super.parseActiveId(rawActiveId);
     },
-
-    async restoreDiscussThread() {
-        // Let Odoo fully initialise its native Discuss stores first.  Once that is
-        // complete, explicitly clear the visible thread on the canonical home.  This
-        // preserves the native sidebar/mobile MessagingMenu without showing a stale
-        // remembered conversation.
-        const result = await super.restoreDiscussThread(...arguments);
-        if (employeePortalMeta("employee-portal-discuss-home") && this.store?.discuss) {
-            const isMobile = window.matchMedia("(max-width: 767.98px)").matches;
-            this.store.discuss.thread = undefined;
-            this.store.discuss.activeTab = isMobile ? "chat" : "main";
-        }
-        return result;
-    },
 });
+
 
 patch(Discuss.prototype, {
     setup() {
@@ -348,30 +248,36 @@ patch(Discuss.prototype, {
         const storeService = this.env.services["mail.store"];
         const originalPublicPage = storeService?.inPublicPage;
 
-        // Make the selected conversation the main thread, like backend Discuss,
-        // rather than opening a second compact ChatWindow on mobile.
+        // Keep the full native Discuss view for authenticated employees instead of
+        // the public-page ChatWindow behaviour.
         if (isEmployeePortalDiscuss && storeService) {
             storeService.inPublicPage = false;
         }
         super.setup(...arguments);
         if (isEmployeePortalDiscuss && storeService) {
             storeService.inPublicPage = originalPublicPage;
-            if (isEmployeePortalDiscussHome) {
-                // A stable neutral home: do not expose Odoo's remembered thread.
-                this.store.discuss.thread = undefined;
-                this.store.discuss.activeTab = window.matchMedia("(max-width: 767.98px)").matches ? "chat" : "main";
-            } else {
-                if (!this.store.discuss.thread && this.store.discuss_public_thread) {
-                    this.store.discuss.thread = this.store.discuss_public_thread;
-                }
-                this.store.discuss.activeTab = "main";
-            }
-            document.body.classList.add("ep-native-discuss-public");
-            document.body.classList.toggle("ep-native-discuss-home", isEmployeePortalDiscussHome);
         }
 
         this.isEmployeePortalDiscuss = isEmployeePortalDiscuss;
         this.isEmployeePortalDiscussHome = isEmployeePortalDiscussHome;
+        this._epRtc = isEmployeePortalDiscuss ? useService("discuss.rtc") : null;
+
+        if (isEmployeePortalDiscuss) {
+            document.body.classList.add("ep-native-discuss-public");
+            document.body.classList.toggle("ep-native-discuss-home", isEmployeePortalDiscussHome);
+
+            // IMPORTANT: never clear store.discuss.thread on the home route.  Odoo
+            // persists/restores the last active thread and several native Discuss
+            // features expect a valid thread during bootstrap.  On mobile, switching
+            // to the native 'chat' tab is enough to hide that remembered thread and
+            // show the canonical Chats list.  On desktop a neutral overlay covers the
+            // bootstrap thread until the user intentionally clicks a conversation.
+            if (isEmployeePortalDiscussHome && window.matchMedia("(max-width: 767.98px)").matches) {
+                this.store.discuss.activeTab = "chat";
+            } else {
+                this.store.discuss.activeTab = "main";
+            }
+        }
 
         if (isEmployeePortalDiscuss) {
             const originalBodyStyle = {
@@ -450,16 +356,30 @@ patch(Discuss.prototype, {
                 this._epSidebarObserver.observe(this.root?.el || document.body, { childList: true, subtree: true });
                 if (isEmployeePortalDiscussHome) {
                     const isMobile = window.matchMedia("(max-width: 767.98px)").matches;
-                    // Clear the selected thread *after* the native Discuss component has
-                    // mounted. This is late enough to keep Odoo's lifecycle intact, but
-                    // early enough that the user always sees the Discuss/Chats home.
-                    this.store.discuss.thread = undefined;
-                    this.store.discuss.activeTab = isMobile ? "chat" : "main";
-                    requestAnimationFrame(() => {
-                        if (!this.store?.discuss) return;
-                        this.store.discuss.thread = undefined;
-                        this.store.discuss.activeTab = isMobile ? "chat" : "main";
-                    });
+                    if (isMobile) {
+                        // Native MessagingMenu is the canonical mobile landing page.
+                        // Do not mutate the restored thread: only select the Chat tab.
+                        this.store.discuss.activeTab = "chat";
+                    } else {
+                        // Desktop keeps the native sidebar, but visually starts neutral.
+                        // The remembered bootstrap thread remains intact underneath so
+                        // Odoo's store/call/composer lifecycle is never broken.
+                        const content = this.root?.el?.querySelector(".o-mail-Discuss-content");
+                        if (content && !content.querySelector("[data-ep-discuss-home-cover]")) {
+                            content.classList.add("ep-native-home-covered");
+                            const cover = document.createElement("div");
+                            cover.dataset.epDiscussHomeCover = "1";
+                            cover.className = "ep-native-discuss-home-cover";
+                            cover.innerHTML = '<div><i class="fa fa-comments-o" aria-hidden="true"></i><h4>Chats</h4><p>Select a conversation to start messaging.</p></div>';
+                            content.appendChild(cover);
+                            const sidebar = this.root?.el?.querySelector(".o-mail-DiscussSidebar");
+                            sidebar?.addEventListener("click", (event) => {
+                                if (event.target.closest("[data-ep-discuss-install], [data-ep-new-native-chat], .ep-native-chats-home-link")) return;
+                                cover.remove();
+                                content.classList.remove("ep-native-home-covered");
+                            }, { once: true });
+                        }
+                    }
                 }
                 this._epApplyViewportHeight();
                 window.setTimeout(this._epApplyViewportHeight, 80);
@@ -485,6 +405,19 @@ patch(Discuss.prototype, {
                 document.body.classList.remove("ep-native-discuss-public");
                 document.body.classList.remove("ep-native-discuss-home");
             });
+        }
+    },
+
+    async startEmployeeVideoCall() {
+        if (!this.thread || !this._epRtc) {
+            this.notification?.add?.("Open a conversation before starting a video call.", { type: "warning" });
+            return;
+        }
+        try {
+            await this._epRtc.toggleCall(this.thread, { audio: true, camera: true });
+        } catch (error) {
+            console.error("Employee Portal: native video call failed", error);
+            this.notification?.add?.(error?.message || "Unable to start video call.", { type: "danger" });
         }
     },
 
