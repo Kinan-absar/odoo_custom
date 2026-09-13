@@ -16,7 +16,7 @@ Version 18.0.1.19.0 switches employee communication away from the custom portal 
 
 The standalone custom Chats frontend is no longer required. The employee communication surface is the existing native Odoo Discuss implementation at `/my/employee/discuss` and `/my/employee/discuss/channel/<id>`.
 
-- Employee Portal Messages opens `/my/employee/discuss` in a new window.
+- Employee Portal Messages opens `/my/employee/discuss` in a new window, which immediately redirects to the most recent native Discuss channel. The old conversation hub is only kept at `/my/employee/discuss/manage` for starting conversations when needed.
 - The native Discuss surface is installable as a PWA named **Chats**.
 - The PWA uses the active company logo for install icons.
 - No messages, attachments, calls, voice notes, reactions, presence, or RTC behavior are reimplemented by the PWA layer; all remain native Odoo Discuss features.

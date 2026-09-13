@@ -193,6 +193,18 @@ class EmployeePortalNativeDiscussController(http.Controller):
         return channel
 
     @http.route('/my/employee/discuss', type='http', auth='user', website=True, methods=['GET'])
+    def employee_discuss_entry(self, **kwargs):
+        """Open native Discuss immediately instead of showing an intermediate hub."""
+        user = self._employee_user()
+        if not user:
+            return request.redirect('/my/employee')
+        channels = self._portal_channels(user)
+        if channels:
+            return request.redirect(f'/my/employee/discuss/channel/{channels[0].id}')
+        # Only users with no existing employee conversations ever see the manage page.
+        return request.redirect('/my/employee/discuss/manage')
+
+    @http.route('/my/employee/discuss/manage', type='http', auth='user', website=True, methods=['GET'])
     def employee_discuss_hub(self, **kwargs):
         user = self._employee_user()
         if not user:
@@ -269,14 +281,14 @@ class EmployeePortalNativeDiscussController(http.Controller):
             'companyName': request.env.company.name,
             'inPublicPage': True,
             'employeePortalDiscuss': True,
-            'employeePortalBackUrl': '/my/employee/discuss',
+            'employeePortalBackUrl': '/my/employee/discuss/manage',
             'discuss_public_thread': Store.one(channel_user),
         })
         return request.render('mail.discuss_public_channel_template', {
             'data': store.get_result(),
             'session_info': channel_user.env['ir.http'].session_info(),
             'employee_portal_discuss': True,
-            'employee_portal_back_url': '/my/employee/discuss',
+            'employee_portal_back_url': '/my/employee/discuss/manage',
             'employee_portal_home_url': '/my/employee',
         })
 

@@ -121,3 +121,11 @@
     padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
   }
 }
+
+.ep-native-discuss-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+}

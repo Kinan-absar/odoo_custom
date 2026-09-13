@@ -107,6 +107,12 @@ patch(Discuss.prototype, {
             };
 
             onMounted(() => {
+                const companyLogo = employeePortalMeta("employee-discuss-company-logo");
+                if (companyLogo) {
+                    document.querySelectorAll("[data-ep-company-logo]").forEach((img) => {
+                        img.src = companyLogo;
+                    });
+                }
                 this._epApplyViewportHeight();
                 window.setTimeout(this._epApplyViewportHeight, 80);
                 window.setTimeout(this._epApplyViewportHeight, 300);

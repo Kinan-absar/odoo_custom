@@ -4,11 +4,8 @@
        t-inherit="mail.Discuss" t-inherit-mode="extension">
         <xpath expr="//div[contains(@class, 'o-mail-Discuss-content')]/div[contains(@class, 'o-mail-Discuss-header')]" position="before">
             <div t-if="isEmployeePortalDiscuss" class="ep-native-discuss-toolbar d-flex align-items-center gap-2 px-2 py-2 border-bottom">
-                <button type="button" class="btn btn-light ep-native-discuss-back" t-on-click="goEmployeeMessages" title="Back to Chats">
-                    <i class="fa fa-arrow-left"/><span class="d-none d-sm-inline ms-1">Chats</span>
-                </button>
-                <span class="ep-native-discuss-app-title d-none d-md-inline-flex align-items-center gap-2">
-                    <i class="fa fa-comments"/>
+                <span class="ep-native-discuss-app-title d-inline-flex align-items-center gap-2">
+                    <img class="ep-native-discuss-logo" data-ep-company-logo="1" alt=""/>
                     <strong>Chats</strong>
                 </span>
                 <span class="flex-grow-1"/>
