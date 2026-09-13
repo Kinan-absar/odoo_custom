@@ -1,6 +1,7 @@
 /** @odoo-module **/
 
 import { Discuss } from "@mail/core/public_web/discuss";
+import { DiscussClientAction } from "@mail/core/public_web/discuss_client_action";
 import { Composer } from "@mail/core/common/composer";
 import { patch } from "@web/core/utils/patch";
 import { onMounted, onWillUnmount } from "@odoo/owl";
@@ -19,6 +20,35 @@ patch(Composer.prototype, {
             return true;
         }
         return super.allowUpload;
+    },
+});
+
+
+// Odoo 18 DiscussClientAction restores the current thread before the Discuss child
+// component mounts.  On the neutral employee home route we must therefore keep a
+// valid bootstrap thread until restoreDiscussThread() has completed.  A null active
+// id makes Odoo's native parseActiveId() call .split() on null.  Guard that edge case
+// using the public bootstrap thread, then the Discuss patch below clears the selected
+// thread after mount so the user still lands on a neutral Chats home.
+patch(DiscussClientAction.prototype, {
+    getActiveId(props) {
+        const activeId = super.getActiveId(props);
+        if (activeId) {
+            return activeId;
+        }
+        const publicThread = this.store?.discuss_public_thread;
+        const publicActiveId = this.store?.Thread?.localIdToActiveId?.(publicThread?.localId);
+        return publicActiveId || "mail.box_inbox";
+    },
+
+    parseActiveId(rawActiveId) {
+        if (!rawActiveId) {
+            const publicThread = this.store?.discuss_public_thread;
+            rawActiveId =
+                this.store?.Thread?.localIdToActiveId?.(publicThread?.localId) ||
+                "mail.box_inbox";
+        }
+        return super.parseActiveId(rawActiveId);
     },
 });
 
@@ -41,12 +71,6 @@ patch(Discuss.prototype, {
                 this.store.discuss.thread = this.store.discuss_public_thread;
             }
             this.store.discuss.activeTab = "main";
-            if (isEmployeePortalDiscussHome) {
-                // The home route is still the real native Discuss component.  Keep
-                // its native sidebar/store/RTC stack, but start with no selected
-                // conversation so the installed PWA never opens as "a chat with X".
-                this.store.discuss.thread = undefined;
-            }
             document.body.classList.add("ep-native-discuss-public");
             document.body.classList.toggle("ep-native-discuss-home", isEmployeePortalDiscussHome);
         }

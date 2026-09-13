@@ -362,7 +362,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
         if not user:
             return request.not_found()
         script = '''
-const CACHE_NAME = "employee-native-discuss-pwa-v3";
+const CACHE_NAME = "employee-native-discuss-pwa-v4";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
