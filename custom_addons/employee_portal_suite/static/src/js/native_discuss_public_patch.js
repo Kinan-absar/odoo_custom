@@ -250,20 +250,20 @@ patch(DiscussClientAction.prototype, {
     },
 
     async restoreDiscussThread() {
-        // The canonical Chats root is a *list/home* state, not a thread state.
-        // Do not let native Discuss restore the bootstrap thread at all here: calling
-        // super first can recreate a stale conversation (especially on mobile Safari)
-        // after our UI has already cleared it.  Channel routes do use native restore.
-        if (employeePortalMeta("employee-portal-discuss-home")) {
-            if (this.store?.discuss) {
-                this.store.discuss.thread = undefined;
-                this.store.discuss.activeTab = window.matchMedia("(max-width: 767.98px)").matches
-                    ? "chat"
-                    : "main";
-            }
-            return;
+        // Always let Odoo complete its native Discuss restore lifecycle first.  The
+        // public Discuss client needs that lifecycle to finish mounting the sidebar,
+        // stores and mobile MessagingMenu.  Skipping `super` leaves a blank page.
+        const result = await super.restoreDiscussThread(...arguments);
+        if (employeePortalMeta("employee-portal-discuss-home") && this.store?.discuss) {
+            // The canonical Chats root is a neutral home/list state.  Clear only the
+            // selected thread *after* native restore has completed so Odoo cannot
+            // re-open the bootstrap/stale conversation afterwards.
+            this.store.discuss.thread = undefined;
+            this.store.discuss.activeTab = window.matchMedia("(max-width: 767.98px)").matches
+                ? "chat"
+                : "main";
         }
-        return await super.restoreDiscussThread(...arguments);
+        return result;
     },
 });
 
@@ -367,19 +367,14 @@ patch(Discuss.prototype, {
                 this._epSidebarObserver = new MutationObserver(() => epEnhanceNativeSidebar());
                 this._epSidebarObserver.observe(this.root?.el || document.body, { childList: true, subtree: true });
                 if (isEmployeePortalDiscussHome) {
-                    const showDiscussHome = () => {
-                        if (!employeePortalMeta("employee-portal-discuss-home")) return;
-                        this.store.discuss.thread = undefined;
-                        this.store.discuss.activeTab = window.matchMedia("(max-width: 767.98px)").matches
-                            ? "chat"
-                            : "main";
-                    };
-                    showDiscussHome();
-                    // Public Discuss may hydrate one more time after mount on Safari.
-                    // Keep the canonical root authoritative without touching channel URLs.
-                    window.setTimeout(showDiscussHome, 120);
-                    window.setTimeout(showDiscussHome, 450);
-                    window.setTimeout(showDiscussHome, 1000);
+                    // `restoreDiscussThread()` already turns the bootstrap thread into
+                    // the neutral home state after Odoo has finished restoring.  Keep
+                    // this mount-time assignment idempotent, but do not schedule later
+                    // timers that could close a conversation the user has just opened.
+                    this.store.discuss.thread = undefined;
+                    this.store.discuss.activeTab = window.matchMedia("(max-width: 767.98px)").matches
+                        ? "chat"
+                        : "main";
                 }
 
                 // Mobile gesture: a deliberate left swipe inside a conversation returns

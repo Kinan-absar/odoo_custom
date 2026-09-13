@@ -3,7 +3,7 @@
     <t t-name="employee_portal_suite.NativeDiscussPortalPatch"
        t-inherit="mail.Discuss" t-inherit-mode="extension">
         <xpath expr="//MessagingMenu" position="attributes">
-            <attribute name="t-if">ui.isSmall and !isEmployeePortalDiscuss</attribute>
+            <attribute name="t-if">ui.isSmall</attribute>
         </xpath>
     </t>
 </templates>
