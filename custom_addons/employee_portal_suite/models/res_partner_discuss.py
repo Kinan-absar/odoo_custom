@@ -60,13 +60,13 @@ class ResPartner(models.Model):
     @api.readonly
     @api.model
     def search_for_channel_invite(self, search_term, channel_id=None, limit=30):
-        """Let Employee Portal users use Odoo's *native* Invite People panel.
+        """Use the same employee directory for native Discuss invites.
 
-        Odoo's standard implementation intentionally filters on
-        ``user_ids.share = False``. Employee portal accounts are ``share=True``,
-        therefore the native ChannelInvitation panel otherwise finds nobody.
-        For authenticated employee portal users, expose only active employees
-        (internal + employee portal) and never vendor/customer portal accounts.
+        Odoo's standard invite search excludes ``share=True`` users, which means
+        internal employees cannot find employee-portal colleagues. For both
+        internal employees and employee-portal users, expose active users linked
+        to an active ``hr.employee``. Vendor/customer portal accounts remain
+        excluded because they are not linked to an active employee.
         """
         is_employee_portal = bool(
             self.env.user.share
@@ -75,7 +75,7 @@ class ResPartner(models.Model):
             ])
             and not self.env.user.has_group('employee_portal_suite.group_attendance_only')
         )
-        if not is_employee_portal:
+        if not self.env.user._is_internal() and not is_employee_portal:
             return super().search_for_channel_invite(
                 search_term, channel_id=channel_id, limit=limit
             )
@@ -86,15 +86,13 @@ class ResPartner(models.Model):
                 channel = channel.browse(int(channel_id)).exists()
             except (TypeError, ValueError):
                 channel = self.env['discuss.channel'].sudo()
-            if channel:
-                current_partner = self.env.user.partner_id
-                if current_partner not in channel.channel_member_ids.partner_id:
-                    return {'count': 0, 'data': {}}
+            if channel and self.env.user.partner_id not in channel.channel_member_ids.partner_id:
+                return {'count': 0, 'data': {}}
 
         employee_users = self.env['hr.employee'].sudo().search([
             ('active', '=', True),
             ('user_id', '!=', False),
-        ]).mapped('user_id').filtered(lambda u: u.active)
+        ]).mapped('user_id').filtered(lambda u: u.active and u.partner_id)
         employee_partner_ids = employee_users.partner_id.ids
         excluded_partner_ids = [self.env.user.partner_id.id]
         if channel:
@@ -123,4 +121,3 @@ class ResPartner(models.Model):
             'count': Partner.search_count(domain),
             'data': store.get_result(),
         }
-

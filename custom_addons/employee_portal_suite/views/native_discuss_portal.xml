@@ -83,7 +83,7 @@
 
                     <div class="ep-chats-thread-list" data-ep-thread-list="1">
                         <t t-foreach="channels" t-as="ch">
-                            <a class="ep-chats-thread" data-ep-thread="1" t-att-data-search="(ch['name'] or '').lower()" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']">
+                            <a class="ep-chats-thread" data-ep-thread="1" target="ep_discuss_frame" t-att-data-search="(ch['name'] or '').lower()" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']">
                                 <div class="ep-chats-avatar">
                                     <img t-if="ch['avatar']" t-att-src="ch['avatar']"/>
                                     <span t-if="not ch['avatar']" class="ep-chats-avatar-fallback">G</span>
@@ -130,6 +130,24 @@
                                 }
                                 return;
                             }
+                            var thread = event.target.closest &amp;&amp; event.target.closest("[data-ep-thread]");
+                            if (thread) {
+                                event.preventDefault();
+                                var shell = document.querySelector("[data-ep-chats-shell]");
+                                var frame = document.querySelector("[data-ep-discuss-frame]");
+                                var empty = document.querySelector("[data-ep-chat-empty]");
+                                var href = thread.getAttribute("href");
+                                if (shell &amp;&amp; frame &amp;&amp; href) {
+                                    var rows = document.querySelectorAll("[data-ep-thread]");
+                                    for (var r = 0; r &lt; rows.length; r++) rows[r].classList.remove("active");
+                                    thread.classList.add("active");
+                                    shell.classList.add("ep-chat-open");
+                                    if (empty) empty.style.display = "none";
+                                    frame.classList.add("show");
+                                    if (frame.getAttribute("src") !== href) frame.setAttribute("src", href);
+                                }
+                                return;
+                            }
                             var close = event.target.closest &amp;&amp; event.target.closest("[data-ep-new-chat-close]");
                             if (close) {
                                 event.preventDefault();
@@ -165,6 +183,21 @@
                             }
                         }, true);
                     }
+
+                    window.addEventListener("message", function (event) {
+                        if (event.origin !== window.location.origin || !event.data || event.data.type !== "employee-discuss-back-to-chats") return;
+                        var shell = document.querySelector("[data-ep-chats-shell]");
+                        var frame = document.querySelector("[data-ep-discuss-frame]");
+                        var empty = document.querySelector("[data-ep-chat-empty]");
+                        if (shell) shell.classList.remove("ep-chat-open");
+                        if (frame) {
+                            frame.classList.remove("show");
+                            frame.setAttribute("src", "about:blank");
+                        }
+                        if (empty) empty.style.display = "";
+                        var rows = document.querySelectorAll("[data-ep-thread]");
+                        for (var r = 0; r &lt; rows.length; r++) rows[r].classList.remove("active");
+                    });
 
                     if (document.readyState === "loading") {
                         document.addEventListener("DOMContentLoaded", bindChatsHomeInline);
