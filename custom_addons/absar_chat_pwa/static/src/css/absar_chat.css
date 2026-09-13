@@ -154,3 +154,120 @@ button,input,textarea{font:inherit}.ac-app{height:100dvh;display:grid;grid-templ
     min-width:42px; padding:3px 7px; border-radius:999px; background:#fff1f0; color:#b42318;
     border:1px solid #fecdca; font-size:11px; font-weight:700; line-height:1.2;
 }
+
+/* Native Discuss voice notes and RTC call bridge */
+.ac-voice-note {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 260px;
+    max-width: 420px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.58);
+}
+.ac-voice-symbol {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    background: #e6f4ef;
+    font-size: 16px;
+}
+.ac-voice-note .ac-audio-preview {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 250px;
+    height: 36px;
+}
+.ac-voice-download {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #65727f;
+    text-decoration: none;
+}
+.ac-native-call-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+}
+.ac-native-call-layer.is-hidden { display: none; }
+.ac-native-call-toolbar {
+    height: 48px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    border-bottom: 1px solid #e3e7ec;
+    background: #fff;
+    color: #1f2937;
+}
+.ac-native-call-toolbar button {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: #f0f2f5;
+    font-size: 22px;
+    cursor: pointer;
+}
+#ac-native-call-frame {
+    width: 100%;
+    height: calc(100vh - 48px);
+    border: 0;
+    background: #fff;
+}
+.ac-native-incoming {
+    position: fixed;
+    inset: 0;
+    z-index: 6000;
+    display: grid;
+    place-items: center;
+    background: rgba(18, 24, 33, .38);
+    backdrop-filter: blur(4px);
+}
+.ac-native-incoming.is-hidden { display: none; }
+.ac-native-incoming-card {
+    width: min(92vw, 360px);
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, .22);
+    padding: 28px 24px 22px;
+    text-align: center;
+}
+#ac-native-incoming-avatar {
+    width: 78px;
+    height: 78px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 14px;
+}
+.ac-native-incoming-copy { display: grid; gap: 4px; }
+.ac-native-incoming-copy strong { font-size: 19px; color: #172033; }
+.ac-native-incoming-copy span { color: #6b7280; }
+.ac-native-incoming-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 22px;
+}
+.ac-native-incoming-actions button {
+    border: 0;
+    border-radius: 12px;
+    min-height: 44px;
+    font-weight: 650;
+    color: #fff;
+    cursor: pointer;
+}
+.ac-native-incoming-actions .decline { background: #dc3545; }
+.ac-native-incoming-actions .answer { background: #16865c; }

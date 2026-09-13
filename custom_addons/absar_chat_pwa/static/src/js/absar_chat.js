@@ -48,6 +48,8 @@
             this.messageTimer = null;
             this.threadTimer = null;
             this.presenceTimer = null;
+            this.nativeCallTimer = null;
+            this.currentNativeInvitation = null;
             this.typingTimer = null;
             this.lastTyping = false;
             this.previousUnreadTotal = 0;
@@ -61,9 +63,6 @@
             this.buildEmojiPanel();
             this.bindInstallPrompt();
             try {
-                if (typeof window.__ensureEmployeePortalCaller === "function") {
-                    window.__ensureEmployeePortalCaller();
-                }
                 await Promise.all([this.refreshContacts(), this.refreshThreads(false), this.refreshPresence()]);
                 this.restoreThreadFromUrl();
                 this.startTimers();
@@ -326,9 +325,11 @@
             if (!items.length) return "";
             return `<div class="ac-attachments">${items.map(a => {
                 const previewUrl = `/chat/attachment/${a.id}`;
-                const mt = a.mimetype || "";
+                const mt = (a.mimetype || "").toLowerCase();
+                if (a.is_voice || mt.startsWith("audio/")) {
+                    return `<div class="ac-voice-note"><div class="ac-voice-symbol">🎙</div><audio class="ac-audio-preview" controls preload="metadata" src="${previewUrl}"></audio><a class="ac-voice-download" href="${previewUrl}" target="_blank" title="Download"><i class="fa fa-download"></i></a></div>`;
+                }
                 if (mt.startsWith("image/")) return `<a href="${previewUrl}" target="_blank"><img class="ac-image-preview" src="${previewUrl}" alt="${esc(a.name)}"/></a>`;
-                if (mt.startsWith("audio/")) return `<audio class="ac-audio-preview" controls preload="metadata" src="${previewUrl}"></audio>`;
                 return `<a class="ac-attachment" href="${previewUrl}" target="_blank"><i class="fa ${mt.includes('pdf') ? 'fa-file-pdf-o' : 'fa-file-o'}"></i><span class="ac-attachment-copy"><strong>${esc(a.name)}</strong><span>${this.formatBytes(a.size)}</span></span><i class="fa fa-download"></i></a>`;
             }).join("")}</div>`;
         }
@@ -376,7 +377,7 @@
             }
         }
 
-        async uploadAndQueueFile(file) {
+        async uploadAndQueueFile(file, options = {}) {
             if (!this.currentThreadId) {
                 alert("Open a conversation before attaching a file.");
                 return null;
@@ -398,6 +399,8 @@
                     filename: file.name || "attachment",
                     mimetype: file.type || "application/octet-stream",
                     data,
+                    voice_note: Boolean(options.voiceNote),
+                    duration_ms: Number(options.durationMs || 0),
                 });
                 if (!result || result.error || !result.attachment?.id) {
                     throw new Error(result?.error || "upload_failed");
@@ -578,6 +581,43 @@
             return types.find(t => window.MediaRecorder?.isTypeSupported?.(t)) || "";
         }
 
+        async _encodeVoiceMp3(blob) {
+            const Lame = window.lamejs;
+            if (!Lame?.Mp3Encoder) {
+                throw new Error("Odoo MP3 encoder is not available.");
+            }
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            const ctx = new AudioCtx();
+            try {
+                const decoded = await ctx.decodeAudioData(await blob.arrayBuffer());
+                const channels = decoded.numberOfChannels;
+                const length = decoded.length;
+                const mono = new Float32Array(length);
+                for (let ch = 0; ch < channels; ch++) {
+                    const data = decoded.getChannelData(ch);
+                    for (let i = 0; i < length; i++) mono[i] += data[i] / channels;
+                }
+                const targetRate = 16000;
+                const samples = this._downsampleMono(mono, decoded.sampleRate, targetRate);
+                const pcm = new Int16Array(samples.length);
+                for (let i = 0; i < samples.length; i++) {
+                    const v = Math.max(-1, Math.min(1, samples[i]));
+                    pcm[i] = v < 0 ? Math.round(v * 32768) : Math.round(v * 32767);
+                }
+                const encoder = new Lame.Mp3Encoder(1, targetRate, 64);
+                const parts = [];
+                for (let i = 0; i < pcm.length; i += 1152) {
+                    const encoded = encoder.encodeBuffer(pcm.subarray(i, Math.min(i + 1152, pcm.length)));
+                    if (encoded.length) parts.push(new Int8Array(encoded));
+                }
+                const flushed = encoder.flush();
+                if (flushed.length) parts.push(new Int8Array(flushed));
+                return { blob: new Blob(parts, { type: "audio/mpeg" }), durationMs: Math.round(decoded.duration * 1000) };
+            } finally {
+                try { await ctx.close(); } catch (_) {}
+            }
+        }
+
         async _stopVoiceRecording() {
             const capture = this.voiceCapture;
             if (!capture || capture.stopping) return;
@@ -599,18 +639,18 @@
                     capture.recorder.stop();
                 }
                 await finished;
-                // Native Discuss stores browser-created audio as a normal
-                // ir.attachment.  Do the same here: keep MediaRecorder's native
-                // Opus/MP4 container instead of re-encoding it in JavaScript.
+                // Match native Odoo Discuss voice notes: encode to MP3 using
+                // Odoo's own bundled lame.js and mark the attachment with the
+                // native ir.attachment.voice_ids metadata server-side.
                 const chunks = capture.chunks.filter(part => part && part.size);
                 if (!chunks.length) throw new Error("No audio was captured.");
-                const mime = capture.recorder.mimeType || capture.mimeType || chunks[0].type || "audio/webm";
-                const blob = new Blob(chunks, { type: mime });
-                if (!blob.size) throw new Error("The recording is empty.");
-                const ext = mime.includes("mp4") ? "m4a" : (mime.includes("ogg") ? "ogg" : "webm");
+                const sourceMime = capture.recorder.mimeType || capture.mimeType || chunks[0].type || "audio/webm";
+                const sourceBlob = new Blob(chunks, { type: sourceMime });
+                if (!sourceBlob.size) throw new Error("The recording is empty.");
+                const encoded = await this._encodeVoiceMp3(sourceBlob);
                 const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-                const file = new File([blob], `Voice note ${stamp}.${ext}`, { type: mime });
-                const att = await this.uploadAndQueueFile(file);
+                const file = new File([encoded.blob], `Voice-${stamp}.mp3`, { type: "audio/mpeg" });
+                const att = await this.uploadAndQueueFile(file, { voiceNote: true, durationMs: encoded.durationMs });
                 if (!att) throw new Error("Voice note upload failed.");
                 await this.sendMessage();
             } catch (error) {
@@ -668,58 +708,101 @@
             }
         }
 
+        ensureNativeCallUi() {
+            if (document.getElementById("ac-native-call-layer")) return;
+            const layer = document.createElement("div");
+            layer.id = "ac-native-call-layer";
+            layer.className = "ac-native-call-layer is-hidden";
+            layer.innerHTML = `<div class="ac-native-call-toolbar"><strong>Odoo Call</strong><button type="button" id="ac-native-call-close" aria-label="Close">×</button></div><iframe id="ac-native-call-frame" allow="camera; microphone; display-capture; autoplay" title="Odoo native call"></iframe>`;
+            document.body.appendChild(layer);
+            document.getElementById("ac-native-call-close").addEventListener("click", () => this.closeNativeCall());
+
+            const incoming = document.createElement("div");
+            incoming.id = "ac-native-incoming";
+            incoming.className = "ac-native-incoming is-hidden";
+            incoming.innerHTML = `<div class="ac-native-incoming-card"><img id="ac-native-incoming-avatar" alt=""/><div class="ac-native-incoming-copy"><strong id="ac-native-incoming-name">Incoming call</strong><span id="ac-native-incoming-kind">Audio call</span></div><div class="ac-native-incoming-actions"><button type="button" id="ac-native-decline" class="decline">Decline</button><button type="button" id="ac-native-answer" class="answer">Answer</button></div></div>`;
+            document.body.appendChild(incoming);
+            document.getElementById("ac-native-decline").addEventListener("click", () => this.declineNativeIncoming());
+            document.getElementById("ac-native-answer").addEventListener("click", () => this.answerNativeIncoming());
+        }
+
+        openNativeCall(url) {
+            this.ensureNativeCallUi();
+            const layer = document.getElementById("ac-native-call-layer");
+            const frame = document.getElementById("ac-native-call-frame");
+            frame.src = url;
+            layer.classList.remove("is-hidden");
+        }
+
+        closeNativeCall() {
+            const layer = document.getElementById("ac-native-call-layer");
+            const frame = document.getElementById("ac-native-call-frame");
+            if (frame) frame.src = "about:blank";
+            layer?.classList.add("is-hidden");
+        }
+
+        async callUsers(userIds, type = "audio") {
+            const ids = [...new Set((userIds || []).map(Number).filter(id => id && id !== this.userId))];
+            if (!ids.length) return;
+            const result = await rpc("/employee_portal/chat/start", { participant_ids: ids });
+            if (!result?.thread_id) {
+                alert(result?.error || "Could not open a call conversation.");
+                return;
+            }
+            await this.refreshThreads(false);
+            await this.openThread(Number(result.thread_id), false);
+            await this.callCurrent(type);
+        }
+
         async callCurrent(type) {
-            const t = this.currentThread || {};
-            let participants = (t.participants || []).filter(p => !p.is_me).map(p => Number(p.user_id)).filter(Boolean);
-            if (!participants.length) {
-                participants = (t.participant_ids || []).map(Number).filter(id => id && id !== this.userId);
-            }
-            participants = [...new Set(participants)];
-            if (!participants.length) {
-                alert("No callable employee was found in this conversation.");
+            const channelId = Number(this.currentThread?.discuss_channel_id || 0);
+            if (!channelId) {
+                alert("This conversation is not connected to Odoo Discuss yet.");
                 return;
             }
-            const caller = await this.waitForCaller();
-            if (!caller || typeof caller._startCall !== "function") {
-                alert("The call engine could not start. Close and reopen Chats, then try again.");
-                return;
-            }
-            const button = type === "video" ? $("#ac-video-call") : $("#ac-audio-call");
-            button?.classList.add("is-starting");
+            const mode = type === "video" ? "video" : "audio";
+            const url = `/my/employee/discuss/channel/${channelId}?chats_call=${mode}`;
+            this.openNativeCall(url);
+        }
+
+        async pollNativeIncoming() {
             try {
-                // Do not duplicate the WebRTC lifecycle here. Use the exact same
-                // proven call entry points used by Employee Portal Suite.
-                if (participants.length === 1) {
-                    await caller._startCall(participants[0], type === "video" ? "video" : "audio");
-                } else {
-                    await caller._startHistoryGroupCall(participants, type === "video" ? "video" : "audio");
+                const result = await rpc("/employee_portal/discuss/call/poll", {});
+                const call = result?.call || null;
+                if (!call) {
+                    if (!this.currentNativeInvitation) document.getElementById("ac-native-incoming")?.classList.add("is-hidden");
+                    return;
                 }
+                if (this.currentNativeInvitation?.channel_id === call.channel_id) return;
+                this.currentNativeInvitation = call;
+                this.ensureNativeCallUi();
+                document.getElementById("ac-native-incoming-name").textContent = call.caller_name || "Incoming call";
+                document.getElementById("ac-native-incoming-kind").textContent = call.is_video ? "Incoming video call" : "Incoming audio call";
+                const avatar = document.getElementById("ac-native-incoming-avatar");
+                avatar.src = call.caller_avatar || this.companyLogo || this.userAvatar;
+                document.getElementById("ac-native-incoming").classList.remove("is-hidden");
             } catch (error) {
-                console.error("[Chats] call start failed", error);
-                alert(`Could not start ${type === "video" ? "video" : "audio"} call: ${error?.message || error}`);
-            } finally {
-                button?.classList.remove("is-starting");
+                console.warn("[Chats] native incoming call poll failed", error);
             }
         }
 
-        waitForCaller() {
-            return new Promise(resolve => {
-                let tries = 0;
-                const check = () => {
-                    if (window.__employeePortalCaller) return resolve(window.__employeePortalCaller);
-                    if (typeof window.__ensureEmployeePortalCaller === "function") {
-                        try {
-                            const caller = window.__ensureEmployeePortalCaller();
-                            if (caller) return resolve(caller);
-                        } catch (error) {
-                            console.error("[Chats] call engine bootstrap failed", error);
-                        }
-                    }
-                    if (++tries > 20) return resolve(null);
-                    setTimeout(check, 100);
-                };
-                check();
-            });
+        async answerNativeIncoming() {
+            const call = this.currentNativeInvitation;
+            if (!call) return;
+            const url = new URL(call.open_url, window.location.origin);
+            url.searchParams.set("auto_answer", "1");
+            url.searchParams.set("auto_video", call.is_video ? "1" : "0");
+            document.getElementById("ac-native-incoming")?.classList.add("is-hidden");
+            this.openNativeCall(url.pathname + url.search);
+            this.currentNativeInvitation = null;
+        }
+
+        async declineNativeIncoming() {
+            const call = this.currentNativeInvitation;
+            if (!call) return;
+            try { await rpc("/employee_portal/discuss/call/decline", { channel_id: call.channel_id }); } catch (_) {}
+            document.getElementById("ac-native-incoming")?.classList.add("is-hidden");
+            this.currentNativeInvitation = null;
         }
 
         async refreshCallHistory() {
@@ -730,7 +813,7 @@
                 const unread = Number(result?.unread_missed_count || 0);
                 $("#ac-call-badge").textContent = unread > 99 ? "99+" : unread; $("#ac-call-badge").classList.toggle("is-hidden", !unread);
                 box.innerHTML = calls.length ? calls.map(c => `<div class="ac-call-row ${c.status === 'missed' ? 'missed' : ''}" data-call='${JSON.stringify(c).replace(/'/g,"&#39;")}'><img src="${esc(c.avatar_url || this.companyLogo)}" alt=""/><div class="ac-call-copy"><strong>${esc(c.title || "Employee")}</strong><span>${esc(this.callStatus(c))} · ${esc(this.formatListTime(c.started_at))}${c.duration_seconds ? ` · ${this.formatDuration(c.duration_seconds)}` : ""}</span></div><div class="ac-call-actions"><button class="ac-icon-btn" data-callback="audio" title="Call"><i class="fa fa-phone"></i></button><button class="ac-icon-btn" data-callback="video" title="Video call"><i class="fa fa-video-camera"></i></button></div></div>`).join("") : `<div class="ac-loading">No calls yet.</div>`;
-                $$("[data-callback]", box).forEach(btn => btn.addEventListener("click", async () => { const row = btn.closest(".ac-call-row"); const c = JSON.parse(row.dataset.call); const ids = (c.callback_user_ids || []).map(Number).filter(Boolean); const caller = await this.waitForCaller(); if (!caller || !ids.length) return; if (ids.length === 1) caller._startCall(ids[0], btn.dataset.callback); else caller._startHistoryGroupCall(ids, btn.dataset.callback); }));
+                $$("[data-callback]", box).forEach(btn => btn.addEventListener("click", async () => { const row = btn.closest(".ac-call-row"); const c = JSON.parse(row.dataset.call); const ids = (c.callback_user_ids || []).map(Number).filter(Boolean); if (!ids.length) return; await this.callUsers(ids, btn.dataset.callback || "audio"); }));
                 await rpc("/employee_portal/call/history/mark_seen", {}).catch(() => {});
             } catch (error) { box.innerHTML = `<div class="ac-error">Could not load call history.</div>`; }
         }
@@ -742,9 +825,9 @@
             const box = $("#ac-people-list"); if (!box) return;
             const q = ($("#ac-people-search").value || "").trim().toLowerCase();
             const rows = this.contacts.filter(c => !q || `${c.name} ${c.department} ${c.note}`.toLowerCase().includes(q));
-            box.innerHTML = rows.length ? rows.map(c => `<article class="ac-person-card"><img src="${esc(c.avatar_url)}" alt=""/><div class="ac-person-copy"><strong>${esc(c.name)}</strong><span>${esc(c.note || c.department || c.user_type || "Employee")}</span><span>${esc(this.presenceLabel(c.presence))}</span></div><div class="ac-person-actions"><button class="ac-icon-btn" data-chat-user="${c.user_id}" title="Message"><i class="fa fa-comment"></i></button><button class="ac-icon-btn" data-call-user="${c.user_id}" data-type="audio" title="Call"><i class="fa fa-phone"></i></button></div></article>`).join("") : `<div class="ac-loading">No employees found.</div>`;
+            box.innerHTML = rows.length ? rows.map(c => `<article class="ac-person-card"><img src="${esc(c.avatar_url)}" alt=""/><div class="ac-person-copy"><strong>${esc(c.name)}</strong><span>${esc(c.note || c.department || c.user_type || "Employee")}</span><span>${esc(this.presenceLabel(c.presence))}</span></div><div class="ac-person-actions"><button class="ac-icon-btn" data-chat-user="${c.user_id}" title="Message"><i class="fa fa-comment"></i></button></div></article>`).join("") : `<div class="ac-loading">No employees found.</div>`;
             $$('[data-chat-user]', box).forEach(btn => btn.addEventListener("click", () => this.startDirect(Number(btn.dataset.chatUser))));
-            $$('[data-call-user]', box).forEach(btn => btn.addEventListener("click", async () => { const caller = await this.waitForCaller(); caller?._startCall(Number(btn.dataset.callUser), btn.dataset.type || "audio"); }));
+            $$('[data-call-user]', box).forEach(btn => btn.addEventListener("click", async () => { await this.callUsers([Number(btn.dataset.callUser)], btn.dataset.type || "audio"); }));
         }
 
         openNewChat() { this.modalMode = "new"; this.modalPeople = null; this.selectedPeople.clear(); $("#ac-new-search").value = ""; $("#ac-group-name").value = ""; $("#ac-new-modal h3").textContent = "New conversation"; $("#ac-new-modal header p").textContent = "Select one employee for a direct chat or several for a group."; $("#ac-new-start").textContent = "Start conversation"; this.renderNewPeople(); $("#ac-modal-backdrop").classList.remove("is-hidden"); $("#ac-new-modal").classList.remove("is-hidden"); setTimeout(() => $("#ac-new-search").focus(), 40); }
@@ -804,9 +887,10 @@
             const threadTick = async () => { if (document.visibilityState === "visible") await this.refreshThreads(true).catch(() => {}); this.threadTimer = setTimeout(threadTick, 5000); };
             const messageTick = async () => { if (document.visibilityState === "visible" && this.currentThreadId) await this.refreshMessages(false); this.messageTimer = setTimeout(messageTick, 2500); };
             const presenceTick = async () => { if (document.visibilityState === "visible") await this.refreshPresence(); this.presenceTimer = setTimeout(presenceTick, 15000); };
-            this.threadTimer = setTimeout(threadTick, 5000); this.messageTimer = setTimeout(messageTick, 2500); this.presenceTimer = setTimeout(presenceTick, 15000);
+            const nativeCallTick = async () => { if (document.visibilityState === "visible") await this.pollNativeIncoming(); this.nativeCallTimer = setTimeout(nativeCallTick, 2000); };
+            this.threadTimer = setTimeout(threadTick, 5000); this.messageTimer = setTimeout(messageTick, 2500); this.presenceTimer = setTimeout(presenceTick, 15000); this.nativeCallTimer = setTimeout(nativeCallTick, 300);
         }
-        syncNow() { this.refreshThreads(false).catch(() => {}); this.refreshPresence().catch(() => {}); if (this.currentThreadId) this.refreshMessages(false); }
+        syncNow() { this.refreshThreads(false).catch(() => {}); this.refreshPresence().catch(() => {}); this.pollNativeIncoming().catch(() => {}); if (this.currentThreadId) this.refreshMessages(false); }
 
         async installApp() { if (this.deferredInstall) { this.deferredInstall.prompt(); await this.deferredInstall.userChoice; this.deferredInstall = null; } else alert("Use your browser's Install / Add to Home Screen option to install Chats."); }
         async enableNotifications() { if (!("Notification" in window)) return alert("Notifications are not supported by this browser."); const p = await Notification.requestPermission(); $("#ac-notifications").textContent = p === "granted" ? "Enabled" : "Enable"; }

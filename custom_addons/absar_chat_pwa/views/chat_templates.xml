@@ -15,10 +15,9 @@
                 <link rel="icon" t-att-href="'/web/image/res.company/%s/logo' % request.env.company.id"/>
                 <link rel="apple-touch-icon" t-att-href="'/web/image/res.company/%s/logo/192x192' % request.env.company.id"/>
                 <link rel="stylesheet" href="/web/static/lib/fontawesome/css/font-awesome.css"/>
-                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/call_widget.css?v=18.0.3.8.0"/>
-                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/absar_chat.css?v=18.0.3.8.0"/>
-                <script src="/absar_chat_pwa/static/src/js/portal_call_bridge.js?v=18.0.3.8.0" defer="defer"></script>
-                <script src="/absar_chat_pwa/static/src/js/absar_chat.js?v=18.0.3.8.0" defer="defer"></script>
+                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/absar_chat.css?v=18.0.3.9.0"/>
+                <script src="/mail/static/lib/lame/lame.js"></script>
+                <script src="/absar_chat_pwa/static/src/js/absar_chat.js?v=18.0.3.9.0" defer="defer"></script>
             </head>
             <body class="ac-body" data-epc-logged-in="1"
                   t-att-data-current-user-id="current_user.id"

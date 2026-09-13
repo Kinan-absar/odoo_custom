@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import base64
 import json
+import logging
 
 from odoo import http, _
 from odoo.http import request
@@ -8,6 +9,8 @@ from odoo.addons.employee_portal_suite.controllers.portal_native_discuss import 
     EmployeePortalNativeDiscussController,
 )
 from odoo.addons.employee_portal_suite.controllers.portal_chat import PortalChatController
+
+_logger = logging.getLogger(__name__)
 
 
 class AbsarChatPWAController(EmployeePortalNativeDiscussController):
@@ -122,12 +125,10 @@ class AbsarChatPWAController(EmployeePortalNativeDiscussController):
     @http.route('/chat/service-worker.js', type='http', auth='public', methods=['GET'])
     def absar_chat_service_worker(self):
         code = r"""
-const CACHE_NAME = 'chats-static-v20';
+const CACHE_NAME = 'chats-static-v21';
 const STATIC_ASSETS = [
   '/chat/manifest.webmanifest',
   '/absar_chat_pwa/static/src/css/absar_chat.css',
-  '/absar_chat_pwa/static/src/css/call_widget.css',
-  '/absar_chat_pwa/static/src/js/portal_call_bridge.js',
   '/absar_chat_pwa/static/src/js/absar_chat.js'
 ];
 self.addEventListener('install', event => {
@@ -202,14 +203,67 @@ class AbsarChatAPIController(PortalChatController):
             statuses[str(employee_user.id)] = native if native != 'offline' else fallback.get(employee_user.id, 'offline')
         return {'ok': True, 'statuses': statuses}
 
+    def _mark_native_voice_attachment(self, attachment, duration_ms=0):
+        """Mark a Chats recording using Odoo's own voice metadata relation.
+
+        Native Discuss decides whether an audio attachment is a voice message
+        from ``ir.attachment.voice_ids`` rather than from the file extension
+        alone.  Resolve the related model dynamically so this stays compatible
+        with the exact mail build installed on Odoo 18.
+        """
+        voice_field = attachment._fields.get('voice_ids')
+        if not voice_field or not getattr(voice_field, 'comodel_name', None):
+            return False
+        inverse_name = getattr(voice_field, 'inverse_name', None)
+        if not inverse_name:
+            return False
+        Voice = request.env[voice_field.comodel_name].sudo()
+        existing = getattr(attachment.sudo(), 'voice_ids', Voice)
+        if existing:
+            return True
+        vals = {inverse_name: attachment.id}
+        # Odoo versions may name the duration field differently.  Supply it
+        # only when present; the attachment relation remains authoritative.
+        seconds = max(0.0, float(duration_ms or 0) / 1000.0)
+        for name, value in (
+            ('duration', seconds),
+            ('duration_seconds', seconds),
+            ('duration_ms', int(duration_ms or 0)),
+        ):
+            if name in Voice._fields:
+                vals[name] = value
+                break
+        try:
+            Voice.create(vals)
+            return True
+        except Exception:
+            _logger.exception('Could not create native Discuss voice metadata for attachment %s', attachment.id)
+            return False
+
     @http.route('/chat/api/upload', type='json', auth='user', csrf=False)
-    def absar_chat_upload(self, thread_id=None, filename=None, mimetype=None, data=None):
-        return super().chat_upload(
+    def absar_chat_upload(self, thread_id=None, filename=None, mimetype=None, data=None, voice_note=False, duration_ms=0):
+        result = super().chat_upload(
             thread_id=thread_id,
             filename=filename,
             mimetype=mimetype,
             data=data,
         )
+        if voice_note and result and not result.get('error') and result.get('attachment', {}).get('id'):
+            attachment = request.env['ir.attachment'].sudo().browse(result['attachment']['id']).exists()
+            if attachment:
+                result['attachment']['is_voice'] = self._mark_native_voice_attachment(attachment, duration_ms=duration_ms)
+        return result
+
+    def _message_row(self, msg, channel, user):
+        row = super()._message_row(msg, channel, user)
+        attachment_ids = [a.get('id') for a in row.get('attachments', []) if a.get('id')]
+        by_id = {}
+        if attachment_ids:
+            for attachment in request.env['ir.attachment'].sudo().browse(attachment_ids).exists():
+                by_id[attachment.id] = bool(getattr(attachment, 'voice_ids', False))
+        for item in row.get('attachments', []):
+            item['is_voice'] = bool(by_id.get(item.get('id')))
+        return row
 
     @http.route('/chat/api/send', type='json', auth='user', csrf=False)
     def absar_chat_send(self, thread_id=None, body=None, reply_to_id=None, attachment_ids=None):
