@@ -59,6 +59,9 @@
             this.buildEmojiPanel();
             this.bindInstallPrompt();
             try {
+                if (typeof window.__ensureEmployeePortalCaller === "function") {
+                    window.__ensureEmployeePortalCaller();
+                }
                 await Promise.all([this.refreshContacts(), this.refreshThreads(false), this.refreshPresence()]);
                 this.restoreThreadFromUrl();
                 this.startTimers();
@@ -345,7 +348,7 @@
             this.renderPendingFiles();
             try {
                 const data = await this.fileToDataUrl(file);
-                const result = await rpc("/employee_portal/chat/upload", {
+                const result = await rpc("/chat/api/upload", {
                     thread_id: this.currentThreadId,
                     filename: file.name || "attachment",
                     mimetype: file.type || "application/octet-stream",
@@ -399,29 +402,53 @@
                 alert("Please wait for the attachment upload to finish.");
                 return;
             }
-            const attachmentIds = this.pendingAttachments.map(a => Number(a.id)).filter(Boolean);
+            const sentAttachments = this.pendingAttachments.filter(a => !a.uploading).map(a => ({...a}));
+            const attachmentIds = sentAttachments.map(a => Number(a.id)).filter(Boolean);
             if (!body && !attachmentIds.length) return;
-            const send = $("#ac-send"); send.disabled = true;
+            const send = $("#ac-send");
+            send.disabled = true;
             try {
-                const result = await rpc("/employee_portal/chat/send", {
+                const result = await rpc("/chat/api/send", {
                     thread_id: this.currentThreadId,
                     body,
                     reply_to_id: this.replyTo?.id || false,
                     attachment_ids: attachmentIds,
                 });
                 if (!result || result.error) throw new Error(result?.error || "send_failed");
+
                 input.value = "";
                 this.autogrowComposer();
                 this.pendingAttachments = [];
                 this.renderPendingFiles();
                 this.setReply(null);
                 this.handleTyping(false);
+
+                // Render the exact server-created message immediately. This is
+                // particularly important for attachment-only messages, where the
+                // user should see the file card before the next polling cycle.
+                if (result.message?.id) {
+                    const idx = this.currentMessages.findIndex(m => Number(m.id) === Number(result.message.id));
+                    if (idx >= 0) this.currentMessages[idx] = result.message;
+                    else this.currentMessages.push(result.message);
+                    this.renderMessages();
+                    this.scrollMessagesToBottom();
+                } else {
+                    const optimisticId = -Date.now();
+                    this.currentMessages.push({
+                        id: optimisticId, body, author: this.userName, mine: true,
+                        date: new Date().toISOString(), avatar_url: this.userAvatar,
+                        attachments: sentAttachments, reply_to: null, reactions: [], read_by: [],
+                    });
+                    this.renderMessages();
+                    this.scrollMessagesToBottom();
+                }
                 await this.refreshMessages(true);
             } catch (error) {
                 console.error("[Absar Chat] send failed", error);
                 alert(`Could not send message: ${error.message || error}`);
             } finally {
                 send.disabled = false;
+                input.focus();
             }
         }
 
@@ -458,12 +485,64 @@
         }
 
         async callCurrent(type) {
-            const participants = (this.currentThread?.participants || []).filter(p => !p.is_me).map(p => Number(p.user_id)).filter(Boolean);
-            if (!participants.length) return;
+            const t = this.currentThread || {};
+            let participants = (t.participants || []).filter(p => !p.is_me).map(p => Number(p.user_id)).filter(Boolean);
+            if (!participants.length) {
+                participants = (t.participant_ids || []).map(Number).filter(id => id && id !== this.userId);
+            }
+            participants = [...new Set(participants)];
+            if (!participants.length) {
+                alert("No callable employee was found in this conversation.");
+                return;
+            }
+            if (!navigator.mediaDevices?.getUserMedia) {
+                alert("This browser does not provide microphone/camera access. Open Absar Chat over HTTPS in a supported browser.");
+                return;
+            }
+
             const caller = await this.waitForCaller();
-            if (!caller) { alert("Call service could not start. Please refresh Absar Chat once and try again."); return; }
-            if (participants.length === 1) caller._startCall(participants[0], type);
-            else caller._startHistoryGroupCall(participants, type);
+            if (!caller) {
+                alert("The call engine could not start. Close and reopen Absar Chat, then try again.");
+                return;
+            }
+
+            const button = type === "video" ? $("#ac-video-call") : $("#ac-audio-call");
+            button?.classList.add("is-starting");
+            try {
+                // Ask for media first while this click still has user activation.
+                // This also gives an immediate permission prompt instead of a
+                // silent call button when the browser has blocked microphone/camera.
+                if (caller.localStream) {
+                    try { caller.localStream.getTracks().forEach(track => track.stop()); } catch (_) {}
+                    caller.localStream = null;
+                }
+                caller.currentCallType = type === "video" ? "video" : "audio";
+                await caller._prepareLocalMedia();
+
+                const params = participants.length === 1
+                    ? { target_user_id: participants[0], call_type: caller.currentCallType }
+                    : { target_user_ids: participants, call_type: caller.currentCallType };
+                const res = await rpc("/employee_portal/call/start", params);
+                if (!res || res.error || !res.uuid) throw new Error(res?.error || "call_start_failed");
+
+                caller.currentUuid = res.uuid;
+                caller._iAmCaller = true;
+                if (participants.length === 1) {
+                    const contact = (caller.contacts || []).find(c => Number(c.user_id) === Number(participants[0]));
+                    caller._setPeerName(contact?.name || this.currentThread?.name || "Employee");
+                    caller._showActive(type === "video" ? "Starting video call…" : "Calling…");
+                } else {
+                    caller._setPeerName(this.currentThread?.name || "Group call");
+                    caller._showActive(`Calling ${participants.length} employees…`);
+                    await caller._refreshParticipants();
+                }
+            } catch (error) {
+                console.error("[Absar Chat] call start failed", error);
+                try { caller._teardown(); } catch (_) {}
+                alert(`Could not start ${type === "video" ? "video" : "audio"} call: ${error.message || error}`);
+            } finally {
+                button?.classList.remove("is-starting");
+            }
         }
 
         waitForCaller() {
@@ -479,7 +558,7 @@
                             console.error("[Absar Chat] call engine bootstrap failed", error);
                         }
                     }
-                    if (++tries > 50) return resolve(null);
+                    if (++tries > 20) return resolve(null);
                     setTimeout(check, 100);
                 };
                 check();

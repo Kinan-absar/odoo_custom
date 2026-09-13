@@ -32,3 +32,96 @@ button,input,textarea{font:inherit}.ac-app{height:100dvh;display:grid;grid-templ
   .ac-conversation-actions .ac-icon-btn{width:38px;min-width:38px;padding:0}
 }
 .ac-pending-file.uploading{opacity:.72}.ac-uploading{font-size:9px;color:#7a8796}.ac-file-symbol{font-size:14px}.ac-pending-file button{font-size:16px;line-height:1}
+
+/* ============================================================
+   v18.0.3.3.0 - stable chat viewport + explicit SVG controls
+   ============================================================ */
+.ac-main{overflow:hidden!important}
+.ac-conversation{
+    position:absolute!important;inset:0!important;height:auto!important;min-height:0!important;
+    display:flex!important;flex-direction:column!important;overflow:hidden!important;background:#f7f9fa;
+}
+.ac-conversation.is-hidden{display:none!important}
+.ac-conversation-head{
+    position:relative;z-index:30;flex:0 0 72px;height:72px!important;min-height:72px;
+    background:#fff;border-bottom:1px solid var(--ac-line);padding:0 18px!important;
+    box-shadow:0 1px 0 rgba(23,33,47,.02);
+}
+.ac-conversation-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.ac-header-action,.ac-round-action{
+    border:0;cursor:pointer;color:#465566;background:#f4f7f8;display:inline-flex;align-items:center;justify-content:center;
+    transition:background .15s ease,color .15s ease,transform .15s ease;
+}
+.ac-header-action{height:40px;padding:0 13px;border-radius:12px;gap:7px;font-weight:650;font-size:12px}
+.ac-round-action{width:40px;height:40px;border-radius:50%}
+.ac-header-action:hover,.ac-round-action:hover{background:#e8f4f2;color:var(--ac-brand)}
+.ac-header-action:active,.ac-round-action:active{transform:scale(.97)}
+.ac-header-action.is-starting{opacity:.6;pointer-events:none}
+.ac-header-action svg,.ac-round-action svg,.ac-compose-btn svg,.ac-send-btn svg{width:19px;height:19px;fill:currentColor;display:block;flex:0 0 auto}
+#ac-audio-call::after,#ac-video-call::after,#ac-chat-info::after{display:none!important;content:none!important}
+
+.ac-message-search-bar{position:relative;z-index:25;flex:0 0 48px}
+.ac-messages{
+    flex:1 1 auto!important;min-height:0!important;height:auto!important;overflow-y:auto!important;overscroll-behavior:contain;
+    padding:22px clamp(14px,3.2vw,48px) 18px!important;
+    scroll-padding-bottom:18px;
+}
+.ac-typing,.ac-reply-bar,.ac-attachment-strip{position:relative;z-index:24;flex:0 0 auto}
+.ac-typing{min-height:26px;padding:5px 18px}
+.ac-typing.is-hidden,.ac-reply-bar.is-hidden,.ac-attachment-strip.is-hidden{display:none!important}
+.ac-attachment-strip{max-height:86px;padding:8px 14px;background:#fff;box-shadow:0 -1px 0 var(--ac-line)}
+.ac-pending-file{max-width:360px;padding:8px 10px;background:#f4f8f8;border-color:#dbe5e6;border-radius:12px}
+.ac-pending-file>span:nth-child(2){max-width:230px;overflow:hidden;text-overflow:ellipsis}
+
+.ac-composer{
+    position:relative!important;z-index:28;flex:0 0 auto!important;min-height:70px!important;
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom))!important;background:#fff!important;
+    border-top:1px solid var(--ac-line)!important;align-items:flex-end!important;gap:7px!important;
+    box-shadow:0 -5px 18px rgba(25,38,54,.035);
+}
+.ac-input-shell{flex:1;min-width:0;background:#f3f6f7;border:1px solid #dde5e8;border-radius:22px;display:flex;align-items:flex-end;padding:0 2px}
+.ac-input-shell:focus-within{background:#fff;border-color:#9bcfc7;box-shadow:0 0 0 3px rgba(15,118,110,.06)}
+.ac-composer textarea{
+    width:100%;min-height:42px;max-height:128px;border:0!important;background:transparent!important;border-radius:22px!important;
+    padding:11px 12px!important;resize:none;outline:0;line-height:1.4;overflow-y:auto;
+}
+.ac-compose-btn,.ac-send-btn{
+    width:42px!important;height:42px!important;min-width:42px!important;border-radius:50%!important;display:inline-flex!important;
+    align-items:center!important;justify-content:center!important;position:relative;flex:0 0 42px!important;
+}
+.ac-compose-btn{background:transparent!important;color:#5f6f7f!important}
+.ac-compose-btn:hover{background:#eef5f4!important;color:var(--ac-brand)!important}
+.ac-send-btn{background:var(--ac-brand)!important;color:#fff!important;box-shadow:0 5px 14px rgba(15,118,110,.22)}
+.ac-send-btn:disabled{opacity:.48;cursor:not-allowed;box-shadow:none}
+#ac-attach::after{display:none!important;content:none!important}
+.ac-emoji-panel{z-index:45!important;bottom:76px!important}
+
+/* Attachment cards inside sent messages */
+.ac-attachments{margin-top:7px!important;gap:7px!important}
+.ac-attachment{background:#fff!important;border-color:#d8e2e5!important;padding:9px 10px!important;border-radius:12px!important;min-width:220px!important}
+.ac-image-preview{max-width:min(420px,70vw)!important;max-height:320px!important;border:1px solid rgba(0,0,0,.05)}
+.ac-audio-preview{min-width:260px}
+
+/* Keep the proven call widget above all Absar Chat panels. */
+.ac-body #epc-root{z-index:12000!important}
+.ac-body #epc-panel{z-index:12010!important}
+.ac-body #epc-incoming,.ac-body #epc-active{z-index:12020!important}
+
+@media(max-width:700px){
+    .ac-main{inset:0 0 64px 0!important;height:auto!important;overflow:hidden!important}
+    .ac-conversation{inset:0!important}
+    .ac-conversation-head{flex-basis:60px;height:60px!important;min-height:60px;padding:0 8px!important;gap:7px}
+    .ac-avatar{width:40px;height:40px}
+    .ac-header-action{width:38px;height:38px;padding:0;border-radius:50%}
+    .ac-header-action span{display:none}
+    .ac-round-action{width:38px;height:38px}
+    .ac-conversation-actions{gap:3px}
+    .ac-conversation-actions #ac-search-messages{display:none}
+    .ac-messages{padding:12px 9px 10px!important}
+    .ac-composer{min-height:62px!important;padding:7px 7px calc(7px + env(safe-area-inset-bottom))!important;gap:3px!important}
+    .ac-compose-btn,.ac-send-btn{width:38px!important;height:38px!important;min-width:38px!important;flex-basis:38px!important}
+    .ac-input-shell{border-radius:20px}
+    .ac-composer textarea{min-height:38px;padding:9px 10px!important}
+    .ac-attachment-strip{max-height:76px;padding:6px 8px}
+    .ac-emoji-panel{bottom:68px!important;left:8px!important;right:8px!important}
+}
