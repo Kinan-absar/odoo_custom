@@ -76,3 +76,48 @@
     padding-bottom: 4px !important;
   }
 }
+
+/* v20 - app-like native Discuss shell. The message/composer/call/voice-note UI
+   stays 100% native Odoo; these rules only style the surrounding shell. */
+.ep-native-discuss-public {
+  background: #fff !important;
+  color-scheme: light;
+}
+
+.ep-native-discuss-toolbar {
+  min-height: 50px;
+  background: rgba(255, 255, 255, .96);
+  border-color: rgba(15, 23, 42, .08) !important;
+  backdrop-filter: blur(14px);
+}
+
+.ep-native-discuss-toolbar .btn {
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #f8fafc !important;
+  color: #334155 !important;
+  box-shadow: none !important;
+}
+
+.ep-native-discuss-toolbar .btn:hover {
+  background: #eef2f7 !important;
+}
+
+.ep-native-discuss-app-title {
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.ep-native-discuss-public .o-mail-Composer {
+  background: #fff !important;
+  border-top-color: rgba(15, 23, 42, .08) !important;
+}
+
+@media (display-mode: standalone) {
+  .ep-native-discuss-toolbar {
+    padding-top: max(8px, env(safe-area-inset-top)) !important;
+  }
+  .ep-native-discuss-public .o-mail-Composer {
+    padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
+  }
+}

@@ -140,6 +140,12 @@ patch(Discuss.prototype, {
         window.location.href = employeePortalMeta("employee-portal-home-url") || "/my/employee";
     },
 
+    installEmployeeChats() {
+        if (window.EmployeeDiscussPWA?.install) {
+            window.EmployeeDiscussPWA.install();
+        }
+    },
+
     async toggleEmployeeFullscreen() {
         try {
             if (!document.fullscreenElement) {

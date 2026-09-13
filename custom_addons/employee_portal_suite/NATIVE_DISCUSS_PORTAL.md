@@ -11,3 +11,15 @@ Version 18.0.1.19.0 switches employee communication away from the custom portal 
 - Vendor/customer portal users are excluded because portal exposure/search requires an active `hr.employee` linked to the user.
 - The Employee Portal keeps only a lightweight employee/channel chooser and unread badge; it does not implement the conversation or RTC engine.
 - Telegram is an external alert only for messages; actual communication stays in Odoo Discuss.
+
+## v18.0.1.20.0 — Native Discuss PWA
+
+The standalone custom Chats frontend is no longer required. The employee communication surface is the existing native Odoo Discuss implementation at `/my/employee/discuss` and `/my/employee/discuss/channel/<id>`.
+
+- Employee Portal Messages opens `/my/employee/discuss` in a new window.
+- The native Discuss surface is installable as a PWA named **Chats**.
+- The PWA uses the active company logo for install icons.
+- No messages, attachments, calls, voice notes, reactions, presence, or RTC behavior are reimplemented by the PWA layer; all remain native Odoo Discuss features.
+- Authenticated pages/messages are not cached by the service worker.
+- When launched standalone, portal navigation chrome is hidden and the conversation hub becomes an app-like entry screen.
+- The native channel page keeps the existing portal-safe Discuss patches, attachment uploader, mobile viewport handling, and native RTC bridge.

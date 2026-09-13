@@ -2,7 +2,7 @@
 <odoo>
     <template id="ep_native_communication_actions">
         <div class="ep-native-comm-actions" t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-            <a class="ep-native-comm-btn ep-native-message-btn" href="/chat/" target="_blank" rel="noopener noreferrer" title="Open Absar Chat">
+            <a class="ep-native-comm-btn ep-native-message-btn" href="/my/employee/discuss" target="_blank" rel="noopener noreferrer" title="Open Chats">
                 <i class="fa fa-comments"/>
                 <span class="ep-native-unread-badge" style="display:none">0</span>
             </a>
@@ -15,12 +15,17 @@
                 <div class="ep-native-discuss-head">
                     <div>
                         <div class="ep-native-discuss-kicker">COMMUNICATION</div>
-                        <h2>Messages</h2>
-                        <p>All employee conversations in native Odoo Discuss</p>
+                        <h2>Chats</h2>
+                        <p>Employee communication powered by Odoo Discuss</p>
                     </div>
-                    <button type="button" class="btn btn-primary" onclick="document.getElementById('ep-native-new-chat').classList.toggle('show')">
-                        <i class="fa fa-plus me-1"/> New
-                    </button>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-light ep-native-install-btn" data-ep-discuss-install="1" title="Install Chats">
+                            <i class="fa fa-download me-1"/> <span class="d-none d-sm-inline">Install</span>
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="document.getElementById('ep-native-new-chat').classList.toggle('show')">
+                            <i class="fa fa-plus me-1"/> New
+                        </button>
+                    </div>
                 </div>
 
                 <div id="ep-native-new-chat" class="ep-native-new-chat">
@@ -74,11 +79,29 @@
         </t>
     </template>
 
+    <template id="employee_native_discuss_pwa_web_head" inherit_id="web.layout" name="Employee Discuss PWA Head">
+        <xpath expr="//head" position="inside">
+            <t t-if="request.httprequest.path.startswith('/my/employee/discuss')">
+                <link rel="manifest" href="/my/employee/discuss/manifest.webmanifest" data-employee-discuss-pwa="1"/>
+                <meta name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+                <meta name="apple-mobile-web-app-title" content="Chats"/>
+                <link rel="apple-touch-icon" t-att-href="'/web/image/res.company/%s/logo/192x192' % request.env.company.id"/>
+            </t>
+        </xpath>
+    </template>
+
     <template id="employee_native_discuss_public_bootstrap" inherit_id="mail.discuss_public_channel_template" name="Employee Native Discuss Bootstrap">
         <xpath expr="//head" position="inside">
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-discuss" content="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-back-url" content="/my/employee/discuss"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-home-url" content="/my/employee"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" rel="manifest" href="/my/employee/discuss/manifest.webmanifest" data-employee-discuss-pwa="1"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="apple-mobile-web-app-capable" content="yes"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="apple-mobile-web-app-title" content="Chats"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" rel="apple-touch-icon" t-att-href="'/web/image/res.company/%s/logo/192x192' % request.env.company.id"/>
         </xpath>
     </template>
 

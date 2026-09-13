@@ -1,4 +1,5 @@
 from odoo import Command, fields, http
+import json
 from odoo.http import request
 from odoo.addons.mail.tools.discuss import Store
 from odoo.tools.image import image_data_uri
@@ -278,6 +279,63 @@ class EmployeePortalNativeDiscussController(http.Controller):
             'employee_portal_back_url': '/my/employee/discuss',
             'employee_portal_home_url': '/my/employee',
         })
+
+    @http.route('/my/employee/discuss/manifest.webmanifest', type='http', auth='user', methods=['GET'], csrf=False)
+    def employee_discuss_manifest(self, **kwargs):
+        user = self._employee_user()
+        if not user:
+            return request.not_found()
+        company = request.env.company.sudo()
+        icon_base = f"/web/image/res.company/{company.id}/logo"
+        payload = {
+            "name": "Chats",
+            "short_name": "Chats",
+            "description": "Company employee communication powered by Odoo Discuss",
+            "start_url": "/my/employee/discuss",
+            "scope": "/my/employee/discuss",
+            "display": "standalone",
+            "orientation": "any",
+            "background_color": "#ffffff",
+            "theme_color": "#ffffff",
+            "icons": [
+                {"src": f"{icon_base}/192x192", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+                {"src": f"{icon_base}/512x512", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+            ],
+        }
+        return request.make_response(
+            json.dumps(payload),
+            headers=[
+                ('Content-Type', 'application/manifest+json; charset=utf-8'),
+                ('Cache-Control', 'no-store'),
+            ],
+        )
+
+    @http.route('/my/employee/discuss/sw.js', type='http', auth='user', methods=['GET'], csrf=False)
+    def employee_discuss_service_worker(self, **kwargs):
+        user = self._employee_user()
+        if not user:
+            return request.not_found()
+        script = '''
+const CACHE_NAME = "employee-native-discuss-pwa-v1";
+self.addEventListener("install", () => { self.skipWaiting(); });
+self.addEventListener("activate", (event) => {
+    event.waitUntil((async () => {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter((k) => k.startsWith("employee-native-discuss-pwa-") && k !== CACHE_NAME).map((k) => caches.delete(k)));
+        await self.clients.claim();
+    })());
+});
+self.addEventListener("fetch", (event) => {
+    const req = event.request;
+    if (req.method !== "GET") return;
+    event.respondWith(fetch(req));
+});
+'''
+        return request.make_response(script, headers=[
+            ('Content-Type', 'application/javascript; charset=utf-8'),
+            ('Cache-Control', 'no-store'),
+            ('Service-Worker-Allowed', '/my/employee/discuss'),
+        ])
 
     @http.route('/employee_portal/discuss/available_people', type='json', auth='user')
     def employee_discuss_available_people(self, channel_id=None):

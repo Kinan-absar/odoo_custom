@@ -44,3 +44,76 @@
 .ep-native-presence-away { color:#a66a00 !important; }
 .ep-native-presence-away .ep-native-presence-dot { background:#e7a72e; box-shadow:0 0 0 2px rgba(231,167,46,.13); }
 .ep-native-presence-offline { color:#8a929f !important; }
+
+/* v20 - Native Discuss as the installable Chats app. */
+.ep-native-install-btn {
+  border: 1px solid rgba(15, 23, 42, .08) !important;
+  background: #fff !important;
+  color: #334155 !important;
+  border-radius: 12px !important;
+}
+
+.ep-discuss-pwa-standalone body,
+body.ep-discuss-pwa-standalone {
+  background: #f7f8fa !important;
+}
+
+/* When launched from the installed PWA, hide the surrounding employee portal
+   chrome. Native Discuss itself remains untouched. */
+.ep-discuss-pwa-standalone .ep-navbar,
+.ep-discuss-pwa-standalone .ep-bottom-nav,
+.ep-discuss-pwa-standalone .ep-bell-wrap,
+.ep-discuss-pwa-standalone .ep-floating-actions {
+  display: none !important;
+}
+
+.ep-discuss-pwa-standalone main {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+.ep-discuss-pwa-standalone .ep-native-discuss-hub {
+  max-width: 760px;
+  min-height: 100dvh;
+  padding: 18px 14px 28px !important;
+}
+
+.ep-discuss-pwa-standalone .ep-native-discuss-head {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 12px 0 14px;
+  background: rgba(247, 248, 250, .96);
+  backdrop-filter: blur(16px);
+}
+
+.ep-discuss-pwa-standalone .ep-native-discuss-kicker {
+  display: none;
+}
+
+.ep-discuss-pwa-standalone .ep-native-discuss-head h2 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.ep-discuss-pwa-standalone .ep-native-discuss-head p {
+  font-size: 12px;
+}
+
+.ep-discuss-pwa-standalone .ep-native-thread-list {
+  border: 1px solid rgba(15, 23, 42, .06);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, .06);
+}
+
+.ep-discuss-pwa-standalone .ep-native-thread {
+  min-height: 76px;
+  padding: 12px 16px;
+}
+
+.ep-discuss-pwa-standalone .ep-native-thread-avatar,
+.ep-discuss-pwa-standalone .ep-native-thread-avatar img {
+  width: 48px;
+  height: 48px;
+  flex-basis: 48px;
+}
