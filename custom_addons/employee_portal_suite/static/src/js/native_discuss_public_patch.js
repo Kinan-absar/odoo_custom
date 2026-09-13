@@ -2,6 +2,7 @@
 
 import { Discuss } from "@mail/core/public_web/discuss";
 import { DiscussClientAction } from "@mail/core/public_web/discuss_client_action";
+import { MessagingMenu } from "@mail/core/public_web/messaging_menu";
 import { Composer } from "@mail/core/common/composer";
 import { patch } from "@web/core/utils/patch";
 import { rpc } from "@web/core/network/rpc";
@@ -167,6 +168,21 @@ function epEnhanceNativeSidebar() {
 }
 
 
+// Employee portal/mobile Chats should behave like a dedicated messenger, not
+// the generic Odoo mobile Discuss switcher.  Keep Odoo's own MessagingMenu and
+// notification rows, but expose only the Chat tab.  This preserves native
+// unread counters, presence, swipe actions and thread opening while removing
+// the irrelevant Channel tab for employee messaging.
+patch(MessagingMenu.prototype, {
+    get tabs() {
+        const tabs = super.tabs;
+        if (!employeePortalMeta("employee-portal-discuss")) {
+            return tabs;
+        }
+        return tabs.filter((tab) => tab.id === "chat");
+    },
+});
+
 // Odoo public Discuss disables some composer capabilities for generic public/guest pages.
 // Employee Portal Discuss is authenticated and channel membership is validated server-side,
 // so keep the native attachment uploader available here as it is in backend Discuss.
@@ -216,7 +232,9 @@ patch(DiscussClientAction.prototype, {
         if (employeePortalMeta("employee-portal-discuss-home")) {
             if (this.store?.discuss) {
                 this.store.discuss.thread = undefined;
-                this.store.discuss.activeTab = "main";
+                this.store.discuss.activeTab = window.matchMedia("(max-width: 767.98px)").matches
+                    ? "chat"
+                    : "main";
             }
         }
         return result;
@@ -328,7 +346,9 @@ patch(Discuss.prototype, {
                     const clearHomeThread = () => {
                         if (!employeePortalMeta("employee-portal-discuss-home")) return;
                         this.store.discuss.thread = undefined;
-                        this.store.discuss.activeTab = "main";
+                        this.store.discuss.activeTab = window.matchMedia("(max-width: 767.98px)").matches
+                            ? "chat"
+                            : "main";
                     };
                     clearHomeThread();
                     window.setTimeout(clearHomeThread, 120);

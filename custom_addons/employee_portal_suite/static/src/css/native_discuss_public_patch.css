@@ -326,3 +326,38 @@
     max-height: min(88dvh, 760px);
   }
 }
+
+/* v20.10 - Mobile Chats home uses Odoo's native MessagingMenu in chat-only mode.
+   The JS patch removes the Channel tab from the component itself.  These rules
+   keep the native chat list full-height and prevent stale channel controls from
+   occupying mobile space. */
+@media (max-width: 767.98px) {
+  .ep-native-discuss-home .o-mail-MessagingMenu {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    background: #fff !important;
+  }
+
+  .ep-native-discuss-home .o-mail-MessagingMenu-list {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  }
+
+  /* One native tab remains: Chat. Stretch it across the footer so there is no
+     empty Channel half and the user can always return to the chat list. */
+  .ep-native-discuss-public .o-mail-MessagingMenu-navbar .o-mail-MessagingMenu-tab {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    border-right: 0 !important;
+  }
+
+  .ep-native-discuss-public .o-mail-MessagingMenu-navbar {
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+}
