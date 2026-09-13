@@ -38,14 +38,18 @@ patch(Rtc.prototype, {
         // header enhancer.  The video button added there therefore uses the same
         // RTC session, invitation and call UI as Odoo's own phone call button.
         window.__employeePortalNativeRtc = this;
+        const startVideo = async () => {
+            const channel = this.store?.discuss?.thread || this.store?.discuss_public_thread;
+            if (!channel) {
+                throw new Error("Open a conversation before starting a video call.");
+            }
+            return await this.joinCall(channel, { audio: true, camera: true });
+        };
         window.EmployeePortalNativeRTC = {
-            videoCall: async () => {
-                const channel = this.store?.discuss?.thread || this.store?.discuss_public_thread;
-                if (!channel) {
-                    throw new Error("Open a conversation before starting a video call.");
-                }
-                return await this.joinCall(channel, { audio: true, camera: true });
-            },
+            ...(window.EmployeePortalNativeRTC || {}),
+            rtc: this,
+            startVideo,
+            videoCall: startVideo,
         };
         if (!shouldAutoAnswer()) {
             return;
