@@ -192,8 +192,40 @@
     }
 
     function bindHomePage() {
-        // Chats home behavior lives in chats_home.js, which is loaded directly
-        // by the root template to avoid asset-bundle timing/cache issues.
+        if (document.documentElement.dataset.epChatsHomeDelegated === "1") return;
+        document.documentElement.dataset.epChatsHomeDelegated = "1";
+
+        // Use event delegation so Search and + New chat keep working even after
+        // Odoo/browser restores or replaces parts of the page.
+        document.addEventListener("click", (event) => {
+            const toggle = event.target.closest?.("[data-ep-new-chat-toggle]");
+            if (toggle) {
+                event.preventDefault();
+                event.stopPropagation();
+                const modal = document.getElementById("ep-native-new-chat");
+                if (!modal) return;
+                modal.classList.add("show");
+                modal.setAttribute("aria-hidden", "false");
+                return;
+            }
+            const close = event.target.closest?.("[data-ep-new-chat-close]");
+            if (close) {
+                event.preventDefault();
+                const modal = document.getElementById("ep-native-new-chat");
+                modal?.classList.remove("show");
+                modal?.setAttribute("aria-hidden", "true");
+            }
+        }, true);
+
+        document.addEventListener("input", (event) => {
+            const input = event.target.closest?.("[data-ep-chat-search]");
+            if (!input) return;
+            const query = (input.value || "").trim().toLowerCase();
+            document.querySelectorAll("[data-ep-thread]").forEach((thread) => {
+                const haystack = (thread.dataset.search || thread.textContent || "").toLowerCase();
+                thread.style.display = !query || haystack.includes(query) ? "" : "none";
+            });
+        }, true);
     }
 
     function bindInstallButtons() {
@@ -238,4 +270,67 @@
 
     // Expose only the install action to the native Owl toolbar patch.
     window.EmployeeDiscussPWA = { install: installChats };
+})();
+
+// Stable Chats shell navigation. The top-level PWA URL always remains
+// /my/employee/discuss; native Odoo Discuss runs only inside the same-origin frame.
+(() => {
+    const bind = () => {
+        const shell = document.querySelector('[data-ep-chats-shell]');
+        if (!shell || shell.dataset.epShellBound === '1') return;
+        shell.dataset.epShellBound = '1';
+        const pane = shell.querySelector('[data-ep-chat-pane]');
+        const frame = shell.querySelector('[data-ep-discuss-frame]');
+        const empty = shell.querySelector('[data-ep-chat-empty]');
+        const listPane = shell.querySelector('[data-ep-chats-list-pane]');
+        const openChat = () => {
+            shell.classList.add('ep-chat-open');
+            empty?.classList.add('d-none');
+            frame?.classList.add('show');
+        };
+        shell.querySelectorAll('[data-ep-thread]').forEach((link) => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const href = link.getAttribute('href');
+                if (!href || !frame) return;
+                shell.querySelectorAll('[data-ep-thread]').forEach((row) => row.classList.remove('active'));
+                link.classList.add('active');
+                frame.classList.remove('show');
+                frame.src = href;
+                openChat();
+            });
+        });
+        frame?.addEventListener('load', () => {
+            if (frame.src && frame.src !== 'about:blank') openChat();
+        });
+        shell.querySelector('[data-ep-chat-back]')?.addEventListener('click', () => {
+            shell.classList.remove('ep-chat-open');
+            frame?.classList.remove('show');
+            shell.querySelectorAll('[data-ep-thread]').forEach((row) => row.classList.remove('active'));
+            try { frame.src = 'about:blank'; } catch (_) {}
+        });
+        const wanted = Number(new URLSearchParams(window.location.search).get('open_channel') || 0);
+        if (wanted) {
+            const link = Array.from(shell.querySelectorAll('[data-ep-thread]')).find((row) => row.getAttribute('href')?.includes(`/channel/${wanted}`));
+            if (link) {
+                link.click();
+                const clean = new URL(window.location.href);
+                clean.searchParams.delete('open_channel');
+                window.history.replaceState({}, '', clean.pathname + clean.search + clean.hash);
+            }
+        }
+    };
+    window.addEventListener('message', (event) => {
+        if (event.origin !== window.location.origin) return;
+        if (event.data?.type !== 'employee-discuss-back-to-chats') return;
+        const shell = document.querySelector('[data-ep-chats-shell]');
+        const frame = document.querySelector('[data-ep-discuss-frame]');
+        if (!shell) return;
+        shell.classList.remove('ep-chat-open');
+        frame?.classList.remove('show');
+        shell.querySelectorAll('[data-ep-thread]').forEach((row) => row.classList.remove('active'));
+        try { if (frame) frame.src = 'about:blank'; } catch (_) {}
+    });
+    document.addEventListener('DOMContentLoaded', bind);
+    window.addEventListener('pageshow', bind);
 })();
