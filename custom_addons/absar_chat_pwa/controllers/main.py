@@ -1,356 +1,187 @@
 # -*- coding: utf-8 -*-
-import logging
-from werkzeug.exceptions import Forbidden, NotFound
+import json
 
-from odoo import http, fields, _
+from odoo import http, _
 from odoo.http import request
-from odoo.tools import plaintext2html
-from odoo.tools.image import image_data_uri
+from odoo.addons.mail.tools.discuss import Store
+from odoo.addons.employee_portal_suite.controllers.portal_native_discuss import (
+    EmployeePortalNativeDiscussController,
+)
 
-_logger = logging.getLogger(__name__)
 
-class AbsarChatController(http.Controller):
+class AbsarChatPWAController(EmployeePortalNativeDiscussController):
+    """Standalone PWA shell around the already-working native Employee Discuss.
 
-    def _get_active_employee(self):
-        """
-        Verify that the current logged-in user is linked to an active hr.employee.
-        Prevents vendor and customer portal users from accessing internal communications.
+    The hub is custom, but opening a conversation uses Odoo's real
+    ``mail.discuss_public_channel_template`` and Store. This intentionally reuses
+    Employee Portal Suite's filtering/security/channel creation helpers so Absar Chat
+    and /my/employee/discuss remain the same communication system.
+    """
 
-        NOTE ON SUDO USAGE:
-        In standard Odoo, external portal users (base.group_portal) lack read access to
-        hr.employee (which is restricted to HR officers/internal users).
-        Querying hr.employee without sudo would raise an AccessError for valid portal employees.
-        Therefore, sudo() is strictly used HERE AND ONLY HERE as an identity gatekeeper:
-        "Does request.env.user correspond to an active company employee?"
-
-        CRITICAL: The resulting employee record is NEVER used to bypass channel or message
-        authorization. All conversation access is separately and strictly checked against
-        the user's real partner identity (request.env.user.partner_id).
-        """
-        user = request.env.user
-        if not user or user._is_public() or not user.active:
-            return False
-        if user.has_group('employee_portal_suite.group_attendance_only'):
-            return False
-        employee = request.env['hr.employee'].sudo().search([
-            ('user_id', '=', user.id),
-            ('active', '=', True)
-        ], limit=1)
-        return employee
-
-    # -------------------------------------------------------------------------
-    # PWA Web Shell & Manifest Routes
-    # -------------------------------------------------------------------------
-
-    @http.route(['/chat', '/chat/'], type='http', auth='user', website=False)
-    def absar_chat_index(self, **kwargs):
-        """
-        Primary entry point for Absar Chat PWA.
-        Renders a full-screen, standalone application shell without website/portal chrome.
-        """
-        employee = self._get_active_employee()
-        if not employee:
+    @http.route(['/chat', '/chat/'], type='http', auth='user', website=True, methods=['GET'])
+    def absar_chat_home(self, **kwargs):
+        user = self._employee_user()
+        if not user:
             return request.render('absar_chat_pwa.access_denied_page', {
                 'title': _('Access Restricted'),
                 'message': _('Absar Chat is restricted to authorized company employees only.'),
             })
 
-        user = request.env.user
-        session_info = {
-            'uid': user.id,
-            'partner_id': user.partner_id.id,
-            'partner_name': user.partner_id.name,
-            'employee_id': employee.id,
-            'employee_name': employee.name,
-            'job_title': employee.job_title or '',
-            'department': employee.department_id.name if employee.department_id else '',
-            'avatar_url': image_data_uri(user.partner_id.sudo().avatar_128) if user.partner_id.sudo().avatar_128 else '/web/static/img/avatar.png',
-            'company_name': user.company_id.name,
-        }
+        channels = self._portal_channels(user)
+        channel_rows = []
+        for channel in channels:
+            member = channel.channel_member_ids.filtered(
+                lambda m: m.partner_id.id == user.partner_id.id
+            )[:1]
+            users = self._channel_users(channel)
+            is_group = channel.channel_type == 'group' or len(users) > 2
+            presence, presence_label = self._channel_presence(channel, user)
+            channel_rows.append({
+                'id': channel.id,
+                'name': self._channel_label(channel, user),
+                'avatar': self._channel_avatar(channel, user),
+                'is_group': is_group,
+                'presence': presence,
+                'presence_label': presence_label,
+                'unread': int(member.message_unread_counter or 0),
+                'last_interest_dt': channel.last_interest_dt,
+            })
 
-        return request.render('absar_chat_pwa.chat_page', {
+        employee_rows = []
+        for emp_user in self._employee_users().filtered(lambda u: u.id != user.id):
+            presence, presence_label = self._discuss_presence(emp_user)
+            employee_rows.append({
+                'id': emp_user.id,
+                'name': emp_user.name,
+                'avatar': self._user_avatar(emp_user),
+                'presence': presence,
+                'presence_label': presence_label,
+            })
+
+        return request.render('absar_chat_pwa.chat_home', {
+            'channels': channel_rows,
+            'employees': employee_rows,
+            'current_user': user,
+            'current_avatar': self._user_avatar(user),
+            'csrf_token': request.csrf_token(),
+        })
+
+    @http.route('/chat/start', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def absar_chat_start(self, participant_ids=None, group_name=None, **kwargs):
+        user = self._employee_user()
+        if not user:
+            return request.redirect('/my/employee')
+
+        raw_ids = request.httprequest.form.getlist('participant_ids')
+        try:
+            ids = [int(x) for x in raw_ids if x]
+        except (TypeError, ValueError):
+            ids = []
+
+        allowed = self._employee_users().filtered(lambda u: u.id != user.id)
+        targets = allowed.filtered(lambda u: u.id in ids)
+        channel = self._get_or_create_channel(user, targets, name=group_name)
+        if not channel:
+            return request.redirect('/chat/')
+        return request.redirect('/chat/channel/%s' % channel.id)
+
+    @http.route('/chat/channel/<int:channel_id>', type='http', auth='user', website=True, methods=['GET'])
+    def absar_chat_channel(self, channel_id, **kwargs):
+        user = self._employee_user()
+        if not user:
+            return request.redirect('/my/employee')
+
+        channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
+        if not self._is_allowed_channel(channel, user):
+            return request.not_found()
+
+        channel.sudo().write({'is_employee_portal_channel': True})
+        channel_user = channel.with_user(user)
+        store = Store()
+        store.add({
+            'companyName': request.env.company.name,
+            'inPublicPage': True,
+            'employeePortalDiscuss': True,
+            'employeePortalBackUrl': '/chat/',
+            'discuss_public_thread': Store.one(channel_user),
+        })
+        return request.render('mail.discuss_public_channel_template', {
+            'data': store.get_result(),
+            'session_info': channel_user.env['ir.http'].session_info(),
+            'employee_portal_discuss': True,
+            'employee_portal_back_url': '/chat/',
+            'employee_portal_home_url': '/my/employee',
         })
 
     @http.route('/chat/manifest.webmanifest', type='http', auth='public', methods=['GET'])
     def absar_chat_manifest(self):
-        manifest_data = {
-            "name": "Absar Chat",
-            "short_name": "Absar Chat",
-            "description": "Internal Company Communication - Powered by Odoo Discuss",
-            "start_url": "/chat/",
-            "scope": "/chat/",
-            "display": "standalone",
-            "orientation": "portrait-primary",
-            "background_color": "#090d16",
-            "theme_color": "#090d16",
-            "icons": [
+        manifest = {
+            'name': 'Absar Chat',
+            'short_name': 'Absar Chat',
+            'description': 'Absar internal employee communication',
+            'start_url': '/chat/',
+            'scope': '/chat/',
+            'display': 'standalone',
+            'background_color': '#0b1220',
+            'theme_color': '#0b1220',
+            'icons': [
                 {
-                    "src": "/absar_chat_pwa/static/icons/icon-192.png",
-                    "sizes": "192x192",
-                    "type": "image/png",
-                    "purpose": "any maskable"
+                    'src': '/absar_chat_pwa/static/icons/icon-192.png',
+                    'sizes': '192x192',
+                    'type': 'image/png',
+                    'purpose': 'any maskable',
                 },
                 {
-                    "src": "/absar_chat_pwa/static/icons/icon-512.png",
-                    "sizes": "512x512",
-                    "type": "image/png",
-                    "purpose": "any maskable"
-                }
-            ]
+                    'src': '/absar_chat_pwa/static/icons/icon-512.png',
+                    'sizes': '512x512',
+                    'type': 'image/png',
+                    'purpose': 'any maskable',
+                },
+            ],
         }
         return request.make_response(
-            json.dumps(manifest_data, indent=2),
+            json.dumps(manifest),
             headers=[
                 ('Content-Type', 'application/manifest+json; charset=utf-8'),
                 ('Cache-Control', 'public, max-age=3600'),
-            ]
+            ],
         )
 
     @http.route('/chat/service-worker.js', type='http', auth='public', methods=['GET'])
     def absar_chat_service_worker(self):
-        sw_code = """
-const CACHE_NAME = 'absar-chat-static-v3';
+        code = r"""
+const CACHE_NAME = 'absar-chat-shell-v5';
 const STATIC_ASSETS = [
   '/chat/manifest.webmanifest',
   '/absar_chat_pwa/static/icons/icon-192.png',
-  '/absar_chat_pwa/static/icons/icon-512.png'
+  '/absar_chat_pwa/static/icons/icon-512.png',
+  '/absar_chat_pwa/static/src/css/absar_chat_home.css',
+  '/absar_chat_pwa/static/src/js/absar_chat_home.js'
 ];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).catch((err) => {
-        console.warn('Absar Chat SW cache failed:', err);
-      });
-    })
-  );
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS).catch(() => {})));
   self.skipWaiting();
 });
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    })
-  );
+self.addEventListener('activate', event => {
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))));
   self.clients.claim();
 });
-
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-
-  // CRITICAL: Never cache authenticated /chat HTML or dynamic data/API routes!
-  // Prevents leaking session/employee information across accounts or logouts.
-  if (
-    url.pathname.startsWith('/chat/api') ||
-    url.pathname.startsWith('/web/dataset') ||
-    url.pathname.startsWith('/longpolling') ||
-    url.pathname.startsWith('/websocket') ||
-    event.request.mode === 'navigate' ||
-    url.pathname === '/chat' ||
-    url.pathname === '/chat/'
-  ) {
+  // Never cache authenticated navigation, JSON-RPC, websocket or Odoo Discuss data.
+  if (event.request.mode === 'navigate' || url.pathname.startsWith('/web/') ||
+      url.pathname.startsWith('/mail/') || url.pathname.startsWith('/discuss/') ||
+      url.pathname.startsWith('/employee_portal/') || url.pathname.startsWith('/websocket') ||
+      url.pathname.startsWith('/longpolling')) {
     return;
   }
-
-  // Cache-first for genuinely static assets only (icons, manifest)
-  if (
-    url.pathname.startsWith('/absar_chat_pwa/static/') ||
-    url.pathname === '/chat/manifest.webmanifest'
-  ) {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        return cached || fetch(event.request).then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        });
-      })
-    );
+  if (STATIC_ASSETS.includes(url.pathname)) {
+    event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
   }
 });
 """
-        return request.make_response(
-            sw_code,
-            headers=[
-                ('Content-Type', 'application/javascript; charset=utf-8'),
-                ('Service-Worker-Allowed', '/chat/'),
-                ('Cache-Control', 'no-cache'),
-            ]
-        )
-
-    # -------------------------------------------------------------------------
-    # JSON-RPC Data Endpoints (Strict Security Validations)
-    # -------------------------------------------------------------------------
-
-    @http.route('/chat/api/session', type='json', auth='user')
-    def get_session_info(self):
-        employee = self._get_active_employee()
-        if not employee:
-            raise Forbidden(_("Active employee credentials required."))
-
-        user = request.env.user
-        return {
-            'uid': user.id,
-            'partner_id': user.partner_id.id,
-            'partner_name': user.partner_id.name,
-            'employee_id': employee.id,
-            'employee_name': employee.name,
-            'job_title': employee.job_title or '',
-            'department': employee.department_id.name if employee.department_id else '',
-            'avatar_url': image_data_uri(user.partner_id.sudo().avatar_128) if user.partner_id.sudo().avatar_128 else '/web/static/img/avatar.png',
-            'company_name': user.company_id.name,
-        }
-
-    @http.route('/chat/api/channels', type='json', auth='user')
-    def get_channels(self):
-        """
-        Returns authorized channels for the current employee.
-        Only returns channels where current partner is an active member.
-        Strictly preserves channel filtering parity with employee_portal_suite.
-        """
-        employee = self._get_active_employee()
-        if not employee:
-            raise Forbidden(_("Access Denied."))
-
-        user = request.env.user
-        partner = user.partner_id
-
-        # Portal employees do not have generic ACL access to discuss.channel.  Reuse the
-        # same safe pattern as employee_portal_suite: resolve memberships with sudo, then
-        # explicitly filter to employee portal chat/group channels containing this partner.
-        members = request.env['discuss.channel.member'].sudo().search([
-            ('partner_id', '=', partner.id),
-            ('channel_id.channel_type', 'in', ('chat', 'group')),
+        return request.make_response(code, headers=[
+            ('Content-Type', 'application/javascript; charset=utf-8'),
+            ('Service-Worker-Allowed', '/chat/'),
+            ('Cache-Control', 'no-cache'),
         ])
-        channels = members.channel_id.filtered(
-            lambda c: c.active
-            and partner in c.channel_member_ids.partner_id
-            and (not hasattr(c, 'is_employee_portal_channel') or c.is_employee_portal_channel)
-        )
-        channels = channels.sorted(
-            key=lambda c: c.last_interest_dt or fields.Datetime.from_string('1970-01-01 00:00:00'),
-            reverse=True,
-        )
-        return [c.sudo()._get_absar_chat_info(partner) for c in channels]
-
-    @http.route('/chat/api/messages', type='json', auth='user')
-    def get_messages(self, channel_id, limit=50, before_id=None):
-        """
-        Fetch paginated messages for a given channel with strict membership verification.
-        """
-        employee = self._get_active_employee()
-        if not employee:
-            raise Forbidden(_("Access Denied."))
-
-        partner = request.env.user.partner_id
-        channel = request.env['discuss.channel'].sudo().browse(int(channel_id)).exists()
-
-        if not channel:
-            raise NotFound(_("Conversation not found."))
-
-        # CRITICAL SECURITY CHECK: Verify user is a member of this channel
-        if partner.id not in channel.channel_member_ids.mapped('partner_id.id'):
-            raise Forbidden(_("You are not authorized to view messages in this conversation."))
-
-        messages = channel._get_absar_messages_data(partner, limit=limit, before_id=before_id)
-        return {
-            'channel_id': channel.id,
-            'channel_name': channel._get_absar_chat_info(partner)['name'],
-            'messages': messages,
-        }
-
-    @http.route('/chat/api/message/send', type='json', auth='user')
-    def send_message(self, channel_id, body):
-        """
-        Posts a real Odoo Discuss message using safe HTML sanitization.
-        Instantly visible in standard Odoo Discuss and Employee Portal.
-        """
-        employee = self._get_active_employee()
-        if not employee:
-            raise Forbidden(_("Access Denied."))
-
-        partner = request.env.user.partner_id
-        channel = request.env['discuss.channel'].sudo().browse(int(channel_id)).exists()
-
-        if not channel:
-            raise NotFound(_("Conversation not found."))
-
-        # CRITICAL SECURITY CHECK: Member verification
-        if partner.id not in channel.channel_member_ids.mapped('partner_id.id'):
-            raise Forbidden(_("You are not a member of this conversation."))
-
-        raw_body = (body or '').strip()
-        if not raw_body:
-            return {'error': _("Message cannot be empty.")}
-
-        # NATIVE SANITIZATION: Convert plain composer text into safe HTML
-        # Escapes HTML/script tags to prevent injection while preserving line breaks and links
-        safe_body = plaintext2html(raw_body)
-
-        # Native Odoo Discuss post: Triggers native mail.message record creation
-        # and dispatches notifications across bus.bus to standard Odoo Discuss
-        msg = channel.message_post(
-            body=safe_body,
-            author_id=partner.id,
-            message_type='comment',
-            subtype_xmlid='mail.mt_comment'
-        )
-
-        # Mark as seen by current user using native Odoo 18 Discuss mechanism
-        member = channel.channel_member_ids.filtered(lambda m: m.partner_id.id == partner.id)
-        if member:
-            if hasattr(member, '_set_last_seen_message_id'):
-                member._set_last_seen_message_id(msg.id)
-            else:
-                member.write({'seen_message_id': msg.id})
-
-        return {
-            'success': True,
-            'message': {
-                'id': msg.id,
-                'author_id': msg.author_id.id,
-                'author_name': msg.author_id.name,
-                'author_avatar': f"/web/image/res.partner/{msg.author_id.id}/avatar_128",
-                'body': msg.body,
-                'date': fields.Datetime.to_string(msg.date),
-                'is_current_user': True,
-                'attachment_ids': [],
-            }
-        }
-
-    @http.route('/chat/api/mark_as_read', type='json', auth='user')
-    def mark_as_read(self, channel_id):
-        """
-        Synchronizes the native Odoo Discuss read marker.
-        Clears the unread count in both Absar Chat and standard Odoo Discuss via native API.
-        """
-        employee = self._get_active_employee()
-        if not employee:
-            raise Forbidden(_("Access Denied."))
-
-        partner = request.env.user.partner_id
-        channel = request.env['discuss.channel'].sudo().browse(int(channel_id)).exists()
-
-        if not channel or partner.id not in channel.channel_member_ids.mapped('partner_id.id'):
-            return {'success': False}
-
-        member = channel.channel_member_ids.filtered(lambda m: m.partner_id.id == partner.id)
-        if member:
-            latest_msg = channel.message_ids[:1]
-            if latest_msg:
-                if hasattr(member, '_set_last_seen_message_id'):
-                    member._set_last_seen_message_id(latest_msg.id)
-                else:
-                    member.write({'seen_message_id': latest_msg.id})
-
-        return {'success': True}
-
