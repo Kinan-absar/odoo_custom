@@ -1257,12 +1257,3 @@
     .epc-chat-reaction-picker { opacity: .65; }
     .epc-chat-reply-preview span { max-width: 180px; }
 }
-/* Chats owns navigation. Keep only the proven incoming/active call surfaces. */
-.ac-body #epc-fab,
-.ac-body #epc-panel,
-.ac-body #epc-picker-backdrop,
-.ac-body .epc-header-btn,
-.ac-body .epc-backend-systray-btn,
-.ac-body .epc-backend-message-btn { display:none !important; }
-.ac-body #epc-incoming,
-.ac-body #epc-active { z-index: 12000 !important; }

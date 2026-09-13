@@ -138,3 +138,10 @@ button,input,textarea{font:inherit}.ac-app{height:100dvh;display:grid;grid-templ
 .ac-drop-card span:last-child{font-size:13px;color:#758392}
 .ac-drop-icon{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:#e8f5f2;color:#0f766e;font-size:36px;line-height:1}
 @media(max-width:700px){.ac-drop-overlay{inset:60px 0 62px 0}.ac-drop-card{min-height:170px}}
+/* Presence indicator shared with the proven Employee Portal presence backend. */
+.ac-thread-avatar-wrap { position: relative; flex: 0 0 auto; display: inline-flex; }
+.ac-presence-dot { position:absolute; right:-1px; bottom:1px; width:11px; height:11px; border-radius:50%; border:2px solid #fff; background:#9ca3af; box-sizing:border-box; }
+.ac-presence-dot.online { background:#22c55e; }
+.ac-presence-dot.away { background:#f59e0b; }
+.ac-presence-dot.in_call { background:#3b82f6; }
+.ac-presence-dot.offline { background:#9ca3af; }

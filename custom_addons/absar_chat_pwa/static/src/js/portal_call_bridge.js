@@ -2358,8 +2358,13 @@
         if (document.querySelector(".o_web_client")) {
             return true;
         }
-        // Frontend/portal: only mount on actual portal pages for logged-in portal
-        // users, never on public/anonymous website pages.
+        // Chats PWA deliberately reuses the exact same proven caller.
+        // The standalone shell is authenticated server-side before it is rendered.
+        if (window.location.pathname === "/chat" || window.location.pathname.startsWith("/chat/")) {
+            return document.body.getAttribute("data-epc-logged-in") === "1" ||
+                !!document.getElementById("epc-mount-marker");
+        }
+        // Frontend/portal: only mount on actual portal pages for logged-in portal users.
         const isPortalPage = document.body.classList.contains("o_portal") ||
             !!document.getElementById("epc-mount-marker");
         const isLoggedIn = document.body.getAttribute("data-epc-logged-in") === "1" ||
@@ -2367,19 +2372,9 @@
         return isPortalPage && isLoggedIn;
     }
 
-    window.__EmployeePortalCallerClass = EmployeePortalCaller;
-    window.__ensureEmployeePortalCaller = function () {
-        if (!window.__employeePortalCaller && shouldMount()) {
-            window.__employeePortalCaller = new EmployeePortalCaller();
-        }
-        return window.__employeePortalCaller || null;
-    };
-
     document.addEventListener("DOMContentLoaded", () => {
-        try {
-            window.__ensureEmployeePortalCaller();
-        } catch (error) {
-            console.error("[EPC] Could not initialize call engine", error);
+        if (shouldMount()) {
+            window.__employeePortalCaller = new EmployeePortalCaller();
         }
     });
 })();

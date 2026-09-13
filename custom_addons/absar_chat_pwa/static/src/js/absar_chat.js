@@ -184,11 +184,32 @@
 
         async refreshPresence() {
             try {
-                const result = await rpc("/employee_portal/call/presence", { active: true });
-                this.presence = result?.statuses || {};
-                this.contacts.forEach(c => c.presence = this.presence[String(c.user_id)] || c.presence || "offline");
-                this.renderPeople(); this.renderNewPeople(); this.updateConversationPresence();
-            } catch (_) {}
+                // Use the exact Employee Portal calling presence endpoints. The
+                // embedded proven caller also runs its own heartbeat; this call
+                // keeps the standalone Chats UI synchronized with the same source.
+                const [heartbeat, directory] = await Promise.all([
+                    rpc("/employee_portal/call/presence", { active: true }),
+                    rpc("/employee_portal/call/contacts", {}),
+                ]);
+                const statuses = Object.assign({}, heartbeat?.statuses || {});
+                if (Array.isArray(directory)) {
+                    const byId = new Map(this.contacts.map(c => [Number(c.user_id), c]));
+                    directory.forEach(row => {
+                        statuses[String(row.user_id)] = row.presence || statuses[String(row.user_id)] || "offline";
+                        const existing = byId.get(Number(row.user_id));
+                        if (existing) Object.assign(existing, row);
+                        else this.contacts.push(row);
+                    });
+                }
+                this.presence = statuses;
+                this.contacts.forEach(c => c.presence = statuses[String(c.user_id)] || c.presence || "offline");
+                this.renderPeople();
+                this.renderNewPeople();
+                this.updateConversationPresence();
+                this.renderThreads();
+            } catch (error) {
+                console.warn("[Chats] presence refresh failed", error);
+            }
         }
 
         async refreshThreads(notify = true) {
@@ -215,8 +236,11 @@
             if (!rows.length) { list.innerHTML = `<div class="ac-loading">${q ? "No matching conversations." : "No conversations yet."}</div>`; return; }
             list.innerHTML = rows.map(t => {
                 const active = Number(t.id) === Number(this.currentThreadId) ? " is-active" : "";
+                const directOther = !t.is_group ? (t.participant_ids || []).map(Number).find(id => id && id !== this.userId) : null;
+                const pstate = directOther ? (this.presence[String(directOther)] || "offline") : "offline";
+                const pdot = !t.is_group ? `<span class="ac-presence-dot ${esc(pstate)}" title="${esc(this.presenceLabel(pstate))}"></span>` : "";
                 return `<article class="ac-thread${active}" data-thread-id="${t.id}">
-                    <img class="ac-thread-avatar" src="${esc(t.avatar_url || this.companyLogo)}" alt=""/>
+                    <span class="ac-thread-avatar-wrap"><img class="ac-thread-avatar" src="${esc(t.avatar_url || this.companyLogo)}" alt=""/>${pdot}</span>
                     <div class="ac-thread-copy"><div class="ac-thread-name">${esc(t.name || "Conversation")}${t.is_group ? ' <i class="fa fa-users" style="font-size:10px;color:#8893a0"></i>' : ""}</div><div class="ac-thread-preview">${esc(t.preview || "No messages yet")}</div></div>
                     <div class="ac-thread-meta"><span class="ac-thread-time">${this.formatListTime(t.last_message_date)}</span>${t.unread ? `<b class="ac-unread">${t.unread > 99 ? "99+" : t.unread}</b>` : ""}</div>
                 </article>`;
@@ -551,35 +575,81 @@
             return new Blob([buffer], { type: "audio/wav" });
         }
 
+        _preferredRecorderMime() {
+            const types = [
+                "audio/webm;codecs=opus",
+                "audio/ogg;codecs=opus",
+                "audio/mp4",
+                "audio/webm",
+            ];
+            return types.find(t => window.MediaRecorder?.isTypeSupported?.(t)) || "";
+        }
+
+        async _voiceBlobToStableWav(blob) {
+            // MediaRecorder is what the native Discuss/browser recording flow relies on.
+            // Re-encode the completed recording into PCM WAV before upload so Chrome,
+            // Safari and installed PWAs all receive a seekable file with a real duration.
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return blob;
+            const ctx = new Ctx();
+            try {
+                const arrayBuffer = await blob.arrayBuffer();
+                const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+                const channels = audioBuffer.numberOfChannels;
+                const frames = audioBuffer.length;
+                const mono = new Float32Array(frames);
+                for (let c = 0; c < channels; c++) {
+                    const data = audioBuffer.getChannelData(c);
+                    for (let i = 0; i < frames; i++) mono[i] += data[i] / channels;
+                }
+                return this._encodeWav(mono, audioBuffer.sampleRate);
+            } finally {
+                try { await ctx.close(); } catch (_) {}
+            }
+        }
+
         async _stopVoiceRecording() {
             const capture = this.voiceCapture;
-            if (!capture) return;
-            this.voiceCapture = null;
+            if (!capture || capture.stopping) return;
+            capture.stopping = true;
             clearTimeout(capture.maxTimer);
             const btn = $("#ac-voice");
             btn.classList.remove("recording");
             btn.title = "Voice note";
-            try { capture.processor.onaudioprocess = null; } catch (_) {}
-            try { capture.source.disconnect(); } catch (_) {}
-            try { capture.processor.disconnect(); } catch (_) {}
-            try { capture.silentGain.disconnect(); } catch (_) {}
-            try { capture.stream.getTracks().forEach(track => track.stop()); } catch (_) {}
-            try { await capture.context.close(); } catch (_) {}
 
             try {
-                const merged = this._mergeFloat32(capture.chunks);
-                if (!merged.length) throw new Error("No audio was captured.");
-                const targetRate = Math.min(16000, capture.sampleRate);
-                const pcm = this._downsampleMono(merged, capture.sampleRate, targetRate);
-                const blob = this._encodeWav(pcm, targetRate);
-                if (!blob.size) throw new Error("The recording is empty.");
+                const finished = new Promise((resolve, reject) => {
+                    capture.recorder.addEventListener("stop", resolve, { once: true });
+                    capture.recorder.addEventListener("error", ev => reject(ev.error || new Error("Recorder error")), { once: true });
+                });
+                // Ask the browser to flush its final encoder buffer before stopping.
+                try { capture.recorder.requestData(); } catch (_) {}
+                capture.recorder.stop();
+                await finished;
+                const chunks = capture.chunks.filter(part => part && part.size);
+                if (!chunks.length) throw new Error("No audio was captured.");
+                const recorded = new Blob(chunks, { type: capture.recorder.mimeType || capture.mimeType || "audio/webm" });
+                let uploadBlob = recorded;
+                let extension = (recorded.type || "").includes("mp4") ? "m4a" : ((recorded.type || "").includes("ogg") ? "ogg" : "webm");
+                let mime = recorded.type || capture.mimeType || "audio/webm";
+                try {
+                    uploadBlob = await this._voiceBlobToStableWav(recorded);
+                    extension = "wav";
+                    mime = "audio/wav";
+                } catch (decodeError) {
+                    console.warn("[Chats] WAV normalization failed; sending native recorder output", decodeError);
+                }
+                if (!uploadBlob.size) throw new Error("The recording is empty.");
                 const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-                const file = new File([blob], `Voice note ${stamp}.wav`, { type: "audio/wav" });
+                const file = new File([uploadBlob], `Voice note ${stamp}.${extension}`, { type: mime });
                 const att = await this.uploadAndQueueFile(file);
                 if (att) await this.sendMessage();
             } catch (error) {
                 console.error("[Chats] could not finalize voice note", error);
                 alert(`Could not send voice note: ${error.message || error}`);
+            } finally {
+                try { capture.stream.getTracks().forEach(track => track.stop()); } catch (_) {}
+                this.voiceCapture = null;
             }
         }
 
@@ -588,51 +658,22 @@
                 await this._stopVoiceRecording();
                 return;
             }
-            if (!navigator.mediaDevices?.getUserMedia) {
+            if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
                 alert("Voice recording is not supported in this browser.");
-                return;
-            }
-            const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContextCtor) {
-                alert("Audio recording is not supported in this browser.");
                 return;
             }
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        channelCount: 1,
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true,
-                    },
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
                 });
-                const context = new AudioContextCtor();
-                if (context.state === "suspended") await context.resume();
-                const source = context.createMediaStreamSource(stream);
-                const processor = context.createScriptProcessor(4096, 1, 1);
-                const silentGain = context.createGain();
-                silentGain.gain.value = 0;
+                const mimeType = this._preferredRecorderMime();
+                const options = mimeType ? { mimeType, audioBitsPerSecond: 64000 } : { audioBitsPerSecond: 64000 };
+                const recorder = new MediaRecorder(stream, options);
                 const chunks = [];
-                processor.onaudioprocess = event => {
-                    const input = event.inputBuffer.getChannelData(0);
-                    chunks.push(new Float32Array(input));
-                };
-                source.connect(processor);
-                processor.connect(silentGain);
-                silentGain.connect(context.destination);
-                const maxTimer = setTimeout(() => {
-                    if (this.voiceCapture) this._stopVoiceRecording();
-                }, 10 * 60 * 1000);
-                this.voiceCapture = {
-                    stream,
-                    context,
-                    source,
-                    processor,
-                    silentGain,
-                    chunks,
-                    sampleRate: context.sampleRate,
-                    maxTimer,
-                };
+                recorder.addEventListener("dataavailable", ev => { if (ev.data?.size) chunks.push(ev.data); });
+                recorder.start();
+                const maxTimer = setTimeout(() => { if (this.voiceCapture) this._stopVoiceRecording(); }, 10 * 60 * 1000);
+                this.voiceCapture = { recorder, stream, chunks, mimeType, maxTimer, stopping: false };
                 this.recordingStartedAt = Date.now();
                 const btn = $("#ac-voice");
                 btn.classList.add("recording");
@@ -654,51 +695,24 @@
                 alert("No callable employee was found in this conversation.");
                 return;
             }
-            if (!navigator.mediaDevices?.getUserMedia) {
-                alert("This browser does not provide microphone/camera access. Open Chats over HTTPS in a supported browser.");
-                return;
-            }
-
             const caller = await this.waitForCaller();
             if (!caller) {
-                alert("The call engine could not start. Close and reopen Chats, then try again.");
+                alert("The call engine could not start. Reload Chats and try again.");
                 return;
             }
-
             const button = type === "video" ? $("#ac-video-call") : $("#ac-audio-call");
             button?.classList.add("is-starting");
             try {
-                // Ask for media first while this click still has user activation.
-                // This also gives an immediate permission prompt instead of a
-                // silent call button when the browser has blocked microphone/camera.
-                if (caller.localStream) {
-                    try { caller.localStream.getTracks().forEach(track => track.stop()); } catch (_) {}
-                    caller.localStream = null;
-                }
-                caller.currentCallType = type === "video" ? "video" : "audio";
-                await caller._prepareLocalMedia();
-
-                const params = participants.length === 1
-                    ? { target_user_id: participants[0], call_type: caller.currentCallType }
-                    : { target_user_ids: participants, call_type: caller.currentCallType };
-                const res = await rpc("/employee_portal/call/start", params);
-                if (!res || res.error || !res.uuid) throw new Error(res?.error || "call_start_failed");
-
-                caller.currentUuid = res.uuid;
-                caller._iAmCaller = true;
+                // Do not duplicate the WebRTC lifecycle here. Use the exact same
+                // proven call entry points used by Employee Portal Suite.
                 if (participants.length === 1) {
-                    const contact = (caller.contacts || []).find(c => Number(c.user_id) === Number(participants[0]));
-                    caller._setPeerName(contact?.name || this.currentThread?.name || "Employee");
-                    caller._showActive(type === "video" ? "Starting video call…" : "Calling…");
+                    await caller._startCall(participants[0], type === "video" ? "video" : "audio");
                 } else {
-                    caller._setPeerName(this.currentThread?.name || "Group call");
-                    caller._showActive(`Calling ${participants.length} employees…`);
-                    await caller._refreshParticipants();
+                    await caller._startHistoryGroupCall(participants, type === "video" ? "video" : "audio");
                 }
             } catch (error) {
                 console.error("[Chats] call start failed", error);
-                try { caller._teardown(); } catch (_) {}
-                alert(`Could not start ${type === "video" ? "video" : "audio"} call: ${error.message || error}`);
+                alert(`Could not start ${type === "video" ? "video" : "audio"} call.`);
             } finally {
                 button?.classList.remove("is-starting");
             }
