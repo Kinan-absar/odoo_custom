@@ -514,3 +514,19 @@
 .ep-native-inline-back svg,.ep-native-inline-video svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 body.ep-native-discuss-embedded .ep-native-video-call-btn{display:none!important}
 @media(max-width:767.98px){.ep-native-inline-back,.ep-native-inline-video{width:40px!important;height:40px!important}.ep-native-discuss-public .o-mail-Discuss-header{padding-left:max(4px,env(safe-area-inset-left))!important;padding-right:max(4px,env(safe-area-inset-right))!important}}
+
+/* v20.21 - Conversations are embedded inside the dedicated Chats shell.
+   The outer Chats page is now the only conversation navigation, so the native
+   public Discuss mobile Chat navigation/footer must not appear inside the frame. */
+.ep-native-discuss-embedded .o-mail-MessagingMenu,
+.ep-native-discuss-embedded [class*="MessagingMenu"] {
+  display: none !important;
+}
+
+/* Keep the embedded native conversation full-size on desktop and mobile. */
+.ep-native-discuss-embedded .o-mail-Discuss,
+.ep-native-discuss-embedded .o-mail-Discuss-content,
+.ep-native-discuss-embedded .o-mail-Discuss-main {
+  width: 100% !important;
+  max-width: none !important;
+}
