@@ -194,20 +194,10 @@ function epEnhanceNativeSidebar() {
 }
 
 
-// Employee portal/mobile Chats should behave like a dedicated messenger, not
-// the generic Odoo mobile Discuss switcher.  Keep Odoo's own MessagingMenu and
-// notification rows, but expose only the Chat tab.  This preserves native
-// unread counters, presence, swipe actions and thread opening while removing
-// the irrelevant Channel tab for employee messaging.
-patch(MessagingMenu.prototype, {
-    get tabs() {
-        const tabs = super.tabs;
-        if (!employeePortalMeta("employee-portal-discuss")) {
-            return tabs;
-        }
-        return tabs.filter((tab) => tab.id === "chat");
-    },
-});
+// Keep Odoo's native MessagingMenu implementation untouched. On mobile we
+// open its Chat view as the landing surface and hide only the Channel tab with
+// portal-scoped CSS. Patching the component tabs itself can remove the native
+// mobile Chat control on some Odoo 18 builds.
 
 // Odoo public Discuss disables some composer capabilities for generic public/guest pages.
 // Employee Portal Discuss is authenticated and channel membership is validated server-side,
@@ -255,13 +245,18 @@ patch(DiscussClientAction.prototype, {
         // stores and mobile MessagingMenu.  Skipping `super` leaves a blank page.
         const result = await super.restoreDiscussThread(...arguments);
         if (employeePortalMeta("employee-portal-discuss-home") && this.store?.discuss) {
-            // The canonical Chats root is a neutral home/list state.  Clear only the
-            // selected thread *after* native restore has completed so Odoo cannot
-            // re-open the bootstrap/stale conversation afterwards.
-            this.store.discuss.thread = undefined;
-            this.store.discuss.activeTab = window.matchMedia("(max-width: 767.98px)").matches
-                ? "chat"
-                : "main";
+            const isMobile = window.matchMedia("(max-width: 767.98px)").matches;
+            if (isMobile) {
+                // Public Discuss requires a real bootstrap thread. Keep it internally,
+                // but make Odoo's native mobile MessagingMenu/Chat list the visible
+                // landing surface. This avoids both the random-thread landing and the
+                // blank-page lifecycle problem.
+                this.store.discuss.activeTab = "chat";
+            } else {
+                // Desktop can safely expose a neutral Discuss canvas.
+                this.store.discuss.thread = undefined;
+                this.store.discuss.activeTab = "main";
+            }
         }
         return result;
     },
@@ -367,14 +362,18 @@ patch(Discuss.prototype, {
                 this._epSidebarObserver = new MutationObserver(() => epEnhanceNativeSidebar());
                 this._epSidebarObserver.observe(this.root?.el || document.body, { childList: true, subtree: true });
                 if (isEmployeePortalDiscussHome) {
-                    // `restoreDiscussThread()` already turns the bootstrap thread into
-                    // the neutral home state after Odoo has finished restoring.  Keep
-                    // this mount-time assignment idempotent, but do not schedule later
-                    // timers that could close a conversation the user has just opened.
-                    this.store.discuss.thread = undefined;
-                    this.store.discuss.activeTab = window.matchMedia("(max-width: 767.98px)").matches
-                        ? "chat"
-                        : "main";
+                    const isMobile = window.matchMedia("(max-width: 767.98px)").matches;
+                    if (isMobile) {
+                        this.store.discuss.activeTab = "chat";
+                        // Re-assert after OWL has painted the native mobile menu. We do
+                        // not clear the bootstrap thread on mobile; the menu covers it.
+                        requestAnimationFrame(() => {
+                            if (this.store?.discuss) this.store.discuss.activeTab = "chat";
+                        });
+                    } else {
+                        this.store.discuss.thread = undefined;
+                        this.store.discuss.activeTab = "main";
+                    }
                 }
 
                 // Mobile gesture: a deliberate left swipe inside a conversation returns
@@ -405,8 +404,8 @@ patch(Discuss.prototype, {
                             window.location.assign("/my/employee/discuss");
                         }
                     };
-                    this.root?.el?.addEventListener("touchstart", this._epSwipeStart, { passive: true });
-                    this.root?.el?.addEventListener("touchend", this._epSwipeEnd, { passive: true });
+                    document.addEventListener("touchstart", this._epSwipeStart, { passive: true, capture: true });
+                    document.addEventListener("touchend", this._epSwipeEnd, { passive: true, capture: true });
                 }
                 this._epApplyViewportHeight();
                 window.setTimeout(this._epApplyViewportHeight, 80);
@@ -424,8 +423,8 @@ patch(Discuss.prototype, {
                 document.removeEventListener("focusin", this._epOnFocusIn, true);
                 document.removeEventListener("focusout", this._epOnFocusOut, true);
                 this._epSidebarObserver?.disconnect();
-                this.root?.el?.removeEventListener("touchstart", this._epSwipeStart);
-                this.root?.el?.removeEventListener("touchend", this._epSwipeEnd);
+                document.removeEventListener("touchstart", this._epSwipeStart, true);
+                document.removeEventListener("touchend", this._epSwipeEnd, true);
                 document.documentElement.style.removeProperty("--ep-discuss-height");
                 document.documentElement.style.removeProperty("--ep-discuss-top");
                 document.documentElement.style.overflow = originalHtmlOverflow;

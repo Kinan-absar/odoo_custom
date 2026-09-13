@@ -384,3 +384,18 @@
     z-index: 60 !important;
   }
 }
+
+/* v20.13 - Native mobile Chats landing. Keep Odoo MessagingMenu intact and
+   hide only its second (Channel) choice. The first Chat control remains visible. */
+@media (max-width: 767.98px) {
+  .ep-native-discuss-public .o-mail-MessagingMenu-navbar > :nth-child(2),
+  .ep-native-discuss-public .o-mail-MessagingMenu-navbar [role="tab"]:nth-of-type(2) {
+    display: none !important;
+  }
+  .ep-native-discuss-public .o-mail-MessagingMenu-navbar > :first-child,
+  .ep-native-discuss-public .o-mail-MessagingMenu-navbar [role="tab"]:first-of-type {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
