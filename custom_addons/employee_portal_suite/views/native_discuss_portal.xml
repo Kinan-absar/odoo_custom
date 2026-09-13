@@ -2,7 +2,7 @@
 <odoo>
     <template id="ep_native_communication_actions">
         <div class="ep-native-comm-actions" t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-            <a class="ep-native-comm-btn ep-native-message-btn" href="/my/employee/discuss" title="Messages">
+            <a class="ep-native-comm-btn ep-native-message-btn" href="/chat/" target="_blank" rel="noopener noreferrer" title="Open Absar Chat">
                 <i class="fa fa-comments"/>
                 <span class="ep-native-unread-badge" style="display:none">0</span>
             </a>

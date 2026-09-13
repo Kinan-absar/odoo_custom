@@ -143,14 +143,14 @@ class AbsarChatPWAController(EmployeePortalNativeDiscussController):
             json.dumps(manifest),
             headers=[
                 ('Content-Type', 'application/manifest+json; charset=utf-8'),
-                ('Cache-Control', 'public, max-age=3600'),
+                ('Cache-Control', 'no-cache'),
             ],
         )
 
     @http.route('/chat/service-worker.js', type='http', auth='public', methods=['GET'])
     def absar_chat_service_worker(self):
         code = r"""
-const CACHE_NAME = 'absar-chat-shell-v5';
+const CACHE_NAME = 'absar-chat-shell-v6';
 const STATIC_ASSETS = [
   '/chat/manifest.webmanifest',
   '/absar_chat_pwa/static/icons/icon-192.png',

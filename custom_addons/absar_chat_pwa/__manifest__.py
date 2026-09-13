@@ -1,6 +1,6 @@
 {
     'name': 'Absar Chat PWA',
-    'version': '18.0.2.0.0',
+    'version': '18.0.2.1.0',
     'summary': 'Installable Absar Chat PWA using native Odoo Discuss and RTC',
     'description': """
 Absar Chat PWA

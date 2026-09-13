@@ -14,8 +14,8 @@
                 <link rel="manifest" href="/chat/manifest.webmanifest"/>
                 <link rel="apple-touch-icon" href="/absar_chat_pwa/static/icons/icon-192.png"/>
                 <link rel="icon" href="/absar_chat_pwa/static/icons/icon-192.png"/>
-                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/absar_chat_home.css?v=18.0.2.0.0"/>
-                <script src="/absar_chat_pwa/static/src/js/absar_chat_home.js?v=18.0.2.0.0" defer="defer"></script>
+                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/absar_chat_home.css?v=18.0.2.1.0"/>
+                <script src="/absar_chat_pwa/static/src/js/absar_chat_home.js?v=18.0.2.1.0" defer="defer"></script>
                 <script>
                     if ('serviceWorker' in navigator) {
                         window.addEventListener('load', function () {
@@ -28,7 +28,7 @@
                 <div class="ac-app">
                     <header class="ac-topbar">
                         <div class="ac-brand">
-                            <div class="ac-logo">A</div>
+                            <div class="ac-logo"><img src="/absar_chat_pwa/static/icons/icon-192.png" alt="Absar Chat"/></div>
                             <div><strong>Absar Chat</strong><span>Internal Communication</span></div>
                         </div>
                         <div class="ac-top-actions">
@@ -84,7 +84,7 @@
 
                         <section class="ac-welcome">
                             <div class="ac-welcome-card">
-                                <div class="ac-welcome-logo">A</div>
+                                <div class="ac-welcome-logo"><img src="/absar_chat_pwa/static/icons/icon-192.png" alt="Absar Chat"/></div>
                                 <h1>Absar Chat</h1>
                                 <p>Select a conversation from the left. Conversations open in <strong>native Odoo Discuss</strong>, so attachments, replies, reactions, calls, screen sharing and the existing RTC features stay available.</p>
                                 <button type="button" class="ac-primary" id="ac-start-first">Start conversation</button>
