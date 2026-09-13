@@ -27,6 +27,35 @@ function removeEmbeddedCloseButton(header) {
     }
 }
 
+
+function tidyEmbeddedMobileHeader(header) {
+    if (!isEmbeddedDiscuss() || !window.matchMedia("(max-width: 767.98px)").matches || !header) return;
+    const controls = Array.from(header.querySelectorAll("button, a"));
+    for (const el of controls) {
+        if (el.dataset.epChatsBack) {
+            el.style.removeProperty("display");
+            continue;
+        }
+        const label = `${el.getAttribute("title") || ""} ${el.getAttribute("aria-label") || ""}`.toLowerCase();
+        const html = (el.innerHTML || "").toLowerCase();
+        const classes = String(el.className || "").toLowerCase();
+        // Historical extra video action must stay gone.
+        if (classes.includes("ep-native-video-call")) {
+            el.style.setProperty("display", "none", "important");
+            continue;
+        }
+        // Keep only the actual audio/video call controls, plus avatar/name links if any.
+        const isCall = label.includes("call") || label.includes("video") || label.includes("camera") ||
+            html.includes("fa-phone") || html.includes("fa-video") || html.includes("phone") || html.includes("video");
+        const identityControl = Boolean(el.querySelector("img")) || (el.textContent || "").trim().length > 1;
+        if (isCall || identityControl) {
+            el.style.removeProperty("display");
+        } else {
+            el.style.setProperty("display", "none", "important");
+            el.dataset.epMobileHiddenAction = "1";
+        }
+    }
+}
 function goBackToChats() {
     if (isEmbeddedDiscuss() && window.parent && window.parent !== window) {
         window.parent.postMessage({ type: "employee-discuss-back-to-chats" }, window.location.origin);
@@ -41,6 +70,7 @@ function ensureEmbeddedHeaderActions() {
     if (!header) return;
 
     removeEmbeddedCloseButton(header);
+    tidyEmbeddedMobileHeader(header);
 
     if (isEmbeddedDiscuss() && !header.querySelector("[data-ep-chats-back]")) {
         const back = document.createElement("button");

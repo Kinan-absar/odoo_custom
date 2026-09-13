@@ -57,7 +57,7 @@
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                             <div class="ep-native-new-chat-title">New chat</div>
                             <div class="ep-new-chat-search">
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:17px;height:17px;min-width:17px;max-width:17px;min-height:17px;max-height:17px;fill:none;stroke:currentColor"><circle cx="11" cy="11" r="7" fill="none"/><path d="M20 20l-3.5-3.5"/></svg>
                                 <input type="search" placeholder="Search employees" autocomplete="off" data-ep-new-chat-search="1"/>
                             </div>
                             <div class="ep-native-people-grid">
@@ -201,9 +201,21 @@
                  conversation is hidden immediately from the HTML itself. This does not rely on
                  any JS-added body class, so it still applies even if the frontend JS assets fail. -->
             <style t-if="request.params.get('embedded')" data-employee-discuss-pwa="1">
+                /* Embedded conversation: the outer Chats page owns navigation. */
+                .o-mail-DiscussSidebar,
+                .o-mail-Discuss-sidebar,
+                [class*="o-mail-DiscussSidebar"],
                 .o-mail-MessagingMenu,
                 .o-mail-MessagingMenu-navbar,
                 [class*="o-mail-MessagingMenu"] { display: none !important; }
+                .o-mail-Discuss { grid-template-columns: minmax(0, 1fr) !important; width: 100% !important; }
+                .o-mail-Discuss-content,
+                .o-mail-Discuss-main,
+                .o-mail-Discuss-core,
+                .o-mail-Discuss-threadContainer { width: 100% !important; max-width: none !important; }
+                /* Remove only our historical extra video action; keep Odoo/portal native call controls. */
+                .ep-native-video-call,
+                .ep-native-video-call-btn { display: none !important; }
             </style>
             <meta t-if="request.httprequest.path == '/my/employee/discuss'" name="employee-portal-discuss-home" content="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-back-url" content="/my/employee/discuss"/>

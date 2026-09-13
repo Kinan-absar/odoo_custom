@@ -514,3 +514,19 @@
 .ep-native-inline-back svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 body.ep-native-discuss-embedded .ep-native-video-call-btn{display:none!important}
 @media(max-width:767.98px){.ep-native-inline-back{width:40px!important;height:40px!important}.ep-native-discuss-public .o-mail-Discuss-header{padding-left:max(4px,env(safe-area-inset-left))!important;padding-right:max(4px,env(safe-area-inset-right))!important}}
+
+
+/* v20.24 - Embedded conversation cleanup. */
+body.ep-native-discuss-embedded .o-mail-DiscussSidebar,
+body.ep-native-discuss-embedded .o-mail-Discuss-sidebar,
+body.ep-native-discuss-embedded [class*="o-mail-DiscussSidebar"],
+body.ep-native-discuss-embedded .o-mail-MessagingMenu,
+body.ep-native-discuss-embedded .o-mail-MessagingMenu-navbar,
+body.ep-native-discuss-embedded [class*="o-mail-MessagingMenu"]{display:none!important}
+body.ep-native-discuss-embedded .o-mail-Discuss{grid-template-columns:minmax(0,1fr)!important;width:100%!important}
+body.ep-native-discuss-embedded .o-mail-Discuss-content,
+body.ep-native-discuss-embedded .o-mail-Discuss-main,
+body.ep-native-discuss-embedded .o-mail-Discuss-core,
+body.ep-native-discuss-embedded .o-mail-Discuss-threadContainer{width:100%!important;max-width:none!important}
+body.ep-native-discuss-embedded .ep-native-video-call,
+body.ep-native-discuss-embedded .ep-native-video-call-btn{display:none!important}
