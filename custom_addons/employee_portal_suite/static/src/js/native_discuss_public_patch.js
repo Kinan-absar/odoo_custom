@@ -13,21 +13,11 @@ function isEmbeddedDiscuss() {
     return Boolean(meta("employee-portal-discuss-embedded"));
 }
 
-function findNativePhoneButton(header) {
-    const controls = Array.from(header.querySelectorAll("button, a"));
-    return controls.find((el) => {
-        if (el.dataset.epVideoCall || el.dataset.epChatsBack) return false;
-        const label = `${el.getAttribute("title") || ""} ${el.getAttribute("aria-label") || ""} ${el.textContent || ""}`.toLowerCase();
-        const html = (el.innerHTML || "").toLowerCase();
-        return !label.includes("video") && (label.includes("call") || label.includes("phone") || html.includes("fa-phone") || html.includes("phone"));
-    }) || null;
-}
-
 function removeEmbeddedCloseButton(header) {
     if (!isEmbeddedDiscuss()) return;
     const controls = Array.from(header.querySelectorAll("button, a"));
     for (const el of controls) {
-        if (el.dataset.epChatsBack || el.dataset.epVideoCall) continue;
+        if (el.dataset.epChatsBack) continue;
         const label = `${el.getAttribute("title") || ""} ${el.getAttribute("aria-label") || ""}`.trim().toLowerCase();
         const html = (el.innerHTML || "").toLowerCase();
         if (label === "close" || label.includes("close conversation") || html.includes("fa-times") || html.includes("fa-close")) {
@@ -68,31 +58,6 @@ function ensureEmbeddedHeaderActions() {
         header.insertBefore(back, header.firstElementChild || null);
     }
 
-    if (header.querySelector("[data-ep-video-call]")) return;
-    const phone = findNativePhoneButton(header);
-    if (!phone) return;
-
-    const video = document.createElement("button");
-    video.type = "button";
-    video.dataset.epVideoCall = "1";
-    video.className = "ep-native-inline-video";
-    video.title = "Video call";
-    video.setAttribute("aria-label", "Video call");
-    video.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="M15 10l5-3v10l-5-3z"/></svg>';
-    video.addEventListener("click", async (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        try {
-            if (!window.EmployeePortalNativeRTC?.startVideo) {
-                throw new Error("Call service is not ready yet.");
-            }
-            await window.EmployeePortalNativeRTC.startVideo();
-        } catch (error) {
-            console.error("Employee Portal video call failed", error);
-            window.alert(error?.message || "Unable to start video call.");
-        }
-    });
-    phone.insertAdjacentElement("afterend", video);
 }
 
 // Employee Portal Discuss is authenticated and membership is validated server-side,

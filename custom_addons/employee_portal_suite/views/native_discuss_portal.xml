@@ -56,9 +56,13 @@
                         <form action="/my/employee/discuss/start" method="post">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                             <div class="ep-native-new-chat-title">New chat</div>
+                            <div class="ep-new-chat-search">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                                <input type="search" placeholder="Search employees" autocomplete="off" data-ep-new-chat-search="1"/>
+                            </div>
                             <div class="ep-native-people-grid">
                                 <t t-foreach="employees" t-as="emp_user">
-                                    <label class="ep-native-person-option">
+                                    <label class="ep-native-person-option" t-att-data-search="(emp_user['name'] or '').lower()">
                                         <input type="checkbox" name="participant_ids" t-att-value="emp_user['id']"/>
                                         <img t-if="emp_user['avatar']" t-att-src="emp_user['avatar']"/>
                                         <span t-if="not emp_user['avatar']" class="ep-native-avatar-fallback"><i class="fa fa-user"/></span>
@@ -139,14 +143,26 @@
                         }, true);
 
                         document.addEventListener("input", function (event) {
-                            var input = event.target.closest &amp;&amp; event.target.closest("[data-ep-chat-search]");
-                            if (!input) return;
-                            var query = (input.value || "").trim().toLowerCase();
-                            var threads = document.querySelectorAll("[data-ep-thread]");
-                            for (var i = 0; i &lt; threads.length; i++) {
-                                var thread = threads[i];
-                                var haystack = (thread.getAttribute("data-search") || thread.textContent || "").toLowerCase();
-                                thread.style.display = !query || haystack.indexOf(query) !== -1 ? "" : "none";
+                            var chatInput = event.target.closest &amp;&amp; event.target.closest("[data-ep-chat-search]");
+                            if (chatInput) {
+                                var chatQuery = (chatInput.value || "").trim().toLowerCase();
+                                var threads = document.querySelectorAll("[data-ep-thread]");
+                                for (var i = 0; i &lt; threads.length; i++) {
+                                    var thread = threads[i];
+                                    var haystack = (thread.getAttribute("data-search") || thread.textContent || "").toLowerCase();
+                                    thread.style.display = !chatQuery || haystack.indexOf(chatQuery) !== -1 ? "" : "none";
+                                }
+                                return;
+                            }
+                            var peopleInput = event.target.closest &amp;&amp; event.target.closest("[data-ep-new-chat-search]");
+                            if (peopleInput) {
+                                var peopleQuery = (peopleInput.value || "").trim().toLowerCase();
+                                var people = document.querySelectorAll(".ep-native-person-option");
+                                for (var j = 0; j &lt; people.length; j++) {
+                                    var person = people[j];
+                                    var personHaystack = (person.getAttribute("data-search") || person.textContent || "").toLowerCase();
+                                    person.style.display = !peopleQuery || personHaystack.indexOf(peopleQuery) !== -1 ? "" : "none";
+                                }
                             }
                         }, true);
                     }

@@ -218,13 +218,23 @@
         }, true);
 
         document.addEventListener("input", (event) => {
-            const input = event.target.closest?.("[data-ep-chat-search]");
-            if (!input) return;
-            const query = (input.value || "").trim().toLowerCase();
-            document.querySelectorAll("[data-ep-thread]").forEach((thread) => {
-                const haystack = (thread.dataset.search || thread.textContent || "").toLowerCase();
-                thread.style.display = !query || haystack.includes(query) ? "" : "none";
-            });
+            const chatInput = event.target.closest?.("[data-ep-chat-search]");
+            if (chatInput) {
+                const query = (chatInput.value || "").trim().toLowerCase();
+                document.querySelectorAll("[data-ep-thread]").forEach((thread) => {
+                    const haystack = (thread.dataset.search || thread.textContent || "").toLowerCase();
+                    thread.style.display = !query || haystack.includes(query) ? "" : "none";
+                });
+                return;
+            }
+            const peopleInput = event.target.closest?.("[data-ep-new-chat-search]");
+            if (peopleInput) {
+                const query = (peopleInput.value || "").trim().toLowerCase();
+                document.querySelectorAll(".ep-native-person-option").forEach((person) => {
+                    const haystack = (person.dataset.search || person.textContent || "").toLowerCase();
+                    person.style.display = !query || haystack.includes(query) ? "" : "none";
+                });
+            }
         }, true);
     }
 
