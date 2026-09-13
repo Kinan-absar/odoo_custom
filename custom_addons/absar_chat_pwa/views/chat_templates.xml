@@ -15,10 +15,10 @@
                 <link rel="icon" t-att-href="'/web/image/res.company/%s/logo' % request.env.company.id"/>
                 <link rel="apple-touch-icon" t-att-href="'/web/image/res.company/%s/logo/192x192' % request.env.company.id"/>
                 <link rel="stylesheet" href="/web/static/lib/fontawesome/css/font-awesome.css"/>
-                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/call_widget.css?v=18.0.3.6.0"/>
-                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/absar_chat.css?v=18.0.3.6.0"/>
-                <script src="/absar_chat_pwa/static/src/js/portal_call_bridge.js?v=18.0.3.6.0" defer="defer"></script>
-                <script src="/absar_chat_pwa/static/src/js/absar_chat.js?v=18.0.3.6.0" defer="defer"></script>
+                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/call_widget.css?v=18.0.3.8.0"/>
+                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/absar_chat.css?v=18.0.3.8.0"/>
+                <script src="/absar_chat_pwa/static/src/js/portal_call_bridge.js?v=18.0.3.8.0" defer="defer"></script>
+                <script src="/absar_chat_pwa/static/src/js/absar_chat.js?v=18.0.3.8.0" defer="defer"></script>
             </head>
             <body class="ac-body" data-epc-logged-in="1"
                   t-att-data-current-user-id="current_user.id"
@@ -37,7 +37,6 @@
                             <button class="ac-rail-btn" data-view="people" title="People"><i class="fa fa-users"></i><span>People</span></button>
                             <button class="ac-rail-btn" data-view="settings" title="Settings"><i class="fa fa-cog"></i><span>Settings</span></button>
                         </nav>
-                        <a class="ac-portal-link" href="/my/employee" title="Employee Portal"><i class="fa fa-th-large"></i><span>Portal</span></a>
                     </aside>
 
                     <section id="ac-sidebar" class="ac-sidebar">
@@ -110,7 +109,7 @@
 
                         <section id="ac-calls-view" class="ac-page-view is-hidden"><div class="ac-page-head"><div><h2>Calls</h2><p>Recent voice and video calls</p></div></div><div id="ac-call-history" class="ac-card-list"><div class="ac-loading">Loading calls…</div></div></section>
                         <section id="ac-people-view" class="ac-page-view is-hidden"><div class="ac-page-head"><div><h2>People</h2><p>Company employee directory</p></div><label class="ac-search ac-page-search"><i class="fa fa-search"></i><input id="ac-people-search" type="search" placeholder="Search employees"/></label></div><div id="ac-people-list" class="ac-people-grid"><div class="ac-loading">Loading employees…</div></div></section>
-                        <section id="ac-settings-view" class="ac-page-view is-hidden"><div class="ac-page-head"><div><h2>Settings</h2><p>Chats preferences</p></div></div><div class="ac-settings-card"><div class="ac-setting-row"><div><strong>Install Chats</strong><span>Add this app to your desktop or home screen.</span></div><button id="ac-install" class="ac-secondary-btn">Install app</button></div><div class="ac-setting-row"><div><strong>Desktop notifications</strong><span>Allow message and call alerts while the app is open.</span></div><button id="ac-notifications" class="ac-secondary-btn">Enable</button></div><div class="ac-setting-row"><div><strong>Employee Portal</strong><span>Return to requests, attendance and other employee tools.</span></div><a href="/my/employee" class="ac-secondary-btn">Open portal</a></div></div></section>
+                        <section id="ac-settings-view" class="ac-page-view is-hidden"><div class="ac-page-head"><div><h2>Settings</h2><p>Chats preferences</p></div></div><div class="ac-settings-card"><div class="ac-setting-row"><div><strong>Install Chats</strong><span>Add this app to your desktop or home screen.</span></div><button id="ac-install" class="ac-secondary-btn">Install app</button></div><div class="ac-setting-row"><div><strong>Desktop notifications</strong><span>Allow message and call alerts while the app is open.</span></div><button id="ac-notifications" class="ac-secondary-btn">Enable</button></div></div></section>
                     </main>
 
                     <aside id="ac-info-panel" class="ac-info-panel is-hidden">
@@ -142,6 +141,6 @@
     <template id="access_denied_page" name="Chats Access Denied">
         &lt;!DOCTYPE html&gt;
         <html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Chats</title></head>
-        <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f8fb;margin:0;display:grid;place-items:center;min-height:100vh;color:#172033"><div style="text-align:center;padding:36px;background:white;border:1px solid #e8edf2;border-radius:24px;max-width:420px"><h1 style="margin:0 0 10px"><t t-esc="title"/></h1><p style="color:#6b7280"><t t-esc="message"/></p><a href="/my/employee" style="display:inline-block;margin-top:12px;padding:11px 18px;background:#0f766e;color:white;border-radius:10px;text-decoration:none">Employee Portal</a></div></body></html>
+        <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f8fb;margin:0;display:grid;place-items:center;min-height:100vh;color:#172033"><div style="text-align:center;padding:36px;background:white;border:1px solid #e8edf2;border-radius:24px;max-width:420px"><h1 style="margin:0 0 10px"><t t-esc="title"/></h1><p style="color:#6b7280"><t t-esc="message"/></p></div></body></html>
     </template>
 </odoo>

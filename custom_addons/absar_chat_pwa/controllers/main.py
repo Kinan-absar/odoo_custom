@@ -122,7 +122,7 @@ class AbsarChatPWAController(EmployeePortalNativeDiscussController):
     @http.route('/chat/service-worker.js', type='http', auth='public', methods=['GET'])
     def absar_chat_service_worker(self):
         code = r"""
-const CACHE_NAME = 'chats-static-v18';
+const CACHE_NAME = 'chats-static-v20';
 const STATIC_ASSETS = [
   '/chat/manifest.webmanifest',
   '/absar_chat_pwa/static/src/css/absar_chat.css',
@@ -165,6 +165,42 @@ class AbsarChatAPIController(PortalChatController):
     the posted mail.message and return the freshly serialized message, making
     attachment-only messages deterministic for the standalone PWA.
     """
+
+
+    @http.route('/chat/api/presence', type='json', auth='user', csrf=False)
+    def absar_chat_presence(self):
+        """Return the same partner presence state consumed by native Discuss.
+
+        Native Discuss reads ``res.partner.im_status``.  Chats uses that value
+        first and falls back to the Employee Portal heartbeat only when native
+        Discuss has no active websocket presence for the employee.
+        """
+        user = self._user()
+        if not self._is_employee_user(user):
+            return {'ok': False, 'statuses': {}}
+        employees = request.env['hr.employee'].sudo().search([
+            ('active', '=', True),
+            ('user_id', '!=', False),
+            ('user_id.active', '=', True),
+        ])
+        users = employees.mapped('user_id')
+        fallback = {}
+        try:
+            # Reuse the existing call-presence semantics for standalone PWA
+            # users, which do not keep Odoo's backend websocket open.
+            from odoo.addons.employee_portal_suite.controllers.portal_call import PortalCallController
+            fallback = PortalCallController()._presence_map(users.ids)
+        except Exception:
+            fallback = {}
+        statuses = {}
+        for employee_user in users:
+            native = (employee_user.partner_id.sudo().im_status or 'offline').lower()
+            if native == 'bot':
+                native = 'online'
+            if native not in ('online', 'away', 'offline'):
+                native = 'offline'
+            statuses[str(employee_user.id)] = native if native != 'offline' else fallback.get(employee_user.id, 'offline')
+        return {'ok': True, 'statuses': statuses}
 
     @http.route('/chat/api/upload', type='json', auth='user', csrf=False)
     def absar_chat_upload(self, thread_id=None, filename=None, mimetype=None, data=None):

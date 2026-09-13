@@ -2372,9 +2372,33 @@
         return isPortalPage && isLoggedIn;
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-        if (shouldMount()) {
-            window.__employeePortalCaller = new EmployeePortalCaller();
+    // Expose the exact proven caller so the standalone Chats PWA can use the
+    // same implementation instead of maintaining a second WebRTC stack.
+    window.EmployeePortalCaller = EmployeePortalCaller;
+    window.__ensureEmployeePortalCaller = function () {
+        if (window.__employeePortalCaller) {
+            return window.__employeePortalCaller;
         }
-    });
+        if (!shouldMount()) {
+            return null;
+        }
+        try {
+            window.__employeePortalCaller = new EmployeePortalCaller();
+            return window.__employeePortalCaller;
+        } catch (error) {
+            console.error("[Chats] Employee Portal caller failed to initialize", error);
+            return null;
+        }
+    };
+
+    const mountCaller = () => {
+        if (shouldMount()) {
+            window.__ensureEmployeePortalCaller();
+        }
+    };
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", mountCaller, { once: true });
+    } else {
+        mountCaller();
+    }
 })();

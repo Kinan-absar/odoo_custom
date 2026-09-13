@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Internal Odoo employees get a normal app/menu entry which opens the
+         same standalone PWA used by portal employees.  The /chat controller
+         still performs the definitive active-employee authorization check. -->
+    <record id="action_chats_pwa" model="ir.actions.act_url">
+        <field name="name">Chats</field>
+        <field name="url">/chat/</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_chats_pwa_root"
+              name="Chats"
+              action="action_chats_pwa"
+              sequence="35"
+              groups="base.group_user"
+              web_icon="absar_chat_pwa,static/description/icon.png"/>
+</odoo>

@@ -184,25 +184,18 @@
 
         async refreshPresence() {
             try {
-                // Use the exact Employee Portal calling presence endpoints. The
-                // embedded proven caller also runs its own heartbeat; this call
-                // keeps the standalone Chats UI synchronized with the same source.
-                const [heartbeat, directory] = await Promise.all([
-                    rpc("/employee_portal/call/presence", { active: true }),
-                    rpc("/employee_portal/call/contacts", {}),
+                // Keep the lightweight heartbeat alive for standalone PWA users,
+                // then read native Discuss presence (res.partner.im_status) with
+                // that heartbeat as a fallback.
+                const [, native] = await Promise.all([
+                    rpc("/employee_portal/call/presence", { active: document.visibilityState === "visible" }).catch(() => null),
+                    rpc("/chat/api/presence", {}),
                 ]);
-                const statuses = Object.assign({}, heartbeat?.statuses || {});
-                if (Array.isArray(directory)) {
-                    const byId = new Map(this.contacts.map(c => [Number(c.user_id), c]));
-                    directory.forEach(row => {
-                        statuses[String(row.user_id)] = row.presence || statuses[String(row.user_id)] || "offline";
-                        const existing = byId.get(Number(row.user_id));
-                        if (existing) Object.assign(existing, row);
-                        else this.contacts.push(row);
-                    });
-                }
+                const statuses = Object.assign({}, native?.statuses || {});
                 this.presence = statuses;
-                this.contacts.forEach(c => c.presence = statuses[String(c.user_id)] || c.presence || "offline");
+                this.contacts.forEach(c => {
+                    c.presence = statuses[String(c.user_id)] || c.presence || "offline";
+                });
                 this.renderPeople();
                 this.renderNewPeople();
                 this.updateConversationPresence();
@@ -585,77 +578,58 @@
             return types.find(t => window.MediaRecorder?.isTypeSupported?.(t)) || "";
         }
 
-        async _voiceBlobToStableWav(blob) {
-            // MediaRecorder is what the native Discuss/browser recording flow relies on.
-            // Re-encode the completed recording into PCM WAV before upload so Chrome,
-            // Safari and installed PWAs all receive a seekable file with a real duration.
-            const Ctx = window.AudioContext || window.webkitAudioContext;
-            if (!Ctx) return blob;
-            const ctx = new Ctx();
-            try {
-                const arrayBuffer = await blob.arrayBuffer();
-                const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
-                const channels = audioBuffer.numberOfChannels;
-                const frames = audioBuffer.length;
-                const mono = new Float32Array(frames);
-                for (let c = 0; c < channels; c++) {
-                    const data = audioBuffer.getChannelData(c);
-                    for (let i = 0; i < frames; i++) mono[i] += data[i] / channels;
-                }
-                return this._encodeWav(mono, audioBuffer.sampleRate);
-            } finally {
-                try { await ctx.close(); } catch (_) {}
-            }
-        }
-
         async _stopVoiceRecording() {
             const capture = this.voiceCapture;
             if (!capture || capture.stopping) return;
             capture.stopping = true;
             clearTimeout(capture.maxTimer);
+            clearInterval(capture.timer);
             const btn = $("#ac-voice");
             btn.classList.remove("recording");
             btn.title = "Voice note";
+            btn.removeAttribute("data-recording-time");
 
             try {
                 const finished = new Promise((resolve, reject) => {
                     capture.recorder.addEventListener("stop", resolve, { once: true });
                     capture.recorder.addEventListener("error", ev => reject(ev.error || new Error("Recorder error")), { once: true });
                 });
-                // Ask the browser to flush its final encoder buffer before stopping.
-                try { capture.recorder.requestData(); } catch (_) {}
-                capture.recorder.stop();
+                if (capture.recorder.state !== "inactive") {
+                    try { capture.recorder.requestData(); } catch (_) {}
+                    capture.recorder.stop();
+                }
                 await finished;
+                // Native Discuss stores browser-created audio as a normal
+                // ir.attachment.  Do the same here: keep MediaRecorder's native
+                // Opus/MP4 container instead of re-encoding it in JavaScript.
                 const chunks = capture.chunks.filter(part => part && part.size);
                 if (!chunks.length) throw new Error("No audio was captured.");
-                const recorded = new Blob(chunks, { type: capture.recorder.mimeType || capture.mimeType || "audio/webm" });
-                let uploadBlob = recorded;
-                let extension = (recorded.type || "").includes("mp4") ? "m4a" : ((recorded.type || "").includes("ogg") ? "ogg" : "webm");
-                let mime = recorded.type || capture.mimeType || "audio/webm";
-                try {
-                    uploadBlob = await this._voiceBlobToStableWav(recorded);
-                    extension = "wav";
-                    mime = "audio/wav";
-                } catch (decodeError) {
-                    console.warn("[Chats] WAV normalization failed; sending native recorder output", decodeError);
-                }
-                if (!uploadBlob.size) throw new Error("The recording is empty.");
+                const mime = capture.recorder.mimeType || capture.mimeType || chunks[0].type || "audio/webm";
+                const blob = new Blob(chunks, { type: mime });
+                if (!blob.size) throw new Error("The recording is empty.");
+                const ext = mime.includes("mp4") ? "m4a" : (mime.includes("ogg") ? "ogg" : "webm");
                 const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-                const file = new File([uploadBlob], `Voice note ${stamp}.${extension}`, { type: mime });
+                const file = new File([blob], `Voice note ${stamp}.${ext}`, { type: mime });
                 const att = await this.uploadAndQueueFile(file);
-                if (att) await this.sendMessage();
+                if (!att) throw new Error("Voice note upload failed.");
+                await this.sendMessage();
             } catch (error) {
                 console.error("[Chats] could not finalize voice note", error);
                 alert(`Could not send voice note: ${error.message || error}`);
             } finally {
                 try { capture.stream.getTracks().forEach(track => track.stop()); } catch (_) {}
                 this.voiceCapture = null;
+                this.recordingStartedAt = null;
             }
         }
 
         async toggleVoiceRecording() {
             if (this.voiceCapture) {
                 await this._stopVoiceRecording();
+                return;
+            }
+            if (!this.currentThreadId) {
+                alert("Open a conversation before recording a voice note.");
                 return;
             }
             if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
@@ -667,17 +641,27 @@
                     audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
                 });
                 const mimeType = this._preferredRecorderMime();
-                const options = mimeType ? { mimeType, audioBitsPerSecond: 64000 } : { audioBitsPerSecond: 64000 };
+                const options = mimeType ? { mimeType } : undefined;
                 const recorder = new MediaRecorder(stream, options);
                 const chunks = [];
                 recorder.addEventListener("dataavailable", ev => { if (ev.data?.size) chunks.push(ev.data); });
-                recorder.start();
-                const maxTimer = setTimeout(() => { if (this.voiceCapture) this._stopVoiceRecording(); }, 10 * 60 * 1000);
-                this.voiceCapture = { recorder, stream, chunks, mimeType, maxTimer, stopping: false };
-                this.recordingStartedAt = Date.now();
+                // A timeslice is important here: Chrome/Safari flush complete
+                // encoded chunks continuously, matching native web composer
+                // recording behavior and avoiding truncated first-chunk audio.
+                recorder.start(1000);
+                const startedAt = Date.now();
                 const btn = $("#ac-voice");
                 btn.classList.add("recording");
-                btn.title = "Stop recording";
+                btn.title = "Stop and send voice note";
+                const timer = setInterval(() => {
+                    const seconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+                    const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
+                    const ss = String(seconds % 60).padStart(2, "0");
+                    btn.setAttribute("data-recording-time", `${mm}:${ss}`);
+                }, 250);
+                const maxTimer = setTimeout(() => { if (this.voiceCapture) this._stopVoiceRecording(); }, 10 * 60 * 1000);
+                this.voiceCapture = { recorder, stream, chunks, mimeType, maxTimer, timer, stopping: false };
+                this.recordingStartedAt = startedAt;
             } catch (error) {
                 console.error("[Chats] microphone access failed", error);
                 alert(`Microphone access failed: ${error.message || error}`);
@@ -696,8 +680,8 @@
                 return;
             }
             const caller = await this.waitForCaller();
-            if (!caller) {
-                alert("The call engine could not start. Reload Chats and try again.");
+            if (!caller || typeof caller._startCall !== "function") {
+                alert("The call engine could not start. Close and reopen Chats, then try again.");
                 return;
             }
             const button = type === "video" ? $("#ac-video-call") : $("#ac-audio-call");
@@ -712,7 +696,7 @@
                 }
             } catch (error) {
                 console.error("[Chats] call start failed", error);
-                alert(`Could not start ${type === "video" ? "video" : "audio"} call.`);
+                alert(`Could not start ${type === "video" ? "video" : "audio"} call: ${error?.message || error}`);
             } finally {
                 button?.classList.remove("is-starting");
             }
