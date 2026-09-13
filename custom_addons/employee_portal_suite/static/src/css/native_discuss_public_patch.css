@@ -277,3 +277,19 @@
   }
   .ep-native-sidebar-action { width: 34px; height: 34px; }
 }
+
+/* v20.8 - The Chats heading is also the canonical home shortcut. */
+.ep-native-chats-home-link {
+  cursor: pointer !important;
+  user-select: none;
+}
+
+.ep-native-chats-home-link:hover {
+  color: #0f172a !important;
+}
+
+.ep-native-chats-home-link:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 4px;
+}

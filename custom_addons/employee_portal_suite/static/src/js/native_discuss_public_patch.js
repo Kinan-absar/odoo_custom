@@ -131,6 +131,26 @@ function epEnhanceNativeSidebar() {
     if (textNode && (textNode.textContent || "").trim().toLowerCase() === "direct messages") textNode.textContent = "Chats";
     else if (label.textContent.trim().toLowerCase() === "direct messages") label.textContent = "Chats";
 
+    // Make the Chats section title itself the permanent home shortcut.
+    // This intentionally navigates to the canonical Discuss root so it works the same
+    // in a normal browser tab and in the installed PWA.
+    label.classList.add("ep-native-chats-home-link");
+    label.setAttribute("role", "link");
+    label.setAttribute("tabindex", "0");
+    label.setAttribute("title", "Open Chats home");
+    if (label.dataset.epChatsHomeBound !== "1") {
+        label.dataset.epChatsHomeBound = "1";
+        const goHome = (ev) => {
+            ev?.preventDefault?.();
+            ev?.stopPropagation?.();
+            window.location.assign("/my/employee/discuss");
+        };
+        label.addEventListener("click", goHome);
+        label.addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter" || ev.key === " ") goHome(ev);
+        });
+    }
+
     let header = label.closest("div") || label.parentElement;
     if (!header) return;
     header.classList.add("ep-native-chats-section-head");
