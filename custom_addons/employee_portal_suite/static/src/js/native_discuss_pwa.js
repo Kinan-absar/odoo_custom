@@ -5,57 +5,153 @@
 // Those remain entirely owned by Odoo Discuss.
 
 (() => {
-    const isDiscussSurface = () => window.location.pathname.startsWith('/my/employee/discuss');
+    const APP_ROOT = "/my/employee/discuss";
+    const normalizedPath = () => window.location.pathname.replace(/\/+$/, "") || "/";
+    const isDiscussSurface = () => normalizedPath().startsWith(APP_ROOT);
+    const isCanonicalHome = () => normalizedPath() === APP_ROOT;
     if (!isDiscussSurface()) return;
 
     let deferredInstallPrompt = null;
+    let titleObserver = null;
+
+    function ensureMeta(name, content) {
+        let meta = document.querySelector(`meta[name="${name}"][data-employee-discuss-pwa]`)
+            || document.querySelector(`meta[name="${name}"]`);
+        if (!meta) {
+            meta = document.createElement("meta");
+            meta.name = name;
+            document.head.appendChild(meta);
+        }
+        meta.content = content;
+        meta.dataset.employeeDiscussPwa = "1";
+        return meta;
+    }
 
     function addHeadMetadata() {
         if (!document.querySelector('link[rel="manifest"][data-employee-discuss-pwa]')) {
-            const link = document.createElement('link');
-            link.rel = 'manifest';
-            link.href = '/my/employee/discuss/manifest.webmanifest';
-            link.dataset.employeeDiscussPwa = '1';
+            const link = document.createElement("link");
+            link.rel = "manifest";
+            link.href = `${APP_ROOT}/manifest.webmanifest`;
+            link.dataset.employeeDiscussPwa = "1";
             document.head.appendChild(link);
         }
-        let theme = document.querySelector('meta[name="theme-color"][data-employee-discuss-pwa]');
-        if (!theme) {
-            theme = document.createElement('meta');
-            theme.name = 'theme-color';
-            theme.content = '#ffffff';
-            theme.dataset.employeeDiscussPwa = '1';
-            document.head.appendChild(theme);
+        ensureMeta("theme-color", "#ffffff");
+        ensureMeta("apple-mobile-web-app-capable", "yes");
+        ensureMeta("apple-mobile-web-app-title", "Chats");
+        ensureMeta("application-name", "Chats");
+    }
+
+    // Safari's Add to Dock uses the current document URL/title more heavily than
+    // Chromium's manifest-driven install flow. The neutral Discuss home must
+    // therefore keep a stable "Chats" identity even though Odoo bootstraps the
+    // native Discuss store from a real conversation behind the scenes.
+    function enforceCanonicalHomeIdentity() {
+        if (!isCanonicalHome()) return;
+        if (document.title !== "Chats") {
+            document.title = "Chats";
         }
-        if (!document.querySelector('meta[name="apple-mobile-web-app-capable"]')) {
-            const capable = document.createElement('meta');
-            capable.name = 'apple-mobile-web-app-capable';
-            capable.content = 'yes';
-            document.head.appendChild(capable);
+        ensureMeta("apple-mobile-web-app-title", "Chats");
+        ensureMeta("application-name", "Chats");
+
+        let canonical = document.querySelector('link[rel="canonical"][data-employee-discuss-pwa]');
+        if (!canonical) {
+            canonical = document.createElement("link");
+            canonical.rel = "canonical";
+            canonical.dataset.employeeDiscussPwa = "1";
+            document.head.appendChild(canonical);
         }
-        if (!document.querySelector('meta[name="apple-mobile-web-app-title"]')) {
-            const title = document.createElement('meta');
-            title.name = 'apple-mobile-web-app-title';
-            title.content = 'Chats';
-            document.head.appendChild(title);
+        canonical.href = `${window.location.origin}${APP_ROOT}`;
+
+        // Odoo can update <title> after Discuss state changes. On the PWA root we
+        // deliberately keep the app title stable so Safari never offers to install
+        // the currently bootstrapped employee name as the app name.
+        const titleEl = document.querySelector("title");
+        if (titleEl && !titleObserver) {
+            titleObserver = new MutationObserver(() => {
+                if (isCanonicalHome() && document.title !== "Chats") {
+                    document.title = "Chats";
+                }
+            });
+            titleObserver.observe(titleEl, { childList: true, subtree: true, characterData: true });
         }
     }
 
     function applyAppMode() {
-        const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-        document.documentElement.classList.toggle('ep-discuss-pwa-standalone', standalone);
-        document.body?.classList.toggle('ep-discuss-pwa-standalone', standalone);
+        const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+        document.documentElement.classList.toggle("ep-discuss-pwa-standalone", standalone);
+        document.body?.classList.toggle("ep-discuss-pwa-standalone", standalone);
     }
 
     function refreshInstallButtons() {
-        const installed = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-        document.querySelectorAll('[data-ep-discuss-install]').forEach((button) => {
-            button.classList.toggle('d-none', installed);
+        const installed = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+        document.querySelectorAll("[data-ep-discuss-install]").forEach((button) => {
+            button.classList.toggle("d-none", installed);
             button.disabled = false;
-            button.title = installed ? 'Chats is installed' : 'Install Chats';
+            button.title = installed ? "Chats is installed" : "Install Chats";
         });
     }
 
+    function isSafari() {
+        const ua = navigator.userAgent || "";
+        return /Safari/i.test(ua) && !/Chrome|CriOS|Chromium|Edg|OPR|Firefox|FxiOS/i.test(ua);
+    }
+
+    function isIOS() {
+        return /iphone|ipad|ipod/i.test(navigator.userAgent || "") ||
+            (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    }
+
+    function closeInstallHelp() {
+        document.getElementById("ep-discuss-install-help")?.remove();
+    }
+
+    function showInstallHelp() {
+        closeInstallHelp();
+        enforceCanonicalHomeIdentity();
+
+        const overlay = document.createElement("div");
+        overlay.id = "ep-discuss-install-help";
+        overlay.className = "ep-discuss-install-overlay";
+
+        const logo = document.querySelector('meta[name="employee-discuss-company-logo"]')?.content || "";
+        const safari = isSafari();
+        const ios = isIOS();
+        let instructions;
+        if (safari && ios) {
+            instructions = "In Safari, tap Share, then choose Add to Home Screen.";
+        } else if (safari) {
+            instructions = "In Safari, use the Share or File menu and choose Add to Dock.";
+        } else {
+            instructions = "Use your browser menu and choose Install Chats or Install app.";
+        }
+
+        overlay.innerHTML = `
+            <div class="ep-discuss-install-card" role="dialog" aria-modal="true" aria-label="Install Chats">
+                <button type="button" class="ep-discuss-install-close" aria-label="Close">&times;</button>
+                ${logo ? `<img class="ep-discuss-install-logo" src="${logo}" alt=""/>` : ""}
+                <h3>Install Chats</h3>
+                <p>${instructions}</p>
+                <div class="ep-discuss-install-note">Chats will open from this main Discuss page, not from an individual conversation.</div>
+                <button type="button" class="btn btn-primary ep-discuss-install-done">OK</button>
+            </div>`;
+        document.body.appendChild(overlay);
+        overlay.querySelector(".ep-discuss-install-close")?.addEventListener("click", closeInstallHelp);
+        overlay.querySelector(".ep-discuss-install-done")?.addEventListener("click", closeInstallHelp);
+        overlay.addEventListener("click", (event) => {
+            if (event.target === overlay) closeInstallHelp();
+        });
+    }
+
+    function moveToCanonicalInstallRoot() {
+        try {
+            sessionStorage.setItem("ep-discuss-install-intent", "1");
+        } catch (_) {}
+        window.location.assign(`${APP_ROOT}?install=1`);
+    }
+
     async function installChats() {
+        // Chromium uses the manifest's stable start_url, so its native install
+        // prompt can be shown from any conversation safely.
         if (deferredInstallPrompt) {
             deferredInstallPrompt.prompt();
             try {
@@ -66,48 +162,68 @@
             }
             return;
         }
-        const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-        if (isiOS) {
-            window.alert('On iPhone/iPad: open this page in Safari, tap Share, then choose “Add to Home Screen”.');
-        } else {
-            window.alert('Use your browser menu and choose “Install Chats” or “Install app”.');
+
+        // Safari installs the CURRENT page. Never let an individual employee/channel
+        // URL become the Dock/Home Screen app. Move to the neutral Chats root first.
+        if (!isCanonicalHome()) {
+            moveToCanonicalInstallRoot();
+            return;
         }
+
+        enforceCanonicalHomeIdentity();
+        showInstallHelp();
     }
 
+    function handleInstallIntent() {
+        if (!isCanonicalHome()) return;
+        const params = new URLSearchParams(window.location.search);
+        let intent = params.get("install") === "1";
+        try {
+            intent = intent || sessionStorage.getItem("ep-discuss-install-intent") === "1";
+            sessionStorage.removeItem("ep-discuss-install-intent");
+        } catch (_) {}
+        if (!intent) return;
+
+        // Remove the helper query parameter before Safari creates a Dock/Home Screen
+        // entry, so the saved URL is exactly the canonical Chats root.
+        window.history.replaceState(window.history.state, "", APP_ROOT);
+        enforceCanonicalHomeIdentity();
+        window.setTimeout(showInstallHelp, 250);
+    }
 
     function bindHomePage() {
-        const newChat = document.getElementById('ep-native-new-chat');
-        document.querySelectorAll('[data-ep-new-chat-toggle]').forEach((button) => {
-            if (button.dataset.epBound === '1') return;
-            button.dataset.epBound = '1';
-            button.addEventListener('click', () => newChat?.classList.toggle('show'));
+        const newChat = document.getElementById("ep-native-new-chat");
+        document.querySelectorAll("[data-ep-new-chat-toggle]").forEach((button) => {
+            if (button.dataset.epBound === "1") return;
+            button.dataset.epBound = "1";
+            button.addEventListener("click", () => newChat?.classList.toggle("show"));
         });
-        document.querySelectorAll('[data-ep-new-chat-close]').forEach((button) => {
-            if (button.dataset.epBound === '1') return;
-            button.dataset.epBound = '1';
-            button.addEventListener('click', () => newChat?.classList.remove('show'));
+        document.querySelectorAll("[data-ep-new-chat-close]").forEach((button) => {
+            if (button.dataset.epBound === "1") return;
+            button.dataset.epBound = "1";
+            button.addEventListener("click", () => newChat?.classList.remove("show"));
         });
-        document.querySelectorAll('[data-ep-chat-search]').forEach((input) => {
-            if (input.dataset.epBound === '1') return;
-            input.dataset.epBound = '1';
-            input.addEventListener('input', () => {
-                const query = (input.value || '').trim().toLowerCase();
+        document.querySelectorAll("[data-ep-chat-search]").forEach((input) => {
+            if (input.dataset.epBound === "1") return;
+            input.dataset.epBound = "1";
+            input.addEventListener("input", () => {
+                const query = (input.value || "").trim().toLowerCase();
                 let visible = 0;
-                document.querySelectorAll('[data-ep-thread]').forEach((thread) => {
-                    const show = !query || (thread.dataset.search || '').includes(query);
-                    thread.classList.toggle('d-none', !show);
+                document.querySelectorAll("[data-ep-thread]").forEach((thread) => {
+                    const show = !query || (thread.dataset.search || "").includes(query);
+                    thread.classList.toggle("d-none", !show);
                     if (show) visible += 1;
                 });
-                document.querySelector('[data-ep-search-empty]')?.classList.toggle('d-none', visible !== 0 || !query);
+                document.querySelector("[data-ep-search-empty]")?.classList.toggle("d-none", visible !== 0 || !query);
             });
         });
     }
 
     function bindInstallButtons() {
-        document.querySelectorAll('[data-ep-discuss-install]').forEach((button) => {
-            if (button.dataset.epInstallBound === '1') return;
-            button.dataset.epInstallBound = '1';
-            button.addEventListener('click', (event) => {
+        document.querySelectorAll("[data-ep-discuss-install]").forEach((button) => {
+            if (button.dataset.epInstallBound === "1") return;
+            button.dataset.epInstallBound = "1";
+            button.addEventListener("click", (event) => {
                 event.preventDefault();
                 installChats();
             });
@@ -116,28 +232,35 @@
     }
 
     addHeadMetadata();
+    enforceCanonicalHomeIdentity();
     applyAppMode();
 
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/my/employee/discuss/sw.js', { scope: '/my/employee/discuss' }).catch((error) => {
-                console.warn('Chats PWA service worker registration failed', error);
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+            navigator.serviceWorker.register(`${APP_ROOT}/sw.js`, { scope: APP_ROOT }).catch((error) => {
+                console.warn("Chats PWA service worker registration failed", error);
             });
         }, { once: true });
     }
 
-    window.addEventListener('beforeinstallprompt', (event) => {
+    window.addEventListener("beforeinstallprompt", (event) => {
         event.preventDefault();
         deferredInstallPrompt = event;
         refreshInstallButtons();
     });
-    window.addEventListener('appinstalled', () => {
+    window.addEventListener("appinstalled", () => {
         deferredInstallPrompt = null;
         refreshInstallButtons();
     });
 
-    document.addEventListener('DOMContentLoaded', () => { bindInstallButtons(); bindHomePage(); });
-    window.addEventListener('pageshow', () => {
+    document.addEventListener("DOMContentLoaded", () => {
+        enforceCanonicalHomeIdentity();
+        bindInstallButtons();
+        bindHomePage();
+        handleInstallIntent();
+    });
+    window.addEventListener("pageshow", () => {
+        enforceCanonicalHomeIdentity();
         applyAppMode();
         bindInstallButtons();
         bindHomePage();

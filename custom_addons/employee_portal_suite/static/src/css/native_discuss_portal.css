@@ -117,3 +117,68 @@ body.ep-discuss-pwa-standalone {
   height: 48px;
   flex-basis: 48px;
 }
+
+/* v20.5 - canonical PWA installation flow. Safari installs the current page,
+   so the Install action always moves to /my/employee/discuss first. */
+.ep-discuss-install-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, .38);
+  backdrop-filter: blur(5px);
+}
+.ep-discuss-install-card {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 28px 26px 24px;
+  border-radius: 22px;
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .20);
+  text-align: center;
+}
+.ep-discuss-install-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+.ep-discuss-install-logo {
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+  border-radius: 16px;
+  background: #fff;
+  margin: 0 auto 14px;
+}
+.ep-discuss-install-card h3 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 800;
+}
+.ep-discuss-install-card p {
+  margin: 0 0 12px;
+  color: #475569;
+  line-height: 1.5;
+}
+.ep-discuss-install-note {
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+}
+.ep-discuss-install-done {
+  min-width: 120px;
+  border-radius: 12px;
+}
