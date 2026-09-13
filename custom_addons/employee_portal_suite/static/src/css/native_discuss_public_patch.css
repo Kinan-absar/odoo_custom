@@ -129,3 +129,151 @@
   border-radius: 6px;
   background: #fff;
 }
+
+/* v20.6 - Native Discuss sidebar is the Chats home. We keep Odoo's own DM rows
+   and simply promote that section, with install and new-chat actions. */
+.ep-native-discuss-public .ep-native-discuss-toolbar {
+  display: none !important;
+}
+
+.ep-native-chats-section-head {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 38px;
+  gap: 8px;
+}
+
+.ep-native-chats-section-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ep-native-sidebar-action {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.ep-native-sidebar-action:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.ep-native-new-chat-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.ep-native-new-chat-modal.show { display: flex; }
+
+.ep-native-new-chat-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, .38);
+  backdrop-filter: blur(3px);
+}
+
+.ep-native-new-chat-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(440px, calc(100vw - 24px));
+  max-height: min(680px, calc(100vh - 36px));
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, .08);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, .22);
+  overflow: hidden;
+}
+
+.ep-native-new-chat-head {
+  padding: 16px 18px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.ep-native-new-chat-head strong { display: block; font-size: 17px; color: #0f172a; }
+.ep-native-new-chat-head small { display: block; color: #64748b; margin-top: 2px; }
+.ep-native-icon-btn { border: 0; background: transparent; font-size: 26px; line-height: 1; color: #64748b; }
+
+.ep-native-new-chat-search-wrap {
+  margin: 12px 14px 8px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+.ep-native-new-chat-search-wrap input { width: 100%; border: 0; outline: 0; background: transparent; }
+.ep-native-new-chat-search-wrap i { color: #94a3b8; }
+
+.ep-native-new-chat-people {
+  overflow-y: auto;
+  min-height: 120px;
+  padding: 4px 8px 10px;
+}
+
+.ep-native-person-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 10px;
+  border-radius: 11px;
+  cursor: pointer;
+}
+.ep-native-person-row:hover { background: #f8fafc; }
+.ep-native-person-row > img,
+.ep-native-person-avatar-fallback {
+  width: 38px; height: 38px; border-radius: 50%; object-fit: cover;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #eef2f7; color: #64748b; flex: 0 0 auto;
+}
+.ep-native-person-row > input { order: 3; margin-left: auto; width: 17px; height: 17px; }
+.ep-native-person-text { min-width: 0; display: flex; flex-direction: column; }
+.ep-native-person-text strong { color: #1e293b; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ep-native-person-presence { display: inline-flex; align-items: center; gap: 5px; color: #94a3b8; font-size: 11px; }
+.ep-native-person-presence > span { width: 7px; height: 7px; border-radius: 50%; background: #cbd5e1; }
+.ep-native-person-presence.online > span { background: #22c55e; }
+.ep-native-person-presence.away > span { background: #f59e0b; }
+
+.ep-native-new-chat-loading { padding: 24px 14px; text-align: center; color: #64748b; }
+.ep-native-new-chat-footer {
+  padding: 12px 14px 14px;
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid #eef2f7;
+  background: #fff;
+}
+.ep-native-new-chat-footer .ep-native-group-name { display: none; flex: 1 1 auto; }
+.ep-native-new-chat-footer .btn { flex: 0 0 auto; }
+
+@media (max-width: 767.98px) {
+  .ep-native-new-chat-modal { padding: 0; align-items: flex-end; }
+  .ep-native-new-chat-dialog {
+    width: 100%;
+    max-height: 82vh;
+    border-radius: 18px 18px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .ep-native-sidebar-action { width: 34px; height: 34px; }
+}

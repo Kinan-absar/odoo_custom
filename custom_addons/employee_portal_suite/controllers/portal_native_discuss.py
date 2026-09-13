@@ -362,7 +362,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
         if not user:
             return request.not_found()
         script = '''
-const CACHE_NAME = "employee-native-discuss-pwa-v5";
+const CACHE_NAME = "employee-native-discuss-pwa-v6";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
@@ -382,6 +382,48 @@ self.addEventListener("fetch", (event) => {
             ('Cache-Control', 'no-store'),
             ('Service-Worker-Allowed', '/my/employee/discuss'),
         ])
+
+
+    @http.route('/employee_portal/discuss/people_all', type='json', auth='user')
+    def employee_discuss_people_all(self):
+        """Employee directory for the native Discuss sidebar new-chat dialog."""
+        user = self._employee_user()
+        if not user:
+            return {'people': []}
+        people = []
+        for emp_user in self._employee_users().filtered(lambda u: u.id != user.id):
+            presence, presence_label = self._discuss_presence(emp_user)
+            people.append({
+                'id': emp_user.id,
+                'name': emp_user.name,
+                'avatar': self._user_avatar(emp_user),
+                'presence': presence,
+                'presence_label': presence_label,
+            })
+        return {'people': people}
+
+    @http.route('/employee_portal/discuss/start_json', type='json', auth='user')
+    def employee_discuss_start_json(self, user_ids=None, group_name=None):
+        """Create/open a native DM or employee group without leaving Discuss."""
+        user = self._employee_user()
+        if not user:
+            return {'ok': False, 'error': 'Employee access required.'}
+        try:
+            ids = [int(x) for x in (user_ids or []) if x]
+        except (TypeError, ValueError):
+            ids = []
+        allowed = self._employee_users().filtered(lambda u: u.id != user.id)
+        targets = allowed.filtered(lambda u: u.id in ids)
+        if not targets:
+            return {'ok': False, 'error': 'Select at least one employee.'}
+        channel = self._get_or_create_channel(user, targets, name=group_name)
+        if not channel:
+            return {'ok': False, 'error': 'Unable to create conversation.'}
+        return {
+            'ok': True,
+            'channel_id': channel.id,
+            'url': f'/my/employee/discuss/channel/{channel.id}',
+        }
 
     @http.route('/employee_portal/discuss/available_people', type='json', auth='user')
     def employee_discuss_available_people(self, channel_id=None):
