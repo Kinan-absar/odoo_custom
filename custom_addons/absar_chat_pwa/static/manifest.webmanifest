@@ -1,0 +1,25 @@
+{
+  "name": "Absar Chat",
+  "short_name": "Absar Chat",
+  "description": "Internal Company Communication - Powered by Odoo Discuss",
+  "start_url": "/chat",
+  "scope": "/chat",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "icons": [
+    {
+      "src": "/absar_chat_pwa/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/absar_chat_pwa/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="absar_chat_pwa.AbsarChatApp">
+        <div class="absar-app-container" t-att-class="{ 'chat-open': state.activeChannelId !== null }">
+            
+            <!-- ========================================================== -->
+            <!-- Left Sidebar (Conversations & Profile)                     -->
+            <!-- ========================================================== -->
+            <aside class="absar-sidebar">
+                <!-- Brand Header -->
+                <div class="absar-sidebar-header">
+                    <div class="absar-brand">
+                        <div class="absar-logo-badge">A</div>
+                        <div class="absar-brand-info">
+                            <span class="absar-brand-title">Absar Chat</span>
+                            <span class="absar-brand-subtitle">Internal Messaging</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search & Filters -->
+                <div class="absar-sidebar-search">
+                    <div class="absar-search-input-wrapper">
+                        <svg class="absar-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input
+                            type="text"
+                            class="absar-search-input"
+                            placeholder="Search conversations..."
+                            t-model="state.searchQuery"
+                        />
+                    </div>
+                </div>
+
+                <!-- Conversations List -->
+                <div class="absar-conversation-list">
+                    <t t-if="state.isLoadingChannels">
+                        <div class="p-3 text-center text-muted">
+                            <small>Loading conversations...</small>
+                        </div>
+                    </t>
+
+                    <t t-elif="filteredChannels.length === 0">
+                        <div class="p-4 text-center text-muted">
+                            <small>No conversations found</small>
+                        </div>
+                    </t>
+
+                    <t t-else="">
+                        <t t-foreach="filteredChannels" t-as="channel" t-key="channel.id">
+                            <div 
+                                class="absar-chat-item"
+                                t-att-class="{ 'active': state.activeChannelId === channel.id }"
+                                t-on-click="() => this.selectChannel(channel)"
+                            >
+                                <div class="absar-chat-avatar-wrapper">
+                                    <img 
+                                        class="absar-chat-avatar" 
+                                        t-att-src="channel.avatar_url" 
+                                        t-att-alt="channel.name"
+                                        loading="lazy"
+                                    />
+                                    <div class="absar-chat-online-dot"/>
+                                </div>
+                                <div class="absar-chat-info">
+                                    <div class="absar-chat-info-top">
+                                        <span class="absar-chat-name" t-esc="channel.name"/>
+                                        <t t-if="channel.last_message and channel.last_message.date">
+                                            <span class="absar-chat-time" t-esc="this.formatTime(channel.last_message.date)"/>
+                                        </t>
+                                    </div>
+                                    <div class="absar-chat-info-bottom">
+                                        <span class="absar-chat-preview">
+                                            <t t-if="channel.last_message">
+                                                <t t-esc="channel.last_message.body"/>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="text-muted">No messages yet</span>
+                                            </t>
+                                        </span>
+                                        <t t-if="channel.unread_count > 0">
+                                            <span class="absar-unread-badge" t-esc="channel.unread_count"/>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </t>
+                </div>
+
+                <!-- Logged-in Employee Profile -->
+                <div class="absar-sidebar-footer">
+                    <div class="absar-user-profile">
+                        <img 
+                            class="absar-user-avatar" 
+                            t-att-src="state.session.avatar_url || '/web/static/img/avatar.png'" 
+                            alt="Employee"
+                        />
+                        <div class="absar-user-meta">
+                            <span class="absar-user-name" t-esc="state.session.employee_name || 'Employee'"/>
+                            <span class="absar-user-role" t-esc="state.session.job_title || state.session.department || 'Staff'"/>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ========================================================== -->
+            <!-- Main Chat Area                                             -->
+            <!-- ========================================================== -->
+            <main class="absar-main">
+                <!-- View 1: Empty State (No conversation selected) -->
+                <t t-if="!state.activeChannelId">
+                    <div class="absar-empty-state">
+                        <div class="absar-empty-icon">
+                            <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                        </div>
+                        <h2 class="absar-empty-title">Absar Chat</h2>
+                        <p class="absar-empty-desc">Select a conversation from the left to read and send messages.</p>
+                    </div>
+                </t>
+
+                <!-- View 2: Active Conversation Timeline & Composer -->
+                <t t-else="">
+                    <!-- Chat Header -->
+                    <header class="absar-chat-header">
+                        <div class="absar-header-left">
+                            <button class="absar-back-btn" t-on-click="() => this.closeActiveChat()">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                            </button>
+                            <img 
+                                class="absar-header-avatar" 
+                                t-att-src="state.activeChannel ? state.activeChannel.avatar_url : ''" 
+                                t-att-alt="state.activeChannel ? state.activeChannel.name : ''"
+                            />
+                            <div class="absar-header-details">
+                                <span class="absar-header-name" t-esc="state.activeChannel ? state.activeChannel.name : ''"/>
+                                <span class="absar-header-status">Active now</span>
+                            </div>
+                        </div>
+                    </header>
+
+                    <!-- Message Timeline -->
+                    <div class="absar-timeline" t-ref="timeline">
+                        <t t-if="state.isLoadingMessages">
+                            <div class="p-4 text-center text-muted">
+                                <small>Loading messages...</small>
+                            </div>
+                        </t>
+
+                        <t t-elif="state.messages.length === 0">
+                            <div class="p-5 text-center text-muted">
+                                <small>No messages yet in this conversation. Start by saying hello!</small>
+                            </div>
+                        </t>
+
+                        <t t-else="">
+                            <t t-foreach="state.messages" t-as="msg" t-key="msg.id">
+                                <div 
+                                    class="absar-message-row"
+                                    t-att-class="{
+                                        'outgoing': msg.is_current_user,
+                                        'incoming': !msg.is_current_user
+                                    }"
+                                >
+                                    <t t-if="!msg.is_current_user">
+                                        <img 
+                                            class="absar-msg-avatar" 
+                                            t-att-src="msg.author_avatar" 
+                                            t-att-alt="msg.author_name"
+                                        />
+                                    </t>
+                                    <div class="absar-message-bubble">
+                                        <t t-if="!msg.is_current_user and state.activeChannel and !state.activeChannel.is_direct">
+                                            <div class="absar-msg-author" t-esc="msg.author_name"/>
+                                        </t>
+                                        <div class="absar-msg-body" t-raw="msg.body"/>
+                                        <span class="absar-msg-time" t-esc="this.formatTime(msg.date)"/>
+                                    </div>
+                                </div>
+                            </t>
+                        </t>
+                    </div>
+
+                    <!-- Message Composer -->
+                    <div class="absar-composer-bar">
+                        <textarea
+                            class="absar-composer-input"
+                            placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
+                            rows="1"
+                            t-ref="composer"
+                            t-model="state.composerText"
+                            t-on-keydown="this.onComposerKeydown"
+                        />
+                        <button 
+                            class="absar-send-btn"
+                            t-att-disabled="state.isSending or !state.composerText.trim()"
+                            t-on-click="() => this.sendMessage()"
+                            title="Send Message"
+                        >
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                            </svg>
+                        </button>
+                    </div>
+                </t>
+            </main>
+
+        </div>
+    </t>
+
+</templates>
