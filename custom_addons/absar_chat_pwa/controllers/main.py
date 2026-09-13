@@ -11,7 +11,7 @@ from odoo.addons.employee_portal_suite.controllers.portal_chat import PortalChat
 
 
 class AbsarChatPWAController(EmployeePortalNativeDiscussController):
-    """Standalone Absar Chat PWA shell and protected attachment preview."""
+    """Standalone Chats PWA shell and protected attachment preview."""
 
     @http.route(['/chat', '/chat/'], type='http', auth='user', website=True, methods=['GET'])
     def absar_chat_home(self, **kwargs):
@@ -19,7 +19,7 @@ class AbsarChatPWAController(EmployeePortalNativeDiscussController):
         if not user:
             return request.render('absar_chat_pwa.access_denied_page', {
                 'title': _('Access Restricted'),
-                'message': _('Absar Chat is restricted to authorized company employees only.'),
+                'message': _('Chats is restricted to authorized company employees only.'),
             })
         employee = request.env['hr.employee'].sudo().search([
             ('active', '=', True), ('user_id', '=', user.id),
@@ -64,19 +64,45 @@ class AbsarChatPWAController(EmployeePortalNativeDiscussController):
             return request.not_found()
         raw = base64.b64decode(attachment.datas or b'')
         filename = (attachment.name or 'attachment').replace('"', '')
-        return request.make_response(raw, headers=[
-            ('Content-Type', attachment.mimetype or 'application/octet-stream'),
-            ('Content-Length', str(len(raw))),
+        mimetype = attachment.mimetype or 'application/octet-stream'
+        total = len(raw)
+        range_header = request.httprequest.headers.get('Range')
+        common_headers = [
+            ('Content-Type', mimetype),
             ('Content-Disposition', 'inline; filename="%s"' % filename),
             ('Cache-Control', 'private, max-age=300'),
+            ('Accept-Ranges', 'bytes'),
+        ]
+        if range_header and range_header.startswith('bytes=') and total:
+            try:
+                requested = range_header[6:].split(',', 1)[0].strip()
+                start_text, end_text = requested.split('-', 1)
+                if start_text:
+                    start = int(start_text)
+                    end = int(end_text) if end_text else total - 1
+                else:
+                    suffix = int(end_text)
+                    start = max(0, total - suffix)
+                    end = total - 1
+                start = max(0, min(start, total - 1))
+                end = max(start, min(end, total - 1))
+                chunk = raw[start:end + 1]
+                return request.make_response(chunk, status=206, headers=common_headers + [
+                    ('Content-Length', str(len(chunk))),
+                    ('Content-Range', 'bytes %s-%s/%s' % (start, end, total)),
+                ])
+            except (ValueError, IndexError):
+                pass
+        return request.make_response(raw, headers=common_headers + [
+            ('Content-Length', str(total)),
         ])
 
-    @http.route('/chat/manifest.webmanifest', type='http', auth='public', methods=['GET'])
+    @http.route('/chat/manifest.webmanifest', type='http', auth='user', methods=['GET'])
     def absar_chat_manifest(self):
         manifest = {
-            'name': 'Absar Chat',
-            'short_name': 'Absar Chat',
-            'description': 'ABSAR internal employee messaging and calls',
+            'name': 'Chats',
+            'short_name': 'Chats',
+            'description': 'Company internal employee messaging and calls',
             'start_url': '/chat/',
             'scope': '/chat/',
             'display': 'standalone',
@@ -84,8 +110,8 @@ class AbsarChatPWAController(EmployeePortalNativeDiscussController):
             'theme_color': '#ffffff',
             'orientation': 'any',
             'icons': [
-                {'src': '/absar_chat_pwa/static/icons/icon-192.png', 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any maskable'},
-                {'src': '/absar_chat_pwa/static/icons/icon-512.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any maskable'},
+                {'src': '/web/image/res.company/%s/logo/192x192' % request.env.company.id, 'sizes': '192x192', 'purpose': 'any'},
+                {'src': '/web/image/res.company/%s/logo/512x512' % request.env.company.id, 'sizes': '512x512', 'purpose': 'any'},
             ],
         }
         return request.make_response(json.dumps(manifest), headers=[
@@ -96,11 +122,9 @@ class AbsarChatPWAController(EmployeePortalNativeDiscussController):
     @http.route('/chat/service-worker.js', type='http', auth='public', methods=['GET'])
     def absar_chat_service_worker(self):
         code = r"""
-const CACHE_NAME = 'absar-chat-static-v15';
+const CACHE_NAME = 'chats-static-v16';
 const STATIC_ASSETS = [
   '/chat/manifest.webmanifest',
-  '/absar_chat_pwa/static/icons/icon-192.png',
-  '/absar_chat_pwa/static/icons/icon-512.png',
   '/absar_chat_pwa/static/src/css/absar_chat.css',
   '/absar_chat_pwa/static/src/css/call_widget.css',
   '/absar_chat_pwa/static/src/js/portal_call_bridge.js',

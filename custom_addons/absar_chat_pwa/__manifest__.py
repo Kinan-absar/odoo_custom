@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'Absar Chat PWA',
-    'version': '18.0.3.3.0',
-    'summary': 'Installable WhatsApp-style employee chat powered by Odoo Discuss',
+    'name': 'Chats PWA',
+    'version': '18.0.3.4.0',
+    'summary': 'Installable employee Chats app powered by Odoo Discuss',
     'category': 'Discuss',
     'author': 'ABSAR ALOMRAN',
     'license': 'LGPL-3',

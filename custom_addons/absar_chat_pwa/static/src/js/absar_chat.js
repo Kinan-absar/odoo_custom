@@ -25,6 +25,7 @@
             this.userId = Number(document.body.dataset.currentUserId || 0);
             this.userName = document.body.dataset.currentUserName || "Employee";
             this.userAvatar = document.body.dataset.currentAvatar || "";
+            this.companyLogo = document.body.dataset.companyLogo || "";
             this.view = "chats";
             this.threads = [];
             this.contacts = [];
@@ -66,8 +67,8 @@
                 this.restoreThreadFromUrl();
                 this.startTimers();
             } catch (error) {
-                console.error("[Absar Chat] startup failed", error);
-                $("#ac-thread-list").innerHTML = `<div class="ac-error">Could not load Absar Chat.<br/>${esc(error.message)}</div>`;
+                console.error("[Chats] startup failed", error);
+                $("#ac-thread-list").innerHTML = `<div class="ac-error">Could not load Chats.<br/>${esc(error.message)}</div>`;
             }
         }
 
@@ -91,6 +92,32 @@
             $("#ac-message-input").addEventListener("blur", () => this.handleTyping(false));
             $("#ac-attach").addEventListener("click", () => $("#ac-file-input").click());
             $("#ac-file-input").addEventListener("change", (ev) => this.handleFiles(ev.target.files));
+            const conversation = $("#ac-conversation");
+            let dragDepth = 0;
+            conversation.addEventListener("dragenter", (ev) => {
+                if (!ev.dataTransfer?.types?.includes("Files")) return;
+                ev.preventDefault(); dragDepth += 1;
+                $("#ac-drop-overlay").classList.remove("is-hidden");
+            });
+            conversation.addEventListener("dragover", (ev) => {
+                if (!ev.dataTransfer?.types?.includes("Files")) return;
+                ev.preventDefault(); ev.dataTransfer.dropEffect = "copy";
+            });
+            conversation.addEventListener("dragleave", (ev) => {
+                if (!ev.dataTransfer?.types?.includes("Files")) return;
+                dragDepth = Math.max(0, dragDepth - 1);
+                if (!dragDepth) $("#ac-drop-overlay").classList.add("is-hidden");
+            });
+            conversation.addEventListener("drop", (ev) => {
+                if (!ev.dataTransfer?.files?.length) return;
+                ev.preventDefault(); dragDepth = 0;
+                $("#ac-drop-overlay").classList.add("is-hidden");
+                this.handleFiles(ev.dataTransfer.files);
+            });
+            $("#ac-message-input").addEventListener("paste", (ev) => {
+                const files = Array.from(ev.clipboardData?.files || []);
+                if (files.length) { ev.preventDefault(); this.handleFiles(files); }
+            });
             $("#ac-voice").addEventListener("click", () => this.toggleVoiceRecording());
             $("#ac-emoji").addEventListener("click", () => $("#ac-emoji-panel").classList.toggle("is-hidden"));
             $("#ac-reply-cancel").addEventListener("click", () => this.setReply(null));
@@ -168,7 +195,7 @@
             const newThreads = result?.threads || [];
             const unreadTotal = Number(result?.unread_total || 0);
             if (notify && unreadTotal > this.previousUnreadTotal && document.visibilityState !== "visible") {
-                this.notify("Absar Chat", "You have a new message.");
+                this.notify("Chats", "You have a new message.");
             }
             this.previousUnreadTotal = unreadTotal;
             this.threads = newThreads;
@@ -188,7 +215,7 @@
             list.innerHTML = rows.map(t => {
                 const active = Number(t.id) === Number(this.currentThreadId) ? " is-active" : "";
                 return `<article class="ac-thread${active}" data-thread-id="${t.id}">
-                    <img class="ac-thread-avatar" src="${esc(t.avatar_url)}" alt="" onerror="this.src='/absar_chat_pwa/static/icons/icon-192.png'"/>
+                    <img class="ac-thread-avatar" src="${esc(t.avatar_url || this.companyLogo)}" alt=""/>
                     <div class="ac-thread-copy"><div class="ac-thread-name">${esc(t.name || "Conversation")}${t.is_group ? ' <i class="fa fa-users" style="font-size:10px;color:#8893a0"></i>' : ""}</div><div class="ac-thread-preview">${esc(t.preview || "No messages yet")}</div></div>
                     <div class="ac-thread-meta"><span class="ac-thread-time">${this.formatListTime(t.last_message_date)}</span>${t.unread ? `<b class="ac-unread">${t.unread > 99 ? "99+" : t.unread}</b>` : ""}</div>
                 </article>`;
@@ -234,13 +261,13 @@
                 if (scrollBottom || (newLast && newLast !== oldLast)) this.scrollMessagesToBottom();
                 await rpc("/employee_portal/chat/mark_read", { thread_id: this.currentThreadId }).catch(() => {});
                 this.refreshThreads(false).catch(() => {});
-            } catch (error) { console.warn("[Absar Chat] message refresh failed", error); }
+            } catch (error) { console.warn("[Chats] message refresh failed", error); }
         }
 
         renderConversationHeader() {
             const t = this.currentThread || {};
             $("#ac-chat-title").textContent = t.name || "Conversation";
-            const avatar = this.currentThread?.avatar_url || this.threads.find(x => Number(x.id) === Number(this.currentThreadId))?.avatar_url || "/absar_chat_pwa/static/icons/icon-192.png";
+            const avatar = this.currentThread?.avatar_url || this.threads.find(x => Number(x.id) === Number(this.currentThreadId))?.avatar_url || this.companyLogo;
             $("#ac-chat-avatar").src = avatar;
             const others = (t.participants || []).filter(p => !p.is_me);
             let subtitle = t.is_group ? `${t.participant_count || others.length + 1} participants` : (others[0] ? this.presenceLabel(this.presence[String(others[0].user_id)] || "offline") : "Employee");
@@ -364,7 +391,7 @@
             } catch (error) {
                 this.pendingAttachments = this.pendingAttachments.filter(a => a.id !== placeholder.id);
                 this.renderPendingFiles();
-                console.error("[Absar Chat] attachment upload failed", error);
+                console.error("[Chats] attachment upload failed", error);
                 alert(`Could not attach ${file.name || "file"}: ${error.message || error}`);
                 return null;
             } finally {
@@ -444,7 +471,7 @@
                 }
                 await this.refreshMessages(true);
             } catch (error) {
-                console.error("[Absar Chat] send failed", error);
+                console.error("[Chats] send failed", error);
                 alert(`Could not send message: ${error.message || error}`);
             } finally {
                 send.disabled = false;
@@ -465,23 +492,59 @@
 
         async toggleVoiceRecording() {
             const btn = $("#ac-voice");
-            if (this.recorder && this.recorder.state === "recording") { this.recorder.stop(); return; }
-            if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { alert("Voice recording is not supported in this browser."); return; }
+            if (this.recorder && this.recorder.state === "recording") {
+                try { this.recorder.requestData(); } catch (_) {}
+                this.recorder.stop();
+                return;
+            }
+            if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+                alert("Voice recording is not supported in this browser.");
+                return;
+            }
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 this.recordingChunks = [];
-                const options = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? { mimeType: "audio/webm;codecs=opus" } : {};
-                this.recorder = new MediaRecorder(stream, options);
-                this.recorder.ondataavailable = ev => { if (ev.data?.size) this.recordingChunks.push(ev.data); };
-                this.recorder.onstop = () => {
-                    const blob = new Blob(this.recordingChunks, { type: this.recorder.mimeType || "audio/webm" });
-                    const seconds = Math.max(1, Math.round((Date.now() - this.recordingStartedAt) / 1000));
-                    const file = new File([blob], `Voice note ${new Date().toISOString().replace(/[:.]/g, "-")}.webm`, { type: blob.type || "audio/webm" });
-                    stream.getTracks().forEach(t => t.stop()); btn.classList.remove("recording"); btn.title = "Voice note";
-                    if (seconds > 0) this.uploadAndQueueFile(file).then(att => { if (att) this.sendMessage(); });
+                const candidates = [
+                    "audio/webm;codecs=opus",
+                    "audio/ogg;codecs=opus",
+                    "audio/mp4",
+                ];
+                const mimeType = candidates.find(type => MediaRecorder.isTypeSupported(type)) || "";
+                this.recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+                this.recorder.ondataavailable = ev => {
+                    if (ev.data && ev.data.size > 0) this.recordingChunks.push(ev.data);
                 };
-                this.recordingStartedAt = Date.now(); this.recorder.start(); btn.classList.add("recording"); btn.title = "Stop recording";
-            } catch (error) { alert(`Microphone access failed: ${error.message}`); }
+                this.recorder.onerror = ev => {
+                    console.error("[Chats] voice recorder error", ev.error || ev);
+                };
+                this.recorder.onstop = async () => {
+                    try {
+                        const recordedType = this.recorder?.mimeType || mimeType || "audio/webm";
+                        const blob = new Blob(this.recordingChunks, { type: recordedType });
+                        const seconds = Math.max(1, Math.round((Date.now() - this.recordingStartedAt) / 1000));
+                        const ext = recordedType.includes("mp4") ? "m4a" : (recordedType.includes("ogg") ? "ogg" : "webm");
+                        stream.getTracks().forEach(t => t.stop());
+                        btn.classList.remove("recording");
+                        btn.title = "Voice note";
+                        this.recorder = null;
+                        if (!blob.size || seconds < 1) return;
+                        const file = new File([blob], `Voice note ${new Date().toISOString().replace(/[:.]/g, "-")}.${ext}`, { type: recordedType });
+                        const att = await this.uploadAndQueueFile(file);
+                        if (att) await this.sendMessage();
+                    } catch (error) {
+                        console.error("[Chats] could not finalize voice note", error);
+                        alert(`Could not send voice note: ${error.message || error}`);
+                    }
+                };
+                this.recordingStartedAt = Date.now();
+                // Emit chunks throughout the recording rather than a single final
+                // WebM blob. This avoids truncated voice notes on Chromium/WebKit.
+                this.recorder.start(500);
+                btn.classList.add("recording");
+                btn.title = "Stop recording";
+            } catch (error) {
+                alert(`Microphone access failed: ${error.message}`);
+            }
         }
 
         async callCurrent(type) {
@@ -496,13 +559,13 @@
                 return;
             }
             if (!navigator.mediaDevices?.getUserMedia) {
-                alert("This browser does not provide microphone/camera access. Open Absar Chat over HTTPS in a supported browser.");
+                alert("This browser does not provide microphone/camera access. Open Chats over HTTPS in a supported browser.");
                 return;
             }
 
             const caller = await this.waitForCaller();
             if (!caller) {
-                alert("The call engine could not start. Close and reopen Absar Chat, then try again.");
+                alert("The call engine could not start. Close and reopen Chats, then try again.");
                 return;
             }
 
@@ -537,7 +600,7 @@
                     await caller._refreshParticipants();
                 }
             } catch (error) {
-                console.error("[Absar Chat] call start failed", error);
+                console.error("[Chats] call start failed", error);
                 try { caller._teardown(); } catch (_) {}
                 alert(`Could not start ${type === "video" ? "video" : "audio"} call: ${error.message || error}`);
             } finally {
@@ -555,7 +618,7 @@
                             const caller = window.__ensureEmployeePortalCaller();
                             if (caller) return resolve(caller);
                         } catch (error) {
-                            console.error("[Absar Chat] call engine bootstrap failed", error);
+                            console.error("[Chats] call engine bootstrap failed", error);
                         }
                     }
                     if (++tries > 20) return resolve(null);
@@ -572,7 +635,7 @@
                 const calls = result?.calls || [];
                 const unread = Number(result?.unread_missed_count || 0);
                 $("#ac-call-badge").textContent = unread > 99 ? "99+" : unread; $("#ac-call-badge").classList.toggle("is-hidden", !unread);
-                box.innerHTML = calls.length ? calls.map(c => `<div class="ac-call-row ${c.status === 'missed' ? 'missed' : ''}" data-call='${JSON.stringify(c).replace(/'/g,"&#39;")}'><img src="${esc(c.avatar_url || '/absar_chat_pwa/static/icons/icon-192.png')}" alt=""/><div class="ac-call-copy"><strong>${esc(c.title || "Employee")}</strong><span>${esc(this.callStatus(c))} · ${esc(this.formatListTime(c.started_at))}${c.duration_seconds ? ` · ${this.formatDuration(c.duration_seconds)}` : ""}</span></div><div class="ac-call-actions"><button class="ac-icon-btn" data-callback="audio" title="Call"><i class="fa fa-phone"></i></button><button class="ac-icon-btn" data-callback="video" title="Video call"><i class="fa fa-video-camera"></i></button></div></div>`).join("") : `<div class="ac-loading">No calls yet.</div>`;
+                box.innerHTML = calls.length ? calls.map(c => `<div class="ac-call-row ${c.status === 'missed' ? 'missed' : ''}" data-call='${JSON.stringify(c).replace(/'/g,"&#39;")}'><img src="${esc(c.avatar_url || this.companyLogo)}" alt=""/><div class="ac-call-copy"><strong>${esc(c.title || "Employee")}</strong><span>${esc(this.callStatus(c))} · ${esc(this.formatListTime(c.started_at))}${c.duration_seconds ? ` · ${this.formatDuration(c.duration_seconds)}` : ""}</span></div><div class="ac-call-actions"><button class="ac-icon-btn" data-callback="audio" title="Call"><i class="fa fa-phone"></i></button><button class="ac-icon-btn" data-callback="video" title="Video call"><i class="fa fa-video-camera"></i></button></div></div>`).join("") : `<div class="ac-loading">No calls yet.</div>`;
                 $$("[data-callback]", box).forEach(btn => btn.addEventListener("click", async () => { const row = btn.closest(".ac-call-row"); const c = JSON.parse(row.dataset.call); const ids = (c.callback_user_ids || []).map(Number).filter(Boolean); const caller = await this.waitForCaller(); if (!caller || !ids.length) return; if (ids.length === 1) caller._startCall(ids[0], btn.dataset.callback); else caller._startHistoryGroupCall(ids, btn.dataset.callback); }));
                 await rpc("/employee_portal/call/history/mark_seen", {}).catch(() => {});
             } catch (error) { box.innerHTML = `<div class="ac-error">Could not load call history.</div>`; }
@@ -625,7 +688,7 @@
         renderInfo() {
             const box = $("#ac-info-content"); if (!box || !this.currentThread) return;
             const t = this.currentThread, participants = t.participants || [];
-            const threadAvatar = this.threads.find(x => Number(x.id) === Number(this.currentThreadId))?.avatar_url || "/absar_chat_pwa/static/icons/icon-192.png";
+            const threadAvatar = this.threads.find(x => Number(x.id) === Number(this.currentThreadId))?.avatar_url || this.companyLogo;
             box.innerHTML = `<div class="ac-info-profile"><img src="${esc(threadAvatar)}" alt=""/><h3>${esc(t.name || "Conversation")}</h3><p>${t.is_group ? `${t.participant_count || participants.length} participants` : "Direct conversation"}</p></div><div class="ac-info-section"><h4>Participants</h4>${participants.map(p => `<div class="ac-participant"><img src="${esc(p.avatar_url)}" alt=""/><div><strong>${esc(p.name)}${p.is_me ? " (You)" : ""}</strong><span>${p.is_me ? "Online" : esc(this.presenceLabel(this.presence[String(p.user_id)] || "offline"))}</span></div></div>`).join("")}${t.discuss_channel_id ? `<button id="ac-add-people" class="ac-secondary-btn" style="width:100%;margin-top:10px"><i class="fa fa-user-plus"></i> Add people</button>` : ""}</div>`;
             $("#ac-add-people")?.addEventListener("click", () => this.addPeopleToCurrent());
         }
@@ -651,9 +714,9 @@
         }
         syncNow() { this.refreshThreads(false).catch(() => {}); this.refreshPresence().catch(() => {}); if (this.currentThreadId) this.refreshMessages(false); }
 
-        async installApp() { if (this.deferredInstall) { this.deferredInstall.prompt(); await this.deferredInstall.userChoice; this.deferredInstall = null; } else alert("Use your browser's Install / Add to Home Screen option to install Absar Chat."); }
+        async installApp() { if (this.deferredInstall) { this.deferredInstall.prompt(); await this.deferredInstall.userChoice; this.deferredInstall = null; } else alert("Use your browser's Install / Add to Home Screen option to install Chats."); }
         async enableNotifications() { if (!("Notification" in window)) return alert("Notifications are not supported by this browser."); const p = await Notification.requestPermission(); $("#ac-notifications").textContent = p === "granted" ? "Enabled" : "Enable"; }
-        notify(title, body) { if ("Notification" in window && Notification.permission === "granted") { try { new Notification(title, { body, icon: "/absar_chat_pwa/static/icons/icon-192.png" }); } catch (_) {} } }
+        notify(title, body) { if ("Notification" in window && Notification.permission === "granted") { try { new Notification(title, { body, icon: this.companyLogo || undefined }); } catch (_) {} } }
 
         scrollMessagesToBottom() { const box = $("#ac-messages"); requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; }); }
         formatBytes(bytes) { const n = Number(bytes || 0); if (!n) return ""; if (n < 1024) return `${n} B`; if (n < 1048576) return `${(n/1024).toFixed(1)} KB`; return `${(n/1048576).toFixed(1)} MB`; }

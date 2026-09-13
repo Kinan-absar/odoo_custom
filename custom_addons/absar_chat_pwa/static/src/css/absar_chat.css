@@ -34,7 +34,7 @@ button,input,textarea{font:inherit}.ac-app{height:100dvh;display:grid;grid-templ
 .ac-pending-file.uploading{opacity:.72}.ac-uploading{font-size:9px;color:#7a8796}.ac-file-symbol{font-size:14px}.ac-pending-file button{font-size:16px;line-height:1}
 
 /* ============================================================
-   v18.0.3.3.0 - stable chat viewport + explicit SVG controls
+   v18.0.3.4.0 - stable chat viewport + explicit SVG controls
    ============================================================ */
 .ac-main{overflow:hidden!important}
 .ac-conversation{
@@ -102,7 +102,7 @@ button,input,textarea{font:inherit}.ac-app{height:100dvh;display:grid;grid-templ
 .ac-image-preview{max-width:min(420px,70vw)!important;max-height:320px!important;border:1px solid rgba(0,0,0,.05)}
 .ac-audio-preview{min-width:260px}
 
-/* Keep the proven call widget above all Absar Chat panels. */
+/* Keep the proven call widget above all Chats panels. */
 .ac-body #epc-root{z-index:12000!important}
 .ac-body #epc-panel{z-index:12010!important}
 .ac-body #epc-incoming,.ac-body #epc-active{z-index:12020!important}
@@ -125,3 +125,16 @@ button,input,textarea{font:inherit}.ac-app{height:100dvh;display:grid;grid-templ
     .ac-attachment-strip{max-height:76px;padding:6px 8px}
     .ac-emoji-panel{bottom:68px!important;left:8px!important;right:8px!important}
 }
+
+
+/* v18.0.3.4.0 branding + drag/drop */
+.ac-brand{background:#fff!important;border:1px solid var(--ac-line)!important;overflow:hidden;padding:4px!important}
+.ac-brand img{width:100%!important;height:100%!important;object-fit:contain!important;border-radius:8px!important}
+.ac-empty-state>img{width:88px!important;height:88px!important;object-fit:contain!important;border-radius:16px!important;background:#fff!important;padding:7px!important;border:1px solid var(--ac-line)!important}
+.ac-drop-overlay{position:absolute;inset:72px 0 70px 0;z-index:55;background:rgba(245,249,249,.88);backdrop-filter:blur(3px);display:grid;place-items:center;padding:24px;pointer-events:none}
+.ac-drop-overlay.is-hidden{display:none!important}
+.ac-drop-card{width:min(440px,90%);min-height:220px;border:2px dashed #5faea4;border-radius:24px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;color:#344554;box-shadow:0 16px 45px rgba(25,38,54,.12)}
+.ac-drop-card strong{font-size:20px;color:#1d2b38}
+.ac-drop-card span:last-child{font-size:13px;color:#758392}
+.ac-drop-icon{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:#e8f5f2;color:#0f766e;font-size:36px;line-height:1}
+@media(max-width:700px){.ac-drop-overlay{inset:60px 0 62px 0}.ac-drop-card{min-height:170px}}

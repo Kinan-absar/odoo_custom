@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <template id="chat_home" name="Absar Chat">
+    <template id="chat_home" name="Chats">
         &lt;!DOCTYPE html&gt;
         <html lang="en">
             <head>
@@ -9,26 +9,27 @@
                 <meta name="theme-color" content="#ffffff"/>
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
                 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-                <meta name="apple-mobile-web-app-title" content="Absar Chat"/>
-                <title>Absar Chat</title>
+                <meta name="apple-mobile-web-app-title" content="Chats"/>
+                <title>Chats</title>
                 <link rel="manifest" href="/chat/manifest.webmanifest"/>
-                <link rel="icon" href="/absar_chat_pwa/static/icons/icon-192.png"/>
-                <link rel="apple-touch-icon" href="/absar_chat_pwa/static/icons/icon-192.png"/>
+                <link rel="icon" t-att-href="'/web/image/res.company/%s/logo' % request.env.company.id"/>
+                <link rel="apple-touch-icon" t-att-href="'/web/image/res.company/%s/logo/192x192' % request.env.company.id"/>
                 <link rel="stylesheet" href="/web/static/lib/fontawesome/css/font-awesome.css"/>
-                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/call_widget.css?v=18.0.3.3.0"/>
-                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/absar_chat.css?v=18.0.3.3.0"/>
-                <script src="/absar_chat_pwa/static/src/js/portal_call_bridge.js?v=18.0.3.3.0" defer="defer"></script>
-                <script src="/absar_chat_pwa/static/src/js/absar_chat.js?v=18.0.3.3.0" defer="defer"></script>
+                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/call_widget.css?v=18.0.3.4.0"/>
+                <link rel="stylesheet" href="/absar_chat_pwa/static/src/css/absar_chat.css?v=18.0.3.4.0"/>
+                <script src="/absar_chat_pwa/static/src/js/portal_call_bridge.js?v=18.0.3.4.0" defer="defer"></script>
+                <script src="/absar_chat_pwa/static/src/js/absar_chat.js?v=18.0.3.4.0" defer="defer"></script>
             </head>
             <body class="ac-body" data-epc-logged-in="1"
                   t-att-data-current-user-id="current_user.id"
                   t-att-data-current-user-name="current_employee.name or current_user.name"
-                  t-att-data-current-avatar="current_avatar">
+                  t-att-data-current-avatar="current_avatar"
+                  t-att-data-company-logo="'/web/image/res.company/%s/logo' % request.env.company.id">
                 <div id="epc-mount-marker" class="ac-call-mount-marker"></div>
                 <div id="ac-app" class="ac-app">
                     <aside class="ac-rail" aria-label="Main navigation">
-                        <a href="/chat/" class="ac-brand" title="Absar Chat">
-                            <img src="/absar_chat_pwa/static/icons/icon-192.png" alt="Absar Chat"/>
+                        <a href="/chat/" class="ac-brand" title="Chats">
+                            <img t-att-src="'/web/image/res.company/%s/logo' % request.env.company.id" alt="Company logo"/>
                         </a>
                         <nav class="ac-rail-nav">
                             <button class="ac-rail-btn is-active" data-view="chats" title="Chats"><i class="fa fa-comments"></i><span>Chats</span><b id="ac-chat-badge" class="ac-badge is-hidden">0</b></button>
@@ -41,7 +42,7 @@
 
                     <section id="ac-sidebar" class="ac-sidebar">
                         <header class="ac-sidebar-head">
-                            <div class="ac-title-row"><div><h1>Absar Chat</h1><p>Work together, instantly.</p></div><button id="ac-new-chat" class="ac-icon-btn" title="New chat"><i class="fa fa-pencil-square-o"></i></button></div>
+                            <div class="ac-title-row"><div><h1>Chats</h1><p>Work together, instantly.</p></div><button id="ac-new-chat" class="ac-icon-btn" title="New chat"><i class="fa fa-pencil-square-o"></i></button></div>
                             <label class="ac-search"><i class="fa fa-search"></i><input id="ac-thread-search" type="search" placeholder="Search conversations" autocomplete="off"/></label>
                         </header>
                         <div id="ac-thread-list" class="ac-thread-list"><div class="ac-loading">Loading conversations…</div></div>
@@ -54,8 +55,8 @@
 
                     <main id="ac-main" class="ac-main">
                         <section id="ac-empty" class="ac-empty-state">
-                            <img src="/absar_chat_pwa/static/icons/icon-192.png" alt=""/>
-                            <h2>Absar Chat</h2>
+                            <img t-att-src="'/web/image/res.company/%s/logo' % request.env.company.id" alt="Company logo"/>
+                            <h2>Chats</h2>
                             <p>Select a conversation or start a new one.</p>
                             <button id="ac-empty-new" class="ac-primary-btn"><i class="fa fa-plus"></i> New conversation</button>
                         </section>
@@ -63,7 +64,7 @@
                         <section id="ac-conversation" class="ac-conversation is-hidden">
                             <header class="ac-conversation-head">
                                 <button id="ac-mobile-back" class="ac-icon-btn ac-mobile-only"><i class="fa fa-arrow-left"></i></button>
-                                <img id="ac-chat-avatar" class="ac-avatar" src="/absar_chat_pwa/static/icons/icon-192.png" alt=""/>
+                                <img id="ac-chat-avatar" class="ac-avatar" t-att-src="'/web/image/res.company/%s/logo' % request.env.company.id" alt=""/>
                                 <div class="ac-conversation-title"><strong id="ac-chat-title">Conversation</strong><span id="ac-chat-subtitle">Employee</span></div>
                                 <div class="ac-conversation-actions">
                                     <button id="ac-audio-call" class="ac-header-action" title="Audio call" aria-label="Audio call">
@@ -84,6 +85,7 @@
                             </header>
                             <div id="ac-message-search-bar" class="ac-message-search-bar is-hidden"><i class="fa fa-search"></i><input id="ac-message-search-input" type="search" placeholder="Search in conversation"/><button id="ac-message-search-close" class="ac-icon-btn"><i class="fa fa-times"></i></button></div>
                             <div id="ac-messages" class="ac-messages"><div class="ac-loading">Loading messages…</div></div>
+                            <div id="ac-drop-overlay" class="ac-drop-overlay is-hidden"><div class="ac-drop-card"><span class="ac-drop-icon">＋</span><strong>Drop files to attach</strong><span>Images, PDFs, documents, audio and other files</span></div></div>
                             <div id="ac-typing" class="ac-typing is-hidden"></div>
                             <div id="ac-reply-bar" class="ac-reply-bar is-hidden"><div><strong id="ac-reply-author"></strong><span id="ac-reply-text"></span></div><button id="ac-reply-cancel" class="ac-icon-btn"><i class="fa fa-times"></i></button></div>
                             <div id="ac-attachment-strip" class="ac-attachment-strip is-hidden"></div>
@@ -108,7 +110,7 @@
 
                         <section id="ac-calls-view" class="ac-page-view is-hidden"><div class="ac-page-head"><div><h2>Calls</h2><p>Recent voice and video calls</p></div></div><div id="ac-call-history" class="ac-card-list"><div class="ac-loading">Loading calls…</div></div></section>
                         <section id="ac-people-view" class="ac-page-view is-hidden"><div class="ac-page-head"><div><h2>People</h2><p>Company employee directory</p></div><label class="ac-search ac-page-search"><i class="fa fa-search"></i><input id="ac-people-search" type="search" placeholder="Search employees"/></label></div><div id="ac-people-list" class="ac-people-grid"><div class="ac-loading">Loading employees…</div></div></section>
-                        <section id="ac-settings-view" class="ac-page-view is-hidden"><div class="ac-page-head"><div><h2>Settings</h2><p>Absar Chat preferences</p></div></div><div class="ac-settings-card"><div class="ac-setting-row"><div><strong>Install Absar Chat</strong><span>Add this app to your desktop or home screen.</span></div><button id="ac-install" class="ac-secondary-btn">Install app</button></div><div class="ac-setting-row"><div><strong>Desktop notifications</strong><span>Allow message and call alerts while the app is open.</span></div><button id="ac-notifications" class="ac-secondary-btn">Enable</button></div><div class="ac-setting-row"><div><strong>Employee Portal</strong><span>Return to requests, attendance and other employee tools.</span></div><a href="/my/employee" class="ac-secondary-btn">Open portal</a></div></div></section>
+                        <section id="ac-settings-view" class="ac-page-view is-hidden"><div class="ac-page-head"><div><h2>Settings</h2><p>Chats preferences</p></div></div><div class="ac-settings-card"><div class="ac-setting-row"><div><strong>Install Chats</strong><span>Add this app to your desktop or home screen.</span></div><button id="ac-install" class="ac-secondary-btn">Install app</button></div><div class="ac-setting-row"><div><strong>Desktop notifications</strong><span>Allow message and call alerts while the app is open.</span></div><button id="ac-notifications" class="ac-secondary-btn">Enable</button></div><div class="ac-setting-row"><div><strong>Employee Portal</strong><span>Return to requests, attendance and other employee tools.</span></div><a href="/my/employee" class="ac-secondary-btn">Open portal</a></div></div></section>
                     </main>
 
                     <aside id="ac-info-panel" class="ac-info-panel is-hidden">
@@ -137,9 +139,9 @@
         </html>
     </template>
 
-    <template id="access_denied_page" name="Absar Chat Access Denied">
+    <template id="access_denied_page" name="Chats Access Denied">
         &lt;!DOCTYPE html&gt;
-        <html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Absar Chat</title></head>
+        <html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Chats</title></head>
         <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f8fb;margin:0;display:grid;place-items:center;min-height:100vh;color:#172033"><div style="text-align:center;padding:36px;background:white;border:1px solid #e8edf2;border-radius:24px;max-width:420px"><h1 style="margin:0 0 10px"><t t-esc="title"/></h1><p style="color:#6b7280"><t t-esc="message"/></p><a href="/my/employee" style="display:inline-block;margin-top:12px;padding:11px 18px;background:#0f766e;color:white;border-radius:10px;text-decoration:none">Employee Portal</a></div></body></html>
     </template>
 </odoo>
