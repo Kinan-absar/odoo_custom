@@ -25,6 +25,7 @@ patch(Composer.prototype, {
 patch(Discuss.prototype, {
     setup() {
         const isEmployeePortalDiscuss = Boolean(employeePortalMeta("employee-portal-discuss"));
+        const isEmployeePortalDiscussHome = Boolean(employeePortalMeta("employee-portal-discuss-home"));
         const storeService = this.env.services["mail.store"];
         const originalPublicPage = storeService?.inPublicPage;
 
@@ -40,10 +41,18 @@ patch(Discuss.prototype, {
                 this.store.discuss.thread = this.store.discuss_public_thread;
             }
             this.store.discuss.activeTab = "main";
+            if (isEmployeePortalDiscussHome) {
+                // The home route is still the real native Discuss component.  Keep
+                // its native sidebar/store/RTC stack, but start with no selected
+                // conversation so the installed PWA never opens as "a chat with X".
+                this.store.discuss.thread = undefined;
+            }
             document.body.classList.add("ep-native-discuss-public");
+            document.body.classList.toggle("ep-native-discuss-home", isEmployeePortalDiscussHome);
         }
 
         this.isEmployeePortalDiscuss = isEmployeePortalDiscuss;
+        this.isEmployeePortalDiscussHome = isEmployeePortalDiscussHome;
 
         if (isEmployeePortalDiscuss) {
             const originalBodyStyle = {
@@ -113,6 +122,12 @@ patch(Discuss.prototype, {
                         img.src = companyLogo;
                     });
                 }
+                if (isEmployeePortalDiscussHome) {
+                    // Some Odoo Discuss restore logic runs after setup.  Clear the
+                    // bootstrap thread once more after mount, only on the neutral
+                    // home route.  A user selection afterwards is left untouched.
+                    this.store.discuss.thread = undefined;
+                }
                 this._epApplyViewportHeight();
                 window.setTimeout(this._epApplyViewportHeight, 80);
                 window.setTimeout(this._epApplyViewportHeight, 300);
@@ -134,6 +149,7 @@ patch(Discuss.prototype, {
                 Object.assign(document.body.style, originalBodyStyle);
                 document.body.classList.remove("ep-native-discuss-keyboard");
                 document.body.classList.remove("ep-native-discuss-public");
+                document.body.classList.remove("ep-native-discuss-home");
             });
         }
     },

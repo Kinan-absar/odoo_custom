@@ -120,7 +120,7 @@
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/my/employee/discuss/sw.js', { scope: '/my/employee/discuss/' }).catch((error) => {
+            navigator.serviceWorker.register('/my/employee/discuss/sw.js', { scope: '/my/employee/discuss' }).catch((error) => {
                 console.warn('Chats PWA service worker registration failed', error);
             });
         }, { once: true });

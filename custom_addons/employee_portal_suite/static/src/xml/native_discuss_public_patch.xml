@@ -9,6 +9,9 @@
                     <strong>Chats</strong>
                 </button>
                 <span class="flex-grow-1"/>
+                <button type="button" class="btn btn-light d-inline-flex align-items-center gap-1" data-ep-discuss-install="1" t-on-click="installEmployeeChats" title="Install Chats">
+                    <i class="fa fa-download"/><span class="d-none d-md-inline">Install</span>
+                </button>
                 <button type="button" class="btn btn-light d-none d-md-inline-flex" t-on-click="toggleEmployeeFullscreen" title="Full screen">
                     <i class="fa fa-expand"/>
                 </button>

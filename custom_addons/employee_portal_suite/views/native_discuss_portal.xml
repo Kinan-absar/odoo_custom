@@ -131,16 +131,17 @@
 
     <template id="employee_native_discuss_public_bootstrap" inherit_id="mail.discuss_public_channel_template" name="Employee Native Discuss Bootstrap">
         <xpath expr="//head" position="inside">
-            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-discuss" content="1"/>
-            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-back-url" content="/my/employee/discuss"/>
-            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-home-url" content="/my/employee"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" rel="manifest" href="/my/employee/discuss/manifest.webmanifest" data-employee-discuss-pwa="1"/>
-            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
-            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="apple-mobile-web-app-capable" content="yes"/>
-            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="apple-mobile-web-app-title" content="Chats"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" rel="apple-touch-icon" t-att-href="'/web/image/res.company/%s/logo/192x192' % request.env.company.id"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" rel="icon" type="image/png" t-att-href="'/web/image/res.company/%s/logo_web' % request.env.company.id"/>
-            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-discuss-company-logo" t-att-content="'/web/image/res.company/%s/logo_web' % request.env.company.id"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-discuss" content="1"/>
+            <meta t-if="request.httprequest.path == '/my/employee/discuss'" name="employee-portal-discuss-home" content="1"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-back-url" content="/my/employee/discuss"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-home-url" content="/my/employee"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="manifest" href="/my/employee/discuss/manifest.webmanifest" data-employee-discuss-pwa="1"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-capable" content="yes"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-title" content="Chats"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon" t-att-href="'/web/image/res.company/%s/logo/192x192' % request.env.company.id"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="icon" type="image/png" t-att-href="'/web/image/res.company/%s/logo_web' % request.env.company.id"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-discuss-company-logo" t-att-content="'/web/image/res.company/%s/logo_web' % request.env.company.id"/>
         </xpath>
     </template>
 
