@@ -140,6 +140,12 @@
         overlay.addEventListener("click", (event) => {
             if (event.target === overlay) closeInstallHelp();
         });
+        overlay.querySelector(".ep-discuss-install-done")?.focus({ preventScroll: true });
+        document.addEventListener("keydown", function onKeydown(event) {
+            if (event.key !== "Escape") return;
+            closeInstallHelp();
+            document.removeEventListener("keydown", onKeydown);
+        });
     }
 
     function moveToCanonicalInstallRoot() {
@@ -193,24 +199,41 @@
 
     function bindHomePage() {
         const newChat = document.getElementById("ep-native-new-chat");
-        document.querySelectorAll("[data-ep-new-chat-toggle]").forEach((button) => {
+        const toggleButtons = document.querySelectorAll("[data-ep-new-chat-toggle]");
+
+        const setNewChatOpen = (open) => {
+            newChat?.classList.toggle("show", open);
+            toggleButtons.forEach((button) => button.setAttribute("aria-expanded", open ? "true" : "false"));
+            if (open) {
+                newChat?.querySelector('[data-ep-people-search]')?.focus({ preventScroll: true });
+            }
+        };
+
+        toggleButtons.forEach((button) => {
             if (button.dataset.epBound === "1") return;
             button.dataset.epBound = "1";
-            button.addEventListener("click", () => {
-                if (!newChat) return;
-                const open = !newChat.classList.contains("show");
-                newChat.classList.toggle("show", open);
-                newChat.setAttribute("aria-hidden", open ? "false" : "true");
-            });
+            button.addEventListener("click", () => setNewChatOpen(!newChat?.classList.contains("show")));
         });
         document.querySelectorAll("[data-ep-new-chat-close]").forEach((button) => {
             if (button.dataset.epBound === "1") return;
             button.dataset.epBound = "1";
-            button.addEventListener("click", () => {
-                newChat?.classList.remove("show");
-                newChat?.setAttribute("aria-hidden", "true");
-            });
+            button.addEventListener("click", () => setNewChatOpen(false));
         });
+
+        // Close the new-chat panel on Escape or on an outside click/tap, and
+        // keep the trigger button's aria-expanded state honest either way.
+        if (newChat && !newChat.dataset.epDismissBound) {
+            newChat.dataset.epDismissBound = "1";
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape" && newChat.classList.contains("show")) setNewChatOpen(false);
+            });
+            document.addEventListener("click", (event) => {
+                if (!newChat.classList.contains("show")) return;
+                if (newChat.contains(event.target) || event.target.closest("[data-ep-new-chat-toggle]")) return;
+                setNewChatOpen(false);
+            });
+        }
+
         document.querySelectorAll("[data-ep-chat-search]").forEach((input) => {
             if (input.dataset.epBound === "1") return;
             input.dataset.epBound = "1";
@@ -223,6 +246,35 @@
                     if (show) visible += 1;
                 });
                 document.querySelector("[data-ep-search-empty]")?.classList.toggle("d-none", visible !== 0 || !query);
+            });
+        });
+
+        // Filter the "New chat" people list as the user types.
+        document.querySelectorAll("[data-ep-people-search]").forEach((input) => {
+            if (input.dataset.epBound === "1") return;
+            input.dataset.epBound = "1";
+            input.addEventListener("input", () => {
+                const query = (input.value || "").trim().toLowerCase();
+                let visible = 0;
+                document.querySelectorAll("[data-ep-people-list] .ep-native-person-option").forEach((row) => {
+                    const show = !query || (row.dataset.search || "").includes(query);
+                    row.classList.toggle("d-none", !show);
+                    if (show) visible += 1;
+                });
+                document.querySelector("[data-ep-people-empty]")?.classList.toggle("d-none", visible !== 0 || !query);
+            });
+        });
+
+        // The group-name field only makes sense once 2+ people are picked;
+        // keep it out of the way for a plain 1:1 chat.
+        document.querySelectorAll("[data-ep-people-checkbox]").forEach((checkbox) => {
+            if (checkbox.dataset.epBound === "1") return;
+            checkbox.dataset.epBound = "1";
+            checkbox.addEventListener("change", () => {
+                const form = checkbox.closest("form");
+                if (!form) return;
+                const checkedCount = form.querySelectorAll("[data-ep-people-checkbox]:checked").length;
+                form.querySelector("[data-ep-group-name]")?.classList.toggle("d-none", checkedCount < 2);
             });
         });
     }
@@ -326,17 +378,6 @@
             }
         }
     };
-    window.addEventListener('message', (event) => {
-        if (event.origin !== window.location.origin) return;
-        if (event.data?.type !== 'employee-discuss-back-to-chats') return;
-        const shell = document.querySelector('[data-ep-chats-shell]');
-        const frame = document.querySelector('[data-ep-discuss-frame]');
-        if (!shell) return;
-        shell.classList.remove('ep-chat-open');
-        frame?.classList.remove('show');
-        shell.querySelectorAll('[data-ep-thread]').forEach((row) => row.classList.remove('active'));
-        try { if (frame) frame.src = 'about:blank'; } catch (_) {}
-    });
     document.addEventListener('DOMContentLoaded', bind);
     window.addEventListener('pageshow', bind);
 })();
