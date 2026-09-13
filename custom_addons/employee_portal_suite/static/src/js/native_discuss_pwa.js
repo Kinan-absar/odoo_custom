@@ -196,12 +196,20 @@
         document.querySelectorAll("[data-ep-new-chat-toggle]").forEach((button) => {
             if (button.dataset.epBound === "1") return;
             button.dataset.epBound = "1";
-            button.addEventListener("click", () => newChat?.classList.toggle("show"));
+            button.addEventListener("click", () => {
+                if (!newChat) return;
+                const open = !newChat.classList.contains("show");
+                newChat.classList.toggle("show", open);
+                newChat.setAttribute("aria-hidden", open ? "false" : "true");
+            });
         });
         document.querySelectorAll("[data-ep-new-chat-close]").forEach((button) => {
             if (button.dataset.epBound === "1") return;
             button.dataset.epBound = "1";
-            button.addEventListener("click", () => newChat?.classList.remove("show"));
+            button.addEventListener("click", () => {
+                newChat?.classList.remove("show");
+                newChat?.setAttribute("aria-hidden", "true");
+            });
         });
         document.querySelectorAll("[data-ep-chat-search]").forEach((input) => {
             if (input.dataset.epBound === "1") return;
@@ -318,6 +326,17 @@
             }
         }
     };
+    window.addEventListener('message', (event) => {
+        if (event.origin !== window.location.origin) return;
+        if (event.data?.type !== 'employee-discuss-back-to-chats') return;
+        const shell = document.querySelector('[data-ep-chats-shell]');
+        const frame = document.querySelector('[data-ep-discuss-frame]');
+        if (!shell) return;
+        shell.classList.remove('ep-chat-open');
+        frame?.classList.remove('show');
+        shell.querySelectorAll('[data-ep-thread]').forEach((row) => row.classList.remove('active'));
+        try { if (frame) frame.src = 'about:blank'; } catch (_) {}
+    });
     document.addEventListener('DOMContentLoaded', bind);
     window.addEventListener('pageshow', bind);
 })();

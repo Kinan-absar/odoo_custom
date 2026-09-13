@@ -9,20 +9,79 @@ function meta(name) {
     return document.querySelector(`meta[name="${name}"]`)?.getAttribute("content") || "";
 }
 
-function ensureVideoButton() {
+function isEmbeddedDiscuss() {
+    return Boolean(meta("employee-portal-discuss-embedded"));
+}
+
+function findNativePhoneButton(header) {
+    const controls = Array.from(header.querySelectorAll("button, a"));
+    return controls.find((el) => {
+        if (el.dataset.epVideoCall || el.dataset.epChatsBack) return false;
+        const label = `${el.getAttribute("title") || ""} ${el.getAttribute("aria-label") || ""} ${el.textContent || ""}`.toLowerCase();
+        const html = (el.innerHTML || "").toLowerCase();
+        return !label.includes("video") && (label.includes("call") || label.includes("phone") || html.includes("fa-phone") || html.includes("phone"));
+    }) || null;
+}
+
+function removeEmbeddedCloseButton(header) {
+    if (!isEmbeddedDiscuss()) return;
+    const controls = Array.from(header.querySelectorAll("button, a"));
+    for (const el of controls) {
+        if (el.dataset.epChatsBack || el.dataset.epVideoCall) continue;
+        const label = `${el.getAttribute("title") || ""} ${el.getAttribute("aria-label") || ""}`.trim().toLowerCase();
+        const html = (el.innerHTML || "").toLowerCase();
+        if (label === "close" || label.includes("close conversation") || html.includes("fa-times") || html.includes("fa-close")) {
+            el.style.display = "none";
+            el.dataset.epHiddenClose = "1";
+        }
+    }
+}
+
+function goBackToChats() {
+    if (isEmbeddedDiscuss() && window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: "employee-discuss-back-to-chats" }, window.location.origin);
+        return;
+    }
+    window.location.assign(meta("employee-portal-back-url") || "/my/employee/discuss");
+}
+
+function ensureEmbeddedHeaderActions() {
     if (!meta("employee-portal-discuss")) return;
     const header = document.querySelector(".o-mail-Discuss-header");
-    if (!header || header.querySelector("[data-ep-video-call]")) return;
-    const actions = header.querySelector(".o-mail-Discuss-headerActions, .o-mail-Discuss-headerActionsContainer, .o-mail-Discuss-header") || header;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.epVideoCall = "1";
-    button.className = "ep-native-video-call-btn";
-    button.title = "Video call";
-    button.setAttribute("aria-label", "Video call");
-    button.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14"/><rect x="3" y="6" width="12" height="12" rx="2"/></svg><span>Video</span>';
-    button.addEventListener("click", async (ev) => {
+    if (!header) return;
+
+    removeEmbeddedCloseButton(header);
+
+    if (isEmbeddedDiscuss() && !header.querySelector("[data-ep-chats-back]")) {
+        const back = document.createElement("button");
+        back.type = "button";
+        back.dataset.epChatsBack = "1";
+        back.className = "ep-native-inline-back";
+        back.title = "Back to Chats";
+        back.setAttribute("aria-label", "Back to Chats");
+        back.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+        back.addEventListener("click", (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            goBackToChats();
+        });
+        header.insertBefore(back, header.firstElementChild || null);
+    }
+
+    if (header.querySelector("[data-ep-video-call]")) return;
+    const phone = findNativePhoneButton(header);
+    if (!phone) return;
+
+    const video = document.createElement("button");
+    video.type = "button";
+    video.dataset.epVideoCall = "1";
+    video.className = "ep-native-inline-video";
+    video.title = "Video call";
+    video.setAttribute("aria-label", "Video call");
+    video.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="M15 10l5-3v10l-5-3z"/></svg>';
+    video.addEventListener("click", async (ev) => {
         ev.preventDefault();
+        ev.stopPropagation();
         try {
             if (!window.EmployeePortalNativeRTC?.startVideo) {
                 throw new Error("Call service is not ready yet.");
@@ -33,7 +92,7 @@ function ensureVideoButton() {
             window.alert(error?.message || "Unable to start video call.");
         }
     });
-    actions.appendChild(button);
+    phone.insertAdjacentElement("afterend", video);
 }
 
 // Employee Portal Discuss is authenticated and membership is validated server-side,
@@ -118,8 +177,8 @@ patch(Discuss.prototype, {
             };
 
             onMounted(() => {
-                ensureVideoButton();
-                this._epHeaderObserver = new MutationObserver(ensureVideoButton);
+                ensureEmbeddedHeaderActions();
+                this._epHeaderObserver = new MutationObserver(ensureEmbeddedHeaderActions);
                 this._epHeaderObserver.observe(this.root?.el || document.body, { childList: true, subtree: true });
                 this._epApplyViewportHeight();
                 window.setTimeout(this._epApplyViewportHeight, 80);

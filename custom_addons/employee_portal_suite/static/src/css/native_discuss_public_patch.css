@@ -507,3 +507,10 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* v20.19 - embedded native Discuss header: back beside name, video beside native phone. */
+.ep-native-inline-back,.ep-native-inline-video{border:0!important;background:transparent!important;color:#475569!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;width:38px!important;height:38px!important;border-radius:50%!important;padding:0!important;box-shadow:none!important}
+.ep-native-inline-back:hover,.ep-native-inline-video:hover{background:#f1f5f9!important;color:#0f172a!important}
+.ep-native-inline-back svg,.ep-native-inline-video svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+body.ep-native-discuss-embedded .ep-native-video-call-btn{display:none!important}
+@media(max-width:767.98px){.ep-native-inline-back,.ep-native-inline-video{width:40px!important;height:40px!important}.ep-native-discuss-public .o-mail-Discuss-header{padding-left:max(4px,env(safe-area-inset-left))!important;padding-right:max(4px,env(safe-area-inset-right))!important}}
