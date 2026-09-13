@@ -206,6 +206,21 @@ patch(DiscussClientAction.prototype, {
         }
         return super.parseActiveId(rawActiveId);
     },
+
+    async restoreDiscussThread() {
+        const result = await super.restoreDiscussThread(...arguments);
+        // Odoo restores the bootstrap public thread asynchronously. On the canonical
+        // Chats home we deliberately finish with no selected conversation. Doing it
+        // here (after Odoo's own restore is complete) prevents a stale/random thread
+        // from reappearing after refresh, especially on mobile Safari.
+        if (employeePortalMeta("employee-portal-discuss-home")) {
+            if (this.store?.discuss) {
+                this.store.discuss.thread = undefined;
+                this.store.discuss.activeTab = "main";
+            }
+        }
+        return result;
+    },
 });
 
 patch(Discuss.prototype, {
@@ -306,10 +321,18 @@ patch(Discuss.prototype, {
                 this._epSidebarObserver = new MutationObserver(() => epEnhanceNativeSidebar());
                 this._epSidebarObserver.observe(this.root?.el || document.body, { childList: true, subtree: true });
                 if (isEmployeePortalDiscussHome) {
-                    // Some Odoo Discuss restore logic runs after setup.  Clear the
-                    // bootstrap thread once more after mount, only on the neutral
-                    // home route.  A user selection afterwards is left untouched.
-                    this.store.discuss.thread = undefined;
+                    // Keep the canonical Chats root neutral. restoreDiscussThread()
+                    // above performs the authoritative clear after Odoo restores its
+                    // bootstrap state; these two short post-mount passes cover slower
+                    // mobile/public-store hydration without affecting channel routes.
+                    const clearHomeThread = () => {
+                        if (!employeePortalMeta("employee-portal-discuss-home")) return;
+                        this.store.discuss.thread = undefined;
+                        this.store.discuss.activeTab = "main";
+                    };
+                    clearHomeThread();
+                    window.setTimeout(clearHomeThread, 120);
+                    window.setTimeout(clearHomeThread, 450);
                 }
                 this._epApplyViewportHeight();
                 window.setTimeout(this._epApplyViewportHeight, 80);

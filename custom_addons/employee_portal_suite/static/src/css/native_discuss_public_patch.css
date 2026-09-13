@@ -293,3 +293,36 @@
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* v20.9 - Mobile Discuss navigation.
+   Do not hide Odoo's native MessagingMenu on small screens. The previous QWeb
+   override removed the only native mobile entry point to the channel/DM list,
+   which produced an apparently blank screen on phones. The template override is
+   no longer loaded; these rules only make the restored native control easier to use. */
+@media (max-width: 767.98px) {
+  .ep-native-discuss-public .o-mail-Discuss {
+    background: #fff !important;
+  }
+
+  /* Keep native mobile navigation controls above the message surface. */
+  .ep-native-discuss-public .o-mail-Discuss-header,
+  .ep-native-discuss-public .o-mail-MessagingMenu,
+  .ep-native-discuss-public [class*="MessagingMenu"] {
+    position: relative;
+    z-index: 40;
+  }
+
+  /* The Chats actions in the native sidebar must remain touch-friendly. */
+  .ep-native-chats-section-head {
+    min-height: 46px;
+  }
+  .ep-native-sidebar-action {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  .ep-native-new-chat-dialog {
+    max-height: min(88dvh, 760px);
+  }
+}
