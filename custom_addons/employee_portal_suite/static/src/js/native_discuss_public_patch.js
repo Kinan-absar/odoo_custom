@@ -33,6 +33,31 @@ function epFindDirectMessagesLabel(root) {
     return null;
 }
 
+
+function epFindChannelsLabel(root) {
+    const nodes = root.querySelectorAll("span, div, button, h1, h2, h3, h4, h5, h6");
+    for (const node of nodes) {
+        const ownText = Array.from(node.childNodes)
+            .filter((n) => n.nodeType === Node.TEXT_NODE)
+            .map((n) => n.textContent || "")
+            .join(" ")
+            .trim()
+            .replace(/\s+/g, " ")
+            .toLowerCase();
+        if (ownText === "channels") return node;
+    }
+    return null;
+}
+
+function epHideNativeChannelsSection(root) {
+    const label = epFindChannelsLabel(root);
+    if (!label) return;
+    // Odoo's sidebar section wrapper is the nearest block that owns the heading.
+    // Prefer a semantic section, then fall back to the immediate parent.
+    const section = label.closest("section, .o-mail-DiscussSidebar-category, .o-mail-DiscussSidebar-section") || label.parentElement;
+    if (section) section.classList.add("ep-native-hidden-channels-section");
+}
+
 function epBuildNewChatModal() {
     let modal = document.getElementById("ep-native-new-chat-modal");
     if (modal) return modal;
@@ -124,6 +149,7 @@ async function epOpenNewChat() {
 function epEnhanceNativeSidebar() {
     if (!employeePortalMeta("employee-portal-discuss")) return;
     const root = document.querySelector(".o-mail-Discuss") || document.body;
+    epHideNativeChannelsSection(root);
     const label = epFindDirectMessagesLabel(root);
     if (!label) return;
 
@@ -224,11 +250,10 @@ patch(DiscussClientAction.prototype, {
     },
 
     async restoreDiscussThread() {
-        const result = await super.restoreDiscussThread(...arguments);
-        // Odoo restores the bootstrap public thread asynchronously. On the canonical
-        // Chats home we deliberately finish with no selected conversation. Doing it
-        // here (after Odoo's own restore is complete) prevents a stale/random thread
-        // from reappearing after refresh, especially on mobile Safari.
+        // The canonical Chats root is a *list/home* state, not a thread state.
+        // Do not let native Discuss restore the bootstrap thread at all here: calling
+        // super first can recreate a stale conversation (especially on mobile Safari)
+        // after our UI has already cleared it.  Channel routes do use native restore.
         if (employeePortalMeta("employee-portal-discuss-home")) {
             if (this.store?.discuss) {
                 this.store.discuss.thread = undefined;
@@ -236,8 +261,9 @@ patch(DiscussClientAction.prototype, {
                     ? "chat"
                     : "main";
             }
+            return;
         }
-        return result;
+        return await super.restoreDiscussThread(...arguments);
     },
 });
 
@@ -256,10 +282,12 @@ patch(Discuss.prototype, {
         super.setup(...arguments);
         if (isEmployeePortalDiscuss && storeService) {
             storeService.inPublicPage = originalPublicPage;
-            if (!this.store.discuss.thread && this.store.discuss_public_thread) {
+            if (!isEmployeePortalDiscussHome && !this.store.discuss.thread && this.store.discuss_public_thread) {
                 this.store.discuss.thread = this.store.discuss_public_thread;
             }
-            this.store.discuss.activeTab = "main";
+            this.store.discuss.activeTab = isEmployeePortalDiscussHome && window.matchMedia("(max-width: 767.98px)").matches
+                ? "chat"
+                : "main";
             document.body.classList.add("ep-native-discuss-public");
             document.body.classList.toggle("ep-native-discuss-home", isEmployeePortalDiscussHome);
         }
@@ -339,20 +367,51 @@ patch(Discuss.prototype, {
                 this._epSidebarObserver = new MutationObserver(() => epEnhanceNativeSidebar());
                 this._epSidebarObserver.observe(this.root?.el || document.body, { childList: true, subtree: true });
                 if (isEmployeePortalDiscussHome) {
-                    // Keep the canonical Chats root neutral. restoreDiscussThread()
-                    // above performs the authoritative clear after Odoo restores its
-                    // bootstrap state; these two short post-mount passes cover slower
-                    // mobile/public-store hydration without affecting channel routes.
-                    const clearHomeThread = () => {
+                    const showDiscussHome = () => {
                         if (!employeePortalMeta("employee-portal-discuss-home")) return;
                         this.store.discuss.thread = undefined;
                         this.store.discuss.activeTab = window.matchMedia("(max-width: 767.98px)").matches
                             ? "chat"
                             : "main";
                     };
-                    clearHomeThread();
-                    window.setTimeout(clearHomeThread, 120);
-                    window.setTimeout(clearHomeThread, 450);
+                    showDiscussHome();
+                    // Public Discuss may hydrate one more time after mount on Safari.
+                    // Keep the canonical root authoritative without touching channel URLs.
+                    window.setTimeout(showDiscussHome, 120);
+                    window.setTimeout(showDiscussHome, 450);
+                    window.setTimeout(showDiscussHome, 1000);
+                }
+
+                // Mobile gesture: a deliberate left swipe inside a conversation returns
+                // to the canonical Discuss home/list. Ignore composer/media controls so
+                // normal message editing and horizontal media gestures are unaffected.
+                if (!isEmployeePortalDiscussHome) {
+                    let touchStartX = 0;
+                    let touchStartY = 0;
+                    let touchStartedAt = 0;
+                    this._epSwipeStart = (ev) => {
+                        if (!window.matchMedia("(max-width: 767.98px)").matches) return;
+                        if (ev.target?.closest?.(".o-mail-Composer, input, textarea, [contenteditable='true'], audio, video")) return;
+                        const touch = ev.touches?.[0];
+                        if (!touch) return;
+                        touchStartX = touch.clientX;
+                        touchStartY = touch.clientY;
+                        touchStartedAt = Date.now();
+                    };
+                    this._epSwipeEnd = (ev) => {
+                        if (!touchStartedAt || !window.matchMedia("(max-width: 767.98px)").matches) return;
+                        const touch = ev.changedTouches?.[0];
+                        if (!touch) return;
+                        const dx = touch.clientX - touchStartX;
+                        const dy = touch.clientY - touchStartY;
+                        const elapsed = Date.now() - touchStartedAt;
+                        touchStartedAt = 0;
+                        if (elapsed <= 900 && dx <= -70 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+                            window.location.assign("/my/employee/discuss");
+                        }
+                    };
+                    this.root?.el?.addEventListener("touchstart", this._epSwipeStart, { passive: true });
+                    this.root?.el?.addEventListener("touchend", this._epSwipeEnd, { passive: true });
                 }
                 this._epApplyViewportHeight();
                 window.setTimeout(this._epApplyViewportHeight, 80);
@@ -370,6 +429,8 @@ patch(Discuss.prototype, {
                 document.removeEventListener("focusin", this._epOnFocusIn, true);
                 document.removeEventListener("focusout", this._epOnFocusOut, true);
                 this._epSidebarObserver?.disconnect();
+                this.root?.el?.removeEventListener("touchstart", this._epSwipeStart);
+                this.root?.el?.removeEventListener("touchend", this._epSwipeEnd);
                 document.documentElement.style.removeProperty("--ep-discuss-height");
                 document.documentElement.style.removeProperty("--ep-discuss-top");
                 document.documentElement.style.overflow = originalHtmlOverflow;

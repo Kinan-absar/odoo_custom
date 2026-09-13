@@ -361,3 +361,26 @@
     padding-bottom: env(safe-area-inset-bottom) !important;
   }
 }
+
+
+/* v20.11 - Chats-only employee Discuss and stable mobile home. */
+.ep-native-discuss-public .ep-native-hidden-channels-section {
+  display: none !important;
+}
+
+@media (max-width: 767.98px) {
+  /* The canonical home is the native chat list. Never leave thread chrome floating
+     above it when no thread is selected. */
+  .ep-native-discuss-home .o-mail-Discuss-threadContainer:empty,
+  .ep-native-discuss-home .o-mail-Discuss-main:empty {
+    display: none !important;
+  }
+
+  .ep-native-discuss-home .o-mail-MessagingMenu {
+    position: fixed !important;
+    inset: var(--ep-discuss-top, 0px) 0 0 0 !important;
+    height: var(--ep-discuss-height, 100dvh) !important;
+    max-height: var(--ep-discuss-height, 100dvh) !important;
+    z-index: 60 !important;
+  }
+}
