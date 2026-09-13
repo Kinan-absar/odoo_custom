@@ -1,50 +1,73 @@
+import logging
+
 from odoo import models
 from odoo.tools.image import image_data_uri
+
+_logger = logging.getLogger(__name__)
 
 
 class DiscussChannelMember(models.Model):
     _inherit = 'discuss.channel.member'
 
     def _rtc_invite_members(self, member_ids=None):
-        """Keep Odoo RTC authoritative and mirror its invitation to portal shell.
+        """Mirror native Discuss RTC invitations to the portal shell and Telegram.
 
-        Odoo first creates the normal rtc_inviting_session_id and sends its
-        native Store bus update.  We then send a tiny companion event on the
-        exact same member personal bus so Employee Portal pages can surface
-        the ringing call without loading the full Discuss/RTC frontend.
+        Native Discuss remains authoritative for ringing/accept/reject.  This hook
+        only adds the portal bus alert and an optional Telegram alert for employee
+        users (internal or portal) who connected Telegram.
         """
         invited = super()._rtc_invite_members(member_ids=member_ids)
+        Employee = self.env['hr.employee'].sudo()
+        Telegram = self.env['employee.portal.telegram.service'].sudo()
+
         for member in invited:
-            user = member.partner_id.user_ids.filtered(lambda u: u.active and u.share)[:1]
-            if not user or not self.env['hr.employee'].sudo().search_count([
-                ('user_id', '=', user.id), ('active', '=', True)
-            ]):
+            employee_users = member.partner_id.user_ids.filtered(
+                lambda user: user.active and Employee.search_count([
+                    ('user_id', '=', user.id),
+                    ('active', '=', True),
+                ])
+            )
+            if not employee_users:
                 continue
+
             channel = member.channel_id
-            if 'is_employee_portal_channel' in channel._fields and not channel.is_employee_portal_channel:
+            # The Chats PWA exposes employee conversations only.  Keep the extra
+            # portal bus alert scoped to those channels while Telegram can notify
+            # either internal or portal employee recipients.
+            is_employee_chat = (
+                'is_employee_portal_channel' not in channel._fields
+                or channel.is_employee_portal_channel
+            )
+            if not is_employee_chat:
                 continue
+
             session = member.rtc_inviting_session_id
             caller = session.channel_member_id.partner_id if session else self.partner_id
             is_video = bool(session and session.is_camera_on)
+            open_path = '/my/employee/discuss?open_channel=%s' % channel.id
+
+            # Portal shell companion event.  Native Discuss still owns the call.
             member._bus_send('employee_portal.native_rtc_invitation', {
                 'channel_id': channel.id,
                 'caller_name': caller.name or channel.display_name,
                 'caller_avatar': image_data_uri(caller.avatar_128) if caller.avatar_128 else False,
                 'is_video': is_video,
-                'open_url': '/my/employee/discuss/channel/%s' % channel.id,
+                'open_url': open_path,
             })
 
-            # Mirror the native RTC invitation to the employee's connected Telegram.
-            # This is alert-only; Odoo Discuss remains authoritative for the call.
-            try:
-                call_kind = 'video call' if is_video else 'call'
-                self.env['employee.portal.telegram.service'].sudo().send_to_user(
-                    user,
-                    'Incoming %s from %s' % (call_kind, caller.name or 'Employee'),
-                    'Open Employee Portal to answer.',
-                    path='/my/employee/discuss/channel/%s' % channel.id,
-                )
-            except Exception:
-                # Telegram must never interrupt native RTC invitation delivery.
-                pass
+            call_kind = 'video call' if is_video else 'call'
+            for user in employee_users:
+                try:
+                    Telegram.send_to_user(
+                        user,
+                        'Incoming %s from %s' % (call_kind, caller.name or 'Employee'),
+                        'Open Chats to answer.',
+                        path=open_path,
+                    )
+                except Exception:
+                    # Telegram is best-effort and must never interrupt native RTC.
+                    _logger.exception(
+                        'Failed to mirror native RTC invitation to Telegram for user %s',
+                        user.id,
+                    )
         return invited

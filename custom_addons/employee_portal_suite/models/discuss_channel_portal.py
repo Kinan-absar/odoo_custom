@@ -199,7 +199,7 @@ class DiscussChannel(models.Model):
             service = self.env['employee.portal.telegram.service'].sudo()
             for user in users:
                 try:
-                    path = f'/my/employee/discuss/channel/{channel.id}' if user.share else '/odoo/discuss'
+                    path = f'/my/employee/discuss?open_channel={channel.id}'
                     service.send_to_user(user, f'New message from {sender}', preview or 'New message', path=path)
                 except Exception:
                     continue

@@ -175,6 +175,41 @@ patch(Discuss.prototype, {
                 window.setTimeout(this._epApplyViewportHeight, 300);
             };
 
+            // Mobile shortcut requested for the Chats PWA: swipe LEFT inside an
+            // opened conversation to return to the Chats list.  Keep it scoped to
+            // embedded Discuss so normal backend Discuss gestures are untouched.
+            this._epSwipe = null;
+            this._epSwipeIgnoreTarget = (target) => Boolean(target?.closest?.(
+                'input, textarea, select, button, a, audio, video, [contenteditable="true"], .o-mail-Composer, .o-mail-Message-actions'
+            ));
+            this._epOnTouchStart = (ev) => {
+                if (!isEmbeddedDiscuss() || !window.matchMedia("(max-width: 767.98px)").matches) return;
+                if (ev.touches?.length !== 1 || this._epSwipeIgnoreTarget(ev.target)) {
+                    this._epSwipe = null;
+                    return;
+                }
+                const touch = ev.touches[0];
+                this._epSwipe = {
+                    x: touch.clientX,
+                    y: touch.clientY,
+                    at: Date.now(),
+                };
+            };
+            this._epOnTouchEnd = (ev) => {
+                const start = this._epSwipe;
+                this._epSwipe = null;
+                if (!start || !isEmbeddedDiscuss() || ev.changedTouches?.length !== 1) return;
+                const touch = ev.changedTouches[0];
+                const dx = touch.clientX - start.x;
+                const dy = touch.clientY - start.y;
+                const elapsed = Date.now() - start.at;
+                // Deliberately LEFT, matching the requested gesture.  A generous
+                // horizontal threshold avoids accidental navigation while scrolling.
+                if (dx <= -72 && Math.abs(dy) <= 64 && elapsed <= 900) {
+                    goBackToChats();
+                }
+            };
+
             onMounted(() => {
                 ensureEmbeddedHeaderActions();
                 this._epHeaderObserver = new MutationObserver(ensureEmbeddedHeaderActions);
@@ -187,6 +222,8 @@ patch(Discuss.prototype, {
                 window.addEventListener("orientationchange", this._epApplyViewportHeight);
                 document.addEventListener("focusin", this._epOnFocusIn, true);
                 document.addEventListener("focusout", this._epOnFocusOut, true);
+                document.addEventListener("touchstart", this._epOnTouchStart, { passive: true, capture: true });
+                document.addEventListener("touchend", this._epOnTouchEnd, { passive: true, capture: true });
             });
             onWillUnmount(() => {
                 this._epHeaderObserver?.disconnect();
@@ -195,6 +232,8 @@ patch(Discuss.prototype, {
                 window.removeEventListener("orientationchange", this._epApplyViewportHeight);
                 document.removeEventListener("focusin", this._epOnFocusIn, true);
                 document.removeEventListener("focusout", this._epOnFocusOut, true);
+                document.removeEventListener("touchstart", this._epOnTouchStart, true);
+                document.removeEventListener("touchend", this._epOnTouchEnd, true);
                 document.documentElement.style.removeProperty("--ep-discuss-height");
                 document.documentElement.style.removeProperty("--ep-discuss-top");
                 document.documentElement.style.overflow = originalHtmlOverflow;
