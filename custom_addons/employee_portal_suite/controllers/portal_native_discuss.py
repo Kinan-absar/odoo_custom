@@ -325,11 +325,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
         # Use exactly the same native Discuss renderer as the neutral home route.
         return self._render_native_discuss(channel, user, home=False)
 
-    @http.route('/my/employee/discuss/manifest.webmanifest', type='http', auth='user', methods=['GET'], csrf=False)
+    @http.route('/my/employee/discuss/manifest.webmanifest', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_discuss_manifest(self, **kwargs):
-        user = self._employee_user()
-        if not user:
-            return request.not_found()
         company = request.env.company.sudo()
         icon_base = f"/web/image/res.company/{company.id}/logo"
         payload = {
@@ -362,7 +359,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
         if not user:
             return request.not_found()
         script = '''
-const CACHE_NAME = "employee-native-discuss-pwa-v6";
+const CACHE_NAME = "employee-native-discuss-pwa-v7";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {

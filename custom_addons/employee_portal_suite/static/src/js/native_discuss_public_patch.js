@@ -10,8 +10,142 @@ import { onMounted, onWillUnmount } from "@odoo/owl";
 function employeePortalMeta(name) {
     return document.querySelector(`meta[name="${name}"]`)?.getAttribute("content") || "";
 }
-\nfunction epEscape(text) {\n    return String(text ?? \"\").replace(/[&<>\"']/g, (ch) => ({\n        \"&\": \"&amp;\", \"<\": \"&lt;\", \">\": \"&gt;\", '\"': \"&quot;\", \"'\": \"&#39;\",\n    }[ch]));\n}\n\nfunction epFindDirectMessagesLabel(root) {\n    const nodes = root.querySelectorAll(\"span, div, button, h1, h2, h3, h4, h5, h6\");\n    for (const node of nodes) {\n        const ownText = Array.from(node.childNodes)\n            .filter((n) => n.nodeType === Node.TEXT_NODE)\n            .map((n) => n.textContent || \"\")\n            .join(\" \")\n            .trim()\n            .replace(/\\s+/g, \" \")\n            .toLowerCase();\n        if (ownText === \"direct messages\") return node;\n    }\n    return null;\n}\n\nfunction epBuildNewChatModal() {\n    let modal = document.getElementById(\"ep-native-new-chat-modal\");\n    if (modal) return modal;\n    modal = document.createElement(\"div\");\n    modal.id = \"ep-native-new-chat-modal\";\n    modal.className = \"ep-native-new-chat-modal\";\n    modal.innerHTML = `\n      <div class=\"ep-native-new-chat-backdrop\" data-ep-close-new-chat=\"1\"></div>\n      <div class=\"ep-native-new-chat-dialog\" role=\"dialog\" aria-modal=\"true\" aria-label=\"New chat\">\n        <div class=\"ep-native-new-chat-head\">\n          <div><strong>New chat</strong><small>Choose an employee or create a group</small></div>\n          <button type=\"button\" class=\"ep-native-icon-btn\" data-ep-close-new-chat=\"1\" aria-label=\"Close\">&times;</button>\n        </div>\n        <div class=\"ep-native-new-chat-search-wrap\">\n          <i class=\"fa fa-search\"></i>\n          <input type=\"search\" placeholder=\"Search employees\" data-ep-new-chat-search=\"1\" autocomplete=\"off\"/>\n        </div>\n        <div class=\"ep-native-new-chat-people\" data-ep-new-chat-people=\"1\"><div class=\"ep-native-new-chat-loading\">Loading employees…</div></div>\n        <div class=\"ep-native-new-chat-footer\">\n          <input type=\"text\" class=\"form-control ep-native-group-name\" placeholder=\"Group name (optional)\" data-ep-new-chat-group-name=\"1\"/>\n          <button type=\"button\" class=\"btn btn-primary\" data-ep-start-new-chat=\"1\" disabled>Start chat</button>\n        </div>\n      </div>`;\n    document.body.appendChild(modal);\n\n    const close = () => modal.classList.remove(\"show\");\n    modal.querySelectorAll(\"[data-ep-close-new-chat]\").forEach((el) => el.addEventListener(\"click\", close));\n    modal.addEventListener(\"keydown\", (ev) => { if (ev.key === \"Escape\") close(); });\n    modal.querySelector(\"[data-ep-new-chat-search]\")?.addEventListener(\"input\", (ev) => {\n        const q = (ev.target.value || \"\").trim().toLowerCase();\n        modal.querySelectorAll(\"[data-ep-person-row]\").forEach((row) => {\n            row.classList.toggle(\"d-none\", q && !(row.dataset.name || \"\").includes(q));\n        });\n    });\n    modal.querySelector(\"[data-ep-start-new-chat]\")?.addEventListener(\"click\", async (ev) => {\n        const button = ev.currentTarget;\n        const ids = Array.from(modal.querySelectorAll(\"input[data-ep-person-check]:checked\")).map((el) => Number(el.value));\n        if (!ids.length) return;\n        button.disabled = true;\n        const old = button.textContent;\n        button.textContent = \"Opening…\";\n        try {\n            const result = await rpc(\"/employee_portal/discuss/start_json\", {\n                user_ids: ids,\n                group_name: modal.querySelector(\"[data-ep-new-chat-group-name]\")?.value || \"\",\n            });\n            if (!result?.ok || !result?.url) throw new Error(result?.error || \"Unable to start chat.\");\n            window.location.assign(result.url);\n        } catch (error) {\n            console.error(\"Unable to start employee chat\", error);\n            window.alert(error?.message || \"Unable to start chat.\");\n            button.disabled = false;\n            button.textContent = old;\n        }\n    });\n    return modal;\n}\n\nasync function epOpenNewChat() {\n    const modal = epBuildNewChatModal();\n    modal.classList.add(\"show\");\n    const peopleBox = modal.querySelector(\"[data-ep-new-chat-people]\");\n    peopleBox.innerHTML = '<div class=\"ep-native-new-chat-loading\">Loading employees…</div>';
-    try {\n        const result = await rpc(\"/employee_portal/discuss/people_all\", {});\n        const people = result?.people || [];\n        peopleBox.innerHTML = people.length ? people.map((person) => `\n          <label class=\"ep-native-person-row\" data-ep-person-row=\"1\" data-name=\"${epEscape((person.name || '').toLowerCase())}\">\n            <input type=\"checkbox\" data-ep-person-check=\"1\" value=\"${Number(person.id)}\"/>\n            ${person.avatar ? `<img src=\"${person.avatar}\" alt=\"\"/>` : '<span class=\"ep-native-person-avatar-fallback\"><i class=\"fa fa-user\"></i></span>'}\n            <span class=\"ep-native-person-text\"><strong>${epEscape(person.name)}</strong><small class=\"ep-native-person-presence ${epEscape(person.presence || 'offline')}\"><span></span>${epEscape(person.presence_label || 'Offline')}</small></span>\n          </label>`).join(\"\") : '<div class=\"ep-native-new-chat-loading\">No other employees found.</div>';\n        const update = () => {\n            const checked = peopleBox.querySelectorAll(\"input[data-ep-person-check]:checked\").length;\n            const start = modal.querySelector(\"[data-ep-start-new-chat]\");\n            if (start) start.disabled = checked === 0;\n            const groupName = modal.querySelector(\"[data-ep-new-chat-group-name]\");\n            if (groupName) groupName.style.display = checked > 1 ? \"block\" : \"none\";\n        };\n        peopleBox.querySelectorAll(\"input[data-ep-person-check]\").forEach((el) => el.addEventListener(\"change\", update));\n        update();\n    } catch (error) {\n        console.error(\"Unable to load employees\", error);\n        peopleBox.innerHTML = '<div class=\"ep-native-new-chat-loading text-danger\">Unable to load employees.</div>';\n    }\n    window.setTimeout(() => modal.querySelector(\"[data-ep-new-chat-search]\")?.focus(), 20);\n}\n\nfunction epEnhanceNativeSidebar() {\n    if (!employeePortalMeta(\"employee-portal-discuss\")) return;\n    const root = document.querySelector(\".o-mail-Discuss\") || document.body;\n    const label = epFindDirectMessagesLabel(root);\n    if (!label) return;\n\n    // Keep the native DM rows and behavior; only turn their section into the Chats hub.\n    const textNode = Array.from(label.childNodes).find((n) => n.nodeType === Node.TEXT_NODE && (n.textContent || \"\").trim());\n    if (textNode && (textNode.textContent || \"\").trim().toLowerCase() === \"direct messages\") textNode.textContent = \"Chats\";\n    else if (label.textContent.trim().toLowerCase() === \"direct messages\") label.textContent = \"Chats\";\n\n    let header = label.closest(\"div\") || label.parentElement;\n    if (!header) return;\n    header.classList.add(\"ep-native-chats-section-head\");\n    if (!header.querySelector(\"[data-ep-new-native-chat]\")) {\n        const actions = document.createElement(\"span\");\n        actions.className = \"ep-native-chats-section-actions\";\n        actions.innerHTML = `\n          <button type=\"button\" data-ep-discuss-install=\"1\" class=\"ep-native-sidebar-action\" title=\"Install Chats\" aria-label=\"Install Chats\"><i class=\"fa fa-download\"></i></button>\n          <button type=\"button\" data-ep-new-native-chat=\"1\" class=\"ep-native-sidebar-action\" title=\"New chat\" aria-label=\"New chat\"><i class=\"fa fa-plus\"></i></button>`;\n        header.appendChild(actions);\n        actions.querySelector(\"[data-ep-new-native-chat]\")?.addEventListener(\"click\", (ev) => { ev.preventDefault(); ev.stopPropagation(); epOpenNewChat(); });\n        actions.querySelector(\"[data-ep-discuss-install]\")?.addEventListener(\"click\", (ev) => { ev.preventDefault(); ev.stopPropagation(); window.EmployeeDiscussPWA?.install?.(); });\n    }\n}\n
+
+function epEscape(text) {
+    return String(text ?? "").replace(/[&<>"']/g, (ch) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[ch]));
+}
+
+function epFindDirectMessagesLabel(root) {
+    const nodes = root.querySelectorAll("span, div, button, h1, h2, h3, h4, h5, h6");
+    for (const node of nodes) {
+        const ownText = Array.from(node.childNodes)
+            .filter((n) => n.nodeType === Node.TEXT_NODE)
+            .map((n) => n.textContent || "")
+            .join(" ")
+            .trim()
+            .replace(/\s+/g, " ")
+            .toLowerCase();
+        if (ownText === "direct messages") return node;
+    }
+    return null;
+}
+
+function epBuildNewChatModal() {
+    let modal = document.getElementById("ep-native-new-chat-modal");
+    if (modal) return modal;
+    modal = document.createElement("div");
+    modal.id = "ep-native-new-chat-modal";
+    modal.className = "ep-native-new-chat-modal";
+    modal.innerHTML = `
+      <div class="ep-native-new-chat-backdrop" data-ep-close-new-chat="1"></div>
+      <div class="ep-native-new-chat-dialog" role="dialog" aria-modal="true" aria-label="New chat">
+        <div class="ep-native-new-chat-head">
+          <div><strong>New chat</strong><small>Choose an employee or create a group</small></div>
+          <button type="button" class="ep-native-icon-btn" data-ep-close-new-chat="1" aria-label="Close">&times;</button>
+        </div>
+        <div class="ep-native-new-chat-search-wrap">
+          <i class="fa fa-search"></i>
+          <input type="search" placeholder="Search employees" data-ep-new-chat-search="1" autocomplete="off"/>
+        </div>
+        <div class="ep-native-new-chat-people" data-ep-new-chat-people="1"><div class="ep-native-new-chat-loading">Loading employees…</div></div>
+        <div class="ep-native-new-chat-footer">
+          <input type="text" class="form-control ep-native-group-name" placeholder="Group name (optional)" data-ep-new-chat-group-name="1"/>
+          <button type="button" class="btn btn-primary" data-ep-start-new-chat="1" disabled>Start chat</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+
+    const close = () => modal.classList.remove("show");
+    modal.querySelectorAll("[data-ep-close-new-chat]").forEach((el) => el.addEventListener("click", close));
+    modal.addEventListener("keydown", (ev) => { if (ev.key === "Escape") close(); });
+    modal.querySelector("[data-ep-new-chat-search]")?.addEventListener("input", (ev) => {
+        const q = (ev.target.value || "").trim().toLowerCase();
+        modal.querySelectorAll("[data-ep-person-row]").forEach((row) => {
+            row.classList.toggle("d-none", q && !(row.dataset.name || "").includes(q));
+        });
+    });
+    modal.querySelector("[data-ep-start-new-chat]")?.addEventListener("click", async (ev) => {
+        const button = ev.currentTarget;
+        const ids = Array.from(modal.querySelectorAll("input[data-ep-person-check]:checked")).map((el) => Number(el.value));
+        if (!ids.length) return;
+        button.disabled = true;
+        const old = button.textContent;
+        button.textContent = "Opening…";
+        try {
+            const result = await rpc("/employee_portal/discuss/start_json", {
+                user_ids: ids,
+                group_name: modal.querySelector("[data-ep-new-chat-group-name]")?.value || "",
+            });
+            if (!result?.ok || !result?.url) throw new Error(result?.error || "Unable to start chat.");
+            window.location.assign(result.url);
+        } catch (error) {
+            console.error("Unable to start employee chat", error);
+            window.alert(error?.message || "Unable to start chat.");
+            button.disabled = false;
+            button.textContent = old;
+        }
+    });
+    return modal;
+}
+
+async function epOpenNewChat() {
+    const modal = epBuildNewChatModal();
+    modal.classList.add("show");
+    const peopleBox = modal.querySelector("[data-ep-new-chat-people]");
+    peopleBox.innerHTML = '<div class="ep-native-new-chat-loading">Loading employees…</div>';
+    try {
+        const result = await rpc("/employee_portal/discuss/people_all", {});
+        const people = result?.people || [];
+        peopleBox.innerHTML = people.length ? people.map((person) => `
+          <label class="ep-native-person-row" data-ep-person-row="1" data-name="${epEscape((person.name || '').toLowerCase())}">
+            <input type="checkbox" data-ep-person-check="1" value="${Number(person.id)}"/>
+            ${person.avatar ? `<img src="${person.avatar}" alt=""/>` : '<span class="ep-native-person-avatar-fallback"><i class="fa fa-user"></i></span>'}
+            <span class="ep-native-person-text"><strong>${epEscape(person.name)}</strong><small class="ep-native-person-presence ${epEscape(person.presence || 'offline')}"><span></span>${epEscape(person.presence_label || 'Offline')}</small></span>
+          </label>`).join("") : '<div class="ep-native-new-chat-loading">No other employees found.</div>';
+        const update = () => {
+            const checked = peopleBox.querySelectorAll("input[data-ep-person-check]:checked").length;
+            const start = modal.querySelector("[data-ep-start-new-chat]");
+            if (start) start.disabled = checked === 0;
+            const groupName = modal.querySelector("[data-ep-new-chat-group-name]");
+            if (groupName) groupName.style.display = checked > 1 ? "block" : "none";
+        };
+        peopleBox.querySelectorAll("input[data-ep-person-check]").forEach((el) => el.addEventListener("change", update));
+        update();
+    } catch (error) {
+        console.error("Unable to load employees", error);
+        peopleBox.innerHTML = '<div class="ep-native-new-chat-loading text-danger">Unable to load employees.</div>';
+    }
+    window.setTimeout(() => modal.querySelector("[data-ep-new-chat-search]")?.focus(), 20);
+}
+
+function epEnhanceNativeSidebar() {
+    if (!employeePortalMeta("employee-portal-discuss")) return;
+    const root = document.querySelector(".o-mail-Discuss") || document.body;
+    const label = epFindDirectMessagesLabel(root);
+    if (!label) return;
+
+    // Keep the native DM rows and behavior; only turn their section into the Chats hub.
+    const textNode = Array.from(label.childNodes).find((n) => n.nodeType === Node.TEXT_NODE && (n.textContent || "").trim());
+    if (textNode && (textNode.textContent || "").trim().toLowerCase() === "direct messages") textNode.textContent = "Chats";
+    else if (label.textContent.trim().toLowerCase() === "direct messages") label.textContent = "Chats";
+
+    let header = label.closest("div") || label.parentElement;
+    if (!header) return;
+    header.classList.add("ep-native-chats-section-head");
+    if (!header.querySelector("[data-ep-new-native-chat]")) {
+        const actions = document.createElement("span");
+        actions.className = "ep-native-chats-section-actions";
+        actions.innerHTML = `
+          <button type="button" data-ep-discuss-install="1" class="ep-native-sidebar-action" title="Install Chats" aria-label="Install Chats"><i class="fa fa-download"></i></button>
+          <button type="button" data-ep-new-native-chat="1" class="ep-native-sidebar-action" title="New chat" aria-label="New chat"><i class="fa fa-plus"></i></button>`;
+        header.appendChild(actions);
+        actions.querySelector("[data-ep-new-native-chat]")?.addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); epOpenNewChat(); });
+        actions.querySelector("[data-ep-discuss-install]")?.addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); window.EmployeeDiscussPWA?.install?.(); });
+    }
+}
+
 
 // Odoo public Discuss disables some composer capabilities for generic public/guest pages.
 // Employee Portal Discuss is authenticated and channel membership is validated server-side,

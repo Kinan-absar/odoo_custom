@@ -118,7 +118,7 @@
     <template id="employee_native_discuss_pwa_web_head" inherit_id="web.layout" name="Employee Discuss PWA Head">
         <xpath expr="//head" position="inside">
             <t t-if="request.httprequest.path.startswith('/my/employee/discuss')">
-                <link rel="manifest" href="/my/employee/discuss/manifest.webmanifest" data-employee-discuss-pwa="1"/>
+                <link rel="manifest" href="/my/employee/discuss/manifest.webmanifest" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
                 <meta name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
                 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
@@ -136,7 +136,7 @@
             <meta t-if="request.httprequest.path == '/my/employee/discuss'" name="employee-portal-discuss-home" content="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-back-url" content="/my/employee/discuss"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-home-url" content="/my/employee"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="manifest" href="/my/employee/discuss/manifest.webmanifest" data-employee-discuss-pwa="1"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="manifest" href="/my/employee/discuss/manifest.webmanifest" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-capable" content="yes"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-title" content="Chats"/>
