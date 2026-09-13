@@ -13,14 +13,14 @@ function ensureVideoButton() {
     if (!meta("employee-portal-discuss")) return;
     const header = document.querySelector(".o-mail-Discuss-header");
     if (!header || header.querySelector("[data-ep-video-call]")) return;
-    const actions = header.querySelector(".o-mail-Discuss-headerActions") || header;
+    const actions = header.querySelector(".o-mail-Discuss-headerActions, .o-mail-Discuss-headerActionsContainer, .o-mail-Discuss-header") || header;
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.epVideoCall = "1";
-    button.className = "btn btn-link ep-native-video-call-btn";
+    button.className = "ep-native-video-call-btn";
     button.title = "Video call";
     button.setAttribute("aria-label", "Video call");
-    button.innerHTML = '<i class="fa fa-video-camera" aria-hidden="true"></i><span class="d-none d-md-inline">Video</span>';
+    button.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14"/><rect x="3" y="6" width="12" height="12" rx="2"/></svg><span>Video</span>';
     button.addEventListener("click", async (ev) => {
         ev.preventDefault();
         try {

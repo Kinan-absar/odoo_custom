@@ -287,11 +287,19 @@
             frame?.classList.add('show');
         };
         shell.querySelectorAll('[data-ep-thread]').forEach((link) => {
-            link.addEventListener('click', () => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const href = link.getAttribute('href');
+                if (!href || !frame) return;
                 shell.querySelectorAll('[data-ep-thread]').forEach((row) => row.classList.remove('active'));
                 link.classList.add('active');
+                frame.classList.remove('show');
+                frame.src = href;
                 openChat();
             });
+        });
+        frame?.addEventListener('load', () => {
+            if (frame.src && frame.src !== 'about:blank') openChat();
         });
         shell.querySelector('[data-ep-chat-back]')?.addEventListener('click', () => {
             shell.classList.remove('ep-chat-open');

@@ -32,8 +32,8 @@
                         <div class="ep-chats-list-title">
                             <span>Chats</span>
                             <div class="ep-chats-list-actions">
-                                <button type="button" class="ep-chats-icon-action" data-ep-discuss-install="1" title="Install Chats" aria-label="Install Chats"><i class="fa fa-download"/></button>
-                                <button type="button" class="ep-chats-icon-action" data-ep-new-chat-toggle="1" title="New chat" aria-label="New chat"><i class="fa fa-plus"/></button>
+                                <button type="button" class="ep-chats-action" data-ep-discuss-install="1" title="Install Chats" aria-label="Install Chats">Install</button>
+                                <button type="button" class="ep-chats-action ep-chats-action-primary" data-ep-new-chat-toggle="1" title="New chat" aria-label="New chat">+ New chat</button>
                             </div>
                         </div>
                         <div class="ep-chats-search">
@@ -69,10 +69,10 @@
 
                     <div class="ep-chats-thread-list" data-ep-thread-list="1">
                         <t t-foreach="channels" t-as="ch">
-                            <a class="ep-chats-thread" data-ep-thread="1" t-att-data-search="(ch['name'] or '').lower()" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']" target="ep_discuss_frame">
+                            <a class="ep-chats-thread" data-ep-thread="1" t-att-data-search="(ch['name'] or '').lower()" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']">
                                 <div class="ep-chats-avatar">
                                     <img t-if="ch['avatar']" t-att-src="ch['avatar']"/>
-                                    <i t-if="not ch['avatar']" class="fa fa-users"/>
+                                    <span t-if="not ch['avatar']" class="ep-chats-avatar-fallback">G</span>
                                 </div>
                                 <div class="ep-chats-thread-copy">
                                     <strong t-esc="ch['name']"/>
@@ -82,8 +82,8 @@
                                 <span t-if="ch['unread']" class="ep-native-thread-unread" t-esc="ch['unread']"/>
                             </a>
                         </t>
-                        <div t-if="not channels" class="ep-native-empty"><i class="fa fa-comments-o"/><strong>No conversations yet</strong><span>Start a conversation with an employee.</span></div>
-                        <div class="ep-native-empty d-none" data-ep-search-empty="1"><i class="fa fa-search"/><strong>No matching chats</strong></div>
+                        <div t-if="not channels" class="ep-native-empty"><strong>No conversations yet</strong><span>Start a conversation with an employee.</span></div>
+                        <div class="ep-native-empty d-none" data-ep-search-empty="1"><strong>No matching chats</strong></div>
                     </div>
                 </aside>
 
@@ -92,7 +92,6 @@
                         <button type="button" class="ep-chats-back" data-ep-chat-back="1"><i class="fa fa-chevron-left"/> <span>Chats</span></button>
                     </div>
                     <div class="ep-chats-empty-state" data-ep-chat-empty="1">
-                        <i class="fa fa-comments-o"/>
                         <h3>Chats</h3>
                         <p>Select a conversation to start messaging.</p>
                     </div>
