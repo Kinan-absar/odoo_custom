@@ -184,9 +184,26 @@ class EmployeePortalTelegramService(models.AbstractModel):
 
         if not self.env.context.get('skip_webpush'):
             try:
+                # Keep phone notification headers compact. The body carries the
+                # request number/status/detail, so repeating a sentence in the
+                # title only wastes lock-screen space.
+                raw_title = str(title or '').strip()
+                lowered = raw_title.lower()
+                if 'material request' in lowered:
+                    push_title = 'Material Request'
+                elif 'employee request' in lowered:
+                    push_title = 'Employee Request'
+                elif 'approval' in lowered:
+                    push_title = 'Approval'
+                elif 'clock-in' in lowered or 'clock-out' in lowered or 'attendance' in lowered:
+                    push_title = 'Attendance'
+                elif 'status updated' in lowered:
+                    push_title = 'Request Update'
+                else:
+                    push_title = raw_title[:48] or 'ABSAR'
                 pushed = self.env['employee.portal.webpush.service'].sudo().send_to_user(
                     user,
-                    title,
+                    push_title,
                     body,
                     path=path,
                     kind='portal',

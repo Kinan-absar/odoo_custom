@@ -239,14 +239,14 @@
         <xpath expr="//head" position="inside">
             <t t-if="request.httprequest.path.startswith('/my/employee/discuss')">
                 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-                <link rel="manifest" href="/my/employee/manifest.webmanifest" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
+                <link rel="manifest" href="/my/employee/manifest.webmanifest?v=40" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
                 <meta name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
                 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
                 <meta name="apple-mobile-web-app-title" content="ABSAR Employee"/>
                 <meta name="application-name" content="ABSAR Employee"/>
-                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png"/>
-                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png"/>
+                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=40"/>
+                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=40"/>
             </t>
         </xpath>
     </template>
@@ -292,13 +292,13 @@
             <meta t-if="request.httprequest.path == '/my/employee/discuss'" name="employee-portal-discuss-home" content="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-back-url" content="/my/employee/discuss"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-home-url" content="/my/employee"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="manifest" href="/my/employee/manifest.webmanifest" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="manifest" href="/my/employee/manifest.webmanifest?v=40" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-capable" content="yes"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-title" content="ABSAR Employee"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="application-name" content="ABSAR Employee"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=40"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=40"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-discuss-company-logo" t-att-content="'/web/image/res.company/%s/logo_web' % request.env.company.id"/>
         </xpath>
     </template>

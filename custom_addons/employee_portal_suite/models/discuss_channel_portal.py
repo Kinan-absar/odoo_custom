@@ -204,7 +204,7 @@ class DiscussChannel(models.Model):
                 try:
                     pushed = push_service.send_to_user(
                         user,
-                        f'New message from {sender}',
+                        sender,
                         preview or 'New message',
                         path=path,
                         kind='message',
@@ -217,7 +217,7 @@ class DiscussChannel(models.Model):
                 if not pushed:
                     try:
                         telegram_service.with_context(skip_webpush=True).send_to_user(
-                            user, f'New message from {sender}', preview or 'New message', path=path
+                            user, sender, preview or 'New message', path=path
                         )
                     except Exception:
                         continue

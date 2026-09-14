@@ -325,7 +325,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
     def employee_discuss_manifest(self, **kwargs):
         payload = {
             "name": "ABSAR Employee Portal",
-            "short_name": "ABSAR",
+            "short_name": "ABSAR Portal",
             "description": "ABSAR employee self-service portal and communications",
             "start_url": "/my/employee",
             "scope": "/my/employee",
@@ -335,8 +335,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
             "background_color": "#ffffff",
             "theme_color": "#ffffff",
             "icons": [
-                {"src": "/employee_portal_suite/static/icons/portal-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-                {"src": "/employee_portal_suite/static/icons/portal-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=40", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=40", "sizes": "512x512", "type": "image/png", "purpose": "any"},
             ],
         }
         return request.make_response(
@@ -372,8 +372,8 @@ self.addEventListener("push", (event) => {
     const kind = data.kind || "message";
     const options = {
         body: data.body || "",
-        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png",
-        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=40",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=40",
         tag: data.tag || `employee-chats-${kind}`,
         renotify: kind === "call" || kind === "video_call",
         requireInteraction: kind === "call" || kind === "video_call",
@@ -406,7 +406,7 @@ self.addEventListener("notificationclick", (event) => {
     def employee_portal_manifest(self, **kwargs):
         payload = {
             "name": "ABSAR Employee Portal",
-            "short_name": "ABSAR",
+            "short_name": "ABSAR Portal",
             "description": "ABSAR employee self-service portal, approvals, attendance and messaging",
             "start_url": "/my/employee",
             "scope": "/my/employee",
@@ -416,8 +416,8 @@ self.addEventListener("notificationclick", (event) => {
             "background_color": "#ffffff",
             "theme_color": "#0f766e",
             "icons": [
-                {"src": "/employee_portal_suite/static/icons/portal-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-                {"src": "/employee_portal_suite/static/icons/portal-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=40", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=40", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
             ],
         }
         return request.make_response(
@@ -431,7 +431,7 @@ self.addEventListener("notificationclick", (event) => {
     @http.route('/my/employee/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_portal_service_worker(self, **kwargs):
         script = r'''
-const CACHE_NAME = "employee-portal-pwa-v39";
+const CACHE_NAME = "employee-portal-pwa-v40";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
@@ -453,8 +453,8 @@ self.addEventListener("push", (event) => {
     const kind = data.kind || "activity";
     const options = {
         body: data.body || "",
-        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png",
-        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=40",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=40",
         tag: data.tag || `employee-portal-${kind}`,
         renotify: kind === "call" || kind === "video_call",
         requireInteraction: kind === "call" || kind === "video_call",

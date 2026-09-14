@@ -63,8 +63,8 @@ class DiscussChannelMember(models.Model):
                 try:
                     pushed = WebPush.send_to_user(
                         user,
-                        'Incoming %s from %s' % (call_kind, caller.name or 'Employee'),
-                        'Tap to open Chats and answer.',
+                        caller.name or 'Employee',
+                        ('Incoming video call. Tap to open Chats and answer.' if is_video else 'Incoming call. Tap to open Chats and answer.'),
                         path=open_path,
                         kind=push_kind,
                         tag='employee-chats-call-%s' % channel.id,
@@ -78,8 +78,8 @@ class DiscussChannelMember(models.Model):
                     try:
                         Telegram.with_context(skip_webpush=True).send_to_user(
                             user,
-                            'Incoming %s from %s' % (call_kind, caller.name or 'Employee'),
-                            'Open Chats to answer.',
+                            caller.name or 'Employee',
+                            ('Incoming video call. Open Chats to answer.' if is_video else 'Incoming call. Open Chats to answer.'),
                             path=open_path,
                         )
                     except Exception:
