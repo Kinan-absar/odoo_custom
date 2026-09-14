@@ -196,13 +196,31 @@ class DiscussChannel(models.Model):
                 attachment_note = ('Attachment: ' if len(message.attachment_ids) == 1 else 'Attachments: ') + names
                 preview = (preview + (' - ' if preview else '') + attachment_note)[:220]
             sender = author_partner.name or 'Employee'
-            service = self.env['employee.portal.telegram.service'].sudo()
+            push_service = self.env['employee.portal.webpush.service'].sudo()
+            telegram_service = self.env['employee.portal.telegram.service'].sudo()
             for user in users:
+                path = f'/my/employee/discuss?open_channel={channel.id}'
+                pushed = False
                 try:
-                    path = f'/my/employee/discuss/channel/{channel.id}' if user.share else '/odoo/discuss'
-                    service.send_to_user(user, f'New message from {sender}', preview or 'New message', path=path)
+                    pushed = push_service.send_to_user(
+                        user,
+                        sender,
+                        preview or 'New message',
+                        path=path,
+                        kind='message',
+                        tag=f'employee-chats-channel-{channel.id}',
+                    )
                 except Exception:
-                    continue
+                    pushed = False
+                # Telegram is retained as a fallback only when no device accepted
+                # the native Web Push notification.
+                if not pushed:
+                    try:
+                        telegram_service.with_context(skip_webpush=True).send_to_user(
+                            user, sender, preview or 'New message', path=path
+                        )
+                    except Exception:
+                        continue
         return message
 
 

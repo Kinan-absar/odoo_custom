@@ -1,4 +1,5 @@
 from odoo import Command, fields, http
+import json
 from odoo.http import request
 from odoo.addons.mail.tools.discuss import Store
 from odoo.tools.image import image_data_uri
@@ -191,11 +192,13 @@ class EmployeePortalNativeDiscussController(http.Controller):
         channel.sudo()._broadcast(partner_ids)
         return channel
 
-    @http.route('/my/employee/discuss', type='http', auth='user', website=True, methods=['GET'])
-    def employee_discuss_hub(self, **kwargs):
-        user = self._employee_user()
-        if not user:
-            return request.redirect('/my/employee')
+    def _discuss_home_values(self, user):
+        """Build the standalone Chats home page from the same native Discuss channels.
+
+        The page is intentionally a neutral home route rather than a selected thread.
+        This gives the PWA a stable start URL so installing Chats never binds the app
+        to whichever conversation happened to be open at install time.
+        """
         channels = self._portal_channels(user)
         rows = []
         for channel in channels:
@@ -222,16 +225,71 @@ class EmployeePortalNativeDiscussController(http.Controller):
                 'presence': presence,
                 'presence_label': presence_label,
             })
-        values = {
+        return {
             'channels': rows,
             'employees': employee_rows,
+            'company': request.env.company.sudo(),
+            'current_user': user,
         }
-        # Keep all normal portal layout counters/notification context.
-        try:
-            values.update(request.env['ir.http']._prepare_portal_layout_values())
-        except Exception:
-            pass
-        return request.render('employee_portal_suite.employee_native_discuss_hub', values)
+
+    def _render_native_discuss(self, channel, user, *, home=False):
+        """Render the exact native public Discuss surface used by a real channel.
+
+        The neutral home route intentionally bootstraps with an allowed channel so
+        Odoo can initialize its native Discuss store/sidebar/RTC stack, then the
+        frontend patch clears the selected thread when ``home`` is true.  This keeps
+        the PWA start URL stable without introducing a second custom chat UI.
+        """
+        channel = channel.sudo().exists()
+        if not channel or not self._is_allowed_channel(channel, user):
+            return request.not_found()
+        channel.sudo().write({'is_employee_portal_channel': True})
+        channel_user = channel.with_user(user)
+        store = Store()
+        store.add({
+            'companyName': request.env.company.name,
+            'inPublicPage': True,
+            'employeePortalDiscuss': True,
+            'employeePortalDiscussHome': bool(home),
+            'employeePortalBackUrl': '/my/employee/discuss',
+            'discuss_public_thread': Store.one(channel_user),
+        })
+        return request.render('mail.discuss_public_channel_template', {
+            'data': store.get_result(),
+            'session_info': channel_user.env['ir.http'].session_info(),
+            'employee_portal_discuss': True,
+            'employee_portal_discuss_home': bool(home),
+            'employee_portal_back_url': '/my/employee/discuss',
+            'employee_portal_home_url': '/my/employee',
+        })
+
+    @http.route('/my/employee/discuss', type='http', auth='user', website=True, methods=['GET'])
+    def employee_discuss_entry(self, **kwargs):
+        """Stable Chats/PWA root.
+
+        The top-level app never boots Odoo Discuss with a remembered thread.  It
+        renders the Chats navigation shell, and a selected conversation runs inside
+        a same-origin frame using Odoo's exact native public Discuss page.  This is
+        what guarantees that every app launch lands on Chats instead of the last
+        opened or last active conversation.
+        """
+        user = self._employee_user()
+        if not user:
+            return request.redirect('/my/employee')
+        return request.render(
+            'employee_portal_suite.employee_native_discuss_hub',
+            self._discuss_home_values(user),
+        )
+
+    @http.route('/my/employee/discuss/manage', type='http', auth='user', website=True, methods=['GET'])
+    def employee_discuss_hub(self, **kwargs):
+        user = self._employee_user()
+        if not user:
+            return request.redirect('/my/employee')
+        return request.render(
+            'employee_portal_suite.employee_native_discuss_hub',
+            self._discuss_home_values(user),
+        )
 
     @http.route('/my/employee/discuss/start', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def employee_discuss_start(self, participant_ids=None, group_name=None, **post):
@@ -248,7 +306,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
         channel = self._get_or_create_channel(user, targets, name=group_name)
         if not channel:
             return request.redirect('/my/employee/discuss')
-        return request.redirect(f'/my/employee/discuss/channel/{channel.id}')
+        return request.redirect(f'/my/employee/discuss?open_channel={channel.id}')
 
     @http.route('/my/employee/discuss/channel/<int:channel_id>', type='http', auth='user', website=True, methods=['GET'])
     def employee_discuss_channel(self, channel_id, **kwargs):
@@ -260,24 +318,210 @@ class EmployeePortalNativeDiscussController(http.Controller):
             return request.not_found()
         channel.sudo().write({'is_employee_portal_channel': True})
 
-        # Use Odoo's real public Discuss frontend and Store. This is the same native
-        # frontend Odoo uses for /discuss/channel and it includes the native RTC stack.
-        channel_user = channel.with_user(user)
-        store = Store()
-        store.add({
-            'companyName': request.env.company.name,
-            'inPublicPage': True,
-            'employeePortalDiscuss': True,
-            'employeePortalBackUrl': '/my/employee/discuss',
-            'discuss_public_thread': Store.one(channel_user),
-        })
-        return request.render('mail.discuss_public_channel_template', {
-            'data': store.get_result(),
-            'session_info': channel_user.env['ir.http'].session_info(),
-            'employee_portal_discuss': True,
-            'employee_portal_back_url': '/my/employee/discuss',
-            'employee_portal_home_url': '/my/employee',
-        })
+        # Use exactly the same native Discuss renderer as the neutral home route.
+        return self._render_native_discuss(channel, user, home=False)
+
+    @http.route('/my/employee/discuss/manifest.webmanifest', type='http', auth='public', methods=['GET'], csrf=False)
+    def employee_discuss_manifest(self, **kwargs):
+        payload = {
+            "name": "ABSAR Employee Portal",
+            "short_name": "ABSAR Portal",
+            "description": "ABSAR employee self-service portal and communications",
+            "start_url": "/my/employee",
+            "scope": "/my/employee",
+            "id": "/my/employee",
+            "display": "standalone",
+            "orientation": "any",
+            "background_color": "#ffffff",
+            "theme_color": "#ffffff",
+            "icons": [
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=42", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=42", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+            ],
+        }
+        return request.make_response(
+            json.dumps(payload),
+            headers=[
+                ('Content-Type', 'application/manifest+json; charset=utf-8'),
+                ('Cache-Control', 'no-store'),
+            ],
+        )
+
+    @http.route('/my/employee/discuss/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
+    def employee_discuss_service_worker(self, **kwargs):
+        script = '''
+const CACHE_NAME = "employee-native-discuss-pwa-retired-v39";
+self.addEventListener("install", () => { self.skipWaiting(); });
+self.addEventListener("activate", (event) => {
+    event.waitUntil((async () => {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter((k) => k.startsWith("employee-native-discuss-pwa-") && k !== CACHE_NAME).map((k) => caches.delete(k)));
+        await self.clients.claim();
+    })());
+});
+self.addEventListener("fetch", (event) => {
+    const req = event.request;
+    if (req.method !== "GET") return;
+    event.respondWith(fetch(req));
+});
+self.addEventListener("push", (event) => {
+    let data = {};
+    try { data = event.data ? event.data.json() : {}; } catch (_) {
+        data = { title: "ABSAR Employee", body: event.data ? event.data.text() : "New activity" };
+    }
+    const kind = data.kind || "message";
+    const options = {
+        body: data.body || "",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=42",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=42",
+        tag: data.tag || `employee-chats-${kind}`,
+        renotify: kind === "call" || kind === "video_call",
+        requireInteraction: kind === "call" || kind === "video_call",
+        data: { url: data.url || "/my/employee/discuss", kind },
+    };
+    event.waitUntil(self.registration.showNotification(data.title || "ABSAR Employee", options));
+});
+self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+    const url = new URL(event.notification.data?.url || "/my/employee/discuss", self.location.origin).href;
+    event.waitUntil((async () => {
+        const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+        const sameApp = windows.find((client) => client.url.startsWith(self.location.origin + "/my/employee/discuss"));
+        if (sameApp) {
+            try { await sameApp.navigate(url); } catch (_) {}
+            return sameApp.focus();
+        }
+        return self.clients.openWindow(url);
+    })());
+});
+'''
+        return request.make_response(script, headers=[
+            ('Content-Type', 'application/javascript; charset=utf-8'),
+            ('Cache-Control', 'no-store'),
+            ('Service-Worker-Allowed', '/my/employee/discuss'),
+        ])
+
+
+    @http.route('/my/employee/manifest.webmanifest', type='http', auth='public', methods=['GET'], csrf=False)
+    def employee_portal_manifest(self, **kwargs):
+        payload = {
+            "name": "ABSAR Employee Portal",
+            "short_name": "ABSAR Portal",
+            "description": "ABSAR employee self-service portal, approvals, attendance and messaging",
+            "start_url": "/my/employee",
+            "scope": "/my/employee",
+            "id": "/my/employee",
+            "display": "standalone",
+            "orientation": "any",
+            "background_color": "#ffffff",
+            "theme_color": "#0f766e",
+            "icons": [
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=42", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=42", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+            ],
+        }
+        return request.make_response(
+            json.dumps(payload),
+            headers=[
+                ('Content-Type', 'application/manifest+json; charset=utf-8'),
+                ('Cache-Control', 'no-store'),
+            ],
+        )
+
+    @http.route('/my/employee/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
+    def employee_portal_service_worker(self, **kwargs):
+        script = r'''
+const CACHE_NAME = "employee-portal-pwa-v42";
+self.addEventListener("install", () => { self.skipWaiting(); });
+self.addEventListener("activate", (event) => {
+    event.waitUntil((async () => {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter((k) => k.startsWith("employee-portal-pwa-") && k !== CACHE_NAME).map((k) => caches.delete(k)));
+        await self.clients.claim();
+    })());
+});
+self.addEventListener("fetch", (event) => {
+    const req = event.request;
+    if (req.method !== "GET") return;
+    event.respondWith(fetch(req));
+});
+self.addEventListener("push", (event) => {
+    let data = {};
+    try { data = event.data ? event.data.json() : {}; } catch (_) {
+        data = { title: "ABSAR Employee", body: event.data ? event.data.text() : "New activity" };
+    }
+    const kind = data.kind || "activity";
+    const options = {
+        body: data.body || "",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=42",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=42",
+        tag: data.tag || `employee-portal-${kind}`,
+        renotify: kind === "call" || kind === "video_call",
+        requireInteraction: kind === "call" || kind === "video_call",
+        data: { url: data.url || "/my/employee", kind },
+    };
+    event.waitUntil(self.registration.showNotification(data.title || "ABSAR Employee", options));
+});
+self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+    const url = new URL(event.notification.data?.url || "/my/employee", self.location.origin).href;
+    event.waitUntil((async () => {
+        const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+        const sameApp = windows.find((client) => client.url.startsWith(self.location.origin + "/my/employee"));
+        if (sameApp) {
+            try { await sameApp.navigate(url); } catch (_) {}
+            return sameApp.focus();
+        }
+        return self.clients.openWindow(url);
+    })());
+});
+'''
+        return request.make_response(script, headers=[
+            ('Content-Type', 'application/javascript; charset=utf-8'),
+            ('Cache-Control', 'no-store'),
+            ('Service-Worker-Allowed', '/my/employee'),
+        ])
+
+    @http.route('/employee_portal/discuss/people_all', type='json', auth='user')
+    def employee_discuss_people_all(self):
+        """Employee directory for the native Discuss sidebar new-chat dialog."""
+        user = self._employee_user()
+        if not user:
+            return {'people': []}
+        people = []
+        for emp_user in self._employee_users().filtered(lambda u: u.id != user.id):
+            presence, presence_label = self._discuss_presence(emp_user)
+            people.append({
+                'id': emp_user.id,
+                'name': emp_user.name,
+                'avatar': self._user_avatar(emp_user),
+                'presence': presence,
+                'presence_label': presence_label,
+            })
+        return {'people': people}
+
+    @http.route('/employee_portal/discuss/start_json', type='json', auth='user')
+    def employee_discuss_start_json(self, user_ids=None, group_name=None):
+        """Create/open a native DM or employee group without leaving Discuss."""
+        user = self._employee_user()
+        if not user:
+            return {'ok': False, 'error': 'Employee access required.'}
+        try:
+            ids = [int(x) for x in (user_ids or []) if x]
+        except (TypeError, ValueError):
+            ids = []
+        allowed = self._employee_users().filtered(lambda u: u.id != user.id)
+        targets = allowed.filtered(lambda u: u.id in ids)
+        if not targets:
+            return {'ok': False, 'error': 'Select at least one employee.'}
+        channel = self._get_or_create_channel(user, targets, name=group_name)
+        if not channel:
+            return {'ok': False, 'error': 'Unable to create conversation.'}
+        return {
+            'ok': True,
+            'channel_id': channel.id,
+            'url': f'/my/employee/discuss/channel/{channel.id}',
+        }
 
     @http.route('/employee_portal/discuss/available_people', type='json', auth='user')
     def employee_discuss_available_people(self, channel_id=None):

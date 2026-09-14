@@ -131,10 +131,13 @@ class PortalCallSignal(models.Model):
     @api.autovacuum
     def _gc_old_signals(self):
         """Remove consumed / stale signals so this table never grows unbounded."""
+        # ``portal.call.signal`` deliberately has ``_log_access = False``, so it
+        # has no create_date/write_date fields. Use the parent call session's
+        # start_date as the age marker instead of querying a non-existent field.
         domain = [
             '|',
             ('consumed', '=', True),
-            ('create_date', '<', fields.Datetime.subtract(fields.Datetime.now(), hours=6)),
+            ('session_id.start_date', '<', fields.Datetime.subtract(fields.Datetime.now(), hours=6)),
         ]
         self.sudo().search(domain).unlink()
 

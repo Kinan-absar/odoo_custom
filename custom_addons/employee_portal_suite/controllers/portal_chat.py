@@ -256,18 +256,6 @@ class PortalChatController(http.Controller):
             'read_by': self._message_read_by(channel, msg, user) if msg.author_id.id == user.partner_id.id else [],
         }
 
-    def _telegram_new_message(self, channel, author_user, text):
-        service = request.env['employee.portal.telegram.service'].sudo()
-        title = 'New Odoo message'
-        preview = (text or '').strip().replace('\n', ' ')[:160]
-        for target in self._users_for_channel(channel).filtered(lambda u: u.id != author_user.id):
-            service.send_to_user(
-                target,
-                title,
-                '%s: %s' % (self._employee_name(author_user), preview or 'Sent an attachment'),
-                path='/my/employee',
-            )
-
     @http.route('/employee_portal/chat/threads', type='json', auth='user', csrf=False)
     def chat_threads(self):
         user = self._user()
@@ -441,7 +429,6 @@ class PortalChatController(http.Controller):
         state = self._read_state(thread, user, create=True)
         state.write({'last_read_at': fields.Datetime.now()})
         self._mark_native_channel_seen(channel, user)
-        self._telegram_new_message(channel, user, text)
         return {'ok': True, 'message_id': message.id, 'discuss_channel_id': channel.id}
 
     @http.route('/employee_portal/chat/upload', type='json', auth='user', csrf=False)
