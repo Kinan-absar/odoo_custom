@@ -301,6 +301,12 @@
         shell.querySelectorAll('[data-ep-thread]').forEach((link) => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
+                const mobile = window.matchMedia('(max-width: 767.98px)').matches;
+                if (mobile) {
+                    const mobileHref = link.dataset.mobileHref || (link.getAttribute('href') || '').replace('?embedded=1', '');
+                    if (mobileHref) window.location.assign(mobileHref);
+                    return;
+                }
                 const href = link.getAttribute('href');
                 if (!href || !frame) return;
                 shell.querySelectorAll('[data-ep-thread]').forEach((row) => row.classList.remove('active'));

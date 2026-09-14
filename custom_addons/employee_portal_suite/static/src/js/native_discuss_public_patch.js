@@ -65,7 +65,15 @@ function goBackToChats() {
         window.parent.postMessage({ type: "employee-discuss-back-to-chats" }, window.location.origin);
         return;
     }
-    window.location.assign(meta("employee-portal-back-url") || "/my/employee/discuss");
+    const backUrl = meta("employee-portal-back-url") || "/my/employee/discuss";
+    try {
+        const referrer = document.referrer ? new URL(document.referrer) : null;
+        if (referrer && referrer.origin === window.location.origin && referrer.pathname.replace(/\/+$/, "") === backUrl.replace(/\/+$/, "")) {
+            window.history.back();
+            return;
+        }
+    } catch (_) {}
+    window.location.assign(backUrl);
 }
 
 function ensureEmbeddedHeaderActions() {
@@ -76,7 +84,8 @@ function ensureEmbeddedHeaderActions() {
     removeEmbeddedCloseButton(header);
     tidyEmbeddedMobileHeader(header);
 
-    if (isEmbeddedDiscuss() && !header.querySelector("[data-ep-chats-back]")) {
+    const isMobileChannel = window.matchMedia("(max-width: 767.98px)").matches && /\/my\/employee\/discuss\/channel\/\d+/.test(window.location.pathname);
+    if ((isEmbeddedDiscuss() || isMobileChannel) && !header.querySelector("[data-ep-chats-back]")) {
         const back = document.createElement("button");
         back.type = "button";
         back.dataset.epChatsBack = "1";
@@ -175,88 +184,9 @@ patch(Discuss.prototype, {
                 window.setTimeout(this._epApplyViewportHeight, 300);
             };
 
-            // Mobile shortcut requested for the Chats PWA: swipe LEFT inside an
-            // opened conversation to return to the Chats list.  Keep it scoped to
-            // embedded Discuss so normal backend Discuss gestures are untouched.
-            this._epSwipe = null;
-            this._epSwipeTriggered = false;
-            this._epSwipeIgnoreTarget = (target) => Boolean(target?.closest?.(
-                'input, textarea, select, button, a, audio, video, [contenteditable="true"], .o-mail-Composer, .o-mail-Message-actions'
-            ));
-            this._epCanSwipeBack = () =>
-                isEmbeddedDiscuss() && window.matchMedia("(max-width: 767.98px)").matches;
-            this._epBeginSwipe = (x, y, target, pointerId = null) => {
-                if (!this._epCanSwipeBack() || this._epSwipeIgnoreTarget(target)) {
-                    this._epSwipe = null;
-                    return;
-                }
-                this._epSwipeTriggered = false;
-                this._epSwipe = { x, y, at: Date.now(), pointerId };
-            };
-            this._epMaybeFinishSwipe = (x, y, force = false) => {
-                const start = this._epSwipe;
-                if (!start || this._epSwipeTriggered || !this._epCanSwipeBack()) return false;
-                const dx = x - start.x;
-                const dy = y - start.y;
-                const elapsed = Date.now() - start.at;
-                const horizontalEnough = dx <= -84;
-                const mostlyHorizontal = Math.abs(dx) >= Math.max(84, Math.abs(dy) * 1.35);
-                const verticalOkay = Math.abs(dy) <= 90;
-                const timeOkay = elapsed <= 1400;
-                if (horizontalEnough && mostlyHorizontal && verticalOkay && timeOkay) {
-                    this._epSwipeTriggered = true;
-                    this._epSwipe = null;
-                    goBackToChats();
-                    return true;
-                }
-                if (force) this._epSwipe = null;
-                return false;
-            };
-            this._epOnTouchStart = (ev) => {
-                if (ev.touches?.length !== 1) {
-                    this._epSwipe = null;
-                    return;
-                }
-                const touch = ev.touches[0];
-                this._epBeginSwipe(touch.clientX, touch.clientY, ev.target);
-            };
-            this._epOnTouchMove = (ev) => {
-                if (!this._epSwipe || ev.touches?.length !== 1) return;
-                const touch = ev.touches[0];
-                // Trigger during the move instead of relying only on touchend.
-                // Mobile Safari may dispatch touchcancel when the thread starts scrolling.
-                this._epMaybeFinishSwipe(touch.clientX, touch.clientY, false);
-            };
-            this._epOnTouchEnd = (ev) => {
-                if (!this._epSwipe || ev.changedTouches?.length !== 1) {
-                    this._epSwipe = null;
-                    return;
-                }
-                const touch = ev.changedTouches[0];
-                this._epMaybeFinishSwipe(touch.clientX, touch.clientY, true);
-            };
-            this._epOnTouchCancel = () => {
-                this._epSwipe = null;
-            };
-            // Pointer Events are used as a second path because some installed PWAs
-            // deliver pointer events more reliably than touchend across scroll containers.
-            this._epOnPointerDown = (ev) => {
-                if (ev.pointerType !== "touch") return;
-                this._epBeginSwipe(ev.clientX, ev.clientY, ev.target, ev.pointerId);
-            };
-            this._epOnPointerMove = (ev) => {
-                if (ev.pointerType !== "touch" || !this._epSwipe) return;
-                if (this._epSwipe.pointerId !== null && this._epSwipe.pointerId !== ev.pointerId) return;
-                this._epMaybeFinishSwipe(ev.clientX, ev.clientY, false);
-            };
-            this._epOnPointerUp = (ev) => {
-                if (ev.pointerType !== "touch" || !this._epSwipe) return;
-                if (this._epSwipe.pointerId !== null && this._epSwipe.pointerId !== ev.pointerId) return;
-                this._epMaybeFinishSwipe(ev.clientX, ev.clientY, true);
-            };
-            this._epOnPointerCancel = () => {
-                this._epSwipe = null;
-            };
+            // Mobile back navigation is intentionally left to the browser/PWA history.
+            // Do not install custom touch/pointer swipe handlers here; Safari already
+            // provides its native history gesture when the conversation is a top-level page.
 
             onMounted(() => {
                 ensureEmbeddedHeaderActions();
@@ -270,14 +200,6 @@ patch(Discuss.prototype, {
                 window.addEventListener("orientationchange", this._epApplyViewportHeight);
                 document.addEventListener("focusin", this._epOnFocusIn, true);
                 document.addEventListener("focusout", this._epOnFocusOut, true);
-                document.addEventListener("touchstart", this._epOnTouchStart, { passive: true, capture: true });
-                document.addEventListener("touchmove", this._epOnTouchMove, { passive: true, capture: true });
-                document.addEventListener("touchend", this._epOnTouchEnd, { passive: true, capture: true });
-                document.addEventListener("touchcancel", this._epOnTouchCancel, { passive: true, capture: true });
-                document.addEventListener("pointerdown", this._epOnPointerDown, { passive: true, capture: true });
-                document.addEventListener("pointermove", this._epOnPointerMove, { passive: true, capture: true });
-                document.addEventListener("pointerup", this._epOnPointerUp, { passive: true, capture: true });
-                document.addEventListener("pointercancel", this._epOnPointerCancel, { passive: true, capture: true });
             });
             onWillUnmount(() => {
                 this._epHeaderObserver?.disconnect();
@@ -286,14 +208,6 @@ patch(Discuss.prototype, {
                 window.removeEventListener("orientationchange", this._epApplyViewportHeight);
                 document.removeEventListener("focusin", this._epOnFocusIn, true);
                 document.removeEventListener("focusout", this._epOnFocusOut, true);
-                document.removeEventListener("touchstart", this._epOnTouchStart, true);
-                document.removeEventListener("touchmove", this._epOnTouchMove, true);
-                document.removeEventListener("touchend", this._epOnTouchEnd, true);
-                document.removeEventListener("touchcancel", this._epOnTouchCancel, true);
-                document.removeEventListener("pointerdown", this._epOnPointerDown, true);
-                document.removeEventListener("pointermove", this._epOnPointerMove, true);
-                document.removeEventListener("pointerup", this._epOnPointerUp, true);
-                document.removeEventListener("pointercancel", this._epOnPointerCancel, true);
                 document.documentElement.style.removeProperty("--ep-discuss-height");
                 document.documentElement.style.removeProperty("--ep-discuss-top");
                 document.documentElement.style.overflow = originalHtmlOverflow;
