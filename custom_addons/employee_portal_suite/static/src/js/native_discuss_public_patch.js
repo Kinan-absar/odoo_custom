@@ -44,16 +44,18 @@ function tidyEmbeddedMobileHeader(header) {
             el.style.setProperty("display", "none", "important");
             continue;
         }
-        // Keep the real audio/video call controls, identity controls, and the native
-        // add-participant (+) action. The rest of the busy desktop header stays hidden on mobile.
+        // Mobile chat header: keep only Back, native audio/video call controls,
+        // and the native add-participant (+) action. Everything else (search,
+        // settings, bell/notifications, pin, close, overflow actions, etc.) is hidden.
         const isCall = label.includes("call") || label.includes("video") || label.includes("camera") ||
             html.includes("fa-phone") || html.includes("fa-video") || html.includes("phone") || html.includes("video");
         const isAddPeople = label.includes("add people") || label.includes("add person") ||
             label.includes("add participant") || label.includes("invite") || label.includes("member") ||
-            label.includes("participant") || html.includes("user-plus") || html.includes("fa-user-plus");
-        const identityControl = Boolean(el.querySelector("img")) || (el.textContent || "").trim().length > 1;
-        if (isCall || isAddPeople || identityControl) {
+            label.includes("participant") || html.includes("user-plus") || html.includes("fa-user-plus") ||
+            html.includes("plus");
+        if (isCall || isAddPeople) {
             el.style.removeProperty("display");
+            el.dataset.epMobileAllowedAction = "1";
         } else {
             el.style.setProperty("display", "none", "important");
             el.dataset.epMobileHiddenAction = "1";

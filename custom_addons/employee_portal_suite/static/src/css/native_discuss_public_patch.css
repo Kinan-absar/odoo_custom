@@ -581,3 +581,24 @@ body.ep-native-discuss-embedded .o-mail-Discuss-header {
     display: inline-flex !important;
   }
 }
+
+/* v20.31 - Mobile channel cleanup after restoring native Safari back-swipe.
+   Conversation pages keep only Back + Add participant + native Phone/Video.
+   The bottom Chat tab belongs to the Chats home, not an open conversation. */
+@media (max-width: 767.98px) {
+  body.ep-native-discuss-public .o-mail-MessagingMenu-navbar,
+  body.ep-native-discuss-public [class*="o-mail-MessagingMenu-navbar"] {
+    display: none !important;
+  }
+
+  /* JS marks allowed actions after Owl renders. Hide every action explicitly
+     rejected by the mobile header policy, even after subsequent re-renders. */
+  .ep-native-discuss-public .o-mail-Discuss-header [data-ep-mobile-hidden-action="1"] {
+    display: none !important;
+  }
+
+  .ep-native-discuss-public .o-mail-Discuss-header [data-ep-mobile-allowed-action="1"],
+  .ep-native-discuss-public .o-mail-Discuss-header [data-ep-chats-back="1"] {
+    display: inline-flex !important;
+  }
+}

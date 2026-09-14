@@ -259,6 +259,16 @@
                 .ep-native-video-call,
                 .ep-native-video-call-btn { display: none !important; }
             </style>
+            <style t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" data-employee-discuss-mobile-channel="1">
+                @media (max-width: 767.98px) {
+                    /* A real conversation owns the whole mobile screen. Navigation back to
+                       Chats is provided by the header back button / native browser history. */
+                    .o-mail-MessagingMenu-navbar,
+                    [class*="o-mail-MessagingMenu-navbar"] { display: none !important; }
+                    /* Do not reserve footer space for the removed Chat tab. */
+                    .o-mail-MessagingMenu { padding-bottom: 0 !important; }
+                }
+            </style>
             <meta t-if="request.httprequest.path == '/my/employee/discuss'" name="employee-portal-discuss-home" content="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-back-url" content="/my/employee/discuss"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-home-url" content="/my/employee"/>
