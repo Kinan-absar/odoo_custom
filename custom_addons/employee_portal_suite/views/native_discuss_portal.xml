@@ -225,8 +225,8 @@
                 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
                 <meta name="apple-mobile-web-app-title" content="Chats"/>
                 <meta name="application-name" content="Chats"/>
-                <link rel="apple-touch-icon" t-att-href="'/web/image/res.company/%s/logo/192x192' % request.env.company.id"/>
-                <link rel="icon" type="image/png" t-att-href="'/web/image/res.company/%s/logo_web' % request.env.company.id"/>
+                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/chats-180.png"/>
+                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/chats-64.png"/>
             </t>
         </xpath>
     </template>
@@ -277,8 +277,8 @@
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-capable" content="yes"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-title" content="Chats"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="application-name" content="Chats"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon" t-att-href="'/web/image/res.company/%s/logo/192x192' % request.env.company.id"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="icon" type="image/png" t-att-href="'/web/image/res.company/%s/logo_web' % request.env.company.id"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/chats-180.png"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/chats-64.png"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-discuss-company-logo" t-att-content="'/web/image/res.company/%s/logo_web' % request.env.company.id"/>
         </xpath>
     </template>

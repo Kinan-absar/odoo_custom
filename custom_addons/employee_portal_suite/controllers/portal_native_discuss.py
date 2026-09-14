@@ -323,8 +323,6 @@ class EmployeePortalNativeDiscussController(http.Controller):
 
     @http.route('/my/employee/discuss/manifest.webmanifest', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_discuss_manifest(self, **kwargs):
-        company = request.env.company.sudo()
-        icon_base = f"/web/image/res.company/{company.id}/logo"
         payload = {
             "name": "Chats",
             "short_name": "Chats",
@@ -337,8 +335,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
             "background_color": "#ffffff",
             "theme_color": "#ffffff",
             "icons": [
-                {"src": f"{icon_base}/192x192", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-                {"src": f"{icon_base}/512x512", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/chats-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/chats-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
             ],
         }
         return request.make_response(
@@ -355,7 +353,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
         if not user:
             return request.not_found()
         script = '''
-const CACHE_NAME = "employee-native-discuss-pwa-v32";
+const CACHE_NAME = "employee-native-discuss-pwa-v33";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
