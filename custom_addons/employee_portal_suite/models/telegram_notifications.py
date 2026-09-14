@@ -11,13 +11,18 @@ _logger = logging.getLogger(__name__)
 class EmployeePortalTelegramConfigNotifications(models.Model):
     _inherit = 'employee.portal.telegram.config'
 
+    telegram_fallback_enabled = fields.Boolean(
+        string='Use Telegram as Fallback', default=False,
+        help='Optional legacy fallback. When disabled, employee notifications are delivered by Web Push only.'
+    )
+
     requester_stage_notifications = fields.Boolean(
         string='Notify Requester on Stage Changes', default=True,
         help='Notify the requesting employee when an Employee Request or Material Request moves to a new approval stage.'
     )
     approval_reminders_enabled = fields.Boolean(
         string='Approval Reminders', default=True,
-        help='Send Telegram reminders while a request is waiting for approval.'
+        help='Send push reminders while a request is waiting for approval.'
     )
     approval_reminder_hours = fields.Integer(
         string='First Reminder After (Hours)', default=24,
@@ -67,7 +72,6 @@ class HrAttendanceTelegramReminders(models.Model):
     def _config(self):
         return self.env['employee.portal.telegram.config'].sudo().search([
             ('active', '=', True),
-            ('enabled', '=', True),
             ('attendance_reminders_enabled', '=', True),
         ], order='id desc', limit=1)
 
@@ -116,7 +120,7 @@ class HrAttendanceTelegramReminders(models.Model):
 
     @api.model
     def _send(self, user, title, body):
-        return self.env['employee.portal.telegram.service'].sudo().send_to_user(
+        return self.env['employee.portal.notification.service'].sudo().send_to_user(
             user, title, body, '/my/employee/attendance'
         )
 
@@ -126,10 +130,7 @@ class HrAttendanceTelegramReminders(models.Model):
         if not config:
             return
 
-        users = self.env['res.users'].sudo().search([
-            ('active', '=', True),
-            ('telegram_chat_id', '!=', False),
-        ])
+        users = self.env['employee.portal.notification.service'].sudo().users_with_delivery()
         now_utc = fields.Datetime.now()
 
         for user in users:
@@ -225,7 +226,7 @@ class HrAttendanceTelegramReminders(models.Model):
 
 class TelegramApprovalReminderMixin(models.AbstractModel):
     _name = 'employee.portal.telegram.approval.mixin'
-    _description = 'Telegram Approval Reminder Mixin'
+    _description = 'Employee Portal Approval Reminder Mixin'
 
     telegram_stage_entered_at = fields.Datetime(copy=False, readonly=True)
     telegram_last_approval_reminder_at = fields.Datetime(copy=False, readonly=True)
@@ -267,10 +268,10 @@ class TelegramApprovalReminderMixin(models.AbstractModel):
 
         if state_change and new_state in self._telegram_approval_states():
             config = self.env['employee.portal.telegram.config'].sudo().search([
-                ('active', '=', True), ('enabled', '=', True),
+                ('active', '=', True),
             ], order='id desc', limit=1)
             if config and config.requester_stage_notifications:
-                service = self.env['employee.portal.telegram.service'].sudo()
+                service = self.env['employee.portal.notification.service'].sudo()
                 for rec in self:
                     requester = rec._telegram_requester_user()
                     if requester:
@@ -290,12 +291,11 @@ class TelegramApprovalReminderMixin(models.AbstractModel):
         every cron run.  On a busy database that could keep the scheduled action
         alive long enough to block module upgrades.  This version uses date
         domains, small batches and records an attempted reminder timestamp so a
-        temporarily unreachable Telegram recipient cannot be retried in a tight
+        temporarily unreachable notification recipient cannot be retried in a tight
         loop every cron cycle.
         """
         config = self.env['employee.portal.telegram.config'].sudo().search([
             ('active', '=', True),
-            ('enabled', '=', True),
             ('approval_reminders_enabled', '=', True),
         ], order='id desc', limit=1)
         if not config:
@@ -311,7 +311,7 @@ class TelegramApprovalReminderMixin(models.AbstractModel):
         escalate_after = timedelta(hours=max(config.approval_escalation_hours, 1))
         first_cutoff = now - first_after
         repeat_cutoff = now - repeat_after
-        service = self.env['employee.portal.telegram.service'].sudo()
+        service = self.env['employee.portal.notification.service'].sudo()
 
         entered_due = [
             '|',

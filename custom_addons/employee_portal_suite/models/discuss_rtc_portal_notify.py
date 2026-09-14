@@ -13,13 +13,12 @@ class DiscussChannelMember(models.Model):
         """Mirror native Discuss RTC invitations to the portal shell and Telegram.
 
         Native Discuss remains authoritative for ringing/accept/reject.  This hook
-        only adds the portal bus alert and an optional Telegram alert for employee
+        only adds the portal bus alert and a Web Push alert for employee
         users (internal or portal) who connected Telegram.
         """
         invited = super()._rtc_invite_members(member_ids=member_ids)
         Employee = self.env['hr.employee'].sudo()
-        Telegram = self.env['employee.portal.telegram.service'].sudo()
-        WebPush = self.env['employee.portal.webpush.service'].sudo()
+        Notify = self.env['employee.portal.notification.service'].sudo()
 
         for member in invited:
             employee_users = member.partner_id.user_ids.filtered(
@@ -33,7 +32,7 @@ class DiscussChannelMember(models.Model):
 
             channel = member.channel_id
             # The Chats PWA exposes employee conversations only.  Keep the extra
-            # portal bus alert scoped to those channels while Telegram can notify
+            # portal bus alert scoped to those channels while Web Push can notify
             # either internal or portal employee recipients.
             is_employee_chat = (
                 'is_employee_portal_channel' not in channel._fields
@@ -59,9 +58,8 @@ class DiscussChannelMember(models.Model):
             call_kind = 'video call' if is_video else 'call'
             push_kind = 'video_call' if is_video else 'call'
             for user in employee_users:
-                pushed = False
                 try:
-                    pushed = WebPush.send_to_user(
+                    Notify.send_to_user(
                         user,
                         'Incoming %s from %s' % (call_kind, caller.name or 'Employee'),
                         'Tap to open Chats and answer.',
@@ -72,20 +70,6 @@ class DiscussChannelMember(models.Model):
                     )
                 except Exception:
                     _logger.exception(
-                        'Failed to send native Web Push RTC invitation for user %s', user.id
+                        'Failed to send RTC notification for user %s', user.id
                     )
-                if not pushed:
-                    try:
-                        Telegram.send_to_user(
-                            user,
-                            'Incoming %s from %s' % (call_kind, caller.name or 'Employee'),
-                            'Open Chats to answer.',
-                            path=open_path,
-                        )
-                    except Exception:
-                        # Telegram is fallback-only and must never interrupt native RTC.
-                        _logger.exception(
-                            'Failed to mirror native RTC invitation to Telegram for user %s',
-                            user.id,
-                        )
         return invited
