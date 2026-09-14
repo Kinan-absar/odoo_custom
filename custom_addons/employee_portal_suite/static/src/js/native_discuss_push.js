@@ -1,6 +1,6 @@
-/** @odoo-module **/
-
 (() => {
+    window.__employeeChatsPushLoaded = true;
+    console.info("[Chats Push] notification client loaded");
     const APP_ROOT = "/my/employee/discuss";
     if (!window.location.pathname.startsWith(APP_ROOT)) return;
 
@@ -55,8 +55,11 @@
 
     async function getRegistration() {
         if (!("serviceWorker" in navigator)) throw new Error("Service workers are not supported on this device.");
-        await navigator.serviceWorker.register(`${APP_ROOT}/sw.js`, { scope: APP_ROOT });
-        return navigator.serviceWorker.ready;
+        if (!window.isSecureContext) throw new Error("Notifications require HTTPS / a secure connection.");
+        const registration = await navigator.serviceWorker.register(`${APP_ROOT}/sw.js`, { scope: APP_ROOT });
+        try { await registration.update(); } catch (_) {}
+        await navigator.serviceWorker.ready;
+        return registration;
     }
 
     async function syncExistingSubscription() {
@@ -100,6 +103,19 @@
             vapidPublicKey = config.public_key;
         }
         const registration = await getRegistration();
+        // Prove that this browser/PWA can actually display a notification before
+        // involving the server-side Web Push delivery path.
+        try {
+            await registration.showNotification("Chats", {
+                body: "Notifications are enabled on this device.",
+                icon: "/employee_portal_suite/static/icons/chats-192.png",
+                badge: "/employee_portal_suite/static/icons/chats-64.png",
+                tag: "employee-chats-local-check",
+                data: { url: APP_ROOT, kind: "test" },
+            });
+        } catch (error) {
+            console.warn("[Chats Push] local notification check failed", error);
+        }
         let subscription = await registration.pushManager.getSubscription();
         if (!subscription) {
             subscription = await registration.pushManager.subscribe({
@@ -114,8 +130,9 @@
         setState("on");
         const test = await api("/employee_portal/push/test", { method: "POST", body: "{}" });
         if (!test.delivered) {
-            throw new Error("The subscription was saved, but the test push was not accepted by the push service. Check the Odoo log for the delivery error.");
+            throw new Error("The device subscribed, but Odoo could not deliver the server test push. Check the Odoo log for 'Web Push' delivery details.");
         }
+        window.alert("Chats notifications are enabled. A test notification was sent to this device.");
     }
 
     async function disableNotifications() {
@@ -135,10 +152,16 @@
         const button = event.target.closest?.(buttonSelector);
         if (!button || busy) return;
         event.preventDefault();
+        event.stopPropagation();
         busy = true;
-        setState(button.dataset.pushState || "off");
+        const previousState = button.dataset.pushState || "off";
+        document.querySelectorAll(buttonSelector).forEach((item) => {
+            const label = item.querySelector("[data-ep-push-label]");
+            if (label) label.textContent = previousState === "on" ? "Turning off…" : "Enabling…";
+            item.disabled = true;
+        });
         try {
-            if ((button.dataset.pushState || "off") === "on") {
+            if (previousState === "on") {
                 await disableNotifications();
             } else {
                 await enableNotifications();
@@ -153,6 +176,11 @@
         }
     }
 
+    window.EmployeeChatsPush = {
+        enable: enableNotifications,
+        disable: disableNotifications,
+        sync: syncExistingSubscription,
+    };
     document.addEventListener("click", toggleNotifications, true);
     const boot = () => syncExistingSubscription().catch((error) => {
         console.warn("Chats push status could not be loaded", error);
