@@ -19,6 +19,7 @@ class DiscussChannelMember(models.Model):
         invited = super()._rtc_invite_members(member_ids=member_ids)
         Employee = self.env['hr.employee'].sudo()
         Telegram = self.env['employee.portal.telegram.service'].sudo()
+        WebPush = self.env['employee.portal.webpush.service'].sudo()
 
         for member in invited:
             employee_users = member.partner_id.user_ids.filtered(
@@ -56,18 +57,35 @@ class DiscussChannelMember(models.Model):
             })
 
             call_kind = 'video call' if is_video else 'call'
+            push_kind = 'video_call' if is_video else 'call'
             for user in employee_users:
+                pushed = False
                 try:
-                    Telegram.send_to_user(
+                    pushed = WebPush.send_to_user(
                         user,
                         'Incoming %s from %s' % (call_kind, caller.name or 'Employee'),
-                        'Open Chats to answer.',
+                        'Tap to open Chats and answer.',
                         path=open_path,
+                        kind=push_kind,
+                        tag='employee-chats-call-%s' % channel.id,
+                        urgency='high',
                     )
                 except Exception:
-                    # Telegram is best-effort and must never interrupt native RTC.
                     _logger.exception(
-                        'Failed to mirror native RTC invitation to Telegram for user %s',
-                        user.id,
+                        'Failed to send native Web Push RTC invitation for user %s', user.id
                     )
+                if not pushed:
+                    try:
+                        Telegram.send_to_user(
+                            user,
+                            'Incoming %s from %s' % (call_kind, caller.name or 'Employee'),
+                            'Open Chats to answer.',
+                            path=open_path,
+                        )
+                    except Exception:
+                        # Telegram is fallback-only and must never interrupt native RTC.
+                        _logger.exception(
+                            'Failed to mirror native RTC invitation to Telegram for user %s',
+                            user.id,
+                        )
         return invited

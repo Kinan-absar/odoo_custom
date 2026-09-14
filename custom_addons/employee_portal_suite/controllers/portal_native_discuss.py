@@ -347,13 +347,10 @@ class EmployeePortalNativeDiscussController(http.Controller):
             ],
         )
 
-    @http.route('/my/employee/discuss/sw.js', type='http', auth='user', methods=['GET'], csrf=False)
+    @http.route('/my/employee/discuss/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_discuss_service_worker(self, **kwargs):
-        user = self._employee_user()
-        if not user:
-            return request.not_found()
         script = '''
-const CACHE_NAME = "employee-native-discuss-pwa-v33";
+const CACHE_NAME = "employee-native-discuss-pwa-v34";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
@@ -366,6 +363,36 @@ self.addEventListener("fetch", (event) => {
     const req = event.request;
     if (req.method !== "GET") return;
     event.respondWith(fetch(req));
+});
+self.addEventListener("push", (event) => {
+    let data = {};
+    try { data = event.data ? event.data.json() : {}; } catch (_) {
+        data = { title: "Chats", body: event.data ? event.data.text() : "New activity" };
+    }
+    const kind = data.kind || "message";
+    const options = {
+        body: data.body || "",
+        icon: data.icon || "/employee_portal_suite/static/icons/chats-192.png",
+        badge: data.badge || "/employee_portal_suite/static/icons/chats-64.png",
+        tag: data.tag || `employee-chats-${kind}`,
+        renotify: kind === "call" || kind === "video_call",
+        requireInteraction: kind === "call" || kind === "video_call",
+        data: { url: data.url || "/my/employee/discuss", kind },
+    };
+    event.waitUntil(self.registration.showNotification(data.title || "Chats", options));
+});
+self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+    const url = new URL(event.notification.data?.url || "/my/employee/discuss", self.location.origin).href;
+    event.waitUntil((async () => {
+        const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+        const sameApp = windows.find((client) => client.url.startsWith(self.location.origin + "/my/employee/discuss"));
+        if (sameApp) {
+            try { await sameApp.navigate(url); } catch (_) {}
+            return sameApp.focus();
+        }
+        return self.clients.openWindow(url);
+    })());
 });
 '''
         return request.make_response(script, headers=[

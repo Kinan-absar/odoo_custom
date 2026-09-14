@@ -58,3 +58,4 @@ portal_chat_thread_internal,portal.chat.thread internal,model_portal_chat_thread
 portal_chat_thread_portal,portal.chat.thread portal,model_portal_chat_thread,base.group_portal,1,0,0,0
 portal_chat_read_internal,portal.chat.read internal,model_portal_chat_read,base.group_user,1,0,0,0
 portal_chat_read_portal,portal.chat.read portal,model_portal_chat_read,base.group_portal,1,0,0,0
+access_employee_portal_push_subscription_admin,employee.portal.push.subscription admin,model_employee_portal_push_subscription,base.group_system,1,1,1,1

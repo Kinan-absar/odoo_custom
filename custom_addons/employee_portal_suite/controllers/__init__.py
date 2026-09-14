@@ -19,3 +19,5 @@ from . import portal_call
 from . import portal_chat
 
 from . import portal_native_discuss
+
+from . import web_push
