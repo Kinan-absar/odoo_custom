@@ -1,4 +1,5 @@
 (() => {
+    if (window.__employeeChatsPushLoaded) return;
     window.__employeeChatsPushLoaded = true;
     console.info("[Chats Push] notification client loaded");
     const APP_ROOT = "/my/employee/discuss";
@@ -180,6 +181,7 @@
         enable: enableNotifications,
         disable: disableNotifications,
         sync: syncExistingSubscription,
+        toggle: toggleNotifications,
     };
     document.addEventListener("click", toggleNotifications, true);
     const boot = () => syncExistingSubscription().catch((error) => {

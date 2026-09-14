@@ -215,6 +215,22 @@
                     }
                 })();
             </script>
+            <!-- The notification bell must work even if Odoo's frontend asset bundle is
+                 cached or omitted on this standalone page. Load the push client directly. -->
+            <script src="/employee_portal_suite/static/src/js/native_discuss_push.js?v=2036"></script>
+            <script>
+                (function () {
+                    document.addEventListener('click', function (ev) {
+                        var btn = ev.target &amp;&amp; ev.target.closest ? ev.target.closest('[data-ep-push-toggle]') : null;
+                        if (!btn) return;
+                        if (!window.EmployeeChatsPush || typeof window.EmployeeChatsPush.toggle !== 'function') {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                            window.alert('Chats notification client did not load. Reload Chats once and try again.');
+                        }
+                    }, true);
+                })();
+            </script>
         </t>
     </template>
 
