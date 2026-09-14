@@ -224,13 +224,13 @@ class EmployeePortalWebPushService(models.AbstractModel):
         if not subscriptions:
             return False
         payload = {
-            'title': str(title or 'Chats'),
+            'title': str(title or 'ABSAR Employee'),
             'body': str(body or ''),
-            'url': path or '/my/employee/discuss',
+            'url': path or '/my/employee',
             'kind': kind or 'message',
-            'tag': tag or ('employee-chats-%s' % (kind or 'message')),
-            'icon': '/employee_portal_suite/static/icons/chats-192.png',
-            'badge': '/employee_portal_suite/static/icons/chats-64.png',
+            'tag': tag or ('employee-portal-%s' % (kind or 'message')),
+            'icon': '/employee_portal_suite/static/icons/portal-192.png',
+            'badge': '/employee_portal_suite/static/icons/portal-64.png',
         }
         urgency = urgency or ('high' if kind in ('call', 'video_call') else 'normal')
         delivered = False

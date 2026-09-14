@@ -324,19 +324,19 @@ class EmployeePortalNativeDiscussController(http.Controller):
     @http.route('/my/employee/discuss/manifest.webmanifest', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_discuss_manifest(self, **kwargs):
         payload = {
-            "name": "Chats",
-            "short_name": "Chats",
-            "description": "Company employee communication powered by Odoo Discuss",
-            "start_url": "/my/employee/discuss",
-            "scope": "/my/employee/discuss",
-            "id": "/my/employee/discuss",
+            "name": "ABSAR Employee Portal",
+            "short_name": "ABSAR",
+            "description": "ABSAR employee self-service portal and communications",
+            "start_url": "/my/employee",
+            "scope": "/my/employee",
+            "id": "/my/employee",
             "display": "standalone",
             "orientation": "any",
             "background_color": "#ffffff",
             "theme_color": "#ffffff",
             "icons": [
-                {"src": "/employee_portal_suite/static/icons/chats-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-                {"src": "/employee_portal_suite/static/icons/chats-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
             ],
         }
         return request.make_response(
@@ -350,7 +350,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
     @http.route('/my/employee/discuss/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_discuss_service_worker(self, **kwargs):
         script = '''
-const CACHE_NAME = "employee-native-discuss-pwa-v38";
+const CACHE_NAME = "employee-native-discuss-pwa-retired-v39";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
@@ -367,19 +367,19 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("push", (event) => {
     let data = {};
     try { data = event.data ? event.data.json() : {}; } catch (_) {
-        data = { title: "Chats", body: event.data ? event.data.text() : "New activity" };
+        data = { title: "ABSAR Employee", body: event.data ? event.data.text() : "New activity" };
     }
     const kind = data.kind || "message";
     const options = {
         body: data.body || "",
-        icon: data.icon || "/employee_portal_suite/static/icons/chats-192.png",
-        badge: data.badge || "/employee_portal_suite/static/icons/chats-64.png",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png",
         tag: data.tag || `employee-chats-${kind}`,
         renotify: kind === "call" || kind === "video_call",
         requireInteraction: kind === "call" || kind === "video_call",
         data: { url: data.url || "/my/employee/discuss", kind },
     };
-    event.waitUntil(self.registration.showNotification(data.title || "Chats", options));
+    event.waitUntil(self.registration.showNotification(data.title || "ABSAR Employee", options));
 });
 self.addEventListener("notificationclick", (event) => {
     event.notification.close();
@@ -401,6 +401,86 @@ self.addEventListener("notificationclick", (event) => {
             ('Service-Worker-Allowed', '/my/employee/discuss'),
         ])
 
+
+    @http.route('/my/employee/manifest.webmanifest', type='http', auth='public', methods=['GET'], csrf=False)
+    def employee_portal_manifest(self, **kwargs):
+        payload = {
+            "name": "ABSAR Employee Portal",
+            "short_name": "ABSAR",
+            "description": "ABSAR employee self-service portal, approvals, attendance and messaging",
+            "start_url": "/my/employee",
+            "scope": "/my/employee",
+            "id": "/my/employee",
+            "display": "standalone",
+            "orientation": "any",
+            "background_color": "#ffffff",
+            "theme_color": "#0f766e",
+            "icons": [
+                {"src": "/employee_portal_suite/static/icons/portal-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+            ],
+        }
+        return request.make_response(
+            json.dumps(payload),
+            headers=[
+                ('Content-Type', 'application/manifest+json; charset=utf-8'),
+                ('Cache-Control', 'no-store'),
+            ],
+        )
+
+    @http.route('/my/employee/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
+    def employee_portal_service_worker(self, **kwargs):
+        script = r'''
+const CACHE_NAME = "employee-portal-pwa-v39";
+self.addEventListener("install", () => { self.skipWaiting(); });
+self.addEventListener("activate", (event) => {
+    event.waitUntil((async () => {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter((k) => k.startsWith("employee-portal-pwa-") && k !== CACHE_NAME).map((k) => caches.delete(k)));
+        await self.clients.claim();
+    })());
+});
+self.addEventListener("fetch", (event) => {
+    const req = event.request;
+    if (req.method !== "GET") return;
+    event.respondWith(fetch(req));
+});
+self.addEventListener("push", (event) => {
+    let data = {};
+    try { data = event.data ? event.data.json() : {}; } catch (_) {
+        data = { title: "ABSAR Employee", body: event.data ? event.data.text() : "New activity" };
+    }
+    const kind = data.kind || "activity";
+    const options = {
+        body: data.body || "",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png",
+        tag: data.tag || `employee-portal-${kind}`,
+        renotify: kind === "call" || kind === "video_call",
+        requireInteraction: kind === "call" || kind === "video_call",
+        data: { url: data.url || "/my/employee", kind },
+    };
+    event.waitUntil(self.registration.showNotification(data.title || "ABSAR Employee", options));
+});
+self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+    const url = new URL(event.notification.data?.url || "/my/employee", self.location.origin).href;
+    event.waitUntil((async () => {
+        const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+        const sameApp = windows.find((client) => client.url.startsWith(self.location.origin + "/my/employee"));
+        if (sameApp) {
+            try { await sameApp.navigate(url); } catch (_) {}
+            return sameApp.focus();
+        }
+        return self.clients.openWindow(url);
+    })());
+});
+'''
+        return request.make_response(script, headers=[
+            ('Content-Type', 'application/javascript; charset=utf-8'),
+            ('Cache-Control', 'no-store'),
+            ('Service-Worker-Allowed', '/my/employee'),
+        ])
 
     @http.route('/employee_portal/discuss/people_all', type='json', auth='user')
     def employee_discuss_people_all(self):

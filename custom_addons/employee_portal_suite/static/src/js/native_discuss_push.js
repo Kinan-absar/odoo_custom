@@ -2,8 +2,9 @@
     if (window.__employeeChatsPushLoaded) return;
     window.__employeeChatsPushLoaded = true;
     console.info("[Chats Push] notification client loaded");
-    const APP_ROOT = "/my/employee/discuss";
-    if (!window.location.pathname.startsWith(APP_ROOT)) return;
+    const APP_ROOT = "/my/employee";
+    const DISCUSS_ROOT = "/my/employee/discuss";
+    if (!window.location.pathname.startsWith(DISCUSS_ROOT)) return;
 
     const buttonSelector = "[data-ep-push-toggle]";
     let vapidPublicKey = null;
@@ -88,10 +89,10 @@
             throw new Error("Push notifications are not supported in this browser.");
         }
         if (isIOS() && !standaloneMode()) {
-            throw new Error("On iPhone/iPad, install Chats on the Home Screen first, then enable notifications from the installed app.");
+            throw new Error("On iPhone/iPad, install the Employee Portal on the Home Screen first, then enable notifications from the installed app.");
         }
         if (Notification.permission === "denied") {
-            throw new Error("Notifications are blocked for Chats. Enable them in your browser/device settings first.");
+            throw new Error("Notifications are blocked for the Employee Portal. Enable them in your browser/device settings first.");
         }
         const permission = Notification.permission === "granted"
             ? "granted"
@@ -107,12 +108,12 @@
         // Prove that this browser/PWA can actually display a notification before
         // involving the server-side Web Push delivery path.
         try {
-            await registration.showNotification("Chats", {
+            await registration.showNotification("ABSAR Employee", {
                 body: "Notifications are enabled on this device.",
-                icon: "/employee_portal_suite/static/icons/chats-192.png",
-                badge: "/employee_portal_suite/static/icons/chats-64.png",
+                icon: "/employee_portal_suite/static/icons/portal-192.png",
+                badge: "/employee_portal_suite/static/icons/portal-64.png",
                 tag: "employee-chats-local-check",
-                data: { url: APP_ROOT, kind: "test" },
+                data: { url: DISCUSS_ROOT, kind: "test" },
             });
         } catch (error) {
             console.warn("[Chats Push] local notification check failed", error);
@@ -133,7 +134,7 @@
         if (!test.delivered) {
             throw new Error("The device subscribed, but Odoo could not deliver the server test push. Check the Odoo log for 'Web Push' delivery details.");
         }
-        window.alert("Chats notifications are enabled. A test notification was sent to this device.");
+        window.alert("Employee Portal notifications are enabled. A test notification was sent to this device.");
     }
 
     async function disableNotifications() {

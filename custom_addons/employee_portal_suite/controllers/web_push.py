@@ -81,11 +81,11 @@ class EmployeePortalWebPushController(http.Controller):
             return self._json_response({'ok': False, 'error': 'Employee access required.'}, status=403)
         delivered = request.env['employee.portal.webpush.service'].sudo().send_to_user(
             user,
-            'Chats notifications enabled',
+            'Employee Portal notifications enabled',
             'Push notifications are working on this device.',
-            path='/my/employee/discuss',
+            path='/my/employee',
             kind='test',
-            tag='employee-chats-test',
+            tag='employee-portal-test',
             urgency='normal',
         )
         return self._json_response({'ok': True, 'delivered': bool(delivered)})

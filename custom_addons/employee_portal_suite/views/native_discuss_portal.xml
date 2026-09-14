@@ -18,7 +18,7 @@
                 .ep-chats-shell{position:fixed;inset:0;display:grid;grid-template-columns:340px minmax(0,1fr);background:#fff;color:#1f2937;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
                 .ep-chats-list-pane{min-width:0;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;background:#fff;overflow:hidden}
                 .ep-chats-list-head{padding:14px 14px 10px;border-bottom:1px solid #eef2f7}
-                .ep-chats-list-title{display:flex;align-items:center;font-size:21px;font-weight:700;color:#111827}
+                .ep-chats-list-title{display:flex;align-items:center;font-size:21px;font-weight:700;color:#111827}.ep-chats-portal-back{display:none;align-items:center;gap:6px;margin-right:10px;color:#475569!important;text-decoration:none!important;font-size:13px;font-weight:650}.ep-chats-portal-back svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
                 .ep-chats-list-actions{margin-left:auto;display:flex;gap:7px;align-items:center}.ep-chats-action{height:34px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;color:#475569;display:inline-flex;align-items:center;gap:6px;padding:0 10px;font-size:12px;font-weight:650;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.04)}.ep-chats-action:hover{background:#f8fafc;color:#0f172a}.ep-chats-action-primary{background:#2563eb;color:#fff;border-color:#2563eb}.ep-chats-action-primary:hover{background:#1d4ed8;color:#fff}.ep-chats-notification-btn.ep-push-enabled{background:#ecfdf5;border-color:#86efac;color:#15803d}.ep-chats-action svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
                 .ep-chats-search{margin-top:10px;display:flex;align-items:center;gap:8px;background:#f3f4f6;border-radius:10px;padding:8px 10px}.ep-chats-search input{border:0;outline:0;background:transparent;width:100%;font-size:14px}
                 .ep-native-new-chat{display:none;position:fixed;inset:0;z-index:5000;align-items:center;justify-content:center;padding:18px}.ep-native-new-chat.show{display:flex}.ep-chats-modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.38);backdrop-filter:blur(3px)}.ep-chats-modal-card{position:relative;z-index:1;width:min(440px,calc(100vw - 28px));max-height:min(720px,calc(100dvh - 36px));display:flex;flex-direction:column;background:#fff;border-radius:18px;box-shadow:0 24px 80px rgba(15,23,42,.24);overflow:hidden;border:1px solid rgba(15,23,42,.08)}.ep-chats-modal-head{height:54px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eef2f7;font-size:17px}.ep-chats-modal-close{width:34px;height:34px;border:0;background:transparent;border-radius:9px;color:#64748b;font-size:25px;line-height:1;cursor:pointer}.ep-chats-modal-close:hover{background:#f1f5f9}.ep-chats-modal-card form{padding:14px;overflow:auto}.ep-native-new-chat-title{display:none}
@@ -29,12 +29,13 @@
                    right pane while the Chats list remains visible on the left. Mobile still
                    switches to a full-screen conversation and uses the back button to return. */
                 .ep-chats-shell.ep-chat-open{grid-template-columns:340px minmax(0,1fr)}
-                @media(max-width:767.98px){.ep-chats-shell{display:block;position:fixed;inset:0;width:100%;height:100dvh}.ep-chats-list-pane{position:absolute;inset:0;width:100%;border:0}.ep-chats-conversation-pane{display:none;position:absolute;inset:0;width:100%;height:100%;background:#fff}.ep-chats-shell.ep-chat-open .ep-chats-list-pane{display:none}.ep-chats-shell.ep-chat-open .ep-chats-conversation-pane{display:block}.ep-chats-frame{inset:0;width:100%;height:100%;padding:0}.ep-chats-empty-state{display:none}.ep-chats-list-head{padding-top:max(14px,env(safe-area-inset-top))}.ep-chats-action span{display:none}.ep-chats-action{width:36px;padding:0;justify-content:center}.ep-native-new-chat{padding:0;align-items:flex-end}.ep-chats-modal-card{width:100%;max-height:88dvh;border-radius:18px 18px 0 0;padding-bottom:env(safe-area-inset-bottom)}}
+                @media(max-width:767.98px){.ep-chats-portal-back{display:inline-flex}.ep-chats-shell{display:block;position:fixed;inset:0;width:100%;height:100dvh}.ep-chats-list-pane{position:absolute;inset:0;width:100%;border:0}.ep-chats-conversation-pane{display:none;position:absolute;inset:0;width:100%;height:100%;background:#fff}.ep-chats-shell.ep-chat-open .ep-chats-list-pane{display:none}.ep-chats-shell.ep-chat-open .ep-chats-conversation-pane{display:block}.ep-chats-frame{inset:0;width:100%;height:100%;padding:0}.ep-chats-empty-state{display:none}.ep-chats-list-head{padding-top:max(14px,env(safe-area-inset-top))}.ep-chats-action span{display:none}.ep-chats-action{width:36px;padding:0;justify-content:center}.ep-native-new-chat{padding:0;align-items:flex-end}.ep-chats-modal-card{width:100%;max-height:88dvh;border-radius:18px 18px 0 0;padding-bottom:env(safe-area-inset-bottom)}}
             </style>
             <div class="ep-chats-shell" data-ep-chats-shell="1">
                 <aside class="ep-chats-list-pane" data-ep-chats-list-pane="1">
                     <div class="ep-chats-list-head">
                         <div class="ep-chats-list-title">
+                            <a href="/my/employee" class="ep-chats-portal-back" aria-label="Back to Portal" title="Back to Portal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span>Portal</span></a>
                             <span>Chats</span>
                             <div class="ep-chats-list-actions">
                                 <button type="button" class="ep-chats-action ep-chats-notification-btn" data-ep-push-toggle="1" data-push-state="off" title="Enable notifications" aria-label="Enable notifications">
@@ -217,7 +218,7 @@
             </script>
             <!-- The notification bell must work even if Odoo's frontend asset bundle is
                  cached or omitted on this standalone page. Load the push client directly. -->
-            <script src="/employee_portal_suite/static/src/js/native_discuss_push.js?v=2036"></script>
+            <script src="/employee_portal_suite/static/src/js/native_discuss_push.js?v=2039"></script>
             <script>
                 (function () {
                     document.addEventListener('click', function (ev) {
@@ -238,14 +239,14 @@
         <xpath expr="//head" position="inside">
             <t t-if="request.httprequest.path.startswith('/my/employee/discuss')">
                 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-                <link rel="manifest" href="/my/employee/discuss/manifest.webmanifest" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
+                <link rel="manifest" href="/my/employee/manifest.webmanifest" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
                 <meta name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
                 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-                <meta name="apple-mobile-web-app-title" content="Chats"/>
-                <meta name="application-name" content="Chats"/>
-                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/chats-180.png"/>
-                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/chats-64.png"/>
+                <meta name="apple-mobile-web-app-title" content="ABSAR Employee"/>
+                <meta name="application-name" content="ABSAR Employee"/>
+                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png"/>
+                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png"/>
             </t>
         </xpath>
     </template>
@@ -291,13 +292,13 @@
             <meta t-if="request.httprequest.path == '/my/employee/discuss'" name="employee-portal-discuss-home" content="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-back-url" content="/my/employee/discuss"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-home-url" content="/my/employee"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="manifest" href="/my/employee/discuss/manifest.webmanifest" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="manifest" href="/my/employee/manifest.webmanifest" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-capable" content="yes"/>
-            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-title" content="Chats"/>
-            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="application-name" content="Chats"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/chats-180.png"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/chats-64.png"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-title" content="ABSAR Employee"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="application-name" content="ABSAR Employee"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-discuss-company-logo" t-att-content="'/web/image/res.company/%s/logo_web' % request.env.company.id"/>
         </xpath>
     </template>

@@ -6,6 +6,7 @@
 
 (() => {
     const APP_ROOT = "/my/employee/discuss";
+    const PORTAL_ROOT = "/my/employee";
     const normalizedPath = () => window.location.pathname.replace(/\/+$/, "") || "/";
     const isDiscussSurface = () => normalizedPath().startsWith(APP_ROOT);
     const isCanonicalHome = () => normalizedPath() === APP_ROOT;
@@ -31,14 +32,14 @@
         if (!document.querySelector('link[rel="manifest"][data-employee-discuss-pwa]')) {
             const link = document.createElement("link");
             link.rel = "manifest";
-            link.href = `${APP_ROOT}/manifest.webmanifest`;
+            link.href = `${PORTAL_ROOT}/manifest.webmanifest`;
             link.dataset.employeeDiscussPwa = "1";
             document.head.appendChild(link);
         }
         ensureMeta("theme-color", "#ffffff");
         ensureMeta("apple-mobile-web-app-capable", "yes");
-        ensureMeta("apple-mobile-web-app-title", "Chats");
-        ensureMeta("application-name", "Chats");
+        ensureMeta("apple-mobile-web-app-title", "ABSAR Employee");
+        ensureMeta("application-name", "ABSAR Employee");
     }
 
     // Safari's Add to Dock uses the current document URL/title more heavily than
@@ -50,8 +51,8 @@
         if (document.title !== "Chats") {
             document.title = "Chats";
         }
-        ensureMeta("apple-mobile-web-app-title", "Chats");
-        ensureMeta("application-name", "Chats");
+        ensureMeta("apple-mobile-web-app-title", "ABSAR Employee");
+        ensureMeta("application-name", "ABSAR Employee");
 
         let canonical = document.querySelector('link[rel="canonical"][data-employee-discuss-pwa]');
         if (!canonical) {
@@ -87,7 +88,7 @@
         document.querySelectorAll("[data-ep-discuss-install]").forEach((button) => {
             button.classList.toggle("d-none", installed);
             button.disabled = false;
-            button.title = installed ? "Chats is installed" : "Install Chats";
+            button.title = installed ? "Employee Portal is installed" : "Install Employee Portal";
         });
     }
 
