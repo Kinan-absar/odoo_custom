@@ -350,7 +350,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
     @http.route('/my/employee/discuss/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_discuss_service_worker(self, **kwargs):
         script = '''
-const CACHE_NAME = "employee-native-discuss-pwa-v37";
+const CACHE_NAME = "employee-native-discuss-pwa-v38";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {

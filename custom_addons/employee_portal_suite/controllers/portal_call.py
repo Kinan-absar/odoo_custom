@@ -181,7 +181,7 @@ class PortalCallController(http.Controller):
         try:
             title = 'Incoming Odoo Group Call' if is_group else 'Incoming Odoo Call'
             body = '%s invited you to a group call.' % caller.name if is_group else '%s is calling you.' % caller.name
-            request.env['employee.portal.notification.service'].sudo().send_to_user(
+            request.env['employee.portal.telegram.service'].sudo().send_to_user(
                 target, title, body + ' Open Odoo to answer.', path='/my/employee'
             )
         except Exception:
@@ -190,7 +190,7 @@ class PortalCallController(http.Controller):
 
     def _notify_telegram_missed(self, targets, caller, is_group=False):
         """Best-effort Telegram missed-call alert after a ringing call ends unanswered."""
-        service = request.env['employee.portal.notification.service'].sudo()
+        service = request.env['employee.portal.telegram.service'].sudo()
         title = 'Missed Odoo Group Call' if is_group else 'Missed Odoo Call'
         for target in targets:
             try:

@@ -244,7 +244,7 @@ class HrAttendance(models.Model):
             )
 
             if employee and employee.user_id:
-                self.env['employee.portal.notification.service'].sudo().send_to_user(
+                self.env['employee.portal.telegram.service'].sudo().send_to_user(
                     employee.user_id,
                     'Automatic clock-out',
                     f'You were automatically checked out by the system at {time_str} because no manual clock-out was recorded.',

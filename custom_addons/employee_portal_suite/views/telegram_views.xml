@@ -4,7 +4,7 @@
         <field name="name">employee.portal.telegram.config.form</field>
         <field name="model">employee.portal.telegram.config</field>
         <field name="arch" type="xml">
-            <form string="Portal Notifications">
+            <form string="Telegram Notifications">
                 <header>
                     <button name="action_test_bot" type="object" string="Test Bot" class="btn-secondary"/>
                     <button name="action_configure_webhook" type="object" string="Configure Webhook &amp; Enable" class="btn-primary"/>
@@ -12,10 +12,9 @@
                 </header>
                 <sheet>
                     <group>
-                        <group string="Optional Telegram Fallback">
+                        <group string="Telegram Bot">
                             <field name="name"/>
                             <field name="enabled"/>
-                            <field name="telegram_fallback_enabled"/>
                             <field name="bot_token" password="True"/>
                             <field name="bot_username" placeholder="absar_approvals_bot"/>
                         </group>
@@ -43,7 +42,7 @@
                         </group>
                     </group>
                     <div class="alert alert-info" role="alert">
-                        Web Push is the primary notification channel for employees and approvers. Telegram is optional fallback only. Approval and attendance reminders work without Telegram once the employee has enabled notifications in Chats. Attendance reminders use each employee's Odoo working schedule and are skipped on non-working days.
+                        Employees and approvers connect their Telegram account from the Employee Portal. Telegram is used only for notifications; approvals remain inside Odoo. Attendance reminders use each employee's Odoo working schedule and are skipped on non-working days.
                     </div>
                 </sheet>
             </form>
@@ -63,13 +62,13 @@
     </record>
 
     <record id="action_employee_portal_telegram_config" model="ir.actions.act_window">
-        <field name="name">Portal Notifications</field>
+        <field name="name">Telegram Notifications</field>
         <field name="res_model">employee.portal.telegram.config</field>
         <field name="view_mode">list,form</field>
     </record>
 
     <menuitem id="menu_employee_portal_telegram_config"
-              name="Portal Notifications"
+              name="Telegram Notifications"
               parent="menu_employee_portal_root"
               action="action_employee_portal_telegram_config"
               sequence="90"

@@ -157,7 +157,7 @@ class EmployeeRequest(models.Model):
                 'author_id': self.env.user.partner_id.id,
             }
             self.env['mail.mail'].sudo().create(mail_values).send()
-        self.env['employee.portal.notification.service'].sudo().send_to_user(
+        self.env['employee.portal.telegram.service'].sudo().send_to_user(
             user, subject, body, f"/my/employee/approvals/{self.id}"
         )
 
@@ -292,7 +292,7 @@ class EmployeeRequest(models.Model):
             rec.message_post(body="Request fully approved.")
             rec._close_activities()
             if rec.employee_id.user_id:
-                rec.env['employee.portal.notification.service'].sudo().send_to_user(
+                rec.env['employee.portal.telegram.service'].sudo().send_to_user(
                     rec.employee_id.user_id,
                     f"Request {rec.name} approved",
                     f"Your request {rec.name} has been fully approved.",
@@ -331,7 +331,7 @@ class EmployeeRequest(models.Model):
             rec.message_post(body="Request rejected.")
             rec._close_activities()
             if rec.employee_id.user_id:
-                rec.env['employee.portal.notification.service'].sudo().send_to_user(
+                rec.env['employee.portal.telegram.service'].sudo().send_to_user(
                     rec.employee_id.user_id,
                     f"Request {rec.name} rejected",
                     f"Your request {rec.name} has been rejected.",

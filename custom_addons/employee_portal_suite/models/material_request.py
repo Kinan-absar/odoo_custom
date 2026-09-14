@@ -687,7 +687,7 @@ class MaterialRequest(models.Model):
                 "author_id": self.env.user.partner_id.id,
             }
             self.env["mail.mail"].sudo().create(mail_values).send()
-        self.env['employee.portal.notification.service'].sudo().send_to_user(
+        self.env['employee.portal.telegram.service'].sudo().send_to_user(
             user, subject, body, f"/my/employee/material/approvals/{self.id}"
         )
 
@@ -835,7 +835,7 @@ class MaterialRequest(models.Model):
             rec.message_post(body="Material Request fully approved.")
             rec.activity_ids.action_done()
             if rec.employee_id.user_id:
-                rec.env['employee.portal.notification.service'].sudo().send_to_user(
+                rec.env['employee.portal.telegram.service'].sudo().send_to_user(
                     rec.employee_id.user_id,
                     f"Material Request {rec.name} approved",
                     f"Your Material Request {rec.name} has been fully approved.",
@@ -872,7 +872,7 @@ class MaterialRequest(models.Model):
             rec.message_post(body="Material Request rejected.")
             rec.activity_ids.action_done()
             if rec.employee_id.user_id:
-                rec.env['employee.portal.notification.service'].sudo().send_to_user(
+                rec.env['employee.portal.telegram.service'].sudo().send_to_user(
                     rec.employee_id.user_id,
                     f"Material Request {rec.name} rejected",
                     f"Your Material Request {rec.name} has been rejected.",

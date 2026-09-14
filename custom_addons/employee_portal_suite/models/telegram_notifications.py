@@ -11,18 +11,13 @@ _logger = logging.getLogger(__name__)
 class EmployeePortalTelegramConfigNotifications(models.Model):
     _inherit = 'employee.portal.telegram.config'
 
-    telegram_fallback_enabled = fields.Boolean(
-        string='Use Telegram as Fallback', default=False,
-        help='Optional legacy fallback. When disabled, employee notifications are delivered by Web Push only.'
-    )
-
     requester_stage_notifications = fields.Boolean(
         string='Notify Requester on Stage Changes', default=True,
         help='Notify the requesting employee when an Employee Request or Material Request moves to a new approval stage.'
     )
     approval_reminders_enabled = fields.Boolean(
         string='Approval Reminders', default=True,
-        help='Send push reminders while a request is waiting for approval.'
+        help='Send Telegram reminders while a request is waiting for approval.'
     )
     approval_reminder_hours = fields.Integer(
         string='First Reminder After (Hours)', default=24,
@@ -120,7 +115,7 @@ class HrAttendanceTelegramReminders(models.Model):
 
     @api.model
     def _send(self, user, title, body):
-        return self.env['employee.portal.notification.service'].sudo().send_to_user(
+        return self.env['employee.portal.telegram.service'].sudo().send_to_user(
             user, title, body, '/my/employee/attendance'
         )
 
@@ -130,7 +125,15 @@ class HrAttendanceTelegramReminders(models.Model):
         if not config:
             return
 
-        users = self.env['employee.portal.notification.service'].sudo().users_with_delivery()
+        push_users = self.env['employee.portal.push.subscription'].sudo().search([
+            ('active', '=', True),
+            ('user_id.active', '=', True),
+        ]).mapped('user_id')
+        telegram_users = self.env['res.users'].sudo().search([
+            ('active', '=', True),
+            ('telegram_chat_id', '!=', False),
+        ])
+        users = push_users | telegram_users
         now_utc = fields.Datetime.now()
 
         for user in users:
@@ -226,7 +229,7 @@ class HrAttendanceTelegramReminders(models.Model):
 
 class TelegramApprovalReminderMixin(models.AbstractModel):
     _name = 'employee.portal.telegram.approval.mixin'
-    _description = 'Employee Portal Approval Reminder Mixin'
+    _description = 'Telegram Approval Reminder Mixin'
 
     telegram_stage_entered_at = fields.Datetime(copy=False, readonly=True)
     telegram_last_approval_reminder_at = fields.Datetime(copy=False, readonly=True)
@@ -271,7 +274,7 @@ class TelegramApprovalReminderMixin(models.AbstractModel):
                 ('active', '=', True),
             ], order='id desc', limit=1)
             if config and config.requester_stage_notifications:
-                service = self.env['employee.portal.notification.service'].sudo()
+                service = self.env['employee.portal.telegram.service'].sudo()
                 for rec in self:
                     requester = rec._telegram_requester_user()
                     if requester:
@@ -291,7 +294,7 @@ class TelegramApprovalReminderMixin(models.AbstractModel):
         every cron run.  On a busy database that could keep the scheduled action
         alive long enough to block module upgrades.  This version uses date
         domains, small batches and records an attempted reminder timestamp so a
-        temporarily unreachable notification recipient cannot be retried in a tight
+        temporarily unreachable Telegram recipient cannot be retried in a tight
         loop every cron cycle.
         """
         config = self.env['employee.portal.telegram.config'].sudo().search([
@@ -311,7 +314,7 @@ class TelegramApprovalReminderMixin(models.AbstractModel):
         escalate_after = timedelta(hours=max(config.approval_escalation_hours, 1))
         first_cutoff = now - first_after
         repeat_cutoff = now - repeat_after
-        service = self.env['employee.portal.notification.service'].sudo()
+        service = self.env['employee.portal.telegram.service'].sudo()
 
         entered_due = [
             '|',
