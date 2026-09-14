@@ -70,8 +70,8 @@
                                         <img t-if="emp_user['avatar']" t-att-src="emp_user['avatar']"/>
                                         <span t-if="not emp_user['avatar']" class="ep-native-avatar-fallback"><i class="fa fa-user"/></span>
                                         <span class="ep-native-person-copy">
-                                            <span t-esc="emp_user['name']"/>
-                                            <small t-att-class="'ep-native-presence ep-native-presence-%s' % emp_user['presence']"><span class="ep-native-presence-dot"/><t t-esc="emp_user['presence_label']"/></small>
+                                            <span t-out="emp_user['name']"/>
+                                            <small t-att-class="'ep-native-presence ep-native-presence-%s' % emp_user['presence']"><span class="ep-native-presence-dot"/><t t-out="emp_user['presence_label']"/></small>
                                         </span>
                                     </label>
                                 </t>
@@ -93,11 +93,11 @@
                                     <span t-if="not ch['avatar']" class="ep-chats-avatar-fallback">G</span>
                                 </div>
                                 <div class="ep-chats-thread-copy">
-                                    <strong t-esc="ch['name']"/>
+                                    <strong t-out="ch['name']"/>
                                     <small t-if="ch['is_group']">Group conversation</small>
-                                    <small t-if="not ch['is_group']" t-att-class="'ep-native-presence ep-native-presence-%s' % ch['presence']"><span class="ep-native-presence-dot"/><t t-esc="ch['presence_label']"/></small>
+                                    <small t-if="not ch['is_group']" t-att-class="'ep-native-presence ep-native-presence-%s' % ch['presence']"><span class="ep-native-presence-dot"/><t t-out="ch['presence_label']"/></small>
                                 </div>
-                                <span t-if="ch['unread']" class="ep-native-thread-unread" t-esc="ch['unread']"/>
+                                <span t-if="ch['unread']" class="ep-native-thread-unread" t-out="ch['unread']"/>
                             </a>
                         </t>
                         <div t-if="not channels" class="ep-native-empty"><strong>No conversations yet</strong><span>Start a conversation with an employee.</span></div>
@@ -239,14 +239,16 @@
         <xpath expr="//head" position="inside">
             <t t-if="request.httprequest.path.startswith('/my/employee/discuss')">
                 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-                <link rel="manifest" href="/my/employee/manifest.webmanifest?v=40" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
+                <link rel="manifest" href="/my/employee/manifest.webmanifest?v=42" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
                 <meta name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
                 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
                 <meta name="apple-mobile-web-app-title" content="ABSAR Employee"/>
                 <meta name="application-name" content="ABSAR Employee"/>
-                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=40"/>
-                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=40"/>
+                <link rel="apple-touch-icon" href="/employee_portal_suite/static/icons/apple-touch-icon.png?v=42" data-employee-portal-touch-icon="1"/>
+                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=42" data-employee-portal-touch-icon="1"/>
+                <link rel="apple-touch-icon-precomposed" href="/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=42" data-employee-portal-touch-icon="1"/>
+                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=42"/>
             </t>
         </xpath>
     </template>
@@ -292,13 +294,15 @@
             <meta t-if="request.httprequest.path == '/my/employee/discuss'" name="employee-portal-discuss-home" content="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-back-url" content="/my/employee/discuss"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-home-url" content="/my/employee"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="manifest" href="/my/employee/manifest.webmanifest?v=40" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="manifest" href="/my/employee/manifest.webmanifest?v=42" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-capable" content="yes"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-title" content="ABSAR Employee"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="application-name" content="ABSAR Employee"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=40"/>
-            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=40"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon" href="/employee_portal_suite/static/icons/apple-touch-icon.png?v=42" data-employee-portal-touch-icon="1"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=42" data-employee-portal-touch-icon="1"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon-precomposed" href="/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=42" data-employee-portal-touch-icon="1"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=42"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-discuss-company-logo" t-att-content="'/web/image/res.company/%s/logo_web' % request.env.company.id"/>
         </xpath>
     </template>

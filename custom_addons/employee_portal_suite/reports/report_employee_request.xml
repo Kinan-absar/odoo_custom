@@ -19,33 +19,33 @@
                             <table class="table table-sm mt-3">
                                 <tr>
                                     <th>Request Number:</th>
-                                    <td><t t-esc="doc.name"/></td>
+                                    <td><t t-out="doc.name"/></td>
                                 </tr>
 
                                 <tr>
                                     <th>Employee:</th>
-                                    <td><t t-esc="doc.employee_id.name"/></td>
+                                    <td><t t-out="doc.employee_id.name"/></td>
                                 </tr>
 
                                 <tr>
                                     <th>Manager:</th>
-                                    <td><t t-esc="doc.manager_id.name"/></td>
+                                    <td><t t-out="doc.manager_id.name"/></td>
                                 </tr>
 
                                 <tr>
                                     <th>Request Type:</th>
-                                    <td><t t-esc="doc.get_request_type_display()"/></td>
+                                    <td><t t-out="doc.get_request_type_display()"/></td>
                                 </tr>
 
                                 <tr>
                                     <th>Date:</th>
-                                    <td><t t-esc="doc.request_date"/></td>
+                                    <td><t t-out="doc.request_date"/></td>
                                 </tr>
                             </table>
 
                             <!-- DESCRIPTION -->
                             <h4 class="mt-4">Description</h4>
-                            <p><t t-esc="doc.description"/></p>
+                            <p><t t-out="doc.description"/></p>
 
                             <!-- APPROVAL HISTORY -->
                             <h4 class="mt-4">Approval Timeline</h4>
@@ -62,39 +62,39 @@
 
                                     <tr>
                                         <td>Manager</td>
-                                        <td><t t-esc="doc.manager_approved_by.name or ''"/></td>
-                                        <td><t t-esc="doc.manager_approved_date or ''"/></td>
-                                        <td><t t-esc="doc.manager_comment or ''"/></td>
+                                        <td><t t-out="doc.manager_approved_by.name or ''"/></td>
+                                        <td><t t-out="doc.manager_approved_date or ''"/></td>
+                                        <td><t t-out="doc.manager_comment or ''"/></td>
                                     </tr>
 
                                     <tr>
                                         <td>HR</td>
-                                        <td><t t-esc="doc.hr_approved_by.name or ''"/></td>
-                                        <td><t t-esc="doc.hr_approved_date or ''"/></td>
-                                        <td><t t-esc="doc.hr_comment or ''"/></td>
+                                        <td><t t-out="doc.hr_approved_by.name or ''"/></td>
+                                        <td><t t-out="doc.hr_approved_date or ''"/></td>
+                                        <td><t t-out="doc.hr_comment or ''"/></td>
                                     </tr>
 
                                     <tr>
                                         <td>Finance</td>
-                                        <td><t t-esc="doc.finance_approved_by.name or ''"/></td>
-                                        <td><t t-esc="doc.finance_approved_date or ''"/></td>
-                                        <td><t t-esc="doc.finance_comment or ''"/></td>
+                                        <td><t t-out="doc.finance_approved_by.name or ''"/></td>
+                                        <td><t t-out="doc.finance_approved_date or ''"/></td>
+                                        <td><t t-out="doc.finance_comment or ''"/></td>
                                     </tr>
 
                                     <tr>
                                         <td>CEO</td>
-                                        <td><t t-esc="doc.ceo_approved_by.name or ''"/></td>
-                                        <td><t t-esc="doc.ceo_approved_date or ''"/></td>
-                                        <td><t t-esc="doc.ceo_comment or ''"/></td>
+                                        <td><t t-out="doc.ceo_approved_by.name or ''"/></td>
+                                        <td><t t-out="doc.ceo_approved_date or ''"/></td>
+                                        <td><t t-out="doc.ceo_comment or ''"/></td>
                                     </tr>
 
                                     <!-- REJECTED -->
                                     <t t-if="doc.state == 'rejected'">
                                         <tr style="color:red;">
                                             <td><strong>Rejected</strong></td>
-                                            <td><t t-esc="doc.rejected_by.name if doc.rejected_by else ''"/></td>
-                                            <td><t t-esc="doc.write_date"/></td>
-                                            <td><t t-esc="doc.manager_comment or doc.hr_comment or doc.finance_comment or doc.ceo_comment"/></td>
+                                            <td><t t-out="doc.rejected_by.name if doc.rejected_by else ''"/></td>
+                                            <td><t t-out="doc.write_date"/></td>
+                                            <td><t t-out="doc.manager_comment or doc.hr_comment or doc.finance_comment or doc.ceo_comment"/></td>
                                         </tr>
                                     </t>
 

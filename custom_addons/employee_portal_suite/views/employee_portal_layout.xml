@@ -74,7 +74,7 @@
                     content: "";
                     position: fixed;
                     inset: 0;
-                    background-image: url('/web/image/res.company/<t t-esc="request.env.company.id"/>/logo');
+                    background-image: url('/web/image/res.company/<t t-out="request.env.company.id"/>/logo');
                     background-repeat: no-repeat;
                     background-position: center;
                     background-size: min(55vw, 420px);
@@ -1468,7 +1468,7 @@
                     });
                 </script>
                 <div class="ep-sidebar-bottom"><div class="ep-sidebar-profile">
-                    <button type="button" class="ep-sidebar-profile-btn" onclick="document.getElementById('ep-profile-menu').classList.toggle('show')"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"/><span><span class="ep-sidebar-profile-name d-block" t-esc="request.env.user.name"/><span class="ep-sidebar-profile-role d-block" t-esc="request.env.user.employee_id.job_title or 'Employee'"/></span><i class="fa fa-angle-up ms-auto"/></button>
+                    <button type="button" class="ep-sidebar-profile-btn" onclick="document.getElementById('ep-profile-menu').classList.toggle('show')"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"/><span><span class="ep-sidebar-profile-name d-block" t-out="request.env.user.name"/><span class="ep-sidebar-profile-role d-block" t-out="request.env.user.employee_id.job_title or 'Employee'"/></span><i class="fa fa-angle-up ms-auto"/></button>
                     <div id="ep-profile-menu" class="ep-profile-menu"><a href="/my/employee/profile"><i class="fa fa-user"/>Edit info</a><a href="/web/session/logout"><i class="fa fa-sign-out"/>Logout</a></div>
                 </div></div>
             </aside>
@@ -1560,7 +1560,7 @@
                             Welcome back
                         </div>
                         <div style="font-size:20px; font-weight:700; color:var(--text-primary); letter-spacing:-0.03em;">
-                            <t t-esc="request.env.user.partner_id.name.split(' ')[0]"/>
+                            <t t-out="request.env.user.partner_id.name.split(' ')[0]"/>
                             <span style="color:var(--app-primary);">!</span>
                         </div>
                     </div>
@@ -1590,7 +1590,7 @@
                         <t t-if="not ann.group_ids or request.env.user.groups_id &amp; ann.group_ids">
                             <div t-attf-class="portal-announcement alert alert-#{ann.color}">
                                 <div class="fw-bold mb-1">
-                                    <t t-esc="ann.name"/>
+                                    <t t-out="ann.name"/>
                                 </div>
                                 <div>
                                     <t t-out="ann.message"/>
@@ -1602,7 +1602,7 @@
                                             <t t-set="view_url" t-value="'/my/employee/announcements/%s/attachments/%s/view' % (ann.id, attachment.id)"/>
                                             <a class="portal-announcement-file" t-att-href="view_url" target="_blank">
                                                 <i class="fa fa-paperclip me-1"/>
-                                                <t t-esc="attachment.name"/>
+                                                <t t-out="attachment.name"/>
                                             </a>
                                         </t>
                                     </div>
@@ -1889,10 +1889,10 @@
                                 <i class="fa fa-bell"></i>
                             </div>
                             <span class="ep-bell-item-label">
-                                <t t-esc="ep_item[1]['label']"/>
+                                <t t-out="ep_item[1]['label']"/>
                             </span>
                             <span class="ep-bell-item-count">
-                                <t t-esc="ep_item[1]['new']"/> new
+                                <t t-out="ep_item[1]['new']"/> new
                             </span>
                         </a>
                     </t>
@@ -1906,17 +1906,21 @@
     <template id="employee_portal_pwa_web_head" inherit_id="web.layout" name="Employee Portal PWA Head">
         <xpath expr="//head" position="inside">
             <t t-if="request.httprequest.path.startswith('/my/employee')">
-                <link rel="manifest" href="/my/employee/manifest.webmanifest?v=41" crossorigin="use-credentials" data-employee-portal-pwa="1"/>
+                <link rel="manifest" href="/my/employee/manifest.webmanifest?v=42" crossorigin="use-credentials" data-employee-portal-pwa="1"/>
                 <meta name="theme-color" content="#0f766e" data-employee-portal-pwa="1"/>
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
                 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
                 <meta name="apple-mobile-web-app-title" content="ABSAR Employee"/>
                 <meta name="application-name" content="ABSAR Employee"/>
-                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=41"/>
-                <link rel="shortcut icon" type="image/x-icon" href="/employee_portal_suite/static/icons/portal-favicon-v41.ico?v=41" data-employee-portal-icon="1"/>
-                <link rel="icon" type="image/png" sizes="16x16" href="/employee_portal_suite/static/icons/portal-16.png?v=41" data-employee-portal-icon="1"/>
-                <link rel="icon" type="image/png" sizes="32x32" href="/employee_portal_suite/static/icons/portal-32.png?v=41" data-employee-portal-icon="1"/>
-                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=41" data-employee-portal-icon="1"/>
+                <!-- iOS/Safari: provide both unsized and sized touch icons so the
+                     Employee Portal wins over Odoo's generic webclip icon. -->
+                <link rel="apple-touch-icon" href="/employee_portal_suite/static/icons/apple-touch-icon.png?v=42" data-employee-portal-touch-icon="1"/>
+                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=42" data-employee-portal-touch-icon="1"/>
+                <link rel="apple-touch-icon-precomposed" href="/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=42" data-employee-portal-touch-icon="1"/>
+                <link rel="shortcut icon" type="image/x-icon" href="/employee_portal_suite/static/icons/portal-favicon-v42.ico?v=42" data-employee-portal-icon="1"/>
+                <link rel="icon" type="image/png" sizes="16x16" href="/employee_portal_suite/static/icons/portal-16.png?v=42" data-employee-portal-icon="1"/>
+                <link rel="icon" type="image/png" sizes="32x32" href="/employee_portal_suite/static/icons/portal-32.png?v=42" data-employee-portal-icon="1"/>
+                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=42" data-employee-portal-icon="1"/>
             </t>
         </xpath>
     </template>

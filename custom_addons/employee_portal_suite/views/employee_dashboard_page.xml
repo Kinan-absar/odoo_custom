@@ -519,11 +519,11 @@
 
 
                 <section class="needs-attention mb-4">
-                    <div class="attention-head"><div><div class="attention-kicker">NEEDS YOUR ATTENTION</div><h3 class="attention-title">Things waiting for you</h3></div><div class="attention-total"><t t-esc="employee_pending_count + material_pending_count + pending_sign_count"/> pending</div></div>
+                    <div class="attention-head"><div><div class="attention-kicker">NEEDS YOUR ATTENTION</div><h3 class="attention-title">Things waiting for you</h3></div><div class="attention-total"><t t-out="employee_pending_count + material_pending_count + pending_sign_count"/> pending</div></div>
                     <div class="attention-grid">
-                        <t t-if="employee_pending_count &gt; 0"><a href="/my/employee/approvals" class="attention-item"><span class="attention-icon"><i class="fa fa-user"/></span><span><strong><t t-esc="employee_pending_count"/> Employee Request<t t-if="employee_pending_count != 1">s</t></strong><small>Waiting for your approval</small></span><i class="fa fa-angle-right ms-auto"/></a></t>
-                        <t t-if="material_pending_count &gt; 0"><a href="/my/employee/material/approvals" class="attention-item"><span class="attention-icon warning"><i class="fa fa-cubes"/></span><span><strong><t t-esc="material_pending_count"/> Material Request<t t-if="material_pending_count != 1">s</t></strong><small>Waiting for your action</small></span><i class="fa fa-angle-right ms-auto"/></a></t>
-                        <t t-if="pending_sign_count &gt; 0"><a href="/my/employee/sign" class="attention-item"><span class="attention-icon dark"><i class="fa fa-pencil-square-o"/></span><span><strong><t t-esc="pending_sign_count"/> Document<t t-if="pending_sign_count != 1">s</t></strong><small>Requires your signature</small></span><i class="fa fa-angle-right ms-auto"/></a></t>
+                        <t t-if="employee_pending_count &gt; 0"><a href="/my/employee/approvals" class="attention-item"><span class="attention-icon"><i class="fa fa-user"/></span><span><strong><t t-out="employee_pending_count"/> Employee Request<t t-if="employee_pending_count != 1">s</t></strong><small>Waiting for your approval</small></span><i class="fa fa-angle-right ms-auto"/></a></t>
+                        <t t-if="material_pending_count &gt; 0"><a href="/my/employee/material/approvals" class="attention-item"><span class="attention-icon warning"><i class="fa fa-cubes"/></span><span><strong><t t-out="material_pending_count"/> Material Request<t t-if="material_pending_count != 1">s</t></strong><small>Waiting for your action</small></span><i class="fa fa-angle-right ms-auto"/></a></t>
+                        <t t-if="pending_sign_count &gt; 0"><a href="/my/employee/sign" class="attention-item"><span class="attention-icon dark"><i class="fa fa-pencil-square-o"/></span><span><strong><t t-out="pending_sign_count"/> Document<t t-if="pending_sign_count != 1">s</t></strong><small>Requires your signature</small></span><i class="fa fa-angle-right ms-auto"/></a></t>
                         <t t-if="employee_pending_count + material_pending_count + pending_sign_count == 0"><div class="attention-clear"><i class="fa fa-check-circle"/><div><strong>You're all caught up</strong><small>No pending actions right now.</small></div></div></t>
                     </div>
                 </section>
@@ -541,7 +541,7 @@
                             <div class="card-bottom">
                                 <div class="card-bottom-number-row">
                                     <span class="card-number">
-                                        <t t-esc="my_request_count"/>
+                                        <t t-out="my_request_count"/>
                                     </span>
                                 </div>
                             </div>
@@ -563,7 +563,7 @@
                             <div class="card-bottom">
                                 <div class="card-bottom-number-row">
                                     <span class="card-number">
-                                        <t t-esc="my_material_count"/>
+                                        <t t-out="my_material_count"/>
                                     </span>
                                 </div>
                             </div>
@@ -591,7 +591,7 @@
                                 <div class="card-bottom">
                                     <div class="card-bottom-number-row">
                                         <span class="card-number">
-                                            <t t-esc="employee_pending_count"/>
+                                            <t t-out="employee_pending_count"/>
                                         </span>
                                         <t t-if="employee_pending_count &gt; 0">
                                             <span class="badge-pulse bg-success"></span>
@@ -602,7 +602,7 @@
                                             <span class="card-new-pill-dot"></span>
                                             <t t-if="new_employee_pending_count == 1">New approval waiting</t>
                                             <t t-if="new_employee_pending_count &gt; 1">
-                                                <t t-esc="new_employee_pending_count"/> new approvals waiting
+                                                <t t-out="new_employee_pending_count"/> new approvals waiting
                                             </t>
                                         </span>
                                     </t>
@@ -633,7 +633,7 @@
                                 <div class="card-bottom">
                                     <div class="card-bottom-number-row">
                                         <span class="card-number">
-                                            <t t-esc="material_pending_count"/>
+                                            <t t-out="material_pending_count"/>
                                         </span>
                                         <t t-if="material_pending_count &gt; 0">
                                             <span class="badge-pulse"></span>
@@ -644,7 +644,7 @@
                                             <span class="card-new-pill-dot"></span>
                                             <t t-if="new_material_pending_count == 1">New approval waiting</t>
                                             <t t-if="new_material_pending_count &gt; 1">
-                                                <t t-esc="new_material_pending_count"/> new approvals waiting
+                                                <t t-out="new_material_pending_count"/> new approvals waiting
                                             </t>
                                         </span>
                                     </t>
@@ -668,7 +668,7 @@
                             <div class="card-bottom">
                                 <div class="card-bottom-number-row">
                                     <span class="card-number">
-                                        <t t-esc="pending_sign_count"/>
+                                        <t t-out="pending_sign_count"/>
                                     </span>
                                 </div>
                                 <t t-if="new_pending_sign_count &gt; 0">
@@ -676,7 +676,7 @@
                                         <span class="card-new-pill-dot"></span>
                                         <t t-if="new_pending_sign_count == 1">New document to sign</t>
                                         <t t-if="new_pending_sign_count &gt; 1">
-                                            <t t-esc="new_pending_sign_count"/> new documents to sign
+                                            <t t-out="new_pending_sign_count"/> new documents to sign
                                         </t>
                                     </span>
                                 </t>
@@ -699,7 +699,7 @@
                                 <div class="card-bottom">
                                     <div class="card-bottom-number-row">
                                         <span class="card-number">
-                                            <t t-esc="salary_report_count"/>
+                                            <t t-out="salary_report_count"/>
                                         </span>
                                     </div>
                                     <t t-if="new_salary_report_count &gt; 0">
@@ -707,7 +707,7 @@
                                             <span class="card-new-pill-dot"></span>
                                             <t t-if="new_salary_report_count == 1">New report added</t>
                                             <t t-if="new_salary_report_count &gt; 1">
-                                                <t t-esc="new_salary_report_count"/> new reports added
+                                                <t t-out="new_salary_report_count"/> new reports added
                                             </t>
                                         </span>
                                     </t>
@@ -732,7 +732,7 @@
                                 <div class="card-bottom">
                                     <div class="card-bottom-number-row">
                                         <span class="card-number">
-                                            <t t-esc="portal_report_count"/>
+                                            <t t-out="portal_report_count"/>
                                         </span>
                                     </div>
                                     <t t-if="new_portal_report_count &gt; 0">
@@ -740,7 +740,7 @@
                                             <span class="card-new-pill-dot"></span>
                                             <t t-if="new_portal_report_count == 1">New report added</t>
                                             <t t-if="new_portal_report_count &gt; 1">
-                                                <t t-esc="new_portal_report_count"/> new reports added
+                                                <t t-out="new_portal_report_count"/> new reports added
                                             </t>
                                         </span>
                                     </t>
@@ -816,11 +816,11 @@
                                 <t t-if="act._name == 'material.request'">
                                     Material Request
                                 </t>
-                                <strong><t t-esc="act.name"/></strong>
+                                <strong><t t-out="act.name"/></strong>
                             </div>
 
                             <div class="activity-time">
-                                <t t-esc="act.create_date.strftime('%d %b %Y - %H:%M')"/>
+                                <t t-out="act.create_date.strftime('%d %b %Y - %H:%M')"/>
                             </div>
 
                         </div>
@@ -828,7 +828,7 @@
                         <!-- STATUS -->
                         <div class="activity-status"
                             t-att-class="'activity-status state-' + act.state">
-                            <t t-esc="act.state.replace('_',' ').title()"/>
+                            <t t-out="act.state.replace('_',' ').title()"/>
                         </div>
 
                     </a>

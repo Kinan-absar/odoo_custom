@@ -335,8 +335,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
             "background_color": "#ffffff",
             "theme_color": "#ffffff",
             "icons": [
-                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=41", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=41", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=42", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=42", "sizes": "512x512", "type": "image/png", "purpose": "any"},
             ],
         }
         return request.make_response(
@@ -372,8 +372,8 @@ self.addEventListener("push", (event) => {
     const kind = data.kind || "message";
     const options = {
         body: data.body || "",
-        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=41",
-        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=41",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=42",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=42",
         tag: data.tag || `employee-chats-${kind}`,
         renotify: kind === "call" || kind === "video_call",
         requireInteraction: kind === "call" || kind === "video_call",
@@ -416,8 +416,8 @@ self.addEventListener("notificationclick", (event) => {
             "background_color": "#ffffff",
             "theme_color": "#0f766e",
             "icons": [
-                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=41", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=41", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=42", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=42", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
             ],
         }
         return request.make_response(
@@ -431,7 +431,7 @@ self.addEventListener("notificationclick", (event) => {
     @http.route('/my/employee/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_portal_service_worker(self, **kwargs):
         script = r'''
-const CACHE_NAME = "employee-portal-pwa-v41";
+const CACHE_NAME = "employee-portal-pwa-v42";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
@@ -453,8 +453,8 @@ self.addEventListener("push", (event) => {
     const kind = data.kind || "activity";
     const options = {
         body: data.body || "",
-        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=41",
-        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=41",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=42",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=42",
         tag: data.tag || `employee-portal-${kind}`,
         renotify: kind === "call" || kind === "video_call",
         requireInteraction: kind === "call" || kind === "video_call",

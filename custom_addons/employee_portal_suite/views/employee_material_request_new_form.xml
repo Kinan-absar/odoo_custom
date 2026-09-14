@@ -66,7 +66,7 @@
         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
         <t t-if="error_message">
-            <div class="alert alert-danger" role="alert"><t t-esc="error_message"/></div>
+            <div class="alert alert-danger" role="alert"><t t-out="error_message"/></div>
         </t>
 
         <div class="form-group mt-3">
@@ -80,7 +80,7 @@
                 <select name="project_id" class="form-select" required="1">
                     <option value="">Select project…</option>
                     <t t-foreach="projects" t-as="project">
-                        <option t-att-value="project.id"><t t-esc="project.display_name"/></option>
+                        <option t-att-value="project.id"><t t-out="project.display_name"/></option>
                     </t>
                 </select>
             </t>
@@ -132,7 +132,7 @@
                                 <option value="">Select…</option>
                                 <t t-foreach="uoms" t-as="u">
                                     <option t-att-value="u.id">
-                                        <t t-esc="u.name"/>
+                                        <t t-out="u.name"/>
                                     </option>
                                 </t>
                             </select>
@@ -191,7 +191,7 @@
                t-att-value="request.csrf_token()"/>
 
         <t t-if="error_message">
-            <div class="alert alert-danger" role="alert"><t t-esc="error_message"/></div>
+            <div class="alert alert-danger" role="alert"><t t-out="error_message"/></div>
         </t>
 
         <div class="form-group mt-3">
@@ -205,7 +205,7 @@
                 <select name="project_id" class="form-select" required="1">
                     <option value="">اختر المشروع…</option>
                     <t t-foreach="projects" t-as="project">
-                        <option t-att-value="project.id"><t t-esc="project.display_name"/></option>
+                        <option t-att-value="project.id"><t t-out="project.display_name"/></option>
                     </t>
                 </select>
             </t>
@@ -257,7 +257,7 @@
                                 <option value="">اختر…</option>
                                 <t t-foreach="uoms" t-as="u">
                                     <option t-att-value="u.id">
-                                        <t t-esc="u.name"/>
+                                        <t t-out="u.name"/>
                                     </option>
                                 </t>
                             </select>

@@ -290,9 +290,9 @@
                         <div class="status-title">You're Clocked In</div>
                         <div class="status-sub">
                             Since
-                            <t t-esc="fmt_dt(open_attendance.check_in, '%I:%M %p')"/>
+                            <t t-out="fmt_dt(open_attendance.check_in, '%I:%M %p')"/>
                             ·
-                            <t t-esc="fmt_dt(open_attendance.check_in, '%d %b %Y')"/>
+                            <t t-out="fmt_dt(open_attendance.check_in, '%d %b %Y')"/>
                         </div>
                         <form action="/my/employee/attendance/check_out" method="post" id="checkout-form">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -414,13 +414,13 @@
                 <div class="today-stats">
                     <div class="stat-card">
                         <div class="stat-value">
-                            <t t-esc="'%dh %dm' % (int(today_hours), int((today_hours % 1) * 60))"/>
+                            <t t-out="'%dh %dm' % (int(today_hours), int((today_hours % 1) * 60))"/>
                         </div>
                         <div class="stat-label">Today's Hours</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">
-                            <t t-esc="'Active' if is_checked_in else 'Inactive'"/>
+                            <t t-out="'Active' if is_checked_in else 'Inactive'"/>
                         </div>
                         <div class="stat-label">Current Status</div>
                     </div>
@@ -442,7 +442,7 @@
 
                                 <div class="history-content">
                                     <div class="history-date">
-                                        <t t-esc="fmt_dt(att.check_in, '%A, %d %b %Y')"/>
+                                        <t t-out="fmt_dt(att.check_in, '%A, %d %b %Y')"/>
                                         <!-- Outside-location checkout flag -->
                                         <t t-if="att.checkout_outside_location">
                                             <span style="
@@ -458,13 +458,13 @@
                                         <t t-if="att.check_in_project_id">
                                             <span style="font-weight:700;color:#4F46E5;">
                                                 <i class="fa fa-map-marker me-1"></i>
-                                                <t t-esc="att.check_in_project_id.display_name"/>
+                                                <t t-out="att.check_in_project_id.display_name"/>
                                             </span>
                                             &amp;nbsp;·&amp;nbsp;
                                         </t>
-                                        In: <t t-esc="fmt_dt(att.check_in, '%I:%M %p')"/>
+                                        In: <t t-out="fmt_dt(att.check_in, '%I:%M %p')"/>
                                         <t t-if="att.check_out">
-                                            &amp;nbsp;·&amp;nbsp; Out: <t t-esc="fmt_dt(att.check_out, '%I:%M %p')"/>
+                                            &amp;nbsp;·&amp;nbsp; Out: <t t-out="fmt_dt(att.check_out, '%I:%M %p')"/>
                                         </t>
                                         <t t-if="not att.check_out">
                                             &amp;nbsp;·&amp;nbsp; <span style="color:#D97706;">Still active</span>
@@ -474,7 +474,7 @@
 
                                 <div class="history-hours">
                                     <t t-if="att.check_out">
-                                        <t t-esc="'%dh %dm' % (int(att.worked_hours), int((att.worked_hours % 1) * 60))"/>
+                                        <t t-out="'%dh %dm' % (int(att.worked_hours), int((att.worked_hours % 1) * 60))"/>
                                     </t>
                                     <t t-if="not att.check_out">
                                         <span style="color:#D97706;">—</span>

@@ -34,12 +34,12 @@
                                 </t>
                                 <t t-foreach="reports" t-as="report">
                                     <tr>
-                                        <td><t t-esc="report.name"/></td>
-                                        <td><t t-esc="report.date_from"/> to <t t-esc="report.date_to"/></td>
-                                        <td class="text-end"><t t-esc="report.total_employees"/></td>
-                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(report.total_gross_salary)"/></td>
-                                        <td class="text-end fw-bold"><t t-esc="'{:,.2f}'.format(report.total_net_salary)"/></td>
-                                        <td><span class="badge bg-secondary"><t t-esc="dict(report._fields['state'].selection).get(report.state)"/></span></td>
+                                        <td><t t-out="report.name"/></td>
+                                        <td><t t-out="report.date_from"/> to <t t-out="report.date_to"/></td>
+                                        <td class="text-end"><t t-out="report.total_employees"/></td>
+                                        <td class="text-end"><t t-out="'{:,.2f}'.format(report.total_gross_salary)"/></td>
+                                        <td class="text-end fw-bold"><t t-out="'{:,.2f}'.format(report.total_net_salary)"/></td>
+                                        <td><span class="badge bg-secondary"><t t-out="dict(report._fields['state'].selection).get(report.state)"/></span></td>
                                         <td class="text-end">
                                             <a t-att-href="'/my/employee/salary-reports/%s' % report.id" class="btn btn-sm btn-primary">View</a>
                                         </td>
@@ -61,12 +61,12 @@
                     <div>
                         <h3 class="mb-1">Salary Report</h3>
                         <p class="text-muted mb-0">
-                            Period: <strong><t t-esc="report.date_from"/> to <t t-esc="report.date_to"/></strong>
+                            Period: <strong><t t-out="report.date_from"/> to <t t-out="report.date_to"/></strong>
                             <t t-if="report.employee_tag_ids">
-                                | Tags: <strong><t t-esc="', '.join(report.employee_tag_ids.mapped('name'))"/></strong>
+                                | Tags: <strong><t t-out="', '.join(report.employee_tag_ids.mapped('name'))"/></strong>
                             </t>
                             <t t-if="report.work_location_ids">
-                                | Work Location Filter: <strong><t t-esc="', '.join(report.work_location_ids.mapped('name'))"/></strong>
+                                | Work Location Filter: <strong><t t-out="', '.join(report.work_location_ids.mapped('name'))"/></strong>
                             </t>
                         </p>
                     </div>
@@ -96,18 +96,18 @@
                 </t>
 
                 <div class="row g-3 mb-4">
-                    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Employees</small><strong><t t-esc="report.total_employees"/></strong></div></div>
-                    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Gross</small><strong><t t-esc="'{:,.2f}'.format(report.total_gross_salary)"/></strong></div></div>
-                    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Deductions</small><strong><t t-esc="'{:,.2f}'.format(report.total_attendance_deductions + report.total_other_deductions)"/></strong></div></div>
-                    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Net</small><strong><t t-esc="'{:,.2f}'.format(report.total_net_salary)"/></strong></div></div>
+                    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Employees</small><strong><t t-out="report.total_employees"/></strong></div></div>
+                    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Gross</small><strong><t t-out="'{:,.2f}'.format(report.total_gross_salary)"/></strong></div></div>
+                    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Deductions</small><strong><t t-out="'{:,.2f}'.format(report.total_attendance_deductions + report.total_other_deductions)"/></strong></div></div>
+                    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Net</small><strong><t t-out="'{:,.2f}'.format(report.total_net_salary)"/></strong></div></div>
                 </div>
 
                 <t t-set="row_num" t-value="0"/>
                 <t t-foreach="groups" t-as="group">
                     <div class="card border-0 shadow-sm mb-4">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                            <strong>Work Location: <t t-esc="group['name']"/></strong>
-                            <span class="text-muted"><t t-esc="group['employee_count']"/> Employees</span>
+                            <strong>Work Location: <t t-out="group['name']"/></strong>
+                            <span class="text-muted"><t t-out="group['employee_count']"/> Employees</span>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-sm mb-0 align-middle">
@@ -127,19 +127,19 @@
                                     <t t-foreach="group['lines']" t-as="line">
                                         <t t-set="row_num" t-value="row_num + 1"/>
                                         <tr>
-                                            <td><t t-esc="row_num"/></td>
-                                            <td><t t-esc="line.employee_id.name"/></td>
-                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.gross_salary)"/></td>
-                                            <td class="text-end"><t t-esc="'{:,.2f}'.format(line.attendance_deduction)"/></td>
+                                            <td><t t-out="row_num"/></td>
+                                            <td><t t-out="line.employee_id.name"/></td>
+                                            <td class="text-end"><t t-out="'{:,.2f}'.format(line.gross_salary)"/></td>
+                                            <td class="text-end"><t t-out="'{:,.2f}'.format(line.attendance_deduction)"/></td>
                                             <td class="text-end" style="min-width: 135px;">
                                                 <input t-if="can_edit_salary_lines" type="number" name="other_deductions" min="0" step="0.01" t-att-value="line.other_deductions" t-att-form="'salary-line-update-%s' % line.id" class="form-control form-control-sm text-end ms-auto" style="width: 105px;"/>
-                                                <span t-else="" class="text-muted"><t t-esc="'{:,.2f}'.format(line.other_deductions)"/></span>
+                                                <span t-else="" class="text-muted"><t t-out="'{:,.2f}'.format(line.other_deductions)"/></span>
                                             </td>
                                             <td class="text-end" style="min-width: 135px;">
                                                 <input t-if="can_edit_salary_lines" type="number" name="reimbursements" min="0" step="0.01" t-att-value="line.reimbursements" t-att-form="'salary-line-update-%s' % line.id" class="form-control form-control-sm text-end ms-auto" style="width: 105px;"/>
-                                                <span t-else="" class="text-muted"><t t-esc="'{:,.2f}'.format(line.reimbursements)"/></span>
+                                                <span t-else="" class="text-muted"><t t-out="'{:,.2f}'.format(line.reimbursements)"/></span>
                                             </td>
-                                            <td class="text-end fw-bold"><t t-esc="'{:,.2f}'.format(line.net_salary)"/></td>
+                                            <td class="text-end fw-bold"><t t-out="'{:,.2f}'.format(line.net_salary)"/></td>
                                             <td class="text-end" style="min-width: 150px;">
                                                 <t t-if="can_edit_salary_lines">
                                                     <form t-att-id="'salary-line-update-%s' % line.id" t-att-action="'/my/employee/salary-reports/%s/lines/%s/update' % (report.id, line.id)" method="post" class="d-inline">
@@ -158,12 +158,12 @@
                                 </tbody>
                                 <tfoot class="table-light fw-bold">
                                     <tr>
-                                        <td colspan="2">Subtotal — <t t-esc="group['name']"/></td>
-                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(group['gross_salary'])"/></td>
-                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(sum(group['lines'].mapped('attendance_deduction')))"/></td>
-                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(sum(group['lines'].mapped('other_deductions')))"/></td>
-                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(group['reimbursements'])"/></td>
-                                        <td class="text-end"><t t-esc="'{:,.2f}'.format(group['net_salary'])"/></td>
+                                        <td colspan="2">Subtotal — <t t-out="group['name']"/></td>
+                                        <td class="text-end"><t t-out="'{:,.2f}'.format(group['gross_salary'])"/></td>
+                                        <td class="text-end"><t t-out="'{:,.2f}'.format(sum(group['lines'].mapped('attendance_deduction')))"/></td>
+                                        <td class="text-end"><t t-out="'{:,.2f}'.format(sum(group['lines'].mapped('other_deductions')))"/></td>
+                                        <td class="text-end"><t t-out="'{:,.2f}'.format(group['reimbursements'])"/></td>
+                                        <td class="text-end"><t t-out="'{:,.2f}'.format(group['net_salary'])"/></td>
                                         <td></td>
                                     </tr>
                                 </tfoot>
@@ -189,11 +189,11 @@
                             </thead>
                             <tbody>
                                 <tr class="fw-bold">
-                                    <td class="text-end"><t t-esc="report.total_employees"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(report.total_gross_salary)"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(report.total_attendance_deductions + report.total_other_deductions)"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(sum(report.line_ids.mapped('reimbursements')))"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(report.total_net_salary)"/></td>
+                                    <td class="text-end"><t t-out="report.total_employees"/></td>
+                                    <td class="text-end"><t t-out="'{:,.2f}'.format(report.total_gross_salary)"/></td>
+                                    <td class="text-end"><t t-out="'{:,.2f}'.format(report.total_attendance_deductions + report.total_other_deductions)"/></td>
+                                    <td class="text-end"><t t-out="'{:,.2f}'.format(sum(report.line_ids.mapped('reimbursements')))"/></td>
+                                    <td class="text-end"><t t-out="'{:,.2f}'.format(report.total_net_salary)"/></td>
                                 </tr>
                             </tbody>
                         </table>
