@@ -5,12 +5,40 @@
 // Those remain entirely owned by Odoo Discuss.
 
 (() => {
+
+function enforceEmployeePortalFavicon() {
+    const head = document.head;
+    if (!head) return;
+    // Odoo's web.layout ships its own favicon. Safari can keep choosing that
+    // first icon even when a later PNG is present, so remove competing favicons
+    // only on the Employee Portal surface and install one stable, cache-busted set.
+    head.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach((link) => {
+        if (link.dataset.employeePortalIcon !== "1") link.remove();
+    });
+    const icons = [
+        ["shortcut icon", "image/x-icon", "", "/employee_portal_suite/static/icons/portal-favicon-v41.ico?v=41"],
+        ["icon", "image/png", "16x16", "/employee_portal_suite/static/icons/portal-16.png?v=41"],
+        ["icon", "image/png", "32x32", "/employee_portal_suite/static/icons/portal-32.png?v=41"],
+        ["icon", "image/png", "64x64", "/employee_portal_suite/static/icons/portal-64.png?v=41"],
+    ];
+    for (const [rel, type, sizes, href] of icons) {
+        const link = document.createElement("link");
+        link.rel = rel;
+        link.type = type;
+        if (sizes) link.sizes = sizes;
+        link.href = href;
+        link.dataset.employeePortalIcon = "1";
+        head.appendChild(link);
+    }
+}
+
     const APP_ROOT = "/my/employee/discuss";
     const PORTAL_ROOT = "/my/employee";
     const normalizedPath = () => window.location.pathname.replace(/\/+$/, "") || "/";
     const isDiscussSurface = () => normalizedPath().startsWith(APP_ROOT);
     const isCanonicalHome = () => normalizedPath() === APP_ROOT;
     if (!isDiscussSurface()) return;
+    enforceEmployeePortalFavicon();
 
     let deferredInstallPrompt = null;
     let titleObserver = null;
