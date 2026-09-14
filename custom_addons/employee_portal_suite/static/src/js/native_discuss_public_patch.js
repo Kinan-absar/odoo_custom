@@ -13,8 +13,12 @@ function isEmbeddedDiscuss() {
     return Boolean(meta("employee-portal-discuss-embedded"));
 }
 
+function isPortalConversationPage() {
+    return isEmbeddedDiscuss() || /\/my\/employee\/discuss\/channel\/\d+\/?$/.test(window.location.pathname);
+}
+
 function removeEmbeddedCloseButton(header) {
-    if (!isEmbeddedDiscuss()) return;
+    if (!isPortalConversationPage()) return;
     const controls = Array.from(header.querySelectorAll("button, a"));
     for (const el of controls) {
         if (el.dataset.epChatsBack) continue;
@@ -29,14 +33,14 @@ function removeEmbeddedCloseButton(header) {
 
 
 function tidyEmbeddedMobileHeader(header) {
-    if (!isEmbeddedDiscuss() || !window.matchMedia("(max-width: 767.98px)").matches || !header) return;
+    if (!isPortalConversationPage() || !window.matchMedia("(max-width: 767.98px)").matches || !header) return;
     const controls = Array.from(header.querySelectorAll("button, a"));
     for (const el of controls) {
         if (el.dataset.epChatsBack) {
             el.style.removeProperty("display");
             continue;
         }
-        const label = `${el.getAttribute("title") || ""} ${el.getAttribute("aria-label") || ""}`.toLowerCase();
+        const label = `${el.getAttribute("title") || ""} ${el.getAttribute("aria-label") || ""} ${el.textContent || ""}`.toLowerCase();
         const html = (el.innerHTML || "").toLowerCase();
         const classes = String(el.className || "").toLowerCase();
         // Historical extra video action must stay gone.
@@ -131,6 +135,9 @@ patch(Discuss.prototype, {
             }
             this.store.discuss.activeTab = "main";
             document.body.classList.add("ep-native-discuss-public");
+            if (isPortalConversationPage()) {
+                document.body.classList.add("ep-native-discuss-channel");
+            }
             if (meta("employee-portal-discuss-embedded")) {
                 document.body.classList.add("ep-native-discuss-embedded");
             }
@@ -214,7 +221,7 @@ patch(Discuss.prototype, {
                 document.documentElement.style.removeProperty("--ep-discuss-top");
                 document.documentElement.style.overflow = originalHtmlOverflow;
                 Object.assign(document.body.style, originalBodyStyle);
-                document.body.classList.remove("ep-native-discuss-keyboard", "ep-native-discuss-public", "ep-native-discuss-embedded");
+                document.body.classList.remove("ep-native-discuss-keyboard", "ep-native-discuss-public", "ep-native-discuss-embedded", "ep-native-discuss-channel");
             });
         }
     },
