@@ -58,12 +58,18 @@ class EmployeePortalMain(CustomerPortal):
     # ---------------------------------------------------------
     @http.route('/my/employee', type='http', auth='user', website=True)
     def employee_portal_dashboard(self, **kw):
-        # Attendance-only users go straight to the attendance page.
-        if request.env.user.has_group('employee_portal_suite.group_attendance_only'):
-            return request.redirect('/my/employee/attendance')
-
         user = request.env.user
+        # The Employee Portal is for share/portal employee accounts only.
+        # Internal Odoo users must stay in the backend even when linked to hr.employee.
+        if not user.share:
+            return request.redirect('/web')
         employee = user.employee_id
+        if not employee:
+            return request.redirect('/my')
+
+        # Attendance-only portal users go straight to the attendance page.
+        if user.has_group('employee_portal_suite.group_attendance_only'):
+            return request.redirect('/my/employee/attendance')
 
         # ------------------------------------------------------
         # 1. My Employee Requests
@@ -182,9 +188,11 @@ class EmployeePortalMain(CustomerPortal):
     @http.route('/my/employee/profile', type='http', auth='user', website=True, methods=['GET', 'POST'], csrf=True)
     def employee_profile(self, **post):
         user = request.env.user
+        if not user.share:
+            return request.redirect('/web')
         employee = user.employee_id.sudo()
         if not employee:
-            return request.redirect('/my/employee')
+            return request.redirect('/my')
 
         saved = False
         bank_changed = False

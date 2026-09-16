@@ -11,7 +11,7 @@ class EmployeePortalLogin(Home):
         if redirect:
             return redirect
         user = request.env['res.users'].sudo().browse(uid)
-        if user.employee_id:
+        if user.share and user.employee_id:
             return '/my/employee'
         return super()._login_redirect(uid, redirect=redirect)
 
@@ -20,13 +20,13 @@ class EmployeePortalRedirect(CustomerPortal):
 
     @http.route(['/my'], type='http', auth='user', website=True)
     def account(self, **kw):
-        if request.env.user.employee_id:
+        if request.env.user.share and request.env.user.employee_id:
             return request.redirect('/my/employee')
         return super().account(**kw)
 
     @http.route(['/my/home'], type='http', auth='user', website=True)
     def home_redirect(self, **kw):
-        if request.env.user.employee_id:
+        if request.env.user.share and request.env.user.employee_id:
             return request.redirect('/my/employee')
         return super().account(**kw)
 
@@ -53,7 +53,7 @@ class EmployeePortalSignRedirect(http.Controller):
         sitemap=False,
     )
     def employee_sign_done_redirect(self, request_item_id=None, page=None, **kw):
-        if request.env.user.employee_id:
+        if request.env.user.share and request.env.user.employee_id:
             return request.redirect('/my/employee/sign')
 
         # Non-employee: hand off to the real Sign controller

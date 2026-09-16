@@ -9,7 +9,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
 
     def _employee_user(self):
         user = request.env.user
-        if user._is_public() or not user.active:
+        if user._is_public() or not user.active or not user.share:
             return False
         employee = request.env['hr.employee'].sudo().search([
             ('active', '=', True), ('user_id', '=', user.id),
@@ -275,7 +275,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
         """
         user = self._employee_user()
         if not user:
-            return request.redirect('/my/employee')
+            return request.redirect('/odoo/discuss' if not request.env.user.share else '/my')
         return request.render(
             'employee_portal_suite.employee_native_discuss_hub',
             self._discuss_home_values(user),
@@ -285,7 +285,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
     def employee_discuss_hub(self, **kwargs):
         user = self._employee_user()
         if not user:
-            return request.redirect('/my/employee')
+            return request.redirect('/odoo/discuss' if not request.env.user.share else '/my')
         return request.render(
             'employee_portal_suite.employee_native_discuss_hub',
             self._discuss_home_values(user),
@@ -295,7 +295,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
     def employee_discuss_start(self, participant_ids=None, group_name=None, **post):
         user = self._employee_user()
         if not user:
-            return request.redirect('/my/employee')
+            return request.redirect('/odoo/discuss' if not request.env.user.share else '/my')
         raw_ids = request.httprequest.form.getlist('participant_ids')
         try:
             ids = [int(x) for x in raw_ids if x]
@@ -312,7 +312,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
     def employee_discuss_channel(self, channel_id, **kwargs):
         user = self._employee_user()
         if not user:
-            return request.redirect('/my/employee')
+            return request.redirect('/odoo/discuss' if not request.env.user.share else '/my')
         channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
         if not self._is_allowed_channel(channel, user):
             return request.not_found()
@@ -335,8 +335,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
             "background_color": "#ffffff",
             "theme_color": "#ffffff",
             "icons": [
-                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=42", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=42", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=43", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=43", "sizes": "512x512", "type": "image/png", "purpose": "any"},
             ],
         }
         return request.make_response(
@@ -372,8 +372,8 @@ self.addEventListener("push", (event) => {
     const kind = data.kind || "message";
     const options = {
         body: data.body || "",
-        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=42",
-        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=42",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=43",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=43",
         tag: data.tag || `employee-chats-${kind}`,
         renotify: kind === "call" || kind === "video_call",
         requireInteraction: kind === "call" || kind === "video_call",
@@ -416,8 +416,8 @@ self.addEventListener("notificationclick", (event) => {
             "background_color": "#ffffff",
             "theme_color": "#0f766e",
             "icons": [
-                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=42", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=42", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=43", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=43", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
             ],
         }
         return request.make_response(
@@ -431,7 +431,7 @@ self.addEventListener("notificationclick", (event) => {
     @http.route('/my/employee/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_portal_service_worker(self, **kwargs):
         script = r'''
-const CACHE_NAME = "employee-portal-pwa-v42";
+const CACHE_NAME = "employee-portal-pwa-v43";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
@@ -453,8 +453,8 @@ self.addEventListener("push", (event) => {
     const kind = data.kind || "activity";
     const options = {
         body: data.body || "",
-        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=42",
-        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=42",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=43",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=43",
         tag: data.tag || `employee-portal-${kind}`,
         renotify: kind === "call" || kind === "video_call",
         requireInteraction: kind === "call" || kind === "video_call",

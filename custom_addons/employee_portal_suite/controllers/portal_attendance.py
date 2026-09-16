@@ -36,6 +36,8 @@ class EmployeePortalAttendance(http.Controller):
     def portal_attendance(self, **kw):
         user = request.env.user
 
+        if not user.share:
+            return request.redirect('/web')
         if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
             return request.redirect('/my/employee')
 
@@ -96,6 +98,8 @@ class EmployeePortalAttendance(http.Controller):
     def portal_attendance_check_in(self, **post):
         user = request.env.user
 
+        if not user.share:
+            return request.redirect('/web')
         if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
             return request.redirect('/my/employee')
 
@@ -166,6 +170,8 @@ class EmployeePortalAttendance(http.Controller):
     def portal_attendance_check_out(self, **post):
         user = request.env.user
 
+        if not user.share:
+            return request.redirect('/web')
         if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
             return request.redirect('/my/employee')
 
