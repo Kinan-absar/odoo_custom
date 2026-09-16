@@ -43,8 +43,11 @@ class EmployeePortalNativeDiscussController(http.Controller):
             return False
         if user.partner_id not in channel.channel_member_ids.partner_id:
             return False
+        # Broadcast channels are exposed read-only to portal employees only when
+        # they are explicit members. This mirrors Odoo's real channel membership
+        # instead of creating a parallel portal channel list.
         if channel.channel_type == 'channel':
-            return channel.employee_portal_access in ('read_only', 'read_write')
+            return True
         users = self._channel_users(channel)
         if user not in users or len(users) < 2:
             return False
@@ -80,10 +83,10 @@ class EmployeePortalNativeDiscussController(http.Controller):
         return request.env['discuss.channel'].sudo().browse([c.id for c in ordered])
 
     def _channel_label(self, channel, user):
+        if channel.channel_type == 'channel':
+            return channel.name or 'Channel'
         users = self._channel_users(channel)
         others = users.filtered(lambda u: u.id != user.id)
-        if channel.channel_type == 'channel':
-            return '#%s' % (channel.name or 'Channel')
         if channel.channel_type == 'group' or len(users) > 2:
             return channel.name or ', '.join(others.mapped('name')) or 'Group'
         return others[:1].name or channel.name or 'Conversation'
@@ -96,9 +99,11 @@ class EmployeePortalNativeDiscussController(http.Controller):
         return image_data_uri(avatar) if avatar else False
 
     def _channel_avatar(self, channel, user):
+        if channel.channel_type == 'channel':
+            return False
         users = self._channel_users(channel)
         others = users.filtered(lambda u: u.id != user.id)
-        if channel.channel_type in ('channel', 'group') or len(users) > 2:
+        if channel.channel_type == 'group' or len(users) > 2:
             return False
         return self._user_avatar(others[:1]) if others else False
 
@@ -123,9 +128,11 @@ class EmployeePortalNativeDiscussController(http.Controller):
         return status, labels[status]
 
     def _channel_presence(self, channel, user):
+        if channel.channel_type == 'channel':
+            return 'offline', ''
         users = self._channel_users(channel)
         others = users.filtered(lambda u: u.id != user.id)
-        if channel.channel_type in ('channel', 'group') or len(users) > 2 or not others:
+        if channel.channel_type == 'group' or len(users) > 2 or not others:
             return 'offline', ''
         return self._discuss_presence(others[:1])
 
@@ -196,30 +203,6 @@ class EmployeePortalNativeDiscussController(http.Controller):
         channel.sudo()._broadcast(partner_ids)
         return channel
 
-    def _mark_channel_read(self, channel, user, last_message_id=None):
-        """Mark one validated portal Discuss membership read using Odoo's native helper."""
-        channel = channel.sudo().exists()
-        if not channel or not self._is_allowed_channel(channel, user):
-            return False
-        member = channel.channel_member_ids.filtered(
-            lambda m: m.partner_id.id == user.partner_id.id
-        )[:1]
-        if not member:
-            return False
-        try:
-            last_message_id = int(last_message_id or 0)
-        except (TypeError, ValueError):
-            last_message_id = 0
-        if not last_message_id:
-            last_message_id = request.env['mail.message'].sudo().search([
-                ('model', '=', 'discuss.channel'),
-                ('res_id', '=', channel.id),
-                ('message_type', '!=', 'user_notification'),
-            ], order='id desc', limit=1).id
-        if last_message_id:
-            member.sudo()._mark_as_read(last_message_id, sync=True)
-        return True
-
     def _discuss_home_values(self, user):
         """Build the standalone Chats home page from the same native Discuss channels.
 
@@ -228,28 +211,26 @@ class EmployeePortalNativeDiscussController(http.Controller):
         to whichever conversation happened to be open at install time.
         """
         channels = self._portal_channels(user)
-        rows = []
+        chat_rows = []
+        channel_rows = []
         for channel in channels:
             member = channel.channel_member_ids.filtered(lambda m: m.partner_id.id == user.partner_id.id)[:1]
-            is_channel = channel.channel_type == 'channel'
-            is_group = channel.channel_type == 'group' or (not is_channel and len(self._channel_users(channel)) > 2)
+            is_broadcast = channel.channel_type == 'channel'
+            is_group = channel.channel_type == 'group' or (not is_broadcast and len(self._channel_users(channel)) > 2)
             presence, presence_label = self._channel_presence(channel, user)
-            rows.append({
+            row = {
                 'id': channel.id,
                 'name': self._channel_label(channel, user),
                 'avatar': self._channel_avatar(channel, user),
                 'is_group': is_group,
-                'is_channel': is_channel,
-                'read_only': bool(is_channel and channel.employee_portal_access == 'read_only'),
+                'is_channel': is_broadcast,
+                'readonly': is_broadcast,
                 'presence': presence,
                 'presence_label': presence_label,
                 'unread': int(member.message_unread_counter or 0),
-                'last_message_id': int(request.env['mail.message'].sudo().search([
-                    ('model', '=', 'discuss.channel'), ('res_id', '=', channel.id),
-                    ('message_type', '!=', 'user_notification'),
-                ], order='id desc', limit=1).id or 0),
                 'last_interest_dt': channel.last_interest_dt,
-            })
+            }
+            (channel_rows if is_broadcast else chat_rows).append(row)
         employee_rows = []
         for emp_user in self._employee_users().filtered(lambda u: u.id != user.id):
             presence, presence_label = self._discuss_presence(emp_user)
@@ -261,13 +242,38 @@ class EmployeePortalNativeDiscussController(http.Controller):
                 'presence_label': presence_label,
             })
         return {
-            'channels': rows,
-            'chat_rows': [row for row in rows if not row['is_channel']],
-            'channel_rows': [row for row in rows if row['is_channel']],
+            'channels': chat_rows + channel_rows,
+            'chat_channels': chat_rows,
+            'broadcast_channels': channel_rows,
             'employees': employee_rows,
             'company': request.env.company.sudo(),
             'current_user': user,
         }
+
+    def _mark_channel_seen(self, channel, user):
+        """Mark the canonical native Discuss member read up to the latest comment.
+
+        Portal Chats uses a custom navigation shell around native Discuss, so we
+        explicitly synchronize Odoo's member read marker when a thread/channel is
+        opened. This keeps row badges and the Employee Portal message badge correct
+        without requiring a page refresh.
+        """
+        channel = channel.sudo().exists()
+        if not channel or not self._is_allowed_channel(channel, user):
+            return False
+        member = channel.channel_member_ids.filtered(
+            lambda m: m.partner_id.id == user.partner_id.id
+        )[:1]
+        if not member:
+            return False
+        latest = request.env['mail.message'].sudo().search([
+            ('model', '=', 'discuss.channel'),
+            ('res_id', '=', channel.id),
+            ('message_type', '=', 'comment'),
+        ], order='id desc', limit=1)
+        if latest:
+            member.sudo()._mark_as_read(latest.id, sync=True)
+        return True
 
     def _render_native_discuss(self, channel, user, *, home=False):
         """Render the exact native public Discuss surface used by a real channel.
@@ -280,7 +286,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
         channel = channel.sudo().exists()
         if not channel or not self._is_allowed_channel(channel, user):
             return request.not_found()
-        if channel.channel_type != 'channel':
+        if channel.channel_type in ('chat', 'group'):
             channel.sudo().write({'is_employee_portal_channel': True})
         channel_user = channel.with_user(user)
         store = Store()
@@ -296,12 +302,10 @@ class EmployeePortalNativeDiscussController(http.Controller):
             'data': store.get_result(),
             'session_info': channel_user.env['ir.http'].session_info(),
             'employee_portal_discuss': True,
+            'employee_portal_readonly_channel': channel.channel_type == 'channel',
             'employee_portal_discuss_home': bool(home),
             'employee_portal_back_url': '/my/employee/discuss',
             'employee_portal_home_url': '/my/employee',
-            'employee_portal_read_only': bool(
-                channel.channel_type == 'channel' and channel.employee_portal_access == 'read_only'
-            ),
         })
 
     @http.route('/my/employee/discuss', type='http', auth='user', website=True, methods=['GET'])
@@ -357,13 +361,9 @@ class EmployeePortalNativeDiscussController(http.Controller):
         channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
         if not self._is_allowed_channel(channel, user):
             return request.not_found()
-        if channel.channel_type != 'channel':
+        if channel.channel_type in ('chat', 'group'):
             channel.sudo().write({'is_employee_portal_channel': True})
-
-        # Opening a conversation means it has been seen.  Do this server-side as
-        # well as from the Chats shell so direct notification/deep links and
-        # read-only Channels clear their unread state too.
-        self._mark_channel_read(channel, user)
+        self._mark_channel_seen(channel, user)
 
         # Use exactly the same native Discuss renderer as the neutral home route.
         return self._render_native_discuss(channel, user, home=False)
@@ -382,8 +382,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
             "background_color": "#ffffff",
             "theme_color": "#ffffff",
             "icons": [
-                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=45", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=45", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=44", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=44", "sizes": "512x512", "type": "image/png", "purpose": "any"},
             ],
         }
         return request.make_response(
@@ -419,8 +419,8 @@ self.addEventListener("push", (event) => {
     const kind = data.kind || "message";
     const options = {
         body: data.body || "",
-        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=45",
-        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=45",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=44",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=44",
         tag: data.tag || `employee-chats-${kind}`,
         renotify: kind === "call" || kind === "video_call",
         requireInteraction: kind === "call" || kind === "video_call",
@@ -463,8 +463,8 @@ self.addEventListener("notificationclick", (event) => {
             "background_color": "#ffffff",
             "theme_color": "#0f766e",
             "icons": [
-                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=45", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=45", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=44", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=44", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
             ],
         }
         return request.make_response(
@@ -478,7 +478,7 @@ self.addEventListener("notificationclick", (event) => {
     @http.route('/my/employee/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_portal_service_worker(self, **kwargs):
         script = r'''
-const CACHE_NAME = "employee-portal-pwa-v45";
+const CACHE_NAME = "employee-portal-pwa-v44";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
@@ -500,8 +500,8 @@ self.addEventListener("push", (event) => {
     const kind = data.kind || "activity";
     const options = {
         body: data.body || "",
-        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=45",
-        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=45",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=44",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=44",
         tag: data.tag || `employee-portal-${kind}`,
         renotify: kind === "call" || kind === "video_call",
         requireInteraction: kind === "call" || kind === "video_call",
@@ -604,10 +604,8 @@ self.addEventListener("notificationclick", (event) => {
         except (TypeError, ValueError):
             channel_id = 0
         channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
-        if not self._is_allowed_channel(channel, user):
+        if not self._is_allowed_channel(channel, user) or channel.channel_type == 'channel':
             return {'ok': False, 'error': 'Conversation not available.'}
-        if channel.channel_type == 'channel':
-            return {'ok': False, 'error': 'Channel membership is managed by an administrator.'}
         try:
             wanted_ids = {int(x) for x in (user_ids or []) if x}
         except (TypeError, ValueError):
@@ -649,43 +647,45 @@ self.addEventListener("notificationclick", (event) => {
         })
         return {'ok': True, 'channel_id': channel.id}
 
-    @http.route('/employee_portal/discuss/mark_read', type='json', auth='user', csrf=False)
-    def employee_discuss_mark_read(self, channel_id=None, last_message_id=None):
-        """Mark a portal-visible native Discuss thread as read immediately."""
+    @http.route('/employee_portal/discuss/mark_read', type='json', auth='user')
+    def employee_discuss_mark_read(self, channel_id=None):
         user = self._employee_user()
         if not user:
-            return {'ok': False, 'unread': 0, 'channels': {}}
+            return {'ok': False, 'unread': 0}
         try:
             channel_id = int(channel_id or 0)
         except (TypeError, ValueError):
             channel_id = 0
         channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
-        if not channel or not self._mark_channel_read(channel, user, last_message_id):
-            return {'ok': False, 'unread': 0, 'channels': {}}
-        return self._unread_payload(user, ok=True)
+        if not self._is_allowed_channel(channel, user):
+            return {'ok': False, 'unread': 0}
+        self._mark_channel_seen(channel, user)
+        member = channel.channel_member_ids.filtered(lambda m: m.partner_id.id == user.partner_id.id)[:1]
+        return {'ok': True, 'unread': int(member.message_unread_counter or 0) if member else 0}
 
-    def _unread_payload(self, user, ok=None):
+    @http.route('/employee_portal/discuss/unread_state', type='json', auth='user')
+    def employee_discuss_unread_state(self):
+        user = self._employee_user()
+        if not user:
+            return {'unread': 0, 'channels': {}}
         channels = self._portal_channels(user)
-        counts = {}
+        state = {}
         total = 0
         for channel in channels:
-            member = channel.channel_member_ids.filtered(
-                lambda m: m.partner_id.id == user.partner_id.id
-            )[:1]
+            member = channel.channel_member_ids.filtered(lambda m: m.partner_id.id == user.partner_id.id)[:1]
             count = int(member.message_unread_counter or 0) if member else 0
-            counts[str(channel.id)] = count
+            state[str(channel.id)] = count
             total += count
-        payload = {'unread': total, 'channels': counts}
-        if ok is not None:
-            payload['ok'] = bool(ok)
-        return payload
+        return {'unread': total, 'channels': state}
 
     @http.route('/employee_portal/discuss/unread', type='json', auth='user')
     def employee_discuss_unread(self):
         user = self._employee_user()
         if not user:
             return {'unread': 0}
-        return self._unread_payload(user)
+        channels = self._portal_channels(user)
+        members = channels.channel_member_ids.filtered(lambda m: m.partner_id.id == user.partner_id.id)
+        return {'unread': sum(int(m.message_unread_counter or 0) for m in members)}
 
     @http.route('/employee_portal/discuss/call/poll', type='json', auth='user', csrf=False)
     def employee_discuss_call_poll(self):
@@ -703,8 +703,6 @@ self.addEventListener("notificationclick", (event) => {
             ('rtc_inviting_session_id', '!=', False),
         ], order='id desc', limit=1)
         if not member or not self._is_allowed_channel(member.channel_id, user):
-            return {'call': False}
-        if member.channel_id.channel_type == 'channel' and member.channel_id.employee_portal_access == 'read_only':
             return {'call': False}
         session = member.rtc_inviting_session_id.sudo()
         caller_member = session.channel_member_id.sudo()

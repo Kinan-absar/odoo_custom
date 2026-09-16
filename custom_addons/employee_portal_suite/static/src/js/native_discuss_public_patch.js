@@ -13,12 +13,12 @@ function isEmbeddedDiscuss() {
     return Boolean(meta("employee-portal-discuss-embedded"));
 }
 
-function isPortalConversationPage() {
-    return isEmbeddedDiscuss() || /\/my\/employee\/discuss\/channel\/\d+\/?$/.test(window.location.pathname);
+function isReadonlyPortalChannel() {
+    return Boolean(meta("employee-portal-discuss-readonly"));
 }
 
-function isPortalReadOnlyChannel() {
-    return meta("employee-portal-channel-readonly") === "1";
+function isPortalConversationPage() {
+    return isEmbeddedDiscuss() || /\/my\/employee\/discuss\/channel\/\d+\/?$/.test(window.location.pathname);
 }
 
 function removeEmbeddedCloseButton(header) {
@@ -61,7 +61,7 @@ function tidyEmbeddedMobileHeader(header) {
             label.includes("add participant") || label.includes("invite") || label.includes("member") ||
             label.includes("participant") || html.includes("user-plus") || html.includes("fa-user-plus") ||
             html.includes("plus");
-        if (isCall || isAddPeople) {
+        if (!isReadonlyPortalChannel() && (isCall || isAddPeople)) {
             el.style.removeProperty("display");
             el.dataset.epMobileAllowedAction = "1";
         } else {
@@ -92,16 +92,7 @@ function ensureEmbeddedHeaderActions() {
     if (!header) return;
 
     removeEmbeddedCloseButton(header);
-    if (isPortalReadOnlyChannel()) {
-        for (const el of Array.from(header.querySelectorAll("button, a"))) {
-            if (!el.dataset.epChatsBack) {
-                el.style.setProperty("display", "none", "important");
-                el.dataset.epReadOnlyHiddenAction = "1";
-            }
-        }
-    } else {
-        tidyEmbeddedMobileHeader(header);
-    }
+    tidyEmbeddedMobileHeader(header);
 
     const isMobileChannel = window.matchMedia("(max-width: 767.98px)").matches && /\/my\/employee\/discuss\/channel\/\d+/.test(window.location.pathname);
     if ((isEmbeddedDiscuss() || isMobileChannel) && !header.querySelector("[data-ep-chats-back]")) {
@@ -126,7 +117,8 @@ function ensureEmbeddedHeaderActions() {
 // therefore keep Odoo's native attachment uploader exactly as in backend Discuss.
 patch(Composer.prototype, {
     get allowUpload() {
-        if (meta("employee-portal-discuss")) return !isPortalReadOnlyChannel();
+        if (isReadonlyPortalChannel()) return false;
+        if (meta("employee-portal-discuss")) return true;
         return super.allowUpload;
     },
 });
@@ -151,11 +143,11 @@ patch(Discuss.prototype, {
             if (isPortalConversationPage()) {
                 document.body.classList.add("ep-native-discuss-channel");
             }
-            if (isPortalReadOnlyChannel()) {
-                document.body.classList.add("ep-native-discuss-readonly");
-            }
             if (meta("employee-portal-discuss-embedded")) {
                 document.body.classList.add("ep-native-discuss-embedded");
+            }
+            if (isReadonlyPortalChannel()) {
+                document.body.classList.add("ep-native-discuss-readonly");
             }
         }
         this.isEmployeePortalDiscuss = isEmployeePortalDiscuss;
@@ -237,7 +229,7 @@ patch(Discuss.prototype, {
                 document.documentElement.style.removeProperty("--ep-discuss-top");
                 document.documentElement.style.overflow = originalHtmlOverflow;
                 Object.assign(document.body.style, originalBodyStyle);
-                document.body.classList.remove("ep-native-discuss-keyboard", "ep-native-discuss-public", "ep-native-discuss-embedded", "ep-native-discuss-channel", "ep-native-discuss-readonly");
+                document.body.classList.remove("ep-native-discuss-keyboard", "ep-native-discuss-public", "ep-native-discuss-embedded", "ep-native-discuss-channel");
             });
         }
     },

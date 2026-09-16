@@ -12,9 +12,9 @@ function enforceEmployeePortalFavicon() {
         if (link.dataset.employeePortalTouchIcon !== "1") link.remove();
     });
     const touchIcons = [
-        ["apple-touch-icon", "", "/employee_portal_suite/static/icons/apple-touch-icon.png?v=45"],
-        ["apple-touch-icon", "180x180", "/employee_portal_suite/static/icons/portal-180.png?v=45"],
-        ["apple-touch-icon-precomposed", "", "/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=45"],
+        ["apple-touch-icon", "", "/employee_portal_suite/static/icons/apple-touch-icon.png?v=44"],
+        ["apple-touch-icon", "180x180", "/employee_portal_suite/static/icons/portal-180.png?v=44"],
+        ["apple-touch-icon-precomposed", "", "/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=44"],
     ];
     for (const [rel, sizes, href] of touchIcons) {
         const link = document.createElement("link");
@@ -25,10 +25,10 @@ function enforceEmployeePortalFavicon() {
         head.appendChild(link);
     }
     const icons = [
-        ["shortcut icon", "image/x-icon", "", "/employee_portal_suite/static/icons/portal-favicon-v45.ico?v=45"],
-        ["icon", "image/png", "16x16", "/employee_portal_suite/static/icons/portal-16.png?v=45"],
-        ["icon", "image/png", "32x32", "/employee_portal_suite/static/icons/portal-32.png?v=45"],
-        ["icon", "image/png", "64x64", "/employee_portal_suite/static/icons/portal-64.png?v=45"],
+        ["shortcut icon", "image/x-icon", "", "/employee_portal_suite/static/icons/portal-favicon-v44.ico?v=44"],
+        ["icon", "image/png", "16x16", "/employee_portal_suite/static/icons/portal-16.png?v=44"],
+        ["icon", "image/png", "32x32", "/employee_portal_suite/static/icons/portal-32.png?v=44"],
+        ["icon", "image/png", "64x64", "/employee_portal_suite/static/icons/portal-64.png?v=44"],
     ];
     for (const [rel, type, sizes, href] of icons) {
         const link = document.createElement("link");
