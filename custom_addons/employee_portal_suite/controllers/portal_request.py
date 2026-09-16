@@ -42,7 +42,8 @@ class EmployeePortalRequests(http.Controller):
     # Helper
     # ---------------------------------------------------------
     def _get_employee(self):
-        return request.env.user.employee_id
+        user = request.env.user
+        return user.employee_id if user.share else request.env['hr.employee']
 
     # ---------------------------------------------------------
     # EMPLOYEE — LIST OWN REQUESTS

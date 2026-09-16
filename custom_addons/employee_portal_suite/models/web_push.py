@@ -215,6 +215,35 @@ class EmployeePortalWebPushService(models.AbstractModel):
             _logger.exception('Web Push delivery failed for subscription %s', subscription.id)
             return False
 
+    def _url_for_user(self, user, path=None):
+        """Return a destination appropriate for the recipient's account type.
+
+        Portal/share employees use the Employee Portal. Internal users stay in the
+        Odoo backend even if the original notification was raised by a portal flow.
+        """
+        path = path or '/my/employee'
+        if not user or user.share or path.startswith(('http://', 'https://')):
+            return path
+
+        import re
+        if path.startswith('/my/employee/discuss'):
+            return '/odoo/discuss'
+
+        match = re.match(r'^/my/employee/(?:approvals|requests)/(\d+)', path)
+        if match:
+            return '/web#id=%s&model=employee.request&view_type=form' % match.group(1)
+
+        match = re.match(r'^/my/employee/material(?:/approvals)?/(\d+)', path)
+        if match:
+            return '/web#id=%s&model=material.request&view_type=form' % match.group(1)
+
+        # Portal-only pages (attendance, reports, sign, profile, etc.) do not have
+        # a universal one-to-one backend URL. Keep internal users in /web rather
+        # than ever dropping them into /my/employee.
+        if path.startswith('/my/employee'):
+            return '/web'
+        return path
+
     def send_to_user(self, user, title, body, path=None, kind='message', tag=None, urgency=None):
         if not user or not user.active:
             return False
@@ -226,7 +255,7 @@ class EmployeePortalWebPushService(models.AbstractModel):
         payload = {
             'title': str(title or 'ABSAR Employee'),
             'body': str(body or ''),
-            'url': path or '/my/employee',
+            'url': self._url_for_user(user, path),
             'kind': kind or 'message',
             'tag': tag or ('employee-portal-%s' % (kind or 'message')),
             'icon': '/employee_portal_suite/static/icons/portal-192.png',

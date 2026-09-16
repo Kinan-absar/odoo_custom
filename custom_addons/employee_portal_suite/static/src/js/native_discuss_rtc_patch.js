@@ -8,6 +8,10 @@ function isEmployeePortalDiscuss() {
     return Boolean(document.querySelector('meta[name="employee-portal-discuss"]'));
 }
 
+function isPortalReadOnlyChannel() {
+    return document.querySelector('meta[name="employee-portal-channel-readonly"]')?.content === "1";
+}
+
 
 function shouldAutoAnswer() {
     const params = new URLSearchParams(window.location.search);
@@ -81,6 +85,9 @@ patch(Rtc.prototype, {
     },
 
     async joinCall(channel, options = {}) {
+        if (isEmployeePortalDiscuss() && isPortalReadOnlyChannel()) {
+            throw new Error("Calls are disabled for this read-only Channel.");
+        }
         if (isEmployeePortalDiscuss()) {
             try {
                 const result = await rpc("/employee_portal/call/ice_servers", {});

@@ -59,6 +59,8 @@ class EmployeePortalSignDocs(CustomerPortal):
     def portal_employee_sign_docs(self, filter="pending", search=None, **kwargs):
 
         user = request.env.user
+        if not user.share:
+            return request.redirect('/web')
         partner = user.partner_id
         SignItem = request.env["sign.request.item"].sudo()
 

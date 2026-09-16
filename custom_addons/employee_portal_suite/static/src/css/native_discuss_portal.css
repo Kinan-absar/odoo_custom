@@ -250,3 +250,14 @@ body.ep-native-discuss-embedded [class*="o-mail-MessagingMenu"] {
   .ep-chats-shell.ep-chat-open .ep-chats-conversation-pane{grid-column:2!important;width:100%!important;display:block!important}
   .ep-chats-shell.ep-chat-open .ep-chats-frame{display:block!important}
 }
+
+/* v20.24 - Hide Odoo's native ChatHub (the floating minimized-chat avatar
+   bubbles fixed at the bottom-right of the viewport) on mobile portal view.
+   The Employee Portal already has its own Chats list/conversation UI, so the
+   ChatHub bubble stack is redundant chrome on small screens and it overlaps
+   the message composer of the embedded conversation. */
+@media (max-width: 767.98px) {
+  .o-mail-ChatHub {
+    display: none !important;
+  }
+}

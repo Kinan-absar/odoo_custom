@@ -20,6 +20,28 @@ async function refreshUnread() {
     }
 }
 
+function handleExternalUnread(value) {
+    if (value === undefined || value === null) return;
+    setBadge(value);
+}
+
+window.addEventListener("storage", (event) => {
+    if (event.key !== "employee_portal_discuss_unread" || !event.newValue) return;
+    try {
+        const payload = JSON.parse(event.newValue);
+        handleExternalUnread(payload?.unread);
+    } catch (_) {}
+});
+
+try {
+    if (window.BroadcastChannel) {
+        const channel = new BroadcastChannel("employee_portal_discuss");
+        channel.addEventListener("message", (event) => {
+            if (event.data?.type === "unread") handleExternalUnread(event.data.unread);
+        });
+    }
+} catch (_) {}
+
 document.addEventListener("DOMContentLoaded", () => {
     refreshUnread();
     window.setInterval(refreshUnread, 5000);

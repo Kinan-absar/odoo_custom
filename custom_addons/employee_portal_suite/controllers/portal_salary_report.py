@@ -11,7 +11,10 @@ class EmployeePortalSalaryReport(CustomerPortal):
     """Portal access for salary report viewing and controlled line adjustments."""
 
     def _check_salary_report_viewer(self):
-        return request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')
+        return bool(
+            request.env.user.share
+            and request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')
+        )
 
     def _salary_report_domain(self):
         return [('state', 'in', ['generated', 'batch_created'])]

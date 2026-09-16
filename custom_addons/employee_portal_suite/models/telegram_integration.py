@@ -216,6 +216,9 @@ class EmployeePortalTelegramService(models.AbstractModel):
                 # the notification. Telegram can still be used as a fallback.
                 _logger.exception('Web Push notification failed for user %s', user.id)
 
+        # Keep Telegram fallback links consistent with Web Push routing.
+        path = self.env['employee.portal.webpush.service'].sudo()._url_for_user(user, path)
+
         if not user.sudo().telegram_chat_id:
             return False
         config = self._get_config()

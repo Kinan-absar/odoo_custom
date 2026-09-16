@@ -31,7 +31,7 @@ function nativeChatsMenuItem() {
         id: "employee_native_discuss_chats",
         description: _t("Chats"),
         callback: () => {
-            window.open("/my/employee/discuss", "_blank", "noopener");
+            window.location.href = "/odoo/discuss";
         },
         sequence: 48,
     };
