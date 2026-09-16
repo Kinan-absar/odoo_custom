@@ -196,6 +196,30 @@ class EmployeePortalNativeDiscussController(http.Controller):
         channel.sudo()._broadcast(partner_ids)
         return channel
 
+    def _mark_channel_read(self, channel, user, last_message_id=None):
+        """Mark one validated portal Discuss membership read using Odoo's native helper."""
+        channel = channel.sudo().exists()
+        if not channel or not self._is_allowed_channel(channel, user):
+            return False
+        member = channel.channel_member_ids.filtered(
+            lambda m: m.partner_id.id == user.partner_id.id
+        )[:1]
+        if not member:
+            return False
+        try:
+            last_message_id = int(last_message_id or 0)
+        except (TypeError, ValueError):
+            last_message_id = 0
+        if not last_message_id:
+            last_message_id = request.env['mail.message'].sudo().search([
+                ('model', '=', 'discuss.channel'),
+                ('res_id', '=', channel.id),
+                ('message_type', '!=', 'user_notification'),
+            ], order='id desc', limit=1).id
+        if last_message_id:
+            member.sudo()._mark_as_read(last_message_id, sync=True)
+        return True
+
     def _discuss_home_values(self, user):
         """Build the standalone Chats home page from the same native Discuss channels.
 
@@ -220,6 +244,10 @@ class EmployeePortalNativeDiscussController(http.Controller):
                 'presence': presence,
                 'presence_label': presence_label,
                 'unread': int(member.message_unread_counter or 0),
+                'last_message_id': int(request.env['mail.message'].sudo().search([
+                    ('model', '=', 'discuss.channel'), ('res_id', '=', channel.id),
+                    ('message_type', '!=', 'user_notification'),
+                ], order='id desc', limit=1).id or 0),
                 'last_interest_dt': channel.last_interest_dt,
             })
         employee_rows = []
@@ -332,6 +360,11 @@ class EmployeePortalNativeDiscussController(http.Controller):
         if channel.channel_type != 'channel':
             channel.sudo().write({'is_employee_portal_channel': True})
 
+        # Opening a conversation means it has been seen.  Do this server-side as
+        # well as from the Chats shell so direct notification/deep links and
+        # read-only Channels clear their unread state too.
+        self._mark_channel_read(channel, user)
+
         # Use exactly the same native Discuss renderer as the neutral home route.
         return self._render_native_discuss(channel, user, home=False)
 
@@ -349,8 +382,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
             "background_color": "#ffffff",
             "theme_color": "#ffffff",
             "icons": [
-                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=44", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=44", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=45", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=45", "sizes": "512x512", "type": "image/png", "purpose": "any"},
             ],
         }
         return request.make_response(
@@ -386,8 +419,8 @@ self.addEventListener("push", (event) => {
     const kind = data.kind || "message";
     const options = {
         body: data.body || "",
-        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=44",
-        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=44",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=45",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=45",
         tag: data.tag || `employee-chats-${kind}`,
         renotify: kind === "call" || kind === "video_call",
         requireInteraction: kind === "call" || kind === "video_call",
@@ -430,8 +463,8 @@ self.addEventListener("notificationclick", (event) => {
             "background_color": "#ffffff",
             "theme_color": "#0f766e",
             "icons": [
-                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=44", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=44", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=45", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=45", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
             ],
         }
         return request.make_response(
@@ -445,7 +478,7 @@ self.addEventListener("notificationclick", (event) => {
     @http.route('/my/employee/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_portal_service_worker(self, **kwargs):
         script = r'''
-const CACHE_NAME = "employee-portal-pwa-v44";
+const CACHE_NAME = "employee-portal-pwa-v45";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
@@ -467,8 +500,8 @@ self.addEventListener("push", (event) => {
     const kind = data.kind || "activity";
     const options = {
         body: data.body || "",
-        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=44",
-        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=44",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=45",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=45",
         tag: data.tag || `employee-portal-${kind}`,
         renotify: kind === "call" || kind === "video_call",
         requireInteraction: kind === "call" || kind === "video_call",
@@ -616,14 +649,43 @@ self.addEventListener("notificationclick", (event) => {
         })
         return {'ok': True, 'channel_id': channel.id}
 
+    @http.route('/employee_portal/discuss/mark_read', type='json', auth='user', csrf=False)
+    def employee_discuss_mark_read(self, channel_id=None, last_message_id=None):
+        """Mark a portal-visible native Discuss thread as read immediately."""
+        user = self._employee_user()
+        if not user:
+            return {'ok': False, 'unread': 0, 'channels': {}}
+        try:
+            channel_id = int(channel_id or 0)
+        except (TypeError, ValueError):
+            channel_id = 0
+        channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
+        if not channel or not self._mark_channel_read(channel, user, last_message_id):
+            return {'ok': False, 'unread': 0, 'channels': {}}
+        return self._unread_payload(user, ok=True)
+
+    def _unread_payload(self, user, ok=None):
+        channels = self._portal_channels(user)
+        counts = {}
+        total = 0
+        for channel in channels:
+            member = channel.channel_member_ids.filtered(
+                lambda m: m.partner_id.id == user.partner_id.id
+            )[:1]
+            count = int(member.message_unread_counter or 0) if member else 0
+            counts[str(channel.id)] = count
+            total += count
+        payload = {'unread': total, 'channels': counts}
+        if ok is not None:
+            payload['ok'] = bool(ok)
+        return payload
+
     @http.route('/employee_portal/discuss/unread', type='json', auth='user')
     def employee_discuss_unread(self):
         user = self._employee_user()
         if not user:
             return {'unread': 0}
-        channels = self._portal_channels(user)
-        members = channels.channel_member_ids.filtered(lambda m: m.partner_id.id == user.partner_id.id)
-        return {'unread': sum(int(m.message_unread_counter or 0) for m in members)}
+        return self._unread_payload(user)
 
     @http.route('/employee_portal/discuss/call/poll', type='json', auth='user', csrf=False)
     def employee_discuss_call_poll(self):

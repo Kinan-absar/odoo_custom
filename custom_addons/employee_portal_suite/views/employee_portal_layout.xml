@@ -1854,7 +1854,7 @@
             </script>
 
         </t>
-        <script src="/employee_portal_suite/static/src/js/employee_portal_pwa.js?v=2044"></script>
+        <script src="/employee_portal_suite/static/src/js/employee_portal_pwa.js?v=2045"></script>
     </template>
 
     <!-- ================================================================
@@ -1906,7 +1906,7 @@
     <template id="employee_portal_pwa_web_head" inherit_id="web.layout" name="Employee Portal PWA Head">
         <xpath expr="//head" position="inside">
             <t t-if="request.httprequest.path.startswith('/my/employee')">
-                <link rel="manifest" href="/my/employee/manifest.webmanifest?v=44" crossorigin="use-credentials" data-employee-portal-pwa="1"/>
+                <link rel="manifest" href="/my/employee/manifest.webmanifest?v=45" crossorigin="use-credentials" data-employee-portal-pwa="1"/>
                 <meta name="theme-color" content="#0f766e" data-employee-portal-pwa="1"/>
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
                 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
@@ -1914,13 +1914,13 @@
                 <meta name="application-name" content="ABSAR Employee"/>
                 <!-- iOS/Safari: provide both unsized and sized touch icons so the
                      Employee Portal wins over Odoo's generic webclip icon. -->
-                <link rel="apple-touch-icon" href="/employee_portal_suite/static/icons/apple-touch-icon.png?v=44" data-employee-portal-touch-icon="1"/>
-                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=44" data-employee-portal-touch-icon="1"/>
-                <link rel="apple-touch-icon-precomposed" href="/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=44" data-employee-portal-touch-icon="1"/>
-                <link rel="shortcut icon" type="image/x-icon" href="/employee_portal_suite/static/icons/portal-favicon-v44.ico?v=44" data-employee-portal-icon="1"/>
-                <link rel="icon" type="image/png" sizes="16x16" href="/employee_portal_suite/static/icons/portal-16.png?v=44" data-employee-portal-icon="1"/>
-                <link rel="icon" type="image/png" sizes="32x32" href="/employee_portal_suite/static/icons/portal-32.png?v=44" data-employee-portal-icon="1"/>
-                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=44" data-employee-portal-icon="1"/>
+                <link rel="apple-touch-icon" href="/employee_portal_suite/static/icons/apple-touch-icon.png?v=45" data-employee-portal-touch-icon="1"/>
+                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=45" data-employee-portal-touch-icon="1"/>
+                <link rel="apple-touch-icon-precomposed" href="/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=45" data-employee-portal-touch-icon="1"/>
+                <link rel="shortcut icon" type="image/x-icon" href="/employee_portal_suite/static/icons/portal-favicon-v45.ico?v=45" data-employee-portal-icon="1"/>
+                <link rel="icon" type="image/png" sizes="16x16" href="/employee_portal_suite/static/icons/portal-16.png?v=45" data-employee-portal-icon="1"/>
+                <link rel="icon" type="image/png" sizes="32x32" href="/employee_portal_suite/static/icons/portal-32.png?v=45" data-employee-portal-icon="1"/>
+                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=45" data-employee-portal-icon="1"/>
             </t>
         </xpath>
     </template>
