@@ -11,36 +11,30 @@ function setBadge(count) {
 }
 
 async function refreshUnread() {
-    if (!document.querySelector(".ep-native-message-btn")) return;
+    if (!document.querySelector(".ep-native-message-btn") && !document.querySelector("[data-ep-thread]")) return;
     try {
         const result = await rpc("/employee_portal/discuss/unread", {});
         setBadge(result?.unread || 0);
+        const counts = result?.channels || {};
+        document.querySelectorAll("[data-ep-thread][data-channel-id]").forEach((row) => {
+            const count = Math.max(0, Number(counts[String(row.dataset.channelId)] || 0));
+            let badge = row.querySelector("[data-ep-row-unread]");
+            if (!count) { badge?.remove(); return; }
+            if (!badge) {
+                badge = document.createElement("span");
+                badge.className = "ep-chats-unread";
+                badge.dataset.epRowUnread = "1";
+                row.appendChild(badge);
+            }
+            badge.textContent = count > 99 ? "99+" : String(count);
+        });
     } catch (_) {
         // Communication badge must never interfere with the portal page.
     }
 }
 
-function handleExternalUnread(value) {
-    if (value === undefined || value === null) return;
-    setBadge(value);
-}
-
-window.addEventListener("storage", (event) => {
-    if (event.key !== "employee_portal_discuss_unread" || !event.newValue) return;
-    try {
-        const payload = JSON.parse(event.newValue);
-        handleExternalUnread(payload?.unread);
-    } catch (_) {}
-});
-
-try {
-    if (window.BroadcastChannel) {
-        const channel = new BroadcastChannel("employee_portal_discuss");
-        channel.addEventListener("message", (event) => {
-            if (event.data?.type === "unread") handleExternalUnread(event.data.unread);
-        });
-    }
-} catch (_) {}
+window.EmployeePortalUnread = { refresh: refreshUnread };
+window.addEventListener("employee-portal-unread-refresh", refreshUnread);
 
 document.addEventListener("DOMContentLoaded", () => {
     refreshUnread();

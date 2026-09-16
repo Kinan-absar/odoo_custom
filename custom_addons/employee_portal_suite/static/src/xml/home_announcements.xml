@@ -13,7 +13,7 @@
                     <span class="eps_announcements_header_title">
                         Announcements
                         <span class="eps_announcements_count">
-                            <t t-out="backendAnnouncementState.announcements.length"/>
+                            <t t-esc="backendAnnouncementState.announcements.length"/>
                         </span>
                     </span>
                     <span class="eps_announcements_chevron"
@@ -28,7 +28,7 @@
                     <t t-foreach="backendAnnouncementState.announcements" t-as="ann" t-key="ann.id">
                         <div t-attf-class="eps_announcement_card eps_announcement_#{ann.type or 'info'}">
                             <div class="eps_announcement_title">
-                                <t t-out="ann.title"/>
+                                <t t-esc="ann.title"/>
                             </div>
                             <div class="eps_announcement_message">
                                 <t t-out="ann.message"/>
@@ -41,7 +41,7 @@
                                        target="_blank"
                                        rel="noopener">
                                         <span class="eps_announcement_file_name">
-                                            <t t-out="attachment.name"/>
+                                            <t t-esc="attachment.name"/>
                                         </span>
                                     </a>
                                 </t>

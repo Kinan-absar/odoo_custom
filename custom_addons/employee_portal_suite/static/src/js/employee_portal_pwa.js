@@ -25,7 +25,7 @@ function enforceEmployeePortalFavicon() {
         head.appendChild(link);
     }
     const icons = [
-        ["shortcut icon", "image/x-icon", "", "/employee_portal_suite/static/icons/portal-favicon-v45.ico?v=45"],
+        ["shortcut icon", "image/x-icon", "", "/employee_portal_suite/static/icons/portal-favicon-v43.ico?v=45"],
         ["icon", "image/png", "16x16", "/employee_portal_suite/static/icons/portal-16.png?v=45"],
         ["icon", "image/png", "32x32", "/employee_portal_suite/static/icons/portal-32.png?v=45"],
         ["icon", "image/png", "64x64", "/employee_portal_suite/static/icons/portal-64.png?v=45"],

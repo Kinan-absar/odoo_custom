@@ -19,9 +19,9 @@ function enforceEmployeePortalFavicon() {
         if (link.dataset.employeePortalTouchIcon !== "1") link.remove();
     });
     const touchIcons = [
-        ["apple-touch-icon", "", "/employee_portal_suite/static/icons/apple-touch-icon.png?v=45"],
-        ["apple-touch-icon", "180x180", "/employee_portal_suite/static/icons/portal-180.png?v=45"],
-        ["apple-touch-icon-precomposed", "", "/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=45"],
+        ["apple-touch-icon", "", "/employee_portal_suite/static/icons/apple-touch-icon.png?v=44"],
+        ["apple-touch-icon", "180x180", "/employee_portal_suite/static/icons/portal-180.png?v=44"],
+        ["apple-touch-icon-precomposed", "", "/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=44"],
     ];
     for (const [rel, sizes, href] of touchIcons) {
         const link = document.createElement("link");
@@ -32,10 +32,10 @@ function enforceEmployeePortalFavicon() {
         head.appendChild(link);
     }
     const icons = [
-        ["shortcut icon", "image/x-icon", "", "/employee_portal_suite/static/icons/portal-favicon-v45.ico?v=45"],
-        ["icon", "image/png", "16x16", "/employee_portal_suite/static/icons/portal-16.png?v=45"],
-        ["icon", "image/png", "32x32", "/employee_portal_suite/static/icons/portal-32.png?v=45"],
-        ["icon", "image/png", "64x64", "/employee_portal_suite/static/icons/portal-64.png?v=45"],
+        ["shortcut icon", "image/x-icon", "", "/employee_portal_suite/static/icons/portal-favicon-v43.ico?v=44"],
+        ["icon", "image/png", "16x16", "/employee_portal_suite/static/icons/portal-16.png?v=44"],
+        ["icon", "image/png", "32x32", "/employee_portal_suite/static/icons/portal-32.png?v=44"],
+        ["icon", "image/png", "64x64", "/employee_portal_suite/static/icons/portal-64.png?v=44"],
     ];
     for (const [rel, type, sizes, href] of icons) {
         const link = document.createElement("link");
@@ -346,6 +346,18 @@ function enforceEmployeePortalFavicon() {
         shell.querySelectorAll('[data-ep-thread]').forEach((link) => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
+                const unreadBadge = link.querySelector('[data-ep-row-unread]');
+                unreadBadge?.remove();
+                const channelId = Number(link.dataset.channelId || 0);
+                if (channelId) {
+                    fetch('/employee_portal/discuss/mark_read', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({jsonrpc: '2.0', method: 'call', params: {channel_id: channelId}, id: Date.now()}),
+                    }).then(() => {
+                        window.dispatchEvent(new Event('employee-portal-unread-refresh'));
+                    }).catch(() => {});
+                }
                 const mobile = window.matchMedia('(max-width: 767.98px)').matches;
                 if (mobile) {
                     const mobileHref = link.dataset.mobileHref || (link.getAttribute('href') || '').replace('?embedded=1', '');
