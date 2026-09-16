@@ -628,11 +628,28 @@ body.ep-native-discuss-embedded .o-mail-Discuss-header {
 }
 
 
-/* Portal Discuss already owns the full conversation surface.  Native folded chat
-   windows/bubbles duplicate the same thread on mobile, so suppress them here only. */
-body.ep-native-discuss-public.ep-native-discuss-channel .o-mail-ChatWindowContainer,
-body.ep-native-discuss-public.ep-native-discuss-channel [class*="o-mail-ChatWindowContainer"],
-body.ep-native-discuss-public.ep-native-discuss-channel .o-mail-ChatWindow,
-body.ep-native-discuss-public.ep-native-discuss-channel [class*="o-mail-ChatWindow"] {
-  display:none!important;
+/* v20.44 - Employee Portal Channels: true read-only mode.
+   Read-only means view-only, not merely a disabled text input. */
+body.ep-native-discuss-readonly .o-mail-Composer,
+body.ep-native-discuss-readonly [class*="o-mail-Composer"],
+body.ep-native-discuss-readonly .o-mail-Message-actions,
+body.ep-native-discuss-readonly [class*="o-mail-MessageAction"],
+body.ep-native-discuss-readonly [class*="o-mail-Message-actions"],
+body.ep-native-discuss-readonly [class*="o-mail-Message-menu"],
+body.ep-native-discuss-readonly [class*="o-mail-MessageMenu"],
+body.ep-native-discuss-readonly [data-action*="reaction"],
+body.ep-native-discuss-readonly [title*="React"],
+body.ep-native-discuss-readonly [aria-label*="React"],
+body.ep-native-discuss-readonly [title*="Reply"],
+body.ep-native-discuss-readonly [aria-label*="Reply"],
+body.ep-native-discuss-readonly [title*="Pin"],
+body.ep-native-discuss-readonly [aria-label*="Pin"] {
+    display: none !important;
+}
+body.ep-native-discuss-readonly .o-mail-Discuss-header button:not([data-ep-chats-back]),
+body.ep-native-discuss-readonly .o-mail-Discuss-header a:not([data-ep-chats-back]) {
+    display: none !important;
+}
+body.ep-native-discuss-readonly .o-mail-Thread {
+    padding-bottom: 14px !important;
 }

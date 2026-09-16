@@ -27,8 +27,3 @@ The standalone custom Chats frontend is no longer required. The employee communi
 ## Web Push notifications (20.34)
 
 Chats now supports standards-based Web Push for installed PWAs and compatible desktop browsers. Employees enable notifications from the bell control on the Chats home page. The browser subscription is stored per Odoo user/device and native Discuss message/RTC events are sent through Web Push first. Telegram remains a fallback only when no active device accepts the push. iPhone/iPad users must add Chats to the Home Screen before enabling push notifications.
-
-
-## Portal Channels (20.45)
-
-Portal employees can see native Odoo channels only when they are explicit channel members. Unread counters now clear immediately when a thread is opened and are synchronised with native Discuss read state. Mobile portal conversations also suppress Odoo's duplicate folded chat-window bubble.
