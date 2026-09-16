@@ -203,6 +203,15 @@ class EmployeePortalNativeDiscussController(http.Controller):
         return channel
 
     def _mark_channel_seen(self, channel, user):
+        """Mark a native Discuss thread read using Odoo's own member state.
+
+        ``message_unread_counter`` is computed from ``new_message_separator``.
+        The native ``_mark_as_read`` helper updates both the last-seen message
+        and that separator and broadcasts the synchronized unread state.  Do
+        not restrict the lookup to ``message_type='comment'`` here: Odoo's own
+        helper deliberately resolves the last message in the thread first,
+        which keeps chat/group/channel behavior consistent.
+        """
         member = channel.sudo().channel_member_ids.filtered(
             lambda m: m.partner_id.id == user.partner_id.id
         )[:1]
@@ -211,10 +220,13 @@ class EmployeePortalNativeDiscussController(http.Controller):
         latest = request.env['mail.message'].sudo().search([
             ('model', '=', 'discuss.channel'),
             ('res_id', '=', channel.id),
-            ('message_type', '=', 'comment'),
         ], order='id desc', limit=1)
         if latest:
             member.sudo()._mark_as_read(latest.id, sync=True)
+            # The unread counter is computed.  Explicit invalidation makes the
+            # JSON response below reflect the new separator in the same request
+            # instead of relying on a later refresh/request.
+            member.invalidate_recordset(['message_unread_counter'])
 
     def _discuss_home_values(self, user):
         """Build the standalone Chats home page from the same native Discuss channels.
@@ -364,8 +376,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
             "background_color": "#ffffff",
             "theme_color": "#ffffff",
             "icons": [
-                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=44", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=44", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=45", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=45", "sizes": "512x512", "type": "image/png", "purpose": "any"},
             ],
         }
         return request.make_response(
@@ -401,8 +413,8 @@ self.addEventListener("push", (event) => {
     const kind = data.kind || "message";
     const options = {
         body: data.body || "",
-        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=44",
-        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=44",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=45",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=45",
         tag: data.tag || `employee-chats-${kind}`,
         renotify: kind === "call" || kind === "video_call",
         requireInteraction: kind === "call" || kind === "video_call",
@@ -445,8 +457,8 @@ self.addEventListener("notificationclick", (event) => {
             "background_color": "#ffffff",
             "theme_color": "#0f766e",
             "icons": [
-                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=44", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=44", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-192.png?v=45", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/employee_portal_suite/static/icons/portal-512.png?v=45", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
             ],
         }
         return request.make_response(
@@ -482,8 +494,8 @@ self.addEventListener("push", (event) => {
     const kind = data.kind || "activity";
     const options = {
         body: data.body || "",
-        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=44",
-        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=44",
+        icon: data.icon || "/employee_portal_suite/static/icons/portal-192.png?v=45",
+        badge: data.badge || "/employee_portal_suite/static/icons/portal-64.png?v=45",
         tag: data.tag || `employee-portal-${kind}`,
         renotify: kind === "call" || kind === "video_call",
         requireInteraction: kind === "call" || kind === "video_call",
@@ -654,7 +666,14 @@ self.addEventListener("notificationclick", (event) => {
         self._mark_channel_seen(channel, user)
         channels = self._portal_channels(user)
         members = channels.channel_member_ids.filtered(lambda m: m.partner_id.id == user.partner_id.id)
-        return {'ok': True, 'unread': sum(int(m.message_unread_counter or 0) for m in members)}
+        members.invalidate_recordset(['message_unread_counter'])
+        counts = {str(m.channel_id.id): int(m.message_unread_counter or 0) for m in members}
+        return {
+            'ok': True,
+            'unread': sum(counts.values()),
+            'channels': counts,
+            'channel_id': channel.id,
+        }
 
     @http.route('/employee_portal/discuss/call/poll', type='json', auth='user', csrf=False)
     def employee_discuss_call_poll(self):
