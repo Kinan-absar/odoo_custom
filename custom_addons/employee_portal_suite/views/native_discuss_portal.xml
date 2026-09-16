@@ -23,7 +23,7 @@
                 .ep-chats-search{margin-top:10px;display:flex;align-items:center;gap:8px;background:#f3f4f6;border-radius:10px;padding:8px 10px}.ep-chats-search input{border:0;outline:0;background:transparent;width:100%;font-size:14px}
                 .ep-native-new-chat{display:none;position:fixed;inset:0;z-index:5000;align-items:center;justify-content:center;padding:18px}.ep-native-new-chat.show{display:flex}.ep-chats-modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.38);backdrop-filter:blur(3px)}.ep-chats-modal-card{position:relative;z-index:1;width:min(440px,calc(100vw - 28px));max-height:min(720px,calc(100dvh - 36px));display:flex;flex-direction:column;background:#fff;border-radius:18px;box-shadow:0 24px 80px rgba(15,23,42,.24);overflow:hidden;border:1px solid rgba(15,23,42,.08)}.ep-chats-modal-head{height:54px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eef2f7;font-size:17px}.ep-chats-modal-close{width:34px;height:34px;border:0;background:transparent;border-radius:9px;color:#64748b;font-size:25px;line-height:1;cursor:pointer}.ep-chats-modal-close:hover{background:#f1f5f9}.ep-chats-modal-card form{padding:14px;overflow:auto}.ep-native-new-chat-title{display:none}
                 .ep-native-people-grid{display:flex;flex-direction:column;gap:4px}.ep-native-person-option{display:flex;align-items:center;gap:9px;padding:8px;border-radius:9px;cursor:pointer}.ep-native-person-option:hover{background:#f8fafc}.ep-native-person-option img,.ep-native-avatar-fallback{width:36px;height:36px;border-radius:50%;object-fit:cover;display:inline-flex;align-items:center;justify-content:center;background:#eef2f7}.ep-native-person-copy{display:flex;flex-direction:column;min-width:0}.ep-native-person-copy small{font-size:11px;color:#9ca3af}
-                .ep-chats-thread-list{flex:1;overflow:auto;padding:6px}.ep-chats-thread{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;text-decoration:none!important;color:#1f2937!important}.ep-chats-thread:hover,.ep-chats-thread.active{background:#eef6f7}.ep-chats-avatar img,.ep-chats-avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;background:#eef2f7;flex:0 0 auto}.ep-chats-thread-copy{min-width:0;display:flex;flex-direction:column;flex:1}.ep-chats-thread-copy strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}.ep-native-presence{font-size:11px;color:#9ca3af}.ep-native-presence-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#cbd5e1;margin-right:5px}.ep-native-presence-online .ep-native-presence-dot{background:#22c55e}.ep-chats-unread{min-width:20px;height:20px;border-radius:10px;padding:0 6px;background:#16a34a;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center}
+                .ep-chats-thread-list{flex:1;overflow:auto;padding:6px}.ep-chats-section{padding:2px 0 8px}.ep-chats-section+.ep-chats-section{border-top:1px solid #f1f5f9;padding-top:9px}.ep-chats-section-title{height:26px;padding:0 10px;display:flex;align-items:center;justify-content:space-between;color:#64748b;font-size:11px;font-weight:750;letter-spacing:.045em;text-transform:uppercase}.ep-chats-section-count{font-size:10px;font-weight:700;color:#94a3b8}.ep-chats-thread{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;text-decoration:none!important;color:#1f2937!important}.ep-chats-thread:hover,.ep-chats-thread.active{background:#eef6f7}.ep-chats-avatar img,.ep-chats-avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;background:#eef2f7;flex:0 0 auto}.ep-chats-channel-avatar{border-radius:11px!important;background:#f3e8ff!important;color:#7c3aed;font-size:22px;font-weight:700}.ep-chats-channel-thread .ep-chats-thread-copy small{color:#94a3b8}.ep-chats-thread-copy{min-width:0;display:flex;flex-direction:column;flex:1}.ep-chats-thread-copy strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}.ep-native-presence{font-size:11px;color:#9ca3af}.ep-native-presence-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#cbd5e1;margin-right:5px}.ep-native-presence-online .ep-native-presence-dot{background:#22c55e}.ep-chats-unread{min-width:20px;height:20px;border-radius:10px;padding:0 6px;background:#16a34a;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center}
                 .ep-chats-conversation-pane{position:relative;min-width:0;background:#f8fafc;overflow:hidden}.ep-chats-empty-state{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8}.ep-chats-empty-state h3{color:#334155;margin:8px 0 2px}.ep-chats-empty-state p{margin:0}.ep-chats-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}.ep-chats-frame.show{display:block}.ep-chats-mobile-bar{display:none}
                 /* Desktop behaves like a classic chat app: the conversation opens in the
                    right pane while the Chats list remains visible on the left. Mobile still
@@ -48,7 +48,7 @@
                         </div>
                         <div class="ep-chats-search">
                             <i class="fa fa-search"/>
-                            <input type="search" placeholder="Search chats" autocomplete="off" data-ep-chat-search="1"/>
+                            <input type="search" placeholder="Search chats and channels" autocomplete="off" data-ep-chat-search="1"/>
                         </div>
                     </div>
 
@@ -86,28 +86,45 @@
                     </div>
 
                     <div class="ep-chats-thread-list" data-ep-thread-list="1">
-                        <t t-foreach="channels" t-as="ch">
-                            <a class="ep-chats-thread" data-ep-thread="1" target="ep_discuss_frame" t-att-data-search="(ch['name'] or '').lower()" t-att-data-mobile-href="'/my/employee/discuss/channel/%s' % ch['id']" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']">
-                                <div class="ep-chats-avatar">
-                                    <img t-if="ch['avatar']" t-att-src="ch['avatar']"/>
-                                    <span t-if="not ch['avatar']" class="ep-chats-avatar-fallback">G</span>
-                                </div>
-                                <div class="ep-chats-thread-copy">
-                                    <strong t-out="ch['name']"/>
-                                    <small t-if="ch['is_group']">Group conversation</small>
-                                    <small t-if="not ch['is_group']" t-att-class="'ep-native-presence ep-native-presence-%s' % ch['presence']"><span class="ep-native-presence-dot"/><t t-out="ch['presence_label']"/></small>
-                                </div>
-                                <span t-if="ch['unread']" class="ep-native-thread-unread" t-out="ch['unread']"/>
-                            </a>
-                        </t>
-                        <div t-if="not channels" class="ep-native-empty"><strong>No conversations yet</strong><span>Start a conversation with an employee.</span></div>
+                        <section t-if="portal_channels" class="ep-chats-section" data-ep-channel-section="1">
+                            <div class="ep-chats-section-title"><span>Channels</span><span class="ep-chats-section-count" t-out="len(portal_channels)"/></div>
+                            <t t-foreach="portal_channels" t-as="ch">
+                                <a class="ep-chats-thread ep-chats-channel-thread" data-ep-thread="1" data-ep-thread-kind="channel" target="ep_discuss_frame" t-att-data-search="(ch['name'] or '').lower()" t-att-data-mobile-href="'/my/employee/discuss/channel/%s' % ch['id']" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']">
+                                    <div class="ep-chats-avatar ep-chats-channel-avatar"><span>#</span></div>
+                                    <div class="ep-chats-thread-copy">
+                                        <strong t-out="ch['name']"/>
+                                        <small>Channel</small>
+                                    </div>
+                                    <span t-if="ch['unread']" class="ep-native-thread-unread" t-out="ch['unread']"/>
+                                </a>
+                            </t>
+                        </section>
+
+                        <section class="ep-chats-section" data-ep-direct-section="1">
+                            <div class="ep-chats-section-title"><span>Direct Messages</span><span t-if="channels" class="ep-chats-section-count" t-out="len(channels)"/></div>
+                            <t t-foreach="channels" t-as="ch">
+                                <a class="ep-chats-thread" data-ep-thread="1" data-ep-thread-kind="direct" target="ep_discuss_frame" t-att-data-search="(ch['name'] or '').lower()" t-att-data-mobile-href="'/my/employee/discuss/channel/%s' % ch['id']" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']">
+                                    <div class="ep-chats-avatar">
+                                        <img t-if="ch['avatar']" t-att-src="ch['avatar']"/>
+                                        <span t-if="not ch['avatar']" class="ep-chats-avatar-fallback">G</span>
+                                    </div>
+                                    <div class="ep-chats-thread-copy">
+                                        <strong t-out="ch['name']"/>
+                                        <small t-if="ch['is_group']">Group conversation</small>
+                                        <small t-if="not ch['is_group']" t-att-class="'ep-native-presence ep-native-presence-%s' % ch['presence']"><span class="ep-native-presence-dot"/><t t-out="ch['presence_label']"/></small>
+                                    </div>
+                                    <span t-if="ch['unread']" class="ep-native-thread-unread" t-out="ch['unread']"/>
+                                </a>
+                            </t>
+                            <div t-if="not channels" class="ep-native-empty"><strong>No direct messages yet</strong><span>Start a conversation with an employee.</span></div>
+                        </section>
                     </div>
                 </aside>
 
                 <section class="ep-chats-conversation-pane" data-ep-chat-pane="1">
                     <div class="ep-chats-empty-state" data-ep-chat-empty="1">
                         <h3>Chats</h3>
-                        <p>Select a conversation to start messaging.</p>
+                        <p>Select a conversation or channel to start messaging.</p>
                     </div>
                     <iframe name="ep_discuss_frame" class="ep-chats-frame" data-ep-discuss-frame="1" allow="camera; microphone; display-capture; autoplay; clipboard-read; clipboard-write"/>
                 </section>

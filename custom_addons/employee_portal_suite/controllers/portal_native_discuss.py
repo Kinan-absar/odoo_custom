@@ -39,10 +39,15 @@ class EmployeePortalNativeDiscussController(http.Controller):
 
     def _is_allowed_channel(self, channel, user):
         channel = channel.sudo().exists()
-        if not channel or channel.channel_type not in ('chat', 'group'):
+        if not channel or channel.channel_type not in ('chat', 'group', 'channel'):
             return False
         if user.partner_id not in channel.channel_member_ids.partner_id:
             return False
+        # Native channels are exposed strictly by membership. A portal employee sees
+        # only channels they were explicitly added to in Odoo; channel discovery is
+        # never broadened beyond membership.
+        if channel.channel_type == 'channel':
+            return True
         users = self._channel_users(channel)
         if user not in users or len(users) < 2:
             return False
@@ -67,7 +72,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
         self._ensure_legacy_channels(user)
         members = request.env['discuss.channel.member'].sudo().search([
             ('partner_id', '=', user.partner_id.id),
-            ('channel_id.channel_type', 'in', ('chat', 'group')),
+            ('channel_id.channel_type', 'in', ('chat', 'group', 'channel')),
         ])
         channels = members.channel_id.filtered(lambda c: self._is_allowed_channel(c, user))
         ordered = sorted(
@@ -78,6 +83,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
         return request.env['discuss.channel'].sudo().browse([c.id for c in ordered])
 
     def _channel_label(self, channel, user):
+        if channel.channel_type == 'channel':
+            return channel.name or 'Channel'
         users = self._channel_users(channel)
         others = users.filtered(lambda u: u.id != user.id)
         if channel.channel_type == 'group' or len(users) > 2:
@@ -92,6 +99,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
         return image_data_uri(avatar) if avatar else False
 
     def _channel_avatar(self, channel, user):
+        if channel.channel_type == 'channel':
+            return False
         users = self._channel_users(channel)
         others = users.filtered(lambda u: u.id != user.id)
         if channel.channel_type == 'group' or len(users) > 2:
@@ -119,6 +128,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
         return status, labels[status]
 
     def _channel_presence(self, channel, user):
+        if channel.channel_type == 'channel':
+            return 'offline', ''
         users = self._channel_users(channel)
         others = users.filtered(lambda u: u.id != user.id)
         if channel.channel_type == 'group' or len(users) > 2 or not others:
@@ -201,20 +212,27 @@ class EmployeePortalNativeDiscussController(http.Controller):
         """
         channels = self._portal_channels(user)
         rows = []
+        channel_rows = []
         for channel in channels:
             member = channel.channel_member_ids.filtered(lambda m: m.partner_id.id == user.partner_id.id)[:1]
-            is_group = channel.channel_type == 'group' or len(self._channel_users(channel)) > 2
+            is_native_channel = channel.channel_type == 'channel'
+            is_group = channel.channel_type == 'group' or (not is_native_channel and len(self._channel_users(channel)) > 2)
             presence, presence_label = self._channel_presence(channel, user)
-            rows.append({
+            row = {
                 'id': channel.id,
                 'name': self._channel_label(channel, user),
                 'avatar': self._channel_avatar(channel, user),
                 'is_group': is_group,
+                'is_channel': is_native_channel,
                 'presence': presence,
                 'presence_label': presence_label,
                 'unread': int(member.message_unread_counter or 0),
                 'last_interest_dt': channel.last_interest_dt,
-            })
+            }
+            if is_native_channel:
+                channel_rows.append(row)
+            else:
+                rows.append(row)
         employee_rows = []
         for emp_user in self._employee_users().filtered(lambda u: u.id != user.id):
             presence, presence_label = self._discuss_presence(emp_user)
@@ -227,6 +245,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
             })
         return {
             'channels': rows,
+            'portal_channels': channel_rows,
             'employees': employee_rows,
             'company': request.env.company.sudo(),
             'current_user': user,
@@ -243,7 +262,14 @@ class EmployeePortalNativeDiscussController(http.Controller):
         channel = channel.sudo().exists()
         if not channel or not self._is_allowed_channel(channel, user):
             return request.not_found()
-        channel.sudo().write({'is_employee_portal_channel': True})
+        if channel.channel_type == 'channel':
+            # Portal members may use native channel attachments/voice notes. Odoo's
+            # upload route still validates channel access/membership before accepting
+            # files, while this flag avoids the blanket non-internal upload rejection.
+            if not channel.allow_public_upload:
+                channel.sudo().write({'allow_public_upload': True})
+        else:
+            channel.sudo().write({'is_employee_portal_channel': True})
         channel_user = channel.with_user(user)
         store = Store()
         store.add({
@@ -316,7 +342,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
         channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
         if not self._is_allowed_channel(channel, user):
             return request.not_found()
-        channel.sudo().write({'is_employee_portal_channel': True})
+        if channel.channel_type != 'channel':
+            channel.sudo().write({'is_employee_portal_channel': True})
 
         # Use exactly the same native Discuss renderer as the neutral home route.
         return self._render_native_discuss(channel, user, home=False)
@@ -431,7 +458,7 @@ self.addEventListener("notificationclick", (event) => {
     @http.route('/my/employee/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_portal_service_worker(self, **kwargs):
         script = r'''
-const CACHE_NAME = "employee-portal-pwa-v43";
+const CACHE_NAME = "employee-portal-pwa-v44";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
@@ -535,6 +562,10 @@ self.addEventListener("notificationclick", (event) => {
         channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
         if not self._is_allowed_channel(channel, user):
             return {'people': []}
+        # Native channel membership is managed from backend Discuss. Portal users
+        # may participate in channels they belong to, but cannot expand the audience.
+        if channel.channel_type == 'channel':
+            return {'people': []}
         existing_ids = set(self._channel_users(channel).ids)
         people = []
         for emp_user in self._employee_users():
@@ -559,6 +590,8 @@ self.addEventListener("notificationclick", (event) => {
         channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
         if not self._is_allowed_channel(channel, user):
             return {'ok': False, 'error': 'Conversation not available.'}
+        if channel.channel_type == 'channel':
+            return {'ok': False, 'error': 'Channel membership is managed in Odoo.'}
         try:
             wanted_ids = {int(x) for x in (user_ids or []) if x}
         except (TypeError, ValueError):
