@@ -110,29 +110,5 @@
         <field name="domain_force">[('user_id', '=', user.id)]</field>
     </record>
 
-    <!-- EMPLOYEE PORTAL CHANNELS: selected portal members may read portal-enabled Odoo Channels.
-         This supplements Odoo's standard channel rule (which normally restricts Channels to internal groups). -->
-    <record id="portal_discuss_channel_member_access_rule" model="ir.rule">
-        <field name="name">Employee Portal: Read Selected Discuss Channels</field>
-        <field name="model_id" ref="mail.model_discuss_channel"/>
-        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
-        <field name="domain_force">[('channel_type', '=', 'channel'), ('employee_portal_access', 'in', ('read_only', 'read_write')), ('is_member', '=', True)]</field>
-        <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="False"/>
-        <field name="perm_create" eval="False"/>
-        <field name="perm_unlink" eval="False"/>
-    </record>
-
-    <record id="portal_discuss_channel_member_rows_rule" model="ir.rule">
-        <field name="name">Employee Portal: Read Members of Selected Discuss Channels</field>
-        <field name="model_id" ref="mail.model_discuss_channel_member"/>
-        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
-        <field name="domain_force">[('channel_id.channel_type', '=', 'channel'), ('channel_id.employee_portal_access', 'in', ('read_only', 'read_write')), ('channel_id.is_member', '=', True)]</field>
-        <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="False"/>
-        <field name="perm_create" eval="False"/>
-        <field name="perm_unlink" eval="False"/>
-    </record>
-
 </odoo>
 

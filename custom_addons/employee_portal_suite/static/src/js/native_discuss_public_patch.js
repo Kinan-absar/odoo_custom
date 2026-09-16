@@ -17,10 +17,6 @@ function isPortalConversationPage() {
     return isEmbeddedDiscuss() || /\/my\/employee\/discuss\/channel\/\d+\/?$/.test(window.location.pathname);
 }
 
-function isPortalReadOnlyChannel() {
-    return meta("employee-portal-channel-readonly") === "1";
-}
-
 function removeEmbeddedCloseButton(header) {
     if (!isPortalConversationPage()) return;
     const controls = Array.from(header.querySelectorAll("button, a"));
@@ -92,16 +88,7 @@ function ensureEmbeddedHeaderActions() {
     if (!header) return;
 
     removeEmbeddedCloseButton(header);
-    if (isPortalReadOnlyChannel()) {
-        for (const el of Array.from(header.querySelectorAll("button, a"))) {
-            if (!el.dataset.epChatsBack) {
-                el.style.setProperty("display", "none", "important");
-                el.dataset.epReadOnlyHiddenAction = "1";
-            }
-        }
-    } else {
-        tidyEmbeddedMobileHeader(header);
-    }
+    tidyEmbeddedMobileHeader(header);
 
     const isMobileChannel = window.matchMedia("(max-width: 767.98px)").matches && /\/my\/employee\/discuss\/channel\/\d+/.test(window.location.pathname);
     if ((isEmbeddedDiscuss() || isMobileChannel) && !header.querySelector("[data-ep-chats-back]")) {
@@ -126,7 +113,7 @@ function ensureEmbeddedHeaderActions() {
 // therefore keep Odoo's native attachment uploader exactly as in backend Discuss.
 patch(Composer.prototype, {
     get allowUpload() {
-        if (meta("employee-portal-discuss")) return !isPortalReadOnlyChannel();
+        if (meta("employee-portal-discuss")) return true;
         return super.allowUpload;
     },
 });
@@ -150,9 +137,6 @@ patch(Discuss.prototype, {
             document.body.classList.add("ep-native-discuss-public");
             if (isPortalConversationPage()) {
                 document.body.classList.add("ep-native-discuss-channel");
-            }
-            if (isPortalReadOnlyChannel()) {
-                document.body.classList.add("ep-native-discuss-readonly");
             }
             if (meta("employee-portal-discuss-embedded")) {
                 document.body.classList.add("ep-native-discuss-embedded");
@@ -237,7 +221,7 @@ patch(Discuss.prototype, {
                 document.documentElement.style.removeProperty("--ep-discuss-top");
                 document.documentElement.style.overflow = originalHtmlOverflow;
                 Object.assign(document.body.style, originalBodyStyle);
-                document.body.classList.remove("ep-native-discuss-keyboard", "ep-native-discuss-public", "ep-native-discuss-embedded", "ep-native-discuss-channel", "ep-native-discuss-readonly");
+                document.body.classList.remove("ep-native-discuss-keyboard", "ep-native-discuss-public", "ep-native-discuss-embedded", "ep-native-discuss-channel");
             });
         }
     },

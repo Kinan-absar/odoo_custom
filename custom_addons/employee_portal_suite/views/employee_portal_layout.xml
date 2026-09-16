@@ -1854,7 +1854,7 @@
             </script>
 
         </t>
-        <script src="/employee_portal_suite/static/src/js/employee_portal_pwa.js?v=2044"></script>
+        <script src="/employee_portal_suite/static/src/js/employee_portal_pwa.js?v=2039"></script>
     </template>
 
     <!-- ================================================================
@@ -1917,7 +1917,7 @@
                 <link rel="apple-touch-icon" href="/employee_portal_suite/static/icons/apple-touch-icon.png?v=44" data-employee-portal-touch-icon="1"/>
                 <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=44" data-employee-portal-touch-icon="1"/>
                 <link rel="apple-touch-icon-precomposed" href="/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=44" data-employee-portal-touch-icon="1"/>
-                <link rel="shortcut icon" type="image/x-icon" href="/employee_portal_suite/static/icons/portal-favicon-v44.ico?v=44" data-employee-portal-icon="1"/>
+                <link rel="shortcut icon" type="image/x-icon" href="/employee_portal_suite/static/icons/portal-favicon-v43.ico?v=44" data-employee-portal-icon="1"/>
                 <link rel="icon" type="image/png" sizes="16x16" href="/employee_portal_suite/static/icons/portal-16.png?v=44" data-employee-portal-icon="1"/>
                 <link rel="icon" type="image/png" sizes="32x32" href="/employee_portal_suite/static/icons/portal-32.png?v=44" data-employee-portal-icon="1"/>
                 <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=44" data-employee-portal-icon="1"/>
