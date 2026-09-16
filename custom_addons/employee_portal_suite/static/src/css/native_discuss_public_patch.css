@@ -627,26 +627,29 @@ body.ep-native-discuss-embedded .o-mail-Discuss-header {
   }
 }
 
-/* v20.44 - Portal Discuss cleanup: no redundant floating native chat-window avatar.
-   The Employee Portal already owns navigation and the active native Discuss thread. */
-body.ep-native-discuss-public .o-mail-ChatWindowContainer,
-body.ep-native-discuss-public .o-mail-ChatWindow,
-body.ep-native-discuss-public .o-mail-ChatWindowManager,
-body.ep-native-discuss-public [class*="o-mail-ChatWindow"] {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
 
-/* Broadcast/channel conversations are intentionally read-only for portal users. */
+/* v20.44 - Employee Portal Channels: true read-only mode.
+   Read-only means view-only, not merely a disabled text input. */
 body.ep-native-discuss-readonly .o-mail-Composer,
-body.ep-native-discuss-readonly [class*="o-mail-Composer"] {
-  display: none !important;
+body.ep-native-discuss-readonly [class*="o-mail-Composer"],
+body.ep-native-discuss-readonly .o-mail-Message-actions,
+body.ep-native-discuss-readonly [class*="o-mail-MessageAction"],
+body.ep-native-discuss-readonly [class*="o-mail-Message-actions"],
+body.ep-native-discuss-readonly [class*="o-mail-Message-menu"],
+body.ep-native-discuss-readonly [class*="o-mail-MessageMenu"],
+body.ep-native-discuss-readonly [data-action*="reaction"],
+body.ep-native-discuss-readonly [title*="React"],
+body.ep-native-discuss-readonly [aria-label*="React"],
+body.ep-native-discuss-readonly [title*="Reply"],
+body.ep-native-discuss-readonly [aria-label*="Reply"],
+body.ep-native-discuss-readonly [title*="Pin"],
+body.ep-native-discuss-readonly [aria-label*="Pin"] {
+    display: none !important;
 }
-body.ep-native-discuss-public .o-mail-ChatBubble,
-body.ep-native-discuss-public [class*="o-mail-ChatBubble"],
-body.ep-native-discuss-public .o-mail-ChatHub,
-body.ep-native-discuss-public [class*="o-mail-ChatHub"] {
-  display: none !important;
-  visibility: hidden !important;
+body.ep-native-discuss-readonly .o-mail-Discuss-header button:not([data-ep-chats-back]),
+body.ep-native-discuss-readonly .o-mail-Discuss-header a:not([data-ep-chats-back]) {
+    display: none !important;
+}
+body.ep-native-discuss-readonly .o-mail-Thread {
+    padding-bottom: 14px !important;
 }
