@@ -1,13 +1,42 @@
 import logging
 
-from odoo import models
+from odoo import _, models
 from odoo.tools.image import image_data_uri
+from odoo.exceptions import AccessError
+from odoo.osv import expression
 
 _logger = logging.getLogger(__name__)
 
 
 class DiscussChannelMember(models.Model):
     _inherit = 'discuss.channel.member'
+
+    def _portal_read_only_channel(self):
+        self.ensure_one()
+        channel = self.channel_id
+        return bool(
+            channel.channel_type == 'channel'
+            and channel.employee_portal_access == 'read_only'
+            and channel._is_employee_portal_user(self.env.user)
+        )
+
+    def _rtc_join_call(self, store=None, check_rtc_session_ids=None, camera=False):
+        self.ensure_one()
+        if self._portal_read_only_channel():
+            raise AccessError(_('Audio and video calls are disabled for read-only portal Channels.'))
+        return super()._rtc_join_call(
+            store=store, check_rtc_session_ids=check_rtc_session_ids, camera=camera
+        )
+
+    def _get_rtc_invite_members_domain(self, member_ids=None):
+        domain = super()._get_rtc_invite_members_domain(member_ids=member_ids)
+        self.ensure_one()
+        channel = self.channel_id
+        if channel.channel_type == 'channel' and channel.employee_portal_access == 'read_only':
+            portal_partner_ids = channel._employee_portal_candidate_users().partner_id.ids
+            if portal_partner_ids:
+                domain = expression.AND([domain, [('partner_id', 'not in', portal_partner_ids)]])
+        return domain
 
     def _rtc_invite_members(self, member_ids=None):
         """Mirror native Discuss RTC invitations to the portal shell and Telegram.
@@ -16,6 +45,9 @@ class DiscussChannelMember(models.Model):
         only adds the portal bus alert and an optional Telegram alert for employee
         users (internal or portal) who connected Telegram.
         """
+        for current in self:
+            if current._portal_read_only_channel():
+                raise AccessError(_('Audio and video calls are disabled for read-only portal Channels.'))
         invited = super()._rtc_invite_members(member_ids=member_ids)
         Employee = self.env['hr.employee'].sudo()
         Telegram = self.env['employee.portal.telegram.service'].sudo()

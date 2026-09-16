@@ -23,7 +23,7 @@
                 .ep-chats-search{margin-top:10px;display:flex;align-items:center;gap:8px;background:#f3f4f6;border-radius:10px;padding:8px 10px}.ep-chats-search input{border:0;outline:0;background:transparent;width:100%;font-size:14px}
                 .ep-native-new-chat{display:none;position:fixed;inset:0;z-index:5000;align-items:center;justify-content:center;padding:18px}.ep-native-new-chat.show{display:flex}.ep-chats-modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.38);backdrop-filter:blur(3px)}.ep-chats-modal-card{position:relative;z-index:1;width:min(440px,calc(100vw - 28px));max-height:min(720px,calc(100dvh - 36px));display:flex;flex-direction:column;background:#fff;border-radius:18px;box-shadow:0 24px 80px rgba(15,23,42,.24);overflow:hidden;border:1px solid rgba(15,23,42,.08)}.ep-chats-modal-head{height:54px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eef2f7;font-size:17px}.ep-chats-modal-close{width:34px;height:34px;border:0;background:transparent;border-radius:9px;color:#64748b;font-size:25px;line-height:1;cursor:pointer}.ep-chats-modal-close:hover{background:#f1f5f9}.ep-chats-modal-card form{padding:14px;overflow:auto}.ep-native-new-chat-title{display:none}
                 .ep-native-people-grid{display:flex;flex-direction:column;gap:4px}.ep-native-person-option{display:flex;align-items:center;gap:9px;padding:8px;border-radius:9px;cursor:pointer}.ep-native-person-option:hover{background:#f8fafc}.ep-native-person-option img,.ep-native-avatar-fallback{width:36px;height:36px;border-radius:50%;object-fit:cover;display:inline-flex;align-items:center;justify-content:center;background:#eef2f7}.ep-native-person-copy{display:flex;flex-direction:column;min-width:0}.ep-native-person-copy small{font-size:11px;color:#9ca3af}
-                .ep-chats-thread-list{flex:1;overflow:auto;padding:8px 8px 18px}.ep-chats-section{padding:8px 4px 5px;font-size:10px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#94a3b8}.ep-chats-section.channels{margin-top:5px;padding-top:12px;border-top:1px solid #eef2f7}.ep-chats-thread{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;text-decoration:none!important;color:#1f2937!important}.ep-chats-thread:hover,.ep-chats-thread.active{background:#eef6f7}.ep-chats-avatar img,.ep-chats-avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;background:#eef2f7;flex:0 0 auto}.ep-chats-thread-copy{min-width:0;display:flex;flex-direction:column;flex:1}.ep-chats-thread-copy strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}.ep-native-presence{font-size:11px;color:#9ca3af}.ep-native-presence-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#cbd5e1;margin-right:5px}.ep-native-presence-online .ep-native-presence-dot{background:#22c55e}.ep-chats-unread{min-width:20px;height:20px;border-radius:999px;padding:0 6px;background:#2563eb;color:#fff;font-size:11px;font-weight:750;line-height:20px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(37,99,235,.22)}.ep-chats-channel-avatar{background:#f3e8ff!important;color:#7c3aed!important;font-size:22px;font-weight:800}.ep-chats-channel-avatar span{transform:translateY(-1px)}
+                .ep-chats-thread-list{flex:1;overflow:auto;padding:6px}.ep-chats-section-label{padding:10px 10px 5px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8}.ep-chats-section-channels{margin-top:4px;border-top:1px solid #f1f5f9;padding-top:12px}.ep-chats-channel-avatar{font-size:23px;font-weight:800;color:#7c3aed;background:#f3e8ff!important}.ep-chats-thread{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;text-decoration:none!important;color:#1f2937!important}.ep-chats-thread:hover,.ep-chats-thread.active{background:#eef6f7}.ep-chats-avatar img,.ep-chats-avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;background:#eef2f7;flex:0 0 auto}.ep-chats-thread-copy{min-width:0;display:flex;flex-direction:column;flex:1}.ep-chats-thread-copy strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}.ep-native-presence{font-size:11px;color:#9ca3af}.ep-native-presence-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#cbd5e1;margin-right:5px}.ep-native-presence-online .ep-native-presence-dot{background:#22c55e}.ep-chats-unread{min-width:20px;height:20px;border-radius:10px;padding:0 6px;background:#16a34a;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center}
                 .ep-chats-conversation-pane{position:relative;min-width:0;background:#f8fafc;overflow:hidden}.ep-chats-empty-state{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8}.ep-chats-empty-state h3{color:#334155;margin:8px 0 2px}.ep-chats-empty-state p{margin:0}.ep-chats-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}.ep-chats-frame.show{display:block}.ep-chats-mobile-bar{display:none}
                 /* Desktop behaves like a classic chat app: the conversation opens in the
                    right pane while the Chats list remains visible on the left. Mobile still
@@ -86,23 +86,36 @@
                     </div>
 
                     <div class="ep-chats-thread-list" data-ep-thread-list="1">
-                        <t t-set="chat_rows" t-value="[ch for ch in channels if not ch['is_channel']]"/>
-                        <t t-set="channel_rows" t-value="[ch for ch in channels if ch['is_channel']]"/>
-                        <div t-if="chat_rows" class="ep-chats-section">Chats</div>
-                        <t t-foreach="chat_rows" t-as="ch">
-                            <a class="ep-chats-thread" data-ep-thread="1" t-att-data-channel-id="ch['id']" target="ep_discuss_frame" t-att-data-search="(ch['name'] or '').lower()" t-att-data-mobile-href="'/my/employee/discuss/channel/%s' % ch['id']" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']">
-                                <div class="ep-chats-avatar"><img t-if="ch['avatar']" t-att-src="ch['avatar']"/><span t-if="not ch['avatar']" class="ep-chats-avatar-fallback">G</span></div>
-                                <div class="ep-chats-thread-copy"><strong t-out="ch['name']"/><small t-if="ch['is_group']">Group conversation</small><small t-if="not ch['is_group']" t-att-class="'ep-native-presence ep-native-presence-%s' % ch['presence']"><span class="ep-native-presence-dot"/><t t-out="ch['presence_label']"/></small></div>
-                                <span t-if="ch['unread']" class="ep-chats-unread" data-ep-row-unread="1" t-out="ch['unread']"/>
-                            </a>
+                        <t t-if="chat_rows">
+                            <div class="ep-chats-section-label">Chats</div>
+                            <t t-foreach="chat_rows" t-as="ch">
+                                <a class="ep-chats-thread" data-ep-thread="1" target="ep_discuss_frame" t-att-data-search="(ch['name'] or '').lower()" t-att-data-mobile-href="'/my/employee/discuss/channel/%s' % ch['id']" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']">
+                                    <div class="ep-chats-avatar">
+                                        <img t-if="ch['avatar']" t-att-src="ch['avatar']"/>
+                                        <span t-if="not ch['avatar']" class="ep-chats-avatar-fallback">G</span>
+                                    </div>
+                                    <div class="ep-chats-thread-copy">
+                                        <strong t-out="ch['name']"/>
+                                        <small t-if="ch['is_group']">Group conversation</small>
+                                        <small t-if="not ch['is_group']" t-att-class="'ep-native-presence ep-native-presence-%s' % ch['presence']"><span class="ep-native-presence-dot"/><t t-out="ch['presence_label']"/></small>
+                                    </div>
+                                    <span t-if="ch['unread']" class="ep-native-thread-unread" t-out="ch['unread']"/>
+                                </a>
+                            </t>
                         </t>
-                        <div t-if="channel_rows" class="ep-chats-section channels">Channels</div>
-                        <t t-foreach="channel_rows" t-as="ch">
-                            <a class="ep-chats-thread ep-chats-channel" data-ep-thread="1" t-att-data-channel-id="ch['id']" target="ep_discuss_frame" t-att-data-search="(ch['name'] or '').lower()" t-att-data-mobile-href="'/my/employee/discuss/channel/%s' % ch['id']" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']">
-                                <div class="ep-chats-avatar ep-chats-channel-avatar"><span>#</span></div>
-                                <div class="ep-chats-thread-copy"><strong><span style="color:#64748b">#</span><t t-out="ch['name']"/></strong><small>Channel</small></div>
-                                <span t-if="ch['unread']" class="ep-chats-unread" data-ep-row-unread="1" t-out="ch['unread']"/>
-                            </a>
+                        <t t-if="channel_rows">
+                            <div class="ep-chats-section-label ep-chats-section-channels">Channels</div>
+                            <t t-foreach="channel_rows" t-as="ch">
+                                <a class="ep-chats-thread ep-chats-channel-row" data-ep-thread="1" target="ep_discuss_frame" t-att-data-search="(ch['name'] or '').lower()" t-att-data-mobile-href="'/my/employee/discuss/channel/%s' % ch['id']" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']">
+                                    <div class="ep-chats-avatar ep-chats-channel-avatar">#</div>
+                                    <div class="ep-chats-thread-copy">
+                                        <strong t-out="ch['name']"/>
+                                        <small t-if="ch['read_only']">Read only</small>
+                                        <small t-if="not ch['read_only']">Channel</small>
+                                    </div>
+                                    <span t-if="ch['unread']" class="ep-native-thread-unread" t-out="ch['unread']"/>
+                                </a>
+                            </t>
                         </t>
                         <div t-if="not channels" class="ep-native-empty"><strong>No conversations yet</strong><span>Start a conversation with an employee.</span></div>
                     </div>
@@ -141,12 +154,6 @@
                             var thread = event.target.closest &amp;&amp; event.target.closest("[data-ep-thread]");
                             if (thread) {
                                 event.preventDefault();
-                                var unread = thread.querySelector("[data-ep-row-unread]");
-                                if (unread) unread.remove();
-                                var channelId = Number(thread.getAttribute("data-channel-id") || 0);
-                                if (channelId &amp;&amp; window.fetch) {
-                                    fetch("/employee_portal/discuss/mark_read", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",method:"call",params:{channel_id:channelId},id:Date.now()})}).catch(function(){});
-                                }
                                 var mobile = window.matchMedia("(max-width: 767.98px)").matches;
                                 if (mobile) {
                                     var mobileHref = thread.getAttribute("data-mobile-href") || (thread.getAttribute("href") || "").replace("?embedded=1", "");
@@ -228,7 +235,7 @@
             </script>
             <!-- The notification bell must work even if Odoo's frontend asset bundle is
                  cached or omitted on this standalone page. Load the push client directly. -->
-            <script src="/employee_portal_suite/static/src/js/native_discuss_push.js?v=2039"></script>
+            <script src="/employee_portal_suite/static/src/js/native_discuss_push.js?v=2044"></script>
             <script>
                 (function () {
                     document.addEventListener('click', function (ev) {
@@ -314,6 +321,12 @@
             <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon-precomposed" href="/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=44" data-employee-portal-touch-icon="1"/>
             <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=44"/>
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-discuss-company-logo" t-att-content="'/web/image/res.company/%s/logo_web' % request.env.company.id"/>
+        </xpath>
+    </template>
+
+    <template id="employee_native_discuss_read_only_head" inherit_id="mail.discuss_public_channel_template" name="Employee Portal Read Only Channel Meta">
+        <xpath expr="//head" position="inside">
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/') and employee_portal_read_only" name="employee-portal-channel-readonly" content="1"/>
         </xpath>
     </template>
 
