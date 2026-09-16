@@ -1,4 +1,5 @@
 from odoo import Command, api, fields, models, tools
+from odoo.exceptions import AccessError
 
 
 from odoo.addons.mail.tools.discuss import Store
@@ -15,6 +16,64 @@ class DiscussChannel(models.Model):
         'portal.chat.thread', string='Employee Portal Conversation', copy=False,
         ondelete='set null', index=True,
     )
+
+    employee_portal_enabled = fields.Boolean(
+        string='Employee Portal Access', copy=False, index=True,
+        help='Expose this channel to the selected employee portal users.',
+    )
+    employee_portal_readonly = fields.Boolean(
+        string='Read Only in Employee Portal', copy=False,
+        help='Portal users can read the channel but cannot post messages or attachments.',
+    )
+    employee_portal_user_ids = fields.Many2many(
+        'res.users', 'discuss_channel_employee_portal_user_rel',
+        'channel_id', 'user_id', string='Employee Portal Users', copy=False,
+        domain="[('share', '=', True), ('active', '=', True)]",
+        help='Portal employee users allowed to see this channel in Chats.',
+    )
+
+    def _sync_employee_portal_members(self):
+        """Ensure configured portal users are real native Discuss members.
+
+        Access remains explicit through ``employee_portal_user_ids``. We only add
+        missing members; removing a user from portal exposure does not destructively
+        remove an existing native channel membership that may have another purpose.
+        """
+        Employee = self.env['hr.employee'].sudo()
+        for channel in self.sudo().filtered(lambda c: c.channel_type == 'channel'):
+            allowed_users = channel.employee_portal_user_ids.filtered(lambda u: u.active and u.share)
+            employee_user_ids = set(Employee.search([
+                ('active', '=', True), ('user_id', 'in', allowed_users.ids),
+            ]).mapped('user_id').ids)
+            allowed_users = allowed_users.filtered(lambda u: u.id in employee_user_ids)
+            if allowed_users != channel.employee_portal_user_ids:
+                channel.with_context(skip_ep_portal_sync=True).write({
+                    'employee_portal_user_ids': [Command.set(allowed_users.ids)],
+                })
+            if channel.employee_portal_enabled and allowed_users:
+                existing_partner_ids = set(channel.channel_member_ids.partner_id.ids)
+                missing = allowed_users.partner_id.filtered(lambda p: p.id not in existing_partner_ids)
+                if missing:
+                    channel._add_members(partners=missing, post_joined_message=False)
+            desired_upload = bool(channel.employee_portal_enabled and not channel.employee_portal_readonly)
+            if channel.allow_public_upload != desired_upload:
+                channel.with_context(skip_ep_portal_sync=True).write({'allow_public_upload': desired_upload})
+        return True
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        channels = super().create(vals_list)
+        if not self.env.context.get('skip_ep_portal_sync'):
+            channels._sync_employee_portal_members()
+        return channels
+
+    def write(self, vals):
+        result = super().write(vals)
+        if not self.env.context.get('skip_ep_portal_sync') and any(
+            key in vals for key in ('employee_portal_enabled', 'employee_portal_readonly', 'employee_portal_user_ids')
+        ):
+            self._sync_employee_portal_members()
+        return result
 
 
 
@@ -170,9 +229,16 @@ class DiscussChannel(models.Model):
         """)
 
     def message_post(self, **kwargs):
+        # A configured channel may be readable by portal users while remaining
+        # writable for internal Odoo users. Enforce that distinction server-side.
+        if self.env.user.share:
+            blocked = self.filtered(lambda ch: ch.channel_type == 'channel' and ch.employee_portal_enabled and ch.employee_portal_readonly and self.env.user in ch.employee_portal_user_ids)
+            if blocked:
+                raise AccessError('This channel is read only in the Employee Portal.')
         message = super().message_post(**kwargs)
-        # Native Discuss remains the source of truth. Telegram is only an external alert.
-        for channel in self.sudo().filtered('is_employee_portal_channel'):
+        # Native Discuss remains the source of truth. External push is only an alert.
+        portal_alert_channels = self.sudo().filtered(lambda ch: ch.is_employee_portal_channel or (ch.channel_type == 'channel' and ch.employee_portal_enabled))
+        for channel in portal_alert_channels:
             if not message or message.model != 'discuss.channel' or message.res_id != channel.id:
                 continue
             if message.message_type not in ('comment', 'email'):
@@ -186,6 +252,8 @@ class DiscussChannel(models.Model):
             users = self.env['res.users'].sudo().search([
                 ('active', '=', True), ('partner_id', 'in', recipients.ids),
             ])
+            if channel.channel_type == 'channel' and channel.employee_portal_enabled:
+                users = users & channel.employee_portal_user_ids
             emp_user_ids = set(self.env['hr.employee'].sudo().search([
                 ('active', '=', True), ('user_id', 'in', users.ids),
             ]).mapped('user_id').ids)

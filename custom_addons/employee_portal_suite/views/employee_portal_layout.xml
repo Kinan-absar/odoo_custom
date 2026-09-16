@@ -115,7 +115,12 @@
                     .ep-sidebar-bottom{margin-top:auto;border-top:1px solid var(--border-light);padding-top:14px}.ep-sidebar-profile{position:relative}.ep-sidebar-profile-btn{width:100%;border:0;background:transparent;display:flex;align-items:center;gap:10px;padding:9px;border-radius:12px;text-align:left}.ep-sidebar-profile-btn:hover{background:var(--surface-2)}.ep-sidebar-profile-btn img{width:38px;height:38px;border-radius:12px;object-fit:cover}.ep-sidebar-profile-name{font-weight:700;font-size:13px;color:var(--text-primary)}.ep-sidebar-profile-role{font-size:11px;color:var(--text-muted)}.ep-profile-menu{display:none;position:absolute;left:0;right:0;bottom:58px;background:#fff;border:1px solid var(--border-light);border-radius:13px;padding:6px;box-shadow:var(--shadow-lg)}.ep-profile-menu.show{display:block}.ep-profile-menu a{display:flex;align-items:center;gap:9px;padding:10px;border-radius:9px;text-decoration:none!important;color:var(--text-primary);font-size:13px;font-weight:600}.ep-profile-menu a:hover{background:var(--surface-2);color:var(--app-primary)}
                     main,.portal-announcement-wrapper{margin-left:260px}.ep-desktop-top-actions{display:flex;position:fixed;right:28px;top:16px;z-index:1450;align-items:center;gap:8px} main{padding-top:88px!important}
                 }
-                @media (max-width:768px){.ep-desktop-sidebar,.ep-desktop-top-actions{display:none!important}}
+                @media (max-width:768px){
+                    .ep-desktop-sidebar,.ep-desktop-top-actions{display:none!important}
+                    /* Portal mobile uses the dedicated Messages screen. Hide Odoo backend-style
+                       floating chat windows/chat heads that can appear for active conversations. */
+                    .o-mail-ChatWindowContainer,.o-mail-ChatWindow,[class*="o-mail-ChatWindow"]{display:none!important}
+                }
 
                 /* ================================================================
                    DESKTOP NAVBAR
@@ -1906,7 +1911,7 @@
     <template id="employee_portal_pwa_web_head" inherit_id="web.layout" name="Employee Portal PWA Head">
         <xpath expr="//head" position="inside">
             <t t-if="request.httprequest.path.startswith('/my/employee')">
-                <link rel="manifest" href="/my/employee/manifest.webmanifest?v=45" crossorigin="use-credentials" data-employee-portal-pwa="1"/>
+                <link rel="manifest" href="/my/employee/manifest.webmanifest?v=44" crossorigin="use-credentials" data-employee-portal-pwa="1"/>
                 <meta name="theme-color" content="#0f766e" data-employee-portal-pwa="1"/>
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
                 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
@@ -1914,13 +1919,13 @@
                 <meta name="application-name" content="ABSAR Employee"/>
                 <!-- iOS/Safari: provide both unsized and sized touch icons so the
                      Employee Portal wins over Odoo's generic webclip icon. -->
-                <link rel="apple-touch-icon" href="/employee_portal_suite/static/icons/apple-touch-icon.png?v=45" data-employee-portal-touch-icon="1"/>
-                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=45" data-employee-portal-touch-icon="1"/>
-                <link rel="apple-touch-icon-precomposed" href="/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=45" data-employee-portal-touch-icon="1"/>
-                <link rel="shortcut icon" type="image/x-icon" href="/employee_portal_suite/static/icons/portal-favicon-v43.ico?v=45" data-employee-portal-icon="1"/>
-                <link rel="icon" type="image/png" sizes="16x16" href="/employee_portal_suite/static/icons/portal-16.png?v=45" data-employee-portal-icon="1"/>
-                <link rel="icon" type="image/png" sizes="32x32" href="/employee_portal_suite/static/icons/portal-32.png?v=45" data-employee-portal-icon="1"/>
-                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=45" data-employee-portal-icon="1"/>
+                <link rel="apple-touch-icon" href="/employee_portal_suite/static/icons/apple-touch-icon.png?v=44" data-employee-portal-touch-icon="1"/>
+                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=44" data-employee-portal-touch-icon="1"/>
+                <link rel="apple-touch-icon-precomposed" href="/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=44" data-employee-portal-touch-icon="1"/>
+                <link rel="shortcut icon" type="image/x-icon" href="/employee_portal_suite/static/icons/portal-favicon-v44.ico?v=44" data-employee-portal-icon="1"/>
+                <link rel="icon" type="image/png" sizes="16x16" href="/employee_portal_suite/static/icons/portal-16.png?v=44" data-employee-portal-icon="1"/>
+                <link rel="icon" type="image/png" sizes="32x32" href="/employee_portal_suite/static/icons/portal-32.png?v=44" data-employee-portal-icon="1"/>
+                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=44" data-employee-portal-icon="1"/>
             </t>
         </xpath>
     </template>
