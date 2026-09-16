@@ -653,3 +653,13 @@ body.ep-native-discuss-readonly .o-mail-Discuss-header a:not([data-ep-chats-back
 body.ep-native-discuss-readonly .o-mail-Thread {
     padding-bottom: 14px !important;
 }
+
+/* v20.24 - Hide Odoo's native ChatHub (floating minimized-chat avatar bubbles
+   fixed at the bottom-right of the viewport) on mobile portal view. It
+   overlaps the embedded conversation's message composer and duplicates the
+   Employee Portal's own Chats UI on small screens. */
+@media (max-width: 767.98px) {
+  .o-mail-ChatHub {
+    display: none !important;
+  }
+}
