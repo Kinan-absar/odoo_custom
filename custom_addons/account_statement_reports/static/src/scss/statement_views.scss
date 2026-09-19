@@ -237,3 +237,27 @@
         .asr_table_totals { grid-template-columns: minmax(0, 1fr) 110px 110px 110px; }
     }
 }
+
+/* v15.1 - clean Customer / Vendor selector spacing */
+.asr_workspace .asr_type_box {
+    gap: 14px;
+    padding-left: 12px;
+    padding-right: 14px;
+}
+.asr_workspace .asr_type_control .o_field_radio {
+    column-gap: 22px !important;
+}
+.asr_workspace .asr_type_control .form-check {
+    gap: 8px !important;
+}
+.asr_workspace .asr_type_control .form-check-input {
+    width: 15px;
+    height: 15px;
+    margin: 0 !important;
+}
+.asr_workspace .asr_type_control .form-check-label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 15px;
+    line-height: 15px !important;
+}
