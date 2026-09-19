@@ -109,7 +109,12 @@ class CustomerStatement(models.Model):
             sheet.write(row, 2, line.reference or ""); sheet.write(row, 3, str(line.due_date or ""))
             sheet.write_number(row, 4, line.debit or 0, money); sheet.write_number(row, 5, line.credit or 0, money)
             sheet.write_number(row, 6, line.balance or 0, money); row += 1
-        sheet.write(row + 1, 5, "Final Balance", bold); sheet.write_number(row + 1, 6, self.final_balance or 0, money)
+        total_label = workbook.add_format({"bold": True, "bg_color": "#F3F4F6", "border": 1, "align": "right"})
+        total_money = workbook.add_format({"bold": True, "bg_color": "#F3F4F6", "border": 1, "num_format": "#,##0.00"})
+        sheet.merge_range(row, 0, row, 3, "Totals", total_label)
+        sheet.write_number(row, 4, sum(self.line_ids.mapped("debit")) or 0.0, total_money)
+        sheet.write_number(row, 5, sum(self.line_ids.mapped("credit")) or 0.0, total_money)
+        sheet.write_number(row, 6, self.final_balance or 0.0, total_money)
         sheet.set_column(0, 0, 12); sheet.set_column(1, 3, 22); sheet.set_column(4, 6, 14)
         workbook.close(); output.seek(0)
         attachment = self.env["ir.attachment"].create({

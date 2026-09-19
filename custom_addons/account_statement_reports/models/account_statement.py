@@ -207,6 +207,8 @@ class AccountStatement(models.Model):
         bold = workbook.add_format({"bold": True})
         money = workbook.add_format({"num_format": "#,##0.00"})
         header = workbook.add_format({"bold": True, "bg_color": "#E9EEF5", "border": 1})
+        total_label = workbook.add_format({"bold": True, "bg_color": "#F3F4F6", "top": 1, "bottom": 1, "align": "right"})
+        total_money = workbook.add_format({"bold": True, "bg_color": "#F3F4F6", "top": 1, "bottom": 1, "num_format": "#,##0.00"})
 
         type_label = "Customer" if self.statement_type == "receivable" else "Vendor"
         sheet.write(0, 0, "Account Statement", title)
@@ -234,8 +236,13 @@ class AccountStatement(models.Model):
             sheet.write_number(row, 6, line.balance or 0.0, money)
             row += 1
 
-        sheet.write(row + 1, 5, "Final Balance", bold)
-        sheet.write_number(row + 1, 6, self.final_balance or 0.0, money)
+        # Statement totals directly under the exported transaction rows.
+        exported_total_debit = sum(self.line_ids.mapped("debit"))
+        exported_total_credit = sum(self.line_ids.mapped("credit"))
+        sheet.merge_range(row, 0, row, 3, "Totals", total_label)
+        sheet.write_number(row, 4, exported_total_debit or 0.0, total_money)
+        sheet.write_number(row, 5, exported_total_credit or 0.0, total_money)
+        sheet.write_number(row, 6, self.final_balance or 0.0, total_money)
         sheet.set_column(0, 0, 12)
         sheet.set_column(1, 3, 24)
         sheet.set_column(4, 6, 15)
