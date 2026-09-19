@@ -1,26 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <!--
-        Dedicated Account Statement report.
+        Dedicated Account Statement report implemented as an Odoo 18
+        account.report variant of Partner Ledger.
 
-        This is intentionally a separate account.report record, implemented
-        as a variant of Odoo Enterprise's Partner Ledger. This keeps the full
-        native accounting-report UI/handler while avoiding the previous v3
-        behaviour where our menu simply opened the original Partner Ledger.
+        Keep this record deliberately minimal: report filter fields such as
+        filter_partner, filter_account_type, filter_show_draft, etc. are
+        computed/inherited from root_report_id by Odoo's account.report
+        engine. Re-declaring them here made the previous build fragile and
+        used an invalid selection value for filter_account_type.
     -->
     <record id="account_statement_native_report" model="account.report">
         <field name="name">Account Statement Reports</field>
         <field name="root_report_id" ref="account_reports.partner_ledger_report"/>
-        <field name="filter_show_draft" eval="True"/>
-        <field name="filter_account_type">payable_receivable</field>
-        <field name="filter_partner" eval="True"/>
-        <field name="filter_unfold_all" eval="True"/>
-        <field name="filter_unreconciled" eval="True"/>
-        <field name="filter_period_comparison" eval="False"/>
-        <field name="filter_multi_company">selector</field>
-        <field name="default_opening_date_filter">this_year</field>
-        <field name="search_bar" eval="True"/>
-        <field name="load_more_limit" eval="80"/>
     </record>
 
     <record id="action_account_statement_native" model="ir.actions.client">
@@ -29,6 +21,7 @@
         <field name="context" eval="{'report_id': ref('account_statement_native_report')}"/>
     </record>
 
+    <!-- Reuse the existing menu XML id so upgrades do not leave duplicates. -->
     <record id="menu_customer_statement_wizard" model="ir.ui.menu">
         <field name="name">Account Statement Reports</field>
         <field name="parent_id" ref="account.account_reports_partners_reports_menu"/>
@@ -37,6 +30,7 @@
         <field name="active">True</field>
     </record>
 
+    <!-- Hide the old separate Vendor Statement menu. -->
     <record id="menu_vendor_statement_wizard" model="ir.ui.menu">
         <field name="active">False</field>
     </record>

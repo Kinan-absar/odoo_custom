@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Account Statement Reports",
-    "version": "18.0.4.0.0",
+    "version": "18.0.5.0.0",
     "category": "Accounting",
     "summary": "Native Partner-Ledger-style customer and vendor account statements",
     "description": """
@@ -32,6 +32,7 @@
     "depends": ["account", "account_reports"],
     "data": [
         "security/ir.model.access.csv",
+        "views/statement_views.xml",
         "views/native_statement_report.xml",
         "views/res_partner_views.xml",
         "views/statement_line_views.xml",
