@@ -1,0 +1,29 @@
+.o-mail-Chatter {
+    background: var(--absar-surface);
+    border-left: 1px solid var(--absar-border);
+}
+
+.o-mail-Chatter-top {
+    background: var(--absar-surface-soft);
+    border-bottom: 1px solid var(--absar-border);
+}
+
+.o-mail-Message {
+    border-radius: var(--absar-radius-sm);
+    transition: background var(--absar-transition);
+}
+
+.o-mail-Message:hover {
+    background: #f8fafc;
+}
+
+.o-mail-Composer,
+.o-mail-Composer-input {
+    border-radius: var(--absar-radius-md);
+}
+
+.o-mail-AttachmentCard {
+    border-radius: var(--absar-radius-sm);
+    border-color: var(--absar-border);
+    box-shadow: var(--absar-shadow-xs);
+}

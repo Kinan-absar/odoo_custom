@@ -1,0 +1,32 @@
+.o_form_view .o_notebook {
+    margin-top: 18px;
+}
+
+.o_form_view .o_notebook .nav-tabs {
+    gap: 5px;
+    border-bottom: 1px solid var(--absar-border);
+}
+
+.o_form_view .o_notebook .nav-tabs .nav-link {
+    border: 0;
+    border-radius: 10px 10px 0 0;
+    color: var(--absar-text-muted);
+    font-weight: 600;
+    padding: 10px 14px;
+    transition: color var(--absar-transition), background var(--absar-transition);
+}
+
+.o_form_view .o_notebook .nav-tabs .nav-link:hover {
+    background: var(--absar-surface-soft);
+    color: var(--absar-text);
+}
+
+.o_form_view .o_notebook .nav-tabs .nav-link.active {
+    color: var(--absar-primary-strong);
+    background: var(--absar-primary-soft);
+    box-shadow: inset 0 -2px 0 var(--absar-primary);
+}
+
+.o_form_view .o_notebook .tab-content {
+    padding-top: 16px;
+}

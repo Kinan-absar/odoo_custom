@@ -1,0 +1,25 @@
+.o_control_panel {
+    background: rgba(244, 247, 251, .94);
+    border-bottom: 1px solid var(--absar-border);
+    padding-top: 10px;
+    padding-bottom: 10px;
+    backdrop-filter: blur(10px);
+}
+
+.o_control_panel .o_breadcrumb .breadcrumb-item,
+.o_control_panel .o_breadcrumb .breadcrumb-item a {
+    color: var(--absar-text);
+}
+
+.o_control_panel .o_searchview {
+    background: var(--absar-surface);
+    border: 1px solid var(--absar-border);
+    border-radius: 12px;
+    box-shadow: var(--absar-shadow-xs);
+    transition: border-color var(--absar-transition), box-shadow var(--absar-transition);
+}
+
+.o_control_panel .o_searchview:focus-within {
+    border-color: rgba(22,102,120,.55);
+    box-shadow: 0 0 0 3px rgba(22,102,120,.10);
+}

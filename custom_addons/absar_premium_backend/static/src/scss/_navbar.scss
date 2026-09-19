@@ -1,0 +1,44 @@
+.o_main_navbar {
+    min-height: 52px;
+    background: linear-gradient(105deg, var(--absar-accent), #214560);
+    border: 0;
+    box-shadow: 0 4px 18px rgba(11, 31, 49, .16);
+}
+
+.o_main_navbar .o_menu_brand,
+.o_main_navbar .o_nav_entry,
+.o_main_navbar .dropdown-toggle,
+.o_main_navbar button {
+    color: rgba(255,255,255,.92) !important;
+}
+
+.o_main_navbar .o_nav_entry,
+.o_main_navbar .dropdown-toggle,
+.o_main_navbar button {
+    border-radius: 9px;
+    transition: background var(--absar-transition), transform var(--absar-transition);
+}
+
+.o_main_navbar .o_nav_entry:hover,
+.o_main_navbar .dropdown-toggle:hover,
+.o_main_navbar button:hover {
+    background: rgba(255,255,255,.10) !important;
+}
+
+.o_main_navbar .o_menu_brand {
+    font-weight: 700;
+    letter-spacing: .01em;
+}
+
+.o_main_navbar .dropdown-menu {
+    margin-top: 8px;
+    border: 1px solid var(--absar-border);
+    border-radius: var(--absar-radius-md);
+    box-shadow: var(--absar-shadow-md);
+    padding: 8px;
+}
+
+.o_main_navbar .dropdown-item {
+    border-radius: 8px;
+    padding: 8px 10px;
+}

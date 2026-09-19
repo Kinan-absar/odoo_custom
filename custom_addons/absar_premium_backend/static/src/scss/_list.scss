@@ -1,0 +1,54 @@
+.o_list_view {
+    background: var(--absar-surface);
+}
+
+.o_list_renderer {
+    background: var(--absar-surface);
+}
+
+.o_list_renderer .o_list_table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.o_list_renderer .o_list_table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.o_list_renderer .o_list_table thead th {
+    background: #f7f9fc;
+    color: #596579;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .025em;
+    text-transform: none;
+    border-bottom: 1px solid var(--absar-border);
+    padding-top: 11px;
+    padding-bottom: 11px;
+}
+
+.o_list_renderer .o_list_table tbody td {
+    border-bottom: 1px solid #edf1f5;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    vertical-align: middle;
+}
+
+.o_list_renderer .o_list_table tbody tr {
+    transition: background var(--absar-transition), box-shadow var(--absar-transition);
+}
+
+.o_list_renderer .o_list_table tbody tr:hover > td {
+    background: #f9fbfd;
+}
+
+.o_list_renderer .o_list_table tbody tr.o_data_row_selected > td,
+.o_list_renderer .o_list_table tbody tr.table-info > td {
+    background: var(--absar-primary-soft) !important;
+}
+
+.o_list_renderer .o_list_table .o_list_number {
+    font-variant-numeric: tabular-nums;
+}

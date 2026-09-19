@@ -1,0 +1,30 @@
+.o_web_client {
+    background: var(--absar-bg);
+    color: var(--absar-text);
+    -webkit-font-smoothing: antialiased;
+}
+
+.o_action_manager,
+.o_action_manager > .o_action,
+.o_content {
+    background: var(--absar-bg);
+}
+
+.o_web_client * {
+    scrollbar-width: thin;
+    scrollbar-color: #b6c1cf transparent;
+}
+
+.o_web_client *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.o_web_client *::-webkit-scrollbar-thumb {
+    background: #b6c1cf;
+    border-radius: 999px;
+}
+
+.o_web_client *::-webkit-scrollbar-track {
+    background: transparent;
+}

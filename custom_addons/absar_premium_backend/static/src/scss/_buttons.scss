@@ -1,0 +1,34 @@
+.o_web_client .btn {
+    border-radius: 10px;
+    font-weight: 600;
+    transition: transform var(--absar-transition), box-shadow var(--absar-transition), background var(--absar-transition), border-color var(--absar-transition);
+}
+
+.o_web_client .btn:hover {
+    transform: translateY(-1px);
+}
+
+.o_web_client .btn-primary {
+    background: var(--absar-primary);
+    border-color: var(--absar-primary);
+    box-shadow: 0 4px 12px rgba(22,102,120,.18);
+}
+
+.o_web_client .btn-primary:hover,
+.o_web_client .btn-primary:focus {
+    background: var(--absar-primary-strong);
+    border-color: var(--absar-primary-strong);
+}
+
+.o_web_client .btn-secondary,
+.o_web_client .btn-light {
+    background: var(--absar-surface);
+    border-color: var(--absar-border);
+    color: var(--absar-text);
+}
+
+.o_web_client .btn-secondary:hover,
+.o_web_client .btn-light:hover {
+    background: var(--absar-surface-soft);
+    border-color: var(--absar-border-strong);
+}

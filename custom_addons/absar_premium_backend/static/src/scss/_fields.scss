@@ -1,0 +1,62 @@
+.o_web_client .o_input,
+.o_web_client input.o_input,
+.o_web_client textarea.o_input,
+.o_web_client select.o_input,
+.o_web_client .o_field_many2one_selection,
+.o_web_client .o_field_many2manytags .o_input_dropdown {
+    background: var(--absar-surface-soft);
+    border: 1px solid var(--absar-border);
+    border-radius: var(--absar-radius-sm);
+    min-height: 38px;
+    padding-left: 11px;
+    padding-right: 11px;
+    color: var(--absar-text);
+    transition: border-color var(--absar-transition), box-shadow var(--absar-transition), background var(--absar-transition);
+}
+
+.o_web_client textarea.o_input {
+    padding-top: 9px;
+    padding-bottom: 9px;
+}
+
+.o_web_client .o_input:focus,
+.o_web_client .o_field_many2one_selection:focus-within,
+.o_web_client .o_field_many2manytags .o_input_dropdown:focus-within {
+    background: var(--absar-surface);
+    border-color: rgba(22,102,120,.60) !important;
+    box-shadow: 0 0 0 3px rgba(22,102,120,.10) !important;
+    outline: 0;
+}
+
+.o_web_client .o_required_modifier.o_input,
+.o_web_client .o_required_modifier .o_input {
+    border-left: 3px solid rgba(22,102,120,.55);
+}
+
+.o_web_client .o_field_many2manytags .badge,
+.o_web_client .o_tag {
+    border-radius: 999px;
+    padding: 5px 9px;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.o_web_client .form-check-input {
+    border-radius: 6px;
+    border-color: var(--absar-border-strong);
+    box-shadow: none;
+}
+
+.o_web_client .form-check-input:checked {
+    background-color: var(--absar-primary);
+    border-color: var(--absar-primary);
+}
+
+.o_web_client .o_field_widget.o_readonly_modifier .o_input,
+.o_web_client .o_field_widget.o_readonly_modifier input,
+.o_web_client .o_field_widget.o_readonly_modifier textarea {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    padding-left: 0;
+}

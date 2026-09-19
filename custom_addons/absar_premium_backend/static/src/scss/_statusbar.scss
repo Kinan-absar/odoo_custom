@@ -1,0 +1,31 @@
+.o_form_view .o_form_statusbar {
+    background: rgba(255,255,255,.96);
+    border-bottom: 1px solid var(--absar-border);
+    padding: 8px 14px;
+    min-height: 54px;
+    box-shadow: 0 2px 10px rgba(20,42,67,.04);
+}
+
+.o_form_view .o_statusbar_status .o_arrow_button {
+    min-height: 34px;
+    border-radius: 999px !important;
+    margin: 2px 4px;
+    padding: 6px 14px;
+    border: 1px solid var(--absar-border) !important;
+    background: var(--absar-surface-soft) !important;
+    color: var(--absar-text-muted) !important;
+}
+
+.o_form_view .o_statusbar_status .o_arrow_button:before,
+.o_form_view .o_statusbar_status .o_arrow_button:after {
+    display: none !important;
+}
+
+.o_form_view .o_statusbar_status .o_arrow_button.btn-primary,
+.o_form_view .o_statusbar_status .o_arrow_button.disabled.btn-primary,
+.o_form_view .o_statusbar_status .o_arrow_button[aria-current="step"] {
+    background: var(--absar-primary-soft) !important;
+    border-color: rgba(22,102,120,.30) !important;
+    color: var(--absar-primary-strong) !important;
+    font-weight: 700;
+}

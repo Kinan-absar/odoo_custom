@@ -1,0 +1,28 @@
+.modal-content {
+    border: 1px solid var(--absar-border);
+    border-radius: var(--absar-radius-lg);
+    box-shadow: 0 24px 60px rgba(14, 31, 48, .22);
+    overflow: hidden;
+}
+
+.modal-header {
+    background: var(--absar-surface-soft);
+    border-bottom: 1px solid var(--absar-border);
+    padding: 16px 20px;
+}
+
+.modal-title {
+    color: var(--absar-accent);
+    font-weight: 700;
+}
+
+.modal-body {
+    background: var(--absar-surface);
+    padding: 20px;
+}
+
+.modal-footer {
+    background: var(--absar-surface-soft);
+    border-top: 1px solid var(--absar-border);
+    padding: 12px 20px;
+}

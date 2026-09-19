@@ -12,8 +12,10 @@ from odoo.exceptions import UserError, ValidationError
 class AccountStatement(models.Model):
     _name = "account.statement"
     _description = "Account Statement"
-    _rec_name = "partner_id"
+    _rec_name = "name"
     _order = "id desc"
+
+    name = fields.Char(default="Account Statements", required=True)
 
     statement_type = fields.Selection(
         [("receivable", "Receivable (Customer)"), ("payable", "Payable (Vendor)")],

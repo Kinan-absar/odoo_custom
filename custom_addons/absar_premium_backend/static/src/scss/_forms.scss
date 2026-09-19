@@ -1,0 +1,56 @@
+.o_form_view {
+    --o-form-lightsecondary: var(--absar-surface-soft);
+}
+
+.o_form_view .o_form_sheet_bg {
+    background: var(--absar-bg);
+    padding-top: 18px;
+    padding-bottom: 30px;
+}
+
+.o_form_view .o_form_sheet {
+    background: var(--absar-surface);
+    border: 1px solid var(--absar-border);
+    border-radius: var(--absar-radius-lg);
+    box-shadow: var(--absar-shadow-sm);
+    padding: 28px 32px;
+}
+
+.o_form_view .oe_title h1,
+.o_form_view .oe_title h2,
+.o_form_view .oe_title h3 {
+    color: var(--absar-accent);
+    letter-spacing: -.02em;
+}
+
+.o_form_view .o_group .o_inner_group {
+    column-gap: 16px;
+    row-gap: 6px;
+}
+
+.o_form_view .o_horizontal_separator {
+    color: var(--absar-accent);
+    font-weight: 700;
+    font-size: .92rem;
+    letter-spacing: .02em;
+    border-bottom: 1px solid var(--absar-border);
+    padding-bottom: 7px;
+    margin-top: 16px;
+    margin-bottom: 12px;
+}
+
+.o_form_view .o_form_label {
+    color: #596579;
+    font-weight: 600;
+    font-size: .82rem;
+    letter-spacing: .01em;
+}
+
+.o_form_view .o_field_widget.o_readonly_modifier {
+    color: var(--absar-text);
+}
+
+.o_form_view .o_inner_group > div,
+.o_form_view .o_group > div {
+    min-width: 0;
+}

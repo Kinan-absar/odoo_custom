@@ -1,0 +1,23 @@
+.o_kanban_renderer {
+    background: var(--absar-bg);
+    gap: 14px;
+    padding: 14px;
+}
+
+.o_kanban_renderer .o_kanban_record {
+    border: 1px solid var(--absar-border) !important;
+    border-radius: var(--absar-radius-md) !important;
+    background: var(--absar-surface) !important;
+    box-shadow: var(--absar-shadow-xs);
+    transition: transform var(--absar-transition), box-shadow var(--absar-transition), border-color var(--absar-transition);
+}
+
+.o_kanban_renderer .o_kanban_record:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--absar-shadow-sm);
+    border-color: var(--absar-border-strong) !important;
+}
+
+.o_kanban_renderer .o_kanban_group {
+    border-radius: var(--absar-radius-md);
+}
