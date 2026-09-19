@@ -44,18 +44,61 @@
     .asr_top_actions .btn { min-height: 32px; padding: 5px 12px; border-radius: 6px; }
 
     .asr_type_box {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        gap: 8px;
-        padding: 5px 9px;
+        gap: 10px;
+        height: 34px;
+        padding: 0 10px;
         background: #fff;
         border: 1px solid var(--asr-border);
         border-radius: 6px;
-        min-height: 32px;
+        box-sizing: border-box;
+        white-space: nowrap;
     }
-    .asr_type_box .o_field_radio { display: flex; gap: 10px; margin: 0; }
-    .asr_type_box .form-check { margin: 0; white-space: nowrap; }
-    .asr_inline_label { margin: 0; color: var(--asr-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .asr_type_control { display: flex; align-items: center; height: 100%; }
+    .asr_type_box .o_field_widget,
+    .asr_type_box .o_field_radio {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px;
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 0 !important;
+    }
+    .asr_type_box .form-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-height: 0;
+        margin: 0 !important;
+        padding: 0 !important;
+        white-space: nowrap;
+    }
+    .asr_type_box .form-check-input {
+        position: static;
+        float: none;
+        margin: 0 !important;
+        flex: 0 0 auto;
+    }
+    .asr_type_box .form-check-label {
+        margin: 0 !important;
+        line-height: 1;
+        font-size: 13px;
+        color: var(--asr-text);
+    }
+    .asr_inline_label {
+        display: inline-flex;
+        align-items: center;
+        margin: 0;
+        padding-right: 9px;
+        border-right: 1px solid #e7eaee;
+        color: var(--asr-muted);
+        font-size: 9.5px;
+        font-weight: 700;
+        line-height: 1;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
 
     .asr_filter_panel {
         padding: 8px 10px 7px;

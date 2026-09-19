@@ -17,7 +17,9 @@
                         <div class="asr_top_actions">
                             <div class="asr_type_box">
                                 <span class="asr_inline_label">Type</span>
-                                <field name="statement_type" widget="radio" options="{'horizontal': True}" nolabel="1"/>
+                                <div class="asr_type_control">
+                                    <field name="statement_type" widget="radio" options="{'horizontal': True}" nolabel="1"/>
+                                </div>
                             </div>
                             <button name="action_apply_filters" type="object" string="Apply" icon="fa-search" class="btn-primary"/>
                             <button name="action_reset_filters" type="object" string="Reset" icon="fa-undo" class="btn-secondary"/>
