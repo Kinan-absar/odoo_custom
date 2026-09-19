@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="employee_portal_layout_petty_cash_reports" inherit_id="employee_portal_suite.employee_portal_layout">
+        <xpath expr="//div[@id='ep-section-reports']/div[hasclass('ep-sidebar-section-links')]" position="inside">
+            <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
+                <a href="/my/employee/petty-cash" class="ep-sidebar-link"><i class="fa fa-money"/>Petty Cash</a>
+            </t>
+        </xpath>
+    </template>
+</odoo>

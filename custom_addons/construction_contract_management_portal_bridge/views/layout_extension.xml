@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="employee_portal_layout_construction_categories" inherit_id="employee_portal_suite.employee_portal_layout">
+        <xpath expr="//div[@id='ep-section-contracts-projects']/div[hasclass('ep-sidebar-section-links')]" position="inside">
+            <t t-if="request.env.user.has_group('construction_contract_management.group_construction_portal')">
+                <a href="/my/employee/contracts" class="ep-sidebar-link"><i class="fa fa-file-text-o"/>Contracts</a>
+                <a href="/my/employee/ipcs" class="ep-sidebar-link"><i class="fa fa-money"/>IPCs</a>
+                <a href="/my/employee/variations" class="ep-sidebar-link"><i class="fa fa-exchange"/>Variations</a>
+                <a href="/my/employee/measurements" class="ep-sidebar-link"><i class="fa fa-bar-chart"/>Measurements</a>
+            </t>
+        </xpath>
+    </template>
+</odoo>

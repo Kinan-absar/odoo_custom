@@ -28,6 +28,7 @@ Adds:
 
     'data': [
         'views/employee_dashboard_extension.xml',
+        'views/layout_extension.xml',
         'views/portal_employee_contract_templates.xml',
         'views/portal_employee_ipc_templates.xml',
         'views/portal_employee_variation_templates.xml',

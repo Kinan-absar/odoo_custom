@@ -40,7 +40,7 @@ class PurchaseOrder(models.Model):
         if set(vals.keys()) & meaningful_fields:
             for po in self:
                 state_before = po_states_before[po.id]
-                if state_before in ('director_pending', 'ceo_pending', 'signed'):
+                if state_before in ('director_pending', 'ceo_pending', 'signed', 'rejected'):
                     po.revision += 1
                     po.signature_state = 'draft'
                     po.message_post(body=f"PO modified after signing. Reset to draft (Revision {po.revision}).")
@@ -160,7 +160,7 @@ class PurchaseOrderLine(models.Model):
                     continue
                 seen_orders.add(order.id)
                 state_before = po_states_before.get(order.id)
-                if state_before in ('director_pending', 'ceo_pending', 'signed'):
+                if state_before in ('director_pending', 'ceo_pending', 'signed', 'rejected'):
                     order.revision += 1
                     order.signature_state = 'draft'
                     order.message_post(body=f"PO line modified after signing. Reset to draft (Revision {order.revision}).")
@@ -179,7 +179,7 @@ class PurchaseOrderLine(models.Model):
             if order.id in seen_orders:
                 continue
             seen_orders.add(order.id)
-            if order.signature_state in ('director_pending', 'ceo_pending', 'signed'):
+            if order.signature_state in ('director_pending', 'ceo_pending', 'signed', 'rejected'):
                 order.revision += 1
                 order.signature_state = 'draft'
                 order.message_post(body=f"PO line added after signing. Reset to draft (Revision {order.revision}).")
@@ -199,7 +199,7 @@ class PurchaseOrderLine(models.Model):
             if order_id in seen:
                 continue
             seen.add(order_id)
-            if state_before in ('director_pending', 'ceo_pending', 'signed'):
+            if state_before in ('director_pending', 'ceo_pending', 'signed', 'rejected'):
                 order.revision += 1
                 order.signature_state = 'draft'
                 order.message_post(body=f"PO line removed after signing. Reset to draft (Revision {order.revision}).")

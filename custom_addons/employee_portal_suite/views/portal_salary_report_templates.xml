@@ -65,6 +65,9 @@
                             <t t-if="report.work_location_ids">
                                 | Work Location Filter: <strong><t t-esc="', '.join(report.work_location_ids.mapped('name'))"/></strong>
                             </t>
+                            <t t-if="report.employee_tag_ids">
+                                | Tags: <strong><t t-esc="', '.join(report.employee_tag_ids.mapped('name'))"/></strong>
+                            </t>
                         </p>
                     </div>
                     <div class="d-flex gap-2">

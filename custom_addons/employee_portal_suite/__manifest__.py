@@ -20,7 +20,7 @@
     ✔ PDF reports for all request types
     ✔ GPS Attendance with geofencing (Check-In / Check-Out)
     ✔ Automatic checkout cron for missed attendance
-    ✔ Telegram approval, stage-change, attendance, reminder, and escalation notifications
+    ✔ Web Push-first approval, stage-change, attendance, reminder, escalation, chat, and call notifications
     ✔ Multiple work locations per employee with project-specific GPS configuration
     ✔ Backend menus for Requests, Attendance, and Material Requests
     ✔ Secure access using custom portal user, manager, HR, finance, and approval groups
@@ -84,12 +84,16 @@
         'views/menus.xml',
         'views/telegram_views.xml',
         'views/portal_report_document_views.xml',
+        'views/portal_call_views.xml',
+        'views/native_discuss_portal.xml',
+        'views/discuss_channel_portal_views.xml',
         
         # --------------------------------------------------
         # EMPLOYEE PORTAL (FRONTEND)
         # --------------------------------------------------
         'views/employee_portal_layout.xml',
         'views/employee_dashboard_page.xml',
+        'views/employee_profile_page.xml',
 
         # Employee Requests
         'views/employee_requests_page.xml',
@@ -133,18 +137,34 @@
     'assets': {
         'web.assets_frontend': [
             'employee_portal_suite/static/src/js/sign_redirect.js',
+            'employee_portal_suite/static/src/js/native_discuss_portal.js',
+            'employee_portal_suite/static/src/js/employee_portal_pwa.js',
+            'employee_portal_suite/static/src/js/native_discuss_pwa.js',
+            'employee_portal_suite/static/src/js/portal_native_presence.js',
+            'employee_portal_suite/static/src/css/native_discuss_portal.css',
+            'employee_portal_suite/static/src/js/portal_native_call_alert.js',
+            'employee_portal_suite/static/src/scss/portal_native_call_alert.scss',
         ],
         'web.assets_backend': [
             'employee_portal_suite/static/src/js/material_request_dashboard.js',
             'employee_portal_suite/static/src/js/employee_request_dashboard.js',
             'employee_portal_suite/static/src/js/home_announcements.js',
             'employee_portal_suite/static/src/js/telegram_user_menu.js',
+            'employee_portal_suite/static/src/js/native_discuss_user_menu.js',
             'employee_portal_suite/static/src/xml/material_request_dashboard.xml',
             'employee_portal_suite/static/src/xml/employee_request_dashboard.xml',
             'employee_portal_suite/static/src/xml/home_announcements.xml',
             'employee_portal_suite/static/src/scss/material_request_dashboard.scss',
             'employee_portal_suite/static/src/scss/employee_request_dashboard.scss',
             'employee_portal_suite/static/src/scss/home_announcements.scss',
+        ],
+        'mail.assets_public': [
+            'employee_portal_suite/static/src/js/native_discuss_public_patch.js',
+            'employee_portal_suite/static/src/js/employee_portal_pwa.js',
+            'employee_portal_suite/static/src/js/native_discuss_pwa.js',
+            'employee_portal_suite/static/src/js/native_discuss_rtc_patch.js',
+            'employee_portal_suite/static/src/xml/native_discuss_public_patch.xml',
+            'employee_portal_suite/static/src/css/native_discuss_public_patch.css',
         ],
     },
     'images': ['static/description/icon.png'],

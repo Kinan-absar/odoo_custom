@@ -67,7 +67,6 @@ class HrAttendanceTelegramReminders(models.Model):
     def _config(self):
         return self.env['employee.portal.telegram.config'].sudo().search([
             ('active', '=', True),
-            ('enabled', '=', True),
             ('attendance_reminders_enabled', '=', True),
         ], order='id desc', limit=1)
 
@@ -126,10 +125,15 @@ class HrAttendanceTelegramReminders(models.Model):
         if not config:
             return
 
-        users = self.env['res.users'].sudo().search([
+        push_users = self.env['employee.portal.push.subscription'].sudo().search([
+            ('active', '=', True),
+            ('user_id.active', '=', True),
+        ]).mapped('user_id')
+        telegram_users = self.env['res.users'].sudo().search([
             ('active', '=', True),
             ('telegram_chat_id', '!=', False),
         ])
+        users = push_users | telegram_users
         now_utc = fields.Datetime.now()
 
         for user in users:
@@ -267,7 +271,7 @@ class TelegramApprovalReminderMixin(models.AbstractModel):
 
         if state_change and new_state in self._telegram_approval_states():
             config = self.env['employee.portal.telegram.config'].sudo().search([
-                ('active', '=', True), ('enabled', '=', True),
+                ('active', '=', True),
             ], order='id desc', limit=1)
             if config and config.requester_stage_notifications:
                 service = self.env['employee.portal.telegram.service'].sudo()
@@ -295,7 +299,6 @@ class TelegramApprovalReminderMixin(models.AbstractModel):
         """
         config = self.env['employee.portal.telegram.config'].sudo().search([
             ('active', '=', True),
-            ('enabled', '=', True),
             ('approval_reminders_enabled', '=', True),
         ], order='id desc', limit=1)
         if not config:

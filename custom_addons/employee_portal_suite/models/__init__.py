@@ -19,3 +19,17 @@ from . import telegram_integration
 from . import telegram_session
 
 from . import telegram_notifications
+
+from . import portal_call
+
+from . import portal_chat
+
+from . import res_partner_discuss
+
+from . import discuss_channel_portal
+
+from . import discuss_rtc_portal_notify
+
+from . import web_push
+
+from . import mail_message_portal_readonly

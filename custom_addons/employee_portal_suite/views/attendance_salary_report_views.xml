@@ -34,6 +34,7 @@
                             <field name="date_from"/>
                             <field name="date_to"/>
                             <field name="department_ids" widget="many2many_tags"/>
+                            <field name="employee_tag_ids" widget="many2many_tags"/>
                             <field name="work_location_ids" widget="many2many_tags"/>
                             <field name="employee_ids" widget="many2many_tags"/>
                             <field name="include_inactive"/>
@@ -219,6 +220,7 @@
                 <field name="date_from"/>
                 <field name="date_to"/>
                 <field name="department_ids" widget="many2many_tags" optional="show"/>
+                <field name="employee_tag_ids" widget="many2many_tags" optional="show"/>
                 <field name="work_location_ids" widget="many2many_tags" optional="show"/>
                 <field name="total_employees"/>
                 <field name="total_gross_salary"/>
@@ -243,6 +245,7 @@
                 <field name="name"/>
                 <field name="company_id"/>
                 <field name="department_ids" widget="many2many_tags"/>
+                <field name="employee_tag_ids" widget="many2many_tags"/>
                 <field name="work_location_ids" widget="many2many_tags"/>
                 <filter name="not_batched" string="Not Batched" domain="[('state', '!=', 'batch_created')]"/>
                 <filter name="batched" string="Batch Created" domain="[('state', '=', 'batch_created')]"/>

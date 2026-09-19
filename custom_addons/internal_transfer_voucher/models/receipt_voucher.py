@@ -571,6 +571,12 @@ class AccountReceiptVoucher(models.Model):
         return records
 
     def _get_or_create_unplanned_category(self, company_id):
+        """Return a shared or same-company Unplanned Actual category.
+
+        Never reuse a category belonging to another company merely because it
+        has the module XML ID.  This prevents cross-company record-rule errors
+        when vouchers are created while another allowed company is active.
+        """
         category = self.env.ref(
             'internal_transfer_voucher.cat_in_unplanned',
             raise_if_not_found=False,
@@ -583,7 +589,7 @@ class AccountReceiptVoucher(models.Model):
             ('flow_type', '=', 'in'),
             ('name', '=', _('Unplanned Actual')),
             '|', ('company_id', '=', False), ('company_id', '=', company_id),
-        ], limit=1)
+        ], order='company_id asc, id asc', limit=1)
         if category:
             return category
         return Category.create({
@@ -656,7 +662,7 @@ class AccountReceiptVoucher(models.Model):
                     'Weekly Cash Plan; this line remains classified as an Unplanned Actual.'
                 ) % rec.name,
             })
-            rec.cash_plan_line_id = line.id
+            rec.with_context(skip_cash_plan_link_lock=True).write({'cash_plan_line_id': line.id})
 
     def write(self, vals):
         for rec in self:
@@ -674,12 +680,29 @@ class AccountReceiptVoucher(models.Model):
         return result
 
 
+    @api.onchange('invoice_ids')
+    def _onchange_invoice_ids_set_receivable_account(self):
+        """Use the selected customer invoice receivable account automatically."""
+        for rec in self:
+            if not rec.invoice_ids:
+                continue
+            invoice = rec.invoice_ids[0]
+            counterpart = invoice.line_ids.filtered(
+                lambda line: line.account_id.account_type == 'asset_receivable' and not line.reconciled
+            )[:1]
+            if counterpart:
+                rec.account_id = counterpart.account_id
+
+
     @api.onchange('company_id')
     def _onchange_company_id(self):
         for rec in self:
             rec.currency_id = rec.company_id.currency_id if rec.company_id else self.env.company.currency_id
             rec.journal_id = False
-            rec.account_id = False
+            # Keep a prefilled receivable account when opening the voucher from
+            # a customer invoice. Only clear it if it is invalid for the company.
+            if rec.account_id and rec.company_id and rec.account_id.company_ids and rec.company_id not in rec.account_id.company_ids:
+                rec.account_id = False
         return {
             'domain': {
                 'journal_id': [('default_account_id', '!=', False), ('company_id', '=', self.company_id.id)] if self.company_id else [('default_account_id', '!=', False)],

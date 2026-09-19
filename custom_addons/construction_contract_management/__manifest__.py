@@ -49,6 +49,7 @@ from the employee portal, install the separate
         'views/construction_contract_views.xml',
         'views/construction_measurement_views.xml',
         'views/construction_ipc_views.xml',
+        'views/construction_ipc_link_move_wizard_views.xml',
         'views/construction_variation_views.xml',
         'views/construction_advance_views.xml',
         'views/construction_retention_release_views.xml',

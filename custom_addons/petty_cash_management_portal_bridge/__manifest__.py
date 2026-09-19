@@ -24,6 +24,7 @@ only the backend.
     ],
 
     'data': [
+        'views/layout_extension.xml',
         'views/portal_petty_cash_templates.xml',
     ],
 }

@@ -9,6 +9,13 @@
 
         <t t-call="web.layout">
 
+            <!-- Marker consumed by portal_call_widget.js: only mounts the call
+                 widget when a real logged-in portal user is viewing this layout,
+                 never for anonymous website visitors. -->
+            <t t-if="not request.env.user._is_public()">
+                
+            </t>
+
             <link rel="preconnect" href="https://fonts.googleapis.com"/>
             <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
             <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;display=swap" rel="stylesheet"/>
@@ -67,7 +74,7 @@
                     content: "";
                     position: fixed;
                     inset: 0;
-                    background-image: url('/web/image/res.company/<t t-esc="request.env.company.id"/>/logo');
+                    background-image: url('/web/image/res.company/<t t-out="request.env.company.id"/>/logo');
                     background-repeat: no-repeat;
                     background-position: center;
                     background-size: min(55vw, 420px);
@@ -98,6 +105,17 @@
                     letter-spacing: -0.02em;
                     color: var(--text-primary);
                 }
+
+
+                @media (min-width: 769px) {
+                    .ep-navbar { display:none !important; }
+                    .ep-desktop-sidebar{display:flex;position:fixed;left:0;top:0;bottom:0;width:260px;background:#fff;border-right:1px solid var(--border-light);z-index:1500;flex-direction:column;padding:22px 14px;}
+                    .ep-sidebar-brand{display:flex;align-items:center;gap:11px;padding:5px 10px 22px;font-weight:800;color:var(--text-primary);font-size:16px}.ep-sidebar-brand img{width:38px;height:38px;object-fit:contain;border-radius:10px}
+                    .ep-sidebar-nav{display:flex;flex-direction:column;gap:4px;overflow:auto}.ep-sidebar-section{margin-top:14px}.ep-sidebar-section:first-of-type{margin-top:8px}.ep-sidebar-section-title{padding:0 12px 6px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}.ep-sidebar-section-links{display:flex;flex-direction:column;gap:3px}.ep-sidebar-section.ep-empty{display:none!important}.ep-sidebar-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;color:var(--text-secondary);text-decoration:none!important;font-weight:600;font-size:13.5px}.ep-sidebar-link:hover,.ep-sidebar-link.active{background:rgba(79,70,229,.08);color:var(--app-primary)}.ep-sidebar-link i{width:20px;text-align:center;font-size:16px}
+                    .ep-sidebar-bottom{margin-top:auto;border-top:1px solid var(--border-light);padding-top:14px}.ep-sidebar-profile{position:relative}.ep-sidebar-profile-btn{width:100%;border:0;background:transparent;display:flex;align-items:center;gap:10px;padding:9px;border-radius:12px;text-align:left}.ep-sidebar-profile-btn:hover{background:var(--surface-2)}.ep-sidebar-profile-btn img{width:38px;height:38px;border-radius:12px;object-fit:cover}.ep-sidebar-profile-name{font-weight:700;font-size:13px;color:var(--text-primary)}.ep-sidebar-profile-role{font-size:11px;color:var(--text-muted)}.ep-profile-menu{display:none;position:absolute;left:0;right:0;bottom:58px;background:#fff;border:1px solid var(--border-light);border-radius:13px;padding:6px;box-shadow:var(--shadow-lg)}.ep-profile-menu.show{display:block}.ep-profile-menu a{display:flex;align-items:center;gap:9px;padding:10px;border-radius:9px;text-decoration:none!important;color:var(--text-primary);font-size:13px;font-weight:600}.ep-profile-menu a:hover{background:var(--surface-2);color:var(--app-primary)}
+                    main,.portal-announcement-wrapper{margin-left:260px}.ep-desktop-top-actions{display:flex;position:fixed;right:28px;top:16px;z-index:1450;align-items:center;gap:8px} main{padding-top:88px!important}
+                }
+                @media (max-width:768px){.ep-desktop-sidebar,.ep-desktop-top-actions{display:none!important}}
 
                 /* ================================================================
                    DESKTOP NAVBAR
@@ -205,15 +223,24 @@
                         padding: 20px 20px 16px;
                         background: var(--surface);
                         border-bottom: 1px solid var(--border-light);
+                        position: relative;
+                        z-index: 6000;
+                        overflow: visible !important;
+                        isolation: auto;
                     }
 
                     .ep-mobile-topbar {
                         display: flex;
                         justify-content: flex-end;
                         align-items: center;
+                        gap: 8px;
                         padding: 14px 20px;
                         background: var(--surface);
                         border-bottom: 1px solid var(--border-light);
+                        position: relative;
+                        z-index: 6000;
+                        overflow: visible !important;
+                        isolation: auto;
                     }
 
                     .nav-btn {
@@ -286,6 +313,8 @@
 
                 .ep-bell-wrap {
                     position: relative;
+                    z-index: 6100;
+                    overflow: visible !important;
                 }
 
                 .ep-bell-btn {
@@ -342,7 +371,7 @@
                     box-shadow: var(--shadow-lg);
                     border: 1px solid var(--border-light);
                     padding: 8px;
-                    z-index: 2200;
+                    z-index: 7000;
                     display: none;
 
                     opacity: 0;
@@ -418,6 +447,14 @@
 
                 @media (prefers-reduced-motion: reduce) {
                     .ep-bell-dot { animation: none; }
+                }
+
+                @media (max-width: 768px) {
+                    .mobile-app-header .ep-bell-panel,
+                    .ep-mobile-topbar .ep-bell-panel {
+                        z-index: 7000;
+                        max-width: calc(100vw - 32px);
+                    }
                 }
 
                 /* Compact persistent mobile top bar (every page) */
@@ -1363,6 +1400,80 @@
             <t t-set="ep_notif_unread_total"
                 t-value="sum(v.get('new', 0) for v in ep_notif_summary.values())"/>
 
+            <aside class="ep-desktop-sidebar">
+                <div class="ep-sidebar-brand"><img t-att-src="'/web/image/res.company/%s/logo' % request.env.company.id"/><span>Employee Portal</span></div>
+                <nav class="ep-sidebar-nav" id="ep-desktop-sidebar-nav">
+                    <a href="/my/employee" class="ep-sidebar-link"><i class="fa fa-home"/>Home</a>
+                    <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+                        <div class="ep-sidebar-section" id="ep-section-my-work">
+                            <div class="ep-sidebar-section-title">My Work</div>
+                            <div class="ep-sidebar-section-links">
+                                <a href="/my/employee/requests" class="ep-sidebar-link"><i class="fa fa-file-text-o"/>Employee Requests</a>
+                                <a href="/my/employee/material" class="ep-sidebar-link"><i class="fa fa-cubes"/>Material Requests</a>
+                                <t t-if="request.env.user.has_group('employee_portal_suite.group_portal_attendance_user')"><a href="/my/employee/attendance" class="ep-sidebar-link"><i class="fa fa-clock-o"/>Attendance</a></t>
+                            </div>
+                        </div>
+                        <div class="ep-sidebar-section" id="ep-section-approvals">
+                            <div class="ep-sidebar-section-title">Approvals</div>
+                            <div class="ep-sidebar-section-links">
+                                <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')"><a href="/my/employee/approvals" class="ep-sidebar-link"><i class="fa fa-check-square-o"/>ER Approvals</a></t>
+                                <t t-if="request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or request.env.user.has_group('employee_portal_suite.group_mr_projects_director') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')"><a href="/my/employee/material/approvals" class="ep-sidebar-link"><i class="fa fa-check-circle-o"/>MR Approvals</a></t>
+                                <a href="/my/employee/sign" class="ep-sidebar-link"><i class="fa fa-pencil-square-o"/>Signatures</a>
+                            </div>
+                        </div>
+                        <div class="ep-sidebar-section ep-empty" id="ep-section-contracts-projects">
+                            <div class="ep-sidebar-section-title">Contracts &amp; Projects</div>
+                            <div class="ep-sidebar-section-links"></div>
+                        </div>
+                        <div class="ep-sidebar-section ep-empty" id="ep-section-weekly-plan">
+                            <div class="ep-sidebar-section-title">Weekly Plan</div>
+                            <div class="ep-sidebar-section-links"></div>
+                        </div>
+                        <div class="ep-sidebar-section" id="ep-section-reports">
+                            <div class="ep-sidebar-section-title">Reports</div>
+                            <div class="ep-sidebar-section-links">
+                                <t t-if="request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')"><a href="/my/employee/salary-reports" class="ep-sidebar-link"><i class="fa fa-money"/>Salary Reports</a></t>
+                                <t t-if="ep_notif_summary.get('portal_report', {}).get('count', 0) &gt; 0"><a href="/my/employee/reports" class="ep-sidebar-link"><i class="fa fa-folder-open-o"/>Reports</a></t>
+                            </div>
+                        </div>
+                    </t>
+                    <t t-if="request.env.user.has_group('employee_portal_suite.group_attendance_only')"><a href="/my/employee/attendance" class="ep-sidebar-link"><i class="fa fa-clock-o"/>Attendance</a></t>
+                </nav>
+                <script type="text/javascript">
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var nav = document.getElementById('ep-desktop-sidebar-nav');
+                        if (!nav) return;
+                        var targets = {
+                            'contracts': 'ep-section-contracts-projects', 'ipcs': 'ep-section-contracts-projects',
+                            'variations': 'ep-section-contracts-projects', 'measurements': 'ep-section-contracts-projects',
+                            'payment approvals': 'ep-section-weekly-plan', 'weekly cash plans': 'ep-section-weekly-plan',
+                            'petty cash': 'ep-section-reports'
+                        };
+                        function organize() {
+                            Array.from(nav.querySelectorAll('a.ep-sidebar-link')).forEach(function (link) {
+                                var text = (link.textContent || '').trim().toLowerCase();
+                                var sectionId = targets[text];
+                                if (!sectionId) return;
+                                var section = document.getElementById(sectionId);
+                                var holder = section &amp;&amp; section.querySelector('.ep-sidebar-section-links');
+                                if (holder &amp;&amp; link.parentElement !== holder) holder.appendChild(link);
+                            });
+                            nav.querySelectorAll('.ep-sidebar-section').forEach(function(section) {
+                                var holder = section.querySelector('.ep-sidebar-section-links');
+                                section.classList.toggle('ep-empty', !holder || !holder.querySelector('a.ep-sidebar-link'));
+                            });
+                        }
+                        organize();
+                        new MutationObserver(organize).observe(nav, {childList:true, subtree:true});
+                    });
+                </script>
+                <div class="ep-sidebar-bottom"><div class="ep-sidebar-profile">
+                    <button type="button" class="ep-sidebar-profile-btn" onclick="document.getElementById('ep-profile-menu').classList.toggle('show')"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"/><span><span class="ep-sidebar-profile-name d-block" t-out="request.env.user.name"/><span class="ep-sidebar-profile-role d-block" t-out="request.env.user.employee_id.job_title or 'Employee'"/></span><i class="fa fa-angle-up ms-auto"/></button>
+                    <div id="ep-profile-menu" class="ep-profile-menu"><a href="/my/employee/profile"><i class="fa fa-user"/>Edit info</a><a href="/web/session/logout"><i class="fa fa-sign-out"/>Logout</a></div>
+                </div></div>
+            </aside>
+            <div class="ep-desktop-top-actions"><t t-call="employee_portal_suite.ep_native_communication_actions"/><t t-call="employee_portal_suite.ep_notification_bell"/></div>
+
             <!-- ================================================================
                  DESKTOP NAVBAR
                  ================================================================ -->
@@ -1429,7 +1540,7 @@
                     </t>
                 </div><!-- /ep-nav-links -->
                 <div class="d-flex align-items-center gap-3">
-                    <t t-call="employee_portal_suite.ep_notification_bell"/>
+                    <t t-call="employee_portal_suite.ep_native_communication_actions"/><t t-call="employee_portal_suite.ep_notification_bell"/>
                     <div class="text-end d-none d-lg-block">
                         <h6 class="mb-0 fw-bold" t-out="request.env.user.partner_id.name"/>
                         <p class="mb-0 text-muted small" t-out="request.env.user.partner_id.company_name"/>
@@ -1449,16 +1560,15 @@
                             Welcome back
                         </div>
                         <div style="font-size:20px; font-weight:700; color:var(--text-primary); letter-spacing:-0.03em;">
-                            <t t-esc="request.env.user.partner_id.name.split(' ')[0]"/>
+                            <t t-out="request.env.user.partner_id.name.split(' ')[0]"/>
                             <span style="color:var(--app-primary);">!</span>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-                            <t t-call="employee_portal_suite.ep_notification_bell"/>
+                            <t t-call="employee_portal_suite.ep_native_communication_actions"/><t t-call="employee_portal_suite.ep_notification_bell"/>
                         </t>
-                        <img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)"
-                            style="width:42px;height:42px;border-radius:14px;box-shadow:0 4px 12px rgba(79,70,229,0.30);object-fit:cover;"/>
+                        <a href="/my/employee/profile" title="Edit info"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" style="width:42px;height:42px;border-radius:14px;box-shadow:0 4px 12px rgba(79,70,229,0.30);object-fit:cover;"/></a>
                     </div>
                 </div>
             </t>
@@ -1466,7 +1576,7 @@
             <!-- Compact topbar (bell only) for every other mobile page -->
             <t t-if="request.httprequest.path != '/my/employee' and not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
                 <div class="ep-mobile-topbar mobile-only">
-                    <t t-call="employee_portal_suite.ep_notification_bell"/>
+                    <t t-call="employee_portal_suite.ep_native_communication_actions"/><t t-call="employee_portal_suite.ep_notification_bell"/>
                 </div>
             </t>
 
@@ -1480,7 +1590,7 @@
                         <t t-if="not ann.group_ids or request.env.user.group_ids &amp; ann.group_ids">
                             <div t-attf-class="portal-announcement alert alert-#{ann.color}">
                                 <div class="fw-bold mb-1">
-                                    <t t-esc="ann.name"/>
+                                    <t t-out="ann.name"/>
                                 </div>
                                 <div>
                                     <t t-out="ann.message"/>
@@ -1492,7 +1602,7 @@
                                             <t t-set="view_url" t-value="'/my/employee/announcements/%s/attachments/%s/view' % (ann.id, attachment.id)"/>
                                             <a class="portal-announcement-file" t-att-href="view_url" target="_blank">
                                                 <i class="fa fa-paperclip me-1"/>
-                                                <t t-esc="attachment.name"/>
+                                                <t t-out="attachment.name"/>
                                             </a>
                                         </t>
                                     </div>
@@ -1744,6 +1854,7 @@
             </script>
 
         </t>
+        <script src="/employee_portal_suite/static/src/js/employee_portal_pwa.js?v=2045"></script>
     </template>
 
     <!-- ================================================================
@@ -1778,10 +1889,10 @@
                                 <i class="fa fa-bell"></i>
                             </div>
                             <span class="ep-bell-item-label">
-                                <t t-esc="ep_item[1]['label']"/>
+                                <t t-out="ep_item[1]['label']"/>
                             </span>
                             <span class="ep-bell-item-count">
-                                <t t-esc="ep_item[1]['new']"/> new
+                                <t t-out="ep_item[1]['new']"/> new
                             </span>
                         </a>
                     </t>
@@ -1792,4 +1903,26 @@
             </div>
         </div>
     </template>
+    <template id="employee_portal_pwa_web_head" inherit_id="web.layout" name="Employee Portal PWA Head">
+        <xpath expr="//head" position="inside">
+            <t t-if="request.httprequest.path.startswith('/my/employee')">
+                <link rel="manifest" href="/my/employee/manifest.webmanifest?v=45" crossorigin="use-credentials" data-employee-portal-pwa="1"/>
+                <meta name="theme-color" content="#0f766e" data-employee-portal-pwa="1"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+                <meta name="apple-mobile-web-app-title" content="ABSAR Employee"/>
+                <meta name="application-name" content="ABSAR Employee"/>
+                <!-- iOS/Safari: provide both unsized and sized touch icons so the
+                     Employee Portal wins over Odoo's generic webclip icon. -->
+                <link rel="apple-touch-icon" href="/employee_portal_suite/static/icons/apple-touch-icon.png?v=45" data-employee-portal-touch-icon="1"/>
+                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=45" data-employee-portal-touch-icon="1"/>
+                <link rel="apple-touch-icon-precomposed" href="/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=45" data-employee-portal-touch-icon="1"/>
+                <link rel="shortcut icon" type="image/x-icon" href="/employee_portal_suite/static/icons/portal-favicon-v45.ico?v=45" data-employee-portal-icon="1"/>
+                <link rel="icon" type="image/png" sizes="16x16" href="/employee_portal_suite/static/icons/portal-16.png?v=45" data-employee-portal-icon="1"/>
+                <link rel="icon" type="image/png" sizes="32x32" href="/employee_portal_suite/static/icons/portal-32.png?v=45" data-employee-portal-icon="1"/>
+                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=45" data-employee-portal-icon="1"/>
+            </t>
+        </xpath>
+    </template>
+
 </odoo>

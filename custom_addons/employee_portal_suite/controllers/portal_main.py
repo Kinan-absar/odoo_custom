@@ -1,3 +1,4 @@
+import base64
 from odoo import http
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
@@ -57,12 +58,18 @@ class EmployeePortalMain(CustomerPortal):
     # ---------------------------------------------------------
     @http.route('/my/employee', type='http', auth='user', website=True)
     def employee_portal_dashboard(self, **kw):
-        # Attendance-only users go straight to the attendance page.
-        if request.env.user.has_group('employee_portal_suite.group_attendance_only'):
-            return request.redirect('/my/employee/attendance')
-
         user = request.env.user
+        # The Employee Portal is for share/portal employee accounts only.
+        # Internal Odoo users must stay in the backend even when linked to hr.employee.
+        if not user.share:
+            return request.redirect('/web')
         employee = user.employee_id
+        if not employee:
+            return request.redirect('/my')
+
+        # Attendance-only portal users go straight to the attendance page.
+        if user.has_group('employee_portal_suite.group_attendance_only'):
+            return request.redirect('/my/employee/attendance')
 
         # ------------------------------------------------------
         # 1. My Employee Requests
@@ -176,4 +183,143 @@ class EmployeePortalMain(CustomerPortal):
             "show_construction_cards": show_construction_cards,
             "attendance_checked_in": attendance_checked_in,
             "can_use_attendance": can_use_attendance,
+        })
+
+    @staticmethod
+    def _primary_bank_account(employee):
+        """Return the employee's primary res.partner.bank (Odoo 19 many2many model)."""
+        employee = employee.sudo()
+        if 'primary_bank_account_id' in employee._fields and employee.primary_bank_account_id:
+            return employee.primary_bank_account_id.sudo()
+        if 'bank_account_ids' in employee._fields and employee.bank_account_ids:
+            return employee.bank_account_ids[:1].sudo()
+        return request.env['res.partner.bank']
+
+    @http.route('/my/employee/profile', type='http', auth='user', website=True, methods=['GET', 'POST'], csrf=True)
+    def employee_profile(self, **post):
+        user = request.env.user
+        if not user.share:
+            return request.redirect('/web')
+        employee = user.employee_id.sudo()
+        if not employee:
+            return request.redirect('/my')
+
+        saved = False
+        bank_changed = False
+        if request.httprequest.method == 'POST':
+            vals = {}
+
+            # The login/work email is intentionally admin-controlled and never
+            # writable from employee self-service.
+            for field_name in ('work_phone', 'mobile_phone'):
+                if field_name in employee._fields and field_name in post:
+                    vals[field_name] = (post.get(field_name) or '').strip()
+
+            # Odoo 19 hr.employee private-information fields (most are delegated
+            # to hr.version via _inherits, so they resolve as employee fields).
+            char_fields = (
+                'private_street', 'private_street2', 'private_city', 'private_zip',
+                'private_email', 'private_phone', 'private_car_plate',
+                'emergency_contact', 'emergency_phone', 'spouse_complete_name',
+                'identification_id', 'ssnid', 'passport_id', 'place_of_birth',
+                'study_field', 'study_school', 'visa_no', 'permit_no',
+            )
+            date_fields = (
+                'spouse_birthdate', 'birthday', 'visa_expire',
+                'work_permit_expiration_date',
+            )
+            integer_fields = ('children', 'distance_home_work')
+            many2one_fields = (
+                'private_country_id', 'private_state_id', 'country_id', 'country_of_birth',
+            )
+            selection_fields = ('marital', 'sex', 'certificate', 'distance_home_work_unit')
+
+            for field_name in char_fields + date_fields:
+                if field_name in employee._fields and field_name in post:
+                    vals[field_name] = (post.get(field_name) or '').strip() or False
+
+            for field_name in integer_fields:
+                if field_name in employee._fields and field_name in post:
+                    raw = (post.get(field_name) or '').strip()
+                    try:
+                        vals[field_name] = int(float(raw)) if raw else 0
+                    except (TypeError, ValueError):
+                        pass
+
+            for field_name in many2one_fields:
+                if field_name in employee._fields and field_name in post:
+                    raw = (post.get(field_name) or '').strip()
+                    vals[field_name] = int(raw) if raw.isdigit() else False
+
+            for field_name in selection_fields:
+                if field_name in employee._fields and field_name in post:
+                    raw = (post.get(field_name) or '').strip()
+                    allowed = dict(employee._fields[field_name]._description_selection(request.env))
+                    if not raw or raw in allowed:
+                        vals[field_name] = raw or False
+
+            if vals:
+                employee.write(vals)
+
+            # Optional work-permit attachment (hr.employee.has_work_permit is a Binary).
+            uploaded_permit = request.httprequest.files.get('work_permit_file')
+            if uploaded_permit and 'has_work_permit' in employee._fields:
+                content = uploaded_permit.read()
+                if content:
+                    employee.write({'has_work_permit': base64.b64encode(content)})
+
+            # Odoo 19 stores employee bank accounts in hr.employee.bank_account_ids
+            # (many2many res.partner.bank); the "primary" one is computed.
+            # Employees may submit/change their IBAN/account number, but the
+            # new account is deliberately left UNTRUSTED so Finance/HR must
+            # review it before Payroll can send money to it.
+            if 'bank_account_ids' in employee._fields and 'bank_account_number' in post:
+                submitted = (post.get('bank_account_number') or '').strip()
+                current = self._primary_bank_account(employee)
+                current_number = (current.acc_number or '').strip() if current else ''
+                if submitted != current_number:
+                    if not submitted:
+                        if current:
+                            employee.write({'bank_account_ids': [(3, current.id)]})
+                        bank_changed = True
+                    else:
+                        partner = employee.work_contact_id.sudo()
+                        if not partner:
+                            employee._create_work_contacts()
+                            partner = employee.work_contact_id.sudo()
+                        new_bank = request.env['res.partner.bank'].sudo().create({
+                            'acc_number': submitted,
+                            'partner_id': partner.id,
+                        })
+                        # Never auto-trust a bank account submitted from portal.
+                        if 'allow_out_payment' in new_bank._fields and new_bank.allow_out_payment:
+                            new_bank.allow_out_payment = False
+                        commands = [(4, new_bank.id)]
+                        if current:
+                            # Replace the previously submitted primary account.
+                            commands.insert(0, (3, current.id))
+                        employee.write({'bank_account_ids': commands})
+                        bank_changed = True
+
+            # Mirror only business phone numbers to the user's contact.
+            partner_vals = {}
+            if 'work_phone' in post:
+                partner_vals['phone'] = (post.get('work_phone') or '').strip()
+            if partner_vals:
+                user.partner_id.sudo().write(partner_vals)
+            saved = True
+
+        countries = request.env['res.country'].sudo().search([], order='name')
+        states = request.env['res.country.state'].sudo().search([], order='name')
+        bank_account = self._primary_bank_account(employee)
+        company_is_saudi = bool(employee.company_id.country_id.code == 'SA')
+        return request.render('employee_portal_suite.employee_profile_edit', {
+            'employee': employee,
+            'saved': saved,
+            'bank_changed': bank_changed,
+            'bank_account': bank_account,
+            'countries': countries,
+            'states': states,
+            'login_email': user.login or user.partner_id.email or '',
+            'company_is_saudi': company_is_saudi,
         })

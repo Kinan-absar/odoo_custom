@@ -12,3 +12,7 @@
 10. Approval-stage notifications are now sent automatically with an **Open in Odoo** button.
 
 Telegram is notification-only. Approval and rejection remain in Odoo.
+
+## Chats Web Push fallback behavior (20.34)
+
+For native Chats messages and RTC call alerts, Web Push is now the primary external notification channel. If at least one active push subscription accepts the notification, Telegram is not sent for that chat/call event. If no Web Push subscription exists or delivery fails, the existing Telegram alert is used as fallback. Telegram notifications for approvals, attendance, reminders, and other non-Chat workflows are unchanged.

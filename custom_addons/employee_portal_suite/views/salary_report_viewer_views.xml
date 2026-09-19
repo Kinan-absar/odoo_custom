@@ -29,6 +29,7 @@
                             <field name="date_from" readonly="1"/>
                             <field name="date_to" readonly="1"/>
                             <field name="department_ids" widget="many2many_tags" readonly="1"/>
+                            <field name="employee_tag_ids" widget="many2many_tags" readonly="1"/>
                             <field name="work_location_ids" widget="many2many_tags" readonly="1"/>
                             <field name="generated_on" readonly="1"/>
                         </group>
@@ -71,6 +72,7 @@
                 <field name="date_from"/>
                 <field name="date_to"/>
                 <field name="department_ids" widget="many2many_tags" optional="show"/>
+                <field name="employee_tag_ids" widget="many2many_tags" optional="show"/>
                 <field name="work_location_ids" widget="many2many_tags" optional="show"/>
                 <field name="total_employees"/>
                 <field name="total_gross_salary"/>

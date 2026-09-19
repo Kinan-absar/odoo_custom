@@ -172,7 +172,54 @@ class EmployeePortalTelegramService(models.AbstractModel):
         return f"{base_url}/{path.lstrip('/')}"
 
     def send_to_user(self, user, title, body, path=None):
-        if not user or not user.sudo().telegram_chat_id:
+        """Deliver employee notifications through Web Push first.
+
+        This keeps all existing approval/attendance/request notification call-sites
+        compatible while making Telegram an optional fallback instead of a
+        requirement. Native Discuss code that already attempted Web Push can set
+        ``skip_webpush`` in the context to avoid a duplicate push retry.
+        """
+        if not user or not user.active:
+            return False
+
+        if not self.env.context.get('skip_webpush'):
+            try:
+                # Keep phone notification headers compact. The body carries the
+                # request number/status/detail, so repeating a sentence in the
+                # title only wastes lock-screen space.
+                raw_title = str(title or '').strip()
+                lowered = raw_title.lower()
+                if 'material request' in lowered:
+                    push_title = 'Material Request'
+                elif 'employee request' in lowered:
+                    push_title = 'Employee Request'
+                elif 'approval' in lowered:
+                    push_title = 'Approval'
+                elif 'clock-in' in lowered or 'clock-out' in lowered or 'attendance' in lowered:
+                    push_title = 'Attendance'
+                elif 'status updated' in lowered:
+                    push_title = 'Request Update'
+                else:
+                    push_title = raw_title[:48] or 'ABSAR'
+                pushed = self.env['employee.portal.webpush.service'].sudo().send_to_user(
+                    user,
+                    push_title,
+                    body,
+                    path=path,
+                    kind='portal',
+                    tag='employee-portal-%s' % user.id,
+                )
+                if pushed:
+                    return True
+            except Exception:
+                # Push must never interrupt the business workflow that triggered
+                # the notification. Telegram can still be used as a fallback.
+                _logger.exception('Web Push notification failed for user %s', user.id)
+
+        # Keep Telegram fallback links consistent with Web Push routing.
+        path = self.env['employee.portal.webpush.service'].sudo()._url_for_user(user, path)
+
+        if not user.sudo().telegram_chat_id:
             return False
         config = self._get_config()
         if not config or not config.bot_token:

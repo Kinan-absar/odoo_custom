@@ -77,6 +77,12 @@
                                             <td class="label-cell">Certificate Ref.</td>
                                             <td class="value-cell"><span t-field="doc.name"/></td>
                                         </tr>
+                                        <tr>
+                                            <td class="label-cell">Percentage Completed</td>
+                                            <td class="value-cell">
+                                                <span t-esc="'{:.2f}%'.format((doc.cumulative_certified_value / (doc.contract_id.revised_amount or doc.contract_id.original_amount) * 100.0) if (doc.contract_id.revised_amount or doc.contract_id.original_amount) else 0.0)"/>
+                                            </td>
+                                        </tr>
                                     </table>
                                 </td>
                                 <td>
@@ -235,21 +241,35 @@
             </td>
         </tr>
         <tr>
-            <td class="label-cell">Advance Recovery</td>
+            <td class="label-cell">Less: Previous Certified</td>
+            <td class="value-cell">
+                <span t-field="doc.previous_certified_value"
+                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+            </td>
+        </tr>
+        <tr class="emphasis">
+            <td class="label-cell">Current Certified</td>
+            <td class="value-cell">
+                <span t-field="doc.current_work_value"
+                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+            </td>
+        </tr>
+        <tr t-if="doc.advance_recovery_amount">
+            <td class="label-cell">Less: Advance Recovery</td>
             <td class="value-cell">
                 <span t-field="doc.advance_recovery_amount"
                       t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
             </td>
         </tr>
         <tr>
-            <td class="label-cell">Retention</td>
+            <td class="label-cell">Less: Retention</td>
             <td class="value-cell">
                 <span t-field="doc.retention_amount"
                       t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
             </td>
         </tr>
-        <tr>
-            <td class="label-cell">Other Deductions</td>
+        <tr t-if="doc.deduction_amount">
+            <td class="label-cell">Less: Other Deductions</td>
             <td class="value-cell">
                 <span t-field="doc.deduction_amount"
                       t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>

@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="ep_native_communication_actions">
+        <div class="ep-native-comm-actions" t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
+            <a class="ep-native-comm-btn ep-native-message-btn" href="/my/employee/discuss" target="_blank" rel="noopener noreferrer" title="Open Chats">
+                <i class="fa fa-comments"/>
+                <span class="ep-native-unread-badge" style="display:none">0</span>
+            </a>
+        </div>
+    </template>
+
+    <template id="employee_native_discuss_hub" name="Chats Home">
+        <t t-call="web.layout">
+            <t t-set="title">Chats</t>
+            <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+            <style>
+                html, body { margin:0 !important; padding:0 !important; height:100% !important; overflow:hidden !important; background:#fff !important; }
+                .ep-chats-shell{position:fixed;inset:0;display:grid;grid-template-columns:340px minmax(0,1fr);background:#fff;color:#1f2937;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+                .ep-chats-list-pane{min-width:0;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;background:#fff;overflow:hidden}
+                .ep-chats-list-head{padding:14px 14px 10px;border-bottom:1px solid #eef2f7}
+                .ep-chats-list-title{display:flex;align-items:center;font-size:21px;font-weight:700;color:#111827}.ep-chats-portal-back{display:none;align-items:center;gap:6px;margin-right:10px;color:#475569!important;text-decoration:none!important;font-size:13px;font-weight:650}.ep-chats-portal-back svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+                .ep-chats-list-actions{margin-left:auto;display:flex;gap:7px;align-items:center}.ep-chats-action{height:34px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;color:#475569;display:inline-flex;align-items:center;gap:6px;padding:0 10px;font-size:12px;font-weight:650;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.04)}.ep-chats-action:hover{background:#f8fafc;color:#0f172a}.ep-chats-action-primary{background:#2563eb;color:#fff;border-color:#2563eb}.ep-chats-action-primary:hover{background:#1d4ed8;color:#fff}.ep-chats-notification-btn.ep-push-enabled{background:#ecfdf5;border-color:#86efac;color:#15803d}.ep-chats-action svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+                .ep-chats-search{margin-top:10px;display:flex;align-items:center;gap:8px;background:#f3f4f6;border-radius:10px;padding:8px 10px}.ep-chats-search input{border:0;outline:0;background:transparent;width:100%;font-size:14px}
+                .ep-native-new-chat{display:none;position:fixed;inset:0;z-index:5000;align-items:center;justify-content:center;padding:18px}.ep-native-new-chat.show{display:flex}.ep-chats-modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.38);backdrop-filter:blur(3px)}.ep-chats-modal-card{position:relative;z-index:1;width:min(440px,calc(100vw - 28px));max-height:min(720px,calc(100dvh - 36px));display:flex;flex-direction:column;background:#fff;border-radius:18px;box-shadow:0 24px 80px rgba(15,23,42,.24);overflow:hidden;border:1px solid rgba(15,23,42,.08)}.ep-chats-modal-head{height:54px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eef2f7;font-size:17px}.ep-chats-modal-close{width:34px;height:34px;border:0;background:transparent;border-radius:9px;color:#64748b;font-size:25px;line-height:1;cursor:pointer}.ep-chats-modal-close:hover{background:#f1f5f9}.ep-chats-modal-card form{padding:14px;overflow:auto}.ep-native-new-chat-title{display:none}
+                .ep-native-people-grid{display:flex;flex-direction:column;gap:4px}.ep-native-person-option{display:flex;align-items:center;gap:9px;padding:8px;border-radius:9px;cursor:pointer}.ep-native-person-option:hover{background:#f8fafc}.ep-native-person-option img,.ep-native-avatar-fallback{width:36px;height:36px;border-radius:50%;object-fit:cover;display:inline-flex;align-items:center;justify-content:center;background:#eef2f7}.ep-native-person-copy{display:flex;flex-direction:column;min-width:0}.ep-native-person-copy small{font-size:11px;color:#9ca3af}
+                .ep-chats-thread-list{flex:1;overflow:auto;padding:6px}.ep-chats-section-label{padding:10px 10px 5px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8}.ep-chats-section-channels{margin-top:4px;border-top:1px solid #f1f5f9;padding-top:12px}.ep-chats-channel-avatar{font-size:23px;font-weight:800;color:#7c3aed;background:#f3e8ff!important}.ep-chats-thread{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;text-decoration:none!important;color:#1f2937!important}.ep-chats-thread:hover,.ep-chats-thread.active{background:#eef6f7}.ep-chats-avatar img,.ep-chats-avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;background:#eef2f7;flex:0 0 auto}.ep-chats-thread-copy{min-width:0;display:flex;flex-direction:column;flex:1}.ep-chats-thread-copy strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}.ep-native-presence{font-size:11px;color:#9ca3af}.ep-native-presence-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#cbd5e1;margin-right:5px}.ep-native-presence-online .ep-native-presence-dot{background:#22c55e}.ep-chats-unread{min-width:20px;height:20px;border-radius:10px;padding:0 6px;background:#16a34a;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center}.ep-native-thread-unread{flex:0 0 auto;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:#2563eb;color:#fff;font-size:11px;font-weight:800;line-height:22px;text-align:center;box-shadow:0 2px 6px rgba(37,99,235,.22)}.ep-native-thread-unread.is-clearing{opacity:.35;transform:scale(.88);transition:opacity .16s ease,transform .16s ease}.ep-native-empty{margin:18px 10px;padding:18px 16px;border:1px dashed #dbe3ee;border-radius:14px;background:#f8fafc;display:flex;flex-direction:column;gap:4px;color:#64748b;font-size:13px;line-height:1.4}.ep-native-empty strong{font-size:14px;color:#334155}.ep-chats-thread{transition:background-color .15s ease}.ep-chats-thread.active .ep-native-thread-unread{display:none!important}
+                .ep-chats-conversation-pane{position:relative;min-width:0;background:#f8fafc;overflow:hidden}.ep-chats-empty-state{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8}.ep-chats-empty-state h3{color:#334155;margin:8px 0 2px}.ep-chats-empty-state p{margin:0}.ep-chats-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}.ep-chats-frame.show{display:block}.ep-chats-mobile-bar{display:none}
+                /* Desktop behaves like a classic chat app: the conversation opens in the
+                   right pane while the Chats list remains visible on the left. Mobile still
+                   switches to a full-screen conversation and uses the back button to return. */
+                .ep-chats-shell.ep-chat-open{grid-template-columns:340px minmax(0,1fr)}
+                @media(max-width:767.98px){.ep-chats-portal-back{display:inline-flex}.ep-chats-shell{display:block;position:fixed;inset:0;width:100%;height:100dvh}.ep-chats-list-pane{position:absolute;inset:0;width:100%;border:0}.ep-chats-conversation-pane{display:none;position:absolute;inset:0;width:100%;height:100%;background:#fff}.ep-chats-shell.ep-chat-open .ep-chats-list-pane{display:none}.ep-chats-shell.ep-chat-open .ep-chats-conversation-pane{display:block}.ep-chats-frame{inset:0;width:100%;height:100%;padding:0}.ep-chats-empty-state{display:none}.ep-chats-list-head{padding-top:max(14px,env(safe-area-inset-top))}.ep-chats-action span{display:none}.ep-chats-action{width:36px;padding:0;justify-content:center}.ep-native-new-chat{padding:0;align-items:flex-end}.ep-chats-modal-card{width:100%;max-height:88dvh;border-radius:18px 18px 0 0;padding-bottom:env(safe-area-inset-bottom)}}
+            </style>
+            <div class="ep-chats-shell" data-ep-chats-shell="1">
+                <aside class="ep-chats-list-pane" data-ep-chats-list-pane="1">
+                    <div class="ep-chats-list-head">
+                        <div class="ep-chats-list-title">
+                            <a href="/my/employee" class="ep-chats-portal-back" aria-label="Back to Portal" title="Back to Portal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span>Portal</span></a>
+                            <span>Chats</span>
+                            <div class="ep-chats-list-actions">
+                                <button type="button" class="ep-chats-action ep-chats-notification-btn" data-ep-push-toggle="1" data-push-state="off" title="Enable notifications" aria-label="Enable notifications">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><span data-ep-push-label="1">Notifications</span>
+                                </button>
+                                <button type="button" class="ep-chats-action ep-chats-action-primary" data-ep-new-chat-toggle="1" title="New chat" aria-label="New chat">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>New chat</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="ep-chats-search">
+                            <i class="fa fa-search"/>
+                            <input type="search" placeholder="Search chats" autocomplete="off" data-ep-chat-search="1"/>
+                        </div>
+                    </div>
+
+                    <div id="ep-native-new-chat" class="ep-native-new-chat ep-chats-new-chat" aria-hidden="true">
+                        <div class="ep-chats-modal-backdrop" data-ep-new-chat-close="1"></div>
+                        <div class="ep-chats-modal-card" role="dialog" aria-modal="true" aria-label="New chat">
+                            <div class="ep-chats-modal-head"><strong>New chat</strong><button type="button" class="ep-chats-modal-close" data-ep-new-chat-close="1" aria-label="Close">&#215;</button></div>
+                        <form action="/my/employee/discuss/start" method="post">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <div class="ep-native-new-chat-title">New chat</div>
+                            <div class="ep-new-chat-search">
+                                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:17px;height:17px;min-width:17px;max-width:17px;min-height:17px;max-height:17px;fill:none;stroke:currentColor"><circle cx="11" cy="11" r="7" fill="none"/><path d="M20 20l-3.5-3.5"/></svg>
+                                <input type="search" placeholder="Search employees" autocomplete="off" data-ep-new-chat-search="1"/>
+                            </div>
+                            <div class="ep-native-people-grid">
+                                <t t-foreach="employees" t-as="emp_user">
+                                    <label class="ep-native-person-option" t-att-data-search="(emp_user['name'] or '').lower()">
+                                        <input type="checkbox" name="participant_ids" t-att-value="emp_user['id']"/>
+                                        <img t-if="emp_user['avatar']" t-att-src="emp_user['avatar']"/>
+                                        <span t-if="not emp_user['avatar']" class="ep-native-avatar-fallback"><i class="fa fa-user"/></span>
+                                        <span class="ep-native-person-copy">
+                                            <span t-out="emp_user['name']"/>
+                                            <small t-att-class="'ep-native-presence ep-native-presence-%s' % emp_user['presence']"><span class="ep-native-presence-dot"/><t t-out="emp_user['presence_label']"/></small>
+                                        </span>
+                                    </label>
+                                </t>
+                            </div>
+                            <input class="form-control mt-2" type="text" name="group_name" placeholder="Group name (optional)"/>
+                            <div class="d-flex gap-2 mt-2">
+                                <button type="submit" class="btn btn-primary flex-grow-1">Start</button>
+                                <button type="button" class="btn btn-light" data-ep-new-chat-close="1">Cancel</button>
+                            </div>
+                        </form>
+                        </div>
+                    </div>
+
+                    <div class="ep-chats-thread-list" data-ep-thread-list="1">
+                        <t t-if="chat_rows">
+                            <div class="ep-chats-section-label">Chats</div>
+                            <t t-foreach="chat_rows" t-as="ch">
+                                <a class="ep-chats-thread" data-ep-thread="1" target="ep_discuss_frame" t-att-data-search="(ch['name'] or '').lower()" t-att-data-channel-id="ch['id']" t-att-data-last-message-id="ch['last_message_id']" t-att-data-mobile-href="'/my/employee/discuss/channel/%s' % ch['id']" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']">
+                                    <div class="ep-chats-avatar">
+                                        <img t-if="ch['avatar']" t-att-src="ch['avatar']"/>
+                                        <span t-if="not ch['avatar']" class="ep-chats-avatar-fallback">G</span>
+                                    </div>
+                                    <div class="ep-chats-thread-copy">
+                                        <strong t-out="ch['name']"/>
+                                        <small t-if="ch['is_group']">Group conversation</small>
+                                        <small t-if="not ch['is_group']" t-att-class="'ep-native-presence ep-native-presence-%s' % ch['presence']"><span class="ep-native-presence-dot"/><t t-out="ch['presence_label']"/></small>
+                                    </div>
+                                    <span t-if="ch['unread']" class="ep-native-thread-unread" t-out="ch['unread']"/>
+                                </a>
+                            </t>
+                        </t>
+                        <t t-if="channel_rows">
+                            <div class="ep-chats-section-label ep-chats-section-channels">Channels</div>
+                            <t t-foreach="channel_rows" t-as="ch">
+                                <a class="ep-chats-thread ep-chats-channel-row" data-ep-thread="1" target="ep_discuss_frame" t-att-data-search="(ch['name'] or '').lower()" t-att-data-channel-id="ch['id']" t-att-data-last-message-id="ch['last_message_id']" t-att-data-mobile-href="'/my/employee/discuss/channel/%s' % ch['id']" t-att-href="'/my/employee/discuss/channel/%s?embedded=1' % ch['id']">
+                                    <div class="ep-chats-avatar ep-chats-channel-avatar">#</div>
+                                    <div class="ep-chats-thread-copy">
+                                        <strong t-out="ch['name']"/>
+                                        <small t-if="ch['read_only']">Read only</small>
+                                        <small t-if="not ch['read_only']">Channel</small>
+                                    </div>
+                                    <span t-if="ch['unread']" class="ep-native-thread-unread" t-out="ch['unread']"/>
+                                </a>
+                            </t>
+                        </t>
+                        <div t-if="not channels" class="ep-native-empty"><strong>No conversations yet</strong><span>Start a conversation with an employee.</span></div>
+                    </div>
+                </aside>
+
+                <section class="ep-chats-conversation-pane" data-ep-chat-pane="1">
+                    <div class="ep-chats-empty-state" data-ep-chat-empty="1">
+                        <h3>Chats</h3>
+                        <p>Select a conversation to start messaging.</p>
+                    </div>
+                    <iframe name="ep_discuss_frame" class="ep-chats-frame" data-ep-discuss-frame="1" allow="camera; microphone; display-capture; autoplay; clipboard-read; clipboard-write"/>
+                </section>
+            </div>
+            <script type="text/javascript">
+                // Wired directly in the page so "+ New chat" and "Search chats" always work,
+                // even if the external employee_portal_suite JS assets fail to load or are blocked.
+                // Uses the same data-ep-* hooks and the same dedupe flag as native_discuss_pwa.js,
+                // so that script simply no-ops its own binding once this inline copy has run.
+                (function () {
+                    function bindChatsHomeInline() {
+                        if (document.documentElement.dataset.epChatsHomeDelegated === "1") return;
+                        document.documentElement.dataset.epChatsHomeDelegated = "1";
+
+                        function publishUnread(total) {
+                            try {
+                                localStorage.setItem("employee_portal_discuss_unread", JSON.stringify({ unread: Number(total || 0), at: Date.now() }));
+                            } catch (e) {}
+                            try {
+                                if (window.BroadcastChannel) {
+                                    var bc = new BroadcastChannel("employee_portal_discuss");
+                                    bc.postMessage({ type: "unread", unread: Number(total || 0) });
+                                    bc.close();
+                                }
+                            } catch (e) {}
+                        }
+
+                        function markThreadRead(thread) {
+                            if (!thread) return;
+                            var badge = thread.querySelector(".ep-native-thread-unread");
+                            if (badge) {
+                                badge.classList.add("is-clearing");
+                                window.setTimeout(function () { if (badge &amp;&amp; badge.parentNode) badge.remove(); }, 140);
+                            }
+                            var channelId = Number(thread.getAttribute("data-channel-id") || 0);
+                            var lastMessageId = Number(thread.getAttribute("data-last-message-id") || 0);
+                            if (!channelId) return;
+                            window.fetch("/employee_portal/discuss/mark_read", {
+                                method: "POST",
+                                credentials: "same-origin",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    jsonrpc: "2.0",
+                                    method: "call",
+                                    params: { channel_id: channelId, last_message_id: lastMessageId },
+                                    id: Date.now()
+                                })
+                            }).then(function (resp) { return resp.json(); }).then(function (payload) {
+                                var result = payload &amp;&amp; payload.result ? payload.result : {};
+                                if (result.ok) publishUnread(result.unread || 0);
+                            }).catch(function () {});
+                        }
+
+                        function setThreadUnread(thread, count) {
+                            if (!thread) return;
+                            count = Math.max(0, Number(count || 0));
+                            var badge = thread.querySelector(".ep-native-thread-unread");
+                            if (!count) {
+                                if (badge) badge.remove();
+                                return;
+                            }
+                            if (!badge) {
+                                badge = document.createElement("span");
+                                badge.className = "ep-native-thread-unread";
+                                thread.appendChild(badge);
+                            }
+                            badge.classList.remove("is-clearing");
+                            badge.textContent = count &gt; 99 ? "99+" : String(count);
+                        }
+
+                        function refreshThreadUnread() {
+                            window.fetch("/employee_portal/discuss/unread", {
+                                method: "POST",
+                                credentials: "same-origin",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ jsonrpc: "2.0", method: "call", params: {}, id: Date.now() })
+                            }).then(function (resp) { return resp.json(); }).then(function (payload) {
+                                var result = payload &amp;&amp; payload.result ? payload.result : {};
+                                var counts = result.channels || {};
+                                var rows = document.querySelectorAll("[data-ep-thread][data-channel-id]");
+                                for (var i = 0; i &lt; rows.length; i++) {
+                                    var id = rows[i].getAttribute("data-channel-id");
+                                    setThreadUnread(rows[i], counts[id] || 0);
+                                }
+                                publishUnread(result.unread || 0);
+                            }).catch(function () {});
+                        }
+
+                        window.addEventListener("pageshow", function () { refreshThreadUnread(); });
+                        window.setInterval(refreshThreadUnread, 4000);
+
+                        document.addEventListener("click", function (event) {
+                            var toggle = event.target.closest &amp;&amp; event.target.closest("[data-ep-new-chat-toggle]");
+                            if (toggle) {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                var modal = document.getElementById("ep-native-new-chat");
+                                if (modal) {
+                                    modal.classList.add("show");
+                                    modal.setAttribute("aria-hidden", "false");
+                                }
+                                return;
+                            }
+                            var thread = event.target.closest &amp;&amp; event.target.closest("[data-ep-thread]");
+                            if (thread) {
+                                event.preventDefault();
+                                markThreadRead(thread);
+                                var mobile = window.matchMedia("(max-width: 767.98px)").matches;
+                                if (mobile) {
+                                    var mobileHref = thread.getAttribute("data-mobile-href") || (thread.getAttribute("href") || "").replace("?embedded=1", "");
+                                    if (mobileHref) window.location.assign(mobileHref);
+                                    return;
+                                }
+                                var shell = document.querySelector("[data-ep-chats-shell]");
+                                var frame = document.querySelector("[data-ep-discuss-frame]");
+                                var empty = document.querySelector("[data-ep-chat-empty]");
+                                var href = thread.getAttribute("href");
+                                if (shell &amp;&amp; frame &amp;&amp; href) {
+                                    var rows = document.querySelectorAll("[data-ep-thread]");
+                                    for (var r = 0; r &lt; rows.length; r++) rows[r].classList.remove("active");
+                                    thread.classList.add("active");
+                                    shell.classList.add("ep-chat-open");
+                                    if (empty) empty.style.display = "none";
+                                    frame.classList.add("show");
+                                    if (frame.getAttribute("src") !== href) frame.setAttribute("src", href);
+                                }
+                                return;
+                            }
+                            var close = event.target.closest &amp;&amp; event.target.closest("[data-ep-new-chat-close]");
+                            if (close) {
+                                event.preventDefault();
+                                var modal2 = document.getElementById("ep-native-new-chat");
+                                if (modal2) {
+                                    modal2.classList.remove("show");
+                                    modal2.setAttribute("aria-hidden", "true");
+                                }
+                            }
+                        }, true);
+
+                        document.addEventListener("input", function (event) {
+                            var chatInput = event.target.closest &amp;&amp; event.target.closest("[data-ep-chat-search]");
+                            if (chatInput) {
+                                var chatQuery = (chatInput.value || "").trim().toLowerCase();
+                                var threads = document.querySelectorAll("[data-ep-thread]");
+                                for (var i = 0; i &lt; threads.length; i++) {
+                                    var thread = threads[i];
+                                    var haystack = (thread.getAttribute("data-search") || thread.textContent || "").toLowerCase();
+                                    thread.style.display = !chatQuery || haystack.indexOf(chatQuery) !== -1 ? "" : "none";
+                                }
+                                return;
+                            }
+                            var peopleInput = event.target.closest &amp;&amp; event.target.closest("[data-ep-new-chat-search]");
+                            if (peopleInput) {
+                                var peopleQuery = (peopleInput.value || "").trim().toLowerCase();
+                                var people = document.querySelectorAll(".ep-native-person-option");
+                                for (var j = 0; j &lt; people.length; j++) {
+                                    var person = people[j];
+                                    var personHaystack = (person.getAttribute("data-search") || person.textContent || "").toLowerCase();
+                                    person.style.display = !peopleQuery || personHaystack.indexOf(peopleQuery) !== -1 ? "" : "none";
+                                }
+                            }
+                        }, true);
+                    }
+
+                    window.addEventListener("message", function (event) {
+                        if (event.origin !== window.location.origin || !event.data || event.data.type !== "employee-discuss-back-to-chats") return;
+                        var shell = document.querySelector("[data-ep-chats-shell]");
+                        var frame = document.querySelector("[data-ep-discuss-frame]");
+                        var empty = document.querySelector("[data-ep-chat-empty]");
+                        if (shell) shell.classList.remove("ep-chat-open");
+                        if (frame) {
+                            frame.classList.remove("show");
+                            frame.setAttribute("src", "about:blank");
+                        }
+                        if (empty) empty.style.display = "";
+                        var rows = document.querySelectorAll("[data-ep-thread]");
+                        for (var r = 0; r &lt; rows.length; r++) rows[r].classList.remove("active");
+                    });
+
+                    if (document.readyState === "loading") {
+                        document.addEventListener("DOMContentLoaded", bindChatsHomeInline);
+                    } else {
+                        bindChatsHomeInline();
+                    }
+                })();
+            </script>
+            <!-- The notification bell must work even if Odoo's frontend asset bundle is
+                 cached or omitted on this standalone page. Load the push client directly. -->
+            <script src="/employee_portal_suite/static/src/js/native_discuss_push.js?v=2045"></script>
+            <script>
+                (function () {
+                    document.addEventListener('click', function (ev) {
+                        var btn = ev.target &amp;&amp; ev.target.closest ? ev.target.closest('[data-ep-push-toggle]') : null;
+                        if (!btn) return;
+                        if (!window.EmployeeChatsPush || typeof window.EmployeeChatsPush.toggle !== 'function') {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                            window.alert('Chats notification client did not load. Reload Chats once and try again.');
+                        }
+                    }, true);
+                })();
+            </script>
+        </t>
+    </template>
+
+    <template id="employee_native_discuss_pwa_web_head" inherit_id="web.layout" name="Employee Discuss PWA Head">
+        <xpath expr="//head" position="inside">
+            <t t-if="request.httprequest.path.startswith('/my/employee/discuss')">
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+                <link rel="manifest" href="/my/employee/manifest.webmanifest?v=45" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
+                <meta name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+                <meta name="apple-mobile-web-app-title" content="ABSAR Employee"/>
+                <meta name="application-name" content="ABSAR Employee"/>
+                <link rel="apple-touch-icon" href="/employee_portal_suite/static/icons/apple-touch-icon.png?v=45" data-employee-portal-touch-icon="1"/>
+                <link rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=45" data-employee-portal-touch-icon="1"/>
+                <link rel="apple-touch-icon-precomposed" href="/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=45" data-employee-portal-touch-icon="1"/>
+                <link rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=45"/>
+            </t>
+        </xpath>
+    </template>
+
+    <template id="employee_native_discuss_public_bootstrap" inherit_id="mail.discuss_public_channel_template" name="Employee Native Discuss Bootstrap">
+        <xpath expr="//head" position="inside">
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-discuss" content="1"/>
+            <meta t-if="request.params.get('embedded')" name="employee-portal-discuss-embedded" content="1"/>
+            <!-- Server-rendered, so the bottom mobile Chat/Channel tab bar inside an opened
+                 conversation is hidden immediately from the HTML itself. This does not rely on
+                 any JS-added body class, so it still applies even if the frontend JS assets fail. -->
+            <style t-if="request.params.get('embedded')" data-employee-discuss-pwa="1">
+                /* Embedded conversation: the outer Chats page owns navigation. */
+                .o-mail-DiscussSidebar,
+                .o-mail-DiscussSidebar,
+                [class*="o-mail-DiscussSidebar"],
+                .o-mail-MessagingMenu,
+                .o-mail-MessagingMenu-navbar,
+                [class*="o-mail-MessagingMenu"] { display: none !important; }
+                .o-mail-Discuss { grid-template-columns: minmax(0, 1fr) !important; width: 100% !important; }
+                .o-mail-DiscussContent,
+                .o-mail-DiscussContent,
+                .o-mail-DiscussContent,
+                .o-mail-DiscussContent,
+                .o-mail-Thread,
+                .o-mail-Thread,
+                .o-mail-Composer { width: 100% !important; max-width: none !important; margin-left: 0 !important; margin-right: 0 !important; }
+                .o-mail-DiscussContent-header { width: 100% !important; max-width: none !important; }
+                /* Remove only our historical extra video action; keep Odoo/portal native call controls. */
+                .ep-native-video-call,
+                .ep-native-video-call-btn { display: none !important; }
+            </style>
+            <style t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" data-employee-discuss-mobile-channel="1">
+                @media (max-width: 767.98px) {
+                    /* A real conversation owns the whole mobile screen. Navigation back to
+                       Chats is provided by the header back button / native browser history. */
+                    .o-mail-MessagingMenu-navbar,
+                    [class*="o-mail-MessagingMenu-navbar"] { display: none !important; }
+                    /* Do not reserve footer space for the removed Chat tab. */
+                    .o-mail-MessagingMenu { padding-bottom: 0 !important; }
+                }
+            </style>
+            <meta t-if="request.httprequest.path == '/my/employee/discuss'" name="employee-portal-discuss-home" content="1"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-back-url" content="/my/employee/discuss"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-portal-home-url" content="/my/employee"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="manifest" href="/my/employee/manifest.webmanifest?v=45" crossorigin="use-credentials" data-employee-discuss-pwa="1"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="theme-color" content="#ffffff" data-employee-discuss-pwa="1"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-capable" content="yes"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="apple-mobile-web-app-title" content="ABSAR Employee"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="application-name" content="ABSAR Employee"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon" href="/employee_portal_suite/static/icons/apple-touch-icon.png?v=45" data-employee-portal-touch-icon="1"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon" sizes="180x180" href="/employee_portal_suite/static/icons/portal-180.png?v=45" data-employee-portal-touch-icon="1"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="apple-touch-icon-precomposed" href="/employee_portal_suite/static/icons/apple-touch-icon-precomposed.png?v=45" data-employee-portal-touch-icon="1"/>
+            <link t-if="request.httprequest.path.startswith('/my/employee/discuss')" rel="icon" type="image/png" sizes="64x64" href="/employee_portal_suite/static/icons/portal-64.png?v=45"/>
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss')" name="employee-discuss-company-logo" t-att-content="'/web/image/res.company/%s/logo_web' % request.env.company.id"/>
+        </xpath>
+    </template>
+
+    <template id="employee_native_discuss_read_only_head" inherit_id="mail.discuss_public_channel_template" name="Employee Portal Read Only Channel Meta">
+        <xpath expr="//head" position="inside">
+            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/') and employee_portal_read_only" name="employee-portal-channel-readonly" content="1"/>
+        </xpath>
+    </template>
+
+</odoo>
