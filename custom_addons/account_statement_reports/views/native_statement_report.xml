@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_account_statement_native" model="ir.actions.client">
+        <field name="name">Account Statement Reports</field>
+        <field name="tag">account_report</field>
+        <field name="context" eval="{'report_id': ref('account_reports.partner_ledger_report')}"/>
+    </record>
+
+    <record id="menu_customer_statement_wizard" model="ir.ui.menu">
+        <field name="name">Account Statement Reports</field>
+        <field name="parent_id" ref="account.account_reports_partners_reports_menu"/>
+        <field name="action" ref="action_account_statement_native"/>
+        <field name="sequence">50</field>
+        <field name="active">True</field>
+    </record>
+
+    <record id="menu_vendor_statement_wizard" model="ir.ui.menu">
+        <field name="active">False</field>
+    </record>
+</odoo>
