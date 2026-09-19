@@ -23,10 +23,28 @@ class ResPartner(models.Model):
             partner.vendor_statement_balance = payable
             partner.statement_balance = receivable - payable
 
+    def action_open_account_statement(self):
+        self.ensure_one()
+        statement_type = "payable" if self.supplier_rank and not self.customer_rank else "receivable"
+        return self.env["account.statement"].with_context(
+            default_statement_type=statement_type,
+            default_partner_id=self.id,
+            default_company_id=self.env.company.id,
+        ).action_open_new_workspace()
+
+    # Backward-compatible methods for existing buttons/bookmarks.
     def action_open_customer_statement_wizard(self):
         self.ensure_one()
-        return {"type": "ir.actions.act_window", "name": "Customer Statement", "res_model": "customer.statement.wizard", "view_mode": "form", "target": "new", "context": {"default_partner_id": self.id, "default_company_id": self.env.company.id}}
+        return self.env["account.statement"].with_context(
+            default_statement_type="receivable",
+            default_partner_id=self.id,
+            default_company_id=self.env.company.id,
+        ).action_open_new_workspace()
 
     def action_open_vendor_statement_wizard(self):
         self.ensure_one()
-        return {"type": "ir.actions.act_window", "name": "Vendor Statement", "res_model": "vendor.statement.wizard", "view_mode": "form", "target": "new", "context": {"default_partner_id": self.id, "default_company_id": self.env.company.id}}
+        return self.env["account.statement"].with_context(
+            default_statement_type="payable",
+            default_partner_id=self.id,
+            default_company_id=self.env.company.id,
+        ).action_open_new_workspace()
