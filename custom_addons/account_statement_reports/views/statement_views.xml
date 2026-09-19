@@ -1,22 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <record id="action_customer_statement_wizard" model="ir.actions.act_window">
-        <field name="name">Customer Statement</field><field name="res_model">customer.statement.wizard</field><field name="view_mode">form</field><field name="target">new</field>
+        <field name="name">Customer Statement</field>
+        <field name="res_model">customer.statement.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
     </record>
     <menuitem id="menu_customer_statement_wizard" name="Customer Statement" parent="account.account_reports_partners_reports_menu" action="action_customer_statement_wizard" sequence="50"/>
 
     <record id="action_vendor_statement_wizard" model="ir.actions.act_window">
-        <field name="name">Vendor Statement</field><field name="res_model">vendor.statement.wizard</field><field name="view_mode">form</field><field name="target">new</field>
+        <field name="name">Vendor Statement</field>
+        <field name="res_model">vendor.statement.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
     </record>
     <menuitem id="menu_vendor_statement_wizard" name="Vendor Statement" parent="account.account_reports_partners_reports_menu" action="action_vendor_statement_wizard" sequence="60"/>
 
     <record id="customer_statement_wizard_form" model="ir.ui.view">
-        <field name="name">customer.statement.wizard.form</field><field name="model">customer.statement.wizard</field>
+        <field name="name">customer.statement.wizard.form</field>
+        <field name="model">customer.statement.wizard</field>
         <field name="arch" type="xml">
             <form string="Customer Statement">
                 <sheet>
-                    <group><group><field name="partner_id"/><field name="company_id" groups="base.group_multi_company"/><field name="date_from"/><field name="date_to"/></group>
-                    <group string="Filters"><field name="journal_ids" widget="many2many_tags" options="{'no_create': True}"/><field name="account_ids" widget="many2many_tags" options="{'no_create': True}"/><field name="move_state"/><field name="show_opening_balance"/></group></group>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group string="Filters">
+                            <field name="journal_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                            <field name="account_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                            <field name="move_state"/>
+                            <field name="show_opening_balance"/>
+                        </group>
+                    </group>
                     <footer>
                         <button string="Show Statement" type="object" name="action_show_statement" class="btn-primary"/>
                         <button string="Print PDF" type="object" name="action_print_pdf" class="btn-secondary"/>
@@ -29,12 +48,25 @@
     </record>
 
     <record id="vendor_statement_wizard_form" model="ir.ui.view">
-        <field name="name">vendor.statement.wizard.form</field><field name="model">vendor.statement.wizard</field>
+        <field name="name">vendor.statement.wizard.form</field>
+        <field name="model">vendor.statement.wizard</field>
         <field name="arch" type="xml">
             <form string="Vendor Statement">
                 <sheet>
-                    <group><group><field name="partner_id"/><field name="company_id" groups="base.group_multi_company"/><field name="date_from"/><field name="date_to"/></group>
-                    <group string="Filters"><field name="journal_ids" widget="many2many_tags" options="{'no_create': True}"/><field name="account_ids" widget="many2many_tags" options="{'no_create': True}"/><field name="move_state"/><field name="show_opening_balance"/></group></group>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group string="Filters">
+                            <field name="journal_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                            <field name="account_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                            <field name="move_state"/>
+                            <field name="show_opening_balance"/>
+                        </group>
+                    </group>
                     <footer>
                         <button string="Show Statement" type="object" name="action_show_statement" class="btn-primary"/>
                         <button string="Print PDF" type="object" name="action_print_pdf" class="btn-secondary"/>
@@ -47,30 +79,244 @@
     </record>
 
     <record id="customer_statement_form" model="ir.ui.view">
-        <field name="name">customer.statement.form</field><field name="model">customer.statement</field>
-        <field name="arch" type="xml"><form string="Customer Statement"><header>
-            <button name="action_refresh_statement" type="object" string="Refresh" class="btn-secondary"/>
-            <button name="action_print_pdf" type="object" string="Print PDF" class="btn-primary"/>
-            <button name="action_export_excel" type="object" string="Export Excel" class="btn-secondary"/>
-        </header><sheet>
-            <group col="4"><field name="partner_id"/><field name="date_from"/><field name="date_to"/><field name="company_id"/></group>
-            <group string="Applied Filters" col="4"><field name="journal_ids" widget="many2many_tags"/><field name="account_ids" widget="many2many_tags"/><field name="move_state"/><field name="show_opening_balance"/></group>
-            <field name="line_ids"><list create="false" edit="false" delete="false"><field name="date"/><field name="move_id" optional="show"/><field name="move" optional="hide"/><field name="reference"/><field name="due_date"/><field name="debit" sum="Total Debit"/><field name="credit" sum="Total Credit"/><field name="balance"/></list></field>
-            <group col="3"><field name="opening_balance"/><field name="final_balance"/></group>
-        </sheet></form></field>
+        <field name="name">customer.statement.form</field>
+        <field name="model">customer.statement</field>
+        <field name="arch" type="xml">
+            <form string="Customer Statement" class="asr_statement_form">
+                <header>
+                    <button name="action_refresh_statement" type="object" string="Apply Filters" icon="fa-refresh" class="btn-primary"/>
+                    <button name="action_print_pdf" type="object" string="Print PDF" icon="fa-file-pdf-o" class="btn-secondary"/>
+                    <button name="action_export_excel" type="object" string="Export Excel" icon="fa-file-excel-o" class="btn-secondary"/>
+                </header>
+                <sheet class="asr_statement_sheet">
+                    <field name="currency_id" invisible="1"/>
+
+                    <div class="asr_statement_hero">
+                        <div>
+                            <div class="asr_eyebrow"><i class="fa fa-user-circle-o me-1"/> CUSTOMER ACCOUNT STATEMENT</div>
+                            <h2>Statement Details &amp; Filters</h2>
+                            <p>Change any detail below, then click <strong>Apply Filters</strong> to refresh the statement.</p>
+                        </div>
+                        <div class="asr_statement_badge">Receivable</div>
+                    </div>
+
+                    <div class="asr_filter_panel">
+                        <div class="asr_panel_title"><i class="fa fa-sliders me-2"/>Statement Filters</div>
+                        <div class="row g-3 asr_filter_grid">
+                            <div class="col-xl-3 col-lg-4 col-md-6">
+                                <div class="asr_field_box asr_field_partner">
+                                    <label for="partner_id" class="asr_field_label">Customer</label>
+                                    <field name="partner_id" nolabel="1" domain="['|', ('customer_rank', '&gt;', 0), ('parent_id.customer_rank', '&gt;', 0)]" options="{'no_create_edit': True}"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-3 col-lg-4 col-md-6">
+                                <div class="asr_field_box asr_field_date">
+                                    <label for="date_from" class="asr_field_label">Date From</label>
+                                    <field name="date_from" nolabel="1"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-3 col-lg-4 col-md-6">
+                                <div class="asr_field_box asr_field_date">
+                                    <label for="date_to" class="asr_field_label">Date To</label>
+                                    <field name="date_to" nolabel="1"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-3 col-lg-4 col-md-6">
+                                <div class="asr_field_box asr_field_company">
+                                    <label for="company_id" class="asr_field_label">Company</label>
+                                    <field name="company_id" nolabel="1" groups="base.group_multi_company" options="{'no_create': True}"/>
+                                    <field name="company_id" nolabel="1" groups="!base.group_multi_company" readonly="1"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-4 col-lg-6 col-md-12">
+                                <div class="asr_field_box asr_field_journal">
+                                    <label for="journal_ids" class="asr_field_label">Journals</label>
+                                    <field name="journal_ids" nolabel="1" widget="many2many_tags" domain="[('company_id', '=', company_id)]" options="{'no_create': True}" placeholder="All journals"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-4 col-lg-6 col-md-12">
+                                <div class="asr_field_box asr_field_account">
+                                    <label for="account_ids" class="asr_field_label">Receivable Accounts</label>
+                                    <field name="account_ids" nolabel="1" widget="many2many_tags" domain="[('account_type', '=', 'asset_receivable')]" options="{'no_create': True}" placeholder="All receivable accounts"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-2 col-lg-6 col-md-6">
+                                <div class="asr_field_box asr_field_state">
+                                    <label for="move_state" class="asr_field_label">Entries</label>
+                                    <field name="move_state" nolabel="1"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-2 col-lg-6 col-md-6">
+                                <div class="asr_field_box asr_field_toggle">
+                                    <label for="show_opening_balance" class="asr_field_label">Opening Balance</label>
+                                    <field name="show_opening_balance" nolabel="1" widget="boolean_toggle"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 asr_summary_row">
+                        <div class="col-md-4">
+                            <div class="asr_summary_card asr_summary_opening">
+                                <div class="asr_summary_icon"><i class="fa fa-sign-in"/></div>
+                                <div><span>Opening Balance</span><strong><field name="opening_balance" nolabel="1" widget="monetary" options="{'currency_field': 'currency_id'}"/></strong></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="asr_summary_card asr_summary_transactions">
+                                <div class="asr_summary_icon"><i class="fa fa-list-alt"/></div>
+                                <div><span>Transactions</span><strong><field name="line_count" nolabel="1"/></strong></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="asr_summary_card asr_summary_final">
+                                <div class="asr_summary_icon"><i class="fa fa-balance-scale"/></div>
+                                <div><span>Final Balance</span><strong><field name="final_balance" nolabel="1" widget="monetary" options="{'currency_field': 'currency_id'}"/></strong></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="asr_table_card">
+                        <div class="asr_table_header">
+                            <div><i class="fa fa-table me-2"/>Statement Transactions</div>
+                            <span>Running balance</span>
+                        </div>
+                        <field name="line_ids" nolabel="1">
+                            <list create="false" edit="false" delete="false">
+                                <field name="date"/>
+                                <field name="move_id" string="Journal Entry" optional="show"/>
+                                <field name="move" optional="hide"/>
+                                <field name="reference"/>
+                                <field name="due_date"/>
+                                <field name="debit" sum="Total Debit"/>
+                                <field name="credit" sum="Total Credit"/>
+                                <field name="balance"/>
+                            </list>
+                        </field>
+                    </div>
+                </sheet>
+            </form>
+        </field>
     </record>
 
     <record id="vendor_statement_form" model="ir.ui.view">
-        <field name="name">vendor.statement.form</field><field name="model">vendor.statement</field>
-        <field name="arch" type="xml"><form string="Vendor Statement"><header>
-            <button name="action_refresh_statement" type="object" string="Refresh" class="btn-secondary"/>
-            <button name="action_print_pdf" type="object" string="Print PDF" class="btn-primary"/>
-            <button name="action_export_excel" type="object" string="Export Excel" class="btn-secondary"/>
-        </header><sheet>
-            <group col="4"><field name="partner_id"/><field name="date_from"/><field name="date_to"/><field name="company_id"/></group>
-            <group string="Applied Filters" col="4"><field name="journal_ids" widget="many2many_tags"/><field name="account_ids" widget="many2many_tags"/><field name="move_state"/><field name="show_opening_balance"/></group>
-            <field name="line_ids"><list create="false" edit="false" delete="false"><field name="date"/><field name="move_id" optional="show"/><field name="move" optional="hide"/><field name="reference"/><field name="due_date"/><field name="debit" sum="Total Debit"/><field name="credit" sum="Total Credit"/><field name="balance"/></list></field>
-            <group col="3"><field name="opening_balance"/><field name="final_balance"/></group>
-        </sheet></form></field>
+        <field name="name">vendor.statement.form</field>
+        <field name="model">vendor.statement</field>
+        <field name="arch" type="xml">
+            <form string="Vendor Statement" class="asr_statement_form">
+                <header>
+                    <button name="action_refresh_statement" type="object" string="Apply Filters" icon="fa-refresh" class="btn-primary"/>
+                    <button name="action_print_pdf" type="object" string="Print PDF" icon="fa-file-pdf-o" class="btn-secondary"/>
+                    <button name="action_export_excel" type="object" string="Export Excel" icon="fa-file-excel-o" class="btn-secondary"/>
+                </header>
+                <sheet class="asr_statement_sheet">
+                    <field name="currency_id" invisible="1"/>
+
+                    <div class="asr_statement_hero asr_vendor_hero">
+                        <div>
+                            <div class="asr_eyebrow"><i class="fa fa-truck me-1"/> VENDOR ACCOUNT STATEMENT</div>
+                            <h2>Statement Details &amp; Filters</h2>
+                            <p>Change any detail below, then click <strong>Apply Filters</strong> to refresh the statement.</p>
+                        </div>
+                        <div class="asr_statement_badge">Payable</div>
+                    </div>
+
+                    <div class="asr_filter_panel">
+                        <div class="asr_panel_title"><i class="fa fa-sliders me-2"/>Statement Filters</div>
+                        <div class="row g-3 asr_filter_grid">
+                            <div class="col-xl-3 col-lg-4 col-md-6">
+                                <div class="asr_field_box asr_field_partner">
+                                    <label for="partner_id" class="asr_field_label">Vendor</label>
+                                    <field name="partner_id" nolabel="1" domain="['|', ('supplier_rank', '&gt;', 0), ('parent_id.supplier_rank', '&gt;', 0)]" options="{'no_create_edit': True}"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-3 col-lg-4 col-md-6">
+                                <div class="asr_field_box asr_field_date">
+                                    <label for="date_from" class="asr_field_label">Date From</label>
+                                    <field name="date_from" nolabel="1"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-3 col-lg-4 col-md-6">
+                                <div class="asr_field_box asr_field_date">
+                                    <label for="date_to" class="asr_field_label">Date To</label>
+                                    <field name="date_to" nolabel="1"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-3 col-lg-4 col-md-6">
+                                <div class="asr_field_box asr_field_company">
+                                    <label for="company_id" class="asr_field_label">Company</label>
+                                    <field name="company_id" nolabel="1" groups="base.group_multi_company" options="{'no_create': True}"/>
+                                    <field name="company_id" nolabel="1" groups="!base.group_multi_company" readonly="1"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-4 col-lg-6 col-md-12">
+                                <div class="asr_field_box asr_field_journal">
+                                    <label for="journal_ids" class="asr_field_label">Journals</label>
+                                    <field name="journal_ids" nolabel="1" widget="many2many_tags" domain="[('company_id', '=', company_id)]" options="{'no_create': True}" placeholder="All journals"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-4 col-lg-6 col-md-12">
+                                <div class="asr_field_box asr_field_account">
+                                    <label for="account_ids" class="asr_field_label">Payable Accounts</label>
+                                    <field name="account_ids" nolabel="1" widget="many2many_tags" domain="[('account_type', '=', 'liability_payable')]" options="{'no_create': True}" placeholder="All payable accounts"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-2 col-lg-6 col-md-6">
+                                <div class="asr_field_box asr_field_state">
+                                    <label for="move_state" class="asr_field_label">Entries</label>
+                                    <field name="move_state" nolabel="1"/>
+                                </div>
+                            </div>
+                            <div class="col-xl-2 col-lg-6 col-md-6">
+                                <div class="asr_field_box asr_field_toggle">
+                                    <label for="show_opening_balance" class="asr_field_label">Opening Balance</label>
+                                    <field name="show_opening_balance" nolabel="1" widget="boolean_toggle"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 asr_summary_row">
+                        <div class="col-md-4">
+                            <div class="asr_summary_card asr_summary_opening">
+                                <div class="asr_summary_icon"><i class="fa fa-sign-in"/></div>
+                                <div><span>Opening Balance</span><strong><field name="opening_balance" nolabel="1" widget="monetary" options="{'currency_field': 'currency_id'}"/></strong></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="asr_summary_card asr_summary_transactions">
+                                <div class="asr_summary_icon"><i class="fa fa-list-alt"/></div>
+                                <div><span>Transactions</span><strong><field name="line_count" nolabel="1"/></strong></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="asr_summary_card asr_summary_final">
+                                <div class="asr_summary_icon"><i class="fa fa-balance-scale"/></div>
+                                <div><span>Final Balance</span><strong><field name="final_balance" nolabel="1" widget="monetary" options="{'currency_field': 'currency_id'}"/></strong></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="asr_table_card">
+                        <div class="asr_table_header">
+                            <div><i class="fa fa-table me-2"/>Statement Transactions</div>
+                            <span>Running balance</span>
+                        </div>
+                        <field name="line_ids" nolabel="1">
+                            <list create="false" edit="false" delete="false">
+                                <field name="date"/>
+                                <field name="move_id" string="Journal Entry" optional="show"/>
+                                <field name="move" optional="hide"/>
+                                <field name="reference"/>
+                                <field name="due_date"/>
+                                <field name="debit" sum="Total Debit"/>
+                                <field name="credit" sum="Total Credit"/>
+                                <field name="balance"/>
+                            </list>
+                        </field>
+                    </div>
+                </sheet>
+            </form>
+        </field>
     </record>
 </odoo>
