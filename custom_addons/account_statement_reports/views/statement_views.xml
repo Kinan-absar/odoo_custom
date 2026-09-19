@@ -20,7 +20,7 @@
                             <span class="text-muted">Receivable and payable partner activity</span>
                         </div>
                         <div class="asr_type_box">
-                            <label class="asr_label">Type</label>
+                            <label for="statement_type" class="asr_label"/>
                             <field name="statement_type" widget="radio" options="{'horizontal': True}" nolabel="1"/>
                         </div>
                     </div>
@@ -28,37 +28,37 @@
                     <div class="asr_filter_panel">
                         <div class="row g-2">
                             <div class="col-12 col-lg-4">
-                                <label class="asr_label">Partner</label>
+                                <label for="partner_id" class="asr_label"/>
                                 <field name="partner_id" nolabel="1" options="{'no_create_edit': True}" placeholder="Search partner..."/>
                             </div>
                             <div class="col-6 col-lg-2">
-                                <label class="asr_label">Date From</label>
+                                <label for="date_from" class="asr_label"/>
                                 <field name="date_from" nolabel="1"/>
                             </div>
                             <div class="col-6 col-lg-2">
-                                <label class="asr_label">Date To</label>
+                                <label for="date_to" class="asr_label"/>
                                 <field name="date_to" nolabel="1"/>
                             </div>
                             <div class="col-12 col-lg-4">
-                                <label class="asr_label">Company</label>
+                                <label for="company_id" class="asr_label"/>
                                 <field name="company_id" nolabel="1" options="{'no_create': True}"/>
                             </div>
                         </div>
                         <div class="row g-2 mt-1">
                             <div class="col-12 col-lg-4">
-                                <label class="asr_label">Journals</label>
+                                <label for="journal_ids" class="asr_label"/>
                                 <field name="journal_ids" nolabel="1" widget="many2many_tags" domain="[('company_id', '=', company_id)]" options="{'no_create': True}" placeholder="All journals"/>
                             </div>
                             <div class="col-12 col-lg-4">
-                                <label class="asr_label">Accounts</label>
+                                <label for="account_ids" class="asr_label"/>
                                 <field name="account_ids" nolabel="1" widget="many2many_tags" domain="[('company_ids', 'in', [company_id]), ('account_type', 'in', ['asset_receivable', 'liability_payable'])]" options="{'no_create': True}" placeholder="All receivable/payable accounts"/>
                             </div>
                             <div class="col-8 col-lg-3">
-                                <label class="asr_label">Entries</label>
+                                <label for="move_state" class="asr_label"/>
                                 <field name="move_state" nolabel="1"/>
                             </div>
                             <div class="col-4 col-lg-1 asr_opening_col">
-                                <label class="asr_label">Opening</label>
+                                <label for="show_opening_balance" class="asr_label"/>
                                 <field name="show_opening_balance" nolabel="1" widget="boolean_toggle"/>
                             </div>
                         </div>
