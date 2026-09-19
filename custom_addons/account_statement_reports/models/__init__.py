@@ -7,5 +7,4 @@ from . import vendor_statement
 from . import vendor_statement_line
 from . import vendor_statement_wizard
 from . import res_partner
-
-from . import native_report_setup
+from . import partner_ledger_statement

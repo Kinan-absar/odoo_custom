@@ -1,45 +1,44 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Account Statement Reports",
-    "version": "18.0.6.0.0",
+    "version": "18.0.7.0.0",
     "category": "Accounting",
-    "summary": "Native Partner-Ledger-style customer and vendor account statements",
+    "summary": "Customer & Vendor Statements with Filters, Running Balance, PDF and Excel",
     "description": """
-        Native Odoo 18 Account Statement Reports built as an independent
-        Accounting Report using the Partner Ledger computation engine.
-
-        Main features:
-        - Native editable Odoo accounting-report filter bar
-        - Search/select one or multiple customer/vendor partners
-        - Editable date range and quick Odoo date periods
-        - Journal filtering
-        - Receivable / Payable / Both account-type filter
-        - Posted entries / draft entries support
-        - Unreconciled/open-item filter
-        - Multi-company selector
-        - Search and unfold/fold controls
-        - Native PDF and XLSX export
-        - Click-through journal items / source entries
-        - Customer and Vendor statement smart buttons on partner form
-        - Separate receivable and payable balance indicators
-
-        The previous custom generated statement records are kept for backward
-        compatibility. The main Reporting menu now opens a dedicated
-        Account Statement Reports record with its own menu while reusing the Partner Ledger handler and columns.
+        Financial statements for customers and vendors:
+        - Opening balance
+        - Running balance
+        - Clean PDF report (Customer & Vendor)
+        - Excel export
+        - Statement wizards with company, journal and account filters
+        - Posted/draft entry selection
+        - Optional opening balance
+        - Direct PDF and Excel export from the wizard
+        - Refreshable statement review with journal entry links
+        - Multi-company safe calculations
+        - Extra Statement PDF and Statement Excel buttons on the native Odoo Partner Ledger
+        - Statement export reuses the active Partner Ledger partner/date/journal/company/status filters
     """,
     "author": "Kinan",
     "website": "https://absar-alomran.com",
     "depends": ["account", "account_reports"],
+
     "data": [
+        # Security
         "security/ir.model.access.csv",
+
+        # Views (menus, wizards, statement forms)
         "views/statement_views.xml",
-        "views/native_statement_report.xml",
-        "views/res_partner_views.xml",
         "views/statement_line_views.xml",
+        'views/res_partner_views.xml',
+
+        # Reports
         "report/reports.xml",
         "report/customer_statement.xml",
         "report/vendor_statement.xml",
+        "report/partner_ledger_statement.xml",
     ],
+
     "installable": True,
     "application": False,
     "license": "OPL-1",
