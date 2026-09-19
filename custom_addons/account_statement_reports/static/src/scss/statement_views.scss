@@ -238,26 +238,62 @@
     }
 }
 
-/* v15.1 - clean Customer / Vendor selector spacing */
+
+/* v16 - roomy Customer / Vendor selector */
 .asr_workspace .asr_type_box {
-    gap: 14px;
-    padding-left: 12px;
-    padding-right: 14px;
+    width: 320px !important;
+    min-width: 320px !important;
+    max-width: 320px !important;
+    height: 36px;
+    padding: 0 14px !important;
+    gap: 14px !important;
+    justify-content: flex-start;
+    overflow: visible;
 }
+.asr_workspace .asr_type_box .asr_inline_label {
+    flex: 0 0 42px;
+    width: 42px;
+    padding-right: 12px;
+    text-align: left;
+}
+.asr_workspace .asr_type_control {
+    flex: 1 1 auto;
+    min-width: 235px;
+    overflow: visible;
+}
+.asr_workspace .asr_type_control .o_field_widget,
 .asr_workspace .asr_type_control .o_field_radio {
-    column-gap: 22px !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 30px !important;
+    overflow: visible !important;
 }
 .asr_workspace .asr_type_control .form-check {
-    gap: 8px !important;
+    flex: 0 0 auto !important;
+    min-width: 96px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    column-gap: 9px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
 }
 .asr_workspace .asr_type_control .form-check-input {
-    width: 15px;
-    height: 15px;
+    position: static !important;
+    float: none !important;
+    flex: 0 0 16px !important;
+    width: 16px !important;
+    height: 16px !important;
     margin: 0 !important;
 }
 .asr_workspace .asr_type_control .form-check-label {
-    display: inline-flex;
-    align-items: center;
-    min-height: 15px;
-    line-height: 15px !important;
+    flex: 0 0 auto !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+    line-height: 16px !important;
+    font-size: 13px !important;
 }
