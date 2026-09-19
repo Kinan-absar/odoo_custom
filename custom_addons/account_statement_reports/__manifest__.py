@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Account Statement Reports",
-    "version": "1.0",
+    "version": "18.0.2.0.0",
     "category": "Accounting",
-    "summary": "Customer and Vendor Financial Statements with Running Balance and Excel Export",
+    "summary": "Customer & Vendor Statements with Filters, Running Balance, PDF and Excel",
     "description": """
         Financial statements for customers and vendors:
         - Opening balance
         - Running balance
         - Clean PDF report (Customer & Vendor)
         - Excel export
-        - Statement wizards
-        - Form views for statement review
+        - Statement wizards with company, journal and account filters
+        - Posted/draft entry selection
+        - Optional opening balance
+        - Direct PDF and Excel export from the wizard
+        - Refreshable statement review with journal entry links
+        - Multi-company safe calculations
     """,
     "author": "Kinan",
     "website": "https://absar-alomran.com",
