@@ -1,26 +1,24 @@
 {
-    "name": "ABSAR Premium Backend",
-    "version": "18.0.3.0.0",
+    "name": "ABSAR Rounded App Icons",
+    "version": "18.0.4.0.0",
     "category": "Themes/Backend",
-    "summary": "Premium high-contrast backend design system for Odoo 18 Enterprise",
+    "summary": "Rounds Odoo 18 Enterprise app launcher icons only",
     "description": """
-ABSAR Premium Backend 3.0
-=========================
-A complete, coherent visual system for Odoo 18 Enterprise with a per-user
-ON/OFF switch in the user menu. The redesign covers navbar, app launcher,
-search/control panel, forms, fields, status bars, notebooks, lists, kanban,
-chatter, dialogs, badges, settings and responsive behavior.
+ABSAR Rounded App Icons
+=======================
+Minimal Odoo 18 Enterprise backend visual module.
 
-No accounting or business workflow logic is changed.
+This version changes ONLY the shape of application icons in the Enterprise
+app launcher / apps menu. It does not modify forms, fields, colors, navbar,
+lists, kanban, chatter, dialogs, spacing, buttons, or business logic.
 """,
     "author": "ABSAR Alomran",
     "website": "https://www.absar-alomran.com",
     "license": "LGPL-3",
-    "depends": ["web", "web_enterprise", "mail"],
+    "depends": ["web", "web_enterprise"],
     "assets": {
         "web.assets_backend": [
-            "absar_premium_backend/static/src/scss/premium.scss",
-            "absar_premium_backend/static/src/js/theme_toggle.js",
+            "absar_premium_backend/static/src/scss/rounded_apps.scss",
         ],
     },
     "installable": True,

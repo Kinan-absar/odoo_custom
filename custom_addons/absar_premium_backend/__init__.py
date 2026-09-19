@@ -1,1 +1,1 @@
-from . import models
+# ABSAR rounded app icons only.

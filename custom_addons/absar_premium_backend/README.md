@@ -1,17 +1,24 @@
-# ABSAR Premium Backend 3.0 — Odoo 18 Enterprise
+# ABSAR Rounded App Icons - Odoo 18 Enterprise
 
-This version replaces the pale/misaligned styling from v2 with a single high-contrast design system.
+This is the stripped-down replacement for the previous ABSAR Premium Backend theme.
 
-## Main fixes
-- Stronger navy/teal palette and darker readable text.
-- Navbar buttons no longer become blank white pills.
-- Search field no longer renders as a box inside another box.
-- Many2one fields no longer show double/inset borders.
-- Many2many tags use one clean container and stronger tag colors.
-- Form grid/field widths are left to Odoo; the theme does not rearrange business views.
-- Lists, tabs, status bars, dialogs, kanban and cards use the same visual language.
-- Enterprise app icons are rounded.
-- Per-user toggle: open the user menu in the top-right and choose **Premium Theme: On/Off**.
+## What it changes
+- Rounds app icons in the Odoo Enterprise app launcher / apps menu.
 
-## Upgrade
-Replace the old `absar_premium_backend` folder with this folder, push to Odoo.sh, upgrade the module, then hard refresh the browser.
+## What it does NOT change
+- Forms
+- Fields
+- Navbar colors
+- Buttons
+- Lists
+- Kanban
+- Chatter
+- Dialogs
+- Search bars
+- Spacing
+- Business logic
+
+## Upgrade from the previous theme
+Keep the same technical folder name: `absar_premium_backend`.
+Replace the old folder completely with this one, push to Odoo.sh, then upgrade the module.
+A hard browser refresh is recommended after the asset rebuild.

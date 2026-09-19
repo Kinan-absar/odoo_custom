@@ -1,0 +1,45 @@
+/* ABSAR Rounded App Icons - Odoo 18 Enterprise
+   Intentionally limited to the Enterprise application launcher / app menu.
+   No global theme rules are included. */
+
+/* Main Enterprise home/app launcher icon containers. */
+.o_home_menu .o_app_icon,
+.o_home_menu .o_app .o_app_icon,
+.o_home_menu .o_app_entry .o_app_icon,
+.o_home_menu .o_home_menu_item .o_app_icon,
+.o_home_menu img.o_app_icon,
+.o_home_menu .o_app img,
+.o_home_menu .o_app_entry img,
+.o_home_menu .o_home_menu_item img {
+    border-radius: 22% !important;
+    overflow: hidden !important;
+}
+
+/* Odoo 18 Enterprise app-menu/dropdown variants. */
+.o_navbar_apps_menu .o_app_icon,
+.o_navbar_apps_menu img.o_app_icon,
+.o_navbar_apps_menu .o_app img,
+.o_navbar_apps_menu .o_app_entry img,
+.o_apps_menu .o_app_icon,
+.o_apps_menu img.o_app_icon,
+.o_apps_menu .o_app img,
+.o_apps_menu .o_app_entry img {
+    border-radius: 22% !important;
+    overflow: hidden !important;
+}
+
+/* Some builds wrap the icon artwork in a dedicated container. */
+.o_home_menu .o_app_icon_container,
+.o_navbar_apps_menu .o_app_icon_container,
+.o_apps_menu .o_app_icon_container {
+    border-radius: 22% !important;
+    overflow: hidden !important;
+}
+
+/* Keep artwork clipped even when the wrapper itself is the icon surface. */
+.o_home_menu .o_app_icon_container > img,
+.o_navbar_apps_menu .o_app_icon_container > img,
+.o_apps_menu .o_app_icon_container > img {
+    border-radius: inherit !important;
+    display: block;
+}
