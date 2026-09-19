@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <!--
-        Dedicated Account Statement report implemented as an Odoo 18
-        account.report variant of Partner Ledger.
+        Dedicated native Account Statement report.
 
-        Keep this record deliberately minimal: report filter fields such as
-        filter_partner, filter_account_type, filter_show_draft, etc. are
-        computed/inherited from root_report_id by Odoo's account.report
-        engine. Re-declaring them here made the previous build fragile and
-        used an invalid selection value for filter_account_type.
+        Do NOT set root_report_id here: a root report variant inherits filter
+        switches but not the Partner Ledger custom handler/columns. The setup
+        function below clones the actual Partner Ledger engine configuration on
+        every install/upgrade while preserving this independent report record.
     -->
     <record id="account_statement_native_report" model="account.report">
         <field name="name">Account Statement Reports</field>
-        <field name="root_report_id" ref="account_reports.partner_ledger_report"/>
     </record>
+
+    <function model="account.statement.native.report.setup" name="configure_native_report"/>
 
     <record id="action_account_statement_native" model="ir.actions.client">
         <field name="name">Account Statement Reports</field>
