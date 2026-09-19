@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Account Statement Reports",
-    "version": '18.0.18.0.0',
+    "version": "18.0.20.0.0",
     "category": "Accounting",
     "summary": "Full-screen receivable and payable account statements with editable filters, PDF and Excel",
     "description": """
@@ -28,6 +28,7 @@
         "report/customer_statement.xml",
         "report/vendor_statement.xml",
     ],
+    "images": ["images/main_screenshot.png"],
     "assets": {
         "web.assets_backend": [
             "account_statement_reports/static/src/scss/statement_views.scss",
@@ -35,5 +36,5 @@
     },
     "installable": True,
     "application": False,
-    "license": "OPL-1",
+    "license": "LGPL-3",
 }
