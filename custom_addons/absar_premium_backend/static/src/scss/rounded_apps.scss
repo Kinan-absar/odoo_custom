@@ -1,0 +1,83 @@
+/* ABSAR Rounded App Icons - Odoo 18 Enterprise
+   Intentionally limited to the Enterprise application launcher / app menu.
+   No global theme rules are included. */
+
+/* Main Enterprise home/app launcher icon containers. */
+.o_home_menu .o_app_icon,
+.o_home_menu .o_app .o_app_icon,
+.o_home_menu .o_app_entry .o_app_icon,
+.o_home_menu .o_home_menu_item .o_app_icon,
+.o_home_menu img.o_app_icon,
+.o_home_menu .o_app img,
+.o_home_menu .o_app_entry img,
+.o_home_menu .o_home_menu_item img {
+    border-radius: 22% !important;
+    overflow: hidden !important;
+}
+
+/* Odoo 18 Enterprise app-menu/dropdown variants. */
+.o_navbar_apps_menu .o_app_icon,
+.o_navbar_apps_menu img.o_app_icon,
+.o_navbar_apps_menu .o_app img,
+.o_navbar_apps_menu .o_app_entry img,
+.o_apps_menu .o_app_icon,
+.o_apps_menu img.o_app_icon,
+.o_apps_menu .o_app img,
+.o_apps_menu .o_app_entry img {
+    border-radius: 22% !important;
+    overflow: hidden !important;
+}
+
+/* Some builds wrap the icon artwork in a dedicated container. */
+.o_home_menu .o_app_icon_container,
+.o_navbar_apps_menu .o_app_icon_container,
+.o_apps_menu .o_app_icon_container {
+    border-radius: 22% !important;
+    overflow: hidden !important;
+}
+
+/* Keep artwork clipped even when the wrapper itself is the icon surface. */
+.o_home_menu .o_app_icon_container > img,
+.o_navbar_apps_menu .o_app_icon_container > img,
+.o_apps_menu .o_app_icon_container > img {
+    border-radius: inherit !important;
+    display: block;
+}
+
+/* Rounded buttons only. Keep Odoo's original colors, typography and sizing. */
+.o_web_client .btn,
+.o_web_client button.btn,
+.o_web_client a.btn,
+.o_web_client .o_form_button_create,
+.o_web_client .o_list_button_add,
+.o_web_client .o-kanban-button-new,
+.o_web_client .o_form_statusbar button,
+.o_web_client .o_statusbar_buttons .btn,
+.o_web_client .o_cp_buttons .btn,
+.o_web_client .o_control_panel .btn,
+.o_web_client .modal-footer .btn,
+.o_web_client .o_dialog .btn {
+    border-radius: 10px !important;
+}
+
+/* Compact icon/control buttons should stay compact, but use the same soft shape. */
+.o_web_client .o_cp_switch_buttons .btn,
+.o_web_client .o_pager .btn,
+.o_web_client .o_field_widget .btn,
+.o_web_client .o_external_button,
+.o_web_client .o_dropdown_button,
+.o_web_client .dropdown-toggle.btn {
+    border-radius: 9px !important;
+}
+
+/* Joined button groups need rounded outer edges without ugly gaps. */
+.o_web_client .btn-group > .btn:first-child,
+.o_web_client .btn-group > :first-child .btn {
+    border-start-start-radius: 10px !important;
+    border-end-start-radius: 10px !important;
+}
+.o_web_client .btn-group > .btn:last-child,
+.o_web_client .btn-group > :last-child .btn {
+    border-start-end-radius: 10px !important;
+    border-end-end-radius: 10px !important;
+}
