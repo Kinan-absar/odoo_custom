@@ -12,11 +12,11 @@
                     <div class="asr_topbar">
                         <div class="asr_title_block">
                             <h2>Account Statements</h2>
-                            <span>View receivable or payable partner activity with opening balance, running balance and totals.</span>
+                            <span>View customer or vendor activity with opening balance, running balance and totals.</span>
                         </div>
                         <div class="asr_top_actions">
                             <div class="asr_type_box">
-                                <label for="statement_type" class="asr_inline_label"/>
+                                <span class="asr_inline_label">Type</span>
                                 <field name="statement_type" widget="radio" options="{'horizontal': True}" nolabel="1"/>
                             </div>
                             <button name="action_apply_filters" type="object" string="Apply" icon="fa-search" class="btn-primary"/>
@@ -30,7 +30,7 @@
                         <div class="asr_filter_grid">
                             <div class="asr_filter_item asr_partner_filter">
                                 <label for="partner_id" class="asr_label"/>
-                                <field name="partner_id" nolabel="1" options="{'no_create_edit': True}" placeholder="Search customer/vendor..."/>
+                                <field name="partner_id" nolabel="1" options="{'no_create_edit': True}" placeholder="Search customer or vendor..."/>
                             </div>
                             <div class="asr_filter_item">
                                 <label for="date_from" class="asr_label"/>
@@ -50,7 +50,7 @@
                             </div>
                             <div class="asr_filter_item">
                                 <label for="account_ids" class="asr_label"/>
-                                <field name="account_ids" nolabel="1" widget="many2many_tags" domain="[('company_ids', 'in', [company_id]), ('account_type', 'in', ['asset_receivable', 'liability_payable'])]" options="{'no_create': True}" placeholder="All receivable/payable accounts"/>
+                                <field name="account_ids" nolabel="1" widget="many2many_tags" domain="[('company_ids', 'in', [company_id]), ('account_type', 'in', ['asset_receivable', 'liability_payable'])]" options="{'no_create': True}" placeholder="All customer/vendor accounts"/>
                             </div>
                             <div class="asr_filter_item">
                                 <label for="move_state" class="asr_label"/>
@@ -90,15 +90,15 @@
                                 <field name="move" string="Label" optional="hide"/>
                                 <field name="reference" optional="show"/>
                                 <field name="due_date" optional="show"/>
-                                <field name="debit"/>
-                                <field name="credit"/>
-                                <field name="balance"/>
+                                <field name="debit" class="asr_col_debit"/>
+                                <field name="credit" class="asr_col_credit"/>
+                                <field name="balance" class="asr_col_balance"/>
                             </list>
                         </field>
                         <div class="asr_table_totals">
                             <div class="asr_totals_label">Total</div>
-                            <div class="asr_total_value"><field name="total_debit" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1"/></div>
-                            <div class="asr_total_value"><field name="total_credit" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1"/></div>
+                            <div class="asr_total_value asr_total_debit"><field name="total_debit" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1"/></div>
+                            <div class="asr_total_value asr_total_credit"><field name="total_credit" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1"/></div>
                             <div class="asr_total_value asr_balance_total"><field name="final_balance" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1"/></div>
                         </div>
                     </div>

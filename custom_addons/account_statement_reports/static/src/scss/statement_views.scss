@@ -123,7 +123,7 @@
         border: 1px solid var(--asr-border);
         border-radius: 7px;
         overflow: hidden;
-        min-height: 430px;
+        min-height: 0;
     }
     .asr_lines .o_list_table { margin-bottom: 0; }
     .asr_lines .o_list_table thead th {
@@ -134,17 +134,53 @@
     }
     .asr_lines .o_list_table tbody td { padding-top: 6px; padding-bottom: 6px; }
 
+    /* Keep the transaction table compact: no artificial empty report area/ghost rows. */
+    .asr_lines .o_list_renderer,
+    .asr_lines .o_list_table {
+        min-height: 0 !important;
+        height: auto !important;
+    }
+    .asr_lines .o_list_table tbody tr:not(.o_data_row) {
+        display: none !important;
+    }
+
+    /* Freeze the widths of the right-side accounting columns so the custom total row
+       sits exactly below Debit / Credit / Balance. */
+    .asr_lines .o_list_table th:nth-last-child(4),
+    .asr_lines .o_list_table td:nth-last-child(4) { width: 130px; min-width: 130px; max-width: 130px; }
+    .asr_lines .o_list_table th:nth-last-child(3),
+    .asr_lines .o_list_table td:nth-last-child(3),
+    .asr_lines .o_list_table th:nth-last-child(2),
+    .asr_lines .o_list_table td:nth-last-child(2),
+    .asr_lines .o_list_table th:nth-last-child(1),
+    .asr_lines .o_list_table td:nth-last-child(1) {
+        width: 130px;
+        min-width: 130px;
+        max-width: 130px;
+        text-align: right;
+    }
+
     .asr_table_totals {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 150px 150px 150px;
+        grid-template-columns: minmax(0, 1fr) 130px 130px 130px;
         align-items: center;
-        min-height: 42px;
+        min-height: 40px;
         border-top: 2px solid #d7dce2;
         background: #f8fafb;
         font-weight: 700;
     }
-    .asr_totals_label { text-align: right; padding: 0 14px; color: #344054; }
-    .asr_total_value { padding: 0 14px; text-align: right; border-left: 1px solid #e3e7ec; color: #111827; }
+    .asr_totals_label {
+        text-align: right;
+        padding: 0 14px;
+        color: #344054;
+    }
+    .asr_total_value {
+        padding: 0 14px;
+        text-align: right;
+        border-left: 1px solid #e3e7ec;
+        color: #111827;
+        white-space: nowrap;
+    }
     .asr_balance_total { background: #f1f7f6; color: var(--asr-teal); }
 
     @media (max-width: 1500px) {

@@ -18,7 +18,7 @@ class AccountStatement(models.Model):
     name = fields.Char(default="Account Statements", required=True)
 
     statement_type = fields.Selection(
-        [("receivable", "Receivable (Customer)"), ("payable", "Payable (Vendor)")],
+        [("receivable", "Customer"), ("payable", "Vendor")],
         string="Statement Type",
         required=True,
         default="receivable",
@@ -151,10 +151,12 @@ class AccountStatement(models.Model):
                 "credit": line["credit"],
                 "balance": line["balance"],
             })
+            # Totals must match the rows currently visible in the statement, including
+            # the synthetic opening-balance row when that option is enabled.
+            total_debit += line["debit"] or 0.0
+            total_credit += line["credit"] or 0.0
             if line.get("move_id"):
                 transaction_count += 1
-                total_debit += line["debit"] or 0.0
-                total_credit += line["credit"] or 0.0
         if vals_list:
             self.env["account.statement.line"].create(vals_list)
 
@@ -162,7 +164,9 @@ class AccountStatement(models.Model):
         self.total_debit = total_debit
         self.total_credit = total_credit
         self.final_balance = lines[-1]["balance"] if lines else self.opening_balance
-        return {"type": "ir.actions.client", "tag": "reload"}
+        # Returning False lets the form controller refresh this record in place instead
+        # of triggering a full client-page reload.
+        return False
 
     def action_reset_filters(self):
         self.ensure_one()
@@ -182,7 +186,7 @@ class AccountStatement(models.Model):
             "line_count": 0,
         })
         self.line_ids.unlink()
-        return {"type": "ir.actions.client", "tag": "reload"}
+        return False
 
     def action_print_pdf(self):
         self.ensure_one()
@@ -204,7 +208,7 @@ class AccountStatement(models.Model):
         money = workbook.add_format({"num_format": "#,##0.00"})
         header = workbook.add_format({"bold": True, "bg_color": "#E9EEF5", "border": 1})
 
-        type_label = "Receivable (Customer)" if self.statement_type == "receivable" else "Payable (Vendor)"
+        type_label = "Customer" if self.statement_type == "receivable" else "Vendor"
         sheet.write(0, 0, "Account Statement", title)
         sheet.write(2, 0, "Type:", bold); sheet.write(2, 1, type_label)
         sheet.write(3, 0, "Partner:", bold); sheet.write(3, 1, self.partner_id.display_name)
