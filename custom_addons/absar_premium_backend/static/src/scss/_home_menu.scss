@@ -1,0 +1,87 @@
+/* Odoo Enterprise application launcher */
+.o_home_menu,
+.o_home_menu_background,
+.o_web_client .o_home_menu {
+    background:
+        radial-gradient(circle at 18% 10%, rgba(23, 106, 120, .11), transparent 30%),
+        radial-gradient(circle at 82% 0%, rgba(23, 50, 71, .08), transparent 26%),
+        linear-gradient(180deg, #f8fafc 0%, #eef3f7 100%) !important;
+}
+
+.o_home_menu .o_home_menu_scrollable,
+.o_home_menu .o_apps,
+.o_home_menu .o_home_menu_content {
+    padding-top: 24px;
+    padding-bottom: 34px;
+}
+
+/* Support Odoo 17/18 Enterprise selector variants. */
+.o_home_menu .o_app,
+.o_home_menu .o_app_entry,
+.o_home_menu .o_home_menu_item,
+.o_home_menu .o_app_icon_container,
+.o_navbar_apps_menu .o_app,
+.o_navbar_apps_menu .o_app_entry {
+    border-radius: 22px !important;
+}
+
+.o_home_menu .o_app,
+.o_home_menu .o_app_entry,
+.o_home_menu .o_home_menu_item {
+    padding: 12px 9px !important;
+    transition: transform var(--absar-ease), background var(--absar-ease), box-shadow var(--absar-ease);
+}
+
+.o_home_menu .o_app:hover,
+.o_home_menu .o_app_entry:hover,
+.o_home_menu .o_home_menu_item:hover {
+    transform: translateY(-3px);
+    background: rgba(255,255,255,.68) !important;
+    box-shadow: 0 12px 28px rgba(24, 47, 67, .08);
+}
+
+/* Turn Odoo's square app artwork into premium rounded tiles without replacing icons. */
+.o_home_menu .o_app_icon,
+.o_home_menu .o_app .o_app_icon,
+.o_home_menu .o_app_entry img,
+.o_home_menu .o_home_menu_item img,
+.o_navbar_apps_menu .o_app_icon {
+    border-radius: 22% !important;
+    box-shadow: 0 9px 22px rgba(20, 39, 57, .14), inset 0 0 0 1px rgba(255,255,255,.16);
+    transition: transform var(--absar-ease), box-shadow var(--absar-ease);
+}
+
+.o_home_menu .o_app:hover .o_app_icon,
+.o_home_menu .o_app_entry:hover img,
+.o_home_menu .o_home_menu_item:hover img {
+    transform: scale(1.035);
+    box-shadow: 0 13px 28px rgba(20, 39, 57, .18), inset 0 0 0 1px rgba(255,255,255,.2);
+}
+
+.o_home_menu .o_caption,
+.o_home_menu .o_app_name,
+.o_home_menu .o_app_entry .o_app_name,
+.o_home_menu .o_home_menu_item .o_caption {
+    color: var(--absar-navy) !important;
+    font-weight: 650 !important;
+    letter-spacing: -.01em;
+    text-shadow: none !important;
+    margin-top: 8px;
+}
+
+.o_home_menu .o_search_container,
+.o_home_menu .o_menu_search {
+    max-width: 660px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.o_home_menu input,
+.o_home_menu .o_search_input {
+    min-height: 44px;
+    border-radius: 14px !important;
+    border: 1px solid var(--absar-border) !important;
+    background: rgba(255,255,255,.92) !important;
+    color: var(--absar-text) !important;
+    box-shadow: var(--absar-shadow-1) !important;
+}

@@ -1,33 +1,26 @@
-# ABSAR Premium Backend — Odoo 18
+# ABSAR Premium Backend 2.0 — Odoo 18 Enterprise
 
-Initial backend UI redesign for Odoo 18 Enterprise.
+Complete visual redesign of the Odoo 18 backend while preserving Odoo's underlying layout and business behavior.
 
-## Included in v18.0.1.0.0
+## What changed
 
-- Global design tokens and premium light palette
-- Navbar and dropdown refinement
-- Control panel and search styling
-- Form sheets and section hierarchy
-- Input, textarea, many2one, tags, checkbox and readonly treatment
-- Primary/secondary button hierarchy
-- Pill-style status bar
-- Notebook/tab redesign
-- List/table refinement
-- Kanban card refinement
-- Chatter and attachment styling
-- Dialog/wizard styling
-- Semantic badges
-- Mobile/tablet responsive adjustments
+- Rebuilt visual system with one coherent spacing/radius/border language
+- Form layout deliberately preserves Odoo's native grid to prevent fields jumping or becoming misaligned
+- Refined editable, required, focused and read-only field states
+- Rounded Odoo Enterprise application tiles and app artwork
+- Reworked navbar, dropdowns, control panel and search
+- Unified buttons, status bars, smart buttons, tabs and badges
+- Refined list, kanban, calendar, pivot, graph and activity surfaces
+- Refined chatter, attachments, dialogs, popovers and settings
+- Mobile/tablet rules included
 
-## Install
+## Installation / upgrade
 
-1. Add the `absar_premium_backend` folder to your custom addons repository.
-2. Push it to an Odoo.sh development branch.
-3. Update the Apps list.
-4. Search for `ABSAR Premium Backend` and install it.
-5. Hard-refresh the browser after installation so the new asset bundle is loaded.
+1. Replace the previous `absar_premium_backend` folder in your custom addons repository.
+2. Push to an Odoo.sh development branch.
+3. Upgrade the **ABSAR Premium Backend** module (do not install a second copy).
+4. Hard-refresh the browser or clear Odoo assets if an old bundle remains cached.
 
-## Development principle
+## Scope
 
-This module is intentionally presentation-only. It does not alter accounting,
-purchase, project, construction, portal, approval or other business logic.
+Presentation only. No accounting, project, purchase, portal, approval or construction workflow logic is changed.

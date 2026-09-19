@@ -1,30 +1,15 @@
 .o_web_client .badge,
 .o_web_client .o_field_badge {
     border-radius: 999px;
-    font-weight: 700;
-    letter-spacing: .01em;
+    font-weight: 680;
+    letter-spacing: .005em;
 }
 
 .o_web_client .text-bg-success,
-.o_web_client .badge.bg-success {
-    background-color: rgba(31,138,91,.12) !important;
-    color: #176f49 !important;
-}
-
+.o_web_client .badge.bg-success { background-color: rgba(33,122,85,.12) !important; color: #1b6748 !important; }
 .o_web_client .text-bg-warning,
-.o_web_client .badge.bg-warning {
-    background-color: rgba(183,121,31,.13) !important;
-    color: #8f5f18 !important;
-}
-
+.o_web_client .badge.bg-warning { background-color: rgba(169,111,22,.13) !important; color: #85570e !important; }
 .o_web_client .text-bg-danger,
-.o_web_client .badge.bg-danger {
-    background-color: rgba(200,68,68,.12) !important;
-    color: #a53232 !important;
-}
-
+.o_web_client .badge.bg-danger { background-color: rgba(184,66,66,.12) !important; color: #993838 !important; }
 .o_web_client .text-bg-info,
-.o_web_client .badge.bg-info {
-    background-color: rgba(50,103,168,.12) !important;
-    color: #285487 !important;
-}
+.o_web_client .badge.bg-info { background-color: rgba(53,107,154,.12) !important; color: #2b5980 !important; }
