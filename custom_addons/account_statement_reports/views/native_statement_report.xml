@@ -1,9 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <!--
+        Dedicated Account Statement report.
+
+        This is intentionally a separate account.report record, implemented
+        as a variant of Odoo Enterprise's Partner Ledger. This keeps the full
+        native accounting-report UI/handler while avoiding the previous v3
+        behaviour where our menu simply opened the original Partner Ledger.
+    -->
+    <record id="account_statement_native_report" model="account.report">
+        <field name="name">Account Statement Reports</field>
+        <field name="root_report_id" ref="account_reports.partner_ledger_report"/>
+        <field name="filter_show_draft" eval="True"/>
+        <field name="filter_account_type">payable_receivable</field>
+        <field name="filter_partner" eval="True"/>
+        <field name="filter_unfold_all" eval="True"/>
+        <field name="filter_unreconciled" eval="True"/>
+        <field name="filter_period_comparison" eval="False"/>
+        <field name="filter_multi_company">selector</field>
+        <field name="default_opening_date_filter">this_year</field>
+        <field name="search_bar" eval="True"/>
+        <field name="load_more_limit" eval="80"/>
+    </record>
+
     <record id="action_account_statement_native" model="ir.actions.client">
         <field name="name">Account Statement Reports</field>
         <field name="tag">account_report</field>
-        <field name="context" eval="{'report_id': ref('account_reports.partner_ledger_report')}"/>
+        <field name="context" eval="{'report_id': ref('account_statement_native_report')}"/>
     </record>
 
     <record id="menu_customer_statement_wizard" model="ir.ui.menu">

@@ -24,7 +24,7 @@ class ResPartner(models.Model):
     def _compute_statement_balances(self):
         """Keep the useful smart-button balances from the previous build.
 
-        The actual statement display is now Odoo's native Partner Ledger,
+        The actual statement display uses Odoo's native accounting-report engine,
         but these values still give an immediate receivable/payable snapshot
         on the partner form.
         """
@@ -50,14 +50,14 @@ class ResPartner(models.Model):
             partner.statement_balance = receivable - payable
 
     def _action_open_native_account_statement(self):
-        """Open the native Odoo Partner Ledger-based statement report.
+        """Open the dedicated native Account Statement report.
 
         The partner can then be selected/changed directly in the report's
         editable Partner filter. We deliberately avoid fragile JS-specific
         option injection so this remains upgrade-safe on Odoo 18.
         """
         self.ensure_one()
-        report = self.env.ref("account_reports.partner_ledger_report")
+        report = self.env.ref("account_statement_reports.account_statement_native_report")
         return {
             "type": "ir.actions.client",
             "name": _("Account Statement Reports"),
