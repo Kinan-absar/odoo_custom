@@ -21,7 +21,7 @@
                         </div>
                         <div class="asr_type_box">
                             <label class="asr_label">Type</label>
-                            <field name="statement_type" widget="radio" options="{'horizontal': true}" nolabel="1"/>
+                            <field name="statement_type" widget="radio" options="{'horizontal': True}" nolabel="1"/>
                         </div>
                     </div>
 
@@ -51,7 +51,7 @@
                             </div>
                             <div class="col-12 col-lg-4">
                                 <label class="asr_label">Accounts</label>
-                                <field name="account_ids" nolabel="1" widget="many2many_tags" domain="[('company_id', '=', company_id)]" options="{'no_create': True}" placeholder="All receivable/payable accounts"/>
+                                <field name="account_ids" nolabel="1" widget="many2many_tags" domain="[('company_ids', 'in', [company_id]), ('account_type', 'in', ['asset_receivable', 'liability_payable'])]" options="{'no_create': True}" placeholder="All receivable/payable accounts"/>
                             </div>
                             <div class="col-8 col-lg-3">
                                 <label class="asr_label">Entries</label>
@@ -74,7 +74,7 @@
 
                     <div class="asr_lines">
                         <field name="line_ids" nolabel="1" readonly="1">
-                            <list create="false" delete="false" edit="false" default_order="date asc, id asc">
+                            <list create="0" delete="0" edit="0" default_order="date asc, id asc">
                                 <field name="date"/>
                                 <field name="move_id" string="Journal Entry" optional="show"/>
                                 <field name="move" string="Label" optional="hide"/>
