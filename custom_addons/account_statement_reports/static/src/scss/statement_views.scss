@@ -1,0 +1,318 @@
+.o_form_view.asr_workspace_form {
+    --asr-border: #d9dee5;
+    --asr-text: #1f2937;
+    --asr-muted: #667085;
+    --asr-soft: #f7f9fb;
+    --asr-blue: #0d6efd;
+    --asr-teal: #0f8f87;
+    --asr-green: #1aa66a;
+    --asr-red: #df4b4b;
+
+    .o_form_renderer { background: #f5f7f9; }
+
+    .asr_fullscreen_sheet {
+        max-width: none !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 10px 14px 16px !important;
+        min-height: calc(100vh - 72px);
+        box-sizing: border-box;
+    }
+
+    .asr_topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 8px;
+    }
+    .asr_title_block h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 650;
+        color: var(--asr-text);
+    }
+    .asr_title_block span { color: var(--asr-muted); font-size: 12px; }
+
+    .asr_top_actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .asr_top_actions .btn { min-height: 32px; padding: 5px 12px; border-radius: 6px; }
+
+    .asr_type_box {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        height: 34px;
+        padding: 0 10px;
+        background: #fff;
+        border: 1px solid var(--asr-border);
+        border-radius: 6px;
+        box-sizing: border-box;
+        white-space: nowrap;
+    }
+    .asr_type_control { display: flex; align-items: center; height: 100%; }
+    .asr_type_box .o_field_widget,
+    .asr_type_box .o_field_radio {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px;
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 0 !important;
+    }
+    .asr_type_box .form-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-height: 0;
+        margin: 0 !important;
+        padding: 0 !important;
+        white-space: nowrap;
+    }
+    .asr_type_box .form-check-input {
+        position: static;
+        float: none;
+        margin: 0 !important;
+        flex: 0 0 auto;
+    }
+    .asr_type_box .form-check-label {
+        margin: 0 !important;
+        line-height: 1;
+        font-size: 13px;
+        color: var(--asr-text);
+    }
+    .asr_inline_label {
+        display: inline-flex;
+        align-items: center;
+        margin: 0;
+        padding-right: 9px;
+        border-right: 1px solid #e7eaee;
+        color: var(--asr-muted);
+        font-size: 9.5px;
+        font-weight: 700;
+        line-height: 1;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+    .asr_filter_panel {
+        padding: 8px 10px 7px;
+        background: #fff;
+        border: 1px solid var(--asr-border);
+        border-radius: 7px;
+        box-shadow: 0 1px 2px rgba(16,24,40,.03);
+    }
+    .asr_filter_grid {
+        display: grid;
+        grid-template-columns: 1.45fr .8fr .8fr 1fr 1.05fr 1.15fr 1.05fr .75fr;
+        gap: 8px;
+        align-items: end;
+    }
+    .asr_filter_item { min-width: 0; }
+    .asr_label {
+        display: block;
+        margin: 0 0 3px;
+        color: var(--asr-muted);
+        font-size: 9.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .025em;
+    }
+    .asr_filter_item .o_field_widget { width: 100%; }
+    .asr_filter_item .o_input,
+    .asr_filter_item .o-autocomplete--input,
+    .asr_filter_item .o_field_many2many_tags {
+        min-height: 31px;
+        background: #fff;
+        border-radius: 5px;
+    }
+    .asr_opening_filter { display: flex; flex-direction: column; justify-content: flex-end; }
+    .asr_opening_filter .o_field_boolean { min-height: 31px; display: flex; align-items: center; }
+
+    .asr_summary_grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin: 8px 0;
+    }
+    .asr_kpi {
+        position: relative;
+        min-height: 58px;
+        padding: 9px 12px;
+        background: #fff;
+        border: 1px solid var(--asr-border);
+        border-radius: 7px;
+        overflow: hidden;
+    }
+    .asr_kpi:before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+    .asr_kpi_opening:before { background: var(--asr-blue); }
+    .asr_kpi_debit:before { background: var(--asr-green); }
+    .asr_kpi_credit:before { background: var(--asr-red); }
+    .asr_kpi_final:before { background: var(--asr-teal); }
+    .asr_kpi_label { display: block; color: var(--asr-muted); font-size: 10px; font-weight: 650; }
+    .asr_kpi strong,
+    .asr_kpi strong .o_field_widget { display: block; margin-top: 2px; color: var(--asr-text); font-size: 18px; font-weight: 700; }
+    .asr_kpi_final { background: #f3f9f8; }
+    .asr_kpi_final strong,
+    .asr_kpi_final strong .o_field_widget { color: var(--asr-teal); }
+
+    .asr_lines {
+        background: #fff;
+        border: 1px solid var(--asr-border);
+        border-radius: 7px;
+        overflow: hidden;
+        min-height: 0;
+    }
+    .asr_lines .o_list_table { margin-bottom: 0; }
+    .asr_lines .o_list_table thead th {
+        background: #f3f5f7;
+        color: #344054;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .asr_lines .o_list_table tbody td { padding-top: 6px; padding-bottom: 6px; }
+
+    /* Keep the transaction table compact: no artificial empty report area/ghost rows. */
+    .asr_lines .o_list_renderer,
+    .asr_lines .o_list_table {
+        min-height: 0 !important;
+        height: auto !important;
+    }
+    .asr_lines .o_list_table tbody tr:not(.o_data_row) {
+        display: none !important;
+    }
+
+    /* Freeze the widths of the right-side accounting columns so the custom total row
+       sits exactly below Debit / Credit / Balance. */
+    .asr_lines .o_list_table th:nth-last-child(4),
+    .asr_lines .o_list_table td:nth-last-child(4) { width: 130px; min-width: 130px; max-width: 130px; }
+    .asr_lines .o_list_table th:nth-last-child(3),
+    .asr_lines .o_list_table td:nth-last-child(3),
+    .asr_lines .o_list_table th:nth-last-child(2),
+    .asr_lines .o_list_table td:nth-last-child(2),
+    .asr_lines .o_list_table th:nth-last-child(1),
+    .asr_lines .o_list_table td:nth-last-child(1) {
+        width: 130px;
+        min-width: 130px;
+        max-width: 130px;
+        text-align: right;
+    }
+
+    .asr_table_totals {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 130px 130px 130px;
+        align-items: center;
+        min-height: 40px;
+        border-top: 2px solid #d7dce2;
+        background: #f8fafb;
+        font-weight: 700;
+    }
+    .asr_totals_label {
+        text-align: right;
+        padding: 0 14px;
+        color: #344054;
+    }
+    .asr_total_value {
+        padding: 0 14px;
+        text-align: right;
+        border-left: 1px solid #e3e7ec;
+        color: #111827;
+        white-space: nowrap;
+    }
+    .asr_balance_total { background: #f1f7f6; color: var(--asr-teal); }
+
+    @media (max-width: 1500px) {
+        .asr_filter_grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media (max-width: 992px) {
+        .asr_topbar { align-items: flex-start; flex-direction: column; }
+        .asr_top_actions { justify-content: flex-start; }
+        .asr_filter_grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .asr_summary_grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .asr_table_totals { grid-template-columns: minmax(0, 1fr) 110px 110px 110px; }
+    }
+}
+
+
+/* v18 - corrected Customer / Vendor selector spacing.
+   IMPORTANT: the form class is asr_workspace_form (not asr_workspace). */
+.o_form_view.asr_workspace_form .asr_type_box {
+    width: 390px !important;
+    min-width: 390px !important;
+    max-width: 390px !important;
+    height: 36px !important;
+    padding: 0 14px !important;
+    gap: 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    overflow: visible !important;
+}
+.o_form_view.asr_workspace_form .asr_type_box .asr_inline_label {
+    flex: 0 0 auto !important;
+    padding-right: 14px !important;
+    margin-right: 2px !important;
+}
+.o_form_view.asr_workspace_form .asr_type_control {
+    flex: 1 1 auto !important;
+    min-width: 290px !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: visible !important;
+}
+.o_form_view.asr_workspace_form .asr_type_control .o_field_widget,
+.o_form_view.asr_workspace_form .asr_type_control .o_field_radio {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+}
+/* Odoo 18/19 radio choices are rendered as .o_radio_item and may also carry
+   Bootstrap's .form-check. Target both so the second radio can never overlap
+   the first label. */
+.o_form_view.asr_workspace_form .asr_type_control .o_radio_item,
+.o_form_view.asr_workspace_form .asr_type_control .form-check {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+}
+.o_form_view.asr_workspace_form .asr_type_control .o_radio_item + .o_radio_item,
+.o_form_view.asr_workspace_form .asr_type_control .form-check + .form-check {
+    margin-left: 48px !important;
+}
+.o_form_view.asr_workspace_form .asr_type_control input[type="radio"],
+.o_form_view.asr_workspace_form .asr_type_control .form-check-input {
+    position: static !important;
+    float: none !important;
+    flex: 0 0 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+    margin: 0 10px 0 0 !important;
+    padding: 0 !important;
+}
+.o_form_view.asr_workspace_form .asr_type_control label,
+.o_form_view.asr_workspace_form .asr_type_control .form-check-label {
+    position: static !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 16px !important;
+    white-space: nowrap !important;
+    font-size: 13px !important;
+}

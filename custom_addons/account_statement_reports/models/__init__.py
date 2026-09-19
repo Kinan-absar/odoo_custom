@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from . import statement_mixin
+from . import account_statement
+from . import account_statement_line
 from . import customer_statement
 from . import customer_statement_line
 from . import customer_statement_wizard

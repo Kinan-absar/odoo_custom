@@ -71,13 +71,13 @@
                             
                                 <div class="header-line">
                                     <strong>Customer:</strong>
-                                    <span t-esc="doc.partner_id.name"/>
+                                    <span t-out="doc.partner_id.name"/>
                                 </div>
                             
                                 <div class="header-line">
                                     <strong>Period:</strong>
-                                    <span t-esc="doc.date_from"/> —
-                                    <span t-esc="doc.date_to"/>
+                                    <span t-out="doc.date_from"/> —
+                                    <span t-out="doc.date_to"/>
                                 </div>
                             </div>
 
@@ -100,10 +100,10 @@
                             <tbody>
                                 <t t-foreach="doc.line_ids" t-as="l">
                                     <tr>
-                                        <td><t t-esc="l.date"/></td>
-                                        <td><t t-esc="l.move"/></td>
-                                        <td><t t-esc="l.reference"/></td>
-                                        <td><t t-esc="l.due_date"/></td>
+                                        <td><t t-out="l.date"/></td>
+                                        <td><t t-out="l.move"/></td>
+                                        <td><t t-out="l.reference"/></td>
+                                        <td><t t-out="l.due_date"/></td>
 
                                         <td class="text-end">
                                             <span t-field="l.debit"
@@ -129,12 +129,12 @@
                                     <td colspan="4" class="text-end">Totals</td>
 
                                <td class="text-end">
-                                <span t-esc="sum(doc.line_ids.mapped('debit'))"
+                                <span t-out="sum(doc.line_ids.mapped('debit'))"
                                     t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
                             </td>
 
                             <td class="text-end">
-                                <span t-esc="sum(doc.line_ids.mapped('credit'))"
+                                <span t-out="sum(doc.line_ids.mapped('credit'))"
                                     t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
                             </td>
 

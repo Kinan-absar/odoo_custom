@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <template id="asr_vendor_statement">
-
+    <template id="asr_account_statement">
         <t t-call="web.external_layout">
             <style>
                 .page {
@@ -13,7 +12,6 @@
                     margin-bottom: 3px;
                 }
 
-                /* ===== Statement Table ===== */
                 table.statement-table {
                     width: 100%;
                     border-collapse: collapse;
@@ -59,22 +57,26 @@
             </style>
 
             <t t-foreach="docs" t-as="doc">
-
-            <t t-set="company" t-value="doc.company_id"/>
+                <t t-set="company" t-value="doc.company_id"/>
 
                 <main>
                     <div class="page">
 
-                        <!-- Header -->
                         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                          <div class="header-block" style="margin-bottom:12px;">
-                                <h2>Vendor Statement</h2>
-                            
+                            <div class="header-block" style="margin-bottom:12px;">
+                                <h2>
+                                    <t t-if="doc.statement_type == 'receivable'">Customer Statement</t>
+                                    <t t-else="">Vendor Statement</t>
+                                </h2>
+
                                 <div class="header-line">
-                                    <strong>Vendor:</strong>
+                                    <strong>
+                                        <t t-if="doc.statement_type == 'receivable'">Customer:</t>
+                                        <t t-else="">Vendor:</t>
+                                    </strong>
                                     <span t-out="doc.partner_id.name"/>
                                 </div>
-                            
+
                                 <div class="header-line">
                                     <strong>Period:</strong>
                                     <span t-out="doc.date_from"/> —
@@ -82,7 +84,6 @@
                                 </div>
                             </div>
                         </div>
-
 
                         <table class="statement-table">
                             <thead>
@@ -97,14 +98,13 @@
                                 </tr>
                             </thead>
 
-
                             <tbody>
                                 <t t-foreach="doc.line_ids" t-as="l">
                                     <tr>
                                         <td><t t-out="l.date"/></td>
-                                        <td><t t-out="l.move"/></td>
-                                        <td><t t-out="l.reference"/></td>
-                                        <td><t t-out="l.due_date"/></td>
+                                        <td><t t-out="l.move or ''"/></td>
+                                        <td><t t-out="l.reference or ''"/></td>
+                                        <td><t t-out="l.due_date or ''"/></td>
 
                                         <td class="text-end">
                                             <span t-field="l.debit"
@@ -127,31 +127,24 @@
                             <tfoot>
                                 <tr style="font-weight:bold; background:#f2f2f2;">
                                     <td colspan="4" class="text-end">Totals</td>
-
-                                     <td class="text-end">
-                            <span t-out="sum(doc.line_ids.mapped('debit'))"
-                                t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
-                                     </td>
-
-                                      <td class="text-end">
-                            <span t-out="sum(doc.line_ids.mapped('credit'))"
-                                t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
-                                       </td>
-
-                                   <td class="text-end">
-                            <span t-field="doc.final_balance"
-                                t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
+                                    <td class="text-end">
+                                        <span t-out="sum(doc.line_ids.mapped('debit'))"
+                                              t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
                                     </td>
-
+                                    <td class="text-end">
+                                        <span t-out="sum(doc.line_ids.mapped('credit'))"
+                                              t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-field="doc.final_balance"
+                                              t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
+                                    </td>
                                 </tr>
                             </tfoot>
                         </table>
-
                     </div>
                 </main>
-
             </t>
         </t>
-
     </template>
 </odoo>

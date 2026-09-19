@@ -1,192 +1,166 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <record id="account_statement_workspace_form" model="ir.ui.view">
+        <field name="name">account.statement.workspace.form</field>
+        <field name="model">account.statement</field>
+        <field name="arch" type="xml">
+            <form string="Account Statements" class="asr_workspace_form" create="0" delete="0" duplicate="0">
+                <sheet class="asr_fullscreen_sheet">
+                    <field name="name" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
 
-    <!-- ========================================================= -->
-    <!--                          MENUS                             -->
-    <!-- ========================================================= -->
+                    <div class="asr_topbar">
+                        <div class="asr_title_block">
+                            <h2>Account Statements</h2>
+                            <span>View customer or vendor activity with opening balance, running balance and totals.</span>
+                        </div>
+                        <div class="asr_top_actions">
+                            <div class="asr_type_box">
+                                <span class="asr_inline_label">Type</span>
+                                <div class="asr_type_control">
+                                    <field name="statement_type" widget="radio" options="{'horizontal': True}" nolabel="1"/>
+                                </div>
+                            </div>
+                            <button name="action_apply_filters" type="object" string="Apply" icon="fa-search" class="btn-primary"/>
+                            <button name="action_reset_filters" type="object" string="Reset" icon="fa-undo" class="btn-secondary"/>
+                            <button name="action_print_pdf" type="object" string="PDF" icon="fa-file-pdf-o" class="btn-secondary"/>
+                            <button name="action_export_excel" type="object" string="Excel" icon="fa-file-excel-o" class="btn-secondary"/>
+                        </div>
+                    </div>
 
-    <!-- Customer Wizard Menu -->
+                    <div class="asr_filter_panel">
+                        <div class="asr_filter_grid">
+                            <div class="asr_filter_item asr_partner_filter">
+                                <label for="partner_id" class="asr_label"/>
+                                <field name="partner_id" nolabel="1" options="{'no_create_edit': True}" placeholder="Search customer or vendor..."/>
+                            </div>
+                            <div class="asr_filter_item">
+                                <label for="date_from" class="asr_label"/>
+                                <field name="date_from" nolabel="1"/>
+                            </div>
+                            <div class="asr_filter_item">
+                                <label for="date_to" class="asr_label"/>
+                                <field name="date_to" nolabel="1"/>
+                            </div>
+                            <div class="asr_filter_item">
+                                <label for="company_id" class="asr_label"/>
+                                <field name="company_id" nolabel="1" options="{'no_create': True}"/>
+                            </div>
+                            <div class="asr_filter_item">
+                                <label for="journal_ids" class="asr_label"/>
+                                <field name="journal_ids" nolabel="1" widget="many2many_tags" domain="[('company_id', '=', company_id)]" options="{'no_create': True}" placeholder="All journals"/>
+                            </div>
+                            <div class="asr_filter_item">
+                                <label for="account_ids" class="asr_label"/>
+                                <field name="account_ids" nolabel="1" widget="many2many_tags" domain="[('company_ids', 'in', [company_id]), ('account_type', 'in', ['asset_receivable', 'liability_payable'])]" options="{'no_create': True}" placeholder="All customer/vendor accounts"/>
+                            </div>
+                            <div class="asr_filter_item">
+                                <label for="move_state" class="asr_label"/>
+                                <field name="move_state" nolabel="1"/>
+                            </div>
+                            <div class="asr_filter_item asr_opening_filter">
+                                <label for="show_opening_balance" class="asr_label"/>
+                                <field name="show_opening_balance" nolabel="1" widget="boolean_toggle"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="asr_summary_grid">
+                        <div class="asr_kpi asr_kpi_opening">
+                            <span class="asr_kpi_label">Opening Balance</span>
+                            <strong><field name="opening_balance" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1"/></strong>
+                        </div>
+                        <div class="asr_kpi asr_kpi_debit">
+                            <span class="asr_kpi_label">Total Debit</span>
+                            <strong><field name="total_debit" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1"/></strong>
+                        </div>
+                        <div class="asr_kpi asr_kpi_credit">
+                            <span class="asr_kpi_label">Total Credit</span>
+                            <strong><field name="total_credit" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1"/></strong>
+                        </div>
+                        <div class="asr_kpi asr_kpi_final">
+                            <span class="asr_kpi_label">Final Balance</span>
+                            <strong><field name="final_balance" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1"/></strong>
+                        </div>
+                    </div>
+
+                    <div class="asr_lines">
+                        <field name="line_ids" nolabel="1" readonly="1">
+                            <list create="0" delete="0" edit="0" default_order="date asc, id asc">
+                                <field name="date"/>
+                                <field name="move_id" string="Journal Entry" optional="show"/>
+                                <field name="move" string="Label" optional="hide"/>
+                                <field name="reference" optional="show"/>
+                                <field name="due_date" optional="show"/>
+                                <field name="debit" class="asr_col_debit"/>
+                                <field name="credit" class="asr_col_credit"/>
+                                <field name="balance" class="asr_col_balance"/>
+                            </list>
+                        </field>
+                        <div class="asr_table_totals">
+                            <div class="asr_totals_label">Total</div>
+                            <div class="asr_total_value asr_total_debit"><field name="total_debit" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1"/></div>
+                            <div class="asr_total_value asr_total_credit"><field name="total_credit" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1"/></div>
+                            <div class="asr_total_value asr_balance_total"><field name="final_balance" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1"/></div>
+                        </div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_open_account_statements" model="ir.actions.server">
+        <field name="name">Account Statements</field>
+        <field name="model_id" ref="model_account_statement"/>
+        <field name="state">code</field>
+        <field name="code">action = env['account.statement'].action_open_new_workspace()</field>
+    </record>
+
+    <menuitem id="menu_account_statements"
+              name="Account Statements"
+              parent="account.account_reports_partners_reports_menu"
+              action="action_open_account_statements"
+              sequence="50"/>
+
     <record id="action_customer_statement_wizard" model="ir.actions.act_window">
         <field name="name">Customer Statement</field>
         <field name="res_model">customer.statement.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>
-
-    <menuitem id="menu_customer_statement_wizard"
-              name="Customer Statement"
-              parent="account.account_reports_partners_reports_menu"
-              action="action_customer_statement_wizard"
-              sequence="50"/>
-
-    <!-- Vendor Wizard Menu -->
     <record id="action_vendor_statement_wizard" model="ir.actions.act_window">
         <field name="name">Vendor Statement</field>
         <field name="res_model">vendor.statement.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>
+    <record id="menu_customer_statement_wizard" model="ir.ui.menu">
+        <field name="name">Customer Statement</field>
+        <field name="parent_id" ref="account.account_reports_partners_reports_menu"/>
+        <field name="action" ref="action_customer_statement_wizard"/>
+        <field name="sequence">51</field>
+        <field name="active" eval="False"/>
+    </record>
+    <record id="menu_vendor_statement_wizard" model="ir.ui.menu">
+        <field name="name">Vendor Statement</field>
+        <field name="parent_id" ref="account.account_reports_partners_reports_menu"/>
+        <field name="action" ref="action_vendor_statement_wizard"/>
+        <field name="sequence">52</field>
+        <field name="active" eval="False"/>
+    </record>
 
-    <menuitem id="menu_vendor_statement_wizard"
-              name="Vendor Statement"
-              parent="account.account_reports_partners_reports_menu"
-              action="action_vendor_statement_wizard"
-              sequence="60"/>
-
-
-
-    <!-- ========================================================= -->
-    <!--                          WIZARDS                           -->
-    <!-- ========================================================= -->
-
-    <!-- Customer Wizard -->
     <record id="customer_statement_wizard_form" model="ir.ui.view">
         <field name="name">customer.statement.wizard.form</field>
         <field name="model">customer.statement.wizard</field>
         <field name="arch" type="xml">
-            <form string="Customer Statement Wizard">
-                <sheet>
-                    <group>
-                        <field name="partner_id"/>
-                        <field name="date_from"/>
-                        <field name="date_to"/>
-                    </group>
-                    <footer>
-                        <button string="Show Statement" type="object"
-                                name="action_show_statement" class="btn-primary"/>
-                        <button string="Print PDF" type="object"
-                                name="action_print_pdf" class="btn-secondary"/>
-                        <button string="Cancel" special="cancel" class="btn-link"/>
-                    </footer>
-                </sheet>
-            </form>
+            <form string="Customer Statement"><sheet><group><field name="partner_id"/></group></sheet></form>
         </field>
     </record>
-
-    <!-- Vendor Wizard -->
     <record id="vendor_statement_wizard_form" model="ir.ui.view">
         <field name="name">vendor.statement.wizard.form</field>
         <field name="model">vendor.statement.wizard</field>
         <field name="arch" type="xml">
-            <form string="Vendor Statement Wizard">
-                <sheet>
-                    <group>
-                        <field name="partner_id"/>
-                        <field name="date_from"/>
-                        <field name="date_to"/>
-                    </group>
-                    <footer>
-                        <button string="Show Statement" type="object"
-                                name="action_show_statement" class="btn-primary"/>
-                        <button string="Print PDF" type="object"
-                                name="action_print_pdf" class="btn-secondary"/>
-                        <button string="Cancel" special="cancel" class="btn-link"/>
-                    </footer>
-                </sheet>
-            </form>
+            <form string="Vendor Statement"><sheet><group><field name="partner_id"/></group></sheet></form>
         </field>
     </record>
-
-
-
-    <!-- ========================================================= -->
-    <!--                  CUSTOMER STATEMENT FORM                  -->
-    <!-- ========================================================= -->
-
-    <record id="customer_statement_form" model="ir.ui.view">
-        <field name="name">customer.statement.form</field>
-        <field name="model">customer.statement</field>
-        <field name="arch" type="xml">
-            <form string="Customer Statement">
-
-                <header>
-                    <button name="action_print_pdf" type="object"
-                            string="Print PDF" class="btn-primary"/>
-                    <button name="action_export_excel" type="object"
-                            string="Export Excel" class="btn-secondary"/>
-                </header>
-
-                <sheet>
-
-                    <group col="4" style="padding-bottom:20px;">
-                        <field name="partner_id" readonly="1"/>
-                        <field name="date_from" readonly="1"/>
-                        <field name="date_to" readonly="1"/>
-                        <field name="company_id" readonly="1"/>
-                    </group>
-
-                    <!-- TABLE -->
-                    <field name="line_ids">
-                        <list create="false" edit="false" delete="false" string="Statement Lines">
-                            <field name="date"/>
-                            <field name="move"/>
-                            <field name="reference"/>
-                            <field name="due_date"/>
-                            <field name="debit" sum="Total Debit"/>
-                            <field name="credit" sum="Total Credit"/>
-                            <field name="balance"/>
-                        </list>
-                    </field> 
-
-                    <!-- TOTALS -->
-                    <group col="3" style="margin-top:20px; font-weight:bold;">
-                        <field name="final_balance" readonly="1"/>
-                    </group>
-
-                </sheet>
-            </form>
-        </field>
-    </record>
-
-
-
-    <!-- ========================================================= -->
-    <!--                   VENDOR STATEMENT FORM                   -->
-    <!-- ========================================================= -->
-
-    <record id="vendor_statement_form" model="ir.ui.view">
-        <field name="name">vendor.statement.form</field>
-        <field name="model">vendor.statement</field>
-        <field name="arch" type="xml">
-            <form string="Vendor Statement">
-
-                <header>
-                    <button name="action_print_pdf" type="object"
-                            string="Print PDF" class="btn-primary"/>
-                    <button name="action_export_excel" type="object"
-                            string="Export Excel" class="btn-secondary"/>
-                </header>
-
-                <sheet>
-
-                    <group col="4" style="padding-bottom:20px;">
-                        <field name="partner_id" readonly="1"/>
-                        <field name="date_from" readonly="1"/>
-                        <field name="date_to" readonly="1"/>
-                        <field name="company_id" readonly="1"/>
-                    </group>
-
-                    <!-- TABLE -->
-                    <field name="line_ids">
-                        <list create="false" edit="false" delete="false" string="Statement Lines">
-                            <field name="date"/>
-                            <field name="move"/>
-                            <field name="reference"/>
-                            <field name="due_date"/>
-                            <field name="debit" sum="Total Debit"/>
-                            <field name="credit" sum="Total Credit"/>
-                            <field name="balance"/>
-                        </list>
-                    </field>
-
-                    <!-- TOTALS -->
-                    <group col="3" style="margin-top:20px; font-weight:bold;">
-                        <field name="final_balance" readonly="1"/>
-                    </group>
-
-                </sheet>
-            </form>
-        </field>
-    </record>
-
 </odoo>
