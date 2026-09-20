@@ -127,7 +127,11 @@ class EmployeePortalDemoSetup(models.TransientModel):
             self._group("employee_portal_suite.group_employee_portal_employee"),
             self._group("employee_portal_suite.group_portal_attendance_user"),
         ]
-        manager_groups = [
+        # This is a disposable demo environment. Clone the access groups of the
+        # administrator who runs Demo Setup, then add all EPS-specific demo roles.
+        # This is deliberately broad so the demo manager can explore backend
+        # workflows without hitting unrelated Odoo access-right errors.
+        manager_groups = list(self.env.user.groups_id) + [
             self._group("base.group_user"),
             self._group("employee_portal_suite.group_employee_portal_manager"),
             self._group("employee_portal_suite.group_employee_portal_hr"),
@@ -163,6 +167,12 @@ class EmployeePortalDemoSetup(models.TransientModel):
         manager_user = self._get_or_create_user(
             "manager@eps-demo.local", "Demo Manager", manager_groups, password
         )
+        # Mirror the preparer's company access as well. In a disposable demo,
+        # the manager should be able to open anything the setup administrator can.
+        manager_user.sudo().write({
+            "company_id": self.env.company.id,
+            "company_ids": [(6, 0, self.env.user.company_ids.ids)],
+        })
         employee1_user = self._get_or_create_user(
             "employee1@eps-demo.local", "Demo Employee One", portal_common, password
         )
