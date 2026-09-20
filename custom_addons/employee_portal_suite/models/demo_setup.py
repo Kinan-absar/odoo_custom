@@ -149,6 +149,16 @@ class EmployeePortalDemoSetup(models.TransientModel):
             # Give the demo manager Accounting Read-only access so those records
             # can be displayed without granting invoicing or administrator rights.
             self._group("account.group_account_readonly"),
+            # This is a disposable public demo manager. Give it broad backend
+            # access so prospects can freely explore workflows without hitting
+            # access errors while testing the module.
+            self._group("base.group_system"),
+            self._group("account.group_account_manager"),
+            self._group("account.group_account_invoice"),
+            self._group("purchase.group_purchase_manager"),
+            self._group("hr.group_hr_manager"),
+            self._group("hr_attendance.group_hr_attendance_manager"),
+            self._group("project.group_project_manager"),
         ]
         manager_user = self._get_or_create_user(
             "manager@eps-demo.local", "Demo Manager", manager_groups, password
