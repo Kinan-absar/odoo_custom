@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="employee_portal_suite.EPSDemoManagerTour">
+    <div class="o_eps_demo_tour h-100 overflow-auto bg-light">
+      <div class="container py-4" style="max-width: 920px;">
+        <div class="card shadow-sm border-0">
+          <div class="card-body p-4 p-lg-5">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="badge text-bg-primary">MANAGER SETUP TOUR</span>
+              <span class="text-muted"><t t-esc="state.step + 1"/> / <t t-esc="total"/></span>
+            </div>
+            <div class="progress mb-4" style="height:6px"><div class="progress-bar" t-att-style="'width:' + (((state.step + 1) / total) * 100) + '%'"/></div>
+            <h2 class="mb-3"><t t-esc="current.title"/></h2>
+            <p class="lead mb-4" style="white-space: pre-line"><t t-esc="current.text"/></p>
+            <div class="alert alert-info" t-if="current.action">
+              The relevant Odoo screen is opened behind this guide. Follow the instruction there, then return here and press <strong>Next</strong>.
+            </div>
+            <div class="d-flex gap-2 justify-content-between align-items-center mt-4">
+              <button class="btn btn-outline-secondary" t-on-click="previous" t-att-disabled="state.step === 0">Back</button>
+              <div class="d-flex gap-2">
+                <button t-if="state.step === total - 1" class="btn btn-outline-primary" t-on-click="openPortal">Open Employee Portal</button>
+                <button t-if="state.step &lt; total - 1" class="btn btn-primary px-4" t-on-click="next">Next</button>
+                <button t-else="" class="btn btn-success px-4" t-on-click="openPortal">Finish &amp; Open Portal</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </t>
+</templates>
