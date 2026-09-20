@@ -22,6 +22,12 @@
 
             <t t-call-assets="web.assets_frontend"/>
 
+            <!-- Demo-only marker: the frontend tour widget mounts only for the
+                 two disposable Employee Portal demo accounts. -->
+            <t t-if="request.env.user.login in ('employee1@eps-demo.local', 'employee2@eps-demo.local')">
+                <div id="eps-demo-portal-tour-marker" class="d-none"/>
+            </t>
+
             <style>
                 /* ================================================================
                    EMPLOYEE PORTAL - PREMIUM REDESIGN
