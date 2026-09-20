@@ -78,10 +78,34 @@ class EmployeePortalDemoSetup(models.TransientModel):
         if not project:
             project = Project.create({"name": "Demo Office Fit-Out", "company_id": company.id})
 
+        # Odoo 18 requires every Work Location to have a Work Address (address_id).
+        # Reuse a dedicated fictional partner so the demo remains self-contained.
+        Partner = self.env["res.partner"].sudo()
+        demo_address = Partner.search([
+            ("name", "=", "Demo Project Site"),
+            ("company_id", "in", [False, company.id]),
+            ("type", "=", "other"),
+        ], limit=1)
+        if not demo_address:
+            demo_address = Partner.create({
+                "name": "Demo Project Site",
+                "type": "other",
+                "company_id": company.id,
+                "street": "100 Demo Avenue",
+                "city": "Demo City",
+            })
+
         WorkLocation = self.env["hr.work.location"].sudo()
         location = WorkLocation.search([("name", "=", "Demo Project Site"), ("company_id", "=", company.id)], limit=1)
-        if not location:
-            location = WorkLocation.create({"name": "Demo Project Site", "company_id": company.id})
+        location_vals = {
+            "name": "Demo Project Site",
+            "company_id": company.id,
+            "address_id": demo_address.id,
+        }
+        if location:
+            location.write(location_vals)
+        else:
+            location = WorkLocation.create(location_vals)
 
         LocationProject = self.env["hr.work.location.project"].sudo()
         link = LocationProject.search([
