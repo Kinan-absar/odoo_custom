@@ -183,6 +183,8 @@ class EmployeePortalMain(CustomerPortal):
             "show_construction_cards": show_construction_cards,
             "attendance_checked_in": attendance_checked_in,
             "can_use_attendance": can_use_attendance,
+            "eps_demo_user": user.login in ("employee1@eps-demo.local", "employee2@eps-demo.local"),
+            "eps_demo_employee_no": 1 if user.login == "employee1@eps-demo.local" else (2 if user.login == "employee2@eps-demo.local" else 0),
         })
 
     @http.route('/my/employee/profile', type='http', auth='user', website=True, methods=['GET', 'POST'], csrf=True)

@@ -127,7 +127,11 @@ class EmployeePortalDemoSetup(models.TransientModel):
             self._group("employee_portal_suite.group_employee_portal_employee"),
             self._group("employee_portal_suite.group_portal_attendance_user"),
         ]
-        manager_groups = [
+        # This is a disposable demo environment. Clone the access groups of the
+        # administrator who runs Demo Setup, then add all EPS-specific demo roles.
+        # This is deliberately broad so the demo manager can explore backend
+        # workflows without hitting unrelated Odoo access-right errors.
+        manager_groups = list(self.env.user.groups_id) + [
             self._group("base.group_user"),
             self._group("employee_portal_suite.group_employee_portal_manager"),
             self._group("employee_portal_suite.group_employee_portal_hr"),
@@ -149,10 +153,26 @@ class EmployeePortalDemoSetup(models.TransientModel):
             # Give the demo manager Accounting Read-only access so those records
             # can be displayed without granting invoicing or administrator rights.
             self._group("account.group_account_readonly"),
+            # This is a disposable public demo manager. Give it broad backend
+            # access so prospects can freely explore workflows without hitting
+            # access errors while testing the module.
+            self._group("base.group_system"),
+            self._group("account.group_account_manager"),
+            self._group("account.group_account_invoice"),
+            self._group("purchase.group_purchase_manager"),
+            self._group("hr.group_hr_manager"),
+            self._group("hr_attendance.group_hr_attendance_manager"),
+            self._group("project.group_project_manager"),
         ]
         manager_user = self._get_or_create_user(
             "manager@eps-demo.local", "Demo Manager", manager_groups, password
         )
+        # Mirror the preparer's company access as well. In a disposable demo,
+        # the manager should be able to open anything the setup administrator can.
+        manager_user.sudo().write({
+            "company_id": self.env.company.id,
+            "company_ids": [(6, 0, self.env.user.company_ids.ids)],
+        })
         employee1_user = self._get_or_create_user(
             "employee1@eps-demo.local", "Demo Employee One", portal_common, password
         )
@@ -289,7 +309,7 @@ class EmployeePortalDemoSetup(models.TransientModel):
                     <tr><td>Portal Employee 2</td><td>employee2@eps-demo.local</td><td>%s</td><td><a href="%s" target="_blank">Employee Portal</a></td></tr>
                 </tbody>
             </table>
-            <p><strong>Suggested demo:</strong> log in as Employee 1, submit a request, then open an incognito/private window as Manager and approve it. Also try Material Requests, Attendance and Discuss.</p>
+            <div class="alert alert-info mt-3"><strong>Recommended customer journey</strong><ol class="mb-0 mt-2"><li>Start as <strong>Portal Employee 1</strong> and follow the Live Demo guide on the dashboard.</li><li>Submit an Employee Request and a Material Request, then try Attendance and Discuss.</li><li>Open an incognito/private window as <strong>Manager</strong> and review/approve the same records in the backend.</li><li>Return to Employee 1 to see the updated statuses and notifications.</li><li>Use Employee 2 for messaging, calls and employee-isolation testing.</li></ol></div>
         """) % (password, backend_url, password, portal_url, password, portal_url)
         return {
             "type": "ir.actions.act_window",
