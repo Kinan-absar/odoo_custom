@@ -59,17 +59,22 @@ const STEPS = [
         focus: "project_approvers",
     },
     {
-        title: "9. Employee Request Approval Flow",
+        title: "9. Portal Access & Approval Roles",
+        text: "Manage permissions by role, not user-by-user. Open Portal Access & Roles, choose a feature or approval role such as Attendance, HR, Finance, CEO or Purchase Representative, then select all users who should have it. You can also Select All Portal Users or Clear All without opening Odoo Settings.",
+        target: "portal_access_roles",
+    },
+    {
+        title: "10. Employee Request Approval Flow",
         text: "Employee Requests move through the configured manager/HR/finance/CEO approval flow. Review the sample requests and use them to demonstrate how a portal request appears in the manager backend.",
         target: "employee_requests",
     },
     {
-        title: "10. Material Request Approval Flow",
+        title: "11. Material Request Approval Flow",
         text: "Material Requests use the project/site setup and can pass through Purchase Rep, Store Manager, Project Manager, Director and CEO stages. Review the sample records and the approval dashboard.",
         target: "material_requests",
     },
     {
-        title: "11. Experience the Employee Portal",
+        title: "12. Experience the Employee Portal",
         text: "The setup is complete. Open the Employee Portal in a new tab and log in as employee1@eps-demo.local. Test requests, material requests, attendance, reports, announcements, messaging, calls and notifications, then return as Manager to approve what the employee submitted.",
         portal: true,
     },
@@ -330,6 +335,9 @@ class EPSDemoManagerTourOverlay extends Component {
                     await this._openForm("project.project", id, "Demo Office Fit-Out");
                     break;
                 }
+                case "portal_access_roles":
+                    await this.action.doAction("employee_portal_suite.action_employee_portal_access_role");
+                    break;
                 case "employee_requests":
                     await this.action.doAction("employee_portal_suite.action_employee_request");
                     break;

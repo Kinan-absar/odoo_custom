@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_employee_portal_access_role_list" model="ir.ui.view">
+        <field name="name">employee.portal.access.role.list</field>
+        <field name="model">employee.portal.access.role</field>
+        <field name="arch" type="xml">
+            <list string="Portal Access &amp; Roles" default_order="section,sequence,name">
+                <field name="sequence" column_invisible="1"/>
+                <field name="name"/>
+                <field name="section"/>
+                <field name="user_ids" widget="many2many_tags" optional="show"/>
+                <field name="user_count" string="Users"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_employee_portal_access_role_form" model="ir.ui.view">
+        <field name="name">employee.portal.access.role.form</field>
+        <field name="model">employee.portal.access.role</field>
+        <field name="arch" type="xml">
+            <form string="Portal Access / Role">
+                <header>
+                    <button name="action_select_all_portal_users" type="object" string="Select All Portal Users" class="btn-primary"/>
+                    <button name="action_select_all_employee_users" type="object" string="Select All Employee Users"/>
+                    <button name="action_clear_users" type="object" string="Clear All" confirm="Remove this access/role from every currently selected user?"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="section"/>
+                            <field name="group_id" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="active"/>
+                            <field name="user_count" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Who has this access / role?">
+                        <field name="user_ids" widget="many2many_tags" options="{'no_create': True}" nolabel="1"/>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" placeholder="Explain when this access or role should be used..." nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_employee_portal_access_role" model="ir.actions.act_window">
+        <field name="name">Portal Access &amp; Roles</field>
+        <field name="res_model">employee.portal.access.role</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Manage access by group, then select the users.</p>
+            <p>Use this screen instead of opening each user in Odoo Settings. You can also create a row for an access group supplied by another installed module, such as a bridge module.</p>
+        </field>
+    </record>
+
+    <record id="view_project_project_eps_approver_list" model="ir.ui.view">
+        <field name="name">project.project.eps.approver.list</field>
+        <field name="model">project.project</field>
+        <field name="arch" type="xml">
+            <list string="Project Approval Roles" editable="bottom" create="false" delete="false">
+                <field name="name" string="Project" readonly="1"/>
+                <field name="store_manager_employee_id" string="Store Manager" options="{'no_create': True}"/>
+                <field name="project_manager_employee_id" string="Project Manager" options="{'no_create': True}"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_employee_portal_project_approvers" model="ir.actions.act_window">
+        <field name="name">Project Approval Roles</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_project_project_eps_approver_list"/>
+        <field name="context">{'create': False}</field>
+        <field name="help" type="html">
+            <p>Choose the approver by project. Store Manager and Project Manager technical groups are synchronized automatically.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_employee_portal_configuration"
+              name="Configuration"
+              parent="menu_employee_portal_root"
+              sequence="90"
+              groups="employee_portal_suite.group_employee_portal_admin,base.group_system"/>
+
+    <menuitem id="menu_employee_portal_access_roles"
+              name="Portal Access &amp; Roles"
+              parent="menu_employee_portal_configuration"
+              action="action_employee_portal_access_role"
+              sequence="10"
+              groups="employee_portal_suite.group_employee_portal_admin,base.group_system"/>
+
+    <menuitem id="menu_employee_portal_project_approvers"
+              name="Project Approval Roles"
+              parent="menu_employee_portal_configuration"
+              action="action_employee_portal_project_approvers"
+              sequence="20"
+              groups="employee_portal_suite.group_employee_portal_admin,base.group_system"/>
+</odoo>

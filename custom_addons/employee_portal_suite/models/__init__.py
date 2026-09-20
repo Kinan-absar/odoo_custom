@@ -34,3 +34,5 @@ from . import web_push
 
 from . import mail_message_portal_readonly
 from . import demo_setup
+
+from . import portal_access_management
