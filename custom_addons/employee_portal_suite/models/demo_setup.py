@@ -141,6 +141,10 @@ class EmployeePortalDemoSetup(models.TransientModel):
             self._group("employee_portal_suite.group_mr_store_manager"),
             self._group("employee_portal_suite.group_mr_project_manager"),
             self._group("employee_portal_suite.group_mr_projects_director"),
+            # Material Request backend views can reference vendor bills / journal entries.
+            # Odoo grants the necessary read access to Purchase users without making
+            # the demo manager an Accounting Administrator.
+            self._group("purchase.group_purchase_user"),
         ]
         manager_user = self._get_or_create_user(
             "manager@eps-demo.local", "Demo Manager", manager_groups, password
