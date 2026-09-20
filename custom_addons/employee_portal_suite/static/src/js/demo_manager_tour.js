@@ -1,7 +1,7 @@
 /** @odoo-module **/
 
 import { registry } from "@web/core/registry";
-import { Component, onMounted, onWillUnmount, useState } from "@odoo/owl";
+import { Component, onMounted, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 
 const STORAGE_KEY = "eps_demo_manager_tour";
@@ -70,27 +70,27 @@ class EPSDemoManagerTourOverlay extends Component {
         this.action = useService("action");
         this.orm = useService("orm");
         this.notification = useService("notification");
-        this.user = useService("user");
         this.state = useState({ visible: false, active: false, step: 0 });
-        this._startHandler = (ev) => this.start(ev.detail?.step || 0);
 
         onMounted(async () => {
-            window.addEventListener("eps-demo-tour-start", this._startHandler);
             await this._computeVisibility();
+            if (!this.state.visible) {
+                return;
+            }
             const saved = window.localStorage.getItem(STORAGE_KEY);
-            if (saved && this.state.visible) {
+            if (saved) {
                 try {
                     const data = JSON.parse(saved);
-                    if (data.active) {
-                        this.state.active = true;
-                        this.state.step = Math.max(0, Math.min(Number(data.step) || 0, STEPS.length - 1));
-                    }
+                    this.state.active = Boolean(data.active);
+                    const step = Number(data.step);
+                    this.state.step = Number.isFinite(step)
+                        ? Math.max(0, Math.min(step, STEPS.length - 1))
+                        : 0;
                 } catch (_) {
                     window.localStorage.removeItem(STORAGE_KEY);
                 }
             }
         });
-        onWillUnmount(() => window.removeEventListener("eps-demo-tour-start", this._startHandler));
     }
 
     async _computeVisibility() {
@@ -98,23 +98,13 @@ class EPSDemoManagerTourOverlay extends Component {
             const demoUsers = await this.orm.searchRead(
                 "res.users",
                 [["login", "=", "manager@eps-demo.local"]],
-                ["id", "login"],
+                ["id"],
                 { limit: 1 }
             );
-            if (!demoUsers.length) {
-                this.state.visible = false;
-                return;
-            }
-            const me = await this.orm.searchRead(
-                "res.users",
-                [["id", "=", this.user.userId]],
-                ["login"],
-                { limit: 1 }
-            );
-            const isDemoManager = me.length && me[0].login === "manager@eps-demo.local";
-            const isAdmin = await this.user.hasGroup("base.group_system");
-            this.state.visible = Boolean(isDemoManager || isAdmin);
+            this.state.visible = Boolean(demoUsers.length);
         } catch (_) {
+            // Never break the Odoo backend because the optional demo widget
+            // could not check its demo user.
             this.state.visible = false;
         }
     }
@@ -128,12 +118,17 @@ class EPSDemoManagerTourOverlay extends Component {
     }
 
     _save() {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ active: this.state.active, step: this.state.step }));
+        window.localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({ active: this.state.active, step: this.state.step })
+        );
     }
 
-    async start(step = 0) {
+    start() {
         this.state.active = true;
-        this.state.step = Math.max(0, Math.min(step, STEPS.length - 1));
+        if (!Number.isFinite(this.state.step)) {
+            this.state.step = 0;
+        }
         this._save();
     }
 
@@ -143,7 +138,9 @@ class EPSDemoManagerTourOverlay extends Component {
     }
 
     restart() {
-        this.start(0);
+        this.state.step = 0;
+        this.state.active = true;
+        this._save();
     }
 
     async _findOne(model, domain) {
@@ -153,7 +150,9 @@ class EPSDemoManagerTourOverlay extends Component {
 
     async _openForm(model, resId, name) {
         if (!resId) {
-            this.notification.add(`${name} was not found. Run Prepare / Reset Demo first.`, { type: "warning" });
+            this.notification.add(`${name} was not found. Run Prepare / Reset Demo first.`, {
+                type: "warning",
+            });
             return;
         }
         await this.action.doAction({
@@ -168,28 +167,41 @@ class EPSDemoManagerTourOverlay extends Component {
 
     async _openCurrentTarget() {
         const step = this.current;
+        if (!step || !step.target) {
+            return;
+        }
         try {
             switch (step.target) {
                 case "contacts":
                     await this.action.doAction("base.action_partner_form");
                     break;
                 case "demo_contact": {
-                    const id = await this._findOne("res.partner", ["|", ["email", "=", "employee1@eps-demo.local"], ["name", "=", "Demo Employee One"]]);
+                    const id = await this._findOne("res.partner", [
+                        "|",
+                        ["email", "=", "employee1@eps-demo.local"],
+                        ["name", "=", "Demo Employee One"],
+                    ]);
                     await this._openForm("res.partner", id, "Demo Employee Contact");
                     break;
                 }
                 case "demo_employee": {
-                    const id = await this._findOne("hr.employee", [["user_id.login", "=", "employee1@eps-demo.local"]]);
+                    const id = await this._findOne("hr.employee", [
+                        ["user_id.login", "=", "employee1@eps-demo.local"],
+                    ]);
                     await this._openForm("hr.employee", id, "Demo Employee One");
                     break;
                 }
                 case "demo_work_location": {
-                    const id = await this._findOne("hr.work.location", [["name", "=", "Demo Project Site"]]);
+                    const id = await this._findOne("hr.work.location", [
+                        ["name", "=", "Demo Project Site"],
+                    ]);
                     await this._openForm("hr.work.location", id, "Demo Project Site");
                     break;
                 }
                 case "demo_project": {
-                    const id = await this._findOne("project.project", [["name", "=", "Demo Office Fit-Out"]]);
+                    const id = await this._findOne("project.project", [
+                        ["name", "=", "Demo Office Fit-Out"],
+                    ]);
                     await this._openForm("project.project", id, "Demo Office Fit-Out");
                     break;
                 }
@@ -198,7 +210,10 @@ class EPSDemoManagerTourOverlay extends Component {
                     break;
             }
         } catch (error) {
-            this.notification.add("The tour could not open this screen automatically. You can continue with Next or open the screen manually.", { type: "warning" });
+            this.notification.add(
+                "The tour could not open this screen automatically. You can continue with Next or open the screen manually.",
+                { type: "warning" }
+            );
         }
     }
 
@@ -229,8 +244,8 @@ class EPSDemoManagerTourOverlay extends Component {
     }
 }
 
-registry.category("systray").add(
+registry.category("main_components").add(
     "employee_portal_suite.EPSDemoManagerTourOverlay",
     { Component: EPSDemoManagerTourOverlay },
-    { sequence: 1 }
+    { sequence: 90 }
 );
