@@ -42,6 +42,43 @@ class EmployeePortalDemoSetup(models.TransientModel):
         user.sudo().write({"password": password})
         return user
 
+    def _get_or_create_portal_user(self, login, name, groups, password):
+        """Create/refresh a portal-only user without ever mixing Odoo user types.
+
+        Showcase users may already exist from a previous attempt.  Odoo validates
+        the Internal / Portal / Public user-type groups strictly, so normalize the
+        user type first, then add the Employee Portal feature groups.
+        """
+        Users = self.env["res.users"].sudo().with_context(no_reset_password=True)
+        portal_group = self._group("base.group_portal")
+        internal_group = self._group("base.group_user")
+        public_group = self._group("base.group_public")
+        if not portal_group:
+            raise UserError(_("Portal user group could not be found."))
+
+        # Employee Portal feature groups only; user-type groups are handled explicitly.
+        user_type_ids = {g.id for g in (portal_group, internal_group, public_group) if g}
+        feature_group_ids = [g.id for g in groups if g and g.id not in user_type_ids]
+
+        user = Users.search([("login", "=", login)], limit=1)
+        base_vals = {"name": name, "login": login, "email": login, "active": True}
+        if user:
+            user.write(base_vals)
+            # First remove every user type. This avoids the transient
+            # Internal + Portal combination that triggers Odoo's validation.
+            current_non_type = [gid for gid in user.groups_id.ids if gid not in user_type_ids]
+            user.write({"groups_id": [(6, 0, current_non_type)]})
+            # Then apply exactly one user type: Portal.
+            user.write({"groups_id": [(4, portal_group.id)]})
+        else:
+            # Create directly as a portal user, then add feature groups separately.
+            user = Users.create(dict(base_vals, groups_id=[(6, 0, [portal_group.id])]))
+
+        if feature_group_ids:
+            user.write({"groups_id": [(4, gid) for gid in feature_group_ids]})
+        user.sudo().write({"password": password})
+        return user
+
     def _get_or_create_employee(self, name, user, department, manager=False, work_location=False):
         Employee = self.env["hr.employee"].sudo()
         employee = Employee.search([("user_id", "=", user.id)], limit=1)
@@ -315,7 +352,7 @@ class EmployeePortalDemoSetup(models.TransientModel):
         ]
         employees = {}
         for name, login, dept, location in people:
-            user = self._get_or_create_user(login, name, portal_groups, password)
+            user = self._get_or_create_portal_user(login, name, portal_groups, password)
             employees[name] = self._get_or_create_employee(name, user, departments[dept], work_location=location)
 
         # Make Omar the visible project lead for a realistic reporting hierarchy.
@@ -414,10 +451,9 @@ class EmployeePortalDemoSetup(models.TransientModel):
         if not self.confirm_disposable:
             raise UserError(_("Confirm that this is a disposable demo/development database before continuing."))
         password = self.demo_password or "Demo123!"
-        # Keep the original functional demo users because the guided tours rely on them.
-        department, project, location = self._prepare_master_data()
-        manager_user, employee1_user, employee2_user, manager, employee1, employee2 = self._prepare_users_and_employees(password, department, location)
-        self._prepare_sample_records(manager, employee1, employee2, project, location)
+        # Showcase preparation is independent from the lightweight guided-tour demo.
+        # Do not recreate or modify the existing demo manager/employee accounts here;
+        # if they already exist, they remain untouched and both demo modes can coexist.
         employees = self._prepare_showcase_dataset(password)
         base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url", "").rstrip("/")
         self.result_html = _("""
@@ -427,7 +463,7 @@ class EmployeePortalDemoSetup(models.TransientModel):
             </div>
             <p><strong>Recommended video employee:</strong> Omar Khalid — <code>omar@eps-showcase.local</code> — password <code>%s</code></p>
             <p><strong>Other showcase users:</strong> Sara, Faisal, Mohammed, Lina, Yousef, Maya and Adam all use the same demo password.</p>
-            <p><strong>Guided-tour accounts are preserved:</strong> <code>employee1@eps-demo.local</code>, <code>employee2@eps-demo.local</code> and <code>manager@eps-demo.local</code>.</p>
+            <p><strong>Guided-tour accounts are untouched:</strong> if <code>employee1@eps-demo.local</code>, <code>employee2@eps-demo.local</code> and <code>manager@eps-demo.local</code> already exist, Showcase preparation leaves them exactly as they are.</p>
             <p><a class="btn btn-primary" href="%s/my/employee" target="_blank">Open Employee Portal</a> <a class="btn btn-secondary" href="%s/web" target="_blank">Open Backend</a></p>
         """) % (password, base_url, base_url)
         return {"type": "ir.actions.act_window", "res_model": self._name, "res_id": self.id, "view_mode": "form", "target": "new"}
