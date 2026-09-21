@@ -42,41 +42,78 @@ class EmployeePortalDemoSetup(models.TransientModel):
         user.sudo().write({"password": password})
         return user
 
-    def _get_or_create_portal_user(self, login, name, groups, password):
-        """Create/refresh a portal-only user without ever mixing Odoo user types.
+    def _safe_showcase_portal_group_ids(self, requested_groups):
+        """Return a group set that is guaranteed to stay Portal-only.
 
-        Showcase users may already exist from a previous attempt.  Odoo validates
-        the Internal / Portal / Public user-type groups strictly, so normalize the
-        user type first, then add the Employee Portal feature groups.
+        Some databases may carry older group metadata or implied groups from
+        previous module revisions.  Odoo treats groups in the User Types
+        category as mutually exclusive, so a custom group that directly or
+        indirectly implies Internal User can make a Portal user invalid.
+
+        Prefer cloning the already-working demo employee's exact group set when
+        available.  Otherwise keep Portal plus only feature groups that do not
+        belong to the User Types category and do not imply Internal/Public.
         """
-        Users = self.env["res.users"].sudo().with_context(no_reset_password=True)
         portal_group = self._group("base.group_portal")
         internal_group = self._group("base.group_user")
         public_group = self._group("base.group_public")
+        user_type_category = self._group("base.module_category_user_type")
         if not portal_group:
             raise UserError(_("Portal user group could not be found."))
 
-        # Employee Portal feature groups only; user-type groups are handled explicitly.
-        user_type_ids = {g.id for g in (portal_group, internal_group, public_group) if g}
-        feature_group_ids = [g.id for g in groups if g and g.id not in user_type_ids]
+        # Best source of truth: an already-working portal demo user created by
+        # the normal Prepare Demo flow.
+        template = self.env["res.users"].sudo().search([
+            ("login", "=", "employee1@eps-demo.local")
+        ], limit=1)
+        if template and portal_group in template.groups_id and internal_group not in template.groups_id:
+            return template.groups_id.ids
 
+        blocked_type_ids = {g.id for g in (internal_group, public_group) if g}
+        safe_ids = [portal_group.id]
+        for group in [g for g in requested_groups if g and g.id != portal_group.id]:
+            # Never add another group explicitly classified as a User Type.
+            if user_type_category and group.category_id.id == user_type_category.id:
+                continue
+            implied = group.trans_implied_ids if "trans_implied_ids" in group._fields else group.implied_ids
+            if blocked_type_ids.intersection(implied.ids):
+                continue
+            safe_ids.append(group.id)
+        return list(dict.fromkeys(safe_ids))
+
+    def _get_or_create_portal_user(self, login, name, groups, password):
+        """Create/refresh a showcase user with one atomic valid Portal group set.
+
+        The previous implementation changed user types in several writes.  If a
+        database already contained a partially configured showcase user, even a
+        harmless write such as changing the name could trigger Odoo's
+        "more than one user types" validation before the groups were repaired.
+        This version computes the final valid groups first and applies everything
+        in a single write/create operation.
+        """
+        Users = self.env["res.users"].sudo().with_context(no_reset_password=True)
+        group_ids = self._safe_showcase_portal_group_ids(groups)
+        vals = {
+            "name": name,
+            "login": login,
+            "email": login,
+            "active": True,
+            "groups_id": [(6, 0, group_ids)],
+        }
         user = Users.search([("login", "=", login)], limit=1)
-        base_vals = {"name": name, "login": login, "email": login, "active": True}
-        if user:
-            user.write(base_vals)
-            # First remove every user type. This avoids the transient
-            # Internal + Portal combination that triggers Odoo's validation.
-            current_non_type = [gid for gid in user.groups_id.ids if gid not in user_type_ids]
-            user.write({"groups_id": [(6, 0, current_non_type)]})
-            # Then apply exactly one user type: Portal.
-            user.write({"groups_id": [(4, portal_group.id)]})
-        else:
-            # Create directly as a portal user, then add feature groups separately.
-            user = Users.create(dict(base_vals, groups_id=[(6, 0, [portal_group.id])]))
-
-        if feature_group_ids:
-            user.write({"groups_id": [(4, gid) for gid in feature_group_ids]})
-        user.sudo().write({"password": password})
+        try:
+            if user:
+                user.write(vals)
+            else:
+                user = Users.create(vals)
+            user.sudo().write({"password": password})
+        except Exception as exc:
+            raise UserError(_(
+                "Could not prepare showcase portal user %(login)s. "
+                "The final Portal-only group set could not be applied. Original error: %(error)s",
+                login=login,
+                error=str(exc),
+            )) from exc
         return user
 
     def _get_or_create_employee(self, name, user, department, manager=False, work_location=False):
