@@ -21,11 +21,6 @@
             <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;display=swap" rel="stylesheet"/>
 
             <t t-call-assets="web.assets_frontend"/>
-
-            <!-- Demo-only marker: the frontend tour widget mounts only for the
-                 two disposable Employee Portal demo accounts. -->
-            <t t-if="request.env.user.login in ('employee1@eps-demo.local', 'employee2@eps-demo.local')">
-                <div id="eps-demo-portal-tour-marker" class="d-none"/>
             </t>
 
             <style>

@@ -409,12 +409,11 @@ class EmployeePortalDemoSetup(models.TransientModel):
             if "work_email" in Employee._fields:
                 vals["work_email"] = user.login
             emp.write(vals)
-            # IMPORTANT: Showcase setup must not write res.users at all.
-            # Even a password/name-only write re-runs Odoo's mutually-exclusive
-            # user-type validation and can fail if an older demo account carries
-            # legacy/implied groups.  The lightweight demo already owns these
-            # credentials, so the showcase only decorates the linked partner/employee.
-            user.partner_id.sudo().write({"name": display_name, "email": user.login})
+            # Showcase must not write res.users OR the linked res.partner.
+            # In Odoo, user identity fields are delegated to res.partner and a
+            # partner write can re-trigger res.users user-type validation.
+            # Keep the proven-good demo account and contact untouched; only the
+            # hr.employee record is decorated for showcase data.
             return emp
 
         def profile_employee(display_name, work_email, department, location):
