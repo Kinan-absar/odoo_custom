@@ -409,9 +409,12 @@ class EmployeePortalDemoSetup(models.TransientModel):
             if "work_email" in Employee._fields:
                 vals["work_email"] = user.login
             emp.write(vals)
-            # Renaming a valid existing portal user does not alter security groups.
+            # IMPORTANT: Showcase setup must not write res.users at all.
+            # Even a password/name-only write re-runs Odoo's mutually-exclusive
+            # user-type validation and can fail if an older demo account carries
+            # legacy/implied groups.  The lightweight demo already owns these
+            # credentials, so the showcase only decorates the linked partner/employee.
             user.partner_id.sudo().write({"name": display_name, "email": user.login})
-            user.sudo().write({"name": display_name, "email": user.login, "password": password})
             return emp
 
         def profile_employee(display_name, work_email, department, location):
