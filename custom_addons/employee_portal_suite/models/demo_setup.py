@@ -363,13 +363,29 @@ class EmployeePortalDemoSetup(models.TransientModel):
         return project, location
 
     def _prepare_showcase_dataset(self, password):
-        """Create a rich, repeatable fictional dataset for screenshots and sales videos."""
-        portal_groups = [
-            self._group("base.group_portal"),
-            self._group("employee_portal_suite.group_employee_portal"),
-            self._group("employee_portal_suite.group_employee_portal_employee"),
-            self._group("employee_portal_suite.group_portal_attendance_user"),
-        ]
+        """Create a rich, repeatable fictional dataset for screenshots and sales videos.
+
+        IMPORTANT: this deliberately creates NO new res.users.  Odoo user types
+        (Internal / Portal / Public) are mutually exclusive, and creating many
+        showcase portal users made this helper fragile across databases with
+        different implied-group setups.
+
+        Instead, the showcase reuses the two already-working portal accounts
+        created by Prepare / Reset Demo and creates the remaining showcase
+        employees as HR employee records only.  This is enough to populate all
+        backend dashboards, approvals, attendance, announcements and reports,
+        while the existing Employee 1 account is used to record the portal side.
+        """
+        Users = self.env["res.users"].sudo()
+        demo_user_1 = Users.search([("login", "=", "employee1@eps-demo.local")], limit=1)
+        demo_user_2 = Users.search([("login", "=", "employee2@eps-demo.local")], limit=1)
+        if not demo_user_1 or not demo_user_2:
+            raise UserError(_(
+                "Prepare the normal demo first. The Showcase Demo reuses the two existing "
+                "working portal accounts (employee1@eps-demo.local and employee2@eps-demo.local) "
+                "so it never creates conflicting Odoo user types."
+            ))
+
         departments = {name: self._showcase_department(name) for name in [
             "Management", "Projects", "HR & Administration", "Finance", "Procurement"
         ]}
@@ -377,20 +393,65 @@ class EmployeePortalDemoSetup(models.TransientModel):
         health_project, health_location = self._showcase_project_location("Healthcare Center Fit-Out", "Healthcare Center Project", "Northern Ring Road")
         north_project, north_location = self._showcase_project_location("North Riyadh Office Fit-Out", "North Riyadh Project Site", "Olaya District")
 
-        people = [
-            ("Omar Khalid", "omar@eps-showcase.local", "Projects", health_location),
-            ("Sara Ahmed", "sara@eps-showcase.local", "HR & Administration", head_location),
+        Employee = self.env["hr.employee"].sudo()
+
+        def linked_employee(user, display_name, department, location):
+            emp = Employee.search([("user_id", "=", user.id)], limit=1)
+            if not emp:
+                raise UserError(_("The demo portal user %(login)s is not linked to an Employee record. Run Prepare / Reset Demo again first.", login=user.login))
+            vals = {
+                "name": display_name,
+                "department_id": department.id,
+                "company_id": self.env.company.id,
+                "work_location_id": location.id,
+                "work_location_ids": [(6, 0, [location.id])],
+            }
+            if "work_email" in Employee._fields:
+                vals["work_email"] = user.login
+            emp.write(vals)
+            # Renaming a valid existing portal user does not alter security groups.
+            user.partner_id.sudo().write({"name": display_name, "email": user.login})
+            user.sudo().write({"name": display_name, "email": user.login, "password": password})
+            return emp
+
+        def profile_employee(display_name, work_email, department, location):
+            emp = Employee.search([
+                ("name", "=", display_name),
+                ("company_id", "=", self.env.company.id),
+                ("user_id", "=", False),
+            ], limit=1)
+            vals = {
+                "name": display_name,
+                "department_id": department.id,
+                "company_id": self.env.company.id,
+                "work_location_id": location.id,
+                "work_location_ids": [(6, 0, [location.id])],
+                "user_id": False,
+            }
+            if "work_email" in Employee._fields:
+                vals["work_email"] = work_email
+            if emp:
+                emp.write(vals)
+            else:
+                emp = Employee.create(vals)
+            return emp
+
+        # Reuse the two proven-good portal accounts for the actual portal recording.
+        employees = {
+            "Omar Khalid": linked_employee(demo_user_1, "Omar Khalid", departments["Projects"], health_location),
+            "Sara Ahmed": linked_employee(demo_user_2, "Sara Ahmed", departments["HR & Administration"], head_location),
+        }
+
+        # Remaining people are realistic HR records only. No new res.users are created.
+        for name, email, dept, location in [
             ("Faisal Ali", "faisal@eps-showcase.local", "Finance", head_location),
             ("Mohammed Salem", "mohammed@eps-showcase.local", "Projects", north_location),
             ("Lina Hassan", "lina@eps-showcase.local", "Procurement", head_location),
             ("Yousef Nasser", "yousef@eps-showcase.local", "Projects", health_location),
             ("Maya Ibrahim", "maya@eps-showcase.local", "Projects", north_location),
             ("Adam Kareem", "adam@eps-showcase.local", "Projects", health_location),
-        ]
-        employees = {}
-        for name, login, dept, location in people:
-            user = self._get_or_create_portal_user(login, name, portal_groups, password)
-            employees[name] = self._get_or_create_employee(name, user, departments[dept], work_location=location)
+        ]:
+            employees[name] = profile_employee(name, email, departments[dept], location)
 
         # Make Omar the visible project lead for a realistic reporting hierarchy.
         for name in ["Yousef Nasser", "Adam Kareem"]:
@@ -407,10 +468,22 @@ class EmployeePortalDemoSetup(models.TransientModel):
             ("Yousef Nasser", "advance", "Salary advance request", "approved"),
             ("Maya Ibrahim", "medical", "Medical reimbursement claim", "rejected"),
         ]
+        req_field = EmployeeRequest._fields.get("request_type")
+        req_selection = dict(req_field.selection) if req_field and isinstance(req_field.selection, list) else {}
+        state_field = EmployeeRequest._fields.get("state")
+        state_selection = dict(state_field.selection) if state_field and isinstance(state_field.selection, list) else {}
+        fallback_req_type = next(iter(req_selection), False)
+        fallback_state = next(iter(state_selection), "draft")
         for emp_name, req_type, desc, state in request_rows:
             emp = employees[emp_name]
             rec = EmployeeRequest.search([("employee_id", "=", emp.id), ("description", "=", desc)], limit=1)
-            vals = {"employee_id": emp.id, "request_type": req_type, "description": desc, "state": state}
+            vals = {
+                "employee_id": emp.id,
+                "description": desc,
+                "state": state if not state_selection or state in state_selection else fallback_state,
+            }
+            if "request_type" in EmployeeRequest._fields:
+                vals["request_type"] = req_type if not req_selection or req_type in req_selection else fallback_req_type
             rec.write(vals) if rec else EmployeeRequest.create(vals)
 
         MaterialRequest = self.env["material.request"].sudo()
@@ -419,12 +492,14 @@ class EmployeePortalDemoSetup(models.TransientModel):
             ("Mohammed Salem", north_project, north_location, "project_manager", [("Gypsum Board 12.5mm", 80), ("Metal Stud 70mm", 150)]),
             ("Yousef Nasser", health_project, health_location, "approved", [("Fire Rated Sealant", 30), ("Cable Tray 150mm", 45)]),
         ]
-        valid_states = dict(MaterialRequest._fields["state"].selection) if isinstance(MaterialRequest._fields["state"].selection, list) else {}
+        mr_state_field = MaterialRequest._fields.get("state")
+        valid_states = dict(mr_state_field.selection) if mr_state_field and isinstance(mr_state_field.selection, list) else {}
+        mr_fallback_state = next(iter(valid_states), "draft")
         for emp_name, project, location, desired_state, lines in material_sets:
             emp = employees[emp_name]
             worksite = location.name
             mr = MaterialRequest.search([("employee_id", "=", emp.id), ("worksite", "=", worksite)], limit=1)
-            state = desired_state if desired_state in valid_states else "draft"
+            state = desired_state if not valid_states or desired_state in valid_states else mr_fallback_state
             vals = {"employee_id": emp.id, "worksite": worksite, "project_id": project.id, "work_location_id": location.id, "state": state}
             if mr:
                 mr.write(vals)
@@ -463,7 +538,6 @@ class EmployeePortalDemoSetup(models.TransientModel):
             vals = {"name": name, "message": message, "target": "both", "active": True, "color": color, "sequence": sequence}
             rec.write(vals) if rec else Announcement.create(vals)
 
-        # Small real PDF documents make the Reports area visibly populated.
         import base64
         pdf = base64.b64encode(b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 0/Kids[]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF")
         Report = self.env["portal.report.document"].sudo()
@@ -498,9 +572,9 @@ class EmployeePortalDemoSetup(models.TransientModel):
                 <h4>Showcase demo is ready for recording.</h4>
                 <p>A realistic fictional company dataset was created: departments, projects, work locations, 8 showcase employees, mixed employee requests, material requests, five days of attendance, announcements and portal reports.</p>
             </div>
-            <p><strong>Recommended video employee:</strong> Omar Khalid — <code>omar@eps-showcase.local</code> — password <code>%s</code></p>
-            <p><strong>Other showcase users:</strong> Sara, Faisal, Mohammed, Lina, Yousef, Maya and Adam all use the same demo password.</p>
-            <p><strong>Guided-tour accounts are untouched:</strong> if <code>employee1@eps-demo.local</code>, <code>employee2@eps-demo.local</code> and <code>manager@eps-demo.local</code> already exist, Showcase preparation leaves them exactly as they are.</p>
+            <p><strong>Recommended video employee:</strong> Omar Khalid — login <code>employee1@eps-demo.local</code> — password <code>%s</code></p>
+            <p><strong>Second portal account:</strong> Sara Ahmed — login <code>employee2@eps-demo.local</code> — same password.</p>
+            <p><strong>Important:</strong> the other showcase employees are realistic HR records used to populate dashboards and workflows; they are not additional Odoo users, so this setup cannot create user-type conflicts.</p>
             <p><a class="btn btn-primary" href="%s/my/employee" target="_blank">Open Employee Portal</a> <a class="btn btn-secondary" href="%s/web" target="_blank">Open Backend</a></p>
         """) % (password, base_url, base_url)
         return {"type": "ir.actions.act_window", "res_model": self._name, "res_id": self.id, "view_mode": "form", "target": "new"}
