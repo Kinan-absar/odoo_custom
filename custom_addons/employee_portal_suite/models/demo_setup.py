@@ -259,6 +259,179 @@ class EmployeePortalDemoSetup(models.TransientModel):
             "project_manager_employee_id": manager.id,
         })
 
+
+    def _showcase_department(self, name):
+        Department = self.env["hr.department"].sudo()
+        rec = Department.search([("name", "=", name), ("company_id", "in", [False, self.env.company.id])], limit=1)
+        return rec or Department.create({"name": name, "company_id": self.env.company.id})
+
+    def _showcase_project_location(self, project_name, location_name, street):
+        company = self.env.company
+        Project = self.env["project.project"].sudo()
+        project = Project.search([("name", "=", project_name), ("company_id", "=", company.id)], limit=1)
+        if not project:
+            project = Project.create({"name": project_name, "company_id": company.id})
+        Partner = self.env["res.partner"].sudo()
+        address = Partner.search([("name", "=", location_name), ("type", "=", "other")], limit=1)
+        if not address:
+            address = Partner.create({"name": location_name, "type": "other", "company_id": company.id, "street": street, "city": "Riyadh"})
+        Location = self.env["hr.work.location"].sudo()
+        location = Location.search([("name", "=", location_name), ("company_id", "=", company.id)], limit=1)
+        vals = {"name": location_name, "company_id": company.id, "address_id": address.id}
+        if location:
+            location.write(vals)
+        else:
+            location = Location.create(vals)
+        Link = self.env["hr.work.location.project"].sudo()
+        link = Link.search([("work_location_id", "=", location.id), ("project_id", "=", project.id)], limit=1)
+        if not link:
+            Link.create({"work_location_id": location.id, "project_id": project.id, "geo_enforce": False})
+        return project, location
+
+    def _prepare_showcase_dataset(self, password):
+        """Create a rich, repeatable fictional dataset for screenshots and sales videos."""
+        portal_groups = [
+            self._group("base.group_portal"),
+            self._group("employee_portal_suite.group_employee_portal"),
+            self._group("employee_portal_suite.group_employee_portal_employee"),
+            self._group("employee_portal_suite.group_portal_attendance_user"),
+        ]
+        departments = {name: self._showcase_department(name) for name in [
+            "Management", "Projects", "HR & Administration", "Finance", "Procurement"
+        ]}
+        head_project, head_location = self._showcase_project_location("Head Office Operations", "Head Office - Riyadh", "King Fahd Road")
+        health_project, health_location = self._showcase_project_location("Healthcare Center Fit-Out", "Healthcare Center Project", "Northern Ring Road")
+        north_project, north_location = self._showcase_project_location("North Riyadh Office Fit-Out", "North Riyadh Project Site", "Olaya District")
+
+        people = [
+            ("Omar Khalid", "omar@eps-showcase.local", "Projects", health_location),
+            ("Sara Ahmed", "sara@eps-showcase.local", "HR & Administration", head_location),
+            ("Faisal Ali", "faisal@eps-showcase.local", "Finance", head_location),
+            ("Mohammed Salem", "mohammed@eps-showcase.local", "Projects", north_location),
+            ("Lina Hassan", "lina@eps-showcase.local", "Procurement", head_location),
+            ("Yousef Nasser", "yousef@eps-showcase.local", "Projects", health_location),
+            ("Maya Ibrahim", "maya@eps-showcase.local", "Projects", north_location),
+            ("Adam Kareem", "adam@eps-showcase.local", "Projects", health_location),
+        ]
+        employees = {}
+        for name, login, dept, location in people:
+            user = self._get_or_create_user(login, name, portal_groups, password)
+            employees[name] = self._get_or_create_employee(name, user, departments[dept], work_location=location)
+
+        # Make Omar the visible project lead for a realistic reporting hierarchy.
+        for name in ["Yousef Nasser", "Adam Kareem"]:
+            employees[name].sudo().write({"parent_id": employees["Omar Khalid"].id})
+        employees["Maya Ibrahim"].sudo().write({"parent_id": employees["Mohammed Salem"].id})
+
+        EmployeeRequest = self.env["employee.request"].sudo()
+        request_rows = [
+            ("Omar Khalid", "leave", "Annual leave - 5 working days", "approved"),
+            ("Sara Ahmed", "travel", "Client workshop business trip", "manager"),
+            ("Faisal Ali", "letter", "Salary certificate for bank", "hr"),
+            ("Mohammed Salem", "asset", "Laptop and site tablet request", "finance"),
+            ("Lina Hassan", "training", "Procurement negotiation workshop", "ceo"),
+            ("Yousef Nasser", "advance", "Salary advance request", "approved"),
+            ("Maya Ibrahim", "medical", "Medical reimbursement claim", "rejected"),
+        ]
+        for emp_name, req_type, desc, state in request_rows:
+            emp = employees[emp_name]
+            rec = EmployeeRequest.search([("employee_id", "=", emp.id), ("description", "=", desc)], limit=1)
+            vals = {"employee_id": emp.id, "request_type": req_type, "description": desc, "state": state}
+            rec.write(vals) if rec else EmployeeRequest.create(vals)
+
+        MaterialRequest = self.env["material.request"].sudo()
+        material_sets = [
+            ("Omar Khalid", health_project, health_location, "purchase", [("LED Panel Light 60x60", 24), ("Electrical Cable 4mm", 300), ("PVC Conduit 25mm", 120)]),
+            ("Mohammed Salem", north_project, north_location, "project_manager", [("Gypsum Board 12.5mm", 80), ("Metal Stud 70mm", 150)]),
+            ("Yousef Nasser", health_project, health_location, "approved", [("Fire Rated Sealant", 30), ("Cable Tray 150mm", 45)]),
+        ]
+        valid_states = dict(MaterialRequest._fields["state"].selection) if isinstance(MaterialRequest._fields["state"].selection, list) else {}
+        for emp_name, project, location, desired_state, lines in material_sets:
+            emp = employees[emp_name]
+            worksite = location.name
+            mr = MaterialRequest.search([("employee_id", "=", emp.id), ("worksite", "=", worksite)], limit=1)
+            state = desired_state if desired_state in valid_states else "draft"
+            vals = {"employee_id": emp.id, "worksite": worksite, "project_id": project.id, "work_location_id": location.id, "state": state}
+            if mr:
+                mr.write(vals)
+            else:
+                mr = MaterialRequest.create(vals)
+            if not mr.line_ids:
+                self.env["material.request.line"].sudo().create([{"request_id": mr.id, "item_name": item, "qty_required": qty} for item, qty in lines])
+
+        Attendance = self.env["hr.attendance"].sudo()
+        now = fields.Datetime.now()
+        showcase_employees = list(employees.values())
+        for day in range(1, 6):
+            for idx, emp in enumerate(showcase_employees):
+                check_in = (now - timedelta(days=day)).replace(hour=8, minute=(idx * 3) % 25, second=0, microsecond=0)
+                check_out = check_in + timedelta(hours=8, minutes=20 + (idx % 4) * 10)
+                existing = Attendance.search([("employee_id", "=", emp.id), ("check_in", "=", check_in)], limit=1)
+                if not existing:
+                    vals = {"employee_id": emp.id, "check_in": check_in, "check_out": check_out}
+                    location = emp.work_location_id
+                    project = health_project if location == health_location else north_project if location == north_location else head_project
+                    if "check_in_project_id" in Attendance._fields:
+                        vals["check_in_project_id"] = project.id
+                    if "check_in_work_location_id" in Attendance._fields:
+                        vals["check_in_work_location_id"] = location.id
+                    Attendance.create(vals)
+
+        Announcement = self.env["portal.announcement"].sudo()
+        announcements = [
+            ("Employee Portal 2.0 is Live", "<p>Requests, attendance, approvals and team communication are now available from one employee workspace.</p>", "success", 120),
+            ("Monthly Safety Meeting", "<p>Project teams: monthly safety meeting is scheduled for Thursday at 9:00 AM.</p>", "warning", 110),
+            ("September Payroll Notice", "<p>September payroll processing is in progress. Salary reports will be available through the portal.</p>", "primary", 100),
+            ("Healthcare Center Project Update", "<p>Great progress this week. Please keep material requests and attendance updated daily.</p>", "primary", 90),
+        ]
+        for name, message, color, sequence in announcements:
+            rec = Announcement.search([("name", "=", name)], limit=1)
+            vals = {"name": name, "message": message, "target": "both", "active": True, "color": color, "sequence": sequence}
+            rec.write(vals) if rec else Announcement.create(vals)
+
+        # Small real PDF documents make the Reports area visibly populated.
+        import base64
+        pdf = base64.b64encode(b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 0/Kids[]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF")
+        Report = self.env["portal.report.document"].sudo()
+        report_group = self._group("employee_portal_suite.group_employee_portal")
+        for title, filename, description in [
+            ("September Project Progress Summary", "September_Project_Progress.pdf", "Monthly progress summary for project teams."),
+            ("Employee Portal Quick Guide", "Employee_Portal_Quick_Guide.pdf", "Quick reference for employee self-service features."),
+            ("Health & Safety Bulletin", "Health_and_Safety_Bulletin.pdf", "Latest site health and safety bulletin."),
+        ]:
+            rec = Report.search([("name", "=", title)], limit=1)
+            vals = {"name": title, "description": description, "date": fields.Date.context_today(self), "active": True, "file": pdf, "filename": filename, "company_id": self.env.company.id}
+            if report_group:
+                vals["allowed_group_ids"] = [(6, 0, [report_group.id])]
+            rec.write(vals) if rec else Report.create(vals)
+
+        return employees
+
+    def action_prepare_showcase_demo(self):
+        self.ensure_one()
+        if not self.env.user.has_group("base.group_system"):
+            raise UserError(_("Only an Odoo administrator can prepare the showcase environment."))
+        if not self.confirm_disposable:
+            raise UserError(_("Confirm that this is a disposable demo/development database before continuing."))
+        password = self.demo_password or "Demo123!"
+        # Keep the original functional demo users because the guided tours rely on them.
+        department, project, location = self._prepare_master_data()
+        manager_user, employee1_user, employee2_user, manager, employee1, employee2 = self._prepare_users_and_employees(password, department, location)
+        self._prepare_sample_records(manager, employee1, employee2, project, location)
+        employees = self._prepare_showcase_dataset(password)
+        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url", "").rstrip("/")
+        self.result_html = _("""
+            <div class="alert alert-success" role="alert">
+                <h4>Showcase demo is ready for recording.</h4>
+                <p>A realistic fictional company dataset was created: departments, projects, work locations, 8 showcase employees, mixed employee requests, material requests, five days of attendance, announcements and portal reports.</p>
+            </div>
+            <p><strong>Recommended video employee:</strong> Omar Khalid — <code>omar@eps-showcase.local</code> — password <code>%s</code></p>
+            <p><strong>Other showcase users:</strong> Sara, Faisal, Mohammed, Lina, Yousef, Maya and Adam all use the same demo password.</p>
+            <p><strong>Guided-tour accounts are preserved:</strong> <code>employee1@eps-demo.local</code>, <code>employee2@eps-demo.local</code> and <code>manager@eps-demo.local</code>.</p>
+            <p><a class="btn btn-primary" href="%s/my/employee" target="_blank">Open Employee Portal</a> <a class="btn btn-secondary" href="%s/web" target="_blank">Open Backend</a></p>
+        """) % (password, base_url, base_url)
+        return {"type": "ir.actions.act_window", "res_model": self._name, "res_id": self.id, "view_mode": "form", "target": "new"}
+
     def action_prepare_demo(self):
         self.ensure_one()
         if not self.env.user.has_group("base.group_system"):

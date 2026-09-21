@@ -10,9 +10,10 @@
                         <h1>Prepare Demo Environment</h1>
                     </div>
                     <div class="alert alert-info" role="alert">
-                        This creates or refreshes a fictional manager, two portal employees, sample requests,
-                        attendance, project/work-location setup and a welcome announcement. It does not touch
-                        normal users or company records outside the specifically named demo records.
+                        Use <strong>Prepare / Reset Demo</strong> for the lightweight functional test environment. Use
+                        <strong>Prepare Showcase Demo</strong> for screenshots, sales videos and customer demonstrations;
+                        it adds a realistic fictional workforce, departments, projects, work locations and populated portal activity.
+                        Both options are repeatable and use specifically named demo/showcase records.
                     </div>
                     <group>
                         <field name="demo_password" password="True"/>
@@ -21,7 +22,8 @@
                     <field name="result_html" widget="html" readonly="1" nolabel="1" invisible="not result_html"/>
                 </sheet>
                 <footer>
-                    <button name="action_prepare_demo" type="object" string="Prepare / Reset Demo" class="btn-primary"/>
+                    <button name="action_prepare_demo" type="object" string="Prepare / Reset Demo" class="btn-secondary"/>
+                    <button name="action_prepare_showcase_demo" type="object" string="Prepare Showcase Demo" class="btn-primary"/>
                     <button string="Close" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>
