@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_construction_ipc_link_move_wizard_form" model="ir.ui.view">
+        <field name="name">construction.ipc.link.move.wizard.form</field>
+        <field name="model">construction.ipc.link.move.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Link Existing Invoice/Bill">
+                <group>
+                    <field name="ipc_id"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="company_id" invisible="1"/>
+                    <field name="expected_move_type" invisible="1"/>
+                    <field name="move_id" options="{'no_create': True}"/>
+                </group>
+                <footer>
+                    <button name="action_link" string="Link" type="object" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

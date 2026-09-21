@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="construction_contract_management.ConstructionDemoTour">
+    <div class="ccm_tour_root">
+      <button t-if="!state.open" class="ccm_tour_launcher" t-on-click="toggle">
+        <i class="fa fa-compass me-2"/> Guided Tour
+      </button>
+      <div t-if="state.open" class="ccm_tour_panel">
+        <div class="ccm_tour_header">
+          <div><span class="ccm_tour_badge">CONSTRUCTION DEMO</span><div class="ccm_tour_counter">Step <t t-esc="stepNumber"/> of <t t-esc="totalSteps"/></div></div>
+          <button class="ccm_tour_close" t-on-click="close" title="Minimize">×</button>
+        </div>
+        <div class="ccm_tour_progress"><div class="ccm_tour_progress_bar" t-att-style="'width:' + progress"/></div>
+        <div class="ccm_tour_body">
+          <h4><t t-esc="stepData.title"/></h4>
+          <p><t t-esc="stepData.body"/></p>
+          <button class="btn btn-outline-secondary btn-sm" t-on-click="openStep"><i class="fa fa-external-link me-1"/> Open this step</button>
+        </div>
+        <div class="ccm_tour_footer">
+          <button class="btn btn-light" t-on-click="previous" t-att-disabled="state.step === 0">Back</button>
+          <button t-if="state.step &lt; totalSteps - 1" class="btn btn-primary" t-on-click="next">Next <i class="fa fa-arrow-right ms-1"/></button>
+          <button t-else="" class="btn btn-primary" t-on-click="close">Finish</button>
+        </div>
+      </div>
+    </div>
+  </t>
+</templates>
