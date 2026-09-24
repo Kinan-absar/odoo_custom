@@ -4,6 +4,11 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
+            <xpath expr="(//field[@name='client_order_ref'])[1]" position="after">
+                <field name="construction_project_id"
+                       options="{'no_create_edit': False}"
+                       domain="[('company_id', 'in', [False, company_id])]"/>
+            </xpath>
             <xpath expr="//form/header" position="inside">
                 <field name="construction_contract_count" invisible="1"/>
                 <button name="action_create_construction_contract"

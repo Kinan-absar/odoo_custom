@@ -6,6 +6,14 @@ from odoo.tools.float_utils import float_is_zero
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
+    construction_project_id = fields.Many2one(
+        'project.project',
+        string='Project',
+        tracking=True,
+        domain="[('company_id', 'in', [False, company_id])]",
+        help='Construction project that will be transferred to the Client Contract.',
+    )
+
     construction_contract_ids = fields.One2many(
         'construction.contract',
         'sale_order_id',
@@ -71,10 +79,11 @@ class SaleOrder(models.Model):
             'boq_line_ids': self._prepare_construction_boq_commands(),
         }
 
-        # Keep this compatible with databases that add a direct project_id on
-        # sale.order through another module/customization.
-        if 'project_id' in self._fields and self.project_id:
-            vals['project_id'] = self.project_id.id
+        # Native project link owned by this module. This deliberately does not
+        # depend on a Studio field, so quotation-to-contract conversion is stable
+        # across databases and deployments.
+        if self.construction_project_id:
+            vals['project_id'] = self.construction_project_id.id
         return vals
 
     def action_create_construction_contract(self):
