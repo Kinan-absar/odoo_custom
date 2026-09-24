@@ -59,6 +59,3 @@ portal_chat_thread_portal,portal.chat.thread portal,model_portal_chat_thread,bas
 portal_chat_read_internal,portal.chat.read internal,model_portal_chat_read,base.group_user,1,0,0,0
 portal_chat_read_portal,portal.chat.read portal,model_portal_chat_read,base.group_portal,1,0,0,0
 access_employee_portal_push_subscription_admin,employee.portal.push.subscription admin,model_employee_portal_push_subscription,base.group_system,1,1,1,1
-employee_portal_demo_setup_admin,employee.portal.demo.setup admin,model_employee_portal_demo_setup,base.group_system,1,1,1,1
-employee_portal_access_role_admin,employee.portal.access.role admin,model_employee_portal_access_role,employee_portal_suite.group_employee_portal_admin,1,1,1,1
-employee_portal_access_role_system,employee.portal.access.role system,model_employee_portal_access_role,base.group_system,1,1,1,1
