@@ -291,7 +291,38 @@
                     </div>
                 </div>
 
-                <t t-if="contract.boq_line_ids">
+                <t t-if="contract_orders">
+                    <div class="card mt-4">
+                        <div class="card-header"><h5>Contract Orders / Sales Order Scopes</h5></div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="thead-light">
+                                        <tr><th>Contract Order</th><th>Source Sales Order</th><th>Scope / Package</th><th class="text-right">Order Amount</th><th class="text-right">BOQ Amount</th><th class="text-center">Measurements</th><th class="text-center">IPCs</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="contract_orders" t-as="order">
+                                            <tr>
+                                                <td><a t-attf-href="/my/employee/contract-order/#{order.id}"><t t-esc="order.name"/></a></td>
+                                                <td><t t-esc="order.sale_order_id.name"/></td>
+                                                <td><t t-esc="order.scope_name or '-'"/></td>
+                                                <td class="text-right"><span t-field="order.order_amount" t-options='{"widget": "monetary", "display_currency": order.currency_id}'/></td>
+                                                <td class="text-right"><span t-field="order.boq_amount" t-options='{"widget": "monetary", "display_currency": order.currency_id}'/></td>
+                                                <td class="text-center"><t t-esc="order.measurement_count"/></td>
+                                                <td class="text-center"><t t-esc="order.ipc_count"/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div t-if="contract.contract_order_count &gt; 1" class="alert alert-info mt-3 mb-0">
+                        Each Sales Order keeps a separate BOQ. Open a Contract Order above to view its BOQ and scope.
+                    </div>
+                </t>
+
+                <t t-if="contract.boq_line_ids and (not contract_orders or contract.contract_order_count &lt;= 1)">
     <div class="card mt-4">
         <div class="card-header">
             <h5>Bill of Quantities</h5>
@@ -438,4 +469,47 @@
             </div>
         </t>
     </template>
+
+    <template id="portal_employee_contract_order_detail" name="Employee Portal - Contract Order Detail">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+            <div class="container construction-portal-page mt-4">
+                <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
+                    <div>
+                        <h3 class="mb-1"><small class="text-muted">Contract Order -</small> <t t-esc="contract_order.name"/></h3>
+                        <div class="text-muted"><t t-esc="contract_order.contract_id.name"/> · <t t-esc="contract_order.project_id.name or ''"/></div>
+                    </div>
+                    <a t-attf-href="/my/employee/contract/#{contract_order.contract_id.id}" class="btn btn-secondary"><i class="fa fa-arrow-left"/> Back to Contract</a>
+                </div>
+                <div class="card mb-4">
+                    <div class="card-header"><h5>Scope Information</h5></div>
+                    <div class="card-body">
+                        <div class="row mb-2"><div class="col-md-3"><strong>Source Sales Order:</strong></div><div class="col-md-9"><t t-esc="contract_order.sale_order_id.name"/></div></div>
+                        <div class="row mb-2"><div class="col-md-3"><strong>Scope / Package:</strong></div><div class="col-md-9"><t t-esc="contract_order.scope_name or '-'"/></div></div>
+                        <div class="row mb-2"><div class="col-md-3"><strong>Order Amount:</strong></div><div class="col-md-9"><span t-field="contract_order.order_amount" t-options='{"widget": "monetary", "display_currency": contract_order.currency_id}'/></div></div>
+                        <div class="row"><div class="col-md-3"><strong>BOQ Amount:</strong></div><div class="col-md-9"><span t-field="contract_order.boq_amount" t-options='{"widget": "monetary", "display_currency": contract_order.currency_id}'/></div></div>
+                    </div>
+                </div>
+                <div class="card" t-if="boq_lines">
+                    <div class="card-header"><h5>Bill of Quantities</h5></div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead class="thead-light"><tr><th>Item Code</th><th>Description</th><th class="text-right">Qty</th><th>Unit</th><th class="text-right">Rate</th><th class="text-right">Amount</th></tr></thead>
+                                <tbody>
+                                    <t t-foreach="boq_lines" t-as="line">
+                                        <tr t-if="line.display_type == 'line_section'" class="table-secondary"><td colspan="6"><strong><t t-esc="line.description"/></strong></td></tr>
+                                        <tr t-elif="line.display_type == 'line_note'"><td colspan="6"><em><t t-esc="line.description"/></em></td></tr>
+                                        <tr t-else="">
+                                            <td><t t-esc="line.item_code or ''"/></td><td><t t-esc="line.description or ''"/></td><td class="text-right"><t t-esc="line.revised_qty or line.contract_qty"/></td><td><t t-esc="line.uom_id.name or ''"/></td><td class="text-right"><span t-field="line.revised_unit_rate" t-options='{"widget":"monetary","display_currency":contract_order.currency_id}'/></td><td class="text-right"><span t-field="line.revised_amount" t-options='{"widget":"monetary","display_currency":contract_order.currency_id}'/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
 </odoo>

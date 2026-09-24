@@ -10,6 +10,11 @@ class ConstructionIPC(models.Model):
 
     name = fields.Char(required=True, copy=False, default='New')
     contract_id = fields.Many2one('construction.contract', required=True, ondelete='cascade', tracking=True)
+    contract_order_id = fields.Many2one(
+        'construction.contract.order', string='Contract Order / Sales Order', tracking=True,
+        domain="[('contract_id', '=', contract_id)]",
+    )
+    sale_order_id = fields.Many2one(related='contract_order_id.sale_order_id', string='Source Sales Order', store=True, readonly=True)
     measurement_id = fields.Many2one('construction.measurement', string='Measurement', tracking=True)
     project_id = fields.Many2one(related='contract_id.project_id', store=True)
     company_id = fields.Many2one(related='contract_id.company_id', store=True)
@@ -138,6 +143,7 @@ class ConstructionIPC(models.Model):
 
             previous_ipcs = self.env['construction.ipc'].search([
                 ('contract_id', '=', rec.contract_id.id),
+                ('contract_order_id', '=', rec.contract_order_id.id if rec.contract_order_id else False),
                 ('id', '!=', rec.id),
                 ('state', 'in', ['approved', 'done'])
             ])
@@ -234,6 +240,9 @@ class ConstructionIPC(models.Model):
 
             if rec.measurement_id.state != 'approved':
                 raise ValidationError("Only approved measurements can be loaded.")
+
+            if rec.measurement_id.contract_order_id:
+                rec.contract_order_id = rec.measurement_id.contract_order_id
 
             existing_ipc = self.env['construction.ipc'].search([
                 ('measurement_id', '=', rec.measurement_id.id),
@@ -333,8 +342,8 @@ class ConstructionIPC(models.Model):
                 'partner_id': contract.partner_id.id,
                 'invoice_date': rec.ipc_date or fields.Date.context_today(self),
                 'journal_id': contract.journal_id.id,
-                'invoice_origin': rec.name,
-                'ref': rec.name,
+                'invoice_origin': ' / '.join(filter(None, [rec.sale_order_id.name if rec.sale_order_id else '', rec.name])),
+                'ref': ' / '.join(filter(None, [rec.contract_id.name, rec.sale_order_id.name if rec.sale_order_id else '', rec.name])),
                 'invoice_line_ids': invoice_line_vals,
             }
 

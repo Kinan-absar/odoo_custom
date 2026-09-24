@@ -1,6 +1,6 @@
 {
     'name': 'Construction Contract Management',
-    'version': '18.0.1.4.0',
+    'version': '18.0.1.6.0',
     'summary': 'Dual-mode construction contract and subcontract management',
     'description': """
 Construction Contract Management
@@ -12,7 +12,7 @@ Construction Contract Management
 - Variations
 - Construction workflow engine
 
-This module is fully standalone (backend only). If you also use Employee
+This module integrates with Odoo Sales for quotation-to-contract conversion while remaining backend-focused. If you also use Employee
 Portal Suite and want employees to view contracts/IPCs/variations/measurements
 from the employee portal, install the separate
 "Construction Contract Management - Employee Portal Bridge" module as well.
@@ -28,6 +28,7 @@ from the employee portal, install the separate
         'account',
         'uom',
         'portal',
+        'sale_management',
     ],
     'images': ['static/description/icon.png'],
     'data': [
@@ -47,6 +48,9 @@ from the employee portal, install the separate
         'reports/construction_advance_report.xml',
         'reports/construction_retention_release_report.xml',
         'views/construction_contract_views.xml',
+        'views/construction_contract_order_views.xml',
+        'views/sale_contract_wizard_views.xml',
+        'views/sale_order_views.xml',
         'views/construction_measurement_views.xml',
         'views/construction_ipc_views.xml',
         'views/construction_ipc_link_move_wizard_views.xml',

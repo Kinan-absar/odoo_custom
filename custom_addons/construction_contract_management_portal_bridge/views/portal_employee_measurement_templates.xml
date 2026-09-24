@@ -66,6 +66,7 @@
                                 <tr>
                                     <th>Measurement #</th>
                                     <th>Contract</th>
+                                    <th>Sales Order / Scope</th>
                                     <th>Project</th>
                                     <th>Date</th>
                                     <th>Period</th>
@@ -81,6 +82,7 @@
                                             </a>
                                         </td>
                                         <td><span t-field="measurement.contract_id"/></td>
+                                        <td><t t-if="measurement.contract_order_id"><t t-esc="measurement.sale_order_id.name"/><t t-if="measurement.contract_order_id.scope_name"> · <t t-esc="measurement.contract_order_id.scope_name"/></t></t><t t-else="">-</t></td>
                                         <td><span t-field="measurement.contract_id.project_id"/></td>
                                         <td><span t-field="measurement.date"/></td>
                                         <td><span t-field="measurement.period_from"/> - <span t-field="measurement.period_to"/></td>
@@ -108,6 +110,10 @@
                                     <div>
                                         <span class="construction-mobile-card-label">Contract</span>
                                         <div class="construction-mobile-card-value"><span t-field="measurement.contract_id"/></div>
+                                    </div>
+                                    <div t-if="measurement.contract_order_id">
+                                        <span class="construction-mobile-card-label">Sales Order / Scope</span>
+                                        <div class="construction-mobile-card-value"><t t-esc="measurement.sale_order_id.name"/><t t-if="measurement.contract_order_id.scope_name"> · <t t-esc="measurement.contract_order_id.scope_name"/></t></div>
                                     </div>
                                     <div>
                                         <span class="construction-mobile-card-label">Project</span>
@@ -459,6 +465,10 @@
                                 <div class="row mb-2">
                                     <div class="col-5"><strong>Contract:</strong></div>
                                     <div class="col-7"><span t-field="measurement.contract_id"/></div>
+                                </div>
+                                <div class="row mb-2" t-if="measurement.contract_order_id">
+                                    <div class="col-5"><strong>Source Sales Order:</strong></div>
+                                    <div class="col-7"><t t-esc="measurement.sale_order_id.name"/><t t-if="measurement.contract_order_id.scope_name"> · <t t-esc="measurement.contract_order_id.scope_name"/></t></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-5"><strong>Project:</strong></div>
@@ -1064,6 +1074,20 @@
                                 </div>
                             </div>
 
+                            <div class="col-md-6" id="contract_order_group" style="display:none;">
+                                <div class="form-group">
+                                    <label for="contract_order_id">Sales Order / Contract Order *</label>
+                                    <select name="contract_order_id" id="contract_order_id" class="form-control">
+                                        <option value="">Select Sales Order / Scope...</option>
+                                        <t t-foreach="contract_orders" t-as="order">
+                                            <option t-att-value="order.id" t-att-data-contract-id="order.contract_id.id">
+                                                <t t-esc="order.sale_order_id.name"/><t t-if="order.scope_name"> - <t t-esc="order.scope_name"/></t>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="date">Date *</label>
@@ -1101,6 +1125,41 @@
                             </a>
                         </div>
                     </form>
+                    <script type="text/javascript"><![CDATA[
+                        document.addEventListener('DOMContentLoaded', function () {
+                            var contractSelect = document.getElementById('contract_id');
+                            var orderSelect = document.getElementById('contract_order_id');
+                            var orderGroup = document.getElementById('contract_order_group');
+                            if (!contractSelect || !orderSelect || !orderGroup) return;
+                            var allOptions = Array.prototype.slice.call(orderSelect.querySelectorAll('option[data-contract-id]'));
+                            function refreshOrders() {
+                                var contractId = contractSelect.value;
+                                var visible = [];
+                                allOptions.forEach(function (opt) {
+                                    var show = contractId && opt.getAttribute('data-contract-id') === contractId;
+                                    opt.hidden = !show;
+                                    opt.disabled = !show;
+                                    if (show) visible.push(opt);
+                                });
+                                if (visible.length) {
+                                    orderGroup.style.display = '';
+                                    orderSelect.required = true;
+                                    if (visible.length === 1) {
+                                        orderSelect.value = visible[0].value;
+                                    } else {
+                                        var currentValid = visible.some(function (opt) { return opt.value === orderSelect.value; });
+                                        if (!currentValid) orderSelect.value = '';
+                                    }
+                                } else {
+                                    orderGroup.style.display = 'none';
+                                    orderSelect.required = false;
+                                    orderSelect.value = '';
+                                }
+                            }
+                            contractSelect.addEventListener('change', refreshOrders);
+                            refreshOrders();
+                        });
+                    ]]></script>
                 </t>
                 <t t-else="">
                     <div class="mt-4">

@@ -10,6 +10,12 @@ class ConstructionMeasurement(models.Model):
 
     name = fields.Char(required=True, copy=False, default='New')
     contract_id = fields.Many2one('construction.contract', required=True, ondelete='cascade', tracking=True)
+    contract_order_id = fields.Many2one(
+        'construction.contract.order', string='Contract Order / Sales Order', tracking=True,
+        domain="[('contract_id', '=', contract_id)]",
+        help='Selects the independent Sales Order scope whose BOQ will be measured.',
+    )
+    sale_order_id = fields.Many2one(related='contract_order_id.sale_order_id', string='Source Sales Order', store=True, readonly=True)
     project_id = fields.Many2one(related='contract_id.project_id', store=True)
     company_id = fields.Many2one(related='contract_id.company_id', store=True)
 
@@ -71,14 +77,18 @@ class ConstructionMeasurement(models.Model):
 
             if not rec.contract_id:
                 continue
+            if rec.contract_id.contract_order_ids and not rec.contract_order_id:
+                raise ValidationError('Select a Contract Order / Sales Order before loading BOQ lines.')
 
             rec.line_ids.unlink()
 
             lines = []
-            for boq in rec.contract_id.boq_line_ids:
+            boq_source = rec.contract_order_id.boq_line_ids if rec.contract_order_id else rec.contract_id.boq_line_ids
+            for boq in boq_source:
                 approved_lines = self.env['construction.measurement.line'].search([
                     ('boq_line_id', '=', boq.id),
                     ('measurement_id.contract_id', '=', rec.contract_id.id),
+                    ('measurement_id.contract_order_id', '=', rec.contract_order_id.id if rec.contract_order_id else False),
                     ('measurement_id.state', '=', 'approved'),
                     ('measurement_id', '!=', rec.id),
                 ])
@@ -102,7 +112,7 @@ class ConstructionMeasurementLine(models.Model):
     boq_line_id = fields.Many2one(
         'construction.contract.boq.line',
         required=True,
-        domain="[('contract_id', '=', parent.contract_id)]",
+        domain="[('contract_id', '=', parent.contract_id), '|', ('contract_order_id', '=', parent.contract_order_id), ('contract_order_id', '=', False)]",
     )
     display_type = fields.Selection(
         related='boq_line_id.display_type',

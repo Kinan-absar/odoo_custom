@@ -8,6 +8,10 @@ class ConstructionContractBoqLine(models.Model):
 
     sequence = fields.Integer(default=10)
     contract_id = fields.Many2one('construction.contract', required=True, ondelete='cascade')
+    contract_order_id = fields.Many2one(
+        'construction.contract.order', string='Contract Order', ondelete='cascade', index=True,
+        help='Independent Sales Order / scope package this BOQ line belongs to.',
+    )
     company_id = fields.Many2one(related='contract_id.company_id', store=True)
     currency_id = fields.Many2one(related='contract_id.currency_id', store=True)
     measurement_line_ids = fields.One2many('construction.measurement.line', 'boq_line_id')
@@ -19,6 +23,23 @@ class ConstructionContractBoqLine(models.Model):
     item_code = fields.Char(string='Item Code')
     description = fields.Text(string='Description')
     uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
+    sale_order_line_id = fields.Many2one(
+        'sale.order.line',
+        string='Source Sales Order Line',
+        copy=False,
+        readonly=True,
+        index=True,
+        ondelete='set null',
+    )
+    quoted_unit_rate = fields.Monetary(
+        string='Quoted Unit Rate',
+        currency_field='currency_id',
+        help='Original unit price from the quotation before discount.',
+    )
+    discount_percent = fields.Float(
+        string='Discount %',
+        help='Discount copied from the quotation line. The Contract Rate already reflects this discount.',
+    )
 
     contract_qty = fields.Float(string='Contract Qty', default=1.0)
     unit_rate = fields.Monetary(string='Unit Rate', currency_field='currency_id', default=0.0)
@@ -77,6 +98,19 @@ class ConstructionContractBoqLine(models.Model):
         compute='_compute_progress_fields',
         store=True,
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('contract_order_id') and not vals.get('contract_id'):
+                order = self.env['construction.contract.order'].browse(vals['contract_order_id'])
+                vals['contract_id'] = order.contract_id.id
+        return super().create(vals_list)
+
+    @api.onchange('contract_order_id')
+    def _onchange_contract_order_id(self):
+        if self.contract_order_id:
+            self.contract_id = self.contract_order_id.contract_id
 
     @api.constrains('display_type', 'description', 'contract_qty', 'unit_rate')
     def _check_accountable_required_fields(self):
