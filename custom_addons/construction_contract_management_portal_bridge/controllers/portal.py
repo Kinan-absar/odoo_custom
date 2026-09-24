@@ -23,6 +23,12 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     def _portal_visible_contract_ids(self):
         return self._portal_visible_contracts().ids
 
+    def _portal_visible_contract_orders(self):
+        contract_ids = self._portal_visible_contract_ids()
+        if not contract_ids:
+            return request.env['construction.contract.order'].sudo().browse()
+        return request.env['construction.contract.order'].sudo().search([('contract_id', 'in', contract_ids)])
+
     # =========================================================
     # CONTRACTS
     # =========================================================
@@ -110,6 +116,22 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
 
         return request.render("construction_contract_management_portal_bridge.portal_employee_contract_detail", {
             'contract': contract,
+            'contract_orders': contract.contract_order_ids.sorted(lambda o: (o.sequence, o.id)),
+            'page_name': 'construction_contract',
+        })
+
+    @http.route(['/my/employee/contract-order/<int:order_id>'], type='http', auth='user', website=True)
+    def portal_employee_contract_order_detail(self, order_id, **kw):
+        allowed_contract_ids = self._portal_visible_contract_ids()
+        order = request.env['construction.contract.order'].sudo().search([
+            ('id', '=', order_id),
+            ('contract_id', 'in', allowed_contract_ids),
+        ], limit=1)
+        if not order:
+            return request.redirect('/my/employee/contracts')
+        return request.render('construction_contract_management_portal_bridge.portal_employee_contract_order_detail', {
+            'contract_order': order,
+            'boq_lines': order.boq_line_ids.sorted(lambda l: (l.sequence, l.id)),
             'page_name': 'construction_contract',
         })
 
@@ -514,8 +536,10 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             contracts = self._portal_visible_contracts()
             if not error_message and not contracts:
                 error_message = "You do not have access to any contracts for creating a measurement."
+            contract_orders = self._portal_visible_contract_orders()
             return {
                 'contracts': contracts,
+                'contract_orders': contract_orders,
                 'has_contracts': bool(contracts),
                 'page_name': 'construction_measurement_new',
                 'error_message': error_message,
@@ -530,8 +554,22 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                         "construction_contract_management_portal_bridge.portal_employee_measurement_new",
                         _measurement_new_values("You are not allowed to create a measurement for this contract.")
                     )
+                contract = request.env['construction.contract'].sudo().browse(contract_id)
+                contract_order_id = int(post.get('contract_order_id') or 0)
+                contract_order = request.env['construction.contract.order'].sudo().browse(contract_order_id) if contract_order_id else request.env['construction.contract.order'].sudo().browse()
+
+                if contract.contract_order_ids:
+                    if not contract_order and len(contract.contract_order_ids) == 1:
+                        contract_order = contract.contract_order_ids[:1]
+                    if not contract_order or contract_order.contract_id != contract:
+                        return request.render(
+                            "construction_contract_management_portal_bridge.portal_employee_measurement_new",
+                            _measurement_new_values("Please select the Sales Order / Contract Order scope to measure.")
+                        )
+
                 vals = {
                     'contract_id': contract_id,
+                    'contract_order_id': contract_order.id if contract_order else False,
                     'date': post.get('date') or False,
                     'period_from': post.get('period_from') or False,
                     'period_to': post.get('period_to') or False,
@@ -581,7 +619,8 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             )
 
         contract = measurement.contract_id
-        boq_lines = contract.boq_line_ids.sorted(lambda l: (l.sequence, l.id))
+        boq_source = measurement.contract_order_id.boq_line_ids if measurement.contract_order_id else contract.boq_line_ids
+        boq_lines = boq_source.sorted(lambda l: (l.sequence, l.id))
         MeasurementLine = request.env['construction.measurement.line']
 
         # existing saved lines for this measurement
@@ -596,6 +635,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             approved_lines = MeasurementLine.search([
                 ('boq_line_id', '=', boq_line.id),
                 ('measurement_id.contract_id', '=', contract.id),
+                ('measurement_id.contract_order_id', '=', measurement.contract_order_id.id if measurement.contract_order_id else False),
                 ('measurement_id.state', '=', 'approved'),
                 ('measurement_id', '!=', measurement.id),
             ])
@@ -603,12 +643,13 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             previous_qty_map[boq_line.id] = sum(approved_lines.mapped('current_qty'))
 
         # progress denominator
-        contract_revised = contract.revised_amount or sum(contract.boq_line_ids.mapped('revised_amount')) or sum(contract.boq_line_ids.mapped('total_amount')) or contract.original_amount or 0.0
+        contract_revised = sum(boq_lines.filtered(lambda l: not l.display_type).mapped('revised_amount')) or sum(boq_lines.filtered(lambda l: not l.display_type).mapped('total_amount')) or 0.0
 
         # progress numerator:
         # prefer contract computed measured amount if available, otherwise compute from approved measurements
         approved_measurement_lines = MeasurementLine.search([
             ('measurement_id.contract_id', '=', contract.id),
+            ('measurement_id.contract_order_id', '=', measurement.contract_order_id.id if measurement.contract_order_id else False),
             ('measurement_id.state', '=', 'approved'),
         ])
         contract_certified = sum(
@@ -649,7 +690,8 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             if measurement.state != 'draft':
                 return request.redirect(f'/my/employee/measurement/{measurement_id}')
 
-            boq_lines = measurement.contract_id.boq_line_ids.sorted(lambda l: (l.sequence, l.id))
+            boq_source = measurement.contract_order_id.boq_line_ids if measurement.contract_order_id else measurement.contract_id.boq_line_ids
+            boq_lines = boq_source.sorted(lambda l: (l.sequence, l.id))
             MeasurementLine = request.env['construction.measurement.line'].sudo()
             validation_errors = []
 
@@ -680,6 +722,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
                 approved_lines = MeasurementLine.search([
                     ('boq_line_id', '=', boq_line.id),
                     ('measurement_id.contract_id', '=', measurement.contract_id.id),
+                    ('measurement_id.contract_order_id', '=', measurement.contract_order_id.id if measurement.contract_order_id else False),
                     ('measurement_id.state', '=', 'approved'),
                     ('measurement_id', '!=', measurement.id),
                 ])
