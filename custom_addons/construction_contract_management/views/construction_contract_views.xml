@@ -33,6 +33,7 @@
                     <button name="action_close" string="Close" type="object" invisible="state not in ['completed']"/>
                     <button name="action_cancel" string="Cancel" type="object" invisible="state in ['closed','cancelled']"/>
                     <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state == 'draft'"/>
+                    <button name="action_refresh_from_sale_order" string="Refresh from Sales" type="object" class="btn-secondary" invisible="not sale_order_id or state not in ['draft','under_review']" groups="construction_contract_management.group_construction_manager"/>
                     <button name="%(construction_contract_management.action_report_construction_contract)d" string="Print" type="action" class="btn-secondary" invisible="not id"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft,under_review,approved,active,completed,closed,cancelled"/>
@@ -40,6 +41,9 @@
 
                 <sheet>
                     <div class="oe_button_box" name="button_box">
+                        <button type="object" name="action_view_sale_order" class="oe_stat_button" icon="fa-shopping-cart" invisible="not sale_order_id">
+                            <div class="o_stat_info"><span class="o_stat_text">Sales Order</span><span class="o_stat_value"><field name="sale_order_id"/></span></div>
+                        </button>
                         <button type="object" name="action_view_measurements" class="oe_stat_button" icon="fa-ruler">
                             <field name="measurement_count" widget="statinfo" string="Measurements"/>
                         </button>
@@ -77,12 +81,14 @@
                             <field name="project_id"/>
                             <field name="partner_id"/>
                             <field name="contract_direction"/>
+                            <field name="sale_order_id" readonly="1" options="{'no_create': True}"/>
+                            <field name="customer_reference"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                         <group>
                             <field name="date_start"/>
                             <field name="date_end"/>
-                            <field name="currency_id" readonly="1"/>
+                            <field name="currency_id"/>
                             <field name="payment_term_id"/>
                         </group>
                     </group>
@@ -92,6 +98,10 @@
                             <group>
                                 <group>
                                     <field name="original_amount"/>
+                                    <field name="boq_original_amount" readonly="1"/>
+                                    <field name="boq_difference" readonly="1" decoration-danger="not boq_matches_original" decoration-success="boq_matches_original"/>
+                                    <field name="boq_matches_original" readonly="1"/>
+                                    <field name="source_sale_amount" readonly="1" invisible="not sale_order_id"/>
                                     <field name="revised_amount" readonly="1"/>
                                     <field name="retention_percent"/>
                                     <field name="advance_percent"/>
@@ -151,7 +161,10 @@
         <field name="variation_qty_decrease" readonly="1" invisible="display_type != False"/>
         <field name="revised_qty" readonly="1" invisible="display_type != False"/>
 
-        <field name="unit_rate" invisible="display_type != False"/>
+        <field name="quoted_unit_rate" readonly="1" optional="hide" invisible="display_type != False"/>
+        <field name="discount_percent" readonly="1" optional="hide" invisible="display_type != False"/>
+        <field name="unit_rate" string="Contract Rate" invisible="display_type != False"/>
+        <field name="sale_order_line_id" readonly="1" optional="hide" invisible="display_type != False"/>
         <field name="revised_unit_rate" readonly="1" invisible="display_type != False"/>
 
         <field name="total_amount" readonly="1" invisible="display_type != False"/>
@@ -180,7 +193,10 @@
         <field name="variation_qty_decrease" readonly="1" invisible="display_type != False"/>
         <field name="revised_qty" readonly="1" invisible="display_type != False"/>
 
-        <field name="unit_rate" invisible="display_type != False"/>
+        <field name="quoted_unit_rate" readonly="1" optional="hide" invisible="display_type != False"/>
+        <field name="discount_percent" readonly="1" optional="hide" invisible="display_type != False"/>
+        <field name="unit_rate" string="Contract Rate" invisible="display_type != False"/>
+        <field name="sale_order_line_id" readonly="1" optional="hide" invisible="display_type != False"/>
         <field name="revised_unit_rate" readonly="1" invisible="display_type != False"/>
 
         <field name="total_amount" readonly="1" invisible="display_type != False"/>

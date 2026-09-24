@@ -1,5 +1,5 @@
-from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError, UserError
 
 
 class ConstructionContract(models.Model):
@@ -12,18 +12,59 @@ class ConstructionContract(models.Model):
     project_id = fields.Many2one('project.project', string='Project', tracking=True)
     partner_id = fields.Many2one('res.partner', string='Partner', required=True, tracking=True)
     company_id = fields.Many2one('res.company', string='Company', required=True, default=lambda self: self.env.company)
-    currency_id = fields.Many2one('res.currency', string='Currency', related='company_id.currency_id', store=True)
+    currency_id = fields.Many2one(
+        'res.currency',
+        string='Currency',
+        required=True,
+        default=lambda self: self.env.company.currency_id,
+        tracking=True,
+    )
 
     contract_direction = fields.Selection([
         ('inbound', 'Client Contract'),
         ('outbound', 'Subcontract'),
     ], string='Contract Direction', required=True, default='outbound', tracking=True)
 
+    sale_order_id = fields.Many2one(
+        'sale.order',
+        string='Source Sales Order',
+        copy=False,
+        readonly=True,
+        index=True,
+        ondelete='restrict',
+        tracking=True,
+    )
+    customer_reference = fields.Char(string='Customer Reference', tracking=True)
+    source_sale_amount = fields.Monetary(
+        string='Sales Order Untaxed Amount',
+        related='sale_order_id.amount_untaxed',
+        currency_field='currency_id',
+        readonly=True,
+    )
+
     scope = fields.Text(string='Scope of Work')
     date_start = fields.Date(string='Start Date')
     date_end = fields.Date(string='End Date')
 
     original_amount = fields.Monetary(string='Original Amount', currency_field='currency_id', tracking=True)
+    boq_original_amount = fields.Monetary(
+        string='Original BOQ Amount',
+        currency_field='currency_id',
+        compute='_compute_boq_comparison',
+        store=True,
+    )
+    boq_difference = fields.Monetary(
+        string='BOQ Difference',
+        currency_field='currency_id',
+        compute='_compute_boq_comparison',
+        store=True,
+        help='Original Amount minus the sum of original BOQ lines.',
+    )
+    boq_matches_original = fields.Boolean(
+        string='BOQ Matches Original Amount',
+        compute='_compute_boq_comparison',
+        store=True,
+    )
     revised_amount = fields.Monetary(
         string='Revised Amount',
         currency_field='currency_id',
@@ -172,6 +213,16 @@ class ConstructionContract(models.Model):
         ('cancelled', 'Cancelled'),
     ], default='draft', tracking=True)
 
+    @api.depends('original_amount', 'boq_line_ids.total_amount', 'currency_id')
+    def _compute_boq_comparison(self):
+        for rec in self:
+            boq_total = sum(rec.boq_line_ids.filtered(lambda l: not l.display_type).mapped('total_amount'))
+            difference = (rec.original_amount or 0.0) - boq_total
+            rec.boq_original_amount = boq_total
+            rec.boq_difference = difference
+            rounding = rec.currency_id.rounding if rec.currency_id else 0.01
+            rec.boq_matches_original = abs(difference) < rounding
+
     @api.depends('boq_line_ids.revised_amount')
     def _compute_revised_amount(self):
         for rec in self:
@@ -205,6 +256,65 @@ class ConstructionContract(models.Model):
             if vals.get('name', 'New') == 'New':
                 vals['name'] = self.env['ir.sequence'].next_by_code('construction.contract') or 'New'
         return super().create(vals_list)
+
+    @api.constrains('sale_order_id')
+    def _check_unique_sale_order(self):
+        for rec in self.filtered('sale_order_id'):
+            duplicate = self.search_count([
+                ('sale_order_id', '=', rec.sale_order_id.id),
+                ('id', '!=', rec.id),
+            ])
+            if duplicate:
+                raise ValidationError(_('A client contract already exists for Sales Order %s.') % rec.sale_order_id.name)
+
+    def action_view_sale_order(self):
+        self.ensure_one()
+        if not self.sale_order_id:
+            raise UserError(_('This contract is not linked to a Sales Order.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Sales Order'),
+            'res_model': 'sale.order',
+            'view_mode': 'form',
+            'res_id': self.sale_order_id.id,
+            'target': 'current',
+        }
+
+    def action_refresh_from_sale_order(self):
+        self.ensure_one()
+        if not self.sale_order_id:
+            raise UserError(_('This contract is not linked to a Sales Order.'))
+        if self.state not in ('draft', 'under_review'):
+            raise UserError(_('The BOQ can only be refreshed from Sales while the contract is Draft or Under Review.'))
+        if self.measurement_ids or self.ipc_ids:
+            raise UserError(_('You cannot rebuild the BOQ after measurements or IPCs have been created.'))
+        approved_variations = self.env['construction.variation'].search_count([
+            ('contract_id', '=', self.id),
+            ('state', 'in', ['approved']),
+        ])
+        if approved_variations:
+            raise UserError(_('You cannot rebuild the BOQ after an approved variation exists.'))
+
+        order = self.sale_order_id
+        self.boq_line_ids.unlink()
+        vals = order._prepare_construction_contract_vals()
+        vals.pop('sale_order_id', None)
+        vals.pop('boq_line_ids', None)
+        self.write({
+            'partner_id': vals['partner_id'],
+            'company_id': vals['company_id'],
+            'currency_id': vals['currency_id'],
+            'payment_term_id': vals['payment_term_id'],
+            'customer_reference': vals['customer_reference'],
+            'original_amount': vals['original_amount'],
+            'scope': vals['scope'],
+            'date_start': vals['date_start'],
+        })
+        if 'project_id' in vals:
+            self.project_id = vals['project_id']
+        self.write({'boq_line_ids': order._prepare_construction_boq_commands()})
+        self.message_post(body=_('Contract header and BOQ refreshed from Sales Order %s.') % order.name)
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     def _get_report_base_filename(self):
         self.ensure_one()

@@ -1,0 +1,28 @@
+<odoo>
+    <record id="view_sale_order_form_construction_contract" model="ir.ui.view">
+        <field name="name">sale.order.form.construction.contract</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/header" position="inside">
+                <field name="construction_contract_count" invisible="1"/>
+                <button name="action_create_construction_contract"
+                        string="Create Client Contract"
+                        type="object"
+                        class="btn-primary"
+                        groups="construction_contract_management.group_construction_manager"
+                        invisible="state != 'sale' or construction_contract_count != 0"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_construction_contract"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-building"
+                        groups="construction_contract_management.group_construction_user"
+                        invisible="construction_contract_count == 0">
+                    <field name="construction_contract_count" widget="statinfo" string="Client Contract"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>
