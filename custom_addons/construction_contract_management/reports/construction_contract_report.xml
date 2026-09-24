@@ -33,7 +33,7 @@
                                 </td>
                                 <td t-if="doc.sale_order_id">
                                     <div class="meta-card">
-                                        <div class="meta-label">Source Sales Order</div>
+                                        <div class="meta-label">Original Sales Order</div>
                                         <div class="meta-value"><span t-field="doc.sale_order_id"/></div>
                                     </div>
                                 </td>
@@ -113,6 +113,21 @@
                             </tr>
                         </table>
 
+                        <t t-if="len(doc.contract_order_ids) &gt; 1">
+                            <div class="section-title">Contract Orders / Scope Packages</div>
+                            <table class="data-table">
+                                <thead><tr><th>Contract Order</th><th>Sales Order</th><th>Scope / Package</th><th class="text-right">Order Amount</th><th class="text-right">BOQ Amount</th></tr></thead>
+                                <tbody>
+                                    <tr t-foreach="doc.contract_order_ids" t-as="co">
+                                        <td><span t-field="co.name"/></td><td><span t-field="co.sale_order_id"/></td><td><span t-esc="co.scope_name or '-'"/></td>
+                                        <td class="text-right"><span t-field="co.order_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                        <td class="text-right"><span t-field="co.boq_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="note-box" style="margin-top:10px;">Detailed BOQs are maintained separately inside each Contract Order / Sales Order scope.</div>
+                        </t>
+                        <t t-if="len(doc.contract_order_ids) &lt;= 1">
                         <div class="section-title">Bill of Quantities</div>
                         <table class="data-table">
                             <thead>
@@ -203,6 +218,7 @@
                                 </tr>
                             </tbody>
                         </table>
+                        </t>
 
                         <t t-if="doc.scope or doc.notes">
                             <table class="two-col" style="margin-top: 14px;">

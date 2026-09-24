@@ -44,6 +44,9 @@
                         <button type="object" name="action_view_sale_order" class="oe_stat_button" icon="fa-shopping-cart" invisible="not sale_order_id">
                             <div class="o_stat_info"><span class="o_stat_text">Sales Order</span><span class="o_stat_value"><field name="sale_order_id"/></span></div>
                         </button>
+                        <button type="object" name="action_view_contract_orders" class="oe_stat_button" icon="fa-list-alt" invisible="contract_order_count == 0">
+                            <field name="contract_order_count" widget="statinfo" string="Contract Orders"/>
+                        </button>
                         <button type="object" name="action_view_measurements" class="oe_stat_button" icon="fa-ruler">
                             <field name="measurement_count" widget="statinfo" string="Measurements"/>
                         </button>
@@ -81,7 +84,7 @@
                             <field name="project_id"/>
                             <field name="partner_id"/>
                             <field name="contract_direction"/>
-                            <field name="sale_order_id" readonly="1" options="{'no_create': True}"/>
+                            <field name="sale_order_id" string="Original Sales Order" readonly="1" options="{'no_create': True}"/>
                             <field name="customer_reference"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
@@ -138,7 +141,20 @@
                             </group>
                         </page>
 
-                        <page string="BOQ Lines">
+                        <page string="Contract Orders">
+                            <field name="contract_order_ids" readonly="1">
+                                <list>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="sale_order_id"/>
+                                    <field name="scope_name"/>
+                                    <field name="order_amount" sum="Total"/>
+                                    <field name="boq_amount" sum="BOQ Total"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="BOQ Lines" invisible="contract_order_count &gt; 0">
                             <field name="boq_line_ids" groups="construction_contract_management.group_construction_manager">
     <list editable="bottom">
         <control>

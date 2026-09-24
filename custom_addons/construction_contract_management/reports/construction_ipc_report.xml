@@ -37,10 +37,10 @@
                                         <div class="meta-value"><span t-field="doc.contract_id"/></div>
                                     </div>
                                 </td>
-                                <td t-if="doc.contract_id.sale_order_id">
+                                <td t-if="doc.sale_order_id or doc.contract_id.sale_order_id">
                                     <div class="meta-card">
-                                        <div class="meta-label">Source Sales Order</div>
-                                        <div class="meta-value"><span t-field="doc.contract_id.sale_order_id"/></div>
+                                        <t t-if="doc.contract_order_id"><div class="meta-label">Contract Order</div><div class="meta-value"><span t-field="doc.contract_order_id"/></div></t><div class="meta-label">Source Sales Order</div>
+                                        <div class="meta-value"><span t-esc="(doc.sale_order_id or doc.contract_id.sale_order_id).name"/></div>
                                     </div>
                                 </td>
                                 <td>

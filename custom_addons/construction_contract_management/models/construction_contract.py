@@ -195,6 +195,8 @@ class ConstructionContract(models.Model):
     )
 
     boq_line_ids = fields.One2many('construction.contract.boq.line', 'contract_id', string='BOQ Lines')
+    contract_order_ids = fields.One2many('construction.contract.order', 'contract_id', string='Contract Orders')
+    contract_order_count = fields.Integer(compute='_compute_counts')
     measurement_ids = fields.One2many('construction.measurement', 'contract_id', string='Measurements')
     ipc_ids = fields.One2many('construction.ipc', 'contract_id', string='IPCs')
 
@@ -241,6 +243,7 @@ class ConstructionContract(models.Model):
     def _compute_counts(self):
         for rec in self:
             rec.boq_line_count = len(rec.boq_line_ids)
+            rec.contract_order_count = len(rec.contract_order_ids)
             rec.measurement_count = len(rec.measurement_ids)
             rec.ipc_count = len(rec.ipc_ids)
 
@@ -284,6 +287,8 @@ class ConstructionContract(models.Model):
         self.ensure_one()
         if not self.sale_order_id:
             raise UserError(_('This contract is not linked to a Sales Order.'))
+        if self.contract_order_ids:
+            raise UserError(_('Refresh the BOQ from the individual Contract Order instead. This contract contains separated Sales Order scopes.'))
         if self.state not in ('draft', 'under_review'):
             raise UserError(_('The BOQ can only be refreshed from Sales while the contract is Draft or Under Review.'))
         if self.measurement_ids or self.ipc_ids:
@@ -340,6 +345,15 @@ class ConstructionContract(models.Model):
 
     def action_reset_to_draft(self):
         self.state = 'draft'
+    def action_view_contract_orders(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window', 'name': _('Contract Orders'),
+            'res_model': 'construction.contract.order', 'view_mode': 'list,form',
+            'domain': [('contract_id', '=', self.id)],
+            'context': {'default_contract_id': self.id},
+        }
+
     def action_view_measurements(self):
         self.ensure_one()
         return {

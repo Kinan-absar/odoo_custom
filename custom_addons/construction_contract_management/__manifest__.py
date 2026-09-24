@@ -1,6 +1,6 @@
 {
     'name': 'Construction Contract Management',
-    'version': '18.0.1.5.3',
+    'version': '18.0.1.6.0',
     'summary': 'Dual-mode construction contract and subcontract management',
     'description': """
 Construction Contract Management
@@ -48,6 +48,8 @@ from the employee portal, install the separate
         'reports/construction_advance_report.xml',
         'reports/construction_retention_release_report.xml',
         'views/construction_contract_views.xml',
+        'views/construction_contract_order_views.xml',
+        'views/sale_contract_wizard_views.xml',
         'views/sale_order_views.xml',
         'views/construction_measurement_views.xml',
         'views/construction_ipc_views.xml',

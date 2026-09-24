@@ -8,6 +8,8 @@
             <list string="Measurements" default_order="id desc">
                 <field name="name"/>
                 <field name="contract_id"/>
+                <field name="contract_order_id" optional="show"/>
+                <field name="sale_order_id" optional="show"/>
                 <field name="project_id"/>
                 <field name="date"/>
                 <field name="period_from"/>
@@ -47,6 +49,8 @@
                     <group>
                         <group>
                             <field name="contract_id" readonly="state == 'approved'"/>
+                            <field name="contract_order_id" readonly="state == 'approved'" domain="[('contract_id', '=', contract_id)]"/>
+                            <field name="sale_order_id" readonly="1"/>
                             <field name="project_id" readonly="1"/>
                             <field name="date" readonly="state == 'approved'"/>
                         </group>
@@ -97,6 +101,8 @@
             <search string="Search Measurements">
                 <field name="name"/>
                 <field name="contract_id"/>
+                <field name="contract_order_id" optional="show"/>
+                <field name="sale_order_id" optional="show"/>
                 <field name="project_id"/>
 
                 <filter string="Draft" name="filter_draft" domain="[('state','=','draft')]"/>
