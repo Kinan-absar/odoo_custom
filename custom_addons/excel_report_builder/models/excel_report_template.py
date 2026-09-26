@@ -62,17 +62,20 @@ class ExcelReportTemplate(models.Model):
     date_field_id = fields.Many2one(
         "ir.model.fields",
         string="Runtime Date Field",
+        ondelete="set null",
         domain="[('model_id', '=', model_id), ('ttype', 'in', ['date', 'datetime']), ('store', '=', True)]",
         help="When set, users can enter From/To dates each time they generate the report.",
     )
     group_field_id = fields.Many2one(
         "ir.model.fields",
         string="Primary Group By",
+        ondelete="set null",
         domain="[('model_id', '=', model_id), ('ttype', 'not in', ['one2many', 'many2many', 'binary', 'html']), ('store', '=', True)]",
     )
     second_group_field_id = fields.Many2one(
         "ir.model.fields",
         string="Secondary Group By",
+        ondelete="set null",
         domain="[('model_id', '=', model_id), ('ttype', 'not in', ['one2many', 'many2many', 'binary', 'html']), ('store', '=', True)]",
     )
     show_subtotals = fields.Boolean(default=True)
@@ -171,16 +174,19 @@ class ExcelReportColumn(models.Model):
     field_id = fields.Many2one(
         "ir.model.fields",
         string="Field",
+        ondelete="set null",
         domain="[('model_id', '=', model_id), ('ttype', 'not in', ['one2many', 'binary', 'html']), ('store', '=', True)]",
     )
     source_field_a_id = fields.Many2one(
         "ir.model.fields",
         string="Field A",
+        ondelete="set null",
         domain="[('model_id', '=', model_id), ('ttype', 'in', ['integer', 'float', 'monetary']), ('store', '=', True)]",
     )
     source_field_b_id = fields.Many2one(
         "ir.model.fields",
         string="Field B",
+        ondelete="set null",
         domain="[('model_id', '=', model_id), ('ttype', 'in', ['integer', 'float', 'monetary']), ('store', '=', True)]",
     )
     width = fields.Float(default=18.0)
@@ -233,6 +239,7 @@ class ExcelReportFilter(models.Model):
     field_id = fields.Many2one(
         "ir.model.fields",
         required=True,
+        ondelete="cascade",
         domain="[('model_id', '=', model_id), ('ttype', 'not in', ['one2many', 'many2many', 'binary', 'html']), ('store', '=', True)]",
     )
     operator = fields.Selection(

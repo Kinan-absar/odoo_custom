@@ -1,7 +1,7 @@
 {
     "name": "Excel Report Builder",
     "summary": "No-code reusable XLSX reports from any Odoo model",
-    "version": "18.0.1.0.1",
+    "version": "18.0.1.0.2",
     "category": "Reporting",
     "author": "ABSAR",
     "license": "OPL-1",
