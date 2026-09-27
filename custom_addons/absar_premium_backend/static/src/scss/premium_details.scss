@@ -1,0 +1,128 @@
+/* ABSAR Premium Details - Odoo 18 Enterprise
+   Subtle visual polish only. Keeps Odoo's native colors, spacing model,
+   typography, and business UI behavior intact. */
+
+/* -------------------------------------------------------------------------
+   FORM / SHEET SURFACES
+   ------------------------------------------------------------------------- */
+
+/* Give form sheets a softer premium edge without changing their layout. */
+.o_web_client .o_form_view .o_form_sheet_bg > .o_form_sheet,
+.o_web_client .o_form_view .o_form_sheet {
+    border-radius: 14px;
+}
+
+/* Notebook/tab content often appears as a separate visual surface. */
+.o_web_client .o_form_view .o_notebook .tab-content {
+    border-radius: 0 0 12px 12px;
+}
+
+/* -------------------------------------------------------------------------
+   DIALOGS / POPOVERS / DROPDOWNS
+   ------------------------------------------------------------------------- */
+
+.o_web_client .modal-content,
+.o_web_client .o_dialog .modal-content {
+    border-radius: 16px !important;
+    overflow: hidden;
+}
+
+.o_web_client .dropdown-menu,
+.o_web_client .o-dropdown--menu,
+.o_web_client .popover {
+    border-radius: 12px !important;
+}
+
+/* Keep menu items compact while making hover/selection feel less harsh. */
+.o_web_client .dropdown-menu .dropdown-item,
+.o_web_client .o-dropdown--menu .dropdown-item,
+.o_web_client .o-dropdown--menu .o-dropdown-item {
+    border-radius: 8px;
+    margin-inline: 4px;
+    width: calc(100% - 8px);
+}
+
+/* -------------------------------------------------------------------------
+   LIST / TABLE POLISH
+   ------------------------------------------------------------------------- */
+
+/* Soft hover cue only; no permanent recoloring of accounting/status rows. */
+.o_web_client .o_list_view .o_data_row,
+.o_web_client .o_list_renderer .o_data_row {
+    transition: background-color 120ms ease;
+}
+
+.o_web_client .o_list_view .o_data_row:hover > td,
+.o_web_client .o_list_renderer .o_data_row:hover > td {
+    background-color: rgba(0, 0, 0, 0.025);
+}
+
+/* Slightly round the visible outer table/list container where supported. */
+.o_web_client .o_list_renderer .o_list_table,
+.o_web_client .o_list_view .o_list_table {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* -------------------------------------------------------------------------
+   KANBAN CARDS
+   ------------------------------------------------------------------------- */
+
+.o_web_client .o_kanban_renderer .o_kanban_record,
+.o_web_client .o_kanban_view .o_kanban_record {
+    border-radius: 12px !important;
+    transition: box-shadow 140ms ease, transform 140ms ease;
+}
+
+/* Very light lift: visible enough to feel polished, not animated/gimmicky. */
+.o_web_client .o_kanban_renderer .o_kanban_record:hover,
+.o_web_client .o_kanban_view .o_kanban_record:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+}
+
+/* -------------------------------------------------------------------------
+   INPUT / FIELD FOCUS
+   ------------------------------------------------------------------------- */
+
+/* Preserve Odoo's own focus color; only soften shape and transition. */
+.o_web_client .o_field_widget input,
+.o_web_client .o_field_widget textarea,
+.o_web_client .o_field_widget select,
+.o_web_client .form-control,
+.o_web_client .o_input {
+    border-radius: 8px;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+/* Avoid touching checkbox/radio visual geometry. */
+.o_web_client input[type="checkbox"],
+.o_web_client input[type="radio"] {
+    border-radius: initial;
+}
+
+/* -------------------------------------------------------------------------
+   SEARCH / CONTROL PANEL SURFACES
+   ------------------------------------------------------------------------- */
+
+.o_web_client .o_searchview,
+.o_web_client .o_searchview_facet {
+    border-radius: 9px;
+}
+
+/* -------------------------------------------------------------------------
+   ACCESSIBILITY / MOTION
+   ------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    .o_web_client .o_list_view .o_data_row,
+    .o_web_client .o_list_renderer .o_data_row,
+    .o_web_client .o_kanban_renderer .o_kanban_record,
+    .o_web_client .o_kanban_view .o_kanban_record,
+    .o_web_client .o_field_widget input,
+    .o_web_client .o_field_widget textarea,
+    .o_web_client .o_field_widget select,
+    .o_web_client .form-control,
+    .o_web_client .o_input {
+        transition: none;
+    }
+}
