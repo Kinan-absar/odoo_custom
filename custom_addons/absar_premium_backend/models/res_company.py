@@ -4,17 +4,29 @@ from odoo import fields, models
 class ResCompany(models.Model):
     _inherit = "res.company"
 
-    # Composite report-font choices.  Each family is defined in report assets
-    # with separate Unicode ranges so Arabic glyphs use the selected Arabic font
-    # while Latin text keeps Lato.  This avoids odd Latin glyphs (notably "o")
-    # when an Arabic-oriented font is selected for a bilingual report.
+    # Add the real font-family names to Odoo's native report font selector.
+    # Odoo generates the company report SCSS from res.company.font, so using
+    # the real family name is more reliable in wkhtmltopdf than an @font-face
+    # alias based on local().
     font = fields.Selection(
         selection_add=[
-            ("ABSAR Arabic Noto", "ABSAR Arabic - Noto Sans Arabic (Latin stays Lato)"),
-            ("ABSAR Arabic Tajawal", "ABSAR Arabic - Tajawal (Latin stays Lato)"),
-            ("ABSAR Arabic DejaVu", "ABSAR Arabic - DejaVu Sans (Latin stays Lato)"),
+            ("Noto Sans Arabic", "Noto Sans Arabic"),
+            ("Tajawal", "Tajawal"),
+            ("DejaVu Sans", "DejaVu Sans"),
+            ("Tahoma", "Tahoma"),
+            ("Arial", "Arial"),
+            # Keep the legacy values temporarily so databases that tested the
+            # previous build remain valid until Settings is saved once.
+            ("ABSAR Arabic Noto", "Legacy ABSAR Noto (replace in ABSAR Theme)"),
+            ("ABSAR Arabic Tajawal", "Legacy ABSAR Tajawal (replace in ABSAR Theme)"),
+            ("ABSAR Arabic DejaVu", "Legacy ABSAR DejaVu (replace in ABSAR Theme)"),
         ],
         ondelete={
+            "Noto Sans Arabic": "set default",
+            "Tajawal": "set default",
+            "DejaVu Sans": "set default",
+            "Tahoma": "set default",
+            "Arial": "set default",
             "ABSAR Arabic Noto": "set default",
             "ABSAR Arabic Tajawal": "set default",
             "ABSAR Arabic DejaVu": "set default",

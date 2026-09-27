@@ -21,9 +21,10 @@ function darkenHex(hex, amount = 0.14) {
 }
 
 function setBooleanClass(root, enabled, onClass, offClass) {
-    root.classList.toggle(onClass, Boolean(enabled));
+    const isEnabled = Boolean(enabled);
+    root.classList.toggle(onClass, isEnabled);
     if (offClass) {
-        root.classList.remove(offClass);
+        root.classList.toggle(offClass, !isEnabled);
     }
 }
 

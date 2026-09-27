@@ -5,6 +5,23 @@ from odoo.exceptions import ValidationError
 
 HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
+REPORT_FONT_TO_ODOO = {
+    "odoo": "Lato",
+    "noto_arabic": "Noto Sans Arabic",
+    "tajawal": "Tajawal",
+    "dejavu": "DejaVu Sans",
+    "tahoma": "Tahoma",
+    "arial": "Arial",
+}
+ODOO_FONT_TO_REPORT = {value: key for key, value in REPORT_FONT_TO_ODOO.items()}
+# Values used by the previous experimental build. Opening Settings maps them
+# to the corrected choice and saving replaces them with the real font name.
+ODOO_FONT_TO_REPORT.update({
+    "ABSAR Arabic Noto": "noto_arabic",
+    "ABSAR Arabic Tajawal": "tajawal",
+    "ABSAR Arabic DejaVu": "dejavu",
+})
+
 
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
@@ -58,9 +75,17 @@ class ResConfigSettings(models.TransientModel):
         config_parameter="absar_premium_backend.backend_font",
     )
     absar_report_font = fields.Selection(
-        related="company_id.font",
-        readonly=False,
+        [
+            ("odoo", "Odoo Default / Lato"),
+            ("noto_arabic", "Noto Sans Arabic"),
+            ("tajawal", "Tajawal"),
+            ("dejavu", "DejaVu Sans"),
+            ("tahoma", "Tahoma"),
+            ("arial", "Arial"),
+        ],
         string="PDF / Report Font",
+        default="odoo",
+        help="Changes Odoo's native company report font. Generate a new PDF after saving.",
     )
 
     # Do NOT use config_parameter directly for these booleans.  Odoo may remove
@@ -81,6 +106,9 @@ class ResConfigSettings(models.TransientModel):
             absar_rounded_apps=params.get_param(
                 "absar_premium_backend.rounded_apps", "1"
             ) in ("1", "true", "True", True),
+            absar_report_font=ODOO_FONT_TO_REPORT.get(
+                self.env.company.font or "Lato", "odoo"
+            ),
         )
         return values
 
@@ -95,6 +123,10 @@ class ResConfigSettings(models.TransientModel):
             "absar_premium_backend.rounded_apps",
             "1" if self.absar_rounded_apps else "0",
         )
+        if self.company_id:
+            self.company_id.font = REPORT_FONT_TO_ODOO.get(
+                self.absar_report_font or "odoo", "Lato"
+            )
 
     @api.constrains(
         "absar_primary_color",

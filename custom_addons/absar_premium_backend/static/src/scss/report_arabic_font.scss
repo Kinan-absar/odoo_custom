@@ -1,70 +1,28 @@
 /*
- * Composite bilingual report fonts.
+ * ABSAR report typography compatibility layer.
  *
- * The previous build applied one Arabic-oriented font to the entire report.
- * That fixed Arabic but also changed Latin glyphs, which is why lowercase "o"
- * could look odd.  These families split glyph coverage by Unicode range:
- * Arabic characters use the selected Arabic face; Latin characters stay Lato.
- * This also works for mixed text in the SAME node, e.g. "42317 المدينة المنورة".
+ * IMPORTANT: The selected report font now uses Odoo's native res.company.font
+ * mechanism with the REAL font-family name (Noto Sans Arabic, Tajawal, etc.).
+ * This avoids the previous @font-face local() aliases, which wkhtmltopdf could
+ * ignore and which made Arabic fall back to Odoo's old/ugly default.
+ *
+ * Odoo's contact/address widget can apply nested font declarations of its own.
+ * Force those descendants to inherit the company report font so mixed address
+ * lines such as "42317 المدينة المنورة" follow the selected report font too.
  */
 
-/* Arabic + Arabic supplement/presentation forms. */
-$absar-arabic-range: U+0600-06FF, U+0750-077F, U+0870-089F, U+08A0-08FF,
-    U+FB50-FDFF, U+FE70-FEFF, U+1EE00-1EEFF;
-
-/* Basic Latin, Latin-1, Latin Extended, punctuation, symbols and digits. */
-$absar-latin-range: U+0000-05FF, U+0900-FB4F, U+FE00-FE6F, U+FF00-1EDFF;
-
-@font-face {
-    font-family: "ABSAR Arabic Noto";
-    src: local("Noto Sans Arabic"), local("NotoSansArabic");
-    font-style: normal;
-    font-weight: 100 900;
-    unicode-range: $absar-arabic-range;
-}
-@font-face {
-    font-family: "ABSAR Arabic Noto";
-    src: local("Lato");
-    font-style: normal;
-    font-weight: 100 900;
-    unicode-range: $absar-latin-range;
+.header,
+.article,
+.footer,
+.page,
+.o_report_layout_standard,
+.o_report_layout_boxed,
+.o_report_layout_bold,
+.o_report_layout_striped,
+.o_report_layout_clean {
+    /* Keep Odoo's company-level font as the source of truth. */
 }
 
-@font-face {
-    font-family: "ABSAR Arabic Tajawal";
-    src: local("Tajawal");
-    font-style: normal;
-    font-weight: 100 900;
-    unicode-range: $absar-arabic-range;
-}
-@font-face {
-    font-family: "ABSAR Arabic Tajawal";
-    src: local("Lato");
-    font-style: normal;
-    font-weight: 100 900;
-    unicode-range: $absar-latin-range;
-}
-
-@font-face {
-    font-family: "ABSAR Arabic DejaVu";
-    src: local("DejaVu Sans");
-    font-style: normal;
-    font-weight: 100 900;
-    unicode-range: $absar-arabic-range;
-}
-@font-face {
-    font-family: "ABSAR Arabic DejaVu";
-    src: local("Lato");
-    font-style: normal;
-    font-weight: 100 900;
-    unicode-range: $absar-latin-range;
-}
-
-/*
- * Contact/address widgets sometimes set their own font.  Force descendants to
- * inherit the report layout's selected composite family.  Because the family
- * itself uses Unicode ranges, English and Arabic remain visually independent.
- */
 .header *:not(.fa):not(.oi),
 .article *:not(.fa):not(.oi),
 .footer *:not(.fa):not(.oi),
@@ -75,10 +33,14 @@ address *:not(.fa):not(.oi),
 .o_address_format *:not(.fa):not(.oi),
 .o_contact_address *:not(.fa):not(.oi),
 .o_force_ltr *:not(.fa):not(.oi),
-[itemscope][itemtype*="PostalAddress"] *:not(.fa):not(.oi) {
+[itemscope][itemtype*="PostalAddress"] *:not(.fa):not(.oi),
+[itemprop="addressLocality"],
+[itemprop="streetAddress"],
+[itemprop="name"] {
     font-family: inherit !important;
 }
 
+/* Give Arabic/RTL text enough vertical room without changing alignment. */
 [lang="ar"],
 [lang^="ar-"],
 [dir="rtl"],

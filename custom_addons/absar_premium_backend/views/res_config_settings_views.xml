@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="base.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
-                <app string="ABSAR Theme" name="absar_theme" groups="base.group_system">
+                <app string="ABSAR Theme" name="absar_theme" logo="/absar_premium_backend/static/description/icon.png" groups="base.group_system">
                     <block title="Colors" name="absar_theme_colors">
                         <setting string="Primary Color" help="Leave empty to keep Odoo's original primary color.">
                             <div class="content-group o_absar_theme_settings">
@@ -68,9 +68,9 @@
                     </block>
 
                     <block title="PDF / QWeb Reports" name="absar_theme_reports">
-                        <setting string="PDF / Report Font" help="For bilingual reports choose one of the ABSAR Arabic composite fonts. Arabic glyphs use the selected Arabic typeface while English/Latin stays Lato, including mixed lines such as 42317 المدينة المنورة.">
+                        <setting string="PDF / Report Font" help="Choose the company PDF/report font. This now uses Odoo's native report-font mechanism with the real font family, so Arabic is not ignored by wkhtmltopdf. Mixed company-address lines such as 42317 المدينة المنورة inherit the selected font.">
                             <field name="absar_report_font"/>
-                            <div class="text-muted mt8">Recommended: ABSAR Arabic - Noto Sans Arabic. You can also try Tajawal or DejaVu. English text remains Lato so Latin letters keep their normal shape. Generate a new PDF after saving.</div>
+                            <div class="text-muted mt8">Recommended first test: Noto Sans Arabic, then Tajawal. The selected font applies to the whole report because that is the most reliable method in Odoo PDF rendering. Generate a NEW PDF after saving.</div>
                         </setting>
                     </block>
 
