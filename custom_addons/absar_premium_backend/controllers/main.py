@@ -30,7 +30,7 @@ FONT_MAP = {
 def _as_bool(value, default=True):
     if value in (None, False, ""):
         return default
-    return str(value).strip().lower() not in ("false", "0", "no", "off")
+    return str(value).strip().lower() in ("true", "1", "yes", "on")
 
 
 class AbsarThemeController(http.Controller):
@@ -46,9 +46,9 @@ class AbsarThemeController(http.Controller):
             "link_hover_color": params.get_param("absar_premium_backend.link_hover_color", "") or "",
             "backend_font_css": FONT_MAP.get(backend_font, ""),
             "rounded_buttons": _as_bool(
-                params.get_param("absar_premium_backend.rounded_buttons"), True
+                params.get_param("absar_premium_backend.rounded_buttons", "1"), True
             ),
             "rounded_apps": _as_bool(
-                params.get_param("absar_premium_backend.rounded_apps"), True
+                params.get_param("absar_premium_backend.rounded_apps", "1"), True
             ),
         }

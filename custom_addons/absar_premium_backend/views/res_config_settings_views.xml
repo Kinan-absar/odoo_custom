@@ -68,9 +68,9 @@
                     </block>
 
                     <block title="PDF / QWeb Reports" name="absar_theme_reports">
-                        <setting string="PDF / Report Font" help="Uses Odoo's native per-company report font engine, so it also reaches PDF headers and footers. Tajawal is Odoo's built-in Arabic-friendly choice; Noto Sans Arabic is also available here because it already works on this Odoo.sh environment.">
+                        <setting string="PDF / Report Font" help="For bilingual reports choose one of the ABSAR Arabic composite fonts. Arabic glyphs use the selected Arabic typeface while English/Latin stays Lato, including mixed lines such as 42317 المدينة المنورة.">
                             <field name="absar_report_font"/>
-                            <div class="text-muted mt8">Try Tajawal or Noto Sans Arabic for Arabic-heavy reports. Generate a new PDF after saving.</div>
+                            <div class="text-muted mt8">Recommended: ABSAR Arabic - Noto Sans Arabic. You can also try Tajawal or DejaVu. English text remains Lato so Latin letters keep their normal shape. Generate a new PDF after saving.</div>
                         </setting>
                     </block>
 

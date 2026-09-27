@@ -1,4 +1,4 @@
-# ABSAR Premium Backend 18.0.5.2.0
+# ABSAR Premium Backend 18.0.5.3.0
 
 Configurable backend theme for Odoo 18.
 
@@ -7,11 +7,12 @@ Go to **Settings -> ABSAR Theme**.
 
 - Primary color + hover/pressed color
 - Link color + hover/pressed color
-- Backend UI font (expanded list)
-- Rounded buttons on/off
-- Rounded app icons on/off
-- PDF / report font using Odoo's native company report-font mechanism
+- Expanded backend UI font list
+- Rounded buttons on/off (explicit 1/0 persistence)
+- Rounded app icons on/off (explicit 1/0 persistence)
+- PDF/report font selection
 
-For Arabic PDFs, try **Tajawal** first, then **Noto Sans Arabic**.  The report CSS
-forces nested company/contact address text to inherit the selected layout font,
-including mixed lines such as `42317 المدينة المنورة`.
+## Bilingual report fonts
+Choose one of the **ABSAR Arabic** report-font options. Arabic glyphs use the
+selected Arabic font while Latin text remains Lato. This fixes mixed address
+lines such as `42317 المدينة المنورة` without changing English glyph shapes.

@@ -22,7 +22,9 @@ function darkenHex(hex, amount = 0.14) {
 
 function setBooleanClass(root, enabled, onClass, offClass) {
     root.classList.toggle(onClass, Boolean(enabled));
-    root.classList.toggle(offClass, !enabled);
+    if (offClass) {
+        root.classList.remove(offClass);
+    }
 }
 
 function applyTheme(config) {

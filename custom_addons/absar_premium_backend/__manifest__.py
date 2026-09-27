@@ -1,6 +1,6 @@
 {
     "name": "ABSAR Premium Backend",
-    "version": "18.0.5.2.0",
+    "version": "18.0.5.3.0",
     "category": "Themes/Backend",
     "summary": "Configurable Odoo 18 backend colors/fonts with reliable report typography",
     "description": """
@@ -13,11 +13,10 @@ Features:
 - Independent link + link hover/pressed colors
 - Clickable HTML color pickers plus HEX fields
 - Expanded backend UI font list
-- Working on/off controls for rounded buttons and application icons
-- PDF/report font selector based on Odoo's native company.font mechanism
-- Adds Noto Sans Arabic to Odoo's native report font choices
-- Forces report header/body/footer descendants to inherit the selected report font,
-  fixing mixed Arabic address lines such as "42317 المدينة المنورة"
+- Reliable on/off controls for rounded buttons and application icons
+- Composite bilingual report fonts: Arabic glyphs can use Noto Sans Arabic, Tajawal, or DejaVu while Latin stays Lato
+- Mixed Arabic/English address lines such as "42317 المدينة المنورة" inherit correctly
+- Prevents Arabic font choices from distorting Latin glyphs such as lowercase "o"
 - Restore Odoo defaults button
 
 When custom colors are empty and Backend UI Font is Odoo Default, the backend

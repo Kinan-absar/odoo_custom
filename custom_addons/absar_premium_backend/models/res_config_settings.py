@@ -57,23 +57,44 @@ class ResConfigSettings(models.TransientModel):
         default="odoo",
         config_parameter="absar_premium_backend.backend_font",
     )
-    # Use Odoo's native per-company report font field.  This is much more
-    # reliable for PDF headers/footers than trying to inject a font at runtime.
     absar_report_font = fields.Selection(
         related="company_id.font",
         readonly=False,
         string="PDF / Report Font",
     )
-    absar_rounded_buttons = fields.Boolean(
-        string="Rounded Buttons",
-        default=True,
-        config_parameter="absar_premium_backend.rounded_buttons",
-    )
-    absar_rounded_apps = fields.Boolean(
-        string="Rounded App Icons",
-        default=True,
-        config_parameter="absar_premium_backend.rounded_apps",
-    )
+
+    # Do NOT use config_parameter directly for these booleans.  Odoo may remove
+    # a config parameter when a Boolean is False, which made an unchecked option
+    # look enabled again because the controller treated a missing value as True.
+    # We explicitly persist 1/0 in get_values/set_values instead.
+    absar_rounded_buttons = fields.Boolean(string="Rounded Buttons", default=True)
+    absar_rounded_apps = fields.Boolean(string="Rounded App Icons", default=True)
+
+    @api.model
+    def get_values(self):
+        values = super().get_values()
+        params = self.env["ir.config_parameter"].sudo()
+        values.update(
+            absar_rounded_buttons=params.get_param(
+                "absar_premium_backend.rounded_buttons", "1"
+            ) in ("1", "true", "True", True),
+            absar_rounded_apps=params.get_param(
+                "absar_premium_backend.rounded_apps", "1"
+            ) in ("1", "true", "True", True),
+        )
+        return values
+
+    def set_values(self):
+        super().set_values()
+        params = self.env["ir.config_parameter"].sudo()
+        params.set_param(
+            "absar_premium_backend.rounded_buttons",
+            "1" if self.absar_rounded_buttons else "0",
+        )
+        params.set_param(
+            "absar_premium_backend.rounded_apps",
+            "1" if self.absar_rounded_apps else "0",
+        )
 
     @api.constrains(
         "absar_primary_color",
@@ -102,11 +123,11 @@ class ResConfigSettings(models.TransientModel):
             "absar_premium_backend.link_color",
             "absar_premium_backend.link_hover_color",
             "absar_premium_backend.backend_font",
-            "absar_premium_backend.rounded_buttons",
-            "absar_premium_backend.rounded_apps",
         ]
         self.env["ir.config_parameter"].sudo().search([("key", "in", keys)]).unlink()
-        # Restore Odoo's standard report font default used by core layouts.
+        params = self.env["ir.config_parameter"].sudo()
+        params.set_param("absar_premium_backend.rounded_buttons", "1")
+        params.set_param("absar_premium_backend.rounded_apps", "1")
         if self.company_id:
             self.company_id.font = "Lato"
         return {"type": "ir.actions.client", "tag": "reload"}

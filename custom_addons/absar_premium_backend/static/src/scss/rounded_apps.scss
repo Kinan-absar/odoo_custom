@@ -1,4 +1,7 @@
 /* ABSAR Rounded App Icons & Buttons - enabled/disabled from Settings. */
+
+/* Only apply custom rounding while the option is ON.  When OFF, we do not
+ * impose any radius at all, so Odoo's own native styling is restored. */
 html.absar-rounded-apps .o_home_menu .o_app_icon,
 html.absar-rounded-apps .o_home_menu .o_app .o_app_icon,
 html.absar-rounded-apps .o_home_menu .o_app_entry .o_app_icon,
@@ -18,26 +21,6 @@ html.absar-rounded-apps .o_apps_menu .o_app_icon_container {
     overflow: hidden !important;
 }
 
-/* Explicit OFF state so disabling the option visibly removes our rounding. */
-html.absar-square-apps .o_home_menu .o_app_icon,
-html.absar-square-apps .o_home_menu .o_app .o_app_icon,
-html.absar-square-apps .o_home_menu .o_app_entry .o_app_icon,
-html.absar-square-apps .o_home_menu .o_home_menu_item .o_app_icon,
-html.absar-square-apps .o_home_menu img.o_app_icon,
-html.absar-square-apps .o_home_menu .o_app img,
-html.absar-square-apps .o_home_menu .o_app_entry img,
-html.absar-square-apps .o_home_menu .o_home_menu_item img,
-html.absar-square-apps .o_navbar_apps_menu .o_app_icon,
-html.absar-square-apps .o_navbar_apps_menu img.o_app_icon,
-html.absar-square-apps .o_apps_menu .o_app_icon,
-html.absar-square-apps .o_apps_menu img.o_app_icon,
-html.absar-square-apps .o_home_menu .o_app_icon_container,
-html.absar-square-apps .o_navbar_apps_menu .o_app_icon_container,
-html.absar-square-apps .o_apps_menu .o_app_icon_container {
-    border-radius: 0 !important;
-    overflow: visible !important;
-}
-
 html.absar-rounded-buttons .o_web_client .btn,
 html.absar-rounded-buttons .o_web_client button.btn,
 html.absar-rounded-buttons .o_web_client a.btn,
@@ -51,19 +34,4 @@ html.absar-rounded-buttons .o_web_client .o_control_panel .btn,
 html.absar-rounded-buttons .o_web_client .modal-footer .btn,
 html.absar-rounded-buttons .o_web_client .o_dialog .btn {
     border-radius: 10px !important;
-}
-
-html.absar-square-buttons .o_web_client .btn,
-html.absar-square-buttons .o_web_client button.btn,
-html.absar-square-buttons .o_web_client a.btn,
-html.absar-square-buttons .o_web_client .o_form_button_create,
-html.absar-square-buttons .o_web_client .o_list_button_add,
-html.absar-square-buttons .o_web_client .o-kanban-button-new,
-html.absar-square-buttons .o_web_client .o_form_statusbar button,
-html.absar-square-buttons .o_web_client .o_statusbar_buttons .btn,
-html.absar-square-buttons .o_web_client .o_cp_buttons .btn,
-html.absar-square-buttons .o_web_client .o_control_panel .btn,
-html.absar-square-buttons .o_web_client .modal-footer .btn,
-html.absar-square-buttons .o_web_client .o_dialog .btn {
-    border-radius: .25rem !important;
 }
