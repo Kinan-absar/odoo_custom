@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="absar_html_container_report_font" inherit_id="web.html_container">
+        <xpath expr="//head" position="inside">
+            <t t-set="absar_report_font_key" t-value="res_company.env['ir.config_parameter'].sudo().get_param('absar_premium_backend.report_arabic_font', 'noto')"/>
+            <t t-set="absar_report_font_css" t-value="{
+                'noto': &quot;'Noto Sans Arabic', 'Noto Sans Arabic UI', 'DejaVu Sans', Arial, sans-serif&quot;,
+                'dejavu': &quot;'DejaVu Sans', Arial, sans-serif&quot;,
+                'tahoma': &quot;Tahoma, 'DejaVu Sans', Arial, sans-serif&quot;,
+                'arial': &quot;Arial, 'DejaVu Sans', sans-serif&quot;,
+            }.get(absar_report_font_key, &quot;'Noto Sans Arabic', 'Noto Sans Arabic UI', 'DejaVu Sans', Arial, sans-serif&quot;)"/>
+            <style type="text/css">
+                :root { --absar-report-font: <t t-out="absar_report_font_css"/>; }
+            </style>
+        </xpath>
+    </template>
+</odoo>

@@ -1,10 +1,15 @@
-# ABSAR Rounded Apps & Buttons
+# ABSAR Premium Backend
 
-Odoo 18 Enterprise backend visual module.
+Lightweight configurable backend appearance for Odoo 18 Enterprise.
 
-- Keeps Odoo's original primary/brand colors
-- Rounded app icons and buttons
-- QWeb/PDF report font override: `Noto Sans Arabic` with `DejaVu Sans` fallback
-- The report font change is loaded only in `web.report_assets_common`; it does not change the normal backend UI font.
+## Settings
+Open **Settings → ABSAR Theme** to configure:
+- Primary color (leave empty for Odoo default)
+- Primary hover color (optional)
+- Backend font
+- Arabic PDF/QWeb report font
+- Rounded buttons
+- Rounded app icons
+- Restore Odoo defaults
 
-Version: 18.0.4.5.0
+The module intentionally avoids redesigning forms, lists, kanban, chatter, or business logic.

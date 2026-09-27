@@ -1,13 +1,6 @@
-/* ABSAR report font override.
-   This asset is loaded only for Odoo QWeb reports / PDF rendering.
-   Noto Sans Arabic is requested from the server's installed fonts, with
-   DejaVu Sans as a safe Arabic-capable fallback. No backend UI font changes. */
+/* ABSAR report font. The actual family is selected in Settings and injected
+   as --absar-report-font by the inherited web.html_container template. */
 
-$o-absar-report-font: "Noto Sans Arabic", "Noto Sans Arabic UI", "DejaVu Sans", Arial, sans-serif;
-
-/* Apply to the report document so Arabic glyphs do not fall back to the
-   browser/PDF engine's unattractive default font. Noto Sans Arabic also has
-   Latin glyphs, so mixed Arabic/English documents remain consistent. */
 html,
 body,
 .o_report_layout_standard,
@@ -15,30 +8,25 @@ body,
 .o_report_layout_bold,
 .o_report_layout_striped,
 .article,
-.page {
-    font-family: $o-absar-report-font !important;
-}
-
-/* Make sure common report elements inherit the report font instead of using
-   a component-specific fallback. */
 .page,
 .page *:not(.fa):not(.oi),
-.article,
 .article *:not(.fa):not(.oi),
 .o_report_layout_standard *:not(.fa):not(.oi),
 .o_report_layout_boxed *:not(.fa):not(.oi),
 .o_report_layout_bold *:not(.fa):not(.oi),
-.o_report_layout_striped *:not(.fa):not(.oi) {
-    font-family: $o-absar-report-font !important;
-}
-
-/* Arabic/RTL text benefits from a little more vertical room in PDFs while
-   preserving the report's existing alignment and direction rules. */
+.o_report_layout_striped *:not(.fa):not(.oi),
 [lang="ar"],
 [lang^="ar-"],
 [dir="rtl"],
 .rtl,
 .o_rtl {
-    font-family: $o-absar-report-font !important;
+    font-family: var(--absar-report-font, "Noto Sans Arabic", "Noto Sans Arabic UI", "DejaVu Sans", Arial, sans-serif) !important;
+}
+
+[lang="ar"],
+[lang^="ar-"],
+[dir="rtl"],
+.rtl,
+.o_rtl {
     line-height: 1.55;
 }
