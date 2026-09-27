@@ -1,6 +1,4 @@
-/* Dynamic ABSAR backend customization. Odoo's native styling remains untouched
-   unless the corresponding setting is enabled. */
-
+/* Optional runtime backend styling. Odoo remains native when no custom color/font is selected. */
 html.absar-custom-font .o_web_client,
 html.absar-custom-font .o_web_client input,
 html.absar-custom-font .o_web_client textarea,
@@ -45,15 +43,13 @@ html.absar-custom-primary .o_web_client .btn-outline-primary {
 
 html.absar-custom-primary .o_web_client .btn-outline-primary:hover,
 html.absar-custom-primary .o_web_client .btn-outline-primary:focus,
-html.absar-custom-primary .o_web_client .btn-outline-primary:active,
-html.absar-custom-primary .o_web_client .btn-outline-primary.active {
+html.absar-custom-primary .o_web_client .btn-outline-primary:active {
     color: #fff !important;
     background-color: var(--absar-primary) !important;
     border-color: var(--absar-primary) !important;
 }
 
 html.absar-custom-primary .o_web_client .text-primary,
-html.absar-custom-primary .o_web_client a.text-primary,
 html.absar-custom-primary .o_web_client .o_form_uri,
 html.absar-custom-primary .o_web_client .o_field_many2one a,
 html.absar-custom-primary .o_web_client .o_field_many2manytags a {
@@ -62,11 +58,11 @@ html.absar-custom-primary .o_web_client .o_field_many2manytags a {
 
 html.absar-custom-primary .o_web_client .bg-primary,
 html.absar-custom-primary .o_web_client .text-bg-primary,
-html.absar-custom-primary .o_web_client .badge.bg-primary {
+html.absar-custom-primary .o_web_client .badge.bg-primary,
+html.absar-custom-primary .o_web_client .nav-pills .nav-link.active,
+html.absar-custom-primary .o_web_client .page-item.active .page-link,
+html.absar-custom-primary .o_web_client .o_searchview_facet_label {
     background-color: var(--absar-primary) !important;
-}
-
-html.absar-custom-primary .o_web_client .border-primary {
     border-color: var(--absar-primary) !important;
 }
 
@@ -83,26 +79,6 @@ html.absar-custom-primary .o_web_client .form-select:focus {
     box-shadow: 0 0 0 .2rem rgba(var(--absar-primary-rgb), .18) !important;
 }
 
-html.absar-custom-primary .o_web_client .nav-pills .nav-link.active,
-html.absar-custom-primary .o_web_client .nav-pills .show > .nav-link,
-html.absar-custom-primary .o_web_client .page-item.active .page-link {
-    background-color: var(--absar-primary) !important;
-    border-color: var(--absar-primary) !important;
-}
-
-html.absar-custom-primary .o_web_client .o_searchview_facet .o_searchview_facet_label,
-html.absar-custom-primary .o_web_client .o_searchview_facet_label {
-    background-color: var(--absar-primary) !important;
-}
-
-html.absar-custom-primary .o_web_client .o_statusbar_status .btn-primary,
-html.absar-custom-primary .o_web_client .o_statusbar_buttons .btn-primary,
-html.absar-custom-primary .o_web_client .o_form_statusbar .btn-primary {
-    background-color: var(--absar-primary) !important;
-    border-color: var(--absar-primary) !important;
-}
-
-/* Settings preview */
 .o_absar_theme_preview {
     --absar-preview-primary: #875a7b;
     --absar-preview-hover: #6f4966;
@@ -111,27 +87,17 @@ html.absar-custom-primary .o_web_client .o_form_statusbar .btn-primary {
     flex-wrap: wrap;
     gap: .65rem;
     padding: .9rem 1rem;
-    border: 1px solid var(--border-color, #dee2e6);
+    border: 1px solid #dee2e6;
     border-radius: 12px;
-    background: var(--body-bg, #fff);
 }
-.o_absar_theme_preview .o_absar_preview_label {
-    font-weight: 600;
-    opacity: .75;
-    margin-inline-end: .25rem;
-}
+.o_absar_theme_preview .o_absar_preview_label { font-weight: 600; opacity: .75; }
 .o_absar_theme_preview .o_absar_preview_primary,
 .o_absar_theme_preview .o_absar_preview_badge {
     color: #fff !important;
     background: var(--absar-preview-primary) !important;
     border-color: var(--absar-preview-primary) !important;
 }
-.o_absar_theme_preview .o_absar_preview_primary:hover {
-    background: var(--absar-preview-hover) !important;
-    border-color: var(--absar-preview-hover) !important;
-}
 .o_absar_theme_preview .o_absar_preview_link {
     color: var(--absar-preview-primary) !important;
-    text-decoration: none;
     font-weight: 500;
 }

@@ -1,21 +1,23 @@
 {
     "name": "ABSAR Premium Backend",
-    "version": "18.0.5.0.0",
+    "version": "18.0.5.1.0",
     "category": "Themes/Backend",
-    "summary": "Configurable Odoo 18 backend appearance and improved Arabic PDF font",
+    "summary": "Configurable Odoo 18 backend color/font with improved Arabic PDF typography",
     "description": """
 ABSAR Premium Backend
 =====================
-A lightweight configurable Odoo 18 Enterprise backend module.
+Built from the stable 18.0.4.5.0 final version.
 
 Features:
-- Optional custom backend primary color and hover color
-- Backend font selection
-- Arabic QWeb/PDF report font selection
-- Toggle rounded backend buttons
-- Toggle rounded application icons
-- One-click restore to Odoo defaults
-- Keeps Odoo's original appearance whenever custom color/font settings are empty
+- Optional backend primary color and hover color from Settings
+- Optional backend font from Settings
+- Toggle rounded buttons and application icons
+- Restore Odoo defaults button
+- Static Noto Sans Arabic report typography for reliable PDF rendering
+- Extra contact/address selectors for mixed Arabic/English address lines
+
+When Primary Color is empty and Backend Font is Odoo Default, Odoo keeps its
+native colors and typography.
 """,
     "author": "ABSAR Alomran",
     "website": "https://www.absar-alomran.com",
@@ -23,7 +25,6 @@ Features:
     "depends": ["web", "web_enterprise"],
     "data": [
         "views/res_config_settings_views.xml",
-        "views/report_font_templates.xml",
     ],
     "assets": {
         "web.assets_backend": [

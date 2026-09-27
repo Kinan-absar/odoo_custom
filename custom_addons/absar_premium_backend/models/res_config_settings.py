@@ -12,12 +12,12 @@ class ResConfigSettings(models.TransientModel):
     absar_primary_color = fields.Char(
         string="Primary Color",
         config_parameter="absar_premium_backend.primary_color",
-        help="Optional custom backend primary color in #RRGGBB format. Leave empty to use Odoo's original color.",
+        help="Optional custom backend primary color in #RRGGBB format. Leave empty to keep Odoo's native color.",
     )
     absar_primary_hover_color = fields.Char(
         string="Primary Hover Color",
         config_parameter="absar_premium_backend.primary_hover_color",
-        help="Optional hover/pressed color in #RRGGBB format. Leave empty to calculate it automatically from the primary color.",
+        help="Optional hover/pressed color. Leave empty to derive a darker shade automatically.",
     )
     absar_backend_font = fields.Selection(
         [
@@ -31,18 +31,6 @@ class ResConfigSettings(models.TransientModel):
         string="Backend Font",
         default="odoo",
         config_parameter="absar_premium_backend.backend_font",
-    )
-    absar_report_arabic_font = fields.Selection(
-        [
-            ("noto", "Noto Sans Arabic"),
-            ("dejavu", "DejaVu Sans"),
-            ("tahoma", "Tahoma"),
-            ("arial", "Arial"),
-        ],
-        string="Arabic Report Font",
-        default="noto",
-        config_parameter="absar_premium_backend.report_arabic_font",
-        help="Font used for QWeb/PDF reports. Noto Sans Arabic is recommended when available on the server.",
     )
     absar_rounded_buttons = fields.Boolean(
         string="Rounded Buttons",
@@ -68,7 +56,6 @@ class ResConfigSettings(models.TransientModel):
             "absar_premium_backend.primary_color",
             "absar_premium_backend.primary_hover_color",
             "absar_premium_backend.backend_font",
-            "absar_premium_backend.report_arabic_font",
             "absar_premium_backend.rounded_buttons",
             "absar_premium_backend.rounded_apps",
         ]

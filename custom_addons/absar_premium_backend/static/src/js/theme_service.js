@@ -13,21 +13,21 @@ function hexToRgb(hex) {
 
 function darkenHex(hex, amount = 0.14) {
     const rgb = hexToRgb(hex);
-    if (!rgb) return "";
+    if (!rgb) {
+        return "";
+    }
     const out = rgb.map((v) => Math.max(0, Math.round(v * (1 - amount))));
     return `#${out.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 }
 
 function applyTheme(config) {
     const root = document.documentElement;
-
-    // Preserve the module's historical defaults unless explicitly disabled.
     root.classList.toggle("absar-rounded-buttons", config.rounded_buttons !== false);
     root.classList.toggle("absar-rounded-apps", config.rounded_apps !== false);
 
     const primary = (config.primary_color || "").trim();
-    const hover = (config.primary_hover_color || "").trim() || darkenHex(primary);
     const rgb = hexToRgb(primary);
+    const hover = (config.primary_hover_color || "").trim() || darkenHex(primary);
 
     root.classList.toggle("absar-custom-primary", Boolean(rgb));
     if (rgb) {
@@ -49,39 +49,33 @@ function applyTheme(config) {
     }
 }
 
-function wireSettingsPreview() {
-    const update = () => {
-        for (const preview of document.querySelectorAll(".o_absar_theme_preview")) {
-            const settings = preview.closest(".o_absar_theme_settings") || document;
-            const primaryInput = settings.querySelector('input[name="absar_primary_color"]') || document.querySelector('input[name="absar_primary_color"]');
-            const hoverInput = settings.querySelector('input[name="absar_primary_hover_color"]') || document.querySelector('input[name="absar_primary_hover_color"]');
-            const primary = (primaryInput?.value || "").trim();
-            const valid = hexToRgb(primary);
-            if (valid) {
-                preview.style.setProperty("--absar-preview-primary", primary);
-                preview.style.setProperty("--absar-preview-hover", (hoverInput?.value || "").trim() || darkenHex(primary));
-            } else {
-                preview.style.removeProperty("--absar-preview-primary");
-                preview.style.removeProperty("--absar-preview-hover");
-            }
+function updatePreview() {
+    document.querySelectorAll(".o_absar_theme_preview").forEach((preview) => {
+        const settings = preview.closest(".o_absar_theme_settings") || document;
+        const primaryInput = settings.querySelector('input[name="absar_primary_color"]');
+        const hoverInput = settings.querySelector('input[name="absar_primary_hover_color"]');
+        const primary = (primaryInput?.value || "").trim();
+        if (hexToRgb(primary)) {
+            preview.style.setProperty("--absar-preview-primary", primary);
+            preview.style.setProperty("--absar-preview-hover", (hoverInput?.value || "").trim() || darkenHex(primary));
+        } else {
+            preview.style.removeProperty("--absar-preview-primary");
+            preview.style.removeProperty("--absar-preview-hover");
         }
-    };
-    document.addEventListener("input", (ev) => {
-        if (ev.target?.matches?.('input[name="absar_primary_color"], input[name="absar_primary_hover_color"]')) {
-            update();
-        }
-    }, true);
-    document.addEventListener("change", update, true);
-    const observer = new MutationObserver(update);
-    observer.observe(document.body, { childList: true, subtree: true });
-    update();
+    });
 }
 
 const absarThemeService = {
     async start() {
         const root = document.documentElement;
         root.classList.add("absar-rounded-buttons", "absar-rounded-apps");
-        wireSettingsPreview();
+        document.addEventListener("input", (ev) => {
+            if (ev.target?.matches?.('input[name="absar_primary_color"], input[name="absar_primary_hover_color"]')) {
+                updatePreview();
+            }
+        }, true);
+        document.addEventListener("change", updatePreview, true);
+        setTimeout(updatePreview, 0);
         try {
             const config = await rpc("/absar_premium_backend/theme_config", {});
             applyTheme(config || {});

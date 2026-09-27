@@ -1,5 +1,4 @@
-/* ABSAR Rounded App Icons & Buttons - configurable from Settings. */
-
+/* ABSAR Rounded App Icons & Buttons - enabled/disabled from Settings. */
 html.absar-rounded-apps .o_home_menu .o_app_icon,
 html.absar-rounded-apps .o_home_menu .o_app .o_app_icon,
 html.absar-rounded-apps .o_home_menu .o_app_entry .o_app_icon,
@@ -10,24 +9,13 @@ html.absar-rounded-apps .o_home_menu .o_app_entry img,
 html.absar-rounded-apps .o_home_menu .o_home_menu_item img,
 html.absar-rounded-apps .o_navbar_apps_menu .o_app_icon,
 html.absar-rounded-apps .o_navbar_apps_menu img.o_app_icon,
-html.absar-rounded-apps .o_navbar_apps_menu .o_app img,
-html.absar-rounded-apps .o_navbar_apps_menu .o_app_entry img,
 html.absar-rounded-apps .o_apps_menu .o_app_icon,
 html.absar-rounded-apps .o_apps_menu img.o_app_icon,
-html.absar-rounded-apps .o_apps_menu .o_app img,
-html.absar-rounded-apps .o_apps_menu .o_app_entry img,
 html.absar-rounded-apps .o_home_menu .o_app_icon_container,
 html.absar-rounded-apps .o_navbar_apps_menu .o_app_icon_container,
 html.absar-rounded-apps .o_apps_menu .o_app_icon_container {
     border-radius: 22% !important;
     overflow: hidden !important;
-}
-
-html.absar-rounded-apps .o_home_menu .o_app_icon_container > img,
-html.absar-rounded-apps .o_navbar_apps_menu .o_app_icon_container > img,
-html.absar-rounded-apps .o_apps_menu .o_app_icon_container > img {
-    border-radius: inherit !important;
-    display: block;
 }
 
 html.absar-rounded-buttons .o_web_client .btn,
@@ -43,24 +31,4 @@ html.absar-rounded-buttons .o_web_client .o_control_panel .btn,
 html.absar-rounded-buttons .o_web_client .modal-footer .btn,
 html.absar-rounded-buttons .o_web_client .o_dialog .btn {
     border-radius: 10px !important;
-}
-
-html.absar-rounded-buttons .o_web_client .o_cp_switch_buttons .btn,
-html.absar-rounded-buttons .o_web_client .o_pager .btn,
-html.absar-rounded-buttons .o_web_client .o_field_widget .btn,
-html.absar-rounded-buttons .o_web_client .o_external_button,
-html.absar-rounded-buttons .o_web_client .o_dropdown_button,
-html.absar-rounded-buttons .o_web_client .dropdown-toggle.btn {
-    border-radius: 9px !important;
-}
-
-html.absar-rounded-buttons .o_web_client .btn-group > .btn:first-child,
-html.absar-rounded-buttons .o_web_client .btn-group > :first-child .btn {
-    border-start-start-radius: 10px !important;
-    border-end-start-radius: 10px !important;
-}
-html.absar-rounded-buttons .o_web_client .btn-group > .btn:last-child,
-html.absar-rounded-buttons .o_web_client .btn-group > :last-child .btn {
-    border-start-end-radius: 10px !important;
-    border-end-end-radius: 10px !important;
 }
