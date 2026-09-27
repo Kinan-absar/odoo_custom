@@ -1,6 +1,6 @@
 {
     "name": "ABSAR Premium Backend",
-    "version": "18.0.5.1.0",
+    "version": "18.0.5.1.1",
     "category": "Themes/Backend",
     "summary": "Configurable Odoo 18 backend color/font with improved Arabic PDF typography",
     "description": """

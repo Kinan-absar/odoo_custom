@@ -20,7 +20,7 @@
                                 </div>
                                 <div class="mt16 o_absar_theme_preview">
                                     <span class="o_absar_preview_label">Preview</span>
-                                    <button type="button" class="btn o_absar_preview_primary">Primary Button</button>
+                                    <span class="btn o_absar_preview_primary" role="button">Primary Button</span>
                                     <span class="badge o_absar_preview_badge">Selected</span>
                                     <span class="o_absar_preview_link">Sample Link</span>
                                 </div>
