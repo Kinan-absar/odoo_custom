@@ -1,0 +1,160 @@
+/* ABSAR primary-color override for Odoo 18 Enterprise.
+   Goal: replace Odoo's purple primary/accent color with #57A2DE while
+   leaving semantic success/warning/danger/info colors unchanged. */
+
+$absar-primary: #57a2de;
+$absar-primary-hover: #3f91d2;
+$absar-primary-active: #2f82c3;
+$absar-primary-soft: rgba(87, 162, 222, 0.14);
+$absar-primary-focus: rgba(87, 162, 222, 0.28);
+
+/* Runtime variables used by Bootstrap/Odoo components.  Keeping these on the
+   webclient makes the override reliable even when an upstream SCSS variable
+   was compiled before this module's assets. */
+:root,
+.o_web_client {
+    --o-brand-primary: #{$absar-primary};
+    --o-brand-odoo: #{$absar-primary};
+    --bs-primary: #{$absar-primary};
+    --primary: #{$absar-primary};
+}
+
+/* Primary buttons: Create, Save, Activate, Confirm, Add, etc. */
+.o_web_client .btn-primary,
+.o_web_client button.btn-primary,
+.o_web_client a.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #{$absar-primary};
+    --bs-btn-border-color: #{$absar-primary};
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #{$absar-primary-hover};
+    --bs-btn-hover-border-color: #{$absar-primary-hover};
+    --bs-btn-focus-shadow-rgb: 87, 162, 222;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #{$absar-primary-active};
+    --bs-btn-active-border-color: #{$absar-primary-active};
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #{$absar-primary};
+    --bs-btn-disabled-border-color: #{$absar-primary};
+    background-color: $absar-primary !important;
+    border-color: $absar-primary !important;
+    color: #fff !important;
+}
+
+.o_web_client .btn-primary:hover,
+.o_web_client .btn-primary:focus,
+.o_web_client .btn-primary.show {
+    background-color: $absar-primary-hover !important;
+    border-color: $absar-primary-hover !important;
+    color: #fff !important;
+}
+
+.o_web_client .btn-primary:active,
+.o_web_client .btn-primary.active {
+    background-color: $absar-primary-active !important;
+    border-color: $absar-primary-active !important;
+    color: #fff !important;
+}
+
+/* Outline-primary buttons. */
+.o_web_client .btn-outline-primary {
+    --bs-btn-color: #{$absar-primary};
+    --bs-btn-border-color: #{$absar-primary};
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #{$absar-primary};
+    --bs-btn-hover-border-color: #{$absar-primary};
+    --bs-btn-focus-shadow-rgb: 87, 162, 222;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #{$absar-primary-active};
+    --bs-btn-active-border-color: #{$absar-primary-active};
+    color: $absar-primary !important;
+    border-color: $absar-primary !important;
+}
+
+.o_web_client .btn-outline-primary:hover,
+.o_web_client .btn-outline-primary:focus,
+.o_web_client .btn-outline-primary:active,
+.o_web_client .btn-outline-primary.active {
+    background-color: $absar-primary !important;
+    border-color: $absar-primary !important;
+    color: #fff !important;
+}
+
+/* Bootstrap/Odoo primary utility classes. */
+.o_web_client .bg-primary {
+    background-color: $absar-primary !important;
+}
+.o_web_client .text-primary {
+    color: $absar-primary !important;
+}
+.o_web_client .border-primary {
+    border-color: $absar-primary !important;
+}
+
+/* Links and clickable text that explicitly use the primary accent. */
+.o_web_client a.text-primary,
+.o_web_client .link-primary,
+.o_web_client .o_field_widget.o_field_many2one a,
+.o_web_client .o_field_widget.o_field_many2many_tags a {
+    color: $absar-primary !important;
+}
+
+/* Checkboxes, radios and switches. */
+.o_web_client .form-check-input:checked,
+.o_web_client .form-check-input[type="checkbox"]:indeterminate {
+    background-color: $absar-primary !important;
+    border-color: $absar-primary !important;
+}
+.o_web_client .form-check-input:focus {
+    border-color: $absar-primary !important;
+    box-shadow: 0 0 0 0.2rem $absar-primary-focus !important;
+}
+
+/* Active pills/tabs and selected navigation items that rely on primary. */
+.o_web_client .nav-pills .nav-link.active,
+.o_web_client .nav-pills .show > .nav-link {
+    background-color: $absar-primary !important;
+    color: #fff !important;
+}
+
+/* Pagination active state. */
+.o_web_client .pagination .page-item.active .page-link,
+.o_web_client .page-item.active .page-link {
+    background-color: $absar-primary !important;
+    border-color: $absar-primary !important;
+    color: #fff !important;
+}
+
+/* Progress bars that intentionally use the primary utility. */
+.o_web_client .progress-bar.bg-primary {
+    background-color: $absar-primary !important;
+}
+
+/* Primary focus rings on common controls without recoloring semantic states. */
+.o_web_client .btn-primary:focus,
+.o_web_client .btn-outline-primary:focus,
+.o_web_client .form-control:focus,
+.o_web_client .form-select:focus {
+    box-shadow: 0 0 0 0.2rem $absar-primary-focus;
+}
+
+/* Odoo-specific accent surfaces that otherwise retain the default purple. */
+.o_web_client .o_searchview_facet .o_searchview_facet_label,
+.o_web_client .o_searchview .o_searchview_facet .o_searchview_facet_label {
+    background-color: $absar-primary !important;
+    color: #fff !important;
+}
+
+.o_web_client .o_form_view .o_form_statusbar .o_arrow_button_current,
+.o_web_client .o_form_view .o_form_statusbar .o_arrow_button_current.disabled,
+.o_web_client .o_form_view .o_form_statusbar .o_arrow_button_current:disabled {
+    background-color: $absar-primary !important;
+    border-color: $absar-primary !important;
+    color: #fff !important;
+}
+
+/* Selection/accent helpers frequently used by Odoo views. */
+.o_web_client .o_selected_row,
+.o_web_client tr.o_data_row.o_selected_row > td {
+    --o-view-background-color: #{$absar-primary-soft};
+}
