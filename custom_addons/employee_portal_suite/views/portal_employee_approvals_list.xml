@@ -77,17 +77,17 @@
                                         <t t-foreach="shown_reqs" t-as="req">
                                             <tr>
                                                 <td class="fw-semibold">
-                                                    <t t-esc="req.name"/>
+                                                    <t t-out="req.name"/>
                                                 </td>
 
-                                                <td><t t-esc="req.employee_id.name"/></td>
-                                                <td><t t-esc="req.get_request_type_display()"/></td>
+                                                <td><t t-out="req.employee_id.name"/></td>
+                                                <td><t t-out="req.get_request_type_display()"/></td>
 
                                                 <td><t t-out="status_badge(req)"/></td>
 
                                                 <td>
                                                     <small class="text-muted">
-                                                        <t t-esc="req.request_date"/>
+                                                        <t t-out="req.request_date"/>
                                                     </small>
                                                 </td>
 
@@ -128,11 +128,11 @@
 
                                             <div>
                                                 <div class="mobile-request-id">
-                                                    <t t-esc="req.name"/>
+                                                    <t t-out="req.name"/>
                                                 </div>
 
                                                 <div class="mobile-request-date">
-                                                    <t t-esc="req.employee_id.name"/>
+                                                    <t t-out="req.employee_id.name"/>
                                                 </div>
                                             </div>
 
@@ -147,14 +147,14 @@
                                             <div>
                                                 <span class="label">Type</span>
                                                 <div>
-                                                    <t t-esc="req.get_request_type_display()"/>
+                                                    <t t-out="req.get_request_type_display()"/>
                                                 </div>
                                             </div>
 
                                             <div>
                                                 <span class="label">Date</span>
                                                 <div>
-                                                    <t t-esc="req.request_date"/>
+                                                    <t t-out="req.request_date"/>
                                                 </div>
                                             </div>
 

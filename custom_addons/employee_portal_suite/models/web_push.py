@@ -62,10 +62,9 @@ class EmployeePortalPushSubscription(models.Model):
     last_success_at = fields.Datetime(readonly=True)
     last_error = fields.Text(readonly=True)
 
-    _employee_portal_push_endpoint_uniq = models.Constraint(
-        'unique(endpoint)',
-        'This push subscription is already registered.',
-    )
+    _sql_constraints = [
+        ('employee_portal_push_endpoint_uniq', 'unique(endpoint)', 'This push subscription is already registered.'),
+    ]
 
     @api.model
     def register_subscription(self, user, subscription, user_agent=None, device_label=None):

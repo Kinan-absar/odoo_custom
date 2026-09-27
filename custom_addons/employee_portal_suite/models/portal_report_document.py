@@ -47,4 +47,4 @@ class PortalReportDocument(models.Model):
         self.ensure_one()
         if not self.active:
             return False
-        return bool(self.allowed_group_ids & user.group_ids)
+        return bool(self.allowed_group_ids & user.groups_id)

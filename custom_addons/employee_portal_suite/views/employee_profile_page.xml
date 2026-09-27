@@ -16,7 +16,7 @@
 <div class="ep-profile-field"><label>Email / Login</label><input class="ep-profile-readonly" type="email" t-att-value="login_email" readonly="readonly"/><div class="ep-profile-hint">Your login email can only be changed by Administration.</div></div>
 <div class="ep-profile-field"><label>Job title</label><input class="ep-profile-readonly" t-att-value="employee.job_title or ''" readonly="readonly"/></div>
 <div class="ep-profile-field"><label>Work phone</label><input name="work_phone" t-att-value="employee.work_phone or request.env.user.partner_id.phone or ''"/></div>
-<div class="ep-profile-field"><label>Work mobile</label><input name="mobile_phone" t-att-value="employee.mobile_phone or ''"/></div>
+<div class="ep-profile-field"><label>Work mobile</label><input name="mobile_phone" t-att-value="employee.mobile_phone or request.env.user.partner_id.mobile or ''"/></div>
 </div></div>
 
 <div class="ep-profile-section"><div class="ep-profile-section-title">Private contact</div><div class="ep-profile-grid">
@@ -50,7 +50,7 @@
 <div class="ep-profile-field"><label>Identification No</label><input name="identification_id" t-att-value="employee.identification_id or ''"/></div>
 <div class="ep-profile-field"><label>SSN No</label><input name="ssnid" t-att-value="employee.ssnid or ''"/></div>
 <div class="ep-profile-field"><label>Passport No</label><input name="passport_id" t-att-value="employee.passport_id or ''"/></div>
-<div class="ep-profile-field"><label>Gender</label><select name="sex"><option value="">-</option><t t-foreach="employee._fields['sex']._description_selection(request.env)" t-as="opt"><option t-att-value="opt[0]" t-att-selected="employee.sex == opt[0]"><t t-out="opt[1]"/></option></t></select></div>
+<div class="ep-profile-field"><label>Gender</label><select name="gender"><option value="">-</option><t t-foreach="employee._fields['gender']._description_selection(request.env)" t-as="opt"><option t-att-value="opt[0]" t-att-selected="employee.gender == opt[0]"><t t-out="opt[1]"/></option></t></select></div>
 <div class="ep-profile-field"><label>Date of birth</label><input type="date" name="birthday" t-att-value="employee.birthday or ''"/></div>
 <div class="ep-profile-field"><label>Place of birth</label><input name="place_of_birth" t-att-value="employee.place_of_birth or ''"/></div>
 <div class="ep-profile-field"><label>Country of birth</label><select name="country_of_birth"><option value="">-</option><t t-foreach="countries" t-as="c"><option t-att-value="c.id" t-att-selected="employee.country_of_birth.id == c.id"><t t-out="c.name"/></option></t></select></div>

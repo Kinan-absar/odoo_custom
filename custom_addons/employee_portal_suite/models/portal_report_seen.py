@@ -112,7 +112,7 @@ class PortalReportSeen(models.Model):
         # ---- Portal Reports (visible by user's portal groups) ----
         domain = [
             ('active', '=', True),
-            ('allowed_group_ids', 'in', user.group_ids.ids),
+            ('allowed_group_ids', 'in', user.groups_id.ids),
         ]
         Report = env['portal.report.document'].sudo()
         total = Report.search_count(domain)

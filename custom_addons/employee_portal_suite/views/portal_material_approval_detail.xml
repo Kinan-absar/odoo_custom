@@ -23,7 +23,7 @@
                 <div>
                     <h4 class="mb-0 fw-bold">Material Approval</h4>
                     <div class="text-muted small">
-                        <t t-esc="request_rec.name"/>
+                        <t t-out="request_rec.name"/>
                     </div>
                 </div>
 
@@ -46,9 +46,9 @@
             <t t-if="request_rec.state == 'rejected'">
                 <div class="alert alert-danger small">
                     <strong>Rejected at:</strong>
-                    <t t-esc="request_rec.state_before_reject"/> —
+                    <t t-out="request_rec.state_before_reject"/> —
                     <strong>Reason:</strong>
-                    <t t-esc="request_rec.get_rejection_reason()"/>
+                    <t t-out="request_rec.get_rejection_reason()"/>
                 </div>
             </t>
 
@@ -56,7 +56,7 @@
                 <div class="alert alert-warning small">
                     <strong>
                         Clarification requested by 
-                        <t t-esc="dict(request_rec._fields['state'].selection).get(request_rec.clarification_stage)"/>.
+                        <t t-out="dict(request_rec._fields['state'].selection).get(request_rec.clarification_stage)"/>.
                     </strong>
                 </div>
             </t>
@@ -70,25 +70,25 @@
                         <div class="col-6">
                             <div class="text-muted">Employee</div>
                             <div class="fw-semibold">
-                                <t t-esc="request_rec.employee_id.name"/>
+                                <t t-out="request_rec.employee_id.name"/>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="text-muted">Worksite</div>
                             <div class="fw-semibold">
-                                <t t-esc="request_rec.worksite"/>
+                                <t t-out="request_rec.worksite"/>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="text-muted">Request Date</div>
                             <div class="fw-semibold">
-                                <t t-esc="request_rec.request_date"/>
+                                <t t-out="request_rec.request_date"/>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="text-muted">Delivery Date</div>
                             <div class="fw-semibold">
-                                <t t-esc="request_rec.delivery_date"/>
+                                <t t-out="request_rec.delivery_date"/>
                             </div>
                         </div>
                     </div>
@@ -107,7 +107,7 @@
                                 <div class="text-muted small">Upload supplier quotations separately from general MR attachments.</div>
                             </div>
                             <span t-att-class="'badge ' + ('bg-secondary' if request_rec.quotation_status == 'pending' else 'bg-warning text-dark' if request_rec.quotation_status in ['remaining_2','remaining_1'] else 'bg-success' if request_rec.quotation_status == 'uploaded' else 'bg-info text-dark')">
-                                <t t-esc="dict(request_rec._fields['quotation_status'].selection).get(request_rec.quotation_status)"/>
+                                <t t-out="dict(request_rec._fields['quotation_status'].selection).get(request_rec.quotation_status)"/>
                             </span>
                         </div>
                     </div>
@@ -116,7 +116,7 @@
                             <div class="col-md-4 col-6">
                                 <div class="p-2 rounded-3 bg-light border h-100">
                                     <div class="text-muted">Quotation Files</div>
-                                    <div class="fw-semibold"><t t-esc="len(quotation_attachments)"/> uploaded</div>
+                                    <div class="fw-semibold"><t t-out="len(quotation_attachments)"/> uploaded</div>
                                 </div>
                             </div>
                             <div class="col-md-4 col-6">
@@ -129,7 +129,7 @@
                                 <div class="p-2 rounded-3 bg-light border h-100">
                                     <div class="text-muted">Backend Override</div>
                                     <div class="fw-semibold text-truncate">
-                                        <t t-if="request_rec.quotation_status_override"><t t-esc="dict(request_rec._fields['quotation_status_override'].selection).get(request_rec.quotation_status_override)"/></t>
+                                        <t t-if="request_rec.quotation_status_override"><t t-out="dict(request_rec._fields['quotation_status_override'].selection).get(request_rec.quotation_status_override)"/></t>
                                         <t t-else="">Automatic</t>
                                     </div>
                                 </div>
@@ -144,10 +144,10 @@
                                             <div class="overflow-hidden d-flex align-items-center gap-2">
                                                 <i t-att-class="'fa ' + ('fa-file-pdf-o text-danger' if (att.mimetype or '').find('pdf') >= 0 else 'fa-file-image-o text-primary' if (att.mimetype or '').find('image') >= 0 else 'fa-file-excel-o text-success' if ((att.mimetype or '').find('sheet') >= 0 or (att.name or '').lower().endswith(('.xls', '.xlsx'))) else 'fa-file-o text-muted')"></i>
                                                 <div class="overflow-hidden">
-                                                    <div class="fw-semibold text-truncate"><t t-esc="att.name"/></div>
+                                                    <div class="fw-semibold text-truncate"><t t-out="att.name"/></div>
                                                     <div class="text-muted small">
-                                                        <t t-if="att.file_size"><t t-esc="'%.1f KB' % (att.file_size / 1024.0)"/></t>
-                                                        <t t-if="att.create_date"> · Uploaded <t t-esc="att.create_date"/></t>
+                                                        <t t-if="att.file_size"><t t-out="'%.1f KB' % (att.file_size / 1024.0)"/></t>
+                                                        <t t-if="att.create_date"> · Uploaded <t t-out="att.create_date"/></t>
                                                     </div>
                                                 </div>
                                             </div>
@@ -211,7 +211,7 @@
                                 <div class="text-muted small">Upload invoice/supporting files separately from quotation and general MR attachments, then submit them to Accounting.</div>
                             </div>
                             <span t-att-class="'badge ' + ('bg-secondary' if request_rec.accounting_docs_status == 'pending' else 'bg-primary' if request_rec.accounting_docs_status == 'submitted' else 'bg-info text-dark' if request_rec.accounting_docs_status == 'received' else 'bg-warning text-dark' if request_rec.accounting_docs_status == 'need_more' else 'bg-success' if request_rec.accounting_docs_status == 'processed' else 'bg-danger')">
-                                <t t-esc="dict(request_rec._fields['accounting_docs_status'].selection).get(request_rec.accounting_docs_status)"/>
+                                <t t-out="dict(request_rec._fields['accounting_docs_status'].selection).get(request_rec.accounting_docs_status)"/>
                             </span>
                         </div>
                     </div>
@@ -247,7 +247,7 @@
                                 <div class="p-2 rounded-3 bg-light border h-100">
                                     <div class="text-muted">PO / Bill</div>
                                     <div class="fw-semibold text-truncate">
-                                        <t t-if="request_rec.po_created"><t t-esc="request_rec.po_name"/></t>
+                                        <t t-if="request_rec.po_created"><t t-out="request_rec.po_name"/></t>
                                         <t t-elif="request_rec.no_po_required and request_rec.vendor_bill_ids">Bill Created</t>
                                         <t t-elif="request_rec.no_po_required">No PO Required</t>
                                         <t t-else="">No PO Created</t>
@@ -257,14 +257,14 @@
                             <div class="col-md-3 col-6">
                                 <div class="p-2 rounded-3 bg-light border h-100">
                                     <div class="text-muted">Files</div>
-                                    <div class="fw-semibold"><t t-esc="len(accounting_attachments)"/> uploaded</div>
+                                    <div class="fw-semibold"><t t-out="len(accounting_attachments)"/> uploaded</div>
                                 </div>
                             </div>
                             <div class="col-md-3 col-6">
                                 <div class="p-2 rounded-3 bg-light border h-100">
                                     <div class="text-muted">Submitted By</div>
                                     <div class="fw-semibold text-truncate">
-                                        <t t-if="request_rec.docs_submitted_by"><t t-esc="request_rec.docs_submitted_by.name"/></t>
+                                        <t t-if="request_rec.docs_submitted_by"><t t-out="request_rec.docs_submitted_by.name"/></t>
                                         <t t-else="">-</t>
                                     </div>
                                 </div>
@@ -273,7 +273,7 @@
                                 <div class="p-2 rounded-3 bg-light border h-100">
                                     <div class="text-muted">Submitted Date</div>
                                     <div class="fw-semibold text-truncate">
-                                        <t t-if="request_rec.docs_submitted_date"><t t-esc="request_rec.docs_submitted_date"/></t>
+                                        <t t-if="request_rec.docs_submitted_date"><t t-out="request_rec.docs_submitted_date"/></t>
                                         <t t-else="">-</t>
                                     </div>
                                 </div>
@@ -291,10 +291,10 @@
                                             <div class="overflow-hidden d-flex align-items-center gap-2">
                                                 <i t-att-class="'fa ' + ('fa-file-pdf-o text-danger' if (att.mimetype or '').find('pdf') >= 0 else 'fa-file-image-o text-primary' if (att.mimetype or '').find('image') >= 0 else 'fa-file-excel-o text-success' if ((att.mimetype or '').find('sheet') >= 0 or (att.name or '').lower().endswith(('.xls', '.xlsx'))) else 'fa-file-o text-muted')"></i>
                                                 <div class="overflow-hidden">
-                                                    <div class="fw-semibold text-truncate"><t t-esc="att.name"/></div>
+                                                    <div class="fw-semibold text-truncate"><t t-out="att.name"/></div>
                                                     <div class="text-muted small">
-                                                        <t t-if="att.file_size"><t t-esc="'%.1f KB' % (att.file_size / 1024.0)"/></t>
-                                                        <t t-if="att.create_date"> · Uploaded <t t-esc="att.create_date"/></t>
+                                                        <t t-if="att.file_size"><t t-out="'%.1f KB' % (att.file_size / 1024.0)"/></t>
+                                                        <t t-if="att.create_date"> · Uploaded <t t-out="att.create_date"/></t>
                                                     </div>
                                                 </div>
                                             </div>
@@ -370,7 +370,7 @@
                             <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold small">Note to Accounting <span class="text-muted fw-normal">(optional)</span></label>
-                                <textarea name="accounting_docs_note" class="form-control" rows="2" placeholder="Example: partial delivery, split invoice, urgent processing..."><t t-esc="request_rec.accounting_docs_note or ''"/></textarea>
+                                <textarea name="accounting_docs_note" class="form-control" rows="2" placeholder="Example: partial delivery, split invoice, urgent processing..."><t t-out="request_rec.accounting_docs_note or ''"/></textarea>
                             </div>
                             <t t-if="not accounting_attachments">
                                 <div class="alert alert-light border small mb-3">
@@ -407,14 +407,14 @@
                         <div class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
                                 <div class="fw-semibold">
-                                    <t t-esc="line.item_name"/>
+                                    <t t-out="line.item_name"/>
                                 </div>
                                 <div class="text-muted small">
-                                    <t t-esc="line.uom_id.name"/>
+                                    <t t-out="line.uom_id.name"/>
                                 </div>
                             </div>
                             <div class="fw-bold fs-6">
-                                <t t-esc="line.qty_required"/>
+                                <t t-out="line.qty_required"/>
                             </div>
                         </div>
                     </t>
@@ -428,7 +428,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center bg-white">
                     <span class="fw-semibold">Attachments</span>
                     <span class="badge bg-light text-dark">
-                        <t t-esc="len(attachments)"/>
+                        <t t-out="len(attachments)"/>
                     </span>
                 </div>
 
@@ -443,10 +443,10 @@
 
                                         <div class="overflow-hidden">
                                             <div class="fw-semibold text-truncate">
-                                                <t t-esc="att.name"/>
+                                                <t t-out="att.name"/>
                                             </div>
                                             <div class="text-muted small">
-                                                <t t-esc="att.description or 'General'"/>
+                                                <t t-out="att.description or 'General'"/>
                                             </div>
                                         </div>
 
@@ -671,14 +671,14 @@
                                     <div class="timeline-marker"></div>
                                     <div class="timeline-content">
                                         <div class="fw-semibold">
-                                            <t t-esc="ev['stage']"/>
+                                            <t t-out="ev['stage']"/>
                                         </div>
                                         <div class="text-muted small">
-                                            <t t-esc="ev['date']"/>
+                                            <t t-out="ev['date']"/>
                                         </div>
                                         <t t-if="ev['comment']">
                                             <div class="small mt-1">
-                                                <t t-esc="ev['comment']"/>
+                                                <t t-out="ev['comment']"/>
                                             </div>
                                         </t>
                                     </div>
@@ -697,9 +697,9 @@
             </div>
 <t t-foreach="request_rec.message_ids.filtered(lambda m: m.message_type == 'comment')" t-as="msg">
     <div class="border p-2 mb-2">
-        <strong><t t-esc="msg.author_id.name or 'Unknown'"/></strong>
+        <strong><t t-out="msg.author_id.name or 'Unknown'"/></strong>
         <small class="text-muted ms-2">
-            <t t-esc="msg.date"/>
+            <t t-out="msg.date"/>
         </small>
         <div class="mt-1">
             <t t-out="msg.body"/>

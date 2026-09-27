@@ -134,12 +134,12 @@ class PortalChatController(http.Controller):
             if not member.partner_id.user_ids.filtered(lambda u: u.active and u._is_internal()):
                 continue
             payload = {
-                'channel_id': channel.id,
-                'invite_to_rtc_call': False,
-                'data': Store(bus_channel=member._bus_channel())
-                .add(channel)
-                .add(member, 'unpin_dt')
-                .get_result(),
+                'channel': {
+                    **channel._channel_basic_info(),
+                    'model': 'discuss.channel',
+                    'is_pinned': True,
+                },
+                'open_chat_window': False,
             }
             member._bus_send('discuss.channel/joined', payload)
         channel._broadcast(members.partner_id.ids)
@@ -171,7 +171,7 @@ class PortalChatController(http.Controller):
             ('message_type', '=', 'comment'),
         ], order='id desc', limit=1)
         if latest:
-            member._mark_as_read(latest.id)
+            member._mark_as_read(latest.id, sync=True)
 
     def _read_state(self, thread, user, create=False):
         Read = request.env['portal.chat.read'].sudo()
@@ -256,7 +256,7 @@ class PortalChatController(http.Controller):
             'read_by': self._message_read_by(channel, msg, user) if msg.author_id.id == user.partner_id.id else [],
         }
 
-    @http.route('/employee_portal/chat/threads', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/chat/threads', type='json', auth='user', csrf=False)
     def chat_threads(self):
         user = self._user()
         if not self._is_employee_user(user):
@@ -297,7 +297,7 @@ class PortalChatController(http.Controller):
             })
         return {'threads': result, 'unread_total': unread_total}
 
-    @http.route('/employee_portal/chat/start', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/chat/start', type='json', auth='user', csrf=False)
     def chat_start(self, participant_ids=None, name=None):
         user = self._user()
         if not self._is_employee_user(user):
@@ -342,7 +342,7 @@ class PortalChatController(http.Controller):
         self._read_state(thread, user, create=True)
         return {'thread_id': thread.id, 'discuss_channel_id': channel.id}
 
-    @http.route('/employee_portal/chat/messages', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/chat/messages', type='json', auth='user', csrf=False)
     def chat_messages(self, thread_id=None, limit=80):
         thread = self._thread(thread_id)
         if not thread:
@@ -401,7 +401,7 @@ class PortalChatController(http.Controller):
                 mentioned_partners |= user.partner_id
         return mentioned_partners
 
-    @http.route('/employee_portal/chat/send', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/chat/send', type='json', auth='user', csrf=False)
     def chat_send(self, thread_id=None, body=None, reply_to_id=None, attachment_ids=None):
         thread = self._thread(thread_id)
         text = (body or '').strip()
@@ -431,7 +431,7 @@ class PortalChatController(http.Controller):
         self._mark_native_channel_seen(channel, user)
         return {'ok': True, 'message_id': message.id, 'discuss_channel_id': channel.id}
 
-    @http.route('/employee_portal/chat/upload', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/chat/upload', type='json', auth='user', csrf=False)
     def chat_upload(self, thread_id=None, filename=None, mimetype=None, data=None):
         thread = self._thread(thread_id)
         if not thread:
@@ -477,7 +477,7 @@ class PortalChatController(http.Controller):
         ]
         return request.make_response(raw, headers=headers)
 
-    @http.route('/employee_portal/chat/reaction', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/chat/reaction', type='json', auth='user', csrf=False)
     def chat_reaction(self, thread_id=None, message_id=None, content=None, action='add'):
         thread = self._thread(thread_id)
         if not thread or content not in ALLOWED_REACTIONS or action not in ('add', 'remove'):
@@ -494,7 +494,7 @@ class PortalChatController(http.Controller):
         )
         return {'ok': True, 'reactions': self._message_reactions(message, user)}
 
-    @http.route('/employee_portal/chat/typing', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/chat/typing', type='json', auth='user', csrf=False)
     def chat_typing(self, thread_id=None, typing=False):
         thread = self._thread(thread_id)
         if not thread:
@@ -513,7 +513,7 @@ class PortalChatController(http.Controller):
             pass
         return {'ok': True}
 
-    @http.route('/employee_portal/chat/mark_read', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/chat/mark_read', type='json', auth='user', csrf=False)
     def chat_mark_read(self, thread_id=None):
         thread = self._thread(thread_id)
         if not thread:

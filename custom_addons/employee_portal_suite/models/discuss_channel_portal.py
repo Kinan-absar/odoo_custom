@@ -1,6 +1,7 @@
 from odoo import _, Command, api, fields, models, tools
 
 
+from odoo.addons.mail.tools.discuss import Store
 from odoo.exceptions import AccessError
 
 
@@ -136,6 +137,7 @@ class DiscussChannel(models.Model):
             enabled = channel.employee_portal_access != 'disabled'
             channel.with_context(skip_employee_portal_channel_sync=True).sudo().write({
                 'is_employee_portal_channel': enabled,
+                'allow_public_upload': channel.employee_portal_access == 'read_write',
             })
 
     @api.model_create_multi
@@ -161,16 +163,16 @@ class DiscussChannel(models.Model):
 
 
     @api.model
-    def _create_group(self, partners_to, default_display_mode=False, name=''):
+    @api.returns('self', lambda channels: Store(channels).get_result())
+    def create_group(self, partners_to, default_display_mode=False, name=''):
         """Create native Discuss groups for authenticated Employee Portal users.
 
-        Odoo's native ChannelInvitation calls ``/discuss/create_group`` which ends
-        in ``discuss.channel._create_group``. Portal users do not normally have
-        create ACL on Discuss channels, so the standard method cannot complete even
-        though the native UI can select employees. Keep native Discuss as the source
-        of truth, but perform the creation as sudo after strictly validating that
-        every participant is an active employee and that the current portal
-        employee is included.
+        Odoo's native ChannelInvitation calls ``discuss.channel.create_group``.
+        Portal users do not normally have create ACL on Discuss channels, so the
+        standard method cannot complete even though the native UI can select
+        employees. Keep native Discuss as the source of truth, but perform the
+        creation as sudo after strictly validating that every participant is an
+        active employee and that the current portal employee is included.
         """
         is_employee_portal = bool(
             self.env.user.share
@@ -180,7 +182,7 @@ class DiscussChannel(models.Model):
             and not self.env.user.has_group('employee_portal_suite.group_attendance_only')
         )
         if not is_employee_portal:
-            return super()._create_group(
+            return super().create_group(
                 partners_to, default_display_mode=default_display_mode, name=name
             )
 
@@ -211,12 +213,16 @@ class DiscussChannel(models.Model):
             'default_display_mode': default_display_mode or False,
             'name': safe_name,
             'is_employee_portal_channel': True,
+            # Odoo 18's native /mail/attachment/upload route blocks every
+            # non-internal user unless this flag is enabled on the channel.
+            # Thread access/membership is still checked by Odoo before upload.
+            'allow_public_upload': True,
         })
         channel._broadcast(partners.ids)
         return channel
 
     def add_members(self, partner_ids=None, guest_ids=None, invite_to_rtc_call=False,
-                    post_joined_message=True):
+                    open_chat_window=False, post_joined_message=True):
         """Allow the native Discuss invite action for Employee Portal members.
 
         The normal native method is kept for internal users. Portal employees may
@@ -235,6 +241,7 @@ class DiscussChannel(models.Model):
                 partner_ids=partner_ids,
                 guest_ids=guest_ids,
                 invite_to_rtc_call=invite_to_rtc_call,
+                open_chat_window=open_chat_window,
                 post_joined_message=post_joined_message,
             )
 
@@ -265,6 +272,7 @@ class DiscussChannel(models.Model):
         return channels._add_members(
             partners=partners,
             invite_to_rtc_call=invite_to_rtc_call,
+            open_chat_window=open_chat_window,
             post_joined_message=post_joined_message,
             inviting_partner=current_partner,
         )
@@ -290,8 +298,25 @@ class DiscussChannel(models.Model):
             if channel.is_employee_portal_channel != should_expose:
                 channel.with_context(skip_ep_channel_refresh=True).write({
                     'is_employee_portal_channel': should_expose,
+                    'allow_public_upload': should_expose,
                 })
         return True
+
+    def init(self):
+        """Enable native attachment upload on existing Employee Portal chats.
+
+        Odoo 18 intentionally rejects /mail/attachment/upload for non-internal
+        users when discuss.channel.allow_public_upload is false. Existing portal
+        channels predate this setting, so update them during module upgrade.
+        The native route still validates thread create access/membership first.
+        """
+        self.env.cr.execute("""
+            UPDATE discuss_channel
+               SET allow_public_upload = TRUE
+             WHERE is_employee_portal_channel = TRUE
+               AND COALESCE(allow_public_upload, FALSE) = FALSE
+               AND (channel_type != 'channel' OR employee_portal_access = 'read_write')
+        """)
 
     def message_post(self, **kwargs):
         for channel in self:

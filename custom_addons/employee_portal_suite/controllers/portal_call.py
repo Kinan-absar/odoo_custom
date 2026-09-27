@@ -103,7 +103,7 @@ class PortalCallController(http.Controller):
                 result[uid] = 'away'
         return result
 
-    @http.route('/employee_portal/call/presence', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/call/presence', type='json', auth='user', csrf=False)
     def call_presence(self, active=False):
         """Heartbeat for Online/Away/Offline plus current In Call state."""
         user = self._user()
@@ -139,7 +139,7 @@ class PortalCallController(http.Controller):
     # ------------------------------------------------------------------
     # Directory
     # ------------------------------------------------------------------
-    @http.route('/employee_portal/call/contacts', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/call/contacts', type='json', auth='user', csrf=False)
     def call_contacts(self):
         user = self._user()
 
@@ -199,7 +199,7 @@ class PortalCallController(http.Controller):
             except Exception:
                 _logger.exception('Could not send Telegram missed-call notification to user %s', target.id)
 
-    @http.route('/employee_portal/call/start', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/call/start', type='json', auth='user', csrf=False)
     def call_start(self, target_user_id=None, target_user_ids=None, call_type='audio'):
         user = self._user()
         raw_ids = list(target_user_ids or [])
@@ -246,7 +246,7 @@ class PortalCallController(http.Controller):
             self._notify_telegram_incoming(target, user, is_group=is_group)
         return {'uuid': session.uuid, 'invited': [target.id for target in targets], 'meeting': is_group}
 
-    @http.route('/employee_portal/call/accept', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/call/accept', type='json', auth='user', csrf=False)
     def call_accept(self, uuid):
         session = self._get_session(uuid)
         if not session or session.state not in ('ringing', 'ongoing'):
@@ -262,7 +262,7 @@ class PortalCallController(http.Controller):
             self._queue_signal(session, other, 'accepted', {'user_id': user.id, 'user_name': user.name})
         return {'ok': True}
 
-    @http.route('/employee_portal/call/reject', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/call/reject', type='json', auth='user', csrf=False)
     def call_reject(self, uuid):
         session = self._get_session(uuid)
         if not session or session.state not in ('ringing', 'ongoing'):
@@ -294,7 +294,7 @@ class PortalCallController(http.Controller):
             self._queue_signal(session, other, 'rejected', {'user_id': user.id})
         return {'ok': True}
 
-    @http.route('/employee_portal/call/end', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/call/end', type='json', auth='user', csrf=False)
     def call_end(self, uuid):
         session = self._get_session(uuid)
         if not session or session.state not in ('ringing', 'ongoing'):
@@ -323,7 +323,7 @@ class PortalCallController(http.Controller):
                 self._queue_signal(session, other, 'ended', {})
         return {'ok': True}
 
-    @http.route('/employee_portal/call/add_participants', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/call/add_participants', type='json', auth='user', csrf=False)
     def call_add_participants(self, uuid, user_ids):
         session = self._get_session(uuid)
         if not session or session.state not in ('ringing', 'ongoing'):
@@ -343,7 +343,7 @@ class PortalCallController(http.Controller):
         return {'ok': True, 'added': added}
 
 
-    @http.route('/employee_portal/call/participants', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/call/participants', type='json', auth='user', csrf=False)
     def call_participants(self, uuid):
         session = self._get_session(uuid)
         if not session or session.state not in ('ringing', 'ongoing'):
@@ -361,7 +361,7 @@ class PortalCallController(http.Controller):
             })
         return {'participants': participants}
 
-    @http.route('/employee_portal/call/signal', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/call/signal', type='json', auth='user', csrf=False)
     def call_signal(self, uuid, signal_type, data):
         session = self._get_session(uuid)
         if not session or session.state not in ('ringing', 'ongoing'):
@@ -379,7 +379,7 @@ class PortalCallController(http.Controller):
     # ------------------------------------------------------------------
     # Polling
     # ------------------------------------------------------------------
-    @http.route('/employee_portal/call/poll', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/call/poll', type='json', auth='user', csrf=False)
     def call_poll(self, last_id=0):
         user = self._user()
         Session = request.env['portal.call.session'].sudo()
@@ -474,7 +474,7 @@ class PortalCallController(http.Controller):
     def _is_missed_for_user(self, session, user):
         return user.id != session.caller_id.id and self._history_status_for_user(session, user) == 'missed'
 
-    @http.route('/employee_portal/call/history', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/call/history', type='json', auth='user', csrf=False)
     def call_history(self, limit=40):
         user = self._user()
         if not self._is_callable_user(user):
@@ -537,7 +537,7 @@ class PortalCallController(http.Controller):
             })
         return {'calls': rows, 'unread_missed_count': unread_missed}
 
-    @http.route('/employee_portal/call/history/mark_seen', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/call/history/mark_seen', type='json', auth='user', csrf=False)
     def call_history_mark_seen(self):
         user = self._user()
         if not self._is_callable_user(user):
@@ -558,7 +558,7 @@ class PortalCallController(http.Controller):
     # ------------------------------------------------------------------
     # ICE servers
     # ------------------------------------------------------------------
-    @http.route('/employee_portal/call/ice_servers', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/call/ice_servers', type='json', auth='user', csrf=False)
     def ice_servers(self):
         ICP = request.env['ir.config_parameter'].sudo()
         servers = [{'urls': ['stun:stun.l.google.com:19302']}]

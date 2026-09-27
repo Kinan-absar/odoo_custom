@@ -69,11 +69,11 @@
                                             <tr>
 
                                                 <td class="fw-semibold">
-                                                    <t t-esc="req.name"/>
+                                                    <t t-out="req.name"/>
                                                 </td>
 
                                                 <td>
-                                                    <t t-esc="req.get_request_type_display()"/>
+                                                    <t t-out="req.get_request_type_display()"/>
                                                 </td>
 
                                                 <td>
@@ -82,7 +82,7 @@
 
                                                 <td>
                                                     <small class="text-muted">
-                                                        <t t-esc="req.request_date"/>
+                                                        <t t-out="req.request_date"/>
                                                     </small>
                                                 </td>
 
@@ -108,10 +108,10 @@
                                         <div class="mobile-request-top">
                                             <div>
                                                 <div class="mobile-request-id">
-                                                    <t t-esc="req.name"/>
+                                                    <t t-out="req.name"/>
                                                 </div>
                                                 <div class="mobile-request-date">
-                                                    <t t-esc="req.request_date"/>
+                                                    <t t-out="req.request_date"/>
                                                 </div>
                                             </div>
 
@@ -124,7 +124,7 @@
                                             <div>
                                                 <span class="label">Type</span>
                                                 <div>
-                                                    <t t-esc="req.get_request_type_display()"/>
+                                                    <t t-out="req.get_request_type_display()"/>
                                                 </div>
                                             </div>
                                         </div>

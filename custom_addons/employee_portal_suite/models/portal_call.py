@@ -18,7 +18,7 @@ class PortalCallContact(models.Model):
     portal_user_id = fields.Many2one(
         'res.users', string='Portal User', required=True, ondelete='cascade',
         domain=lambda self: [
-            ('group_ids', 'in', [self.env.ref('base.group_portal').id]),
+            ('groups_id', 'in', [self.env.ref('base.group_portal').id]),
             ('active', '=', True),
         ],
     )
@@ -31,10 +31,10 @@ class PortalCallContact(models.Model):
 
     display_name = fields.Char(compute='_compute_display_name', store=False)
 
-    _portal_internal_uniq = models.Constraint(
-        'unique(portal_user_id, internal_user_id)',
-        'This portal/internal user pair is already a call contact.',
-    )
+    _sql_constraints = [
+        ('portal_internal_uniq', 'unique(portal_user_id, internal_user_id)',
+         'This portal/internal user pair is already a call contact.'),
+    ]
 
     @api.depends('portal_user_id', 'internal_user_id')
     def _compute_display_name(self):
@@ -151,10 +151,9 @@ class PortalCallPresence(models.Model):
     last_seen = fields.Datetime(index=True)
     last_activity = fields.Datetime(index=True)
 
-    _portal_call_presence_user_uniq = models.Constraint(
-        'unique(user_id)',
-        'Only one presence record is allowed per user.',
-    )
+    _sql_constraints = [
+        ('portal_call_presence_user_uniq', 'unique(user_id)', 'Only one presence record is allowed per user.'),
+    ]
 
     @api.autovacuum
     def _gc_old_presence(self):

@@ -63,19 +63,19 @@
                                     <tr>
                                         <td>
                                             <a class="portal-report-title-link" t-att-href="'/my/employee/reports/%s' % report.id">
-                                                <t t-esc="report.name"/>
+                                                <t t-out="report.name"/>
                                             </a>
                                             <t t-if="report.description">
-                                                <div class="portal-report-desc text-truncate"><t t-esc="report.description"/></div>
+                                                <div class="portal-report-desc text-truncate"><t t-out="report.description"/></div>
                                             </t>
                                         </td>
                                         <td>
-                                            <span t-esc="report.date.strftime('%d %b %Y') if report.date else ''"/>
+                                            <span t-out="report.date.strftime('%d %b %Y') if report.date else ''"/>
                                         </td>
                                         <td>
                                             <t t-if="report.filename">
                                                 <i class="fa fa-file-pdf-o me-1 text-danger"></i>
-                                                <span t-esc="report.filename"/>
+                                                <span t-out="report.filename"/>
                                             </t>
                                         </td>
                                         <td class="text-end">
@@ -123,14 +123,14 @@
                     <a href="/my/employee/reports" class="text-muted small text-decoration-none">
                         <i class="fa fa-chevron-left me-1"></i> Back to Reports
                     </a>
-                    <h4 class="mb-1 mt-2"><t t-esc="report.name"/></h4>
+                    <h4 class="mb-1 mt-2"><t t-out="report.name"/></h4>
                     <div class="text-muted small">
                         <i class="fa fa-calendar-o me-1"></i>
-                        <t t-esc="report.date.strftime('%d %b %Y') if report.date else ''"/>
+                        <t t-out="report.date.strftime('%d %b %Y') if report.date else ''"/>
                         <t t-if="report.filename">
                             <span class="mx-2">•</span>
                             <i class="fa fa-file-pdf-o me-1"></i>
-                            <t t-esc="report.filename"/>
+                            <t t-out="report.filename"/>
                         </t>
                     </div>
                 </div>
@@ -141,7 +141,7 @@
 
             <div class="portal-report-detail-card mb-4">
                 <t t-if="report.description">
-                    <p class="text-muted mb-3"><t t-esc="report.description"/></p>
+                    <p class="text-muted mb-3"><t t-out="report.description"/></p>
                 </t>
                 <iframe class="portal-report-viewer" t-att-src="'/my/employee/reports/%s/view' % report.id"></iframe>
             </div>

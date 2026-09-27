@@ -19,7 +19,7 @@ registry.category("services").add("employee_portal_discuss_bridge", {
                 // If a portal-created channel was not known to the already-open Store,
                 // refresh only an actively-open Discuss screen as a safe fallback.
                 const discussOpen = Boolean(
-                    document.querySelector(".o-mail-Discuss, .o-mail-DiscussContent") ||
+                    document.querySelector(".o-mail-Discuss, .o-mail-Discuss-content") ||
                     String(window.location.hash || "").toLowerCase().includes("discuss")
                 );
                 const active = document.activeElement;

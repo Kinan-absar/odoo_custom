@@ -151,6 +151,7 @@ class PortalChatThread(models.Model):
                 channel.with_user(create_env.env.user).sudo()._add_members(
                     partners=missing,
                     post_joined_message=False,
+                    open_chat_window=False,
                 )
         else:
             channel.channel_member_ids.sudo().write({'unpin_dt': False})
@@ -169,7 +170,6 @@ class PortalChatRead(models.Model):
     user_id = fields.Many2one('res.users', required=True, ondelete='cascade', index=True)
     last_read_at = fields.Datetime(default=fields.Datetime.now, index=True)
 
-    _portal_chat_read_unique = models.Constraint(
-        'unique(thread_id, user_id)',
-        'Only one read state is allowed per user and conversation.',
-    )
+    _sql_constraints = [
+        ('portal_chat_read_unique', 'unique(thread_id, user_id)', 'Only one read state is allowed per user and conversation.'),
+    ]

@@ -276,7 +276,7 @@
     padding: 0 !important;
     overflow: visible !important;
 }
-/* Odoo 18/19 radio choices are rendered as .o_radio_item and may also carry
+/* Odoo 18 radio choices are rendered as .o_radio_item and may also carry
    Bootstrap's .form-check. Target both so the second radio can never overlap
    the first label. */
 .o_form_view.asr_workspace_form .asr_type_control .o_radio_item,

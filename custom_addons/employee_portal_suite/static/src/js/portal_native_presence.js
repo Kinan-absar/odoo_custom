@@ -19,6 +19,7 @@ const employeePortalNativePresence = {
             if (stopped) return;
             bus_service.send("update_presence", {
                 inactivity_period: presence.getInactivityPeriod(),
+                im_status_ids_by_model: {},
             });
         };
 

@@ -37,4 +37,13 @@
         <field name="prefix">REL/%(year)s/</field>
         <field name="padding">4</field>
     </record>
+
+    <record id="seq_construction_contract_order" model="ir.sequence">
+        <field name="name">Construction Contract Order</field>
+        <field name="code">construction.contract.order</field>
+        <field name="prefix">CO/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
 </odoo>

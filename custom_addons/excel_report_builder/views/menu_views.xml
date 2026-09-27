@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_excel_report_root" name="Excel Report Builder" sequence="65" groups="excel_report_builder.group_excel_report_user"/>
+    <menuitem id="menu_excel_reports" name="Reports" parent="menu_excel_report_root" action="action_excel_report_template" sequence="10" groups="excel_report_builder.group_excel_report_user"/>
+</odoo>

@@ -5,6 +5,9 @@
             <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
                 <a href="/my/employee/petty-cash" class="ep-sidebar-link"><i class="fa fa-money"/>Petty Cash</a>
             </t>
+            <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_approver')">
+                <a href="/my/employee/petty-cash/approvals" class="ep-sidebar-link"><i class="fa fa-check-square-o"/>Petty Cash Approvals</a>
+            </t>
         </xpath>
     </template>
 </odoo>

@@ -358,20 +358,20 @@
             <style t-if="request.params.get('embedded')" data-employee-discuss-pwa="1">
                 /* Embedded conversation: the outer Chats page owns navigation. */
                 .o-mail-DiscussSidebar,
-                .o-mail-DiscussSidebar,
+                .o-mail-Discuss-sidebar,
                 [class*="o-mail-DiscussSidebar"],
                 .o-mail-MessagingMenu,
                 .o-mail-MessagingMenu-navbar,
                 [class*="o-mail-MessagingMenu"] { display: none !important; }
                 .o-mail-Discuss { grid-template-columns: minmax(0, 1fr) !important; width: 100% !important; }
-                .o-mail-DiscussContent,
-                .o-mail-DiscussContent,
-                .o-mail-DiscussContent,
-                .o-mail-DiscussContent,
-                .o-mail-Thread,
+                .o-mail-Discuss-content,
+                .o-mail-Discuss-main,
+                .o-mail-Discuss-core,
+                .o-mail-Discuss-threadContainer,
+                .o-mail-ThreadView,
                 .o-mail-Thread,
                 .o-mail-Composer { width: 100% !important; max-width: none !important; margin-left: 0 !important; margin-right: 0 !important; }
-                .o-mail-DiscussContent-header { width: 100% !important; max-width: none !important; }
+                .o-mail-Discuss-header { width: 100% !important; max-width: none !important; }
                 /* Remove only our historical extra video action; keep Odoo/portal native call controls. */
                 .ep-native-video-call,
                 .ep-native-video-call-btn { display: none !important; }

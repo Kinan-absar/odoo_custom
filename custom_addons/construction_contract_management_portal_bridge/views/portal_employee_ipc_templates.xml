@@ -61,6 +61,7 @@
                                 <tr>
                                     <th>IPC #</th>
                                     <th>Contract</th>
+                                    <th>Sales Order / Scope</th>
                                     <th>Project</th>
                                     <th>Date</th>
                                     <th>Period</th>
@@ -76,6 +77,7 @@
                                     <tr>
                                         <td><a t-attf-href="/my/employee/ipc/#{ipc.id}"><t t-esc="ipc.name"/></a></td>
                                         <td><span t-field="ipc.contract_id"/></td>
+                                        <td><t t-if="ipc.contract_order_id"><t t-esc="ipc.sale_order_id.name"/><t t-if="ipc.contract_order_id.scope_name"> · <t t-esc="ipc.contract_order_id.scope_name"/></t></t><t t-else="">-</t></td>
                                         <td><span t-field="ipc.contract_id.project_id"/></td>
                                         <td><span t-field="ipc.ipc_date"/></td>
                                         <td><span t-field="ipc.period_from"/> - <span t-field="ipc.period_to"/></td>
@@ -118,6 +120,10 @@
                                     <div>
                                         <span class="construction-mobile-card-label">Project</span>
                                         <div class="construction-mobile-card-value"><span t-field="ipc.contract_id.project_id"/></div>
+                                    </div>
+                                    <div t-if="ipc.contract_order_id">
+                                        <span class="construction-mobile-card-label">Sales Order / Scope</span>
+                                        <div class="construction-mobile-card-value"><t t-esc="ipc.sale_order_id.name"/><t t-if="ipc.contract_order_id.scope_name"> · <t t-esc="ipc.contract_order_id.scope_name"/></t></div>
                                     </div>
                                     <div>
                                         <span class="construction-mobile-card-label">Period</span>
@@ -287,6 +293,10 @@
                                 <div class="row mb-2">
                                     <div class="col-5"><strong>Contract:</strong></div>
                                     <div class="col-7"><span t-field="ipc.contract_id"/></div>
+                                </div>
+                                <div class="row mb-2" t-if="ipc.contract_order_id">
+                                    <div class="col-5"><strong>Source Sales Order:</strong></div>
+                                    <div class="col-7"><t t-esc="ipc.sale_order_id.name"/><t t-if="ipc.contract_order_id.scope_name"> · <t t-esc="ipc.contract_order_id.scope_name"/></t></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-5"><strong>Project:</strong></div>

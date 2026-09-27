@@ -168,12 +168,12 @@ class EmployeePortalNativeDiscussController(http.Controller):
         if not target_users:
             return request.env['discuss.channel']
 
-        # Direct conversation: delegate completely to native Odoo _get_or_create_chat().
-        # sudo keeps the current uid in Odoo 19, so the portal employee remains
+        # Direct conversation: delegate completely to native Odoo channel_get().
+        # sudo keeps the current uid in Odoo 18, so the portal employee remains
         # the current persona while ACLs are bypassed for the server-side bridge.
         if len(target_users) == 1:
             target_partner_id = target_users.partner_id.id
-            channel = request.env['discuss.channel'].sudo()._get_or_create_chat([target_partner_id])
+            channel = request.env['discuss.channel'].sudo().channel_get([target_partner_id])
             channel.sudo().write({
                 'is_employee_portal_channel': True,
                 'last_interest_dt': fields.Datetime.now(),
@@ -227,7 +227,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
                 ('message_type', '!=', 'user_notification'),
             ], order='id desc', limit=1).id
         if last_message_id:
-            member.sudo()._mark_as_read(last_message_id)
+            member.sudo()._mark_as_read(last_message_id, sync=True)
         return True
 
     def _discuss_home_values(self, user):
@@ -294,14 +294,14 @@ class EmployeePortalNativeDiscussController(http.Controller):
             channel.sudo().write({'is_employee_portal_channel': True})
         channel_user = channel.with_user(user)
         store = Store()
-        store.add_global_values(
-            companyName=request.env.company.name,
-            inPublicPage=True,
-            employeePortalDiscuss=True,
-            employeePortalDiscussHome=bool(home),
-            employeePortalBackUrl='/my/employee/discuss',
-        )
-        store.add_singleton_values('DiscussApp', {'thread': store.One(channel_user)})
+        store.add({
+            'companyName': request.env.company.name,
+            'inPublicPage': True,
+            'employeePortalDiscuss': True,
+            'employeePortalDiscussHome': bool(home),
+            'employeePortalBackUrl': '/my/employee/discuss',
+            'discuss_public_thread': Store.one(channel_user),
+        })
         return request.render('mail.discuss_public_channel_template', {
             'data': store.get_result(),
             'session_info': channel_user.env['ir.http'].session_info(),
@@ -539,7 +539,7 @@ self.addEventListener("notificationclick", (event) => {
             ('Service-Worker-Allowed', '/my/employee'),
         ])
 
-    @http.route('/employee_portal/discuss/people_all', type='jsonrpc', auth='user')
+    @http.route('/employee_portal/discuss/people_all', type='json', auth='user')
     def employee_discuss_people_all(self):
         """Employee directory for the native Discuss sidebar new-chat dialog."""
         user = self._employee_user()
@@ -557,7 +557,7 @@ self.addEventListener("notificationclick", (event) => {
             })
         return {'people': people}
 
-    @http.route('/employee_portal/discuss/start_json', type='jsonrpc', auth='user')
+    @http.route('/employee_portal/discuss/start_json', type='json', auth='user')
     def employee_discuss_start_json(self, user_ids=None, group_name=None):
         """Create/open a native DM or employee group without leaving Discuss."""
         user = self._employee_user()
@@ -580,7 +580,7 @@ self.addEventListener("notificationclick", (event) => {
             'url': f'/my/employee/discuss/channel/{channel.id}',
         }
 
-    @http.route('/employee_portal/discuss/available_people', type='jsonrpc', auth='user')
+    @http.route('/employee_portal/discuss/available_people', type='json', auth='user')
     def employee_discuss_available_people(self, channel_id=None):
         user = self._employee_user()
         if not user:
@@ -604,7 +604,7 @@ self.addEventListener("notificationclick", (event) => {
             })
         return {'people': people}
 
-    @http.route('/employee_portal/discuss/add_people', type='jsonrpc', auth='user')
+    @http.route('/employee_portal/discuss/add_people', type='json', auth='user')
     def employee_discuss_add_people(self, channel_id=None, user_ids=None):
         user = self._employee_user()
         if not user:
@@ -659,7 +659,7 @@ self.addEventListener("notificationclick", (event) => {
         })
         return {'ok': True, 'channel_id': channel.id}
 
-    @http.route('/employee_portal/discuss/mark_read', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/discuss/mark_read', type='json', auth='user', csrf=False)
     def employee_discuss_mark_read(self, channel_id=None, last_message_id=None):
         """Mark a portal-visible native Discuss thread as read immediately."""
         user = self._employee_user()
@@ -690,14 +690,14 @@ self.addEventListener("notificationclick", (event) => {
             payload['ok'] = bool(ok)
         return payload
 
-    @http.route('/employee_portal/discuss/unread', type='jsonrpc', auth='user')
+    @http.route('/employee_portal/discuss/unread', type='json', auth='user')
     def employee_discuss_unread(self):
         user = self._employee_user()
         if not user:
             return {'unread': 0}
         return self._unread_payload(user)
 
-    @http.route('/employee_portal/discuss/call/poll', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/discuss/call/poll', type='json', auth='user', csrf=False)
     def employee_discuss_call_poll(self):
         """Expose native Discuss RTC invitations to the employee portal shell.
 
@@ -731,7 +731,7 @@ self.addEventListener("notificationclick", (event) => {
             }
         }
 
-    @http.route('/employee_portal/discuss/call/decline', type='jsonrpc', auth='user', csrf=False)
+    @http.route('/employee_portal/discuss/call/decline', type='json', auth='user', csrf=False)
     def employee_discuss_call_decline(self, channel_id=None):
         """Decline only the current employee's native RTC invitation."""
         user = self._employee_user()

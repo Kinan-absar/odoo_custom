@@ -19,7 +19,7 @@
                     <div>
                         <h4 class="mb-0 fw-bold">Employee Request</h4>
                         <div class="text-muted small">
-                            <t t-esc="request_rec.name"/>
+                            <t t-out="request_rec.name"/>
                         </div>
                     </div>
 
@@ -31,9 +31,9 @@
                 <t t-if="request_rec.state == 'rejected'">
                     <div class="alert alert-danger small">
                         <strong>Rejected at:</strong>
-                        <t t-esc="request_rec.state_before_reject"/> —
+                        <t t-out="request_rec.state_before_reject"/> —
                         <strong>Reason:</strong>
-                        <t t-esc="request_rec.get_rejection_reason()"/>
+                        <t t-out="request_rec.get_rejection_reason()"/>
                     </div>
                 </t>
 
@@ -47,21 +47,21 @@
                             <div class="col-6">
                                 <div class="text-muted">Type</div>
                                 <div class="fw-semibold">
-                                    <t t-esc="request_rec.get_request_type_display()"/>
+                                    <t t-out="request_rec.get_request_type_display()"/>
                                 </div>
                             </div>
 
                             <div class="col-6">
                                 <div class="text-muted">Date</div>
                                 <div class="fw-semibold">
-                                    <t t-esc="request_rec.request_date"/>
+                                    <t t-out="request_rec.request_date"/>
                                 </div>
                             </div>
 
                             <div class="col-12">
                                 <div class="text-muted">Description</div>
                                 <div class="fw-semibold">
-                                    <t t-esc="request_rec.description"/>
+                                    <t t-out="request_rec.description"/>
                                 </div>
                             </div>
 
@@ -69,14 +69,14 @@
                                 <div class="col-6">
                                     <div class="text-muted">Leave From</div>
                                     <div class="fw-semibold">
-                                        <t t-esc="request_rec.leave_from"/>
+                                        <t t-out="request_rec.leave_from"/>
                                     </div>
                                 </div>
 
                                 <div class="col-6">
                                     <div class="text-muted">Leave To</div>
                                     <div class="fw-semibold">
-                                        <t t-esc="request_rec.leave_to"/>
+                                        <t t-out="request_rec.leave_to"/>
                                     </div>
                                 </div>
                             </t>
@@ -102,16 +102,16 @@
                                         <div class="timeline-marker"></div>
                                         <div class="timeline-content">
                                             <div class="fw-semibold">
-                                                <t t-esc="ev['stage']"/>
+                                                <t t-out="ev['stage']"/>
                                             </div>
 
                                             <div class="text-muted small">
-                                                <t t-esc="ev['date']"/>
+                                                <t t-out="ev['date']"/>
                                             </div>
 
                                             <t t-if="ev['comment']">
                                                 <div class="small mt-1">
-                                                    <t t-esc="ev['comment']"/>
+                                                    <t t-out="ev['comment']"/>
                                                 </div>
                                             </t>
                                         </div>

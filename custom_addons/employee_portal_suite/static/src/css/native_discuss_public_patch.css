@@ -26,15 +26,15 @@
   min-height: 36px;
 }
 
-.ep-native-discuss-public .o-mail-DiscussContent,
-.ep-native-discuss-public .o-mail-DiscussContent,
-.ep-native-discuss-public .o-mail-DiscussContent,
-.ep-native-discuss-public .o-mail-DiscussContent {
+.ep-native-discuss-public .o-mail-Discuss-content,
+.ep-native-discuss-public .o-mail-Discuss-main,
+.ep-native-discuss-public .o-mail-Discuss-core,
+.ep-native-discuss-public .o-mail-Discuss-threadContainer {
   min-height: 0 !important;
   overflow: hidden !important;
 }
 
-.ep-native-discuss-public .o-mail-DiscussContent {
+.ep-native-discuss-public .o-mail-Discuss-threadContainer {
   display: flex !important;
   flex-direction: column !important;
 }
@@ -63,7 +63,7 @@
     width: 100% !important;
   }
 
-  .ep-native-discuss-public .o-mail-DiscussContent-header {
+  .ep-native-discuss-public .o-mail-Discuss-header {
     min-height: 54px;
   }
 
@@ -305,7 +305,7 @@
   }
 
   /* Keep native mobile navigation controls above the message surface. */
-  .ep-native-discuss-public .o-mail-DiscussContent-header,
+  .ep-native-discuss-public .o-mail-Discuss-header,
   .ep-native-discuss-public .o-mail-MessagingMenu,
   .ep-native-discuss-public [class*="MessagingMenu"] {
     position: relative;
@@ -371,8 +371,8 @@
 @media (max-width: 767.98px) {
   /* The canonical home is the native chat list. Never leave thread chrome floating
      above it when no thread is selected. */
-  .ep-native-discuss-home .o-mail-DiscussContent:empty,
-  .ep-native-discuss-home .o-mail-DiscussContent:empty {
+  .ep-native-discuss-home .o-mail-Discuss-threadContainer:empty,
+  .ep-native-discuss-home .o-mail-Discuss-main:empty {
     display: none !important;
   }
 
@@ -513,21 +513,21 @@
 .ep-native-inline-back:hover{background:#f1f5f9!important;color:#0f172a!important}
 .ep-native-inline-back svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 body.ep-native-discuss-embedded .ep-native-video-call-btn{display:none!important}
-@media(max-width:767.98px){.ep-native-inline-back{width:40px!important;height:40px!important}.ep-native-discuss-public .o-mail-DiscussContent-header{padding-left:max(4px,env(safe-area-inset-left))!important;padding-right:max(4px,env(safe-area-inset-right))!important}}
+@media(max-width:767.98px){.ep-native-inline-back{width:40px!important;height:40px!important}.ep-native-discuss-public .o-mail-Discuss-header{padding-left:max(4px,env(safe-area-inset-left))!important;padding-right:max(4px,env(safe-area-inset-right))!important}}
 
 
 /* v20.24 - Embedded conversation cleanup. */
 body.ep-native-discuss-embedded .o-mail-DiscussSidebar,
-body.ep-native-discuss-embedded .o-mail-DiscussSidebar,
+body.ep-native-discuss-embedded .o-mail-Discuss-sidebar,
 body.ep-native-discuss-embedded [class*="o-mail-DiscussSidebar"],
 body.ep-native-discuss-embedded .o-mail-MessagingMenu,
 body.ep-native-discuss-embedded .o-mail-MessagingMenu-navbar,
 body.ep-native-discuss-embedded [class*="o-mail-MessagingMenu"]{display:none!important}
 body.ep-native-discuss-embedded .o-mail-Discuss{grid-template-columns:minmax(0,1fr)!important;width:100%!important}
-body.ep-native-discuss-embedded .o-mail-DiscussContent,
-body.ep-native-discuss-embedded .o-mail-DiscussContent,
-body.ep-native-discuss-embedded .o-mail-DiscussContent,
-body.ep-native-discuss-embedded .o-mail-DiscussContent{width:100%!important;max-width:none!important}
+body.ep-native-discuss-embedded .o-mail-Discuss-content,
+body.ep-native-discuss-embedded .o-mail-Discuss-main,
+body.ep-native-discuss-embedded .o-mail-Discuss-core,
+body.ep-native-discuss-embedded .o-mail-Discuss-threadContainer{width:100%!important;max-width:none!important}
 body.ep-native-discuss-embedded .ep-native-video-call,
 body.ep-native-discuss-embedded .ep-native-video-call-btn{display:none!important}
 
@@ -543,11 +543,11 @@ body.ep-native-discuss-embedded main {
 }
 
 body.ep-native-discuss-embedded .o-mail-Discuss,
-body.ep-native-discuss-embedded .o-mail-DiscussContent,
-body.ep-native-discuss-embedded .o-mail-DiscussContent,
-body.ep-native-discuss-embedded .o-mail-DiscussContent,
-body.ep-native-discuss-embedded .o-mail-DiscussContent,
-body.ep-native-discuss-embedded .o-mail-Thread,
+body.ep-native-discuss-embedded .o-mail-Discuss-content,
+body.ep-native-discuss-embedded .o-mail-Discuss-main,
+body.ep-native-discuss-embedded .o-mail-Discuss-core,
+body.ep-native-discuss-embedded .o-mail-Discuss-threadContainer,
+body.ep-native-discuss-embedded .o-mail-ThreadView,
 body.ep-native-discuss-embedded .o-mail-Thread,
 body.ep-native-discuss-embedded .o-mail-Composer {
   width: 100% !important;
@@ -560,24 +560,24 @@ body.ep-native-discuss-embedded .o-mail-Discuss {
   grid-template-columns: minmax(0, 1fr) !important;
 }
 
-body.ep-native-discuss-embedded .o-mail-DiscussContent,
-body.ep-native-discuss-embedded .o-mail-DiscussContent,
-body.ep-native-discuss-embedded .o-mail-DiscussContent {
+body.ep-native-discuss-embedded .o-mail-Discuss-content,
+body.ep-native-discuss-embedded .o-mail-Discuss-main,
+body.ep-native-discuss-embedded .o-mail-Discuss-core {
   flex: 1 1 auto !important;
   min-width: 0 !important;
 }
 
-body.ep-native-discuss-embedded .o-mail-DiscussContent-header {
+body.ep-native-discuss-embedded .o-mail-Discuss-header {
   width: 100% !important;
   max-width: none !important;
 }
 
 @media (max-width: 767.98px) {
   /* Keep the native add-participant (+) action visible beside the call controls. */
-  body.ep-native-discuss-embedded .o-mail-DiscussContent-header button[title*="Add" i],
-  body.ep-native-discuss-embedded .o-mail-DiscussContent-header button[aria-label*="Add" i],
-  body.ep-native-discuss-embedded .o-mail-DiscussContent-header button[title*="Invite" i],
-  body.ep-native-discuss-embedded .o-mail-DiscussContent-header button[aria-label*="Invite" i] {
+  body.ep-native-discuss-embedded .o-mail-Discuss-header button[title*="Add" i],
+  body.ep-native-discuss-embedded .o-mail-Discuss-header button[aria-label*="Add" i],
+  body.ep-native-discuss-embedded .o-mail-Discuss-header button[title*="Invite" i],
+  body.ep-native-discuss-embedded .o-mail-Discuss-header button[aria-label*="Invite" i] {
     display: inline-flex !important;
   }
 }
@@ -593,12 +593,12 @@ body.ep-native-discuss-embedded .o-mail-DiscussContent-header {
 
   /* JS marks allowed actions after Owl renders. Hide every action explicitly
      rejected by the mobile header policy, even after subsequent re-renders. */
-  .ep-native-discuss-public .o-mail-DiscussContent-header [data-ep-mobile-hidden-action="1"] {
+  .ep-native-discuss-public .o-mail-Discuss-header [data-ep-mobile-hidden-action="1"] {
     display: none !important;
   }
 
-  .ep-native-discuss-public .o-mail-DiscussContent-header [data-ep-mobile-allowed-action="1"],
-  .ep-native-discuss-public .o-mail-DiscussContent-header [data-ep-chats-back="1"] {
+  .ep-native-discuss-public .o-mail-Discuss-header [data-ep-mobile-allowed-action="1"],
+  .ep-native-discuss-public .o-mail-Discuss-header [data-ep-chats-back="1"] {
     display: inline-flex !important;
   }
 }
@@ -615,13 +615,13 @@ body.ep-native-discuss-embedded .o-mail-DiscussContent-header {
     display: none !important;
   }
 
-  body.ep-native-discuss-channel .o-mail-DiscussContent-header [data-ep-mobile-hidden-action="1"] {
+  body.ep-native-discuss-channel .o-mail-Discuss-header [data-ep-mobile-hidden-action="1"] {
     display: none !important;
     visibility: hidden !important;
   }
 
-  body.ep-native-discuss-channel .o-mail-DiscussContent-header [data-ep-mobile-allowed-action="1"],
-  body.ep-native-discuss-channel .o-mail-DiscussContent-header [data-ep-chats-back="1"] {
+  body.ep-native-discuss-channel .o-mail-Discuss-header [data-ep-mobile-allowed-action="1"],
+  body.ep-native-discuss-channel .o-mail-Discuss-header [data-ep-chats-back="1"] {
     display: inline-flex !important;
     visibility: visible !important;
   }
@@ -635,8 +635,6 @@ body.ep-native-discuss-readonly [class*="o-mail-Composer"],
 body.ep-native-discuss-readonly .o-mail-Message-actions,
 body.ep-native-discuss-readonly [class*="o-mail-MessageAction"],
 body.ep-native-discuss-readonly [class*="o-mail-Message-actions"],
-body.ep-native-discuss-readonly [class*="o-mail-Message-moreMenu"],
-body.ep-native-discuss-readonly [class*="o-mail-Message-actions"],
 body.ep-native-discuss-readonly [class*="o-mail-Message-menu"],
 body.ep-native-discuss-readonly [class*="o-mail-MessageMenu"],
 body.ep-native-discuss-readonly [data-action*="reaction"],
@@ -648,8 +646,8 @@ body.ep-native-discuss-readonly [title*="Pin"],
 body.ep-native-discuss-readonly [aria-label*="Pin"] {
     display: none !important;
 }
-body.ep-native-discuss-readonly .o-mail-DiscussContent-header button:not([data-ep-chats-back]),
-body.ep-native-discuss-readonly .o-mail-DiscussContent-header a:not([data-ep-chats-back]) {
+body.ep-native-discuss-readonly .o-mail-Discuss-header button:not([data-ep-chats-back]),
+body.ep-native-discuss-readonly .o-mail-Discuss-header a:not([data-ep-chats-back]) {
     display: none !important;
 }
 body.ep-native-discuss-readonly .o-mail-Thread {

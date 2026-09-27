@@ -20,7 +20,7 @@
         <div>
             <h4 class="mb-0 fw-bold">Material Request</h4>
             <div class="text-muted small">
-                <t t-esc="request_rec.name"/>
+                <t t-out="request_rec.name"/>
             </div>
         </div>
 
@@ -36,16 +36,16 @@
     <t t-if="request_rec.state == 'rejected'">
         <div class="alert alert-danger small">
             <strong>Rejected at:</strong>
-            <t t-esc="request_rec.state_before_reject"/> —
+            <t t-out="request_rec.state_before_reject"/> —
             <strong>Reason:</strong>
-            <t t-esc="request_rec.get_rejection_reason()"/>
+            <t t-out="request_rec.get_rejection_reason()"/>
         </div>
     </t>
 
     <t t-if="request_rec.needs_clarification and request_rec.clarification_stage">
         <div class="alert alert-warning small">
             <strong>Clarification requested by 
-                <t t-esc="dict(request_rec._fields['state'].selection).get(request_rec.clarification_stage)"/>.
+                <t t-out="dict(request_rec._fields['state'].selection).get(request_rec.clarification_stage)"/>.
             </strong>
         </div>
     </t>
@@ -62,35 +62,35 @@
                 <div class="col-6">
                     <div class="text-muted">Employee</div>
                     <div class="fw-semibold">
-                        <t t-esc="request_rec.employee_id.name"/>
+                        <t t-out="request_rec.employee_id.name"/>
                     </div>
                 </div>
 
                 <div class="col-6">
                     <div class="text-muted">Project</div>
                     <div class="fw-semibold">
-                        <t t-esc="request_rec.project_id.display_name or '-'"/>
+                        <t t-out="request_rec.project_id.display_name or '-'"/>
                     </div>
                 </div>
 
                 <div class="col-6">
                     <div class="text-muted">Worksite</div>
                     <div class="fw-semibold">
-                        <t t-esc="request_rec.worksite"/>
+                        <t t-out="request_rec.worksite"/>
                     </div>
                 </div>
 
                 <div class="col-6">
                     <div class="text-muted">Request Date</div>
                     <div class="fw-semibold">
-                        <t t-esc="request_rec.request_date"/>
+                        <t t-out="request_rec.request_date"/>
                     </div>
                 </div>
 
                 <div class="col-6">
                     <div class="text-muted">Delivery Date</div>
                     <div class="fw-semibold">
-                        <t t-esc="request_rec.delivery_date"/>
+                        <t t-out="request_rec.delivery_date"/>
                     </div>
                 </div>
 
@@ -115,15 +115,15 @@
 
                     <div>
                         <div class="fw-semibold">
-                            <t t-esc="line.item_name"/>
+                            <t t-out="line.item_name"/>
                         </div>
                         <div class="text-muted small">
-                            <t t-esc="line.uom_id.name"/>
+                            <t t-out="line.uom_id.name"/>
                         </div>
                     </div>
 
                     <div class="fw-bold fs-6">
-                        <t t-esc="line.qty_required"/>
+                        <t t-out="line.qty_required"/>
                     </div>
 
                 </div>
@@ -139,7 +139,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center bg-white">
                     <span class="fw-semibold">Attachments</span>
                     <span class="badge bg-light text-dark">
-                        <t t-esc="len(attachments)"/>
+                        <t t-out="len(attachments)"/>
                     </span>
                 </div>
 
@@ -154,10 +154,10 @@
 
                                         <div class="overflow-hidden">
                                             <div class="fw-semibold text-truncate">
-                                                <t t-esc="att.name"/>
+                                                <t t-out="att.name"/>
                                             </div>
                                             <div class="text-muted small">
-                                                <t t-esc="att.description or 'General'"/>
+                                                <t t-out="att.description or 'General'"/>
                                             </div>
                                         </div>
 
@@ -289,16 +289,16 @@
                             <div class="timeline-marker"></div>
                             <div class="timeline-content">
                                 <div class="fw-semibold">
-                                    <t t-esc="ev['stage']"/>
+                                    <t t-out="ev['stage']"/>
                                 </div>
 
                                 <div class="text-muted small">
-                                    <t t-esc="ev['date']"/>
+                                    <t t-out="ev['date']"/>
                                 </div>
 
                                 <t t-if="ev['comment']">
                                     <div class="small mt-1">
-                                        <t t-esc="ev['comment']"/>
+                                        <t t-out="ev['comment']"/>
                                     </div>
                                 </t>
                             </div>
@@ -319,9 +319,9 @@
 
     <t t-foreach="request_rec.message_ids.filtered(lambda m: m.message_type == 'comment')" t-as="msg">
     <div class="border p-2 mb-2">
-        <strong><t t-esc="msg.author_id.name or 'Unknown'"/></strong>
+        <strong><t t-out="msg.author_id.name or 'Unknown'"/></strong>
         <small class="text-muted ms-2">
-            <t t-esc="msg.date"/>
+            <t t-out="msg.date"/>
         </small>
         <div class="mt-1">
             <t t-out="msg.body"/>

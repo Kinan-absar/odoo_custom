@@ -1,0 +1,82 @@
+<odoo>
+    <record id="view_construction_contract_order_list" model="ir.ui.view">
+        <field name="name">construction.contract.order.list</field>
+        <field name="model">construction.contract.order</field>
+        <field name="arch" type="xml">
+            <list string="Contract Orders">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="sale_order_id"/>
+                <field name="scope_name"/>
+                <field name="project_id"/>
+                <field name="order_amount" sum="Total"/>
+                <field name="boq_amount" sum="BOQ Total"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_construction_contract_order_form" model="ir.ui.view">
+        <field name="name">construction.contract.order.form</field>
+        <field name="model">construction.contract.order</field>
+        <field name="arch" type="xml">
+            <form string="Contract Order">
+                <header>
+                    <button name="action_refresh_boq_from_sale" string="Refresh BOQ from Sales" type="object" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_sale_order" type="object" class="oe_stat_button" icon="fa-shopping-cart">
+                            <div class="o_stat_info"><span class="o_stat_text">Sales Order</span><span class="o_stat_value"><field name="sale_order_id"/></span></div>
+                        </button>
+                        <button name="action_view_measurements" type="object" class="oe_stat_button" icon="fa-ruler">
+                            <field name="measurement_count" widget="statinfo" string="Measurements"/>
+                        </button>
+                        <button name="action_view_ipcs" type="object" class="oe_stat_button" icon="fa-file-text-o">
+                            <field name="ipc_count" widget="statinfo" string="IPCs"/>
+                        </button>
+                    </div>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="contract_id" readonly="1"/>
+                            <field name="sale_order_id" readonly="1"/>
+                            <field name="scope_name"/>
+                            <field name="project_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="customer_reference" readonly="1"/>
+                            <field name="payment_term_id" readonly="1"/>
+                            <field name="order_amount" readonly="1"/>
+                            <field name="boq_amount" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="BOQ">
+                            <field name="boq_line_ids">
+                                <list editable="bottom">
+                                    <control>
+                                        <create string="Add a line"/>
+                                        <create string="Add a section" context="{'default_display_type': 'line_section'}"/>
+                                        <create string="Add a note" context="{'default_display_type': 'line_note'}"/>
+                                    </control>
+                                    <field name="display_type" column_invisible="True"/>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="item_code" invisible="display_type != False"/>
+                                    <field name="description" decoration-bf="display_type == 'line_section'" decoration-it="display_type == 'line_note'"/>
+                                    <field name="uom_id" invisible="display_type != False"/>
+                                    <field name="contract_qty" invisible="display_type != False"/>
+                                    <field name="unit_rate" string="Contract Rate" invisible="display_type != False"/>
+                                    <field name="total_amount" readonly="1" invisible="display_type != False"/>
+                                    <field name="measured_qty" readonly="1" invisible="display_type != False"/>
+                                    <field name="certified_qty" readonly="1" invisible="display_type != False"/>
+                                    <field name="remaining_qty" readonly="1" invisible="display_type != False"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+</odoo>

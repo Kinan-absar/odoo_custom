@@ -3,7 +3,7 @@ import logging
 from odoo import _, models
 from odoo.tools.image import image_data_uri
 from odoo.exceptions import AccessError
-from odoo.fields import Domain
+from odoo.osv import expression
 
 _logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class DiscussChannelMember(models.Model):
         if channel.channel_type == 'channel' and channel.employee_portal_access == 'read_only':
             portal_partner_ids = channel._employee_portal_candidate_users().partner_id.ids
             if portal_partner_ids:
-                domain = Domain.AND([domain, Domain('partner_id', 'not in', portal_partner_ids)])
+                domain = expression.AND([domain, [('partner_id', 'not in', portal_partner_ids)]])
         return domain
 
     def _rtc_invite_members(self, member_ids=None):

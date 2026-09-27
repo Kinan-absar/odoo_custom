@@ -210,7 +210,7 @@ body.ep-discuss-pwa-standalone {
 /* When native Discuss is inside the Chats shell, show only the conversation; the shell owns navigation. */
 body.ep-native-discuss-embedded .o-mail-DiscussSidebar,body.ep-native-discuss-embedded .o-mail-MessagingMenu{display:none!important}
 body.ep-native-discuss-embedded .o-mail-Discuss{grid-template-columns:1fr!important}
-body.ep-native-discuss-embedded .o-mail-DiscussContent{width:100%!important;max-width:none!important}
+body.ep-native-discuss-embedded .o-mail-Discuss-content{width:100%!important;max-width:none!important}
 .ep-native-video-call-btn{display:inline-flex!important;align-items:center;gap:5px;color:inherit!important;text-decoration:none!important}
 @media(max-width:767.98px){
   .ep-chats-shell{display:block;position:fixed;inset:0;height:100dvh}

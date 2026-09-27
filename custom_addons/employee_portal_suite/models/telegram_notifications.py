@@ -397,7 +397,7 @@ class EmployeeRequestTelegramReminders(models.Model):
             'ceo': 'employee_portal_suite.group_employee_portal_ceo',
         }
         group = self.env.ref(groups.get(self.state), raise_if_not_found=False) if groups.get(self.state) else False
-        return group.user_ids if group else self.env['res.users']
+        return group.users if group else self.env['res.users']
 
     def _telegram_approval_path(self):
         self.ensure_one()
@@ -432,7 +432,7 @@ class MaterialRequestTelegramReminders(models.Model):
             'ceo': 'employee_portal_suite.group_employee_portal_ceo',
         }
         group = self.env.ref(groups.get(self.state), raise_if_not_found=False) if groups.get(self.state) else False
-        return group.user_ids if group else self.env['res.users']
+        return group.users if group else self.env['res.users']
 
     def _telegram_approval_path(self):
         self.ensure_one()

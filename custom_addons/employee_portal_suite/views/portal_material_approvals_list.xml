@@ -96,11 +96,11 @@
                             <t t-foreach="shown_reqs" t-as="req">
                                 <tr>
                                     <td class="fw-semibold">
-                                        <t t-esc="req.name"/>
+                                        <t t-out="req.name"/>
                                     </td>
 
-                                    <td><t t-esc="req.employee_id.name"/></td>
-                                    <td><t t-esc="req.worksite"/></td>
+                                    <td><t t-out="req.employee_id.name"/></td>
+                                    <td><t t-out="req.worksite"/></td>
 
                                     <td>
                                         <t t-out="status_badge(req)"/>
@@ -108,7 +108,7 @@
 
                                     <td>
                                         <t t-if="req.po_created">
-                                            <span class="badge bg-success">PO: <t t-esc="req.po_name"/></span>
+                                            <span class="badge bg-success">PO: <t t-out="req.po_name"/></span>
                                         </t>
                                         <t t-elif="req.no_po_required">
                                             <span class="badge bg-info text-dark">No PO Required</span>
@@ -120,19 +120,19 @@
 
                                     <td>
                                         <span t-att-class="'badge ' + ('bg-secondary' if req.quotation_status == 'pending' else 'bg-warning text-dark' if req.quotation_status in ['remaining_2','remaining_1'] else 'bg-success' if req.quotation_status == 'uploaded' else 'bg-info text-dark')">
-                                            <t t-esc="dict(req._fields['quotation_status'].selection).get(req.quotation_status)"/>
+                                            <t t-out="dict(req._fields['quotation_status'].selection).get(req.quotation_status)"/>
                                         </span>
                                     </td>
 
                                     <td>
                                         <span class="badge bg-light text-dark">
-                                            <t t-esc="dict(req._fields['accounting_docs_status'].selection).get(req.accounting_docs_status)"/>
+                                            <t t-out="dict(req._fields['accounting_docs_status'].selection).get(req.accounting_docs_status)"/>
                                         </span>
                                     </td>
 
                                     <td>
                                         <small class="text-muted">
-                                            <t t-esc="req.request_date"/>
+                                            <t t-out="req.request_date"/>
                                         </small>
                                     </td>
 
@@ -170,11 +170,11 @@
 
                                 <div>
                                     <div class="mobile-request-id">
-                                        <t t-esc="req.name"/>
+                                        <t t-out="req.name"/>
                                     </div>
 
                                     <div class="mobile-request-date">
-                                        <t t-esc="req.employee_id.name"/>
+                                        <t t-out="req.employee_id.name"/>
                                     </div>
                                 </div>
 
@@ -188,13 +188,13 @@
 
                                 <div>
                                     <span class="label">Worksite</span>
-                                    <div><t t-esc="req.worksite"/></div>
+                                    <div><t t-out="req.worksite"/></div>
                                 </div>
 
                                 <div>
                                     <span class="label">PO</span>
                                     <div>
-                                        <t t-if="req.po_created"><t t-esc="req.po_name"/></t>
+                                        <t t-if="req.po_created"><t t-out="req.po_name"/></t>
                                         <t t-elif="req.no_po_required">No PO Required</t>
                                         <t t-else="">No PO</t>
                                     </div>
@@ -202,17 +202,17 @@
 
                                 <div>
                                     <span class="label">Quotation</span>
-                                    <div><t t-esc="dict(req._fields['quotation_status'].selection).get(req.quotation_status)"/></div>
+                                    <div><t t-out="dict(req._fields['quotation_status'].selection).get(req.quotation_status)"/></div>
                                 </div>
 
                                 <div>
                                     <span class="label">Invoice</span>
-                                    <div><t t-esc="dict(req._fields['accounting_docs_status'].selection).get(req.accounting_docs_status)"/></div>
+                                    <div><t t-out="dict(req._fields['accounting_docs_status'].selection).get(req.accounting_docs_status)"/></div>
                                 </div>
 
                                 <div>
                                     <span class="label">Date</span>
-                                    <div><t t-esc="req.request_date"/></div>
+                                    <div><t t-out="req.request_date"/></div>
                                 </div>
 
                             </div>

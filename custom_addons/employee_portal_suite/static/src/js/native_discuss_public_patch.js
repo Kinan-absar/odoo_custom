@@ -88,7 +88,7 @@ function goBackToChats() {
 
 function ensureEmbeddedHeaderActions() {
     if (!meta("employee-portal-discuss")) return;
-    const header = document.querySelector(".o-mail-DiscussContent-header");
+    const header = document.querySelector(".o-mail-Discuss-header");
     if (!header) return;
 
     removeEmbeddedCloseButton(header);
