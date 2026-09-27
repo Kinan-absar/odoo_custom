@@ -1,9 +1,10 @@
-# ABSAR Rounded Apps & Buttons — Odoo 18
+# ABSAR Rounded Apps & Buttons
 
-Minimal backend visual module.
+Odoo 18 Enterprise backend visual module.
 
-Changes only:
-- Enterprise app icons: rounded
-- Backend buttons: rounded corners
+- Rounded app icons and buttons
+- Primary backend accent: `#57A2DE`
+- QWeb/PDF report font override: `Noto Sans Arabic` with `DejaVu Sans` fallback
+- The report font change is loaded only in `web.report_assets_common`; it does not change the normal backend UI font.
 
-It intentionally does not recolor or restyle forms, fields, menus, lists, kanban, chatter, dialogs, or business logic.
+Version: 18.0.4.4.0
