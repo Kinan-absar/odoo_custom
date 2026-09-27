@@ -7,42 +7,75 @@
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
                 <app string="ABSAR Theme" name="absar_theme" groups="base.group_system">
-                    <block title="Backend Appearance" name="absar_theme_backend">
+                    <block title="Colors" name="absar_theme_colors">
                         <setting string="Primary Color" help="Leave empty to keep Odoo's original primary color.">
                             <div class="content-group o_absar_theme_settings">
                                 <div class="row mt16">
                                     <label for="absar_primary_color" class="col-lg-3 o_light_label"/>
-                                    <field name="absar_primary_color" placeholder="#875A7B" class="oe_inline"/>
+                                    <div class="col-lg-9 o_absar_color_row">
+                                        <field name="absar_primary_color" placeholder="#714B67" class="oe_inline"/>
+                                        <input type="color" class="o_absar_color_picker" data-absar-target="absar_primary_color" title="Pick primary color"/>
+                                    </div>
                                 </div>
                                 <div class="row mt16">
                                     <label for="absar_primary_hover_color" class="col-lg-3 o_light_label"/>
-                                    <field name="absar_primary_hover_color" placeholder="Auto" class="oe_inline"/>
+                                    <div class="col-lg-9 o_absar_color_row">
+                                        <field name="absar_primary_hover_color" placeholder="Auto" class="oe_inline"/>
+                                        <input type="color" class="o_absar_color_picker" data-absar-target="absar_primary_hover_color" title="Pick primary hover / pressed color"/>
+                                    </div>
                                 </div>
                                 <div class="mt16 o_absar_theme_preview">
                                     <span class="o_absar_preview_label">Preview</span>
                                     <span class="btn o_absar_preview_primary" role="button">Primary Button</span>
                                     <span class="badge o_absar_preview_badge">Selected</span>
-                                    <span class="o_absar_preview_link">Sample Link</span>
                                 </div>
                             </div>
                         </setting>
-                        <setting string="Backend Font" help="Change only the Odoo backend font. PDF reports keep the Arabic-safe report font.">
+                        <setting string="Link Colors" help="Change clickable record/link colors independently from the primary color.">
+                            <div class="content-group o_absar_theme_settings">
+                                <div class="row mt16">
+                                    <label for="absar_link_color" class="col-lg-3 o_light_label"/>
+                                    <div class="col-lg-9 o_absar_color_row">
+                                        <field name="absar_link_color" placeholder="Odoo default" class="oe_inline"/>
+                                        <input type="color" class="o_absar_color_picker" data-absar-target="absar_link_color" title="Pick link color"/>
+                                    </div>
+                                </div>
+                                <div class="row mt16">
+                                    <label for="absar_link_hover_color" class="col-lg-3 o_light_label"/>
+                                    <div class="col-lg-9 o_absar_color_row">
+                                        <field name="absar_link_hover_color" placeholder="Auto" class="oe_inline"/>
+                                        <input type="color" class="o_absar_color_picker" data-absar-target="absar_link_hover_color" title="Pick link hover / pressed color"/>
+                                    </div>
+                                </div>
+                                <div class="mt16 o_absar_theme_preview">
+                                    <span class="o_absar_preview_label">Preview</span>
+                                    <span class="o_absar_preview_link" role="link" tabindex="0">Clickable Sample Link</span>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+
+                    <block title="Backend Appearance" name="absar_theme_backend">
+                        <setting string="Backend UI Font" help="Changes the Odoo backend font only. Browser/system availability determines the exact rendering.">
                             <field name="absar_backend_font"/>
                         </setting>
-                        <setting string="Rounded Buttons" help="Use rounded corners on backend buttons.">
+                        <setting string="Rounded Buttons" help="Enable or disable ABSAR's rounded backend buttons. The change is previewed immediately and saved when you save Settings.">
                             <field name="absar_rounded_buttons"/>
                         </setting>
-                        <setting string="Rounded App Icons" help="Round the application launcher icons.">
+                        <setting string="Rounded App Icons" help="Enable or disable ABSAR's rounded application launcher icons. The change is previewed immediately and saved when you save Settings.">
                             <field name="absar_rounded_apps"/>
                         </setting>
                     </block>
+
                     <block title="PDF / QWeb Reports" name="absar_theme_reports">
-                        <setting string="Arabic Report Font" help="Noto Sans Arabic is kept enabled for PDF/QWeb reports for consistent Arabic rendering, including mixed Arabic/English address lines.">
-                            <div class="text-muted">Noto Sans Arabic (fixed for report reliability)</div>
+                        <setting string="PDF / Report Font" help="Uses Odoo's native per-company report font engine, so it also reaches PDF headers and footers. Tajawal is Odoo's built-in Arabic-friendly choice; Noto Sans Arabic is also available here because it already works on this Odoo.sh environment.">
+                            <field name="absar_report_font"/>
+                            <div class="text-muted mt8">Try Tajawal or Noto Sans Arabic for Arabic-heavy reports. Generate a new PDF after saving.</div>
                         </setting>
                     </block>
+
                     <block title="Reset" name="absar_theme_reset">
-                        <setting string="Restore Odoo Defaults" help="Clear custom backend color/font settings. Rounded buttons and app icons return to enabled.">
+                        <setting string="Restore Odoo Defaults" help="Clear custom backend colors/font, restore Lato for reports, and return rounded buttons/app icons to their default enabled state.">
                             <button name="action_absar_reset_theme" type="object" string="Restore Odoo Defaults" class="btn btn-secondary"/>
                         </setting>
                     </block>

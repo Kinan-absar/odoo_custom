@@ -1,46 +1,24 @@
-/* Arabic-safe report typography. Kept static on purpose so report rendering does not
-   depend on dynamic QWeb configuration during Odoo.sh build or PDF generation. */
-$o-absar-report-font: "Noto Sans Arabic", "Noto Sans Arabic UI", "DejaVu Sans", Arial, sans-serif;
+/*
+Odoo 18 already applies the company-selected report font to every stock external
+layout (.o_company_<id>_layout).  The problem with mixed Arabic address lines is
+that child nodes from the contact/company-details widgets can carry their own
+font declarations.  Force report descendants to inherit the layout font.
 
-html,
-body,
-.o_report_layout_standard,
-.o_report_layout_boxed,
-.o_report_layout_bold,
-.o_report_layout_striped,
-.article,
-.page,
-.page *:not(.fa):not(.oi),
+This deliberately does NOT choose a font here.  Settings -> ABSAR Theme ->
+PDF / Report Font controls company.font using Odoo's native report mechanism.
+*/
+.header *:not(.fa):not(.oi),
 .article *:not(.fa):not(.oi),
-.o_report_layout_standard *:not(.fa):not(.oi),
-.o_report_layout_boxed *:not(.fa):not(.oi),
-.o_report_layout_bold *:not(.fa):not(.oi),
-.o_report_layout_striped *:not(.fa):not(.oi) {
-    font-family: $o-absar-report-font !important;
-}
-
-/* Odoo contact/address widgets can apply their own typography. Force those nested
-   nodes too, including mixed LTR lines such as "42317 المدينة المنورة". */
-address,
-address *,
-.company_address,
-.company_address *,
-.o_address_format,
-.o_address_format *,
-.o_contact_address,
-.o_contact_address *,
-.o_field_widget[name="contact_address"],
-.o_field_widget[name="contact_address"] *,
-.o_force_ltr,
-.o_force_ltr *,
-[itemscope][itemtype*="PostalAddress"],
-[itemscope][itemtype*="PostalAddress"] *,
-[lang="ar"],
-[lang^="ar-"],
-[dir="rtl"],
-.rtl,
-.o_rtl {
-    font-family: $o-absar-report-font !important;
+.footer *:not(.fa):not(.oi),
+.page *:not(.fa):not(.oi),
+address *:not(.fa):not(.oi),
+[name="company_address"] *:not(.fa):not(.oi),
+[name="company_address_list"] *:not(.fa):not(.oi),
+.o_address_format *:not(.fa):not(.oi),
+.o_contact_address *:not(.fa):not(.oi),
+.o_force_ltr *:not(.fa):not(.oi),
+[itemscope][itemtype*="PostalAddress"] *:not(.fa):not(.oi) {
+    font-family: inherit !important;
 }
 
 [lang="ar"],
