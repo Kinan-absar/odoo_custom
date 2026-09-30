@@ -64,6 +64,19 @@ class EmployeeRequest(models.Model):
 
     leave_from = fields.Date(string="Leave From")
     leave_to = fields.Date(string="Leave To")
+    time_off_type_id = fields.Many2one(
+        'hr.leave.type',
+        string='Time Off Type',
+        tracking=True,
+        help='Odoo Time Off type to use when creating the approved leave.'
+    )
+    time_off_id = fields.Many2one(
+        'hr.leave',
+        string='Created Time Off',
+        readonly=True,
+        copy=False,
+        tracking=True
+    )
 
     # ---------------------------------------------------------
     # STATE MACHINE
@@ -372,6 +385,56 @@ class EmployeeRequest(models.Model):
                     f"Your request {rec.name} has been fully approved.",
                     f"/my/employee/requests/{rec.id}"
                 )
+
+    # ---------------------------------------------------------
+    # CREATE ODOO TIME OFF FROM AN APPROVED LEAVE REQUEST
+    # ---------------------------------------------------------
+    def action_create_time_off(self):
+        self.ensure_one()
+
+        if not (
+            self.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
+            or self.env.user.has_group('employee_portal_suite.group_employee_portal_admin')
+            or self.env.user.has_group('employee_portal_suite.group_employee_portal_superadmin')
+        ):
+            raise UserError(_("Only HR, Administrator, or Super Administrator can create Time Off from an Employee Request."))
+
+        if self.request_type != 'leave':
+            raise UserError(_("Time Off can only be created from a Leave Request."))
+        if self.state != 'approved':
+            raise UserError(_("The Leave Request must be fully approved before creating Time Off."))
+        if self.time_off_id:
+            raise UserError(_("Time Off has already been created for this Leave Request."))
+        if not self.leave_from or not self.leave_to:
+            raise UserError(_("Please set both Leave From and Leave To dates first."))
+        if self.leave_from > self.leave_to:
+            raise UserError(_("Leave From cannot be after Leave To."))
+        if not self.time_off_type_id:
+            raise UserError(_("Please select a Time Off Type before creating the Time Off record."))
+
+        leave = self.env['hr.leave'].sudo().create({
+            'name': self.description or _("Employee Request %s") % self.name,
+            'employee_id': self.employee_id.id,
+            'holiday_status_id': self.time_off_type_id.id,
+            'request_date_from': self.leave_from,
+            'request_date_to': self.leave_to,
+            'employee_request_id': self.id,
+        })
+        self.time_off_id = leave.id
+        self.message_post(
+            body=_("Time Off %(leave)s was created from this approved Leave Request.", leave=leave.display_name)
+        )
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Time Off Created'),
+                'message': _("Time Off was created successfully for %(employee)s.", employee=self.employee_id.name),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
 
     # ---------------------------------------------------------
     # REJECTION ACTION — FIXED

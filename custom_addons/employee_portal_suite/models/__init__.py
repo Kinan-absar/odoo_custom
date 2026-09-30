@@ -1,4 +1,5 @@
 from . import employee_request
+from . import hr_leave
 from . import approval_flow
 from . import material_request_line
 from . import material_request
