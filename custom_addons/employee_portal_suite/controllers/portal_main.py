@@ -72,18 +72,19 @@ class EmployeePortalMain(CustomerPortal):
             return request.redirect('/my/employee/attendance')
 
         # ------------------------------------------------------
-        # 1. My Employee Requests
+        # 1-2. Request overview
+        # Administrators see the complete operational overview; normal
+        # employees see only records that belong to them.
         # ------------------------------------------------------
-        my_request_count = request.env['employee.request'].sudo().search_count([
-            ('employee_id', '=', employee.id)
-        ])
+        is_portal_admin = (
+            user.has_group('employee_portal_suite.group_employee_portal_admin')
+            or user.has_group('employee_portal_suite.group_employee_portal_superadmin')
+        )
+        employee_request_domain = [] if is_portal_admin else [('employee_id', '=', employee.id)]
+        material_request_domain = [] if is_portal_admin else [('employee_id.user_id', '=', user.id)]
 
-        # ------------------------------------------------------
-        # 2. My Material Requests
-        # ------------------------------------------------------
-        my_material_count = request.env['material.request'].sudo().search_count([
-            ('employee_id.user_id', '=', user.id)
-        ])
+        my_request_count = request.env['employee.request'].sudo().search_count(employee_request_domain)
+        my_material_count = request.env['material.request'].sudo().search_count(material_request_domain)
 
         # ------------------------------------------------------
         # 3-5, 7-8. Pending approvals, signatures, and reports —

@@ -75,8 +75,15 @@ class EmployeePortalMaterialRequests(http.Controller):
             return request.redirect("/my")
 
         search = kw.get("search")
+        user = request.env.user
+        is_portal_admin = (
+            user.has_group("employee_portal_suite.group_employee_portal_admin")
+            or user.has_group("employee_portal_suite.group_employee_portal_superadmin")
+        )
 
-        domain = [("employee_id", "=", emp.id)]
+        # Operational Administrators and Super Administrators have an overview
+        # of every Material Request. Regular employees remain limited to their own.
+        domain = [] if is_portal_admin else [("employee_id", "=", emp.id)]
 
         # If user typed something in search bar, search by MR number, employee, worksite, item name, or linked PO.
         if search:
@@ -107,9 +114,16 @@ class EmployeePortalMaterialRequests(http.Controller):
     @http.route("/my/employee/material/<int:req_id>", type="http", auth="user", website=True)
     def material_detail(self, req_id, **kw):
         emp = self._employee()
+        user = request.env.user
         rec = request.env["material.request"].sudo().browse(req_id)
+        is_portal_admin = (
+            user.has_group("employee_portal_suite.group_employee_portal_admin")
+            or user.has_group("employee_portal_suite.group_employee_portal_superadmin")
+        )
 
-        if not rec.exists() or rec.employee_id != emp:
+        if not rec.exists():
+            return request.redirect("/my")
+        if not is_portal_admin and rec.employee_id != emp:
             return request.redirect("/my")
 
         attachments = request.env["ir.attachment"].sudo().search([
