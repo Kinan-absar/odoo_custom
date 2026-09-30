@@ -41,6 +41,14 @@
                                 class="oe_stat_button btn-danger"
                                 invisible="state == 'approved'"/>
                                 <!-- NEW PRINT BUTTON -->
+                        <button name="action_create_time_off"
+                                type="object"
+                                string="Create Time Off"
+                                class="btn-primary"
+                                icon="fa-calendar-check-o"
+                                groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"
+                                invisible="request_type != 'leave' or state != 'approved' or time_off_id"/>
+
                         <button name="%(employee_portal_suite.employee_request_pdf)d"
                                 type="action"
                                 class="btn-primary"
@@ -48,7 +56,6 @@
                                 string="Print PDF"/>
                 </header>
                 <sheet>
-
                     <!-- TITLE + STATUS -->
                     <div class="oe_title">
                         <h1><field name="name"/></h1>
@@ -89,6 +96,13 @@
                                             <label for="leave_to" string="To" class="oe_inline" style="margin-left: 20px;"/>
                                             <field name="leave_to" class="oe_inline"/>
                                         </div>
+                                        <field name="time_off_type_id"
+                                               groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
+                                        <field name="time_off_id"
+                                               string="Time Off"
+                                               readonly="1"
+                                               invisible="not time_off_id"
+                                               groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
                                     </group>
                                 </group>
 
