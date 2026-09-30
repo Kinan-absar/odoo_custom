@@ -93,6 +93,13 @@
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
+    <record id="material_request_superadmin_rule" model="ir.rule">
+        <field name="name">Material Request: Super Administrator Full Access</field>
+        <field name="model_id" ref="model_material_request"/>
+        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_superadmin'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
     <record id="material_request_admin_rule" model="ir.rule">
         <field name="name">Material Request: Administrator Rule Disabled</field>
         <field name="model_id" ref="model_material_request"/>
@@ -141,6 +148,13 @@
         <field name="name">Material Request Line: CEO All Records</field>
         <field name="model_id" ref="model_material_request_line"/>
         <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_ceo'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="material_request_line_superadmin_rule" model="ir.rule">
+        <field name="name">Material Request Line: Super Administrator Full Access</field>
+        <field name="model_id" ref="model_material_request_line"/>
+        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_superadmin'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
