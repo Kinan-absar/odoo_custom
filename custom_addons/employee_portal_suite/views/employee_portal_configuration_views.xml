@@ -29,12 +29,12 @@
               name="Configuration"
               parent="employee_portal_suite.menu_employee_portal_root"
               sequence="90"
-              groups="base.group_system"/>
+              groups="employee_portal_suite.group_employee_portal_superadmin"/>
 
     <menuitem id="menu_employee_portal_roles_permissions"
               name="Roles &amp; Permissions"
               parent="menu_employee_portal_configuration"
               action="action_employee_portal_suite_roles"
               sequence="10"
-              groups="base.group_system"/>
+              groups="employee_portal_suite.group_employee_portal_superadmin"/>
 </odoo>

@@ -53,6 +53,13 @@
          
     </record>
 
+    <record id="group_employee_portal_superadmin" model="res.groups">
+        <field name="name">Employee Portal: Super Administrator</field>
+        <field name="category_id" ref="employee_portal_suite.module_category_employee_portal_suite"/>
+        <field name="implied_ids" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
+        <field name="comment">Sensitive Employee Portal administration: Roles &amp; Permissions, Telegram configuration, Call History, and Portal Reports.</field>
+    </record>
+
 
     <!-- ============================= -->
     <!-- MATERIAL REQUEST APPROVER ROLES -->

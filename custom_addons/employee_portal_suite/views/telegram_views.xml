@@ -72,7 +72,7 @@
               parent="menu_employee_portal_root"
               action="action_employee_portal_telegram_config"
               sequence="90"
-              groups="base.group_system"/>
+              groups="employee_portal_suite.group_employee_portal_superadmin"/>
 
     <!-- Internal users connect from the top-right user menu.
          Keep the former inherited form view inactive on upgrades so there is
