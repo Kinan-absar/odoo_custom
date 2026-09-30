@@ -219,7 +219,7 @@
         <field name="model">project.project</field>
         <field name="inherit_id" ref="employee_portal_suite.project_project_form_inherit_responsibles"/>
         <field name="arch" type="xml">
-            <xpath expr="//page[@string='Workflow Roles']" position="after">
+            <xpath expr="//page[@name='workflow_roles']" position="after">
                 <page string="Approval Workflows" groups="employee_portal_suite.group_employee_portal_superadmin">
                     <field name="employee_portal_workflow_ids" context="{'default_project_id': id, 'default_company_id': company_id}">
                         <list editable="bottom">
@@ -252,10 +252,10 @@
             <xpath expr="//field[@name='state'][@widget='statusbar']" position="attributes">
                 <attribute name="statusbar_visible">draft,returned,workflow,manager,hr,finance,ceo,approved,rejected</attribute>
             </xpath>
-            <xpath expr="//page[@string='Workflow']/group" position="before">
+            <xpath expr="//page[@name='workflow_page']/group" position="before">
                 <field name="workflow_progress_html" widget="html" nolabel="1" readonly="1"/>
             </xpath>
-            <xpath expr="//page[@string='Workflow']//field[@name='approval_line_ids']/list/field[@name='state']" position="after">
+            <xpath expr="//page[@name='workflow_page']//field[@name='approval_line_ids']/list/field[@name='state']" position="after">
                 <field name="pending_date" optional="show"/>
                 <field name="due_date" optional="show"/>
                 <field name="is_overdue" optional="show"/>
@@ -284,10 +284,10 @@
             <xpath expr="//field[@name='state'][@widget='statusbar']" position="attributes">
                 <attribute name="statusbar_visible">draft,returned,workflow,purchase,store,project_manager,director,ceo,approved,rejected</attribute>
             </xpath>
-            <xpath expr="//page[@string='Workflow']/group" position="before">
+            <xpath expr="//page[@name='workflow_page']/group" position="before">
                 <field name="workflow_progress_html" widget="html" nolabel="1" readonly="1"/>
             </xpath>
-            <xpath expr="//page[@string='Workflow']//field[@name='approval_line_ids']/list/field[@name='state']" position="after">
+            <xpath expr="//page[@name='workflow_page']//field[@name='approval_line_ids']/list/field[@name='state']" position="after">
                 <field name="pending_date" optional="show"/>
                 <field name="due_date" optional="show"/>
                 <field name="is_overdue" optional="show"/>

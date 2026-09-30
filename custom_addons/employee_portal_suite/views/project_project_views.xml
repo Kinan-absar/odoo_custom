@@ -12,7 +12,7 @@
                 </group>
             </xpath>
             <xpath expr="//notebook" position="inside">
-                <page string="Workflow Roles" groups="employee_portal_suite.group_employee_portal_superadmin">
+                <page name="workflow_roles" string="Workflow Roles" groups="employee_portal_suite.group_employee_portal_superadmin">
                     <field name="approval_role_assignment_ids" context="{'default_project_id': id}">
                         <list editable="bottom">
                             <field name="approval_role_id" domain="[('company_id','=',parent.company_id),('active','=',True)]"/>

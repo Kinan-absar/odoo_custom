@@ -239,7 +239,7 @@
                             </group>
                         </page>
 
-                        <page string="Workflow" invisible="not workflow_id">
+                        <page name="workflow_page" string="Workflow" invisible="not workflow_id">
                             <group>
                                 <field name="workflow_id" readonly="1"/>
                                 <field name="current_approval_line_id" readonly="1" invisible="state != 'workflow'"/>
