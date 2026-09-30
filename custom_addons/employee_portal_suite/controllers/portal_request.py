@@ -56,15 +56,9 @@ class EmployeePortalRequests(http.Controller):
 
         search = kw.get('search', '').strip()
 
-        user = request.env.user
-        is_portal_admin = (
-            user.has_group("employee_portal_suite.group_employee_portal_admin")
-            or user.has_group("employee_portal_suite.group_employee_portal_superadmin")
-        )
-
-        # Operational Administrators and Super Administrators have an overview
-        # of every Employee Request. Regular employees remain limited to their own.
-        domain = [] if is_portal_admin else [('employee_id', '=', emp.id)]
+        domain = [
+            ('employee_id', '=', emp.id)
+        ]
 
         if search:
             domain.append(('name', 'ilike', search))
@@ -88,16 +82,9 @@ class EmployeePortalRequests(http.Controller):
     @http.route('/my/employee/requests/<int:req_id>', type='http', auth='user', website=True)
     def portal_detail(self, req_id, **kw):
         emp = self._get_employee()
-        user = request.env.user
         rec = request.env['employee.request'].sudo().browse(req_id)
-        is_portal_admin = (
-            user.has_group("employee_portal_suite.group_employee_portal_admin")
-            or user.has_group("employee_portal_suite.group_employee_portal_superadmin")
-        )
 
-        if not emp or not rec.exists():
-            return request.redirect('/my')
-        if not is_portal_admin and rec.employee_id != emp:
+        if not emp or rec.employee_id != emp:
             return request.redirect('/my')
 
         return request.render("employee_portal_suite.employee_request_detail_page", {

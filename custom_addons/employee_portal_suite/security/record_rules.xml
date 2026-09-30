@@ -7,43 +7,43 @@
     <record id="employee_request_portal_rule" model="ir.rule">
         <field name="name">Employee Request: Employee Own Records</field>
         <field name="model_id" ref="model_employee_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_employee'))]"/>
-        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_employee')])]"/>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('employee_id.user_id', '=', user.id)]</field>
     </record>
 
     <record id="employee_request_manager_rule" model="ir.rule">
         <field name="name">Employee Request: Manager Own + Subordinates</field>
         <field name="model_id" ref="model_employee_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_manager'))]"/>
-        <field name="domain_force">['|', ('manager_id.user_id', '=', user.id), ('employee_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_manager')])]"/>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else ['|', ('manager_id.user_id', '=', user.id), ('employee_id.user_id', '=', user.id)]</field>
     </record>
 
     <!-- Broad functional roles widen visibility even when the same user is also Manager/Employee. -->
     <record id="employee_request_hr_rule" model="ir.rule">
         <field name="name">Employee Request: HR All Records</field>
         <field name="model_id" ref="model_employee_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_hr'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_hr')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
     <record id="employee_request_finance_rule" model="ir.rule">
         <field name="name">Employee Request: Finance All Records</field>
         <field name="model_id" ref="model_employee_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_finance'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_finance')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
     <record id="employee_request_ceo_rule" model="ir.rule">
         <field name="name">Employee Request: CEO All Records</field>
         <field name="model_id" ref="model_employee_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_ceo'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_ceo')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
     <record id="employee_request_admin_rule" model="ir.rule">
         <field name="name">Employee Request: Administrator All Records</field>
         <field name="model_id" ref="model_employee_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_admin')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
@@ -53,56 +53,56 @@
     <record id="material_request_portal_rule" model="ir.rule">
         <field name="name">Material Request: Employee Own Records</field>
         <field name="model_id" ref="model_material_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_employee'))]"/>
-        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_employee')])]"/>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('employee_id.user_id', '=', user.id)]</field>
     </record>
 
     <record id="material_request_purchase_rule" model="ir.rule">
         <field name="name">Material Request: Purchase Representative All Records</field>
         <field name="model_id" ref="model_material_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_mr_purchase_rep'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_purchase_rep')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
     <record id="material_request_store_rule" model="ir.rule">
         <field name="name">Material Request: Assigned Store Manager</field>
         <field name="model_id" ref="model_material_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_mr_store_manager'))]"/>
-        <field name="domain_force">[('store_manager_user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_store_manager')])]"/>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('store_manager_user_id', '=', user.id)]</field>
     </record>
 
     <record id="material_request_project_manager_rule" model="ir.rule">
         <field name="name">Material Request: Assigned Project Manager</field>
         <field name="model_id" ref="model_material_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_mr_project_manager'))]"/>
-        <field name="domain_force">[('project_manager_user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_project_manager')])]"/>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('project_manager_user_id', '=', user.id)]</field>
     </record>
 
     <record id="material_request_director_rule" model="ir.rule">
         <field name="name">Material Request: Projects Director All Records</field>
         <field name="model_id" ref="model_material_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_mr_projects_director'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_projects_director')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
     <record id="material_request_ceo_rule" model="ir.rule">
         <field name="name">Material Request: CEO All Records</field>
         <field name="model_id" ref="model_material_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_ceo'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_ceo')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
     <record id="material_request_superadmin_rule" model="ir.rule">
         <field name="name">Material Request: Super Administrator Full Access</field>
         <field name="model_id" ref="model_material_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_superadmin'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_superadmin')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
     <record id="material_request_admin_rule" model="ir.rule">
         <field name="name">Material Request: Administrator All Records</field>
         <field name="model_id" ref="model_material_request"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_admin')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
@@ -110,56 +110,56 @@
     <record id="material_request_line_employee_rule" model="ir.rule">
         <field name="name">Material Request Line: Employee Own Records</field>
         <field name="model_id" ref="model_material_request_line"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_employee'))]"/>
-        <field name="domain_force">[('request_id.employee_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_employee')])]"/>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('request_id.employee_id.user_id', '=', user.id)]</field>
     </record>
 
     <record id="material_request_line_purchase_rule" model="ir.rule">
         <field name="name">Material Request Line: Purchase Representative All Records</field>
         <field name="model_id" ref="model_material_request_line"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_mr_purchase_rep'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_purchase_rep')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
     <record id="material_request_line_store_rule" model="ir.rule">
         <field name="name">Material Request Line: Assigned Store Manager</field>
         <field name="model_id" ref="model_material_request_line"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_mr_store_manager'))]"/>
-        <field name="domain_force">[('request_id.store_manager_user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_store_manager')])]"/>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('request_id.store_manager_user_id', '=', user.id)]</field>
     </record>
 
     <record id="material_request_line_project_manager_rule" model="ir.rule">
         <field name="name">Material Request Line: Assigned Project Manager</field>
         <field name="model_id" ref="model_material_request_line"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_mr_project_manager'))]"/>
-        <field name="domain_force">[('request_id.project_manager_user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_project_manager')])]"/>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('request_id.project_manager_user_id', '=', user.id)]</field>
     </record>
 
     <record id="material_request_line_director_rule" model="ir.rule">
         <field name="name">Material Request Line: Projects Director All Records</field>
         <field name="model_id" ref="model_material_request_line"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_mr_projects_director'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_projects_director')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
     <record id="material_request_line_ceo_rule" model="ir.rule">
         <field name="name">Material Request Line: CEO All Records</field>
         <field name="model_id" ref="model_material_request_line"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_ceo'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_ceo')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
     <record id="material_request_line_superadmin_rule" model="ir.rule">
         <field name="name">Material Request Line: Super Administrator Full Access</field>
         <field name="model_id" ref="model_material_request_line"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_superadmin'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_superadmin')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
     <record id="material_request_line_admin_rule" model="ir.rule">
         <field name="name">Material Request Line: Administrator All Records</field>
         <field name="model_id" ref="model_material_request_line"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_admin')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
@@ -167,7 +167,7 @@
     <record id="portal_report_document_group_rule" model="ir.rule">
         <field name="name">Portal Reports: Visible Portal Groups Only</field>
         <field name="model_id" ref="model_portal_report_document"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_employee'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_employee')])]"/>
         <field name="domain_force">[('active', '=', True), ('allowed_group_ids', 'in', user.groups_id.ids)]</field>
     </record>
 
@@ -198,7 +198,7 @@
     <record id="portal_call_session_admin_rule" model="ir.rule">
         <field name="name">Portal Call Session: Super Administrator Full Read Access</field>
         <field name="model_id" ref="model_portal_call_session"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_superadmin'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_superadmin')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
@@ -230,7 +230,7 @@
     <record id="portal_call_contact_admin_rule" model="ir.rule">
         <field name="name">Portal Call Contact: Admin Full Access</field>
         <field name="model_id" ref="model_portal_call_contact"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_admin')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
@@ -277,7 +277,7 @@
     <record id="employee_portal_superadmin_groups_rule" model="ir.rule">
         <field name="name">Employee Portal Groups: Legacy Direct Access Disabled</field>
         <field name="model_id" ref="base.model_res_groups"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_superadmin'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_superadmin')])]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="active" eval="False"/>
     </record>
