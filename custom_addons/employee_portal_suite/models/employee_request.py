@@ -420,20 +420,16 @@ class EmployeeRequest(models.Model):
             'request_date_to': self.leave_to,
             'employee_request_id': self.id,
         })
-        self.time_off_id = leave.id
+        self.write({'time_off_id': leave.id})
         self.message_post(
             body=_("Time Off %(leave)s was created from this approved Leave Request.", leave=leave.display_name)
         )
 
+        # Reload the current form so the linked Time Off appears immediately
+        # and the Create Time Off button disappears without reopening the record.
         return {
             'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Time Off Created'),
-                'message': _("Time Off was created successfully for %(employee)s.", employee=self.employee_id.name),
-                'type': 'success',
-                'sticky': False,
-            },
+            'tag': 'reload',
         }
 
     def action_open_time_off(self):
