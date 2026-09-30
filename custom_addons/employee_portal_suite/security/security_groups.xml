@@ -12,14 +12,16 @@
     <!-- ============================= -->
 
     <record id="group_employee_portal" model="res.groups">
-        <field name="name">Employee Portal</field>
+        <field name="name">Employee Portal: Technical Base Access</field>
         <field name="category_id" ref="employee_portal_suite.module_category_employee_portal_suite"/>
+        <field name="comment">Technical group. Automatically assigned from Employee → Related User; do not manage manually.</field>
          
     </record>
 
     <record id="group_employee_portal_employee" model="res.groups">
-        <field name="name">Employee Portal: Employee</field>
+        <field name="name">Employee Portal: Technical Employee Access</field>
         <field name="category_id" ref="employee_portal_suite.module_category_employee_portal_suite"/>
+        <field name="comment">Technical baseline employee-access group. Automatically assigned from Employee → Related User; do not manage manually.</field>
          
     </record>
 
