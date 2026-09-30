@@ -1,27 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- Central place to manage the REAL security groups used by the suite. -->
     <record id="view_employee_portal_suite_groups_list" model="ir.ui.view">
-        <field name="name">employee.portal.suite.groups.list</field>
-        <field name="model">res.groups</field>
+        <field name="name">employee.portal.role.assignment.list</field>
+        <field name="model">employee.portal.role.assignment</field>
         <field name="arch" type="xml">
-            <list string="Employee Portal Roles" create="0" delete="0">
+            <list string="Roles &amp; Permissions" create="0" delete="0" default_order="section_sequence,sequence,name">
+                <field name="section" optional="show"/>
                 <field name="name"/>
-                <field name="users" widget="many2many_tags"/>
-                <field name="comment" optional="hide"/>
+                <field name="description" optional="show"/>
+                <field name="user_count"/>
+                <field name="user_ids" widget="many2many_tags" options="{'no_create': True, 'no_create_edit': True}"/>
             </list>
+        </field>
+    </record>
+
+    <record id="view_employee_portal_role_assignment_form" model="ir.ui.view">
+        <field name="name">employee.portal.role.assignment.form</field>
+        <field name="model">employee.portal.role.assignment</field>
+        <field name="arch" type="xml">
+            <form string="Employee Portal Role" create="0" delete="0">
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <field name="section" readonly="1"/>
+                        <field name="description" readonly="1"/>
+                    </group>
+                    <group string="Assigned Users">
+                        <field name="user_ids" widget="many2many_tags" options="{'no_create': True, 'no_create_edit': True}" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_employee_portal_role_assignment_search" model="ir.ui.view">
+        <field name="name">employee.portal.role.assignment.search</field>
+        <field name="model">employee.portal.role.assignment</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="user_ids"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_section" string="Role Area" context="{'group_by':'section'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
     <record id="action_employee_portal_suite_roles" model="ir.actions.act_window">
         <field name="name">Roles &amp; Permissions</field>
-        <field name="res_model">res.groups</field>
+        <field name="res_model">employee.portal.role.assignment</field>
         <field name="view_mode">list,form</field>
-        <field name="view_id" ref="view_employee_portal_suite_groups_list"/>
-        <field name="domain" eval="[('category_id', '=', ref('employee_portal_suite.module_category_employee_portal_suite')), ('id', 'not in', [ref('employee_portal_suite.group_employee_portal'), ref('employee_portal_suite.group_employee_portal_employee')])]"/>
-        <field name="context" eval="{'default_category_id': ref('employee_portal_suite.module_category_employee_portal_suite')}"/>
+        <field name="search_view_id" ref="view_employee_portal_role_assignment_search"/>
+        <field name="context">{'search_default_group_section': 1}</field>
         <field name="help" type="html">
-            <p>Manage additional Employee Portal responsibilities here. Basic employee portal access is automatic when an Employee is linked to a Related User. Roles are additive: assigning an additional role widens access according to that role instead of being blocked by a narrower role.</p>
+            <p>Assign additional Employee Portal responsibilities. Basic employee access is automatic from Employee → Related User. Roles are additive and do not cancel one another.</p>
         </field>
     </record>
 

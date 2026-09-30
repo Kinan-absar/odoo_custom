@@ -204,7 +204,7 @@ class EmployeeRequest(models.Model):
         """Return the UNION of every Employee Request role the user has.
 
         Broad functional roles intentionally widen visibility.  A user who is
-        both Manager and Finance/Admin must not be trapped by the Manager
+        both Manager and Finance must not be trapped by the Manager
         subordinate-only scope.
         """
         user = user or self.env.user
@@ -213,7 +213,6 @@ class EmployeeRequest(models.Model):
             "employee_portal_suite.group_employee_portal_hr",
             "employee_portal_suite.group_employee_portal_finance",
             "employee_portal_suite.group_employee_portal_ceo",
-            "employee_portal_suite.group_employee_portal_admin",
         )
         if any(user.has_group(group) for group in broad_groups):
             return []

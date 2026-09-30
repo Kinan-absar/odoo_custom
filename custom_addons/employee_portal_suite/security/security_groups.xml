@@ -59,7 +59,7 @@
         <field name="name">Employee Portal: Super Administrator</field>
         <field name="category_id" ref="employee_portal_suite.module_category_employee_portal_suite"/>
         <field name="implied_ids" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
-        <field name="comment">Sensitive Employee Portal administration: Roles &amp; Permissions, Telegram configuration, Call History, and Portal Reports.</field>
+        <field name="comment">Sensitive Employee Portal administration: Roles &amp; Permissions and protected configuration.</field>
     </record>
 
 
@@ -119,7 +119,7 @@
 
     <!-- Can upload PDF reports that are visible to selected portal groups -->
     <record id="group_portal_report_uploader" model="res.groups">
-        <field name="name">Employee Portal: Report Uploader</field>
+        <field name="name">Employee Portal: Portal Reports Manager</field>
         <field name="category_id" ref="employee_portal_suite.module_category_employee_portal_suite"/>
     </record>
 

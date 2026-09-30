@@ -163,7 +163,6 @@ class EmployeePortalRequests(http.Controller):
             or user.has_group("employee_portal_suite.group_employee_portal_hr")
             or user.has_group("employee_portal_suite.group_employee_portal_finance")
             or user.has_group("employee_portal_suite.group_employee_portal_ceo")
-            or user.has_group("employee_portal_suite.group_employee_portal_admin")
         ):
             return request.redirect('/my')
 

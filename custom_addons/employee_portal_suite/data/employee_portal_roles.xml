@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+    <record id="role_employee_manager" model="employee.portal.role.assignment">
+        <field name="name">Manager</field>
+        <field name="section">approval</field>
+        <field name="section_sequence">10</field>
+        <field name="sequence">10</field>
+        <field name="group_xmlid">employee_portal_suite.group_employee_portal_manager</field>
+        <field name="description">Approve requests only for employees assigned to this manager.</field>
+    </record>
+    <record id="role_employee_hr" model="employee.portal.role.assignment">
+        <field name="name">HR</field>
+        <field name="section">approval</field>
+        <field name="section_sequence">10</field>
+        <field name="sequence">20</field>
+        <field name="group_xmlid">employee_portal_suite.group_employee_portal_hr</field>
+        <field name="description">HR-stage Employee Request access and approval.</field>
+    </record>
+    <record id="role_employee_finance" model="employee.portal.role.assignment">
+        <field name="name">Finance</field>
+        <field name="section">approval</field>
+        <field name="section_sequence">10</field>
+        <field name="sequence">30</field>
+        <field name="group_xmlid">employee_portal_suite.group_employee_portal_finance</field>
+        <field name="description">Finance-stage Employee Request access and approval.</field>
+    </record>
+    <record id="role_employee_ceo" model="employee.portal.role.assignment">
+        <field name="name">CEO</field>
+        <field name="section">approval</field>
+        <field name="section_sequence">10</field>
+        <field name="sequence">40</field>
+        <field name="group_xmlid">employee_portal_suite.group_employee_portal_ceo</field>
+        <field name="description">CEO-stage Employee and Material Request approval.</field>
+    </record>
+
+    <record id="role_mr_purchase" model="employee.portal.role.assignment">
+        <field name="name">Purchase Representative</field>
+        <field name="section">material</field>
+        <field name="section_sequence">20</field>
+        <field name="sequence">10</field>
+        <field name="group_xmlid">employee_portal_suite.group_mr_purchase_rep</field>
+        <field name="description">Purchase-stage Material Request responsibility.</field>
+    </record>
+    <record id="role_mr_store" model="employee.portal.role.assignment">
+        <field name="name">Store Manager</field>
+        <field name="section">material</field>
+        <field name="section_sequence">20</field>
+        <field name="sequence">20</field>
+        <field name="group_xmlid">employee_portal_suite.group_mr_store_manager</field>
+        <field name="description">Store-stage Material Requests assigned to this user.</field>
+    </record>
+    <record id="role_mr_project" model="employee.portal.role.assignment">
+        <field name="name">Project Manager</field>
+        <field name="section">material</field>
+        <field name="section_sequence">20</field>
+        <field name="sequence">30</field>
+        <field name="group_xmlid">employee_portal_suite.group_mr_project_manager</field>
+        <field name="description">Project Manager-stage Material Requests assigned to this user.</field>
+    </record>
+    <record id="role_mr_director" model="employee.portal.role.assignment">
+        <field name="name">Projects Director</field>
+        <field name="section">material</field>
+        <field name="section_sequence">20</field>
+        <field name="sequence">40</field>
+        <field name="group_xmlid">employee_portal_suite.group_mr_projects_director</field>
+        <field name="description">Projects Director-stage Material Request responsibility.</field>
+    </record>
+
+    <record id="role_admin" model="employee.portal.role.assignment">
+        <field name="name">Administrator</field>
+        <field name="section">administration</field>
+        <field name="section_sequence">30</field>
+        <field name="sequence">10</field>
+        <field name="group_xmlid">employee_portal_suite.group_employee_portal_admin</field>
+        <field name="description">Operational Employee Portal administrator. Business-request access still requires the relevant functional role.</field>
+    </record>
+    <record id="role_superadmin" model="employee.portal.role.assignment">
+        <field name="name">Super Administrator</field>
+        <field name="section">administration</field>
+        <field name="section_sequence">30</field>
+        <field name="sequence">20</field>
+        <field name="group_xmlid">employee_portal_suite.group_employee_portal_superadmin</field>
+        <field name="description">Can open Configuration and manage Employee Portal roles.</field>
+    </record>
+
+    <record id="role_announcement_manager" model="employee.portal.role.assignment">
+        <field name="name">Announcement Manager</field>
+        <field name="section">communication</field>
+        <field name="section_sequence">40</field>
+        <field name="sequence">10</field>
+        <field name="group_xmlid">employee_portal_suite.group_employee_portal_announcement_manager</field>
+        <field name="description">Create and manage Employee Portal announcements.</field>
+    </record>
+
+    <record id="role_attendance_user" model="employee.portal.role.assignment">
+        <field name="name">Attendance User</field>
+        <field name="section">attendance</field>
+        <field name="section_sequence">50</field>
+        <field name="sequence">10</field>
+        <field name="group_xmlid">employee_portal_suite.group_portal_attendance_user</field>
+        <field name="description">Can use Employee Portal attendance check-in and check-out.</field>
+    </record>
+    <record id="role_attendance_only" model="employee.portal.role.assignment">
+        <field name="name">Attendance Only</field>
+        <field name="section">attendance</field>
+        <field name="section_sequence">50</field>
+        <field name="sequence">20</field>
+        <field name="group_xmlid">employee_portal_suite.group_attendance_only</field>
+        <field name="description">Restricted attendance-only portal user.</field>
+    </record>
+
+    <record id="role_salary_viewer" model="employee.portal.role.assignment">
+        <field name="name">Salary Report Viewer</field>
+        <field name="section">reports</field>
+        <field name="section_sequence">60</field>
+        <field name="sequence">10</field>
+        <field name="group_xmlid">employee_portal_suite.group_salary_report_viewer</field>
+        <field name="description">Read-only access to salary reports.</field>
+    </record>
+    <record id="role_portal_reports" model="employee.portal.role.assignment">
+        <field name="name">Portal Reports Manager</field>
+        <field name="section">reports</field>
+        <field name="section_sequence">60</field>
+        <field name="sequence">20</field>
+        <field name="group_xmlid">employee_portal_suite.group_portal_report_uploader</field>
+        <field name="description">Upload and manage documents in Portal Reports.</field>
+    </record>
+</odoo>

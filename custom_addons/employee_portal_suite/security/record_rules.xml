@@ -41,10 +41,11 @@
     </record>
 
     <record id="employee_request_admin_rule" model="ir.rule">
-        <field name="name">Employee Request: Administrator All Records</field>
+        <field name="name">Employee Request: Administrator Rule Disabled</field>
         <field name="model_id" ref="model_employee_request"/>
         <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="active" eval="False"/>
     </record>
 
     <!-- ========================================================= -->
@@ -93,10 +94,11 @@
     </record>
 
     <record id="material_request_admin_rule" model="ir.rule">
-        <field name="name">Material Request: Administrator All Records</field>
+        <field name="name">Material Request: Administrator Rule Disabled</field>
         <field name="model_id" ref="model_material_request"/>
         <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="active" eval="False"/>
     </record>
 
     <!-- Material request lines follow the same union logic as their parent request. -->
@@ -143,10 +145,11 @@
     </record>
 
     <record id="material_request_line_admin_rule" model="ir.rule">
-        <field name="name">Material Request Line: Administrator All Records</field>
+        <field name="name">Material Request Line: Administrator Rule Disabled</field>
         <field name="model_id" ref="model_material_request_line"/>
         <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="active" eval="False"/>
     </record>
 
     <!-- PORTAL REPORTS: portal users only see reports shared with one of their groups -->
@@ -173,11 +176,11 @@
         <field name="domain_force">[('participant_ids', 'in', [user.id])]</field>
     </record>
 
-    <!-- CALLING: only Employee Portal Super Administrators can inspect all call sessions. -->
+    <!-- CALLING: Employee Portal Administrators can inspect full call history. -->
     <record id="portal_call_session_admin_rule" model="ir.rule">
-        <field name="name">Portal Call Session: Super Admin Full Read Access</field>
+        <field name="name">Portal Call Session: Administrator Full Read Access</field>
         <field name="model_id" ref="model_portal_call_session"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_superadmin'))]"/>
+        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
@@ -254,10 +257,11 @@
 
     <!-- CONFIGURATION: Super Admins may manage only this suite's own roles from the dedicated page. -->
     <record id="employee_portal_superadmin_groups_rule" model="ir.rule">
-        <field name="name">Employee Portal Groups: Super Admin Suite Roles Only</field>
+        <field name="name">Employee Portal Groups: Legacy Direct Access Disabled</field>
         <field name="model_id" ref="base.model_res_groups"/>
         <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_superadmin'))]"/>
-        <field name="domain_force" eval="&quot;[('category_id', '=', %d)]&quot; % ref('employee_portal_suite.module_category_employee_portal_suite')"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="active" eval="False"/>
     </record>
 
 </odoo>

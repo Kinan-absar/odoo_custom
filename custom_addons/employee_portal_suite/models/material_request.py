@@ -743,7 +743,6 @@ class MaterialRequest(models.Model):
             "employee_portal_suite.group_mr_purchase_rep",
             "employee_portal_suite.group_mr_projects_director",
             "employee_portal_suite.group_employee_portal_ceo",
-            "employee_portal_suite.group_employee_portal_admin",
         )
         if any(user.has_group(group) for group in broad_groups):
             return []

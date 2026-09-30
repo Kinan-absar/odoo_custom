@@ -231,7 +231,6 @@ class EmployeePortalMaterialRequests(http.Controller):
             or user.has_group("employee_portal_suite.group_mr_store_manager")
             or user.has_group("employee_portal_suite.group_mr_project_manager")
             or user.has_group("employee_portal_suite.group_mr_projects_director")
-            or user.has_group("employee_portal_suite.group_employee_portal_admin")
         ):
             return request.redirect('/my')
 

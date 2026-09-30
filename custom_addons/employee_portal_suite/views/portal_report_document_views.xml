@@ -62,6 +62,6 @@
               parent="menu_employee_portal_root"
               action="action_portal_report_document"
               sequence="35"
-              groups="employee_portal_suite.group_employee_portal_superadmin"/>
+              groups="employee_portal_suite.group_portal_report_uploader"/>
 
 </odoo>

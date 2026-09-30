@@ -74,6 +74,6 @@
               parent="menu_employee_portal_root"
               action="action_portal_call_session"
               sequence="41"
-              groups="employee_portal_suite.group_employee_portal_superadmin"/>
+              groups="employee_portal_suite.group_employee_portal_admin"/>
 
 </odoo>
