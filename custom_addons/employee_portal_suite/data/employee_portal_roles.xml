@@ -72,7 +72,7 @@
         <field name="section_sequence">30</field>
         <field name="sequence">10</field>
         <field name="group_xmlid">employee_portal_suite.group_employee_portal_admin</field>
-        <field name="description">Operational administrator with full backend visibility of Employee Requests and Material Requests. Approval authority still follows workflow roles; Super Administrator can override stages.</field>
+        <field name="description">Operational administrator with full backend visibility of Employee Requests and Material Requests. Attendance and Announcements are separate roles and are not granted automatically.</field>
     </record>
     <record id="role_superadmin" model="employee.portal.role.assignment">
         <field name="name">Super Administrator</field>
@@ -80,7 +80,7 @@
         <field name="section_sequence">30</field>
         <field name="sequence">20</field>
         <field name="group_xmlid">employee_portal_suite.group_employee_portal_superadmin</field>
-        <field name="description">Can open Configuration and manage Employee Portal roles.</field>
+        <field name="description">Can open Configuration and manage Employee Portal roles. Attendance and Announcements remain separate explicit roles.</field>
     </record>
 
     <record id="role_announcement_manager" model="employee.portal.role.assignment">

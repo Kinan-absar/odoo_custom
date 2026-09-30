@@ -137,21 +137,21 @@
               name="Attendance"
               parent="menu_employee_portal_root"
               sequence="40"
-              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_attendance_manager,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
+              groups="employee_portal_suite.group_attendance_manager,employee_portal_suite.group_salary_report_viewer"/>
 
     <menuitem id="menu_attendance_auto_checkout"
               name="Auto Checked-Out"
               parent="menu_employee_portal_attendance_root"
               action="action_attendance_auto_checkout"
               sequence="20"
-              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_attendance_manager,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
+              groups="employee_portal_suite.group_attendance_manager"/>
 
     <menuitem id="menu_attendance_outside_location"
               name="Outside Location Check-outs"
               parent="menu_employee_portal_attendance_root"
               action="action_attendance_outside_location"
               sequence="30"
-              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_attendance_manager,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
+              groups="employee_portal_suite.group_attendance_manager"/>
 
 
     <!-- Add detected project information to Odoo's standard Attendance views. -->
