@@ -361,6 +361,37 @@ class EmployeePortalWorkflowApprovalLine(models.Model):
         return visible.mapped(field_name).ids
 
 
+    @api.model
+    def retrieve_workflow_dashboard(self):
+        """Compact KPI payload used by the backend Workflow Reports dashboard."""
+        today = fields.Date.context_today(self)
+        counts = {
+            'all_count': self.search_count([]),
+            'pending_count': self.search_count([('state', '=', 'pending')]),
+            'waiting_count': self.search_count([('state', '=', 'waiting')]),
+            'overdue_count': self.search_count([('state', '=', 'pending'), ('is_overdue', '=', True)]),
+            'approved_count': self.search_count([('state', '=', 'approved')]),
+            'returned_count': self.search_count([('state', '=', 'returned')]),
+            'rejected_count': self.search_count([('state', '=', 'rejected')]),
+            'skipped_count': self.search_count([('state', '=', 'skipped')]),
+            'override_count': self.search_count([('override_by', '!=', False)]),
+        }
+        grouped = self.read_group(
+            [('duration_hours', '>', 0.0), ('state', 'in', ['approved', 'rejected', 'returned'])],
+            ['duration_hours:avg'], [],
+        )
+        avg_hours = grouped[0].get('duration_hours', 0.0) if grouped else 0.0
+        counts.update({
+            'avg_hours': round(avg_hours or 0.0, 1),
+            'active_workflow_count': self.env['employee.portal.workflow'].search_count([('active', '=', True)]),
+            'approval_role_count': self.env['employee.portal.approval.role'].search_count([('active', '=', True)]),
+            'active_delegation_count': self.env['employee.portal.approval.delegation'].search_count([
+                ('active', '=', True), ('date_from', '<=', today), ('date_to', '>=', today),
+            ]),
+        })
+        return counts
+
+
 class EmployeePortalWorkflowTestWizard(models.TransientModel):
     _name = 'employee.portal.workflow.test.wizard'
     _description = 'Test Employee Portal Workflow'
@@ -449,6 +480,8 @@ class ProjectProject(models.Model):
     employee_portal_workflow_ids = fields.One2many(
         'employee.portal.workflow', 'project_id', string='Employee Portal Workflows'
     )
+
+
 
 
 class WorkflowRequestMixin(models.AbstractModel):
