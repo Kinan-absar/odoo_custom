@@ -153,7 +153,7 @@
                                     <!-- Readonly for normal portal employees -->
                                     <field name="employee_id"
                                         readonly="1"
-                                        groups="employee_portal_suite.group_employee_portal_employee"/>
+                                        groups="employee_portal_suite.group_employee_portal_employee,!employee_portal_suite.group_employee_portal_admin"/>
 
                                     <!-- Editable ONLY for Portal Admins -->
                                     <field name="employee_id"
