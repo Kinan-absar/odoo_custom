@@ -92,6 +92,15 @@
         <field name="description">Create and manage Employee Portal announcements.</field>
     </record>
 
+    <record id="role_attendance_manager" model="employee.portal.role.assignment">
+        <field name="name">Attendance Manager</field>
+        <field name="section">attendance</field>
+        <field name="section_sequence">50</field>
+        <field name="sequence">5</field>
+        <field name="group_xmlid">employee_portal_suite.group_attendance_manager</field>
+        <field name="description">Backend Attendance administration: Instant Salary Reports, Auto Checked-Out, and Outside Location Check-outs.</field>
+    </record>
+
     <record id="role_attendance_user" model="employee.portal.role.assignment">
         <field name="name">Attendance User</field>
         <field name="section">attendance</field>

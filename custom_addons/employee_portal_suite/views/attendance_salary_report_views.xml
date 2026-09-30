@@ -10,15 +10,15 @@
                     <button name="action_generate" type="object"
                             string="Generate / Refresh"
                             class="btn-primary"
-                            groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
+                            groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_attendance_manager,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
                     <button name="action_print_report" type="object"
                             string="Print Report"
                             class="btn-secondary"
-                            groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
+                            groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_attendance_manager,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
                     <button name="action_create_payroll_batch" type="object"
                             string="Create Payroll Batch"
                             class="btn-secondary"
-                            groups="employee_portal_suite.group_employee_portal_admin"/>
+                            groups="employee_portal_suite.group_attendance_manager,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,generated,batch_created"/>
                 </header>
@@ -271,6 +271,6 @@
               parent="menu_employee_portal_attendance_root"
               action="action_attendance_salary_report"
               sequence="10"
-              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin"/>
+              groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_attendance_manager,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
 
 </odoo>
