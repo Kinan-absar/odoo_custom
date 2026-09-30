@@ -213,6 +213,7 @@ class EmployeeRequest(models.Model):
             "employee_portal_suite.group_employee_portal_hr",
             "employee_portal_suite.group_employee_portal_finance",
             "employee_portal_suite.group_employee_portal_ceo",
+            "employee_portal_suite.group_employee_portal_admin",
         )
         if any(user.has_group(group) for group in broad_groups):
             return []
@@ -242,6 +243,10 @@ class EmployeeRequest(models.Model):
         self.ensure_one()
         user = user or self.env.user
 
+        # Super Administrator is an explicit workflow override role.
+        if user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
+            return self.state in {"manager", "hr", "finance", "ceo"}
+
         if self.state == "manager":
             return bool(
                 user.has_group("employee_portal_suite.group_employee_portal_manager")
@@ -260,6 +265,10 @@ class EmployeeRequest(models.Model):
 
         if self.state != required_state:
             raise UserError(_("This action is not allowed in the current state."))
+
+        # Super Administrator can deliberately override any pending approval stage.
+        if self.env.user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
+            return
 
         if required_state == "manager":
             if not (

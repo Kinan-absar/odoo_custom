@@ -163,6 +163,7 @@ class EmployeePortalRequests(http.Controller):
             or user.has_group("employee_portal_suite.group_employee_portal_hr")
             or user.has_group("employee_portal_suite.group_employee_portal_finance")
             or user.has_group("employee_portal_suite.group_employee_portal_ceo")
+            or user.has_group("employee_portal_suite.group_employee_portal_superadmin")
         ):
             return request.redirect('/my')
 
@@ -179,7 +180,10 @@ class EmployeePortalRequests(http.Controller):
             ('state', 'in', ['manager', 'hr', 'finance', 'ceo'])
         ]):
 
-            if rec.state == "manager" and user.has_group("employee_portal_suite.group_employee_portal_manager"):
+            if user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
+                pending_list.append(rec)
+
+            elif rec.state == "manager" and user.has_group("employee_portal_suite.group_employee_portal_manager"):
                 if rec.manager_id == emp:
                     pending_list.append(rec)
 
@@ -327,17 +331,15 @@ class EmployeePortalRequests(http.Controller):
         if not rec._portal_can_approve(user):
             return request.redirect(f"/my/employee/approvals/{rec.id}")
 
-        # Save rejection comment in correct field
-        if rec.state == 'manager' and rec.manager_id == user.employee_id:
+        # Authorization was already checked above; save the comment for the current stage.
+        # This also supports the explicit Super Administrator override.
+        if rec.state == 'manager':
             rec.manager_comment = comment
-
-        elif rec.state == 'hr' and user.has_group('employee_portal_suite.group_employee_portal_hr'):
+        elif rec.state == 'hr':
             rec.hr_comment = comment
-
-        elif rec.state == 'finance' and user.has_group('employee_portal_suite.group_employee_portal_finance'):
+        elif rec.state == 'finance':
             rec.finance_comment = comment
-
-        elif rec.state == 'ceo' and user.has_group('employee_portal_suite.group_employee_portal_ceo'):
+        elif rec.state == 'ceo':
             rec.ceo_comment = comment
 
         # Now actually reject

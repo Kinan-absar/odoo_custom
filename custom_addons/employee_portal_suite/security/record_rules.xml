@@ -41,11 +41,10 @@
     </record>
 
     <record id="employee_request_admin_rule" model="ir.rule">
-        <field name="name">Employee Request: Administrator Rule Disabled</field>
+        <field name="name">Employee Request: Administrator All Records</field>
         <field name="model_id" ref="model_employee_request"/>
         <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="active" eval="False"/>
     </record>
 
     <!-- ========================================================= -->
@@ -101,11 +100,10 @@
     </record>
 
     <record id="material_request_admin_rule" model="ir.rule">
-        <field name="name">Material Request: Administrator Rule Disabled</field>
+        <field name="name">Material Request: Administrator All Records</field>
         <field name="model_id" ref="model_material_request"/>
         <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="active" eval="False"/>
     </record>
 
     <!-- Material request lines follow the same union logic as their parent request. -->
@@ -159,11 +157,10 @@
     </record>
 
     <record id="material_request_line_admin_rule" model="ir.rule">
-        <field name="name">Material Request Line: Administrator Rule Disabled</field>
+        <field name="name">Material Request Line: Administrator All Records</field>
         <field name="model_id" ref="model_material_request_line"/>
         <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="active" eval="False"/>
     </record>
 
     <!-- PORTAL REPORTS: portal users only see reports shared with one of their groups -->
@@ -172,6 +169,13 @@
         <field name="model_id" ref="model_portal_report_document"/>
         <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_employee'))]"/>
         <field name="domain_force">[('active', '=', True), ('allowed_group_ids', 'in', user.groups_id.ids)]</field>
+    </record>
+
+    <record id="portal_report_document_manager_rule" model="ir.rule">
+        <field name="name">Portal Reports: Manager All Records</field>
+        <field name="model_id" ref="model_portal_report_document"/>
+        <field name="groups" eval="[(4, ref('employee_portal_suite.group_portal_report_uploader'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
     <!-- PORTAL REPORT SEEN MARKERS: every user (incl. portal) can only access their own marker rows -->
@@ -192,9 +196,9 @@
 
     <!-- CALLING: Employee Portal Administrators can inspect full call history. -->
     <record id="portal_call_session_admin_rule" model="ir.rule">
-        <field name="name">Portal Call Session: Administrator Full Read Access</field>
+        <field name="name">Portal Call Session: Super Administrator Full Read Access</field>
         <field name="model_id" ref="model_portal_call_session"/>
-        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_admin'))]"/>
+        <field name="groups" eval="[(4, ref('employee_portal_suite.group_employee_portal_superadmin'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 

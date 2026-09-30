@@ -625,7 +625,7 @@
 
 
                 <!-- PORTAL REPORTS (visible by selected portal groups) -->
-                <t t-if="portal_report_count &gt; 0">
+                <t t-if="portal_report_count &gt; 0 or can_manage_portal_reports">
                     <div class="col-6 col-md-6">
                         <a href="/my/employee/reports" class="dashboard-link">
                             <div class="dashboard-card">

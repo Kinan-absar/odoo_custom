@@ -11,9 +11,15 @@ from odoo.exceptions import MissingError
 class EmployeePortalReports(CustomerPortal):
 
     def _portal_report_domain(self):
+        user = request.env.user
+        if (
+            user.has_group('employee_portal_suite.group_portal_report_uploader')
+            or user.has_group('employee_portal_suite.group_employee_portal_superadmin')
+        ):
+            return [('active', '=', True)]
         return [
             ('active', '=', True),
-            ('allowed_group_ids', 'in', request.env.user.groups_id.ids),
+            ('allowed_group_ids', 'in', user.groups_id.ids),
         ]
 
     def _get_accessible_report(self, report_id):

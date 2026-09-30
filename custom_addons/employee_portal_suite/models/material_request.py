@@ -715,6 +715,10 @@ class MaterialRequest(models.Model):
 
         user = self.env.user
 
+        # Super Administrator can deliberately override any pending approval stage.
+        if user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
+            return
+
         # -------------------------------------------------
         # PROJECT-SCOPED STAGES
         # -------------------------------------------------
@@ -743,6 +747,7 @@ class MaterialRequest(models.Model):
             "employee_portal_suite.group_mr_purchase_rep",
             "employee_portal_suite.group_mr_projects_director",
             "employee_portal_suite.group_employee_portal_ceo",
+            "employee_portal_suite.group_employee_portal_admin",
         )
         if any(user.has_group(group) for group in broad_groups):
             return []
@@ -768,6 +773,10 @@ class MaterialRequest(models.Model):
     def _portal_can_approve(self, user=None):
         self.ensure_one()
         user = user or self.env.user
+
+        # Super Administrator is an explicit workflow override role.
+        if user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
+            return self.state in {"purchase", "store", "project_manager", "director", "ceo"}
 
         if self.state == "store":
             return bool(

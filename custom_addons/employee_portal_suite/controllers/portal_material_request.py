@@ -226,7 +226,8 @@ class EmployeePortalMaterialRequests(http.Controller):
 
         # Only approvers allowed
         if not (
-            user.has_group("employee_portal_suite.group_employee_portal_ceo")
+            user.has_group("employee_portal_suite.group_employee_portal_superadmin")
+            or user.has_group("employee_portal_suite.group_employee_portal_ceo")
             or user.has_group("employee_portal_suite.group_mr_purchase_rep")
             or user.has_group("employee_portal_suite.group_mr_store_manager")
             or user.has_group("employee_portal_suite.group_mr_project_manager")
@@ -247,6 +248,10 @@ class EmployeePortalMaterialRequests(http.Controller):
         for rec in Material.search([
             ("state", "in", ["purchase", "store", "project_manager", "director", "ceo"])
         ]):
+
+            if user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
+                pending_list.append(rec)
+                continue
 
             # -------------------------------
             # STORE MANAGER (project-based)
