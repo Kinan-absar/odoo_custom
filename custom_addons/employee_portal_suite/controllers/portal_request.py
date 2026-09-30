@@ -18,9 +18,19 @@ def _er_status_badge(rec):
             'ceo': 'CEO',
         }
 
-        lbl = stage_labels.get(rec.state_before_reject, "Unknown Stage")
+        if rec.state_before_reject == 'workflow':
+            rejected_line = rec.approval_line_ids.filtered(lambda l: l.state == 'rejected')[:1]
+            lbl = rejected_line.name if rejected_line else 'Workflow'
+        else:
+            lbl = stage_labels.get(rec.state_before_reject, "Unknown Stage")
 
         return Markup('<span class="badge bg-danger">Rejected — %s Stage</span>') % escape(lbl)
+    # CONFIGURABLE WORKFLOW
+    if state == 'workflow':
+        step = rec.current_approval_line_id
+        label = step.name if step else 'Workflow Approval'
+        return Markup('<span class="badge bg-warning text-dark">Pending — %s</span>') % escape(label)
+
     # PENDING STAGES
     stage_labels = {
         'manager': 'Pending Manager',
@@ -101,7 +111,11 @@ class EmployeePortalRequests(http.Controller):
         if not emp:
             return request.redirect('/my')
 
-        return request.render("employee_portal_suite.employee_request_new_form")
+        projects = emp.sudo()._get_material_request_projects()
+        return request.render("employee_portal_suite.employee_request_new_form", {
+            "projects": projects,
+            "single_project": projects[:1] if len(projects) == 1 else False,
+        })
 
     # ---------------------------------------------------------
     # EMPLOYEE — CREATE REQUEST
@@ -130,12 +144,19 @@ class EmployeePortalRequests(http.Controller):
         }
         req_type = mapping.get(post.get("request_type"), "other")
 
+        projects = emp.sudo()._get_material_request_projects()
+        project_id = int(post.get('project_id') or 0)
+        selected_project = request.env['project.project'].sudo().browse(project_id) if project_id else request.env['project.project']
+        if project_id and (not selected_project.exists() or selected_project not in projects):
+            return request.redirect('/my/employee/requests/new')
+
         # Build vals
         vals = {
             'employee_id': emp.id,
             'request_date': post.get('request_date'),
             'request_type': req_type,
             'description': post.get('description'),
+            'project_id': selected_project.id if selected_project else False,
         }
 
         # Leave fields
@@ -157,13 +178,20 @@ class EmployeePortalRequests(http.Controller):
         user = request.env.user
         EmployeeReq = request.env['employee.request'].sudo()
 
-        # Allow only employee approval groups
+        has_dynamic_approval = bool(request.env['employee.portal.workflow.approval.line'].sudo().search_count([
+            ('employee_request_id', '!=', False),
+            ('state', '=', 'pending'),
+            ('approver_user_ids', 'in', [user.id]),
+        ]))
+
+        # Allow employee approval groups or a specifically assigned dynamic approver
         if not (
             user.has_group("employee_portal_suite.group_employee_portal_manager")
             or user.has_group("employee_portal_suite.group_employee_portal_hr")
             or user.has_group("employee_portal_suite.group_employee_portal_finance")
             or user.has_group("employee_portal_suite.group_employee_portal_ceo")
             or user.has_group("employee_portal_suite.group_employee_portal_superadmin")
+            or has_dynamic_approval
         ):
             return request.redirect('/my')
 
@@ -177,10 +205,14 @@ class EmployeePortalRequests(http.Controller):
         pending_list = []
 
         for rec in EmployeeReq.search([
-            ('state', 'in', ['manager', 'hr', 'finance', 'ceo'])
+            ('state', 'in', ['workflow', 'manager', 'hr', 'finance', 'ceo'])
         ]):
 
-            if user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
+            if rec.state == 'workflow':
+                if rec._portal_can_approve(user):
+                    pending_list.append(rec)
+
+            elif user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
                 pending_list.append(rec)
 
             elif rec.state == "manager" and user.has_group("employee_portal_suite.group_employee_portal_manager"):
@@ -206,6 +238,8 @@ class EmployeePortalRequests(http.Controller):
             ("finance_approved_by", "=", user.id),
             ("ceo_approved_by", "=", user.id),
         ])
+        dynamic_approved = EmployeeReq.search([('approval_line_ids.approved_by', '=', user.id)], order='id desc')
+        approved_list = EmployeeReq.browse(list(dict.fromkeys(approved_list.ids + dynamic_approved.ids)))
 
         # ---------------------------------------------------------
         # 3) REJECTED LIST — requests user rejected
@@ -290,7 +324,12 @@ class EmployeePortalRequests(http.Controller):
         if not rec._portal_can_approve(user):
             return request.redirect(f"/my/employee/approvals/{rec.id}")
 
-        if rec.state == "manager":
+        if rec.state == 'workflow':
+            if rec.current_approval_line_id:
+                rec.current_approval_line_id.sudo().comment = post.get('comment') or False
+            rec.with_context(workflow_actor_user_id=user.id).action_workflow_approve()
+
+        elif rec.state == "manager":
             rec.manager_comment = comment
             rec.action_manager_approve()
 
@@ -333,7 +372,12 @@ class EmployeePortalRequests(http.Controller):
 
         # Authorization was already checked above; save the comment for the current stage.
         # This also supports the explicit Super Administrator override.
-        if rec.state == 'manager':
+        if rec.state == 'workflow':
+            if rec.current_approval_line_id:
+                rec.current_approval_line_id.sudo().comment = comment
+            rec.with_context(workflow_actor_user_id=user.id).action_workflow_reject()
+            return request.redirect('/my/employee/approvals')
+        elif rec.state == 'manager':
             rec.manager_comment = comment
         elif rec.state == 'hr':
             rec.hr_comment = comment

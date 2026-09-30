@@ -282,5 +282,86 @@
         <field name="active" eval="False"/>
     </record>
 
+
+    <!-- CONFIGURABLE WORKFLOW APPROVAL LINES -->
+    <!-- Internal users may access lines specifically assigned to them. Other functional
+         role rules below widen visibility additively, matching the request access model. -->
+    <record id="workflow_approval_line_internal_assigned_rule" model="ir.rule">
+        <field name="name">Workflow Approval Line: Assigned Internal Approver</field>
+        <field name="model_id" ref="model_employee_portal_workflow_approval_line"/>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="domain_force">[('approver_user_ids', 'in', [user.id])]</field>
+    </record>
+
+    <record id="workflow_approval_line_manager_rule" model="ir.rule">
+        <field name="name">Workflow Approval Line: Employee Manager Scope</field>
+        <field name="model_id" ref="model_employee_portal_workflow_approval_line"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_manager')])]"/>
+        <field name="domain_force">['|', ('employee_request_id.manager_id.user_id', '=', user.id), ('employee_request_id.employee_id.user_id', '=', user.id)]</field>
+    </record>
+
+    <record id="workflow_approval_line_hr_rule" model="ir.rule">
+        <field name="name">Workflow Approval Line: HR Employee Requests</field>
+        <field name="model_id" ref="model_employee_portal_workflow_approval_line"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_hr')])]"/>
+        <field name="domain_force">[('employee_request_id', '!=', False)]</field>
+    </record>
+
+    <record id="workflow_approval_line_finance_rule" model="ir.rule">
+        <field name="name">Workflow Approval Line: Finance Employee Requests</field>
+        <field name="model_id" ref="model_employee_portal_workflow_approval_line"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_finance')])]"/>
+        <field name="domain_force">[('employee_request_id', '!=', False)]</field>
+    </record>
+
+    <record id="workflow_approval_line_mr_store_rule" model="ir.rule">
+        <field name="name">Workflow Approval Line: Store Manager Scope</field>
+        <field name="model_id" ref="model_employee_portal_workflow_approval_line"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_store_manager')])]"/>
+        <field name="domain_force">[('material_request_id.store_manager_user_id', '=', user.id)]</field>
+    </record>
+
+    <record id="workflow_approval_line_mr_project_rule" model="ir.rule">
+        <field name="name">Workflow Approval Line: Project Manager Scope</field>
+        <field name="model_id" ref="model_employee_portal_workflow_approval_line"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_project_manager')])]"/>
+        <field name="domain_force">[('material_request_id.project_manager_user_id', '=', user.id)]</field>
+    </record>
+
+    <record id="workflow_approval_line_mr_purchase_rule" model="ir.rule">
+        <field name="name">Workflow Approval Line: Purchase Representative All MR</field>
+        <field name="model_id" ref="model_employee_portal_workflow_approval_line"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_purchase_rep')])]"/>
+        <field name="domain_force">[('material_request_id', '!=', False)]</field>
+    </record>
+
+    <record id="workflow_approval_line_mr_director_rule" model="ir.rule">
+        <field name="name">Workflow Approval Line: Projects Director All MR</field>
+        <field name="model_id" ref="model_employee_portal_workflow_approval_line"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_projects_director')])]"/>
+        <field name="domain_force">[('material_request_id', '!=', False)]</field>
+    </record>
+
+    <record id="workflow_approval_line_ceo_rule" model="ir.rule">
+        <field name="name">Workflow Approval Line: CEO All Requests</field>
+        <field name="model_id" ref="model_employee_portal_workflow_approval_line"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_ceo')])]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="workflow_approval_line_admin_rule" model="ir.rule">
+        <field name="name">Workflow Approval Line: Administrator All Requests</field>
+        <field name="model_id" ref="model_employee_portal_workflow_approval_line"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_admin')])]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="workflow_approval_line_superadmin_rule" model="ir.rule">
+        <field name="name">Workflow Approval Line: Super Administrator All Requests</field>
+        <field name="model_id" ref="model_employee_portal_workflow_approval_line"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_superadmin')])]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
 </odoo>
 

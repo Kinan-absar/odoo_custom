@@ -133,20 +133,25 @@ class PortalReportSeen(models.Model):
             }
 
         # ---- ER Approvals: pending list is per-user/state, not a clean domain ----
+        has_dynamic_er = bool(env['employee.portal.workflow.approval.line'].sudo().search_count([
+            ('employee_request_id', '!=', False), ('state', '=', 'pending'), ('approver_user_ids', 'in', [user.id])
+        ]))
         if (
             user.has_group('employee_portal_suite.group_employee_portal_manager')
             or user.has_group('employee_portal_suite.group_employee_portal_hr')
             or user.has_group('employee_portal_suite.group_employee_portal_finance')
             or user.has_group('employee_portal_suite.group_employee_portal_ceo')
             or user.has_group('employee_portal_suite.group_employee_portal_superadmin')
+            or has_dynamic_er
         ):
             EmployeeRequest = env['employee.request'].sudo()
-            pending = EmployeeRequest.search([('state', 'in', ['manager', 'hr', 'finance', 'ceo'])])
+            pending = EmployeeRequest.search([('state', 'in', ['workflow', 'manager', 'hr', 'finance', 'ceo'])])
             if user.has_group('employee_portal_suite.group_employee_portal_superadmin'):
                 pending_for_user = pending
             else:
                 pending_for_user = pending.filtered(lambda rec: (
-                (rec.state == 'manager' and user.has_group('employee_portal_suite.group_employee_portal_manager') and rec.manager_id == employee)
+                (rec.state == 'workflow' and rec._portal_can_approve(user))
+                or (rec.state == 'manager' and user.has_group('employee_portal_suite.group_employee_portal_manager') and rec.manager_id == employee)
                 or (rec.state == 'hr' and user.has_group('employee_portal_suite.group_employee_portal_hr'))
                 or (rec.state == 'finance' and user.has_group('employee_portal_suite.group_employee_portal_finance'))
                 or (rec.state == 'ceo' and user.has_group('employee_portal_suite.group_employee_portal_ceo'))
@@ -159,6 +164,9 @@ class PortalReportSeen(models.Model):
             }
 
         # ---- MR Approvals: same shape as ER Approvals ----
+        has_dynamic_mr = bool(env['employee.portal.workflow.approval.line'].sudo().search_count([
+            ('material_request_id', '!=', False), ('state', '=', 'pending'), ('approver_user_ids', 'in', [user.id])
+        ]))
         if (
             user.has_group('employee_portal_suite.group_mr_purchase_rep')
             or user.has_group('employee_portal_suite.group_mr_store_manager')
@@ -166,14 +174,16 @@ class PortalReportSeen(models.Model):
             or user.has_group('employee_portal_suite.group_mr_projects_director')
             or user.has_group('employee_portal_suite.group_employee_portal_ceo')
             or user.has_group('employee_portal_suite.group_employee_portal_superadmin')
+            or has_dynamic_mr
         ):
             Material = env['material.request'].sudo()
-            pending = Material.search([('state', 'in', ['purchase', 'store', 'project_manager', 'director', 'ceo'])])
+            pending = Material.search([('state', 'in', ['workflow', 'purchase', 'store', 'project_manager', 'director', 'ceo'])])
             if user.has_group('employee_portal_suite.group_employee_portal_superadmin'):
                 pending_for_user = pending
             else:
                 pending_for_user = pending.filtered(lambda rec: (
-                (rec.state == 'purchase' and user.has_group('employee_portal_suite.group_mr_purchase_rep'))
+                (rec.state == 'workflow' and rec._portal_can_approve(user))
+                or (rec.state == 'purchase' and user.has_group('employee_portal_suite.group_mr_purchase_rep'))
                 or (rec.state == 'store' and rec.store_manager_user_id == user)
                 or (rec.state == 'project_manager' and rec.project_manager_user_id == user)
                 or (rec.state == 'director' and user.has_group('employee_portal_suite.group_mr_projects_director'))

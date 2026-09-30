@@ -385,10 +385,12 @@ class EmployeeRequestTelegramReminders(models.Model):
     _name = 'employee.request'
 
     def _telegram_approval_states(self):
-        return ['manager', 'hr', 'finance', 'ceo']
+        return ['workflow', 'manager', 'hr', 'finance', 'ceo']
 
     def _telegram_current_approvers(self):
         self.ensure_one()
+        if self.state == 'workflow':
+            return self.current_approval_line_id.sudo().approver_user_ids if self.current_approval_line_id else self.env['res.users']
         if self.state == 'manager':
             return self.manager_id.user_id if self.manager_id and self.manager_id.user_id else self.env['res.users']
         groups = {
@@ -418,10 +420,12 @@ class MaterialRequestTelegramReminders(models.Model):
     _name = 'material.request'
 
     def _telegram_approval_states(self):
-        return ['purchase', 'store', 'project_manager', 'director', 'ceo']
+        return ['workflow', 'purchase', 'store', 'project_manager', 'director', 'ceo']
 
     def _telegram_current_approvers(self):
         self.ensure_one()
+        if self.state == 'workflow':
+            return self.current_approval_line_id.sudo().approver_user_ids if self.current_approval_line_id else self.env['res.users']
         if self.state == 'store':
             return self.store_manager_user_id if self.store_manager_user_id else self.env['res.users']
         if self.state == 'project_manager':

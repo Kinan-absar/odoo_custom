@@ -41,10 +41,20 @@
                                 class="oe_stat_button"
                                 invisible="state != 'ceo'"/>
 
+                        <button name="action_workflow_approve" type="object"
+                                string="Approve Current Step"
+                                class="btn-primary"
+                                invisible="state != 'workflow'"/>
+
+                        <button name="action_workflow_reject" type="object"
+                                string="Reject Current Step"
+                                class="btn-danger"
+                                invisible="state != 'workflow'"/>
+
                         <button name="action_reject" type="object"
                                 string="Reject"
                                 class="oe_stat_button btn-danger"
-                                invisible="state == 'approved'"/>
+                                invisible="state in ('approved','workflow')"/>
                         <button name="%(employee_portal_suite.material_request_pdf)d"
                                 type="action"
                                 class="btn-primary"
@@ -125,7 +135,7 @@
                         <label for="state" class="oe_inline"/>
                         <div class="oe_inline">
                             <field name="state" widget="statusbar"
-                                   statusbar_visible="draft,purchase,store,project_manager,director,ceo,approved,rejected"/>
+                                   statusbar_visible="draft,workflow,purchase,store,project_manager,director,ceo,approved,rejected"/>
                                 <div class="oe_inline ms-3 d-flex align-items-center"
                                     invisible="not can_toggle_clarification">
 
@@ -164,6 +174,8 @@
                                            options="{'no_create': True}"
                                            readonly="project_selection_locked"
                                            required="1"/>
+                                    <field name="workflow_id" readonly="1" invisible="not workflow_id"/>
+                                    <field name="current_approval_line_id" readonly="1" invisible="state != 'workflow'"/>
                                     <field name="request_date"/>
                                     <field name="worksite"/>
                                     <field name="delivery_date"/>
@@ -225,6 +237,26 @@
                                     <field name="accounting_docs_note" placeholder="Optional note from Purchase Representative / Accounting"/>
                                 </group>
                             </group>
+                        </page>
+
+                        <page string="Workflow" invisible="not workflow_id">
+                            <group>
+                                <field name="workflow_id" readonly="1"/>
+                                <field name="current_approval_line_id" readonly="1" invisible="state != 'workflow'"/>
+                            </group>
+                            <field name="approval_line_ids" readonly="1">
+                                <list create="0" delete="0" edit="0" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'" decoration-warning="state == 'pending'" decoration-muted="state == 'waiting'">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="role_name" optional="show"/>
+                                    <field name="approver_user_ids" widget="many2many_tags"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="approved_by" optional="show"/>
+                                    <field name="approved_date" optional="show"/>
+                                    <field name="rejected_by" optional="hide"/>
+                                    <field name="rejected_date" optional="hide"/>
+                                </list>
+                            </field>
                         </page>
 
                         <!-- APPROVAL TIMELINE TAB -->

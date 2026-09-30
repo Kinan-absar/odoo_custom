@@ -23,6 +23,17 @@
             <input type="date" name="request_date" id="req_date_en" class="form-control" readonly="readonly"/>
         </div>
 
+        <!-- Optional Project (used for project-specific workflow routing) -->
+        <div class="form-group mt-3" t-if="projects">
+            <label>Project</label>
+            <select name="project_id" class="form-control">
+                <option value="">Company / Default Workflow</option>
+                <t t-foreach="projects" t-as="project">
+                    <option t-att-value="project.id" t-att-selected="single_project and project.id == single_project.id"><t t-esc="project.name"/></option>
+                </t>
+            </select>
+        </div>
+
         <!-- Request Type -->
         <div class="form-group mt-3">
             <label>Request Type <span class="text-danger">*</span></label>
@@ -73,6 +84,17 @@
         <div class="form-group mt-3">
             <label>تاريخ الطلب</label>
             <input type="date" name="request_date" id="req_date_ar" class="form-control" readonly="readonly"/>
+        </div>
+
+        <!-- Project -->
+        <div class="form-group mt-3" t-if="projects">
+            <label>المشروع</label>
+            <select name="project_id" class="form-control">
+                <option value="">مسار الموافقة الافتراضي للشركة</option>
+                <t t-foreach="projects" t-as="project">
+                    <option t-att-value="project.id" t-att-selected="single_project and project.id == single_project.id"><t t-esc="project.name"/></option>
+                </t>
+            </select>
         </div>
 
         <!-- Request Type -->
