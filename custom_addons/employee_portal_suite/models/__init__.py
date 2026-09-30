@@ -40,3 +40,5 @@ from . import hr_employee_portal_access
 from . import employee_portal_role_assignment
 
 from . import workflow_engine
+
+from . import workflow_v2
