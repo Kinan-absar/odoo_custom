@@ -178,11 +178,9 @@ class EmployeePortalRequests(http.Controller):
         user = request.env.user
         EmployeeReq = request.env['employee.request'].sudo()
 
-        has_dynamic_approval = bool(request.env['employee.portal.workflow.approval.line'].sudo().search_count([
-            ('employee_request_id', '!=', False),
-            ('state', '=', 'pending'),
-            ('approver_user_ids', 'in', [user.id]),
-        ]))
+        has_dynamic_approval = request.env['employee.portal.workflow.approval.line'].sudo().user_has_approval_area_access(
+            user, 'employee_request'
+        )
 
         # Allow employee approval groups or a specifically assigned dynamic approver
         if not (

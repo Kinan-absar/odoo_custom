@@ -236,11 +236,9 @@ class EmployeePortalMaterialRequests(http.Controller):
         user = request.env.user
         Material = request.env["material.request"].sudo()
 
-        has_dynamic_approval = bool(request.env['employee.portal.workflow.approval.line'].sudo().search_count([
-            ('material_request_id', '!=', False),
-            ('state', '=', 'pending'),
-            ('approver_user_ids', 'in', [user.id]),
-        ]))
+        has_dynamic_approval = request.env['employee.portal.workflow.approval.line'].sudo().user_has_approval_area_access(
+            user, 'material_request'
+        )
 
         # Only configured approvers allowed
         if not (

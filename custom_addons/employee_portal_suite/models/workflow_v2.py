@@ -312,6 +312,54 @@ class EmployeePortalWorkflowApprovalLine(models.Model):
             return True
         return user in self._effective_users()
 
+    def user_has_approval_involvement(self, user=None):
+        """Whether *user* legitimately belongs to this approval line.
+
+        This is intentionally broader than ``can_user_approve``: it keeps the
+        approval area available after the user has approved/rejected/returned
+        a step, and it includes an active delegate while the delegated step is
+        pending.  It does not grant unrelated employees access.
+        """
+        self.ensure_one()
+        user = user or self.env.user
+        if user.has_group('employee_portal_suite.group_employee_portal_superadmin'):
+            return True
+        if user in self.approver_user_ids:
+            return True
+        if user in (self.approved_by | self.rejected_by | self.returned_by | self.override_by):
+            return True
+        return bool(self.state == 'pending' and user in self._effective_users())
+
+    @api.model
+    def user_has_approval_area_access(self, user, request_kind):
+        """Return True when the user should see the ER/MR approval area.
+
+        ``request_kind`` is ``employee_request`` or ``material_request``.
+        Legacy group access is handled by callers; this method covers dynamic
+        workflow assignments, history, and active delegation.
+        """
+        field_name = {
+            'employee_request': 'employee_request_id',
+            'material_request': 'material_request_id',
+        }.get(request_kind)
+        if not field_name:
+            return False
+        lines = self.sudo().search([(field_name, '!=', False)])
+        return any(line.user_has_approval_involvement(user) for line in lines)
+
+    @api.model
+    def request_ids_for_user(self, user, request_kind):
+        """Dynamic workflow request ids visible to a user through involvement."""
+        field_name = {
+            'employee_request': 'employee_request_id',
+            'material_request': 'material_request_id',
+        }.get(request_kind)
+        if not field_name:
+            return []
+        lines = self.sudo().search([(field_name, '!=', False)])
+        visible = lines.filtered(lambda line: line.user_has_approval_involvement(user))
+        return visible.mapped(field_name).ids
+
 
 class EmployeePortalWorkflowTestWizard(models.TransientModel):
     _name = 'employee.portal.workflow.test.wizard'

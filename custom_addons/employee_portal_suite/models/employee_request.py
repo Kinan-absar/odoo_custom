@@ -379,7 +379,10 @@ class EmployeeRequest(models.Model):
         if any(user.has_group(group) for group in broad_groups):
             return []
 
-        domains = [[("approval_line_ids.approver_user_ids", "in", [user.id])]]
+        dynamic_ids = self.env['employee.portal.workflow.approval.line'].sudo().request_ids_for_user(
+            user, 'employee_request'
+        )
+        domains = [[("id", "in", dynamic_ids)]] if dynamic_ids else []
         if user.has_group("employee_portal_suite.group_employee_portal_employee"):
             domains.append([("employee_id.user_id", "=", user.id)])
 
@@ -395,6 +398,8 @@ class EmployeeRequest(models.Model):
     def _portal_can_view(self, user=None):
         self.ensure_one()
         user = user or self.env.user
+        if self.approval_line_ids.filtered(lambda line: line.user_has_approval_involvement(user)):
+            return True
         domain = self._portal_visibility_domain(user)
         if not domain:
             return True

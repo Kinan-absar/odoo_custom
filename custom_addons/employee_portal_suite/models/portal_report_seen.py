@@ -133,9 +133,9 @@ class PortalReportSeen(models.Model):
             }
 
         # ---- ER Approvals: pending list is per-user/state, not a clean domain ----
-        has_dynamic_er = bool(env['employee.portal.workflow.approval.line'].sudo().search_count([
-            ('employee_request_id', '!=', False), ('state', '=', 'pending'), ('approver_user_ids', 'in', [user.id])
-        ]))
+        has_dynamic_er = env['employee.portal.workflow.approval.line'].sudo().user_has_approval_area_access(
+            user, 'employee_request'
+        )
         if (
             user.has_group('employee_portal_suite.group_employee_portal_manager')
             or user.has_group('employee_portal_suite.group_employee_portal_hr')
@@ -164,9 +164,9 @@ class PortalReportSeen(models.Model):
             }
 
         # ---- MR Approvals: same shape as ER Approvals ----
-        has_dynamic_mr = bool(env['employee.portal.workflow.approval.line'].sudo().search_count([
-            ('material_request_id', '!=', False), ('state', '=', 'pending'), ('approver_user_ids', 'in', [user.id])
-        ]))
+        has_dynamic_mr = env['employee.portal.workflow.approval.line'].sudo().user_has_approval_area_access(
+            user, 'material_request'
+        )
         if (
             user.has_group('employee_portal_suite.group_mr_purchase_rep')
             or user.has_group('employee_portal_suite.group_mr_store_manager')
