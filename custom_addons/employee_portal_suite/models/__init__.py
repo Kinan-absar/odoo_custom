@@ -33,3 +33,7 @@ from . import discuss_rtc_portal_notify
 from . import web_push
 
 from . import mail_message_portal_readonly
+
+from . import hr_employee_portal_access
+
+from . import employee_portal_role_assignment

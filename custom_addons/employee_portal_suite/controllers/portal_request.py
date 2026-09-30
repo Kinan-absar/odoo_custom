@@ -163,6 +163,7 @@ class EmployeePortalRequests(http.Controller):
             or user.has_group("employee_portal_suite.group_employee_portal_hr")
             or user.has_group("employee_portal_suite.group_employee_portal_finance")
             or user.has_group("employee_portal_suite.group_employee_portal_ceo")
+            or user.has_group("employee_portal_suite.group_employee_portal_superadmin")
         ):
             return request.redirect('/my')
 
@@ -179,7 +180,10 @@ class EmployeePortalRequests(http.Controller):
             ('state', 'in', ['manager', 'hr', 'finance', 'ceo'])
         ]):
 
-            if rec.state == "manager" and user.has_group("employee_portal_suite.group_employee_portal_manager"):
+            if user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
+                pending_list.append(rec)
+
+            elif rec.state == "manager" and user.has_group("employee_portal_suite.group_employee_portal_manager"):
                 if rec.manager_id == emp:
                     pending_list.append(rec)
 
@@ -212,9 +216,10 @@ class EmployeePortalRequests(http.Controller):
         ])
 
         # ---------------------------------------------------------
-        # 4) ALL LIST
+        # 4) ALL LIST — all records visible through the UNION of roles
         # ---------------------------------------------------------
-        all_reqs = list({*pending_list, *approved_list, *rejected_list})
+        visibility_domain = EmployeeReq._portal_visibility_domain(user)
+        all_reqs = EmployeeReq.search(visibility_domain, order="id desc")
 
         # ---------------------------------------------------------
         # 5) Apply filter
@@ -258,18 +263,14 @@ class EmployeePortalRequests(http.Controller):
         if not rec.exists():
             return request.redirect('/my')
 
-        # Only managers/hr/finance/ceo
-        if not (
-            user.has_group("employee_portal_suite.group_employee_portal_manager")
-            or user.has_group("employee_portal_suite.group_employee_portal_hr")
-            or user.has_group("employee_portal_suite.group_employee_portal_finance")
-            or user.has_group("employee_portal_suite.group_employee_portal_ceo")
-        ):
-            return request.redirect('/my')
+        # Visibility is additive across all assigned roles.
+        if not rec._portal_can_view(user):
+            return request.redirect('/my/employee/approvals')
 
         return request.render("employee_portal_suite.portal_manager_request_detail", {
             "request_rec": rec,
             "status_badge": _er_status_badge,
+            "can_approve": rec._portal_can_approve(user),
         })
 
    # ---------------------------------------------------------
@@ -285,6 +286,9 @@ class EmployeePortalRequests(http.Controller):
 
         if not rec.exists():
             return request.redirect('/my/employee/approvals')
+
+        if not rec._portal_can_approve(user):
+            return request.redirect(f"/my/employee/approvals/{rec.id}")
 
         if rec.state == "manager":
             rec.manager_comment = comment
@@ -317,24 +321,25 @@ class EmployeePortalRequests(http.Controller):
 
         # REQUIRE REJECTION COMMENT
         if not comment:
-            return request.redirect(f"/my/employee/requests/{req_id}")  # go back to detail page
+            return request.redirect(f"/my/employee/approvals/{req_id}")
 
         rec = request.env['employee.request'].sudo().browse(req_id)
 
         if not rec.exists():
             return request.redirect('/my/employee/approvals')
 
-        # Save rejection comment in correct field
-        if rec.state == 'manager' and rec.manager_id == user.employee_id:
+        if not rec._portal_can_approve(user):
+            return request.redirect(f"/my/employee/approvals/{rec.id}")
+
+        # Authorization was already checked above; save the comment for the current stage.
+        # This also supports the explicit Super Administrator override.
+        if rec.state == 'manager':
             rec.manager_comment = comment
-
-        elif rec.state == 'hr' and user.has_group('employee_portal_suite.group_employee_portal_hr'):
+        elif rec.state == 'hr':
             rec.hr_comment = comment
-
-        elif rec.state == 'finance' and user.has_group('employee_portal_suite.group_employee_portal_finance'):
+        elif rec.state == 'finance':
             rec.finance_comment = comment
-
-        elif rec.state == 'ceo' and user.has_group('employee_portal_suite.group_employee_portal_ceo'):
+        elif rec.state == 'ceo':
             rec.ceo_comment = comment
 
         # Now actually reject

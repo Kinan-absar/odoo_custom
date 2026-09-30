@@ -131,12 +131,17 @@ class AttendanceSalaryReport(models.Model):
             raise UserError(_('The start date must be before the end date.'))
         self.line_ids.unlink()
         lines = [(0, 0, self._prepare_employee_line(emp)) for emp in self._get_employees()]
-        self.write({
+        vals = {
             'line_ids': lines,
             'state': 'batch_created' if self.payroll_batch_id else 'generated',
             'generated_on': fields.Datetime.now(),
-            'name': _('Attendance Salary Report %s → %s') % (self.date_from, self.date_to),
-        })
+        }
+        # Keep the report name entered by the user.  It is also used as the
+        # payroll batch title, instead of silently replacing it with a
+        # date-generated name.
+        if not self.name or self.name == 'Instant Attendance Salary Report':
+            vals['name'] = _('Attendance Salary Report %s → %s') % (self.date_from, self.date_to)
+        self.write(vals)
         return False
 
     def action_create_payroll_batch(self):
@@ -147,8 +152,11 @@ class AttendanceSalaryReport(models.Model):
             raise UserError(_('Generate the report before creating a payroll batch.'))
         PayslipRun = self.env['hr.payslip.run'].sudo()
         Payslip = self.env['hr.payslip'].sudo()
+        batch_name = (self.name or '').strip()
+        if not batch_name:
+            batch_name = _('Attendance Payroll %s → %s') % (self.date_from, self.date_to)
         batch = PayslipRun.create({
-            'name': _('Attendance Payroll %s → %s') % (self.date_from, self.date_to),
+            'name': batch_name,
             'date_start': self.date_from,
             'date_end': self.date_to,
         })

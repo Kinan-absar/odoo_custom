@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+from odoo.osv import expression
 from datetime import timedelta
 from odoo.exceptions import ValidationError
 from odoo.tools import html2plaintext
@@ -355,10 +356,16 @@ class MaterialRequest(models.Model):
 
         # Project based stages
         if self.state == "store":
-            return user == self.store_manager_user_id
+            return bool(
+                user.has_group("employee_portal_suite.group_mr_store_manager")
+                and user == self.store_manager_user_id
+            )
 
         if self.state == "project_manager":
-            return user == self.project_manager_user_id
+            return bool(
+                user.has_group("employee_portal_suite.group_mr_project_manager")
+                and user == self.project_manager_user_id
+            )
 
         # Group based stages
         stage_group_map = {
@@ -708,16 +715,20 @@ class MaterialRequest(models.Model):
 
         user = self.env.user
 
+        # Super Administrator can deliberately override any pending approval stage.
+        if user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
+            return
+
         # -------------------------------------------------
         # PROJECT-SCOPED STAGES
         # -------------------------------------------------
         if required_state == "store":
-            if user != self.store_manager_user_id:
-                raise UserError(_("You are not allowed to approve this request."))
+            if not (user.has_group(required_group) and user == self.store_manager_user_id):
+                raise UserError(_("Only the assigned Store Manager can approve this request."))
 
         elif required_state == "project_manager":
-            if user != self.project_manager_user_id:
-                raise UserError(_("You are not allowed to approve this request."))
+            if not (user.has_group(required_group) and user == self.project_manager_user_id):
+                raise UserError(_("Only the assigned Project Manager can approve this request."))
 
         # -------------------------------------------------
         # GLOBAL STAGES
@@ -725,6 +736,66 @@ class MaterialRequest(models.Model):
         else:
             if not user.has_group(required_group):
                 raise UserError(_("You are not allowed to approve at this stage."))
+
+    @api.model
+    def _portal_visibility_domain(self, user=None):
+        """Return the UNION of every Material Request role the user has."""
+        user = user or self.env.user
+
+        # These roles intentionally have an overview of all MRs.
+        broad_groups = (
+            "employee_portal_suite.group_mr_purchase_rep",
+            "employee_portal_suite.group_mr_projects_director",
+            "employee_portal_suite.group_employee_portal_ceo",
+            "employee_portal_suite.group_employee_portal_admin",
+        )
+        if any(user.has_group(group) for group in broad_groups):
+            return []
+
+        domains = []
+        if user.has_group("employee_portal_suite.group_employee_portal_employee"):
+            domains.append([("employee_id.user_id", "=", user.id)])
+        if user.has_group("employee_portal_suite.group_mr_store_manager"):
+            domains.append([("store_manager_user_id", "=", user.id)])
+        if user.has_group("employee_portal_suite.group_mr_project_manager"):
+            domains.append([("project_manager_user_id", "=", user.id)])
+
+        return expression.OR(domains) if domains else [("id", "=", 0)]
+
+    def _portal_can_view(self, user=None):
+        self.ensure_one()
+        user = user or self.env.user
+        domain = self._portal_visibility_domain(user)
+        if not domain:
+            return True
+        return bool(self.sudo().search_count(expression.AND([[('id', '=', self.id)], domain])))
+
+    def _portal_can_approve(self, user=None):
+        self.ensure_one()
+        user = user or self.env.user
+
+        # Super Administrator is an explicit workflow override role.
+        if user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
+            return self.state in {"purchase", "store", "project_manager", "director", "ceo"}
+
+        if self.state == "store":
+            return bool(
+                user.has_group("employee_portal_suite.group_mr_store_manager")
+                and user == self.store_manager_user_id
+            )
+        if self.state == "project_manager":
+            return bool(
+                user.has_group("employee_portal_suite.group_mr_project_manager")
+                and user == self.project_manager_user_id
+            )
+
+        stage_groups = {
+            "purchase": "employee_portal_suite.group_mr_purchase_rep",
+            "director": "employee_portal_suite.group_mr_projects_director",
+            "ceo": "employee_portal_suite.group_employee_portal_ceo",
+        }
+        group = stage_groups.get(self.state)
+        return bool(group and user.has_group(group))
 
     # ---------------------------------------------------------
     # ACTIONS
@@ -856,8 +927,8 @@ class MaterialRequest(models.Model):
             if not required_group:
                 raise UserError(_("This request cannot be rejected at this stage."))
 
-            if not self.env.user.has_group(required_group):
-                raise UserError(_("You are not allowed to reject this request."))
+            if not rec._portal_can_approve(self.env.user):
+                raise UserError(_("You are not allowed to reject this request at this stage."))
 
             rec.state_before_reject = rec.state
             rec.rejected_by = self.env.user.id

@@ -102,6 +102,10 @@ class EmployeePortalMain(CustomerPortal):
         new_salary_report_count = notif_summary.get('salary_report', {}).get('new', 0)
         portal_report_count = notif_summary.get('portal_report', {}).get('count', 0)
         new_portal_report_count = notif_summary.get('portal_report', {}).get('new', 0)
+        can_manage_portal_reports = (
+            user.has_group('employee_portal_suite.group_portal_report_uploader')
+            or user.has_group('employee_portal_suite.group_employee_portal_superadmin')
+        )
 
         # -------------------------------
         # 6. Construction Counts
@@ -175,6 +179,7 @@ class EmployeePortalMain(CustomerPortal):
             "new_salary_report_count": new_salary_report_count,
             "portal_report_count": portal_report_count,
             "new_portal_report_count": new_portal_report_count,
+            "can_manage_portal_reports": can_manage_portal_reports,
             "recent_activities": recent_activities,
             "contract_count": contract_count,
             "ipc_count": ipc_count,

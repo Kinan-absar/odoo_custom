@@ -69,11 +69,14 @@
               active="False"
               groups="employee_portal_suite.group_employee_portal_admin"/>
 
+    <!-- Call History backend tab intentionally retired.  The call/session
+         models remain because they are used by the live calling feature. -->
     <menuitem id="menu_portal_call_session"
               name="Call History"
               parent="menu_employee_portal_root"
               action="action_portal_call_session"
               sequence="41"
-              groups="employee_portal_suite.group_employee_portal_admin"/>
+              active="False"
+              groups="employee_portal_suite.group_employee_portal_superadmin"/>
 
 </odoo>

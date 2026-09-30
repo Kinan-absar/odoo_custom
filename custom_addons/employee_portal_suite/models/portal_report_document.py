@@ -47,4 +47,9 @@ class PortalReportDocument(models.Model):
         self.ensure_one()
         if not self.active:
             return False
+        if (
+            user.has_group('employee_portal_suite.group_portal_report_uploader')
+            or user.has_group('employee_portal_suite.group_employee_portal_superadmin')
+        ):
+            return True
         return bool(self.allowed_group_ids & user.groups_id)

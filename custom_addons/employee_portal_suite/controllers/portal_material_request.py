@@ -226,7 +226,8 @@ class EmployeePortalMaterialRequests(http.Controller):
 
         # Only approvers allowed
         if not (
-            user.has_group("employee_portal_suite.group_employee_portal_ceo")
+            user.has_group("employee_portal_suite.group_employee_portal_superadmin")
+            or user.has_group("employee_portal_suite.group_employee_portal_ceo")
             or user.has_group("employee_portal_suite.group_mr_purchase_rep")
             or user.has_group("employee_portal_suite.group_mr_store_manager")
             or user.has_group("employee_portal_suite.group_mr_project_manager")
@@ -248,18 +249,28 @@ class EmployeePortalMaterialRequests(http.Controller):
             ("state", "in", ["purchase", "store", "project_manager", "director", "ceo"])
         ]):
 
+            if user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
+                pending_list.append(rec)
+                continue
+
             # -------------------------------
             # STORE MANAGER (project-based)
             # -------------------------------
             if rec.state == "store":
-                if user == rec.store_manager_user_id:
+                if (
+                    user.has_group("employee_portal_suite.group_mr_store_manager")
+                    and user == rec.store_manager_user_id
+                ):
                     pending_list.append(rec)
 
             # -------------------------------
             # PROJECT MANAGER (project-based)
             # -------------------------------
             elif rec.state == "project_manager":
-                if user == rec.project_manager_user_id:
+                if (
+                    user.has_group("employee_portal_suite.group_mr_project_manager")
+                    and user == rec.project_manager_user_id
+                ):
                     pending_list.append(rec)
 
             # -------------------------------
@@ -305,9 +316,10 @@ class EmployeePortalMaterialRequests(http.Controller):
         ])
 
         # ---------------------------------------------------------
-        # 4) ALL LIST — union
+        # 4) ALL LIST — all records visible through the UNION of roles
         # ---------------------------------------------------------
-        all_reqs = list({*pending_list, *approved_list, *rejected_list})
+        visibility_domain = Material._portal_visibility_domain(user)
+        all_reqs = Material.search(visibility_domain, order="id desc")
 
         # ---------------------------------------------------------
         # 5) Choose what to show
@@ -364,6 +376,10 @@ class EmployeePortalMaterialRequests(http.Controller):
         if not rec.exists():
             return request.redirect("/my")
 
+        user = request.env.user
+        if not rec._portal_can_view(user):
+            return request.redirect("/my/employee/material/approvals")
+
         all_attachments = request.env["ir.attachment"].sudo().search([
             ("res_model", "=", "material.request"),
             ("res_id", "=", rec.id)
@@ -391,6 +407,7 @@ class EmployeePortalMaterialRequests(http.Controller):
             "can_submit_accounting_docs": can_submit_accounting_docs,
             "is_purchase_rep": is_purchase_rep,
             "can_view_quotations": is_purchase_rep or is_ceo,
+            "can_approve": rec._portal_can_approve(user),
             "status_badge": _mr_status_badge,
         })
 
@@ -406,6 +423,9 @@ class EmployeePortalMaterialRequests(http.Controller):
 
         if not rec.exists():
             return request.redirect("/my")
+
+        if not rec._portal_can_approve(user):
+            return request.redirect(f"/my/employee/material/approvals/{rec.id}")
 
         if rec.state == "purchase":
             rec.purchase_comment = comment
@@ -435,11 +455,15 @@ class EmployeePortalMaterialRequests(http.Controller):
     # ---------------------------------------------------------
     @http.route("/my/employee/material/requests/reject", type="http", auth="user", website=True, csrf=True)
     def material_reject(self, **post):
+        user = request.env.user
         rec = request.env["material.request"].sudo().browse(int(post.get("req_id")))
         comment = (post.get("comment") or "").strip()
 
         if not rec.exists():
             return request.redirect("/my")
+
+        if not rec._portal_can_approve(user):
+            return request.redirect(f"/my/employee/material/approvals/{rec.id}")
 
         # REQUIRE COMMENT
         if not comment:
