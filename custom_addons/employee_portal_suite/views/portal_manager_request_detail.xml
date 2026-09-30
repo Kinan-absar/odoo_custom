@@ -111,7 +111,7 @@
                 <!-- APPROVAL ACTION -->
                 <!-- ========================= -->
 
-                <t t-if="request_rec.state not in ['approved','rejected']">
+                <t t-if="can_approve">
 
                     <div class="card mb-3 rounded-4 shadow-sm">
                         <div class="card-header bg-white fw-semibold">

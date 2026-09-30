@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+from odoo.osv import expression
 import base64
 
 
@@ -198,11 +199,76 @@ class EmployeeRequest(models.Model):
                         f"Please review request {rec.name}."
                     )
                     #helper
+    @api.model
+    def _portal_visibility_domain(self, user=None):
+        """Return the UNION of every Employee Request role the user has.
+
+        Broad functional roles intentionally widen visibility.  A user who is
+        both Manager and Finance/Admin must not be trapped by the Manager
+        subordinate-only scope.
+        """
+        user = user or self.env.user
+
+        broad_groups = (
+            "employee_portal_suite.group_employee_portal_hr",
+            "employee_portal_suite.group_employee_portal_finance",
+            "employee_portal_suite.group_employee_portal_ceo",
+            "employee_portal_suite.group_employee_portal_admin",
+        )
+        if any(user.has_group(group) for group in broad_groups):
+            return []
+
+        domains = []
+        if user.has_group("employee_portal_suite.group_employee_portal_employee"):
+            domains.append([("employee_id.user_id", "=", user.id)])
+
+        if user.has_group("employee_portal_suite.group_employee_portal_manager"):
+            domains.append([
+                "|",
+                ("manager_id.user_id", "=", user.id),
+                ("employee_id.user_id", "=", user.id),
+            ])
+
+        return expression.OR(domains) if domains else [("id", "=", 0)]
+
+    def _portal_can_view(self, user=None):
+        self.ensure_one()
+        user = user or self.env.user
+        domain = self._portal_visibility_domain(user)
+        if not domain:
+            return True
+        return bool(self.sudo().search_count(expression.AND([[('id', '=', self.id)], domain])))
+
+    def _portal_can_approve(self, user=None):
+        self.ensure_one()
+        user = user or self.env.user
+
+        if self.state == "manager":
+            return bool(
+                user.has_group("employee_portal_suite.group_employee_portal_manager")
+                and self.manager_id.user_id == user
+            )
+        stage_groups = {
+            "hr": "employee_portal_suite.group_employee_portal_hr",
+            "finance": "employee_portal_suite.group_employee_portal_finance",
+            "ceo": "employee_portal_suite.group_employee_portal_ceo",
+        }
+        group = stage_groups.get(self.state)
+        return bool(group and user.has_group(group))
+
     def _check_approval(self, required_state, required_group):
         self.ensure_one()
 
         if self.state != required_state:
             raise UserError(_("This action is not allowed in the current state."))
+
+        if required_state == "manager":
+            if not (
+                self.env.user.has_group(required_group)
+                and self.manager_id.user_id == self.env.user
+            ):
+                raise UserError(_("Only this employee's assigned manager can approve this request."))
+            return
 
         if not self.env.user.has_group(required_group):
             raise UserError(_("You are not allowed to approve at this stage."))
@@ -317,6 +383,8 @@ class EmployeeRequest(models.Model):
 
             if not self.env.user.has_group(required_group):
                 raise UserError(_("You are not allowed to reject this request."))
+            if rec.state == "manager" and rec.manager_id.user_id != self.env.user:
+                raise UserError(_("Only this employee's assigned manager can reject this request."))
 
             rec.state_before_reject = rec.state
             rec.rejected_by = self.env.user.id
