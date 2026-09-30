@@ -436,6 +436,19 @@ class EmployeeRequest(models.Model):
             },
         }
 
+    def action_open_time_off(self):
+        self.ensure_one()
+        if not self.time_off_id:
+            raise UserError(_("No Time Off record has been created for this request yet."))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Time Off'),
+            'res_model': 'hr.leave',
+            'view_mode': 'form',
+            'res_id': self.time_off_id.id,
+            'target': 'current',
+        }
+
     # ---------------------------------------------------------
     # REJECTION ACTION — FIXED
     # ---------------------------------------------------------
