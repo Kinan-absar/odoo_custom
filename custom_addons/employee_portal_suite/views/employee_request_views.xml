@@ -56,19 +56,6 @@
                                 string="Print PDF"/>
                 </header>
                 <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button name="action_open_time_off"
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-calendar"
-                                groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"
-                                invisible="not time_off_id">
-                            <div class="o_stat_info">
-                                <span class="o_stat_text">Time Off</span>
-                            </div>
-                        </button>
-                    </div>
-
                     <!-- TITLE + STATUS -->
                     <div class="oe_title">
                         <h1><field name="name"/></h1>
@@ -110,6 +97,11 @@
                                             <field name="leave_to" class="oe_inline"/>
                                         </div>
                                         <field name="time_off_type_id"
+                                               groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
+                                        <field name="time_off_id"
+                                               string="Time Off"
+                                               readonly="1"
+                                               invisible="not time_off_id"
                                                groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
                                     </group>
                                 </group>
