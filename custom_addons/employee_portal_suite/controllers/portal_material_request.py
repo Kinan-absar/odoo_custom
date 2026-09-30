@@ -50,6 +50,11 @@ def _mr_status_badge(rec):
         clar_label = stage_labels.get(rec.clarification_stage, rec.clarification_stage)
         return Markup('<span class="badge bg-info text-dark">🚩 Clarification — %s</span>') % escape(clar_label)
 
+    if state == 'returned':
+        line = rec.approval_line_ids.filtered(lambda l: l.state == 'returned')[:1]
+        label = line.name if line else 'Workflow'
+        return Markup('<span class="badge bg-info text-dark">Returned for Correction — %s</span>') % escape(label)
+
     if state == 'workflow':
         step = rec.current_approval_line_id
         label = step.name if step else 'Workflow Approval'
@@ -477,6 +482,27 @@ class EmployeePortalMaterialRequests(http.Controller):
             rec.ceo_comment = comment
             rec.action_ceo()
 
+        return request.redirect("/my/employee/material/approvals")
+
+    # ---------------------------------------------------------
+    # RETURN FOR CORRECTION (configurable workflow only)
+    # ---------------------------------------------------------
+    @http.route("/my/employee/material/requests/return", type="http", auth="user", website=True, csrf=True)
+    def material_return_for_correction(self, **post):
+        user = request.env.user
+        rec = request.env["material.request"].sudo().browse(int(post.get("req_id")))
+        reason = (post.get("reason") or "").strip()
+
+        if not rec.exists():
+            return request.redirect("/my")
+
+        if rec.state != 'workflow' or not rec._portal_can_approve(user):
+            return request.redirect(f"/my/employee/material/approvals/{rec.id}")
+
+        if not reason:
+            return request.redirect(f"/my/employee/material/approvals/{rec.id}")
+
+        rec.with_context(workflow_actor_user_id=user.id)._workflow_return_confirm(reason)
         return request.redirect("/my/employee/material/approvals")
 
     # ---------------------------------------------------------

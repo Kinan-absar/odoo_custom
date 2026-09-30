@@ -25,6 +25,12 @@ def _er_status_badge(rec):
             lbl = stage_labels.get(rec.state_before_reject, "Unknown Stage")
 
         return Markup('<span class="badge bg-danger">Rejected — %s Stage</span>') % escape(lbl)
+    # RETURNED FOR CORRECTION
+    if state == 'returned':
+        line = rec.approval_line_ids.filtered(lambda l: l.state == 'returned')[:1]
+        label = line.name if line else 'Workflow'
+        return Markup('<span class="badge bg-info text-dark">Returned for Correction — %s</span>') % escape(label)
+
     # CONFIGURABLE WORKFLOW
     if state == 'workflow':
         step = rec.current_approval_line_id
@@ -344,6 +350,28 @@ class EmployeePortalRequests(http.Controller):
             rec.action_ceo_approve()
 
 
+        return request.redirect('/my/employee/approvals')
+
+    # ---------------------------------------------------------
+    # PORTAL RETURN FOR CORRECTION (configurable workflow only)
+    # ---------------------------------------------------------
+    @http.route('/my/employee/requests/return', type='http', auth='user', website=True, csrf=True)
+    def portal_return_for_correction(self, **post):
+        req_id = int(post.get('req_id'))
+        reason = (post.get('reason') or '').strip()
+        user = request.env.user
+
+        rec = request.env['employee.request'].sudo().browse(req_id)
+        if not rec.exists():
+            return request.redirect('/my/employee/approvals')
+
+        if rec.state != 'workflow' or not rec._portal_can_approve(user):
+            return request.redirect(f'/my/employee/approvals/{rec.id}')
+
+        if not reason:
+            return request.redirect(f'/my/employee/approvals/{rec.id}')
+
+        rec.with_context(workflow_actor_user_id=user.id)._workflow_return_confirm(reason)
         return request.redirect('/my/employee/approvals')
 
 
