@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.osv import expression
 import base64
 
@@ -82,11 +82,21 @@ class EmployeeRequest(models.Model):
     # ---------------------------------------------------------
     # CONFIGURABLE WORKFLOW
     # ---------------------------------------------------------
+    available_project_ids = fields.Many2many(
+        'project.project',
+        string='Available Projects',
+        compute='_compute_available_projects',
+    )
+    project_selection_locked = fields.Boolean(
+        string='Project Selection Locked',
+        compute='_compute_available_projects',
+    )
     project_id = fields.Many2one(
         'project.project',
         string='Project',
         tracking=True,
-        help='Optional project used to resolve a project-specific approval workflow.'
+        domain="[('id', 'in', available_project_ids)]",
+        help='Project assigned to the employee and used to resolve the project-specific approval workflow.'
     )
     workflow_id = fields.Many2one(
         'employee.portal.workflow', string='Approval Workflow', readonly=True, copy=False, tracking=True
@@ -152,6 +162,44 @@ class EmployeeRequest(models.Model):
     def _compute_manager(self):
         for rec in self:
             rec.manager_id = rec.employee_id.parent_id
+
+    @api.depends(
+        'employee_id',
+        'employee_id.work_location_ids',
+        'employee_id.work_location_ids.project_line_ids.project_id',
+        'employee_id.work_location_id',
+        'employee_id.work_location_id.project_line_ids.project_id',
+    )
+    def _compute_available_projects(self):
+        for rec in self:
+            projects = (
+                rec.employee_id._get_material_request_projects()
+                if rec.employee_id
+                else self.env['project.project']
+            )
+            rec.available_project_ids = projects
+            rec.project_selection_locked = len(projects) <= 1
+
+    @api.onchange('employee_id')
+    def _onchange_employee_request_projects(self):
+        for rec in self:
+            employee = rec.employee_id
+            projects = employee._get_material_request_projects() if employee else self.env['project.project']
+            if len(projects) == 1:
+                rec.project_id = projects.id
+            elif rec.project_id not in projects:
+                rec.project_id = False
+
+    @api.constrains('employee_id', 'project_id')
+    def _check_employee_request_project(self):
+        for rec in self:
+            if not rec.employee_id or not rec.project_id:
+                continue
+            allowed = rec.employee_id._get_material_request_projects()
+            if rec.project_id not in allowed:
+                raise ValidationError(_(
+                    "The selected project is not configured in any of this employee's work locations."
+                ))
    
    #employee autofilled
     @api.model
@@ -162,6 +210,10 @@ class EmployeeRequest(models.Model):
             if not employee:
                 raise UserError(_("Your user is not linked to an employee."))
             res['employee_id'] = employee.id
+            if 'project_id' in fields_list:
+                projects = employee._get_material_request_projects()
+                if len(projects) == 1:
+                    res['project_id'] = projects.id
         return res
     # ---------------------------------------------------------
     # SEQUENCE ASSIGN
@@ -171,6 +223,11 @@ class EmployeeRequest(models.Model):
         for vals in vals_list:
             if vals.get('name', _('New')) == _('New'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('employee.request.seq') or _('New')
+            employee = self.env['hr.employee'].browse(vals.get('employee_id')) if vals.get('employee_id') else self.env['hr.employee']
+            if employee and not vals.get('project_id'):
+                projects = employee._get_material_request_projects()
+                if len(projects) == 1:
+                    vals['project_id'] = projects.id
         return super().create(vals_list)
 
     # ---------------------------------------------------------

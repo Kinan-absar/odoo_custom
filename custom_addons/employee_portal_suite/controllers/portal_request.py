@@ -152,9 +152,13 @@ class EmployeePortalRequests(http.Controller):
 
         projects = emp.sudo()._get_material_request_projects()
         project_id = int(post.get('project_id') or 0)
-        selected_project = request.env['project.project'].sudo().browse(project_id) if project_id else request.env['project.project']
-        if project_id and (not selected_project.exists() or selected_project not in projects):
-            return request.redirect('/my/employee/requests/new')
+        selected_project = request.env['project.project'].sudo().browse(project_id)
+        if not selected_project.exists() or selected_project not in projects:
+            return request.render('employee_portal_suite.employee_request_new_form', {
+                'projects': projects,
+                'single_project': projects[:1] if len(projects) == 1 else False,
+                'error_message': _('Please select one of the projects assigned to your work location.'),
+            })
 
         # Build vals
         vals = {
@@ -162,7 +166,7 @@ class EmployeePortalRequests(http.Controller):
             'request_date': post.get('request_date'),
             'request_type': req_type,
             'description': post.get('description'),
-            'project_id': selected_project.id if selected_project else False,
+            'project_id': selected_project.id,
         }
 
         # Leave fields

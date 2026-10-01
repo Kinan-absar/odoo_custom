@@ -17,21 +17,35 @@
     <form id="form-en" method="post" action="/my/employee/requests/create" style="display:block;">
         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
+        <t t-if="error_message">
+            <div class="alert alert-danger" role="alert"><t t-out="error_message"/></div>
+        </t>
+
         <!-- Request Date -->
         <div class="form-group mt-3">
             <label>Request Date</label>
             <input type="date" name="request_date" id="req_date_en" class="form-control" readonly="readonly"/>
         </div>
 
-        <!-- Optional Project (used for project-specific workflow routing) -->
-        <div class="form-group mt-3" t-if="projects">
-            <label>Project</label>
-            <select name="project_id" class="form-control">
-                <option value="">Company / Default Workflow</option>
-                <t t-foreach="projects" t-as="project">
-                    <option t-att-value="project.id" t-att-selected="single_project and project.id == single_project.id"><t t-esc="project.name"/></option>
-                </t>
-            </select>
+        <!-- Project: only projects assigned to this employee -->
+        <div class="form-group mt-3">
+            <label>Project <span class="text-danger">*</span></label>
+            <t t-if="single_project">
+                <input type="hidden" name="project_id" t-att-value="single_project.id"/>
+                <input type="text" class="form-control" t-att-value="single_project.display_name" readonly="readonly"/>
+                <small class="text-muted">This is the only project assigned to you.</small>
+            </t>
+            <t t-elif="projects">
+                <select name="project_id" class="form-select" required="1">
+                    <option value="">Select project…</option>
+                    <t t-foreach="projects" t-as="project">
+                        <option t-att-value="project.id"><t t-out="project.display_name"/></option>
+                    </t>
+                </select>
+            </t>
+            <t t-else="">
+                <div class="alert alert-warning mb-0">No project is assigned to your work location. Please contact HR.</div>
+            </t>
         </div>
 
         <!-- Request Type -->
@@ -73,12 +87,16 @@
             <textarea name="description" class="form-control" rows="4" required="1"></textarea>
         </div>
     
-        <button type="submit" class="btn btn-primary mt-4">Submit</button>
+        <button type="submit" class="btn btn-primary mt-4" t-att-disabled="not projects">Submit</button>
     </form>
 
     <!-- ===================== ARABIC FORM ===================== -->
     <form id="form-ar" method="post" action="/my/employee/requests/create" style="display:none; direction:rtl; text-align:right;">
         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+        <t t-if="error_message">
+            <div class="alert alert-danger" role="alert"><t t-out="error_message"/></div>
+        </t>
 
         <!-- Request Date -->
         <div class="form-group mt-3">
@@ -86,15 +104,25 @@
             <input type="date" name="request_date" id="req_date_ar" class="form-control" readonly="readonly"/>
         </div>
 
-        <!-- Project -->
-        <div class="form-group mt-3" t-if="projects">
-            <label>المشروع</label>
-            <select name="project_id" class="form-control">
-                <option value="">مسار الموافقة الافتراضي للشركة</option>
-                <t t-foreach="projects" t-as="project">
-                    <option t-att-value="project.id" t-att-selected="single_project and project.id == single_project.id"><t t-esc="project.name"/></option>
-                </t>
-            </select>
+        <!-- Project: only projects assigned to this employee -->
+        <div class="form-group mt-3">
+            <label>المشروع <span class="text-danger">*</span></label>
+            <t t-if="single_project">
+                <input type="hidden" name="project_id" t-att-value="single_project.id"/>
+                <input type="text" class="form-control" t-att-value="single_project.display_name" readonly="readonly"/>
+                <small class="text-muted">هذا هو المشروع الوحيد المعيّن لك.</small>
+            </t>
+            <t t-elif="projects">
+                <select name="project_id" class="form-select" required="1">
+                    <option value="">اختر المشروع…</option>
+                    <t t-foreach="projects" t-as="project">
+                        <option t-att-value="project.id"><t t-out="project.display_name"/></option>
+                    </t>
+                </select>
+            </t>
+            <t t-else="">
+                <div class="alert alert-warning mb-0">لا يوجد مشروع معيّن لموقع عملك. يرجى التواصل مع الموارد البشرية.</div>
+            </t>
         </div>
 
         <!-- Request Type -->
@@ -135,7 +163,7 @@
             <textarea name="description" class="form-control" rows="4" required="1"></textarea>
         </div>
 
-        <button type="submit" class="btn btn-primary mt-4">إرسال</button>
+        <button type="submit" class="btn btn-primary mt-4" t-att-disabled="not projects">إرسال</button>
     </form>
 
 </div>

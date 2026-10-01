@@ -92,7 +92,12 @@
                                         groups="employee_portal_suite.group_employee_portal_admin"/>
 
                                     <field name="manager_id" readonly="1"/>
-                                    <field name="project_id" options="{'no_create': True}"/>
+                                    <field name="available_project_ids" invisible="1"/>
+                                    <field name="project_selection_locked" invisible="1"/>
+                                    <field name="project_id"
+                                           options="{'no_create': True}"
+                                           readonly="project_selection_locked"
+                                           required="1"/>
                                     <field name="request_type"/>
                                     <field name="workflow_id" readonly="1" invisible="not workflow_id"/>
                                     <field name="current_approval_line_id" readonly="1" invisible="state != 'workflow'"/>
