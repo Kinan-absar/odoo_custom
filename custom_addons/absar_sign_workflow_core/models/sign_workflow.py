@@ -76,6 +76,58 @@ class AbsarSignWorkflow(models.Model):
             )
         return True
 
+    @api.model
+    def _relocate_menu_into_sign_configuration(self):
+        """Keep Signing Workflows inside Odoo Sign > Configuration.
+
+        We resolve the Sign configuration menu dynamically instead of depending
+        on an Enterprise XML ID that can differ between minor builds.  The
+        temporary ABSAR root remains defined only as an upgrade-safe fallback
+        and is hidden once relocation succeeds.
+        """
+        Menu = self.env["ir.ui.menu"].sudo()
+        Data = self.env["ir.model.data"].sudo()
+        workflow_menu = self.env.ref(
+            "absar_sign_workflow_core.menu_absar_signing_workflows",
+            raise_if_not_found=False,
+        )
+        absar_root = self.env.ref(
+            "absar_sign_workflow_core.menu_absar_document_signing_root",
+            raise_if_not_found=False,
+        )
+        if not workflow_menu:
+            return False
+
+        configuration = Menu.browse()
+        candidates = Data.search([
+            ("module", "=", "sign"),
+            ("model", "=", "ir.ui.menu"),
+        ])
+        menus = Menu.browse(candidates.mapped("res_id")).exists()
+        configuration = menus.filtered(lambda m: (m.name or "").strip().lower() == "configuration")[:1]
+
+        if not configuration:
+            sign_roots = menus.filtered(
+                lambda m: not m.parent_id and (m.name or "").strip().lower() == "sign"
+            )
+            if not sign_roots:
+                sign_roots = Menu.search([
+                    ("parent_id", "=", False),
+                    ("name", "=", "Sign"),
+                ], limit=1)
+            if sign_roots:
+                configuration = Menu.search([
+                    ("parent_id", "=", sign_roots[:1].id),
+                    ("name", "=", "Configuration"),
+                ], limit=1)
+
+        if configuration:
+            workflow_menu.write({"parent_id": configuration.id, "sequence": 90})
+            if absar_root and "active" in absar_root._fields:
+                absar_root.write({"active": False})
+            return True
+        return False
+
     def action_validate_workflow(self):
         self._validate_configuration()
         return {

@@ -101,6 +101,70 @@ class PurchaseOrder(models.Model):
         return self.env["absar.sign.workflow.service"].open_status(self)
 
     @api.model
+    def _absar_migrate_legacy_signatures(self):
+        """Backfill POs signed before the configurable signing engine.
+
+        Legacy versions already stored sign_template_id/signature_state but did
+        not have sign_request_id or the new status/count fields.  Preserve the
+        historical result and link the newest request where available.
+        """
+        service = self.env["absar.sign.workflow.service"].sudo()
+        Request = self.env["sign.request"].sudo()
+        Item = self.env["sign.request.item"].sudo()
+        pos = self.sudo().search([("sign_template_id", "!=", False)])
+
+        def item_completed(item):
+            if "state" in item._fields and item.state in ("completed", "signed"):
+                return True
+            return any(
+                field_name in item._fields and bool(item[field_name])
+                for field_name in ("is_signed", "signed", "completed")
+            )
+
+        for po in pos:
+            request = Request.search(
+                [("template_id", "=", po.sign_template_id.id)],
+                order="id desc",
+                limit=1,
+            )
+            vals = {}
+            if request and not po.sign_request_id:
+                vals["sign_request_id"] = request.id
+
+            # Historical signed state is authoritative.  Also detect a fully
+            # signed Odoo Sign request in case an earlier upgrade left the PO
+            # state/status text at its new default.
+            request_signed = bool(request and request.state == "signed")
+            if po.signature_state == "signed" or request_signed:
+                items = Item.search([("sign_request_id", "=", request.id)]) if request else Item.browse()
+                total = len(items)
+                completed = len(items.filtered(item_completed))
+                if po.signing_workflow_id:
+                    total = max(total, len(po.signing_workflow_id.step_ids))
+                vals.update({
+                    "signature_state": "signed",
+                    "signature_status_text": _("Fully Signed"),
+                    "signature_completed_count": max(completed, total),
+                    "signature_total_count": total,
+                })
+            elif request:
+                # For old pending requests, let the current engine calculate the
+                # live progress and waiting signer using the actual Sign request.
+                if vals:
+                    po.with_context(skip_po_sign_reset=True).write(vals)
+                service.sync_record(po, "skip_po_sign_reset")
+                continue
+            elif po.signature_state in ("director_pending", "ceo_pending"):
+                vals.update({
+                    "signature_state": "pending",
+                    "signature_status_text": _("Template Ready · Awaiting Send"),
+                })
+
+            if vals:
+                po.with_context(skip_po_sign_reset=True).write(vals)
+        return True
+
+    @api.model
     def _cron_sync_sign_status(self):
         records = self.search([
             ("sign_template_id", "!=", False),

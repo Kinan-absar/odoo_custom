@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Upgrade-safe backfill for POs signed with the legacy PO signing workflow. -->
+    <function model="purchase.order" name="_absar_migrate_legacy_signatures"/>
+</odoo>

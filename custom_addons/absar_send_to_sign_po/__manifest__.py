@@ -1,6 +1,6 @@
 {
     "name": "Send to Sign for Purchase Orders",
-    "version": "18.0.1.1.3",
+    "version": "18.0.1.1.4",
     "summary": "Configurable digital signing workflow for Purchase Orders using Odoo Sign",
     "author": "Kinan",
     "website": "https://absar-alomran.com",
@@ -11,7 +11,8 @@
         "data/cron.xml",
         "views/purchase_order_view.xml",
         "views/report_purchaseorder_inherit.xml",
-        "views/legacy_cleanup.xml"
+        "views/legacy_cleanup.xml",
+        "data/legacy_signature_migration.xml"
     ],
     "installable": True,
     "application": False,
