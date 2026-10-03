@@ -321,6 +321,8 @@ class EmployeePortalNativeDiscussController(http.Controller):
             'employee_portal_read_only': bool(
                 channel.channel_type == 'channel' and channel.employee_portal_access == 'read_only'
             ),
+            'employee_portal_channel_type': channel.channel_type,
+            'employee_portal_can_leave_group': bool(channel.channel_type == 'group'),
         })
 
     @http.route('/my/employee/discuss', type='http', auth='user', website=True, methods=['GET'])
@@ -667,6 +669,86 @@ self.addEventListener("notificationclick", (event) => {
             'last_interest_dt': fields.Datetime.now(),
         })
         return {'ok': True, 'channel_id': channel.id}
+
+    def _leave_portal_group(self, channel, user, *, post_notice=True):
+        """Remove only the current portal employee from a group conversation.
+
+        Channels are deliberately excluded.  The group and all of its messages remain
+        available to the other members.  Any legacy portal.chat.thread participant link
+        is also removed so the compatibility bridge cannot silently add the employee back.
+        """
+        channel = channel.sudo().exists()
+        if not channel or channel.channel_type != 'group' or not self._is_allowed_channel(channel, user):
+            return False
+        member = channel.channel_member_ids.filtered(
+            lambda m: m.partner_id.id == user.partner_id.id
+        )[:1]
+        if not member:
+            return False
+        if post_notice:
+            try:
+                channel.sudo().message_post(
+                    body='%s left the group.' % (user.name or 'Employee'),
+                    message_type='notification',
+                    subtype_xmlid='mail.mt_note',
+                )
+            except Exception:
+                pass
+        # Stop old compatibility data from recreating this membership later.
+        legacy_threads = request.env['portal.chat.thread'].sudo().search([
+            ('discuss_channel_id', '=', channel.id),
+            ('participant_ids', 'in', [user.id]),
+        ])
+        for thread in legacy_threads:
+            try:
+                thread.sudo().write({'participant_ids': [Command.unlink(user.id)]})
+            except Exception:
+                continue
+        member.sudo().unlink()
+        channel.sudo().write({'last_interest_dt': fields.Datetime.now()})
+        return True
+
+    @http.route('/employee_portal/discuss/leave_group', type='json', auth='user', csrf=False)
+    def employee_discuss_leave_group(self, channel_id=None):
+        user = self._employee_user()
+        if not user:
+            return {'ok': False, 'error': 'Employee access required.'}
+        try:
+            channel_id = int(channel_id or 0)
+        except (TypeError, ValueError):
+            channel_id = 0
+        channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
+        if not channel or channel.channel_type == 'channel':
+            return {'ok': False, 'error': 'Channels cannot be exited from the portal.'}
+        if channel.channel_type != 'group':
+            return {'ok': False, 'error': 'Only group conversations can be exited.'}
+        if not self._leave_portal_group(channel, user, post_notice=True):
+            return {'ok': False, 'error': 'Unable to exit this group.'}
+        return {'ok': True, 'redirect': '/my/employee/discuss'}
+
+    @http.route('/employee_portal/discuss/delete_exit_group', type='json', auth='user', csrf=False)
+    def employee_discuss_delete_exit_group(self, channel_id=None):
+        """WhatsApp-style Delete & Exit for the current portal employee only.
+
+        It removes the employee from the group and therefore removes the conversation
+        from their Chats list.  It never destroys the group for the remaining members;
+        company administrators can globally delete a group from the backend.
+        """
+        user = self._employee_user()
+        if not user:
+            return {'ok': False, 'error': 'Employee access required.'}
+        try:
+            channel_id = int(channel_id or 0)
+        except (TypeError, ValueError):
+            channel_id = 0
+        channel = request.env['discuss.channel'].sudo().browse(channel_id).exists()
+        if not channel or channel.channel_type == 'channel':
+            return {'ok': False, 'error': 'Channels cannot be deleted or exited from the portal.'}
+        if channel.channel_type != 'group':
+            return {'ok': False, 'error': 'Only group conversations support Delete & Exit.'}
+        if not self._leave_portal_group(channel, user, post_notice=False):
+            return {'ok': False, 'error': 'Unable to delete and exit this group.'}
+        return {'ok': True, 'redirect': '/my/employee/discuss'}
 
     @http.route('/employee_portal/discuss/mark_read', type='json', auth='user', csrf=False)
     def employee_discuss_mark_read(self, channel_id=None, last_message_id=None):

@@ -21,6 +21,27 @@ function isPortalReadOnlyChannel() {
     return meta("employee-portal-channel-readonly") === "1";
 }
 
+function isPortalGroupConversation() {
+    return meta("employee-portal-channel-type") === "group" && meta("employee-portal-can-leave-group") === "1";
+}
+
+function currentPortalChannelId() {
+    const match = window.location.pathname.match(/\/my\/employee\/discuss\/channel\/(\d+)/);
+    return match ? Number(match[1]) : 0;
+}
+
+async function employeePortalJsonRpc(route, params = {}) {
+    const response = await fetch(route, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", method: "call", params, id: Date.now() }),
+    });
+    const payload = await response.json();
+    if (payload.error) throw new Error(payload.error.data?.message || payload.error.message || "RPC error");
+    return payload.result || {};
+}
+
 function removeEmbeddedCloseButton(header) {
     if (!isPortalConversationPage()) return;
     const controls = Array.from(header.querySelectorAll("button, a"));
@@ -40,7 +61,7 @@ function tidyEmbeddedMobileHeader(header) {
     if (!isPortalConversationPage() || !window.matchMedia("(max-width: 767.98px)").matches || !header) return;
     const controls = Array.from(header.querySelectorAll("button, a"));
     for (const el of controls) {
-        if (el.dataset.epChatsBack) {
+        if (el.dataset.epChatsBack || el.dataset.epGroupActions || el.closest?.("[data-ep-group-actions]")) {
             el.style.removeProperty("display");
             continue;
         }
@@ -86,12 +107,59 @@ function goBackToChats() {
     window.location.assign(backUrl);
 }
 
+function ensurePortalGroupActions(header) {
+    if (!isPortalGroupConversation() || !header || header.querySelector("[data-ep-group-actions]")) return;
+    const channelId = currentPortalChannelId();
+    if (!channelId) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "ep-group-actions-wrap";
+    wrap.dataset.epGroupActions = "1";
+    wrap.innerHTML = `
+        <button type="button" class="ep-group-actions-button" data-ep-group-actions="1" title="Group options" aria-label="Group options">
+            <i class="fa fa-ellipsis-v"></i>
+        </button>
+        <div class="ep-group-actions-menu" hidden>
+            <button type="button" data-ep-leave-group="1"><i class="fa fa-sign-out"></i><span>Exit group</span></button>
+            <button type="button" class="ep-group-delete-exit" data-ep-delete-exit-group="1"><i class="fa fa-trash"></i><span>Delete &amp; Exit</span></button>
+        </div>`;
+    const toggle = wrap.querySelector(".ep-group-actions-button");
+    const menu = wrap.querySelector(".ep-group-actions-menu");
+    toggle.addEventListener("click", (ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        menu.hidden = !menu.hidden;
+    });
+    const close = () => { menu.hidden = true; };
+    document.addEventListener("click", close, { once: true });
+
+    wrap.querySelector("[data-ep-leave-group]").addEventListener("click", async (ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        if (!window.confirm("Exit this group? The group and its messages will remain for the other members.")) return;
+        try {
+            const result = await employeePortalJsonRpc("/employee_portal/discuss/leave_group", { channel_id: channelId });
+            if (!result.ok) throw new Error(result.error || "Unable to exit group.");
+            goBackToChats();
+        } catch (error) { window.alert(error.message || "Unable to exit group."); }
+    });
+    wrap.querySelector("[data-ep-delete-exit-group]").addEventListener("click", async (ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        if (!window.confirm("Delete this group from your Chats and exit it? This does NOT delete the group for the other members.")) return;
+        try {
+            const result = await employeePortalJsonRpc("/employee_portal/discuss/delete_exit_group", { channel_id: channelId });
+            if (!result.ok) throw new Error(result.error || "Unable to delete and exit group.");
+            goBackToChats();
+        } catch (error) { window.alert(error.message || "Unable to delete and exit group."); }
+    });
+    header.appendChild(wrap);
+}
+
 function ensureEmbeddedHeaderActions() {
     if (!meta("employee-portal-discuss")) return;
     const header = document.querySelector(".o-mail-Discuss-header");
     if (!header) return;
 
     removeEmbeddedCloseButton(header);
+    ensurePortalGroupActions(header);
     if (isPortalReadOnlyChannel()) {
         for (const el of Array.from(header.querySelectorAll("button, a"))) {
             if (!el.dataset.epChatsBack) {

@@ -663,3 +663,20 @@ body.ep-native-discuss-readonly .o-mail-Thread {
     display: none !important;
   }
 }
+
+
+/* Employee Portal group actions: portal users can leave their own group membership.
+   Channels intentionally never receive this control. */
+.ep-group-actions-wrap { position: relative; display: inline-flex; align-items: center; margin-left: 4px; z-index: 30; }
+.ep-group-actions-button { width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent; color: #475569; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.ep-group-actions-button:hover { background: #f1f5f9; color: #0f172a; }
+.ep-group-actions-menu { position: absolute; top: calc(100% + 6px); right: 0; min-width: 180px; padding: 6px; background: #fff; border: 1px solid #e2e8f0; border-radius: 11px; box-shadow: 0 14px 35px rgba(15, 23, 42, .16); }
+.ep-group-actions-menu[hidden] { display: none !important; }
+.ep-group-actions-menu button { width: 100%; border: 0; background: transparent; display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 8px; text-align: left; color: #334155; font-size: 13px; cursor: pointer; }
+.ep-group-actions-menu button:hover { background: #f8fafc; }
+.ep-group-actions-menu .ep-group-delete-exit { color: #b91c1c; }
+@media (max-width: 767.98px) {
+    .ep-group-actions-wrap { margin-left: 0; }
+    .ep-group-actions-menu { position: fixed; top: auto; right: 12px; left: 12px; bottom: max(12px, env(safe-area-inset-bottom)); min-width: 0; border-radius: 14px; padding: 8px; }
+    .ep-group-actions-menu button { padding: 13px 12px; font-size: 15px; }
+}
