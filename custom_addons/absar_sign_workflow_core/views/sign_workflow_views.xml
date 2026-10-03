@@ -40,7 +40,7 @@
                     </group>
                     <separator string="Signer Chain"/>
                     <div class="text-muted mb-3">
-                        Signers are followed in sequence. The role label is shown on the source document status. Configure the same Odoo Sign Role when placing signature fields for precise tracking.
+                        Signers are followed in sequence. Odoo Sign roles and movable signature placeholders are prepared automatically from these steps, and the Send wizard is prefilled with the configured users and order. After generating a document, move the signature boxes to the correct places and press Send.
                     </div>
                     <field name="step_ids" nolabel="1">
                         <list editable="bottom">

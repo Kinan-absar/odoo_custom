@@ -1,6 +1,6 @@
 import base64
 
-from odoo import api, fields, models, _
+from odoo import Command, api, fields, models, _
 from odoo.exceptions import ValidationError, UserError
 
 
@@ -116,8 +116,20 @@ class AbsarSignWorkflowStep(models.Model):
     sign_role_id = fields.Many2one(
         "sign.item.role",
         string="Odoo Sign Role",
-        help="Optional but recommended. When you place signature fields in Odoo Sign, use this same role so signer tracking can match the configured step precisely.",
+        help="Automatically created/reused from the workflow role name. You can still choose a different Odoo Sign role manually when needed.",
     )
+
+    def _ensure_sign_role(self):
+        """Return a concrete Odoo Sign role for this business workflow step."""
+        self.ensure_one()
+        if self.sign_role_id:
+            return self.sign_role_id
+        Role = self.env["sign.item.role"].sudo()
+        role = Role.search([("name", "=", self.name)], limit=1)
+        if not role:
+            role = Role.create({"name": self.name})
+        self.sudo().sign_role_id = role.id
+        return role
 
 
 class AbsarSignWorkflowService(models.AbstractModel):
@@ -157,6 +169,43 @@ class AbsarSignWorkflowService(models.AbstractModel):
         return workflow
 
     @api.model
+    def _prepare_template_signature_items(self, template, workflow):
+        """Create movable signature placeholders and bind them to configured roles.
+
+        Positions are intentionally just a staging area on page 1. The document
+        owner only needs to drag the already-labelled boxes to their final places
+        before pressing Odoo Sign's Send button.
+        """
+        signature_type = self.env.ref("sign.sign_item_type_signature", raise_if_not_found=False)
+        if not signature_type:
+            signature_type = self.env["sign.item.type"].sudo().search([("name", "ilike", "signature")], limit=1)
+        if not signature_type:
+            raise UserError(_("Odoo Sign signature field type could not be found."))
+
+        SignItem = self.env["sign.item"].sudo()
+        for index, step in enumerate(workflow.step_ids.sorted("sequence")):
+            role = step._ensure_sign_role()
+            # Stagger placeholders in a staging grid so they are easy to grab/move.
+            row = index % 8
+            col = min(index // 8, 2)
+            vals = {
+                "template_id": template.id,
+                "type_id": signature_type.id,
+                "required": True,
+                "responsible_id": role.id,
+                "page": 1,
+                "posX": 0.04 + (0.31 * col),
+                "posY": 0.04 + (0.105 * row),
+                "width": 0.25,
+                "height": 0.065,
+                "name": _("%(seq)s. %(role)s - Signature") % {
+                    "seq": index + 1,
+                    "role": step.name,
+                },
+            }
+            SignItem.create(vals)
+
+    @api.model
     def create_template(self, record, report_xmlid, document_label, filename_parts):
         record.ensure_one()
         workflow = self.get_workflow(record, required=True)
@@ -184,6 +233,7 @@ class AbsarSignWorkflowService(models.AbstractModel):
             "absar_source_model": record._name,
             "absar_source_id": record.id,
         })
+        self._prepare_template_signature_items(template, workflow)
         steps = workflow.step_ids.sorted("sequence")
         first = steps[0]
         status = _("0/%(total)s Signed · Waiting: %(role)s") % {
@@ -226,7 +276,18 @@ class AbsarSignWorkflowService(models.AbstractModel):
             return
 
         items = self.env["sign.request.item"].search([("sign_request_id", "=", request.id)])
-        completed_items = items.filtered(lambda item: item.state == "completed")
+
+        def _is_completed(item):
+            # Odoo 18 normally uses `completed`; keep `signed` as a safe
+            # compatibility value for databases/customizations that expose it.
+            if "state" in item._fields and item.state in ("completed", "signed"):
+                return True
+            for field_name in ("is_signed", "signed", "completed"):
+                if field_name in item._fields and bool(item[field_name]):
+                    return True
+            return False
+
+        completed_items = items.filtered(_is_completed)
 
         if not workflow:
             record.with_context(**{skip_context_key: True}).write({
@@ -237,30 +298,15 @@ class AbsarSignWorkflowService(models.AbstractModel):
             return
 
         steps = workflow.step_ids.sorted("sequence")
-        completed_count = 0
-        partner_field = "partner_id" if "partner_id" in items._fields else False
-        role_field = "role_id" if "role_id" in items._fields else False
 
-        for step in steps:
-            matched = False
-            if partner_field:
-                step_items = completed_items.filtered(
-                    lambda item: item.partner_id.id == step.signer_partner_id.id
-                )
-                if step.sign_role_id and role_field:
-                    step_items = step_items.filtered(
-                        lambda item: item.role_id.id == step.sign_role_id.id
-                    )
-                matched = bool(step_items)
-            if matched:
-                completed_count += 1
-            else:
-                break
-
-        # Backward-compatible fallback for older requests where signer metadata
-        # cannot be matched to configured users/roles.
-        if completed_count == 0 and completed_items:
-            completed_count = min(len(completed_items), len(steps))
+        # A sign.request.item represents a signer, not an individual signature
+        # box. Counting completed request items is therefore the reliable source
+        # of progress. The old implementation required an exact partner+role
+        # match and could get stuck at 1/N when Odoo stored the next signer with
+        # slightly different metadata. Odoo's send wizard already enforces the
+        # configured signer ordering (mail_sent_order when available), so the
+        # count maps directly onto our ordered workflow steps.
+        completed_count = min(len(completed_items), len(steps))
 
         if completed_count >= len(steps):
             status = _("All configured signers completed · Awaiting Sign finalization")
@@ -281,6 +327,57 @@ class AbsarSignWorkflowService(models.AbstractModel):
         })
 
 
+class SignSendRequest(models.TransientModel):
+    _inherit = "sign.send.request"
+
+    @api.model
+    def _absar_signer_commands(self, template):
+        workflow = template.absar_workflow_id if template else False
+        if not workflow:
+            return []
+        workflow._validate_configuration()
+        Signer = self.env["sign.send.request.signer"]
+        commands = [Command.clear()]
+        for order, step in enumerate(workflow.step_ids.sorted("sequence"), start=1):
+            role = step._ensure_sign_role()
+            vals = {
+                "role_id": role.id,
+                "partner_id": step.signer_partner_id.id,
+            }
+            # Odoo 18 exposes this on the send wizard when signing order is used.
+            # Checking dynamically keeps this bridge safe if a minor edition has
+            # a different transient schema.
+            if "mail_sent_order" in Signer._fields:
+                vals["mail_sent_order"] = order
+            commands.append(Command.create(vals))
+        return commands
+
+    @api.model
+    def default_get(self, fields_list):
+        vals = super().default_get(fields_list)
+        template_id = vals.get("template_id") or self.env.context.get("default_template_id")
+        if not template_id and self.env.context.get("active_model") == "sign.template":
+            template_id = self.env.context.get("active_id")
+        if template_id and "signer_ids" in self._fields:
+            template = self.env["sign.template"].browse(template_id).exists()
+            if template and template.absar_workflow_id:
+                vals["template_id"] = template.id
+                vals["signer_ids"] = self._absar_signer_commands(template)
+                if "signer_id" in self._fields and len(template.absar_workflow_id.step_ids) == 1:
+                    vals["signer_id"] = template.absar_workflow_id.step_ids[:1].signer_partner_id.id
+        return vals
+
+    @api.onchange("template_id")
+    def _onchange_absar_workflow_template(self):
+        for wizard in self:
+            if not wizard.template_id or not wizard.template_id.absar_workflow_id:
+                continue
+            if "signer_ids" in wizard._fields:
+                wizard.signer_ids = wizard._absar_signer_commands(wizard.template_id)
+            if "signer_id" in wizard._fields and len(wizard.template_id.absar_workflow_id.step_ids) == 1:
+                wizard.signer_id = wizard.template_id.absar_workflow_id.step_ids[:1].signer_partner_id
+
+
 class SignTemplate(models.Model):
     _inherit = "sign.template"
 
@@ -289,3 +386,36 @@ class SignTemplate(models.Model):
     )
     absar_source_model = fields.Char(copy=False, readonly=True)
     absar_source_id = fields.Integer(copy=False, readonly=True)
+
+    def _absar_sync_source_document(self):
+        service = self.env["absar.sign.workflow.service"].sudo()
+        for template in self.sudo():
+            if not template.absar_source_model or not template.absar_source_id:
+                continue
+            if template.absar_source_model not in self.env:
+                continue
+            record = self.env[template.absar_source_model].sudo().browse(template.absar_source_id).exists()
+            if record and "sign_template_id" in record._fields and record.sign_template_id == template:
+                service.sync_record(record, "skip_absar_sign_live_sync")
+
+
+class SignRequestItem(models.Model):
+    _inherit = "sign.request.item"
+
+    def write(self, vals):
+        res = super().write(vals)
+        watched = {"state", "partner_id", "role_id"}
+        if watched.intersection(vals):
+            templates = self.mapped("sign_request_id.template_id").filtered("absar_workflow_id")
+            templates._absar_sync_source_document()
+        return res
+
+
+class SignRequest(models.Model):
+    _inherit = "sign.request"
+
+    def write(self, vals):
+        res = super().write(vals)
+        if "state" in vals:
+            self.mapped("template_id").filtered("absar_workflow_id")._absar_sync_source_document()
+        return res
