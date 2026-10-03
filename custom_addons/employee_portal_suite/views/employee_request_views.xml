@@ -56,8 +56,7 @@
                                 string="Create Time Off"
                                 class="btn-primary"
                                 icon="fa-calendar-check-o"
-                                groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"
-                                invisible="request_type != 'leave' or state != 'approved' or time_off_id"/>
+                                invisible="not can_create_time_off"/>
 
                         <button name="%(employee_portal_suite.employee_request_pdf)d"
                                 type="action"
@@ -66,6 +65,7 @@
                                 string="Print PDF"/>
                 </header>
                 <sheet>
+                    <field name="can_create_time_off" invisible="1"/>
                     <!-- TITLE + STATUS -->
                     <div class="oe_title">
                         <h1><field name="name"/></h1>

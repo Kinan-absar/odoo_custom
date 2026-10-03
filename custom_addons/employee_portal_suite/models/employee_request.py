@@ -78,6 +78,12 @@ class EmployeeRequest(models.Model):
         tracking=True
     )
 
+    can_create_time_off = fields.Boolean(
+        string='Can Create Time Off',
+        compute='_compute_can_create_time_off',
+        store=False,
+    )
+
 
     # ---------------------------------------------------------
     # CONFIGURABLE WORKFLOW
@@ -608,14 +614,29 @@ class EmployeeRequest(models.Model):
     # ---------------------------------------------------------
     # CREATE ODOO TIME OFF FROM AN APPROVED LEAVE REQUEST
     # ---------------------------------------------------------
+    def _user_can_create_time_off(self):
+        user = self.env.user
+        return bool(
+            user.has_group('employee_portal_suite.group_employee_portal_hr')
+            or user.has_group('employee_portal_suite.group_employee_portal_admin')
+            or user.has_group('employee_portal_suite.group_employee_portal_superadmin')
+        )
+
+    @api.depends('request_type', 'state', 'time_off_id')
+    def _compute_can_create_time_off(self):
+        allowed = self._user_can_create_time_off()
+        for rec in self:
+            rec.can_create_time_off = bool(
+                allowed
+                and rec.request_type == 'leave'
+                and rec.state == 'approved'
+                and not rec.time_off_id
+            )
+
     def action_create_time_off(self):
         self.ensure_one()
 
-        if not (
-            self.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-            or self.env.user.has_group('employee_portal_suite.group_employee_portal_admin')
-            or self.env.user.has_group('employee_portal_suite.group_employee_portal_superadmin')
-        ):
+        if not self._user_can_create_time_off():
             raise UserError(_("Only HR, Administrator, or Super Administrator can create Time Off from an Employee Request."))
 
         if self.request_type != 'leave':

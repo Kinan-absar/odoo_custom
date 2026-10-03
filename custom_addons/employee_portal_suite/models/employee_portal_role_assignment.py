@@ -50,7 +50,32 @@ class EmployeePortalRoleAssignment(models.Model):
 
     def _inverse_user_ids(self):
         self._check_superadmin()
+        super_xmlid = 'employee_portal_suite.group_employee_portal_superadmin'
+        admin_xmlid = 'employee_portal_suite.group_employee_portal_admin'
         for rec in self:
             group = rec._group()
-            if group:
-                group.sudo().write({'users': [(6, 0, rec.user_ids.ids)]})
+            if not group:
+                continue
+
+            users = rec.user_ids.sudo()
+
+            # Super Administrator must always carry Administrator membership.
+            # The custom role screen writes directly on res.groups, so we
+            # synchronize the implied membership explicitly instead of relying
+            # on a later cache/group recomputation.
+            if rec.group_xmlid == super_xmlid:
+                group.sudo().write({'users': [(6, 0, users.ids)]})
+                admin_group = self.env.ref(admin_xmlid, raise_if_not_found=False)
+                if admin_group:
+                    admin_users = (admin_group.sudo().users | users)
+                    admin_group.sudo().write({'users': [(6, 0, admin_users.ids)]})
+                continue
+
+            # If the Administrator role is edited directly, never strip
+            # Administrator from users who still hold Super Administrator.
+            if rec.group_xmlid == admin_xmlid:
+                super_group = self.env.ref(super_xmlid, raise_if_not_found=False)
+                if super_group:
+                    users |= super_group.sudo().users
+
+            group.sudo().write({'users': [(6, 0, users.ids)]})
