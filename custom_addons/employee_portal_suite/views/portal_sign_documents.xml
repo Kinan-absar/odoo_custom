@@ -35,6 +35,7 @@
             .eps-action { display:flex; justify-content:flex-end; align-items:center; gap:8px; }
             .eps-action .btn { border-radius:9px; padding:7px 12px; font-weight:600; font-size:13px; }
             .eps-action .btn-primary { background:#714b67; border-color:#714b67; }
+            .eps-waiting-action { display:inline-flex; align-items:center; gap:4px; color:#8a7a55; background:#f7f1df; border:1px solid #eadfbe; border-radius:9px; padding:6px 10px; font-size:12px; font-weight:600; white-space:nowrap; }
             .eps-empty { padding:56px 20px; text-align:center; color:#8a93a5; }
             .eps-mobile-card { border:1px solid #e5e8ed; border-radius:14px; background:#fff; padding:15px; margin-bottom:12px; box-shadow:0 5px 18px rgba(31,38,55,.04); }
             .eps-mobile-meta { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:10px 0 12px; color:#788297; font-size:12px; }
@@ -103,8 +104,11 @@
                                     <td><div class="eps-workflow"><t t-out="workflow_status"/></div></td>
                                     <td><div class="eps-action">
                                         <t t-if="'🔴' in workflow_status"><span class="eps-badge eps-badge-rejected">Rejected</span></t>
-                                        <t t-elif="'🟡' in your_status">
+                                        <t t-elif="doc.get('can_sign')">
                                             <a class="btn btn-sm btn-primary" t-att-href="doc['sign_url']"><i class="fa fa-pencil me-1"/>Sign</a>
+                                        </t>
+                                        <t t-elif="'🟡' in your_status">
+                                            <span class="eps-waiting-action"><i class="fa fa-clock-o me-1"/>Waiting</span>
                                         </t>
                                         <t t-if="item.sign_request_id.state == 'signed'">
                                             <a class="btn btn-sm btn-outline-secondary" t-attf-href="/sign/download/{{ item.sign_request_id.id }}/{{ item.sign_request_id.access_token }}/completed" target="_blank" title="Download signed PDF"><i class="fa fa-download"/></a>
@@ -131,7 +135,8 @@
                             <div class="eps-mobile-meta"><span><i class="fa fa-calendar-o me-1"/><t t-out="doc['date']"/></span><span><t t-out="workflow_status"/></span></div>
                             <div class="eps-action">
                                 <t t-if="'🔴' in workflow_status"><span class="eps-badge eps-badge-rejected">Rejected</span></t>
-                                <t t-elif="'🟡' in your_status"><a class="btn btn-sm btn-primary" t-att-href="doc['sign_url']"><i class="fa fa-pencil me-1"/>Sign</a></t>
+                                <t t-elif="doc.get('can_sign')"><a class="btn btn-sm btn-primary" t-att-href="doc['sign_url']"><i class="fa fa-pencil me-1"/>Sign</a></t>
+                                <t t-elif="'🟡' in your_status"><span class="eps-waiting-action"><i class="fa fa-clock-o me-1"/>Waiting</span></t>
                                 <t t-if="item.sign_request_id.state == 'signed'"><a class="btn btn-sm btn-outline-secondary" t-attf-href="/sign/download/{{ item.sign_request_id.id }}/{{ item.sign_request_id.access_token }}/completed" target="_blank"><i class="fa fa-download me-1"/>Download</a></t>
                             </div>
                         </div>

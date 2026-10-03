@@ -93,8 +93,17 @@ class EmployeePortalSignDocs(CustomerPortal):
             # -------------------------
             # FILTER LOGIC
             # -------------------------
+            # Pending now includes every unsigned document assigned to this
+            # portal user, even when an earlier signer still has to complete
+            # their step.  Only the current signer receives the Sign button.
+            can_sign = bool(
+                first_pending
+                and first_pending.id == item.id
+                and item.state in ("draft", "sent")
+            )
+
             if filter == "pending":
-                if not first_pending or first_pending.id != item.id:
+                if item.state not in ("draft", "sent"):
                     continue
 
             elif filter == "signed":
@@ -116,6 +125,7 @@ class EmployeePortalSignDocs(CustomerPortal):
                 "workflow_status": self._compute_workflow_status(req),
                 "sign_url": item._get_share_url(),
                 "access_token": item.access_token,
+                "can_sign": can_sign,
             })
 
         # Sort newest → oldest
