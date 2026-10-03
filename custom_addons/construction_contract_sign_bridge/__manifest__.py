@@ -1,12 +1,11 @@
 {
     "name": "Construction Contract Send to Sign Bridge",
-    "version": "18.0.1.0.1",
-    "summary": "Send Construction Contracts, Measurements and IPCs to Odoo Sign",
+    "version": "18.0.1.1.0",
+    "summary": "Configurable Odoo Sign workflows for Contracts, Measurements and IPCs",
     "description": """
-Bridge between Construction Contract Management and Send to Sign for Purchase Orders.
-Adds the same Odoo Sign workflow, signature status and revision tracking to
-Construction Contracts, Measurements and IPCs without adding a Sign dependency
-to the base construction module.
+Bridge between Construction Contract Management and ABSAR Sign Workflow Core.
+Adds configurable signer chains, dynamic signing status and revision tracking to
+Construction Contracts, Measurements and IPCs.
     """,
     "author": "Kinan",
     "website": "https://absar-alomran.com",
@@ -14,12 +13,12 @@ to the base construction module.
     "license": "LGPL-3",
     "depends": [
         "construction_contract_management",
-        "absar_send_to_sign_po",
+        "absar_sign_workflow_core"
     ],
     "data": [
         "data/cron.xml",
         "views/construction_sign_views.xml",
-        "reports/construction_sign_report.xml",
+        "reports/construction_sign_report.xml"
     ],
     "installable": True,
     "application": False,

@@ -1,206 +1,151 @@
-from odoo import models, fields, api, _
+from odoo import api, fields, models, _
 from odoo.exceptions import UserError
-import base64
+
+
+SIGNATURE_STATES = [
+    ("draft", "Not Sent"),
+    ("pending", "Signing in Progress"),
+    ("director_pending", "Legacy: Pending Director Signature"),
+    ("ceo_pending", "Legacy: Pending CEO Signature"),
+    ("signed", "Fully Signed"),
+    ("rejected", "Rejected"),
+]
+ACTIVE_SIGNATURE_STATES = {"pending", "director_pending", "ceo_pending", "signed", "rejected"}
 
 
 class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
 
-    sign_template_id = fields.Many2one("sign.template")
-    signature_state = fields.Selection([
-        ("draft", "Not Sent"),
-        ("director_pending", "Pending Director Signature"),
-        ("ceo_pending", "Pending CEO Signature"),
-        ("signed", "Fully Signed"),
-        ("rejected", "Rejected"),
-    ], default="draft", tracking=True)
+    sign_template_id = fields.Many2one("sign.template", copy=False, readonly=True)
+    signing_workflow_id = fields.Many2one("absar.sign.workflow", copy=False, readonly=True)
+    signature_state = fields.Selection(SIGNATURE_STATES, default="draft", tracking=True, copy=False)
+    signature_status_text = fields.Char(default="Not Sent", copy=False, readonly=True)
+    signature_completed_count = fields.Integer(default=0, copy=False, readonly=True)
+    signature_total_count = fields.Integer(default=0, copy=False, readonly=True)
+    revision = fields.Integer(default=0, tracking=True, copy=False)
 
-    revision = fields.Integer(default=0, tracking=True)
+    project_id = fields.Many2one("project.project", string="Project", tracking=True, groups=False)
 
-    project_id = fields.Many2one(
-        'project.project',
-        string='Project',
-        tracking=True,
-        groups=False
-    )
+    def _reset_signing(self, reason):
+        for po in self:
+            if po.signature_state not in ACTIVE_SIGNATURE_STATES:
+                continue
+            revision = (po.revision or 0) + 1
+            po.with_context(skip_po_sign_reset=True).write({
+                "revision": revision,
+                "signature_state": "draft",
+                "signature_status_text": _("Not Sent"),
+                "signature_completed_count": 0,
+                "signature_total_count": 0,
+                "sign_template_id": False,
+                "signing_workflow_id": False,
+            })
+            po.message_post(body=_("%s Reset to Not Sent (Revision R%s).") % (reason, revision))
 
-    # ---------------------------------------------------------------------
-    # WRITE OVERRIDE – Reset when PO header fields change
-    # ---------------------------------------------------------------------
     def write(self, vals):
-        po_states_before = {po.id: po.signature_state for po in self}
-
+        previous = {po.id: po.signature_state for po in self}
         res = super().write(vals)
-
-        meaningful_fields = {
-            'amount_total', 'date_planned', 'date_approve',
-            'partner_id', 'currency_id', 'notes',
-        }
-
-        if set(vals.keys()) & meaningful_fields:
+        if self.env.context.get("skip_po_sign_reset"):
+            return res
+        meaningful = {"amount_total", "date_planned", "date_approve", "partner_id", "currency_id", "notes", "project_id"}
+        if meaningful.intersection(vals):
             for po in self:
-                state_before = po_states_before[po.id]
-                if state_before in ('director_pending', 'ceo_pending', 'signed', 'rejected'):
-                    po.revision += 1
-                    po.signature_state = 'draft'
-                    po.message_post(body=f"PO modified after signing. Reset to draft (Revision {po.revision}).")
-
+                if previous.get(po.id) in ACTIVE_SIGNATURE_STATES:
+                    po._reset_signing(_("PO modified after signing/sending."))
         return res
 
-    # ---------------------------------------------------------------------
-    # SEND TO SIGN
-    # ---------------------------------------------------------------------
     def action_send_to_sign(self):
         self.ensure_one()
+        if self.state != "purchase":
+            raise UserError(_("Only a confirmed Purchase Order can be sent to Sign."))
+        if self.signature_state != "draft":
+            raise UserError(_("This Purchase Order has already been sent to Sign."))
 
-        pdf_content, _ = self.env['ir.actions.report']._render_qweb_pdf(
-            'purchase.report_purchaseorder',
-            self.ids,
+        template, workflow, status = self.env["absar.sign.workflow.service"].create_template(
+            self,
+            "purchase.report_purchaseorder",
+            _("Purchase Order"),
+            [
+                self.name,
+                self.partner_id.name,
+                self.material_request_id.name if hasattr(self, "material_request_id") and self.material_request_id else None,
+                self.project_id.name if self.project_id else None,
+            ],
         )
-        pdf_b64 = base64.b64encode(pdf_content)
-
-        filename_parts = [
-            self.name,
-            self.partner_id.name,
-            self.material_request_id.name if hasattr(self, 'material_request_id') and self.material_request_id else None,
-            self.project_id.name if self.project_id else None,
-        ]
-
-        filename = " - ".join(p for p in filename_parts if p)
-        if self.revision > 0:
-            filename += f"_R{self.revision}"
-        filename += ".pdf"
-
-        attachment = self.env['ir.attachment'].create({
-            'name': filename,
-            'datas': pdf_b64,
-            'type': 'binary',
-            'mimetype': 'application/pdf',
+        self.with_context(skip_po_sign_reset=True).write({
+            "sign_template_id": template.id,
+            "signing_workflow_id": workflow.id,
+            "signature_state": "pending",
+            "signature_status_text": status,
+            "signature_completed_count": 0,
+            "signature_total_count": len(workflow.step_ids),
         })
-
-        template = self.env['sign.template'].create({
-            'name': f"PO - {filename.replace('.pdf', '')}",
-            'attachment_id': attachment.id,
-        })
-
-        self.sign_template_id = template.id
-        self.signature_state = "director_pending"
-        self.message_post(body="PO sent for Director Signature.")
-
+        first = workflow.step_ids.sorted("sequence")[0]
+        self.message_post(
+            body=_("PO prepared for signing. Workflow: %(workflow)s. First signer: %(role)s (%(user)s).") % {
+                "workflow": workflow.name,
+                "role": first.name,
+                "user": first.signer_user_id.name,
+            }
+        )
         return {
             "type": "ir.actions.act_url",
             "url": f'/odoo/sign/{template.id}/action-sign.Template?id={template.id}&name=Template%20"PO%20{self.name}"',
             "target": "self",
         }
 
-    # ---------------------------------------------------------------------
-    # CRON SYNC STATUS
-    # ---------------------------------------------------------------------
+    def action_open_signature_status(self):
+        self.ensure_one()
+        if not self.sign_template_id:
+            return {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {"title": _("Signature"), "message": _("This PO has not been sent to Sign yet."), "type": "info", "sticky": False},
+            }
+        return {
+            "type": "ir.actions.act_url",
+            "url": f"/odoo/sign/{self.sign_template_id.id}/action-sign.Template?id={self.sign_template_id.id}",
+            "target": "self",
+        }
+
     @api.model
     def _cron_sync_sign_status(self):
-        pos = self.search([
-            ('sign_template_id', '!=', False),
-            ('signature_state', 'in', ['director_pending', 'ceo_pending']),
+        records = self.search([
+            ("sign_template_id", "!=", False),
+            ("signature_state", "in", ["pending", "director_pending", "ceo_pending"]),
         ])
-
-        for po in pos:
-            template = po.sign_template_id
-            request = self.env['sign.request'].search(
-                [('template_id', '=', template.id)],
-                order="id desc",
-                limit=1
-            )
-            if not request:
-                continue
-
-            if request.state in ('canceled', 'refused'):
-                po.signature_state = 'rejected'
-                po.message_post(body="Signature request was rejected or cancelled.")
-                continue
-
-            if request.state == 'signed':
-                po.signature_state = 'signed'
-                po.message_post(body="PO fully signed.")
-                continue
-
-            signed_items = self.env['sign.request.item'].search_count([
-                ('sign_request_id', '=', request.id),
-                ('state', '=', 'completed'),
-            ])
-
-            if po.signature_state == 'director_pending' and signed_items >= 1:
-                po.signature_state = 'ceo_pending'
-                po.message_post(body="Director has signed. Waiting for CEO signature.")
+        service = self.env["absar.sign.workflow.service"]
+        for po in records:
+            service.sync_record(po, "skip_po_sign_reset")
 
 
 class PurchaseOrderLine(models.Model):
     _inherit = "purchase.order.line"
 
-    # ---------------------------------------------------------------------
-    # LINE WRITE – Reset when line quantities/prices change
-    # ---------------------------------------------------------------------
     def write(self, vals):
-        po_states_before = {
-            line.order_id.id: line.order_id.signature_state
-            for line in self
-        }
-
+        states = {line.order_id.id: line.order_id.signature_state for line in self}
         res = super().write(vals)
-
-        line_meaningful_fields = {
-            'product_qty', 'price_unit', 'product_id',
-            'date_planned', 'discount', 'taxes_id', 'product_uom',
-        }
-
-        if set(vals.keys()) & line_meaningful_fields:
-            seen_orders = set()
-            for line in self:
-                order = line.order_id
-                if order.id in seen_orders:
-                    continue
-                seen_orders.add(order.id)
-                state_before = po_states_before.get(order.id)
-                if state_before in ('director_pending', 'ceo_pending', 'signed', 'rejected'):
-                    order.revision += 1
-                    order.signature_state = 'draft'
-                    order.message_post(body=f"PO line modified after signing. Reset to draft (Revision {order.revision}).")
-
+        meaningful = {"product_qty", "price_unit", "product_id", "date_planned", "discount", "taxes_id", "product_uom"}
+        if not self.env.context.get("skip_po_sign_reset") and meaningful.intersection(vals):
+            for order in self.mapped("order_id"):
+                if states.get(order.id) in ACTIVE_SIGNATURE_STATES:
+                    order._reset_signing(_("PO line modified after signing/sending."))
         return res
 
-    # ---------------------------------------------------------------------
-    # LINE CREATE – Reset if a new line is added
-    # ---------------------------------------------------------------------
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        seen_orders = set()
-        for line in records:
-            order = line.order_id
-            if order.id in seen_orders:
-                continue
-            seen_orders.add(order.id)
-            if order.signature_state in ('director_pending', 'ceo_pending', 'signed', 'rejected'):
-                order.revision += 1
-                order.signature_state = 'draft'
-                order.message_post(body=f"PO line added after signing. Reset to draft (Revision {order.revision}).")
+        if not self.env.context.get("skip_po_sign_reset"):
+            for order in records.mapped("order_id"):
+                if order.signature_state in ACTIVE_SIGNATURE_STATES:
+                    order._reset_signing(_("PO line added after signing/sending."))
         return records
 
-    # ---------------------------------------------------------------------
-    # LINE UNLINK – Reset if a line is deleted
-    # ---------------------------------------------------------------------
     def unlink(self):
-        order_states = {
-            line.order_id.id: (line.order_id, line.order_id.signature_state)
-            for line in self
-        }
+        orders = {line.order_id.id: (line.order_id, line.order_id.signature_state) for line in self}
         res = super().unlink()
-        seen = set()
-        for order_id, (order, state_before) in order_states.items():
-            if order_id in seen:
-                continue
-            seen.add(order_id)
-            if state_before in ('director_pending', 'ceo_pending', 'signed', 'rejected'):
-                order.revision += 1
-                order.signature_state = 'draft'
-                order.message_post(body=f"PO line removed after signing. Reset to draft (Revision {order.revision}).")
+        if not self.env.context.get("skip_po_sign_reset"):
+            for order, state in orders.values():
+                if state in ACTIVE_SIGNATURE_STATES:
+                    order._reset_signing(_("PO line removed after signing/sending."))
         return res

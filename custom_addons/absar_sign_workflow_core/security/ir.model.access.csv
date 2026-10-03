@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_absar_sign_workflow_system,absar.sign.workflow system,model_absar_sign_workflow,base.group_system,1,1,1,1
+access_absar_sign_workflow_step_system,absar.sign.workflow.step system,model_absar_sign_workflow_step,base.group_system,1,1,1,1

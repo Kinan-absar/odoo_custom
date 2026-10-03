@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_absar_sign_workflow_list" model="ir.ui.view">
+        <field name="name">absar.sign.workflow.list</field>
+        <field name="model">absar.sign.workflow</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="not active">
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="model_id"/>
+                <field name="project_id" optional="show"/>
+                <field name="step_count" string="Signers"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_absar_sign_workflow_form" model="ir.ui.view">
+        <field name="name">absar.sign.workflow.form</field>
+        <field name="model">absar.sign.workflow</field>
+        <field name="arch" type="xml">
+            <form string="Signing Workflow">
+                <header>
+                    <button name="action_validate_workflow" type="object" string="Validate" class="btn-primary" icon="fa-check"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Purchase Order Signing"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="model_id" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <separator string="Signer Chain"/>
+                    <div class="text-muted mb-3">
+                        Signers are followed in sequence. The role label is shown on the source document status. Configure the same Odoo Sign Role when placing signature fields for precise tracking.
+                    </div>
+                    <field name="step_ids" nolabel="1">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                            <field name="signer_user_id"/>
+                            <field name="sign_role_id" optional="show"/>
+                            <field name="signer_partner_id" optional="hide"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_absar_sign_workflow" model="ir.actions.act_window">
+        <field name="name">Signing Workflows</field>
+        <field name="res_model">absar.sign.workflow</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_absar_document_signing_root"
+              name="Document Signing"
+              sequence="95"
+              groups="base.group_system"/>
+    <menuitem id="menu_absar_document_signing_configuration"
+              name="Configuration"
+              parent="menu_absar_document_signing_root"
+              sequence="10"
+              groups="base.group_system"/>
+    <menuitem id="menu_absar_signing_workflows"
+              name="Signing Workflows"
+              parent="menu_absar_document_signing_configuration"
+              action="action_absar_sign_workflow"
+              sequence="10"
+              groups="base.group_system"/>
+</odoo>

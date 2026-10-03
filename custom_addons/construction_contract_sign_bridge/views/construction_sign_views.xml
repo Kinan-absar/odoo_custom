@@ -7,20 +7,19 @@
         <field name="arch" type="xml">
             <xpath expr="//header/field[@name='state']" position="before">
                 <field name="sign_template_id" invisible="1"/>
+                <field name="signing_workflow_id" invisible="1"/>
                 <field name="revision" invisible="1"/>
+                <field name="signature_state" invisible="1" readonly="1"/>
                 <button name="action_send_to_sign" string="Send to Sign" type="object" class="btn-primary" icon="fa-pencil-square-o"
                         invisible="state not in ['approved','active','completed','closed'] or signature_state != 'draft'"/>
-                <field name="signature_state" invisible="1" readonly="1"/>
             </xpath>
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_open_signature_status" type="object" class="oe_stat_button" icon="fa-pencil-square-o">
-                    <field name="signature_state" widget="statinfo" string="Signature"/>
+                    <field name="signature_status_text" widget="statinfo" string="Signature"/>
                 </button>
             </xpath>
             <xpath expr="//h1" position="after">
-                <div class="text-muted" invisible="revision == 0">
-                    <span>Revision R</span><field name="revision" nolabel="1" readonly="1"/>
-                </div>
+                <div class="text-muted" invisible="revision == 0"><span>Revision R</span><field name="revision" nolabel="1" readonly="1"/></div>
             </xpath>
         </field>
     </record>
@@ -32,22 +31,21 @@
         <field name="arch" type="xml">
             <xpath expr="//header/field[@name='state']" position="before">
                 <field name="sign_template_id" invisible="1"/>
+                <field name="signing_workflow_id" invisible="1"/>
                 <field name="revision" invisible="1"/>
+                <field name="signature_state" invisible="1" readonly="1"/>
                 <button name="action_send_to_sign" string="Send to Sign" type="object" class="btn-primary" icon="fa-pencil-square-o"
                         invisible="state != 'approved' or signature_state != 'draft'"/>
-                <field name="signature_state" invisible="1" readonly="1"/>
             </xpath>
             <xpath expr="//sheet/div[contains(@class, 'oe_title')]" position="before">
                 <div class="oe_button_box" name="button_box">
                     <button name="action_open_signature_status" type="object" class="oe_stat_button" icon="fa-pencil-square-o">
-                        <field name="signature_state" widget="statinfo" string="Signature"/>
+                        <field name="signature_status_text" widget="statinfo" string="Signature"/>
                     </button>
                 </div>
             </xpath>
             <xpath expr="//h1" position="after">
-                <div class="text-muted" invisible="revision == 0">
-                    <span>Revision R</span><field name="revision" nolabel="1" readonly="1"/>
-                </div>
+                <div class="text-muted" invisible="revision == 0"><span>Revision R</span><field name="revision" nolabel="1" readonly="1"/></div>
             </xpath>
         </field>
     </record>
@@ -59,20 +57,19 @@
         <field name="arch" type="xml">
             <xpath expr="//header/field[@name='state']" position="before">
                 <field name="sign_template_id" invisible="1"/>
+                <field name="signing_workflow_id" invisible="1"/>
                 <field name="revision" invisible="1"/>
+                <field name="signature_state" invisible="1" readonly="1"/>
                 <button name="action_send_to_sign" string="Send to Sign" type="object" class="btn-primary" icon="fa-pencil-square-o"
                         invisible="state not in ['approved','done'] or signature_state != 'draft'"/>
-                <field name="signature_state" invisible="1" readonly="1"/>
             </xpath>
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_open_signature_status" type="object" class="oe_stat_button" icon="fa-pencil-square-o">
-                    <field name="signature_state" widget="statinfo" string="Signature"/>
+                    <field name="signature_status_text" widget="statinfo" string="Signature"/>
                 </button>
             </xpath>
             <xpath expr="//h1" position="after">
-                <div class="text-muted" invisible="revision == 0">
-                    <span>Revision R</span><field name="revision" nolabel="1" readonly="1"/>
-                </div>
+                <div class="text-muted" invisible="revision == 0"><span>Revision R</span><field name="revision" nolabel="1" readonly="1"/></div>
             </xpath>
         </field>
     </record>
@@ -83,7 +80,7 @@
         <field name="inherit_id" ref="construction_contract_management.view_construction_contract_list"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='state']" position="after">
-                <field name="signature_state" widget="badge" optional="show"/>
+                <field name="signature_status_text" string="Signature" optional="show"/>
                 <field name="revision" optional="hide"/>
             </xpath>
         </field>
@@ -95,7 +92,7 @@
         <field name="inherit_id" ref="construction_contract_management.view_construction_measurement_list"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='state']" position="after">
-                <field name="signature_state" widget="badge" optional="show"/>
+                <field name="signature_status_text" string="Signature" optional="show"/>
                 <field name="revision" optional="hide"/>
             </xpath>
         </field>
@@ -107,10 +104,9 @@
         <field name="inherit_id" ref="construction_contract_management.view_construction_ipc_list"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='state']" position="after">
-                <field name="signature_state" widget="badge" optional="show"/>
+                <field name="signature_status_text" string="Signature" optional="show"/>
                 <field name="revision" optional="hide"/>
             </xpath>
         </field>
     </record>
-
 </odoo>

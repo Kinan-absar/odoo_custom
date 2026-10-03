@@ -1,72 +1,59 @@
-import base64
-
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 
 SIGNATURE_STATES = [
     ("draft", "Not Sent"),
-    ("director_pending", "Pending Director Signature"),
-    ("ceo_pending", "Pending CEO Signature"),
+    ("pending", "Signing in Progress"),
+    ("director_pending", "Legacy: Pending Director Signature"),
+    ("ceo_pending", "Legacy: Pending CEO Signature"),
     ("signed", "Fully Signed"),
     ("rejected", "Rejected"),
 ]
-
-ACTIVE_SIGNATURE_STATES = {"director_pending", "ceo_pending", "signed", "rejected"}
+ACTIVE_SIGNATURE_STATES = {"pending", "director_pending", "ceo_pending", "signed", "rejected"}
 
 
 def _reset_signature(record, reason):
-    """Reset one signed/sent construction document and increment its revision."""
     if record.signature_state not in ACTIVE_SIGNATURE_STATES:
         return
     new_revision = (record.revision or 0) + 1
     record.with_context(skip_construction_sign_reset=True).write({
         "revision": new_revision,
         "signature_state": "draft",
+        "signature_status_text": _("Not Sent"),
+        "signature_completed_count": 0,
+        "signature_total_count": 0,
         "sign_template_id": False,
+        "signing_workflow_id": False,
     })
-    record.message_post(
-        body=_("%s Reset to Not Sent (Revision R%s).") % (reason, new_revision)
-    )
+    record.message_post(body=_("%s Reset to Not Sent (Revision R%s).") % (reason, new_revision))
 
 
 def _create_sign_template(record, report_xmlid, document_label, filename_parts):
     record.ensure_one()
-
     if record.signature_state != "draft":
         raise UserError(_("This document has already been sent to Sign. Modify the document first if a new revision is required."))
 
-    pdf_content, pdf_format = record.env["ir.actions.report"]._render_qweb_pdf(
-        report_xmlid,
-        record.ids,
+    template, workflow, status = record.env["absar.sign.workflow.service"].create_template(
+        record, report_xmlid, document_label, filename_parts
     )
-
-    clean_parts = [str(p).strip() for p in filename_parts if p and str(p).strip()]
-    filename = " - ".join(clean_parts) or record.display_name
-    if record.revision:
-        filename += f"_R{record.revision}"
-    filename += ".pdf"
-
-    attachment = record.env["ir.attachment"].create({
-        "name": filename,
-        "datas": base64.b64encode(pdf_content),
-        "type": "binary",
-        "mimetype": "application/pdf",
-        "res_model": record._name,
-        "res_id": record.id,
-    })
-
-    template = record.env["sign.template"].create({
-        "name": f"{document_label} - {filename[:-4]}",
-        "attachment_id": attachment.id,
-    })
-
     record.with_context(skip_construction_sign_reset=True).write({
         "sign_template_id": template.id,
-        "signature_state": "director_pending",
+        "signing_workflow_id": workflow.id,
+        "signature_state": "pending",
+        "signature_status_text": status,
+        "signature_completed_count": 0,
+        "signature_total_count": len(workflow.step_ids),
     })
-    record.message_post(body=_("%s sent for Director Signature.") % document_label)
-
+    first = workflow.step_ids.sorted("sequence")[0]
+    record.message_post(
+        body=_("%(document)s prepared for signing. Workflow: %(workflow)s. First signer: %(role)s (%(user)s).") % {
+            "document": document_label,
+            "workflow": workflow.name,
+            "role": first.name,
+            "user": first.signer_user_id.name,
+        }
+    )
     return {
         "type": "ir.actions.act_url",
         "url": f'/odoo/sign/{template.id}/action-sign.Template?id={template.id}&name=Template%20"{document_label}%20{record.display_name}"',
@@ -74,24 +61,44 @@ def _create_sign_template(record, report_xmlid, document_label, filename_parts):
     }
 
 
-def _open_sign_template(record):
+def _open_signature(record):
     record.ensure_one()
     if not record.sign_template_id:
-        raise UserError(_("No Sign template is linked to this document."))
-    template = record.sign_template_id
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Signature"),
+                "message": _("This document has not been sent to Sign yet."),
+                "type": "info",
+                "sticky": False,
+            },
+        }
     return {
         "type": "ir.actions.act_url",
-        "url": f'/odoo/sign/{template.id}/action-sign.Template?id={template.id}',
+        "url": f"/odoo/sign/{record.sign_template_id.id}/action-sign.Template?id={record.sign_template_id.id}",
         "target": "self",
     }
 
 
-class ConstructionContract(models.Model):
-    _inherit = "construction.contract"
+class ConstructionSignFieldsMixin(models.AbstractModel):
+    _name = "construction.sign.fields.mixin"
+    _description = "Construction Sign Fields Mixin"
 
     sign_template_id = fields.Many2one("sign.template", copy=False, readonly=True)
+    signing_workflow_id = fields.Many2one("absar.sign.workflow", copy=False, readonly=True)
     signature_state = fields.Selection(SIGNATURE_STATES, default="draft", tracking=True, copy=False)
+    signature_status_text = fields.Char(default="Not Sent", copy=False, readonly=True)
+    signature_completed_count = fields.Integer(default=0, copy=False, readonly=True)
+    signature_total_count = fields.Integer(default=0, copy=False, readonly=True)
     revision = fields.Integer(default=0, tracking=True, copy=False)
+
+    def action_open_signature_status(self):
+        return _open_signature(self)
+
+
+class ConstructionContract(models.Model):
+    _inherit = ["construction.contract", "construction.sign.fields.mixin"]
 
     def action_send_to_sign(self):
         self.ensure_one()
@@ -104,32 +111,14 @@ class ConstructionContract(models.Model):
             [self.name, self.partner_id.name, self.project_id.name if self.project_id else None],
         )
 
-    def action_open_sign_template(self):
-        return _open_sign_template(self)
-
-    def action_open_signature_status(self):
-        self.ensure_one()
-        if self.sign_template_id:
-            return _open_sign_template(self)
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Signature"),
-                "message": _("This document has not been sent to Sign yet."),
-                "type": "info",
-                "sticky": False,
-            },
-        }
-
     def write(self, vals):
         previous = {rec.id: rec.signature_state for rec in self}
         res = super().write(vals)
         if self.env.context.get("skip_construction_sign_reset"):
             return res
         meaningful = {
-            "project_id", "partner_id", "contract_direction", "customer_reference",
-            "scope", "date_start", "date_end", "original_amount", "payment_term_id",
+            "project_id", "partner_id", "contract_direction", "customer_reference", "scope",
+            "date_start", "date_end", "original_amount", "payment_term_id",
             "retention_percent", "advance_percent", "vat_percent", "notes",
         }
         if meaningful.intersection(vals):
@@ -140,42 +129,18 @@ class ConstructionContract(models.Model):
 
     @api.model
     def _cron_sync_construction_sign_status(self):
+        service = self.env["absar.sign.workflow.service"]
         for model_name in ("construction.contract", "construction.measurement", "construction.ipc"):
             records = self.env[model_name].search([
                 ("sign_template_id", "!=", False),
-                ("signature_state", "in", ["director_pending", "ceo_pending"]),
+                ("signature_state", "in", ["pending", "director_pending", "ceo_pending"]),
             ])
             for rec in records:
-                request = self.env["sign.request"].search(
-                    [("template_id", "=", rec.sign_template_id.id)],
-                    order="id desc",
-                    limit=1,
-                )
-                if not request:
-                    continue
-                if request.state in ("canceled", "refused"):
-                    rec.with_context(skip_construction_sign_reset=True).signature_state = "rejected"
-                    rec.message_post(body=_("Signature request was rejected or cancelled."))
-                    continue
-                if request.state == "signed":
-                    rec.with_context(skip_construction_sign_reset=True).signature_state = "signed"
-                    rec.message_post(body=_("Document fully signed."))
-                    continue
-                signed_items = self.env["sign.request.item"].search_count([
-                    ("sign_request_id", "=", request.id),
-                    ("state", "=", "completed"),
-                ])
-                if rec.signature_state == "director_pending" and signed_items >= 1:
-                    rec.with_context(skip_construction_sign_reset=True).signature_state = "ceo_pending"
-                    rec.message_post(body=_("Director has signed. Waiting for CEO signature."))
+                service.sync_record(rec, "skip_construction_sign_reset")
 
 
 class ConstructionMeasurement(models.Model):
-    _inherit = "construction.measurement"
-
-    sign_template_id = fields.Many2one("sign.template", copy=False, readonly=True)
-    signature_state = fields.Selection(SIGNATURE_STATES, default="draft", tracking=True, copy=False)
-    revision = fields.Integer(default=0, tracking=True, copy=False)
+    _inherit = ["construction.measurement", "construction.sign.fields.mixin"]
 
     def action_send_to_sign(self):
         self.ensure_one()
@@ -193,33 +158,12 @@ class ConstructionMeasurement(models.Model):
             ],
         )
 
-    def action_open_sign_template(self):
-        return _open_sign_template(self)
-
-    def action_open_signature_status(self):
-        self.ensure_one()
-        if self.sign_template_id:
-            return _open_sign_template(self)
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Signature"),
-                "message": _("This document has not been sent to Sign yet."),
-                "type": "info",
-                "sticky": False,
-            },
-        }
-
     def write(self, vals):
         previous = {rec.id: rec.signature_state for rec in self}
         res = super().write(vals)
         if self.env.context.get("skip_construction_sign_reset"):
             return res
-        meaningful = {
-            "contract_id", "contract_order_id", "date", "period_from", "period_to",
-            "prepared_by", "checked_by",
-        }
+        meaningful = {"contract_id", "contract_order_id", "date", "period_from", "period_to", "prepared_by", "checked_by"}
         if meaningful.intersection(vals):
             for rec in self:
                 if previous.get(rec.id) in ACTIVE_SIGNATURE_STATES:
@@ -228,11 +172,7 @@ class ConstructionMeasurement(models.Model):
 
 
 class ConstructionIPC(models.Model):
-    _inherit = "construction.ipc"
-
-    sign_template_id = fields.Many2one("sign.template", copy=False, readonly=True)
-    signature_state = fields.Selection(SIGNATURE_STATES, default="draft", tracking=True, copy=False)
-    revision = fields.Integer(default=0, tracking=True, copy=False)
+    _inherit = ["construction.ipc", "construction.sign.fields.mixin"]
 
     def action_send_to_sign(self):
         self.ensure_one()
@@ -250,24 +190,6 @@ class ConstructionIPC(models.Model):
             ],
         )
 
-    def action_open_sign_template(self):
-        return _open_sign_template(self)
-
-    def action_open_signature_status(self):
-        self.ensure_one()
-        if self.sign_template_id:
-            return _open_sign_template(self)
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Signature"),
-                "message": _("This document has not been sent to Sign yet."),
-                "type": "info",
-                "sticky": False,
-            },
-        }
-
     def write(self, vals):
         previous = {rec.id: rec.signature_state for rec in self}
         res = super().write(vals)
@@ -275,8 +197,7 @@ class ConstructionIPC(models.Model):
             return res
         meaningful = {
             "contract_id", "contract_order_id", "measurement_id", "ipc_date",
-            "period_from", "period_to", "deduct_advance", "deduct_retention_on_invoice",
-            "deduction_amount",
+            "period_from", "period_to", "deduct_advance", "deduct_retention_on_invoice", "deduction_amount",
         }
         if meaningful.intersection(vals):
             for rec in self:
@@ -289,8 +210,7 @@ class ConstructionContractBOQLine(models.Model):
     _inherit = "construction.contract.boq.line"
 
     def _reset_parent_contract_signatures(self, states=None, reason=None):
-        contracts = self.mapped("contract_id")
-        for contract in contracts:
+        for contract in self.mapped("contract_id"):
             expected = states.get(contract.id) if states else contract.signature_state
             if expected in ACTIVE_SIGNATURE_STATES:
                 _reset_signature(contract, reason or _("Contract BOQ changed after signing/sending."))
@@ -298,10 +218,8 @@ class ConstructionContractBOQLine(models.Model):
     def write(self, vals):
         states = {line.contract_id.id: line.contract_id.signature_state for line in self if line.contract_id}
         res = super().write(vals)
-        if self.env.context.get("skip_construction_sign_reset"):
-            return res
         meaningful = {"sequence", "display_type", "item_code", "description", "uom_id", "contract_qty", "unit_rate"}
-        if meaningful.intersection(vals):
+        if not self.env.context.get("skip_construction_sign_reset") and meaningful.intersection(vals):
             self._reset_parent_contract_signatures(states, _("Contract BOQ modified after signing/sending."))
         return res
 
@@ -359,7 +277,8 @@ class ConstructionIPCLine(models.Model):
     def write(self, vals):
         parents = {line.ipc_id.id: (line.ipc_id, line.ipc_id.signature_state) for line in self if line.ipc_id}
         res = super().write(vals)
-        if not self.env.context.get("skip_construction_sign_reset") and {"boq_line_id", "measurement_line_id", "previous_qty", "current_qty", "cumulative_qty", "unit_rate"}.intersection(vals):
+        meaningful = {"boq_line_id", "measurement_line_id", "previous_qty", "current_qty", "cumulative_qty", "unit_rate"}
+        if not self.env.context.get("skip_construction_sign_reset") and meaningful.intersection(vals):
             for parent, state in parents.values():
                 if state in ACTIVE_SIGNATURE_STATES:
                     _reset_signature(parent, _("IPC lines modified after signing/sending."))
