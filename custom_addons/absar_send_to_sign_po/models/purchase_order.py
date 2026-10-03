@@ -66,14 +66,17 @@ class PurchaseOrder(models.Model):
         template, workflow, status = self.env["absar.sign.workflow.service"].create_template(
             self,
             "purchase.report_purchaseorder",
-            _("Purchase Order"),
+            self.name,
             [
-                self.name,
                 self.partner_id.name,
                 self.material_request_id.name if hasattr(self, "material_request_id") and self.material_request_id else None,
                 self.project_id.name if self.project_id else None,
             ],
         )
+        # Keep the generated PDF/attachment aligned with the visible Sign template name.
+        if template.attachment_id:
+            template.attachment_id.sudo().name = f"{template.name}.pdf"
+
         self.with_context(skip_po_sign_reset=True).write({
             "sign_template_id": template.id,
             "signing_workflow_id": workflow.id,
