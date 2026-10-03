@@ -1,8 +1,5 @@
-import time
-
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
-from odoo.tools.safe_eval import safe_eval
 
 
 SIGNATURE_STATES = [
@@ -59,40 +56,6 @@ class PurchaseOrder(models.Model):
                     po._reset_signing(_("PO modified after signing/sending."))
         return res
 
-    def _get_purchase_report_filename(self):
-        """Return the exact filename configured on the Purchase Order report action.
-
-        This deliberately uses ir.actions.report.print_report_name as the single
-        source of truth, so changes made from Settings > Technical > Reports are
-        automatically reflected in Odoo Sign and the employee portal.
-        """
-        self.ensure_one()
-        report = self.env["ir.actions.report"].sudo().search([
-            ("model", "=", "purchase.order"),
-            ("report_name", "=", "purchase.report_purchaseorder"),
-        ], limit=1)
-        if not report:
-            report = self.env.ref("purchase.action_report_purchase_order", raise_if_not_found=False)
-        filename = False
-        if report and report.print_report_name:
-            try:
-                filename = safe_eval(
-                    report.print_report_name,
-                    {
-                        "object": self,
-                        "time": time,
-                        "user": self.env.user,
-                    },
-                )
-            except Exception:
-                # Signing must not fail merely because a custom report filename
-                # expression is temporarily invalid. Fall back to the PO number.
-                filename = False
-        filename = str(filename or self.name or self.display_name).strip()
-        if filename.lower().endswith(".pdf"):
-            filename = filename[:-4]
-        return filename
-
     def action_send_to_sign(self):
         self.ensure_one()
         if self.state != "purchase":
@@ -103,17 +66,14 @@ class PurchaseOrder(models.Model):
         template, workflow, status = self.env["absar.sign.workflow.service"].create_template(
             self,
             "purchase.report_purchaseorder",
-            _("PO"),
-            [self.name],  # Temporary fallback; replaced below by report print_report_name.
+            _("Purchase Order"),
+            [
+                self.name,
+                self.partner_id.name,
+                self.material_request_id.name if hasattr(self, "material_request_id") and self.material_request_id else None,
+                self.project_id.name if self.project_id else None,
+            ],
         )
-
-        # Use the Purchase Order report action's Printed Report Name verbatim.
-        # This keeps PDF, Sign template/request and portal naming in sync with
-        # whatever is configured in Settings > Technical > Reports.
-        report_filename = self._get_purchase_report_filename()
-        if template.attachment_id:
-            template.attachment_id.sudo().write({"name": f"{report_filename}.pdf"})
-        template.sudo().write({"name": report_filename})
         self.with_context(skip_po_sign_reset=True).write({
             "sign_template_id": template.id,
             "signing_workflow_id": workflow.id,
@@ -205,18 +165,6 @@ class PurchaseOrder(models.Model):
         return True
 
     @api.model
-    def _absar_backfill_po_sign_request_names(self):
-        """Force existing PO Sign requests to use the report Printed Report Name."""
-        requests = self.env["sign.request"].sudo().search([
-            ("template_id.absar_source_model", "=", "purchase.order"),
-        ])
-        for sign_request in requests:
-            reference = sign_request._absar_po_report_reference()
-            if reference and "reference" in sign_request._fields and sign_request.reference != reference:
-                sign_request.write({"reference": reference})
-        return True
-
-    @api.model
     def _cron_sync_sign_status(self):
         records = self.search([
             ("sign_template_id", "!=", False),
@@ -257,47 +205,3 @@ class PurchaseOrderLine(models.Model):
                 if state in ACTIVE_SIGNATURE_STATES:
                     order._reset_signing(_("PO line removed after signing/sending."))
         return res
-
-
-class SignRequest(models.Model):
-    _inherit = "sign.request"
-
-    def _absar_po_report_reference(self):
-        self.ensure_one()
-        template = self.template_id
-        if not template or getattr(template, "absar_source_model", False) != "purchase.order":
-            return False
-        source_id = getattr(template, "absar_source_id", 0)
-        po = self.env["purchase.order"].sudo().browse(source_id).exists()
-        if not po:
-            return False
-        return po._get_purchase_report_filename()
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        requests = super().create(vals_list)
-        for sign_request in requests:
-            reference = sign_request._absar_po_report_reference()
-            if reference and "reference" in sign_request._fields and sign_request.reference != reference:
-                super(SignRequest, sign_request.sudo()).write({"reference": reference})
-        return requests
-
-    def write(self, vals):
-        vals = dict(vals)
-        # Odoo Sign can write a short source reference (for example ``PO 244``)
-        # after the request is created.  For PO-originated requests, always keep
-        # the Purchase Order report's Printed Report Name as the canonical title.
-        po_requests = self.filtered(lambda r: r._absar_po_report_reference())
-        other_requests = self - po_requests
-        result = True
-        if po_requests:
-            # Requests can belong to different POs, so write one by one.
-            for sign_request in po_requests:
-                request_vals = dict(vals)
-                reference = sign_request._absar_po_report_reference()
-                if reference and "reference" in sign_request._fields:
-                    request_vals["reference"] = reference
-                result = super(SignRequest, sign_request).write(request_vals) and result
-        if other_requests:
-            result = super(SignRequest, other_requests).write(vals) and result
-        return result

@@ -624,18 +624,7 @@ class SignRequest(models.Model):
         requests = super().create(vals_list)
         for request in requests:
             template = request.template_id
-            if not template:
-                continue
-
-            # The Sign kanban/list uses sign.request.reference as its document
-            # title.  ABSAR templates already carry the canonical report/document
-            # filename, so keep the request reference synchronized with it instead
-            # of allowing Odoo to fall back to a short source name such as PO 243.
-            if template.absar_workflow_id and "reference" in request._fields and template.name:
-                if request.reference != template.name:
-                    request.sudo().write({"reference": template.name})
-
-            if not template.absar_source_model or not template.absar_source_id:
+            if not template or not template.absar_source_model or not template.absar_source_id:
                 continue
             if template.absar_source_model not in self.env:
                 continue
@@ -643,22 +632,6 @@ class SignRequest(models.Model):
             if source and "sign_request_id" in source._fields:
                 source.write({"sign_request_id": request.id})
         return requests
-
-    @api.model
-    def _absar_backfill_request_references(self):
-        """Synchronize existing ABSAR Sign request titles with templates.
-
-        This fixes requests created by earlier versions where the template had
-        the full report filename but the Sign request card displayed only a
-        short source reference such as ``PO 243``.
-        """
-        requests = self.sudo().search([("template_id.absar_workflow_id", "!=", False)])
-        for sign_request in requests:
-            template = sign_request.template_id
-            if template and template.name and "reference" in sign_request._fields:
-                if sign_request.reference != template.name:
-                    sign_request.write({"reference": template.name})
-        return True
 
     def write(self, vals):
         res = super().write(vals)

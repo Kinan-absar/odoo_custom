@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <function model="absar.sign.workflow" name="_relocate_menu_into_sign_configuration"/>
-    <function model="sign.request" name="_absar_backfill_request_references"/>
 </odoo>
