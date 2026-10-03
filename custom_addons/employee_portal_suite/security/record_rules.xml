@@ -8,14 +8,14 @@
         <field name="name">Employee Request: Employee Own Records</field>
         <field name="model_id" ref="model_employee_request"/>
         <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_employee')])]"/>
-        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('employee_id.user_id', '=', user.id)]</field>
+        <field name="domain_force">[(1, '=', 1)] if (user.has_group('employee_portal_suite.group_employee_portal_admin') or user.has_group('employee_portal_suite.group_employee_portal_superadmin')) else [('employee_id.user_id', '=', user.id)]</field>
     </record>
 
     <record id="employee_request_manager_rule" model="ir.rule">
         <field name="name">Employee Request: Manager Own + Subordinates</field>
         <field name="model_id" ref="model_employee_request"/>
         <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_manager')])]"/>
-        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else ['|', ('manager_id.user_id', '=', user.id), ('employee_id.user_id', '=', user.id)]</field>
+        <field name="domain_force">[(1, '=', 1)] if (user.has_group('employee_portal_suite.group_employee_portal_admin') or user.has_group('employee_portal_suite.group_employee_portal_superadmin')) else ['|', ('manager_id.user_id', '=', user.id), ('employee_id.user_id', '=', user.id)]</field>
     </record>
 
     <!-- Broad functional roles widen visibility even when the same user is also Manager/Employee. -->
@@ -47,6 +47,13 @@
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
+    <record id="employee_request_superadmin_rule" model="ir.rule">
+        <field name="name">Employee Request: Super Administrator All Records</field>
+        <field name="model_id" ref="model_employee_request"/>
+        <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_superadmin')])]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
     <!-- ========================================================= -->
     <!-- MATERIAL REQUESTS: role scopes are ADDITIVE (group rules OR) -->
     <!-- ========================================================= -->
@@ -54,7 +61,7 @@
         <field name="name">Material Request: Employee Own Records</field>
         <field name="model_id" ref="model_material_request"/>
         <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_employee')])]"/>
-        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('employee_id.user_id', '=', user.id)]</field>
+        <field name="domain_force">[(1, '=', 1)] if (user.has_group('employee_portal_suite.group_employee_portal_admin') or user.has_group('employee_portal_suite.group_employee_portal_superadmin')) else [('employee_id.user_id', '=', user.id)]</field>
     </record>
 
     <record id="material_request_purchase_rule" model="ir.rule">
@@ -68,14 +75,14 @@
         <field name="name">Material Request: Assigned Store Manager</field>
         <field name="model_id" ref="model_material_request"/>
         <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_store_manager')])]"/>
-        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('store_manager_user_id', '=', user.id)]</field>
+        <field name="domain_force">[(1, '=', 1)] if (user.has_group('employee_portal_suite.group_employee_portal_admin') or user.has_group('employee_portal_suite.group_employee_portal_superadmin')) else [('store_manager_user_id', '=', user.id)]</field>
     </record>
 
     <record id="material_request_project_manager_rule" model="ir.rule">
         <field name="name">Material Request: Assigned Project Manager</field>
         <field name="model_id" ref="model_material_request"/>
         <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_project_manager')])]"/>
-        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('project_manager_user_id', '=', user.id)]</field>
+        <field name="domain_force">[(1, '=', 1)] if (user.has_group('employee_portal_suite.group_employee_portal_admin') or user.has_group('employee_portal_suite.group_employee_portal_superadmin')) else [('project_manager_user_id', '=', user.id)]</field>
     </record>
 
     <record id="material_request_director_rule" model="ir.rule">
@@ -111,7 +118,7 @@
         <field name="name">Material Request Line: Employee Own Records</field>
         <field name="model_id" ref="model_material_request_line"/>
         <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_employee')])]"/>
-        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('request_id.employee_id.user_id', '=', user.id)]</field>
+        <field name="domain_force">[(1, '=', 1)] if (user.has_group('employee_portal_suite.group_employee_portal_admin') or user.has_group('employee_portal_suite.group_employee_portal_superadmin')) else [('request_id.employee_id.user_id', '=', user.id)]</field>
     </record>
 
     <record id="material_request_line_purchase_rule" model="ir.rule">
@@ -125,14 +132,14 @@
         <field name="name">Material Request Line: Assigned Store Manager</field>
         <field name="model_id" ref="model_material_request_line"/>
         <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_store_manager')])]"/>
-        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('request_id.store_manager_user_id', '=', user.id)]</field>
+        <field name="domain_force">[(1, '=', 1)] if (user.has_group('employee_portal_suite.group_employee_portal_admin') or user.has_group('employee_portal_suite.group_employee_portal_superadmin')) else [('request_id.store_manager_user_id', '=', user.id)]</field>
     </record>
 
     <record id="material_request_line_project_manager_rule" model="ir.rule">
         <field name="name">Material Request Line: Assigned Project Manager</field>
         <field name="model_id" ref="model_material_request_line"/>
         <field name="groups" eval="[(6, 0, [ref('employee_portal_suite.group_mr_project_manager')])]"/>
-        <field name="domain_force">[(1, '=', 1)] if user.has_group('employee_portal_suite.group_employee_portal_admin') else [('request_id.project_manager_user_id', '=', user.id)]</field>
+        <field name="domain_force">[(1, '=', 1)] if (user.has_group('employee_portal_suite.group_employee_portal_admin') or user.has_group('employee_portal_suite.group_employee_portal_superadmin')) else [('request_id.project_manager_user_id', '=', user.id)]</field>
     </record>
 
     <record id="material_request_line_director_rule" model="ir.rule">

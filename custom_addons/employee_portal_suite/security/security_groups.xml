@@ -64,8 +64,8 @@
     <record id="group_employee_portal_superadmin" model="res.groups">
         <field name="name">Employee Portal: Super Administrator</field>
         <field name="category_id" ref="employee_portal_suite.module_category_employee_portal_suite"/>
-        <field name="implied_ids" eval="[(6, 0, [ref('employee_portal_suite.group_employee_portal_admin')])]"/>
-        <field name="comment">Sensitive Employee Portal administration: Roles &amp; Permissions and protected configuration.</field>
+        <field name="implied_ids" eval="[(6, 0, [])]"/>
+        <field name="comment">Independent sensitive Employee Portal administration: Roles &amp; Permissions, protected configuration, full ER/MR visibility, and workflow override. Does not imply Administrator.</field>
     </record>
 
 

@@ -163,11 +163,11 @@
                                     <!-- Readonly for normal portal employees -->
                                     <field name="employee_id"
                                         readonly="1"
-                                        groups="employee_portal_suite.group_employee_portal_employee,!employee_portal_suite.group_employee_portal_admin"/>
+                                        groups="employee_portal_suite.group_employee_portal_employee,!employee_portal_suite.group_employee_portal_admin,!employee_portal_suite.group_employee_portal_superadmin"/>
 
                                     <!-- Editable ONLY for Portal Admins -->
                                     <field name="employee_id"
-                                        groups="employee_portal_suite.group_employee_portal_admin"/>
+                                        groups="employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
                                     <field name="available_project_ids" invisible="1"/>
                                     <field name="project_selection_locked" invisible="1"/>
                                     <field name="project_id"
