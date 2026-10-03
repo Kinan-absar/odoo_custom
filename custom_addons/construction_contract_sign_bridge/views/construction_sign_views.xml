@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="construction_contract_form_sign_bridge" model="ir.ui.view">
+        <field name="name">construction.contract.form.sign.bridge</field>
+        <field name="model">construction.contract</field>
+        <field name="inherit_id" ref="construction_contract_management.view_construction_contract_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/field[@name='state']" position="before">
+                <field name="sign_template_id" invisible="1"/>
+                <field name="revision" invisible="1"/>
+                <button name="action_send_to_sign" string="Send to Sign" type="object" class="btn-primary" icon="fa-pencil-square-o"
+                        invisible="state not in ['approved','active','completed','closed'] or signature_state != 'draft'"/>
+                <button name="action_open_sign_template" string="Open Sign" type="object" class="btn-secondary"
+                        invisible="not sign_template_id"/>
+                <field name="signature_state" widget="badge" readonly="1"/>
+            </xpath>
+            <xpath expr="//h1" position="after">
+                <div class="text-muted" invisible="revision == 0">
+                    <span>Revision R</span><field name="revision" nolabel="1" readonly="1"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="construction_measurement_form_sign_bridge" model="ir.ui.view">
+        <field name="name">construction.measurement.form.sign.bridge</field>
+        <field name="model">construction.measurement</field>
+        <field name="inherit_id" ref="construction_contract_management.view_construction_measurement_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/field[@name='state']" position="before">
+                <field name="sign_template_id" invisible="1"/>
+                <field name="revision" invisible="1"/>
+                <button name="action_send_to_sign" string="Send to Sign" type="object" class="btn-primary" icon="fa-pencil-square-o"
+                        invisible="state != 'approved' or signature_state != 'draft'"/>
+                <button name="action_open_sign_template" string="Open Sign" type="object" class="btn-secondary"
+                        invisible="not sign_template_id"/>
+                <field name="signature_state" widget="badge" readonly="1"/>
+            </xpath>
+            <xpath expr="//h1" position="after">
+                <div class="text-muted" invisible="revision == 0">
+                    <span>Revision R</span><field name="revision" nolabel="1" readonly="1"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="construction_ipc_form_sign_bridge" model="ir.ui.view">
+        <field name="name">construction.ipc.form.sign.bridge</field>
+        <field name="model">construction.ipc</field>
+        <field name="inherit_id" ref="construction_contract_management.view_construction_ipc_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/field[@name='state']" position="before">
+                <field name="sign_template_id" invisible="1"/>
+                <field name="revision" invisible="1"/>
+                <button name="action_send_to_sign" string="Send to Sign" type="object" class="btn-primary" icon="fa-pencil-square-o"
+                        invisible="state not in ['approved','done'] or signature_state != 'draft'"/>
+                <button name="action_open_sign_template" string="Open Sign" type="object" class="btn-secondary"
+                        invisible="not sign_template_id"/>
+                <field name="signature_state" widget="badge" readonly="1"/>
+            </xpath>
+            <xpath expr="//h1" position="after">
+                <div class="text-muted" invisible="revision == 0">
+                    <span>Revision R</span><field name="revision" nolabel="1" readonly="1"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="construction_contract_list_sign_bridge" model="ir.ui.view">
+        <field name="name">construction.contract.list.sign.bridge</field>
+        <field name="model">construction.contract</field>
+        <field name="inherit_id" ref="construction_contract_management.view_construction_contract_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="signature_state" widget="badge" optional="show"/>
+                <field name="revision" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="construction_measurement_list_sign_bridge" model="ir.ui.view">
+        <field name="name">construction.measurement.list.sign.bridge</field>
+        <field name="model">construction.measurement</field>
+        <field name="inherit_id" ref="construction_contract_management.view_construction_measurement_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="signature_state" widget="badge" optional="show"/>
+                <field name="revision" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="construction_ipc_list_sign_bridge" model="ir.ui.view">
+        <field name="name">construction.ipc.list.sign.bridge</field>
+        <field name="model">construction.ipc</field>
+        <field name="inherit_id" ref="construction_contract_management.view_construction_ipc_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="signature_state" widget="badge" optional="show"/>
+                <field name="revision" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

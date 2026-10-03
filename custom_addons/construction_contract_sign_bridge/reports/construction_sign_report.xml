@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="report_contract_sign_revision" inherit_id="construction_contract_management.report_construction_contract">
+        <xpath expr="//div[contains(@class, 'report-title-side')]" position="inside">
+            <div t-if="doc.revision" style="margin-top:5px; font-size:10px;">Revision R<span t-esc="doc.revision"/></div>
+        </xpath>
+    </template>
+
+    <template id="report_measurement_sign_revision" inherit_id="construction_contract_management.report_construction_measurement">
+        <xpath expr="//div[contains(@class, 'report-title-side')]" position="inside">
+            <div t-if="doc.revision" style="margin-top:5px; font-size:10px;">Revision R<span t-esc="doc.revision"/></div>
+        </xpath>
+    </template>
+
+    <template id="report_ipc_sign_revision" inherit_id="construction_contract_management.report_construction_ipc">
+        <xpath expr="//div[contains(@class, 'report-title-side')]" position="inside">
+            <div t-if="doc.revision" style="margin-top:5px; font-size:10px;">Revision R<span t-esc="doc.revision"/></div>
+        </xpath>
+    </template>
+</odoo>
