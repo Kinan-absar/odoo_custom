@@ -74,6 +74,12 @@
                             </div>
                         </div>
                         <div class="col-6">
+                            <div class="text-muted">Project</div>
+                            <div class="fw-semibold">
+                                <t t-out="request_rec.project_id.display_name or '-'"/>
+                            </div>
+                        </div>
+                        <div class="col-6">
                             <div class="text-muted">Worksite</div>
                             <div class="fw-semibold">
                                 <t t-out="request_rec.worksite"/>

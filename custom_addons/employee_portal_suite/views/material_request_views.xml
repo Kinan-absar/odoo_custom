@@ -313,6 +313,7 @@
             <list js_class="material_request_dashboard_list">
                 <field name="name"/>
                 <field name="employee_id"/>
+                <field name="project_id" string="Project" optional="show"/>
                 <field name="request_date"/>
                 <field name="worksite"/>
                 <field name="delivery_date"/>
@@ -382,9 +383,11 @@
             <search>
                 <field name="name"/>
                 <field name="employee_id"/>
+                <field name="project_id" string="Project"/>
                 <field name="worksite"/>
                 <field name="state"/>
                 <field name="accounting_docs_status"/>
+                <filter string="Project" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="PO Required" name="po_required" domain="[('no_po_required','=',False)]"/>
                 <filter string="No PO Required" name="no_po_required" domain="[('no_po_required','=',True)]"/>
                 <filter string="Invoice Submitted" name="docs_submitted" domain="[('accounting_docs_status','=','submitted')]"/>

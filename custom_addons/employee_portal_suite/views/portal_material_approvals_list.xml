@@ -65,21 +65,23 @@
                 <table class="table table-hover table-sm align-middle mb-0 material-approvals-table">
                     <!-- One fixed column definition is shared by Pending, Approved, Rejected and All. -->
                     <colgroup>
-                        <col style="width: 7.5%;"/>
-                        <col style="width: 20%;"/>
-                        <col style="width: 25%;"/>
+                        <col style="width: 7%;"/>
+                        <col style="width: 15%;"/>
+                        <col style="width: 14%;"/>
+                        <col style="width: 16%;"/>
                         <col style="width: 9%;"/>
                         <col style="width: 8%;"/>
-                        <col style="width: 13%;"/>
-                        <col style="width: 10%;"/>
+                        <col style="width: 11%;"/>
+                        <col style="width: 9%;"/>
                         <col style="width: 5%;"/>
-                        <col style="width: 7.5%;"/>
+                        <col style="width: 6%;"/>
                     </colgroup>
 
                     <thead class="table-light">
                         <tr>
                             <th>Request #</th>
                             <th>Employee</th>
+                            <th>Project</th>
                             <th>Worksite</th>
                             <th>Status</th>
                             <th>PO</th>
@@ -100,6 +102,7 @@
                                     </td>
 
                                     <td><t t-out="req.employee_id.name"/></td>
+                                    <td><t t-out="req.project_id.display_name or '-'"/></td>
                                     <td><t t-out="req.worksite"/></td>
 
                                     <td>
@@ -148,7 +151,7 @@
 
                         <t t-if="not shown_reqs">
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">
+                                <td colspan="10" class="text-center text-muted py-4">
                                     No Requests Found.
                                 </td>
                             </tr>
@@ -185,6 +188,11 @@
                             </div>
 
                             <div class="mobile-request-body">
+
+                                <div>
+                                    <span class="label">Project</span>
+                                    <div><t t-out="req.project_id.display_name or '-'"/></div>
+                                </div>
 
                                 <div>
                                     <span class="label">Worksite</span>
