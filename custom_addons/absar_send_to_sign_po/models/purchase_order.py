@@ -66,7 +66,7 @@ class PurchaseOrder(models.Model):
         template, workflow, status = self.env["absar.sign.workflow.service"].create_template(
             self,
             "purchase.report_purchaseorder",
-            _("Purchase Order"),
+            _("PO"),
             [
                 self.name,
                 self.partner_id.name,
