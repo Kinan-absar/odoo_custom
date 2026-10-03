@@ -81,9 +81,8 @@ def _open_signature(record):
     }
 
 
-class ConstructionSignFieldsMixin(models.AbstractModel):
-    _name = "construction.sign.fields.mixin"
-    _description = "Construction Sign Fields Mixin"
+class ConstructionContract(models.Model):
+    _inherit = "construction.contract"
 
     sign_template_id = fields.Many2one("sign.template", copy=False, readonly=True)
     signing_workflow_id = fields.Many2one("absar.sign.workflow", copy=False, readonly=True)
@@ -96,9 +95,6 @@ class ConstructionSignFieldsMixin(models.AbstractModel):
     def action_open_signature_status(self):
         return _open_signature(self)
 
-
-class ConstructionContract(models.Model):
-    _inherit = ["construction.contract", "construction.sign.fields.mixin"]
 
     def action_send_to_sign(self):
         self.ensure_one()
@@ -140,7 +136,19 @@ class ConstructionContract(models.Model):
 
 
 class ConstructionMeasurement(models.Model):
-    _inherit = ["construction.measurement", "construction.sign.fields.mixin"]
+    _inherit = "construction.measurement"
+
+    sign_template_id = fields.Many2one("sign.template", copy=False, readonly=True)
+    signing_workflow_id = fields.Many2one("absar.sign.workflow", copy=False, readonly=True)
+    signature_state = fields.Selection(SIGNATURE_STATES, default="draft", tracking=True, copy=False)
+    signature_status_text = fields.Char(default="Not Sent", copy=False, readonly=True)
+    signature_completed_count = fields.Integer(default=0, copy=False, readonly=True)
+    signature_total_count = fields.Integer(default=0, copy=False, readonly=True)
+    revision = fields.Integer(default=0, tracking=True, copy=False)
+
+    def action_open_signature_status(self):
+        return _open_signature(self)
+
 
     def action_send_to_sign(self):
         self.ensure_one()
@@ -172,7 +180,19 @@ class ConstructionMeasurement(models.Model):
 
 
 class ConstructionIPC(models.Model):
-    _inherit = ["construction.ipc", "construction.sign.fields.mixin"]
+    _inherit = "construction.ipc"
+
+    sign_template_id = fields.Many2one("sign.template", copy=False, readonly=True)
+    signing_workflow_id = fields.Many2one("absar.sign.workflow", copy=False, readonly=True)
+    signature_state = fields.Selection(SIGNATURE_STATES, default="draft", tracking=True, copy=False)
+    signature_status_text = fields.Char(default="Not Sent", copy=False, readonly=True)
+    signature_completed_count = fields.Integer(default=0, copy=False, readonly=True)
+    signature_total_count = fields.Integer(default=0, copy=False, readonly=True)
+    revision = fields.Integer(default=0, tracking=True, copy=False)
+
+    def action_open_signature_status(self):
+        return _open_signature(self)
+
 
     def action_send_to_sign(self):
         self.ensure_one()
