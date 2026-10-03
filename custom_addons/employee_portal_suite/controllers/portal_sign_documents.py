@@ -116,7 +116,15 @@ class EmployeePortalSignDocs(CustomerPortal):
                 "date": req.create_date.date(),
                 "your_status": self._compute_personal_status(item),
                 "workflow_status": self._compute_workflow_status(req),
-                "sign_url": item._get_share_url(),
+                # Use the canonical Odoo Sign document route explicitly.
+                # _get_share_url() can resolve to portal/list routes depending on
+                # context, which made the Employee Portal Sign button appear to
+                # do nothing for some request items.
+                "sign_url": (
+                    "/sign/document/%s/%s?portal=1"
+                    % (req.id, item.access_token)
+                    if item.access_token else False
+                ),
                 "access_token": item.access_token,
             })
 
