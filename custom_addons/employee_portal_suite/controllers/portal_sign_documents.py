@@ -36,19 +36,11 @@ class EmployeePortalSignDocs(CustomerPortal):
         if canceled:
             return f"🔴 Rejected by {canceled.partner_id.name}"
 
-        # Prefer Odoo Sign's actual active signer.  With Signing Order enabled
-        # the active request item is ``sent`` while later signers stay ``draft``.
-        # Keep an ordered incomplete fallback for legacy/non-sequential requests.
-        active_items = items.filtered(lambda it: it.state == "sent")
-        next_item = active_items.sorted(lambda x: (x.mail_sent_order or 0, x.id))[:1]
-        if not next_item:
-            items_sorted = items.sorted(lambda x: (x.mail_sent_order or 0, x.id))
-            next_item = next((
-                it for it in items_sorted
-                if it.state not in ("completed", "canceled")
-            ), None)
-        elif hasattr(next_item, 'ensure_one'):
-            next_item = next_item[:1]
+        # correct signing order → mail_sent_order
+        items_sorted = items.sorted(lambda x: x.mail_sent_order or 0)
+
+        # find the next signer
+        next_item = next((it for it in items_sorted if it.state not in ("completed", "canceled")), None)
 
         if next_item:
             current_user_partner = request.env.user.partner_id
@@ -59,27 +51,6 @@ class EmployeePortalSignDocs(CustomerPortal):
                 return f"⏳ Waiting: {next_item.partner_id.name}"
 
         return "⚪ Unknown"
-
-    @http.route('/my/employee/sign/open/<int:item_id>', type='http', auth='user', website=True)
-    def portal_employee_sign_open(self, item_id, **kwargs):
-        """Open the current user's active Odoo Sign item only.
-
-        Sequential signing must be enforced server-side, not just by hiding the
-        button. Future signers remain in ``draft`` and cannot be opened until
-        Odoo Sign advances their item to ``sent``.
-        """
-        user = request.env.user
-        if not user.share:
-            return request.redirect('/web')
-        item = request.env['sign.request.item'].sudo().browse(item_id).exists()
-        if not item or item.partner_id != user.partner_id:
-            return request.not_found()
-        if item.state != 'sent':
-            return request.redirect('/my/employee/sign?filter=pending')
-        share_url = item._get_share_url()
-        if not share_url:
-            return request.redirect('/my/employee/sign?filter=pending')
-        return request.redirect(share_url)
 
     # -------------------------------
     # Main route
@@ -108,16 +79,22 @@ class EmployeePortalSignDocs(CustomerPortal):
                     continue
 
             # -------------------------
+            # SIGNING ORDER LOGIC
+            # -------------------------
+            items_sorted = req.request_item_ids.sorted(
+                lambda x: x.mail_sent_order or 0
+            )
+
+            first_pending = next((
+                it for it in items_sorted
+                if it.state not in ("completed", "canceled")
+            ), None)
+
+            # -------------------------
             # FILTER LOGIC
             # -------------------------
-            # Odoo Sign owns the signing-order state machine.  For sequential
-            # requests the currently active signer is the request item whose
-            # state is ``sent``; future signers normally remain ``draft`` until
-            # their turn.  Trust that state instead of trying to reconstruct the
-            # sequence in the portal, otherwise a valid portal signer can vanish
-            # from Pending when Odoo changes how mail_sent_order is populated.
             if filter == "pending":
-                if item.state != "sent":
+                if not first_pending or first_pending.id != item.id:
                     continue
 
             elif filter == "signed":
@@ -137,11 +114,7 @@ class EmployeePortalSignDocs(CustomerPortal):
                 "date": req.create_date.date(),
                 "your_status": self._compute_personal_status(item),
                 "workflow_status": self._compute_workflow_status(req),
-                # Route through our server-side gate.  It verifies both that
-                # the item belongs to this portal user and that Odoo Sign has
-                # advanced it to ``sent`` before redirecting to Odoo's own
-                # canonical share URL.
-                "sign_url": "/my/employee/sign/open/%s" % item.id,
+                "sign_url": item._get_share_url(),
                 "access_token": item.access_token,
             })
 
