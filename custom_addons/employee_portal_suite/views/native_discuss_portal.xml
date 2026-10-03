@@ -352,8 +352,6 @@
         <xpath expr="//head" position="inside">
             <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/')" name="employee-portal-discuss" content="1"/>
             <meta t-if="request.params.get('embedded')" name="employee-portal-discuss-embedded" content="1"/>
-            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/') and employee_portal_channel_type" name="employee-portal-channel-type" t-att-content="employee_portal_channel_type"/>
-            <meta t-if="request.httprequest.path.startswith('/my/employee/discuss/channel/') and employee_portal_can_leave_group" name="employee-portal-can-leave-group" content="1"/>
             <!-- Server-rendered, so the bottom mobile Chat/Channel tab bar inside an opened
                  conversation is hidden immediately from the HTML itself. This does not rely on
                  any JS-added body class, so it still applies even if the frontend JS assets fail. -->

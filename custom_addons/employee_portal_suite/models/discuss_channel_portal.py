@@ -162,17 +162,6 @@ class DiscussChannel(models.Model):
         return result
 
 
-
-    def action_employee_portal_delete_group(self):
-        """Backend-only hard delete for Employee Portal group conversations."""
-        if self.env.user.share:
-            raise AccessError(_('Only internal users can delete group conversations.'))
-        groups = self.filtered(lambda channel: channel.channel_type == 'group')
-        if groups != self:
-            raise AccessError(_('Only group conversations can be deleted with this action.'))
-        groups.sudo().unlink()
-        return {'type': 'ir.actions.act_window_close'}
-
     @api.model
     @api.returns('self', lambda channels: Store(channels).get_result())
     def create_group(self, partners_to, default_display_mode=False, name=''):
