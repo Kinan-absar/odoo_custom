@@ -266,7 +266,7 @@ class AbsarSignWorkflowService(models.AbstractModel):
             row = index % 5
             col = min(index // 5, 2)
             base_x = 0.04 + (0.31 * col)
-            base_y = 0.035 + (0.185 * row)
+            base_y = 0.035 + (0.145 * row)
 
             common = {
                 "template_id": template.id,
@@ -279,8 +279,8 @@ class AbsarSignWorkflowService(models.AbstractModel):
                 **common,
                 "type_id": signature_type.id,
                 "posY": base_y,
-                "width": 0.25,
-                "height": 0.065,
+                "width": 0.18,
+                "height": 0.045,
                 "name": _("%(seq)s. %(role)s - Signature") % {
                     "seq": index + 1,
                     "role": step.name,
@@ -289,9 +289,9 @@ class AbsarSignWorkflowService(models.AbstractModel):
             SignItem.create({
                 **common,
                 "type_id": date_type.id,
-                "posY": base_y + 0.072,
-                "width": 0.16,
-                "height": 0.035,
+                "posY": base_y + 0.052,
+                "width": 0.10,
+                "height": 0.020,
                 "name": _("%(seq)s. %(role)s - Date") % {
                     "seq": index + 1,
                     "role": step.name,
