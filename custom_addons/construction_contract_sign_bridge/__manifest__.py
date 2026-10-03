@@ -1,6 +1,6 @@
 {
     "name": "Construction Contract Send to Sign Bridge",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.0.1",
     "summary": "Send Construction Contracts, Measurements and IPCs to Odoo Sign",
     "description": """
 Bridge between Construction Contract Management and Send to Sign for Purchase Orders.

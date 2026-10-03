@@ -10,9 +10,12 @@
                 <field name="revision" invisible="1"/>
                 <button name="action_send_to_sign" string="Send to Sign" type="object" class="btn-primary" icon="fa-pencil-square-o"
                         invisible="state not in ['approved','active','completed','closed'] or signature_state != 'draft'"/>
-                <button name="action_open_sign_template" string="Open Sign" type="object" class="btn-secondary"
-                        invisible="not sign_template_id"/>
-                <field name="signature_state" widget="badge" readonly="1"/>
+                <field name="signature_state" invisible="1" readonly="1"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_open_signature_status" type="object" class="oe_stat_button" icon="fa-pencil-square-o">
+                    <field name="signature_state" widget="statinfo" string="Signature"/>
+                </button>
             </xpath>
             <xpath expr="//h1" position="after">
                 <div class="text-muted" invisible="revision == 0">
@@ -32,9 +35,14 @@
                 <field name="revision" invisible="1"/>
                 <button name="action_send_to_sign" string="Send to Sign" type="object" class="btn-primary" icon="fa-pencil-square-o"
                         invisible="state != 'approved' or signature_state != 'draft'"/>
-                <button name="action_open_sign_template" string="Open Sign" type="object" class="btn-secondary"
-                        invisible="not sign_template_id"/>
-                <field name="signature_state" widget="badge" readonly="1"/>
+                <field name="signature_state" invisible="1" readonly="1"/>
+            </xpath>
+            <xpath expr="//sheet/div[contains(@class, 'oe_title')]" position="before">
+                <div class="oe_button_box" name="button_box">
+                    <button name="action_open_signature_status" type="object" class="oe_stat_button" icon="fa-pencil-square-o">
+                        <field name="signature_state" widget="statinfo" string="Signature"/>
+                    </button>
+                </div>
             </xpath>
             <xpath expr="//h1" position="after">
                 <div class="text-muted" invisible="revision == 0">
@@ -54,9 +62,12 @@
                 <field name="revision" invisible="1"/>
                 <button name="action_send_to_sign" string="Send to Sign" type="object" class="btn-primary" icon="fa-pencil-square-o"
                         invisible="state not in ['approved','done'] or signature_state != 'draft'"/>
-                <button name="action_open_sign_template" string="Open Sign" type="object" class="btn-secondary"
-                        invisible="not sign_template_id"/>
-                <field name="signature_state" widget="badge" readonly="1"/>
+                <field name="signature_state" invisible="1" readonly="1"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_open_signature_status" type="object" class="oe_stat_button" icon="fa-pencil-square-o">
+                    <field name="signature_state" widget="statinfo" string="Signature"/>
+                </button>
             </xpath>
             <xpath expr="//h1" position="after">
                 <div class="text-muted" invisible="revision == 0">

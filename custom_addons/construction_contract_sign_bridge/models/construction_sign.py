@@ -36,7 +36,7 @@ def _create_sign_template(record, report_xmlid, document_label, filename_parts):
     if record.signature_state != "draft":
         raise UserError(_("This document has already been sent to Sign. Modify the document first if a new revision is required."))
 
-    pdf_content, _ = record.env["ir.actions.report"]._render_qweb_pdf(
+    pdf_content, pdf_format = record.env["ir.actions.report"]._render_qweb_pdf(
         report_xmlid,
         record.ids,
     )
@@ -106,6 +106,21 @@ class ConstructionContract(models.Model):
 
     def action_open_sign_template(self):
         return _open_sign_template(self)
+
+    def action_open_signature_status(self):
+        self.ensure_one()
+        if self.sign_template_id:
+            return _open_sign_template(self)
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Signature"),
+                "message": _("This document has not been sent to Sign yet."),
+                "type": "info",
+                "sticky": False,
+            },
+        }
 
     def write(self, vals):
         previous = {rec.id: rec.signature_state for rec in self}
@@ -181,6 +196,21 @@ class ConstructionMeasurement(models.Model):
     def action_open_sign_template(self):
         return _open_sign_template(self)
 
+    def action_open_signature_status(self):
+        self.ensure_one()
+        if self.sign_template_id:
+            return _open_sign_template(self)
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Signature"),
+                "message": _("This document has not been sent to Sign yet."),
+                "type": "info",
+                "sticky": False,
+            },
+        }
+
     def write(self, vals):
         previous = {rec.id: rec.signature_state for rec in self}
         res = super().write(vals)
@@ -222,6 +252,21 @@ class ConstructionIPC(models.Model):
 
     def action_open_sign_template(self):
         return _open_sign_template(self)
+
+    def action_open_signature_status(self):
+        self.ensure_one()
+        if self.sign_template_id:
+            return _open_sign_template(self)
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Signature"),
+                "message": _("This document has not been sent to Sign yet."),
+                "type": "info",
+                "sticky": False,
+            },
+        }
 
     def write(self, vals):
         previous = {rec.id: rec.signature_state for rec in self}
