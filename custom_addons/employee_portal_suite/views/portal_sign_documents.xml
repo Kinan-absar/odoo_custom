@@ -3,144 +3,95 @@
 <template id="portal_sign_documents_page">
     <t t-call="employee_portal_suite.employee_portal_layout">
         <style>
-            .ep-sign-page { max-width: 1500px; margin: 0 auto; padding: 26px 18px 48px; }
-            .ep-sign-head { display:flex; justify-content:space-between; align-items:flex-end; gap:18px; margin-bottom:18px; }
-            .ep-sign-title { font-size:30px; line-height:1.15; font-weight:750; margin:0; color:#171c2d; }
-            .ep-sign-subtitle { color:#7b8496; margin-top:5px; font-size:14px; }
-            .ep-sign-filters { display:flex; gap:8px; flex-wrap:wrap; }
-            .ep-sign-filter { border:1px solid #dfe3ea; background:#fff; color:#495267; padding:8px 15px; border-radius:999px; font-weight:650; text-decoration:none; transition:.18s ease; }
-            .ep-sign-filter:hover { border-color:#8d6b86; color:#714b67; background:#faf7f9; }
-            .ep-sign-filter.active.pending { background:#6f56d9; border-color:#6f56d9; color:#fff; box-shadow:0 5px 16px rgba(111,86,217,.20); }
-            .ep-sign-filter.active.signed { background:#20a455; border-color:#20a455; color:#fff; box-shadow:0 5px 16px rgba(32,164,85,.18); }
-            .ep-sign-filter.active.rejected { background:#dc4655; border-color:#dc4655; color:#fff; box-shadow:0 5px 16px rgba(220,70,85,.16); }
-            .ep-sign-search { position:relative; margin:16px 0 20px; }
-            .ep-sign-search input { width:100%; height:50px; border:1px solid #e1e5ec; border-radius:14px; padding:0 48px 0 16px; background:#fff; box-shadow:0 4px 16px rgba(27,33,48,.04); }
-            .ep-sign-search input:focus { outline:none; border-color:#98768f; box-shadow:0 0 0 3px rgba(113,75,103,.10); }
-            .ep-sign-search .search-btn { position:absolute; right:8px; top:7px; width:36px; height:36px; border:0; border-radius:10px; background:transparent; color:#8993a6; }
-            .ep-sign-search .clear-search { position:absolute; right:46px; top:15px; color:#9aa3b1; }
-            .ep-sign-panel { background:#fff; border:1px solid #e5e8ee; border-radius:18px; overflow:hidden; box-shadow:0 10px 28px rgba(27,33,48,.055); }
-            .ep-sign-table { width:100%; margin:0; border-collapse:separate; border-spacing:0; }
-            .ep-sign-table thead th { background:#f8f9fb; color:#697286; font-size:12px; font-weight:750; text-transform:uppercase; letter-spacing:.035em; padding:14px 16px; border-bottom:1px solid #e7e9ee; white-space:nowrap; }
-            .ep-sign-table tbody td { padding:17px 16px; border-bottom:1px solid #edf0f3; vertical-align:middle; color:#252b3a; }
-            .ep-sign-table tbody tr:last-child td { border-bottom:0; }
-            .ep-sign-table tbody tr:hover { background:#fbfbfd; }
-            .ep-doc-name { font-weight:650; color:#202638; line-height:1.4; }
-            .ep-doc-date { color:#727c8e; white-space:nowrap; }
-            .ep-pill { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; font-size:12px; font-weight:750; white-space:nowrap; }
-            .ep-pill.pending { background:#fff3c4; color:#8c6500; }
-            .ep-pill.signed { background:#dff6e7; color:#187c42; }
-            .ep-pill.rejected { background:#fee6e9; color:#b72e3f; }
-            .ep-workflow { display:flex; align-items:center; gap:7px; color:#4a5366; font-size:13px; }
-            .ep-action-sign { border:0; border-radius:10px; background:#6f56d9; color:#fff !important; padding:7px 14px; font-weight:700; text-decoration:none; box-shadow:0 4px 12px rgba(111,86,217,.18); }
-            .ep-action-sign:hover { background:#6047ce; }
-            .ep-action-download { border:1px solid #d9dde5; border-radius:10px; background:#fff; color:#566074 !important; padding:7px 12px; font-weight:650; text-decoration:none; }
-            .ep-empty { text-align:center; padding:52px 20px; color:#8992a3; }
-            .ep-mobile-card { background:#fff; border:1px solid #e5e8ee; border-radius:16px; box-shadow:0 7px 20px rgba(27,33,48,.05); padding:16px; margin-bottom:12px; }
-            .ep-mobile-meta { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:12px 0; color:#7c8596; font-size:12px; }
-            @media (max-width: 767.98px) {
-                .ep-sign-page { padding:18px 12px 36px; }
-                .ep-sign-head { align-items:flex-start; flex-direction:column; }
-                .ep-sign-title { font-size:25px; }
-                .ep-sign-filters { width:100%; }
-                .ep-sign-filter { flex:1; text-align:center; padding:7px 10px; }
-            }
+            .eps-sign-page{max-width:1380px;margin:0 auto;padding:20px 18px 42px}
+            .eps-sign-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+            .eps-sign-heading h1{margin:0;color:#1e2535;font-size:28px;font-weight:750;letter-spacing:-.02em}
+            .eps-sign-heading p{margin:3px 0 0;color:#8891a3;font-size:13px}
+            .eps-sign-tabs{display:inline-flex;padding:3px;border:1px solid #e1e5eb;background:#fff;border-radius:11px;gap:2px}
+            .eps-sign-tab{padding:7px 13px;border-radius:8px;text-decoration:none!important;color:#667085;font-size:13px;font-weight:650;line-height:1}
+            .eps-sign-tab:hover{background:#f6f4f6;color:#714b67}
+            .eps-sign-tab.active.pending{background:#714b67;color:#fff}
+            .eps-sign-tab.active.signed{background:#eaf8ef;color:#198754}
+            .eps-sign-tab.active.rejected{background:#fff0f1;color:#c23b4a}
+            .eps-sign-search{position:relative;margin-bottom:12px}
+            .eps-sign-search input{width:100%;height:42px;border:1px solid #e2e6ec;border-radius:11px;background:#fff;padding:0 42px 0 14px;color:#252b38;font-size:13px;box-shadow:0 2px 8px rgba(20,28,45,.025)}
+            .eps-sign-search input:focus{outline:none;border-color:#b49bab;box-shadow:0 0 0 3px rgba(113,75,103,.08)}
+            .eps-sign-search button{position:absolute;right:5px;top:4px;width:34px;height:34px;border:0;background:transparent;color:#98a1b2;border-radius:8px}
+            .eps-sign-search .clear-search{position:absolute;right:42px;top:11px;color:#a0a8b6}
+            .eps-sign-list{background:#fff;border:1px solid #e5e8ed;border-radius:13px;overflow:hidden;box-shadow:0 5px 18px rgba(24,32,48,.035)}
+            .eps-sign-row{display:grid;grid-template-columns:minmax(0,1fr) 112px 108px 190px 108px;align-items:center;column-gap:14px;padding:12px 14px;border-bottom:1px solid #edf0f3;min-height:60px}
+            .eps-sign-row:last-child{border-bottom:0}
+            .eps-sign-row:not(.head):hover{background:#fbfbfc}
+            .eps-sign-row.head{min-height:auto;padding-top:9px;padding-bottom:9px;background:#fafbfc;color:#7a8394;font-size:11px;font-weight:750;text-transform:uppercase;letter-spacing:.045em}
+            .eps-doc{min-width:0;display:flex;align-items:center;gap:10px}
+            .eps-doc-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#f3eef2;color:#714b67;flex:0 0 auto}
+            .eps-doc-name{font-size:14px;font-weight:650;color:#222a3a;line-height:1.3;white-space:normal;word-break:break-word}
+            .eps-date{font-size:12.5px;color:#7e8798;white-space:nowrap}
+            .eps-status{display:inline-flex;align-items:center;justify-content:center;width:max-content;min-width:66px;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:750}
+            .eps-status.pending{background:#fff4cc;color:#8a6500}.eps-status.signed{background:#e1f6e8;color:#167b40}.eps-status.rejected{background:#fde7ea;color:#b63242}
+            .eps-workflow{font-size:12.5px;color:#4f5869;line-height:1.3}
+            .eps-action{text-align:right;white-space:nowrap}
+            .eps-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 11px;border-radius:8px;text-decoration:none!important;font-size:12px;font-weight:700}
+            .eps-btn.sign{background:#714b67;color:#fff!important;box-shadow:0 3px 8px rgba(113,75,103,.15)}
+            .eps-btn.download{border:1px solid #dfe3e8;background:#fff;color:#576174!important}
+            .eps-empty{text-align:center;padding:46px 20px;color:#8a93a3}
+            .eps-mobile-card{background:#fff;border:1px solid #e5e8ed;border-radius:12px;padding:13px;margin-bottom:10px;box-shadow:0 4px 14px rgba(24,32,48,.035)}
+            .eps-mobile-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.eps-mobile-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:11px;padding-top:10px;border-top:1px solid #eef0f3}
+            @media(max-width:767.98px){.eps-sign-page{padding:16px 11px 34px}.eps-sign-toolbar{align-items:flex-start;flex-direction:column}.eps-sign-heading h1{font-size:24px}.eps-sign-tabs{width:100%}.eps-sign-tab{flex:1;text-align:center}.eps-workflow{font-size:12px}}
         </style>
-
-        <div class="ep-sign-page">
-            <div class="ep-sign-head">
-                <div>
-                    <h1 class="ep-sign-title">Documents to Sign</h1>
-                    <div class="ep-sign-subtitle">Your signature requests and completed documents</div>
+        <div class="eps-sign-page">
+            <div class="eps-sign-toolbar">
+                <div class="eps-sign-heading">
+                    <h1>Documents to Sign</h1>
+                    <p>Signature requests assigned to you</p>
                 </div>
-                <div class="ep-sign-filters">
-                    <a href="/my/employee/sign?filter=pending"
-                       t-att-class="'ep-sign-filter pending ' + ('active pending' if current_filter=='pending' else '')">Pending</a>
-                    <a href="/my/employee/sign?filter=signed"
-                       t-att-class="'ep-sign-filter signed ' + ('active signed' if current_filter=='signed' else '')">Signed</a>
-                    <a href="/my/employee/sign?filter=rejected"
-                       t-att-class="'ep-sign-filter rejected ' + ('active rejected' if current_filter=='rejected' else '')">Rejected</a>
+                <div class="eps-sign-tabs">
+                    <a href="/my/employee/sign?filter=pending" t-att-class="'eps-sign-tab pending ' + ('active pending' if current_filter=='pending' else '')">Pending</a>
+                    <a href="/my/employee/sign?filter=signed" t-att-class="'eps-sign-tab signed ' + ('active signed' if current_filter=='signed' else '')">Signed</a>
+                    <a href="/my/employee/sign?filter=rejected" t-att-class="'eps-sign-tab rejected ' + ('active rejected' if current_filter=='rejected' else '')">Rejected</a>
                 </div>
             </div>
-
-            <form method="get" class="ep-sign-search">
+            <form method="get" class="eps-sign-search">
                 <input type="hidden" name="filter" t-att-value="current_filter"/>
                 <input type="text" id="signSearchInput" name="search" t-att-value="search or ''" placeholder="Search documents..."/>
                 <t t-if="search"><a t-att-href="'/my/employee/sign?filter=%s' % current_filter" class="clear-search"><i class="fa fa-times"/></a></t>
-                <button type="submit" class="search-btn"><i class="fa fa-search"/></button>
+                <button type="submit"><i class="fa fa-search"/></button>
             </form>
-
             <t t-if="not documents">
-                <div class="ep-sign-panel ep-empty">
-                    <i class="fa fa-file-signature fa-2x mb-3"/>
-                    <div class="fw-semibold">No documents found</div>
-                    <div class="small mt-1">There are no documents in this view.</div>
-                </div>
+                <div class="eps-sign-list eps-empty"><i class="fa fa-file-text-o fa-2x mb-2"/><div class="fw-semibold">No documents found</div></div>
             </t>
-
             <t t-if="documents">
-                <div class="ep-sign-panel d-none d-md-block">
-                    <table class="ep-sign-table">
-                        <thead><tr><th>Document</th><th>Date</th><th>Your Status</th><th>Workflow</th><th class="text-end">Actions</th></tr></thead>
-                        <tbody>
-                            <t t-foreach="documents" t-as="doc">
-                                <t t-set="item" t-value="doc['item']"/><t t-set="filename" t-value="doc['filename']"/>
-                                <t t-set="date" t-value="doc['date']"/><t t-set="your_status" t-value="doc['your_status']"/>
-                                <t t-set="workflow_status" t-value="doc['workflow_status']"/>
-                                <tr>
-                                    <td><div class="ep-doc-name"><t t-out="filename"/></div></td>
-                                    <td><span class="ep-doc-date"><t t-out="date"/></span></td>
-                                    <td>
-                                        <t t-if="'🟢' in your_status"><span class="ep-pill signed">Signed</span></t>
-                                        <t t-elif="'🟡' in your_status"><span class="ep-pill pending">Pending</span></t>
-                                        <t t-elif="'🔴' in your_status"><span class="ep-pill rejected">Rejected</span></t>
-                                    </td>
-                                    <td><div class="ep-workflow"><t t-out="workflow_status"/></div></td>
-                                    <td class="text-end">
-                                        <t t-if="'🔴' in workflow_status"><span class="ep-pill rejected">Rejected</span></t>
-                                        <t t-elif="'🟡' in your_status"><a class="ep-action-sign" t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1">Sign</a></t>
-                                        <t t-if="item.sign_request_id.state == 'signed'"><a class="ep-action-download ms-1" t-attf-href="/sign/download/{{ item.sign_request_id.id }}/{{ item.sign_request_id.access_token }}/completed" target="_blank"><i class="fa fa-download me-1"/>Download</a></t>
-                                    </td>
-                                </tr>
-                            </t>
-                        </tbody>
-                    </table>
+                <div class="eps-sign-list d-none d-md-block">
+                    <div class="eps-sign-row head"><div>Document</div><div>Date</div><div>Your Status</div><div>Workflow</div><div class="text-end">Action</div></div>
+                    <t t-foreach="documents" t-as="doc">
+                        <t t-set="item" t-value="doc['item']"/><t t-set="your_status" t-value="doc['your_status']"/><t t-set="workflow_status" t-value="doc['workflow_status']"/>
+                        <div class="eps-sign-row">
+                            <div class="eps-doc"><span class="eps-doc-icon"><i class="fa fa-file-text-o"/></span><div class="eps-doc-name"><t t-out="doc['filename']"/></div></div>
+                            <div class="eps-date"><t t-out="doc['date']"/></div>
+                            <div><t t-if="'🟢' in your_status"><span class="eps-status signed">Signed</span></t><t t-elif="'🟡' in your_status"><span class="eps-status pending">Pending</span></t><t t-elif="'🔴' in your_status"><span class="eps-status rejected">Rejected</span></t></div>
+                            <div class="eps-workflow"><t t-out="workflow_status"/></div>
+                            <div class="eps-action">
+                                <t t-if="item.state == 'sent'"><a class="eps-btn sign" t-att-href="doc['sign_url']"><i class="fa fa-pencil"/>Sign</a></t>
+                                <t t-elif="item.sign_request_id.state == 'signed'"><a class="eps-btn download" t-attf-href="/sign/download/{{ item.sign_request_id.id }}/{{ item.sign_request_id.access_token }}/completed" target="_blank"><i class="fa fa-download"/>Download</a></t>
+                            </div>
+                        </div>
+                    </t>
                 </div>
-
                 <div class="d-md-none">
                     <t t-foreach="documents" t-as="doc">
-                        <t t-set="item" t-value="doc['item']"/><t t-set="filename" t-value="doc['filename']"/>
-                        <t t-set="date" t-value="doc['date']"/><t t-set="your_status" t-value="doc['your_status']"/>
-                        <t t-set="workflow_status" t-value="doc['workflow_status']"/>
-                        <div class="ep-mobile-card">
-                            <div class="ep-doc-name"><t t-out="filename"/></div>
-                            <div class="ep-mobile-meta">
-                                <span><i class="fa fa-calendar-o me-1"/><t t-out="date"/></span>
-                                <t t-if="'🟢' in your_status"><span class="ep-pill signed">Signed</span></t>
-                                <t t-elif="'🟡' in your_status"><span class="ep-pill pending">Pending</span></t>
-                                <t t-elif="'🔴' in your_status"><span class="ep-pill rejected">Rejected</span></t>
-                            </div>
-                            <div class="ep-workflow mb-3"><t t-out="workflow_status"/></div>
-                            <div class="d-flex justify-content-end gap-2">
-                                <t t-if="'🔴' in workflow_status"><span class="ep-pill rejected">Rejected</span></t>
-                                <t t-elif="'🟡' in your_status"><a class="ep-action-sign" t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1">Sign</a></t>
-                                <t t-if="item.sign_request_id.state == 'signed'"><a class="ep-action-download" t-attf-href="/sign/download/{{ item.sign_request_id.id }}/{{ item.sign_request_id.access_token }}/completed" target="_blank"><i class="fa fa-download me-1"/>Download</a></t>
-                            </div>
+                        <t t-set="item" t-value="doc['item']"/><t t-set="your_status" t-value="doc['your_status']"/><t t-set="workflow_status" t-value="doc['workflow_status']"/>
+                        <div class="eps-mobile-card">
+                            <div class="eps-mobile-top"><div class="eps-doc-name"><t t-out="doc['filename']"/></div><t t-if="'🟢' in your_status"><span class="eps-status signed">Signed</span></t><t t-elif="'🟡' in your_status"><span class="eps-status pending">Pending</span></t><t t-elif="'🔴' in your_status"><span class="eps-status rejected">Rejected</span></t></div>
+                            <div class="eps-mobile-bottom"><div><div class="eps-date mb-1"><i class="fa fa-calendar-o me-1"/><t t-out="doc['date']"/></div><div class="eps-workflow"><t t-out="workflow_status"/></div></div><div><t t-if="item.state == 'sent'"><a class="eps-btn sign" t-att-href="doc['sign_url']">Sign</a></t><t t-elif="item.sign_request_id.state == 'signed'"><a class="eps-btn download" t-attf-href="/sign/download/{{ item.sign_request_id.id }}/{{ item.sign_request_id.access_token }}/completed" target="_blank"><i class="fa fa-download"/></a></t></div></div>
                         </div>
                     </t>
                 </div>
             </t>
         </div>
-
         <script>
             document.addEventListener("DOMContentLoaded", function () {
-                const input = document.getElementById("signSearchInput");
-                if (!input) return;
-                input.addEventListener("input", function () {
-                    if (this.value.trim() === "") {
-                        const filter = new URLSearchParams(window.location.search).get('filter') || 'pending';
-                        window.location.href = "/my/employee/sign?filter=" + filter;
-                    }
-                });
+                const input = document.getElementById("signSearchInput"); if (!input) return;
+                input.addEventListener("input", function () { if (this.value.trim() === "") { const filter = new URLSearchParams(window.location.search).get('filter') || 'pending'; window.location.href = "/my/employee/sign?filter=" + filter; } });
             });
         </script>
     </t>

@@ -36,11 +36,19 @@ class EmployeePortalSignDocs(CustomerPortal):
         if canceled:
             return f"🔴 Rejected by {canceled.partner_id.name}"
 
-        # correct signing order → mail_sent_order
-        items_sorted = items.sorted(lambda x: x.mail_sent_order or 0)
-
-        # find the next signer
-        next_item = next((it for it in items_sorted if it.state not in ("completed", "canceled")), None)
+        # Prefer Odoo Sign's actual active signer.  With Signing Order enabled
+        # the active request item is ``sent`` while later signers stay ``draft``.
+        # Keep an ordered incomplete fallback for legacy/non-sequential requests.
+        active_items = items.filtered(lambda it: it.state == "sent")
+        next_item = active_items.sorted(lambda x: (x.mail_sent_order or 0, x.id))[:1]
+        if not next_item:
+            items_sorted = items.sorted(lambda x: (x.mail_sent_order or 0, x.id))
+            next_item = next((
+                it for it in items_sorted
+                if it.state not in ("completed", "canceled")
+            ), None)
+        elif hasattr(next_item, 'ensure_one'):
+            next_item = next_item[:1]
 
         if next_item:
             current_user_partner = request.env.user.partner_id
@@ -79,22 +87,16 @@ class EmployeePortalSignDocs(CustomerPortal):
                     continue
 
             # -------------------------
-            # SIGNING ORDER LOGIC
-            # -------------------------
-            items_sorted = req.request_item_ids.sorted(
-                lambda x: x.mail_sent_order or 0
-            )
-
-            first_pending = next((
-                it for it in items_sorted
-                if it.state not in ("completed", "canceled")
-            ), None)
-
-            # -------------------------
             # FILTER LOGIC
             # -------------------------
+            # Odoo Sign owns the signing-order state machine.  For sequential
+            # requests the currently active signer is the request item whose
+            # state is ``sent``; future signers normally remain ``draft`` until
+            # their turn.  Trust that state instead of trying to reconstruct the
+            # sequence in the portal, otherwise a valid portal signer can vanish
+            # from Pending when Odoo changes how mail_sent_order is populated.
             if filter == "pending":
-                if not first_pending or first_pending.id != item.id:
+                if item.state != "sent":
                     continue
 
             elif filter == "signed":
