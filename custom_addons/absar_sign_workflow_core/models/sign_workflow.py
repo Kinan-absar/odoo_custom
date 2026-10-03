@@ -290,8 +290,8 @@ class AbsarSignWorkflowService(models.AbstractModel):
                 **common,
                 "type_id": date_type.id,
                 "posY": base_y + 0.052,
-                "width": 0.10,
-                "height": 0.020,
+                "width": 0.13,
+                "height": 0.032,
                 "name": _("%(seq)s. %(role)s - Date") % {
                     "seq": index + 1,
                     "role": step.name,
