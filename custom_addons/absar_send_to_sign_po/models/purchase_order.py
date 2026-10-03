@@ -1,5 +1,8 @@
+import time
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+from odoo.tools.safe_eval import safe_eval
 
 
 SIGNATURE_STATES = [
@@ -56,6 +59,40 @@ class PurchaseOrder(models.Model):
                     po._reset_signing(_("PO modified after signing/sending."))
         return res
 
+    def _get_purchase_report_filename(self):
+        """Return the exact filename configured on the Purchase Order report action.
+
+        This deliberately uses ir.actions.report.print_report_name as the single
+        source of truth, so changes made from Settings > Technical > Reports are
+        automatically reflected in Odoo Sign and the employee portal.
+        """
+        self.ensure_one()
+        report = self.env["ir.actions.report"].sudo().search([
+            ("model", "=", "purchase.order"),
+            ("report_name", "=", "purchase.report_purchaseorder"),
+        ], limit=1)
+        if not report:
+            report = self.env.ref("purchase.action_report_purchase_order", raise_if_not_found=False)
+        filename = False
+        if report and report.print_report_name:
+            try:
+                filename = safe_eval(
+                    report.print_report_name,
+                    {
+                        "object": self,
+                        "time": time,
+                        "user": self.env.user,
+                    },
+                )
+            except Exception:
+                # Signing must not fail merely because a custom report filename
+                # expression is temporarily invalid. Fall back to the PO number.
+                filename = False
+        filename = str(filename or self.name or self.display_name).strip()
+        if filename.lower().endswith(".pdf"):
+            filename = filename[:-4]
+        return filename
+
     def action_send_to_sign(self):
         self.ensure_one()
         if self.state != "purchase":
@@ -67,13 +104,16 @@ class PurchaseOrder(models.Model):
             self,
             "purchase.report_purchaseorder",
             _("PO"),
-            [
-                self.name,
-                self.partner_id.name,
-                self.material_request_id.name if hasattr(self, "material_request_id") and self.material_request_id else None,
-                self.project_id.name if self.project_id else None,
-            ],
+            [self.name],  # Temporary fallback; replaced below by report print_report_name.
         )
+
+        # Use the Purchase Order report action's Printed Report Name verbatim.
+        # This keeps PDF, Sign template/request and portal naming in sync with
+        # whatever is configured in Settings > Technical > Reports.
+        report_filename = self._get_purchase_report_filename()
+        if template.attachment_id:
+            template.attachment_id.sudo().write({"name": f"{report_filename}.pdf"})
+        template.sudo().write({"name": report_filename})
         self.with_context(skip_po_sign_reset=True).write({
             "sign_template_id": template.id,
             "signing_workflow_id": workflow.id,
