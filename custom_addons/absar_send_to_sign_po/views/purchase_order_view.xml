@@ -7,6 +7,7 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <field name="sign_template_id" invisible="1"/>
+                <field name="sign_request_id" invisible="1"/>
                 <field name="signing_workflow_id" invisible="1"/>
                 <field name="signature_state" invisible="1"/>
                 <field name="signature_completed_count" invisible="1"/>

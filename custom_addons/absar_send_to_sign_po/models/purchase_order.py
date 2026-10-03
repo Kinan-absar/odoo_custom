@@ -17,6 +17,7 @@ class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
 
     sign_template_id = fields.Many2one("sign.template", copy=False, readonly=True)
+    sign_request_id = fields.Many2one("sign.request", copy=False, readonly=True)
     signing_workflow_id = fields.Many2one("absar.sign.workflow", copy=False, readonly=True)
     signature_state = fields.Selection(SIGNATURE_STATES, default="draft", tracking=True, copy=False)
     signature_status_text = fields.Char(default="Not Sent", copy=False, readonly=True)
@@ -38,6 +39,7 @@ class PurchaseOrder(models.Model):
                 "signature_completed_count": 0,
                 "signature_total_count": 0,
                 "sign_template_id": False,
+                "sign_request_id": False,
                 "signing_workflow_id": False,
             })
             po.message_post(body=_("%s Reset to Not Sent (Revision R%s).") % (reason, revision))
@@ -96,17 +98,7 @@ class PurchaseOrder(models.Model):
 
     def action_open_signature_status(self):
         self.ensure_one()
-        if not self.sign_template_id:
-            return {
-                "type": "ir.actions.client",
-                "tag": "display_notification",
-                "params": {"title": _("Signature"), "message": _("This PO has not been sent to Sign yet."), "type": "info", "sticky": False},
-            }
-        return {
-            "type": "ir.actions.act_url",
-            "url": f"/odoo/sign/{self.sign_template_id.id}/action-sign.Template?id={self.sign_template_id.id}",
-            "target": "self",
-        }
+        return self.env["absar.sign.workflow.service"].open_status(self)
 
     @api.model
     def _cron_sync_sign_status(self):

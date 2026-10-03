@@ -108,7 +108,8 @@ class AbsarSignWorkflowStep(models.Model):
         "res.users",
         string="Signer User",
         required=True,
-        domain=[("share", "=", False)],
+        domain=[("active", "=", True)],
+        help="Internal and portal users can both be selected. Odoo Sign sends the request to the selected user's contact/email.",
     )
     signer_partner_id = fields.Many2one(
         "res.partner", related="signer_user_id.partner_id", store=True, readonly=True
@@ -327,6 +328,59 @@ class AbsarSignWorkflowService(models.AbstractModel):
         })
 
 
+    @api.model
+    def get_latest_request(self, record):
+        record.ensure_one()
+        if "sign_request_id" in record._fields and record.sign_request_id:
+            return record.sign_request_id.exists()
+        if not getattr(record, "sign_template_id", False):
+            return self.env["sign.request"]
+        request = self.env["sign.request"].search(
+            [("template_id", "=", record.sign_template_id.id)], order="id desc", limit=1
+        )
+        if request and "sign_request_id" in record._fields:
+            record.sudo().write({"sign_request_id": request.id})
+        return request
+
+    @api.model
+    def open_status(self, record):
+        """Open the existing Sign Request once one exists.
+
+        Before the request is sent, open the generated template so the owner can
+        position the pre-created signature placeholders. This prevents the status
+        smart button from repeatedly reopening the template/sign-from-scratch flow
+        after a real Sign Request has already been created.
+        """
+        record.ensure_one()
+        request = self.get_latest_request(record)
+        if request:
+            return {
+                "type": "ir.actions.act_window",
+                "name": _("Signature Request"),
+                "res_model": "sign.request",
+                "res_id": request.id,
+                "view_mode": "form",
+                "target": "current",
+            }
+        template = getattr(record, "sign_template_id", False)
+        if template:
+            return {
+                "type": "ir.actions.act_url",
+                "url": f"/odoo/sign/{template.id}/action-sign.Template?id={template.id}",
+                "target": "self",
+            }
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Signature"),
+                "message": _("This document has not been prepared for signing yet."),
+                "type": "info",
+                "sticky": False,
+            },
+        }
+
+
 class SignSendRequest(models.TransientModel):
     _inherit = "sign.send.request"
 
@@ -363,8 +417,15 @@ class SignSendRequest(models.TransientModel):
             if template and template.absar_workflow_id:
                 vals["template_id"] = template.id
                 vals["signer_ids"] = self._absar_signer_commands(template)
-                if "signer_id" in self._fields and len(template.absar_workflow_id.step_ids) == 1:
-                    vals["signer_id"] = template.absar_workflow_id.step_ids[:1].signer_partner_id.id
+                # ABSAR workflows are remote/separate-person signing flows, not
+                # Odoo's in-person "Sign Now / Next signatory" flow.
+                if "is_user_signer" in self._fields:
+                    vals["is_user_signer"] = False
+                if "signer_id" in self._fields:
+                    vals["signer_id"] = (
+                        template.absar_workflow_id.step_ids[:1].signer_partner_id.id
+                        if len(template.absar_workflow_id.step_ids) == 1 else False
+                    )
         return vals
 
     @api.onchange("template_id")
@@ -374,8 +435,30 @@ class SignSendRequest(models.TransientModel):
                 continue
             if "signer_ids" in wizard._fields:
                 wizard.signer_ids = wizard._absar_signer_commands(wizard.template_id)
-            if "signer_id" in wizard._fields and len(wizard.template_id.absar_workflow_id.step_ids) == 1:
-                wizard.signer_id = wizard.template_id.absar_workflow_id.step_ids[:1].signer_partner_id
+            if "is_user_signer" in wizard._fields:
+                wizard.is_user_signer = False
+            if "signer_id" in wizard._fields:
+                wizard.signer_id = (
+                    wizard.template_id.absar_workflow_id.step_ids[:1].signer_partner_id
+                    if len(wizard.template_id.absar_workflow_id.step_ids) == 1 else False
+                )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Never let ABSAR multi-signer workflows silently become an in-person
+        # signing session just because the sender is also one of the signers.
+        for vals in vals_list:
+            template_id = vals.get("template_id") or self.env.context.get("default_template_id")
+            template = self.env["sign.template"].browse(template_id).exists() if template_id else False
+            if template and template.absar_workflow_id and "is_user_signer" in self._fields:
+                vals["is_user_signer"] = False
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if vals.get("is_user_signer"):
+            if any(w.template_id.absar_workflow_id for w in self):
+                vals = dict(vals, is_user_signer=False)
+        return super().write(vals)
 
 
 class SignTemplate(models.Model):
@@ -413,6 +496,20 @@ class SignRequestItem(models.Model):
 
 class SignRequest(models.Model):
     _inherit = "sign.request"
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        requests = super().create(vals_list)
+        for request in requests:
+            template = request.template_id
+            if not template or not template.absar_source_model or not template.absar_source_id:
+                continue
+            if template.absar_source_model not in self.env:
+                continue
+            source = self.env[template.absar_source_model].sudo().browse(template.absar_source_id).exists()
+            if source and "sign_request_id" in source._fields:
+                source.write({"sign_request_id": request.id})
+        return requests
 
     def write(self, vals):
         res = super().write(vals)

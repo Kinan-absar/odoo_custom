@@ -1,6 +1,6 @@
 {
     "name": "Send to Sign for Purchase Orders",
-    "version": "18.0.1.1.2",
+    "version": "18.0.1.1.3",
     "summary": "Configurable digital signing workflow for Purchase Orders using Odoo Sign",
     "author": "Kinan",
     "website": "https://absar-alomran.com",

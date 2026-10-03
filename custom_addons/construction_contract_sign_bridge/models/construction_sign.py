@@ -24,6 +24,7 @@ def _reset_signature(record, reason):
         "signature_completed_count": 0,
         "signature_total_count": 0,
         "sign_template_id": False,
+        "sign_request_id": False,
         "signing_workflow_id": False,
     })
     record.message_post(body=_("%s Reset to Not Sent (Revision R%s).") % (reason, new_revision))
@@ -63,28 +64,14 @@ def _create_sign_template(record, report_xmlid, document_label, filename_parts):
 
 def _open_signature(record):
     record.ensure_one()
-    if not record.sign_template_id:
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Signature"),
-                "message": _("This document has not been sent to Sign yet."),
-                "type": "info",
-                "sticky": False,
-            },
-        }
-    return {
-        "type": "ir.actions.act_url",
-        "url": f"/odoo/sign/{record.sign_template_id.id}/action-sign.Template?id={record.sign_template_id.id}",
-        "target": "self",
-    }
+    return record.env["absar.sign.workflow.service"].open_status(record)
 
 
 class ConstructionContract(models.Model):
     _inherit = "construction.contract"
 
     sign_template_id = fields.Many2one("sign.template", copy=False, readonly=True)
+    sign_request_id = fields.Many2one("sign.request", copy=False, readonly=True)
     signing_workflow_id = fields.Many2one("absar.sign.workflow", copy=False, readonly=True)
     signature_state = fields.Selection(SIGNATURE_STATES, default="draft", tracking=True, copy=False)
     signature_status_text = fields.Char(default="Not Sent", copy=False, readonly=True)
@@ -139,6 +126,7 @@ class ConstructionMeasurement(models.Model):
     _inherit = "construction.measurement"
 
     sign_template_id = fields.Many2one("sign.template", copy=False, readonly=True)
+    sign_request_id = fields.Many2one("sign.request", copy=False, readonly=True)
     signing_workflow_id = fields.Many2one("absar.sign.workflow", copy=False, readonly=True)
     signature_state = fields.Selection(SIGNATURE_STATES, default="draft", tracking=True, copy=False)
     signature_status_text = fields.Char(default="Not Sent", copy=False, readonly=True)
@@ -183,6 +171,7 @@ class ConstructionIPC(models.Model):
     _inherit = "construction.ipc"
 
     sign_template_id = fields.Many2one("sign.template", copy=False, readonly=True)
+    sign_request_id = fields.Many2one("sign.request", copy=False, readonly=True)
     signing_workflow_id = fields.Many2one("absar.sign.workflow", copy=False, readonly=True)
     signature_state = fields.Selection(SIGNATURE_STATES, default="draft", tracking=True, copy=False)
     signature_status_text = fields.Char(default="Not Sent", copy=False, readonly=True)

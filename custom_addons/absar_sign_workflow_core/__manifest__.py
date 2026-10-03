@@ -1,6 +1,6 @@
 {
     "name": "ABSAR Sign Workflow Core",
-    "version": "18.0.1.0.2",
+    "version": "18.0.1.0.3",
     "summary": "Reusable configurable signing workflows for Odoo Sign documents",
     "author": "Kinan",
     "website": "https://absar-alomran.com",

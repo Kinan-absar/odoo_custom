@@ -40,7 +40,7 @@
                     </group>
                     <separator string="Signer Chain"/>
                     <div class="text-muted mb-3">
-                        Signers are followed in sequence. Odoo Sign roles and movable signature placeholders are prepared automatically from these steps, and the Send wizard is prefilled with the configured users and order. After generating a document, move the signature boxes to the correct places and press Send.
+                        Signers are followed in sequence. Internal and portal users are supported. Odoo Sign roles and movable signature placeholders are prepared automatically, and the Send wizard is prefilled with the configured users and order. ABSAR workflows use separate signer invitations (not the in-person Sign Now flow). After generating a document, move the signature boxes to the correct places and press Send.
                     </div>
                     <field name="step_ids" nolabel="1">
                         <list editable="bottom">
