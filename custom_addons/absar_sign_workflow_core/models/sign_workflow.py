@@ -223,40 +223,80 @@ class AbsarSignWorkflowService(models.AbstractModel):
 
     @api.model
     def _prepare_template_signature_items(self, template, workflow):
-        """Create movable signature placeholders and bind them to configured roles.
+        """Create movable Signature + Date pairs for every configured signer.
 
-        Positions are intentionally just a staging area on page 1. The document
-        owner only needs to drag the already-labelled boxes to their final places
-        before pressing Odoo Sign's Send button.
+        Both fields are assigned to the exact same Odoo Sign role, so once the
+        user positions the pair on the PDF there is nothing else to configure.
+        The positions are only a staging layout on page 1 and can be dragged to
+        the desired location before sending.
         """
-        signature_type = self.env.ref("sign.sign_item_type_signature", raise_if_not_found=False)
+        ItemType = self.env["sign.item.type"].sudo()
+        signature_type = self.env.ref(
+            "sign.sign_item_type_signature", raise_if_not_found=False
+        )
         if not signature_type:
-            signature_type = self.env["sign.item.type"].sudo().search([("name", "ilike", "signature")], limit=1)
+            signature_type = ItemType.search([
+                ("name", "ilike", "signature")
+            ], limit=1)
         if not signature_type:
             raise UserError(_("Odoo Sign signature field type could not be found."))
+
+        # Odoo normally exposes this XML ID.  The name lookup is kept as a
+        # compatibility fallback for minor Odoo 18 builds/localizations.
+        date_type = self.env.ref(
+            "sign.sign_item_type_date", raise_if_not_found=False
+        )
+        if not date_type:
+            date_type = ItemType.search([
+                "|",
+                ("name", "=ilike", "Date"),
+                ("name", "ilike", "date"),
+            ], limit=1)
+        if not date_type:
+            raise UserError(_("Odoo Sign date field type could not be found."))
 
         SignItem = self.env["sign.item"].sudo()
         for index, step in enumerate(workflow.step_ids.sorted("sequence")):
             role = step._ensure_sign_role()
-            # Stagger placeholders in a staging grid so they are easy to grab/move.
-            row = index % 8
-            col = min(index // 8, 2)
-            vals = {
+
+            # Each signer gets a compact pair in a staging grid:
+            # [ Signature ]
+            # [ Date      ]
+            # The document owner only needs to drag the pair into place.
+            row = index % 5
+            col = min(index // 5, 2)
+            base_x = 0.04 + (0.31 * col)
+            base_y = 0.035 + (0.185 * row)
+
+            common = {
                 "template_id": template.id,
-                "type_id": signature_type.id,
                 "required": True,
                 "responsible_id": role.id,
                 "page": 1,
-                "posX": 0.04 + (0.31 * col),
-                "posY": 0.04 + (0.105 * row),
+                "posX": base_x,
+            }
+            SignItem.create({
+                **common,
+                "type_id": signature_type.id,
+                "posY": base_y,
                 "width": 0.25,
                 "height": 0.065,
                 "name": _("%(seq)s. %(role)s - Signature") % {
                     "seq": index + 1,
                     "role": step.name,
                 },
-            }
-            SignItem.create(vals)
+            })
+            SignItem.create({
+                **common,
+                "type_id": date_type.id,
+                "posY": base_y + 0.072,
+                "width": 0.16,
+                "height": 0.035,
+                "name": _("%(seq)s. %(role)s - Date") % {
+                    "seq": index + 1,
+                    "role": step.name,
+                },
+            })
 
     @api.model
     def create_template(self, record, report_xmlid, document_label, filename_parts):
@@ -437,6 +477,32 @@ class SignSendRequest(models.TransientModel):
     _inherit = "sign.send.request"
 
     @api.model
+    def _absar_enable_signing_order_vals(self, vals):
+        """Enable Odoo Sign's ordering toggle across Odoo 18 minor schemas.
+
+        The signer rows already receive mail_sent_order = 1..N.  Odoo has used
+        different boolean field names for the UI toggle across editions/minor
+        versions, so set whichever one exists instead of hard-coding one name.
+        """
+        for field_name in (
+            "signing_order",
+            "sign_order",
+            "set_sign_order",
+            "use_sign_order",
+            "is_sign_order",
+        ):
+            if field_name in self._fields:
+                vals[field_name] = True
+        return vals
+
+    def _absar_enable_signing_order_record(self):
+        for wizard in self:
+            values = {}
+            wizard._absar_enable_signing_order_vals(values)
+            for field_name, value in values.items():
+                wizard[field_name] = value
+
+    @api.model
     def _absar_signer_commands(self, template):
         workflow = template.absar_workflow_id if template else False
         if not workflow:
@@ -469,6 +535,7 @@ class SignSendRequest(models.TransientModel):
             if template and template.absar_workflow_id:
                 vals["template_id"] = template.id
                 vals["signer_ids"] = self._absar_signer_commands(template)
+                self._absar_enable_signing_order_vals(vals)
                 # ABSAR workflows are remote/separate-person signing flows, not
                 # Odoo's in-person "Sign Now / Next signatory" flow.
                 if "is_user_signer" in self._fields:
@@ -487,6 +554,7 @@ class SignSendRequest(models.TransientModel):
                 continue
             if "signer_ids" in wizard._fields:
                 wizard.signer_ids = wizard._absar_signer_commands(wizard.template_id)
+            wizard._absar_enable_signing_order_record()
             if "is_user_signer" in wizard._fields:
                 wizard.is_user_signer = False
             if "signer_id" in wizard._fields:
@@ -502,8 +570,10 @@ class SignSendRequest(models.TransientModel):
         for vals in vals_list:
             template_id = vals.get("template_id") or self.env.context.get("default_template_id")
             template = self.env["sign.template"].browse(template_id).exists() if template_id else False
-            if template and template.absar_workflow_id and "is_user_signer" in self._fields:
-                vals["is_user_signer"] = False
+            if template and template.absar_workflow_id:
+                self._absar_enable_signing_order_vals(vals)
+                if "is_user_signer" in self._fields:
+                    vals["is_user_signer"] = False
         return super().create(vals_list)
 
     def write(self, vals):
