@@ -205,6 +205,18 @@ class PurchaseOrder(models.Model):
         return True
 
     @api.model
+    def _absar_backfill_po_sign_request_names(self):
+        """Force existing PO Sign requests to use the report Printed Report Name."""
+        requests = self.env["sign.request"].sudo().search([
+            ("template_id.absar_source_model", "=", "purchase.order"),
+        ])
+        for sign_request in requests:
+            reference = sign_request._absar_po_report_reference()
+            if reference and "reference" in sign_request._fields and sign_request.reference != reference:
+                sign_request.write({"reference": reference})
+        return True
+
+    @api.model
     def _cron_sync_sign_status(self):
         records = self.search([
             ("sign_template_id", "!=", False),
@@ -245,3 +257,47 @@ class PurchaseOrderLine(models.Model):
                 if state in ACTIVE_SIGNATURE_STATES:
                     order._reset_signing(_("PO line removed after signing/sending."))
         return res
+
+
+class SignRequest(models.Model):
+    _inherit = "sign.request"
+
+    def _absar_po_report_reference(self):
+        self.ensure_one()
+        template = self.template_id
+        if not template or getattr(template, "absar_source_model", False) != "purchase.order":
+            return False
+        source_id = getattr(template, "absar_source_id", 0)
+        po = self.env["purchase.order"].sudo().browse(source_id).exists()
+        if not po:
+            return False
+        return po._get_purchase_report_filename()
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        requests = super().create(vals_list)
+        for sign_request in requests:
+            reference = sign_request._absar_po_report_reference()
+            if reference and "reference" in sign_request._fields and sign_request.reference != reference:
+                super(SignRequest, sign_request.sudo()).write({"reference": reference})
+        return requests
+
+    def write(self, vals):
+        vals = dict(vals)
+        # Odoo Sign can write a short source reference (for example ``PO 244``)
+        # after the request is created.  For PO-originated requests, always keep
+        # the Purchase Order report's Printed Report Name as the canonical title.
+        po_requests = self.filtered(lambda r: r._absar_po_report_reference())
+        other_requests = self - po_requests
+        result = True
+        if po_requests:
+            # Requests can belong to different POs, so write one by one.
+            for sign_request in po_requests:
+                request_vals = dict(vals)
+                reference = sign_request._absar_po_report_reference()
+                if reference and "reference" in sign_request._fields:
+                    request_vals["reference"] = reference
+                result = super(SignRequest, sign_request).write(request_vals) and result
+        if other_requests:
+            result = super(SignRequest, other_requests).write(vals) and result
+        return result

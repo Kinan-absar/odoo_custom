@@ -60,6 +60,27 @@ class EmployeePortalSignDocs(CustomerPortal):
 
         return "⚪ Unknown"
 
+    @http.route('/my/employee/sign/open/<int:item_id>', type='http', auth='user', website=True)
+    def portal_employee_sign_open(self, item_id, **kwargs):
+        """Open the current user's active Odoo Sign item only.
+
+        Sequential signing must be enforced server-side, not just by hiding the
+        button. Future signers remain in ``draft`` and cannot be opened until
+        Odoo Sign advances their item to ``sent``.
+        """
+        user = request.env.user
+        if not user.share:
+            return request.redirect('/web')
+        item = request.env['sign.request.item'].sudo().browse(item_id).exists()
+        if not item or item.partner_id != user.partner_id:
+            return request.not_found()
+        if item.state != 'sent':
+            return request.redirect('/my/employee/sign?filter=pending')
+        share_url = item._get_share_url()
+        if not share_url:
+            return request.redirect('/my/employee/sign?filter=pending')
+        return request.redirect(share_url)
+
     # -------------------------------
     # Main route
     # -------------------------------
@@ -116,15 +137,11 @@ class EmployeePortalSignDocs(CustomerPortal):
                 "date": req.create_date.date(),
                 "your_status": self._compute_personal_status(item),
                 "workflow_status": self._compute_workflow_status(req),
-                # Use the canonical Odoo Sign document route explicitly.
-                # _get_share_url() can resolve to portal/list routes depending on
-                # context, which made the Employee Portal Sign button appear to
-                # do nothing for some request items.
-                "sign_url": (
-                    "/sign/document/%s/%s?portal=1"
-                    % (req.id, item.access_token)
-                    if item.access_token else False
-                ),
+                # Route through our server-side gate.  It verifies both that
+                # the item belongs to this portal user and that Odoo Sign has
+                # advanced it to ``sent`` before redirecting to Odoo's own
+                # canonical share URL.
+                "sign_url": "/my/employee/sign/open/%s" % item.id,
                 "access_token": item.access_token,
             })
 
