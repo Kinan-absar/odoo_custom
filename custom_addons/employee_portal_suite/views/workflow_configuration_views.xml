@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <!-- ========================================================= -->
     <!-- BUSINESS APPROVAL ROLES                                  -->
@@ -7,7 +7,7 @@
         <field name="name">employee.portal.approval.role.list</field>
         <field name="model">employee.portal.approval.role</field>
         <field name="arch" type="xml">
-            <list string="Approval Roles" default_order="company_id,sequence,name" class="eps_compact_list">
+            <list string="Approval Roles" default_order="company_id,sequence,name">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="company_id" groups="base.group_multi_company"/>
@@ -22,31 +22,31 @@
         <field name="name">employee.portal.approval.role.form</field>
         <field name="model">employee.portal.approval.role</field>
         <field name="arch" type="xml">
-            <form string="Approval Role" class="eps_compact_form">
+            <form string="Approval Role">
                 <sheet>
                     <div class="oe_title">
                         <label for="name"/>
                         <h1><field name="name" placeholder="e.g. Commercial Manager"/></h1>
                     </div>
                     <group>
-                        <group class="eps_compact_section">
+                        <group>
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="sequence"/>
                             <field name="active"/>
                         </group>
-                        <group class="eps_compact_section">
+                        <group>
                             <field name="linked_role_assignment_id" options="{'no_create': True}"/>
                             <field name="description"/>
                         </group>
                     </group>
-                    <group string="Default Approvers" class="eps_compact_section">
+                    <group string="Default Approvers">
                         <field name="default_user_ids" widget="many2many_tags" options="{'no_create': True}" nolabel="1"/>
                         <div class="text-muted">Used when a project does not have its own assignment for this role.</div>
                     </group>
                     <notebook>
                         <page string="Project Assignments">
                             <field name="project_assignment_ids" context="{'default_approval_role_id': id}">
-                                <list editable="bottom" class="eps_compact_lines">
+                                <list editable="bottom">
                                     <field name="project_id"/>
                                     <field name="user_ids" widget="many2many_tags"/>
                                     <field name="note" optional="show"/>
@@ -95,7 +95,7 @@
         <field name="name">employee.portal.project.role.assignment.list</field>
         <field name="model">employee.portal.project.role.assignment</field>
         <field name="arch" type="xml">
-            <list string="Project Role Assignments" editable="bottom" default_order="project_id,approval_role_id" class="eps_compact_list">
+            <list string="Project Role Assignments" editable="bottom" default_order="project_id,approval_role_id">
                 <field name="company_id" groups="base.group_multi_company" readonly="1"/>
                 <field name="project_id"/>
                 <field name="approval_role_id"/>
@@ -138,7 +138,7 @@
         <field name="name">employee.portal.workflow.list</field>
         <field name="model">employee.portal.workflow</field>
         <field name="arch" type="xml">
-            <list string="Approval Workflows" default_order="company_id,applies_to,project_id,sequence,name" class="eps_compact_list">
+            <list string="Approval Workflows" default_order="company_id,applies_to,project_id,sequence,name">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="company_id" groups="base.group_multi_company"/>
@@ -155,20 +155,20 @@
         <field name="name">employee.portal.workflow.form</field>
         <field name="model">employee.portal.workflow</field>
         <field name="arch" type="xml">
-            <form string="Approval Workflow" class="eps_compact_form">
+            <form string="Approval Workflow">
                 <sheet>
                     <div class="oe_title">
                         <label for="name"/>
                         <h1><field name="name" placeholder="e.g. TAAKAD GEN2 - Material Request"/></h1>
                     </div>
                     <group>
-                        <group class="eps_compact_section">
+                        <group>
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="applies_to"/>
                             <field name="project_id" options="{'no_create': True}" domain="[('company_id','=',company_id)]"/>
                             <field name="employee_request_type" invisible="applies_to != 'employee_request'"/>
                         </group>
-                        <group class="eps_compact_section">
+                        <group>
                             <field name="sequence"/>
                             <field name="active"/>
                             <field name="step_count" readonly="1"/>
@@ -177,7 +177,7 @@
 
                     <separator string="Approval Steps"/>
                     <field name="step_ids" nolabel="1">
-                        <list editable="bottom" default_order="sequence,id" class="eps_compact_lines">
+                        <list editable="bottom" default_order="sequence,id">
                             <field name="sequence" widget="handle"/>
                             <field name="name" string="Step" required="1"/>
                             <field name="approver_type" required="1"/>
@@ -228,9 +228,24 @@
         </field>
     </record>
 
-    <menuitem id="menu_employee_portal_approval_roles" name="Approval Roles" parent="employee_portal_suite.menu_employee_portal_configuration" action="action_employee_portal_approval_roles" sequence="20" groups="employee_portal_suite.group_employee_portal_superadmin"/>
+    <menuitem id="menu_employee_portal_approval_roles"
+              name="Approval Roles"
+              parent="employee_portal_suite.menu_employee_portal_configuration"
+              action="action_employee_portal_approval_roles"
+              sequence="20"
+              groups="employee_portal_suite.group_employee_portal_superadmin"/>
 
-    <menuitem id="menu_employee_portal_project_role_assignments" name="Project Role Assignments" parent="employee_portal_suite.menu_employee_portal_configuration" action="action_employee_portal_project_role_assignments" sequence="30" groups="employee_portal_suite.group_employee_portal_superadmin"/>
+    <menuitem id="menu_employee_portal_project_role_assignments"
+              name="Project Role Assignments"
+              parent="employee_portal_suite.menu_employee_portal_configuration"
+              action="action_employee_portal_project_role_assignments"
+              sequence="30"
+              groups="employee_portal_suite.group_employee_portal_superadmin"/>
 
-    <menuitem id="menu_employee_portal_workflows" name="Workflows" parent="employee_portal_suite.menu_employee_portal_configuration" action="action_employee_portal_workflows" sequence="40" groups="employee_portal_suite.group_employee_portal_superadmin"/>
+    <menuitem id="menu_employee_portal_workflows"
+              name="Workflows"
+              parent="employee_portal_suite.menu_employee_portal_configuration"
+              action="action_employee_portal_workflows"
+              sequence="40"
+              groups="employee_portal_suite.group_employee_portal_superadmin"/>
 </odoo>

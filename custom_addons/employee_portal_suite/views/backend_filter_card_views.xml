@@ -1,10 +1,10 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <record id="view_employee_portal_backend_filter_card_list" model="ir.ui.view">
         <field name="name">employee.portal.backend.filter.card.list</field>
         <field name="model">employee.portal.backend.filter.card</field>
         <field name="arch" type="xml">
-            <list string="Backend Request Cards" default_order="request_kind,sequence,id" class="eps_compact_list">
+            <list string="Backend Request Cards" default_order="request_kind,sequence,id">
                 <field name="sequence" widget="handle"/>
                 <field name="active" widget="boolean_toggle"/>
                 <field name="request_kind"/>
@@ -22,7 +22,7 @@
         <field name="name">employee.portal.backend.filter.card.form</field>
         <field name="model">employee.portal.backend.filter.card</field>
         <field name="arch" type="xml">
-            <form string="Request Filter Card" class="eps_compact_form">
+            <form string="Request Filter Card">
                 <header>
                     <button name="action_test_filter" type="object" string="Test Filter" class="btn-primary"/>
                 </header>
@@ -32,14 +32,14 @@
                         <h1><field name="label" placeholder="e.g. TAAKAD Only"/></h1>
                     </div>
                     <group>
-                        <group class="eps_compact_section">
+                        <group>
                             <field name="active"/>
                             <field name="request_kind"/>
                             <field name="filter_type"/>
                             <field name="code" invisible="filter_type != 'predefined'" required="filter_type == 'predefined'"/>
                             <field name="custom_domain" invisible="filter_type != 'custom'" required="filter_type == 'custom'" placeholder="[('project_id.name', '=', 'TAAKAD')]"/>
                         </group>
-                        <group class="eps_compact_section">
+                        <group>
                             <field name="sequence"/>
                             <field name="color_style"/>
                             <field name="icon" placeholder="⭐"/>
@@ -91,5 +91,10 @@
         </field>
     </record>
 
-    <menuitem id="menu_employee_portal_backend_filter_cards" name="Request Filter Cards" parent="menu_employee_portal_configuration" action="action_employee_portal_backend_filter_cards" sequence="35" groups="employee_portal_suite.group_employee_portal_superadmin"/>
+    <menuitem id="menu_employee_portal_backend_filter_cards"
+              name="Request Filter Cards"
+              parent="menu_employee_portal_configuration"
+              action="action_employee_portal_backend_filter_cards"
+              sequence="35"
+              groups="employee_portal_suite.group_employee_portal_superadmin"/>
 </odoo>

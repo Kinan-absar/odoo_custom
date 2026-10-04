@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
     <!-- ========================================================= -->
@@ -9,27 +9,60 @@
         <field name="model">employee.request</field>
         <field name="arch" type="xml">
 
-            <form string="Employee Request" create="1" edit="1" class="eps_compact_form">
+            <form string="Employee Request" create="1" edit="1">
                 <header>
-                        <button type="object" name="action_submit" string="Submit" class="oe_stat_button" invisible="state != 'draft'"/>
+                        <button type="object" name="action_submit"
+                                string="Submit"
+                                class="oe_stat_button"
+                                invisible="state != 'draft'"/>
 
-                        <button type="object" name="action_manager_approve" string="Manager Approve" class="oe_stat_button" invisible="state != 'manager'"/>
+                        <button type="object" name="action_manager_approve"
+                                string="Manager Approve"
+                                class="oe_stat_button"
+                                invisible="state != 'manager'"/>
 
-                        <button type="object" name="action_hr_approve" string="HR Approve" class="oe_stat_button" invisible="state != 'hr'"/>
+                        <button type="object" name="action_hr_approve"
+                                string="HR Approve"
+                                class="oe_stat_button"
+                                invisible="state != 'hr'"/>
 
-                        <button type="object" name="action_finance_approve" string="Finance Approve" class="oe_stat_button" invisible="state != 'finance'"/>
+                        <button type="object" name="action_finance_approve"
+                                string="Finance Approve"
+                                class="oe_stat_button"
+                                invisible="state != 'finance'"/>
 
-                        <button type="object" name="action_ceo_approve" string="CEO Approve" class="oe_stat_button" invisible="state != 'ceo'"/>
+                        <button type="object" name="action_ceo_approve"
+                                string="CEO Approve"
+                                class="oe_stat_button"
+                                invisible="state != 'ceo'"/>
 
-                        <button type="object" name="action_workflow_approve" string="Approve Current Step" class="btn-primary" invisible="state != 'workflow'"/>
+                        <button type="object" name="action_workflow_approve"
+                                string="Approve Current Step"
+                                class="btn-primary"
+                                invisible="state != 'workflow'"/>
 
-                        <button type="object" name="action_workflow_reject" string="Reject Current Step" class="btn-danger" invisible="state != 'workflow'"/>
+                        <button type="object" name="action_workflow_reject"
+                                string="Reject Current Step"
+                                class="btn-danger"
+                                invisible="state != 'workflow'"/>
 
-                        <button type="object" name="action_reject" string="Reject" class="oe_stat_button btn-danger" invisible="state in ('approved','workflow')"/>
+                        <button type="object" name="action_reject"
+                                string="Reject"
+                                class="oe_stat_button btn-danger"
+                                invisible="state in ('approved','workflow')"/>
                                 <!-- NEW PRINT BUTTON -->
-                        <button name="action_create_time_off" type="object" string="Create Time Off" class="btn-primary" icon="fa-calendar-check-o" invisible="not can_create_time_off"/>
+                        <button name="action_create_time_off"
+                                type="object"
+                                string="Create Time Off"
+                                class="btn-primary"
+                                icon="fa-calendar-check-o"
+                                invisible="not can_create_time_off"/>
 
-                        <button name="%(employee_portal_suite.employee_request_pdf)d" type="action" class="btn-primary" icon="fa-print" string="Print PDF"/>
+                        <button name="%(employee_portal_suite.employee_request_pdf)d"
+                                type="action"
+                                class="btn-primary"
+                                icon="fa-print"
+                                string="Print PDF"/>
                 </header>
                 <sheet>
                     <field name="can_create_time_off" invisible="1"/>
@@ -38,7 +71,8 @@
                         <h1><field name="name"/></h1>
                         <label for="state" class="oe_inline"/>
                         <div class="oe_inline">
-                            <field name="state" widget="statusbar" statusbar_visible="draft,workflow,manager,hr,finance,ceo,approved,rejected"/>
+                            <field name="state" widget="statusbar"
+                                   statusbar_visible="draft,workflow,manager,hr,finance,ceo,approved,rejected"/>
                         </div>
                     </div>
 
@@ -47,35 +81,46 @@
 
                         <page string="Request Details">
                             <group>
-                                <group class="eps_compact_section">
+                                <group>
                                     <!-- Readonly for normal portal employees -->
-                                    <field name="employee_id" readonly="1" groups="employee_portal_suite.group_employee_portal_employee,!employee_portal_suite.group_employee_portal_admin,!employee_portal_suite.group_employee_portal_superadmin"/>
+                                    <field name="employee_id"
+                                        readonly="1"
+                                        groups="employee_portal_suite.group_employee_portal_employee,!employee_portal_suite.group_employee_portal_admin,!employee_portal_suite.group_employee_portal_superadmin"/>
 
                                     <!-- Editable ONLY for Portal Admins -->
-                                    <field name="employee_id" groups="employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
+                                    <field name="employee_id"
+                                        groups="employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
 
                                     <field name="manager_id" readonly="1"/>
                                     <field name="available_project_ids" invisible="1"/>
                                     <field name="project_selection_locked" invisible="1"/>
-                                    <field name="project_id" options="{'no_create': True}" readonly="project_selection_locked" required="1"/>
+                                    <field name="project_id"
+                                           options="{'no_create': True}"
+                                           readonly="project_selection_locked"
+                                           required="1"/>
                                     <field name="request_type"/>
                                     <field name="workflow_id" readonly="1" invisible="not workflow_id"/>
                                     <field name="current_approval_line_id" readonly="1" invisible="state != 'workflow'"/>
                                 </group>
-                                <group class="eps_compact_section">
+                                <group>
                                     <field name="request_date"/>
                                     <field name="description"/>
                                 </group>
                                 <group invisible="request_type != 'leave'">
-                                    <group string="Leave Period" class="eps_compact_section">
+                                    <group string="Leave Period">
                                         <label for="leave_from" string="From"/>
                                         <div class="o_row">
                                             <field name="leave_from" class="oe_inline"/>
                                             <label for="leave_to" string="To" class="oe_inline" style="margin-left: 20px;"/>
                                             <field name="leave_to" class="oe_inline"/>
                                         </div>
-                                        <field name="time_off_type_id" groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
-                                        <field name="time_off_id" string="Time Off" readonly="1" invisible="not time_off_id" groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
+                                        <field name="time_off_type_id"
+                                               groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
+                                        <field name="time_off_id"
+                                               string="Time Off"
+                                               readonly="1"
+                                               invisible="not time_off_id"
+                                               groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin,employee_portal_suite.group_employee_portal_superadmin"/>
                                     </group>
                                 </group>
 
@@ -84,12 +129,12 @@
                         </page>
 
                         <page name="workflow_page" string="Workflow" invisible="not workflow_id">
-                            <group class="eps_compact_section">
+                            <group>
                                 <field name="workflow_id" readonly="1"/>
                                 <field name="current_approval_line_id" readonly="1" invisible="state != 'workflow'"/>
                             </group>
                             <field name="approval_line_ids" readonly="1">
-                                <list create="0" delete="0" edit="0" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'" decoration-warning="state == 'pending'" decoration-muted="state == 'waiting'" class="eps_compact_lines">
+                                <list create="0" delete="0" edit="0" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'" decoration-warning="state == 'pending'" decoration-muted="state == 'waiting'">
                                     <field name="sequence" widget="handle"/>
                                     <field name="name"/>
                                     <field name="role_name" optional="show"/>
@@ -105,25 +150,25 @@
 
                         <page string="Approval Timeline">
 
-                            <group string="Manager Approval" class="eps_compact_section">
+                            <group string="Manager Approval">
                                 <field name="manager_approved_by" readonly="1"/>
                                 <field name="manager_approved_date" readonly="1"/>
                                 <field name="manager_comment"/>
                             </group>
 
-                            <group string="HR Approval" class="eps_compact_section">
+                            <group string="HR Approval">
                                 <field name="hr_approved_by" readonly="1"/>
                                 <field name="hr_approved_date" readonly="1"/>
                                 <field name="hr_comment"/>
                             </group>
 
-                            <group string="Finance Approval" class="eps_compact_section">
+                            <group string="Finance Approval">
                                 <field name="finance_approved_by" readonly="1"/>
                                 <field name="finance_approved_date" readonly="1"/>
                                 <field name="finance_comment"/>
                             </group>
 
-                            <group string="CEO Approval" class="eps_compact_section">
+                            <group string="CEO Approval">
                                 <field name="ceo_approved_by" readonly="1"/>
                                 <field name="ceo_approved_date" readonly="1"/>
                                 <field name="ceo_comment"/>
@@ -147,11 +192,15 @@
         <field name="name">employee.request.list</field>
         <field name="model">employee.request</field>
         <field name="arch" type="xml">
-            <list js_class="employee_request_dashboard_list" class="eps_compact_list">
+            <list js_class="employee_request_dashboard_list">
                 <field name="name"/>
                 <field name="employee_id"/>
                 <field name="request_type"/>
-                <field name="state" widget="badge" decoration-muted="state == 'draft'" decoration-info="state in ('workflow','manager','hr','finance','ceo')" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'"/>
+                <field name="state" widget="badge"
+                decoration-muted="state == 'draft'"
+                decoration-info="state in ('workflow','manager','hr','finance','ceo')"
+                decoration-success="state == 'approved'"
+                decoration-danger="state == 'rejected'"/>
                 <field name="request_date"/>
             </list>
         </field>
