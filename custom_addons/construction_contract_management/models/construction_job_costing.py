@@ -179,23 +179,15 @@ class ConstructionContractJobCosting(models.Model):
             '|',
             '|',
             ('analytic_distribution', '!=', False),
-            '|',
             ('move_id.construction_contract_id', '=', self.id),
             ('purchase_line_id', '!=', False),
         ])
-        analytic_id = self.analytic_account_id.id
 
-        def allocation(line):
-            percentage = _distribution_has_account(line.analytic_distribution, analytic_id)
-            if percentage:
-                return percentage
-            # A journal entry explicitly linked to this construction contract is
-            # treated as 100% job-related when its P&L line has no distribution.
-            if line.move_id.construction_contract_id == self and not line.analytic_distribution:
-                return 100.0
-            return 0.0
-
-        return lines.filtered(lambda line: allocation(line) > 0.0)
+        # Use the same allocation routine as the computation itself. Besides
+        # direct analytic allocation, it also recognizes entries explicitly
+        # tagged with this contract and vendor-bill lines linked to PO lines
+        # carrying the project's analytic distribution.
+        return lines.filtered(lambda line: self._job_cost_line_allocation(line) > 0.0)
 
     def _job_cost_line_allocation(self, line):
         self.ensure_one()

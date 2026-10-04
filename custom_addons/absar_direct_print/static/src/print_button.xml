@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
- <t t-name="absar_direct_print.FormPrint" t-inherit="web.FormView" t-inherit-mode="extension">
-  <xpath expr="//t[@t-set-slot='control-panel-additional-actions']/CogMenu" position="after">
-   <button t-if="absarPrint.available and model.root.resId" type="button" class="btn btn-secondary ms-1" t-on-click.stop="absarOpenPrint" t-att-disabled="absarPrint.busy" title="Print to the office printer">
-    <i class="fa fa-print me-1" aria-hidden="true"/>Print
+ <t t-name="absar_direct_print.FormPrint" t-inherit="web.StatusBarButtons" t-inherit-mode="extension">
+  <xpath expr="//div[contains(@class, 'o_statusbar_buttons')]" position="inside">
+   <button t-if="env.absarDirectPrint and env.absarDirectPrint.canPrint()" type="button" class="btn btn-secondary px-3" t-on-click.stop="env.absarDirectPrint.open" t-att-disabled="env.absarDirectPrint.state.busy" title="Print to the office printer" aria-label="Print to the office printer">
+    <i class="fa fa-print" aria-hidden="true"/>
    </button>
   </xpath>
  </t>
  <t t-name="absar_direct_print.ListPrint" t-inherit="web.ListView" t-inherit-mode="extension">
   <xpath expr="//t[@t-set-slot='control-panel-selection-actions']/div" position="inside">
-   <button t-if="absarPrint.available and hasSelectedRecords" type="button" class="btn btn-secondary ms-1" t-on-click.stop="absarOpenPrint" t-att-disabled="absarPrint.busy" title="Select records to print to the office printer">
-    <i class="fa fa-print me-1" aria-hidden="true"/>Print
+   <button t-if="absarPrint.available and hasSelectedRecords" type="button" class="btn btn-secondary px-3" t-on-click.stop="absarOpenPrint" t-att-disabled="absarPrint.busy" title="Print selected records to the office printer" aria-label="Print selected records to the office printer">
+    <i class="fa fa-print" aria-hidden="true"/>
    </button>
   </xpath>
  </t>
