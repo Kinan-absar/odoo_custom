@@ -169,6 +169,63 @@
 /* Keep overview cards aligned with document forms. */
 .o_construction_dashboard .o_form_sheet_bg { background: var(--ccm-soft); }
 .o_construction_dashboard .ccm_dashboard_header { background: #19354a; box-shadow: none; }
+.o_construction_dashboard .ccm_dashboard_header {
+    overflow: visible;
+    gap: 24px;
+    isolation: isolate;
+    z-index: 2;
+}
+.o_construction_dashboard .ccm_dashboard_header::before {
+    inset: 0;
+    width: auto;
+    height: auto;
+    border-radius: inherit;
+    z-index: -1;
+}
+.o_construction_dashboard .ccm_header_left { min-width: 0; }
+.o_construction_dashboard .ccm_header_right {
+    flex: 0 0 320px;
+    width: 320px;
+    max-width: 100%;
+    position: relative;
+}
+.o_construction_dashboard .ccm_contract_filter_pill {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 16px;
+    overflow: visible;
+    backdrop-filter: none;
+}
+.o_construction_dashboard .ccm_filter_label { color: #d4e1e9; }
+.o_construction_dashboard .ccm_filter_field {
+    display: block;
+    width: 100%;
+    margin-bottom: 0;
+}
+.o_construction_dashboard .ccm_filter_field .o_input {
+    color: #19354a !important;
+    background: #fff !important;
+    border: 1px solid #d5e1e7 !important;
+    border-radius: 6px;
+    padding: 8px 28px 8px 10px;
+    min-height: 36px;
+    width: 100%;
+}
+.o_construction_dashboard .ccm_filter_field .o_input::placeholder { color: #657b8a; }
+.o_construction_dashboard .ccm_filter_field .o_dropdown_button { color: #19354a; }
+.o_construction_dashboard .ccm_filter_field .o-autocomplete--dropdown-menu {
+    min-width: 100%;
+    color: #19354a;
+    background: #fff;
+    border: 1px solid #d5e1e7;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgb(25 53 74 / 16%);
+    z-index: 1050;
+}
+@media (max-width: 768px) {
+    .o_construction_dashboard .ccm_dashboard_header { align-items: stretch; gap: 16px; }
+    .o_construction_dashboard .ccm_header_right { flex: 0 0 auto; width: 100%; }
+}
 .o_construction_dashboard .ccm_kpi_card,
 .o_construction_dashboard .ccm_finance_card { box-shadow: 0 3px 14px rgb(25 53 74 / 4%); }
 @media (max-width: 991px) {
