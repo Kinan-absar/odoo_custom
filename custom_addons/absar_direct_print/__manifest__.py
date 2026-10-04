@@ -1,5 +1,5 @@
 {
- 'name': 'Absar Direct Print', 'version': '18.0.1.0.0',
+ 'name': 'Absar Direct Print', 'version': '18.0.1.0.1',
  'category': 'Productivity', 'summary': 'Browser printing and a Windows office print queue',
  'author': 'Absar Alomran', 'license': 'LGPL-3',
  'depends': ['web'],

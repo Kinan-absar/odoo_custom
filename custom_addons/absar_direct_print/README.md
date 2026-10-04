@@ -1,6 +1,6 @@
 # Absar Direct Print — Odoo 18
 
-Version 18.0.1.0.0. Independent add-on; does not modify Employee Portal Suite or Construction.
+Version 18.0.1.0.1. Independent add-on; does not modify Employee Portal Suite or Construction.
 
 ## Install on staging
 
@@ -49,3 +49,5 @@ To run Odoo tests in a dedicated disposable database: enable tests and use tag `
 ## Uninstall / disable
 
 Turn off Show print options to restore normal report behavior per user. Stop the desktop app to stop receiving new work. Revoke a station key to disconnect it. Remove the add-on through Odoo before removing its source folder. Do not delete the source of an installed module first.
+
+18.0.1.0.1: supply explicit form views in both dynamic window actions for Odoo 18 action preprocessing.

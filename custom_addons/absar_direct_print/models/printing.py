@@ -27,7 +27,7 @@ class PrintStation(models.Model):
         self.token_hash = hashlib.sha256(token.encode()).hexdigest()
         pair = self.env['absar.print.pair'].create({'station_id': self.id, 'token': token})
         return {'type':'ir.actions.act_window', 'res_model':pair._name, 'res_id':pair.id,
-                'view_mode':'form', 'target':'new'}
+                'view_mode':'form', 'views':[(False, 'form')], 'target':'new'}
     def action_revoke(self):
         if not self.env.user.has_group('absar_direct_print.group_print_manager'):
             raise AccessError(_('Only print managers can revoke a station.'))
@@ -136,7 +136,7 @@ class PrintWizard(models.TransientModel):
             raise UserError(_('Report options are too large.'))
         w = self.create({'name':report.name,'report_id':report.id,'payload':json.dumps(safe)})
         w._report_args()  # validate model access before opening preview or queueing
-        return {'type':'ir.actions.act_window','res_model':self._name,'res_id':w.id,'view_mode':'form','target':'new'}
+        return {'type':'ir.actions.act_window','res_model':self._name,'res_id':w.id,'view_mode':'form','views':[(False, 'form')],'target':'new'}
     def _report_args(self):
         self.ensure_one()
         self.check_access('read')

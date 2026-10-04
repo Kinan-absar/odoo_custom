@@ -32,6 +32,8 @@ class TestDirectPrint(TransactionCase):
         report=self.env['ir.actions.report'].create({'name':'Test Report','model':'res.partner','report_type':'qweb-pdf','report_name':template.key})
         w=self.env['absar.print.wizard'].with_user(self.user).create({'name':'Test','report_id':report.id,'payload':json.dumps({'context':{},'data':{}})})
         w._report_args()
+        action=self.env['absar.print.wizard'].with_user(self.user).open_report({'report_type':'qweb-pdf','report_name':report.report_name,'context':{}})
+        self.assertEqual(action['views'],[(False,'form')])
         with self.assertRaises(AccessError):w.with_user(self.other)._report_args()
         with self.assertRaises(UserError):
             self.env['absar.print.wizard'].with_user(self.user).open_report({'report_type':'qweb-text'})
