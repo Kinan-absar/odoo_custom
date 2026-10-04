@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <odoo>
 
     <template id="employee_portal_layout">
@@ -1395,10 +1395,8 @@
 }
             </style>
 
-            <t t-set="ep_notif_summary"
-                t-value="request.env['portal.report.seen'].sudo()._get_notification_summary(request.env.user) if not request.env.user.has_group('employee_portal_suite.group_attendance_only') else {}"/>
-            <t t-set="ep_notif_unread_total"
-                t-value="sum(v.get('new', 0) for v in ep_notif_summary.values())"/>
+            <t t-set="ep_notif_summary" t-value="request.env['portal.report.seen'].sudo()._get_notification_summary(request.env.user) if not request.env.user.has_group('employee_portal_suite.group_attendance_only') else {}"/>
+            <t t-set="ep_notif_unread_total" t-value="sum(v.get('new', 0) for v in ep_notif_summary.values())"/>
             <t t-set="can_er_approval_nav" t-value="'er_approval' in ep_notif_summary"/>
             <t t-set="can_mr_approval_nav" t-value="'mr_approval' in ep_notif_summary"/>
 
@@ -1425,11 +1423,11 @@
                         </div>
                         <div class="ep-sidebar-section ep-empty" id="ep-section-contracts-projects">
                             <div class="ep-sidebar-section-title">Contracts &amp; Projects</div>
-                            <div class="ep-sidebar-section-links"></div>
+                            <div class="ep-sidebar-section-links"/>
                         </div>
                         <div class="ep-sidebar-section ep-empty" id="ep-section-weekly-plan">
                             <div class="ep-sidebar-section-title">Weekly Plan</div>
-                            <div class="ep-sidebar-section-links"></div>
+                            <div class="ep-sidebar-section-links"/>
                         </div>
                         <div class="ep-sidebar-section" id="ep-section-reports">
                             <div class="ep-sidebar-section-title">Reports</div>
@@ -1485,7 +1483,7 @@
                         <a href="/my" class="ep-link">Dashboard</a>
 
                         <div class="ep-dropdown">
-                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests &#9662;</button>
+                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests ▾</button>
                             <div id="req-d" class="ep-dropdown-menu">
                                 <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
                                 <a href="/my/employee/requests/new" class="ep-sub-link text-primary">+ New Employee Request</a>
@@ -1497,7 +1495,7 @@
 
                         <t t-if="can_er_approval_nav or can_mr_approval_nav">
                             <div class="ep-dropdown">
-                                <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals &#9662;</button>
+                                <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals ▾</button>
                                 <div id="app-d" class="ep-dropdown-menu">
 
                                     <t t-if="can_er_approval_nav">
@@ -1562,8 +1560,7 @@
                 </div>
             </t>
 
-            <t t-set="portal_announcements"
-                t-value="request.env['portal.announcement']._get_visible_announcements_for_current_user(target='portal', limit=5)"/>
+            <t t-set="portal_announcements" t-value="request.env['portal.announcement']._get_visible_announcements_for_current_user(target='portal', limit=5)"/>
 
             <t t-if="portal_announcements">
                 <div class="portal-announcement-wrapper">
@@ -1599,7 +1596,7 @@
             <!-- ================================================================
                  MAIN CONTENT
                  ================================================================ -->
-            <main>
+            <main class="eps_portal_workspace">
                 <div id="wrap" class="container mt-3 mb-5">
                     <t t-out="0"/>
                 </div>
@@ -1608,26 +1605,23 @@
             <!-- ================================================================
                  MOBILE BOTTOM NAV
                  ================================================================ -->
-                 <t t-set="is_attendance_only"
-   t-value="request.env.user.has_group('employee_portal_suite.group_attendance_only')"/>
+                 <t t-set="is_attendance_only" t-value="request.env.user.has_group('employee_portal_suite.group_attendance_only')"/>
 
-                 <t t-set="has_extended_nav"
-   t-value="not is_attendance_only and (can_er_approval_nav or can_mr_approval_nav or request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user'))"/>
+                 <t t-set="has_extended_nav" t-value="not is_attendance_only and (can_er_approval_nav or can_mr_approval_nav or request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user'))"/>
 
             <!-- Attendance-only mobile nav: just Attendance + Logout -->
             <t t-if="is_attendance_only">
                 <nav class="ep-bottom-nav mobile-only basic-nav">
                     <div class="ep-nav-left">
-                        <a href="/my/employee/attendance"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/attendance') else 'nav-btn'">
-                            <i class="fa fa-clock-o"></i>
+                        <a href="/my/employee/attendance" t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/attendance') else 'nav-btn'">
+                            <i class="fa fa-clock-o"/>
                             <span>Attendance</span>
                         </a>
                     </div>
-                    <div class="ep-fab-center"></div>
+                    <div class="ep-fab-center"/>
                     <div class="ep-nav-right">
                         <a href="/web/session/logout" class="nav-btn">
-                            <i class="fa fa-sign-out"></i>
+                            <i class="fa fa-sign-out"/>
                             <span>Exit</span>
                         </a>
                     </div>
@@ -1638,23 +1632,20 @@
 
                 <div class="ep-nav-left">
 
-                    <a href="/my/employee"
-                        t-att-class="'nav-btn active' if request.httprequest.path == '/my/employee' else 'nav-btn'">
-                        <i class="fa fa-home"></i>
+                    <a href="/my/employee" t-att-class="'nav-btn active' if request.httprequest.path == '/my/employee' else 'nav-btn'">
+                        <i class="fa fa-home"/>
                         <span>Home</span>
                     </a>
 
-                    <a href="/my/employee/requests"
-                        t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/requests') else 'nav-btn'">
-                        <i class="fa fa-file-text-o"></i>
+                    <a href="/my/employee/requests" t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/requests') else 'nav-btn'">
+                        <i class="fa fa-file-text-o"/>
                         <span>Employee</span>
                     </a>
                     
                         <!-- ONLY if extended -->
                     <t t-if="has_extended_nav">
-                        <a href="/my/employee/material"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') and not request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
-                            <i class="fa fa-cubes"></i>
+                        <a href="/my/employee/material" t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') and not request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
+                            <i class="fa fa-cubes"/>
                             <span>Material</span>
                         </a>
                     </t>
@@ -1663,25 +1654,22 @@
 
                 <div class="ep-fab-center" id="fabCenterBtn" onclick="toggleFabMenu()">
                     <div class="fab-plus">
-                        <i class="fa fa-plus"></i>
+                        <i class="fa fa-plus"/>
                     </div>
                 </div>
 
                 <div class="ep-nav-right">
                     <!-- BASIC MODE: Material moves here -->
                     <t t-if="not has_extended_nav">
-                        <a href="/my/employee/material"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') else 'nav-btn'">
-                            <i class="fa fa-cubes"></i>
+                        <a href="/my/employee/material" t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') else 'nav-btn'">
+                            <i class="fa fa-cubes"/>
                             <span>Material</span>
                         </a>
                     </t>
                      <t t-if="has_extended_nav">
                     <t t-if="can_er_approval_nav or can_mr_approval_nav">
-                        <div id="approvalBtn"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'"
-                            onclick="toggleApprovalMenu()">
-                            <i class="fa fa-check-circle-o"></i>
+                        <div id="approvalBtn" t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'" onclick="toggleApprovalMenu()">
+                            <i class="fa fa-check-circle-o"/>
                             <span>Approvals</span>
                         </div>
 
@@ -1689,14 +1677,14 @@
 
                             <t t-if="can_er_approval_nav">
                                 <a href="/my/employee/approvals" class="fab-item">
-                                    <i class="fa fa-user"></i>
+                                    <i class="fa fa-user"/>
                                     <span>Employee Approvals</span>
                                 </a>
                             </t>
 
                             <t t-if="can_mr_approval_nav">
                                 <a href="/my/employee/material/approvals" class="fab-item">
-                                    <i class="fa fa-cubes"></i>
+                                    <i class="fa fa-cubes"/>
                                     <span>Material Approvals</span>
                                 </a>
                             </t>
@@ -1705,9 +1693,8 @@
                     </t>
 
                     <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
-                        <a href="/my/employee/petty-cash"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/petty-cash') else 'nav-btn'">
-                            <i class="fa fa-money"></i>
+                        <a href="/my/employee/petty-cash" t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/petty-cash') else 'nav-btn'">
+                            <i class="fa fa-money"/>
                             <span>Cash</span>
                         </a>
                     </t>
@@ -1715,7 +1702,7 @@
                     
 
                     <a href="/web/session/logout" class="nav-btn">
-                        <i class="fa fa-sign-out"></i>
+                        <i class="fa fa-sign-out"/>
                         <span>Exit</span>
                     </a>
 
@@ -1729,11 +1716,11 @@
                  ================================================================ -->
             <div id="fabMenu" class="fab-menu mobile-only">
                 <a href="/my/employee/requests/new" class="fab-item">
-                    <i class="fa fa-file-text-o"></i>
+                    <i class="fa fa-file-text-o"/>
                     <span>New Employee Request</span>
                 </a>
                 <a href="/my/employee/material/new" class="fab-item">
-                    <i class="fa fa-cubes"></i>
+                    <i class="fa fa-cubes"/>
                     <span>New Material Request</span>
                 </a>
             </div>
@@ -1804,7 +1791,7 @@
             </script>
 
         </t>
-        <script src="/employee_portal_suite/static/src/js/employee_portal_pwa.js?v=2045"></script>
+        <script src="/employee_portal_suite/static/src/js/employee_portal_pwa.js?v=2045"/>
     </template>
 
     <!-- ================================================================
@@ -1818,25 +1805,23 @@
          ================================================================ -->
     <template id="ep_notification_bell">
         <div class="ep-bell-wrap">
-            <div t-att-class="'ep-bell-btn has-unread' if ep_notif_unread_total else 'ep-bell-btn'"
-                onclick="toggleEpBell(event)">
-                <i class="fa fa-bell-o"></i>
+            <div t-att-class="'ep-bell-btn has-unread' if ep_notif_unread_total else 'ep-bell-btn'" onclick="toggleEpBell(event)">
+                <i class="fa fa-bell-o"/>
                 <t t-if="ep_notif_unread_total &gt; 0">
-                    <span class="ep-bell-dot"></span>
+                    <span class="ep-bell-dot"/>
                 </t>
             </div>
 
             <div class="ep-bell-panel">
                 <div class="ep-bell-panel-header">Notifications</div>
 
-                <t t-set="ep_unread_items"
-                    t-value="[(k, v) for k, v in ep_notif_summary.items() if v.get('new', 0) &gt; 0]"/>
+                <t t-set="ep_unread_items" t-value="[(k, v) for k, v in ep_notif_summary.items() if v.get('new', 0) &gt; 0]"/>
 
                 <t t-if="ep_unread_items">
                     <t t-foreach="ep_unread_items" t-as="ep_item">
                         <a t-att-href="ep_item[1]['url']" class="ep-bell-item">
                             <div class="ep-bell-item-icon">
-                                <i class="fa fa-bell"></i>
+                                <i class="fa fa-bell"/>
                             </div>
                             <span class="ep-bell-item-label">
                                 <t t-out="ep_item[1]['label']"/>

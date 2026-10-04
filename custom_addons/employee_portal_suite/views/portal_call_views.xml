@@ -1,11 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <odoo>
 
     <record id="view_portal_call_contact_list" model="ir.ui.view">
         <field name="name">portal.call.contact.list</field>
         <field name="model">portal.call.contact</field>
         <field name="arch" type="xml">
-            <list>
+            <list class="eps_compact_list">
                 <field name="portal_user_id"/>
                 <field name="internal_user_id"/>
                 <field name="note"/>
@@ -18,9 +18,9 @@
         <field name="name">portal.call.contact.form</field>
         <field name="model">portal.call.contact</field>
         <field name="arch" type="xml">
-            <form>
+            <form class="eps_compact_form">
                 <sheet>
-                    <group>
+                    <group class="eps_compact_section">
                         <field name="portal_user_id"/>
                         <field name="internal_user_id"/>
                         <field name="note"/>
@@ -42,7 +42,7 @@
         <field name="name">portal.call.session.list</field>
         <field name="model">portal.call.session</field>
         <field name="arch" type="xml">
-            <list create="0" edit="0" delete="0">
+            <list create="0" edit="0" delete="0" class="eps_compact_list">
                 <field name="caller_id"/>
                 <field name="callee_id"/>
                 <field name="call_type"/>
@@ -61,22 +61,10 @@
     </record>
 
     <!-- Legacy pairing menu retained but hidden: calls now use the automatic user directory. -->
-    <menuitem id="menu_portal_call_contact"
-              name="Call Contacts"
-              parent="menu_employee_portal_root"
-              action="action_portal_call_contact"
-              sequence="40"
-              active="False"
-              groups="employee_portal_suite.group_employee_portal_admin"/>
+    <menuitem id="menu_portal_call_contact" name="Call Contacts" parent="menu_employee_portal_root" action="action_portal_call_contact" sequence="40" active="False" groups="employee_portal_suite.group_employee_portal_admin"/>
 
     <!-- Call History backend tab intentionally retired.  The call/session
          models remain because they are used by the live calling feature. -->
-    <menuitem id="menu_portal_call_session"
-              name="Call History"
-              parent="menu_employee_portal_root"
-              action="action_portal_call_session"
-              sequence="41"
-              active="False"
-              groups="employee_portal_suite.group_employee_portal_superadmin"/>
+    <menuitem id="menu_portal_call_session" name="Call History" parent="menu_employee_portal_root" action="action_portal_call_session" sequence="41" active="False" groups="employee_portal_suite.group_employee_portal_superadmin"/>
 
 </odoo>

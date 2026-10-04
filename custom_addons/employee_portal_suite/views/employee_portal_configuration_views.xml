@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <odoo>
     <record id="view_employee_portal_suite_groups_list" model="ir.ui.view">
         <field name="name">employee.portal.role.assignment.list</field>
         <field name="model">employee.portal.role.assignment</field>
         <field name="arch" type="xml">
-            <list string="Roles &amp; Permissions" create="0" delete="0" default_order="section_sequence,sequence,name">
+            <list string="Roles &amp; Permissions" create="0" delete="0" default_order="section_sequence,sequence,name" class="eps_compact_list">
                 <field name="section" optional="show"/>
                 <field name="name"/>
                 <field name="description" optional="show"/>
@@ -18,14 +18,14 @@
         <field name="name">employee.portal.role.assignment.form</field>
         <field name="model">employee.portal.role.assignment</field>
         <field name="arch" type="xml">
-            <form string="Employee Portal Role" create="0" delete="0">
+            <form string="Employee Portal Role" create="0" delete="0" class="eps_compact_form">
                 <sheet>
                     <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
-                    <group>
+                    <group class="eps_compact_section">
                         <field name="section" readonly="1"/>
                         <field name="description" readonly="1"/>
                     </group>
-                    <group string="Assigned Users">
+                    <group string="Assigned Users" class="eps_compact_section">
                         <field name="user_ids" widget="many2many_tags" options="{'no_create': True, 'no_create_edit': True}" nolabel="1"/>
                     </group>
                 </sheet>
@@ -64,16 +64,7 @@
         </field>
     </record>
 
-    <menuitem id="menu_employee_portal_configuration"
-              name="Configuration"
-              parent="employee_portal_suite.menu_employee_portal_root"
-              sequence="90"
-              groups="employee_portal_suite.group_employee_portal_superadmin"/>
+    <menuitem id="menu_employee_portal_configuration" name="Configuration" parent="employee_portal_suite.menu_employee_portal_root" sequence="90" groups="employee_portal_suite.group_employee_portal_superadmin"/>
 
-    <menuitem id="menu_employee_portal_roles_permissions"
-              name="Roles &amp; Permissions"
-              parent="menu_employee_portal_configuration"
-              action="action_employee_portal_suite_roles"
-              sequence="10"
-              groups="employee_portal_suite.group_employee_portal_superadmin"/>
+    <menuitem id="menu_employee_portal_roles_permissions" name="Roles &amp; Permissions" parent="menu_employee_portal_configuration" action="action_employee_portal_suite_roles" sequence="10" groups="employee_portal_suite.group_employee_portal_superadmin"/>
 </odoo>

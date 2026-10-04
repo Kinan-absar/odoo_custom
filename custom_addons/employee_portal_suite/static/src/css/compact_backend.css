@@ -1,0 +1,69 @@
+/* Scoped to Employee Portal Suite views, including their existing custom list renderers. */
+.eps_compact_form, .eps_compact_list {
+    --eps-ink: #19354a;
+    --eps-teal: #127c80;
+    --eps-border: #e2e9ec;
+}
+.eps_compact_form .o_form_sheet_bg { background: #f5f9fa; }
+.eps_compact_form .o_form_sheet {
+    max-width: none;
+    width: calc(100% - 32px);
+    margin: 16px auto;
+    padding: 20px 24px;
+    border: 1px solid var(--eps-border);
+    border-radius: 12px;
+    box-shadow: 0 3px 15px rgb(25 53 74 / 4%);
+}
+.eps_compact_form .oe_title { max-width: 100%; margin-bottom: 16px; }
+.eps_compact_form .oe_title h1 { color: var(--eps-ink); font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+.eps_compact_form .o_group { margin-top: 0 !important; margin-bottom: 12px !important; }
+.eps_compact_form .eps_compact_section { padding: 4px 0 8px; }
+.eps_compact_form .o_horizontal_separator {
+    color: var(--eps-ink); border-bottom: 1px solid var(--eps-border);
+    font-size: 13px; font-weight: 700; padding-bottom: 8px;
+    margin-top: 8px !important; margin-bottom: 10px !important;
+}
+.eps_compact_form .o_form_label { color: #536b7c; font-weight: 500; }
+.eps_compact_form .o_input:focus { border-color: var(--eps-teal); }
+.eps_compact_form .o_form_statusbar { padding: 8px 14px; gap: 8px; border-color: var(--eps-border); }
+.eps_compact_form .o_statusbar_buttons { flex-wrap: wrap; gap: 6px; }
+.eps_compact_form .o_statusbar_buttons .btn { border-radius: 7px; font-weight: 600; }
+.eps_compact_form .o_statusbar_buttons .btn-primary { background: var(--eps-teal); border-color: var(--eps-teal); }
+.eps_compact_form .oe_button_box { margin-bottom: 12px; }
+.eps_compact_form .oe_stat_button { border-radius: 7px; border-color: var(--eps-border); }
+.eps_compact_form .o_stat_value, .eps_compact_form .o_button_icon { color: var(--eps-teal); }
+.eps_compact_form .o_notebook .nav-tabs { border-color: var(--eps-border); }
+.eps_compact_form .o_notebook .nav-link { padding: 9px 12px; color: #536b7c; font-weight: 600; border: 0; border-bottom: 3px solid transparent; background: transparent; }
+.eps_compact_form .o_notebook .nav-link.active { border-bottom-color: var(--eps-teal); color: var(--eps-teal); }
+.eps_compact_form .o_notebook .tab-content { padding-top: 12px; }
+.eps_compact_form .badge, .eps_compact_list .badge { border-radius: 6px; padding: 5px 8px; font-size: 11px; font-weight: 600; }
+.eps_compact_list .o_list_table, .eps_compact_form .o_list_table { font-size: 13px; }
+.eps_compact_list .o_list_table thead th, .eps_compact_form .o_list_table thead th { background: #edf4f6; color: var(--eps-ink); font-size: 12px; font-weight: 600; padding-block: 10px; border-bottom-color: #d3e0e5; }
+.eps_compact_list .o_list_table tbody td, .eps_compact_form .o_list_table tbody td { padding-block: 8px; vertical-align: middle; border-bottom-color: #edf1f3; }
+.eps_compact_list .o_list_table tbody tr.o_data_row:nth-child(even):not(.o_selected_row), .eps_compact_form .o_list_table tbody tr.o_data_row:nth-child(even):not(.o_selected_row) { background: #fafcfd; }
+.eps_compact_list .o_list_table tbody tr.o_data_row:hover:not(.o_selected_row), .eps_compact_form .o_list_table tbody tr.o_data_row:hover:not(.o_selected_row) { background: #eef7f7; }
+.eps_compact_list .o_list_number, .eps_compact_form .o_list_number { font-variant-numeric: tabular-nums; }
+.eps_compact_list td[name="name"], .eps_compact_form td[name="name"] { font-weight: 600; color: var(--eps-ink); }
+.eps_compact_list .o_list_table tfoot td, .eps_compact_form .o_list_table tfoot td { background: #f0f7f6; color: var(--eps-ink); font-weight: 700; padding-block: 10px; }
+.eps_compact_form .o_field_x2many .o_list_renderer { overflow-x: auto; }
+/* Chatter uses the document width and a single page scroll, even on wide displays. */
+.o_form_view:has(.o_form_renderer.eps_compact_form) .o_content { overflow-y: auto !important; }
+.o_form_renderer.eps_compact_form { flex-direction: column !important; height: auto !important; min-height: 100%; width: 100%; overflow: visible !important; }
+.eps_compact_form .o_form_sheet_bg { flex: 0 0 auto !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; }
+.eps_compact_form .o-mail-Form-chatter, .eps_compact_form .o-mail-Form-chatter.o-aside { flex: 0 0 auto !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; height: auto !important; max-height: none !important; position: relative !important; overflow: visible !important; border-inline-start: 0 !important; border-top: 1px solid var(--eps-border); padding: 16px; background: #f5f9fa; }
+.eps_compact_form .o-mail-Chatter { height: auto !important; overflow: visible !important; background: #fff; border: 1px solid var(--eps-border); border-radius: 10px; }
+.eps_compact_form .o-mail-Chatter-content { height: auto !important; max-height: none !important; overflow: visible !important; }
+/* Keep the configurable card colors and click handlers; tighten their dimensions. */
+.o_employee_request_dashboard .er_card, .o_material_request_dashboard .mr_card { min-width: 120px; height: 64px; padding: 9px 13px; border-radius: 9px; box-shadow: none; }
+.o_employee_request_dashboard .er_label, .o_material_request_dashboard .mr_label { font-size: 12px; margin-top: 4px; white-space: normal; }
+.o_employee_request_dashboard .er_value, .o_material_request_dashboard .mr_value { font-size: 22px; color: #19354a; }
+.eps_wf_dashboard { padding: 14px 16px; background: #f5f9fa; }
+.eps_wf_dashboard_header { margin-bottom: 12px; }
+.eps_wf_dashboard_header h2 { font-size: 21px; color: #19354a; }
+.eps_wf_kpi { min-height: 70px; padding: 10px 12px; box-shadow: none; border-radius: 10px; }
+@media (max-width: 767px) {
+    .eps_compact_form .o_form_sheet { width: 100%; margin: 0; padding: 16px 12px; border-radius: 0; }
+    .eps_compact_form .oe_title h1 { font-size: 24px; }
+    .eps_compact_form .o_notebook .nav-link { padding: 9px; }
+    .eps_compact_form .o_statusbar_buttons .btn { min-height: 36px; }
+}
