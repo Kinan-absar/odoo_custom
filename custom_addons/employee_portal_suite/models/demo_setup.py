@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import timedelta
 
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
@@ -274,6 +274,7 @@ class EmployeePortalDemoSetup(models.TransientModel):
             "project_manager_employee_id": manager.id,
         })
 
+    @api.model
     def _sync_demo_manager_access(self):
         """Keep an already-created demo manager able to follow the backend tour.
 
