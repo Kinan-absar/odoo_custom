@@ -1,0 +1,370 @@
+from odoo import api, fields, models, _
+from odoo.exceptions import UserError
+
+
+def _distribution_has_account(distribution, account_id):
+    """Return the percentage allocated to an analytic account in a distribution."""
+    if not distribution or not account_id:
+        return 0.0
+    target = str(account_id)
+    percentage = 0.0
+    for key, value in distribution.items():
+        account_ids = [part.strip() for part in str(key).split(',') if part.strip()]
+        if target in account_ids:
+            percentage += float(value or 0.0)
+    return percentage
+
+
+class ConstructionContractJobCosting(models.Model):
+    _inherit = 'construction.contract'
+
+    analytic_account_id = fields.Many2one(
+        'account.analytic.account',
+        string='Job Cost Analytic Account',
+        tracking=True,
+        check_company=True,
+        help='Analytic account used to collect the actual revenue and cost of this construction contract.',
+    )
+    job_cost_budget = fields.Monetary(
+        string='Cost Budget',
+        currency_field='currency_id',
+        tracking=True,
+        help='Approved/target total cost budget for this contract. This is a management value; accounting actuals are read from the analytic account.',
+    )
+    forecast_remaining_cost = fields.Monetary(
+        string='Uncommitted Forecast Cost',
+        currency_field='currency_id',
+        tracking=True,
+        help='Expected future cost that is not yet represented by posted actuals or confirmed purchase commitments.',
+    )
+    purchase_commitment_amount = fields.Monetary(
+        string='PO Commitments',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+    )
+    purchase_billed_amount = fields.Monetary(
+        string='PO Billed Cost',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+    )
+    open_purchase_commitment = fields.Monetary(
+        string='Open PO Commitment',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+    )
+    actual_cost_amount = fields.Monetary(
+        string='Actual Cost',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+        help='Negative analytic amounts converted to a positive project cost.',
+    )
+    actual_revenue_amount = fields.Monetary(
+        string='Actual Revenue',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+        help='Positive analytic amounts posted to the selected analytic account.',
+    )
+    cost_exposure_amount = fields.Monetary(
+        string='Cost Exposure',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+        help='Actual cost plus open purchase commitments.',
+    )
+    forecast_final_cost = fields.Monetary(
+        string='Forecast Final Cost',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+        help='Actual cost + open PO commitments + uncommitted forecast cost.',
+    )
+    forecast_profit = fields.Monetary(
+        string='Forecast Profit',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+    )
+    forecast_margin_percent = fields.Float(
+        string='Forecast Margin %',
+        compute='_compute_job_costing',
+    )
+    budget_variance = fields.Monetary(
+        string='Cost Budget Variance',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+        help='Cost Budget minus Forecast Final Cost. Negative means forecast cost exceeds budget.',
+    )
+    budget_consumed_percent = fields.Float(
+        string='Budget Consumed %',
+        compute='_compute_job_costing',
+    )
+
+    @api.onchange('project_id')
+    def _onchange_project_job_cost_analytic(self):
+        for rec in self:
+            if rec.project_id and not rec.analytic_account_id and 'account_id' in rec.project_id._fields:
+                rec.analytic_account_id = rec.project_id.account_id
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        for rec in records:
+            if rec.project_id and not rec.analytic_account_id and 'account_id' in rec.project_id._fields:
+                if rec.project_id.account_id:
+                    rec.analytic_account_id = rec.project_id.account_id
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'project_id' in vals and 'analytic_account_id' not in vals:
+            for rec in self:
+                if rec.project_id and not rec.analytic_account_id and 'account_id' in rec.project_id._fields:
+                    if rec.project_id.account_id:
+                        rec.analytic_account_id = rec.project_id.account_id
+        return result
+
+    def _convert_job_cost_amount(self, amount, source_currency, date=False):
+        self.ensure_one()
+        source_currency = source_currency or self.company_id.currency_id
+        if source_currency == self.currency_id:
+            return amount
+        return source_currency._convert(
+            amount,
+            self.currency_id,
+            self.company_id,
+            date or fields.Date.context_today(self),
+        )
+
+    def _analytic_line_domain(self):
+        self.ensure_one()
+        analytic = self.analytic_account_id
+        if not analytic:
+            return []
+        plan = analytic.plan_id
+        if not plan:
+            return []
+        column = plan._column_name()
+        return [(column, '=', analytic.id), ('company_id', '=', self.company_id.id)]
+
+    def _matching_purchase_lines(self):
+        self.ensure_one()
+        if not self.analytic_account_id:
+            return self.env['purchase.order.line']
+        lines = self.env['purchase.order.line'].search([
+            ('order_id.company_id', '=', self.company_id.id),
+            ('order_id.state', 'in', ['purchase', 'done']),
+            ('display_type', '=', False),
+        ])
+        analytic_id = self.analytic_account_id.id
+        return lines.filtered(lambda line: _distribution_has_account(line.analytic_distribution, analytic_id) > 0.0)
+
+    @api.depends('analytic_account_id', 'job_cost_budget', 'forecast_remaining_cost', 'revised_amount', 'currency_id', 'company_id')
+    def _compute_job_costing(self):
+        for rec in self:
+            rec.purchase_commitment_amount = 0.0
+            rec.purchase_billed_amount = 0.0
+            rec.open_purchase_commitment = 0.0
+            rec.actual_cost_amount = 0.0
+            rec.actual_revenue_amount = 0.0
+            rec.cost_exposure_amount = 0.0
+            rec.forecast_final_cost = 0.0
+            rec.forecast_profit = 0.0
+            rec.forecast_margin_percent = 0.0
+            rec.budget_variance = 0.0
+            rec.budget_consumed_percent = 0.0
+
+            if not rec.analytic_account_id:
+                continue
+
+            # Actuals come from Odoo analytic lines, so posted accounting remains
+            # the source of truth. Negative analytic amounts are costs; positive
+            # analytic amounts are revenue.
+            analytic_domain = rec._analytic_line_domain()
+            if analytic_domain:
+                analytic_lines = self.env['account.analytic.line'].search(analytic_domain)
+                actual_cost = 0.0
+                actual_revenue = 0.0
+                for line in analytic_lines:
+                    amount = rec._convert_job_cost_amount(
+                        line.amount,
+                        line.currency_id,
+                        line.date,
+                    )
+                    if amount < 0:
+                        actual_cost += -amount
+                    elif amount > 0:
+                        actual_revenue += amount
+                rec.actual_cost_amount = actual_cost
+                rec.actual_revenue_amount = actual_revenue
+
+            # Purchase commitment is based on confirmed PO lines carrying this
+            # analytic account. No Inventory/stock records are required.
+            purchase_lines = rec._matching_purchase_lines()
+            commitment = 0.0
+            billed = 0.0
+            for po_line in purchase_lines:
+                allocation = _distribution_has_account(
+                    po_line.analytic_distribution,
+                    rec.analytic_account_id.id,
+                ) / 100.0
+                if not allocation:
+                    continue
+
+                po_date = po_line.order_id.date_order.date() if po_line.order_id.date_order else False
+                line_commitment = rec._convert_job_cost_amount(
+                    po_line.price_subtotal * allocation,
+                    po_line.order_id.currency_id,
+                    po_date,
+                )
+                commitment += line_commitment
+
+                for invoice_line in po_line.invoice_lines.filtered(
+                    lambda l: l.move_id.state == 'posted' and l.move_id.move_type in ('in_invoice', 'in_refund')
+                ):
+                    # Balance is in company currency and naturally reverses for refunds.
+                    line_allocation = _distribution_has_account(
+                        invoice_line.analytic_distribution,
+                        rec.analytic_account_id.id,
+                    ) / 100.0
+                    if not line_allocation:
+                        line_allocation = allocation
+                    amount_company = invoice_line.balance * line_allocation
+                    billed += rec._convert_job_cost_amount(
+                        amount_company,
+                        rec.company_id.currency_id,
+                        invoice_line.date,
+                    )
+
+            rec.purchase_commitment_amount = commitment
+            rec.purchase_billed_amount = max(billed, 0.0)
+            rec.open_purchase_commitment = max(commitment - billed, 0.0)
+            rec.cost_exposure_amount = rec.actual_cost_amount + rec.open_purchase_commitment
+            rec.forecast_final_cost = rec.cost_exposure_amount + (rec.forecast_remaining_cost or 0.0)
+
+            revenue_base = rec.revised_amount or rec.original_amount or 0.0
+            rec.forecast_profit = revenue_base - rec.forecast_final_cost
+            rec.forecast_margin_percent = (
+                rec.forecast_profit / revenue_base * 100.0 if revenue_base else 0.0
+            )
+            rec.budget_variance = (rec.job_cost_budget or 0.0) - rec.forecast_final_cost
+            rec.budget_consumed_percent = (
+                rec.actual_cost_amount / rec.job_cost_budget * 100.0
+                if rec.job_cost_budget else 0.0
+            )
+
+    def action_use_project_analytic_account(self):
+        self.ensure_one()
+        if not self.project_id:
+            raise UserError(_('Select a Project first.'))
+        if 'account_id' not in self.project_id._fields:
+            raise UserError(_('This Odoo Project does not expose an analytic account field. Select the Job Cost Analytic Account manually.'))
+        if not self.project_id.account_id and hasattr(self.project_id, '_create_analytic_account'):
+            self.project_id._create_analytic_account()
+        if not self.project_id.account_id:
+            raise UserError(_('The selected Project has no analytic account. Create one on the Project or select one manually.'))
+        self.analytic_account_id = self.project_id.account_id
+        return True
+
+    def action_view_job_cost_analytic_items(self):
+        self.ensure_one()
+        if not self.analytic_account_id:
+            raise UserError(_('Set a Job Cost Analytic Account first.'))
+        domain = self._analytic_line_domain()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Job Cost Analytic Items'),
+            'res_model': 'account.analytic.line',
+            'view_mode': 'list,form',
+            'domain': domain,
+            'context': {'default_company_id': self.company_id.id},
+        }
+
+    def action_view_job_cost_purchase_orders(self):
+        self.ensure_one()
+        purchase_lines = self._matching_purchase_lines()
+        orders = purchase_lines.mapped('order_id')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Job Cost Purchase Orders'),
+            'res_model': 'purchase.order',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', orders.ids)],
+            'context': {
+                'default_construction_contract_id': self.id,
+                'default_company_id': self.company_id.id,
+            },
+        }
+
+
+class PurchaseOrderConstructionJobCost(models.Model):
+    _inherit = 'purchase.order'
+
+    construction_contract_id = fields.Many2one(
+        'construction.contract',
+        string='Construction Contract',
+        domain="[('company_id', '=', company_id), ('contract_direction', '=', 'inbound')]",
+        tracking=True,
+        help='Client construction contract/project whose cost this purchase belongs to.',
+    )
+
+    @api.onchange('construction_contract_id')
+    def _onchange_construction_contract_id(self):
+        for order in self:
+            order._apply_construction_analytic_to_lines()
+
+    def _apply_construction_analytic_to_lines(self):
+        for order in self:
+            analytic = order.construction_contract_id.analytic_account_id
+            if not analytic:
+                continue
+            for line in order.order_line.filtered(lambda l: not l.display_type and not l.analytic_distribution):
+                line.analytic_distribution = {str(analytic.id): 100.0}
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        orders = super().create(vals_list)
+        orders._apply_construction_analytic_to_lines()
+        return orders
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'construction_contract_id' in vals:
+            self._apply_construction_analytic_to_lines()
+        return result
+
+
+class PurchaseOrderLineConstructionJobCost(models.Model):
+    _inherit = 'purchase.order.line'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('analytic_distribution') or not vals.get('order_id'):
+                continue
+            order = self.env['purchase.order'].browse(vals['order_id'])
+            analytic = order.construction_contract_id.analytic_account_id
+            if analytic:
+                vals['analytic_distribution'] = {str(analytic.id): 100.0}
+        return super().create(vals_list)
+
+
+class AccountMoveConstructionJobCost(models.Model):
+    _inherit = 'account.move'
+
+    construction_contract_id = fields.Many2one(
+        'construction.contract',
+        string='Construction Contract',
+        domain="[('company_id', '=', company_id)]",
+        tracking=True,
+        help='Construction contract used to allocate this invoice/bill to job costing.',
+    )
+
+    @api.onchange('construction_contract_id')
+    def _onchange_construction_contract_id(self):
+        for move in self:
+            move._apply_construction_analytic_to_invoice_lines()
+
+    def _apply_construction_analytic_to_invoice_lines(self):
+        for move in self:
+            analytic = move.construction_contract_id.analytic_account_id
+            if not analytic:
+                continue
+            for line in move.invoice_line_ids.filtered(lambda l: not l.display_type and not l.analytic_distribution):
+                line.analytic_distribution = {str(analytic.id): 100.0}

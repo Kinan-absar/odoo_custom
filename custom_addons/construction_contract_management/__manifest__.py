@@ -1,6 +1,6 @@
 {
     'name': 'Construction Contract Management',
-    'version': '18.0.1.6.7',
+    'version': '18.0.1.7.0',
     'summary': 'Dual-mode construction contract and subcontract management',
     'description': """
 Construction Contract Management
@@ -29,6 +29,7 @@ from the employee portal, install the separate
         'uom',
         'portal',
         'sale_management',
+        'purchase',
     ],
     'images': ['static/description/icon.png'],
     'data': [
@@ -51,6 +52,7 @@ from the employee portal, install the separate
         'views/construction_contract_order_views.xml',
         'views/sale_contract_wizard_views.xml',
         'views/sale_order_views.xml',
+        'views/construction_job_costing_views.xml',
         'views/construction_measurement_views.xml',
         'views/construction_ipc_views.xml',
         'views/construction_ipc_link_move_wizard_views.xml',

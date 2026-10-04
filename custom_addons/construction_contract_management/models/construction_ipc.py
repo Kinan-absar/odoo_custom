@@ -337,13 +337,16 @@ class ConstructionIPC(models.Model):
             invoice_line_vals = []
 
             # 1) Work Done line
-            invoice_line_vals.append((0, 0, {
+            work_line_vals = {
                 'name': f'{rec.name} - Work Done',
                 'quantity': 1.0,
                 'price_unit': rec.current_work_value,
                 'account_id': contract.work_account_id.id,
                 'tax_ids': [(6, 0, contract.tax_id.ids)],
-            }))
+            }
+            if contract.analytic_account_id:
+                work_line_vals['analytic_distribution'] = {str(contract.analytic_account_id.id): 100.0}
+            invoice_line_vals.append((0, 0, work_line_vals))
 
             # 2) Advance Recovery line (optional)
             if rec.advance_recovery_amount > 0:
@@ -375,6 +378,7 @@ class ConstructionIPC(models.Model):
                 'invoice_origin': ' / '.join(filter(None, [rec.sale_order_id.name if rec.sale_order_id else '', rec.name])),
                 'ref': ' / '.join(filter(None, [rec.contract_id.name, rec.sale_order_id.name if rec.sale_order_id else '', rec.name])),
                 'invoice_line_ids': invoice_line_vals,
+                'construction_contract_id': contract.id,
             }
 
             move = self.env['account.move'].create(move_vals)

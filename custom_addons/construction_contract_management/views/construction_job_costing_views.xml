@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_construction_contract_form_job_costing" model="ir.ui.view">
+        <field name="name">construction.contract.form.job.costing</field>
+        <field name="model">construction.contract</field>
+        <field name="inherit_id" ref="construction_contract_management.view_construction_contract_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button type="object" name="action_view_job_cost_purchase_orders" class="oe_stat_button" icon="fa-shopping-cart" invisible="not analytic_account_id">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="purchase_commitment_amount" widget="monetary"/></span>
+                        <span class="o_stat_text">PO Commitments</span>
+                    </div>
+                </button>
+                <button type="object" name="action_view_job_cost_analytic_items" class="oe_stat_button" icon="fa-line-chart" invisible="not analytic_account_id">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="actual_cost_amount" widget="monetary"/></span>
+                        <span class="o_stat_text">Actual Cost</span>
+                    </div>
+                </button>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Job Costing" name="ccm_job_costing" invisible="contract_direction != 'inbound'">
+                    <group>
+                        <group string="Setup" class="ccm_field_section">
+                            <field name="analytic_account_id" options="{'no_create_edit': False}"/>
+                            <button name="action_use_project_analytic_account" type="object" string="Use Project Analytic Account" class="btn-secondary" invisible="not project_id"/>
+                            <field name="job_cost_budget"/>
+                            <field name="forecast_remaining_cost"/>
+                        </group>
+                        <group string="Profitability" class="ccm_field_section">
+                            <field name="revised_amount" readonly="1" string="Revised Contract Revenue"/>
+                            <field name="forecast_final_cost" readonly="1"/>
+                            <field name="forecast_profit" readonly="1" decoration-danger="forecast_profit &lt; 0" decoration-success="forecast_profit &gt;= 0"/>
+                            <field name="forecast_margin_percent" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <separator string="Cost Position"/>
+                    <group col="4">
+                        <group string="Committed &amp; Billed" class="ccm_field_section">
+                            <field name="purchase_commitment_amount" readonly="1"/>
+                            <field name="purchase_billed_amount" readonly="1"/>
+                            <field name="open_purchase_commitment" readonly="1"/>
+                        </group>
+                        <group string="Actual &amp; Forecast" class="ccm_field_section">
+                            <field name="actual_cost_amount" readonly="1"/>
+                            <field name="actual_revenue_amount" readonly="1"/>
+                            <field name="cost_exposure_amount" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <separator string="Budget Health"/>
+                    <group>
+                        <group class="ccm_field_section">
+                            <field name="job_cost_budget" readonly="1"/>
+                            <field name="budget_variance" readonly="1" decoration-danger="budget_variance &lt; 0" decoration-success="budget_variance &gt;= 0"/>
+                            <field name="budget_consumed_percent" readonly="1"/>
+                        </group>
+                        <group class="ccm_field_section">
+                            <label string="How it works"/>
+                            <div class="text-muted">
+                                Actual cost/revenue comes from the selected analytic account. Confirmed Purchase Orders create commitments. Inventory is not used.
+                            </div>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="purchase_order_form_construction_job_cost" model="ir.ui.view">
+        <field name="name">purchase.order.form.construction.job.cost</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_ref']" position="after">
+                <field name="construction_contract_id" options="{'no_create': True}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="account_move_form_construction_job_cost" model="ir.ui.view">
+        <field name="name">account.move.form.construction.job.cost</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='invoice_origin']" position="after">
+                <field name="construction_contract_id" options="{'no_create': True}" invisible="move_type not in ['out_invoice', 'out_refund', 'in_invoice', 'in_refund']"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
