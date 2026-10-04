@@ -143,6 +143,59 @@ class ConstructionContractJobCosting(models.Model):
         column = plan._column_name()
         return [(column, '=', analytic.id), ('company_id', '=', self.company_id.id)]
 
+    def _matching_account_move_lines(self):
+        """Return posted P&L journal items allocated to this job.
+
+        Reading account.move.line directly makes the job-cost actuals include
+        vendor bills, miscellaneous journal entries, expenses, payroll journals,
+        petty-cash journals and any other posted accounting entry carrying the
+        project's analytic distribution.
+        """
+        self.ensure_one()
+        if not self.analytic_account_id:
+            return self.env['account.move.line']
+
+        pnl_types = [
+            'expense', 'expense_depreciation', 'expense_direct_cost',
+            'income', 'income_other',
+        ]
+        lines = self.env['account.move.line'].search([
+            ('company_id', '=', self.company_id.id),
+            ('move_id.state', '=', 'posted'),
+            ('display_type', '=', False),
+            ('account_id.account_type', 'in', pnl_types),
+            '|',
+            ('analytic_distribution', '!=', False),
+            ('move_id.construction_contract_id', '=', self.id),
+        ])
+        analytic_id = self.analytic_account_id.id
+
+        def allocation(line):
+            percentage = _distribution_has_account(line.analytic_distribution, analytic_id)
+            if percentage:
+                return percentage
+            # A journal entry explicitly linked to this construction contract is
+            # treated as 100% job-related when its P&L line has no distribution.
+            if line.move_id.construction_contract_id == self and not line.analytic_distribution:
+                return 100.0
+            return 0.0
+
+        return lines.filtered(lambda line: allocation(line) > 0.0)
+
+    def _job_cost_line_allocation(self, line):
+        self.ensure_one()
+        if not self.analytic_account_id:
+            return 0.0
+        percentage = _distribution_has_account(
+            line.analytic_distribution,
+            self.analytic_account_id.id,
+        )
+        if percentage:
+            return percentage / 100.0
+        if line.move_id.construction_contract_id == self and not line.analytic_distribution:
+            return 1.0
+        return 0.0
+
     def _matching_purchase_lines(self):
         self.ensure_one()
         if not self.analytic_account_id:
@@ -173,26 +226,32 @@ class ConstructionContractJobCosting(models.Model):
             if not rec.analytic_account_id:
                 continue
 
-            # Actuals come from Odoo analytic lines, so posted accounting remains
-            # the source of truth. Negative analytic amounts are costs; positive
-            # analytic amounts are revenue.
-            analytic_domain = rec._analytic_line_domain()
-            if analytic_domain:
-                analytic_lines = self.env['account.analytic.line'].search(analytic_domain)
-                actual_cost = 0.0
-                actual_revenue = 0.0
-                for line in analytic_lines:
-                    amount = rec._convert_job_cost_amount(
-                        line.amount,
-                        line.currency_id,
-                        line.date,
-                    )
-                    if amount < 0:
-                        actual_cost += -amount
-                    elif amount > 0:
-                        actual_revenue += amount
-                rec.actual_cost_amount = actual_cost
-                rec.actual_revenue_amount = actual_revenue
+            # Posted journal items are the accounting source of truth. This
+            # includes vendor bills AND miscellaneous entries, expenses, payroll,
+            # petty cash and other posted P&L entries carrying the project's
+            # analytic allocation. Balance is expressed in company currency.
+            actual_cost = 0.0
+            actual_revenue = 0.0
+            for line in rec._matching_account_move_lines():
+                allocation = rec._job_cost_line_allocation(line)
+                if not allocation:
+                    continue
+                allocated_balance = line.balance * allocation
+                amount = rec._convert_job_cost_amount(
+                    allocated_balance,
+                    rec.company_id.currency_id,
+                    line.date,
+                )
+                account_type = line.account_id.account_type
+                if account_type in ('expense', 'expense_depreciation', 'expense_direct_cost'):
+                    # Expense debits increase cost; credits/refunds reduce it.
+                    actual_cost += amount
+                elif account_type in ('income', 'income_other'):
+                    # Income is normally a credit (negative balance).
+                    actual_revenue += -amount
+
+            rec.actual_cost_amount = max(actual_cost, 0.0)
+            rec.actual_revenue_amount = max(actual_revenue, 0.0)
 
             # Purchase commitment is based on confirmed PO lines carrying this
             # analytic account. No Inventory/stock records are required.
@@ -266,13 +325,13 @@ class ConstructionContractJobCosting(models.Model):
         self.ensure_one()
         if not self.analytic_account_id:
             raise UserError(_('Set a Job Cost Analytic Account first.'))
-        domain = self._analytic_line_domain()
+        lines = self._matching_account_move_lines()
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Job Cost Analytic Items'),
-            'res_model': 'account.analytic.line',
+            'name': _('Job Cost Accounting Lines'),
+            'res_model': 'account.move.line',
             'view_mode': 'list,form',
-            'domain': domain,
+            'domain': [('id', 'in', lines.ids)],
             'context': {'default_company_id': self.company_id.id},
         }
 
@@ -287,62 +346,9 @@ class ConstructionContractJobCosting(models.Model):
             'view_mode': 'list,form',
             'domain': [('id', 'in', orders.ids)],
             'context': {
-                'default_construction_contract_id': self.id,
                 'default_company_id': self.company_id.id,
             },
         }
-
-
-class PurchaseOrderConstructionJobCost(models.Model):
-    _inherit = 'purchase.order'
-
-    construction_contract_id = fields.Many2one(
-        'construction.contract',
-        string='Construction Contract',
-        domain="[('company_id', '=', company_id), ('contract_direction', '=', 'inbound')]",
-        tracking=True,
-        help='Client construction contract/project whose cost this purchase belongs to.',
-    )
-
-    @api.onchange('construction_contract_id')
-    def _onchange_construction_contract_id(self):
-        for order in self:
-            order._apply_construction_analytic_to_lines()
-
-    def _apply_construction_analytic_to_lines(self):
-        for order in self:
-            analytic = order.construction_contract_id.analytic_account_id
-            if not analytic:
-                continue
-            for line in order.order_line.filtered(lambda l: not l.display_type and not l.analytic_distribution):
-                line.analytic_distribution = {str(analytic.id): 100.0}
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        orders = super().create(vals_list)
-        orders._apply_construction_analytic_to_lines()
-        return orders
-
-    def write(self, vals):
-        result = super().write(vals)
-        if 'construction_contract_id' in vals:
-            self._apply_construction_analytic_to_lines()
-        return result
-
-
-class PurchaseOrderLineConstructionJobCost(models.Model):
-    _inherit = 'purchase.order.line'
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('analytic_distribution') or not vals.get('order_id'):
-                continue
-            order = self.env['purchase.order'].browse(vals['order_id'])
-            analytic = order.construction_contract_id.analytic_account_id
-            if analytic:
-                vals['analytic_distribution'] = {str(analytic.id): 100.0}
-        return super().create(vals_list)
 
 
 class AccountMoveConstructionJobCost(models.Model):
@@ -353,18 +359,65 @@ class AccountMoveConstructionJobCost(models.Model):
         string='Construction Contract',
         domain="[('company_id', '=', company_id)]",
         tracking=True,
-        help='Construction contract used to allocate this invoice/bill to job costing.',
+        help='Construction contract/project used to allocate this accounting entry to job costing.',
     )
 
     @api.onchange('construction_contract_id')
     def _onchange_construction_contract_id(self):
         for move in self:
-            move._apply_construction_analytic_to_invoice_lines()
+            move._apply_construction_analytic_to_lines()
 
-    def _apply_construction_analytic_to_invoice_lines(self):
+    def _apply_construction_analytic_to_lines(self):
+        pnl_types = {
+            'expense', 'expense_depreciation', 'expense_direct_cost',
+            'income', 'income_other',
+        }
         for move in self:
             analytic = move.construction_contract_id.analytic_account_id
             if not analytic:
                 continue
-            for line in move.invoice_line_ids.filtered(lambda l: not l.display_type and not l.analytic_distribution):
+            for line in move.line_ids.filtered(
+                lambda l: not l.display_type
+                and l.account_id
+                and l.account_id.account_type in pnl_types
+                and not l.analytic_distribution
+            ):
                 line.analytic_distribution = {str(analytic.id): 100.0}
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        moves = super().create(vals_list)
+        moves._apply_construction_analytic_to_lines()
+        return moves
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'construction_contract_id' in vals and not self.env.context.get('ccm_skip_analytic_apply'):
+            self.with_context(ccm_skip_analytic_apply=True)._apply_construction_analytic_to_lines()
+        return result
+
+
+class AccountMoveLineConstructionJobCost(models.Model):
+    _inherit = 'account.move.line'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        lines = super().create(vals_list)
+        pnl_types = {
+            'expense', 'expense_depreciation', 'expense_direct_cost',
+            'income', 'income_other',
+        }
+        for line in lines:
+            move = line.move_id
+            contract = move.construction_contract_id
+            analytic = contract.analytic_account_id if contract else False
+            if (
+                analytic
+                and not line.display_type
+                and line.account_id
+                and line.account_id.account_type in pnl_types
+                and not line.analytic_distribution
+                and move.state == 'draft'
+            ):
+                line.with_context(check_move_validity=False).analytic_distribution = {str(analytic.id): 100.0}
+        return lines

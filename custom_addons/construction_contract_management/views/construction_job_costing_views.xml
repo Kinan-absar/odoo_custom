@@ -61,22 +61,11 @@
                         <group class="ccm_field_section">
                             <div class="o_form_label">How it works</div>
                             <div class="text-muted">
-                                Actual cost/revenue comes from the selected analytic account. Confirmed Purchase Orders create commitments. Inventory is not used.
+                                Actual cost/revenue comes from all posted P&amp;L journal items allocated to the selected analytic account, including bills, miscellaneous entries, expenses, payroll and petty cash. Confirmed Purchase Orders create commitments. Inventory is not used.
                             </div>
                         </group>
                     </group>
                 </page>
-            </xpath>
-        </field>
-    </record>
-
-    <record id="purchase_order_form_construction_job_cost" model="ir.ui.view">
-        <field name="name">purchase.order.form.construction.job.cost</field>
-        <field name="model">purchase.order</field>
-        <field name="inherit_id" ref="purchase.purchase_order_form"/>
-        <field name="arch" type="xml">
-            <xpath expr="//field[@name='partner_ref']" position="after">
-                <field name="construction_contract_id" options="{'no_create': True}"/>
             </xpath>
         </field>
     </record>
@@ -87,7 +76,7 @@
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='invoice_origin']" position="after">
-                <field name="construction_contract_id" options="{'no_create': True}" invisible="move_type not in ['out_invoice', 'out_refund', 'in_invoice', 'in_refund']"/>
+                <field name="construction_contract_id" options="{'no_create': True}" />
             </xpath>
         </field>
     </record>

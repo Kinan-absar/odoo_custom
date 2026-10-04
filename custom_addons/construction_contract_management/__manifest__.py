@@ -1,6 +1,6 @@
 {
     'name': 'Construction Contract Management',
-    'version': '18.0.1.7.2',
+    'version': '18.0.1.8.1',
     'summary': 'Dual-mode construction contract and subcontract management',
     'description': """
 Construction Contract Management
