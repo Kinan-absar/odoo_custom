@@ -180,6 +180,7 @@ class ConstructionContractJobCosting(models.Model):
                 ('move_id', '!=', False),
             ]).mapped('move_id').ids
         advance_move_ids = set(advance_move_ids)
+        advance_move_id_list = list(advance_move_ids)
 
         allocation_domain = [
             '|',
@@ -188,8 +189,8 @@ class ConstructionContractJobCosting(models.Model):
             ('move_id.construction_contract_id', '=', self.id),
             ('purchase_line_id', '!=', False),
         ]
-        if advance_move_ids:
-            allocation_domain = ['|', ('move_id', 'in', advance_move_ids)] + allocation_domain
+        if advance_move_id_list:
+            allocation_domain = ['|', ('move_id', 'in', advance_move_id_list)] + allocation_domain
 
         lines = self.env['account.move.line'].search([
             ('company_id', '=', self.company_id.id),
