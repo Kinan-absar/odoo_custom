@@ -17,7 +17,7 @@
  <record id="user_print_admin" model="ir.ui.view"><field name="name">res.users.print.admin</field><field name="model">res.users</field><field name="inherit_id" ref="base.view_users_form"/><field name="arch" type="xml"><xpath expr="//sheet" position="inside"><group string="Direct Print"><field name="absar_print_station_id" options="{'no_create': True}"/></group></xpath></field></record>
  <record id="action_stations" model="ir.actions.act_window"><field name="name">Office Stations</field><field name="res_model">absar.print.station</field><field name="view_mode">list,form</field></record>
  <record id="action_jobs" model="ir.actions.act_window"><field name="name">Print Jobs</field><field name="res_model">absar.print.job</field><field name="view_mode">list,form</field></record>
- <menuitem id="print_root" name="Direct Print" sequence="80" groups="absar_direct_print.group_print_user"/>
+ <menuitem id="print_root" name="Direct Print" parent="base.menu_administration" sequence="80" groups="absar_direct_print.group_print_user"/>
  <menuitem id="print_jobs" name="Print Jobs" parent="print_root" action="action_jobs" sequence="10"/>
  <menuitem id="print_stations" name="Office Stations" parent="print_root" action="action_stations" sequence="20" groups="absar_direct_print.group_print_manager"/>
  <record id="cron_cleanup" model="ir.cron"><field name="name">Direct Print: expire documents</field><field name="model_id" ref="model_absar_print_job"/><field name="state">code</field><field name="code">model._gc_jobs()</field><field name="interval_number">1</field><field name="interval_type">days</field></record>
