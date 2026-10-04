@@ -174,7 +174,6 @@ class ConstructionContractJobCosting(models.Model):
         lines = self.env['account.move.line'].search([
             ('company_id', '=', self.company_id.id),
             ('move_id.state', '=', 'posted'),
-            ('display_type', '=', False),
             ('account_id.account_type', 'in', pnl_types),
             '|',
             '|',
@@ -404,8 +403,7 @@ class AccountMoveConstructionJobCost(models.Model):
             if not analytic:
                 continue
             for line in move.line_ids.filtered(
-                lambda l: not l.display_type
-                and l.account_id
+                lambda l: l.account_id
                 and l.account_id.account_type in pnl_types
                 and not l.analytic_distribution
             ):
@@ -440,7 +438,6 @@ class AccountMoveLineConstructionJobCost(models.Model):
             analytic = contract.analytic_account_id if contract else False
             if (
                 analytic
-                and not line.display_type
                 and line.account_id
                 and line.account_id.account_type in pnl_types
                 and not line.analytic_distribution
