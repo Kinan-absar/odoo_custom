@@ -171,16 +171,28 @@ class ConstructionContractJobCosting(models.Model):
             'expense', 'expense_depreciation', 'expense_direct_cost',
             'income', 'income_other',
         ]
-        lines = self.env['account.move.line'].search([
-            ('company_id', '=', self.company_id.id),
-            ('move_id.state', '=', 'posted'),
-            ('account_id.account_type', 'in', pnl_types),
+        # Existing Construction Advance moves may predate the contract-tagging
+        # enhancement below, so include them explicitly by their linked move.
+        advance_move_ids = self.env['construction.advance'].search([
+            ('contract_id', '=', self.id),
+            ('move_id', '!=', False),
+        ]).mapped('move_id').ids
+
+        allocation_domain = [
             '|',
             '|',
             ('analytic_distribution', '!=', False),
             ('move_id.construction_contract_id', '=', self.id),
             ('purchase_line_id', '!=', False),
-        ])
+        ]
+        if advance_move_ids:
+            allocation_domain = ['|', ('move_id', 'in', advance_move_ids)] + allocation_domain
+
+        lines = self.env['account.move.line'].search([
+            ('company_id', '=', self.company_id.id),
+            ('move_id.state', '=', 'posted'),
+            ('account_id.account_type', 'in', pnl_types),
+        ] + allocation_domain)
 
         # Use the same allocation routine as the computation itself. Besides
         # direct analytic allocation, it also recognizes entries explicitly
@@ -199,6 +211,13 @@ class ConstructionContractJobCosting(models.Model):
         if percentage:
             return percentage / 100.0
         if line.move_id.construction_contract_id == self and not line.analytic_distribution:
+            return 1.0
+        # Backward compatibility for Construction Advance accounting moves that
+        # were created before account.move was stamped with the contract.
+        if self.env['construction.advance'].search_count([
+            ('contract_id', '=', self.id),
+            ('move_id', '=', line.move_id.id),
+        ]):
             return 1.0
         # Vendor bill lines generated from a PO do not always keep an
         # analytic_distribution on the invoice line itself. In that case,
