@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_employee_portal_backend_filter_card_list" model="ir.ui.view">
+        <field name="name">employee.portal.backend.filter.card.list</field>
+        <field name="model">employee.portal.backend.filter.card</field>
+        <field name="arch" type="xml">
+            <list string="Backend Request Cards" editable="bottom" create="0" delete="0" default_order="request_kind,sequence,id">
+                <field name="active" widget="boolean_toggle"/>
+                <field name="request_kind" readonly="1"/>
+                <field name="label"/>
+                <field name="code" readonly="1"/>
+                <field name="sequence" widget="handle"/>
+                <field name="color_style"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_employee_portal_backend_filter_card_search" model="ir.ui.view">
+        <field name="name">employee.portal.backend.filter.card.search</field>
+        <field name="model">employee.portal.backend.filter.card</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="label"/>
+                <filter name="employee_request_cards" string="Employee Requests" domain="[('request_kind','=','employee')]"/>
+                <filter name="material_request_cards" string="Material Requests" domain="[('request_kind','=','material')]"/>
+                <filter name="inactive" string="Inactive" domain="[('active','=',False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_request_kind" string="Request Type" context="{'group_by':'request_kind'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_employee_portal_backend_filter_cards" model="ir.actions.act_window">
+        <field name="name">Request Filter Cards</field>
+        <field name="res_model">employee.portal.backend.filter.card</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_employee_portal_backend_filter_card_search"/>
+        <field name="context">{'active_test': False, 'search_default_group_request_kind': 1}</field>
+        <field name="help" type="html">
+            <p>Choose which KPI/filter cards appear above the backend Employee Request and Material Request lists. Disable a card to hide it, rename it if needed, and drag cards to change their order.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_employee_portal_backend_filter_cards"
+              name="Request Filter Cards"
+              parent="menu_employee_portal_configuration"
+              action="action_employee_portal_backend_filter_cards"
+              sequence="35"
+              groups="employee_portal_suite.group_employee_portal_superadmin"/>
+</odoo>

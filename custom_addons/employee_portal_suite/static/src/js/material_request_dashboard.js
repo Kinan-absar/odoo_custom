@@ -4,63 +4,34 @@ import { registry } from "@web/core/registry";
 import { listView } from "@web/views/list/list_view";
 import { ListController } from "@web/views/list/list_controller";
 import { useService } from "@web/core/utils/hooks";
-import { user } from "@web/core/user";
 import { Component, onWillStart, useState } from "@odoo/owl";
 import { Domain } from "@web/core/domain";
 
-// ─── Dashboard Component ────────────────────────────────────────────────────
-
 class MaterialRequestDashboard extends Component {
     static template = "employee_portal_suite.MaterialRequestDashboard";
-    static props = {
-        onFilter: Function,
-    };
+    static props = { onFilter: Function };
 
     setup() {
         this.orm = useService("orm");
-        this.data = useState({
-            all_count: 0,
-            draft_count: 0,
-            purchase_count: 0,
-            store_count: 0,
-            project_manager_count: 0,
-            director_count: 0,
-            ceo_count: 0,
-            approved_count: 0,
-            rejected_count: 0,
-            clarification_count: 0,
-            my_count: 0,
-            po_required_count: 0,
-            no_po_required_count: 0,
-        });
-
+        this.cards = useState([]);
         onWillStart(async () => {
             const result = await this.orm.call(
-                "material.request",
-                "retrieve_dashboard",
-                []
+                "employee.portal.backend.filter.card",
+                "get_dashboard_cards",
+                ["material"]
             );
-            Object.assign(this.data, result);
+            this.cards.splice(0, this.cards.length, ...result);
         });
     }
 
     filter(domain) {
-        this.props.onFilter(domain);
-    }
-
-    get myDomain() {
-        return [["create_uid", "=", user.userId]];
+        this.props.onFilter(domain || []);
     }
 }
 
-// ─── Controller ────────────────────────────────────────────────────────────
-
 class MaterialRequestListController extends ListController {
     static template = "employee_portal_suite.MaterialRequestListView";
-    static components = {
-        ...ListController.components,
-        MaterialRequestDashboard,
-    };
+    static components = { ...ListController.components, MaterialRequestDashboard };
 
     setup() {
         super.setup();
@@ -75,14 +46,9 @@ class MaterialRequestListController extends ListController {
     }
 }
 
-// ─── View Registration ─────────────────────────────────────────────────────
-
 export const materialRequestDashboardListView = {
     ...listView,
     Controller: MaterialRequestListController,
 };
 
-registry.category("views").add(
-    "material_request_dashboard_list",
-    materialRequestDashboardListView
-);
+registry.category("views").add("material_request_dashboard_list", materialRequestDashboardListView);

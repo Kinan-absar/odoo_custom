@@ -204,13 +204,7 @@ class EmployeePortalRequests(http.Controller):
             return request.redirect('/my')
 
         emp = user.employee_id
-        filter_cards = request.env['employee.portal.request.filter.card'].sudo().search([
-            ('request_area', '=', 'employee_request'), ('active', '=', True)
-        ], order='sequence,id')
-        allowed_filters = filter_cards.mapped('filter_key') or ['pending']
-        current_filter = kw.get("filter") or allowed_filters[0]
-        if current_filter not in allowed_filters:
-            current_filter = allowed_filters[0]
+        current_filter = kw.get("filter", "pending")
         search = kw.get("search")
 
         # ---------------------------------------------------------
@@ -295,7 +289,6 @@ class EmployeePortalRequests(http.Controller):
             "all_reqs": all_reqs,
             "shown_reqs": shown_reqs,
             "current_filter": current_filter,
-            "filter_cards": filter_cards,
             "status_badge": _er_status_badge,
             "search": search,   # 👈 ADD THIS
         })
