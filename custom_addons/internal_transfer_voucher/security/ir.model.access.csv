@@ -23,3 +23,4 @@ access_payment_voucher_line_execution_manager,payment voucher line execution man
 access_payment_voucher_po_allocation_execution_manager,payment voucher po allocation execution manager,model_account_payment_voucher_po_allocation,internal_transfer_voucher.group_payment_execution_manager,1,1,1,1
 
 access_cash_plan_add_to_run_wizard_execution,cash.plan.add.to.run.wizard execution,model_cash_plan_add_to_run_wizard,internal_transfer_voucher.group_payment_execution_manager,1,1,1,1
+access_account_payment_po_allocation,access.account.payment.po.allocation,model_account_payment_po_allocation,account.group_account_user,1,1,1,1

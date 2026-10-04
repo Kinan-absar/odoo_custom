@@ -32,10 +32,11 @@
                                 icon="fa-plus"/>
                         <button name="action_link_existing_payment_voucher"
                                 type="object"
-                                string="Link Existing Voucher"
+                                string="Link Existing Payment"
                                 class="btn-secondary"
                                 icon="fa-link"/>
                     </div>
+                    <separator string="Payment Voucher Links"/>
                     <field name="payment_voucher_allocation_ids" nolabel="1" readonly="1">
                         <list create="0" delete="0">
                             <field name="voucher_id" string="Payment Voucher"/>
@@ -47,6 +48,16 @@
                             <field name="currency_id" column_invisible="True"/>
                             <field name="po_currency_id" column_invisible="True"/>
                             <field name="purchase_order_id" column_invisible="True"/>
+                        </list>
+                    </field>
+                    <separator string="Odoo Vendor Payment Links"/>
+                    <field name="standard_payment_allocation_ids" nolabel="1" readonly="1">
+                        <list create="0" delete="0">
+                            <field name="payment_id" string="Vendor Payment"/>
+                            <field name="payment_date"/>
+                            <field name="payment_state" widget="badge"/>
+                            <field name="amount" widget="monetary"/>
+                            <field name="currency_id" column_invisible="True"/>
                         </list>
                     </field>
                 </page>
