@@ -6,11 +6,61 @@
     --ccm-soft: #f5f9fa;
 }
 .ccm_form .o_form_sheet_bg { background: var(--ccm-soft); }
+/* Keep the chatter below construction documents at every viewport size.
+   Odoo adds o-aside on wide screens; override its layout without removing it. */
+.o_form_view:has(.o_form_renderer.ccm_form) .o_content {
+    overflow-y: auto !important;
+}
+.o_form_renderer.ccm_form,
+.ccm_form .o_form_renderer {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 100%;
+    width: 100%;
+    overflow: visible !important;
+}
+.ccm_form .o_form_sheet_bg {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+}
+.ccm_form .o-mail-Form-chatter,
+.ccm_form .o-mail-Form-chatter.o-aside {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    position: relative !important;
+    overflow: visible !important;
+    border-inline-start: 0 !important;
+    border-top: 1px solid var(--ccm-border);
+    background: var(--ccm-soft);
+    padding: 20px;
+    margin-top: 0 !important;
+}
+.ccm_form .o-mail-Form-chatter .o-mail-Chatter {
+    width: 100%;
+    max-width: none;
+    margin-inline: auto;
+    height: auto !important;
+    overflow: visible !important;
+    border: 1px solid var(--ccm-border);
+    border-radius: 12px;
+    background: #fff;
+}
+.ccm_form .o-mail-Form-chatter .o-mail-Chatter-content {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
 .ccm_form .o_form_sheet {
     width: calc(100% - 40px);
-    max-width: 1500px;
-    margin: 24px auto;
-    padding: 28px 32px;
+    max-width: none;
+    margin: 16px auto;
+    padding: 22px 26px;
     border: 1px solid var(--ccm-border);
     border-radius: 16px;
     box-shadow: 0 4px 20px rgb(25 53 74 / 4%);
@@ -27,7 +77,7 @@
 .ccm_dialog .btn-primary { background: var(--ccm-accent); border-color: var(--ccm-accent); }
 .ccm_form .o_statusbar_buttons .btn-primary:hover,
 .ccm_dialog .btn-primary:hover { background: #0e6266; border-color: #0e6266; }
-.ccm_form .oe_button_box { margin-bottom: 20px; }
+.ccm_form .oe_button_box { margin-bottom: 12px; }
 .ccm_form .oe_stat_button {
     border-radius: 8px;
     border-color: var(--ccm-border);
@@ -39,8 +89,8 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 4px 0 24px;
-    margin-bottom: 24px;
+    padding: 4px 0 16px;
+    margin-bottom: 16px;
     border-bottom: 1px solid var(--ccm-border);
 }
 .ccm_document_icon {
@@ -60,9 +110,9 @@
     position: relative;
     width: 100%;
     max-width: 100%;
-    min-height: 76px;
+    min-height: 68px;
     padding-inline-start: 68px;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 .ccm_document_header > .ccm_document_icon {
     position: absolute;
@@ -75,30 +125,31 @@
 .ccm_summary_grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 14px;
-    margin-bottom: 28px;
+    gap: 10px;
+    margin-bottom: 18px;
 }
-.ccm_summary_card { border: 1px solid var(--ccm-border); border-radius: 12px; padding: 18px 20px; background: #fff; min-width: 0; }
+.ccm_summary_card { border: 1px solid var(--ccm-border); border-radius: 12px; padding: 14px 16px; background: #fff; min-width: 0; }
 .ccm_summary_card.ccm_summary_accent { background: #f0faf8; border-color: #b9ded7; }
-.ccm_summary_label { display: block; color: #607585; font-size: 12px; font-weight: 600; margin-bottom: 10px; }
+.ccm_summary_label { display: block; color: #607585; font-size: 12px; font-weight: 600; margin-bottom: 7px; }
 .ccm_summary_value { font-size: clamp(18px, 1.7vw, 24px); font-weight: 700; color: var(--ccm-ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .ccm_summary_accent .ccm_summary_value { color: #0d6864; }
-.ccm_form .ccm_field_section { padding: 8px 0 18px; }
-.ccm_form .o_horizontal_separator { color: var(--ccm-ink); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--ccm-border); padding-bottom: 10px; margin-bottom: 16px; }
+.ccm_form .o_group { margin-top: 0 !important; margin-bottom: 12px !important; }
+.ccm_form .ccm_field_section { padding: 4px 0 8px; }
+.ccm_form .o_horizontal_separator { color: var(--ccm-ink); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--ccm-border); padding-bottom: 8px; margin-top: 8px !important; margin-bottom: 10px !important; }
 .ccm_form .o_form_label { color: #556b7b; font-weight: 500; }
 .ccm_form .o_input { border-radius: 5px 5px 0 0; }
 .ccm_form .o_input:focus { border-color: var(--ccm-accent); }
 .ccm_form .o_notebook .nav-tabs { border-color: var(--ccm-border); gap: 4px; }
-.ccm_form .o_notebook .nav-link { padding: 12px 14px; color: #607585; font-weight: 600; border: none; border-bottom: 3px solid transparent; background: transparent; }
+.ccm_form .o_notebook .nav-link { padding: 9px 12px; color: #607585; font-weight: 600; border: none; border-bottom: 3px solid transparent; background: transparent; }
 .ccm_form .o_notebook .nav-link.active { color: var(--ccm-accent); border-bottom-color: var(--ccm-accent); }
-.ccm_form .o_notebook .tab-content { padding-top: 20px; }
+.ccm_form .o_notebook .tab-content { padding-top: 12px; }
 .ccm_form .badge, .ccm_list .badge { border-radius: 6px; padding: 5px 9px; font-size: 11px; font-weight: 600; }
 /* Root list class is applied by Odoo to the renderer; line tables live in forms. */
 .ccm_list .o_list_table, .ccm_form .o_list_table { border-collapse: separate; border-spacing: 0; font-size: 13px; }
 .ccm_list .o_list_table thead th,
-.ccm_form .o_list_table thead th { background: #edf4f6; color: var(--ccm-ink); font-size: 12px; font-weight: 600; padding-top: 13px; padding-bottom: 13px; border-bottom: 1px solid #d3e0e5; }
+.ccm_form .o_list_table thead th { background: #edf4f6; color: var(--ccm-ink); font-size: 12px; font-weight: 600; padding-top: 10px; padding-bottom: 10px; border-bottom: 1px solid #d3e0e5; }
 .ccm_list .o_list_table tbody td,
-.ccm_form .o_list_table tbody td { padding-top: 12px; padding-bottom: 12px; border-bottom: 1px solid #edf1f3; vertical-align: middle; }
+.ccm_form .o_list_table tbody td { padding-top: 8px; padding-bottom: 8px; border-bottom: 1px solid #edf1f3; vertical-align: middle; }
 .ccm_list .o_list_table tbody tr.o_data_row:nth-child(even):not(.o_selected_row),
 .ccm_form .o_list_table tbody tr.o_data_row:nth-child(even):not(.o_selected_row) { background: #fafcfd; }
 .ccm_list .o_list_table tbody tr.o_data_row:hover:not(.o_selected_row),
