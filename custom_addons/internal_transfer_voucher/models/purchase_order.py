@@ -240,6 +240,130 @@ class PurchaseOrder(models.Model):
             },
         }
 
+
+    def _get_reconciled_standard_payment_amounts(self):
+        """Return {account.payment: amount_in_payment_currency} proven through bill reconciliation.
+
+        Only vendor bills whose purchase lines all belong to this PO are considered. Bills that
+        mix multiple POs are intentionally skipped so the sync never guesses an allocation.
+        """
+        self.ensure_one()
+        result = {}
+        company_currency = self.company_id.currency_id
+
+        bills = self.invoice_ids.filtered(
+            lambda move: move.state == 'posted'
+            and move.move_type == 'in_invoice'
+            and move.company_id == self.company_id
+        )
+        for bill in bills:
+            bill_pos = bill.invoice_line_ids.mapped('purchase_line_id.order_id')
+            if not bill_pos or bill_pos != self:
+                # Skip bills that cannot be traced to this PO alone.
+                continue
+
+            payable_lines = bill.line_ids.filtered(
+                lambda line: line.account_id.account_type == 'liability_payable'
+            )
+            for bill_line in payable_lines:
+                partials = bill_line.matched_debit_ids | bill_line.matched_credit_ids
+                for partial in partials:
+                    other_line = (
+                        partial.credit_move_id
+                        if partial.debit_move_id == bill_line
+                        else partial.debit_move_id
+                    )
+                    payment = other_line.move_id.payment_id
+                    if not payment:
+                        continue
+                    if (
+                        payment.company_id != self.company_id
+                        or payment.partner_id.commercial_partner_id != self.partner_id.commercial_partner_id
+                        or payment.payment_type != 'outbound'
+                        or payment.partner_type != 'supplier'
+                        or not payment.move_id
+                        or payment.move_id.state != 'posted'
+                    ):
+                        continue
+
+                    # account.partial.reconcile.amount is in company currency. Store allocations
+                    # in the payment currency because that is what the existing allocation model uses.
+                    amount_company = partial.amount
+                    if payment.currency_id == company_currency:
+                        amount_payment_currency = amount_company
+                    else:
+                        amount_payment_currency = company_currency._convert(
+                            amount_company,
+                            payment.currency_id,
+                            self.company_id,
+                            payment.date or fields.Date.context_today(self),
+                        )
+                    result[payment] = result.get(payment, 0.0) + amount_payment_currency
+        return result
+
+    def action_sync_standard_payments_from_bills(self):
+        """Create PO tracking links for standard vendor payments already reconciled to this PO's bills."""
+        self.ensure_one()
+        payment_amounts = self._get_reconciled_standard_payment_amounts()
+        created = 0
+        skipped_existing = 0
+
+        for payment, amount in payment_amounts.items():
+            if payment.purchase_order_allocation_ids.filtered(lambda line: line.purchase_order_id == self):
+                skipped_existing += 1
+                continue
+            if payment.currency_id.is_zero(amount):
+                continue
+            self.env['account.payment.po.allocation'].create({
+                'payment_id': payment.id,
+                'purchase_order_id': self.id,
+                'amount': amount,
+            })
+            created += 1
+
+        self.invalidate_recordset([
+            'standard_payment_allocation_ids',
+            'standard_payment_ids',
+            'amount_paid',
+            'amount_paid_residual',
+            'payment_voucher_count',
+        ])
+
+        if created:
+            message = _(
+                '%(count)s standard vendor payment(s) were linked automatically from reconciled vendor bills.',
+                count=created,
+            )
+            self.message_post(body=message)
+
+        if created:
+            title = _('Payments Synced')
+            message = _('%(count)s payment(s) linked from reconciled vendor bills.', count=created)
+            if skipped_existing:
+                message += ' ' + _('%(count)s existing link(s) were left unchanged.', count=skipped_existing)
+            notification_type = 'success'
+        elif skipped_existing:
+            title = _('Payments Already Linked')
+            message = _('%(count)s matching payment link(s) already exist. Nothing was changed.', count=skipped_existing)
+            notification_type = 'info'
+        else:
+            title = _('No Payments Found')
+            message = _(
+                'No standard Odoo vendor payments could be proven through reconciled bills belonging only to this Purchase Order.'
+            )
+            notification_type = 'warning'
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': title,
+                'message': message,
+                'type': notification_type,
+                'sticky': False,
+            },
+        }
+
     def action_view_payment_vouchers(self):
         self.ensure_one()
         return {

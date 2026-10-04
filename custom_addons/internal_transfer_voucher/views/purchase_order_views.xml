@@ -35,6 +35,12 @@
                                 string="Link Existing Payment"
                                 class="btn-secondary"
                                 icon="fa-link"/>
+                        <button name="action_sync_standard_payments_from_bills"
+                                type="object"
+                                string="Sync Payments from Bills"
+                                class="btn-secondary"
+                                icon="fa-refresh"
+                                help="Automatically link standard Odoo vendor payments that are reconciled to posted vendor bills belonging only to this Purchase Order."/>
                     </div>
                     <separator string="Payment Voucher Links"/>
                     <field name="payment_voucher_allocation_ids" nolabel="1" readonly="1">
