@@ -212,7 +212,7 @@ class ConstructionIPC(models.Model):
                 next_by_contract[contract_id] = next_by_contract.get(contract_id, 0) + 1
                 vals['contract_sequence'] = next_by_contract[contract_id]
             if vals.get('name', 'New') == 'New' and vals.get('contract_sequence'):
-                vals['name'] = f"IPC {vals['contract_sequence']}"
+                vals['name'] = f"IPC/{fields.Date.to_date(vals.get('date') or fields.Date.context_today(self)).year}/{vals['contract_sequence']:04d}"
         return super().create(vals_list)
 
     def _recompute_contract_progress(self):
