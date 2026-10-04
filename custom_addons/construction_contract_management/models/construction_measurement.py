@@ -9,6 +9,7 @@ class ConstructionMeasurement(models.Model):
     _order = 'id desc'
 
     name = fields.Char(required=True, copy=False, default='New')
+    contract_sequence = fields.Integer(string='Contract Sequence', copy=False, readonly=True, index=True)
     contract_id = fields.Many2one('construction.contract', required=True, ondelete='cascade', tracking=True)
     contract_order_id = fields.Many2one(
         'construction.contract.order', string='Contract Order / Sales Order', tracking=True,
@@ -35,11 +36,40 @@ class ConstructionMeasurement(models.Model):
         ('rejected', 'Rejected'),
     ], default='draft', tracking=True)
 
+    def _contract_sequence_starts(self, contract_ids):
+        """Return the last used per-contract number, locking contracts for safe allocation."""
+        starts = {}
+        for contract_id in sorted(set(contract_ids)):
+            self.env.cr.execute(
+                "SELECT id FROM construction_contract WHERE id = %s FOR UPDATE",
+                [contract_id],
+            )
+            self.env.cr.execute(
+                """
+                SELECT COALESCE(MAX(contract_sequence), 0), COUNT(*)
+                  FROM construction_measurement
+                 WHERE contract_id = %s
+                """,
+                [contract_id],
+            )
+            max_sequence, record_count = self.env.cr.fetchone()
+            # Legacy records have contract_sequence = 0. Their count establishes
+            # the starting point without renumbering historical documents.
+            starts[contract_id] = max(max_sequence or 0, record_count or 0)
+        return starts
+
     @api.model_create_multi
     def create(self, vals_list):
+        contract_ids = [vals.get('contract_id') for vals in vals_list if vals.get('contract_id')]
+        next_by_contract = self._contract_sequence_starts(contract_ids) if contract_ids else {}
+
         for vals in vals_list:
-            if vals.get('name', 'New') == 'New':
-                vals['name'] = self.env['ir.sequence'].next_by_code('construction.measurement') or 'New'
+            contract_id = vals.get('contract_id')
+            if contract_id and not vals.get('contract_sequence'):
+                next_by_contract[contract_id] = next_by_contract.get(contract_id, 0) + 1
+                vals['contract_sequence'] = next_by_contract[contract_id]
+            if vals.get('name', 'New') == 'New' and vals.get('contract_sequence'):
+                vals['name'] = f"Measurement {vals['contract_sequence']}"
         return super().create(vals_list)
 
     def _get_report_base_filename(self):
