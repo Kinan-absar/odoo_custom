@@ -1,0 +1,123 @@
+/* Construction workspace only. Native Odoo widgets retain editing and navigation. */
+.ccm_form, .ccm_list, .o_construction_dashboard {
+    --ccm-ink: #19354a;
+    --ccm-accent: #127c80;
+    --ccm-border: #e2e9ec;
+    --ccm-soft: #f5f9fa;
+}
+.ccm_form .o_form_sheet_bg { background: var(--ccm-soft); }
+.ccm_form .o_form_sheet {
+    width: calc(100% - 40px);
+    max-width: 1500px;
+    margin: 24px auto;
+    padding: 28px 32px;
+    border: 1px solid var(--ccm-border);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgb(25 53 74 / 4%);
+}
+.ccm_form .o_form_statusbar {
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--ccm-border);
+    gap: 8px;
+}
+.ccm_form .o_statusbar_buttons { gap: 8px; flex-wrap: wrap; }
+.ccm_form .o_statusbar_buttons .btn,
+.ccm_dialog .btn { border-radius: 8px; font-weight: 600; }
+.ccm_form .o_statusbar_buttons .btn-primary,
+.ccm_dialog .btn-primary { background: var(--ccm-accent); border-color: var(--ccm-accent); }
+.ccm_form .o_statusbar_buttons .btn-primary:hover,
+.ccm_dialog .btn-primary:hover { background: #0e6266; border-color: #0e6266; }
+.ccm_form .oe_button_box { margin-bottom: 20px; }
+.ccm_form .oe_stat_button {
+    border-radius: 8px;
+    border-color: var(--ccm-border);
+    margin-bottom: 6px;
+}
+.ccm_form .oe_stat_button .o_button_icon,
+.ccm_form .oe_stat_button .o_stat_value { color: var(--ccm-accent); }
+.ccm_document_header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 4px 0 24px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--ccm-border);
+}
+.ccm_document_icon {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    display: grid;
+    place-items: center;
+    background: #eaf5f4;
+    color: var(--ccm-accent);
+    border-radius: 14px;
+    font-size: 23px;
+}
+.ccm_form .ccm_document_title.oe_title { max-width: 100%; margin: 0; }
+.ccm_document_type { display: block; font-size: 12px; font-weight: 600; color: #607585; margin-bottom: 6px; }
+.ccm_document_title h1 { font-size: clamp(24px, 2.3vw, 34px); font-weight: 700; color: var(--ccm-ink); margin: 0; }
+.ccm_document_title .o_field_widget { margin-bottom: 0; }
+.ccm_summary_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+}
+.ccm_summary_card { border: 1px solid var(--ccm-border); border-radius: 12px; padding: 18px 20px; background: #fff; min-width: 0; }
+.ccm_summary_card.ccm_summary_accent { background: #f0faf8; border-color: #b9ded7; }
+.ccm_summary_label { display: block; color: #607585; font-size: 12px; font-weight: 600; margin-bottom: 10px; }
+.ccm_summary_value { font-size: clamp(18px, 1.7vw, 24px); font-weight: 700; color: var(--ccm-ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.ccm_summary_accent .ccm_summary_value { color: #0d6864; }
+.ccm_form .ccm_field_section { padding: 8px 0 18px; }
+.ccm_form .o_horizontal_separator { color: var(--ccm-ink); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--ccm-border); padding-bottom: 10px; margin-bottom: 16px; }
+.ccm_form .o_form_label { color: #556b7b; font-weight: 500; }
+.ccm_form .o_input { border-radius: 5px 5px 0 0; }
+.ccm_form .o_input:focus { border-color: var(--ccm-accent); }
+.ccm_form .o_notebook .nav-tabs { border-color: var(--ccm-border); gap: 4px; }
+.ccm_form .o_notebook .nav-link { padding: 12px 14px; color: #607585; font-weight: 600; border: none; border-bottom: 3px solid transparent; background: transparent; }
+.ccm_form .o_notebook .nav-link.active { color: var(--ccm-accent); border-bottom-color: var(--ccm-accent); }
+.ccm_form .o_notebook .tab-content { padding-top: 20px; }
+.ccm_form .badge, .ccm_list .badge { border-radius: 6px; padding: 5px 9px; font-size: 11px; font-weight: 600; }
+/* Root list class is applied by Odoo to the renderer; line tables live in forms. */
+.ccm_list .o_list_table, .ccm_form .o_list_table { border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.ccm_list .o_list_table thead th,
+.ccm_form .o_list_table thead th { background: #edf4f6; color: var(--ccm-ink); font-size: 12px; font-weight: 600; padding-top: 13px; padding-bottom: 13px; border-bottom: 1px solid #d3e0e5; }
+.ccm_list .o_list_table tbody td,
+.ccm_form .o_list_table tbody td { padding-top: 12px; padding-bottom: 12px; border-bottom: 1px solid #edf1f3; vertical-align: middle; }
+.ccm_list .o_list_table tbody tr.o_data_row:nth-child(even):not(.o_selected_row),
+.ccm_form .o_list_table tbody tr.o_data_row:nth-child(even):not(.o_selected_row) { background: #fafcfd; }
+.ccm_list .o_list_table tbody tr.o_data_row:hover:not(.o_selected_row),
+.ccm_form .o_list_table tbody tr.o_data_row:hover:not(.o_selected_row) { background: #eef7f7; }
+.ccm_list .o_list_table tfoot td,
+.ccm_form .o_list_table tfoot td { padding-top: 13px; padding-bottom: 13px; background: #f0f7f6; color: var(--ccm-ink); font-weight: 700; border-top: 1px solid #d3e0e5; font-variant-numeric: tabular-nums; }
+.ccm_list .o_list_number, .ccm_form .o_list_number { font-variant-numeric: tabular-nums; }
+.ccm_form .o_list_table td[name="description"] { min-width: 260px; max-width: 480px; white-space: normal; }
+.ccm_form .o_list_table td[name="description"] .o_field_text { white-space: pre-wrap; }
+.ccm_form .o_list_table td[name="current_qty"] { background: rgb(18 124 128 / 4%); }
+.ccm_form .o_progressbar { min-width: 85px; }
+.ccm_form .o_progressbar .progress-bar { background-color: var(--ccm-accent); }
+.ccm_form .o_field_x2many .o_list_renderer { overflow-x: auto; }
+.ccm_form .o_field_x2many .o_list_table { min-width: 100%; }
+.ccm_dialog .o_group { margin-top: 16px; }
+.ccm_dialog .o_horizontal_separator { color: var(--ccm-ink); }
+/* Keep overview cards aligned with document forms. */
+.o_construction_dashboard .o_form_sheet_bg { background: var(--ccm-soft); }
+.o_construction_dashboard .ccm_dashboard_header { background: #19354a; box-shadow: none; }
+.o_construction_dashboard .ccm_kpi_card,
+.o_construction_dashboard .ccm_finance_card { box-shadow: 0 3px 14px rgb(25 53 74 / 4%); }
+@media (max-width: 991px) {
+    .ccm_form .o_form_sheet { width: calc(100% - 24px); margin: 12px auto; padding: 22px; }
+    .ccm_summary_grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ccm_form .o_form_statusbar { padding: 8px 12px; }
+}
+@media (max-width: 575px) {
+    .ccm_form .o_form_sheet { width: 100%; margin: 0; border-radius: 0; padding: 18px 14px; }
+    .ccm_document_header { gap: 12px; padding-bottom: 18px; margin-bottom: 18px; }
+    .ccm_document_icon { width: 42px; height: 42px; flex-basis: 42px; font-size: 20px; }
+    .ccm_summary_grid { gap: 8px; margin-bottom: 20px; }
+    .ccm_summary_card { padding: 13px 12px; }
+    .ccm_summary_label { font-size: 11px; }
+    .ccm_form .o_notebook .nav-link { padding: 10px; }
+    .ccm_form .o_list_table tbody td { padding-top: 10px; padding-bottom: 10px; }
+}

@@ -1,359 +1,348 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <odoo>
-
-    <!-- List View -->
-    <record id="view_construction_contract_list" model="ir.ui.view">
-        <field name="name">construction.contract.list</field>
-        <field name="model">construction.contract</field>
-        <field name="arch" type="xml">
-            <list string="Construction Contracts" default_order="id desc">
-                <field name="name"/>
-                <field name="project_id"/>
-                <field name="partner_id"/>
-                <field name="contract_direction"/>
-                <field name="date_start"/>
-                <field name="date_end"/>
-                <field name="original_amount"/>
-                <field name="revised_amount"/>
-                <field name="state"/>
-            </list>
-        </field>
-    </record>
-
-    <!-- Form View -->
-    <record id="view_construction_contract_form" model="ir.ui.view">
-        <field name="name">construction.contract.form</field>
-        <field name="model">construction.contract</field>
-        <field name="arch" type="xml">
-            <form string="Construction Contract">
-                <header>
-                    <button name="action_submit_review" string="Submit for Review" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_approve" string="Approve" type="object" class="btn-primary" invisible="state != 'under_review'"/>
-                    <button name="action_activate" string="Activate" type="object" class="btn-primary" invisible="state != 'approved'"/>
-                    <button name="action_complete" string="Mark Completed" type="object" invisible="state != 'active'"/>
-                    <button name="action_close" string="Close" type="object" invisible="state not in ['completed']"/>
-                    <button name="action_cancel" string="Cancel" type="object" invisible="state in ['closed','cancelled']"/>
-                    <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state == 'draft'"/>
-                    <button name="action_refresh_from_sale_order" string="Refresh from Sales" type="object" class="btn-secondary" invisible="not sale_order_id or state not in ['draft','under_review']" groups="construction_contract_management.group_construction_manager"/>
-                    <button name="%(construction_contract_management.action_report_construction_contract)d" string="Print" type="action" class="btn-secondary" invisible="not id"/>
-
-                    <field name="state" widget="statusbar" statusbar_visible="draft,under_review,approved,active,completed,closed,cancelled"/>
-                </header>
-
-                <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button type="object" name="action_view_sale_order" class="oe_stat_button" icon="fa-shopping-cart" invisible="not sale_order_id">
-                            <div class="o_stat_info"><span class="o_stat_text">Sales Order</span><span class="o_stat_value"><field name="sale_order_id"/></span></div>
-                        </button>
-                        <button type="object" name="action_view_contract_orders" class="oe_stat_button" icon="fa-list-alt" invisible="contract_order_count == 0">
-                            <field name="contract_order_count" widget="statinfo" string="Contract Orders"/>
-                        </button>
-                        <button type="object" name="action_view_measurements" class="oe_stat_button" icon="fa-ruler">
-                            <field name="measurement_count" widget="statinfo" string="Measurements"/>
-                        </button>
-                        <button type="object" name="action_view_ipcs" class="oe_stat_button" icon="fa-file-text-o">
-                            <field name="ipc_count" widget="statinfo" string="IPCs"/>
-                        </button>
-                        <button name="action_view_variations"
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-exchange">
-                            <field name="variation_count" widget="statinfo"/>
-                        </button>
-                        <button name="action_view_advances"
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-money">
-                            <field name="advance_count" widget="statinfo" string="Advances"/>
-                        </button>
-                        <button name="action_view_retention_releases"
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-unlock-alt">
-                            <field name="retention_release_count" widget="statinfo" string="Retention Releases"/>
-                        </button>
-                    </div>
-
-                    <div class="oe_title">
-                        <h1>
-                            <field name="name" readonly="1"/>
-                        </h1>
-                    </div>
-
-                    <group>
-                        <group>
-                            <field name="project_id"/>
-                            <field name="partner_id"/>
-                            <field name="contract_direction"/>
-                            <field name="sale_order_id" string="Original Sales Order" readonly="1" options="{'no_create': True}"/>
-                            <field name="customer_reference"/>
-                            <field name="company_id" groups="base.group_multi_company"/>
-                        </group>
-                        <group>
-                            <field name="date_start"/>
-                            <field name="date_end"/>
-                            <field name="currency_id"/>
-                            <field name="payment_term_id"/>
-                        </group>
-                    </group>
-
-                    <notebook>
-                        <page string="Contract Details">
-                            <group>
-                                <group>
-                                    <field name="original_amount"/>
-                                    <field name="boq_original_amount" readonly="1"/>
-                                    <field name="boq_difference" readonly="1" decoration-danger="not boq_matches_original" decoration-success="boq_matches_original"/>
-                                    <field name="boq_matches_original" readonly="1"/>
-                                    <field name="source_sale_amount" readonly="1" invisible="not sale_order_id"/>
-                                    <field name="revised_amount" readonly="1"/>
-                                    <field name="retention_percent"/>
-                                    <field name="advance_percent"/>
-                                </group>
-                                <group>
-                                    <field name="scope"/>
-                                    <field name="notes"/>
-                                </group>
-                            </group>
-                        </page>
-
-                        <page string="Visibility">
-                            <group string="Portal Visibility">
-                                <group>
-                                    <field name="portal_visibility_restricted"/>
-                                </group>
-                                <group>
-                                    <field name="portal_employee_ids"
-                                           widget="many2many_tags"
-                                           options="{'no_create_edit': True}"
-                                           invisible="not portal_visibility_restricted"/>
-                                </group>
-                            </group>
-                            <group string="Internal Visibility">
-                                <group>
-                                    <field name="internal_visibility_restricted"/>
-                                </group>
-                                <group>
-                                    <field name="internal_employee_ids"
-                                           widget="many2many_tags"
-                                           options="{'no_create_edit': True}"
-                                           invisible="not internal_visibility_restricted"/>
-                                </group>
-                            </group>
-                        </page>
-
-                        <page string="Contract Orders">
-                            <field name="contract_order_ids" readonly="1">
-                                <list>
-                                    <field name="sequence" widget="handle"/>
-                                    <field name="name"/>
-                                    <field name="sale_order_id"/>
-                                    <field name="scope_name"/>
-                                    <field name="order_amount" sum="Total"/>
-                                    <field name="boq_amount" sum="BOQ Total"/>
-                                </list>
-                            </field>
-                        </page>
-
-                        <page string="BOQ Lines" invisible="contract_order_count &gt; 0">
-                            <field name="boq_line_ids" groups="construction_contract_management.group_construction_manager">
-    <list editable="bottom">
-        <control>
-            <create string="Add a line"/>
-            <create string="Add a section" context="{'default_display_type': 'line_section'}"/>
-            <create string="Add a note" context="{'default_display_type': 'line_note'}"/>
-        </control>
-
-        <field name="display_type" column_invisible="True"/>
-        <field name="sequence" widget="handle"/>
-
-        <field name="item_code" invisible="display_type != False"/>
-        <field name="description"
-       decoration-bf="display_type == 'line_section'"
-       decoration-it="display_type == 'line_note'"/>
-        <field name="uom_id" invisible="display_type != False"/>
-
-        <field name="contract_qty" invisible="display_type != False"/>
-        <field name="variation_qty_increase" readonly="1" invisible="display_type != False"/>
-        <field name="variation_qty_decrease" readonly="1" invisible="display_type != False"/>
-        <field name="revised_qty" readonly="1" invisible="display_type != False"/>
-
-        <field name="quoted_unit_rate" readonly="1" optional="hide" invisible="display_type != False"/>
-        <field name="discount_percent" readonly="1" optional="hide" invisible="display_type != False"/>
-        <field name="unit_rate" string="Contract Rate" invisible="display_type != False"/>
-        <field name="sale_order_line_id" readonly="1" optional="hide" invisible="display_type != False"/>
-        <field name="revised_unit_rate" readonly="1" invisible="display_type != False"/>
-
-        <field name="total_amount" readonly="1" invisible="display_type != False"/>
-        <field name="revised_amount" readonly="1" invisible="display_type != False"/>
-
-        <field name="measured_qty" readonly="1" invisible="display_type != False"/>
-        <field name="certified_qty" readonly="1" invisible="display_type != False"/>
-        <field name="remaining_qty" readonly="1" invisible="display_type != False"/>
-    </list>
-</field>
-                            <field name="boq_line_ids"
-       groups="construction_contract_management.group_construction_user,!construction_contract_management.group_construction_manager"
-       readonly="1">
-    <list>
-        <field name="display_type" column_invisible="True"/>
-        <field name="sequence"/>
-
-        <field name="item_code" invisible="display_type != False"/>
-        <field name="description"
-       decoration-bf="display_type == 'line_section'"
-       decoration-it="display_type == 'line_note'"/>
-        <field name="uom_id" invisible="display_type != False"/>
-
-        <field name="contract_qty" invisible="display_type != False"/>
-        <field name="variation_qty_increase" readonly="1" invisible="display_type != False"/>
-        <field name="variation_qty_decrease" readonly="1" invisible="display_type != False"/>
-        <field name="revised_qty" readonly="1" invisible="display_type != False"/>
-
-        <field name="quoted_unit_rate" readonly="1" optional="hide" invisible="display_type != False"/>
-        <field name="discount_percent" readonly="1" optional="hide" invisible="display_type != False"/>
-        <field name="unit_rate" string="Contract Rate" invisible="display_type != False"/>
-        <field name="sale_order_line_id" readonly="1" optional="hide" invisible="display_type != False"/>
-        <field name="revised_unit_rate" readonly="1" invisible="display_type != False"/>
-
-        <field name="total_amount" readonly="1" invisible="display_type != False"/>
-        <field name="revised_amount" readonly="1" invisible="display_type != False"/>
-
-        <field name="measured_qty" readonly="1" invisible="display_type != False"/>
-        <field name="certified_qty" readonly="1" invisible="display_type != False"/>
-        <field name="remaining_qty" readonly="1" invisible="display_type != False"/>
-    </list>
-</field>
-                        </page>
-
-                        <page string="Measurements">
-                            <field name="measurement_ids" readonly="1">
-                                <list>
-                                    <field name="name"/>
-                                    <field name="date"/>
-                                    <field name="period_from"/>
-                                    <field name="period_to"/>
-                                    <field name="prepared_by"/>
-                                    <field name="checked_by"/>
-                                    <field name="state"/>
-                                </list>
-                            </field>
-                        </page>
-
-                        <page string="IPCs">
-                            <field name="ipc_ids" readonly="1">
-                                <list>
-                                    <field name="name"/>
-                                    <field name="ipc_date"/>
-                                    <field name="measurement_id"/>
-                                    <field name="current_work_value"/>
-                                    <field name="retention_amount"/>
-                                    <field name="net_amount"/>
-                                    <field name="payment_status"/>
-                                    <field name="state"/>
-                                </list>
-                            </field>
-                        </page>
-                        <page string="Accounting">
-                            <group>
-                                <group>
-                                    <field name="journal_id"/>
-                                    <field name="work_account_id"/>
-                                    <field name="tax_id"/>
-                                </group>
-                                <group>
-                                    <field name="advance_account_id"/>
-                                    <field name="retention_account_id"/>
-                                </group>
-                            </group>
-                            <group>
-                                <group>
-                                    <field name="advance_percent"/>
-                                    <field name="advance_amount" readonly="1"/>
-                                    <field name="advance_recovered" readonly="1"/>
-                                    <field name="advance_balance" readonly="1"/>
-                                </group>
-                                <group>
-                                    <field name="retention_percent"/>
-                                    <field name="vat_percent"/>
-                                </group>
-                                <group>
-                                    <group>
-                                        <field name="retention_held" readonly="1"/>
-                                        <field name="retention_released" readonly="1"/>
-                                        <field name="retention_balance" readonly="1"/>
-                                    </group>
-                                </group>
-                            </group>
-                        </page>
-                        <page string="Advances">
-                            <field name="advance_ids" readonly="1">
-                                <list>
-                                    <field name="name"/>
-                                    <field name="date"/>
-                                    <field name="amount"/>
-                                    <field name="tax_amount"/>
-                                    <field name="total_amount"/>
-                                    <field name="payment_status"/>
-                                    <field name="state"/>
-                                    <field name="move_id"/>
-                                </list>
-                            </field>
-                        </page>
-                        <page string="Retention Releases">
-                            <field name="retention_release_ids" readonly="1">
-                                <list>
-                                    <field name="name"/>
-                                    <field name="date"/>
-                                    <field name="amount"/>
-                                    <field name="payment_status"/>
-                                    <field name="state"/>
-                                    <field name="move_id"/>
-                                </list>
-                            </field>
-                        </page>
-                    </notebook>
-                </sheet>
-                <chatter/>
-            </form>
-        </field>
-    </record>
-
-    <!-- Search View -->
-    <record id="view_construction_contract_search" model="ir.ui.view">
-        <field name="name">construction.contract.search</field>
-        <field name="model">construction.contract</field>
-        <field name="arch" type="xml">
-            <search string="Search Contracts">
-                <field name="name"/>
-                <field name="project_id"/>
-                <field name="partner_id"/>
-
-                <filter string="Client Contract" name="filter_inbound" domain="[('contract_direction','=','inbound')]"/>
-                <filter string="Subcontract" name="filter_outbound" domain="[('contract_direction','=','outbound')]"/>
-
-                <filter string="Draft" name="filter_draft" domain="[('state','=','draft')]"/>
-                <filter string="Active" name="filter_active" domain="[('state','=','active')]"/>
-                <filter string="Closed" name="filter_closed" domain="[('state','=','closed')]"/>
-
-                <group expand="0" string="Group By">
-                    <filter string="Project" name="group_project" context="{'group_by': 'project_id'}"/>
-                    <filter string="Partner" name="group_partner" context="{'group_by': 'partner_id'}"/>
-                    <filter string="Direction" name="group_direction" context="{'group_by': 'contract_direction'}"/>
-                    <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+  <!-- List View -->
+  <record id="view_construction_contract_list" model="ir.ui.view">
+    <field name="name">construction.contract.list</field>
+    <field name="model">construction.contract</field>
+    <field name="arch" type="xml">
+      <list string="Construction Contracts" default_order="id desc" class="ccm_list ccm_table">
+        <field name="currency_id" column_invisible="True"/>
+        <field name="name" class="fw-semibold ccm_reference"/>
+        <field name="project_id" optional="show"/>
+        <field name="partner_id" optional="show"/>
+        <field name="contract_direction" optional="hide" widget="badge" decoration-info="contract_direction == 'inbound'" decoration-warning="contract_direction == 'outbound'"/>
+        <field name="date_start" optional="show"/>
+        <field name="date_end" optional="hide"/>
+        <field name="original_amount" optional="hide" widget="monetary"/>
+        <field name="revised_amount" widget="monetary"/>
+        <field name="state" widget="badge" decoration-success="state in ['approved', 'active', 'completed', 'closed', 'done', 'posted']" decoration-warning="state in ['submitted', 'under_review', 'checked']" decoration-danger="state in ['rejected', 'cancelled']" decoration-muted="state == 'draft'"/>
+      </list>
+    </field>
+  </record>
+  <!-- Form View -->
+  <record id="view_construction_contract_form" model="ir.ui.view">
+    <field name="name">construction.contract.form</field>
+    <field name="model">construction.contract</field>
+    <field name="arch" type="xml">
+      <form string="Construction Contract" class="ccm_form">
+        <header>
+          <button name="action_submit_review" string="Submit for Review" type="object" class="btn-primary" invisible="state != 'draft'"/>
+          <button name="action_approve" string="Approve" type="object" class="btn-primary" invisible="state != 'under_review'"/>
+          <button name="action_activate" string="Activate" type="object" class="btn-primary" invisible="state != 'approved'"/>
+          <button name="action_complete" string="Mark Completed" type="object" invisible="state != 'active'"/>
+          <button name="action_close" string="Close" type="object" invisible="state not in ['completed']"/>
+          <button name="action_cancel" string="Cancel" type="object" invisible="state in ['closed','cancelled']"/>
+          <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state == 'draft'"/>
+          <button name="action_refresh_from_sale_order" string="Refresh from Sales" type="object" class="btn-secondary" invisible="not sale_order_id or state not in ['draft','under_review']" groups="construction_contract_management.group_construction_manager"/>
+          <button name="%(construction_contract_management.action_report_construction_contract)d" string="Print" type="action" class="btn-secondary" invisible="not id"/>
+          <field name="state" widget="statusbar" statusbar_visible="draft,under_review,approved,active,completed,closed,cancelled"/>
+        </header>
+        <sheet>
+          <div class="oe_button_box" name="button_box">
+            <button type="object" name="action_view_sale_order" class="oe_stat_button" icon="fa-shopping-cart" invisible="not sale_order_id">
+              <div class="o_stat_info">
+                <span class="o_stat_text">Sales Order</span>
+                <span class="o_stat_value">
+                  <field name="sale_order_id"/>
+                </span>
+              </div>
+            </button>
+            <button type="object" name="action_view_contract_orders" class="oe_stat_button" icon="fa-list-alt" invisible="contract_order_count == 0">
+              <field name="contract_order_count" widget="statinfo" string="Contract Orders"/>
+            </button>
+            <button type="object" name="action_view_measurements" class="oe_stat_button" icon="fa-ruler">
+              <field name="measurement_count" widget="statinfo" string="Measurements"/>
+            </button>
+            <button type="object" name="action_view_ipcs" class="oe_stat_button" icon="fa-file-text-o">
+              <field name="ipc_count" widget="statinfo" string="IPCs"/>
+            </button>
+            <button name="action_view_variations" type="object" class="oe_stat_button" icon="fa-exchange">
+              <field name="variation_count" widget="statinfo"/>
+            </button>
+            <button name="action_view_advances" type="object" class="oe_stat_button" icon="fa-money">
+              <field name="advance_count" widget="statinfo" string="Advances"/>
+            </button>
+            <button name="action_view_retention_releases" type="object" class="oe_stat_button" icon="fa-unlock-alt">
+              <field name="retention_release_count" widget="statinfo" string="Retention Releases"/>
+            </button>
+          </div>
+          <div class="ccm_document_header" name="ccm_document_header">
+            <div class="ccm_document_icon">
+              <i class="fa fa-building-o" aria-hidden="true"/>
+            </div>
+            <div class="oe_title ccm_document_title">
+              <span class="ccm_document_type">Construction Contract</span>
+              <h1>
+                <field name="name" readonly="1"/>
+              </h1>
+            </div>
+          </div>
+          <field name="currency_id" invisible="1"/>
+          <div class="ccm_summary_grid" name="ccm_summary_grid">
+            <div class="ccm_summary_card">
+              <span class="ccm_summary_label">Revised Contract Value</span>
+              <field name="revised_amount" readonly="1" nolabel="1" class="ccm_summary_value"/>
+            </div>
+            <div class="ccm_summary_card">
+              <span class="ccm_summary_label">Certified Work</span>
+              <field name="total_certified_amount" readonly="1" nolabel="1" class="ccm_summary_value"/>
+            </div>
+            <div class="ccm_summary_card">
+              <span class="ccm_summary_label">Advance Balance</span>
+              <field name="advance_balance" readonly="1" nolabel="1" class="ccm_summary_value"/>
+            </div>
+            <div class="ccm_summary_card ccm_summary_accent">
+              <span class="ccm_summary_label">Retention Balance</span>
+              <field name="retention_balance" readonly="1" nolabel="1" class="ccm_summary_value"/>
+            </div>
+          </div>
+          <group>
+            <group string="Project &amp; Parties" class="ccm_field_section">
+              <field name="project_id"/>
+              <field name="partner_id"/>
+              <field name="contract_direction"/>
+              <field name="sale_order_id" string="Original Sales Order" readonly="1" options="{'no_create': True}"/>
+              <field name="customer_reference"/>
+              <field name="company_id" groups="base.group_multi_company"/>
+            </group>
+            <group string="Dates &amp; Payment Terms" class="ccm_field_section">
+              <field name="date_start"/>
+              <field name="date_end"/>
+              <field name="currency_id"/>
+              <field name="payment_term_id"/>
+            </group>
+          </group>
+          <notebook>
+            <page string="Contract Details" name="ccm_contract_details">
+              <group>
+                <group string="Contract Value &amp; Terms" class="ccm_field_section">
+                  <field name="original_amount"/>
+                  <field name="boq_original_amount" readonly="1"/>
+                  <field name="boq_difference" readonly="1" decoration-danger="not boq_matches_original" decoration-success="boq_matches_original"/>
+                  <field name="boq_matches_original" readonly="1"/>
+                  <field name="source_sale_amount" readonly="1" invisible="not sale_order_id"/>
+                  <field name="revised_amount" readonly="1"/>
+                  <field name="retention_percent"/>
+                  <field name="advance_percent"/>
                 </group>
-            </search>
-        </field>
-    </record>
-
-    <!-- Action -->
-    <record id="action_construction_contract" model="ir.actions.act_window">
-        <field name="name">Contracts</field>
-        <field name="res_model">construction.contract</field>
-        <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="view_construction_contract_search"/>
-        <field name="help" type="html">
-            <p>Create and manage client contracts and subcontracts.</p>
-        </field>
-    </record>
-
+                <group string="Scope &amp; Notes" class="ccm_field_section">
+                  <field name="scope" placeholder="Add scope…"/>
+                  <field name="notes" placeholder="Add notes…"/>
+                </group>
+              </group>
+            </page>
+            <page string="Visibility" name="ccm_visibility">
+              <group string="Portal Visibility">
+                <group string="Access Settings" class="ccm_field_section">
+                  <field name="portal_visibility_restricted"/>
+                </group>
+                <group string="Allowed Employees" class="ccm_field_section">
+                  <field name="portal_employee_ids" widget="many2many_tags" options="{'no_create_edit': True}" invisible="not portal_visibility_restricted"/>
+                </group>
+              </group>
+              <group string="Internal Visibility">
+                <group string="Access Settings" class="ccm_field_section">
+                  <field name="internal_visibility_restricted"/>
+                </group>
+                <group string="Allowed Employees" class="ccm_field_section">
+                  <field name="internal_employee_ids" widget="many2many_tags" options="{'no_create_edit': True}" invisible="not internal_visibility_restricted"/>
+                </group>
+              </group>
+            </page>
+            <page string="Contract Orders" name="ccm_contract_orders">
+              <field name="contract_order_ids" readonly="1">
+                <list class="ccm_lines">
+                  <field name="currency_id" column_invisible="True"/>
+                  <field name="sequence" widget="handle"/>
+                  <field name="name" class="fw-semibold ccm_reference"/>
+                  <field name="sale_order_id"/>
+                  <field name="scope_name"/>
+                  <field name="order_amount" sum="Total" widget="monetary"/>
+                  <field name="boq_amount" sum="BOQ Total" widget="monetary"/>
+                </list>
+              </field>
+            </page>
+            <page string="BOQ Lines" invisible="contract_order_count &gt; 0" name="ccm_boq_lines">
+              <field name="boq_line_ids" groups="construction_contract_management.group_construction_manager">
+                <list editable="bottom" class="ccm_lines">
+                  <field name="currency_id" column_invisible="True"/>
+                  <control>
+                    <create string="Add a line"/>
+                    <create string="Add a section" context="{'default_display_type': 'line_section'}"/>
+                    <create string="Add a note" context="{'default_display_type': 'line_note'}"/>
+                  </control>
+                  <field name="display_type" column_invisible="True"/>
+                  <field name="sequence" widget="handle"/>
+                  <field name="item_code" invisible="display_type != False"/>
+                  <field name="description" decoration-bf="display_type == 'line_section'" decoration-it="display_type == 'line_note'" class="ccm_line_description"/>
+                  <field name="uom_id" invisible="display_type != False"/>
+                  <field name="contract_qty" invisible="display_type != False"/>
+                  <field name="variation_qty_increase" readonly="1" invisible="display_type != False" optional="hide"/>
+                  <field name="variation_qty_decrease" readonly="1" invisible="display_type != False" optional="hide"/>
+                  <field name="revised_qty" readonly="1" invisible="display_type != False"/>
+                  <field name="quoted_unit_rate" readonly="1" optional="hide" invisible="display_type != False" widget="monetary"/>
+                  <field name="discount_percent" readonly="1" optional="hide" invisible="display_type != False"/>
+                  <field name="unit_rate" string="Contract Rate" invisible="display_type != False" widget="monetary"/>
+                  <field name="sale_order_line_id" readonly="1" optional="hide" invisible="display_type != False"/>
+                  <field name="revised_unit_rate" readonly="1" invisible="display_type != False" widget="monetary" optional="hide"/>
+                  <field name="total_amount" readonly="1" invisible="display_type != False" widget="monetary" sum="Total"/>
+                  <field name="revised_amount" readonly="1" invisible="display_type != False" widget="monetary" optional="hide" sum="Total"/>
+                  <field name="measured_qty" readonly="1" invisible="display_type != False" optional="hide"/>
+                  <field name="certified_qty" readonly="1" invisible="display_type != False" optional="hide"/>
+                  <field name="remaining_qty" readonly="1" invisible="display_type != False" string="Remaining Qty"/>
+                </list>
+              </field>
+              <field name="boq_line_ids" groups="construction_contract_management.group_construction_user,!construction_contract_management.group_construction_manager" readonly="1">
+                <list class="ccm_lines">
+                  <field name="currency_id" column_invisible="True"/>
+                  <field name="display_type" column_invisible="True"/>
+                  <field name="sequence"/>
+                  <field name="item_code" invisible="display_type != False"/>
+                  <field name="description" decoration-bf="display_type == 'line_section'" decoration-it="display_type == 'line_note'" class="ccm_line_description"/>
+                  <field name="uom_id" invisible="display_type != False"/>
+                  <field name="contract_qty" invisible="display_type != False"/>
+                  <field name="variation_qty_increase" readonly="1" invisible="display_type != False" optional="hide"/>
+                  <field name="variation_qty_decrease" readonly="1" invisible="display_type != False" optional="hide"/>
+                  <field name="revised_qty" readonly="1" invisible="display_type != False"/>
+                  <field name="quoted_unit_rate" readonly="1" optional="hide" invisible="display_type != False" widget="monetary"/>
+                  <field name="discount_percent" readonly="1" optional="hide" invisible="display_type != False"/>
+                  <field name="unit_rate" string="Contract Rate" invisible="display_type != False" widget="monetary"/>
+                  <field name="sale_order_line_id" readonly="1" optional="hide" invisible="display_type != False"/>
+                  <field name="revised_unit_rate" readonly="1" invisible="display_type != False" widget="monetary" optional="hide"/>
+                  <field name="total_amount" readonly="1" invisible="display_type != False" widget="monetary" sum="Total"/>
+                  <field name="revised_amount" readonly="1" invisible="display_type != False" widget="monetary" optional="hide" sum="Total"/>
+                  <field name="measured_qty" readonly="1" invisible="display_type != False" optional="hide"/>
+                  <field name="certified_qty" readonly="1" invisible="display_type != False" optional="hide"/>
+                  <field name="remaining_qty" readonly="1" invisible="display_type != False" string="Remaining Qty"/>
+                </list>
+              </field>
+            </page>
+            <page string="Measurements" name="ccm_measurements">
+              <field name="measurement_ids" readonly="1">
+                <list class="ccm_lines">
+                  <field name="name" class="fw-semibold ccm_reference"/>
+                  <field name="date"/>
+                  <field name="period_from"/>
+                  <field name="period_to"/>
+                  <field name="prepared_by"/>
+                  <field name="checked_by"/>
+                  <field name="state" widget="badge" decoration-success="state in ['approved', 'active', 'completed', 'closed', 'done', 'posted']" decoration-warning="state in ['submitted', 'under_review', 'checked']" decoration-danger="state in ['rejected', 'cancelled']" decoration-muted="state == 'draft'"/>
+                </list>
+              </field>
+            </page>
+            <page string="IPCs" name="ccm_ipcs">
+              <field name="ipc_ids" readonly="1">
+                <list class="ccm_lines">
+                  <field name="currency_id" column_invisible="True"/>
+                  <field name="name" class="fw-semibold ccm_reference"/>
+                  <field name="ipc_date"/>
+                  <field name="measurement_id"/>
+                  <field name="current_work_value" widget="monetary"/>
+                  <field name="retention_amount" widget="monetary"/>
+                  <field name="net_amount" widget="monetary" sum="Total"/>
+                  <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-warning="payment_status in ['partial', 'in_payment']" decoration-danger="payment_status in ['reversed', 'cancelled']" decoration-muted="payment_status in ['no_move', 'not_paid', 'invoicing_legacy']"/>
+                  <field name="state" widget="badge" decoration-success="state in ['approved', 'active', 'completed', 'closed', 'done', 'posted']" decoration-warning="state in ['submitted', 'under_review', 'checked']" decoration-danger="state in ['rejected', 'cancelled']" decoration-muted="state == 'draft'"/>
+                </list>
+              </field>
+            </page>
+            <page string="Accounting" name="ccm_accounting">
+              <group>
+                <group string="Journal &amp; Tax" class="ccm_field_section">
+                  <field name="journal_id"/>
+                  <field name="work_account_id"/>
+                  <field name="tax_id"/>
+                  <field name="vat_percent"/>
+                </group>
+                <group string="Accounting Accounts" class="ccm_field_section">
+                  <field name="advance_account_id"/>
+                  <field name="retention_account_id"/>
+                </group>
+              </group>
+              <group>
+                <group string="Advance Recovery" class="ccm_field_section">
+                  <field name="advance_percent"/>
+                  <field name="advance_amount" readonly="1"/>
+                  <field name="advance_recovered" readonly="1"/>
+                  <field name="advance_balance" readonly="1"/>
+                </group>
+                <group string="Retention" class="ccm_field_section">
+                  <field name="retention_percent"/>
+                  <field name="retention_held" readonly="1"/>
+                  <field name="retention_released" readonly="1"/>
+                  <field name="retention_balance" readonly="1"/>
+                </group>
+              </group>
+            </page>
+            <page string="Advances" name="ccm_advances">
+              <field name="advance_ids" readonly="1">
+                <list class="ccm_lines">
+                  <field name="currency_id" column_invisible="True"/>
+                  <field name="name" class="fw-semibold ccm_reference"/>
+                  <field name="date"/>
+                  <field name="amount" widget="monetary" sum="Total"/>
+                  <field name="tax_amount" widget="monetary"/>
+                  <field name="total_amount" widget="monetary" sum="Total"/>
+                  <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-warning="payment_status in ['partial', 'in_payment']" decoration-danger="payment_status in ['reversed', 'cancelled']" decoration-muted="payment_status in ['no_move', 'not_paid', 'invoicing_legacy']"/>
+                  <field name="state" widget="badge" decoration-success="state in ['approved', 'active', 'completed', 'closed', 'done', 'posted']" decoration-warning="state in ['submitted', 'under_review', 'checked']" decoration-danger="state in ['rejected', 'cancelled']" decoration-muted="state == 'draft'"/>
+                  <field name="move_id"/>
+                </list>
+              </field>
+            </page>
+            <page string="Retention Releases" name="ccm_retention_releases">
+              <field name="retention_release_ids" readonly="1">
+                <list class="ccm_lines">
+                  <field name="currency_id" column_invisible="True"/>
+                  <field name="name" class="fw-semibold ccm_reference"/>
+                  <field name="date"/>
+                  <field name="amount" widget="monetary" sum="Total"/>
+                  <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-warning="payment_status in ['partial', 'in_payment']" decoration-danger="payment_status in ['reversed', 'cancelled']" decoration-muted="payment_status in ['no_move', 'not_paid', 'invoicing_legacy']"/>
+                  <field name="state" widget="badge" decoration-success="state in ['approved', 'active', 'completed', 'closed', 'done', 'posted']" decoration-warning="state in ['submitted', 'under_review', 'checked']" decoration-danger="state in ['rejected', 'cancelled']" decoration-muted="state == 'draft'"/>
+                  <field name="move_id"/>
+                </list>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+  <!-- Search View -->
+  <record id="view_construction_contract_search" model="ir.ui.view">
+    <field name="name">construction.contract.search</field>
+    <field name="model">construction.contract</field>
+    <field name="arch" type="xml">
+      <search string="Search Contracts">
+        <field name="name"/>
+        <field name="project_id"/>
+        <field name="partner_id"/>
+        <filter string="Client Contract" name="filter_inbound" domain="[('contract_direction','=','inbound')]"/>
+        <filter string="Subcontract" name="filter_outbound" domain="[('contract_direction','=','outbound')]"/>
+        <separator/>
+        <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+        <filter string="Under Review" name="filter_under_review" domain="[('state', '=', 'under_review')]"/>
+        <filter string="Approved" name="filter_approved" domain="[('state', '=', 'approved')]"/>
+        <filter string="Active" name="filter_active" domain="[('state', '=', 'active')]"/>
+        <filter string="Completed" name="filter_completed" domain="[('state', '=', 'completed')]"/>
+        <filter string="Closed" name="filter_closed" domain="[('state', '=', 'closed')]"/>
+        <filter string="Cancelled" name="filter_cancelled" domain="[('state', '=', 'cancelled')]"/>
+        <group expand="0" string="Group By">
+          <filter string="Project" name="group_project" context="{'group_by': 'project_id'}"/>
+          <filter string="Partner" name="group_partner" context="{'group_by': 'partner_id'}"/>
+          <filter string="Direction" name="group_direction" context="{'group_by': 'contract_direction'}"/>
+          <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+  <!-- Action -->
+  <record id="action_construction_contract" model="ir.actions.act_window">
+    <field name="name">Contracts</field>
+    <field name="res_model">construction.contract</field>
+    <field name="view_mode">list,form</field>
+    <field name="search_view_id" ref="view_construction_contract_search"/>
+    <field name="help" type="html">
+      <p>Create and manage client contracts and subcontracts.</p>
+    </field>
+  </record>
 </odoo>

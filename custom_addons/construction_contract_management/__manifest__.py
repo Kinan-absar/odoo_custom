@@ -1,6 +1,6 @@
 {
     'name': 'Construction Contract Management',
-    'version': '18.0.1.6.2',
+    'version': '18.0.1.6.3',
     'summary': 'Dual-mode construction contract and subcontract management',
     'description': """
 Construction Contract Management
@@ -62,6 +62,7 @@ from the employee portal, install the separate
     'assets': {
         'web.assets_backend': [
             'construction_contract_management/static/src/css/construction_dashboard.css',
+            'construction_contract_management/static/src/css/construction_backend.css',
         ],
     },
     'application': True,

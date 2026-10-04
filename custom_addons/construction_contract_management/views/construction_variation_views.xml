@@ -1,132 +1,147 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <odoo>
-
-    <!-- LIST -->
-    <record id="view_construction_variation_list" model="ir.ui.view">
-        <field name="name">construction.variation.list</field>
-        <field name="model">construction.variation</field>
-        <field name="arch" type="xml">
-            <list>
+  <record id="view_construction_variation_search" model="ir.ui.view">
+    <field name="name">construction.variation.search</field>
+    <field name="model">construction.variation</field>
+    <field name="arch" type="xml">
+      <search string="Search Variations">
+        <field name="name"/>
+        <field name="contract_id"/>
+        <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+        <filter string="Submitted" name="filter_submitted" domain="[('state', '=', 'submitted')]"/>
+        <filter string="Approved" name="filter_approved" domain="[('state', '=', 'approved')]"/>
+        <filter string="Rejected" name="filter_rejected" domain="[('state', '=', 'rejected')]"/>
+        <group expand="0" string="Group By">
+          <filter string="Contract" name="group_contract_id" context="{'group_by': 'contract_id'}"/>
+          <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+          <filter string="Month" name="group_date" context="{'group_by': 'date'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+  <!-- LIST -->
+  <record id="view_construction_variation_list" model="ir.ui.view">
+    <field name="name">construction.variation.list</field>
+    <field name="model">construction.variation</field>
+    <field name="arch" type="xml">
+      <list class="ccm_list ccm_table" default_order="id desc">
+        <field name="currency_id" column_invisible="True"/>
+        <field name="name" class="fw-semibold ccm_reference"/>
+        <field name="contract_id"/>
+        <field name="date" optional="show"/>
+        <field name="state" widget="badge" decoration-success="state in ['approved', 'active', 'completed', 'closed', 'done', 'posted']" decoration-warning="state in ['submitted', 'under_review', 'checked']" decoration-danger="state in ['rejected', 'cancelled']" decoration-muted="state == 'draft'"/>
+        <field name="total_amount" widget="monetary"/>
+      </list>
+    </field>
+  </record>
+  <!-- FORM -->
+  <record id="view_construction_variation_form" model="ir.ui.view">
+    <field name="name">construction.variation.form</field>
+    <field name="model">construction.variation</field>
+    <field name="arch" type="xml">
+      <form string="Variation" class="ccm_form">
+        <header>
+          <button name="action_submit" string="Submit" type="object" invisible="state != 'draft'" class="btn-primary"/>
+          <button name="action_approve" string="Approve" type="object" invisible="state != 'submitted'" class="btn-primary"/>
+          <button name="action_reject" string="Reject" type="object" invisible="state not in ['submitted']"/>
+          <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state == 'draft'"/>
+          <button name="%(construction_contract_management.action_report_construction_variation)d" string="Print" type="action" class="btn-secondary" invisible="not id"/>
+          <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,rejected"/>
+        </header>
+        <sheet>
+          <div class="ccm_document_header" name="ccm_document_header">
+            <div class="ccm_document_icon">
+              <i class="fa fa-exchange" aria-hidden="true"/>
+            </div>
+            <div class="oe_title ccm_document_title">
+              <span class="ccm_document_type">Contract Variation</span>
+              <h1>
                 <field name="name"/>
-                <field name="contract_id"/>
-                <field name="date"/>
-                <field name="state"/>
-                <field name="total_amount"/>
-            </list>
-        </field>
-    </record>
-
-    <!-- FORM -->
-    <record id="view_construction_variation_form" model="ir.ui.view">
-        <field name="name">construction.variation.form</field>
-        <field name="model">construction.variation</field>
-        <field name="arch" type="xml">
-            <form string="Variation">
-
-                <header>
-                    <button name="action_submit" string="Submit" type="object"
-                            invisible="state != 'draft'"/>
-
-                    <button name="action_approve" string="Approve" type="object"
-                            invisible="state != 'submitted'"/>
-
-                    <button name="action_reject" string="Reject" type="object"
-                            invisible="state not in ['submitted']"/>
-
-                    <button name="action_reset_to_draft" string="Reset to Draft" type="object"
-                            invisible="state == 'draft'"/>
-                    <button name="%(construction_contract_management.action_report_construction_variation)d"
-                            string="Print"
-                            type="action"
-                            class="btn-secondary"
-                            invisible="not id"/>
-                    <field name="state" widget="statusbar"
-                           statusbar_visible="draft,submitted,approved,rejected"/>
-                </header>
-
-                <sheet>
+              </h1>
+            </div>
+          </div>
+          <field name="currency_id" invisible="1"/>
+          <div class="ccm_summary_grid" name="ccm_summary_grid">
+            <div class="ccm_summary_card ccm_summary_accent">
+              <span class="ccm_summary_label">Variation Value</span>
+              <field name="total_amount" readonly="1" nolabel="1" class="ccm_summary_value"/>
+            </div>
+          </div>
+          <group>
+            <group string="Contract &amp; Source" class="ccm_field_section">
+              <field name="contract_id"/>
+              <field name="date"/>
+            </group>
+            <group string="Variation Value" class="ccm_field_section">
+              <field name="total_amount" readonly="1"/>
+            </group>
+          </group>
+          <notebook>
+            <page string="Variation Lines" name="ccm_variation_lines">
+              <field name="line_ids">
+                <list editable="bottom" class="ccm_lines">
+                  <field name="currency_id" column_invisible="True"/>
+                  <control>
+                    <create string="Add a line"/>
+                    <create string="Add a section" context="{'default_display_type': 'line_section'}"/>
+                    <create string="Add a note" context="{'default_display_type': 'line_note'}"/>
+                  </control>
+                  <field name="display_type" column_invisible="True"/>
+                  <field name="type" invisible="display_type != False"/>
+                  <field name="boq_line_id" invisible="display_type != False"/>
+                  <field name="item_code" invisible="display_type != False"/>
+                  <field name="description" decoration-bf="display_type == 'line_section'" decoration-it="display_type == 'line_note'" class="ccm_line_description"/>
+                  <field name="original_qty" readonly="1" invisible="display_type != False"/>
+                  <field name="variation_qty" invisible="display_type != False"/>
+                  <field name="revised_qty" readonly="1" invisible="display_type != False"/>
+                  <field name="uom_id" invisible="display_type != False"/>
+                  <field name="unit_rate" invisible="display_type != False" widget="monetary"/>
+                  <field name="amount" readonly="1" invisible="display_type != False" widget="monetary" sum="Total"/>
+                </list>
+                <form class="ccm_form ccm_dialog">
+                  <field name="currency_id" invisible="1"/>
+                  <group>
+                    <field name="display_type" invisible="1"/>
                     <group>
-                        <group>
-                            <field name="name"/>
-                            <field name="contract_id"/>
-                            <field name="date"/>
-                        </group>
-                        <group>
-                            <field name="total_amount" readonly="1"/>
-                        </group>
+                      <field name="type" invisible="display_type != False"/>
+                      <field name="boq_line_id" invisible="display_type != False"/>
+                      <field name="item_code" invisible="display_type != False"/>
                     </group>
-
-                    <notebook>
-                        <page string="Variation Lines">
-                           <field name="line_ids">
-    <list editable="bottom">
-        <control>
-            <create string="Add a line"/>
-            <create string="Add a section" context="{'default_display_type': 'line_section'}"/>
-            <create string="Add a note" context="{'default_display_type': 'line_note'}"/>
-        </control>
-
-        <field name="display_type" column_invisible="True"/>
-
-        <field name="type" invisible="display_type != False"/>
-        <field name="boq_line_id" invisible="display_type != False"/>
-        <field name="item_code" invisible="display_type != False"/>
-        <field name="description"
-               decoration-bf="display_type == 'line_section'"
-               decoration-it="display_type == 'line_note'"/>
-        <field name="original_qty" readonly="1" invisible="display_type != False"/>
-        <field name="variation_qty" invisible="display_type != False"/>
-        <field name="revised_qty" readonly="1" invisible="display_type != False"/>
-        <field name="uom_id" invisible="display_type != False"/>
-        <field name="unit_rate" invisible="display_type != False"/>
-        <field name="amount" readonly="1" invisible="display_type != False"/>
-    </list>
-
-    <form>
-        <group>
-            <field name="display_type" invisible="1"/>
-
-            <group>
-                <field name="type" invisible="display_type != False"/>
-                <field name="boq_line_id" invisible="display_type != False"/>
-                <field name="item_code" invisible="display_type != False"/>
-            </group>
-            <group>
-                <field name="uom_id" invisible="display_type != False"/>
-                <field name="unit_rate" invisible="display_type != False"/>
-            </group>
-        </group>
-
-        <group>
-            <field name="description"/>
-        </group>
-
-        <group invisible="display_type != False">
-            <group>
-                <field name="original_qty" readonly="1"/>
-                <field name="variation_qty"/>
-                <field name="revised_qty" readonly="1"/>
-            </group>
-            <group>
-                <field name="amount" readonly="1"/>
-            </group>
-        </group>
-    </form>
-</field>
-                        </page>
-                    </notebook>
-                </sheet>
-
-                <chatter/>
-
-            </form>
-        </field>
-    </record>
-
-    <!-- ACTION -->
-    <record id="action_construction_variation" model="ir.actions.act_window">
-        <field name="name">Variations</field>
-        <field name="res_model">construction.variation</field>
-        <field name="view_mode">list,form</field>
-    </record>
-
+                    <group>
+                      <field name="uom_id" invisible="display_type != False"/>
+                      <field name="unit_rate" invisible="display_type != False"/>
+                    </group>
+                  </group>
+                  <group>
+                    <field name="description"/>
+                  </group>
+                  <group invisible="display_type != False">
+                    <group>
+                      <field name="original_qty" readonly="1"/>
+                      <field name="variation_qty"/>
+                      <field name="revised_qty" readonly="1"/>
+                    </group>
+                    <group>
+                      <field name="amount" readonly="1"/>
+                    </group>
+                  </group>
+                </form>
+              </field>
+            </page>
+            <page string="Notes" name="ccm_variation_notes">
+              <field name="description" placeholder="Describe the reason for this variation…"/>
+            </page>
+          </notebook>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+  <!-- ACTION -->
+  <record id="action_construction_variation" model="ir.actions.act_window">
+    <field name="name">Variations</field>
+    <field name="res_model">construction.variation</field>
+    <field name="view_mode">list,form</field>
+    <field name="search_view_id" ref="view_construction_variation_search"/>
+  </record>
 </odoo>

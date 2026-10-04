@@ -1,129 +1,123 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <odoo>
-
-    <record id="view_construction_retention_release_list" model="ir.ui.view">
-        <field name="name">construction.retention.release.list</field>
-        <field name="model">construction.retention.release</field>
-        <field name="arch" type="xml">
-            <list>
-                <field name="name"/>
-                <field name="contract_id"/>
-                <field name="date"/>
-                <field name="release_method"/>
-                <field name="amount"/>
-                <field name="available_retention"/>
-                <field name="payment_status"/>
-                <field name="state"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="view_construction_retention_release_form" model="ir.ui.view">
-        <field name="name">construction.retention.release.form</field>
-        <field name="model">construction.retention.release</field>
-        <field name="arch" type="xml">
-            <form string="Retention Release">
-                <header>
-                    <button name="action_post_release"
-                            string="Post Release"
-                            type="object"
-                            class="btn-primary"
-                            invisible="move_id or state != 'draft'"/>
-
-                    <button name="action_view_move"
-                            string="View Entry/Invoice"
-                            type="object"
-                            invisible="not move_id"/>
-
-                    <button name="action_cancel"
-                            string="Cancel"
-                            type="object"
-                            invisible="state == 'cancelled'"/>
-
-                    <button name="action_reset_to_draft"
-                            string="Reset to Draft"
-                            type="object"
-                            invisible="state == 'draft'"/>
-                    <button name="%(construction_contract_management.action_report_construction_retention_release)d"
-                            string="Print"
-                            type="action"
-                            class="btn-secondary"
-                            invisible="not id"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,posted,cancelled"/>
-                </header>
-
-                <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button name="action_view_move"
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-file-text-o"
-                                invisible="not move_id">
-                            <field name="move_count" widget="statinfo" string="Entry / Invoice"/>
-                        </button>
-                    </div>
-
-                    <group>
-                        <group>
-                            <field name="name" readonly="1"/>
-                            <field name="contract_id"/>
-                            <field name="date"/>
-                            <field name="contract_direction" readonly="1"/>
-                            <field name="release_method"/>
-                        </group>
-                        <group>
-                            <field name="journal_id"/>
-                            <field name="retention_account_id"/>
-                            <field name="liquidity_account_id" invisible="release_method != 'journal'"/>
-                        </group>
-                    </group>
-
-                    <group>
-                        <group>
-                            <field name="available_retention" readonly="1"/>
-                            <field name="amount"/>
-                            <field name="payment_status" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="move_id" readonly="1"/>
-                        </group>
-                    </group>
-
-                    <group>
-                        <field name="notes"/>
-                    </group>
-                </sheet>
-
-                <chatter/>
-            </form>
-        </field>
-    </record>
-
-    <record id="view_construction_retention_release_search" model="ir.ui.view">
-        <field name="name">construction.retention.release.search</field>
-        <field name="model">construction.retention.release</field>
-        <field name="arch" type="xml">
-            <search>
-                <field name="name"/>
-                <field name="contract_id"/>
-                <field name="partner_id"/>
-
-                <filter string="Draft" name="filter_draft" domain="[('state','=','draft')]"/>
-                <filter string="Posted" name="filter_posted" domain="[('state','=','posted')]"/>
-
-                <group expand="0" string="Group By">
-                    <filter string="Contract" name="group_contract" context="{'group_by': 'contract_id'}"/>
-                    <filter string="Method" name="group_method" context="{'group_by': 'release_method'}"/>
-                    <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
-                </group>
-            </search>
-        </field>
-    </record>
-
-    <record id="action_construction_retention_release" model="ir.actions.act_window">
-        <field name="name">Retention Releases</field>
-        <field name="res_model">construction.retention.release</field>
-        <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="view_construction_retention_release_search"/>
-    </record>
-
+  <record id="view_construction_retention_release_list" model="ir.ui.view">
+    <field name="name">construction.retention.release.list</field>
+    <field name="model">construction.retention.release</field>
+    <field name="arch" type="xml">
+      <list class="ccm_list ccm_table" default_order="id desc">
+        <field name="currency_id" column_invisible="True"/>
+        <field name="name" class="fw-semibold ccm_reference"/>
+        <field name="contract_id"/>
+        <field name="date" optional="show"/>
+        <field name="release_method" optional="show"/>
+        <field name="amount" optional="show" widget="monetary"/>
+        <field name="available_retention" optional="hide" widget="monetary"/>
+        <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-warning="payment_status in ['partial', 'in_payment']" decoration-danger="payment_status in ['reversed', 'cancelled']" decoration-muted="payment_status in ['no_move', 'not_paid', 'invoicing_legacy']"/>
+        <field name="state" widget="badge" decoration-success="state in ['approved', 'active', 'completed', 'closed', 'done', 'posted']" decoration-warning="state in ['submitted', 'under_review', 'checked']" decoration-danger="state in ['rejected', 'cancelled']" decoration-muted="state == 'draft'"/>
+      </list>
+    </field>
+  </record>
+  <record id="view_construction_retention_release_form" model="ir.ui.view">
+    <field name="name">construction.retention.release.form</field>
+    <field name="model">construction.retention.release</field>
+    <field name="arch" type="xml">
+      <form string="Retention Release" class="ccm_form">
+        <header>
+          <button name="action_post_release" string="Post Release" type="object" class="btn-primary" invisible="move_id or state != 'draft'"/>
+          <button name="action_view_move" string="View Entry/Invoice" type="object" invisible="not move_id"/>
+          <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'"/>
+          <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state == 'draft'"/>
+          <button name="%(construction_contract_management.action_report_construction_retention_release)d" string="Print" type="action" class="btn-secondary" invisible="not id"/>
+          <field name="state" widget="statusbar" statusbar_visible="draft,posted,cancelled"/>
+        </header>
+        <sheet>
+          <div class="oe_button_box" name="button_box">
+            <button name="action_view_move" type="object" class="oe_stat_button" icon="fa-file-text-o" invisible="not move_id">
+              <field name="move_count" widget="statinfo" string="Entry / Invoice"/>
+            </button>
+          </div>
+          <div class="ccm_document_header" name="ccm_document_header">
+            <div class="ccm_document_icon">
+              <i class="fa fa-unlock-alt" aria-hidden="true"/>
+            </div>
+            <div class="oe_title ccm_document_title">
+              <span class="ccm_document_type">Retention Release</span>
+              <h1>
+                <field name="name" readonly="1"/>
+              </h1>
+            </div>
+          </div>
+          <field name="currency_id" invisible="1"/>
+          <div class="ccm_summary_grid" name="ccm_summary_grid">
+            <div class="ccm_summary_card">
+              <span class="ccm_summary_label">Available Retention</span>
+              <field name="available_retention" readonly="1" nolabel="1" class="ccm_summary_value"/>
+            </div>
+            <div class="ccm_summary_card ccm_summary_accent">
+              <span class="ccm_summary_label">Release Amount</span>
+              <field name="amount" readonly="1" nolabel="1" class="ccm_summary_value"/>
+            </div>
+          </div>
+          <group>
+            <group string="Contract &amp; Source" class="ccm_field_section">
+              <field name="contract_id"/>
+              <field name="date"/>
+              <field name="contract_direction" readonly="1" widget="badge" decoration-info="contract_direction == 'inbound'" decoration-warning="contract_direction == 'outbound'"/>
+              <field name="release_method"/>
+            </group>
+            <group string="Accounting Setup" class="ccm_field_section">
+              <field name="journal_id"/>
+              <field name="retention_account_id"/>
+              <field name="liquidity_account_id" invisible="release_method != 'journal'"/>
+            </group>
+          </group>
+          <group>
+            <group string="Release Amounts" class="ccm_field_section">
+              <field name="available_retention" readonly="1"/>
+              <field name="amount"/>
+              <field name="payment_status" readonly="1" widget="badge" decoration-success="payment_status == 'paid'" decoration-warning="payment_status in ['partial', 'in_payment']" decoration-danger="payment_status in ['reversed', 'cancelled']" decoration-muted="payment_status in ['no_move', 'not_paid', 'invoicing_legacy']"/>
+            </group>
+            <group string="Linked Accounting Document" class="ccm_field_section">
+              <field name="move_id" readonly="1"/>
+            </group>
+          </group>
+          <group string="Notes" class="ccm_field_section">
+            <field name="notes" placeholder="Add notes…"/>
+          </group>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+  <record id="view_construction_retention_release_search" model="ir.ui.view">
+    <field name="name">construction.retention.release.search</field>
+    <field name="model">construction.retention.release</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="name"/>
+        <field name="contract_id"/>
+        <field name="partner_id"/>
+        <separator/>
+        <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+        <filter string="Posted" name="filter_posted" domain="[('state', '=', 'posted')]"/>
+        <filter string="Cancelled" name="filter_cancelled" domain="[('state', '=', 'cancelled')]"/>
+        <separator/>
+        <filter string="Unpaid" name="filter_payment_unpaid" domain="[('payment_status', 'in', ['not_paid', 'partial', 'in_payment'])]"/>
+        <filter string="Paid" name="filter_payment_paid" domain="[('payment_status', '=', 'paid')]"/>
+        <filter string="Not Invoiced / Posted" name="filter_payment_no_move" domain="[('payment_status', '=', 'no_move')]"/>
+        <group expand="0" string="Group By">
+          <filter string="Contract" name="group_contract" context="{'group_by': 'contract_id'}"/>
+          <filter string="Method" name="group_method" context="{'group_by': 'release_method'}"/>
+          <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+          <filter string="Payment Status" name="group_payment_status" context="{'group_by': 'payment_status'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+  <record id="action_construction_retention_release" model="ir.actions.act_window">
+    <field name="name">Retention Releases</field>
+    <field name="res_model">construction.retention.release</field>
+    <field name="view_mode">list,form</field>
+    <field name="search_view_id" ref="view_construction_retention_release_search"/>
+  </record>
 </odoo>
