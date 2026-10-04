@@ -273,7 +273,11 @@ class PurchaseOrder(models.Model):
                         if partial.debit_move_id == bill_line
                         else partial.debit_move_id
                     )
-                    payment = other_line.move_id.payment_id
+                    # Odoo 18 links account.payment -> account.move through payment.move_id;
+                    # account.move itself does not expose a payment_id field in this build.
+                    payment = self.env['account.payment'].search(
+                        [('move_id', '=', other_line.move_id.id)], limit=1
+                    )
                     if not payment:
                         continue
                     if (
