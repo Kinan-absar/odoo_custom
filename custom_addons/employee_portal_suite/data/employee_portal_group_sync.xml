@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Keep technical baseline access synchronized for all existing Employee -> Related User links. -->
+    <function model="hr.employee" name="_sync_all_employee_portal_base_groups"/>
+</odoo>

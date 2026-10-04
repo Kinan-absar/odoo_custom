@@ -12,7 +12,6 @@ from . import portal_reports
 from . import portal_announcements
 from . import portal_purchase_order
 
-from . import telegram
 
 from . import portal_call
 

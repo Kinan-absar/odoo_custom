@@ -10,7 +10,7 @@
             <!-- Add a dedicated "Payroll Settings" tab inside the employee notebook -->
             <xpath expr="//notebook" position="inside">
                 <page string="Payroll Settings" name="eps_payroll_settings"
-                      groups="employee_portal_suite.group_employee_portal_hr,employee_portal_suite.group_employee_portal_admin">
+                      groups="employee_portal_suite.group_employee_portal_hr">
                     <group>
                         <group string="Attendance &amp; Overtime">
                             <field name="eps_overtime_enabled"

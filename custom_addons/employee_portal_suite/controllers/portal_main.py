@@ -96,12 +96,18 @@ class EmployeePortalMain(CustomerPortal):
         new_employee_pending_count = notif_summary.get('er_approval', {}).get('new', 0)
         material_pending_count = notif_summary.get('mr_approval', {}).get('count', 0)
         new_material_pending_count = notif_summary.get('mr_approval', {}).get('new', 0)
+        can_er_approval_page = 'er_approval' in notif_summary
+        can_mr_approval_page = 'mr_approval' in notif_summary
         pending_sign_count = notif_summary.get('sign_request', {}).get('count', 0)
         new_pending_sign_count = notif_summary.get('sign_request', {}).get('new', 0)
         salary_report_count = notif_summary.get('salary_report', {}).get('count', 0)
         new_salary_report_count = notif_summary.get('salary_report', {}).get('new', 0)
         portal_report_count = notif_summary.get('portal_report', {}).get('count', 0)
         new_portal_report_count = notif_summary.get('portal_report', {}).get('new', 0)
+        can_manage_portal_reports = (
+            user.has_group('employee_portal_suite.group_portal_report_uploader')
+            or user.has_group('employee_portal_suite.group_employee_portal_superadmin')
+        )
 
         # -------------------------------
         # 6. Construction Counts
@@ -169,12 +175,15 @@ class EmployeePortalMain(CustomerPortal):
             "new_employee_pending_count": new_employee_pending_count,
             "material_pending_count": material_pending_count,
             "new_material_pending_count": new_material_pending_count,
+            "can_er_approval_page": can_er_approval_page,
+            "can_mr_approval_page": can_mr_approval_page,
             "pending_sign_count": pending_sign_count,
             "new_pending_sign_count": new_pending_sign_count,
             "salary_report_count": salary_report_count,
             "new_salary_report_count": new_salary_report_count,
             "portal_report_count": portal_report_count,
             "new_portal_report_count": new_portal_report_count,
+            "can_manage_portal_reports": can_manage_portal_reports,
             "recent_activities": recent_activities,
             "contract_count": contract_count,
             "ipc_count": ipc_count,

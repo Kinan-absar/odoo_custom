@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="employee_portal_suite.WorkflowReportListView" t-inherit="web.ListView" t-inherit-mode="primary">
+        <xpath expr="//Layout/t[@t-component]" position="before">
+            <WorkflowReportDashboard onFilter.bind="onDashboardFilter" onNavigate.bind="onDashboardNavigate"/>
+        </xpath>
+    </t>
+
+    <t t-name="employee_portal_suite.WorkflowReportDashboard">
+        <section class="eps_wf_dashboard">
+            <div class="eps_wf_dashboard_header">
+                <div>
+                    <div class="eps_wf_eyebrow">WORKFLOW CONTROL CENTER</div>
+                    <h2>Approval Performance</h2>
+                    <p>Live view of approval workload, delays and workflow health.</p>
+                </div>
+                <button type="button" class="btn btn-light eps_wf_refresh" t-on-click="refresh">
+                    <i class="fa fa-refresh me-1"/> Refresh
+                </button>
+            </div>
+            <div class="eps_wf_kpi_grid">
+                <button class="eps_wf_kpi eps_wf_kpi_primary" t-on-click="() => this.filter([])"><span class="eps_wf_kpi_icon"><i class="fa fa-sitemap"/></span><span><strong t-out="data.all_count"/><small>All Approval Steps</small></span></button>
+                <button class="eps_wf_kpi eps_wf_kpi_pending" t-on-click="() => this.filter([['state','=','pending']])"><span class="eps_wf_kpi_icon"><i class="fa fa-clock-o"/></span><span><strong t-out="data.pending_count"/><small>Pending Now</small></span></button>
+                <button class="eps_wf_kpi eps_wf_kpi_danger" t-on-click="() => this.filter([['state','=','pending'],['is_overdue','=',true]])"><span class="eps_wf_kpi_icon"><i class="fa fa-exclamation-triangle"/></span><span><strong t-out="data.overdue_count"/><small>Overdue</small></span></button>
+                <button class="eps_wf_kpi eps_wf_kpi_success" t-on-click="() => this.filter([['state','=','approved']])"><span class="eps_wf_kpi_icon"><i class="fa fa-check-circle"/></span><span><strong t-out="data.approved_count"/><small>Approved</small></span></button>
+                <button class="eps_wf_kpi eps_wf_kpi_warning" t-on-click="() => this.filter([['state','=','returned']])"><span class="eps_wf_kpi_icon"><i class="fa fa-reply"/></span><span><strong t-out="data.returned_count"/><small>Returned</small></span></button>
+                <button class="eps_wf_kpi eps_wf_kpi_override" t-on-click="() => this.filter([['override_by','!=',false]])"><span class="eps_wf_kpi_icon"><i class="fa fa-shield"/></span><span><strong t-out="data.override_count"/><small>Overrides</small></span></button>
+                <div class="eps_wf_kpi eps_wf_kpi_time"><span class="eps_wf_kpi_icon"><i class="fa fa-hourglass-half"/></span><span><strong><t t-out="data.avg_hours"/> h</strong><small>Avg. Decision Time</small></span></div>
+            </div>
+            <div class="eps_wf_shortcuts">
+                <button t-on-click="() => this.navigate('employee_portal_suite.action_employee_portal_workflows')"><i class="fa fa-random"/><span><b t-out="data.active_workflow_count"/> Active Workflows</span><i class="fa fa-angle-right"/></button>
+                <button t-on-click="() => this.navigate('employee_portal_suite.action_employee_portal_approval_roles')"><i class="fa fa-id-badge"/><span><b t-out="data.approval_role_count"/> Approval Roles</span><i class="fa fa-angle-right"/></button>
+                <button t-on-click="() => this.navigate('employee_portal_suite.action_employee_portal_approval_delegations')"><i class="fa fa-exchange"/><span><b t-out="data.active_delegation_count"/> Active Delegations</span><i class="fa fa-angle-right"/></button>
+            </div>
+        </section>
+    </t>
+</templates>

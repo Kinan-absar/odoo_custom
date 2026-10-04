@@ -1,5 +1,0 @@
-<odoo>
-    <record id="construction_dashboard_main" model="construction.dashboard">
-        <field name="name">Main Dashboard</field>
-    </record>
-</odoo>

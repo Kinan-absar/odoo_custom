@@ -18,9 +18,25 @@ def _er_status_badge(rec):
             'ceo': 'CEO',
         }
 
-        lbl = stage_labels.get(rec.state_before_reject, "Unknown Stage")
+        if rec.state_before_reject == 'workflow':
+            rejected_line = rec.approval_line_ids.filtered(lambda l: l.state == 'rejected')[:1]
+            lbl = rejected_line.name if rejected_line else 'Workflow'
+        else:
+            lbl = stage_labels.get(rec.state_before_reject, "Unknown Stage")
 
         return Markup('<span class="badge bg-danger">Rejected — %s Stage</span>') % escape(lbl)
+    # RETURNED FOR CORRECTION
+    if state == 'returned':
+        line = rec.approval_line_ids.filtered(lambda l: l.state == 'returned')[:1]
+        label = line.name if line else 'Workflow'
+        return Markup('<span class="badge bg-info text-dark">Returned for Correction — %s</span>') % escape(label)
+
+    # CONFIGURABLE WORKFLOW
+    if state == 'workflow':
+        step = rec.current_approval_line_id
+        label = step.name if step else 'Workflow Approval'
+        return Markup('<span class="badge bg-warning text-dark">Pending — %s</span>') % escape(label)
+
     # PENDING STAGES
     stage_labels = {
         'manager': 'Pending Manager',
@@ -101,7 +117,11 @@ class EmployeePortalRequests(http.Controller):
         if not emp:
             return request.redirect('/my')
 
-        return request.render("employee_portal_suite.employee_request_new_form")
+        projects = emp.sudo()._get_material_request_projects()
+        return request.render("employee_portal_suite.employee_request_new_form", {
+            "projects": projects,
+            "single_project": projects[:1] if len(projects) == 1 else False,
+        })
 
     # ---------------------------------------------------------
     # EMPLOYEE — CREATE REQUEST
@@ -130,12 +150,23 @@ class EmployeePortalRequests(http.Controller):
         }
         req_type = mapping.get(post.get("request_type"), "other")
 
+        projects = emp.sudo()._get_material_request_projects()
+        project_id = int(post.get('project_id') or 0)
+        selected_project = request.env['project.project'].sudo().browse(project_id)
+        if not selected_project.exists() or selected_project not in projects:
+            return request.render('employee_portal_suite.employee_request_new_form', {
+                'projects': projects,
+                'single_project': projects[:1] if len(projects) == 1 else False,
+                'error_message': _('Please select one of the projects assigned to your work location.'),
+            })
+
         # Build vals
         vals = {
             'employee_id': emp.id,
             'request_date': post.get('request_date'),
             'request_type': req_type,
             'description': post.get('description'),
+            'project_id': selected_project.id,
         }
 
         # Leave fields
@@ -157,12 +188,18 @@ class EmployeePortalRequests(http.Controller):
         user = request.env.user
         EmployeeReq = request.env['employee.request'].sudo()
 
-        # Allow only employee approval groups
+        has_dynamic_approval = request.env['employee.portal.workflow.approval.line'].sudo().user_has_approval_area_access(
+            user, 'employee_request'
+        )
+
+        # Allow employee approval groups or a specifically assigned dynamic approver
         if not (
             user.has_group("employee_portal_suite.group_employee_portal_manager")
             or user.has_group("employee_portal_suite.group_employee_portal_hr")
             or user.has_group("employee_portal_suite.group_employee_portal_finance")
             or user.has_group("employee_portal_suite.group_employee_portal_ceo")
+            or user.has_group("employee_portal_suite.group_employee_portal_superadmin")
+            or has_dynamic_approval
         ):
             return request.redirect('/my')
 
@@ -176,10 +213,17 @@ class EmployeePortalRequests(http.Controller):
         pending_list = []
 
         for rec in EmployeeReq.search([
-            ('state', 'in', ['manager', 'hr', 'finance', 'ceo'])
+            ('state', 'in', ['workflow', 'manager', 'hr', 'finance', 'ceo'])
         ]):
 
-            if rec.state == "manager" and user.has_group("employee_portal_suite.group_employee_portal_manager"):
+            if rec.state == 'workflow':
+                if rec._portal_can_approve(user):
+                    pending_list.append(rec)
+
+            elif user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
+                pending_list.append(rec)
+
+            elif rec.state == "manager" and user.has_group("employee_portal_suite.group_employee_portal_manager"):
                 if rec.manager_id == emp:
                     pending_list.append(rec)
 
@@ -202,6 +246,8 @@ class EmployeePortalRequests(http.Controller):
             ("finance_approved_by", "=", user.id),
             ("ceo_approved_by", "=", user.id),
         ])
+        dynamic_approved = EmployeeReq.search([('approval_line_ids.approved_by', '=', user.id)], order='id desc')
+        approved_list = EmployeeReq.browse(list(dict.fromkeys(approved_list.ids + dynamic_approved.ids)))
 
         # ---------------------------------------------------------
         # 3) REJECTED LIST — requests user rejected
@@ -212,9 +258,10 @@ class EmployeePortalRequests(http.Controller):
         ])
 
         # ---------------------------------------------------------
-        # 4) ALL LIST
+        # 4) ALL LIST — all records visible through the UNION of roles
         # ---------------------------------------------------------
-        all_reqs = list({*pending_list, *approved_list, *rejected_list})
+        visibility_domain = EmployeeReq._portal_visibility_domain(user)
+        all_reqs = EmployeeReq.search(visibility_domain, order="id desc")
 
         # ---------------------------------------------------------
         # 5) Apply filter
@@ -258,18 +305,14 @@ class EmployeePortalRequests(http.Controller):
         if not rec.exists():
             return request.redirect('/my')
 
-        # Only managers/hr/finance/ceo
-        if not (
-            user.has_group("employee_portal_suite.group_employee_portal_manager")
-            or user.has_group("employee_portal_suite.group_employee_portal_hr")
-            or user.has_group("employee_portal_suite.group_employee_portal_finance")
-            or user.has_group("employee_portal_suite.group_employee_portal_ceo")
-        ):
-            return request.redirect('/my')
+        # Visibility is additive across all assigned roles.
+        if not rec._portal_can_view(user):
+            return request.redirect('/my/employee/approvals')
 
         return request.render("employee_portal_suite.portal_manager_request_detail", {
             "request_rec": rec,
             "status_badge": _er_status_badge,
+            "can_approve": rec._portal_can_approve(user),
         })
 
    # ---------------------------------------------------------
@@ -286,7 +329,15 @@ class EmployeePortalRequests(http.Controller):
         if not rec.exists():
             return request.redirect('/my/employee/approvals')
 
-        if rec.state == "manager":
+        if not rec._portal_can_approve(user):
+            return request.redirect(f"/my/employee/approvals/{rec.id}")
+
+        if rec.state == 'workflow':
+            if rec.current_approval_line_id:
+                rec.current_approval_line_id.sudo().comment = post.get('comment') or False
+            rec.with_context(workflow_actor_user_id=user.id).action_workflow_approve()
+
+        elif rec.state == "manager":
             rec.manager_comment = comment
             rec.action_manager_approve()
 
@@ -305,6 +356,28 @@ class EmployeePortalRequests(http.Controller):
 
         return request.redirect('/my/employee/approvals')
 
+    # ---------------------------------------------------------
+    # PORTAL RETURN FOR CORRECTION (configurable workflow only)
+    # ---------------------------------------------------------
+    @http.route('/my/employee/requests/return', type='http', auth='user', website=True, csrf=True)
+    def portal_return_for_correction(self, **post):
+        req_id = int(post.get('req_id'))
+        reason = (post.get('reason') or '').strip()
+        user = request.env.user
+
+        rec = request.env['employee.request'].sudo().browse(req_id)
+        if not rec.exists():
+            return request.redirect('/my/employee/approvals')
+
+        if rec.state != 'workflow' or not rec._portal_can_approve(user):
+            return request.redirect(f'/my/employee/approvals/{rec.id}')
+
+        if not reason:
+            return request.redirect(f'/my/employee/approvals/{rec.id}')
+
+        rec.with_context(workflow_actor_user_id=user.id)._workflow_return_confirm(reason)
+        return request.redirect('/my/employee/approvals')
+
 
         # ---------------------------------------------------------
     # PORTAL REJECT (Manager / HR / Finance / CEO)
@@ -317,24 +390,30 @@ class EmployeePortalRequests(http.Controller):
 
         # REQUIRE REJECTION COMMENT
         if not comment:
-            return request.redirect(f"/my/employee/requests/{req_id}")  # go back to detail page
+            return request.redirect(f"/my/employee/approvals/{req_id}")
 
         rec = request.env['employee.request'].sudo().browse(req_id)
 
         if not rec.exists():
             return request.redirect('/my/employee/approvals')
 
-        # Save rejection comment in correct field
-        if rec.state == 'manager' and rec.manager_id == user.employee_id:
+        if not rec._portal_can_approve(user):
+            return request.redirect(f"/my/employee/approvals/{rec.id}")
+
+        # Authorization was already checked above; save the comment for the current stage.
+        # This also supports the explicit Super Administrator override.
+        if rec.state == 'workflow':
+            if rec.current_approval_line_id:
+                rec.current_approval_line_id.sudo().comment = comment
+            rec.with_context(workflow_actor_user_id=user.id).action_workflow_reject()
+            return request.redirect('/my/employee/approvals')
+        elif rec.state == 'manager':
             rec.manager_comment = comment
-
-        elif rec.state == 'hr' and user.has_group('employee_portal_suite.group_employee_portal_hr'):
+        elif rec.state == 'hr':
             rec.hr_comment = comment
-
-        elif rec.state == 'finance' and user.has_group('employee_portal_suite.group_employee_portal_finance'):
+        elif rec.state == 'finance':
             rec.finance_comment = comment
-
-        elif rec.state == 'ceo' and user.has_group('employee_portal_suite.group_employee_portal_ceo'):
+        elif rec.state == 'ceo':
             rec.ceo_comment = comment
 
         # Now actually reject

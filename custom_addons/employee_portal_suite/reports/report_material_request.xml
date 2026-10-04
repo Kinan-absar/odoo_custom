@@ -27,6 +27,10 @@
                                     <td><t t-out="o.employee_id.name"/></td>
                                 </tr>
                                 <tr>
+                                    <th>Project:</th>
+                                    <td><t t-out="o.project_id.display_name or '-'"/></td>
+                                </tr>
+                                <tr>
                                     <th>Worksite:</th>
                                     <td><t t-out="o.worksite"/></td>
                                 </tr>

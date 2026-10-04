@@ -22,6 +22,11 @@
 
             <t t-call-assets="web.assets_frontend"/>
 
+            <!-- Demo-only marker: the frontend tour mounts only for disposable demo employees. -->
+            <t t-if="request.env.user.login in ('employee1@eps-demo.local', 'employee2@eps-demo.local', 'employee3@eps-demo.local', 'employee4@eps-demo.local')">
+                <div id="eps-demo-portal-tour-marker" class="d-none"/>
+            </t>
+
             <style>
                 /* ================================================================
                    EMPLOYEE PORTAL - PREMIUM REDESIGN
@@ -1399,6 +1404,8 @@
                 t-value="request.env['portal.report.seen'].sudo()._get_notification_summary(request.env.user) if not request.env.user.has_group('employee_portal_suite.group_attendance_only') else {}"/>
             <t t-set="ep_notif_unread_total"
                 t-value="sum(v.get('new', 0) for v in ep_notif_summary.values())"/>
+            <t t-set="can_er_approval_nav" t-value="'er_approval' in ep_notif_summary"/>
+            <t t-set="can_mr_approval_nav" t-value="'mr_approval' in ep_notif_summary"/>
 
             <aside class="ep-desktop-sidebar">
                 <div class="ep-sidebar-brand"><img t-att-src="'/web/image/res.company/%s/logo' % request.env.company.id"/><span>Employee Portal</span></div>
@@ -1416,8 +1423,8 @@
                         <div class="ep-sidebar-section" id="ep-section-approvals">
                             <div class="ep-sidebar-section-title">Approvals</div>
                             <div class="ep-sidebar-section-links">
-                                <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_manager') or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr') or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')"><a href="/my/employee/approvals" class="ep-sidebar-link"><i class="fa fa-check-square-o"/>ER Approvals</a></t>
-                                <t t-if="request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep') or request.env.user.has_group('employee_portal_suite.group_mr_store_manager') or request.env.user.has_group('employee_portal_suite.group_mr_project_manager') or request.env.user.has_group('employee_portal_suite.group_mr_projects_director') or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')"><a href="/my/employee/material/approvals" class="ep-sidebar-link"><i class="fa fa-check-circle-o"/>MR Approvals</a></t>
+                                <t t-if="can_er_approval_nav"><a href="/my/employee/approvals" class="ep-sidebar-link"><i class="fa fa-check-square-o"/>ER Approvals</a></t>
+                                <t t-if="can_mr_approval_nav"><a href="/my/employee/material/approvals" class="ep-sidebar-link"><i class="fa fa-check-circle-o"/>MR Approvals</a></t>
                                 <a href="/my/employee/sign" class="ep-sidebar-link"><i class="fa fa-pencil-square-o"/>Signatures</a>
                             </div>
                         </div>
@@ -1433,7 +1440,7 @@
                             <div class="ep-sidebar-section-title">Reports</div>
                             <div class="ep-sidebar-section-links">
                                 <t t-if="request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')"><a href="/my/employee/salary-reports" class="ep-sidebar-link"><i class="fa fa-money"/>Salary Reports</a></t>
-                                <t t-if="ep_notif_summary.get('portal_report', {}).get('count', 0) &gt; 0"><a href="/my/employee/reports" class="ep-sidebar-link"><i class="fa fa-folder-open-o"/>Reports</a></t>
+                                <t t-if="ep_notif_summary.get('portal_report') or request.env.user.has_group('employee_portal_suite.group_portal_report_uploader')"><a href="/my/employee/reports" class="ep-sidebar-link"><i class="fa fa-folder-open-o"/>Reports</a></t>
                             </div>
                         </div>
                     </t>
@@ -1493,36 +1500,16 @@
                             </div>
                         </div>
 
-                        <t t-if="
-                            request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                            or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                            or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                        ">
+                        <t t-if="can_er_approval_nav or can_mr_approval_nav">
                             <div class="ep-dropdown">
                                 <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals &#9662;</button>
                                 <div id="app-d" class="ep-dropdown-menu">
 
-                                    <t t-if="
-                                        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                                    ">
+                                    <t t-if="can_er_approval_nav">
                                         <a href="/my/employee/approvals" class="ep-sub-link">Employee Approvals</a>
                                     </t>
 
-                                    <t t-if="
-                                        request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                                        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                                        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                                        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                                    ">
+                                    <t t-if="can_mr_approval_nav">
                                         <a href="/my/employee/material/approvals" class="ep-sub-link">Material Approvals</a>
                                     </t>
 
@@ -1630,19 +1617,7 @@
    t-value="request.env.user.has_group('employee_portal_suite.group_attendance_only')"/>
 
                  <t t-set="has_extended_nav"
-   t-value="
-       not is_attendance_only and (
-       request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-       or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-       or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-       or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-       or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-       or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-       or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-       or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-       or request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')
-       )
-   "/>
+   t-value="not is_attendance_only and (can_er_approval_nav or can_mr_approval_nav or request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user'))"/>
 
             <!-- Attendance-only mobile nav: just Attendance + Logout -->
             <t t-if="is_attendance_only">
@@ -1707,16 +1682,7 @@
                         </a>
                     </t>
                      <t t-if="has_extended_nav">
-                    <t t-if="
-                        request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                        or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                        or request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                        or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                        or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                        or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                    ">
+                    <t t-if="can_er_approval_nav or can_mr_approval_nav">
                         <div id="approvalBtn"
                             t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'"
                             onclick="toggleApprovalMenu()">
@@ -1726,25 +1692,14 @@
 
                         <div id="approvalMenu" class="fab-menu">
 
-                            <t t-if="
-                                request.env.user.has_group('employee_portal_suite.group_employee_portal_manager')
-                                or request.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-                                or request.env.user.has_group('employee_portal_suite.group_employee_portal_finance')
-                                or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                            ">
+                            <t t-if="can_er_approval_nav">
                                 <a href="/my/employee/approvals" class="fab-item">
                                     <i class="fa fa-user"></i>
                                     <span>Employee Approvals</span>
                                 </a>
                             </t>
 
-                            <t t-if="
-                                request.env.user.has_group('employee_portal_suite.group_mr_purchase_rep')
-                                or request.env.user.has_group('employee_portal_suite.group_mr_store_manager')
-                                or request.env.user.has_group('employee_portal_suite.group_mr_project_manager')
-                                or request.env.user.has_group('employee_portal_suite.group_mr_projects_director')
-                                or request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')
-                            ">
+                            <t t-if="can_mr_approval_nav">
                                 <a href="/my/employee/material/approvals" class="fab-item">
                                     <i class="fa fa-cubes"></i>
                                     <span>Material Approvals</span>

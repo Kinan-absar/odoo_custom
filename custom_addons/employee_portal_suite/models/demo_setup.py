@@ -1,0 +1,318 @@
+# -*- coding: utf-8 -*-
+from datetime import timedelta
+
+from odoo import _, fields, models
+from odoo.exceptions import UserError
+
+
+class EmployeePortalDemoSetup(models.TransientModel):
+    _name = "employee.portal.demo.setup"
+    _description = "Employee Portal Suite Demo Setup"
+
+    demo_password = fields.Char(
+        string="Demo Password",
+        default="Demo123!",
+        required=True,
+        help="This password is applied to all demo users every time the setup is prepared.",
+    )
+    confirm_disposable = fields.Boolean(
+        string="I confirm this is a disposable demo/development database",
+        help="The setup creates fictional users and sample business records. Run it only on a disposable demo/dev database.",
+    )
+    result_html = fields.Html(string="Demo Access", readonly=True, sanitize=False)
+
+    def _group(self, xmlid):
+        return self.env.ref(xmlid, raise_if_not_found=False)
+
+    def _get_or_create_user(self, login, name, groups, password):
+        Users = self.env["res.users"].sudo().with_context(no_reset_password=True)
+        user = Users.search([("login", "=", login)], limit=1)
+        group_ids = [group.id for group in groups if group]
+        vals = {
+            "name": name,
+            "login": login,
+            "email": login,
+            "active": True,
+            "groups_id": [(6, 0, group_ids)],
+        }
+        if user:
+            user.write(vals)
+        else:
+            user = Users.create(vals)
+        user.sudo().write({"password": password})
+        return user
+
+    def _get_or_create_employee(self, name, user, department, manager=False, work_location=False):
+        Employee = self.env["hr.employee"].sudo()
+        employee = Employee.search([("user_id", "=", user.id)], limit=1)
+        vals = {
+            "name": name,
+            "user_id": user.id,
+            "company_id": self.env.company.id,
+            "department_id": department.id,
+            "parent_id": manager.id if manager else False,
+        }
+        if work_location:
+            vals.update({
+                "work_location_id": work_location.id,
+                "work_location_ids": [(6, 0, [work_location.id])],
+            })
+        if employee:
+            employee.write(vals)
+        else:
+            employee = Employee.create(vals)
+        return employee
+
+    def _prepare_master_data(self):
+        company = self.env.company
+        Department = self.env["hr.department"].sudo()
+        department = Department.search([
+            ("name", "=", "Demo Operations"),
+            ("company_id", "in", [False, company.id]),
+        ], limit=1)
+        if not department:
+            department = Department.create({"name": "Demo Operations", "company_id": company.id})
+
+        Project = self.env["project.project"].sudo()
+        project = Project.search([("name", "=", "Demo Office Fit-Out"), ("company_id", "=", company.id)], limit=1)
+        if not project:
+            project = Project.create({"name": "Demo Office Fit-Out", "company_id": company.id})
+
+        Partner = self.env["res.partner"].sudo()
+        demo_address = Partner.search([
+            ("name", "=", "Demo Project Site"),
+            ("company_id", "in", [False, company.id]),
+            ("type", "=", "other"),
+        ], limit=1)
+        if not demo_address:
+            demo_address = Partner.create({
+                "name": "Demo Project Site",
+                "type": "other",
+                "company_id": company.id,
+                "street": "100 Demo Avenue",
+                "city": "Demo City",
+            })
+
+        WorkLocation = self.env["hr.work.location"].sudo()
+        location = WorkLocation.search([("name", "=", "Demo Project Site"), ("company_id", "=", company.id)], limit=1)
+        location_vals = {
+            "name": "Demo Project Site",
+            "company_id": company.id,
+            "address_id": demo_address.id,
+        }
+        if location:
+            location.write(location_vals)
+        else:
+            location = WorkLocation.create(location_vals)
+
+        LocationProject = self.env["hr.work.location.project"].sudo()
+        link = LocationProject.search([
+            ("work_location_id", "=", location.id),
+            ("project_id", "=", project.id),
+        ], limit=1)
+        if not link:
+            LocationProject.create({
+                "work_location_id": location.id,
+                "project_id": project.id,
+                "geo_enforce": False,
+            })
+        return department, project, location
+
+    def _prepare_users_and_employees(self, password, department, location):
+        portal_common = [
+            self._group("base.group_portal"),
+            self._group("employee_portal_suite.group_employee_portal"),
+            self._group("employee_portal_suite.group_employee_portal_employee"),
+            self._group("employee_portal_suite.group_portal_attendance_user"),
+        ]
+        manager_groups = [
+            self._group("base.group_user"),
+            self._group("employee_portal_suite.group_employee_portal_superadmin"),
+            self._group("employee_portal_suite.group_employee_portal_admin"),
+            self._group("employee_portal_suite.group_employee_portal_manager"),
+            self._group("employee_portal_suite.group_employee_portal_hr"),
+            self._group("employee_portal_suite.group_employee_portal_finance"),
+            self._group("employee_portal_suite.group_employee_portal_ceo"),
+            self._group("employee_portal_suite.group_employee_portal_announcement_manager"),
+            self._group("employee_portal_suite.group_attendance_manager"),
+            self._group("employee_portal_suite.group_salary_report_viewer"),
+            self._group("employee_portal_suite.group_portal_report_uploader"),
+            self._group("employee_portal_suite.group_mr_purchase_rep"),
+            self._group("employee_portal_suite.group_mr_store_manager"),
+            self._group("employee_portal_suite.group_mr_project_manager"),
+            self._group("employee_portal_suite.group_mr_projects_director"),
+            self._group("purchase.group_purchase_user"),
+            self._group("account.group_account_readonly"),
+        ]
+        manager_user = self._get_or_create_user(
+            "manager@eps-demo.local", "Demo Manager", manager_groups, password
+        )
+
+        employee_specs = [
+            ("employee1@eps-demo.local", "Demo Employee One"),
+            ("employee2@eps-demo.local", "Demo Employee Two"),
+            ("employee3@eps-demo.local", "Demo Employee Three"),
+            ("employee4@eps-demo.local", "Demo Employee Four"),
+        ]
+        employee_users = [
+            self._get_or_create_user(login, name, portal_common, password)
+            for login, name in employee_specs
+        ]
+
+        manager = self._get_or_create_employee(
+            "Demo Manager", manager_user, department, work_location=location
+        )
+        employees = [
+            self._get_or_create_employee(name, user, department, manager=manager, work_location=location)
+            for user, (_, name) in zip(employee_users, employee_specs)
+        ]
+        return manager_user, employee_users, manager, employees
+
+    def _prepare_sample_records(self, manager, employees, project, location):
+        employee1, employee2, employee3, employee4 = employees
+
+        EmployeeRequest = self.env["employee.request"].sudo()
+        demo_requests = [
+            (employee1, "leave", "Annual leave request for five working days.", "manager"),
+            (employee1, "advance", "Salary advance request for demonstration purposes.", "finance"),
+            (employee2, "training", "Training course approval request.", "approved"),
+            (employee3, "travel", "Business trip request for a client meeting.", "hr"),
+            (employee4, "asset", "Laptop and site equipment request.", "manager"),
+        ]
+        for employee, request_type, description, state in demo_requests:
+            existing = EmployeeRequest.search([
+                ("employee_id", "=", employee.id),
+                ("description", "=", description),
+            ], limit=1)
+            vals = {
+                "employee_id": employee.id,
+                "request_type": request_type,
+                "description": description,
+                "state": state,
+                "project_id": project.id,
+            }
+            if existing:
+                existing.write(vals)
+            else:
+                EmployeeRequest.create(vals)
+
+        MaterialRequest = self.env["material.request"].sudo()
+        mr_specs = [
+            (employee1, "Demo Project Site", "purchase", [
+                ("LED Panel Light 60x60", 12.0),
+                ("Electrical Cable 4mm", 200.0),
+            ]),
+            (employee3, "Demo Project Site - Store Review", "store", [
+                ("PVC Conduit 25mm", 80.0),
+                ("Junction Box", 24.0),
+            ]),
+        ]
+        for employee, worksite, state, lines in mr_specs:
+            mr = MaterialRequest.search([
+                ("employee_id", "=", employee.id),
+                ("worksite", "=", worksite),
+            ], limit=1)
+            mr_vals = {
+                "employee_id": employee.id,
+                "worksite": worksite,
+                "project_id": project.id,
+                "work_location_id": location.id,
+                "state": state,
+            }
+            if mr:
+                mr.write(mr_vals)
+            else:
+                mr = MaterialRequest.create(mr_vals)
+            if not mr.line_ids:
+                self.env["material.request.line"].sudo().create([
+                    {"request_id": mr.id, "item_name": item_name, "qty_required": qty}
+                    for item_name, qty in lines
+                ])
+
+        Attendance = self.env["hr.attendance"].sudo()
+        now = fields.Datetime.now()
+        for idx, employee in enumerate(employees, start=1):
+            check_in = now - timedelta(days=idx, hours=8)
+            check_out = now - timedelta(days=idx)
+            existing = Attendance.search([
+                ("employee_id", "=", employee.id),
+                ("check_in", "=", check_in),
+            ], limit=1)
+            if not existing:
+                vals = {"employee_id": employee.id, "check_in": check_in, "check_out": check_out}
+                if "project_id" in Attendance._fields:
+                    vals["project_id"] = project.id
+                if "work_location_id" in Attendance._fields:
+                    vals["work_location_id"] = location.id
+                Attendance.create(vals)
+
+        Announcement = self.env["portal.announcement"].sudo()
+        ann = Announcement.search([("name", "=", "Welcome to the Employee Portal Suite Demo")], limit=1)
+        ann_vals = {
+            "name": "Welcome to the Employee Portal Suite Demo",
+            "message": (
+                "<p>This is a prepared demonstration environment. Try employee requests, "
+                "material requests, attendance, approvals, workflows, messaging and the employee portal.</p>"
+            ),
+            "target": "both",
+            "active": True,
+            "color": "primary",
+            "sequence": 100,
+        }
+        if ann:
+            ann.write(ann_vals)
+        else:
+            Announcement.create(ann_vals)
+
+        project.sudo().write({
+            "store_manager_employee_id": manager.id,
+            "project_manager_employee_id": manager.id,
+        })
+
+    def action_prepare_demo(self):
+        self.ensure_one()
+        if not self.env.user.has_group("base.group_system"):
+            raise UserError(_("Only an Odoo administrator can prepare the demo environment."))
+        if not self.confirm_disposable:
+            raise UserError(_("Confirm that this is a disposable demo/development database before continuing."))
+
+        password = self.demo_password or "Demo123!"
+        department, project, location = self._prepare_master_data()
+        manager_user, employee_users, manager, employees = self._prepare_users_and_employees(
+            password, department, location
+        )
+        self._prepare_sample_records(manager, employees, project, location)
+
+        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url", "")
+        portal_url = "%s/my/employee" % base_url.rstrip("/") if base_url else "/my/employee"
+        backend_url = "%s/web" % base_url.rstrip("/") if base_url else "/web"
+
+        rows = [
+            '<tr><td>Manager / Super Administrator</td><td>manager@eps-demo.local</td><td>%s</td><td><a href="%s" target="_blank">Backend</a></td></tr>'
+            % (password, backend_url)
+        ]
+        for idx in range(1, 5):
+            rows.append(
+                '<tr><td>Portal Employee %s</td><td>employee%s@eps-demo.local</td><td>%s</td><td><a href="%s" target="_blank">Employee Portal</a></td></tr>'
+                % (idx, idx, password, portal_url)
+            )
+
+        self.result_html = _("""
+            <div class="alert alert-success" role="alert">
+                <h4>Employee Portal Suite demo is ready.</h4>
+                <p>The setup is safe to run again; it refreshes the same demo users and sample records.</p>
+                <p><strong>Demo Manager is a Super Administrator</strong>, so the Configuration, Roles &amp; Permissions and workflow setup screens are available for demonstration.</p>
+            </div>
+            <table class="table table-sm table-bordered">
+                <thead><tr><th>Role</th><th>Login</th><th>Password</th><th>Start here</th></tr></thead>
+                <tbody>%s</tbody>
+            </table>
+            <p><strong>Suggested demo:</strong> use any of the four employee accounts to create requests, then use the Manager account to review approvals, configuration, workflows, attendance, reports and administration.</p>
+        """) % "".join(rows)
+        return {
+            "type": "ir.actions.act_window",
+            "res_model": self._name,
+            "res_id": self.id,
+            "view_mode": "form",
+            "target": "new",
+        }
