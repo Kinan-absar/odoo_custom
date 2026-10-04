@@ -155,7 +155,7 @@ class ConstructionContractJobCosting(models.Model):
         column = plan._column_name()
         return [(column, '=', analytic.id), ('company_id', '=', self.company_id.id)]
 
-    def _matching_account_move_lines(self):
+    def _matching_account_move_lines(self, advance_move_ids=None):
         """Return posted P&L journal items allocated to this job.
 
         Reading account.move.line directly makes the job-cost actuals include
@@ -173,10 +173,13 @@ class ConstructionContractJobCosting(models.Model):
         ]
         # Existing Construction Advance moves may predate the contract-tagging
         # enhancement below, so include them explicitly by their linked move.
-        advance_move_ids = self.env['construction.advance'].search([
-            ('contract_id', '=', self.id),
-            ('move_id', '!=', False),
-        ]).mapped('move_id').ids
+        # Resolve this once per contract; never query again for every journal line.
+        if advance_move_ids is None:
+            advance_move_ids = self.env['construction.advance'].search([
+                ('contract_id', '=', self.id),
+                ('move_id', '!=', False),
+            ]).mapped('move_id').ids
+        advance_move_ids = set(advance_move_ids)
 
         allocation_domain = [
             '|',
@@ -198,9 +201,9 @@ class ConstructionContractJobCosting(models.Model):
         # direct analytic allocation, it also recognizes entries explicitly
         # tagged with this contract and vendor-bill lines linked to PO lines
         # carrying the project's analytic distribution.
-        return lines.filtered(lambda line: self._job_cost_line_allocation(line) > 0.0)
+        return lines.filtered(lambda line: self._job_cost_line_allocation(line, advance_move_ids) > 0.0)
 
-    def _job_cost_line_allocation(self, line):
+    def _job_cost_line_allocation(self, line, advance_move_ids=None):
         self.ensure_one()
         if not self.analytic_account_id:
             return 0.0
@@ -214,10 +217,8 @@ class ConstructionContractJobCosting(models.Model):
             return 1.0
         # Backward compatibility for Construction Advance accounting moves that
         # were created before account.move was stamped with the contract.
-        if self.env['construction.advance'].search_count([
-            ('contract_id', '=', self.id),
-            ('move_id', '=', line.move_id.id),
-        ]):
+        # advance_move_ids is preloaded once to avoid one SQL query per journal line.
+        if advance_move_ids and line.move_id.id in advance_move_ids:
             return 1.0
         # Vendor bill lines generated from a PO do not always keep an
         # analytic_distribution on the invoice line itself. In that case,
@@ -271,8 +272,12 @@ class ConstructionContractJobCosting(models.Model):
             other_accounting_cost = 0.0
             actual_cost = 0.0
             actual_revenue = 0.0
-            for line in rec._matching_account_move_lines():
-                allocation = rec._job_cost_line_allocation(line)
+            advance_move_ids = set(rec.env['construction.advance'].search([
+                ('contract_id', '=', rec.id),
+                ('move_id', '!=', False),
+            ]).mapped('move_id').ids)
+            for line in rec._matching_account_move_lines(advance_move_ids):
+                allocation = rec._job_cost_line_allocation(line, advance_move_ids)
                 if not allocation:
                     continue
                 allocated_balance = line.balance * allocation
