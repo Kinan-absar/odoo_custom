@@ -257,9 +257,13 @@ class EmployeePortalMaterialRequests(http.Controller):
         ):
             return request.redirect('/my')
 
-        current_filter = kw.get("filter", "pending")
-        if current_filter not in {"pending", "approved", "rejected", "all"}:
-            current_filter = "pending"
+        filter_cards = request.env['employee.portal.request.filter.card'].sudo().search([
+            ('request_area', '=', 'material_request'), ('active', '=', True)
+        ], order='sequence,id')
+        allowed_filters = filter_cards.mapped('filter_key') or ['pending']
+        current_filter = kw.get("filter") or allowed_filters[0]
+        if current_filter not in allowed_filters:
+            current_filter = allowed_filters[0]
         search = (kw.get("search") or "").strip()
 
         # ---------------------------------------------------------
@@ -389,6 +393,7 @@ class EmployeePortalMaterialRequests(http.Controller):
             "all_reqs": all_reqs,
             "shown_reqs": shown_reqs,
             "current_filter": current_filter,
+            "filter_cards": filter_cards,
             "search": search,  # <-- ADD THIS
             "status_badge": _mr_status_badge,  # <= pass badge renderer
         })
