@@ -52,7 +52,7 @@ class PrintPair(models.TransientModel):
 
 class PrintUser(models.Model):
     _inherit = 'res.users'
-    absar_print_enabled = fields.Boolean(string='Show print options', default=False)
+    absar_print_enabled = fields.Boolean(string='Show Print button', default=False)
     absar_print_station_id = fields.Many2one('absar.print.station', string='Default office station')
     @property
     def SELF_READABLE_FIELDS(self):
@@ -113,12 +113,56 @@ class PrintJob(models.Model):
 
 class PrintWizard(models.TransientModel):
     _name = 'absar.print.wizard'
-    _description = 'Choose How to Print'
+    _description = 'Print'
     name = fields.Char(readonly=True)
-    report_id = fields.Many2one('ir.actions.report', required=True, readonly=True)
+    report_id = fields.Many2one('ir.actions.report', required=True)
     payload = fields.Text(required=True, readonly=True)
     station_id = fields.Many2one('absar.print.station', default=lambda s:s.env.user.absar_print_station_id)
     copies = fields.Integer(default=1)
+    @api.model
+    def available_reports(self, model_name, view_type):
+        if not self.env.user.has_group('absar_direct_print.group_print_user'):
+            return []
+        if model_name not in self.env or view_type not in ('form', 'list'):
+            return []
+        self.env[model_name].check_access_rights('read')
+        reports = self.env['ir.actions.report'].search([
+            ('model', '=', model_name), ('report_type', '=', 'qweb-pdf'),
+            ('binding_model_id.model', '=', model_name), ('binding_type', '=', 'report')])
+        return [{'id': r.id, 'name': r.name} for r in reports
+                if view_type in (r.binding_view_types or '').split(',')
+                and (not r.groups_id or r.groups_id & self.env.user.groups_id)]
+
+    @api.model
+    def open_for_records(self, model_name, ids, view_type):
+        reports = self.available_reports(model_name, view_type)
+        if not reports:
+            raise UserError(_('No PDF reports are available for this page.'))
+        if not isinstance(ids, list) or not ids or any(type(i) is not int or i <= 0 for i in ids):
+            raise UserError(_('Select saved records to print.'))
+        records = self.env[model_name].browse(ids).exists()
+        records.check_access('read')
+        if len(records) != len(set(ids)):
+            raise UserError(_('Some selected records no longer exist.'))
+        payload = {'context': {'active_model': model_name, 'active_ids': records.ids,
+                              'active_id': records.ids[0]}, 'view_type': view_type, 'data': {}}
+        wizard = self.create({'name': reports[0]['name'], 'report_id': reports[0]['id'],
+                              'payload': json.dumps(payload)})
+        return {'name': _('Print'), 'type': 'ir.actions.act_window', 'res_model': self._name,
+                'res_id': wizard.id, 'views': [(False, 'form')], 'view_mode': 'form', 'target': 'new'}
+
+    available_report_ids = fields.Many2many('ir.actions.report', compute='_compute_available_reports')
+
+    @api.depends('payload')
+    def _compute_available_reports(self):
+        for wizard in self:
+            payload = json.loads(wizard.payload or '{}')
+            model_name = (payload.get('context') or {}).get('active_model')
+            if payload.get('view_type'):
+                wizard.available_report_ids = [r['id'] for r in self.available_reports(model_name, payload['view_type'])]
+            else:
+                wizard.available_report_ids = wizard.report_id
+
     @api.model
     def open_report(self, action):
         if not self.env.user.has_group('absar_direct_print.group_print_user'):
@@ -136,13 +180,17 @@ class PrintWizard(models.TransientModel):
             raise UserError(_('Report options are too large.'))
         w = self.create({'name':report.name,'report_id':report.id,'payload':json.dumps(safe)})
         w._report_args()  # validate model access before opening preview or queueing
-        return {'type':'ir.actions.act_window','res_model':self._name,'res_id':w.id,'view_mode':'form','views':[(False, 'form')],'target':'new'}
+        return {'name':_('Print'),'type':'ir.actions.act_window','res_model':self._name,'res_id':w.id,'view_mode':'form','views':[(False, 'form')],'target':'new'}
     def _report_args(self):
         self.ensure_one()
         self.check_access('read')
         if self.create_uid != self.env.user:
             raise AccessError(_('This print request belongs to another user.'))
         report = self.report_id
+        if report.report_type != 'qweb-pdf':
+            raise UserError(_('Only PDF reports are supported.'))
+        if report not in self.available_report_ids:
+            raise AccessError(_('This report is unavailable for the selected records.'))
         if report.groups_id and not (report.groups_id & self.env.user.groups_id):
             raise AccessError(_('You cannot print this report.'))
         model = self.env[report.model]
@@ -164,12 +212,6 @@ class PrintWizard(models.TransientModel):
             ids=[]
         model.browse(ids).check_access('read')
         return report.with_context(ctx), ids, payload.get('data') or None
-    def action_browser(self):
-        self._report_args()
-        return {'type':'ir.actions.act_url','url':'/absar-print/browser/%s' % self.id,'target':'new'}
-    def action_download(self):
-        self._report_args()
-        return {'type':'ir.actions.act_url','url':'/absar-print/download/%s' % self.id,'target':'download'}
     def action_office(self):
         report, ids, data = self._report_args()
         if not self.station_id:
@@ -181,7 +223,7 @@ class PrintWizard(models.TransientModel):
         if len(pdf) > MAX_PDF:
             raise UserError(_('This PDF exceeds the 25 MB print limit.'))
         # Create as sudo only after report rendering under the requesting user's permissions.
-        job = self.env['absar.print.job'].sudo().create({'name':self.name,'station_id':self.station_id.id,
+        job = self.env['absar.print.job'].sudo().create({'name':report.name,'station_id':self.station_id.id,
             'user_id':self.env.uid, 'copies':self.copies,
             'printer_name':self.station_id.printer_name, 'pdf_data':base64.b64encode(pdf)})
         return {'type':'ir.actions.client','tag':'display_notification','params':{

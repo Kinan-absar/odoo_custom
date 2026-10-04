@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+ <t t-name="absar_direct_print.FormPrint" t-inherit="web.FormView" t-inherit-mode="extension">
+  <xpath expr="//t[@t-set-slot='control-panel-create-button']" position="inside">
+   <button t-if="absarPrint.available" type="button" class="btn btn-secondary ms-1" t-on-click.stop="absarOpenPrint" t-att-disabled="absarPrint.busy or !model.root.resId" title="Print to the office printer">
+    <i class="fa fa-print me-1" aria-hidden="true"/>Print
+   </button>
+  </xpath>
+ </t>
+ <t t-name="absar_direct_print.ListPrint" t-inherit="web.ListView" t-inherit-mode="extension">
+  <xpath expr="//t[@t-set-slot='control-panel-create-button']" position="inside">
+   <button t-if="absarPrint.available" type="button" class="btn btn-secondary ms-1" t-on-click.stop="absarOpenPrint" t-att-disabled="absarPrint.busy or !hasSelectedRecords" title="Select records to print to the office printer">
+    <i class="fa fa-print me-1" aria-hidden="true"/>Print
+   </button>
+  </xpath>
+ </t>
+</templates>

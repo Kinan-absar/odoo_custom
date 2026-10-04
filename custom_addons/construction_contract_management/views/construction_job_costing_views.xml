@@ -59,7 +59,7 @@
                             <field name="budget_consumed_percent" readonly="1"/>
                         </group>
                         <group class="ccm_field_section">
-                            <label string="How it works"/>
+                            <label string="How it works" class="o_form_label"/>
                             <div class="text-muted">
                                 Actual cost/revenue comes from the selected analytic account. Confirmed Purchase Orders create commitments. Inventory is not used.
                             </div>
