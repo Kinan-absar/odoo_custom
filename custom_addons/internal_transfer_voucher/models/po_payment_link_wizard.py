@@ -173,10 +173,10 @@ class PurchaseOrderLinkPaymentVoucherWizard(models.TransientModel):
             order.invalidate_recordset(['standard_payment_allocation_ids', 'amount_paid', 'amount_paid_residual'])
 
         message = _(
-            '%(source_label)s %(source)s was linked to Purchase Order %(po)s with an allocation of %(amount).2f %(currency)s. '
+            '%(source_label)s %(payment_name)s was linked to Purchase Order %(po)s with an allocation of %(amount).2f %(currency)s. '
             'The posted accounting entry was not changed.',
             source_label=source_label,
-            source=source_name,
+            payment_name=source_name,
             po=order.display_name,
             amount=self.amount,
             currency=currency.name,
