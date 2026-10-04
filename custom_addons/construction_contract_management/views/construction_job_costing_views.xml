@@ -45,6 +45,8 @@
                             <field name="open_purchase_commitment" readonly="1"/>
                         </group>
                         <group string="Actual &amp; Forecast" class="ccm_field_section">
+                            <field name="vendor_bill_cost_amount" readonly="1"/>
+                            <field name="other_accounting_cost_amount" readonly="1"/>
                             <field name="actual_cost_amount" readonly="1"/>
                             <field name="actual_revenue_amount" readonly="1"/>
                             <field name="cost_exposure_amount" readonly="1"/>
@@ -61,7 +63,7 @@
                         <group class="ccm_field_section">
                             <div class="o_form_label">How it works</div>
                             <div class="text-muted">
-                                Actual cost/revenue comes from all posted P&amp;L journal items allocated to the selected analytic account, including bills, miscellaneous entries, expenses, payroll and petty cash. Confirmed Purchase Orders create commitments. Inventory is not used.
+                                Actual Cost is the accounting total for the project. Vendor Bill Cost includes posted supplier bills/credit notes with or without a PO. Other Accounting Cost includes miscellaneous entries, expenses, payroll, petty cash and other posted costs. PO-linked bills can inherit the project allocation from their PO line when the invoice line has no analytic distribution. Bills without a PO must be tagged with the project analytic account or Construction Contract. Confirmed Purchase Orders create commitments. Inventory is not used.
                             </div>
                         </group>
                     </group>

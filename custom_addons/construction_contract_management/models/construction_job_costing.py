@@ -52,6 +52,18 @@ class ConstructionContractJobCosting(models.Model):
         currency_field='currency_id',
         compute='_compute_job_costing',
     )
+    vendor_bill_cost_amount = fields.Monetary(
+        string='Vendor Bill Cost',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+        help='Posted vendor bills and vendor credit notes allocated to this project, whether or not they originate from a Purchase Order.',
+    )
+    other_accounting_cost_amount = fields.Monetary(
+        string='Other Accounting Cost',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+        help='Posted project costs coming from miscellaneous journal entries, expenses, payroll, petty cash and other non-vendor-bill accounting entries.',
+    )
     actual_cost_amount = fields.Monetary(
         string='Actual Cost',
         currency_field='currency_id',
@@ -165,8 +177,11 @@ class ConstructionContractJobCosting(models.Model):
             ('display_type', '=', False),
             ('account_id.account_type', 'in', pnl_types),
             '|',
+            '|',
             ('analytic_distribution', '!=', False),
+            '|',
             ('move_id.construction_contract_id', '=', self.id),
+            ('purchase_line_id', '!=', False),
         ])
         analytic_id = self.analytic_account_id.id
 
@@ -194,6 +209,16 @@ class ConstructionContractJobCosting(models.Model):
             return percentage / 100.0
         if line.move_id.construction_contract_id == self and not line.analytic_distribution:
             return 1.0
+        # Vendor bill lines generated from a PO do not always keep an
+        # analytic_distribution on the invoice line itself. In that case,
+        # inherit the project allocation from the originating PO line.
+        if getattr(line, 'purchase_line_id', False):
+            percentage = _distribution_has_account(
+                line.purchase_line_id.analytic_distribution,
+                self.analytic_account_id.id,
+            )
+            if percentage:
+                return percentage / 100.0
         return 0.0
 
     def _matching_purchase_lines(self):
@@ -214,6 +239,8 @@ class ConstructionContractJobCosting(models.Model):
             rec.purchase_commitment_amount = 0.0
             rec.purchase_billed_amount = 0.0
             rec.open_purchase_commitment = 0.0
+            rec.vendor_bill_cost_amount = 0.0
+            rec.other_accounting_cost_amount = 0.0
             rec.actual_cost_amount = 0.0
             rec.actual_revenue_amount = 0.0
             rec.cost_exposure_amount = 0.0
@@ -230,6 +257,8 @@ class ConstructionContractJobCosting(models.Model):
             # includes vendor bills AND miscellaneous entries, expenses, payroll,
             # petty cash and other posted P&L entries carrying the project's
             # analytic allocation. Balance is expressed in company currency.
+            vendor_bill_cost = 0.0
+            other_accounting_cost = 0.0
             actual_cost = 0.0
             actual_revenue = 0.0
             for line in rec._matching_account_move_lines():
@@ -246,10 +275,16 @@ class ConstructionContractJobCosting(models.Model):
                 if account_type in ('expense', 'expense_depreciation', 'expense_direct_cost'):
                     # Expense debits increase cost; credits/refunds reduce it.
                     actual_cost += amount
+                    if line.move_id.move_type in ('in_invoice', 'in_refund'):
+                        vendor_bill_cost += amount
+                    else:
+                        other_accounting_cost += amount
                 elif account_type in ('income', 'income_other'):
                     # Income is normally a credit (negative balance).
                     actual_revenue += -amount
 
+            rec.vendor_bill_cost_amount = max(vendor_bill_cost, 0.0)
+            rec.other_accounting_cost_amount = max(other_accounting_cost, 0.0)
             rec.actual_cost_amount = max(actual_cost, 0.0)
             rec.actual_revenue_amount = max(actual_revenue, 0.0)
 
