@@ -15,7 +15,7 @@
                     <div t-att-class="'er_card er_card_' + card.style"
                          t-on-click="() => this.filter(card.domain)">
                         <div class="er_value"><t t-out="card.count"/></div>
-                        <div class="er_label"><t t-out="card.label"/></div>
+                        <div class="er_label"><t t-if="card.icon"><span class="me-1"><t t-out="card.icon"/></span></t><t t-out="card.label"/></div>
                     </div>
                 </t>
             </div>
