@@ -143,6 +143,11 @@ class EmployeePortalDemoSetup(models.TransientModel):
             self._group("employee_portal_suite.group_mr_projects_director"),
             self._group("purchase.group_purchase_user"),
             self._group("account.group_account_readonly"),
+            # The demo manager must be able to open the Employee and Work Location
+            # screens used by the backend setup tour. Employee Portal Super Admin is
+            # intentionally independent from Odoo HR security, so grant HR Officer
+            # access explicitly in this disposable demo account.
+            self._group("hr.group_hr_user"),
         ]
         manager_user = self._get_or_create_user(
             "manager@eps-demo.local", "Demo Manager", manager_groups, password
@@ -268,6 +273,24 @@ class EmployeePortalDemoSetup(models.TransientModel):
             "store_manager_employee_id": manager.id,
             "project_manager_employee_id": manager.id,
         })
+
+    def _sync_demo_manager_access(self):
+        """Keep an already-created demo manager able to follow the backend tour.
+
+        This is deliberately scoped to the fictional demo login, so upgrading a demo
+        database fixes the tour without changing permissions for real users.
+        """
+        user = self.env["res.users"].sudo().search([("login", "=", "manager@eps-demo.local")], limit=1)
+        if not user:
+            return True
+        required = [
+            self._group("employee_portal_suite.group_employee_portal_superadmin"),
+            self._group("hr.group_hr_user"),
+        ]
+        required_ids = [group.id for group in required if group]
+        if required_ids:
+            user.sudo().write({"groups_id": [(4, group_id) for group_id in required_ids]})
+        return True
 
     def action_prepare_demo(self):
         self.ensure_one()

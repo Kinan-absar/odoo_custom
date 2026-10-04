@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Demo-only upgrade repair: if the fictional demo manager already exists,
+         make sure it can open the native HR screens used by the manager tour. -->
+    <function model="employee.portal.demo.setup" name="_sync_demo_manager_access"/>
+</odoo>

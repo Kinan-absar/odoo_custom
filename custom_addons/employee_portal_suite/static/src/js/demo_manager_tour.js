@@ -10,72 +10,81 @@ const HIGHLIGHT_CLASS = "eps_demo_tour_highlight";
 const STEPS = [
     {
         title: "Welcome to Employee Portal Suite",
-        text: "This guided setup tour shows the real manager/admin setup flow: create the contact, grant free portal access, link that portal user to the employee, assign the employee's manager/department/work location, connect the work location to a project, configure project approvers, then test the employee-facing portal.",
+        text: "This tour follows the current setup model: create/link the portal employee, assign the employee's manager and work location, connect the location to a project, then configure built-in permissions, reusable Approval Roles, project-specific role assignments, and separate ER/MR approval workflows before testing the employee portal.",
     },
     {
         title: "1. Start from the Employee Contact",
-        text: "Every portal employee starts from a Contact. We will use Demo Employee One. The next step opens the contact and shows exactly where portal access is granted.",
+        text: "Every portal employee starts from a Contact. We will use Demo Employee One. Open the contact first, then grant portal access from the Action menu.",
         target: "demo_contact",
     },
     {
         title: "2. Grant Portal Access",
-        text: "On the Contact, use the Action menu and choose Grant Portal Access. This creates the portal login and sends the invitation email. Portal users are external users, so they do not consume an internal Odoo user seat.",
+        text: "On the Contact, open the Action menu and choose Grant Portal Access. This creates the external portal login. Portal users do not consume an internal Odoo user seat.",
         target: "demo_contact",
         focus: "grant_portal",
     },
     {
         title: "3. Open the Matching Employee",
-        text: "After portal access exists, open the employee record for the same person. The Employee record is where you connect the portal login to HR information and the employee's organization/site setup.",
+        text: "Now open the matching Employee record. The Employee record connects the portal login to HR information, the direct manager, department and assigned work locations/projects.",
         target: "demo_employee",
     },
     {
         title: "4. Link the Related User",
-        text: "On the Employee, open the Settings tab and set Related User to the portal user created from the Contact. This is the key link that tells Employee Portal Suite which employee belongs to the logged-in portal account.",
+        text: "On the Employee, open Settings and set Related User to the portal user created from the Contact. This link tells Employee Portal Suite which employee belongs to the logged-in portal account.",
         target: "demo_employee",
         focus: "related_user",
     },
     {
-        title: "5. Department, Manager & Work Locations",
-        text: "Open Work Information. Set the Department and Manager, then assign at least one Work Location. These relationships drive approvals, visibility, attendance and project/site behavior in the portal.",
+        title: "5. Department, Direct Manager & Work Locations",
+        text: "Open Work Information. Set the Department and Direct Manager, then assign the employee's Work Location(s). The direct manager can be used as a dynamic ER workflow step, while work locations determine which projects the employee can select in ER/MR requests.",
         target: "demo_employee",
         focus: "work_information",
     },
     {
         title: "6. Open the Employee Work Location",
-        text: "Each portal employee should have a Work Location. Demo Project Site is assigned to this employee. Open it to configure the project/site relationship and geofence settings.",
+        text: "Demo Project Site is assigned to this employee. Open the Work Location to see how locations are connected to projects and optional attendance geofencing.",
         target: "demo_work_location",
         focus: "work_location_header",
     },
     {
         title: "7. Link Project & Geofence",
-        text: "In the Work Location, use Projects and Geolocation to link the relevant Project. You can also enable geofencing and define latitude, longitude and radius for attendance at that project/site.",
+        text: "Under Projects and Geolocation, link the project(s) that belong to this Work Location. Employees can select only projects reached through their assigned work locations. Geofencing can optionally enforce attendance latitude, longitude and radius.",
         target: "demo_work_location",
         focus: "project_geofence",
     },
     {
-        title: "8. Configure Project Approvers",
-        text: "Open the linked Project and configure the Store Manager and Project Manager under Approvers. These project-specific approvers are used by the Material Request workflow.",
-        target: "demo_project",
-        focus: "project_approvers",
-    },
-    {
-        title: "9. Roles, Permissions & Workflow Configuration",
-        text: "Open Roles & Permissions from Employee Portal Configuration. The Demo Manager is a Super Administrator, so you can assign Manager, HR, Finance, Attendance, Material Request and other roles, then continue into Approval Roles and configurable Workflows.",
+        title: "8. Built-in Roles & Permissions",
+        text: "Open Configuration → Roles & Permissions. These are the built-in access roles such as Manager, HR, Finance, CEO, Attendance Manager and Material Request roles. They control what a user is allowed to see or administer; roles are additive.",
         target: "roles_permissions",
     },
     {
-        title: "10. Employee Request Approval Flow",
-        text: "Employee Requests move through the configured manager/HR/finance/CEO approval flow. Review the sample requests and use them to demonstrate how a portal request appears in the manager backend.",
+        title: "9. Create Your Own Approval Roles",
+        text: "Open Configuration → Approval Roles. This is where a company can create its own business approval positions—Commercial Manager, Cost Control, Site Engineer, Operations Director, or any other role—without adding new hard-coded groups.",
+        target: "approval_roles",
+    },
+    {
+        title: "10. Assign Approval Roles per Project",
+        text: "Open Project Role Assignments. Assign the actual users who perform each Approval Role on each project. The same role can resolve to different people on different projects.",
+        target: "project_role_assignments",
+    },
+    {
+        title: "11. Design ER & MR Workflows",
+        text: "Open Workflows. Create a separate workflow for Employee Requests or Material Requests, optionally per project and ER request type. Add as many ordered steps as needed. A step can use the employee's Direct Manager, a custom Approval Role, a specific user, Project Manager, Store Manager, or other supported resolver. If no matching custom workflow exists, the existing default/legacy flow remains the fallback.",
+        target: "workflows",
+    },
+    {
+        title: "12. Employee Request Approval Flow",
+        text: "Open Employee Requests and review the demo records. In a custom ER workflow, the first step can always resolve to the employee's Direct Manager, followed by HR, Finance, CEO, custom Approval Roles, or any other sequence you configure.",
         target: "employee_requests",
     },
     {
-        title: "11. Material Request Approval Flow",
-        text: "Material Requests use the project/site setup and can pass through Purchase Rep, Store Manager, Project Manager, Director and CEO stages. Review the sample records and the approval dashboard.",
+        title: "13. Material Request Approval Flow",
+        text: "Open Material Requests and review the demo records. MR workflows are project-aware: the request project determines which project workflow and project-role assignments are used. Custom workflows can replace the old fixed Purchase/Store/Project Manager/Director/CEO chain.",
         target: "material_requests",
     },
     {
-        title: "12. Experience the Employee Portal",
-        text: "The setup is complete. Open the Employee Portal in a new tab and log in as employee1@eps-demo.local. Test requests, material requests, attendance, reports, announcements, messaging, calls and notifications, then return as Manager to approve what the employee submitted.",
+        title: "14. Experience the Employee Portal",
+        text: "The setup is complete. Open the Employee Portal in a new tab and log in as employee1@eps-demo.local. Test ER/MR submission, assigned projects, attendance, reports, announcements, messaging and approvals, then return as Demo Manager to configure or approve records.",
         portal: true,
     },
 ];
@@ -299,12 +308,6 @@ class EPSDemoManagerTourOverlay extends Component {
             return;
         }
 
-        if (focus === "project_approvers") {
-            this._highlight([
-                this._fieldEl("store_manager_employee_id"),
-                this._fieldEl("project_manager_employee_id"),
-            ]);
-        }
     }
 
     async _openCurrentTarget() {
@@ -321,7 +324,7 @@ class EPSDemoManagerTourOverlay extends Component {
                     break;
                 }
                 case "demo_employee": {
-                    const id = await this._findOne("hr.employee", [["user_id.login", "=", "employee1@eps-demo.local"]]);
+                    const id = await this._findOne("hr.employee", ["|", ["user_id.login", "=", "employee1@eps-demo.local"], ["name", "=", "Demo Employee One"]]);
                     await this._openForm("hr.employee", id, "Demo Employee One");
                     break;
                 }
@@ -330,13 +333,17 @@ class EPSDemoManagerTourOverlay extends Component {
                     await this._openForm("hr.work.location", id, "Demo Project Site");
                     break;
                 }
-                case "demo_project": {
-                    const id = await this._findOne("project.project", [["name", "=", "Demo Office Fit-Out"]]);
-                    await this._openForm("project.project", id, "Demo Office Fit-Out");
-                    break;
-                }
                 case "roles_permissions":
                     await this.action.doAction("employee_portal_suite.action_employee_portal_suite_roles");
+                    break;
+                case "approval_roles":
+                    await this.action.doAction("employee_portal_suite.action_employee_portal_approval_roles");
+                    break;
+                case "project_role_assignments":
+                    await this.action.doAction("employee_portal_suite.action_employee_portal_project_role_assignments");
+                    break;
+                case "workflows":
+                    await this.action.doAction("employee_portal_suite.action_employee_portal_workflows");
                     break;
                 case "employee_requests":
                     await this.action.doAction("employee_portal_suite.action_employee_request");
