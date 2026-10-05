@@ -55,28 +55,26 @@
                             <field name="selected_count"/>
                         </group>
                     </group>
-                    <field name="line_ids" nolabel="1">
+                    <field name="line_ids" nolabel="1" class="o_payment_review_recommendations">
                         <list editable="bottom" create="0" delete="0"
                               decoration-success="action == 'keep'"
                               decoration-warning="action in ('update','convert','review')"
                               decoration-danger="action == 'remove'">
-                            <button name="action_toggle_apply" type="object" string="Select" class="btn-link" invisible="not can_apply or applied or apply"/>
-                            <button name="action_toggle_apply" type="object" string="Unselect" class="btn-link" invisible="not can_apply or applied or not apply"/>
-                            <field name="apply" readonly="not can_apply or applied"/>
+                            <field name="apply" string="Apply" readonly="applied or action in ('keep','review')" width="55px"/>
                             <field name="can_apply" column_invisible="True"/>
-                            <field name="source_type" readonly="1" optional="show"/>
-                            <field name="agent_action" widget="badge" readonly="1" optional="show"/>
-                            <field name="action" widget="badge"/>
-                            <field name="partner_id" readonly="1"/>
-                            <field name="plan_line_id" readonly="1" optional="show"/>
+                            <field name="agent_action" string="Agent" widget="badge" readonly="1" width="105px"/>
+                            <field name="action" string="Decision" width="145px"/>
+                            <field name="partner_id" string="Supplier" readonly="1" width="190px"/>
+                            <field name="source_type" string="Source" readonly="1" optional="show" width="130px"/>
+                            <field name="plan_line_id" string="Planned Payment" readonly="1" optional="show" width="180px"/>
+                            <field name="purchase_order_id" string="PO" readonly="1" optional="show" width="115px"/>
+                            <field name="current_amount" string="Current" readonly="1" width="110px"/>
+                            <field name="proposed_amount" string="Proposed" width="110px"/>
+                            <field name="oldest_due_date" string="Oldest Due" readonly="1" optional="show" width="105px"/>
+                            <field name="aging_summary" string="Aging" readonly="1" optional="hide" width="230px"/>
+                            <field name="reason" string="Reason" readonly="1" width="420px"/>
                             <field name="target_plan_line_id" readonly="1" optional="hide"/>
-                            <field name="purchase_order_id" readonly="1" optional="show"/>
-                            <field name="current_amount" readonly="1"/>
-                            <field name="proposed_amount"/>
-                            <field name="oldest_due_date" readonly="1" optional="show"/>
-                            <field name="aging_summary" readonly="1" optional="show"/>
-                            <field name="reason" readonly="1"/>
-                            <field name="applied" widget="boolean_toggle" readonly="1"/>
+                            <field name="applied" string="Applied" widget="boolean_toggle" readonly="1" width="70px"/>
                         </list>
                     </field>
                 </sheet>

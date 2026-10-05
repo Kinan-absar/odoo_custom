@@ -1,4 +1,4 @@
-/* Keep the review report full width and place chatter below it on wide screens. */
+/* Full-width review: keep chatter below the report and give the recommendation table room. */
 .o_form_view.o_payment_review_form .o_form_renderer {
     flex-wrap: wrap !important;
 }
@@ -11,4 +11,22 @@
 .o_form_view.o_payment_review_form .o-mail-Form-chatter {
     border-left: 0 !important;
     border-top: 1px solid var(--border-color, #dee2e6);
+}
+
+/* The agent report is intentionally wide. Avoid crushing the first columns and
+   let the user scroll horizontally when needed. */
+.o_form_view.o_payment_review_form .o_payment_review_recommendations .o_list_renderer {
+    overflow-x: auto !important;
+}
+.o_form_view.o_payment_review_form .o_payment_review_recommendations table.o_list_table {
+    min-width: 1850px !important;
+    table-layout: auto !important;
+}
+.o_form_view.o_payment_review_form .o_payment_review_recommendations th,
+.o_form_view.o_payment_review_form .o_payment_review_recommendations td {
+    vertical-align: middle !important;
+}
+.o_form_view.o_payment_review_form .o_payment_review_recommendations th:first-child,
+.o_form_view.o_payment_review_form .o_payment_review_recommendations td:first-child {
+    padding-left: 12px !important;
 }

@@ -206,11 +206,13 @@ class CashPlanReviewLine(models.Model):
         if self.action == 'remove':
             if not line or not self._safe_line(line):
                 raise UserError(_('This planned payment is no longer safe to remove automatically. Run a new review.'))
+            self._prepare_line_for_agent_change(line)
             line.action_cancel()
 
         elif self.action == 'update':
             if not line or not self._safe_line(line) or self.proposed_amount <= 0:
                 raise UserError(_('This planned payment is no longer safe to update automatically. Run a new review.'))
+            self._prepare_line_for_agent_change(line)
             vals = {'forecast_amount': self.proposed_amount}
             if self.source_type == 'existing_payable':
                 vals['bill_ids'] = [(6, 0, self.bill_ids.ids)]
@@ -219,10 +221,12 @@ class CashPlanReviewLine(models.Model):
         elif self.action == 'convert':
             if not line or not self._safe_line(line):
                 raise UserError(_('This PO planned payment is no longer safe to convert automatically. Run a new review.'))
+            self._prepare_line_for_agent_change(line)
             target = self.target_plan_line_id
             if target:
                 if not self._safe_line(target):
                     raise UserError(_('The target supplier-balance planned payment is locked. Run a new review.'))
+                self._prepare_line_for_agent_change(target)
                 target.with_context(allow_locked_write=True).write({
                     'forecast_amount': self.proposed_amount,
                     'bill_ids': [(6, 0, self.bill_ids.ids)],
@@ -300,12 +304,33 @@ class CashPlanReviewLine(models.Model):
         self.applied = True
 
     def _safe_line(self, line):
+        """Lines the review may maintain without touching an executed/approved payment.
+
+        Pending / held / rejected CEO items are still editable planning items. If the agent
+        changes one of them we reset the approval to Not Sent so the revised amount/content
+        must be reviewed again. Approved/adjusted and executed items are deliberately locked.
+        """
+        decision = getattr(line, 'ceo_decision', 'not_sent')
         return bool(
             line
             and line.state == 'planned'
-            and getattr(line, 'ceo_decision', 'not_sent') == 'not_sent'
+            and decision in ('not_sent', 'pending', 'held', 'rejected', False)
             and not line.is_unplanned
         )
+
+    def _prepare_line_for_agent_change(self, line):
+        """Invalidate any pending CEO review before changing the planning item."""
+        if not line or not self._safe_line(line):
+            return
+        decision = getattr(line, 'ceo_decision', 'not_sent')
+        if decision in ('pending', 'held', 'rejected'):
+            line.with_context(allow_locked_write=True).write({
+                'ceo_decision': 'not_sent',
+                'approved_amount': 0.0,
+                'ceo_comment': False,
+                'ceo_approved_by': False,
+                'ceo_approved_date': False,
+            })
 
     def _suggest_category(self, partner):
         existing = self.env['cash.plan.line'].search([
