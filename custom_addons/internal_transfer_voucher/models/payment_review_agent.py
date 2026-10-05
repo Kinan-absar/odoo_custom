@@ -35,6 +35,18 @@ class CashPlanReview(models.Model):
                 vals['name'] = _('Payment Review %s') % fields.Date.context_today(self)
         return super().create(vals_list)
 
+    @api.model
+    def action_run_payment_review_agent(self):
+        return self.env['cash.plan.line'].action_run_payment_review_agent()
+
+    def action_refresh_review(self):
+        self.ensure_one()
+        if self.state == 'applied':
+            raise UserError(_('An applied review cannot be refreshed. Run a new review instead.'))
+        self.line_ids.unlink()
+        self.env['cash.plan.line']._populate_payment_review(self)
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
+
     def action_apply_selected(self):
         self.ensure_one()
         selected = self.line_ids.filtered('apply')
@@ -89,22 +101,30 @@ class CashPlanLinePaymentAgent(models.Model):
     @api.model
     def action_run_payment_review_agent(self):
         company = self.env.company
-        Review = self.env['cash.plan.review']
+        review = self.env['cash.plan.review'].create({'company_id': company.id})
+        self._populate_payment_review(review)
+        return {
+            'type': 'ir.actions.act_window', 'name': _('Payment Review Agent'),
+            'res_model': 'cash.plan.review', 'res_id': review.id,
+            'view_mode': 'form', 'target': 'current',
+        }
+
+    @api.model
+    def _populate_payment_review(self, review):
+        company = review.company_id
         ReviewLine = self.env['cash.plan.review.line']
-        review = Review.create({'company_id': company.id})
         recommendations = []
 
+        # Review every open outgoing planning item. CEO-pending items remain open and
+        # must still be reviewed, even though they are locked against automatic edits.
         planned = self.search([
             ('company_id', '=', company.id), ('flow_type', '=', 'out'),
-            ('state', '=', 'planned'),
+            ('state', 'not in', ('executed', 'cancel')),
         ])
         active_po_lines = planned.filtered(lambda l: l.purchase_order_ids)
         po_ids_already_planned = set(active_po_lines.mapped('purchase_order_ids').ids)
 
         for line in planned:
-            # Review supplier/subcontractor obligations only. Older records may not have
-            # transaction_type populated consistently, so PO-linked lines and partner-based
-            # supplier lines are still considered instead of filtering them out in SQL.
             if line.transaction_type and line.transaction_type != 'supplier' and not line.purchase_order_ids:
                 continue
             pos = line.purchase_order_ids
@@ -143,7 +163,6 @@ class CashPlanLinePaymentAgent(models.Model):
                 recommendations.append(self._agent_vals(review, line, 'review',
                     _('The linked PO billing status is not a clean Nothing-to-Bill case. Review before changing the plan.'), severity='warning'))
 
-        # Find confirmed, uninvoiced supplier POs that are not represented by an active planned payment.
         po_domain = [('company_id', '=', company.id), ('state', 'in', ('purchase', 'done')), ('invoice_status', '=', 'no')]
         for po in self.env['purchase.order'].search(po_domain):
             if po.id in po_ids_already_planned:
@@ -161,11 +180,7 @@ class CashPlanLinePaymentAgent(models.Model):
 
         if recommendations:
             ReviewLine.create(recommendations)
-        return {
-            'type': 'ir.actions.act_window', 'name': _('Payment Review Agent'),
-            'res_model': 'cash.plan.review', 'res_id': review.id,
-            'view_mode': 'form', 'target': 'current',
-        }
+        return len(recommendations)
 
     def _safe_to_change(self, line):
         return bool(line.state == 'planned' and getattr(line, 'ceo_decision', 'not_sent') == 'not_sent' and not line.is_locked)

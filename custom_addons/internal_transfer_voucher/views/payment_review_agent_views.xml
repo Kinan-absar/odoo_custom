@@ -2,13 +2,13 @@
 <odoo>
     <record id="view_cash_plan_review_list" model="ir.ui.view">
         <field name="name">cash.plan.review.list</field><field name="model">cash.plan.review</field>
-        <field name="arch" type="xml"><list><field name="review_date"/><field name="name"/><field name="keep_count"/><field name="add_count"/><field name="update_count"/><field name="remove_count"/><field name="review_count"/><field name="state" widget="badge"/></list></field>
+        <field name="arch" type="xml"><list create="0"><header><button name="action_run_payment_review_agent" type="object" string="Run Payment Review" class="btn-primary"/></header><field name="review_date"/><field name="name"/><field name="keep_count"/><field name="add_count"/><field name="update_count"/><field name="remove_count"/><field name="review_count"/><field name="state" widget="badge"/></list></field>
     </record>
     <record id="view_cash_plan_review_form" model="ir.ui.view">
         <field name="name">cash.plan.review.form</field><field name="model">cash.plan.review</field>
         <field name="arch" type="xml">
             <form string="Payment Review Agent">
-                <header><button name="action_apply_selected" type="object" string="Apply Selected Safe Changes" class="btn-primary" invisible="state == 'applied'"/><field name="state" widget="statusbar"/></header>
+                <header><button name="action_refresh_review" type="object" string="Run / Refresh Review" class="btn-secondary" invisible="state == 'applied'"/><button name="action_apply_selected" type="object" string="Apply Selected Safe Changes" class="btn-primary" invisible="state == 'applied'"/><field name="state" widget="statusbar"/></header>
                 <sheet>
                     <div class="oe_title"><h1><field name="name"/></h1></div>
                     <div class="alert alert-info" role="alert">This first version is a controlled review agent. It reads live Odoo data and recommends actions. Only explicitly selected safe changes are applied; payments and approvals are never executed by the agent.</div>
