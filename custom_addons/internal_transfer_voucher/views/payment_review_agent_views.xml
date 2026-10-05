@@ -56,25 +56,32 @@
                         </group>
                     </group>
                     <field name="line_ids" nolabel="1" class="o_payment_review_recommendations">
-                        <list editable="bottom" create="0" delete="0"
+                        <list editable="bottom" create="0" delete="0" multi_edit="1"
+                              decoration-info="apply and not applied"
                               decoration-success="action == 'keep'"
                               decoration-warning="action in ('update','convert','review')"
                               decoration-danger="action == 'remove'">
-                            <field name="apply" string="Apply" readonly="applied or action in ('keep','review')" width="55px"/>
+                            <field name="apply" column_invisible="True"/>
                             <field name="can_apply" column_invisible="True"/>
-                            <field name="agent_action" string="Agent" widget="badge" readonly="1" width="105px"/>
-                            <field name="action" string="Decision" width="145px"/>
-                            <field name="partner_id" string="Supplier" readonly="1" width="190px"/>
-                            <field name="source_type" string="Source" readonly="1" optional="show" width="130px"/>
-                            <field name="plan_line_id" string="Planned Payment" readonly="1" optional="show" width="180px"/>
-                            <field name="purchase_order_id" string="PO" readonly="1" optional="show" width="115px"/>
-                            <field name="current_amount" string="Current" readonly="1" width="110px"/>
-                            <field name="proposed_amount" string="Proposed" width="110px"/>
-                            <field name="oldest_due_date" string="Oldest Due" readonly="1" optional="show" width="105px"/>
-                            <field name="aging_summary" string="Aging" readonly="1" optional="hide" width="230px"/>
-                            <field name="reason" string="Reason" readonly="1" width="420px"/>
+                            <button name="action_toggle_apply" type="object" string="Select" icon="fa-square-o"
+                                    class="btn-link o_payment_review_select"
+                                    invisible="not can_apply or applied or apply"/>
+                            <button name="action_toggle_apply" type="object" string="Selected" icon="fa-check-square-o"
+                                    class="btn-link text-success o_payment_review_unselect"
+                                    invisible="not can_apply or applied or not apply"/>
+                            <field name="agent_action" string="Agent" widget="badge" readonly="1" width="90px"/>
+                            <field name="action" string="Your Decision" width="125px"/>
+                            <field name="partner_id" string="Supplier" readonly="1" width="210px"/>
+                            <field name="source_type" string="Source" readonly="1" optional="show" width="125px"/>
+                            <field name="plan_line_id" string="Planned Payment" readonly="1" optional="show" width="190px"/>
+                            <field name="purchase_order_id" string="PO" readonly="1" optional="show" width="105px"/>
+                            <field name="current_amount" string="Current" readonly="1" width="105px"/>
+                            <field name="proposed_amount" string="Proposed" width="105px"/>
+                            <field name="oldest_due_date" string="Oldest Due" readonly="1" optional="show" width="100px"/>
+                            <field name="aging_summary" string="Aging Summary" readonly="1" optional="hide" width="260px"/>
+                            <field name="reason" string="Reason" readonly="1" optional="hide" width="360px"/>
                             <field name="target_plan_line_id" readonly="1" optional="hide"/>
-                            <field name="applied" string="Applied" widget="boolean_toggle" readonly="1" width="70px"/>
+                            <field name="applied" string="Applied" widget="boolean_toggle" readonly="1" optional="show" width="65px"/>
                         </list>
                     </field>
                 </sheet>

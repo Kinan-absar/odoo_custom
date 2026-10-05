@@ -1,4 +1,4 @@
-/* Full-width review: keep chatter below the report and give the recommendation table room. */
+/* Payment Review: wide report, chatter below, compact one-line rows. */
 .o_form_view.o_payment_review_form .o_form_renderer {
     flex-wrap: wrap !important;
 }
@@ -13,20 +13,35 @@
     border-top: 1px solid var(--border-color, #dee2e6);
 }
 
-/* The agent report is intentionally wide. Avoid crushing the first columns and
-   let the user scroll horizontally when needed. */
 .o_form_view.o_payment_review_form .o_payment_review_recommendations .o_list_renderer {
     overflow-x: auto !important;
 }
 .o_form_view.o_payment_review_form .o_payment_review_recommendations table.o_list_table {
-    min-width: 1850px !important;
-    table-layout: auto !important;
+    min-width: 1500px !important;
+    width: max-content !important;
+    table-layout: fixed !important;
 }
 .o_form_view.o_payment_review_form .o_payment_review_recommendations th,
 .o_form_view.o_payment_review_form .o_payment_review_recommendations td {
     vertical-align: middle !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    height: 42px !important;
+    max-height: 42px !important;
 }
-.o_form_view.o_payment_review_form .o_payment_review_recommendations th:first-child,
-.o_form_view.o_payment_review_form .o_payment_review_recommendations td:first-child {
-    padding-left: 12px !important;
+.o_form_view.o_payment_review_form .o_payment_review_recommendations .o_data_cell {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+}
+.o_form_view.o_payment_review_form .o_payment_review_recommendations .o_payment_review_select,
+.o_form_view.o_payment_review_form .o_payment_review_recommendations .o_payment_review_unselect {
+    min-width: 82px !important;
+    text-align: left !important;
+    font-weight: 600 !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+}
+.o_form_view.o_payment_review_form .o_payment_review_recommendations .o_list_record_selector {
+    width: 28px !important;
 }
