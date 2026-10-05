@@ -13,3 +13,5 @@ from . import cash_plan_link_voucher_wizard
 
 from . import cash_plan_add_to_run_wizard
 from . import account_move
+
+from . import payment_review_agent
