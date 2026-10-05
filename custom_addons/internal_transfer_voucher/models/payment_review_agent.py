@@ -96,12 +96,17 @@ class CashPlanLinePaymentAgent(models.Model):
 
         planned = self.search([
             ('company_id', '=', company.id), ('flow_type', '=', 'out'),
-            ('transaction_type', '=', 'supplier'), ('state', '=', 'planned'),
+            ('state', '=', 'planned'),
         ])
         active_po_lines = planned.filtered(lambda l: l.purchase_order_ids)
         po_ids_already_planned = set(active_po_lines.mapped('purchase_order_ids').ids)
 
         for line in planned:
+            # Review supplier/subcontractor obligations only. Older records may not have
+            # transaction_type populated consistently, so PO-linked lines and partner-based
+            # supplier lines are still considered instead of filtering them out in SQL.
+            if line.transaction_type and line.transaction_type != 'supplier' and not line.purchase_order_ids:
+                continue
             pos = line.purchase_order_ids
             if not pos:
                 recommendations.append(self._agent_vals(review, line, 'review',
