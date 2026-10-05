@@ -1,4 +1,4 @@
-/* Payment Review: wide report, chatter below, compact one-line rows. */
+/* Payment Review form: keep chatter below the form. */
 .o_form_view.o_payment_review_form .o_form_renderer {
     flex-wrap: wrap !important;
 }
@@ -13,35 +13,26 @@
     border-top: 1px solid var(--border-color, #dee2e6);
 }
 
-.o_form_view.o_payment_review_form .o_payment_review_recommendations .o_list_renderer {
-    overflow-x: auto !important;
+/* Dedicated recommendation list: behave like a normal Odoo list, but let explanation cells wrap. */
+.o_list_view .o_payment_review_line_list .o_payment_review_wrap,
+.o_list_renderer .o_payment_review_line_list .o_payment_review_wrap {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    line-height: 1.35 !important;
+    vertical-align: top !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
 }
-.o_form_view.o_payment_review_form .o_payment_review_recommendations table.o_list_table {
-    min-width: 1500px !important;
-    width: max-content !important;
-    table-layout: fixed !important;
+.o_list_view .o_payment_review_line_list .o_payment_review_reason {
+    min-width: 320px !important;
+    max-width: 520px !important;
 }
-.o_form_view.o_payment_review_form .o_payment_review_recommendations th,
-.o_form_view.o_payment_review_form .o_payment_review_recommendations td {
-    vertical-align: middle !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    height: 42px !important;
-    max-height: 42px !important;
+.o_list_view .o_payment_review_line_list .o_payment_review_aging {
+    min-width: 260px !important;
+    max-width: 420px !important;
 }
-.o_form_view.o_payment_review_form .o_payment_review_recommendations .o_data_cell {
-    padding-top: 6px !important;
-    padding-bottom: 6px !important;
-}
-.o_form_view.o_payment_review_form .o_payment_review_recommendations .o_payment_review_select,
-.o_form_view.o_payment_review_form .o_payment_review_recommendations .o_payment_review_unselect {
-    min-width: 82px !important;
-    text-align: left !important;
-    font-weight: 600 !important;
-    padding-left: 4px !important;
-    padding-right: 4px !important;
-}
-.o_form_view.o_payment_review_form .o_payment_review_recommendations .o_list_record_selector {
-    width: 28px !important;
+.o_list_view .o_payment_review_line_list td:not(.o_payment_review_wrap) {
+    vertical-align: top !important;
+    padding-top: 8px !important;
 }

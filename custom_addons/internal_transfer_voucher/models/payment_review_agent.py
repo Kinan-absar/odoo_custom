@@ -66,6 +66,18 @@ class CashPlanReview(models.Model):
         self.env['cash.plan.line']._populate_payment_review(self)
         return {'type': 'ir.actions.client', 'tag': 'reload'}
 
+
+    def action_open_recommendations(self):
+        self.ensure_one()
+        action = self.env.ref('internal_transfer_voucher.action_cash_plan_review_line').read()[0]
+        action['domain'] = [('review_id', '=', self.id)]
+        action['context'] = {
+            'default_review_id': self.id,
+            'search_default_not_applied': 1,
+        }
+        action['name'] = _('Recommendations - %s') % self.name
+        return action
+
     def action_select_all_safe(self):
         self.ensure_one()
         safe = self.line_ids.filtered(lambda l: l.can_apply and not l.applied)
@@ -193,6 +205,29 @@ class CashPlanReviewLine(models.Model):
         if not self.can_apply or self.applied:
             raise UserError(_('This recommendation is not currently safe to apply automatically. Change the decision/amount or review it manually.'))
         self.apply = not self.apply
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
+
+
+    def action_apply_selected_from_list(self):
+        if not self:
+            raise UserError(_('Select at least one recommendation first.'))
+        unsafe = self.filtered(lambda l: l.applied or not l._decision_is_safely_applicable())
+        if unsafe:
+            labels = []
+            for line in unsafe[:8]:
+                labels.append('%s - %s' % (line.partner_id.display_name or _('No Supplier'), dict(line._fields['action'].selection).get(line.action, line.action)))
+            more = len(unsafe) - len(labels)
+            msg = _('Some selected rows are not safe to apply yet:\n- %s') % '\n- '.join(labels)
+            if more > 0:
+                msg += _('\n...and %s more.') % more
+            msg += _('\n\nChange the Decision / Proposed Amount first, or remove those rows from the selection.')
+            raise UserError(msg)
+        reviews = self.mapped('review_id')
+        for line in self:
+            line._apply_recommendation()
+        for review in reviews:
+            remaining_safe = review.line_ids.filtered(lambda l: l.can_apply and not l.applied)
+            review.state = 'partial' if remaining_safe else 'applied'
         return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     def _apply_recommendation(self):

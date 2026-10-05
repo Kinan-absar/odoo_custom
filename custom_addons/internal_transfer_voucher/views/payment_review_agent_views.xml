@@ -29,15 +29,24 @@
             <form string="Payment Review Agent" class="o_payment_review_form">
                 <header>
                     <button name="action_refresh_review" type="object" string="Run / Refresh Review" class="btn-secondary" invisible="state != 'draft'"/>
-                    <button name="action_select_all_safe" type="object" string="Select All Safe" class="btn-secondary" invisible="state == 'applied' or safe_count == 0"/>
-                    <button name="action_clear_selection" type="object" string="Clear Selection" class="btn-secondary" invisible="selected_count == 0"/>
-                    <button name="action_apply_selected" type="object" string="Apply Selected" class="btn-primary" invisible="state == 'applied' or selected_count == 0"/>
+                    <button name="action_open_recommendations" type="object" string="Open Recommendations" class="btn-primary"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,partial,applied"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_recommendations" type="object" class="oe_stat_button" icon="fa-list">
+                            <field name="line_ids" widget="statinfo" string="All"/>
+                        </button>
+                        <button name="action_open_recommendations" type="object" class="oe_stat_button" icon="fa-check-circle">
+                            <field name="safe_count" widget="statinfo" string="Safe"/>
+                        </button>
+                        <button name="action_open_recommendations" type="object" class="oe_stat_button" icon="fa-exclamation-circle">
+                            <field name="review_count" widget="statinfo" string="Review"/>
+                        </button>
+                    </div>
                     <div class="oe_title"><h1><field name="name"/></h1></div>
                     <div class="alert alert-info" role="alert">
-                        Review live planned payments, Nothing-to-Bill POs and live non-retention supplier payables. You can change the decision and proposed amount before selecting individual rows. Payments and approvals are never executed here.
+                        The detailed recommendations now open in a normal Odoo list with search, filters, grouping and native row selection. Change Decision / Proposed Amount there, select exactly the rows you want, then use Apply Selected.
                     </div>
                     <group>
                         <group>
@@ -45,49 +54,99 @@
                             <field name="year" readonly="state != 'draft'"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
-                        <group>
+                        <group string="Summary">
                             <field name="keep_count"/>
                             <field name="add_count"/>
                             <field name="update_count"/>
                             <field name="remove_count"/>
                             <field name="review_count"/>
                             <field name="safe_count"/>
-                            <field name="selected_count"/>
                         </group>
                     </group>
-                    <field name="line_ids" nolabel="1" class="o_payment_review_recommendations">
-                        <list editable="bottom" create="0" delete="0" multi_edit="1"
-                              decoration-info="apply and not applied"
-                              decoration-success="action == 'keep'"
-                              decoration-warning="action in ('update','convert','review')"
-                              decoration-danger="action == 'remove'">
-                            <field name="apply" column_invisible="True"/>
-                            <field name="can_apply" column_invisible="True"/>
-                            <button name="action_toggle_apply" type="object" string="Select" icon="fa-square-o"
-                                    class="btn-link o_payment_review_select"
-                                    invisible="not can_apply or applied or apply"/>
-                            <button name="action_toggle_apply" type="object" string="Selected" icon="fa-check-square-o"
-                                    class="btn-link text-success o_payment_review_unselect"
-                                    invisible="not can_apply or applied or not apply"/>
-                            <field name="agent_action" string="Agent" widget="badge" readonly="1" width="90px"/>
-                            <field name="action" string="Your Decision" width="125px"/>
-                            <field name="partner_id" string="Supplier" readonly="1" width="210px"/>
-                            <field name="source_type" string="Source" readonly="1" optional="show" width="125px"/>
-                            <field name="plan_line_id" string="Planned Payment" readonly="1" optional="show" width="190px"/>
-                            <field name="purchase_order_id" string="PO" readonly="1" optional="show" width="105px"/>
-                            <field name="current_amount" string="Current" readonly="1" width="105px"/>
-                            <field name="proposed_amount" string="Proposed" width="105px"/>
-                            <field name="oldest_due_date" string="Oldest Due" readonly="1" optional="show" width="100px"/>
-                            <field name="aging_summary" string="Aging Summary" readonly="1" optional="hide" width="260px"/>
-                            <field name="reason" string="Reason" readonly="1" optional="hide" width="360px"/>
-                            <field name="target_plan_line_id" readonly="1" optional="hide"/>
-                            <field name="applied" string="Applied" widget="boolean_toggle" readonly="1" optional="show" width="65px"/>
-                        </list>
-                    </field>
                 </sheet>
                 <chatter/>
             </form>
         </field>
+    </record>
+
+    <record id="view_cash_plan_review_line_search" model="ir.ui.view">
+        <field name="name">cash.plan.review.line.search</field>
+        <field name="model">cash.plan.review.line</field>
+        <field name="arch" type="xml">
+            <search string="Payment Review Recommendations">
+                <field name="partner_id" string="Supplier"/>
+                <field name="purchase_order_id" string="PO"/>
+                <field name="plan_line_id" string="Planned Payment"/>
+                <field name="action" string="Decision"/>
+                <field name="agent_action" string="Agent Decision"/>
+                <field name="source_type" string="Source"/>
+                <field name="oldest_due_date"/>
+                <separator/>
+                <filter name="safe" string="Safe Changes" domain="[('can_apply','=',True),('applied','=',False)]"/>
+                <filter name="review" string="Needs Review" domain="[('action','=','review')]"/>
+                <filter name="not_applied" string="Not Applied" domain="[('applied','=',False)]"/>
+                <filter name="applied" string="Applied" domain="[('applied','=',True)]"/>
+                <separator/>
+                <filter name="add" string="Add" domain="[('action','=','add')]"/>
+                <filter name="update" string="Update" domain="[('action','=','update')]"/>
+                <filter name="convert" string="Convert" domain="[('action','=','convert')]"/>
+                <filter name="remove" string="Remove" domain="[('action','=','remove')]"/>
+                <filter name="keep" string="Keep" domain="[('action','=','keep')]"/>
+                <separator/>
+                <filter name="existing" string="Existing Plans" domain="[('source_type','in',('existing_po','existing_payable'))]"/>
+                <filter name="new_candidates" string="New Candidates" domain="[('source_type','in',('new_po','new_payable'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Decision" name="group_action" context="{'group_by':'action'}"/>
+                    <filter string="Agent Decision" name="group_agent_action" context="{'group_by':'agent_action'}"/>
+                    <filter string="Supplier" name="group_partner" context="{'group_by':'partner_id'}"/>
+                    <filter string="Source" name="group_source" context="{'group_by':'source_type'}"/>
+                    <filter string="Oldest Due" name="group_due" context="{'group_by':'oldest_due_date:month'}"/>
+                </group>
+                <searchpanel>
+                    <field name="action" string="Decision" enable_counters="1"/>
+                    <field name="source_type" string="Source" enable_counters="1"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_cash_plan_review_line_list" model="ir.ui.view">
+        <field name="name">cash.plan.review.line.list</field>
+        <field name="model">cash.plan.review.line</field>
+        <field name="arch" type="xml">
+            <list string="Payment Review Recommendations" editable="bottom" create="0" delete="0" multi_edit="1" class="o_payment_review_line_list"
+                  decoration-success="action == 'keep'"
+                  decoration-warning="action in ('update','convert','review')"
+                  decoration-danger="action == 'remove'">
+                <header>
+                    <button name="action_apply_selected_from_list" type="object" string="Apply Selected" class="btn-primary" display="always"/>
+                </header>
+                <field name="agent_action" string="Agent" widget="badge" readonly="1" width="95"/>
+                <field name="action" string="Decision" width="125"/>
+                <field name="partner_id" string="Supplier" readonly="1" width="220"/>
+                <field name="source_type" string="Source" readonly="1" width="145" optional="show"/>
+                <field name="plan_line_id" string="Planned Payment" readonly="1" width="190" optional="show"/>
+                <field name="purchase_order_id" string="PO" readonly="1" width="110" optional="show"/>
+                <field name="current_amount" string="Current" readonly="1" width="110"/>
+                <field name="proposed_amount" string="Proposed" width="110"/>
+                <field name="oldest_due_date" string="Oldest Due" readonly="1" width="105" optional="show"/>
+                <field name="reason" string="Reason" readonly="1" class="o_payment_review_wrap o_payment_review_reason" width="420" optional="show"/>
+                <field name="aging_summary" string="Aging Summary" readonly="1" class="o_payment_review_wrap o_payment_review_aging" width="320" optional="show"/>
+                <field name="can_apply" string="Safe" widget="boolean_toggle" readonly="1" width="70" optional="show"/>
+                <field name="applied" string="Applied" widget="boolean_toggle" readonly="1" width="75" optional="show"/>
+                <field name="review_id" column_invisible="True"/>
+                <field name="target_plan_line_id" column_invisible="True"/>
+                <field name="apply" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_cash_plan_review_line" model="ir.actions.act_window">
+        <field name="name">Payment Review Recommendations</field>
+        <field name="res_model">cash.plan.review.line</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_cash_plan_review_line_search"/>
+        <field name="context">{'search_default_not_applied': 1}</field>
     </record>
 
     <record id="action_cash_plan_review" model="ir.actions.act_window">
