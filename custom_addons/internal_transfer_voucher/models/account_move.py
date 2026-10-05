@@ -1,9 +1,31 @@
-from odoo import models, _
+from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+
+    payment_voucher_count = fields.Integer(compute='_compute_payment_voucher_count', string='Payment Vouchers')
+
+    def _compute_payment_voucher_count(self):
+        Voucher = self.env['account.payment.voucher']
+        for move in self:
+            move.payment_voucher_count = Voucher.search_count([('bill_ids', 'in', move.id)]) if move.move_type == 'in_invoice' else 0
+
+    def action_view_payment_vouchers(self):
+        self.ensure_one()
+        vouchers = self.env['account.payment.voucher'].search([('bill_ids', 'in', self.id)])
+        action = {
+            'type': 'ir.actions.act_window',
+            'name': _('Payment Vouchers'),
+            'res_model': 'account.payment.voucher',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', vouchers.ids)],
+            'context': {'default_partner_id': self.commercial_partner_id.id, 'default_bill_ids': [(6, 0, self.ids)]},
+        }
+        if len(vouchers) == 1:
+            action.update({'view_mode': 'form', 'res_id': vouchers.id})
+        return action
 
     def action_open_voucher_payment(self):
         """Open the custom voucher for a posted customer invoice/vendor bill."""

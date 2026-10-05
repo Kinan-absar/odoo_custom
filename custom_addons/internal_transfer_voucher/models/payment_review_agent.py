@@ -8,17 +8,23 @@ from odoo.exceptions import UserError
 class CashPlanReview(models.Model):
     _name = 'cash.plan.review'
     _description = 'Payment Planning Agent Review'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'create_date desc, id desc'
 
     name = fields.Char(required=True, readonly=True, copy=False, default='New')
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company, readonly=True)
     currency_id = fields.Many2one(related='company_id.currency_id', readonly=True)
     review_date = fields.Datetime(default=fields.Datetime.now, readonly=True)
+    year = fields.Selection(
+        selection=lambda self: [('all', _('All Open'))] + [(str(y), str(y)) for y in range(date.today().year + 1, date.today().year - 7, -1)],
+        string='Year', default=lambda self: str(date.today().year), required=True,
+        help='Filters planned-payment dates and purchase-order dates. Supplier aging remains the full live open balance so older unpaid items are not accidentally ignored.',
+    )
     state = fields.Selection([
         ('draft', 'Review'),
         ('partial', 'Partially Applied'),
         ('applied', 'Safe Changes Applied'),
-    ], default='draft', readonly=True)
+    ], default='draft', readonly=True, tracking=True)
     line_ids = fields.One2many('cash.plan.review.line', 'review_id', string='Recommendations', copy=False)
 
     keep_count = fields.Integer(compute='_compute_summary')
@@ -92,6 +98,14 @@ class CashPlanReviewLine(models.Model):
 
     review_id = fields.Many2one('cash.plan.review', required=True, ondelete='cascade')
     sequence = fields.Integer(default=10)
+    agent_action = fields.Selection([
+        ('keep', 'Keep'),
+        ('add', 'Add'),
+        ('update', 'Update'),
+        ('convert', 'Convert to Payable'),
+        ('remove', 'Remove'),
+        ('review', 'Review'),
+    ], string='Agent Decision', readonly=True)
     action = fields.Selection([
         ('keep', 'Keep'),
         ('add', 'Add'),
@@ -99,7 +113,7 @@ class CashPlanReviewLine(models.Model):
         ('convert', 'Convert to Payable'),
         ('remove', 'Remove'),
         ('review', 'Review'),
-    ], required=True, readonly=True)
+    ], string='Decision', required=True)
     source_type = fields.Selection([
         ('existing_po', 'Existing PO Plan'),
         ('existing_payable', 'Existing Payable Plan'),
@@ -118,7 +132,7 @@ class CashPlanReviewLine(models.Model):
         string='Open Bills', readonly=True,
     )
     current_amount = fields.Monetary(currency_field='currency_id', readonly=True)
-    proposed_amount = fields.Monetary(currency_field='currency_id', readonly=True)
+    proposed_amount = fields.Monetary(currency_field='currency_id')
     currency_id = fields.Many2one(related='review_id.currency_id', readonly=True)
     oldest_due_date = fields.Date(readonly=True)
     aging_summary = fields.Char(readonly=True)
@@ -126,6 +140,60 @@ class CashPlanReviewLine(models.Model):
     apply = fields.Boolean(string='Apply', default=False)
     can_apply = fields.Boolean(default=False, readonly=True)
     applied = fields.Boolean(default=False, readonly=True)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('action') and not vals.get('agent_action'):
+                vals['agent_action'] = vals['action']
+        return super().create(vals_list)
+
+    @api.onchange('action', 'proposed_amount')
+    def _onchange_manual_decision(self):
+        for rec in self:
+            rec.can_apply = rec._decision_is_safely_applicable()
+            if not rec.can_apply:
+                rec.apply = False
+
+    def write(self, vals):
+        res = super().write(vals)
+        if {'action', 'proposed_amount'} & set(vals) and not self.env.context.get('skip_recompute_can_apply'):
+            for rec in self:
+                safe = rec._decision_is_safely_applicable()
+                updates = {}
+                if rec.can_apply != safe:
+                    updates['can_apply'] = safe
+                if not safe and rec.apply:
+                    updates['apply'] = False
+                if updates:
+                    super(CashPlanReviewLine, rec.with_context(skip_recompute_can_apply=True)).write(updates)
+        return res
+
+    def _decision_is_safely_applicable(self):
+        self.ensure_one()
+        if self.applied or self.action in ('keep', 'review'):
+            return False
+        if self.action == 'add':
+            if self.source_type == 'new_payable':
+                return self.proposed_amount > 0 and bool(self.partner_id)
+            if self.source_type == 'new_po':
+                po = self.purchase_order_id
+                return bool(po and self.proposed_amount > 0 and po.state in ('purchase', 'done') and getattr(po, 'invoice_status', False) == 'no')
+            return False
+        if self.action in ('update', 'remove'):
+            return bool(self.plan_line_id and self._safe_line(self.plan_line_id) and (self.action != 'update' or self.proposed_amount > 0))
+        if self.action == 'convert':
+            if not self.plan_line_id or not self._safe_line(self.plan_line_id) or self.proposed_amount <= 0:
+                return False
+            return not self.target_plan_line_id or self._safe_line(self.target_plan_line_id)
+        return False
+
+    def action_toggle_apply(self):
+        self.ensure_one()
+        if not self.can_apply or self.applied:
+            raise UserError(_('This recommendation is not currently safe to apply automatically. Change the decision/amount or review it manually.'))
+        self.apply = not self.apply
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     def _apply_recommendation(self):
         self.ensure_one()
@@ -169,6 +237,34 @@ class CashPlanReviewLine(models.Model):
                     'bill_ids': [(6, 0, self.bill_ids.ids)],
                     'forecast_amount': self.proposed_amount,
                 })
+
+        elif self.action == 'add' and self.source_type == 'new_po':
+            po = self.purchase_order_id
+            if not po or po.state not in ('purchase', 'done') or getattr(po, 'invoice_status', False) != 'no':
+                raise UserError(_('The purchase order is no longer an eligible Nothing-to-Bill PO. Run a new review.'))
+            if self.proposed_amount <= 0:
+                raise UserError(_('Enter the amount you want to plan for this PO.'))
+            existing = self.env['cash.plan.line'].search([
+                ('company_id', '=', company.id),
+                ('flow_type', '=', 'out'),
+                ('transaction_type', '=', 'supplier'),
+                ('state', 'not in', ('executed', 'cancel')),
+                ('purchase_order_ids', 'in', po.id),
+            ], limit=1)
+            if existing:
+                raise UserError(_('This PO is already represented by an active planned payment. Run a new review.'))
+            category = self._suggest_category(po.partner_id.commercial_partner_id)
+            self.env['cash.plan.line'].create({
+                'name': _('%s - %s') % (po.name, po.partner_id.display_name),
+                'company_id': company.id,
+                'flow_type': 'out',
+                'transaction_type': 'supplier',
+                'category_id': category.id,
+                'partner_id': po.partner_id.commercial_partner_id.id,
+                'purchase_order_ids': [(6, 0, po.ids)],
+                'forecast_amount': self.proposed_amount,
+                'description': _('Created from Payment Review. User-confirmed PO amount.'),
+            })
 
         elif self.action == 'add' and self.source_type == 'new_payable':
             if self.proposed_amount <= 0:
@@ -255,11 +351,15 @@ class CashPlanLinePaymentAgent(models.Model):
         ReviewLine = self.env['cash.plan.review.line']
         recommendations = []
 
-        planned = self.search([
+        planned_domain = [
             ('company_id', '=', company.id),
             ('flow_type', '=', 'out'),
             ('state', 'not in', ('executed', 'cancel')),
-        ])
+        ]
+        if review.year != 'all':
+            year = int(review.year)
+            planned_domain += [('planned_date', '>=', date(year, 1, 1)), ('planned_date', '<=', date(year, 12, 31))]
+        planned = self.search(planned_domain)
         supplier_lines = planned.filtered(lambda l: l.transaction_type == 'supplier')
         po_plan_lines = supplier_lines.filtered(lambda l: l.purchase_order_ids)
         balance_plan_lines = supplier_lines.filtered(lambda l: not l.purchase_order_ids)
@@ -423,6 +523,9 @@ class CashPlanLinePaymentAgent(models.Model):
             ('state', 'in', ('purchase', 'done')),
             ('invoice_status', '=', 'no'),
         ]
+        if review.year != 'all':
+            year = int(review.year)
+            po_domain += [('date_order', '>=', date(year, 1, 1)), ('date_order', '<', date(year + 1, 1, 1))]
         for po in self.env['purchase.order'].search(po_domain, order='date_order asc, id asc'):
             if po.id in po_ids_already_planned:
                 continue
@@ -621,6 +724,7 @@ class CashPlanLinePaymentAgent(models.Model):
         partner = line.partner_id.commercial_partner_id if line and line.partner_id else (po.partner_id.commercial_partner_id if po else False)
         return {
             'review_id': review.id,
+            'agent_action': action,
             'action': action,
             'source_type': source_type,
             'severity': severity,

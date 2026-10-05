@@ -1,0 +1,14 @@
+/* Keep the review report full width and place chatter below it on wide screens. */
+.o_form_view.o_payment_review_form .o_form_renderer {
+    flex-wrap: wrap !important;
+}
+.o_form_view.o_payment_review_form .o_form_sheet_bg,
+.o_form_view.o_payment_review_form .o-mail-Form-chatter {
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+.o_form_view.o_payment_review_form .o-mail-Form-chatter {
+    border-left: 0 !important;
+    border-top: 1px solid var(--border-color, #dee2e6);
+}

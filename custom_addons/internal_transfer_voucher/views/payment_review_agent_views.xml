@@ -9,6 +9,7 @@
                     <button name="action_run_payment_review_agent" type="object" string="Run Payment Review" class="btn-primary"/>
                 </header>
                 <field name="review_date"/>
+                <field name="year"/>
                 <field name="name"/>
                 <field name="keep_count"/>
                 <field name="add_count"/>
@@ -25,22 +26,23 @@
         <field name="name">cash.plan.review.form</field>
         <field name="model">cash.plan.review</field>
         <field name="arch" type="xml">
-            <form string="Payment Review Agent">
+            <form string="Payment Review Agent" class="o_payment_review_form">
                 <header>
                     <button name="action_refresh_review" type="object" string="Run / Refresh Review" class="btn-secondary" invisible="state != 'draft'"/>
                     <button name="action_select_all_safe" type="object" string="Select All Safe" class="btn-secondary" invisible="state == 'applied' or safe_count == 0"/>
                     <button name="action_clear_selection" type="object" string="Clear Selection" class="btn-secondary" invisible="selected_count == 0"/>
-                    <button name="action_apply_selected" type="object" string="Apply Selected Safe Changes" class="btn-primary" invisible="state == 'applied' or selected_count == 0"/>
+                    <button name="action_apply_selected" type="object" string="Apply Selected" class="btn-primary" invisible="state == 'applied' or selected_count == 0"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,partial,applied"/>
                 </header>
                 <sheet>
                     <div class="oe_title"><h1><field name="name"/></h1></div>
                     <div class="alert alert-info" role="alert">
-                        The review reads live Odoo data. It checks all active supplier payment plans, all confirmed Nothing-to-Bill POs, and live posted non-retention payables. Safe changes can be selected and applied; payments and CEO approvals are never executed by the agent.
+                        Review live planned payments, Nothing-to-Bill POs and live non-retention supplier payables. You can change the decision and proposed amount before selecting individual rows. Payments and approvals are never executed here.
                     </div>
                     <group>
                         <group>
                             <field name="review_date"/>
+                            <field name="year" readonly="state != 'draft'"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                         <group>
@@ -58,16 +60,19 @@
                               decoration-success="action == 'keep'"
                               decoration-warning="action in ('update','convert','review')"
                               decoration-danger="action == 'remove'">
+                            <button name="action_toggle_apply" type="object" string="Select" class="btn-link" invisible="not can_apply or applied or apply"/>
+                            <button name="action_toggle_apply" type="object" string="Unselect" class="btn-link" invisible="not can_apply or applied or not apply"/>
                             <field name="apply" readonly="not can_apply or applied"/>
                             <field name="can_apply" column_invisible="True"/>
                             <field name="source_type" readonly="1" optional="show"/>
-                            <field name="action" widget="badge" readonly="1"/>
+                            <field name="agent_action" widget="badge" readonly="1" optional="show"/>
+                            <field name="action" widget="badge"/>
                             <field name="partner_id" readonly="1"/>
                             <field name="plan_line_id" readonly="1" optional="show"/>
                             <field name="target_plan_line_id" readonly="1" optional="hide"/>
                             <field name="purchase_order_id" readonly="1" optional="show"/>
                             <field name="current_amount" readonly="1"/>
-                            <field name="proposed_amount" readonly="1"/>
+                            <field name="proposed_amount"/>
                             <field name="oldest_due_date" readonly="1" optional="show"/>
                             <field name="aging_summary" readonly="1" optional="show"/>
                             <field name="reason" readonly="1"/>
@@ -75,6 +80,7 @@
                         </list>
                     </field>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>
