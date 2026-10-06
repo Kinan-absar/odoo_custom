@@ -735,16 +735,20 @@ class CashPlanLinePaymentAgent(models.Model):
 
     @api.model
     def _agent_get_retention_data(self, company):
-        """Return open retention liability separately from ordinary supplier AP."""
+        """Return the live retention liability by supplier from the retention GL account.
+
+        Retention account 201019 is a normal liability control account in this database, not
+        necessarily a reconcilable ``liability_payable`` account.  Therefore ``amount_residual``
+        and ``reconciled`` are NOT reliable here.  The correct source is the posted GL balance:
+        credits increase retention payable and debits/releases reduce it.
+        """
         aml = self.env['account.move.line'].search([
             ('company_id', '=', company.id),
             ('parent_state', '=', 'posted'),
-            ('account_id.account_type', '=', 'liability_payable'),
             ('partner_id', '!=', False),
-            ('reconciled', '=', False),
         ])
-        aml = aml.filtered(lambda line: not company.currency_id.is_zero(line.amount_residual))
         aml = aml.filtered(lambda line: self._agent_is_retention_account(line.account_id))
+        aml = aml.filtered(lambda line: not company.currency_id.is_zero(line.balance))
 
         grouped = {}
         for line in aml:
@@ -754,7 +758,9 @@ class CashPlanLinePaymentAgent(models.Model):
                 'bills': self.env['account.move'],
                 'oldest_due': False,
             })
-            data['net_due'] += -line.amount_residual
+            # Odoo company-currency balance: credits are negative, debits positive.
+            # A positive retention liability is therefore the negative net GL balance.
+            data['net_due'] += -line.balance
             move = line.move_id
             if move.move_type in ('in_invoice', 'in_refund') and move.state == 'posted':
                 data['bills'] |= move
