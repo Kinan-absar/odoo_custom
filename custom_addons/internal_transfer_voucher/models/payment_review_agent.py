@@ -132,6 +132,7 @@ class CashPlanReviewLine(models.Model):
         ('existing_retention', 'Existing Retention Plan'),
         ('new_po', 'New PO Candidate'),
         ('new_payable', 'New Payable Candidate'),
+        ('new_retention', 'New Retention Candidate'),
     ], readonly=True)
     severity = fields.Selection([
         ('info', 'Info'), ('warning', 'Warning'), ('danger', 'Danger')
@@ -192,6 +193,8 @@ class CashPlanReviewLine(models.Model):
             if self.source_type == 'new_po':
                 po = self.purchase_order_id
                 return bool(po and self.proposed_amount > 0 and po.state in ('purchase', 'done') and getattr(po, 'invoice_status', False) == 'no')
+            if self.source_type == 'new_retention':
+                return bool(self.purchase_order_id and self.partner_id and self.proposed_amount > 0)
             return False
         if self.action in ('update', 'remove'):
             return bool(self.plan_line_id and self._safe_line(self.plan_line_id) and (self.action != 'update' or self.proposed_amount > 0))
@@ -307,6 +310,38 @@ class CashPlanReviewLine(models.Model):
                 'purchase_order_ids': [(6, 0, po.ids)],
                 'forecast_amount': self.proposed_amount,
                 'description': _('Created from Payment Review. User-confirmed PO amount.'),
+            })
+
+        elif self.action == 'add' and self.source_type == 'new_retention':
+            po = self.purchase_order_id
+            if not po or self.proposed_amount <= 0:
+                raise UserError(_('The retention candidate is no longer valid. Run a new review.'))
+            existing = self.env['cash.plan.line'].search([
+                ('company_id', '=', company.id),
+                ('flow_type', '=', 'out'),
+                ('transaction_type', '=', 'supplier'),
+                ('state', 'not in', ('executed', 'cancel')),
+                ('purchase_order_ids', 'in', po.id),
+            ]).filtered(lambda l: self.env['cash.plan.line']._agent_plan_basis(l) == 'retention')[:1]
+            if existing:
+                raise UserError(_('A retention planned payment already exists for %s. Run a new review.') % po.name)
+            category = self._suggest_category(po.partner_id.commercial_partner_id)
+            retention_account = self.env['account.account'].search([
+                ('company_ids', 'in', company.id),
+                ('code', '=', '201019'),
+            ], limit=1)
+            self.env['cash.plan.line'].create({
+                'name': _('Retention - %s') % po.name,
+                'company_id': company.id,
+                'flow_type': 'out',
+                'transaction_type': 'supplier',
+                'category_id': category.id,
+                'partner_id': po.partner_id.commercial_partner_id.id,
+                'purchase_order_ids': [(6, 0, po.ids)],
+                'bill_ids': [(6, 0, self.bill_ids.ids)],
+                'account_id': retention_account.id if retention_account else False,
+                'forecast_amount': self.proposed_amount,
+                'description': _('Retention candidate created from Payment Review after PO amount vs gross posted invoices and Retention Payable cross-check.'),
             })
 
         elif self.action == 'add' and self.source_type == 'new_payable':
@@ -485,52 +520,168 @@ class CashPlanLinePaymentAgent(models.Model):
                     oldest_due=data['oldest_due'], aging=data['aging_summary'], proposed=due,
                 ))
 
-        # Review retention plans separately. A retention plan is never converted to
-        # ordinary supplier aging merely because its PO has been billed. Compare the
-        # supplier's total active planned
-        # retention with the actual open retention liability, but do not auto-change
-        # partial retention releases because they are a finance decision.
-        retention_by_partner = defaultdict(lambda: self.env['cash.plan.line'])
+        # Retention engine: determine whether retention is ready to be planned from
+        # PO amount vs gross posted invoiced work, then cross-check the Retention
+        # Payable GL. Odoo's PO billing status is intentionally NOT used here.
+        #
+        # A PO is a retention candidate only when cumulative gross posted invoice
+        # value sourced from its PO lines reaches the PO untaxed amount and its
+        # related bills generated retention in the Retention Payable account.
+        # Supplier-level open retention is then used as a control total. Where a
+        # supplier has several completed POs and the open GL balance is lower than
+        # the sum of generated retention, allocation is ambiguous and stays Review.
+        retention_pos = self.env['purchase.order']
         for line in retention_plan_lines:
-            if line.partner_id:
-                retention_by_partner[line.partner_id.commercial_partner_id.id] |= line
+            retention_pos |= line.purchase_order_ids
+        # Also discover completed-retention candidates that are not already planned.
+        po_scan_domain = [('company_id', '=', company.id), ('state', 'in', ('purchase', 'done'))]
+        if review.year != 'all':
+            year = int(review.year)
+            po_scan_domain += [('date_order', '>=', date(year, 1, 1)), ('date_order', '<', date(year + 1, 1, 1))]
+        candidate_po_data = {}
+        for po in self.env['purchase.order'].search(po_scan_domain):
+            pdata = self._agent_po_retention_candidate_data(po, company)
+            if pdata['retention_generated'] > 0 and pdata['fully_invoiced_by_amount']:
+                retention_pos |= po
+                candidate_po_data[po.id] = pdata
 
-        for partner_id, lines in retention_by_partner.items():
-            data = retention_data.get(partner_id, self._agent_empty_retention_data())
-            liability = data['net_due']
-            total_planned = sum(lines.mapped('forecast_amount'))
-            for line in lines:
-                po = line.purchase_order_ids[:1] if len(line.purchase_order_ids) == 1 else False
-                if liability <= 0 or company.currency_id.is_zero(liability):
-                    recommendations.append(self._agent_vals(
-                        review, line, 'review',
-                        _('This is a retention planned payment. No positive open retention liability was found for this supplier, so review the retention release manually.'),
-                        severity='warning', source_type='existing_retention', po=po,
-                        bills=data['bills'], oldest_due=data['oldest_due'], aging=data['aging_summary'],
-                        proposed=line.forecast_amount, can_apply=False,
-                    ))
-                elif company.currency_id.compare_amounts(total_planned, liability) > 0:
-                    recommendations.append(self._agent_vals(
-                        review, line, 'review',
-                        _('Retention planning for this supplier totals %(planned)s, which exceeds the open retention liability of %(liability)s. The PO link is only a reference; review the release amount manually.') % {
-                            'planned': format(total_planned, ',.2f'),
-                            'liability': format(liability, ',.2f'),
+        # Build supplier control totals for all fully invoiced retention POs.
+        generated_by_partner = defaultdict(float)
+        po_count_by_partner = defaultdict(int)
+        for po in retention_pos:
+            pdata = candidate_po_data.get(po.id) or self._agent_po_retention_candidate_data(po, company)
+            candidate_po_data[po.id] = pdata
+            if pdata['fully_invoiced_by_amount'] and pdata['retention_generated'] > 0:
+                pid = po.partner_id.commercial_partner_id.id
+                generated_by_partner[pid] += pdata['retention_generated']
+                po_count_by_partner[pid] += 1
+
+        retention_plans_by_po = defaultdict(lambda: self.env['cash.plan.line'])
+        retention_plans_without_po = self.env['cash.plan.line']
+        for line in retention_plan_lines:
+            if len(line.purchase_order_ids) == 1:
+                retention_plans_by_po[line.purchase_order_ids.id] |= line
+            else:
+                retention_plans_without_po |= line
+
+        # Existing retention plans linked to one PO.
+        for po in retention_pos:
+            pdata = candidate_po_data.get(po.id) or self._agent_po_retention_candidate_data(po, company)
+            partner_id = po.partner_id.commercial_partner_id.id
+            supplier_data = retention_data.get(partner_id, self._agent_empty_retention_data())
+            supplier_open = max(supplier_data['net_due'], 0.0)
+            generated_total = generated_by_partner.get(partner_id, 0.0)
+            clear_allocation = generated_total <= supplier_open + company.currency_id.rounding
+            open_for_po = min(pdata['retention_generated'], supplier_open) if clear_allocation else 0.0
+            lines = retention_plans_by_po.get(po.id, self.env['cash.plan.line'])
+
+            if lines:
+                for line in lines:
+                    if not pdata['fully_invoiced_by_amount']:
+                        recommendations.append(self._agent_vals(
+                            review, line, 'review',
+                            _('Retention exists, but PO %(po)s is not yet fully invoiced by amount. PO untaxed: %(po_amount)s; gross posted invoiced work: %(inv)s. Do not release retention yet.') % {
+                                'po': po.name,
+                                'po_amount': format(pdata['po_amount'], ',.2f'),
+                                'inv': format(pdata['gross_invoiced'], ',.2f'),
+                            },
+                            severity='warning', source_type='existing_retention', po=po,
+                            bills=pdata['bills'], proposed=line.forecast_amount, can_apply=False,
+                            aging=_('Supplier open retention GL: %s') % format(supplier_open, ',.2f'),
+                        ))
+                    elif not clear_allocation:
+                        recommendations.append(self._agent_vals(
+                            review, line, 'review',
+                            _('PO %(po)s is fully invoiced and generated retention %(ret)s, but this supplier has several retention POs and the Retention Payable GL balance (%(open)s) is lower than total generated retention (%(total)s). The released amount cannot be allocated safely to a specific PO automatically.') % {
+                                'po': po.name, 'ret': format(pdata['retention_generated'], ',.2f'),
+                                'open': format(supplier_open, ',.2f'), 'total': format(generated_total, ',.2f'),
+                            },
+                            severity='warning', source_type='existing_retention', po=po,
+                            bills=pdata['bills'], proposed=line.forecast_amount, can_apply=False,
+                            aging=_('Supplier open retention GL: %s') % format(supplier_open, ',.2f'),
+                        ))
+                    elif company.currency_id.is_zero(open_for_po):
+                        recommendations.append(self._agent_vals(
+                            review, line, 'remove',
+                            _('PO %s is fully invoiced, but no open retention remains in the Retention Payable GL for this supplier.') % po.name,
+                            severity='warning', source_type='existing_retention', po=po,
+                            bills=pdata['bills'], proposed=0.0,
+                            can_apply=self._agent_safe_to_change(line),
+                            aging=_('Supplier open retention GL: %s') % format(supplier_open, ',.2f'),
+                        ))
+                    elif company.currency_id.compare_amounts(line.forecast_amount, open_for_po) != 0:
+                        recommendations.append(self._agent_vals(
+                            review, line, 'update',
+                            _('PO %(po)s is fully invoiced by amount. PO untaxed: %(po_amount)s; gross posted invoiced work: %(inv)s; retention generated by its bills: %(ret)s. Update planned retention to %(open)s based on the Retention Payable GL control.') % {
+                                'po': po.name, 'po_amount': format(pdata['po_amount'], ',.2f'),
+                                'inv': format(pdata['gross_invoiced'], ',.2f'),
+                                'ret': format(pdata['retention_generated'], ',.2f'), 'open': format(open_for_po, ',.2f'),
+                            },
+                            severity='warning', source_type='existing_retention', po=po,
+                            bills=pdata['bills'], proposed=open_for_po,
+                            can_apply=self._agent_safe_to_change(line),
+                            aging=_('Supplier open retention GL: %s') % format(supplier_open, ',.2f'),
+                        ))
+                    else:
+                        recommendations.append(self._agent_vals(
+                            review, line, 'keep',
+                            _('PO %(po)s is fully invoiced by amount and its planned retention matches the retention cross-check. PO untaxed: %(po_amount)s; gross posted invoiced work: %(inv)s; retention generated: %(ret)s.') % {
+                                'po': po.name, 'po_amount': format(pdata['po_amount'], ',.2f'),
+                                'inv': format(pdata['gross_invoiced'], ',.2f'), 'ret': format(pdata['retention_generated'], ',.2f'),
+                            },
+                            source_type='existing_retention', po=po, bills=pdata['bills'],
+                            proposed=line.forecast_amount, can_apply=False,
+                            aging=_('Supplier open retention GL: %s') % format(supplier_open, ',.2f'),
+                        ))
+            else:
+                # No retention plan exists for this PO: propose one only when the
+                # amount-based invoicing test and GL cross-check are clear.
+                if pdata['fully_invoiced_by_amount'] and pdata['retention_generated'] > 0 and clear_allocation and open_for_po > 0:
+                    recommendations.append({
+                        'review_id': review.id,
+                        'agent_action': 'add',
+                        'action': 'add',
+                        'source_type': 'new_retention',
+                        'severity': 'info',
+                        'partner_id': po.partner_id.commercial_partner_id.id,
+                        'purchase_order_id': po.id,
+                        'bill_ids': [(6, 0, pdata['bills'].ids)],
+                        'current_amount': 0.0,
+                        'proposed_amount': min(pdata['retention_generated'], open_for_po),
+                        'aging_summary': _('Supplier open retention GL: %s') % format(supplier_open, ',.2f'),
+                        'reason': _('Add retention planned payment for %(po)s. PO untaxed amount %(po_amount)s is fully covered by gross posted invoiced work %(inv)s. Its bills generated retention %(ret)s, cross-checked against the supplier Retention Payable GL balance.') % {
+                            'po': po.name, 'po_amount': format(pdata['po_amount'], ',.2f'),
+                            'inv': format(pdata['gross_invoiced'], ',.2f'), 'ret': format(pdata['retention_generated'], ',.2f'),
                         },
-                        severity='warning', source_type='existing_retention', po=po,
-                        bills=data['bills'], oldest_due=data['oldest_due'], aging=data['aging_summary'],
-                        proposed=line.forecast_amount, can_apply=False,
-                    ))
-                else:
-                    recommendations.append(self._agent_vals(
-                        review, line, 'keep',
-                        _("Retention planned payment is within the supplier's open retention liability. The linked PO is treated as reference only. Total planned retention: %(planned)s; open retention liability: %(liability)s.") % {
-                            'planned': format(total_planned, ',.2f'),
-                            'liability': format(liability, ',.2f'),
-                        },
-                        source_type='existing_retention', po=po, bills=data['bills'],
-                        oldest_due=data['oldest_due'], aging=data['aging_summary'],
-                        proposed=line.forecast_amount, can_apply=False,
-                    ))
+                        'can_apply': True,
+                    })
+                elif pdata['fully_invoiced_by_amount'] and pdata['retention_generated'] > 0 and not clear_allocation:
+                    recommendations.append({
+                        'review_id': review.id,
+                        'agent_action': 'review',
+                        'action': 'review',
+                        'source_type': 'new_retention',
+                        'severity': 'warning',
+                        'partner_id': po.partner_id.commercial_partner_id.id,
+                        'purchase_order_id': po.id,
+                        'bill_ids': [(6, 0, pdata['bills'].ids)],
+                        'current_amount': 0.0,
+                        'proposed_amount': pdata['retention_generated'],
+                        'aging_summary': _('Supplier open retention GL: %s') % format(supplier_open, ',.2f'),
+                        "reason": _("PO %s qualifies by invoice amount, but retention releases cannot be allocated safely among this supplier\'s multiple completed POs. Review before adding retention.") % po.name,
+                        'can_apply': False,
+                    })
+
+        # Retention lines without exactly one PO cannot be matched to a PO-level
+        # completion test, so keep them manual.
+        for line in retention_plans_without_po:
+            supplier_data = retention_data.get(line.partner_id.commercial_partner_id.id, self._agent_empty_retention_data()) if line.partner_id else self._agent_empty_retention_data()
+            recommendations.append(self._agent_vals(
+                review, line, 'review',
+                _('Retention planned payment has no single PO reference, so the agent cannot perform the PO amount vs gross invoice completion test. Review manually.'),
+                severity='warning', source_type='existing_retention', proposed=line.forecast_amount,
+                bills=supplier_data['bills'], aging=supplier_data['aging_summary'], can_apply=False,
+            ))
 
         po_ids_already_planned = set(po_plan_lines.mapped('purchase_order_ids').ids)
 
@@ -732,6 +883,56 @@ class CashPlanLinePaymentAgent(models.Model):
         if line.purchase_order_ids:
             return 'po'
         return 'payable'
+
+    @api.model
+    def _agent_po_retention_candidate_data(self, po, company):
+        """Calculate PO completion and generated retention without billing status.
+
+        Completion compares the PO untaxed amount with gross posted invoice lines
+        sourced from this PO's purchase lines. Retention is taken from Retention
+        Payable journal lines on those same posted bills and proportionally allocated
+        when a bill contains lines from more than one PO.
+        """
+        bills = po.invoice_ids.filtered(lambda m: m.state == 'posted' and m.move_type in ('in_invoice', 'in_refund'))
+        gross = 0.0
+        retention_generated = 0.0
+        relevant_bills = self.env['account.move']
+        for move in bills:
+            sign = 1.0 if move.move_type == 'in_invoice' else -1.0
+            po_lines = move.invoice_line_ids.filtered(
+                lambda l: not l.display_type and l.purchase_line_id and l.purchase_line_id.order_id == po
+            )
+            po_gross = sum(po_lines.mapped('price_subtotal')) * sign
+            if company.currency_id.is_zero(po_gross):
+                continue
+            relevant_bills |= move
+            gross += po_gross
+
+            # If a bill mixes several POs, allocate its retention proportionally to
+            # the gross source lines belonging to this PO.
+            all_po_lines = move.invoice_line_ids.filtered(lambda l: not l.display_type and l.purchase_line_id)
+            total_source = sum(all_po_lines.mapped('price_subtotal'))
+            share = abs(po_gross) / abs(total_source) if total_source else 1.0
+            retention_lines = move.line_ids.filtered(lambda l: self._agent_is_retention_account(l.account_id))
+            move_retention = sum(-l.balance for l in retention_lines)
+            retention_generated += move_retention * share
+
+        po_amount = po.currency_id._convert(
+            po.amount_untaxed,
+            company.currency_id,
+            company,
+            po.date_order.date() if po.date_order else fields.Date.context_today(self),
+        )
+        # Allow normal currency rounding plus a tiny tolerance for legacy records.
+        tolerance = max(company.currency_id.rounding, 0.02)
+        fully_invoiced = gross + tolerance >= po_amount and po_amount > 0
+        return {
+            'po_amount': po_amount,
+            'gross_invoiced': gross,
+            'retention_generated': max(retention_generated, 0.0),
+            'fully_invoiced_by_amount': fully_invoiced,
+            'bills': relevant_bills,
+        }
 
     @api.model
     def _agent_get_retention_data(self, company):

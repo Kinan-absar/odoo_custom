@@ -94,8 +94,8 @@
                 <filter name="keep" string="Keep" domain="[('action','=','keep')]"/>
                 <separator/>
                 <filter name="existing" string="Existing Plans" domain="[('source_type','in',('existing_po','existing_payable','existing_retention'))]"/>
-                <filter name="retention_plans" string="Retention" domain="[('source_type','=','existing_retention')]"/>
-                <filter name="new_candidates" string="New Candidates" domain="[('source_type','in',('new_po','new_payable'))]"/>
+                <filter name="retention_plans" string="Retention" domain="[('source_type','in',('existing_retention','new_retention'))]"/>
+                <filter name="new_candidates" string="New Candidates" domain="[('source_type','in',('new_po','new_payable','new_retention'))]"/>
                 <group expand="0" string="Group By">
                     <filter string="Decision" name="group_action" context="{'group_by':'action'}"/>
                     <filter string="Agent Decision" name="group_agent_action" context="{'group_by':'agent_action'}"/>
