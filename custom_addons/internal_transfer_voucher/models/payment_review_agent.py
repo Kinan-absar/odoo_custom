@@ -129,6 +129,7 @@ class CashPlanReviewLine(models.Model):
     source_type = fields.Selection([
         ('existing_po', 'Existing PO Plan'),
         ('existing_payable', 'Existing Payable Plan'),
+        ('existing_retention', 'Existing Retention Plan'),
         ('new_po', 'New PO Candidate'),
         ('new_payable', 'New Payable Candidate'),
     ], readonly=True)
@@ -250,7 +251,9 @@ class CashPlanReviewLine(models.Model):
             self._prepare_line_for_agent_change(line)
             vals = {'forecast_amount': self.proposed_amount}
             if self.source_type == 'existing_payable':
-                vals['bill_ids'] = [(6, 0, self.bill_ids.ids)]
+                vals.update({
+                    'bill_ids': [(6, 0, self.bill_ids.ids)],
+                })
             line.with_context(allow_locked_write=True).write(vals)
 
         elif self.action == 'convert':
@@ -270,9 +273,10 @@ class CashPlanReviewLine(models.Model):
             else:
                 if self.proposed_amount <= 0:
                     raise UserError(_('There is no positive supplier payable balance to convert this PO into.'))
+                # Once this obligation is treated through supplier aging, the PO
+                # link must be removed. A PO link means this is a PO-based payment.
                 line.with_context(allow_locked_write=True).write({
                     'name': _('Balance Due - %s') % self.partner_id.display_name,
-                    'purchase_order_ids': [(5, 0, 0)],
                     'bill_ids': [(6, 0, self.bill_ids.ids)],
                     'forecast_amount': self.proposed_amount,
                 })
@@ -309,14 +313,14 @@ class CashPlanReviewLine(models.Model):
             if self.proposed_amount <= 0:
                 raise UserError(_('There is no positive payable balance to add.'))
             # Re-check for an active supplier-balance line to avoid creating a duplicate
-            existing = self.env['cash.plan.line'].search([
+            candidates = self.env['cash.plan.line'].search([
                 ('company_id', '=', company.id),
                 ('flow_type', '=', 'out'),
                 ('transaction_type', '=', 'supplier'),
                 ('partner_id', '=', self.partner_id.id),
                 ('state', 'not in', ('executed', 'cancel')),
-                ('purchase_order_ids', '=', False),
-            ], limit=1)
+            ])
+            existing = candidates.filtered(lambda l: self.env['cash.plan.line']._agent_plan_basis(l) == 'payable')[:1]
             if existing:
                 raise UserError(_('A supplier-balance planned payment now exists for %s. Run a new review.') % self.partner_id.display_name)
 
@@ -421,10 +425,16 @@ class CashPlanLinePaymentAgent(models.Model):
             planned_domain += [('planned_date', '>=', date(year, 1, 1)), ('planned_date', '<=', date(year, 12, 31))]
         planned = self.search(planned_domain)
         supplier_lines = planned.filtered(lambda l: l.transaction_type == 'supplier')
-        po_plan_lines = supplier_lines.filtered(lambda l: l.purchase_order_ids)
-        balance_plan_lines = supplier_lines.filtered(lambda l: not l.purchase_order_ids)
+
+        # Classification rule: retention is handled separately; otherwise a linked
+        # PO means the planned payment is PO-based. If there is no PO link, it is a
+        # supplier-balance/account payment.
+        po_plan_lines = supplier_lines.filtered(lambda l: self._agent_plan_basis(l) == 'po')
+        balance_plan_lines = supplier_lines.filtered(lambda l: self._agent_plan_basis(l) == 'payable')
+        retention_plan_lines = supplier_lines.filtered(lambda l: self._agent_plan_basis(l) == 'retention')
 
         payable_data = self._agent_get_payable_data(company)
+        retention_data = self._agent_get_retention_data(company)
 
         # Choose one supplier-balance line per partner. Extra lines are duplicates.
         balance_by_partner = defaultdict(lambda: self.env['cash.plan.line'])
@@ -475,9 +485,58 @@ class CashPlanLinePaymentAgent(models.Model):
                     oldest_due=data['oldest_due'], aging=data['aging_summary'], proposed=due,
                 ))
 
+        # Review retention plans separately. A retention plan is never converted to
+        # ordinary supplier aging merely because its PO has been billed. Compare the
+        # supplier's total active planned
+        # retention with the actual open retention liability, but do not auto-change
+        # partial retention releases because they are a finance decision.
+        retention_by_partner = defaultdict(lambda: self.env['cash.plan.line'])
+        for line in retention_plan_lines:
+            if line.partner_id:
+                retention_by_partner[line.partner_id.commercial_partner_id.id] |= line
+
+        for partner_id, lines in retention_by_partner.items():
+            data = retention_data.get(partner_id, self._agent_empty_retention_data())
+            liability = data['net_due']
+            total_planned = sum(lines.mapped('forecast_amount'))
+            for line in lines:
+                po = line.purchase_order_ids[:1] if len(line.purchase_order_ids) == 1 else False
+                if liability <= 0 or company.currency_id.is_zero(liability):
+                    recommendations.append(self._agent_vals(
+                        review, line, 'review',
+                        _('This is a retention planned payment. No positive open retention liability was found for this supplier, so review the retention release manually.'),
+                        severity='warning', source_type='existing_retention', po=po,
+                        bills=data['bills'], oldest_due=data['oldest_due'], aging=data['aging_summary'],
+                        proposed=line.forecast_amount, can_apply=False,
+                    ))
+                elif company.currency_id.compare_amounts(total_planned, liability) > 0:
+                    recommendations.append(self._agent_vals(
+                        review, line, 'review',
+                        _('Retention planning for this supplier totals %(planned)s, which exceeds the open retention liability of %(liability)s. The PO link is only a reference; review the release amount manually.') % {
+                            'planned': format(total_planned, ',.2f'),
+                            'liability': format(liability, ',.2f'),
+                        },
+                        severity='warning', source_type='existing_retention', po=po,
+                        bills=data['bills'], oldest_due=data['oldest_due'], aging=data['aging_summary'],
+                        proposed=line.forecast_amount, can_apply=False,
+                    ))
+                else:
+                    recommendations.append(self._agent_vals(
+                        review, line, 'keep',
+                        _("Retention planned payment is within the supplier's open retention liability. The linked PO is treated as reference only. Total planned retention: %(planned)s; open retention liability: %(liability)s.") % {
+                            'planned': format(total_planned, ',.2f'),
+                            'liability': format(liability, ',.2f'),
+                        },
+                        source_type='existing_retention', po=po, bills=data['bills'],
+                        oldest_due=data['oldest_due'], aging=data['aging_summary'],
+                        proposed=line.forecast_amount, can_apply=False,
+                    ))
+
         po_ids_already_planned = set(po_plan_lines.mapped('purchase_order_ids').ids)
 
-        # Review each existing PO-based planned payment.
+        # Review each payment linked to a Purchase Order (except retention). A PO
+        # on a Supplier Balance / Account line is only a reference and never enters
+        # this conversion logic.
         for line in po_plan_lines:
             pos = line.purchase_order_ids
             if len(pos) != 1:
@@ -650,6 +709,71 @@ class CashPlanLinePaymentAgent(models.Model):
         if recommendations:
             ReviewLine.create(recommendations)
         return len(recommendations)
+
+    @api.model
+    def _agent_plan_basis(self, line):
+        """Classify a supplier planned payment using the actual data-entry rule.
+
+        Retention is detected first because it is a separate liability. Otherwise,
+        if a Purchase Order is linked, the payment is against that PO. If no PO is
+        linked, the payment is against the supplier account / payable balance.
+        """
+        parts = [line.name or '', line.description or '']
+        if line.category_id:
+            parts.append(line.category_id.name or '')
+        if line.account_id:
+            parts.extend([line.account_id.code or '', line.account_id.name or ''])
+        text = ' '.join(parts).lower()
+
+        retention_tokens = ('retention', 'retainage', 'احتجاز', 'محتجز', 'ضمان')
+        if any(token in text for token in retention_tokens):
+            return 'retention'
+
+        if line.purchase_order_ids:
+            return 'po'
+        return 'payable'
+
+    @api.model
+    def _agent_get_retention_data(self, company):
+        """Return open retention liability separately from ordinary supplier AP."""
+        aml = self.env['account.move.line'].search([
+            ('company_id', '=', company.id),
+            ('parent_state', '=', 'posted'),
+            ('account_id.account_type', '=', 'liability_payable'),
+            ('partner_id', '!=', False),
+            ('reconciled', '=', False),
+        ])
+        aml = aml.filtered(lambda line: not company.currency_id.is_zero(line.amount_residual))
+        aml = aml.filtered(lambda line: self._agent_is_retention_account(line.account_id))
+
+        grouped = {}
+        for line in aml:
+            partner = line.partner_id.commercial_partner_id
+            data = grouped.setdefault(partner.id, {
+                'net_due': 0.0,
+                'bills': self.env['account.move'],
+                'oldest_due': False,
+            })
+            data['net_due'] += -line.amount_residual
+            move = line.move_id
+            if move.move_type in ('in_invoice', 'in_refund') and move.state == 'posted':
+                data['bills'] |= move
+                due_date = line.date_maturity or move.invoice_date_due or move.date
+                if due_date and (not data['oldest_due'] or due_date < data['oldest_due']):
+                    data['oldest_due'] = due_date
+
+        for data in grouped.values():
+            data['aging_summary'] = _('Open retention liability: %s') % format(max(data['net_due'], 0.0), ',.2f')
+        return grouped
+
+    @api.model
+    def _agent_empty_retention_data(self):
+        return {
+            'net_due': 0.0,
+            'bills': self.env['account.move'],
+            'oldest_due': False,
+            'aging_summary': _('Open retention liability: 0.00'),
+        }
 
     @api.model
     def _agent_get_payable_data(self, company):
