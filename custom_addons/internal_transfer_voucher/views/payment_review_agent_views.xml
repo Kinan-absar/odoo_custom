@@ -162,11 +162,10 @@
         <field name="model">cash.plan.line</field>
         <field name="inherit_id" ref="internal_transfer_voucher.view_cash_plan_line_list"/>
         <field name="arch" type="xml">
-            <xpath expr="//list" position="inside">
-                <header>
-                    <button name="action_run_payment_review_agent" type="object" string="Payment Review" class="btn-primary"
-                            groups="internal_transfer_voucher.group_weekly_payment_plan_manager,internal_transfer_voucher.group_payment_execution_manager"/>
-                </header>
+            <!-- Keep one list header: a second header hides buttons from the base
+                 view. Payment Reviews has its own menu and Run button. -->
+            <xpath expr="//list/header/button[@name='action_submit_selected_to_ceo']" position="attributes">
+                <attribute name="display">always</attribute>
             </xpath>
         </field>
     </record>
