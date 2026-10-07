@@ -383,6 +383,8 @@ class CashPlanReviewLine(models.Model):
             target = targets[:1]
             self.target_plan_line_id = target
             if target:
+                if line.payment_voucher_id or line.receipt_voucher_id or line.internal_transfer_id:
+                    raise UserError(_('This replaced PO payment is linked to a voucher or transfer. Unlink it manually before conversion.'))
                 if not self._safe_line(target):
                     raise UserError(_('The target supplier-balance planned payment is locked. Run a new review.'))
                 self._prepare_line_for_agent_change(target)
@@ -390,7 +392,13 @@ class CashPlanReviewLine(models.Model):
                     'forecast_amount': self.proposed_amount,
                     'bill_ids': [(6, 0, self.bill_ids.ids)],
                 })
-                line.action_cancel()
+                # The payable target replaces this PO planning item completely.
+                # Retain a textual audit reference in the review, not a cancelled
+                # duplicate in Planned Payments. Never delete voucher-linked items.
+                source_reference = '%s (#%s)' % (line.display_name, line.id)
+                self.reason = '%s\n%s' % (self.reason or '', _('Replaced PO planned payment deleted: %s') % source_reference)
+                self.plan_line_id = False
+                line.unlink()
             else:
                 if self.proposed_amount <= 0:
                     raise UserError(_('There is no positive supplier payable balance to convert this PO into.'))

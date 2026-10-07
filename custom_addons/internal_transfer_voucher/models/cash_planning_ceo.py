@@ -175,6 +175,28 @@ class CashPlanLineCEO(models.Model):
                     })
         return result
 
+    def action_submit_selected_to_ceo(self):
+        if not self:
+            raise UserError(_('Select at least one planned payment first.'))
+        # Validate the whole selection before sending any payment. In particular,
+        # never revive cancelled payments or reset an existing CEO approval.
+        for line in self:
+            if (line.flow_type != 'out' or line.state != 'planned'
+                    or line.ceo_decision != 'not_sent' or line.is_unplanned):
+                raise UserError(_('Cannot submit %s. Select only planned outgoing payments with CEO Decision Not Sent. No selected payments were submitted.') % line.display_name)
+            if not line.partner_id:
+                raise UserError(_('Select the supplier on %s before submitting. No selected payments were submitted.') % line.display_name)
+        self.action_submit_to_ceo()
+        return {
+            'type': 'ir.actions.client', 'tag': 'display_notification',
+            'params': {
+                'title': _('Submit to CEO'),
+                'message': _('%s selected payment(s) submitted to CEO.') % len(self),
+                'type': 'success', 'sticky': False,
+                'next': {'type': 'ir.actions.act_window_close'},
+            },
+        }
+
     def action_submit_to_ceo(self):
         for line in self:
             if line.flow_type != 'out':

@@ -26,9 +26,14 @@ class Fields:
 odoo=types.ModuleType('odoo');odoo.api=Api();odoo.fields=Fields();odoo.models=types.SimpleNamespace(Model=Base);odoo._=lambda x:x
 odoo.fields.Datetime=type('DT',(),{'__new__':lambda cls,*a,**kw:None,'now':staticmethod(datetime.now)})
 sys.modules['odoo']=odoo
-exceptions=types.ModuleType('odoo.exceptions');exceptions.UserError=UserError;sys.modules['odoo.exceptions']=exceptions
+exceptions=types.ModuleType('odoo.exceptions');exceptions.UserError=UserError;exceptions.ValidationError=UserError;sys.modules['odoo.exceptions']=exceptions
 spec=importlib.util.spec_from_file_location('fixed_agent',Path(__file__).resolve().parents[1] / 'models' / 'payment_review_agent.py')
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+# Markup helpers are not used by the CEO submission paths tested here.
+markup=types.ModuleType('markupsafe');markup.Markup=str;markup.escape=lambda value:value
+sys.modules['markupsafe']=markup
+ceo_spec=importlib.util.spec_from_file_location('fixed_ceo',Path(__file__).resolve().parents[1] / 'models' / 'cash_planning_ceo.py')
+ceo_module=importlib.util.module_from_spec(ceo_spec);ceo_spec.loader.exec_module(ceo_module)
 
 class Row:
     def __init__(self,**kw): self.__dict__.update(kw)
@@ -83,7 +88,7 @@ class Currency(Row):
     def _convert(self,a,target,company,ondate):return a*self.rate/target.rate
 
 class Store:
-    def __init__(self):self.rows=[]
+    def __init__(self):self.rows=[];self.next_id=1
     def search(self,domain,**kw):
         rows=self.rows
         for field,op,value in domain:
@@ -162,10 +167,12 @@ class Tests(unittest.TestCase):
         self.env={'cash.plan.line':self.agent,'res.partner':Row(browse=lambda pid:self.partner),'account.move':RS(),'account.account':Row(search=lambda *a,**kw:Row(id=19))}
         self.env=type('Env',(dict,),{})(self.env);self.env.cr=Row(execute=lambda *a:None)
         self.agent.env=self.env
-        self.rec=Rec();self.rec.env=self.env;self.rec.store=self.store;self.rec.review_id=Row(company_id=self.company);self.rec.partner_id=self.partner;self.rec.purchase_order_id=RS();self.rec.plan_line_id=RS();self.rec.target_plan_line_id=RS();self.rec.source_type='new_payable';self.rec.action='add';self.rec.agent_action='add';self.rec.proposed_amount=8;self.rec.amount_confirmed=False;self.rec.applied=False;self.rec.can_apply=False;self.rec.bill_ids=RS()
+        self.rec=Rec();self.rec.env=self.env;self.rec.store=self.store;self.rec.review_id=Row(company_id=self.company);self.rec.partner_id=self.partner;self.rec.purchase_order_id=RS();self.rec.plan_line_id=RS();self.rec.target_plan_line_id=RS();self.rec.source_type='new_payable';self.rec.action='add';self.rec.agent_action='add';self.rec.proposed_amount=8;self.rec.amount_confirmed=False;self.rec.reason='test';self.rec.applied=False;self.rec.can_apply=False;self.rec.bill_ids=RS()
         self.agent.controls={'po_data':{},'generated_by_partner':{1:5},'po_count_by_partner':{1:1},'ambiguous_partners':set(),'retention_data':{1:{'net_due':5}}}
     def plan(self,po=False,amount=7,decision='pending',name='Balance'):
-        r=Row(id=len(self.store.rows)+1,name=name,description='',category_id=False,account_id=False,company_id=self.company,partner_id=self.partner,forecast_amount=amount,purchase_order_ids=RS([self.po]) if po else RS(),ceo_decision=decision,state='planned',is_unplanned=False,flow_type='out',transaction_type='supplier')
+        r=Row(id=self.store.next_id,name=name,display_name=name,description='',category_id=False,account_id=False,company_id=self.company,partner_id=self.partner,forecast_amount=amount,purchase_order_ids=RS([self.po]) if po else RS(),ceo_decision=decision,state='planned',is_unplanned=False,flow_type='out',transaction_type='supplier')
+        self.store.next_id+=1
+        r.unlink=lambda:self.store.rows.remove(r)
         self.store.rows.append(r);return r
     def bill(self,subtotal=100,retention=5,refund=False,currency=None):
         product=Row(display_type='product',purchase_line_id=Row(order_id=self.po),account_id=Row(code='601001'),price_subtotal=subtotal,balance=(-1 if refund else 1)*subtotal)
@@ -208,7 +215,35 @@ class Tests(unittest.TestCase):
         self.bill();line=self.plan(po=True);self.rec.action='convert';self.rec.source_type='existing_po';self.rec.plan_line_id=line;self.rec.purchase_order_id=self.po;self.rec._apply_recommendation();self.assertFalse(line.purchase_order_ids);self.assertEqual(line.name,'Balance Due - Supplier')
     def test_second_conversion_reuses_live_target(self):
         self.bill();a=self.plan(po=True);self.rec.action='convert';self.rec.source_type='existing_po';self.rec.plan_line_id=a;self.rec.purchase_order_id=self.po;self.rec._apply_recommendation()
-        b=self.plan(po=True);self.rec.applied=False;self.rec.plan_line_id=b;self.rec.target_plan_line_id=RS();self.rec._apply_recommendation();self.assertEqual(b.state,'cancel');self.assertEqual(a.forecast_amount,8);self.assertFalse(a.purchase_order_ids)
+        b=self.plan(po=True);self.rec.applied=False;self.rec.plan_line_id=b;self.rec.target_plan_line_id=RS();self.rec._apply_recommendation();self.assertNotIn(b,self.store.rows);self.assertEqual(a.forecast_amount,8);self.assertFalse(a.purchase_order_ids);self.assertFalse(self.rec.plan_line_id);self.assertIs(self.rec.target_plan_line_id[0],a);self.assertIn('deleted',self.rec.reason)
+    def test_conversion_preserves_voucher_linked_source(self):
+        self.bill();self.plan(amount=8);source=self.plan(po=True)
+        source.payment_voucher_id=Row(id=91)
+        self.rec.action='convert';self.rec.source_type='existing_po';self.rec.plan_line_id=source;self.rec.purchase_order_id=self.po
+        with self.assertRaisesRegex(UserError,'linked to a voucher'):
+            self.rec._apply_recommendation()
+        self.assertIn(source,self.store.rows);self.assertFalse(self.rec.applied)
+    def test_submit_selected_to_ceo(self):
+        a=self.plan(decision='not_sent');b=self.plan(decision='not_sent')
+        selection=ActionSet([a,b]);selection.action_submit_to_ceo=lambda:ceo_module.CashPlanLineCEO.action_submit_to_ceo(selection)
+        result=ceo_module.CashPlanLineCEO.action_submit_selected_to_ceo(selection)
+        self.assertEqual([a.ceo_decision,b.ceo_decision],['pending','pending']);self.assertEqual(a.approved_amount,0)
+        self.assertEqual(result['params']['next'],{'type':'ir.actions.act_window_close'})
+    def test_submit_selection_validates_all_before_changes(self):
+        for invalid in ['pending','approved','adjusted','held','rejected']:
+            a=self.plan(decision='not_sent');b=self.plan(decision=invalid)
+            with self.assertRaisesRegex(UserError,'No selected payments were submitted'):
+                ceo_module.CashPlanLineCEO.action_submit_selected_to_ceo(ActionSet([a,b]))
+            self.assertEqual(a.ceo_decision,'not_sent');self.assertEqual(b.ceo_decision,invalid)
+    def test_submit_selection_rejects_cancelled_paid_receipts_and_missing_partner(self):
+        for attribute,value in [('state','cancel'),('state','executed'),('state','approved'),('flow_type','in'),('is_unplanned',True),('partner_id',False)]:
+            a=self.plan(decision='not_sent');b=self.plan(decision='not_sent');setattr(b,attribute,value)
+            with self.assertRaises(UserError):
+                ceo_module.CashPlanLineCEO.action_submit_selected_to_ceo(ActionSet([a,b]))
+            self.assertEqual(a.ceo_decision,'not_sent')
+    def test_submit_selection_empty(self):
+        with self.assertRaisesRegex(UserError,'Select at least one'):
+            ceo_module.CashPlanLineCEO.action_submit_selected_to_ceo(ActionSet())
     def test_partial_po_convert_blocked(self):
         self.bill(subtotal=50);self.rec.action='convert';self.rec.source_type='existing_po';self.rec.plan_line_id=self.plan(po=True);self.rec.purchase_order_id=self.po
         with self.assertRaises(UserError):self.rec._apply_recommendation()
