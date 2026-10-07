@@ -63,7 +63,9 @@ class CashPlanReview(models.Model):
         self.line_ids.unlink()
         self.review_date = fields.Datetime.now()
         self.env['cash.plan.line']._populate_payment_review(self)
-        return {'type': 'ir.actions.client', 'tag': 'reload'}
+        # Odoo's view-button onClose callback reloads the existing form model.
+        # Avoid a full interface reload or another action/breadcrumb.
+        return {'type': 'ir.actions.act_window_close'}
 
 
     def action_open_recommendations(self):
@@ -246,7 +248,10 @@ class CashPlanReviewLine(models.Model):
                 'title': _('Payment Review'),
                 'message': _('%s selected recommendation(s) applied successfully.') % len(self),
                 'type': 'success', 'sticky': False,
-                'next': reviews.action_open_recommendations(),
+                # No dialog is open for the native list header button. Closing
+                # invokes its onClose/model.load callback in the same controller,
+                # retaining the review domain, filters, and breadcrumbs.
+                'next': {'type': 'ir.actions.act_window_close'},
             },
         }
 

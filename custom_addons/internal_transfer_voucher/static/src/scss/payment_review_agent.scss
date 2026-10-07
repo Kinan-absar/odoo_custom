@@ -14,7 +14,7 @@
 }
 
 /* Dedicated recommendation list: behave like a normal Odoo list, but let explanation cells wrap. */
-.o_list_view .o_payment_review_line_list .o_payment_review_wrap,
+.o_list_view.o_payment_review_line_list .o_payment_review_wrap,
 .o_list_renderer .o_payment_review_line_list .o_payment_review_wrap {
     white-space: normal !important;
     overflow: visible !important;
@@ -24,15 +24,25 @@
     padding-top: 8px !important;
     padding-bottom: 8px !important;
 }
-.o_list_view .o_payment_review_line_list .o_payment_review_reason {
+.o_list_view.o_payment_review_line_list .o_payment_review_reason {
     min-width: 320px !important;
     max-width: 520px !important;
 }
-.o_list_view .o_payment_review_line_list .o_payment_review_aging {
+.o_list_view.o_payment_review_line_list .o_payment_review_aging {
     min-width: 260px !important;
     max-width: 420px !important;
 }
-.o_list_view .o_payment_review_line_list td:not(.o_payment_review_wrap) {
+.o_list_view.o_payment_review_line_list td:not(.o_payment_review_wrap) {
     vertical-align: top !important;
     padding-top: 8px !important;
+}
+
+/* Odoo places the arch class on the list-view root itself. The native
+   selection cell otherwise remains vertically centered in tall rows. */
+.o_list_view.o_payment_review_line_list .o_list_renderer .o_list_table tbody > tr > td.o_list_record_selector {
+    vertical-align: top !important;
+    padding-top: 8px !important;
+}
+.o_list_view.o_payment_review_line_list .o_list_record_selector .o-checkbox {
+    margin-top: 0 !important;
 }

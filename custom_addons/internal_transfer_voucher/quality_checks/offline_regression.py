@@ -266,6 +266,6 @@ class Tests(unittest.TestCase):
     def test_native_selection_success_reports_and_preserves_scope(self):
         self.rec.review_id.line_ids=RS([self.rec]);self.rec.review_id.action_open_recommendations=lambda:{'domain':[('review_id','=',44)]}
         result=module.CashPlanReviewLine.action_apply_selected_from_list(ActionSet([self.rec]))
-        self.assertTrue(self.rec.applied);self.assertEqual(result['params']['type'],'success');self.assertEqual(result['params']['next']['domain'],[('review_id','=',44)])
+        self.assertTrue(self.rec.applied);self.assertEqual(result['params']['type'],'success');self.assertEqual(result['params']['next'],{'type':'ir.actions.act_window_close'})
 
 if __name__=='__main__':unittest.main(verbosity=2)
