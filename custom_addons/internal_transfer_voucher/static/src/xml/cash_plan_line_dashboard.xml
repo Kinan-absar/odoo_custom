@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
   <t t-name="internal_transfer_voucher.CashPlanLineListView" t-inherit="web.ListView" t-inherit-mode="primary">
-    <xpath expr="//Layout/t[@t-component]" position="before"><CashPlanLineDashboard onFilter.bind="onDashboardFilter"/></xpath>
+    <xpath expr="//Layout/t[@t-component]" position="before"><CashPlanLineDashboard onFilter.bind="onDashboardFilter" records="model.root.records" revision="dashboardRevision"/></xpath>
   </t>
   <t t-name="internal_transfer_voucher.CashPlanLineDashboard">
-    <div class="o_cash_plan_dashboard px-3 py-3 border-bottom bg-view"><div class="d-flex flex-wrap gap-2">
+    <div class="o_cash_plan_dashboard px-3 py-3 border-bottom bg-view"><button class="btn btn-link btn-sm float-end" t-on-click="refresh" title="Refresh payment totals">Refresh totals</button><div class="d-flex flex-wrap gap-2">
       <div class="cp_card cp_neutral" t-on-click="() => this.filter([])"><div class="cp_value"><t t-esc="data.all_count || 0"/></div><div class="cp_label">All</div></div>
       <div class="cp_card cp_muted" t-on-click="() => this.filter([['ceo_decision','=','not_sent']])"><div class="cp_value"><t t-esc="data.not_sent_count || 0"/></div><div class="cp_label">Not Submitted</div></div>
       <div class="cp_card cp_orange" t-on-click="() => this.filter([['ceo_decision','=','pending']])"><div class="cp_value"><t t-esc="data.pending_count || 0"/></div><div class="cp_label">Pending CEO</div></div>

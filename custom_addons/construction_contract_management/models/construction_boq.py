@@ -216,6 +216,11 @@ class ConstructionContractBoqLine(models.Model):
                 rec.contract_qty = 0.0
                 rec.unit_rate = 0.0
 
+    @api.depends('item_code', 'description')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = ' - '.join(filter(None, [rec.item_code, rec.description])) or f'BOQ {rec.id}'
+
     def name_get(self):
         result = []
         for rec in self:

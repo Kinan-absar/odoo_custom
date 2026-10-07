@@ -1,0 +1,11 @@
+<odoo noupdate="1">
+    <record id="cron_sync_payment_voucher_sign" model="ir.cron">
+        <field name="name">Payment Voucher: Sync Signature Status</field>
+        <field name="model_id" ref="internal_transfer_voucher.model_account_payment_voucher"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync_voucher_sign_status()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

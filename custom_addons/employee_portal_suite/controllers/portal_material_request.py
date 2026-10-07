@@ -1,6 +1,7 @@
 from odoo import http, fields, _
 from odoo.http import request
 import base64
+from datetime import timedelta
 from markupsafe import Markup, escape
 
 def _mr_status_badge(rec):
@@ -177,6 +178,19 @@ class EmployeePortalMaterialRequests(http.Controller):
                 "projects": projects,
                 "single_project": projects[:1] if len(projects) == 1 else False,
                 "error_message": _("Please select one of the projects configured on your work location."),
+            })
+
+        # Reject invalid dates before creating the request or any material lines.
+        try:
+            delivery = fields.Date.to_date(post.get('delivery_date'))
+        except (TypeError, ValueError):
+            delivery = False
+        if not delivery or delivery < fields.Date.context_today(request.env['material.request']) + timedelta(days=3):
+            return request.render('employee_portal_suite.employee_material_request_new_form', {
+                'uoms': request.env['uom.uom'].sudo().search([]),
+                'projects': projects,
+                'single_project': projects[:1] if len(projects) == 1 else False,
+                'error_message': _('Set a Delivery Date at least three days after the Request Date.'),
             })
 
         # Create main request

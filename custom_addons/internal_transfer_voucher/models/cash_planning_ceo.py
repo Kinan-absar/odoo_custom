@@ -115,17 +115,6 @@ class CashPlanLineCEO(models.Model):
              WHERE flow_type = 'in'
                AND COALESCE(ceo_decision, '') != 'not_required'
         """)
-        self.env.cr.execute("""
-            UPDATE cash_plan_line
-               SET state = 'planned',
-                   ceo_decision = 'not_sent',
-                   approved_amount = 0,
-                   ceo_approved_by = NULL,
-                   ceo_approved_date = NULL
-             WHERE flow_type = 'out'
-               AND state = 'cancel'
-               AND COALESCE(ceo_decision, '') = 'pending'
-        """)
 
     @api.depends('flow_type', 'forecast_amount', 'approved_amount', 'ceo_decision')
     def _compute_execution_amount(self):
@@ -198,13 +187,14 @@ class CashPlanLineCEO(models.Model):
         }
 
     def action_submit_to_ceo(self):
+        # Check all rows before any mutation; the form and list share this guard.
         for line in self:
-            if line.flow_type != 'out':
-                raise UserError(_('Receipts do not require CEO approval.'))
-            if line.state == 'executed':
-                raise UserError(_('An executed payment cannot be resubmitted.'))
+            if (line.flow_type != 'out' or line.state != 'planned'
+                    or line.ceo_decision != 'not_sent' or line.is_unplanned):
+                raise UserError(_('Cannot submit %s. Select only planned outgoing payments with CEO Decision Not Sent. No selected payments were submitted.') % line.display_name)
             if not line.partner_id:
-                raise UserError(_('Select the supplier before submitting this planned payment to the CEO.'))
+                raise UserError(_('Select the supplier on %s before submitting. No selected payments were submitted.') % line.display_name)
+        for line in self:
             line.write({
                 'state': 'planned',
                 'ceo_decision': 'pending',

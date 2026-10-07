@@ -1,0 +1,23 @@
+<odoo>
+    <record id="view_payment_voucher_sign_form" model="ir.ui.view">
+        <field name="name">account.payment.voucher.sign.form</field>
+        <field name="model">account.payment.voucher</field>
+        <field name="inherit_id" ref="internal_transfer_voucher.view_payment_voucher_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_send_to_sign" type="object" string="Send to Sign" class="btn-primary" invisible="state == 'cancel' or signature_state != 'draft'"/>
+                <button name="action_open_signature_status" type="object" string="Signature Status" invisible="not sign_template_id"/>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <group string="Document Signing">
+                    <field name="project_id" domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]"/>
+                    <field name="revision" readonly="1"/>
+                    <field name="signature_state" widget="badge" readonly="1"/>
+                    <field name="signature_status_text"/>
+                    <field name="signing_workflow_id"/>
+                    <field name="sign_template_id" invisible="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

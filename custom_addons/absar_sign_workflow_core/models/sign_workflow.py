@@ -9,6 +9,7 @@ class AbsarSignWorkflow(models.Model):
     _description = "Document Signing Workflow"
     _order = "company_id, model_id, project_id, name"
 
+    is_template = fields.Boolean(default=False, copy=False)
     name = fields.Char(required=True)
     active = fields.Boolean(default=True)
     company_id = fields.Many2one(
@@ -32,6 +33,26 @@ class AbsarSignWorkflow(models.Model):
     )
     step_count = fields.Integer(compute="_compute_step_count")
 
+    def action_use_template(self):
+        self.ensure_one()
+        if not self.is_template:
+            raise UserError(_('Choose a workflow template first.'))
+        workflow = self.copy({'name': self.name + _(' - Project Copy'),
+                              'is_template': False, 'active': False, 'project_id': False})
+        return {'type': 'ir.actions.act_window', 'res_model': self._name,
+                'res_id': workflow.id, 'view_mode': 'form', 'target': 'current',
+                'context': {'active_test': False}}
+
+    @api.constrains('is_template', 'active')
+    def _check_template_inactive(self):
+        if any(rec.is_template and rec.active for rec in self):
+            raise ValidationError(_('Templates cannot be activated. Use Create Project Workflow, fill the project and approvers, then activate the copy.'))
+
+    @api.constrains('active', 'step_ids', 'is_template')
+    def _check_active_signers(self):
+        for workflow in self.filtered('active'):
+            workflow._validate_configuration()
+
     @api.depends("step_ids")
     def _compute_step_count(self):
         for rec in self:
@@ -43,6 +64,7 @@ class AbsarSignWorkflow(models.Model):
             domain = [
                 ("id", "!=", rec.id),
                 ("active", "=", True),
+                ("is_template", "=", False),
                 ("company_id", "=", rec.company_id.id),
                 ("model_id", "=", rec.model_id.id),
             ]
@@ -59,6 +81,8 @@ class AbsarSignWorkflow(models.Model):
 
     def _validate_configuration(self):
         self.ensure_one()
+        if self.is_template:
+            raise UserError(_('Create a project workflow from this template and fill its signer users first.'))
         steps = self.step_ids.sorted("sequence")
         if not steps:
             raise UserError(_("Add at least one signer step before using this workflow."))
@@ -123,6 +147,9 @@ class AbsarSignWorkflow(models.Model):
 
         if configuration:
             workflow_menu.write({"parent_id": configuration.id, "sequence": 90})
+            template_menu = self.env.ref('absar_sign_workflow_core.menu_sign_workflow_templates', raise_if_not_found=False)
+            if template_menu:
+                template_menu.write({'parent_id': configuration.id, 'sequence': 91})
             if absar_root and "active" in absar_root._fields:
                 absar_root.write({"active": False})
             return True
@@ -159,7 +186,7 @@ class AbsarSignWorkflowStep(models.Model):
     signer_user_id = fields.Many2one(
         "res.users",
         string="Signer User",
-        required=True,
+        required=False,
         domain=[("active", "=", True)],
         help="Internal and portal users can both be selected. Odoo Sign sends the request to the selected user's contact/email.",
     )
@@ -171,6 +198,11 @@ class AbsarSignWorkflowStep(models.Model):
         string="Odoo Sign Role",
         help="Automatically created/reused from the workflow role name. You can still choose a different Odoo Sign role manually when needed.",
     )
+
+    @api.constrains('signer_user_id', 'workflow_id', 'sequence', 'name')
+    def _check_active_signer_configuration(self):
+        for workflow in self.mapped('workflow_id').filtered('active'):
+            workflow._validate_configuration()
 
     def _ensure_sign_role(self):
         """Return a concrete Odoo Sign role for this business workflow step."""
@@ -200,6 +232,7 @@ class AbsarSignWorkflowService(models.AbstractModel):
         if project:
             workflow = Workflow.search([
                 ("active", "=", True),
+                ("is_template", "=", False),
                 ("company_id", "=", company.id),
                 ("model_id", "=", model.id),
                 ("project_id", "=", project.id),
@@ -207,6 +240,7 @@ class AbsarSignWorkflowService(models.AbstractModel):
         if not workflow:
             workflow = Workflow.search([
                 ("active", "=", True),
+                ("is_template", "=", False),
                 ("company_id", "=", company.id),
                 ("model_id", "=", model.id),
                 ("project_id", "=", False),
