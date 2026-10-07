@@ -76,11 +76,13 @@
             <xpath expr="//notebook" position="inside">
                 <page string="Signing Package" name="absar_signing_package">
                     <group>
-                        <field name="quotation_attachment_ids" widget="many2many_binary"
+                        <field name="quotation_attachment_ids" widget="many2many_tags"
                                string="Supplier Quotation PDF(s)"
+                               domain="[('res_model', '=', 'purchase.order'), ('res_id', '=', id), ('mimetype', '=', 'application/pdf')]"
+                               options="{'no_create': True, 'no_create_edit': True}"
                                readonly="signature_state != 'draft'"/>
                     </group>
-                    <div class="text-muted">Final signing PDF order: Purchase Order → selected Supplier Quotation PDF(s) → linked Material Request.</div>
+                    <div class="text-muted">Final signing PDF order: Purchase Order → Supplier Quotation PDF(s) → linked Material Request. If no quotation is selected here, the module automatically uses the quotation PDF already attached to this PO chatter when it can identify it safely.</div>
                 </page>
             </xpath>
         </field>

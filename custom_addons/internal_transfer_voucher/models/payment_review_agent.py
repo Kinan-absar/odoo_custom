@@ -18,7 +18,7 @@ class CashPlanReview(models.Model):
     year = fields.Selection(
         selection=lambda self: [('all', _('All Open'))] + [(str(y), str(y)) for y in range(date.today().year + 1, date.today().year - 7, -1)],
         string='Year', default=lambda self: str(date.today().year), required=True,
-        help='Filters planned-payment dates and purchase-order dates. Supplier aging remains the full live open balance so older unpaid items are not accidentally ignored.',
+        help='Filters dated existing plans and new PO candidates. Undated active plans remain visible. Duplicate and retention controls always include all years; supplier aging remains the full live open balance.',
     )
     state = fields.Selection([
         ('draft', 'Review'),
@@ -44,7 +44,7 @@ class CashPlanReview(models.Model):
             rec.remove_count = len(rec.line_ids.filtered(lambda l: l.action == 'remove'))
             rec.review_count = len(rec.line_ids.filtered(lambda l: l.action == 'review'))
             rec.safe_count = len(rec.line_ids.filtered(lambda l: l.can_apply and not l.applied))
-            rec.selected_count = len(rec.line_ids.filtered(lambda l: l.can_apply and l.apply and not l.applied))
+            rec.selected_count = len(rec.line_ids.filtered(lambda l: l.apply and not l.applied))
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -53,7 +53,6 @@ class CashPlanReview(models.Model):
                 vals['name'] = _('Payment Review %s') % fields.Date.context_today(self)
         return super().create(vals_list)
 
-    @api.model
     def action_run_payment_review_agent(self):
         return self.env['cash.plan.line'].action_run_payment_review_agent()
 
@@ -69,6 +68,9 @@ class CashPlanReview(models.Model):
 
     def action_open_recommendations(self):
         self.ensure_one()
+        # Optional signing fields and journal balances have no universal stored
+        # dependency. Refresh eligibility when opening an existing snapshot.
+        self.line_ids._compute_can_apply()
         action = self.env.ref('internal_transfer_voucher.action_cash_plan_review_line').read()[0]
         action['domain'] = [('review_id', '=', self.id)]
         action['context'] = {
@@ -80,7 +82,7 @@ class CashPlanReview(models.Model):
 
     def action_select_all_safe(self):
         self.ensure_one()
-        safe = self.line_ids.filtered(lambda l: l.can_apply and not l.applied)
+        safe = self.line_ids.filtered(lambda l: l._decision_is_safely_applicable())
         (self.line_ids - safe).write({'apply': False})
         safe.write({'apply': True})
         return {'type': 'ir.actions.client', 'tag': 'reload'}
@@ -92,15 +94,9 @@ class CashPlanReview(models.Model):
 
     def action_apply_selected(self):
         self.ensure_one()
-        selected = self.line_ids.filtered(lambda l: l.apply and l.can_apply and not l.applied)
-        if not selected:
-            raise UserError(_('Select at least one safe recommendation to apply.'))
-        for item in selected:
-            item._apply_recommendation()
-        selected.write({'apply': False})
-        remaining_safe = self.line_ids.filtered(lambda l: l.can_apply and not l.applied)
-        self.state = 'partial' if remaining_safe else 'applied'
-        return {'type': 'ir.actions.client', 'tag': 'reload'}
+        selected = self.line_ids.filtered(lambda l: l.apply and not l.applied)
+        return selected.action_apply_selected_from_list()
+
 
 
 class CashPlanReviewLine(models.Model):
@@ -152,47 +148,60 @@ class CashPlanReviewLine(models.Model):
     aging_summary = fields.Char(readonly=True)
     reason = fields.Text(readonly=True)
     apply = fields.Boolean(string='Apply', default=False)
-    can_apply = fields.Boolean(default=False, readonly=True)
+    amount_confirmed = fields.Boolean(
+        string='Amount Reviewed', default=False,
+        help='For a new PO payment, confirm the installment/advance amount before applying. The full remaining PO amount is only a suggestion.',
+    )
+    can_apply = fields.Boolean(compute='_compute_can_apply', store=True, readonly=True)
     applied = fields.Boolean(default=False, readonly=True)
 
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            vals.pop('can_apply', None)
             if vals.get('action') and not vals.get('agent_action'):
                 vals['agent_action'] = vals['action']
         return super().create(vals_list)
 
-    @api.onchange('action', 'proposed_amount')
-    def _onchange_manual_decision(self):
+    @api.depends(
+        'action', 'source_type', 'proposed_amount', 'amount_confirmed', 'applied',
+        'partner_id', 'plan_line_id.state', 'plan_line_id.ceo_decision',
+        'plan_line_id.is_unplanned', 'target_plan_line_id.state',
+        'target_plan_line_id.ceo_decision', 'target_plan_line_id.is_unplanned',
+        'purchase_order_id.state', 'purchase_order_id.invoice_status',
+        'purchase_order_id.invoice_ids.state',
+        'review_id.company_id',
+    )
+    def _compute_can_apply(self):
         for rec in self:
             rec.can_apply = rec._decision_is_safely_applicable()
-            if not rec.can_apply:
-                rec.apply = False
+
+    @api.onchange('proposed_amount')
+    def _onchange_manual_amount(self):
+        for rec in self:
+            if rec.source_type == 'new_po':
+                rec.amount_confirmed = False
 
     def write(self, vals):
-        res = super().write(vals)
-        if {'action', 'proposed_amount'} & set(vals) and not self.env.context.get('skip_recompute_can_apply'):
-            for rec in self:
-                safe = rec._decision_is_safely_applicable()
-                updates = {}
-                if rec.can_apply != safe:
-                    updates['can_apply'] = safe
-                if not safe and rec.apply:
-                    updates['apply'] = False
-                if updates:
-                    super(CashPlanReviewLine, rec.with_context(skip_recompute_can_apply=True)).write(updates)
-        return res
+        # A changed installment must be confirmed again, even through import/RPC.
+        if 'proposed_amount' in vals and 'amount_confirmed' not in vals:
+            po_rows = self.filtered(lambda l: l.source_type == 'new_po')
+            if po_rows:
+                super(CashPlanReviewLine, po_rows).write({'amount_confirmed': False})
+        return super().write(vals)
 
     def _decision_is_safely_applicable(self):
         self.ensure_one()
         if self.applied or self.action in ('keep', 'review'):
+            return False
+        if not self.partner_id:
             return False
         if self.action == 'add':
             if self.source_type == 'new_payable':
                 return self.proposed_amount > 0 and bool(self.partner_id)
             if self.source_type == 'new_po':
                 po = self.purchase_order_id
-                return bool(po and self.proposed_amount > 0 and po.state in ('purchase', 'done') and getattr(po, 'invoice_status', False) == 'no')
+                return bool(self.amount_confirmed and self._eligible_new_po(po) and self.proposed_amount > 0)
             if self.source_type == 'new_retention':
                 return bool(self.purchase_order_id and self.partner_id and self.proposed_amount > 0)
             return False
@@ -206,7 +215,7 @@ class CashPlanReviewLine(models.Model):
 
     def action_toggle_apply(self):
         self.ensure_one()
-        if not self.can_apply or self.applied:
+        if not self._decision_is_safely_applicable():
             raise UserError(_('This recommendation is not currently safe to apply automatically. Change the decision/amount or review it manually.'))
         self.apply = not self.apply
         return {'type': 'ir.actions.client', 'tag': 'reload'}
@@ -215,29 +224,127 @@ class CashPlanReviewLine(models.Model):
     def action_apply_selected_from_list(self):
         if not self:
             raise UserError(_('Select at least one recommendation first.'))
-        unsafe = self.filtered(lambda l: l.applied or not l._decision_is_safely_applicable())
+        reviews = self.mapped('review_id')
+        if len(reviews) != 1:
+            raise UserError(_('Apply recommendations from one Payment Review at a time.'))
+        unsafe = self.filtered(lambda l: not l._decision_is_safely_applicable())
         if unsafe:
             labels = []
             for line in unsafe[:8]:
-                labels.append('%s - %s' % (line.partner_id.display_name or _('No Supplier'), dict(line._fields['action'].selection).get(line.action, line.action)))
-            more = len(unsafe) - len(labels)
-            msg = _('Some selected rows are not safe to apply yet:\n- %s') % '\n- '.join(labels)
-            if more > 0:
-                msg += _('\n...and %s more.') % more
-            msg += _('\n\nChange the Decision / Proposed Amount first, or remove those rows from the selection.')
-            raise UserError(msg)
-        reviews = self.mapped('review_id')
+                note = _(' — confirm Amount Reviewed after checking the PO installment') if line.source_type == 'new_po' and not line.amount_confirmed else ''
+                labels.append('%s - %s%s' % (line.partner_id.display_name or _('No Supplier'), dict(line._fields['action'].selection).get(line.action, line.action), note))
+            raise UserError(_('Selected recommendations cannot be applied:\n- %s\nReview the decision, amount, and current payment/PO state. No selected changes were applied.') % '\n- '.join(labels))
+        # A transaction error rolls back every selected mutation; no partial success is hidden.
         for line in self:
             line._apply_recommendation()
-        for review in reviews:
-            remaining_safe = review.line_ids.filtered(lambda l: l.can_apply and not l.applied)
-            review.state = 'partial' if remaining_safe else 'applied'
-        return {'type': 'ir.actions.client', 'tag': 'reload'}
+        self.write({'apply': False})
+        remaining = reviews.line_ids.filtered(lambda l: not l.applied and l._decision_is_safely_applicable())
+        reviews.state = 'partial' if remaining else 'applied'
+        return {
+            'type': 'ir.actions.client', 'tag': 'display_notification',
+            'params': {
+                'title': _('Payment Review'),
+                'message': _('%s selected recommendation(s) applied successfully.') % len(self),
+                'type': 'success', 'sticky': False,
+                'next': reviews.action_open_recommendations(),
+            },
+        }
+
+    def _eligible_new_po(self, po):
+        agent = self.env['cash.plan.line']
+        return bool(
+            po and po.company_id == self.review_id.company_id
+            and po.state in ('purchase', 'done') and po.invoice_status == 'no'
+            and not agent._agent_signature_note(po)
+            and not agent._agent_po_posted_bills(po)
+            and not agent._agent_po_draft_bills(po)
+        )
+
+    def _active_supplier_plans(self):
+        return self.env['cash.plan.line'].search([
+            ('company_id', '=', self.review_id.company_id.id),
+            ('flow_type', '=', 'out'), ('transaction_type', '=', 'supplier'),
+            ('partner_id.commercial_partner_id', '=', self.partner_id.commercial_partner_id.id),
+            ('state', 'not in', ('executed', 'cancel')),
+        ])
+
+    def _validate_live_recommendation(self):
+        """Reject snapshots whose liability, source, or coverage has changed."""
+        agent = self.env['cash.plan.line']
+        company = self.review_id.company_id
+        po = self.purchase_order_id
+        line = self.plan_line_id
+        if line and (line.company_id != company or line.partner_id.commercial_partner_id != self.partner_id.commercial_partner_id):
+            raise UserError(_('The planned payment supplier/company changed. Run a new review.'))
+        if line and self.source_type in ('existing_po', 'existing_retention') and line.purchase_order_ids != po:
+            raise UserError(_('The planned payment PO reference changed. Run a new review.'))
+        if po and po.company_id != company:
+            raise UserError(_('The purchase order belongs to another company.'))
+        if self.partner_id and line:
+            expected_basis = {'existing_po': 'po', 'existing_payable': 'payable', 'existing_retention': 'retention'}.get(self.source_type)
+            if expected_basis and agent._agent_plan_basis(line) != expected_basis:
+                raise UserError(_('The planned payment basis changed or it was already converted. Run a new review.'))
+        if self.source_type in ('new_payable', 'existing_payable') or self.action == 'convert':
+            data = agent._agent_get_payable_data(company).get(self.partner_id.commercial_partner_id.id, agent._agent_empty_payable_data())
+            if self.action in ('add', 'update', 'convert'):
+                if company.currency_id.compare_amounts(self.proposed_amount, max(data['net_due'], 0.0)):
+                    raise UserError(_('The supplier payable balance changed or the proposed amount differs from the current balance. Run a new review.'))
+                self.bill_ids = [(6, 0, data['bills'].ids)]
+            if self.action == 'remove' and self.agent_action == 'remove':
+                others = (self._active_supplier_plans() - line).filtered(lambda l: agent._agent_plan_basis(l) == 'payable')
+                if data['net_due'] > 0 and not others:
+                    raise UserError(_('This supplier still has a positive payable balance and no other balance plan. Run a new review.'))
+        if self.source_type in ('new_retention', 'existing_retention'):
+            if not po or len(line.purchase_order_ids) > 1:
+                raise UserError(_('Retention requires one unambiguous PO reference.'))
+            same_po = self._active_supplier_plans().filtered(
+                lambda l: agent._agent_plan_basis(l) == 'retention' and l.purchase_order_ids == po
+            )
+            if self.action != 'remove' and self.source_type == 'existing_retention' and len(same_po) > 1:
+                raise UserError(_('Multiple retention payments cover this PO. Resolve their combined amount before updating one payment.'))
+            controls = agent._agent_retention_controls(company)
+            pdata = controls['po_data'].get(po.id) or agent._agent_po_retention_candidate_data(po, company)
+            clear, amount = agent._agent_retention_allocation(po, pdata, controls, company)
+            if not clear or (self.action != 'remove' and not pdata['fully_invoiced_by_amount']):
+                raise UserError(_('Current posted invoices / account 201019 do not support a safe retention allocation. Run a new review.'))
+            expected = 0.0 if self.action == 'remove' else amount
+            if (self.action == 'remove' and not company.currency_id.is_zero(amount)) or company.currency_id.compare_amounts(self.proposed_amount, expected):
+                raise UserError(_('The open PO retention differs from this recommendation. Run a new review.'))
+            self.bill_ids = [(6, 0, pdata['bills'].ids)]
+            if self.source_type == 'new_retention':
+                if po.state not in ('purchase', 'done'):
+                    raise UserError(_('A new retention plan requires a confirmed PO.'))
+                floating = self._active_supplier_plans().filtered(lambda l: agent._agent_plan_basis(l) == 'retention' and len(l.purchase_order_ids) != 1)
+                if floating:
+                    raise UserError(_('An existing retention plan has no single PO allocation. Resolve it before adding PO retention.'))
+        if self.source_type == 'new_po':
+            if not self._eligible_new_po(po):
+                raise UserError(_('The PO is unsigned, billed, has a draft bill, or is no longer eligible. Run a new review.'))
+            due = agent._agent_po_due_company_currency(po, company)
+            if company.currency_id.compare_amounts(self.proposed_amount, due) > 0:
+                raise UserError(_('The proposed installment exceeds the current remaining PO balance.'))
+        if self.action == 'convert':
+            if not po or not agent._agent_po_posted_bills(po):
+                raise UserError(_('This PO no longer has posted vendor bills. Run a new review.'))
+            if not agent._agent_po_retention_candidate_data(po, company)['fully_invoiced_by_amount']:
+                raise UserError(_('This PO is only partially invoiced by amount. Review its remaining uninvoiced obligation before converting.'))
+        if self.source_type == 'existing_po' and self.action == 'update':
+            if not self._eligible_new_po(po) or company.currency_id.compare_amounts(self.proposed_amount, agent._agent_po_due_company_currency(po, company)) > 0:
+                raise UserError(_('The PO is no longer eligible or the proposed amount exceeds its remaining balance. Run a new review.'))
+        if self.source_type == 'existing_po' and self.action == 'remove' and self.agent_action == 'remove':
+            due = agent._agent_po_due_company_currency(po, company) if po else 0.0
+            payable = agent._agent_get_payable_data(company).get(self.partner_id.commercial_partner_id.id, agent._agent_empty_payable_data())
+            if po and po.state in ('purchase', 'done') and due > 0 and not (agent._agent_po_posted_bills(po) and payable['net_due'] <= 0):
+                raise UserError(_('The PO still has an outstanding obligation. Run a new review.'))
 
     def _apply_recommendation(self):
         self.ensure_one()
-        if self.applied or not self.can_apply:
-            return
+        if not self._decision_is_safely_applicable():
+            raise UserError(_('This recommendation is already applied, review-only, unconfirmed, or locked. No change was applied.'))
+        # Serialize agent mutations for one supplier; re-query duplicate targets afterwards.
+        if self.partner_id:
+            self.env.cr.execute('SELECT id FROM res_partner WHERE id = %s FOR UPDATE', [self.partner_id.commercial_partner_id.id])
+        self._validate_live_recommendation()
 
         line = self.plan_line_id
         company = self.review_id.company_id
@@ -263,7 +370,13 @@ class CashPlanReviewLine(models.Model):
             if not line or not self._safe_line(line):
                 raise UserError(_('This PO planned payment is no longer safe to convert automatically. Run a new review.'))
             self._prepare_line_for_agent_change(line)
-            target = self.target_plan_line_id
+            targets = (self._active_supplier_plans() - line).filtered(
+                lambda l: self.env['cash.plan.line']._agent_plan_basis(l) == 'payable'
+            )
+            if len(targets) > 1:
+                raise UserError(_('Multiple supplier-balance plans exist. Resolve duplicates and run a new review.'))
+            target = targets[:1]
+            self.target_plan_line_id = target
             if target:
                 if not self._safe_line(target):
                     raise UserError(_('The target supplier-balance planned payment is locked. Run a new review.'))
@@ -280,13 +393,14 @@ class CashPlanReviewLine(models.Model):
                 # link must be removed. A PO link means this is a PO-based payment.
                 line.with_context(allow_locked_write=True).write({
                     'name': _('Balance Due - %s') % self.partner_id.display_name,
+                    'purchase_order_ids': [(5, 0, 0)],
                     'bill_ids': [(6, 0, self.bill_ids.ids)],
                     'forecast_amount': self.proposed_amount,
                 })
 
         elif self.action == 'add' and self.source_type == 'new_po':
             po = self.purchase_order_id
-            if not po or po.state not in ('purchase', 'done') or getattr(po, 'invoice_status', False) != 'no':
+            if not self.amount_confirmed or not self._eligible_new_po(po):
                 raise UserError(_('The purchase order is no longer an eligible Nothing-to-Bill PO. Run a new review.'))
             if self.proposed_amount <= 0:
                 raise UserError(_('Enter the amount you want to plan for this PO.'))
@@ -330,6 +444,8 @@ class CashPlanReviewLine(models.Model):
                 ('company_ids', 'in', company.id),
                 ('code', '=', '201019'),
             ], limit=1)
+            if not retention_account:
+                raise UserError(_('Account 201019 Retention Payable is missing for this company.'))
             self.env['cash.plan.line'].create({
                 'name': _('Retention - %s') % po.name,
                 'company_id': company.id,
@@ -348,17 +464,13 @@ class CashPlanReviewLine(models.Model):
             if self.proposed_amount <= 0:
                 raise UserError(_('There is no positive payable balance to add.'))
             # Re-check for an active supplier-balance line to avoid creating a duplicate
-            candidates = self.env['cash.plan.line'].search([
-                ('company_id', '=', company.id),
-                ('flow_type', '=', 'out'),
-                ('transaction_type', '=', 'supplier'),
-                ('partner_id', '=', self.partner_id.id),
-                ('state', 'not in', ('executed', 'cancel')),
-            ])
+            candidates = self._active_supplier_plans()
             existing = candidates.filtered(lambda l: self.env['cash.plan.line']._agent_plan_basis(l) == 'payable')[:1]
             if existing:
                 raise UserError(_('A supplier-balance planned payment now exists for %s. Run a new review.') % self.partner_id.display_name)
 
+            if candidates.filtered(lambda l: self.env['cash.plan.line']._agent_plan_basis(l) == 'po' and len(l.purchase_order_ids) > 1):
+                raise UserError(_('An active multi-PO payment may already cover these bills. Consolidate it before adding a supplier-balance plan.'))
             category = self._suggest_category(self.partner_id)
             self.env['cash.plan.line'].create({
                 'name': _('Balance Due - %s') % self.partner_id.display_name,
@@ -430,7 +542,6 @@ class CashPlanReviewLine(models.Model):
 class CashPlanLinePaymentAgent(models.Model):
     _inherit = 'cash.plan.line'
 
-    @api.model
     def action_run_payment_review_agent(self):
         company = self.env.company
         review = self.env['cash.plan.review'].create({'company_id': company.id})
@@ -457,8 +568,13 @@ class CashPlanLinePaymentAgent(models.Model):
         ]
         if review.year != 'all':
             year = int(review.year)
-            planned_domain += [('planned_date', '>=', date(year, 1, 1)), ('planned_date', '<=', date(year, 12, 31))]
+            planned_domain += ['|', ('planned_date', '=', False), '&', ('planned_date', '>=', date(year, 1, 1)), ('planned_date', '<=', date(year, 12, 31))]
+        all_planned = self.search([
+            ('company_id', '=', company.id), ('flow_type', '=', 'out'),
+            ('state', 'not in', ('executed', 'cancel')),
+        ])
         planned = self.search(planned_domain)
+        all_supplier_lines = all_planned.filtered(lambda l: l.transaction_type == 'supplier')
         supplier_lines = planned.filtered(lambda l: l.transaction_type == 'supplier')
 
         # Classification rule: retention is handled separately; otherwise a linked
@@ -473,17 +589,20 @@ class CashPlanLinePaymentAgent(models.Model):
 
         # Choose one supplier-balance line per partner. Extra lines are duplicates.
         balance_by_partner = defaultdict(lambda: self.env['cash.plan.line'])
-        for line in balance_plan_lines:
+        for line in all_supplier_lines.filtered(lambda l: self._agent_plan_basis(l) == 'payable'):
             balance_by_partner[line.partner_id.commercial_partner_id.id] |= line
 
         primary_balance = {}
         for partner_id, lines in balance_by_partner.items():
             # Prefer a draft/not-sent line because it can be maintained automatically.
-            ordered = lines.sorted(key=lambda l: (0 if self._agent_safe_to_change(l) else 1, l.id))
+            # Preserve a locked/approved obligation; cancel editable duplicates instead.
+            ordered = lines.sorted(key=lambda l: (1 if self._agent_safe_to_change(l) else 0, l.id))
             primary = ordered[:1]
             if primary:
                 primary_balance[partner_id] = primary
             for duplicate in ordered[1:]:
+                if duplicate not in planned:
+                    continue
                 recommendations.append(self._agent_vals(
                     review, duplicate, 'remove',
                     _('Duplicate supplier-balance planned payment. Keep one balance line per supplier to avoid double planning.'),
@@ -494,6 +613,8 @@ class CashPlanLinePaymentAgent(models.Model):
 
         # Review existing supplier-balance planned payments against live open payables.
         for partner_id, line in primary_balance.items():
+            if line not in planned:
+                continue
             data = payable_data.get(partner_id, self._agent_empty_payable_data())
             due = data['net_due']
             if company.currency_id.is_zero(due) or due < 0:
@@ -538,27 +659,16 @@ class CashPlanLinePaymentAgent(models.Model):
         if review.year != 'all':
             year = int(review.year)
             po_scan_domain += [('date_order', '>=', date(year, 1, 1)), ('date_order', '<', date(year + 1, 1, 1))]
-        candidate_po_data = {}
+        controls = self._agent_retention_controls(company)
+        candidate_po_data = controls['po_data']
         for po in self.env['purchase.order'].search(po_scan_domain):
-            pdata = self._agent_po_retention_candidate_data(po, company)
+            pdata = candidate_po_data.get(po.id) or self._agent_po_retention_candidate_data(po, company)
             if pdata['retention_generated'] > 0 and pdata['fully_invoiced_by_amount']:
                 retention_pos |= po
-                candidate_po_data[po.id] = pdata
-
-        # Build supplier control totals for all fully invoiced retention POs.
-        generated_by_partner = defaultdict(float)
-        po_count_by_partner = defaultdict(int)
-        for po in retention_pos:
-            pdata = candidate_po_data.get(po.id) or self._agent_po_retention_candidate_data(po, company)
-            candidate_po_data[po.id] = pdata
-            if pdata['fully_invoiced_by_amount'] and pdata['retention_generated'] > 0:
-                pid = po.partner_id.commercial_partner_id.id
-                generated_by_partner[pid] += pdata['retention_generated']
-                po_count_by_partner[pid] += 1
 
         retention_plans_by_po = defaultdict(lambda: self.env['cash.plan.line'])
         retention_plans_without_po = self.env['cash.plan.line']
-        for line in retention_plan_lines:
+        for line in all_supplier_lines.filtered(lambda l: self._agent_plan_basis(l) == 'retention'):
             if len(line.purchase_order_ids) == 1:
                 retention_plans_by_po[line.purchase_order_ids.id] |= line
             else:
@@ -570,14 +680,22 @@ class CashPlanLinePaymentAgent(models.Model):
             partner_id = po.partner_id.commercial_partner_id.id
             supplier_data = retention_data.get(partner_id, self._agent_empty_retention_data())
             supplier_open = max(supplier_data['net_due'], 0.0)
-            generated_total = generated_by_partner.get(partner_id, 0.0)
-            clear_allocation = generated_total <= supplier_open + company.currency_id.rounding
-            open_for_po = min(pdata['retention_generated'], supplier_open) if clear_allocation else 0.0
+            generated_total = controls['generated_by_partner'].get(partner_id, 0.0)
+            clear_allocation, open_for_po = self._agent_retention_allocation(po, pdata, controls, company)
             lines = retention_plans_by_po.get(po.id, self.env['cash.plan.line'])
 
             if lines:
                 for line in lines:
-                    if not pdata['fully_invoiced_by_amount']:
+                    if line not in planned:
+                        continue
+                    if len(lines) > 1 and not company.currency_id.is_zero(open_for_po):
+                        recommendations.append(self._agent_vals(
+                            review, line, 'review',
+                            _('Multiple retention payments cover PO %s. Review their combined amount; do not assign the entire PO retention to each payment.') % po.name,
+                            severity='warning', source_type='existing_retention', po=po,
+                            bills=pdata['bills'], proposed=line.forecast_amount,
+                        ))
+                    elif not pdata['fully_invoiced_by_amount']:
                         recommendations.append(self._agent_vals(
                             review, line, 'review',
                             _('Retention exists, but PO %(po)s is not yet fully invoiced by amount. PO untaxed: %(po_amount)s; gross posted invoiced work: %(inv)s. Do not release retention yet.') % {
@@ -592,7 +710,7 @@ class CashPlanLinePaymentAgent(models.Model):
                     elif not clear_allocation:
                         recommendations.append(self._agent_vals(
                             review, line, 'review',
-                            _('PO %(po)s is fully invoiced and generated retention %(ret)s, but this supplier has several retention POs and the Retention Payable GL balance (%(open)s) is lower than total generated retention (%(total)s). The released amount cannot be allocated safely to a specific PO automatically.') % {
+                            _('PO %(po)s is fully invoiced and generated retention %(ret)s. Supplier Retention Payable GL: %(open)s; total generated: %(total)s. Mixed invoice sources or retention releases prevent a safe allocation to this PO.') % {
                                 'po': po.name, 'ret': format(pdata['retention_generated'], ',.2f'),
                                 'open': format(supplier_open, ',.2f'), 'total': format(generated_total, ',.2f'),
                             },
@@ -636,6 +754,15 @@ class CashPlanLinePaymentAgent(models.Model):
             else:
                 # No retention plan exists for this PO: propose one only when the
                 # amount-based invoicing test and GL cross-check are clear.
+                floating = retention_plans_without_po.filtered(lambda l: l.partner_id.commercial_partner_id.id == partner_id)
+                if floating:
+                    recommendations.append({
+                        'review_id': review.id, 'action': 'review', 'source_type': 'new_retention',
+                        'partner_id': po.partner_id.commercial_partner_id.id, 'purchase_order_id': po.id,
+                        'proposed_amount': pdata['retention_generated'],
+                        'reason': _('An existing retention plan has no single PO allocation. Resolve it before adding PO retention.'),
+                    })
+                    continue
                 if pdata['fully_invoiced_by_amount'] and pdata['retention_generated'] > 0 and clear_allocation and open_for_po > 0:
                     recommendations.append({
                         'review_id': review.id,
@@ -675,6 +802,8 @@ class CashPlanLinePaymentAgent(models.Model):
         # Retention lines without exactly one PO cannot be matched to a PO-level
         # completion test, so keep them manual.
         for line in retention_plans_without_po:
+            if line not in planned:
+                continue
             supplier_data = retention_data.get(line.partner_id.commercial_partner_id.id, self._agent_empty_retention_data()) if line.partner_id else self._agent_empty_retention_data()
             recommendations.append(self._agent_vals(
                 review, line, 'review',
@@ -683,7 +812,7 @@ class CashPlanLinePaymentAgent(models.Model):
                 bills=supplier_data['bills'], aging=supplier_data['aging_summary'], can_apply=False,
             ))
 
-        po_ids_already_planned = set(po_plan_lines.mapped('purchase_order_ids').ids)
+        po_ids_already_planned = set(all_supplier_lines.mapped('purchase_order_ids').ids)
 
         # Review each payment linked to a Purchase Order (except retention). A PO
         # on a Supplier Balance / Account line is only a reference and never enters
@@ -715,6 +844,13 @@ class CashPlanLinePaymentAgent(models.Model):
                 continue
 
             if posted_bills:
+                if not self._agent_po_retention_candidate_data(po, company)['fully_invoiced_by_amount']:
+                    recommendations.append(self._agent_vals(
+                        review, line, 'review',
+                        _('PO %s has posted bills but is only partially invoiced by amount. Review the remaining uninvoiced obligation before replacing its PO plan with supplier aging.') % po.name,
+                        source_type='existing_po', po=po, proposed=line.forecast_amount,
+                    ))
+                    continue
                 target = primary_balance.get(partner.id)
                 can_convert = self._agent_safe_to_change(line)
                 if target and not self._agent_safe_to_change(target):
@@ -799,7 +935,7 @@ class CashPlanLinePaymentAgent(models.Model):
         for po in self.env['purchase.order'].search(po_domain, order='date_order asc, id asc'):
             if po.id in po_ids_already_planned:
                 continue
-            if self._agent_po_posted_bills(po):
+            if self._agent_po_posted_bills(po) or self._agent_po_draft_bills(po):
                 continue
             due = self._agent_po_due_company_currency(po, company)
             if due <= 0 or company.currency_id.is_zero(due):
@@ -834,8 +970,17 @@ class CashPlanLinePaymentAgent(models.Model):
             if partner_id in primary_balance:
                 continue
             partner = self.env['res.partner'].browse(partner_id)
+            multi_po = all_supplier_lines.filtered(lambda l: l.partner_id.commercial_partner_id.id == partner_id and self._agent_plan_basis(l) == 'po' and len(l.purchase_order_ids) > 1)
+            if multi_po:
+                recommendations.append({
+                    'review_id': review.id, 'action': 'review', 'source_type': 'new_payable',
+                    'partner_id': partner.id, 'proposed_amount': due,
+                    'reason': _('An active multi-PO payment may already cover this supplier liability. Consolidate the existing payment before adding a supplier-balance plan.'),
+                    'aging_summary': data['aging_summary'], 'can_apply': False,
+                })
+                continue
             # If a PO line for this supplier has been billed, its conversion recommendation will create/convert the balance line.
-            convertible = po_plan_lines.filtered(
+            convertible = all_supplier_lines.filtered(lambda l: self._agent_plan_basis(l) == 'po').filtered(
                 lambda l: l.partner_id.commercial_partner_id.id == partner_id
                 and len(l.purchase_order_ids) == 1
                 and bool(self._agent_po_posted_bills(l.purchase_order_ids[0]))
@@ -869,6 +1014,8 @@ class CashPlanLinePaymentAgent(models.Model):
         if a Purchase Order is linked, the payment is against that PO. If no PO is
         linked, the payment is against the supplier account / payable balance.
         """
+        if line.account_id and (line.account_id.code or '').strip() == '201019':
+            return 'retention'
         parts = [line.name or '', line.description or '']
         if line.category_id:
             parts.append(line.category_id.name or '')
@@ -886,53 +1033,87 @@ class CashPlanLinePaymentAgent(models.Model):
 
     @api.model
     def _agent_po_retention_candidate_data(self, po, company):
-        """Calculate PO completion and generated retention without billing status.
-
-        Completion compares the PO untaxed amount with gross posted invoice lines
-        sourced from this PO's purchase lines. Retention is taken from Retention
-        Payable journal lines on those same posted bills and proportionally allocated
-        when a bill contains lines from more than one PO.
-        """
-        bills = po.invoice_ids.filtered(lambda m: m.state == 'posted' and m.move_type in ('in_invoice', 'in_refund'))
-        gross = 0.0
-        retention_generated = 0.0
+        """Use posted product lines and account 201019; never PO Billing Status."""
+        bills = self._agent_po_posted_bills(po)
+        gross = gross_po_currency = retention_generated = 0.0
+        allocation_clear = True
         relevant_bills = self.env['account.move']
         for move in bills:
-            sign = 1.0 if move.move_type == 'in_invoice' else -1.0
-            po_lines = move.invoice_line_ids.filtered(
-                lambda l: not l.display_type and l.purchase_line_id and l.purchase_line_id.order_id == po
+            products = move.invoice_line_ids.filtered(
+                lambda l: l.display_type in (False, 'product') and not self._agent_is_retention_account(l.account_id)
             )
-            po_gross = sum(po_lines.mapped('price_subtotal')) * sign
-            if company.currency_id.is_zero(po_gross):
+            source_lines = products.filtered(lambda l: l.purchase_line_id)
+            po_lines = source_lines.filtered(lambda l: l.purchase_line_id.order_id == po)
+            if not po_lines:
                 continue
             relevant_bills |= move
-            gross += po_gross
-
-            # If a bill mixes several POs, allocate its retention proportionally to
-            # the gross source lines belonging to this PO.
-            all_po_lines = move.invoice_line_ids.filtered(lambda l: not l.display_type and l.purchase_line_id)
-            total_source = sum(all_po_lines.mapped('price_subtotal'))
-            share = abs(po_gross) / abs(total_source) if total_source else 1.0
+            sign = -1.0 if move.move_type == 'in_refund' else 1.0
+            # balance is already signed company currency (tax excluded).
+            gross += sum(po_lines.mapped('balance'))
+            po_subtotal = sum(po_lines.mapped('price_subtotal')) * sign
+            gross_po_currency += move.currency_id._convert(
+                po_subtotal, po.currency_id, company, move.invoice_date or move.date,
+            )
             retention_lines = move.line_ids.filtered(lambda l: self._agent_is_retention_account(l.account_id))
-            move_retention = sum(-l.balance for l in retention_lines)
-            retention_generated += move_retention * share
-
+            if not retention_lines:
+                continue
+            source_pos = source_lines.mapped('purchase_line_id.order_id')
+            unlinked_work = products.filtered(lambda l: not l.purchase_line_id and not company.currency_id.is_zero(l.balance))
+            if len(source_pos) == 1 and not unlinked_work:
+                retention_generated += sum(-l.balance for l in retention_lines)
+            elif all(l.purchase_line_id for l in retention_lines):
+                retention_generated += sum(-l.balance for l in retention_lines if l.purchase_line_id.order_id == po)
+            else:
+                # Different POs may have different retention rates. Never invent an allocation.
+                allocation_clear = False
+                total_source = sum(abs(l.balance) for l in source_lines)
+                share = sum(abs(l.balance) for l in po_lines) / total_source if total_source else 0.0
+                retention_generated += sum(-l.balance for l in retention_lines) * share
         po_amount = po.currency_id._convert(
-            po.amount_untaxed,
-            company.currency_id,
-            company,
+            po.amount_untaxed, company.currency_id, company,
             po.date_order.date() if po.date_order else fields.Date.context_today(self),
         )
-        # Allow normal currency rounding plus a tiny tolerance for legacy records.
-        tolerance = max(company.currency_id.rounding, 0.02)
-        fully_invoiced = gross + tolerance >= po_amount and po_amount > 0
+        tolerance = max(po.currency_id.rounding, 0.02)
         return {
-            'po_amount': po_amount,
-            'gross_invoiced': gross,
+            'po_amount': po_amount, 'gross_invoiced': gross,
             'retention_generated': max(retention_generated, 0.0),
-            'fully_invoiced_by_amount': fully_invoiced,
-            'bills': relevant_bills,
+            'fully_invoiced_by_amount': gross_po_currency + tolerance >= po.amount_untaxed and po.amount_untaxed > 0,
+            'allocation_clear': allocation_clear, 'bills': relevant_bills,
         }
+
+    @api.model
+    def _agent_retention_controls(self, company):
+        po_data = {}
+        generated = defaultdict(float)
+        counts = defaultdict(int)
+        ambiguous = set()
+        for po in self.env['purchase.order'].search([('company_id', '=', company.id)]):
+            pdata = self._agent_po_retention_candidate_data(po, company)
+            po_data[po.id] = pdata
+            if pdata['retention_generated'] > 0:
+                pid = po.partner_id.commercial_partner_id.id
+                generated[pid] += pdata['retention_generated']
+                counts[pid] += 1
+                if not pdata['allocation_clear']:
+                    ambiguous.add(pid)
+        return {'po_data': po_data, 'generated_by_partner': generated,
+                'po_count_by_partner': counts, 'ambiguous_partners': ambiguous,
+                'retention_data': self._agent_get_retention_data(company)}
+
+    @api.model
+    def _agent_retention_allocation(self, po, pdata, controls, company):
+        pid = po.partner_id.commercial_partner_id.id
+        open_amount = max(controls['retention_data'].get(pid, {}).get('net_due', 0.0), 0.0)
+        if not pdata['allocation_clear'] or pid in controls['ambiguous_partners']:
+            return False, 0.0
+        if company.currency_id.is_zero(open_amount):
+            return True, 0.0
+        total = controls['generated_by_partner'].get(pid, 0.0)
+        count = controls['po_count_by_partner'].get(pid, 0)
+        if count == 1 or total <= open_amount + company.currency_id.rounding:
+            return True, min(pdata['retention_generated'], open_amount)
+        # Partial releases with several retention POs have no reliable PO allocation.
+        return False, 0.0
 
     @api.model
     def _agent_get_retention_data(self, company):
@@ -1006,6 +1187,7 @@ class CashPlanLinePaymentAgent(models.Model):
             partner = line.partner_id.commercial_partner_id
             data = grouped.setdefault(partner.id, {
                 'net_due': 0.0,
+                'credit_offsets': 0.0,
                 'bills': self.env['account.move'],
                 'oldest_due': False,
                 'bucket_amounts': {'current': 0.0, '1_30': 0.0, '31_60': 0.0, '61_90': 0.0, '90_plus': 0.0},
@@ -1013,6 +1195,8 @@ class CashPlanLinePaymentAgent(models.Model):
             # Payable credits normally carry a negative residual; open debit advances carry
             # a positive residual and therefore reduce the supplier amount due.
             data['net_due'] += -line.amount_residual
+            if line.amount_residual > 0:
+                data['credit_offsets'] += line.amount_residual
 
             move = line.move_id
             if move.move_type not in ('in_invoice', 'in_refund'):
@@ -1044,9 +1228,10 @@ class CashPlanLinePaymentAgent(models.Model):
         for data in grouped.values():
             b = data['bucket_amounts']
             data['aging_summary'] = _(
-                'Net due: %(net)s | Not due: %(current)s | 1-30: %(b1)s | 31-60: %(b2)s | 61-90: %(b3)s | 90+: %(b4)s'
+                'Net balance: %(net)s | Advances/credits: %(offset)s | Gross unpaid invoices — Not due: %(current)s | 1-30: %(b1)s | 31-60: %(b2)s | 61-90: %(b3)s | 90+: %(b4)s'
             ) % {
-                'net': format(max(data['net_due'], 0.0), ',.2f'),
+                'net': format(data['net_due'], ',.2f'),
+                'offset': format(data['credit_offsets'], ',.2f'),
                 'current': format(b['current'], ',.2f'),
                 'b1': format(b['1_30'], ',.2f'),
                 'b2': format(b['31_60'], ',.2f'),
@@ -1067,8 +1252,7 @@ class CashPlanLinePaymentAgent(models.Model):
     @api.model
     def _agent_is_retention_account(self, account):
         code = (account.code or '').strip().lower()
-        name = (account.name or '').strip().lower()
-        return code == '201019' or 'retention' in name or 'retention' in code or 'احتجاز' in name
+        return code == '201019'
 
     @api.model
     def _agent_po_posted_bills(self, po):
@@ -1104,7 +1288,7 @@ class CashPlanLinePaymentAgent(models.Model):
         return bool(
             line
             and line.state == 'planned'
-            and getattr(line, 'ceo_decision', 'not_sent') == 'not_sent'
+            and getattr(line, 'ceo_decision', 'not_sent') in ('not_sent', 'pending', 'held', 'rejected', False)
             and not line.is_unplanned
         )
 
