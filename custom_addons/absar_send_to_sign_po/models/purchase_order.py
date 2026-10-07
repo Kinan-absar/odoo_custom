@@ -1,5 +1,13 @@
+import base64
+import io
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+
+try:
+    from pypdf import PdfReader, PdfWriter
+except ImportError:  # Odoo environments that still expose the legacy package
+    from PyPDF2 import PdfReader, PdfWriter
 
 
 SIGNATURE_STATES = [
@@ -24,6 +32,15 @@ class PurchaseOrder(models.Model):
     signature_completed_count = fields.Integer(default=0, copy=False, readonly=True)
     signature_total_count = fields.Integer(default=0, copy=False, readonly=True)
     revision = fields.Integer(default=0, tracking=True, copy=False)
+    quotation_attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "purchase_order_sign_quotation_attachment_rel",
+        "purchase_order_id",
+        "attachment_id",
+        string="Supplier Quotation PDF(s)",
+        copy=False,
+        help="Select the supplier quotation PDF attachment(s) to append after the PO and before the linked Material Request in the signing package.",
+    )
 
     project_id = fields.Many2one("project.project", string="Project", tracking=True, groups=False)
 
@@ -56,6 +73,51 @@ class PurchaseOrder(models.Model):
                     po._reset_signing(_("PO modified after signing/sending."))
         return res
 
+    def _absar_render_linked_material_request_pdf(self):
+        self.ensure_one()
+        if not hasattr(self, "material_request_id") or not self.material_request_id:
+            return None
+        mr = self.material_request_id
+        reports = self.env["ir.actions.report"].sudo().search([
+            ("model", "=", mr._name),
+            ("report_type", "=", "qweb-pdf"),
+        ])
+        if not reports:
+            raise UserError(_("The linked Material Request has no PDF report configured, so the signing package cannot include it."))
+        report = reports.filtered(lambda r: "material" in (r.name or "").lower() and "request" in (r.name or "").lower())[:1] or reports[:1]
+        pdf_content, _fmt = report._render_qweb_pdf(report.report_name, mr.ids)
+        return pdf_content
+
+    def _absar_build_signing_package_pdf(self):
+        self.ensure_one()
+        po_pdf, _fmt = self.env["ir.actions.report"]._render_qweb_pdf(
+            "purchase.report_purchaseorder", self.ids
+        )
+        parts = [("Purchase Order", po_pdf)]
+
+        for attachment in self.quotation_attachment_ids:
+            if attachment.mimetype != "application/pdf":
+                raise UserError(_("Quotation attachment '%s' is not a PDF.") % attachment.name)
+            if not attachment.datas:
+                raise UserError(_("Quotation attachment '%s' has no file content.") % attachment.name)
+            parts.append((attachment.name or _("Supplier Quotation"), base64.b64decode(attachment.datas)))
+
+        mr_pdf = self._absar_render_linked_material_request_pdf()
+        if mr_pdf:
+            parts.append((_("Material Request"), mr_pdf))
+
+        writer = PdfWriter()
+        try:
+            for label, content in parts:
+                reader = PdfReader(io.BytesIO(content))
+                for page in reader.pages:
+                    writer.add_page(page)
+            output = io.BytesIO()
+            writer.write(output)
+            return output.getvalue()
+        except Exception as exc:
+            raise UserError(_("Could not build the PO signing package (PO → Quotation → MR): %s") % exc) from exc
+
     def action_send_to_sign(self):
         self.ensure_one()
         if self.state != "purchase":
@@ -63,6 +125,7 @@ class PurchaseOrder(models.Model):
         if self.signature_state != "draft":
             raise UserError(_("This Purchase Order has already been sent to Sign."))
 
+        package_pdf = self._absar_build_signing_package_pdf()
         template, workflow, status = self.env["absar.sign.workflow.service"].create_template(
             self,
             "purchase.report_purchaseorder",
@@ -72,6 +135,7 @@ class PurchaseOrder(models.Model):
                 self.material_request_id.name if hasattr(self, "material_request_id") and self.material_request_id else None,
                 self.project_id.name if self.project_id else None,
             ],
+            pdf_content=package_pdf,
         )
         # Keep the generated PDF/attachment aligned with the visible Sign template name.
         if template.attachment_id:

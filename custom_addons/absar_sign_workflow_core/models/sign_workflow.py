@@ -299,12 +299,13 @@ class AbsarSignWorkflowService(models.AbstractModel):
             })
 
     @api.model
-    def create_template(self, record, report_xmlid, document_label, filename_parts):
+    def create_template(self, record, report_xmlid, document_label, filename_parts, pdf_content=None):
         record.ensure_one()
         workflow = self.get_workflow(record, required=True)
-        pdf_content, pdf_format = self.env["ir.actions.report"]._render_qweb_pdf(
-            report_xmlid, record.ids
-        )
+        if pdf_content is None:
+            pdf_content, pdf_format = self.env["ir.actions.report"]._render_qweb_pdf(
+                report_xmlid, record.ids
+            )
         clean_parts = [str(part).strip() for part in filename_parts if part and str(part).strip()]
         filename = " - ".join(clean_parts) or record.display_name
         if getattr(record, "revision", 0):

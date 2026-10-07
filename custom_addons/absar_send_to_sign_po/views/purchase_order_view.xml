@@ -67,4 +67,23 @@
             </xpath>
         </field>
     </record>
+
+    <record id="view_po_form_signing_package" model="ir.ui.view">
+        <field name="name">purchase.order.form.signing.package</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Signing Package" name="absar_signing_package">
+                    <group>
+                        <field name="quotation_attachment_ids" widget="many2many_binary"
+                               string="Supplier Quotation PDF(s)"
+                               readonly="signature_state != 'draft'"/>
+                    </group>
+                    <div class="text-muted">Final signing PDF order: Purchase Order → selected Supplier Quotation PDF(s) → linked Material Request.</div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>
