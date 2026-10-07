@@ -70,17 +70,38 @@ class CashPlanReview(models.Model):
 
     def action_open_recommendations(self):
         self.ensure_one()
+        self.check_access_rights('read')
+        self.check_access_rule('read')
         # Optional signing fields and journal balances have no universal stored
         # dependency. Refresh eligibility when opening an existing snapshot.
         self.line_ids._compute_can_apply()
-        action = self.env.ref('internal_transfer_voucher.action_cash_plan_review_line').read()[0]
-        action['domain'] = [('review_id', '=', self.id)]
-        action['context'] = {
-            'default_review_id': self.id,
-            'search_default_not_applied': 1,
+        # A modified action dictionary loses its domain when the browser
+        # reloads the stored action ID. Give each review its own persisted
+        # action so reload, bookmarks and saved favorites retain that scope.
+        # Lock this review while lazily creating the action for older reviews.
+        self.env.cr.execute('SELECT id FROM cash_plan_review WHERE id = %s FOR UPDATE', (self.id,))
+        Action = self.env['ir.actions.act_window'].sudo()
+        action = Action.search([('cash_plan_review_id', '=', self.id)], limit=1)
+        values = {
+            'name': _('Recommendations - %s (#%s)') % (self.name, self.id),
+            'domain': repr([('review_id', '=', self.id)]),
+            'context': repr({'default_review_id': self.id, 'search_default_not_applied': 1}),
         }
-        action['name'] = _('Recommendations - %s') % self.name
-        return action
+        if action:
+            action.write(values)
+        else:
+            action = self.env.ref('internal_transfer_voucher.action_cash_plan_review_line').sudo().copy(
+                dict(values, cash_plan_review_id=self.id)
+            )
+        return action.read()[0]
+
+    def unlink(self):
+        # Only actions owned by the deleted reviews are removed. Never mutate
+        # the shared generic recommendation action or another review's action.
+        actions = self.env['ir.actions.act_window'].sudo().search([('cash_plan_review_id', 'in', self.ids)])
+        result = super().unlink()
+        actions.unlink()
+        return result
 
     def action_select_all_safe(self):
         self.ensure_one()

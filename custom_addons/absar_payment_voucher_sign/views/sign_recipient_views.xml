@@ -1,0 +1,22 @@
+<odoo>
+    <record id="view_payment_voucher_sign_wizard" model="ir.ui.view">
+        <field name="name">payment.voucher.sign.wizard.form</field>
+        <field name="model">payment.voucher.sign.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Choose Voucher Signer">
+                <group>
+                    <field name="voucher_id" options="{'no_open': True}"/>
+                    <field name="company_id" invisible="1"/>
+                    <field name="recipient_type" string="Choose Signer From" widget="radio"/>
+                    <field name="signer_user_id" invisible="recipient_type != 'user'" required="recipient_type == 'user'" domain="[('active', '=', True), ('company_ids', 'in', [company_id])]" options="{'no_create': True}"/>
+                    <field name="signer_partner_id" invisible="recipient_type != 'partner'" required="recipient_type == 'partner'" domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]" options="{'no_create': True}"/>
+                </group>
+                <p>Prepare the PDF, review the signature position, then use Send in Odoo Sign. The selected recipient will be prefilled.</p>
+                <footer>
+                    <button name="action_prepare_pdf" type="object" string="Prepare PDF" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

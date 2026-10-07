@@ -15,3 +15,4 @@ from . import cash_plan_add_to_run_wizard
 from . import account_move
 
 from . import payment_review_agent
+from . import payment_review_action
