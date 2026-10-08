@@ -166,10 +166,84 @@ class PurchaseOrder(models.Model):
         except Exception as exc:
             raise UserError(_("Could not build the PO signing package (PO → Quotation → MR): %s") % exc) from exc
 
+    def _absar_send_prepared_po(self, template, workflow):
+        """Send through the native wizard without opening its/template UI."""
+        self.ensure_one()
+        workflow._validate_configuration()
+        if workflow.step_ids.filtered(lambda step: not step.signer_user_id.active):
+            raise UserError(_("All configured PO signer users must be active."))
+        Request = self.env["sign.request"]
+        if Request.search([("template_id", "=", template.id)], limit=1):
+            raise UserError(_("This PO template already has a signature request. Open Signature to check it."))
+
+        Wizard = self.env["sign.send.request"].with_context(
+            active_model="sign.template", active_id=template.id,
+            default_template_id=template.id,
+        )
+        values = {
+            "template_id": template.id,
+            "subject": template.name,
+            "filename": template.attachment_id.name or (template.name + ".pdf"),
+            "signer_ids": Wizard._absar_signer_commands(template),
+        }
+        Wizard._absar_enable_signing_order_vals(values)
+        if "is_user_signer" in Wizard._fields:
+            values["is_user_signer"] = False
+        if "signer_id" in Wizard._fields:
+            values["signer_id"] = (
+                workflow.step_ids[:1].signer_partner_id.id
+                if len(workflow.step_ids) == 1 else False
+            )
+        if "tag_ids" in Wizard._fields:
+            values["tag_ids"] = [(6, 0, template.tag_ids.ids)]
+        wizard = Wizard.create(values)
+        # Native validation checks every field role has exactly one recipient.
+        # Native sending preserves ordering, authentication and email behavior.
+        wizard.send_request()
+        request = Request.search([("template_id", "=", template.id)], order="id desc", limit=1)
+        if not request or request.state not in ("sent", "signed"):
+            raise UserError(_("Odoo Sign did not create a sent signature request. The PO has not been marked as sent."))
+        self.with_context(skip_po_sign_reset=True).write({"sign_request_id": request.id})
+        self.env["absar.sign.workflow.service"].sync_record(self, "skip_po_sign_reset")
+        self.message_post(body=_("PO signature request sent using workflow: %s") % workflow.name)
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Purchase Order sent to Sign"),
+                "message": _("Signature request created. Signers follow the configured workflow order."),
+                "type": "success",
+                "sticky": False,
+                "next": {"type": "ir.actions.client", "tag": "reload"},
+            },
+        }
+
+    def _absar_tag_sign_template(self, template):
+        """Reuse the existing native Purchase Order tag, keeping other tags."""
+        Tag = self.env[template._fields["tag_ids"].comodel_name]
+        tag = Tag.search([("name", "=ilike", "Purchase Order")], order="id", limit=1)
+        if not tag:
+            tag = Tag.create({"name": "Purchase Order"})
+        template.write({"tag_ids": [(4, tag.id)]})
+
     def action_send_to_sign(self):
         self.ensure_one()
+        self.check_access_rights("write")
+        self.check_access_rule("write")
+        # Serialize double-clicks and concurrent sends before creating any PDF/request.
+        self.env.cr.execute("SELECT id FROM purchase_order WHERE id = %s FOR UPDATE", [self.id])
+        self.invalidate_recordset(["state", "signature_state", "sign_template_id", "sign_request_id", "signing_workflow_id"])
         if self.state != "purchase":
             raise UserError(_("Only a confirmed Purchase Order can be sent to Sign."))
+        if self.sign_request_id:
+            raise UserError(_("This Purchase Order already has a signature request."))
+        if self.signature_state == "pending" and self.sign_template_id:
+            template = self.sign_template_id
+            workflow = template.absar_workflow_id
+            if not workflow:
+                raise UserError(_("The prepared PO template has no signing workflow."))
+            self._absar_tag_sign_template(template)
+            return self._absar_send_prepared_po(template, workflow)
         if self.signature_state != "draft":
             raise UserError(_("This Purchase Order has already been sent to Sign."))
 
@@ -211,19 +285,8 @@ class PurchaseOrder(models.Model):
             "signature_completed_count": 0,
             "signature_total_count": len(workflow.step_ids),
         })
-        first = workflow.step_ids.sorted("sequence")[0]
-        self.message_post(
-            body=_("PO prepared for signing. Workflow: %(workflow)s. First signer: %(role)s (%(user)s).") % {
-                "workflow": workflow.name,
-                "role": first.name,
-                "user": first.signer_user_id.name,
-            }
-        )
-        return {
-            "type": "ir.actions.act_url",
-            "url": f'/odoo/sign/{template.id}/action-sign.Template?id={template.id}&name=Template%20"PO%20{self.name}"',
-            "target": "self",
-        }
+        self._absar_tag_sign_template(template)
+        return self._absar_send_prepared_po(template, workflow)
 
     def action_open_signature_status(self):
         self.ensure_one()

@@ -24,7 +24,7 @@
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_send_to_sign" type="object" class="oe_stat_button" icon="fa-pencil-square-o"
-                        invisible="state != 'purchase' or signature_state != 'draft'">
+                        invisible="state != 'purchase' or signature_state not in ('draft', 'pending') or sign_request_id">
                     <div>Send to Sign</div>
                 </button>
                 <button name="action_open_signature_status" type="object" class="oe_stat_button" icon="fa-pencil-square-o"
