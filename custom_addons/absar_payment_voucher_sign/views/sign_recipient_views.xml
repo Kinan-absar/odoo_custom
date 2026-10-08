@@ -7,9 +7,17 @@
                 <group>
                     <field name="voucher_id" options="{'no_open': True}"/>
                     <field name="company_id" invisible="1"/>
+                    <field name="signing_as"/>
+                    <separator string="Paid By" invisible="signing_as != 'paid'"/>
+                    <separator string="Received By" invisible="signing_as == 'paid'"/>
                     <field name="recipient_type" string="Choose Signer From" widget="radio"/>
                     <field name="signer_user_id" invisible="recipient_type != 'user'" required="recipient_type == 'user'" domain="[('active', '=', True), ('company_ids', 'in', [company_id])]" options="{'no_create': True}"/>
                     <field name="signer_partner_id" invisible="recipient_type != 'partner'" required="recipient_type == 'partner'" domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]" options="{'no_create': True}"/>
+                </group>
+                <group string="Paid By" invisible="signing_as != 'both'">
+                    <field name="paid_recipient_type" widget="radio"/>
+                    <field name="paid_signer_user_id" invisible="paid_recipient_type != 'user'" required="signing_as == 'both' and paid_recipient_type == 'user'" domain="[('active', '=', True), ('company_ids', 'in', [company_id])]" options="{'no_create': True}"/>
+                    <field name="paid_signer_partner_id" invisible="paid_recipient_type != 'partner'" required="signing_as == 'both' and paid_recipient_type == 'partner'" domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]" options="{'no_create': True}"/>
                 </group>
                 <p>Prepare the PDF, review the signature position, then use Send in Odoo Sign. The selected recipient will be prefilled.</p>
                 <footer>

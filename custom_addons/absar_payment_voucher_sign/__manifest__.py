@@ -1,6 +1,6 @@
 {
     'name': 'Send to Sign for Payment Vouchers',
-    'version': '18.0.1.0.2',
+    'version': '18.0.1.0.3',
     'author': 'Kinan',
     'license': 'LGPL-3',
     'depends': ['internal_transfer_voucher', 'absar_sign_workflow_core'],

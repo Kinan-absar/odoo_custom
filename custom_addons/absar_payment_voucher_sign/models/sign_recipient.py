@@ -12,6 +12,13 @@ class PaymentVoucherSignWizard(models.TransientModel):
     signer_user_id = fields.Many2one('res.users', string='Signer User', domain=[('active', '=', True)])
     signer_partner_id = fields.Many2one('res.partner', string='Signer Contact')
 
+    signing_as = fields.Selection([
+        ('received', 'Received By'), ('paid', 'Paid By'), ('both', 'Paid By and Received By'),
+    ], string='Who will sign?', default='received', required=True)
+    paid_recipient_type = fields.Selection([('user', 'User'), ('partner', 'Contact / Partner')], default='user', required=True)
+    paid_signer_user_id = fields.Many2one('res.users', string='Paid By User', domain=[('active', '=', True)])
+    paid_signer_partner_id = fields.Many2one('res.partner', string='Paid By Contact')
+
     def action_prepare_pdf(self):
         self.ensure_one()
         if self.recipient_type == 'user':
@@ -22,7 +29,19 @@ class PaymentVoucherSignWizard(models.TransientModel):
             partner = self.signer_partner_id
         if not partner:
             raise UserError(_('Choose a signer contact.'))
-        return self.voucher_id._prepare_direct_signing_pdf(partner)
+        paid_partner = False
+        if self.signing_as == 'both':
+            if self.paid_recipient_type == 'user':
+                if not self.paid_signer_user_id or not self.paid_signer_user_id.active:
+                    raise UserError(_('Choose an active Paid By user.'))
+                paid_partner = self.paid_signer_user_id.partner_id
+            else:
+                paid_partner = self.paid_signer_partner_id
+            if not paid_partner:
+                raise UserError(_('Choose the Paid By contact.'))
+        return self.voucher_id._prepare_direct_signing_pdf(
+            partner, signing_as=self.signing_as, paid_partner=paid_partner,
+        )
 
 
 class SignTemplate(models.Model):
@@ -32,6 +51,10 @@ class SignTemplate(models.Model):
     pv_revision = fields.Integer(readonly=True, copy=False, default=0)
     pv_signer_partner_id = fields.Many2one('res.partner', readonly=True, copy=False)
     pv_sign_role_id = fields.Many2one('sign.item.role', readonly=True, copy=False)
+    pv_paid_partner_id = fields.Many2one('res.partner', readonly=True, copy=False)
+    pv_paid_role_id = fields.Many2one('sign.item.role', readonly=True, copy=False)
+    pv_received_partner_id = fields.Many2one('res.partner', readonly=True, copy=False)
+    pv_received_role_id = fields.Many2one('sign.item.role', readonly=True, copy=False)
 
 
 class SignSendRequest(models.TransientModel):
@@ -39,12 +62,24 @@ class SignSendRequest(models.TransientModel):
 
     @api.model
     def _pv_signer_values(self, template):
-        values = {'signer_ids': [Command.clear(), Command.create({
-            'role_id': template.pv_sign_role_id.id, 'partner_id': template.pv_signer_partner_id.id})]}
+        recipients = []
+        if template.pv_paid_partner_id:
+            recipients.append((template.pv_paid_role_id, template.pv_paid_partner_id))
+        if template.pv_received_partner_id:
+            recipients.append((template.pv_received_role_id, template.pv_received_partner_id))
+        if not recipients:
+            recipients = [(template.pv_sign_role_id, template.pv_signer_partner_id)]
+        values = {'signer_ids': [Command.clear()] + [Command.create({
+            'role_id': role.id, 'partner_id': partner.id,
+        }) for role, partner in recipients]}
         if 'is_user_signer' in self._fields:
             values['is_user_signer'] = False
         if 'signer_id' in self._fields:
-            values['signer_id'] = template.pv_signer_partner_id.id
+            values['signer_id'] = recipients[0][1].id if len(recipients) == 1 else False
+        if 'has_default_template' in self._fields:
+            values['has_default_template'] = True
+        if 'signers_count' in self._fields:
+            values['signers_count'] = len(recipients)
         return values
 
     @api.model
@@ -71,8 +106,11 @@ class SignSendRequest(models.TransientModel):
         for vals in vals_list:
             template_id = vals.get('template_id') or self.env.context.get('default_template_id')
             template = self.env['sign.template'].browse(template_id).exists() if template_id else False
-            if template and template.pv_signer_partner_id and 'is_user_signer' in self._fields:
-                vals['is_user_signer'] = False
+            if template and template.pv_signer_partner_id:
+                if 'is_user_signer' in self._fields:
+                    vals['is_user_signer'] = False
+                if 'has_default_template' in self._fields:
+                    vals['has_default_template'] = True
         return super().create(vals_list)
 
     def write(self, vals):

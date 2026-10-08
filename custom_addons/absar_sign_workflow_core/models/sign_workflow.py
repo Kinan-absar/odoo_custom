@@ -203,12 +203,12 @@ class AbsarSignWorkflowStep(models.Model):
         ("heading", "Printed Heading"),
         ("position", "Saved Position"),
         ("manual", "Review in Template"),
-    ], string="PO Placement", default="heading", required=True)
+    ], string="Placement", default="heading", required=True)
     po_printed_heading = fields.Char(
         string="Printed Heading",
-        help="Heading printed on the PO, independent of the signer role. Leave empty to use the role name.",
+        help="Heading printed on the document, independent of the signer role. Leave empty to use the role name.",
     )
-    po_signature_page = fields.Integer(string="PO Page", default=1)
+    po_signature_page = fields.Integer(string="Page", default=1)
     po_signature_x = fields.Float(string="Left (%)", default=4.0)
     po_signature_y = fields.Float(string="Top (%)", default=82.0)
 
@@ -216,7 +216,7 @@ class AbsarSignWorkflowStep(models.Model):
     def _check_po_signature_position(self):
         for step in self.filtered(lambda row: row.po_placement_mode == 'position'):
             if step.po_signature_page < 1 or not (0 <= step.po_signature_x <= 74) or not (0 <= step.po_signature_y <= 91.7):
-                raise ValidationError(_("Saved PO position requires page 1 or above, Left 0–74%, and Top 0–91.7%."))
+                raise ValidationError(_("Saved signature position requires page 1 or above, Left 0–74%, and Top 0–91.7%."))
 
     @api.constrains('signer_user_id', 'workflow_id', 'sequence', 'name')
     def _check_active_signer_configuration(self):

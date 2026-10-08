@@ -1,5 +1,13 @@
 import base64
 import re
+import io
+
+try:
+    from pypdf import PdfReader
+except ImportError:
+    from PyPDF2 import PdfReader
+
+from odoo.addons.absar_sign_workflow_core.tools.signature_anchors import locate_signature_anchors
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
@@ -85,20 +93,28 @@ class PaymentVoucher(models.Model):
                 'res_model': 'payment.voucher.sign.wizard', 'view_mode': 'form', 'target': 'new',
                 'context': dict(self.env.context, default_voucher_id=self.id)}
 
-    def _prepare_direct_signing_pdf(self, partner):
+    def _prepare_direct_signing_pdf(self, partner, signing_as="received", paid_partner=False):
         # Recheck after opening the picker in case the voucher was reset or
         # cancelled. Serialize preparation to avoid duplicate PDFs.
         self._check_can_prepare_signature()
         self.env.cr.execute('SELECT id FROM account_payment_voucher WHERE id = %s FOR UPDATE', (self.id,))
         self.invalidate_recordset(['state', 'revision', 'sign_template_id'])
         self._check_can_prepare_signature()
-        partner.ensure_one()
-        partner.check_access_rights('read')
-        partner.check_access_rule('read')
-        if not partner.email:
-            raise UserError(_('Set an email address on the selected signer contact before continuing.'))
-        if partner.company_id and partner.company_id != self.company_id:
-            raise UserError(_('The signer contact must be shared or belong to the voucher company.'))
+        if signing_as not in ('paid', 'received', 'both'):
+            raise UserError(_('Choose Paid By, Received By, or both.'))
+        recipients = [('received', partner)] if signing_as == 'received' else [('paid', partner)]
+        if signing_as == 'both':
+            if not paid_partner:
+                raise UserError(_('Choose the Paid By signer.'))
+            recipients = [('paid', paid_partner), ('received', partner)]
+        for _slot, contact in recipients:
+            contact.ensure_one()
+            contact.check_access_rights('read')
+            contact.check_access_rule('read')
+            if not contact.email:
+                raise UserError(_('Set an email address on every selected signer contact before continuing.'))
+            if contact.company_id and contact.company_id != self.company_id:
+                raise UserError(_('Every signer contact must be shared or belong to the voucher company.'))
         pdf, _format = self.env['ir.actions.report']._render_qweb_pdf(
             'internal_transfer_voucher.action_payment_voucher_pdf', self.ids)
         filename = '%s - %s' % (self.name, self.partner_id.name)
@@ -108,31 +124,59 @@ class PaymentVoucher(models.Model):
             'name': filename + '.pdf', 'datas': base64.b64encode(pdf), 'type': 'binary',
             'mimetype': 'application/pdf', 'res_model': self._name, 'res_id': self.id})
         Role = self.env['sign.item.role'].sudo()
-        role = Role.search([('name', '=', 'Payment Voucher Signer')], limit=1)
-        if not role:
-            role = Role.create({'name': 'Payment Voucher Signer'})
-        template = self.env['sign.template'].create({
+        roles = {}
+        for slot, contact in recipients:
+            label = 'Paid By' if slot == 'paid' else 'Received By'
+            role = Role.search([('name', '=', label)], limit=1)
+            if not role:
+                role = Role.create({'name': label})
+            roles[slot] = role
+        primary_slot = 'received' if signing_as in ('received', 'both') else 'paid'
+        template_values = {
             'name': _('Payment Voucher - %s') % filename, 'attachment_id': attachment.id,
             'pv_voucher_id': self.id, 'pv_revision': self.revision,
-            'pv_signer_partner_id': partner.id, 'pv_sign_role_id': role.id})
-        # Movable native fields start in the bottom signature area.
-        for xmlid, label, y, width, height in [
-            ('sign.sign_item_type_signature', _('Signature'), 0.80, 0.26, 0.035),
-            ('sign.sign_item_type_date', _('Date'), 0.84, 0.16, 0.018),
-        ]:
-            item_type = self.env.ref(xmlid, raise_if_not_found=False)
-            if not item_type:
-                raise UserError(_('Odoo Sign field type is missing: %s') % label)
-            self.env['sign.item'].sudo().create({
-                'template_id': template.id, 'type_id': item_type.id, 'required': True,
-                'responsible_id': role.id, 'page': 1, 'posX': 0.65, 'posY': y,
-                'width': width, 'height': height, 'name': label})
+            'pv_signer_partner_id': partner.id, 'pv_sign_role_id': roles[primary_slot].id,
+        }
+        for slot, contact in recipients:
+            template_values['pv_%s_partner_id' % slot] = contact.id
+            template_values['pv_%s_role_id' % slot] = roles[slot].id
+        template = self.env['sign.template'].create(template_values)
+        page_count = len(PdfReader(io.BytesIO(pdf)).pages)
+        issues = []
+        for slot, contact in recipients:
+            label = 'Paid By' if slot == 'paid' else 'Received By'
+            try:
+                anchor = locate_signature_anchors(
+                    pdf, page_count, {slot: label}, prefer_signature_area=True,
+                )[slot]
+            except (ValueError, ImportError) as exc:
+                issues.append('%s: %s' % (label, exc))
+                anchor = {'page': page_count, 'posX': 0.04 if slot == 'paid' else 0.65, 'posY': 0.80}
+            for xmlid, item_label, offset, width, height in [
+                ('sign.sign_item_type_signature', _('Signature'), 0, 0.26, 0.031),
+                ('sign.sign_item_type_date', _('Date'), 0.038, 0.155, 0.015),
+            ]:
+                item_type = self.env.ref(xmlid, raise_if_not_found=False)
+                if not item_type:
+                    raise UserError(_('Odoo Sign field type is missing: %s') % item_label)
+                self.env['sign.item'].sudo().create({
+                    'template_id': template.id, 'type_id': item_type.id, 'required': True,
+                    'responsible_id': roles[slot].id, 'page': anchor['page'],
+                    'posX': anchor['posX'], 'posY': anchor['posY'] + offset,
+                    'width': width, 'height': height, 'name': '%s - %s' % (label, item_label)})
         # All signing data lives on Sign records. Never write to the posted
         # voucher, and never bypass its financial write restriction.
         self.invalidate_recordset(['sign_template_id', 'sign_request_id', 'signature_state',
                                    'signature_status_text', 'signature_completed_count', 'signature_total_count'])
-        return {'type': 'ir.actions.act_url',
-                'url': '/odoo/sign/%s/action-sign.Template?id=%s' % (template.id, template.id), 'target': 'self'}
+        action = {'type': 'ir.actions.act_url',
+                  'url': '/odoo/sign/%s/action-sign.Template?id=%s' % (template.id, template.id), 'target': 'self'}
+        if issues:
+            return {'type': 'ir.actions.client', 'tag': 'display_notification', 'params': {
+                'title': _('Review voucher signature positions · Not sent'),
+                'message': ' '.join(issues) + ' ' + _('Adjust fields before using Send.'),
+                'type': 'warning', 'sticky': True, 'next': action,
+            }}
+        return action
 
     def action_open_signature_status(self):
         self.ensure_one()

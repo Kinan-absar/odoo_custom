@@ -1,7 +1,7 @@
 import base64
 import io
 
-from ..tools.signature_anchors import resolve_signature_placements
+from odoo.addons.absar_sign_workflow_core.tools.signature_anchors import resolve_signature_placements
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError

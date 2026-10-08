@@ -1,6 +1,6 @@
 {
     "name": "Construction Contract Send to Sign Bridge",
-    "version": "18.0.1.1.2",
+    "version": "18.0.1.1.3",
     "summary": "Configurable Odoo Sign workflows for Contracts, Measurements and IPCs",
     "description": """
 Bridge between Construction Contract Management and ABSAR Sign Workflow Core.

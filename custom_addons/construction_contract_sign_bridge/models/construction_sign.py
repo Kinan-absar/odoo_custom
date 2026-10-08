@@ -1,3 +1,12 @@
+import io
+
+try:
+    from pypdf import PdfReader
+except ImportError:
+    from PyPDF2 import PdfReader
+
+from odoo.addons.absar_sign_workflow_core.tools.signature_anchors import resolve_signature_placements
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
@@ -35,9 +44,16 @@ def _create_sign_template(record, report_xmlid, document_label, filename_parts):
     if record.signature_state != "draft":
         raise UserError(_("This document has already been sent to Sign. Modify the document first if a new revision is required."))
 
-    template, workflow, status = record.env["absar.sign.workflow.service"].create_template(
-        record, report_xmlid, document_label, filename_parts
+    service = record.env["absar.sign.workflow.service"]
+    workflow = service.get_workflow(record, required=True)
+    pdf_content, _format = record.env["ir.actions.report"]._render_qweb_pdf(report_xmlid, record.ids)
+    page_count = len(PdfReader(io.BytesIO(pdf_content)).pages)
+    anchors, issues = resolve_signature_placements(
+        pdf_content, page_count, workflow.step_ids, prefer_signature_area=True,
     )
+    template, workflow, status = service.with_context(
+        absar_sign_bottom=True, absar_sign_page=page_count, absar_sign_anchors=anchors,
+    ).create_template(record, report_xmlid, document_label, filename_parts, pdf_content=pdf_content)
     record.with_context(skip_construction_sign_reset=True).write({
         "sign_template_id": template.id,
         "signing_workflow_id": workflow.id,
@@ -55,11 +71,18 @@ def _create_sign_template(record, report_xmlid, document_label, filename_parts):
             "user": first.signer_user_id.name,
         }
     )
-    return {
+    action = {
         "type": "ir.actions.act_url",
-        "url": f'/odoo/sign/{template.id}/action-sign.Template?id={template.id}&name=Template%20"{document_label}%20{record.display_name}"',
+        "url": f'/odoo/sign/{template.id}/action-sign.Template?id={template.id}',
         "target": "self",
     }
+    if issues:
+        return {"type": "ir.actions.client", "tag": "display_notification", "params": {
+            "title": _("Placement review required · Not sent"),
+            "message": " ".join(issues) + " " + _("Adjust fields in the template, then use Send."),
+            "type": "warning", "sticky": True, "next": action,
+        }}
+    return action
 
 
 def _open_signature(record):
