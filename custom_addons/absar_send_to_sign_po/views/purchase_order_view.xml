@@ -13,6 +13,7 @@
                 <field name="signature_completed_count" invisible="1"/>
                 <field name="signature_total_count" invisible="1"/>
                 <field name="revision" invisible="1"/>
+                <field name="sign_placement_review_required" invisible="1"/>
             </xpath>
         </field>
     </record>
@@ -25,7 +26,8 @@
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_send_to_sign" type="object" class="oe_stat_button" icon="fa-pencil-square-o"
                         invisible="state != 'purchase' or signature_state not in ('draft', 'pending') or sign_request_id">
-                    <div>Send to Sign</div>
+                    <div invisible="sign_placement_review_required">Send to Sign</div>
+                    <div invisible="not sign_placement_review_required">Review &amp; Send</div>
                 </button>
                 <button name="action_open_signature_status" type="object" class="oe_stat_button" icon="fa-pencil-square-o"
                         invisible="not sign_template_id">

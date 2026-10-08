@@ -199,6 +199,25 @@ class AbsarSignWorkflowStep(models.Model):
         help="Automatically created/reused from the workflow role name. You can still choose a different Odoo Sign role manually when needed.",
     )
 
+    po_placement_mode = fields.Selection([
+        ("heading", "Printed Heading"),
+        ("position", "Saved Position"),
+        ("manual", "Review in Template"),
+    ], string="PO Placement", default="heading", required=True)
+    po_printed_heading = fields.Char(
+        string="Printed Heading",
+        help="Heading printed on the PO, independent of the signer role. Leave empty to use the role name.",
+    )
+    po_signature_page = fields.Integer(string="PO Page", default=1)
+    po_signature_x = fields.Float(string="Left (%)", default=4.0)
+    po_signature_y = fields.Float(string="Top (%)", default=82.0)
+
+    @api.constrains('po_placement_mode', 'po_signature_page', 'po_signature_x', 'po_signature_y')
+    def _check_po_signature_position(self):
+        for step in self.filtered(lambda row: row.po_placement_mode == 'position'):
+            if step.po_signature_page < 1 or not (0 <= step.po_signature_x <= 74) or not (0 <= step.po_signature_y <= 91.7):
+                raise ValidationError(_("Saved PO position requires page 1 or above, Left 0–74%, and Top 0–91.7%."))
+
     @api.constrains('signer_user_id', 'workflow_id', 'sequence', 'name')
     def _check_active_signer_configuration(self):
         for workflow in self.mapped('workflow_id').filtered('active'):
@@ -393,7 +412,11 @@ class AbsarSignWorkflowService(models.AbstractModel):
             [("template_id", "=", template.id)], order="id desc", limit=1
         )
         if not request:
-            vals = {"signature_status_text": _("Template Ready · Awaiting Send")}
+            needs_review = getattr(record, "sign_placement_review_required", False)
+            vals = {"signature_status_text": (
+                _("Placement review required · Not sent") if needs_review
+                else _("Template Ready · Awaiting Send")
+            )}
             if workflow:
                 vals["signature_total_count"] = len(workflow.step_ids)
             record.with_context(**{skip_context_key: True}).write(vals)
@@ -677,7 +700,10 @@ class SignRequest(models.Model):
                 continue
             source = self.env[template.absar_source_model].sudo().browse(template.absar_source_id).exists()
             if source and "sign_request_id" in source._fields:
-                source.write({"sign_request_id": request.id})
+                values = {"sign_request_id": request.id}
+                if "sign_placement_review_required" in source._fields:
+                    values["sign_placement_review_required"] = False
+                source.write(values)
         return requests
 
     def write(self, vals):

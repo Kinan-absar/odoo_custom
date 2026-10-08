@@ -1,7 +1,7 @@
 import base64
 import io
 
-from ..tools.signature_anchors import locate_signature_anchors
+from ..tools.signature_anchors import resolve_signature_placements
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
@@ -34,6 +34,7 @@ class PurchaseOrder(models.Model):
     signature_completed_count = fields.Integer(default=0, copy=False, readonly=True)
     signature_total_count = fields.Integer(default=0, copy=False, readonly=True)
     revision = fields.Integer(default=0, tracking=True, copy=False)
+    sign_placement_review_required = fields.Boolean(copy=False, readonly=True)
     quotation_attachment_ids = fields.Many2many(
         "ir.attachment",
         "purchase_order_sign_quotation_attachment_rel",
@@ -60,6 +61,7 @@ class PurchaseOrder(models.Model):
                 "sign_template_id": False,
                 "sign_request_id": False,
                 "signing_workflow_id": False,
+                "sign_placement_review_required": False,
             })
             po.message_post(body=_("%s Reset to Not Sent (Revision R%s).") % (reason, revision))
 
@@ -166,9 +168,29 @@ class PurchaseOrder(models.Model):
         except Exception as exc:
             raise UserError(_("Could not build the PO signing package (PO → Quotation → MR): %s") % exc) from exc
 
+    def _absar_open_placement_review(self, template, issues=None):
+        """Open the prepared template, with no signature invitation sent."""
+        message = _("Review and adjust the signature/date fields, then click Send in the template.")
+        if issues:
+            message += " " + " ".join(issues)
+        return {
+            "type": "ir.actions.client", "tag": "display_notification",
+            "params": {
+                "title": _("PO placement needs review · Not sent"),
+                "message": message, "type": "warning", "sticky": True,
+                "next": {
+                    "type": "ir.actions.act_url",
+                    "url": f'/odoo/sign/{template.id}/action-sign.Template?id={template.id}',
+                    "target": "self",
+                },
+            },
+        }
+
     def _absar_send_prepared_po(self, template, workflow):
         """Send through the native wizard without opening its/template UI."""
         self.ensure_one()
+        if self.sign_placement_review_required:
+            raise UserError(_("Review the PO placeholders and send from the template; automatic sending is disabled for this document."))
         workflow._validate_configuration()
         if workflow.step_ids.filtered(lambda step: not step.signer_user_id.active):
             raise UserError(_("All configured PO signer users must be active."))
@@ -178,7 +200,9 @@ class PurchaseOrder(models.Model):
 
         Wizard = self.env["sign.send.request"].with_context(
             active_model="sign.template", active_id=template.id,
+            sign_template_id=template.id,
             default_template_id=template.id,
+            default_has_default_template=True,
         )
         values = {
             "template_id": template.id,
@@ -186,6 +210,12 @@ class PurchaseOrder(models.Model):
             "filename": template.attachment_id.name or (template.name + ".pdf"),
             "signer_ids": Wizard._absar_signer_commands(template),
         }
+        # Native create_request selects its multi-role path with this flag.
+        # Supplying template_id alone does not trigger the UI's onchange/defaults.
+        if "has_default_template" in Wizard._fields:
+            values["has_default_template"] = True
+        if "signers_count" in Wizard._fields:
+            values["signers_count"] = len(workflow.step_ids)
         Wizard._absar_enable_signing_order_vals(values)
         if "is_user_signer" in Wizard._fields:
             values["is_user_signer"] = False
@@ -197,6 +227,8 @@ class PurchaseOrder(models.Model):
         if "tag_ids" in Wizard._fields:
             values["tag_ids"] = [(6, 0, template.tag_ids.ids)]
         wizard = Wizard.create(values)
+        if "has_default_template" in wizard._fields and not wizard.has_default_template:
+            raise UserError(_("Odoo Sign did not initialize this as a template request. No invitation was sent."))
         # Native validation checks every field role has exactly one recipient.
         # Native sending preserves ordering, authentication and email behavior.
         wizard.send_request()
@@ -232,7 +264,7 @@ class PurchaseOrder(models.Model):
         self.check_access_rule("write")
         # Serialize double-clicks and concurrent sends before creating any PDF/request.
         self.env.cr.execute("SELECT id FROM purchase_order WHERE id = %s FOR UPDATE", [self.id])
-        self.invalidate_recordset(["state", "signature_state", "sign_template_id", "sign_request_id", "signing_workflow_id"])
+        self.invalidate_recordset(["state", "signature_state", "sign_template_id", "sign_request_id", "signing_workflow_id", "sign_placement_review_required"])
         if self.state != "purchase":
             raise UserError(_("Only a confirmed Purchase Order can be sent to Sign."))
         if self.sign_request_id:
@@ -243,6 +275,8 @@ class PurchaseOrder(models.Model):
             if not workflow:
                 raise UserError(_("The prepared PO template has no signing workflow."))
             self._absar_tag_sign_template(template)
+            if self.sign_placement_review_required:
+                return self._absar_open_placement_review(template)
             return self._absar_send_prepared_po(template, workflow)
         if self.signature_state != "draft":
             raise UserError(_("This Purchase Order has already been sent to Sign."))
@@ -250,15 +284,9 @@ class PurchaseOrder(models.Model):
         package_pdf, po_page_count = self._absar_build_signing_package_pdf(with_po_page_count=True)
         service = self.env["absar.sign.workflow.service"]
         workflow = service.get_workflow(self, required=True)
-        try:
-            anchors = locate_signature_anchors(
-                package_pdf, po_page_count,
-                {step.id: step.name for step in workflow.step_ids},
-            )
-        except ImportError as exc:
-            raise UserError(_("PO heading detection requires the Python package pdfminer.six.")) from exc
-        except ValueError as exc:
-            raise UserError(str(exc)) from exc
+        anchors, placement_issues = resolve_signature_placements(
+            package_pdf, po_page_count, workflow.step_ids,
+        )
         template, workflow, status = service.with_context(
             absar_sign_bottom=True, absar_sign_page=po_page_count,
             absar_sign_anchors=anchors,
@@ -281,11 +309,14 @@ class PurchaseOrder(models.Model):
             "sign_template_id": template.id,
             "signing_workflow_id": workflow.id,
             "signature_state": "pending",
-            "signature_status_text": status,
+            "signature_status_text": _("Placement review required · Not sent") if placement_issues else status,
+            "sign_placement_review_required": bool(placement_issues),
             "signature_completed_count": 0,
             "signature_total_count": len(workflow.step_ids),
         })
         self._absar_tag_sign_template(template)
+        if placement_issues:
+            return self._absar_open_placement_review(template, placement_issues)
         return self._absar_send_prepared_po(template, workflow)
 
     def action_open_signature_status(self):

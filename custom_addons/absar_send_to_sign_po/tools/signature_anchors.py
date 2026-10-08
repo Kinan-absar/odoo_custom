@@ -80,3 +80,41 @@ def locate_signature_anchors(pdf_content, po_page_count, roles):
             raise ValueError("There is not enough space below signer heading '%s' for signature and date." % role_name)
         result[str(key)] = anchor
     return result
+
+
+def resolve_signature_placements(pdf_content, po_page_count, steps):
+    """Keep resolved positions; collect review reasons for unresolved steps."""
+    positions, issues = {}, []
+    for step in steps:
+        key = str(step.id)
+        mode = step.po_placement_mode or 'heading'
+        if mode == 'manual':
+            issues.append("%s: review placement in the template." % step.name)
+            continue
+        if mode == 'position':
+            if not (1 <= step.po_signature_page <= po_page_count):
+                issues.append("%s: saved page is outside the PO pages." % step.name)
+                continue
+            if not (0 <= step.po_signature_x <= 74 and 0 <= step.po_signature_y <= 91.7):
+                issues.append("%s: saved position is outside the printable page area." % step.name)
+                continue
+            positions[key] = {'page': step.po_signature_page,
+                              'posX': step.po_signature_x / 100,
+                              'posY': step.po_signature_y / 100}
+            continue
+        heading = step.po_printed_heading or step.name
+        try:
+            positions.update(locate_signature_anchors(pdf_content, po_page_count, {step.id: heading}))
+        except ImportError:
+            issues.append("%s: PDF heading detection is unavailable; place the fields manually." % step.name)
+        except ValueError as exc:
+            issues.append("%s: %s" % (step.name, exc))
+    # Two workflow roles must not automatically occupy the same signing area.
+    rows = list(positions.items())
+    for index, (key, left) in enumerate(rows):
+        for other_key, right in rows[index + 1:]:
+            if (left['page'] == right['page'] and
+                    abs(left['posX'] - right['posX']) < 0.26 and
+                    abs(left['posY'] - right['posY']) < 0.053):
+                issues.append("Signature positions overlap; adjust them in the template before sending.")
+    return positions, issues
