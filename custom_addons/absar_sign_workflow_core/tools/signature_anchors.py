@@ -28,6 +28,8 @@ def locate_signature_anchors(pdf_content, po_page_count, roles, prefer_signature
 
     found = {str(key): {label: [] for label in aliases(name)}
              for key, name in roles.items()}
+    seen_bounds = {key: {label: [] for label in labels}
+                   for key, labels in found.items()}
     patterns = {label: re.compile(
         r'(?<!\w)' + r'\s+'.join(re.escape(word) for word in label.split()) + r'(?!\w)',
         re.IGNORECASE,
@@ -60,13 +62,23 @@ def locate_signature_anchors(pdf_content, po_page_count, roles, prefer_signature
                         x0 = min(g.x0 for g in matched)
                         x1 = max(g.x1 for g in matched)
                         bottom = min(g.y0 for g in matched)
+                        bounds = (x0, bottom, x1, max(g.y1 for g in matched))
+                        # Some PDFs simulate bold by drawing the same heading
+                        # twice with a tiny offset. Compare physical glyph bounds
+                        # before normalizing/clamping the Sign field coordinates;
+                        # genuinely separate headings must remain ambiguous.
+                        seen = seen_bounds[str(key)][label]
+                        if any(page == page_index and
+                               all(abs(a - b) <= 1.0 for a, b in zip(bounds, previous))
+                               for page, previous in seen):
+                            continue
+                        seen.append((page_index, bounds))
                         # Center the field under the actual printed heading.
                         x = max(0.02, min(0.72, (x0 + x1) / (2 * layout.width) - 0.13))
                         y = (layout.y1 - bottom) / layout.height + 0.012
                         anchor = {'page': page_index + 1, 'posX': x, 'posY': y}
                         matches = found[str(key)][label]
-                        if anchor not in matches:
-                            matches.append(anchor)
+                        matches.append(anchor)
     result = {}
     for key, role_name in roles.items():
         # Prefer the full printed role title over its acronym elsewhere in the PO.
