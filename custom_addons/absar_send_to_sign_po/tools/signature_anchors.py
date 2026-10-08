@@ -1,5 +1,6 @@
 """Locate printed signer headings in PO pages, using PDF text coordinates."""
 import io
+import re
 
 
 def normalize(text):
@@ -9,10 +10,10 @@ def normalize(text):
 def aliases(role_name):
     key = normalize(role_name)
     if key in ('projectdirector', 'projectsdirector'):
-        return ('projectdirector', 'projectsdirector')
+        return ('Projects Director', 'Project Director')
     if key in ('ceo', 'chiefexecutiveofficer'):
-        return ('chiefexecutiveofficer', 'ceo')
-    return (key,)
+        return ('Chief Executive Officer', 'CEO')
+    return (role_name.strip(),)
 
 
 def locate_signature_anchors(pdf_content, po_page_count, roles):
@@ -25,7 +26,12 @@ def locate_signature_anchors(pdf_content, po_page_count, roles):
     from pdfminer.high_level import extract_pages
     from pdfminer.layout import LTChar, LTTextLine
 
-    found = {str(key): [] for key in roles}
+    found = {str(key): {label: [] for label in aliases(name)}
+             for key, name in roles.items()}
+    patterns = {label: re.compile(
+        r'(?<!\w)' + r'\s+'.join(re.escape(word) for word in label.split()) + r'(?!\w)',
+        re.IGNORECASE,
+    ) for labels in found.values() for label in labels}
 
     def text_lines(item):
         if isinstance(item, LTTextLine):
@@ -37,21 +43,20 @@ def locate_signature_anchors(pdf_content, po_page_count, roles):
     for page_index, layout in enumerate(extract_pages(
             io.BytesIO(pdf_content), page_numbers=range(po_page_count))):
         for line in text_lines(layout):
-            glyphs = [char for char in line if isinstance(char, LTChar)]
             text, lookup = '', []
-            for glyph in glyphs:
-                for char in glyph.get_text():
-                    if char.isalnum():
-                        text += char.lower()
-                        lookup.append(glyph)
+            for item in line:
+                if not hasattr(item, 'get_text'):
+                    continue
+                for char in item.get_text():
+                    text += char
+                    lookup.append(item if isinstance(item, LTChar) else None)
             for key, role_name in roles.items():
                 for label in aliases(role_name):
-                    start = 0
-                    while label:
-                        offset = text.find(label, start)
-                        if offset < 0:
-                            break
-                        matched = lookup[offset:offset + len(label)]
+                    for match in patterns[label].finditer(text):
+                        matched = [glyph for glyph in lookup[match.start():match.end()]
+                                   if glyph is not None]
+                        if not matched:
+                            continue
                         x0 = min(g.x0 for g in matched)
                         x1 = max(g.x1 for g in matched)
                         bottom = min(g.y0 for g in matched)
@@ -59,12 +64,14 @@ def locate_signature_anchors(pdf_content, po_page_count, roles):
                         x = max(0.02, min(0.72, (x0 + x1) / (2 * layout.width) - 0.13))
                         y = (layout.y1 - bottom) / layout.height + 0.012
                         anchor = {'page': page_index + 1, 'posX': x, 'posY': y}
-                        if anchor not in found[str(key)]:
-                            found[str(key)].append(anchor)
-                        start = offset + len(label)
+                        matches = found[str(key)][label]
+                        if anchor not in matches:
+                            matches.append(anchor)
     result = {}
     for key, role_name in roles.items():
-        matches = found[str(key)]
+        # Prefer the full printed role title over its acronym elsewhere in the PO.
+        matches = next((found[str(key)][label] for label in aliases(role_name)
+                        if found[str(key)][label]), [])
         if len(matches) != 1:
             raise ValueError("Signer heading '%s': expected one match in the PO, found %s. "
                              "Check the printed role heading before preparing Sign." % (role_name, len(matches)))
