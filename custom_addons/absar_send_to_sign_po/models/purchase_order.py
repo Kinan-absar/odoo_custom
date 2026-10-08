@@ -1,6 +1,8 @@
 import base64
 import io
 
+from ..tools.signature_anchors import locate_signature_anchors
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
@@ -129,7 +131,7 @@ class PurchaseOrder(models.Model):
             "before sending to Sign."
         ))
 
-    def _absar_build_signing_package_pdf(self):
+    def _absar_build_signing_package_pdf(self, with_po_page_count=False):
         self.ensure_one()
         po_pdf, _fmt = self.env["ir.actions.report"]._render_qweb_pdf(
             "purchase.report_purchaseorder", self.ids
@@ -149,12 +151,17 @@ class PurchaseOrder(models.Model):
 
         writer = PdfWriter()
         try:
-            for label, content in parts:
+            po_page_count = 0
+            for index, (label, content) in enumerate(parts):
                 reader = PdfReader(io.BytesIO(content))
+                if index == 0:
+                    po_page_count = len(reader.pages)
                 for page in reader.pages:
                     writer.add_page(page)
             output = io.BytesIO()
             writer.write(output)
+            if with_po_page_count:
+                return output.getvalue(), po_page_count
             return output.getvalue()
         except Exception as exc:
             raise UserError(_("Could not build the PO signing package (PO → Quotation → MR): %s") % exc) from exc
@@ -166,8 +173,22 @@ class PurchaseOrder(models.Model):
         if self.signature_state != "draft":
             raise UserError(_("This Purchase Order has already been sent to Sign."))
 
-        package_pdf = self._absar_build_signing_package_pdf()
-        template, workflow, status = self.env["absar.sign.workflow.service"].create_template(
+        package_pdf, po_page_count = self._absar_build_signing_package_pdf(with_po_page_count=True)
+        service = self.env["absar.sign.workflow.service"]
+        workflow = service.get_workflow(self, required=True)
+        try:
+            anchors = locate_signature_anchors(
+                package_pdf, po_page_count,
+                {step.id: step.name for step in workflow.step_ids},
+            )
+        except ImportError as exc:
+            raise UserError(_("PO heading detection requires the Python package pdfminer.six.")) from exc
+        except ValueError as exc:
+            raise UserError(str(exc)) from exc
+        template, workflow, status = service.with_context(
+            absar_sign_bottom=True, absar_sign_page=po_page_count,
+            absar_sign_anchors=anchors,
+        ).create_template(
             self,
             "purchase.report_purchaseorder",
             self.name,

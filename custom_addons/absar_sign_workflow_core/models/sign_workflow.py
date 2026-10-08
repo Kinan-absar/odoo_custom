@@ -261,8 +261,9 @@ class AbsarSignWorkflowService(models.AbstractModel):
 
         Both fields are assigned to the exact same Odoo Sign role, so once the
         user positions the pair on the PDF there is nothing else to configure.
-        The positions are only a staging layout on page 1 and can be dragged to
-        the desired location before sending.
+        PO callers stage pairs at the bottom of their last PO page. Other
+        documents retain the existing staging layout. Fields remain independently
+        movable in the native template editor.
         """
         ItemType = self.env["sign.item.type"].sudo()
         signature_type = self.env.ref(
@@ -296,17 +297,28 @@ class AbsarSignWorkflowService(models.AbstractModel):
             # Each signer gets a compact pair in a staging grid:
             # [ Signature ]
             # [ Date      ]
-            # The document owner only needs to drag the pair into place.
-            row = index % 5
-            col = min(index // 5, 2)
-            base_x = 0.04 + (0.31 * col)
-            base_y = 0.035 + (0.145 * row)
+            # Native Sign treats these as two separate fields, not a drag group.
+            anchor = self.env.context.get("absar_sign_anchors", {}).get(str(step.id))
+            if anchor:
+                base_x = anchor["posX"]
+                base_y = anchor["posY"]
+            elif self.env.context.get("absar_sign_bottom"):
+                row, col = divmod(index, 3)
+                base_x = 0.04 + (0.31 * col)
+                base_y = 0.82 - (0.085 * row)
+                if base_y < 0.04:
+                    raise UserError(_("Too many signers for the PO page layout."))
+            else:
+                row = index % 5
+                col = min(index // 5, 2)
+                base_x = 0.04 + (0.31 * col)
+                base_y = 0.035 + (0.145 * row)
 
             common = {
                 "template_id": template.id,
                 "required": True,
                 "responsible_id": role.id,
-                "page": 1,
+                "page": anchor["page"] if anchor else max(1, int(self.env.context.get("absar_sign_page", 1))),
                 "posX": base_x,
             }
             SignItem.create({
