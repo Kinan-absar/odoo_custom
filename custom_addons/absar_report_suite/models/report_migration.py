@@ -259,7 +259,9 @@ class AbsarReportMigration(models.AbstractModel):
         if not self.env.su and not self.env.user.has_group('base.group_system'):
             raise AccessError('Only Settings administrators can apply the ABSAR report migration.')
         manifest = json.loads((_ROOT / 'data/report_manifest.json').read_text(encoding='utf-8'))
+        _logger.info("ABSAR report suite: starting preflight for %s", manifest["version"])
         self._preflight(manifest)
+        _logger.info("ABSAR report suite: preflight passed")
         doomed_views, doomed_actions = self._retired(manifest)
         snapshot = self._snapshot(manifest, doomed_views, doomed_actions)
         self._assets()

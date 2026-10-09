@@ -1,5 +1,5 @@
 {
-  "version": "18.0.1.0.0",
+  "version": "18.0.1.0.2",
   "views": [
     {
       "key": "wm_journal_entry_report.report_journal_document",
