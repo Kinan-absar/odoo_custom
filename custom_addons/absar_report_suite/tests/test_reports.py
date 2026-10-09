@@ -57,3 +57,44 @@ class TestAbsarReports(TransactionCase):
                 'absar_report_suite.' + alias, invoice.ids)
             self.assertIn(b'Absar Header', html)
             self.assertIn(partner.name.encode(), html)
+
+    def test_cleanup_removes_unused_and_preserves_references(self):
+        views = self.env['ir.ui.view']
+        retired = views.create({
+            'name': 'ABSAR cleanup disposable wrapper', 'type': 'qweb',
+            'key': 'purchase.report_purchaseorder_copy_1',
+            'arch_db': '<t t-name="purchase.report_purchaseorder_copy_1"><p>old</p></t>',
+        })
+        dependency = views.create({
+            'name': 'ABSAR cleanup dependency', 'type': 'qweb',
+            'key': 'purchase.report_purchaseorder_copy_2',
+            'arch_db': '<t t-name="purchase.report_purchaseorder_copy_2"><p>keep</p></t>',
+        })
+        retained = views.create({
+            'name': 'Unrelated retained report', 'type': 'qweb',
+            'key': 'absar_cleanup_test.retained',
+            'arch_db': '<t t-name="absar_cleanup_test.retained"><t t-call="purchase.report_purchaseorder_copy_2"/></t>',
+        })
+        system = views.create({
+            'name': 'Protected owner fixture', 'type': 'qweb',
+            'key': 'purchase.report_purchaseorder_copy_3',
+            'arch_db': '<t t-name="purchase.report_purchaseorder_copy_3"><p>system</p></t>',
+        })
+        self.env['ir.model.data'].create({
+            'module': 'account', 'name': 'absar_cleanup_guard_fixture',
+            'model': 'ir.ui.view', 'res_id': system.id,
+        })
+        action = self.env['ir.actions.report'].create({
+            'name': 'Unused retired action', 'model': 'purchase.order',
+            'report_type': 'qweb-pdf', 'report_name': 'purchase.report_purchaseorder_copy_1',
+        })
+        self.env['absar.report.setup'].apply()
+        self.assertFalse(retired.exists())
+        self.assertFalse(action.exists())
+        self.assertTrue(dependency.exists())
+        self.assertTrue(retained.exists())
+        self.assertTrue(system.exists())
+        self.assertTrue(self.env.ref('web.external_layout_wave').exists())
+        self.assertTrue(self.env.ref('absar_report_suite.purchase').exists())
+        self.env['absar.report.setup'].apply()
+        self.assertTrue(dependency.exists())

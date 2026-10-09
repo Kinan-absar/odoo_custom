@@ -17,7 +17,7 @@ def checked(name):
 for path in ROOT.rglob('*.py'):
     ast.parse(path.read_text())
 checked('Python syntax')
-assert manifest['version'] == '18.0.2.0.0'
+assert manifest['version'] == '18.0.2.0.1'
 assert not {'wm_journal_entry_report', 'sale_pdf_quote_builder', 'studio_customization'} & set(manifest['depends'])
 records = {}
 for filename in manifest['data']:
@@ -119,10 +119,12 @@ class Env:
         if k in self.refs:return self.actions.browse(self.refs[k])
         if raise_if_not_found:raise KeyError(k)
         return False
-odoo=types.ModuleType('odoo');odoo.api=types.SimpleNamespace(model=lambda f:f);odoo.models=types.SimpleNamespace(AbstractModel=object)
+odoo=types.ModuleType('odoo');odoo.api=types.SimpleNamespace(model=lambda f:f);odoo.models=types.SimpleNamespace(AbstractModel=object);odoo.fields=types.SimpleNamespace(Datetime=types.SimpleNamespace(now=lambda:'TEST'))
 errors=types.ModuleType('odoo.exceptions');errors.AccessError=type('AccessError',(Exception,),{})
 sys.modules['odoo']=odoo;sys.modules['odoo.exceptions']=errors
-spec=importlib.util.spec_from_file_location('setup_under_test',ROOT/'models/report_setup.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+pkg=types.ModuleType('absar_test');pkg.__path__=[str(ROOT/'models')];sys.modules['absar_test']=pkg
+spec=importlib.util.spec_from_file_location('absar_test.report_setup',ROOT/'models/report_setup.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+module.cleanup_reports=lambda env,config,keep: {}
 config=json.loads((ROOT/'data/integration.json').read_text())
 def scenario(existing, extras=False):
     env=Env()
@@ -167,5 +169,21 @@ def scenario(existing, extras=False):
 scenario(False);scenario(True);scenario(True,True)
 assert 'state' not in module._FIELDS
 assert 'unlink(' not in (ROOT/'models/report_setup.py').read_text()
-checked('Installer does not force module state or delete report records')
+checked('Report rebinding does not force module state')
+from absar_test.cleanup_plan import plan_cleanup
+a=('ir.ui.view',1);b=('ir.ui.view',2);c=('ir.actions.report',3);system=('ir.ui.view',4);retained=('ir.ui.view',5)
+remove,reasons=plan_cleanup({a,b,c,system},{a:{'studio_customization'},b:set(),c:{'studio_customization'},system:{'account'}},set(),[(a,b),(c,a)])
+assert remove=={a,b,c} and system in reasons
+remove,reasons=plan_cleanup({a,b,c}, {},set(),[(retained,a),(a,b),(c,a)])
+assert remove=={c} and a in reasons and b in reasons
+remove,reasons=plan_cleanup({a,b}, {},{a},[(a,b),(b,a)])
+assert not remove
+remove,reasons=plan_cleanup({a,b}, {},set(),[(a,b),(b,a)])
+assert remove=={a,b}
+remove,reasons=plan_cleanup({a,c}, {},set(),[(None,c),(c,a)])
+assert not remove
+checked('Cleanup graph: system ownership, retained inheritance, cycles and external references')
+assert all(v['key'] not in views for v in config['retired_views'])
+assert set(config['retired_templates']).isdisjoint(views)
+checked('Cleanup allowlist excludes the rebuilt report templates')
 print(json.dumps({'result':'PASS','offline_checks':checks,'odoo_installation_tested':False,'live_pdf_rendering_tested':False},indent=2))

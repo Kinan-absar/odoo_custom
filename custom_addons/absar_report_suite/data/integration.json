@@ -182,5 +182,299 @@
     "account.account_invoices_without_payment",
     "sale.action_report_pro_forma_invoice",
     "sale.action_report_saleorder"
+  ],
+  "retired_views": [
+    {
+      "key": "purchase.report_purchaseorder_copy_1",
+      "xmlid": "studio_customization.report_purchaseorder_021e8619-96f4-45df-b05a-e33814679515"
+    },
+    {
+      "key": "purchase.report_purchaseorder_document_copy_1",
+      "xmlid": "studio_customization.report_purchaseorder_a2681d3a-4436-4601-90eb-65249e7bbc7f"
+    },
+    {
+      "key": "purchase.document_tax_totals_copy_1",
+      "xmlid": "studio_customization.document_tax_totals_939bcddd-d7f7-4bed-bf6b-b0c81c153084"
+    },
+    {
+      "key": "purchase.report_purchaseorder_copy_2",
+      "xmlid": "studio_customization.report_purchaseorder_e0391a54-ebf9-42cd-9c42-6fbfdfde4769"
+    },
+    {
+      "key": "purchase.report_purchaseorder_document_copy_2",
+      "xmlid": "studio_customization.report_purchaseorder_f1611950-abdc-4c71-aba5-45cc1a8ba7f5"
+    },
+    {
+      "key": "purchase.document_tax_totals_copy_2",
+      "xmlid": "studio_customization.document_tax_totals_c832e28d-271e-447c-98db-ed794d3526a2"
+    },
+    {
+      "key": "purchase.report_purchaseorder_copy_3",
+      "xmlid": "studio_customization.report_purchaseorder_e28ec38a-01b2-4355-b280-d7932de300fd"
+    },
+    {
+      "key": "purchase.report_purchaseorder_document_copy_3",
+      "xmlid": "studio_customization.report_purchaseorder_71b1040d-8225-4047-a81a-ad5a3ae776f3"
+    },
+    {
+      "key": "purchase.document_tax_totals_copy_3",
+      "xmlid": "studio_customization.document_tax_totals_abb550dc-c5b5-4097-90d1-3315b3a22cf3"
+    },
+    {
+      "key": "purchase.report_purchaseorder_copy_4",
+      "xmlid": "studio_customization.report_purchaseorder_b6c20c99-b2ff-4cf3-be0a-5e92ccaf1c78"
+    },
+    {
+      "key": "purchase.report_purchaseorder_document_copy_4",
+      "xmlid": "studio_customization.report_purchaseorder_808ff6cd-69a6-4a55-8588-bcb0fcc78b2b"
+    },
+    {
+      "key": "purchase.report_purchaseorder_copy_4_copy_1",
+      "xmlid": "studio_customization.report_purchaseorder_1919f834-d652-44a0-a15a-6ec65aef5a2e"
+    },
+    {
+      "key": "purchase.report_purchaseorder_document_copy_4_copy_1",
+      "xmlid": "studio_customization.report_purchaseorder_645c4ebc-1a43-473d-8acb-83ae84626d9d"
+    },
+    {
+      "key": "purchase.document_tax_totals_copy_4_copy_1",
+      "xmlid": "studio_customization.document_tax_totals__eade0d7f-cd14-4ad4-bc93-13ab6abdd4ac"
+    },
+    {
+      "key": "purchase.report_purchaseorder_copy_4_copy_3",
+      "xmlid": "studio_customization.report_purchaseorder_b505cce9-da3a-46a3-86fc-943e7448f403"
+    },
+    {
+      "key": "purchase.report_purchaseorder_document_copy_4_copy_3",
+      "xmlid": "studio_customization.report_purchaseorder_bb893bc2-c146-47c3-bf44-ba5f04d07df7"
+    },
+    {
+      "key": "purchase.document_tax_totals_copy_4_copy_3",
+      "xmlid": "studio_customization.document_tax_totals__009f1a5b-cd58-4c1f-a29c-a9e76d338a17"
+    },
+    {
+      "key": "web_studio.report_editor_customization_full.view._purchase.report_purchaseorder_document_copy_1",
+      "xmlid": "studio_customization.web_studio_report_ed_1f480875-0ac5-4068-852d-e1ec22ec4698"
+    },
+    {
+      "key": "web_studio.report_editor_customization_diff.view._purchase.report_purchaseorder_document_copy_4",
+      "xmlid": "studio_customization.web_studio_report_ed_7745ad73-3b98-470f-80af-9c6f38e388e5"
+    },
+    {
+      "key": "web_studio.report_editor_customization_diff.view._purchase.report_purchaseorder_document_copy_4_copy_3",
+      "xmlid": "studio_customization.web_studio_report_ed_3c4521fa-826e-4057-998f-ee68e83b86cd"
+    },
+    {
+      "key": "sale.report_saleorder_pro_forma_copy_1",
+      "xmlid": "studio_customization.report_saleorder_pro_086f5842-98ab-470c-aeb4-13a1d2c5b3c7"
+    },
+    {
+      "key": "sale.report_saleorder_document_copy_1",
+      "xmlid": "studio_customization.report_saleorder_doc_1ec23af1-c008-43a5-b765-1c8dd0ed7d64"
+    },
+    {
+      "key": "sale.document_tax_totals_copy_1",
+      "xmlid": "studio_customization.document_tax_totals_daf80f02-d5a3-46d2-bf21-43b3c86a4c26"
+    },
+    {
+      "key": "sale.report_saleorder_raw_copy_1",
+      "xmlid": "studio_customization.report_saleorder_raw_91152fad-6e1e-43fd-9f95-768651301198"
+    },
+    {
+      "key": "sale.report_saleorder_document_copy_2",
+      "xmlid": "studio_customization.report_saleorder_doc_b48c4b60-0e0c-4e18-94c4-798381bc61a9"
+    },
+    {
+      "key": "sale.document_tax_totals_copy_2",
+      "xmlid": "studio_customization.document_tax_totals_e64d2e2b-96b9-41ba-a6ad-731e221f1392"
+    },
+    {
+      "key": "sale.report_saleorder_pro_forma_copy_2",
+      "xmlid": "studio_customization.report_saleorder_pro_27263fe0-f4d0-4f37-8a98-469976fe91e9"
+    },
+    {
+      "key": "sale.report_saleorder_document_copy_3",
+      "xmlid": "studio_customization.report_saleorder_doc_f34bc6e3-448d-483a-b563-a82b7592b410"
+    },
+    {
+      "key": "sale.document_tax_totals_copy_3",
+      "xmlid": "studio_customization.document_tax_totals_58f9340a-4f49-4b69-930e-679db0502d1c"
+    },
+    {
+      "key": "sale.report_saleorder_pro_forma_copy_3",
+      "xmlid": "studio_customization.report_saleorder_pro_995dedfb-1d78-45ee-bb3a-414a3654de7f"
+    },
+    {
+      "key": "sale.report_saleorder_document_copy_4",
+      "xmlid": "studio_customization.report_saleorder_doc_8ea5a75c-b8d9-4139-a17f-664917a0aae5"
+    },
+    {
+      "key": "absar.company_heading",
+      "xmlid": null
+    },
+    {
+      "key": "purchase.report_purchaseorder_copy_4_copy_2",
+      "xmlid": null
+    },
+    {
+      "key": "wm_journal_entry_report.report_journal_document_custom",
+      "xmlid": null
+    },
+    {
+      "key": "web_studio.report_editor_customization_diff.view._wm_journal_entry_report.report_journal_document",
+      "xmlid": null
+    },
+    {
+      "key": "account.report_invoice_copy_1",
+      "xmlid": "studio_customization.report_invoice_07dfa7da-d658-489f-841f-ecc22aa96cf7"
+    },
+    {
+      "key": "account.report_invoice_document_copy_1",
+      "xmlid": "studio_customization.report_invoice_docum_64dc698c-d092-4946-b027-1b9fb70ad681"
+    },
+    {
+      "key": "account.document_tax_totals_copy_1",
+      "xmlid": "studio_customization.document_tax_totals_628123bb-3ea6-45ba-8aef-d9e8ac998ef4"
+    },
+    {
+      "key": "account.tax_groups_totals_copy_1",
+      "xmlid": "studio_customization.tax_groups_totals_074d91b2-989c-4e5b-b287-c428a01e2615"
+    },
+    {
+      "key": "account.document_tax_totals_company_currency_template_copy_1",
+      "xmlid": "studio_customization.document_tax_totals__cbe9c659-5e80-40e4-80f0-865eb2a759c6"
+    },
+    {
+      "key": "l10n_gcc_invoice.arabic_english_invoice_copy_1",
+      "xmlid": "studio_customization.arabic_english_invoi_30df012b-8331-4500-813d-bbcd7ea9de6b"
+    },
+    {
+      "key": "account.report_invoice_copy_1_copy_1",
+      "xmlid": "studio_customization.report_invoice_copy__87f5e58d-53b7-468b-9ccd-c7b486c1eb2e"
+    },
+    {
+      "key": "account.report_invoice_document_copy_1_copy_1",
+      "xmlid": "studio_customization.report_invoice_docum_437a951c-3445-411a-8ae3-fcaac6363717"
+    },
+    {
+      "key": "account.document_tax_totals_copy_1_copy_1",
+      "xmlid": "studio_customization.document_tax_totals__127b291f-29b1-4a3a-9ae8-fbc082fb4097"
+    },
+    {
+      "key": "account.tax_groups_totals_copy_1_copy_1",
+      "xmlid": "studio_customization.tax_groups_totals_co_d5bf6d4a-43ec-4bc4-a6a6-dd7559f5eea4"
+    },
+    {
+      "key": "account.document_tax_totals_company_currency_template_copy_1_copy_1",
+      "xmlid": "studio_customization.document_tax_totals__0644fa28-bca7-454e-9f01-9e2924755346"
+    },
+    {
+      "key": "l10n_gcc_invoice.arabic_english_invoice_copy_1_copy_1",
+      "xmlid": "studio_customization.arabic_english_invoi_6f003c45-8428-4214-b0e9-81988fb8dbb0"
+    },
+    {
+      "key": "account.report_invoice_copy_1_copy_1_copy_1",
+      "xmlid": "studio_customization.report_invoice_copy__c373d1c2-bcca-4d4a-955f-9e7be2720d7a"
+    },
+    {
+      "key": "account.report_invoice_document_copy_1_copy_1_copy_1",
+      "xmlid": "studio_customization.report_invoice_docum_8c0696ba-7974-4541-ae14-cce3e5599e4d"
+    },
+    {
+      "key": "account.document_tax_totals_copy_1_copy_1_copy_1",
+      "xmlid": "studio_customization.document_tax_totals__d6f4545a-7f0d-49be-ac80-a22cb94ad870"
+    },
+    {
+      "key": "account.tax_groups_totals_copy_1_copy_1_copy_1",
+      "xmlid": "studio_customization.tax_groups_totals_co_834bf26a-6f3a-42d3-89d8-69d5207ebfc9"
+    },
+    {
+      "key": "account.document_tax_totals_company_currency_template_copy_1_copy_1_copy_1",
+      "xmlid": "studio_customization.document_tax_totals__9794c354-c18e-4452-9bfa-69fc3f15128f"
+    },
+    {
+      "key": "l10n_gcc_invoice.arabic_english_invoice_copy_1_copy_1_copy_1",
+      "xmlid": "studio_customization.arabic_english_invoi_3cc63e09-d1ba-4554-bbad-13654e149e82"
+    },
+    {
+      "key": "account.report_invoice_copy_1_copy_1_copy_2",
+      "xmlid": "studio_customization.report_invoice_copy__392692c5-bd08-4d9c-a537-b5c70ee6811c"
+    },
+    {
+      "key": "account.report_invoice_document_copy_1_copy_1_copy_2",
+      "xmlid": "studio_customization.report_invoice_docum_7dcd0717-758f-4ea5-a1c9-5a979c2de35f"
+    },
+    {
+      "key": "account.document_tax_totals_copy_1_copy_1_copy_2",
+      "xmlid": "studio_customization.document_tax_totals__3cd043fd-c660-49f0-830f-2da4cbd5b29b"
+    },
+    {
+      "key": "account.tax_groups_totals_copy_1_copy_1_copy_2",
+      "xmlid": "studio_customization.tax_groups_totals_co_e4b29534-d8b9-4106-8db3-66281649a79f"
+    },
+    {
+      "key": "account.document_tax_totals_company_currency_template_copy_1_copy_1_copy_2",
+      "xmlid": "studio_customization.document_tax_totals__4ca9d794-f790-491e-8e54-e4a0e7511387"
+    },
+    {
+      "key": "l10n_gcc_invoice.arabic_english_invoice_copy_1_copy_1_copy_2",
+      "xmlid": "studio_customization.arabic_english_invoi_518d856a-4823-4568-a3d3-3e6c1818089f"
+    },
+    {
+      "key": "account.report_invoice_copy_1_copy_1_copy_4",
+      "xmlid": "studio_customization.report_invoice_copy__627279b3-dd3a-4047-a3d3-057996f7245a"
+    },
+    {
+      "key": "account.report_invoice_document_copy_1_copy_1_copy_4",
+      "xmlid": "studio_customization.report_invoice_docum_b1db48d2-2084-452e-8495-7d6018acee2a"
+    },
+    {
+      "key": "account.document_tax_totals_copy_1_copy_1_copy_4",
+      "xmlid": "studio_customization.document_tax_totals__4c094a21-9abb-47d3-bb8b-80983238279c"
+    },
+    {
+      "key": "account.tax_groups_totals_copy_1_copy_1_copy_4",
+      "xmlid": "studio_customization.tax_groups_totals_co_58b4a4f1-9c1d-43fe-a828-45d0de53d174"
+    },
+    {
+      "key": "account.document_tax_totals_company_currency_template_copy_1_copy_1_copy_4",
+      "xmlid": "studio_customization.document_tax_totals__f0927b43-9e4b-4f50-9f49-0cd59a35c0af"
+    },
+    {
+      "key": "l10n_gcc_invoice.arabic_english_invoice_copy_1_copy_1_copy_4",
+      "xmlid": "studio_customization.arabic_english_invoi_9fb7de06-fcb8-462f-9e22-02a1038ef632"
+    },
+    {
+      "key": "account.report_invoice_copy_1_copy_1_copy_4_copy_1",
+      "xmlid": "studio_customization.report_invoice_copy__c52ada8c-17f8-4a40-81da-db7c1d70a0e1"
+    },
+    {
+      "key": "account.report_invoice_document_copy_1_copy_1_copy_4_copy_1",
+      "xmlid": "studio_customization.report_invoice_docum_ec698b89-627d-4135-9038-ef260e0cd135"
+    },
+    {
+      "key": "account.document_tax_totals_copy_1_copy_1_copy_4_copy_1",
+      "xmlid": "studio_customization.document_tax_totals__392f73aa-63f0-4856-96b6-f3d01eba40c5"
+    },
+    {
+      "key": "account.tax_groups_totals_copy_1_copy_1_copy_4_copy_1",
+      "xmlid": "studio_customization.tax_groups_totals_co_5181f527-db64-4951-be59-15071b47ff8f"
+    },
+    {
+      "key": "account.document_tax_totals_company_currency_template_copy_1_copy_1_copy_4_copy_1",
+      "xmlid": "studio_customization.document_tax_totals__6312327f-701b-407f-aa2a-163f3b717e38"
+    },
+    {
+      "key": "l10n_gcc_invoice.arabic_english_invoice_copy_1_copy_1_copy_4_copy_1",
+      "xmlid": "studio_customization.arabic_english_invoi_f0ec3a06-ce31-433d-8d55-1c75fbc15fc4"
+    },
+    {
+      "key": "web_studio.report_editor_customization_full.view._account.report_invoice_document_copy_1",
+      "xmlid": "studio_customization.web_studio_report_ed_0a2204a4-e59d-4e0f-b1e8-4bb24cae551a"
+    },
+    {
+      "key": "web_studio.report_editor_customization_full.view._account.report_invoice_document_copy_1_copy_1",
+      "xmlid": "studio_customization.web_studio_report_ed_61eb2a70-2ca9-479f-87e2-2739ab9d652f"
+    }
   ]
 }

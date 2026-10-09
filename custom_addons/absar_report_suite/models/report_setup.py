@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from odoo import api, models
 from odoo.exceptions import AccessError
+from .report_cleanup import cleanup_reports
 
 _logger = logging.getLogger(__name__)
 _MODULE = 'absar_report_suite'
@@ -100,6 +101,7 @@ class AbsarReportSetup(models.AbstractModel):
             remember(record)
             record.write({'binding_model_id': False})
         params.set_param(_BACKUP, json.dumps(backup, ensure_ascii=False))
-        params.set_param(_MODULE + '.applied_version', '18.0.2.0.0')
-        _logger.info('ABSAR reports 18.0.2.0.0 configured: %s active report bindings', len(bound))
+        cleanup_reports(env, config, owned | bound)
+        params.set_param(_MODULE + '.applied_version', '18.0.2.0.1')
+        _logger.info('ABSAR reports 18.0.2.0.1 configured: %s active report bindings', len(bound))
         return True

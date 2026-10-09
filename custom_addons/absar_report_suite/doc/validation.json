@@ -8,7 +8,9 @@
     "Setup, repeat update, retained actions and unrelated records: False; duplicates and standard buttons: False",
     "Setup, repeat update, retained actions and unrelated records: True; duplicates and standard buttons: False",
     "Setup, repeat update, retained actions and unrelated records: True; duplicates and standard buttons: True",
-    "Installer does not force module state or delete report records"
+    "Report rebinding does not force module state",
+    "Cleanup graph: system ownership, retained inheritance, cycles and external references",
+    "Cleanup allowlist excludes the rebuilt report templates"
   ],
   "odoo_installation_tested": false,
   "live_pdf_rendering_tested": false
