@@ -1,0 +1,15 @@
+{
+  "result": "PASS",
+  "offline_checks": [
+    "Python syntax",
+    "Manifest data order and unique XML record identities",
+    "QWeb calls, expression syntax and portable assets",
+    "Journal footer, purchase routing and three image files",
+    "Setup, repeat update, retained actions and unrelated records: False; duplicates and standard buttons: False",
+    "Setup, repeat update, retained actions and unrelated records: True; duplicates and standard buttons: False",
+    "Setup, repeat update, retained actions and unrelated records: True; duplicates and standard buttons: True",
+    "Installer does not force module state or delete report records"
+  ],
+  "odoo_installation_tested": false,
+  "live_pdf_rendering_tested": false
+}

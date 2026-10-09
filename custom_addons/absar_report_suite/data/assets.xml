@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+  <record id="letterhead_image" model="ir.attachment">
+    <field name="name">ABSAR letterhead.png</field>
+    <field name="type">binary</field>
+    <field name="mimetype">image/png</field>
+    <field name="datas" type="base64" file="absar_report_suite/static/img/letterhead.png"/>
+  </record>
+  <record id="footer_image" model="ir.attachment">
+    <field name="name">ABSAR footer.png</field>
+    <field name="type">binary</field>
+    <field name="mimetype">image/png</field>
+    <field name="datas" type="base64" file="absar_report_suite/static/img/footer.png"/>
+  </record>
+  <record id="stamp_image" model="ir.attachment">
+    <field name="name">ABSAR stamp.png</field>
+    <field name="type">binary</field>
+    <field name="mimetype">image/png</field>
+    <field name="datas" type="base64" file="absar_report_suite/static/img/stamp.png"/>
+  </record>
+</odoo>

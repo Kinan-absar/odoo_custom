@@ -1,1 +1,1 @@
-from . import report_migration
+from . import report_setup

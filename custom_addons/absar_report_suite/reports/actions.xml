@@ -1,0 +1,129 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+  <record id="business_paperformat" model="report.paperformat">
+    <field name="name">ABSAR Business A4</field>
+    <field name="format">A4</field>
+    <field name="orientation">Portrait</field>
+    <field name="margin_top">45</field>
+    <field name="margin_bottom">32</field>
+    <field name="margin_left">4</field>
+    <field name="margin_right">4</field>
+    <field name="header_spacing">40</field>
+    <field name="dpi">90</field>
+  </record>
+  <record id="journal_paperformat" model="report.paperformat">
+    <field name="name">ABSAR Journal A4</field>
+    <field name="format">A4</field>
+    <field name="orientation">Portrait</field>
+    <field name="margin_top">45</field>
+    <field name="margin_bottom">10</field>
+    <field name="margin_left">7</field>
+    <field name="margin_right">7</field>
+    <field name="header_spacing">40</field>
+    <field name="dpi">90</field>
+  </record>
+  <record id="invoice_report" model="ir.actions.report">
+    <field name="name">Invoice</field>
+    <field name="model">account.move</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">absar_report_suite.invoice</field>
+    <field name="report_file">absar_report_suite.invoice</field>
+    <field name="binding_type">report</field>
+    <field name="binding_view_types">list,form</field>
+    <field name="paperformat_id" ref="business_paperformat"/>
+    <field name="binding_model_id" ref="account.model_account_move"/>
+    <field name="print_report_name">object._get_report_base_filename()</field>
+    <field name="attachment_use" eval="False"/>
+  </record>
+  <record id="invoice_payment_report" model="ir.actions.report">
+    <field name="name">Invoice with Payment</field>
+    <field name="model">account.move</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">absar_report_suite.invoice_with_payment</field>
+    <field name="report_file">absar_report_suite.invoice_with_payment</field>
+    <field name="binding_type">report</field>
+    <field name="binding_view_types">list,form</field>
+    <field name="paperformat_id" ref="business_paperformat"/>
+    <field name="binding_model_id" ref="account.model_account_move"/>
+    <field name="print_report_name">object._get_report_base_filename()</field>
+    <field name="attachment_use" eval="False"/>
+  </record>
+  <record id="purchase_report" model="ir.actions.report">
+    <field name="name">Purchase Order</field>
+    <field name="model">purchase.order</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">absar_report_suite.purchase</field>
+    <field name="report_file">absar_report_suite.purchase</field>
+    <field name="binding_type">report</field>
+    <field name="binding_view_types">list,form</field>
+    <field name="paperformat_id" ref="business_paperformat"/>
+    <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+    <field name="print_report_name">object.name</field>
+    <field name="attachment_use" eval="False"/>
+  </record>
+  <record id="quotation_report" model="ir.actions.report">
+    <field name="name">Quotation / Order</field>
+    <field name="model">sale.order</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">absar_report_suite.quotation</field>
+    <field name="report_file">absar_report_suite.quotation</field>
+    <field name="binding_type">report</field>
+    <field name="binding_view_types">list,form</field>
+    <field name="paperformat_id" ref="business_paperformat"/>
+    <field name="binding_model_id" ref="sale.model_sale_order"/>
+    <field name="print_report_name">object.name</field>
+    <field name="attachment_use" eval="False"/>
+  </record>
+  <record id="proforma_report" model="ir.actions.report">
+    <field name="name">Pro-forma Invoice</field>
+    <field name="model">sale.order</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">absar_report_suite.proforma</field>
+    <field name="report_file">absar_report_suite.proforma</field>
+    <field name="binding_type">report</field>
+    <field name="binding_view_types">list,form</field>
+    <field name="paperformat_id" ref="business_paperformat"/>
+    <field name="binding_model_id" ref="sale.model_sale_order"/>
+    <field name="print_report_name">object.name</field>
+    <field name="attachment_use" eval="False"/>
+  </record>
+  <record id="journal_report" model="ir.actions.report">
+    <field name="name">Journal Entries</field>
+    <field name="model">account.move</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">absar_report_suite.journal</field>
+    <field name="report_file">absar_report_suite.journal</field>
+    <field name="binding_type">report</field>
+    <field name="binding_view_types">list,form</field>
+    <field name="paperformat_id" ref="journal_paperformat"/>
+    <field name="binding_model_id" ref="account.model_account_move"/>
+    <field name="print_report_name">object._get_report_base_filename()</field>
+    <field name="attachment_use" eval="False"/>
+  </record>
+  <record id="certificate_report" model="ir.actions.report">
+    <field name="name">Subcontractor Payment Certificate</field>
+    <field name="model">account.move</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">absar_report_suite.certificate</field>
+    <field name="report_file">absar_report_suite.certificate</field>
+    <field name="binding_type">report</field>
+    <field name="binding_view_types">list,form</field>
+    <field name="paperformat_id" ref="business_paperformat"/>
+    <field name="binding_model_id" ref="account.model_account_move"/>
+    <field name="print_report_name">object._get_report_base_filename()</field>
+    <field name="attachment_use" eval="False"/>
+  </record>
+  <record id="subcontract_report" model="ir.actions.report">
+    <field name="name">عقد مقاولة من الباطن / Subcontract Agreement</field>
+    <field name="model">purchase.order</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">absar_report_suite.subcontract</field>
+    <field name="report_file">absar_report_suite.subcontract</field>
+    <field name="binding_type">report</field>
+    <field name="binding_view_types">list,form</field>
+    <field name="paperformat_id" ref="business_paperformat"/>
+    <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+    <field name="print_report_name">'Subcontract Agreement - %s' % object.name</field>
+    <field name="attachment_use" eval="False"/>
+  </record>
+</odoo>
