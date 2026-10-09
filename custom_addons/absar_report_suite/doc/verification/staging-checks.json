@@ -1,0 +1,36 @@
+{
+  "staging_pdf_checks": [
+    {
+      "report": "purchase-order.pdf",
+      "pages": 1,
+      "expected_total": "5,252.00",
+      "passed": true
+    },
+    {
+      "report": "subcontract.pdf",
+      "pages": 1,
+      "expected_total": "5,252.00",
+      "passed": true
+    },
+    {
+      "report": "quotation.pdf",
+      "pages": 1,
+      "expected_total": "37,887.90",
+      "passed": true
+    },
+    {
+      "report": "proforma.pdf",
+      "pages": 1,
+      "expected_total": "37,887.90",
+      "passed": true
+    },
+    {
+      "report": "journal-voucher.pdf",
+      "pages": 2,
+      "expected_total": "2,805,767.57",
+      "passed": true
+    }
+  ],
+  "new_module_odoo_installation": "not tested",
+  "production_changed": false
+}

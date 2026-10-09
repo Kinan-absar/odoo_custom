@@ -1,0 +1,22 @@
+<t t-name="absar.journal_layout">
+
+<t t-set="company" t-value="o.company_id.sudo()"/>
+  <!-- Current company external-layout header -->
+  <div t-attf-class="header o_company_#{company.id}_layout" style=" margin-top: -10px;  text-align: center;">
+    <img t-att-src="image_data_uri(env.ref('absar_report_suite.letterhead_image').sudo().datas)" style="width: 100%; max-height: 230px; object-fit: contain;" alt="Absar Header"/>
+  </div>
+
+  <!-- BODY -->
+  <div t-attf-class="article o_report_layout_wave o_table_striped o_company_#{company.id}_layout" t-att-style="report_type != 'pdf' and 'margin-top:230px;' or ''" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+    <t t-set="custom_layout_address" t-value="true"/>
+    <t t-call="web.address_layout"/>
+    <h2 t-out="layout_document_title"/>
+    <t t-out="0"/>
+  </div>
+
+<div t-attf-class="footer o_company_#{company.id}_layout" style="font-family:Arial,'Cairo',sans-serif;font-size:11px;color:#000;border:0!important;outline:0!important;box-shadow:none!important;padding:0!important;">
+<div style="position:relative;width:100%;height:18px;border:0!important;outline:0!important;">
+<span style="float:left;text-align:left;border:0;"><span t-out="company.name"/></span>
+<span style="position:absolute;left:40%;width:20%;text-align:center;border:0;">Page <span class="page"/> / <span class="topage"/></span>
+<span style="float:right;text-align:right;border:0;">Printed by: <span t-out="env.user.name"/></span>
+</div></div></t>

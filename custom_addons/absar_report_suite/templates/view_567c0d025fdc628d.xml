@@ -1,0 +1,7 @@
+<t t-name="absar.subcontract">
+    <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="o">
+            <t t-call="purchase.report_purchaseorder_document_copy_4_copy_2" t-lang="o.partner_id.lang"/>
+        </t>
+    </t>
+</t>
