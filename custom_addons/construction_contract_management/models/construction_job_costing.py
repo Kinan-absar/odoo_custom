@@ -62,19 +62,31 @@ class ConstructionContractJobCosting(models.Model):
         string='Other Accounting Cost',
         currency_field='currency_id',
         compute='_compute_job_costing',
-        help='Net debit on expense accounts from posted miscellaneous journal entries (including payroll, petty cash and expenses), excluding vendor bills.',
+        help='Total allocated debits from posted miscellaneous journal entries (move type entry).',
     )
     actual_cost_amount = fields.Monetary(
         string='Actual Cost',
         currency_field='currency_id',
         compute='_compute_job_costing',
-        help='Net debited costs from posted vendor bills and miscellaneous journal entries allocated to this job.',
+        help='Vendor Bills debit minus Vendor Bills credit, plus Miscellaneous Operations debit, for this project.',
     )
     actual_revenue_amount = fields.Monetary(
         string='Actual Revenue',
         currency_field='currency_id',
         compute='_compute_job_costing',
-        help='Net credited revenue on income accounts from posted customer invoices, credit notes and miscellaneous journal entries allocated to this job.',
+        help='Customer Invoices credit plus Miscellaneous Operations credit, for this project.',
+    )
+    invoice_revenue_credit_amount = fields.Monetary(
+        string='Invoice Credits',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+        help='Allocated credit column of posted customer invoices.',
+    )
+    miscellaneous_revenue_credit_amount = fields.Monetary(
+        string='Miscellaneous Credits',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+        help='Allocated credit column of posted miscellaneous journal entries.',
     )
     cost_exposure_amount = fields.Monetary(
         string='Cost Exposure',
@@ -154,21 +166,15 @@ class ConstructionContractJobCosting(models.Model):
         return [(column, '=', analytic.id), ('company_id', '=', self.company_id.id)]
 
     def _matching_account_move_lines(self, advance_move_ids=None):
-        """Return posted P&L journal items allocated to this job.
+        """Return posted journal lines allocated to the selected project.
 
-        Reading account.move.line directly makes the job-cost actuals include
-        vendor bills, miscellaneous journal entries, expenses, payroll journals,
-        petty-cash journals and any other posted accounting entry carrying the
-        project's analytic distribution.
+        All account types must be eligible: the requested totals come from the
+        Debit and Credit columns, not just P&L account classifications.
         """
         self.ensure_one()
         if not self.analytic_account_id:
             return self.env['account.move.line']
 
-        pnl_types = [
-            'expense', 'expense_depreciation', 'expense_direct_cost',
-            'income', 'income_other',
-        ]
         # Existing Construction Advance moves may predate the contract-tagging
         # enhancement below, so include them explicitly by their linked move.
         # Resolve this once per contract; never query again for every journal line.
@@ -193,7 +199,6 @@ class ConstructionContractJobCosting(models.Model):
         lines = self.env['account.move.line'].search([
             ('company_id', '=', self.company_id.id),
             ('move_id.state', '=', 'posted'),
-            ('account_id.account_type', 'in', pnl_types),
         ] + allocation_domain)
 
         # Use the same allocation routine as the computation itself. Besides
@@ -253,6 +258,8 @@ class ConstructionContractJobCosting(models.Model):
             rec.other_accounting_cost_amount = 0.0
             rec.actual_cost_amount = 0.0
             rec.actual_revenue_amount = 0.0
+            rec.invoice_revenue_credit_amount = 0.0
+            rec.miscellaneous_revenue_credit_amount = 0.0
             rec.cost_exposure_amount = 0.0
             rec.forecast_final_cost = 0.0
             rec.forecast_profit = 0.0
@@ -263,14 +270,14 @@ class ConstructionContractJobCosting(models.Model):
             if not rec.analytic_account_id:
                 continue
 
-            # Posted journal items are the accounting source of truth. This
-            # includes vendor bills AND miscellaneous entries, expenses, payroll,
-            # petty cash and other posted P&L entries carrying the project's
-            # analytic allocation. Balance is expressed in company currency.
-            vendor_bill_cost = 0.0
-            other_accounting_cost = 0.0
-            actual_cost = 0.0
-            actual_revenue = 0.0
+            # Reconcile directly with the Debit/Credit columns in the journal
+            # items list grouped by document type.  Do not filter by account
+            # type: the user wants the shown gross posted debit/credit totals.
+            vendor_bill_debits = 0.0
+            vendor_bill_credits = 0.0
+            miscellaneous_debits = 0.0
+            miscellaneous_credits = 0.0
+            invoice_credits = 0.0
             advance_move_ids = set(rec.env['construction.advance'].search([
                 ('contract_id', '=', rec.id),
                 ('move_id', '!=', False),
@@ -279,30 +286,28 @@ class ConstructionContractJobCosting(models.Model):
                 allocation = rec._job_cost_line_allocation(line, advance_move_ids)
                 if not allocation:
                     continue
-                allocated_balance = line.balance * allocation
-                amount = rec._convert_job_cost_amount(
-                    allocated_balance,
-                    rec.company_id.currency_id,
-                    line.date,
+                debit = rec._convert_job_cost_amount(
+                    line.debit * allocation, rec.company_id.currency_id, line.date,
                 )
-                account_type = line.account_id.account_type
-                if account_type in ('expense', 'expense_depreciation', 'expense_direct_cost'):
-                    # Expense debits increase cost; credits/refunds reduce it.
-                    actual_cost += amount
-                    if line.move_id.move_type in ('in_invoice', 'in_refund'):
-                        vendor_bill_cost += amount
-                    else:
-                        other_accounting_cost += amount
-                elif account_type in ('income', 'income_other'):
-                    # Income is normally a credit (negative balance).
-                    actual_revenue += -amount
+                credit = rec._convert_job_cost_amount(
+                    line.credit * allocation, rec.company_id.currency_id, line.date,
+                )
+                move_type = line.move_id.move_type
+                if move_type in ('in_invoice', 'in_refund', 'in_receipt'):
+                    vendor_bill_debits += debit
+                    vendor_bill_credits += credit
+                elif move_type in ('out_invoice', 'out_refund', 'out_receipt'):
+                    invoice_credits += credit
+                elif move_type == 'entry':
+                    miscellaneous_debits += debit
+                    miscellaneous_credits += credit
 
-            rec.vendor_bill_cost_amount = vendor_bill_cost
-            rec.other_accounting_cost_amount = other_accounting_cost
-            # Net posted expense includes credits/reversals; do not independently
-            # floor components, which would overstate the accounting total.
-            rec.actual_cost_amount = vendor_bill_cost + other_accounting_cost
-            rec.actual_revenue_amount = actual_revenue
+            rec.vendor_bill_cost_amount = vendor_bill_debits - vendor_bill_credits
+            rec.other_accounting_cost_amount = miscellaneous_debits
+            rec.actual_cost_amount = rec.vendor_bill_cost_amount + miscellaneous_debits
+            rec.invoice_revenue_credit_amount = invoice_credits
+            rec.miscellaneous_revenue_credit_amount = miscellaneous_credits
+            rec.actual_revenue_amount = invoice_credits + miscellaneous_credits
 
             # Purchase commitment is based on confirmed PO lines carrying this
             # analytic account. No Inventory/stock records are required.

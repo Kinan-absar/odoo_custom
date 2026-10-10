@@ -49,6 +49,11 @@
                             <field name="actual_cost_amount" readonly="1"/>
                         </group>
                     </group>
+                    <group string="Actual Revenue" class="ccm_field_section">
+                        <field name="invoice_revenue_credit_amount" readonly="1"/>
+                        <field name="miscellaneous_revenue_credit_amount" readonly="1"/>
+                        <field name="actual_revenue_amount" readonly="1"/>
+                    </group>
 
                     <separator string="Budget Health"/>
                     <group>
@@ -59,7 +64,7 @@
                         <group class="ccm_field_section">
                             <div class="o_form_label">How it works</div>
                             <div class="text-muted">
-                                Actual Cost = net vendor bill expense debits + net miscellaneous expense debits. Actual Revenue = net income credits from customer invoices and miscellaneous journal entries (less reversals and credit notes). Open PO Commitment = confirmed PO value less posted PO bills. Forecast Final Cost = Actual Cost + Open PO Commitment + Uncommitted Forecast Cost. Forecast Profit = Revised Contract Revenue less Forecast Final Cost. Vendor Bill Cost includes posted supplier bills/credit notes with or without a PO. Other Accounting Cost includes miscellaneous entries, expenses, payroll, petty cash and other posted costs. PO-linked bills can inherit the project allocation from their PO line when the invoice line has no analytic distribution. Bills without a PO must be tagged with the project analytic account or Construction Contract. Confirmed Purchase Orders create commitments. Inventory is not used.
+                                Actual Cost = (Vendor Bills debit - Vendor Bills credit) + Miscellaneous Operations debit. Actual Revenue = Customer Invoices credit + Miscellaneous Operations credit. Only posted journal items allocated to the selected Job Cost Analytic Account (or explicitly linked to this contract) are included; figures follow Debit and Credit columns rather than account types. Open PO Commitment = confirmed PO value less posted PO bills. Forecast Final Cost = Actual Cost + Open PO Commitment + Uncommitted Forecast Cost. Forecast Profit = Revised Contract Revenue less Forecast Final Cost.
                             </div>
                         </group>
                     </group>
