@@ -117,8 +117,8 @@ class ConstructionContractJobCosting(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        for rec in records:
-            if rec.project_id and 'account_id' in rec.project_id._fields:
+        for rec, vals in zip(records, vals_list):
+            if 'analytic_account_id' not in vals and rec.project_id and 'account_id' in rec.project_id._fields:
                 rec.analytic_account_id = rec.project_id.account_id
         return records
 
@@ -297,9 +297,11 @@ class ConstructionContractJobCosting(models.Model):
                     # Income is normally a credit (negative balance).
                     actual_revenue += -amount
 
-            rec.vendor_bill_cost_amount = max(vendor_bill_cost, 0.0)
-            rec.other_accounting_cost_amount = max(other_accounting_cost, 0.0)
-            rec.actual_cost_amount = max(vendor_bill_cost, 0.0) + max(other_accounting_cost, 0.0)
+            rec.vendor_bill_cost_amount = vendor_bill_cost
+            rec.other_accounting_cost_amount = other_accounting_cost
+            # Net posted expense includes credits/reversals; do not independently
+            # floor components, which would overstate the accounting total.
+            rec.actual_cost_amount = vendor_bill_cost + other_accounting_cost
             rec.actual_revenue_amount = max(actual_revenue, 0.0)
 
             # Purchase commitment is based on confirmed PO lines carrying this
@@ -356,6 +358,16 @@ class ConstructionContractJobCosting(models.Model):
                 rec.actual_cost_amount / rec.job_cost_budget * 100.0
                 if rec.job_cost_budget else 0.0
             )
+
+    def action_use_project_analytic_account(self):
+        """Backward-compatible action for views stored in existing databases.
+
+        Never create an analytic account; only reuse the project's existing one.
+        """
+        self.ensure_one()
+        if self.project_id and 'account_id' in self.project_id._fields:
+            self.analytic_account_id = self.project_id.account_id or False
+        return True
 
     def action_view_job_cost_analytic_items(self):
         self.ensure_one()
