@@ -24,8 +24,7 @@
                 <page string="Job Costing" name="ccm_job_costing" invisible="contract_direction != 'inbound'">
                     <group>
                         <group string="Setup" class="ccm_field_section">
-                            <field name="analytic_account_id" options="{'no_create_edit': False}"/>
-                            <button name="action_use_project_analytic_account" type="object" string="Use Project Analytic Account" class="btn-secondary" invisible="not project_id"/>
+                            <field name="analytic_account_id" options="{'no_create': True, 'no_create_edit': True}" readonly="1"/>
                             <field name="job_cost_budget"/>
                             <field name="forecast_remaining_cost"/>
                         </group>
@@ -48,22 +47,19 @@
                             <field name="vendor_bill_cost_amount" readonly="1"/>
                             <field name="other_accounting_cost_amount" readonly="1"/>
                             <field name="actual_cost_amount" readonly="1"/>
-                            <field name="actual_revenue_amount" readonly="1"/>
-                            <field name="cost_exposure_amount" readonly="1"/>
                         </group>
                     </group>
 
                     <separator string="Budget Health"/>
                     <group>
                         <group class="ccm_field_section">
-                            <field name="job_cost_budget" readonly="1"/>
                             <field name="budget_variance" readonly="1" decoration-danger="budget_variance &lt; 0" decoration-success="budget_variance &gt;= 0"/>
                             <field name="budget_consumed_percent" readonly="1"/>
                         </group>
                         <group class="ccm_field_section">
                             <div class="o_form_label">How it works</div>
                             <div class="text-muted">
-                                Actual Cost is the accounting total for the project. Vendor Bill Cost includes posted supplier bills/credit notes with or without a PO. Other Accounting Cost includes miscellaneous entries, expenses, payroll, petty cash and other posted costs. PO-linked bills can inherit the project allocation from their PO line when the invoice line has no analytic distribution. Bills without a PO must be tagged with the project analytic account or Construction Contract. Confirmed Purchase Orders create commitments. Inventory is not used.
+                                Actual Cost = Vendor Bill Cost + Other Accounting Cost. Open PO Commitment = confirmed PO value less posted PO bills. Forecast Final Cost = Actual Cost + Open PO Commitment + Uncommitted Forecast Cost. Forecast Profit = Revised Contract Revenue less Forecast Final Cost. Vendor Bill Cost includes posted supplier bills/credit notes with or without a PO. Other Accounting Cost includes miscellaneous entries, expenses, payroll, petty cash and other posted costs. PO-linked bills can inherit the project allocation from their PO line when the invoice line has no analytic distribution. Bills without a PO must be tagged with the project analytic account or Construction Contract. Confirmed Purchase Orders create commitments. Inventory is not used.
                             </div>
                         </group>
                     </group>

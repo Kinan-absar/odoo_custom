@@ -111,25 +111,23 @@ class ConstructionContractJobCosting(models.Model):
     @api.onchange('project_id')
     def _onchange_project_job_cost_analytic(self):
         for rec in self:
-            if rec.project_id and not rec.analytic_account_id and 'account_id' in rec.project_id._fields:
+            if rec.project_id and 'account_id' in rec.project_id._fields:
                 rec.analytic_account_id = rec.project_id.account_id
 
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
         for rec in records:
-            if rec.project_id and not rec.analytic_account_id and 'account_id' in rec.project_id._fields:
-                if rec.project_id.account_id:
-                    rec.analytic_account_id = rec.project_id.account_id
+            if rec.project_id and 'account_id' in rec.project_id._fields:
+                rec.analytic_account_id = rec.project_id.account_id
         return records
 
     def write(self, vals):
         result = super().write(vals)
         if 'project_id' in vals and 'analytic_account_id' not in vals:
             for rec in self:
-                if rec.project_id and not rec.analytic_account_id and 'account_id' in rec.project_id._fields:
-                    if rec.project_id.account_id:
-                        rec.analytic_account_id = rec.project_id.account_id
+                if rec.project_id and 'account_id' in rec.project_id._fields:
+                    rec.analytic_account_id = rec.project_id.account_id
         return result
 
     def _convert_job_cost_amount(self, amount, source_currency, date=False):
@@ -301,7 +299,7 @@ class ConstructionContractJobCosting(models.Model):
 
             rec.vendor_bill_cost_amount = max(vendor_bill_cost, 0.0)
             rec.other_accounting_cost_amount = max(other_accounting_cost, 0.0)
-            rec.actual_cost_amount = max(actual_cost, 0.0)
+            rec.actual_cost_amount = max(vendor_bill_cost, 0.0) + max(other_accounting_cost, 0.0)
             rec.actual_revenue_amount = max(actual_revenue, 0.0)
 
             # Purchase commitment is based on confirmed PO lines carrying this
@@ -358,19 +356,6 @@ class ConstructionContractJobCosting(models.Model):
                 rec.actual_cost_amount / rec.job_cost_budget * 100.0
                 if rec.job_cost_budget else 0.0
             )
-
-    def action_use_project_analytic_account(self):
-        self.ensure_one()
-        if not self.project_id:
-            raise UserError(_('Select a Project first.'))
-        if 'account_id' not in self.project_id._fields:
-            raise UserError(_('This Odoo Project does not expose an analytic account field. Select the Job Cost Analytic Account manually.'))
-        if not self.project_id.account_id and hasattr(self.project_id, '_create_analytic_account'):
-            self.project_id._create_analytic_account()
-        if not self.project_id.account_id:
-            raise UserError(_('The selected Project has no analytic account. Create one on the Project or select one manually.'))
-        self.analytic_account_id = self.project_id.account_id
-        return True
 
     def action_view_job_cost_analytic_items(self):
         self.ensure_one()
