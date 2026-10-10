@@ -131,7 +131,7 @@ class ConstructionContractJobCosting(models.Model):
         help='Posted vendor bills and vendor credit notes allocated to this project, whether or not they originate from a Purchase Order.',
     )
     other_accounting_cost_amount = fields.Monetary(
-        string='Other Accounting Cost',
+        string='Overhead',
         currency_field='currency_id',
         compute='_compute_job_costing',
         help='Total allocated debits from posted miscellaneous journal entries (move type entry).',

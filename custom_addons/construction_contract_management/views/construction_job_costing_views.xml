@@ -73,7 +73,7 @@
                                     <td><field name="vendor_bill_cost_amount" readonly="1" nolabel="1"/></td>
                                 </tr>
                                 <tr>
-                                    <td>Other Accounting Cost</td>
+                                    <td>Overhead</td>
                                     <td><field name="other_accounting_cost_amount" readonly="1" nolabel="1"/></td>
                                 </tr>
                                 <tr class="ccm_actual_profit_subtotal">
