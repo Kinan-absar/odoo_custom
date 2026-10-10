@@ -18,14 +18,14 @@ def _distribution_has_account(distribution, account_id):
 def _job_costing_bucket(move_type, move_id, account_id, advance_move_ids, advance_account_id):
     """Classify posted project journal items without treating advances as sales.
 
-    Customer advance invoices are a liability/advance, not earned income.
+    Customer advance invoices and related refunds are not earned income.
     Their full invoice and related advance-account credits must not inflate
     actual invoice revenue; recovered advances posted through miscellaneous
     accounting entries are kept separately in the actual revenue calculation.
     """
     if move_type in ('in_invoice', 'in_refund', 'in_receipt'):
         return 'vendor'
-    if move_type in ('out_invoice', 'out_receipt'):
+    if move_type in ('out_invoice', 'out_refund', 'out_receipt'):
         if move_id in advance_move_ids or (advance_account_id and account_id == advance_account_id):
             return None
         return 'invoice'
@@ -146,13 +146,13 @@ class ConstructionContractJobCosting(models.Model):
         string='Actual Revenue',
         currency_field='currency_id',
         compute='_compute_job_costing',
-        help='Customer invoice revenue (excluding customer advance invoices) plus customer advance recovery credits from miscellaneous entries.',
+        help='Net customer invoice work revenue (invoice credits less credit-note debits, excluding customer advances) plus recovered-advance credits from miscellaneous entries.',
     )
     invoice_revenue_credit_amount = fields.Monetary(
-        string='Customer Invoice Revenue',
+        string='Customer Invoice Revenue (Net of Credit Notes)',
         currency_field='currency_id',
         compute='_compute_job_costing',
-        help='Only posted customer invoice work-line credits; excludes customer advances, VAT, receivables, and retention.',
+        help='Posted work invoice credits less customer credit-note work-line debits; excludes advances, VAT, receivables, and retention.',
     )
     miscellaneous_revenue_credit_amount = fields.Monetary(
         string='Customer Advance Recovered',
@@ -377,6 +377,7 @@ class ConstructionContractJobCosting(models.Model):
             miscellaneous_debits = 0.0
             miscellaneous_credits = 0.0
             invoice_credits = 0.0
+            invoice_debits = 0.0
             advance_move_ids = set(rec.env['construction.advance'].search([
                 ('contract_id', '=', rec.id),
                 ('move_id', '!=', False),
@@ -402,6 +403,7 @@ class ConstructionContractJobCosting(models.Model):
                     vendor_bill_credits += credit
                 elif bucket == 'invoice':
                     invoice_credits += credit
+                    invoice_debits += debit
                 elif bucket == 'miscellaneous':
                     miscellaneous_debits += debit
                     miscellaneous_credits += credit
@@ -409,9 +411,9 @@ class ConstructionContractJobCosting(models.Model):
             rec.vendor_bill_cost_amount = vendor_bill_debits - vendor_bill_credits
             rec.other_accounting_cost_amount = miscellaneous_debits
             rec.actual_cost_amount = rec.vendor_bill_cost_amount + miscellaneous_debits
-            rec.invoice_revenue_credit_amount = invoice_credits
+            rec.invoice_revenue_credit_amount = invoice_credits - invoice_debits
             rec.miscellaneous_revenue_credit_amount = miscellaneous_credits
-            rec.actual_revenue_amount = invoice_credits + miscellaneous_credits
+            rec.actual_revenue_amount = rec.invoice_revenue_credit_amount + miscellaneous_credits
             rec.actual_profit_amount = rec.actual_revenue_amount - rec.actual_cost_amount
             rec.actual_profit_margin_percent = (
                 rec.actual_profit_amount / rec.actual_revenue_amount * 100.0
