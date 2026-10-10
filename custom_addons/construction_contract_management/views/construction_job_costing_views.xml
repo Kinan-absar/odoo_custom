@@ -49,11 +49,48 @@
                             <field name="actual_cost_amount" readonly="1"/>
                         </group>
                     </group>
-                    <group string="Actual Revenue" class="ccm_field_section">
-                        <field name="invoice_revenue_credit_amount" readonly="1"/>
-                        <field name="miscellaneous_revenue_credit_amount" readonly="1"/>
-                        <field name="actual_revenue_amount" readonly="1"/>
-                    </group>
+                    <separator string="Actual Profitability"/>
+                    <div class="ccm_actual_profit_table_wrap">
+                        <table class="table table-sm ccm_actual_profit_table">
+                            <thead>
+                                <tr><th scope="col">Actual Profitability Breakdown</th><th scope="col">Amount</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Customer Invoice Revenue</td>
+                                    <td><field name="invoice_revenue_credit_amount" readonly="1" nolabel="1"/></td>
+                                </tr>
+                                <tr>
+                                    <td>Customer Advance Recovered</td>
+                                    <td><field name="miscellaneous_revenue_credit_amount" readonly="1" nolabel="1"/></td>
+                                </tr>
+                                <tr class="ccm_actual_profit_subtotal">
+                                    <td>Total Actual Revenue</td>
+                                    <td><field name="actual_revenue_amount" readonly="1" nolabel="1"/></td>
+                                </tr>
+                                <tr>
+                                    <td>Vendor Bill Cost</td>
+                                    <td><field name="vendor_bill_cost_amount" readonly="1" nolabel="1"/></td>
+                                </tr>
+                                <tr>
+                                    <td>Other Accounting Cost</td>
+                                    <td><field name="other_accounting_cost_amount" readonly="1" nolabel="1"/></td>
+                                </tr>
+                                <tr class="ccm_actual_profit_subtotal">
+                                    <td>Total Actual Cost</td>
+                                    <td><field name="actual_cost_amount" readonly="1" nolabel="1"/></td>
+                                </tr>
+                                <tr class="ccm_actual_profit_total">
+                                    <td>Actual Profit</td>
+                                    <td><field name="actual_profit_amount" readonly="1" nolabel="1" decoration-danger="actual_profit_amount &lt; 0" decoration-success="actual_profit_amount &gt;= 0"/></td>
+                                </tr>
+                                <tr class="ccm_actual_profit_total">
+                                    <td>Actual Profit Margin</td>
+                                    <td><field name="actual_profit_margin_percent" readonly="1" nolabel="1"/> %</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
                     <separator string="Budget Health"/>
                     <group>
@@ -64,7 +101,7 @@
                         <group class="ccm_field_section">
                             <div class="o_form_label">How it works</div>
                             <div class="text-muted">
-                                Actual Cost = (Vendor Bills debit - Vendor Bills credit) + Miscellaneous Operations debit. Actual Revenue = Customer Invoices credit + Miscellaneous Operations credit. Only posted journal items allocated to the selected Job Cost Analytic Account (or explicitly linked to this contract) are included; figures follow Debit and Credit columns rather than account types. Open PO Commitment = confirmed PO value less posted PO bills. Forecast Final Cost = Actual Cost + Open PO Commitment + Uncommitted Forecast Cost. Forecast Profit = Revised Contract Revenue less Forecast Final Cost.
+                                Actual Cost = (Vendor Bills debit - Vendor Bills credit) + Miscellaneous Operations debit. Actual Revenue = work-invoice credits (excluding customer advance invoices) + recovered-advance credits from miscellaneous entries. Actual Profit = Actual Revenue - Actual Cost. Actual Margin = Actual Profit / Actual Revenue. Only posted journal items allocated to the selected Job Cost Analytic Account (or explicitly linked to this contract) are included; figures follow Debit and Credit columns rather than account types. Open PO Commitment = confirmed PO value less posted PO bills. Forecast Final Cost = Actual Cost + Open PO Commitment + Uncommitted Forecast Cost. Forecast Profit = Revised Contract Revenue less Forecast Final Cost.
                             </div>
                         </group>
                     </group>

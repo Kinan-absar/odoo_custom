@@ -15,6 +15,25 @@ def _distribution_has_account(distribution, account_id):
     return percentage
 
 
+def _job_costing_bucket(move_type, move_id, account_id, advance_move_ids, advance_account_id):
+    """Classify posted project journal items without treating advances as sales.
+
+    Customer advance invoices are a liability/advance, not earned income.
+    Their full invoice and related advance-account credits must not inflate
+    actual invoice revenue; recovered advances posted through miscellaneous
+    accounting entries are kept separately in the actual revenue calculation.
+    """
+    if move_type in ('in_invoice', 'in_refund', 'in_receipt'):
+        return 'vendor'
+    if move_type in ('out_invoice', 'out_receipt'):
+        if move_id in advance_move_ids or (advance_account_id and account_id == advance_account_id):
+            return None
+        return 'invoice'
+    if move_type == 'entry':
+        return 'miscellaneous'
+    return None
+
+
 class ConstructionContractJobCosting(models.Model):
     _inherit = 'construction.contract'
 
@@ -74,19 +93,31 @@ class ConstructionContractJobCosting(models.Model):
         string='Actual Revenue',
         currency_field='currency_id',
         compute='_compute_job_costing',
-        help='Customer Invoices credit plus Miscellaneous Operations credit, for this project.',
+        help='Customer invoice revenue (excluding customer advance invoices) plus customer advance recovery credits from miscellaneous entries.',
     )
     invoice_revenue_credit_amount = fields.Monetary(
-        string='Invoice Credits',
+        string='Customer Invoice Revenue',
         currency_field='currency_id',
         compute='_compute_job_costing',
-        help='Allocated credit column of posted customer invoices.',
+        help='Credits on posted customer invoices for completed work, excluding invoices created for customer advances and advance-account lines.',
     )
     miscellaneous_revenue_credit_amount = fields.Monetary(
-        string='Miscellaneous Credits',
+        string='Customer Advance Recovered',
         currency_field='currency_id',
         compute='_compute_job_costing',
-        help='Allocated credit column of posted miscellaneous journal entries.',
+        help='Allocated credits on posted miscellaneous accounting entries representing recovered customer advances, as shown in the project journal items.',
+    )
+    actual_profit_amount = fields.Monetary(
+        string='Actual Profit',
+        currency_field='currency_id',
+        compute='_compute_job_costing',
+        help='Actual Revenue minus Actual Cost. Based on posted accounting entries only.',
+    )
+    actual_profit_margin_percent = fields.Float(
+        string='Actual Profit Margin %',
+        digits=(16, 2),
+        compute='_compute_job_costing',
+        help='Actual Profit divided by Actual Revenue, multiplied by 100.',
     )
     cost_exposure_amount = fields.Monetary(
         string='Cost Exposure',
@@ -258,6 +289,8 @@ class ConstructionContractJobCosting(models.Model):
             rec.other_accounting_cost_amount = 0.0
             rec.actual_cost_amount = 0.0
             rec.actual_revenue_amount = 0.0
+            rec.actual_profit_amount = 0.0
+            rec.actual_profit_margin_percent = 0.0
             rec.invoice_revenue_credit_amount = 0.0
             rec.miscellaneous_revenue_credit_amount = 0.0
             rec.cost_exposure_amount = 0.0
@@ -282,6 +315,7 @@ class ConstructionContractJobCosting(models.Model):
                 ('contract_id', '=', rec.id),
                 ('move_id', '!=', False),
             ]).mapped('move_id').ids)
+            advance_account_id = rec.advance_account_id.id if rec.advance_account_id else False
             for line in rec._matching_account_move_lines(advance_move_ids):
                 allocation = rec._job_cost_line_allocation(line, advance_move_ids)
                 if not allocation:
@@ -292,13 +326,19 @@ class ConstructionContractJobCosting(models.Model):
                 credit = rec._convert_job_cost_amount(
                     line.credit * allocation, rec.company_id.currency_id, line.date,
                 )
-                move_type = line.move_id.move_type
-                if move_type in ('in_invoice', 'in_refund', 'in_receipt'):
+                bucket = _job_costing_bucket(
+                    line.move_id.move_type,
+                    line.move_id.id,
+                    line.account_id.id,
+                    advance_move_ids,
+                    advance_account_id,
+                )
+                if bucket == 'vendor':
                     vendor_bill_debits += debit
                     vendor_bill_credits += credit
-                elif move_type in ('out_invoice', 'out_refund', 'out_receipt'):
+                elif bucket == 'invoice':
                     invoice_credits += credit
-                elif move_type == 'entry':
+                elif bucket == 'miscellaneous':
                     miscellaneous_debits += debit
                     miscellaneous_credits += credit
 
@@ -308,6 +348,11 @@ class ConstructionContractJobCosting(models.Model):
             rec.invoice_revenue_credit_amount = invoice_credits
             rec.miscellaneous_revenue_credit_amount = miscellaneous_credits
             rec.actual_revenue_amount = invoice_credits + miscellaneous_credits
+            rec.actual_profit_amount = rec.actual_revenue_amount - rec.actual_cost_amount
+            rec.actual_profit_margin_percent = (
+                rec.actual_profit_amount / rec.actual_revenue_amount * 100.0
+                if rec.actual_revenue_amount else 0.0
+            )
 
             # Purchase commitment is based on confirmed PO lines carrying this
             # analytic account. No Inventory/stock records are required.

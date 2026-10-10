@@ -258,3 +258,14 @@
     .ccm_form .o_notebook .nav-link { padding: 10px; }
     .ccm_form .o_list_table tbody td { padding-top: 10px; padding-bottom: 10px; }
 }
+
+/* Construction Job Costing: actual profit reconciliation table. */
+.ccm_form .ccm_actual_profit_table_wrap { max-width: 100%; overflow-x: auto; margin: 10px 0 20px; }
+.ccm_form .ccm_actual_profit_table { width: 100%; border-collapse: collapse; color: #19354a; background: #fff; }
+.ccm_form .ccm_actual_profit_table th { padding: 11px 14px; font-weight: 700; border-bottom: 2px solid #c7d5dc; background: #fff; }
+.ccm_form .ccm_actual_profit_table td { padding: 9px 14px; border-bottom: 1px solid #e5eaee; vertical-align: middle; background: #fff; }
+.ccm_form .ccm_actual_profit_table th:last-child,
+.ccm_form .ccm_actual_profit_table td:last-child { width: 42%; text-align: right; white-space: nowrap; }
+.ccm_form .ccm_actual_profit_table td:last-child .o_field_widget { display: inline-block; width: auto; font-variant-numeric: tabular-nums; }
+.ccm_form .ccm_actual_profit_table .ccm_actual_profit_subtotal td { font-weight: 700; border-top: 1px solid #cedce2; }
+.ccm_form .ccm_actual_profit_table .ccm_actual_profit_total td { font-weight: 800; font-size: 15px; border-top: 2px solid #197e87; }
