@@ -62,6 +62,31 @@ def _is_customer_invoice_revenue_line(display_type, account_type, account_id,
     return True
 
 
+def _project_journal_category(move_type, move_id, account_id, display_type,
+                              account_type, advance_move_ids,
+                              advance_account_id, retention_account_id,
+                              is_tax_line=False):
+    """One definition for both the profitability totals and journal-item drill-down.
+
+    Never show or count an advance invoice's liability/VAT/receivable entries
+    as project income. Do retain real IPC invoice lines even if the company's
+    work-revenue account is configured with a non-income account type.
+    """
+    bucket = _job_costing_bucket(
+        move_type, move_id, account_id, advance_move_ids, advance_account_id,
+    )
+    if bucket != 'invoice':
+        return bucket
+    if is_tax_line:
+        return None
+    if _is_customer_invoice_revenue_line(
+        display_type, account_type, account_id,
+        advance_account_id, retention_account_id,
+    ):
+        return 'invoice'
+    return None
+
+
 class ConstructionContractJobCosting(models.Model):
     _inherit = 'construction.contract'
 
@@ -229,6 +254,8 @@ class ConstructionContractJobCosting(models.Model):
 
         All account types must be eligible: the requested totals come from the
         Debit and Credit columns, not just P&L account classifications.
+        The journal-item drill-down later applies the SAME category filter used
+        by the profitability compute, excluding customer invoice balance lines.
         """
         self.ensure_one()
         if not self.analytic_account_id:
@@ -295,6 +322,17 @@ class ConstructionContractJobCosting(models.Model):
                 return percentage / 100.0
         return 0.0
 
+    def _job_cost_journal_category(self, line, advance_move_ids,
+                                   advance_account_id, retention_account_id):
+        """Used by totals AND drill-down so they cannot disagree."""
+        self.ensure_one()
+        return _project_journal_category(
+            line.move_id.move_type, line.move_id.id, line.account_id.id,
+            line.display_type, line.account_id.account_type,
+            advance_move_ids, advance_account_id, retention_account_id,
+            bool(line.tax_line_id),
+        )
+
     def _matching_purchase_lines(self):
         self.ensure_one()
         if not self.analytic_account_id:
@@ -355,25 +393,15 @@ class ConstructionContractJobCosting(models.Model):
                 credit = rec._convert_job_cost_amount(
                     line.credit * allocation, rec.company_id.currency_id, line.date,
                 )
-                bucket = _job_costing_bucket(
-                    line.move_id.move_type,
-                    line.move_id.id,
-                    line.account_id.id,
-                    advance_move_ids,
-                    advance_account_id,
+                bucket = rec._job_cost_journal_category(
+                    line, advance_move_ids, advance_account_id,
+                    retention_account_id,
                 )
                 if bucket == 'vendor':
                     vendor_bill_debits += debit
                     vendor_bill_credits += credit
                 elif bucket == 'invoice':
-                    # Only genuine IPC/work invoice product lines earn revenue.
-                    # Exclude VAT, receivables, advances and retention from
-                    # invoice credit, even when allocated to this project.
-                    if _is_customer_invoice_revenue_line(
-                        line.display_type, line.account_id.account_type,
-                        line.account_id.id, advance_account_id, retention_account_id,
-                    ):
-                        invoice_credits += credit
+                    invoice_credits += credit
                 elif bucket == 'miscellaneous':
                     miscellaneous_debits += debit
                     miscellaneous_credits += credit
@@ -459,10 +487,20 @@ class ConstructionContractJobCosting(models.Model):
         self.ensure_one()
         if not self.analytic_account_id:
             raise UserError(_('Set a Job Cost Analytic Account first.'))
-        lines = self._matching_account_move_lines()
+        advance_move_ids = set(self.env['construction.advance'].search([
+            ('contract_id', '=', self.id),
+            ('move_id', '!=', False),
+        ]).mapped('move_id').ids)
+        advance_account_id = self.advance_account_id.id if self.advance_account_id else False
+        retention_account_id = self.retention_account_id.id if self.retention_account_id else False
+        lines = self._matching_account_move_lines(advance_move_ids).filtered(
+            lambda line: bool(self._job_cost_journal_category(
+                line, advance_move_ids, advance_account_id, retention_account_id,
+            ))
+        )
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Job Cost Accounting Lines'),
+            'name': _('Project Cost & Revenue Journal Lines'),
             'res_model': 'account.move.line',
             'view_mode': 'list,form',
             'domain': [('id', 'in', lines.ids)],
