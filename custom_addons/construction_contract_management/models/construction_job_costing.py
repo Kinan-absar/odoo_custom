@@ -34,6 +34,34 @@ def _job_costing_bucket(move_type, move_id, account_id, advance_move_ids, advanc
     return None
 
 
+def _is_customer_invoice_revenue_line(display_type, account_type, account_id,
+                                      advance_account_id, retention_account_id):
+    """Include only work lines from customer invoices, not invoice balancing lines.
+
+    Odoo 18 invoice lines use display_type='product'. The tax and payment-term
+    (receivable) lines have separate display types and must never be counted
+    as sales. The customer advance and retention accounts are balance-sheet
+    postings, not earned revenue, even when they occur on an invoice line.
+
+    Do not require an income account here: existing IPC work accounts can be
+    classified differently in a company's chart of accounts.
+    """
+    if display_type != 'product':
+        return False
+    if not account_id:
+        return False
+    if advance_account_id and account_id == advance_account_id:
+        return False
+    if retention_account_id and account_id == retention_account_id:
+        return False
+    if account_type in (
+        'asset_receivable', 'asset_cash', 'liability_payable',
+        'liability_current', 'liability_non_current', 'liability_credit_card',
+    ):
+        return False
+    return True
+
+
 class ConstructionContractJobCosting(models.Model):
     _inherit = 'construction.contract'
 
@@ -99,7 +127,7 @@ class ConstructionContractJobCosting(models.Model):
         string='Customer Invoice Revenue',
         currency_field='currency_id',
         compute='_compute_job_costing',
-        help='Credits on posted customer invoices for completed work, excluding invoices created for customer advances and advance-account lines.',
+        help='Only posted customer invoice work-line credits; excludes customer advances, VAT, receivables, and retention.',
     )
     miscellaneous_revenue_credit_amount = fields.Monetary(
         string='Customer Advance Recovered',
@@ -316,6 +344,7 @@ class ConstructionContractJobCosting(models.Model):
                 ('move_id', '!=', False),
             ]).mapped('move_id').ids)
             advance_account_id = rec.advance_account_id.id if rec.advance_account_id else False
+            retention_account_id = rec.retention_account_id.id if rec.retention_account_id else False
             for line in rec._matching_account_move_lines(advance_move_ids):
                 allocation = rec._job_cost_line_allocation(line, advance_move_ids)
                 if not allocation:
@@ -337,7 +366,14 @@ class ConstructionContractJobCosting(models.Model):
                     vendor_bill_debits += debit
                     vendor_bill_credits += credit
                 elif bucket == 'invoice':
-                    invoice_credits += credit
+                    # Only genuine IPC/work invoice product lines earn revenue.
+                    # Exclude VAT, receivables, advances and retention from
+                    # invoice credit, even when allocated to this project.
+                    if _is_customer_invoice_revenue_line(
+                        line.display_type, line.account_id.account_type,
+                        line.account_id.id, advance_account_id, retention_account_id,
+                    ):
+                        invoice_credits += credit
                 elif bucket == 'miscellaneous':
                     miscellaneous_debits += debit
                     miscellaneous_credits += credit
