@@ -269,3 +269,40 @@
 .ccm_form .ccm_actual_profit_table td:last-child .o_field_widget { display: inline-block; width: auto; font-variant-numeric: tabular-nums; }
 .ccm_form .ccm_actual_profit_table .ccm_actual_profit_subtotal td { font-weight: 700; border-top: 1px solid #cedce2; }
 .ccm_form .ccm_actual_profit_table .ccm_actual_profit_total td { font-weight: 800; font-size: 15px; border-top: 2px solid #197e87; }
+
+/* Job costing: actual profitability heading and read-only project context. */
+.ccm_form .ccm_actual_profit_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin: 8px 0 12px;
+    padding: 0 0 10px;
+    border-bottom: 1px solid var(--ccm-border, #d4e0e6);
+}
+.ccm_form .ccm_actual_profit_header h4 {
+    margin: 0;
+    color: var(--ccm-ink, #19354a);
+    font-size: 14px;
+    font-weight: 700;
+}
+.ccm_form .ccm_actual_profit_project {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    min-width: 0;
+    max-width: 70%;
+    color: var(--ccm-ink, #19354a);
+    font-size: 13px;
+}
+.ccm_form .ccm_actual_profit_project .o_field_widget {
+    min-width: 180px;
+    max-width: 100%;
+    font-weight: 600;
+}
+@media (max-width: 575px) {
+    .ccm_form .ccm_actual_profit_project { max-width: 100%; }
+    .ccm_form .ccm_actual_profit_project .o_field_widget { min-width: 0; }
+}
