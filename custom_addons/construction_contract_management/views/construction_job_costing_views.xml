@@ -24,7 +24,7 @@
                 <page string="Job Costing" name="ccm_job_costing" invisible="contract_direction != 'inbound'">
                     <group>
                         <group string="Setup" class="ccm_field_section">
-                            <field name="analytic_account_id" options="{'no_create': True, 'no_create_edit': True}" readonly="1"/>
+                            <field name="analytic_account_id" options="{'no_create': True, 'no_create_edit': True}"/>
                             <field name="job_cost_budget"/>
                             <field name="forecast_remaining_cost"/>
                         </group>
@@ -59,7 +59,7 @@
                         <group class="ccm_field_section">
                             <div class="o_form_label">How it works</div>
                             <div class="text-muted">
-                                Actual Cost = Vendor Bill Cost + Other Accounting Cost. Open PO Commitment = confirmed PO value less posted PO bills. Forecast Final Cost = Actual Cost + Open PO Commitment + Uncommitted Forecast Cost. Forecast Profit = Revised Contract Revenue less Forecast Final Cost. Vendor Bill Cost includes posted supplier bills/credit notes with or without a PO. Other Accounting Cost includes miscellaneous entries, expenses, payroll, petty cash and other posted costs. PO-linked bills can inherit the project allocation from their PO line when the invoice line has no analytic distribution. Bills without a PO must be tagged with the project analytic account or Construction Contract. Confirmed Purchase Orders create commitments. Inventory is not used.
+                                Actual Cost = net vendor bill expense debits + net miscellaneous expense debits. Actual Revenue = net income credits from customer invoices and miscellaneous journal entries (less reversals and credit notes). Open PO Commitment = confirmed PO value less posted PO bills. Forecast Final Cost = Actual Cost + Open PO Commitment + Uncommitted Forecast Cost. Forecast Profit = Revised Contract Revenue less Forecast Final Cost. Vendor Bill Cost includes posted supplier bills/credit notes with or without a PO. Other Accounting Cost includes miscellaneous entries, expenses, payroll, petty cash and other posted costs. PO-linked bills can inherit the project allocation from their PO line when the invoice line has no analytic distribution. Bills without a PO must be tagged with the project analytic account or Construction Contract. Confirmed Purchase Orders create commitments. Inventory is not used.
                             </div>
                         </group>
                     </group>

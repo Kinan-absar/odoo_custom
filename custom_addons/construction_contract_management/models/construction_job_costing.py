@@ -62,19 +62,19 @@ class ConstructionContractJobCosting(models.Model):
         string='Other Accounting Cost',
         currency_field='currency_id',
         compute='_compute_job_costing',
-        help='Posted project costs coming from miscellaneous journal entries, expenses, payroll, petty cash and other non-vendor-bill accounting entries.',
+        help='Net debit on expense accounts from posted miscellaneous journal entries (including payroll, petty cash and expenses), excluding vendor bills.',
     )
     actual_cost_amount = fields.Monetary(
         string='Actual Cost',
         currency_field='currency_id',
         compute='_compute_job_costing',
-        help='Negative analytic amounts converted to a positive project cost.',
+        help='Net debited costs from posted vendor bills and miscellaneous journal entries allocated to this job.',
     )
     actual_revenue_amount = fields.Monetary(
         string='Actual Revenue',
         currency_field='currency_id',
         compute='_compute_job_costing',
-        help='Positive analytic amounts posted to the selected analytic account.',
+        help='Net credited revenue on income accounts from posted customer invoices, credit notes and miscellaneous journal entries allocated to this job.',
     )
     cost_exposure_amount = fields.Monetary(
         string='Cost Exposure',
@@ -302,7 +302,7 @@ class ConstructionContractJobCosting(models.Model):
             # Net posted expense includes credits/reversals; do not independently
             # floor components, which would overstate the accounting total.
             rec.actual_cost_amount = vendor_bill_cost + other_accounting_cost
-            rec.actual_revenue_amount = max(actual_revenue, 0.0)
+            rec.actual_revenue_amount = actual_revenue
 
             # Purchase commitment is based on confirmed PO lines carrying this
             # analytic account. No Inventory/stock records are required.
