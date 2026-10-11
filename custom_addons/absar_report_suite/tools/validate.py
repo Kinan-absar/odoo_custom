@@ -17,7 +17,7 @@ def checked(name):
 for path in ROOT.rglob('*.py'):
     ast.parse(path.read_text())
 checked('Python syntax')
-assert manifest['version'] == '18.0.2.0.8'
+assert manifest['version'] == '18.0.2.0.9'
 assert not {'wm_journal_entry_report', 'sale_pdf_quote_builder', 'studio_customization'} & set(manifest['depends'])
 records = {}
 for filename in manifest['data']:
@@ -130,7 +130,7 @@ class Env:
         if k=='ir.model':return types.SimpleNamespace(_get=lambda name:Link({'account.move':1,'purchase.order':2,'sale.order':3}[name]))
         raise KeyError(k)
     def ref(self,k,raise_if_not_found=True):
-        if k.endswith('_paperformat'):return Link(10 if 'business' in k else 11)
+        if k.endswith('_paperformat'):return Link(12 if 'compact' in k else 10 if 'business' in k else 11)
         if k in self.refs:return self.actions.browse(self.refs[k]).exists()
         if raise_if_not_found:raise KeyError(k)
         return False

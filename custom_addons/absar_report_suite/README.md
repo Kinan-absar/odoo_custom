@@ -72,3 +72,7 @@ Payment rows are restored inside the right-hand totals card, directly below Tota
 ## PO table border reset — 18.0.2.0.8
 
 Purchase order tables now also opt out of external-layout table decorations and explicitly suppress their outer table border, outline and shadow. The card outlines and item row separators remain. All invoice fixes from 18.0.2.0.7 are included. No PO fields, tax computations, signature labels, report routing or paper margins changed. Verify actual PDF rendering on staging after upgrade.
+
+## Compact PO and invoice headers — 18.0.2.0.9
+
+Supplier and customer names are 16px, still larger than body details. PO and both invoice variants use a dedicated compact A4 layout: letterhead at 90% width, 38mm top margin, 26mm bottom margin, and 33mm header spacing. This provides 13mm more body height; PO card, heading and signature spacing is slightly tighter. Other reports retain their existing layout and paper format. Longer documents still paginate normally. Signature labels remain unchanged. Verify actual PDFs on staging.

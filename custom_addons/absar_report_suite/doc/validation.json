@@ -1,5 +1,5 @@
 {
-  "version": "18.0.2.0.8",
+  "version": "18.0.2.0.9",
   "result": "PASS",
   "checks": [
     "Suite validator",
@@ -12,7 +12,11 @@
     "ZIP integrity",
     "PO business directives unchanged",
     "PO tables opt out of layout decorations",
-    "Invoice fixes retained unchanged"
+    "Invoice fixes retained unchanged",
+    "Compact paper format assigned only to PO and both invoice variants",
+    "PO and invoice business directives preserved",
+    "All other report templates unchanged",
+    "Compact letterhead and reduced name sizes"
   ],
   "live_odoo_tested": false
 }

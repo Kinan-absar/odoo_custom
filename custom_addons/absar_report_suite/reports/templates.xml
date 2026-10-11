@@ -1,5 +1,36 @@
 <?xml version='1.0' encoding='utf-8'?>
 <odoo>
+  <record id="compact_business_layout" model="ir.ui.view">
+    <field name="name">ABSAR Compact PO and Invoice Layout</field>
+    <field name="key">absar_report_suite.compact_business_layout</field>
+    <field name="type">qweb</field>
+    <field name="arch" type="xml">
+      <t t-name="absar_report_suite.compact_business_layout">
+
+  <t t-set="o" t-value="o or doc"/><t t-set="company" t-value="o.company_id.sudo()"/><!-- HEADER IMAGE ONLY -->
+  <div class="header" style=" margin-top: -10px;  text-align: center;">
+    <img t-att-src="image_data_uri(env.ref('absar_report_suite.letterhead_image').sudo().datas)" style="width:90%;max-height:200px;object-fit:contain;" alt="Absar Header"/>
+  </div>
+
+  <!-- BODY -->
+  <div t-attf-class="article o_report_layout_wave o_table_striped o_company_#{company.id}_layout" t-att-style="report_type != 'pdf' and 'margin-top:200px;' or ''" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+    <t t-set="custom_layout_address" t-value="True"/>
+    <t t-call="web.address_layout"/>
+    <h2 t-out="layout_document_title"/>
+    <t t-out="0"/>
+  </div>
+
+  <!-- FOOTER -->
+  <div t-attf-class="footer o_company_#{company.id}_layout {{report_type != 'pdf' and 'position-relative mt-auto mx-n5'}}" style="background: none !important; border: none !important; box-shadow: none !important;">
+    <div class="text-center" style="padding-top:40px;">
+    <img t-att-src="image_data_uri(env.ref('absar_report_suite.footer_image').sudo().datas)" alt="Footer Image" style="max-height: 90px; width: 100%; display: inline-block; border: none;"/>
+  </div>
+</div>
+
+
+</t>
+    </field>
+  </record>
   <record id="journal_document" model="ir.ui.view">
     <field name="name">ABSAR Journal Document</field>
     <field name="key">absar_report_suite.journal_document</field>
@@ -68,7 +99,7 @@
     <field name="type">qweb</field>
     <field name="arch" type="xml">
       <t t-name="absar_report_suite.invoice_document">
-        <t t-set="company" t-value="o.company_id.sudo()"/><t t-set="layout_document_title" t-value="False"/><t t-call="absar_report_suite.business_layout">
+        <t t-set="company" t-value="o.company_id.sudo()"/><t t-set="layout_document_title" t-value="False"/><t t-call="absar_report_suite.compact_business_layout">
 
        <style>
 .absar-invoice-cards {font-family:Arial,'Cairo',sans-serif!important;color:#182f43!important;font-size:13px!important;line-height:1.45;}
@@ -76,7 +107,7 @@
 .absar-invoice-cards .absar-title {color:#182f43!important;font-size:26px!important;font-weight:700!important;border:0!important;background:none!important;margin:0!important;padding:0!important;}
 .absar-invoice-cards .absar-card,.absar-invoice-cards .inv-card {background:#fff!important;border:1px solid #e0e7eb!important;border-radius:7px!important;padding:12px 14px!important;box-shadow:none!important;}
 .absar-invoice-cards .absar-card-title {font-size:12px!important;color:#627782!important;font-weight:600!important;border:0!important;background:none!important;padding:0!important;margin-bottom:5px;}
-.absar-invoice-cards .absar-customer-name {font-size:17px!important;color:#182f43!important;font-weight:700!important;margin-bottom:5px;}
+.absar-invoice-cards .absar-customer-name {font-size:16px!important;color:#182f43!important;font-weight:700!important;margin-bottom:5px;}
 .absar-invoice-cards .absar-top-row {margin-bottom:14px!important;page-break-inside:avoid;}
 .absar-invoice-cards .absar-top-row .col-6 {padding-left:6px!important;padding-right:6px!important;}
 .absar-invoice-cards .absar-qr-wrap {text-align:center!important;}
@@ -664,20 +695,20 @@
     <field name="arch" type="xml">
       <t t-name="absar_report_suite.purchase_document">
 <t t-set="company" t-value="o.company_id.sudo()"/><t t-set="layout_document_title" t-value="False"/>
-<t t-call="absar_report_suite.business_layout">
+<t t-call="absar_report_suite.compact_business_layout">
 <t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
 <style>
 .absar-po-white {font-family:Arial,'Cairo',sans-serif!important;font-size:14px!important;line-height:1.4;color:#182f43!important;}
-.absar-po-white .po-heading {overflow:hidden;margin:8px 0 20px;border:0!important;background:#fff!important;}
+.absar-po-white .po-heading {overflow:hidden;margin:8px 0 14px;border:0!important;background:#fff!important;}
 .absar-po-white .po-heading h2 {font-size:28px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;padding:0!important;}
 .absar-po-white .po-project {font-size:18px!important;font-weight:700!important;color:#182f43!important;overflow-wrap:break-word;}
-.absar-po-white .po-card {border:1px solid #e0e7eb!important;border-radius:7px;background:#fff!important;padding:12px 14px;margin-bottom:16px;}
+.absar-po-white .po-card {border:1px solid #e0e7eb!important;border-radius:7px;background:#fff!important;padding:12px 14px;margin-bottom:12px;}
 .absar-po-white h3 {font-size:18px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0 0 10px!important;padding:0!important;page-break-after:avoid;}
 .absar-po-white .po-details {overflow:hidden;page-break-inside:avoid;}
 .absar-po-white .po-label {font-size:11px!important;font-weight:700!important;text-transform:uppercase;color:#627782!important;margin-bottom:3px;}
 .absar-po-white .po-value {font-size:14px!important;font-weight:600!important;color:#182f43!important;overflow-wrap:break-word;}
 .absar-po-white .po-supplier {font-size:13px!important;line-height:1.5;}
-.absar-po-white .po-supplier-name {font-size:18px!important;font-weight:700!important;color:#182f43!important;margin:4px 0 6px;overflow-wrap:break-word;}
+.absar-po-white .po-supplier-name {font-size:16px!important;font-weight:700!important;color:#182f43!important;margin:4px 0 6px;overflow-wrap:break-word;}
 .absar-po-white .po-lines {width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px!important;}
 .absar-po-white .po-lines th {font-size:12px!important;font-weight:700!important;text-align:left;padding:7px 5px!important;color:#182f43!important;}
 .absar-po-white .po-lines td {padding:6px 5px!important;vertical-align:top;font-size:13px!important;overflow-wrap:break-word;word-wrap:break-word;color:#182f43!important;}
@@ -692,7 +723,7 @@
 .absar-po-white .po-totals .o_total td {font-weight:700!important;font-size:17px!important;padding-top:8px!important;}
 .absar-po-white .po-notes {font-size:12px!important;line-height:1.45;margin:0!important;}
 .absar-po-white .po-notes p {margin:0 0 5px!important;}
-.absar-po-white .po-signatures {overflow:hidden;page-break-inside:avoid;margin:18px 0 8px;}
+.absar-po-white .po-signatures {overflow:hidden;page-break-inside:avoid;margin:12px 0 8px;}
 .absar-po-white .po-signatures h5 {font-size:16px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;}
 
 .absar-po-white table.o_ignore_layout_styling {border-width:0!important;border-style:none!important;outline:none!important;box-shadow:none!important;}
