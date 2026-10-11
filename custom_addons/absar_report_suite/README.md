@@ -86,3 +86,7 @@ The supplier card shows name and VAT number only. Supplier address and phone are
 Supplier, Vendor Reference, MR and Order Date share a row with widths 50%, 19%, 14% and 17%. VAT stays under supplier name. Optional MR behavior and confirmed/draft date logic are unchanged. PO cards use a 0.75px teal outline (#177b83), matching the item header separator color with a thinner stroke. Other reports and business directives are unchanged.
 
 Invisible table borders explicitly use transparent color in PO and invoice. Uploaded PDFs contain zero-area dark edge fills that can appear as hairlines in some viewers. Transparent hidden borders prevent the source from using the dark text color for those fills. Intentional teal header rules and item separators retain their explicit bottom border colors. Actual PDF viewer rendering must be verified after upgrading.
+
+## Visible thin teal PO card outlines — 18.0.2.0.14
+
+PO supplier/details, items, terms and optional shipping cards receive explicit inline 1px solid teal borders. This overrides external layout border resets and avoids subpixel border widths that can disappear in PDF rendering. The item heading separator remains 2px, so card outlines are thinner. Transparent hidden table borders, one-row details, totals and signature layout remain unchanged. Verify actual staging output.

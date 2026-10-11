@@ -671,7 +671,7 @@
 .absar-po-white .po-heading {overflow:hidden;margin:8px 0 20px;border:0!important;background:#fff!important;}
 .absar-po-white .po-heading h2 {font-size:28px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;padding:0!important;}
 .absar-po-white .po-project {font-size:18px!important;font-weight:700!important;color:#182f43!important;overflow-wrap:break-word;}
-.absar-po-white .po-card {border:0.75px solid #177b83!important;border-radius:7px;background:#fff!important;padding:12px 14px;margin-bottom:16px;}
+.absar-po-white .po-card {border:1px solid #177b83!important;border-radius:7px;background:#fff!important;padding:12px 14px;margin-bottom:16px;}
 .absar-po-white h3 {font-size:18px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0 0 10px!important;padding:0!important;page-break-after:avoid;}
 .absar-po-white .po-details {overflow:hidden;page-break-inside:avoid;padding:8px 12px!important;margin-bottom:10px!important;}
 .absar-po-white .po-label {font-size:11px!important;font-weight:700!important;text-transform:uppercase;color:#627782!important;margin-bottom:3px;}
@@ -700,7 +700,7 @@
 <div class="page absar-po-white">
 <div class="po-heading"><div style="float:left;width:40%;"><h2><span t-field="o.name"/></h2><span t-if="'revision' in o._fields and o.revision &gt; 0">Revision <span t-field="o.revision"/></span><span t-if="o.state in ['draft','sent','to approve']" style="display:block;font-size:12px;">Request for Quotation</span><span t-if="o.state == 'cancel'" style="display:block;font-size:12px;">Cancelled Purchase Order</span></div>
 <div style="float:right;width:60%;text-align:right;" class="po-project" t-if="'project_id' in o._fields and o.project_id">Project: <span t-field="o.project_id.name"/></div></div>
-<div class="po-card po-details"><div class="po-supplier" style="float:left;width:50%;padding-right:10px;box-sizing:border-box;">
+<div class="po-card po-details" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;"><div class="po-supplier" style="float:left;width:50%;padding-right:10px;box-sizing:border-box;">
   <div>
     <div class="po-label"><strong>Supplier:</strong></div>
     <div class="po-supplier-name">
@@ -714,8 +714,8 @@
 <div style="float:left;width:19%;padding-right:10px;box-sizing:border-box;"><div class="po-label">Vendor Reference</div><div class="po-value"><span t-if="o.partner_ref" t-field="o.partner_ref"/><span t-else="">-</span></div>
 </div>
 <div style="float:left;width:14%;padding-right:10px;box-sizing:border-box;" t-if="'material_request_id' in o._fields and o.material_request_id"><div class="po-label">MR</div><div class="po-value"><span t-field="o.material_request_id.name"/></div></div><div style="float:left;width:17%;padding-right:10px;box-sizing:border-box;"><t t-if="o.state in ['purchase','done'] and o.date_approve"><div class="po-label">Order Date</div><div class="po-value"><span t-field="o.date_approve" t-options="{'widget':'date'}"/></div></t><t t-elif="o.date_order"><div class="po-label">Order Deadline</div><div class="po-value"><span t-field="o.date_order" t-options="{'widget':'date'}"/></div></t></div><div style="clear:both;"/></div>
-<div class="po-card" t-if="o.dest_address_id"><div class="po-label">Shipping Address</div><div t-field="o.dest_address_id" t-options="{'widget':'contact','fields':['address','name','phone'],'no_marker':True}"/></div>
-<div class="po-card po-items"><table class="po-lines o_ignore_layout_styling" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+<div class="po-card" t-if="o.dest_address_id" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;"><div class="po-label">Shipping Address</div><div t-field="o.dest_address_id" t-options="{'widget':'contact','fields':['address','name','phone'],'no_marker':True}"/></div>
+<div class="po-card po-items" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;"><table class="po-lines o_ignore_layout_styling" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
   <t t-set="display_discount" t-value="any(l.discount for l in o.order_line)"/><thead style="display:table-header-group;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
     <tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
       <th style="width:45%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Description</th>
@@ -837,7 +837,7 @@
                 </td>
             </tr>
         </table></div>
-<div class="po-card po-terms" t-if="o.notes"><p t-field="o.notes" class="po-notes"/>
+<div class="po-card po-terms" t-if="o.notes" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;"><p t-field="o.notes" class="po-notes"/>
         </div>
 <div class="po-signatures"><div style="float:left;width:50%;"><h5>Projects Director</h5></div><div style="float:right;width:50%;text-align:right;"><h5>Chief Executive Officer</h5></div><div style="clear:both;text-align:center;margin-top:8px;"><img alt="Company stamp" t-att-src="image_data_uri(env.ref('absar_report_suite.stamp_image').sudo().datas)" style="width:120px;display:inline-block;"/></div></div>
 </div></t></t></field>

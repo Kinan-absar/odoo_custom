@@ -1,5 +1,5 @@
 {
-  "version": "18.0.2.0.13",
+  "version": "18.0.2.0.14",
   "base_version": "18.0.2.0.8",
   "result": "PASS",
   "checks": [
@@ -8,7 +8,9 @@
     "Thin teal PO card borders",
     "Hidden PO/invoice table borders explicitly transparent",
     "Business directives unchanged",
-    "ZIP integrity"
+    "ZIP integrity",
+    "Inline 1px teal outlines on PO card containers",
+    "Other report templates unchanged"
   ],
   "live_odoo_tested": false
 }
