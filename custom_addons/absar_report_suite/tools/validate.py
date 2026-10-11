@@ -17,7 +17,7 @@ def checked(name):
 for path in ROOT.rglob('*.py'):
     ast.parse(path.read_text())
 checked('Python syntax')
-assert manifest['version'] == '18.0.2.0.28'
+assert manifest['version'] == '18.0.2.0.30'
 assert 'sale_project' in manifest['depends']
 assert not {'wm_journal_entry_report', 'sale_pdf_quote_builder', 'studio_customization'} & set(manifest['depends'])
 records = {}
@@ -52,7 +52,8 @@ checked('Journal footer, purchase routing and three image files')
 
 sale_view = E.tostring(views['absar_report_suite.sale_document']).decode()
 purchase_view = E.tostring(views['absar_report_suite.purchase_document']).decode()
-assert 'doc.project_id.name' in sale_view and 'x_studio_many2one_field_6j0_1i331v3dj' not in sale_view
+assert 'doc.project_ids' in sale_view and 'doc.project_id.name' in sale_view
+assert 'x_studio_many2one_field_6j0_1i331v3dj' not in sale_view
 assert 'Project:' in sale_view and 'absar-sale-heading' in sale_view
 assert 'doc.partner_id.name' in sale_view and 'doc.partner_id.vat' in sale_view
 assert '&quot;address&quot;' not in sale_view
@@ -62,6 +63,7 @@ assert 'absar-sale-document' in sale_view and 'border-bottom:1px solid #177b83!i
 assert 'background:#fff!important;color:#182f43!important' in sale_view
 assert 'absar-unified-total-card' in sale_view and 'Project:' in sale_view
 assert 'Purchase Order #' in purchase_view and 'Request for Quotation #' in purchase_view
+assert any(item['alias']=='rfq_report' and item['legacy_report']=='purchase.report_purchasequotation' for item in json.loads((ROOT/'data/integration.json').read_text())['reports'])
 subcontract_view=E.tostring(views['absar_report_suite.subcontract_document']).decode()
 certificate_view=E.tostring(views['absar_report_suite.certificate_bilingual']).decode()
 assert 'absar-unified-document' in subcontract_view and 'absar-unified-table' in subcontract_view
@@ -69,7 +71,10 @@ assert 'absar-unified-total-card' in subcontract_view
 assert 'absar-unified-document' in certificate_view and 'absar-unified-table' in certificate_view
 assert 'absar-unified-total-card' in certificate_view
 assert 'background:#fff!important;color:#182f43!important' in E.tostring(views['absar_report_suite.report_styles']).decode()
-checked('All routed commercial reports share rounded cards, open teal-rule tables and invoice-style totals; PO/RFQ titles and sales project header')
+assert 'font-size:18px!important' in sale_view and 'font-size:18px!important' in purchase_view
+assert 'inset 5px 0 0 #177b83' in E.tostring(views['absar_report_suite.report_styles']).decode()
+assert 'absar-unified-total-card table tbody tr.o_total *' in E.tostring(views['absar_report_suite.report_styles']).decode()
+checked('All routed reports include the distinct Odoo RFQ action; rounded cards, open teal-rule tables, visible invoice totals, standard sales project relation')
 
 # Exercise the actual action setup code against an in-memory ORM substitute.
 class Link:
@@ -180,7 +185,7 @@ def scenario(existing, upgrade=False):
     for i,item in enumerate(config['reports'],1):
         values={'name':item['name'],'model':item['model'],'report_name':item['legacy_report'],
                 'report_file':item['legacy_report'],'paperformat_id':99,'binding_model_id':1,
-                'print_report_name':rich_po if item['alias']=='purchase_report' else "'Original filename - %s' % object.name"}
+                'print_report_name':rich_po if item['alias'] in ('purchase_report','rfq_report') else "'Original filename - %s' % object.name"}
         if existing:
             env.actions.rows[i+100]=values
             if item.get('xmlid'):env.refs[item['xmlid']]=i+100
@@ -198,17 +203,17 @@ def scenario(existing, upgrade=False):
     assert state==env.actions.rows
     assert first==json.loads(env.params.get_param('absar_report_suite.original_report_actions'))
     assert env.actions.rows[999]==untouched
-    assert len(env.actions.rows)==9, env.actions.rows
+    assert len(env.actions.rows)==len(config['reports'])+1, env.actions.rows
     for item in config['reports']:
         target=int(env.params.get_param('absar_report_suite.target.'+item['alias']))
         row=env.actions.rows[target]
         assert row['report_name']==item['report_name']
         assert row['binding_model_id']
-        if existing:assert row['print_report_name']==('object._absar_report_filename()' if item['alias']=='purchase_report' else "'Original filename - %s' % object.name")
+        if existing:assert row['print_report_name']==('object._absar_report_filename()' if item['alias'] in ('purchase_report','rfq_report') else "'Original filename - %s' % object.name")
     purchase_id=int(env.params.get_param('absar_report_suite.target.purchase_report'))
     assert env.actions.rows[purchase_id]['report_name']=='purchase.report_purchaseorder'
     if not existing:assert env.actions.rows[purchase_id]['print_report_name']=='object._absar_report_filename()'
-    if upgrade:assert all(i not in env.actions.rows for i in range(1,9))
+    if upgrade:assert all(i not in env.actions.rows for i in range(1,len(config['reports'])+1))
     checked('Actual setup: fresh='+str(not existing)+'; duplicate upgrade='+str(upgrade)+'; repeat setup and filenames')
 scenario(False);scenario(True);scenario(True,True)
 # Prove an older rich expression cannot reintroduce a prefix or the wrong field order.

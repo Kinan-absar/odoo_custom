@@ -34,6 +34,16 @@
       "legacy_report": "purchase.report_purchaseorder"
     },
     {
+      "alias": "rfq_report",
+      "name": "Request for Quotation",
+      "model": "purchase.order",
+      "report_name": "absar_report_suite.purchase",
+      "paper": "business",
+      "bound": true,
+      "old_reports": [],
+      "legacy_report": "purchase.report_purchasequotation"
+    },
+    {
       "alias": "quotation_report",
       "name": "Quotation / Order",
       "model": "sale.order",

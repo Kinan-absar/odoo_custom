@@ -33,7 +33,7 @@
 .absar-jv-page .jv-lines .jv-totals td {font-weight:700!important;padding-top:16px!important;}
 
 /* Rounded border: fuller teal at left, fading across top/bottom to pale right. */
-.absar-tapered-card {border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;}
+.absar-tapered-card {border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;}
 
 </style>
 <div class="page absar-jv-page">
@@ -42,11 +42,11 @@
 <div class="jv-heading-part" style="width:34%;font-size:20px;text-align:center;padding-top:3px;"><span t-if="o.name != '/'" t-field="o.name"/><span t-else="">Draft</span></div>
 <div class="jv-heading-part" style="width:33%;font-size:25px;text-align:right;" dir="rtl" lang="ar">قيد يومية</div>
 </div>
-<div class="jv-card jv-details-card absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="jv-info" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><colgroup><col style="width:17%;border:0!important;border-color:transparent!important;background:#fff!important;"/><col style="width:33%;border:0!important;border-color:transparent!important;background:#fff!important;"/><col style="width:15%;border:0!important;border-color:transparent!important;background:#fff!important;"/><col style="width:35%;border:0!important;border-color:transparent!important;background:#fff!important;"/></colgroup><tbody style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+<div class="jv-card jv-details-card absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;"><table class="jv-info" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><colgroup><col style="width:17%;border:0!important;border-color:transparent!important;background:#fff!important;"/><col style="width:33%;border:0!important;border-color:transparent!important;background:#fff!important;"/><col style="width:15%;border:0!important;border-color:transparent!important;background:#fff!important;"/><col style="width:35%;border:0!important;border-color:transparent!important;background:#fff!important;"/></colgroup><tbody style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
 <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;" class="jv-label-cell"><span class="jv-label">Accounting Date</span></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span class="jv-value" t-field="o.date"/></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;" class="jv-label-cell jv-right-label"><span class="jv-label">Company</span></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span class="jv-value" t-field="o.company_id.name"/></td></tr>
 <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;" class="jv-label-cell"><span class="jv-label">Reference</span></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span class="jv-value" t-if="o.ref" t-field="o.ref"/><span t-else="" class="jv-value">-</span></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;" class="jv-label-cell jv-right-label"><span class="jv-label">Journal Type</span></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span class="jv-value" t-field="o.journal_id.name"/></td></tr>
 </tbody></table></div>
-<div class="jv-card absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><h3>Journal Entries</h3>
+<div class="jv-card absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;"><h3>Journal Entries</h3>
 <table class="jv-lines" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><colgroup style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><col style="width:20%;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"/><col style="width:20%;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"/><col style="width:13%;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"/><col style="width:18%;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"/><col style="width:14.5%;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"/><col style="width:14.5%;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"/></colgroup>
 <thead style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><th style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Account</th><th style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Description</th><th style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Partner</th><th style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Analytic Account</th><th class="jv-money" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Debit (<span t-field="o.company_id.currency_id.name"/>)</th><th class="jv-money" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Credit (<span t-field="o.company_id.currency_id.name"/>)</th></tr></thead>
 <tbody style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><tr t-foreach="o.line_ids" t-as="line" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
@@ -125,7 +125,7 @@
 .absar-invoice-cards .inv-info-column .inv-info .value {overflow-wrap:break-word;word-wrap:break-word;}
 
 /* Rounded border: fuller teal at left, fading across top/bottom to pale right. */
-.absar-tapered-card {border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;}
+.absar-tapered-card {border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;}
 
 </style>
                <div class="page absar-invoice-cards"><!-- ========================= -->
@@ -188,7 +188,7 @@
 
       <!-- LEFT: CUSTOMER BLOCK -->
       <div class="col-6">
-        <div class="absar-card absar-tapered-card" style="min-height:130px;background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+        <div class="absar-card absar-tapered-card" style="min-height:130px;background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
           <div class="absar-card-title">
             Customer / العميل
           </div>
@@ -226,7 +226,7 @@
 
             <div class="absar-invoice-page">
 <!-- INVOICE DETAILS: clean design (only underline under values) -->
-<div class="absar-info-wrap inv-card absar-tapered-card" style="background:#fff!important;padding:8px 12px!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+<div class="absar-info-wrap inv-card absar-tapered-card" style="background:#fff!important;padding:8px 12px!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
 
 
   <div class="inv-info-column" style="float:left;width:50%;padding-right:12px;box-sizing:border-box;"><table class="inv-info o_ignore_layout_styling" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
@@ -266,7 +266,7 @@
 <t t-set="display_discount" t-value="any(l.discount for l in o.invoice_line_ids)"/>
 <t t-set="lines" t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
 
-<div class="inv-card inv-lines-card absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm o_ignore_layout_styling" name="invoice_line_table" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+<div class="inv-card inv-lines-card absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm o_ignore_layout_styling" name="invoice_line_table" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
 
   <!-- ===== TABLE HEADER ===== -->
   <thead style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
@@ -371,7 +371,7 @@
   <!-- =================== -->
   <div class="row justify-content-end mt-2 absar-total-wrap">
     <div class="col-6">
-      <div class="inv-card absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm table-borderless text-end absar-total-table o_ignore_layout_styling" style="page-break-inside: avoid;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <div class="inv-card absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm table-borderless text-end absar-total-table o_ignore_layout_styling" style="page-break-inside: avoid;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
         <tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
           <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Subtotal / الإجمالي الفرعي</strong></td>
           <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.amount_untaxed"/></td>
@@ -408,7 +408,7 @@
   <!-- =================== -->
   <!--  Multi-Currency Row -->
   <!-- =================== -->
-  <div t-if="o.currency_id != o.company_id.currency_id" class="row clearfix ms-auto text-nowrap border-top border-bottom p-2 mt-2 absar-multi-currency absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+  <div t-if="o.currency_id != o.company_id.currency_id" class="row clearfix ms-auto text-nowrap border-top border-bottom p-2 mt-2 absar-multi-currency absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
     <t t-set="exchange_rate" t-value="abs(o.amount_total_signed) / o.amount_total if o.amount_total else 0"/>
     <div class="col-auto">
       <strong>Exchange Rate / سعر الصرف</strong><br/>
@@ -433,7 +433,7 @@
   <!-- =================== -->
   <t t-if="o.invoice_payment_term_id">
     <div class="row mt-3">
-      <div class="col-12 text-start absar-note-block absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+      <div class="col-12 text-start absar-note-block absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
         <strong>Payment Terms / شروط الدفع:</strong><br/>
         <span t-out="o.invoice_payment_term_id.note"/>
       </div>
@@ -442,7 +442,7 @@
 
   <t t-if="o.narration">
     <div class="row mt-2">
-      <div class="col-12 text-start absar-note-block absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+      <div class="col-12 text-start absar-note-block absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
         <strong>Notes / ملاحظات:</strong><br/>
         <span t-out="o.narration"/>
       </div>
@@ -451,7 +451,7 @@
 
   <t t-if="o.fiscal_position_id.note">
     <div class="row mt-2">
-      <div class="col-12 text-start absar-note-block absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+      <div class="col-12 text-start absar-note-block absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
         <strong>Fiscal Note / ملاحظات ضريبية:</strong><br/>
         <span t-out="o.fiscal_position_id.note"/>
       </div>
@@ -460,7 +460,7 @@
 
   <t t-if="o.invoice_incoterm_id">
     <div class="row mt-2">
-      <div class="col-12 text-start absar-note-block absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+      <div class="col-12 text-start absar-note-block absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
         <strong>Incoterm / شرط تجاري:</strong><br/>
         <span t-out="o.invoice_incoterm_id.code"/> -
         <span t-out="o.invoice_incoterm_id.name"/>
@@ -581,11 +581,11 @@
 
 
 /* Shared card treatment used by quotation, proforma, subcontractor and certificate reports. */
-.absar-report .absar-tapered-card {border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;}
-.absar-report #informations.absar-tapered-card {border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;}
+.absar-report .absar-tapered-card {border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;}
+.absar-report #informations.absar-tapered-card {border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;}
 .absar-unified-document {font-family:Arial,'Tajawal','Cairo',sans-serif!important;color:#182f43!important;}
 .absar-unified-document .absar-unified-heading {overflow:hidden!important;margin:8px 0 12px!important;border:0!important;}
-.absar-unified-document .absar-unified-heading h2 {font-size:28px!important;line-height:1.25!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;padding:0!important;}
+.absar-unified-document .absar-unified-heading h2 {font-size:18px!important;line-height:1.35!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;padding:0!important;}
 .absar-unified-document .absar-unified-project {float:right!important;width:50%!important;text-align:right!important;font-size:18px!important;line-height:1.35!important;font-weight:700!important;color:#182f43!important;overflow-wrap:break-word!important;}
 .absar-unified-document .absar-unified-table {width:100%!important;margin:0!important;border:0!important;border-collapse:collapse!important;font-size:13px!important;line-height:1.4!important;}
 .absar-unified-document .absar-unified-table thead th {background:#fff!important;color:#182f43!important;font-weight:700!important;padding:8px 6px!important;border:0!important;border-bottom:1px solid #177b83!important;vertical-align:bottom!important;}
@@ -593,11 +593,16 @@
 .absar-unified-document .absar-unified-table tbody tr:nth-child(even) td {background:#fff!important;}
 .absar-unified-document .absar-unified-table .o_line_section td {background:#f6f9fa!important;color:#182f43!important;font-weight:700!important;}
 .absar-unified-document .absar-unified-table .o_line_note td {background:#fff!important;color:#627782!important;font-style:italic!important;}
-.absar-unified-document .absar-unified-total-card {width:50%!important;box-sizing:border-box!important;margin:8px 0 12px auto!important;padding:8px 10px!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;page-break-inside:avoid!important;}
+.absar-unified-document .absar-unified-total-card {width:50%!important;box-sizing:border-box!important;margin:8px 0 12px auto!important;padding:8px 10px!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;page-break-inside:avoid!important;}
 .absar-unified-document #total {margin:8px 0!important;}
 .absar-unified-document .absar-unified-total-card table {width:100%!important;margin:0!important;border:0!important;border-collapse:collapse!important;background:#fff!important;}
 .absar-unified-document .absar-unified-total-card table td,.absar-unified-document .absar-unified-total-card table th {background:#fff!important;color:#182f43!important;border:0!important;padding:5px 4px!important;}
 .absar-unified-document .absar-unified-total-card table tbody tr.o_total td,.absar-unified-document .absar-unified-total-card table tbody tr.total-row td {background:#fff!important;color:#182f43!important;border:0!important;padding:7px 4px!important;font-weight:700!important;}
+.absar-unified-document .absar-unified-total-card table tbody tr.o_total *,.absar-unified-document .absar-unified-total-card table tbody tr.total-row * {background:#fff!important;color:#182f43!important;border:0!important;}
+.absar-unified-document .absar-tapered-card table {border:0!important;outline:0!important;box-shadow:none!important;border-collapse:collapse!important;}
+.absar-unified-document .absar-tapered-card table th,.absar-unified-document .absar-tapered-card table td {outline:0!important;box-shadow:none!important;border-left:0!important;border-right:0!important;border-top:0!important;}
+.absar-unified-document .absar-tapered-card .absar-unified-table thead th {border-bottom:1px solid #177b83!important;}
+.absar-unified-document .absar-tapered-card .absar-unified-table tbody td {border-bottom:1px solid #dbe4e8!important;}
 .absar-unified-document .absar-unified-total-card table tbody tr.o_total td:first-child,.absar-unified-document .absar-unified-total-card table tbody tr.total-row td:first-child {color:#9b7965!important;font-size:15px!important;}
 .absar-unified-document .absar-unified-total-card table tbody tr.o_total td:last-child,.absar-unified-document .absar-unified-total-card table tbody tr.total-row td:last-child {color:#182f43!important;font-size:17px!important;white-space:nowrap!important;}
 </style>
@@ -704,8 +709,8 @@
 <style>
 .absar-po-white {font-family:Arial,'Cairo',sans-serif!important;font-size:14px!important;line-height:1.4;color:#182f43!important;}
 .absar-po-white .po-heading {overflow:hidden;margin:8px 0 20px;border:0!important;background:#fff!important;}
-.absar-po-white .po-heading h2 {font-size:28px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;padding:0!important;}
-.absar-po-white .po-project {font-size:18px!important;font-weight:700!important;color:#182f43!important;overflow-wrap:break-word;}
+.absar-po-white .po-heading h2 {font-size:18px!important;line-height:1.35!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;padding:0!important;}
+.absar-po-white .po-project {font-size:18px!important;line-height:1.35!important;font-weight:700!important;color:#182f43!important;overflow-wrap:break-word;}
 .absar-po-white .po-card {border:1px solid #177b83!important;border-radius:7px;background:#fff!important;padding:12px 14px;margin-bottom:16px;}
 .absar-po-white h3 {font-size:18px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0 0 10px!important;padding:0!important;page-break-after:avoid;}
 .absar-po-white .po-details {overflow:hidden;page-break-inside:avoid;padding:8px 12px!important;margin-bottom:10px!important;}
@@ -720,7 +725,7 @@
 .absar-po-white .po-lines tr {page-break-inside:avoid;}
 .absar-po-white .po-lines .o_line_section td {font-weight:700!important;text-align:left!important;}
 .absar-po-white .po-lines .o_line_note td {font-style:italic;text-align:left!important;}
-.absar-po-white .po-totals {width:50%;box-sizing:border-box;padding:8px 10px;margin:8px 0 12px auto;page-break-inside:avoid;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;}
+.absar-po-white .po-totals {width:50%;box-sizing:border-box;padding:8px 10px;margin:8px 0 12px auto;page-break-inside:avoid;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;}
 .absar-po-white .po-totals table {width:100%;border-collapse:collapse;font-size:14px!important;}
 .absar-po-white .po-totals td {padding:5px 4px!important;line-height:1.3!important;color:#182f43!important;border:0!important;background:#fff!important;}
 .absar-po-white .po-totals td:last-child {text-align:right!important;white-space:nowrap;}
@@ -734,13 +739,13 @@
 .absar-po-white table.o_ignore_layout_styling {border-width:0!important;border-style:none!important;outline:none!important;box-shadow:none!important;}
 
 /* Rounded border: fuller teal at left, fading across top/bottom to pale right. */
-.absar-tapered-card {border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;}
+.absar-tapered-card {border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;}
 
 </style>
 <div class="page absar-po-white">
 <div class="po-heading"><div style="float:left;width:50%;"><h2><span t-if="o.state in ['draft','sent','to approve']">Request for Quotation # </span><span t-elif="o.state == 'cancel'">Cancelled Purchase Order # </span><span t-else="">Purchase Order # </span><span t-field="o.name"/></h2><span t-if="'revision' in o._fields and o.revision &gt; 0">Revision <span t-field="o.revision"/></span></div>
 <div style="float:right;width:50%;text-align:right;" class="po-project" t-if="'project_id' in o._fields and o.project_id">Project: <span t-field="o.project_id.name"/></div></div>
-<div class="po-card po-details absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><div class="po-supplier" style="float:left;width:50%;padding-right:10px;box-sizing:border-box;">
+<div class="po-card po-details absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;"><div class="po-supplier" style="float:left;width:50%;padding-right:10px;box-sizing:border-box;">
   <div>
     <div class="po-label"><strong>Supplier:</strong></div>
     <div class="po-supplier-name">
@@ -754,8 +759,8 @@
 <div style="float:left;width:19%;padding-right:10px;box-sizing:border-box;"><div class="po-label">Vendor Reference</div><div class="po-value"><span t-if="o.partner_ref" t-field="o.partner_ref"/><span t-else="">-</span></div>
 </div>
 <div style="float:left;width:14%;padding-right:10px;box-sizing:border-box;" t-if="'material_request_id' in o._fields and o.material_request_id"><div class="po-label">MR</div><div class="po-value"><span t-field="o.material_request_id.name"/></div></div><div style="float:left;width:17%;padding-right:10px;box-sizing:border-box;"><t t-if="o.state in ['purchase','done'] and o.date_approve"><div class="po-label">Order Date</div><div class="po-value"><span t-field="o.date_approve" t-options="{'widget':'date'}"/></div></t><t t-elif="o.date_order"><div class="po-label">Order Deadline</div><div class="po-value"><span t-field="o.date_order" t-options="{'widget':'date'}"/></div></t></div><div style="clear:both;"/></div>
-<div class="po-card absar-tapered-card" t-if="o.dest_address_id" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><div class="po-label">Shipping Address</div><div t-field="o.dest_address_id" t-options="{'widget':'contact','fields':['address','name','phone'],'no_marker':True}"/></div>
-<div class="po-card po-items absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="po-lines o_ignore_layout_styling" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+<div class="po-card absar-tapered-card" t-if="o.dest_address_id" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;"><div class="po-label">Shipping Address</div><div t-field="o.dest_address_id" t-options="{'widget':'contact','fields':['address','name','phone'],'no_marker':True}"/></div>
+<div class="po-card po-items absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;"><table class="po-lines o_ignore_layout_styling" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
   <t t-set="display_discount" t-value="any(l.discount for l in o.order_line)"/><thead style="display:table-header-group;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
     <tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
       <th style="width:45%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Description</th>
@@ -877,7 +882,7 @@
                 </td>
             </tr>
         </table></div>
-<div class="po-card po-terms absar-tapered-card" t-if="o.notes" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><p t-field="o.notes" class="po-notes"/>
+<div class="po-card po-terms absar-tapered-card" t-if="o.notes" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;"><p t-field="o.notes" class="po-notes"/>
         </div>
 <div class="po-signatures"><div style="float:left;width:50%;"><h5>Projects Director</h5></div><div style="float:right;width:50%;text-align:right;"><h5>Chief Executive Officer</h5></div><div style="clear:both;text-align:center;margin-top:8px;"><img alt="Company stamp" t-att-src="image_data_uri(env.ref('absar_report_suite.stamp_image').sudo().datas)" style="width:120px;display:inline-block;"/></div></div>
 </div></t></t></field>
@@ -893,9 +898,9 @@
       <style>
 .absar-sale-document {font-family:Arial,'Tajawal','Cairo',sans-serif!important;font-size:13px!important;line-height:1.4!important;color:#182f43!important;}
 .absar-sale-document .absar-sale-heading {overflow:hidden!important;margin:8px 0 10px!important;border:0!important;}
-.absar-sale-document .absar-sale-heading h2 {font-size:28px!important;line-height:1.25!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;padding:0!important;}
+.absar-sale-document .absar-sale-heading h2 {font-size:18px!important;line-height:1.35!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;padding:0!important;}
 .absar-sale-document .absar-sale-project {font-size:18px!important;line-height:1.35!important;font-weight:700!important;color:#182f43!important;}
-.absar-sale-document .absar-tapered-card {border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;}
+.absar-sale-document .absar-tapered-card {border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;}
 .absar-sale-document #informations.absar-tapered-card {padding:8px 12px!important;margin:8px 0 10px!important;}
 .absar-sale-document #informations strong {font-size:12px!important;color:#627782!important;}
 .absar-sale-document #informations div {font-size:13px!important;line-height:1.35!important;}
@@ -932,10 +937,14 @@
         </h2>
           </div>
           <div class="absar-sale-project absar-unified-project" style="float:right;width:50%;text-align:right;font-size:18px;font-weight:700;color:#182f43;overflow-wrap:break-word;">
-            Project: <t t-if="'project_id' in doc._fields and doc.project_id"><span t-field="doc.project_id.name"/></t><span t-else="">—</span>
+            Project:
+            <t t-set="linked_projects" t-value="doc.project_ids if 'project_ids' in doc._fields else False"/>
+            <t t-if="linked_projects"><t t-foreach="linked_projects" t-as="linked_project"><span t-if="not linked_project_first">, </span><span t-field="linked_project.name"/></t></t>
+            <t t-elif="'project_id' in doc._fields and doc.project_id and doc.project_id._name == 'project.project'"><span t-field="doc.project_id.name"/></t>
+            <t t-else="">—</t>
           </div>
         </div>
-        <div class="row mt-2 mb-2 absar-tapered-card absar-sale-information" id="informations" style="padding:8px 12px;margin:8px 0 12px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+        <div class="row mt-2 mb-2 absar-tapered-card absar-sale-information" id="informations" style="padding:8px 12px;margin:8px 0 12px;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
           <div t-if="doc.partner_id" class="col-6 mb-2">
             <strong>Customer:</strong>
             <br/>
@@ -963,7 +972,7 @@
         <t t-set="lines_to_report" t-value="doc._get_order_lines_to_report()"/>
         <t t-set="display_discount" t-value="any(l.discount for l in lines_to_report)"/>
         <div class="oe_structure"/>
-        <div class="absar-tapered-card absar-sale-lines-card" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm o_main_table mt-4 absar-unified-table">
+        <div class="absar-tapered-card absar-sale-lines-card" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm o_main_table mt-4 absar-unified-table">
           <thead style="display: table-header-group">
             <tr>
               <th name="th_description" class="text-start">Description</th>
@@ -1062,7 +1071,7 @@
           <h4 name="h_optional_products">
                 Options
             </h4>
-          <div class="absar-tapered-card absar-sale-options-card" style="padding:8px 12px;margin:14px 0;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table name="table_optional_products" class="table table-sm absar-unified-table">
+          <div class="absar-tapered-card absar-sale-options-card" style="padding:8px 12px;margin:14px 0;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;"><table name="table_optional_products" class="table table-sm absar-unified-table">
             <thead class="fw-bold">
               <tr>
                 <td name="th_option_name" class="text-start">Description</td>
@@ -1093,7 +1102,7 @@
           </table></div>
           <div class="oe_structure">​</div>
         </div>
-        <div class="absar-tapered-card absar-sale-terms-card" style="padding:8px 12px;margin-top:10px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+        <div class="absar-tapered-card absar-sale-terms-card" style="padding:8px 12px;margin-top:10px;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
           <span t-field="doc.note" t-attf-style="#{'text-align:justify;text-justify:inter-word;' if doc.company_id.terms_type != 'html' else ''}" name="order_note"/>
           <p t-if="not is_html_empty(doc.payment_term_id.note)">
             <span t-field="doc.payment_term_id.note">The payment should also be transmitted with love</span>
@@ -1269,7 +1278,7 @@
           <div style="float:left;width:50%;"><h2><span t-if="o.state in ['draft', 'sent', 'to approve']">Request for Quotation # </span><span t-elif="o.state == 'cancel'">Cancelled Purchase Order # </span><span t-else="">Subcontract Agreement # </span><span t-field="o.name"/></h2></div>
           <div class="absar-unified-project" t-if="'project_id' in o._fields and o.project_id">Project: <span t-field="o.project_id.name"/></div>
         </div>
-        <div id="informations" class="row absar-tapered-card absar-subcontract-information" style="padding:12px 14px;margin:14px 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+        <div id="informations" class="row absar-tapered-card absar-subcontract-information" style="padding:12px 14px;margin:14px 0 16px;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
           <div t-if="o.partner_id" class="col-4 bm-2">
             <strong>Supplier:</strong>
             <p t-field="o.partner_id" t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;, &quot;vat&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}" class="m-0"/>
@@ -1287,7 +1296,7 @@
             <p t-field="o.date_order" t-options="{&quot;widget&quot;:&quot;date&quot;}" class="m-0"/>
           </div>
         </div>
-        <div class="absar-tapered-card absar-subcontract-lines-card" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm o_main_table mt-4 mb-4 absar-unified-table">
+        <div class="absar-tapered-card absar-subcontract-lines-card" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm o_main_table mt-4 mb-4 absar-unified-table">
   <thead style="display: table-header-group">
     <tr>
       <th name="th_description"><strong>Description</strong></th>
@@ -1350,14 +1359,14 @@
   </tbody>
 </table></div>
 <div id="total" style="width: 100%;">
-  <div style="width:50%;margin-left:auto;padding:8px 10px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;" class="absar-tapered-card absar-subcontract-totals-card absar-unified-total-card">
+  <div style="width:50%;margin-left:auto;padding:8px 10px;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;" class="absar-tapered-card absar-subcontract-totals-card absar-unified-total-card">
     <table class="table table-sm">
       <t t-set="tax_totals" t-value="o.tax_totals"/>
       <t t-call="absar_report_suite.subcontract_tax_totals"/>
     </table>
   </div>
 </div>
-      <p t-field="o.notes" class="mt-3 absar-tapered-card absar-subcontract-notes-card" style="padding:12px 14px;margin-top:14px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"/>
+      <p t-field="o.notes" class="mt-3 absar-tapered-card absar-subcontract-notes-card" style="padding:12px 14px;margin-top:14px;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;"/>
         <div class="oe_structure">
           <div class="container o_text_columns absar-signatures">
             <div class="row">
@@ -1482,7 +1491,7 @@
         <div class="row align-items-start" style="margin-top:10px;">
 
             <!-- LEFT: SUBCONTRACTOR -->
-            <div class="col-6 absar-tapered-card absar-certificate-supplier" style="padding:12px 14px;margin:10px 0;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+            <div class="col-6 absar-tapered-card absar-certificate-supplier" style="padding:12px 14px;margin:10px 0;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
                 <div style="padding:8px 0;">
                     <div style="color:#714B67; font-weight:800; font-size:16px; margin-bottom:6px;">
                         Subcontractor / المقاول
@@ -1554,7 +1563,7 @@
         <!-- ========================= -->
         <!--  CERTIFICATE INFO         -->
         <!-- ========================= -->
-        <div class="row mt-4 absar-tapered-card absar-certificate-info" style="padding:10px 14px;margin:14px 0;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+        <div class="row mt-4 absar-tapered-card absar-certificate-info" style="padding:10px 14px;margin:14px 0;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
             <table class="inv-info">
                 <tr>
                     <td class="label-left">Certificate No</td>
@@ -1585,7 +1594,7 @@
         <t t-set="display_discount" t-value="any(l.discount for l in o.invoice_line_ids)"/>
 <t t-set="lines" t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
 
-<div class="absar-tapered-card absar-certificate-lines" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm absar-unified-table" name="invoice_line_table" style="border-color:#ccc; font-size:13px; border-collapse:collapse; width:100%; page-break-inside:auto;">
+<div class="absar-tapered-card absar-certificate-lines" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm absar-unified-table" name="invoice_line_table" style="border-color:#ccc; font-size:13px; border-collapse:collapse; width:100%; page-break-inside:auto;">
 
   <!-- ===== TABLE HEADER ===== -->
   <thead style="display:table-header-group;">
@@ -1676,7 +1685,7 @@
         <!--  TOTALS                   -->
         <!-- ========================= -->
         <div class="row justify-content-end mt-3">
-            <div class="col-6 absar-tapered-card absar-certificate-totals absar-unified-total-card" style="padding:10px 12px;margin-top:14px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+            <div class="col-6 absar-tapered-card absar-certificate-totals absar-unified-total-card" style="padding:10px 12px;margin-top:14px;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
                 <table class="table table-sm table-borderless text-end">
                     <tr>
                         <td><strong>Subtotal / الإجمالي الفرعي</strong></td>
@@ -1710,7 +1719,7 @@
         <!-- ========================= -->
         <t t-if="o.narration">
             <div class="row mt-3">
-                <div class="col-6 absar-tapered-card absar-certificate-notes" style="padding:12px 14px;margin-top:14px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+                <div class="col-6 absar-tapered-card absar-certificate-notes" style="padding:12px 14px;margin-top:14px;border:1px solid #63aeb2!important;border-left:1px solid #63aeb2!important;border-radius:16px!important;background:#fff!important;box-shadow:inset 5px 0 0 #177b83,0 0 15px rgba(23,123,131,.25)!important;">
                     <strong>Notes / ملاحظات</strong><br/>
                     <span t-out="o.narration"/>
                 </div>

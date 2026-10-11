@@ -1,19 +1,22 @@
 {
-  "version": "18.0.2.0.28",
-  "base_version": "18.0.2.0.27",
+  "version": "18.0.2.0.30",
+  "base_version": "18.0.2.0.29",
   "result": "PASS",
   "checks": [
-    "Suite validator",
-    "Shared stylesheet now covers sale/proforma/subcontract/certificate card selectors",
-    "High-specificity rule overrides legacy information-panel border",
-    "Quotation, proforma, subcontract and certificate sections have explicit teal cards",
-    "Invoice, invoice-with-payment, PO and journal voucher retain card styling",
-    "Action setup version synchronized for upgrade",
-    "Sales reports use standard project_id, compact name/VAT block, aligned header, and no title underline",
-    "Purchase report labels the PO number with Purchase Order #",
-    "Sales reports use compact white cards, slim teal accent, open table styling, teal header rule, and matching navy typography",
-    "All routed commercial reports share invoice-style totals; subcontractor/certificate layouts use unified cards and open teal-rule tables",
-    "Purchase Order and RFQ headings match the sales heading pattern; sales project remains right-aligned"
+    "Python syntax",
+    "Manifest data order and unique XML record identities",
+    "QWeb calls, expression syntax and portable assets",
+    "Journal footer, purchase routing and three image files",
+    "All routed reports include the distinct Odoo RFQ action; rounded cards, open teal-rule tables, visible invoice totals, standard sales project relation",
+    "Actual setup: fresh=True; duplicate upgrade=False; repeat setup and filenames",
+    "Actual setup: fresh=False; duplicate upgrade=False; repeat setup and filenames",
+    "Actual setup: fresh=False; duplicate upgrade=True; repeat setup and filenames",
+    "PO filename policy replaces older saved expressions; legacy PO QWeb bridge and no declarative duplicate action creation",
+    "Actual PO filename helper: exact supplied Arabic title, MR/project order, no prefix in draft/confirmed, revisions and absent optional fields",
+    "Report rebinding does not force module state",
+    "Cleanup graph: system ownership, retained inheritance, cycles and external references",
+    "Cleanup allowlist excludes the rebuilt report templates"
   ],
-  "live_odoo_tested": false
+  "live_odoo_tested": false,
+  "staging_action_audit": "Read-only audit of 102 Odoo report actions; distinct Request for Quotation action identified and added to routing."
 }

@@ -16,7 +16,7 @@ class TestAbsarReports(TransactionCase):
         setup.apply()
         before = params.get_param('absar_report_suite.original_report_actions')
         routes = {r: params.get_param('absar_report_suite.target.' + r) for r in [
-            'invoice_report', 'invoice_payment_report', 'purchase_report',
+            'invoice_report', 'invoice_payment_report', 'purchase_report', 'rfq_report',
             'quotation_report', 'proforma_report', 'journal_report',
             'certificate_report', 'subcontract_report']}
         setup.apply()
@@ -32,13 +32,14 @@ class TestAbsarReports(TransactionCase):
     def test_render_purchase_sale_and_journal(self):
         partner = self.env['res.partner'].create({'name': 'ABSAR Report Test'})
         po = self.env['purchase.order'].create({'partner_id': partner.id})
-        project = self.env['project.project'].create({'name': 'ABSAR Report Project'})
-        so = self.env['sale.order'].create({'partner_id': partner.id, 'project_id': project.id})
+        so = self.env['sale.order'].create({'partner_id': partner.id})
+        project = self.env['project.project'].create({'name': 'ABSAR Report Project', 'sale_order_id': so.id})
+        so.invalidate_recordset(['project_ids'])
         journal = self.env['account.journal'].search([
             ('company_id', '=', self.env.company.id), ('type', '=', 'general')], limit=1)
         self.assertTrue(journal, 'Test company needs a general journal')
         move = self.env['account.move'].create({'journal_id': journal.id})
-        for alias, record in [('purchase_report', po), ('subcontract_report', po),
+        for alias, record in [('purchase_report', po), ('rfq_report', po), ('subcontract_report', po),
                               ('quotation_report', so), ('proforma_report', so),
                               ('journal_report', move)]:
             html, _ = self.env['ir.actions.report']._render_qweb_html(
@@ -48,10 +49,15 @@ class TestAbsarReports(TransactionCase):
         purchase_html, _ = self.env['ir.actions.report']._render_qweb_html(
             self._action('purchase_report'), po.ids)
         self.assertIn(b'Request for Quotation #', purchase_html)
+        rfq_html, _ = self.env['ir.actions.report']._render_qweb_html(
+            self._action('rfq_report'), po.ids)
+        self.assertIn(b'Request for Quotation #', rfq_html)
+        self.assertIn(b'absar-po-white', rfq_html)
         sale_html, _ = self.env['ir.actions.report']._render_qweb_html(
             self._action('quotation_report'), so.ids)
         self.assertIn(b'Project:', sale_html)
         self.assertIn(project.name.encode(), sale_html)
+        self.assertIn(b'ABSAR Report Project', sale_html)
         self.assertIn(b'absar-sale-document', sale_html)
         self.assertIn(b'border-bottom:1px solid #177b83', sale_html)
         html, _ = self.env['ir.actions.report']._render_qweb_html(

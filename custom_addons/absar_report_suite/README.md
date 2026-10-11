@@ -169,3 +169,10 @@ Validation: offline suite, source checks and ZIP integrity passed. Live Odoo PDF
 The PO heading now prints “Purchase Order #” and its number on one line, matching the sales heading; RFQs use “Request for Quotation #” with the same alignment and project position. Sales orders, quotations and proformas show the project field on the right. The invoice-style outlined total card is applied to sales, PO/RFQ, subcontract agreement and subcontractor payment certificate totals while each report keeps its existing total labels. The subcontract agreement and RFQ tables now use the open white table with teal header rule, and the payment certificate is brought into the same teal/navy card design. Invoice and journal voucher layouts remain as the visual reference.
 
 Validation: offline suite, source checks and ZIP integrity passed. Live Odoo PDF rendering remains required.
+
+
+## Project binding, smooth cards and RFQ routing — 18.0.2.0.30
+
+Sales order, quotation and pro-forma headers now read the linked Odoo Projects relation (`sale.order.project_ids`) first, then use a real `project.project` many-to-one only when available. They do not read a Studio field. Purchase, subcontract and sales headings use a shared 18px size, matching the Project label. Card accents use an inset teal edge under one continuous thin border to avoid doubled corner strokes. Nested tables stay open inside the cards, and total-row text is explicitly set to navy so the Total label and amount remain visible.
+
+Offline validation passed. The staging report action list was reviewed read-only (102 actions), and the distinct Request for Quotation action was added to suite routing. Live PDF rendering was not performed.
