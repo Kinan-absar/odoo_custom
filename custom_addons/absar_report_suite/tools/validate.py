@@ -17,7 +17,7 @@ def checked(name):
 for path in ROOT.rglob('*.py'):
     ast.parse(path.read_text())
 checked('Python syntax')
-assert manifest['version'] == '18.0.2.0.30'
+assert manifest['version'] == '18.0.2.0.31'
 assert 'sale_project' in manifest['depends']
 assert not {'wm_journal_entry_report', 'sale_pdf_quote_builder', 'studio_customization'} & set(manifest['depends'])
 records = {}
@@ -52,7 +52,7 @@ checked('Journal footer, purchase routing and three image files')
 
 sale_view = E.tostring(views['absar_report_suite.sale_document']).decode()
 purchase_view = E.tostring(views['absar_report_suite.purchase_document']).decode()
-assert 'doc.project_ids' in sale_view and 'doc.project_id.name' in sale_view
+assert 'doc.construction_project_id.name' in sale_view and 'doc.project_ids' in sale_view
 assert 'x_studio_many2one_field_6j0_1i331v3dj' not in sale_view
 assert 'Project:' in sale_view and 'absar-sale-heading' in sale_view
 assert 'doc.partner_id.name' in sale_view and 'doc.partner_id.vat' in sale_view
@@ -62,6 +62,8 @@ assert 'border:0!important;padding:0!important;margin:0!important' in sale_view
 assert 'absar-sale-document' in sale_view and 'border-bottom:1px solid #177b83!important' in sale_view
 assert 'background:#fff!important;color:#182f43!important' in sale_view
 assert 'absar-unified-total-card' in sale_view and 'Project:' in sale_view
+assert 'table class="o_ignore_layout_styling"' in sale_view
+assert 'table class="table table-sm table-borderless"' not in sale_view
 assert 'Purchase Order #' in purchase_view and 'Request for Quotation #' in purchase_view
 assert any(item['alias']=='rfq_report' and item['legacy_report']=='purchase.report_purchasequotation' for item in json.loads((ROOT/'data/integration.json').read_text())['reports'])
 subcontract_view=E.tostring(views['absar_report_suite.subcontract_document']).decode()
@@ -72,9 +74,12 @@ assert 'absar-unified-document' in certificate_view and 'absar-unified-table' in
 assert 'absar-unified-total-card' in certificate_view
 assert 'background:#fff!important;color:#182f43!important' in E.tostring(views['absar_report_suite.report_styles']).decode()
 assert 'font-size:18px!important' in sale_view and 'font-size:18px!important' in purchase_view
-assert 'inset 5px 0 0 #177b83' in E.tostring(views['absar_report_suite.report_styles']).decode()
+assert 'box-shadow:0 2px 10px rgba(23,123,131,.12)!important' in E.tostring(views['absar_report_suite.report_styles']).decode()
+assert 'border-left:6px solid #177b83!important' in E.tostring(views['absar_report_suite.report_styles']).decode()
+assert 'inset 5px 0 0 #177b83' not in E.tostring(views['absar_report_suite.report_styles']).decode()
+assert 't-if="o.notes and not is_html_empty(o.notes)"' in E.tostring(views['absar_report_suite.subcontract_document']).decode()
 assert 'absar-unified-total-card table tbody tr.o_total *' in E.tostring(views['absar_report_suite.report_styles']).decode()
-checked('All routed reports include the distinct Odoo RFQ action; rounded cards, open teal-rule tables, visible invoice totals, standard sales project relation')
+checked('All routed reports include the distinct Odoo RFQ action; rounded cards, open teal-rule tables, visible invoice totals, actual construction project relation')
 
 # Exercise the actual action setup code against an in-memory ORM substitute.
 class Link:

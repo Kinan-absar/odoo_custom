@@ -171,8 +171,8 @@ The PO heading now prints “Purchase Order #” and its number on one line, mat
 Validation: offline suite, source checks and ZIP integrity passed. Live Odoo PDF rendering remains required.
 
 
-## Project binding, smooth cards and RFQ routing — 18.0.2.0.30
+## Correct project field and smooth card borders — 18.0.2.0.31
 
-Sales order, quotation and pro-forma headers now read the linked Odoo Projects relation (`sale.order.project_ids`) first, then use a real `project.project` many-to-one only when available. They do not read a Studio field. Purchase, subcontract and sales headings use a shared 18px size, matching the Project label. Card accents use an inset teal edge under one continuous thin border to avoid doubled corner strokes. Nested tables stay open inside the cards, and total-row text is explicitly set to navy so the Total label and amount remain visible.
+Sales order, quotation and pro-forma headers now read the actual Odoo project selector on these records (`sale.order.construction_project_id`), not the empty Studio field. They fall back to Odoo linked Projects only on databases without that selector. Purchase, subcontract and sales headings use a shared 18px size, matching the Project label. Cards use a rounded 6px teal left rail with one thin outline on the other edges, avoiding the doubled inset stripe and keeping the intended accent. Nested tables keep clean separators without boxed borders, total text remains visible, and empty subcontract notes no longer render an empty card.
 
-Offline validation passed. The staging report action list was reviewed read-only (102 actions), and the distinct Request for Quotation action was added to suite routing. Live PDF rendering was not performed.
+Offline validation passed. The staging Sales Order S00480 form was inspected read-only and confirmed the real project field is `construction_project_id` (value: “Bathroom repair and maintenance Exit 4”); the Studio project field is separate and empty. The report action list was reviewed read-only (102 actions), and RFQ routing is included. Live PDF rendering was not performed.

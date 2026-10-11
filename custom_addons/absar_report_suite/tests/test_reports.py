@@ -33,8 +33,13 @@ class TestAbsarReports(TransactionCase):
         partner = self.env['res.partner'].create({'name': 'ABSAR Report Test'})
         po = self.env['purchase.order'].create({'partner_id': partner.id})
         so = self.env['sale.order'].create({'partner_id': partner.id})
-        project = self.env['project.project'].create({'name': 'ABSAR Report Project', 'sale_order_id': so.id})
-        so.invalidate_recordset(['project_ids'])
+        project_field = so._fields.get('construction_project_id')
+        if project_field:
+            project = self.env[project_field.comodel_name].create({'name': 'ABSAR Report Project'})
+            so.write({'construction_project_id': project.id})
+        else:
+            project = self.env['project.project'].create({'name': 'ABSAR Report Project', 'sale_order_id': so.id})
+            so.invalidate_recordset(['project_ids'])
         journal = self.env['account.journal'].search([
             ('company_id', '=', self.env.company.id), ('type', '=', 'general')], limit=1)
         self.assertTrue(journal, 'Test company needs a general journal')
@@ -59,6 +64,7 @@ class TestAbsarReports(TransactionCase):
         self.assertIn(project.name.encode(), sale_html)
         self.assertIn(b'ABSAR Report Project', sale_html)
         self.assertIn(b'absar-sale-document', sale_html)
+        self.assertIn(b'o_ignore_layout_styling', sale_html)
         self.assertIn(b'border-bottom:1px solid #177b83', sale_html)
         html, _ = self.env['ir.actions.report']._render_qweb_html(
             self._action('proforma_report'), so.ids)
