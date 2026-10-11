@@ -34,10 +34,54 @@
 .eps-print .eps-description { white-space:pre-wrap; overflow-wrap:break-word; }
 
 .eps-print table, .eps-print th, .eps-print td { box-sizing:border-box; }
+
+/* Version 95: larger type and white sections, with an unframed document heading. */
+.eps-print { font-size:14px; }
+.eps-print .eps-title, .eps-print .eps-title tr, .eps-print .eps-title td {
+    border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;
+}
+.eps-print .eps-title { margin:8px 0 18px; }
+.eps-print h2 { font-size:28px; white-space:nowrap; }
+.eps-print .eps-subtitle { font-size:12px; }
+.eps-print .eps-number { font-size:19px; }
+.eps-print .eps-status { font-size:12px; background:#fff; border:0; padding:3px 0; }
+.eps-print .eps-card {
+    background:#fff !important; border:1px solid #e0e7eb; border-radius:7px;
+    padding:14px 15px; margin:0 0 17px; page-break-inside:auto;
+}
+.eps-print .eps-card h3 { font-size:17px; margin:0 0 12px; border:0; padding:0; }
+.eps-print .eps-summary { margin:0; }
+.eps-print .eps-summary td {
+    border:0 !important; padding:8px 9px !important; background:#fff !important;
+}
+.eps-print .eps-summary tr:nth-child(even) td { background:#fff !important; }
+.eps-print .eps-label { font-size:10px; }
+.eps-print .eps-value { font-size:13px; }
+.eps-print .eps-table { font-size:13px; }
+.eps-print .eps-table th {
+    background:#fff !important; color:#183b4c !important; font-size:12px;
+    border:0 !important; border-bottom:2px solid #177b83 !important;
+    padding:8px 7px !important;
+}
+.eps-print .eps-table td {
+    border:0 !important; border-bottom:1px solid #e0e7eb !important;
+    background:#fff !important; padding:9px 7px !important;
+}
+.eps-print .eps-table tbody tr:nth-child(even) td { background:#fff !important; }
+.eps-print .eps-notes { border:0; background:#fff; padding:0; }
+.eps-print .eps-note, .eps-print .eps-muted, .eps-print .eps-step-status { font-size:12px; }
+
+.eps-print .eps-title { margin-bottom:12px; }
+.eps-print .eps-card { padding:10px 12px; margin-bottom:12px; }
+.eps-print .eps-card h3 { font-size:16px; margin-bottom:8px; }
+.eps-print .eps-summary td { padding:5px 8px !important; }
+.eps-print .eps-label { margin-bottom:2px; }
+.eps-print .eps-table td { padding:7px 6px !important; }
+.eps-print .eps-table th { padding:7px 6px !important; }
 </style>
   </template>
   <template id="request_report_approval_table">
-<h3>Approval History</h3>
+<div class="eps-card"><h3>Approval History</h3>
 <table class="eps-table">
 <colgroup><col style="width:25%"/><col style="width:13%"/><col style="width:25%"/><col style="width:37%"/></colgroup><thead><tr><th>Approval stage</th><th>Status</th><th>Approver / acted by</th><th>Date and remarks</th></tr></thead>
 <tbody t-if="o.workflow_id">
@@ -71,5 +115,5 @@
 </tr>
 <tr t-if="o.state == 'rejected'"><td><strong>Request rejected</strong></td><td><span class="eps-step-status eps-step-rejected">Rejected</span></td><td><span t-field="o.rejected_by"/></td><td><div class="eps-note" t-if="o.get_rejection_reason()" t-out="o.get_rejection_reason()"/><div class="eps-muted">Last updated: <span t-field="o.write_date"/></div></td></tr>
 </tbody></table>
-</template>
+</div></template>
 </odoo>
