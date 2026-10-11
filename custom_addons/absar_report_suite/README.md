@@ -90,3 +90,7 @@ Invisible table borders explicitly use transparent color in PO and invoice. Uplo
 ## Visible thin teal PO card outlines — 18.0.2.0.14
 
 PO supplier/details, items, terms and optional shipping cards receive explicit inline 1px solid teal borders. This overrides external layout border resets and avoids subpixel border widths that can disappear in PDF rendering. The item heading separator remains 2px, so card outlines are thinner. Transparent hidden table borders, one-row details, totals and signature layout remain unchanged. Verify actual staging output.
+
+## Matching invoice teal card outlines — 18.0.2.0.15
+
+Both invoice variants now use the same explicit 1px teal card outlines as the approved PO. Customer, QR, invoice details, items, totals and optional note/currency cards are covered. Existing layout, payment display flags, computations, content and transparent hidden table borders remain unchanged. All PO changes are retained.

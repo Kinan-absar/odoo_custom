@@ -1,5 +1,5 @@
 {
-  "version": "18.0.2.0.14",
+  "version": "18.0.2.0.15",
   "base_version": "18.0.2.0.8",
   "result": "PASS",
   "checks": [
@@ -10,7 +10,9 @@
     "Business directives unchanged",
     "ZIP integrity",
     "Inline 1px teal outlines on PO card containers",
-    "Other report templates unchanged"
+    "Other report templates unchanged",
+    "Matching inline 1px teal outlines on invoice cards",
+    "Invoice business directives unchanged; PO template unchanged"
   ],
   "live_odoo_tested": false
 }

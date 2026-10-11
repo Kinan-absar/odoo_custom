@@ -74,7 +74,7 @@
 .absar-invoice-cards {font-family:Arial,'Cairo',sans-serif!important;color:#182f43!important;font-size:13px!important;line-height:1.45;}
 .absar-invoice-cards .absar-title-wrap {margin:8px 0 18px!important;text-align:center;}
 .absar-invoice-cards .absar-title {color:#182f43!important;font-size:26px!important;font-weight:700!important;border:0!important;background:none!important;margin:0!important;padding:0!important;}
-.absar-invoice-cards .absar-card,.absar-invoice-cards .inv-card {background:#fff!important;border:1px solid #e0e7eb!important;border-radius:7px!important;padding:12px 14px!important;box-shadow:none!important;}
+.absar-invoice-cards .absar-card,.absar-invoice-cards .inv-card {background:#fff!important;border:1px solid #177b83!important;border-radius:7px!important;padding:12px 14px!important;box-shadow:none!important;}
 .absar-invoice-cards .absar-card-title {font-size:12px!important;color:#627782!important;font-weight:600!important;border:0!important;background:none!important;padding:0!important;margin-bottom:5px;}
 .absar-invoice-cards .absar-customer-name {font-size:17px!important;color:#182f43!important;font-weight:700!important;margin-bottom:5px;}
 .absar-invoice-cards .absar-top-row {margin-bottom:14px!important;page-break-inside:avoid;}
@@ -104,8 +104,8 @@
 .absar-invoice-cards .inv-payments table {width:100%;border-collapse:collapse;}
 .absar-invoice-cards .inv-payments td {padding:6px 4px!important;color:#182f43!important;font-size:13px!important;}
 .absar-invoice-cards .inv-payments td:last-child {text-align:right!important;white-space:nowrap;}
-.absar-invoice-cards .absar-multi-currency {white-space:normal!important;background:#fff!important;border:1px solid #e0e7eb!important;border-radius:7px;padding:12px;margin:12px 0!important;}
-.absar-invoice-cards .absar-note-block {background:#fff!important;border:1px solid #e0e7eb!important;border-radius:7px;padding:12px 14px!important;color:#182f43!important;font-size:12px!important;}
+.absar-invoice-cards .absar-multi-currency {white-space:normal!important;background:#fff!important;border:1px solid #177b83!important;border-radius:7px;padding:12px;margin:12px 0!important;}
+.absar-invoice-cards .absar-note-block {background:#fff!important;border:1px solid #177b83!important;border-radius:7px;padding:12px 14px!important;color:#182f43!important;font-size:12px!important;}
 
 .absar-invoice-cards table[name="invoice_line_table"] td:not(:first-child) {white-space:nowrap!important;}
 .absar-invoice-cards table[name="invoice_line_table"] .absar-note-row td,.absar-invoice-cards table[name="invoice_line_table"] .absar-section-row td {white-space:normal!important;}
@@ -173,7 +173,7 @@
 
       <!-- LEFT: CUSTOMER BLOCK -->
       <div class="col-6">
-        <div class="absar-card" style="min-height:130px;">
+        <div class="absar-card" style="min-height:130px;border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;">
           <div class="absar-card-title">
             Customer / العميل
           </div>
@@ -201,7 +201,7 @@
 
       <!-- RIGHT: QR CODE -->
       <div class="col-6 text-end">
-        <div class="absar-card absar-qr-wrap" style="min-height:130px;" t-if="o.l10n_sa_qr_code_str">
+        <div class="absar-card absar-qr-wrap" style="min-height:130px;border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;" t-if="o.l10n_sa_qr_code_str">
           <img t-att-src="'/report/barcode/?barcode_type=QR&amp;value=' + quote_plus(o.l10n_sa_qr_code_str) + '&amp;width=140&amp;height=140'" class="absar-qr-img" alt="ZATCA QR"/>
         </div>
       </div>
@@ -211,7 +211,7 @@
 
             <div class="absar-invoice-page">
 <!-- INVOICE DETAILS: clean design (only underline under values) -->
-<div class="absar-info-wrap inv-card">
+<div class="absar-info-wrap inv-card" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;">
 
 
   <table class="inv-info o_ignore_layout_styling" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
@@ -253,7 +253,7 @@
 <t t-set="display_discount" t-value="any(l.discount for l in o.invoice_line_ids)"/>
 <t t-set="lines" t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
 
-<div class="inv-card inv-lines-card"><table class="table table-sm o_ignore_layout_styling" name="invoice_line_table" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+<div class="inv-card inv-lines-card" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;"><table class="table table-sm o_ignore_layout_styling" name="invoice_line_table" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
 
   <!-- ===== TABLE HEADER ===== -->
   <thead style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
@@ -358,7 +358,7 @@
   <!-- =================== -->
   <div class="row justify-content-end mt-2 absar-total-wrap">
     <div class="col-6">
-      <div class="inv-card"><table class="table table-sm table-borderless text-end absar-total-table o_ignore_layout_styling" style="page-break-inside: avoid;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <div class="inv-card" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;"><table class="table table-sm table-borderless text-end absar-total-table o_ignore_layout_styling" style="page-break-inside: avoid;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
         <tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
           <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Subtotal / الإجمالي الفرعي</strong></td>
           <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.amount_untaxed"/></td>
@@ -395,7 +395,7 @@
   <!-- =================== -->
   <!--  Multi-Currency Row -->
   <!-- =================== -->
-  <div t-if="o.currency_id != o.company_id.currency_id" class="row clearfix ms-auto text-nowrap border-top border-bottom p-2 mt-2 absar-multi-currency">
+  <div t-if="o.currency_id != o.company_id.currency_id" class="row clearfix ms-auto text-nowrap border-top border-bottom p-2 mt-2 absar-multi-currency" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;">
     <t t-set="exchange_rate" t-value="abs(o.amount_total_signed) / o.amount_total if o.amount_total else 0"/>
     <div class="col-auto">
       <strong>Exchange Rate / سعر الصرف</strong><br/>
@@ -420,7 +420,7 @@
   <!-- =================== -->
   <t t-if="o.invoice_payment_term_id">
     <div class="row mt-3">
-      <div class="col-12 text-start absar-note-block">
+      <div class="col-12 text-start absar-note-block" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;">
         <strong>Payment Terms / شروط الدفع:</strong><br/>
         <span t-out="o.invoice_payment_term_id.note"/>
       </div>
@@ -429,7 +429,7 @@
 
   <t t-if="o.narration">
     <div class="row mt-2">
-      <div class="col-12 text-start absar-note-block">
+      <div class="col-12 text-start absar-note-block" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;">
         <strong>Notes / ملاحظات:</strong><br/>
         <span t-out="o.narration"/>
       </div>
@@ -438,7 +438,7 @@
 
   <t t-if="o.fiscal_position_id.note">
     <div class="row mt-2">
-      <div class="col-12 text-start absar-note-block">
+      <div class="col-12 text-start absar-note-block" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;">
         <strong>Fiscal Note / ملاحظات ضريبية:</strong><br/>
         <span t-out="o.fiscal_position_id.note"/>
       </div>
@@ -447,7 +447,7 @@
 
   <t t-if="o.invoice_incoterm_id">
     <div class="row mt-2">
-      <div class="col-12 text-start absar-note-block">
+      <div class="col-12 text-start absar-note-block" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;">
         <strong>Incoterm / شرط تجاري:</strong><br/>
         <span t-out="o.invoice_incoterm_id.code"/> -
         <span t-out="o.invoice_incoterm_id.name"/>
