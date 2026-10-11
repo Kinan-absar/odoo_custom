@@ -1,13 +1,12 @@
 {
-  "version": "18.0.2.0.23",
-  "base_version": "18.0.2.0.22",
+  "version": "18.0.2.0.24",
+  "base_version": "18.0.2.0.23",
   "result": "PASS",
   "checks": [
     "Suite validator",
-    "One 6px deep-teal left accent and one thin outline on other card edges",
-    "16px rounded cards with soft teal shadow",
-    "No separate overlapping top/bottom edge overlays",
-    "Invoice QR remains borderless"
+    "Quotation and proforma details, lines, totals, terms and options use teal accent cards",
+    "Subcontractor details, lines, totals and notes use teal accent cards",
+    "Business fields, calculations and routing preserved"
   ],
   "live_odoo_tested": false
 }

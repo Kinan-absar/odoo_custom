@@ -134,3 +134,10 @@ Validation: offline suite and XML/QWeb checks passed. Fresh staging PDF renderin
 Invoice, purchase order and journal voucher cards use a 6px deep-teal left accent, a single thin teal outline on the remaining edges, 16px rounded corners and a soft teal shadow. The separate top and bottom strokes remain removed. Report content, layout and the borderless invoice QR are unchanged.
 
 Validation: offline suite and XML/QWeb checks passed. Fresh staging PDF rendering remains required.
+
+
+## Teal accent cards on remaining commercial reports — 18.0.2.0.24
+
+Quotation and proforma reports share the same teal card styling around customer/order details, lines, totals, terms and optional products. Subcontractor reports use it around supplier/order details, lines, totals and notes. Cards retain a 6px deep-teal left accent, thin teal outline on the other sides, 16px corners and soft teal shadow. Report content and calculations are preserved.
+
+Validation: offline module checks and XML/QWeb parsing passed. Odoo PDF rendering after upgrade remains to be verified.

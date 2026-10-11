@@ -1,12 +1,12 @@
 {
-  "README.md": "1aecacb955ba95e83d9c56fcd7dafa8d0dbcb41aa6cf0d1a35c234d93d42d324",
+  "README.md": "f69378b2372aef45a706f8ff6749f0920d2c7c3f869ea74cf089d3c2515b1e06",
   "__init__.py": "9476dc0ffdc9864d3680ac803634350627fcba49cef2a2ed4522b894934f79e4",
-  "__manifest__.py": "c6679b3451185038054a6710de2ac16bb3d0d3de3a19a50081ad5aa965736ea3",
+  "__manifest__.py": "bae4f355111145544e1f16e7ce077ab0b98be72ef711b632bbf4e1f0d7b79d0b",
   "data/assets.xml": "54a7ce9d9322a3b74bd4724b9ddcf1037ea62f0b72eb26be8f07349ce8598486",
   "data/integrate.xml": "fabdf9a7547a607af83794ed7c630d5f3e5f9eb8732ce9246fc13c8adc87b946",
   "data/integration.json": "2897b472d8e45cd9016a97610b2060dc5e8e3e29af52df3113555fbdf93a6e86",
   "doc/source-provenance.json": "c09c513fa65e5d73182987e2400eae7804b10363dc30cc61837dd5fe2d5f3bad",
-  "doc/validation.json": "6852f3104faf58a7fe2b12394ecc43ebb2ee782ba67d7bb8451bc1c2c1dac65d",
+  "doc/validation.json": "dc200bd25bfd476a06e54f9c3ffe959ad78f6b28046643426dd922472f6c09f3",
   "hooks.py": "cd8272cfae4d31913026e9a381d11b9317d15314523ce7ac49e1031c13a6d350",
   "models/__init__.py": "74e95c544a885407611aafba9b191b0b1f526ad5f396e340e46a0275482ac826",
   "models/__pycache__/cleanup_plan.cpython-312.pyc": "69ceda5df10e25959f22590c63a326a37a07120780a9fc6256889eb6f7362b11",
@@ -20,12 +20,12 @@
   "models/report_setup.py": "3d0ecef70bd5a8a75caaac0fd050795ba5bf61bccf18dc1ae7fab1c641140064",
   "reports/actions.xml": "ace4a5535e92917c2b7e0e17480654f3e0c7a8870b5130b76f502b3c552e203a",
   "reports/compatibility.xml": "a37a9eeb892872f47b5c06295b4c62040a4e6dc7ceae32ddf525a2b1bb45ae61",
-  "reports/templates.xml": "f4f3cf62fb279024bcbe9b2756c051d1659ac33b728d810062d933a5dd99b4e7",
+  "reports/templates.xml": "8f2acc0221c55aebc6801f71f5238b8dfdec4315c9c9ef589aef5cf51e591cf4",
   "static/description/index.html": "b19411608a73d304b337783f1d45d9c10aa5610f97ac2ca5a4f531708d7709e7",
   "static/img/footer.png": "22167bfd962c4ab34daf378ac0c284e828849ae8a03364d644bc0aa79b13b669",
   "static/img/letterhead.png": "dea82fd16fe66abf61a6a14694729b46331ffdfa05b8140c5427425119e5e3b2",
   "static/img/stamp.png": "61071018ae4a3a945cc091b1e4cc7022165420c25ae89155f0b29d933fd227bf",
   "tests/__init__.py": "7f71bf30a6f34ba99a58993c219eafffdafcd4732d62a91219fe7a94ef6e3377",
   "tests/test_reports.py": "b3005f159f080de4acfafa3f61c4351af3bd63b26677beda03420ebf7ab6061e",
-  "tools/validate.py": "3580e7e6be423e76750715a9caa15773109ea405fd1099998f9191975d4e894a"
+  "tools/validate.py": "bc387b1696a84486a55fc4690837df11129a431f8dc5ea155232acd24f2e157f"
 }

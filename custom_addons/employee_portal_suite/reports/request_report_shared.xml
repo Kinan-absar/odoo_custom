@@ -91,6 +91,16 @@
 .eps-print .eps-table .eps-right { text-align:right !important; }
 .eps-print .eps-table .eps-center { text-align:center !important; }
 .eps-print .eps-note, .eps-print .eps-muted, .eps-print .eps-step-status { font-size:13px !important; }
+
+
+/* Version 97: ABSAR teal accent cards on Material and Employee Request printouts. */
+.eps-print .eps-card {
+    background:#fff !important;
+    border:1px solid #63aeb2 !important;
+    border-left:6px solid #177b83 !important;
+    border-radius:16px !important;
+    box-shadow:0 0 15px rgba(23,123,131,.25) !important;
+}
 </style>
   </template>
   <template id="request_report_approval_table">
