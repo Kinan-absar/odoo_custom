@@ -106,3 +106,11 @@ The invoice details card has two columns: Invoice No, Invoice Date and Due Date 
 ## Rounded teal invoice and journal cards — 18.0.2.0.18
 
 Invoice customer, details and items card corners are rounded at 7px. Journal voucher details and entries cards receive matching thin 1px teal outlines and rounded corners. Invoice QR remains borderless. All content, compact invoice detail columns, partner/analytic columns, computations, report routing and PO styling are preserved.
+
+## Tapered rounded teal cards — 18.0.2.0.19
+
+PO, both invoice variants and journal voucher cards use a fuller 3px teal left edge and a thin pale 1px right edge. Top and bottom edges fade from teal to pale using standard and WebKit gradients, with a solid fallback. Corners remain rounded. Card content and existing layout remain intact; invoice QR stays borderless. Actual staging PDF appearance still needs verification.
+
+## Explicit closed tapered card edges — 18.0.2.0.20
+
+Tapered cards render explicit positioned top and bottom edge elements inside each rounded container rather than relying on generated pseudo-elements. This addresses missing top edges shown in the uploaded invoice screenshot. Applies to PO, invoice and journal cards; QR stays borderless. Actual PDF appearance needs staging verification.

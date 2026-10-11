@@ -108,7 +108,7 @@ def cleanup_reports(env, config, keep, duplicate_action_ids=()):
     doomed_views = views.browse(sorted(i for model, i in removable if model == 'ir.ui.view'))
     doomed_reports = reports.browse(sorted(i for model, i in removable if model == 'ir.actions.report'))
     summary = {
-        'version': '18.0.2.0.18', 'date': str(fields.Datetime.now()),
+        'version': '18.0.2.0.20', 'date': str(fields.Datetime.now()),
         'deleted_actions': doomed_reports.read(['name', 'model', 'report_name']),
         'deleted_views': doomed_views.read(['name', 'key']),
         'preserved': [{'model': model, 'id': record_id, 'reason': reason}

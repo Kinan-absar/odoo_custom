@@ -1,5 +1,5 @@
 {
-  "version": "18.0.2.0.18",
+  "version": "18.0.2.0.20",
   "base_version": "18.0.2.0.8",
   "result": "PASS",
   "checks": [
@@ -20,7 +20,10 @@
     "All invoice business directives preserved; other report XML unchanged",
     "Rounded invoice card corners; QR borderless",
     "Journal cards have thin teal rounded outlines",
-    "Invoice/journal business directives unchanged; other templates unchanged"
+    "Invoice/journal business directives unchanged; other templates unchanged",
+    "Tapered rounded border styling on PO/invoice/journal cards",
+    "QR stays borderless; business directives unchanged",
+    "Explicit top/bottom edge elements close all tapered card borders"
   ],
   "live_odoo_tested": false
 }
