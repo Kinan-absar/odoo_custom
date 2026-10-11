@@ -1,13 +1,13 @@
 {
-  "version": "18.0.2.0.22",
-  "base_version": "18.0.2.0.21",
+  "version": "18.0.2.0.23",
+  "base_version": "18.0.2.0.22",
   "result": "PASS",
   "checks": [
     "Suite validator",
-    "One continuous 1px teal outline per card; no extra edge overlays",
-    "Rounded invoice, PO and journal voucher cards use identical border styling",
-    "Invoice QR remains borderless",
-    "Business content and report layouts preserved"
+    "One 6px deep-teal left accent and one thin outline on other card edges",
+    "16px rounded cards with soft teal shadow",
+    "No separate overlapping top/bottom edge overlays",
+    "Invoice QR remains borderless"
   ],
   "live_odoo_tested": false
 }

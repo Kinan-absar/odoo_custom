@@ -127,3 +127,10 @@ Validation: offline suite checks and QWeb directive preservation passed. Fresh s
 Removed the separate top and bottom gradient strokes that overlapped the rounded outline and caused doubled, uneven-looking corners. Invoice, purchase order and journal voucher cards now use one continuous 1px teal border with a consistent 12px radius. Card content and layout are unchanged; the invoice QR remains borderless.
 
 Validation: offline suite and XML/QWeb checks passed. Fresh staging PDF rendering remains required.
+
+
+## Teal accent card treatment — 18.0.2.0.23
+
+Invoice, purchase order and journal voucher cards use a 6px deep-teal left accent, a single thin teal outline on the remaining edges, 16px rounded corners and a soft teal shadow. The separate top and bottom strokes remain removed. Report content, layout and the borderless invoice QR are unchanged.
+
+Validation: offline suite and XML/QWeb checks passed. Fresh staging PDF rendering remains required.
