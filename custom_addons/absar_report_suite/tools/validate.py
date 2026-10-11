@@ -17,7 +17,7 @@ def checked(name):
 for path in ROOT.rglob('*.py'):
     ast.parse(path.read_text())
 checked('Python syntax')
-assert manifest['version'] == '18.0.2.0.2'
+assert manifest['version'] == '18.0.2.0.3'
 assert not {'wm_journal_entry_report', 'sale_pdf_quote_builder', 'studio_customization'} & set(manifest['depends'])
 records = {}
 for filename in manifest['data']:
@@ -182,38 +182,43 @@ def scenario(existing, upgrade=False):
         row=env.actions.rows[target]
         assert row['report_name']==item['report_name']
         assert row['binding_model_id']
-        if existing:assert row['print_report_name']==(rich_po if item['alias']=='purchase_report' else "'Original filename - %s' % object.name")
+        if existing:assert row['print_report_name']==('object._absar_report_filename()' if item['alias']=='purchase_report' else "'Original filename - %s' % object.name")
     purchase_id=int(env.params.get_param('absar_report_suite.target.purchase_report'))
     assert env.actions.rows[purchase_id]['report_name']=='purchase.report_purchaseorder'
     if not existing:assert env.actions.rows[purchase_id]['print_report_name']=='object._absar_report_filename()'
     if upgrade:assert all(i not in env.actions.rows for i in range(1,9))
     checked('Actual setup: fresh='+str(not existing)+'; duplicate upgrade='+str(upgrade)+'; repeat setup and filenames')
 scenario(False);scenario(True);scenario(True,True)
-# Prove original backup wins over the regressed short filename on an upgrade.
+# Prove an older rich expression cannot reintroduce a prefix or the wrong field order.
 env=Env();env.actions.rows[42]={'name':'Purchase Order','model':'purchase.order','report_name':'absar_report_suite.purchase','print_report_name':'object.name'}
 env.refs['purchase.action_report_purchase_order']=42
 env.params.set_param('absar_report_suite.original_report_actions',json.dumps({'42':{'print_report_name':"'%s - %s - %s - %s' % (object.name, object.partner_id.name, object.project_id.name, object.material_request_id.name)"}}))
 setup=module.AbsarReportSetup();setup.env=env;setup.apply()
-assert env.actions.rows[42]['print_report_name']=="'%s - %s - %s - %s' % (object.name, object.partner_id.name, object.project_id.name, object.material_request_id.name)"
+assert env.actions.rows[42]['print_report_name']=='object._absar_report_filename()'
 bridge=E.parse(str(ROOT/'reports/compatibility.xml'))
 assert bridge.find('template').get('inherit_id')=='purchase.report_purchaseorder'
 assert bridge.xpath('//t[@t-call="absar_report_suite.purchase"]')
 assert not any(r.get('model')=='ir.actions.report' for r in records.values())
-checked('Saved rich filename restored; legacy PO QWeb bridge and no declarative duplicate action creation')
+checked('PO filename policy replaces older saved expressions; legacy PO QWeb bridge and no declarative duplicate action creation')
 spec=importlib.util.spec_from_file_location('absar_test.purchase_order',ROOT/'models/purchase_order.py')
 po_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(po_module)
 class DummyPurchase(po_module.PurchaseOrder):
     def __init__(self, optional=True, state='purchase'):
         self.name='P00123';self.partner_id=types.SimpleNamespace(name='Supplier Test');self.state=state
         self._fields={'project_id','material_request_id'} if optional else set()
-        self.links={'project_id':types.SimpleNamespace(display_name='Project Test'),
-                    'material_request_id':types.SimpleNamespace(display_name='MR/0123')}
+        self.links={'project_id':types.SimpleNamespace(name='Project Test'),
+                    'material_request_id':types.SimpleNamespace(name='MR/0123')}
     def ensure_one(self):pass
     def __getitem__(self,name):return self.links[name]
-assert DummyPurchase()._absar_report_filename()=='P00123 - Supplier Test - Project Test - MR/0123'
-assert DummyPurchase(state='draft')._absar_report_filename()=='RFQ - P00123 - Supplier Test - Project Test - MR/0123'
+assert DummyPurchase()._absar_report_filename()=='P00123 - Supplier Test - MR/0123 - Project Test'
+assert DummyPurchase(state='draft')._absar_report_filename()=='P00123 - Supplier Test - MR/0123 - Project Test'
 assert DummyPurchase(optional=False)._absar_report_filename()=='P00123 - Supplier Test'
-checked('Actual PO filename helper: supplier/project/MR; RFQ prefix; absent optional fields')
+example=DummyPurchase();example.name='PO 238';example.partner_id.name='مؤسسة نورة الدوسري التجارية'
+example.links['material_request_id'].name='MR-00708';example.links['project_id'].name='MEP Jussur Emdad HR'
+assert example._absar_report_filename()=='PO 238 - مؤسسة نورة الدوسري التجارية - MR-00708 - MEP Jussur Emdad HR'
+example.revision=2
+assert example._absar_report_filename().endswith('_R2')
+checked('Actual PO filename helper: exact supplied Arabic title, MR/project order, no prefix in draft/confirmed, revisions and absent optional fields')
 assert 'state' not in module._FIELDS
 assert 'unlink(' not in (ROOT/'models/report_setup.py').read_text()
 checked('Report rebinding does not force module state')

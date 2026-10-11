@@ -113,6 +113,8 @@ class TestAbsarReports(TransactionCase):
         partner = self.env['res.partner'].create({'name': 'Signing Filename Supplier'})
         po = self.env['purchase.order'].create({'partner_id': partner.id})
         filename = safe_eval(self._action('purchase_report').print_report_name, {'object': po})
+        self.assertEqual(self._action('purchase_report').print_report_name, 'object._absar_report_filename()')
+        self.assertEqual(filename, po._absar_report_filename())
         self.assertIn(po.name, filename)
         self.assertIn(partner.name, filename)
         pdf, fmt = reports._render_qweb_pdf('purchase.report_purchaseorder', po.ids)

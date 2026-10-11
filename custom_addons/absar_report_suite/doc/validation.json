@@ -8,8 +8,8 @@
     "Actual setup: fresh=True; duplicate upgrade=False; repeat setup and filenames",
     "Actual setup: fresh=False; duplicate upgrade=False; repeat setup and filenames",
     "Actual setup: fresh=False; duplicate upgrade=True; repeat setup and filenames",
-    "Saved rich filename restored; legacy PO QWeb bridge and no declarative duplicate action creation",
-    "Actual PO filename helper: supplier/project/MR; RFQ prefix; absent optional fields",
+    "PO filename policy replaces older saved expressions; legacy PO QWeb bridge and no declarative duplicate action creation",
+    "Actual PO filename helper: exact supplied Arabic title, MR/project order, no prefix in draft/confirmed, revisions and absent optional fields",
     "Report rebinding does not force module state",
     "Cleanup graph: system ownership, retained inheritance, cycles and external references",
     "Cleanup allowlist excludes the rebuilt report templates"

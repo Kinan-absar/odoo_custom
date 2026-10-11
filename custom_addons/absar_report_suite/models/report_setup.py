@@ -73,10 +73,7 @@ class AbsarReportSetup(models.AbstractModel):
             previous = backup.get(str(target.id), {}) if target else {}
             filename = previous.get('print_report_name') or (target.print_report_name if target else False)
             if item['alias'] == 'purchase_report':
-                full_expression = filename and all(field in filename for field in (
-                    'partner_id', 'project_id', 'material_request_id'))
-                if not full_expression:
-                    filename = 'object._absar_report_filename()'
+                filename = 'object._absar_report_filename()'
             values['print_report_name'] = filename or item.get('print_report_name') or (
                 'object.name' if item['model'] == 'sale.order' else 'object._get_report_base_filename()')
             if target:
@@ -120,6 +117,6 @@ class AbsarReportSetup(models.AbstractModel):
 
         params.set_param(_BACKUP, json.dumps(backup, ensure_ascii=False))
         cleanup_reports(env, config, protected, duplicate_action_ids=duplicates.ids)
-        params.set_param(_MODULE + '.applied_version', '18.0.2.0.2')
-        _logger.info('ABSAR reports 18.0.2.0.2 configured: %s active report bindings', len(bound))
+        params.set_param(_MODULE + '.applied_version', '18.0.2.0.3')
+        _logger.info('ABSAR reports 18.0.2.0.3 configured: %s active report bindings', len(bound))
         return True
