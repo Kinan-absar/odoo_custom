@@ -1,25 +1,16 @@
 {
-  "version": "18.0.2.0.10",
+  "version": "18.0.2.0.11",
+  "base_version": "18.0.2.0.8",
   "result": "PASS",
   "checks": [
     "Suite validator",
-    "Invoice business directives unchanged",
-    "Other report XML unchanged",
-    "100% widths and exact column spans with/without discount",
-    "Payments inside totals card; default payment flag unchanged",
-    "Invoice tables opt out of external layout decorations",
-    "PO total styling reused",
-    "ZIP integrity",
     "PO business directives unchanged",
-    "PO tables opt out of layout decorations",
-    "Invoice fixes retained unchanged",
-    "Compact paper format assigned only to PO and both invoice variants",
-    "PO and invoice business directives preserved",
-    "All other report templates unchanged",
-    "Compact letterhead and reduced name sizes",
-    "Full-width undistorted PO/invoice letterhead restored",
-    "PO stamp between signature areas; anchor labels unchanged",
-    "PO terms spacing reduced"
+    "All other report templates identical to 18.0.2.0.8",
+    "Original header, paper formats and signature block retained",
+    "Order Items title removed",
+    "Compact supplier card; 15px name",
+    "Totals rows have separator lines and tighter spacing",
+    "ZIP integrity"
   ],
   "live_odoo_tested": false
 }

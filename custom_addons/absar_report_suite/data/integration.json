@@ -6,7 +6,7 @@
       "model": "account.move",
       "report_name": "absar_report_suite.invoice",
       "xmlid": "studio_customization.invoices_without_pay_150745bf-75e2-4967-aa62-a71d62f45009",
-      "paper": "compact",
+      "paper": "business",
       "bound": true,
       "old_reports": [],
       "legacy_report": "absar.invoice"
@@ -17,7 +17,7 @@
       "model": "account.move",
       "report_name": "absar_report_suite.invoice_with_payment",
       "xmlid": "studio_customization.invoice_copy_1_1fb54fa7-86bd-4592-a13c-49ad70cec583",
-      "paper": "compact",
+      "paper": "business",
       "bound": true,
       "old_reports": [],
       "legacy_report": "absar.invoice_with_payment"
@@ -28,7 +28,7 @@
       "model": "purchase.order",
       "report_name": "purchase.report_purchaseorder",
       "xmlid": "purchase.action_report_purchase_order",
-      "paper": "compact",
+      "paper": "business",
       "bound": true,
       "old_reports": [],
       "legacy_report": "purchase.report_purchaseorder"
