@@ -109,10 +109,11 @@ class AbsarReportSetup(models.AbstractModel):
                                            ('report_name', '=', report_name)])
             targets |= actions.search([('model', '=', item['model']), ('name', '=', item['name'])])
             for record in targets:
-                remember(record)
                 if record.binding_model_id:
                     record.write({'binding_model_id': False})
-            duplicates |= targets
+            # These exact named reports are obsolete. Do not leave orphaned
+            # actions in Technical Reports after merely hiding their bindings.
+            targets.unlink()
             params.set_param(_MODULE + '.target.' + item['alias'], '')
 
         standard = {
@@ -137,6 +138,6 @@ class AbsarReportSetup(models.AbstractModel):
 
         params.set_param(_BACKUP, json.dumps(backup, ensure_ascii=False))
         cleanup_reports(env, config, protected, duplicate_action_ids=duplicates.ids)
-        params.set_param(_MODULE + '.applied_version', '18.0.2.0.32')
-        _logger.info('ABSAR reports 18.0.2.0.32 configured: %s active report bindings', len(bound))
+        params.set_param(_MODULE + '.applied_version', '18.0.2.0.34')
+        _logger.info('ABSAR reports 18.0.2.0.34 configured: %s active report bindings', len(bound))
         return True

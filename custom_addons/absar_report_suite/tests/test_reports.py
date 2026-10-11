@@ -92,6 +92,19 @@ class TestAbsarReports(TransactionCase):
     def test_obsolete_subcontract_reports_have_no_print_actions(self):
         params = self.env['ir.config_parameter'].sudo()
         actions = self.env['ir.actions.report'].sudo()
+        setup = self.env['absar.report.setup']
+        retired_actions = actions.browse()
+        for model, name, report_name in [
+            ('purchase.order', 'عقد مقاولة من الباطن / Subcontract Agreement', 'absar_report_suite.subcontract'),
+            ('account.move', 'Subcontractor Payment Certificate', 'absar_report_suite.certificate'),
+        ]:
+            retired_actions |= actions.create({
+                'name': name, 'model': model, 'report_type': 'qweb-pdf',
+                'report_name': report_name, 'binding_model_id': self.env['ir.model']._get(model).id,
+                'binding_type': 'report', 'binding_view_types': 'list,form',
+            })
+        setup.apply()
+        self.assertFalse(retired_actions.exists(), 'obsolete report actions must be deleted, not just unbound')
         for alias in ['certificate_report', 'subcontract_report']:
             self.assertFalse(params.get_param('absar_report_suite.target.' + alias))
         for model, report_names in [

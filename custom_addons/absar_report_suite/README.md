@@ -183,3 +183,17 @@ Offline validation passed. The staging Sales Order S00480 form was inspected rea
 The unused Subcontract Agreement and Subcontractor Payment Certificate reports are removed from the module templates and their Purchase/Bill Print bindings are retired during upgrade. The regular Purchase Order, invoice and bill reports remain. Sales order, quotation, pro-forma and optional-product description tables now use the same Odoo layout-styling opt-out as the Purchase Order table, so browser layout styles do not draw a second box inside the teal card.
 
 Offline validation checks the retirement behavior, sales table classes, XML/QWeb references and package integrity. Live Odoo installation and PDF rendering still need verification after upgrading the module.
+
+
+## Explicitly remove sales description grid — 18.0.2.0.33
+
+The sales description and optional-product tables now explicitly clear all outside and vertical cell borders inside their cards, with only the teal header rule and light horizontal row separators retained. This addresses browser styles that remained visible after using the same layout-styling opt-out as the PO.
+
+Offline validation passes. This version has not been installed or rendered live in Odoo.
+
+
+## Delete obsolete subcontract report actions — 18.0.2.0.34
+
+Upgrade setup now deletes the exact Subcontract Agreement and Subcontractor Payment Certificate report actions, in addition to retiring their report templates. They will no longer remain in Technical Reports after upgrading.
+
+Offline validation passes. The action deletion is covered by the upgrade setup simulation and Odoo integration test; live Odoo upgrade has not been run.

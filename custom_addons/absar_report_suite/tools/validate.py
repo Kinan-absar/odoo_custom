@@ -17,7 +17,7 @@ def checked(name):
 for path in ROOT.rglob('*.py'):
     ast.parse(path.read_text())
 checked('Python syntax')
-assert manifest['version'] == '18.0.2.0.32'
+assert manifest['version'] == '18.0.2.0.34'
 assert 'sale_project' in manifest['depends']
 assert not {'wm_journal_entry_report', 'sale_pdf_quote_builder', 'studio_customization'} & set(manifest['depends'])
 records = {}
@@ -64,6 +64,8 @@ assert 'background:#fff!important;color:#182f43!important' in sale_view
 assert 'absar-unified-total-card' in sale_view and 'Project:' in sale_view
 assert 'o_ignore_layout_styling absar-unified-table' in sale_view
 assert 'class="table table-sm o_main_table' not in sale_view
+assert 'table.o_ignore_layout_styling tbody td {border-bottom:1px solid #dbe4e8!important;}' in sale_view
+assert 'border-left:0!important;border-right:0!important' in sale_view
 assert 'table class="table table-sm table-borderless"' not in sale_view
 assert 'Purchase Order #' in purchase_view and 'Request for Quotation #' in purchase_view
 config=json.loads((ROOT/'data/integration.json').read_text())
@@ -262,7 +264,9 @@ example.revision=2
 assert example._absar_report_filename().endswith('_R2')
 checked('Actual PO filename helper: exact supplied Arabic title, MR/project order, no prefix in draft/confirmed, revisions and absent optional fields')
 assert 'state' not in module._FIELDS
-assert 'unlink(' not in (ROOT/'models/report_setup.py').read_text()
+setup_source=(ROOT/'models/report_setup.py').read_text()
+assert "targets.unlink()" in setup_source
+assert "record.write({'state':" not in setup_source
 checked('Report rebinding does not force module state')
 from absar_test.cleanup_plan import plan_cleanup
 a=('ir.ui.view',1);b=('ir.ui.view',2);c=('ir.actions.report',3);system=('ir.ui.view',4);retained=('ir.ui.view',5)
