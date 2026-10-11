@@ -583,6 +583,23 @@
 /* Shared card treatment used by quotation, proforma, subcontractor and certificate reports. */
 .absar-report .absar-tapered-card {border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;}
 .absar-report #informations.absar-tapered-card {border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;}
+.absar-unified-document {font-family:Arial,'Tajawal','Cairo',sans-serif!important;color:#182f43!important;}
+.absar-unified-document .absar-unified-heading {overflow:hidden!important;margin:8px 0 12px!important;border:0!important;}
+.absar-unified-document .absar-unified-heading h2 {font-size:28px!important;line-height:1.25!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;padding:0!important;}
+.absar-unified-document .absar-unified-project {float:right!important;width:50%!important;text-align:right!important;font-size:18px!important;line-height:1.35!important;font-weight:700!important;color:#182f43!important;overflow-wrap:break-word!important;}
+.absar-unified-document .absar-unified-table {width:100%!important;margin:0!important;border:0!important;border-collapse:collapse!important;font-size:13px!important;line-height:1.4!important;}
+.absar-unified-document .absar-unified-table thead th {background:#fff!important;color:#182f43!important;font-weight:700!important;padding:8px 6px!important;border:0!important;border-bottom:1px solid #177b83!important;vertical-align:bottom!important;}
+.absar-unified-document .absar-unified-table tbody td {background:#fff!important;color:#182f43!important;padding:7px 6px!important;border:0!important;border-bottom:1px solid #dbe4e8!important;vertical-align:top!important;}
+.absar-unified-document .absar-unified-table tbody tr:nth-child(even) td {background:#fff!important;}
+.absar-unified-document .absar-unified-table .o_line_section td {background:#f6f9fa!important;color:#182f43!important;font-weight:700!important;}
+.absar-unified-document .absar-unified-table .o_line_note td {background:#fff!important;color:#627782!important;font-style:italic!important;}
+.absar-unified-document .absar-unified-total-card {width:50%!important;box-sizing:border-box!important;margin:8px 0 12px auto!important;padding:8px 10px!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;page-break-inside:avoid!important;}
+.absar-unified-document #total {margin:8px 0!important;}
+.absar-unified-document .absar-unified-total-card table {width:100%!important;margin:0!important;border:0!important;border-collapse:collapse!important;background:#fff!important;}
+.absar-unified-document .absar-unified-total-card table td,.absar-unified-document .absar-unified-total-card table th {background:#fff!important;color:#182f43!important;border:0!important;padding:5px 4px!important;}
+.absar-unified-document .absar-unified-total-card table tbody tr.o_total td,.absar-unified-document .absar-unified-total-card table tbody tr.total-row td {background:#fff!important;color:#182f43!important;border:0!important;padding:7px 4px!important;font-weight:700!important;}
+.absar-unified-document .absar-unified-total-card table tbody tr.o_total td:first-child,.absar-unified-document .absar-unified-total-card table tbody tr.total-row td:first-child {color:#9b7965!important;font-size:15px!important;}
+.absar-unified-document .absar-unified-total-card table tbody tr.o_total td:last-child,.absar-unified-document .absar-unified-total-card table tbody tr.total-row td:last-child {color:#182f43!important;font-size:17px!important;white-space:nowrap!important;}
 </style>
       </t>
     </field>
@@ -703,11 +720,12 @@
 .absar-po-white .po-lines tr {page-break-inside:avoid;}
 .absar-po-white .po-lines .o_line_section td {font-weight:700!important;text-align:left!important;}
 .absar-po-white .po-lines .o_line_note td {font-style:italic;text-align:left!important;}
-.absar-po-white .po-totals {width:42%;margin-left:auto;margin-bottom:10px;page-break-inside:avoid;}
+.absar-po-white .po-totals {width:50%;box-sizing:border-box;padding:8px 10px;margin:8px 0 12px auto;page-break-inside:avoid;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;}
 .absar-po-white .po-totals table {width:100%;border-collapse:collapse;font-size:14px!important;}
-.absar-po-white .po-totals td {padding:3px 5px!important;line-height:1.25!important;color:#182f43!important;border-bottom:0!important;}
+.absar-po-white .po-totals td {padding:5px 4px!important;line-height:1.3!important;color:#182f43!important;border:0!important;background:#fff!important;}
 .absar-po-white .po-totals td:last-child {text-align:right!important;white-space:nowrap;}
-.absar-po-white .po-totals .o_total td {font-weight:700!important;font-size:15px!important;padding-top:4px!important;padding-bottom:4px!important;}
+.absar-po-white .po-totals .o_total td {background:#fff!important;color:#182f43!important;border:0!important;font-weight:700!important;font-size:17px!important;padding-top:7px!important;padding-bottom:7px!important;}
+.absar-po-white .po-totals .o_total td:first-child {color:#9b7965!important;font-size:15px!important;}
 .absar-po-white .po-notes {font-size:12px!important;line-height:1.45;margin:0!important;}
 .absar-po-white .po-notes p {margin:0 0 5px!important;}
 .absar-po-white .po-signatures {overflow:hidden;page-break-inside:avoid;margin:18px 0 8px;}
@@ -720,8 +738,8 @@
 
 </style>
 <div class="page absar-po-white">
-<div class="po-heading"><div style="float:left;width:40%;"><div class="po-title-label" style="font-size:14px;font-weight:700;color:#627782;line-height:1.2;">Purchase Order #</div><h2><span t-field="o.name"/></h2><span t-if="'revision' in o._fields and o.revision &gt; 0">Revision <span t-field="o.revision"/></span><span t-if="o.state in ['draft','sent','to approve']" style="display:block;font-size:12px;">Request for Quotation</span><span t-if="o.state == 'cancel'" style="display:block;font-size:12px;">Cancelled Purchase Order</span></div>
-<div style="float:right;width:60%;text-align:right;" class="po-project" t-if="'project_id' in o._fields and o.project_id">Project: <span t-field="o.project_id.name"/></div></div>
+<div class="po-heading"><div style="float:left;width:50%;"><h2><span t-if="o.state in ['draft','sent','to approve']">Request for Quotation # </span><span t-elif="o.state == 'cancel'">Cancelled Purchase Order # </span><span t-else="">Purchase Order # </span><span t-field="o.name"/></h2><span t-if="'revision' in o._fields and o.revision &gt; 0">Revision <span t-field="o.revision"/></span></div>
+<div style="float:right;width:50%;text-align:right;" class="po-project" t-if="'project_id' in o._fields and o.project_id">Project: <span t-field="o.project_id.name"/></div></div>
 <div class="po-card po-details absar-tapered-card" style="background:#fff!important;position:relative!important;background:#fff!important;background:#fff!important;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><div class="po-supplier" style="float:left;width:50%;padding-right:10px;box-sizing:border-box;">
   <div>
     <div class="po-label"><strong>Supplier:</strong></div>
@@ -801,7 +819,7 @@
 </table>
 
 </div>
-<div class="po-totals" id="total"><table style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;" class="o_ignore_layout_styling"><t t-set="tax_totals" t-value="o.tax_totals"/><!--
+<div class="po-totals absar-unified-total-card" id="total"><table style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;" class="o_ignore_layout_styling"><t t-set="tax_totals" t-value="o.tax_totals"/><!--
                 Generic template to display tax totals in pdf reports.
                 Used by invoices, SO and PO.
 
@@ -877,7 +895,7 @@
 .absar-sale-document .absar-sale-heading {overflow:hidden!important;margin:8px 0 10px!important;border:0!important;}
 .absar-sale-document .absar-sale-heading h2 {font-size:28px!important;line-height:1.25!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;padding:0!important;}
 .absar-sale-document .absar-sale-project {font-size:18px!important;line-height:1.35!important;font-weight:700!important;color:#182f43!important;}
-.absar-sale-document .absar-tapered-card {border:1px solid #63aeb2!important;border-left:5px solid #177b83!important;border-radius:12px!important;background:#fff!important;box-shadow:0 0 12px rgba(23,123,131,.16)!important;}
+.absar-sale-document .absar-tapered-card {border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;}
 .absar-sale-document #informations.absar-tapered-card {padding:8px 12px!important;margin:8px 0 10px!important;}
 .absar-sale-document #informations strong {font-size:12px!important;color:#627782!important;}
 .absar-sale-document #informations div {font-size:13px!important;line-height:1.35!important;}
@@ -898,9 +916,9 @@
 .absar-sale-document .absar-sale-terms-card p {margin:0 0 5px!important;}
 .absar-sale-document h4 {font-size:16px!important;color:#182f43!important;border:0!important;padding:0!important;margin:10px 0 6px!important;}
       </style>
-      <div class="page absar-report absar-sale-document">
+      <div class="page absar-report absar-sale-document absar-unified-document">
         <div class="oe_structure"/>
-        <div class="absar-sale-heading" style="overflow:hidden;margin:8px 0 14px;border:0!important;">
+        <div class="absar-sale-heading absar-unified-heading" style="overflow:hidden;margin:8px 0 14px;border:0!important;">
           <div style="float:left;width:50%;">
         <h2 style="border:0!important;padding:0!important;margin:0!important;">
           <span t-if="env.context.get('proforma', False) or is_pro_forma">Pro-Forma Invoice # </span>
@@ -913,11 +931,11 @@
 
         </h2>
           </div>
-          <div class="absar-sale-project" style="float:right;width:50%;text-align:right;font-size:18px;font-weight:700;color:#182f43;overflow-wrap:break-word;" t-if="'project_id' in doc._fields and doc.project_id">
-            Project: <span t-field="doc.project_id.name"/>
+          <div class="absar-sale-project absar-unified-project" style="float:right;width:50%;text-align:right;font-size:18px;font-weight:700;color:#182f43;overflow-wrap:break-word;">
+            Project: <t t-if="'project_id' in doc._fields and doc.project_id"><span t-field="doc.project_id.name"/></t><span t-else="">—</span>
           </div>
         </div>
-        <div class="row mt-2 mb-2 absar-tapered-card absar-sale-information" id="informations" style="padding:8px 12px;margin:8px 0 12px;border:1px solid #63aeb2!important;border-left:4px solid #177b83!important;border-radius:10px!important;background:#fff!important;box-shadow:0 0 10px rgba(23,123,131,.16)!important;">
+        <div class="row mt-2 mb-2 absar-tapered-card absar-sale-information" id="informations" style="padding:8px 12px;margin:8px 0 12px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
           <div t-if="doc.partner_id" class="col-6 mb-2">
             <strong>Customer:</strong>
             <br/>
@@ -945,7 +963,7 @@
         <t t-set="lines_to_report" t-value="doc._get_order_lines_to_report()"/>
         <t t-set="display_discount" t-value="any(l.discount for l in lines_to_report)"/>
         <div class="oe_structure"/>
-        <div class="absar-tapered-card absar-sale-lines-card" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:4px solid #177b83!important;border-radius:10px!important;background:#fff!important;box-shadow:0 0 10px rgba(23,123,131,.16)!important;"><table class="table table-sm o_main_table mt-4">
+        <div class="absar-tapered-card absar-sale-lines-card" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm o_main_table mt-4 absar-unified-table">
           <thead style="display: table-header-group">
             <tr>
               <th name="th_description" class="text-start">Description</th>
@@ -1017,7 +1035,7 @@
         </table></div>
         <div class="clearfix" name="so_total_summary">
           <div id="total" class="row" name="total">
-            <div t-attf-class="#{'col-6' if report_type != 'html' else 'col-sm-7 col-md-6'} ms-auto absar-tapered-card absar-sale-totals-card" style="padding:10px 12px;">
+            <div t-attf-class="#{'col-6' if report_type != 'html' else 'col-sm-7 col-md-6'} ms-auto absar-tapered-card absar-sale-totals-card absar-unified-total-card" style="padding:10px 12px;">
               <table class="table table-sm table-borderless">
                 <t t-set="tax_totals" t-value="doc.tax_totals"/>
                 <t t-call="absar_report_suite.sale_tax_totals"/>
@@ -1044,7 +1062,7 @@
           <h4 name="h_optional_products">
                 Options
             </h4>
-          <div class="absar-tapered-card absar-sale-options-card" style="padding:8px 12px;margin:14px 0;border:1px solid #63aeb2!important;border-left:4px solid #177b83!important;border-radius:10px!important;background:#fff!important;box-shadow:0 0 10px rgba(23,123,131,.16)!important;"><table name="table_optional_products" class="table table-sm">
+          <div class="absar-tapered-card absar-sale-options-card" style="padding:8px 12px;margin:14px 0;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table name="table_optional_products" class="table table-sm absar-unified-table">
             <thead class="fw-bold">
               <tr>
                 <td name="th_option_name" class="text-start">Description</td>
@@ -1075,7 +1093,7 @@
           </table></div>
           <div class="oe_structure">​</div>
         </div>
-        <div class="absar-tapered-card absar-sale-terms-card" style="padding:8px 12px;margin-top:10px;border:1px solid #63aeb2!important;border-left:4px solid #177b83!important;border-radius:10px!important;background:#fff!important;box-shadow:0 0 10px rgba(23,123,131,.16)!important;">
+        <div class="absar-tapered-card absar-sale-terms-card" style="padding:8px 12px;margin-top:10px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
           <span t-field="doc.note" t-attf-style="#{'text-align:justify;text-justify:inter-word;' if doc.company_id.terms_type != 'html' else ''}" name="order_note"/>
           <p t-if="not is_html_empty(doc.payment_term_id.note)">
             <span t-field="doc.payment_term_id.note">The payment should also be transmitted with love</span>
@@ -1245,24 +1263,11 @@
           </div>
         </t>
       </t>
-      <div class="page absar-report">
-         <div class="oe_structure">
-      <br/></div>
-        <div class="margin-top:0;">
-          <h2 t-if="o.state in ['draft', 'sent', 'to approve']">
-           
-            Request for Quotation #<span t-field="o.name"/>
-          </h2>
-          <div class="row col-12 absar-subcontract-title">
-            <h2 style="font-size: 25px;">
-              <div class="col-6" t-if="o.state in ['purchase', 'done']">Subcontract Agreement #<span t-field="o.name"/>
-              </div>
-              <div class="col-6">
-              </div>
-            </h2>
-          </div>
-          <h2 t-if="o.state == 'cancel'">Cancelled Purchase Order #<span t-field="o.name"/>
-          </h2>
+      <div class="page absar-report absar-unified-document">
+         <div class="oe_structure"/>
+        <div class="absar-unified-heading">
+          <div style="float:left;width:50%;"><h2><span t-if="o.state in ['draft', 'sent', 'to approve']">Request for Quotation # </span><span t-elif="o.state == 'cancel'">Cancelled Purchase Order # </span><span t-else="">Subcontract Agreement # </span><span t-field="o.name"/></h2></div>
+          <div class="absar-unified-project" t-if="'project_id' in o._fields and o.project_id">Project: <span t-field="o.project_id.name"/></div>
         </div>
         <div id="informations" class="row absar-tapered-card absar-subcontract-information" style="padding:12px 14px;margin:14px 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
           <div t-if="o.partner_id" class="col-4 bm-2">
@@ -1282,8 +1287,8 @@
             <p t-field="o.date_order" t-options="{&quot;widget&quot;:&quot;date&quot;}" class="m-0"/>
           </div>
         </div>
-        <div class="absar-tapered-card absar-subcontract-lines-card" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm o_main_table mt-4 mb-4">
-  <thead style="display: table-row-group">
+        <div class="absar-tapered-card absar-subcontract-lines-card" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm o_main_table mt-4 mb-4 absar-unified-table">
+  <thead style="display: table-header-group">
     <tr>
       <th name="th_description"><strong>Description</strong></th>
       <th name="th_taxes" class="text-end"><strong>Taxes</strong></th>
@@ -1345,7 +1350,7 @@
   </tbody>
 </table></div>
 <div id="total" style="width: 100%;">
-  <div style="width:40%;margin-left:auto;padding:10px 12px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;" class="absar-tapered-card absar-subcontract-totals-card">
+  <div style="width:50%;margin-left:auto;padding:8px 10px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;" class="absar-tapered-card absar-subcontract-totals-card absar-unified-total-card">
     <table class="table table-sm">
       <t t-set="tax_totals" t-value="o.tax_totals"/>
       <t t-call="absar_report_suite.subcontract_tax_totals"/>
@@ -1455,13 +1460,13 @@
     <field name="type">qweb</field>
     <field name="arch" type="xml">
       <t t-name="absar_report_suite.certificate_bilingual">
-<t t-set="company" t-value="o.company_id.sudo()"/><t t-set="layout_document_title" t-value="False"/><t t-call="absar_report_suite.business_layout"><t t-call="absar_report_suite.report_styles"/><div class="absar-report">
+<t t-set="company" t-value="o.company_id.sudo()"/><t t-set="layout_document_title" t-value="False"/><t t-call="absar_report_suite.business_layout"><t t-call="absar_report_suite.report_styles"/><div class="absar-report absar-unified-document">
 
         <!-- ========================= -->
         <!--  TITLE                    -->
         <!-- ========================= -->
-        <div class="text-center mt-3 mb-3">
-            <h2 style="color:#714B67; font-weight:400; letter-spacing:0.3px;">
+        <div class="text-center mt-3 mb-3 absar-unified-heading">
+            <h2>
                 Subcontractor Payment Certificate / شهادة مستخلص مقاول
             </h2>
         </div>
@@ -1506,7 +1511,7 @@
             <!-- RIGHT: QR -->
             <div class="col-6 text-end">
                 <div t-if="o.l10n_sa_qr_code_str">
-                    <img t-att-src="'/report/barcode/?barcode_type=QR&amp;value=' + quote_plus(o.l10n_sa_qr_code_str) + '&amp;width=140&amp;height=140'" style="border:1px solid #ccc; padding:4px;"/>
+                    <img t-att-src="'/report/barcode/?barcode_type=QR&amp;value=' + quote_plus(o.l10n_sa_qr_code_str) + '&amp;width=140&amp;height=140'" style="border:0!important;padding:0!important;box-shadow:none!important;"/>
                 </div>
             </div>
         </div>
@@ -1532,9 +1537,10 @@
           color: #000;
           width: 30%;
         }
+        .absar-certificate-info .inv-info td {border-bottom:1px solid #dbe4e8!important;padding:5px 4px!important;}
         .inv-info .value {
           text-align: center;
-          border-bottom: 1px solid #444 !important;
+          border-bottom: 0 !important;
           width: 40%;
         }
         .inv-info .label-right {
@@ -1579,10 +1585,10 @@
         <t t-set="display_discount" t-value="any(l.discount for l in o.invoice_line_ids)"/>
 <t t-set="lines" t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
 
-<div class="absar-tapered-card absar-certificate-lines" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm table-bordered" name="invoice_line_table" style="border-color:#ccc; font-size:13px; border-collapse:collapse; width:100%; page-break-inside:auto;">
+<div class="absar-tapered-card absar-certificate-lines" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm absar-unified-table" name="invoice_line_table" style="border-color:#ccc; font-size:13px; border-collapse:collapse; width:100%; page-break-inside:auto;">
 
   <!-- ===== TABLE HEADER ===== -->
-  <thead style="background-color:#f8f8f8; border-bottom:2px solid #714B67;">
+  <thead style="display:table-header-group;">
     <tr>
       <th class="text-start" style="width:30%;">
         <strong>Description</strong><br/><span>الوصف</span>
@@ -1670,7 +1676,7 @@
         <!--  TOTALS                   -->
         <!-- ========================= -->
         <div class="row justify-content-end mt-3">
-            <div class="col-6 absar-tapered-card absar-certificate-totals" style="padding:10px 12px;margin-top:14px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
+            <div class="col-6 absar-tapered-card absar-certificate-totals absar-unified-total-card" style="padding:10px 12px;margin-top:14px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
                 <table class="table table-sm table-borderless text-end">
                     <tr>
                         <td><strong>Subtotal / الإجمالي الفرعي</strong></td>

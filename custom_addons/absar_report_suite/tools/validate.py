@@ -17,7 +17,7 @@ def checked(name):
 for path in ROOT.rglob('*.py'):
     ast.parse(path.read_text())
 checked('Python syntax')
-assert manifest['version'] == '18.0.2.0.27'
+assert manifest['version'] == '18.0.2.0.28'
 assert 'sale_project' in manifest['depends']
 assert not {'wm_journal_entry_report', 'sale_pdf_quote_builder', 'studio_customization'} & set(manifest['depends'])
 records = {}
@@ -60,8 +60,16 @@ assert 'Purchase Order #' in purchase_view and 'o.name' in purchase_view
 assert 'border:0!important;padding:0!important;margin:0!important' in sale_view
 assert 'absar-sale-document' in sale_view and 'border-bottom:1px solid #177b83!important' in sale_view
 assert 'background:#fff!important;color:#182f43!important' in sale_view
-assert 'border-radius:10px!important' in sale_view and 'border-left:4px solid #177b83!important' in sale_view
-checked('Sales, quotation and proforma match the rounded teal card, open table and clean heading design; PO title label')
+assert 'absar-unified-total-card' in sale_view and 'Project:' in sale_view
+assert 'Purchase Order #' in purchase_view and 'Request for Quotation #' in purchase_view
+subcontract_view=E.tostring(views['absar_report_suite.subcontract_document']).decode()
+certificate_view=E.tostring(views['absar_report_suite.certificate_bilingual']).decode()
+assert 'absar-unified-document' in subcontract_view and 'absar-unified-table' in subcontract_view
+assert 'absar-unified-total-card' in subcontract_view
+assert 'absar-unified-document' in certificate_view and 'absar-unified-table' in certificate_view
+assert 'absar-unified-total-card' in certificate_view
+assert 'background:#fff!important;color:#182f43!important' in E.tostring(views['absar_report_suite.report_styles']).decode()
+checked('All routed commercial reports share rounded cards, open teal-rule tables and invoice-style totals; PO/RFQ titles and sales project header')
 
 # Exercise the actual action setup code against an in-memory ORM substitute.
 class Link:

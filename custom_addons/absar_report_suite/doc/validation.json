@@ -1,6 +1,6 @@
 {
-  "version": "18.0.2.0.27",
-  "base_version": "18.0.2.0.26",
+  "version": "18.0.2.0.28",
+  "base_version": "18.0.2.0.27",
   "result": "PASS",
   "checks": [
     "Suite validator",
@@ -11,7 +11,9 @@
     "Action setup version synchronized for upgrade",
     "Sales reports use standard project_id, compact name/VAT block, aligned header, and no title underline",
     "Purchase report labels the PO number with Purchase Order #",
-    "Sales reports use compact white cards, slim teal accent, open table styling, teal header rule, and matching navy typography"
+    "Sales reports use compact white cards, slim teal accent, open table styling, teal header rule, and matching navy typography",
+    "All routed commercial reports share invoice-style totals; subcontractor/certificate layouts use unified cards and open teal-rule tables",
+    "Purchase Order and RFQ headings match the sales heading pattern; sales project remains right-aligned"
   ],
   "live_odoo_tested": false
 }

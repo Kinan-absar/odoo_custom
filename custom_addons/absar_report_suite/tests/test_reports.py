@@ -47,7 +47,7 @@ class TestAbsarReports(TransactionCase):
             self.assertIn(record.name.encode(), html)
         purchase_html, _ = self.env['ir.actions.report']._render_qweb_html(
             self._action('purchase_report'), po.ids)
-        self.assertIn(b'Purchase Order #', purchase_html)
+        self.assertIn(b'Request for Quotation #', purchase_html)
         sale_html, _ = self.env['ir.actions.report']._render_qweb_html(
             self._action('quotation_report'), so.ids)
         self.assertIn(b'Project:', sale_html)

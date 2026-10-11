@@ -162,3 +162,10 @@ Validation: offline suite and XML/QWeb checks passed. Odoo upgrade and PDF rende
 Sales order, quotation and proforma now use the same compact, white rounded cards with a slim teal accent, navy text, teal table header rule and light row separators used by the invoice and journal voucher. Their document title has no underline and the project remains aligned at the right. Customer details show only name and VAT. References, dates, expiration and remaining report content are preserved. The styling is scoped to these sales reports.
 
 Validation: offline suite, source checks and ZIP integrity passed. Live Odoo PDF rendering remains required.
+
+
+## Unified headings and invoice-style total cards across routed reports — 18.0.2.0.28
+
+The PO heading now prints “Purchase Order #” and its number on one line, matching the sales heading; RFQs use “Request for Quotation #” with the same alignment and project position. Sales orders, quotations and proformas show the project field on the right. The invoice-style outlined total card is applied to sales, PO/RFQ, subcontract agreement and subcontractor payment certificate totals while each report keeps its existing total labels. The subcontract agreement and RFQ tables now use the open white table with teal header rule, and the payment certificate is brought into the same teal/navy card design. Invoice and journal voucher layouts remain as the visual reference.
+
+Validation: offline suite, source checks and ZIP integrity passed. Live Odoo PDF rendering remains required.

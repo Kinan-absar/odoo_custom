@@ -117,6 +117,6 @@ class AbsarReportSetup(models.AbstractModel):
 
         params.set_param(_BACKUP, json.dumps(backup, ensure_ascii=False))
         cleanup_reports(env, config, protected, duplicate_action_ids=duplicates.ids)
-        params.set_param(_MODULE + '.applied_version', '18.0.2.0.27')
-        _logger.info('ABSAR reports 18.0.2.0.27 configured: %s active report bindings', len(bound))
+        params.set_param(_MODULE + '.applied_version', '18.0.2.0.28')
+        _logger.info('ABSAR reports 18.0.2.0.28 configured: %s active report bindings', len(bound))
         return True
