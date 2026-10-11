@@ -1,4 +1,4 @@
-# Request printouts — 18.0.1.20.95
+# Request printouts — 18.0.1.20.96
 
 Both request printouts now share a navy/teal design with a clear title, request number, actual stage label, two-column request summary, readable tables, and a detailed approval history. Material lines are numbered, quantities aligned, units compact, with white rows and repeating table headers. Employee Requests include project, direct manager, request type and leave dates/type when relevant. Multi-line descriptions and comments are preserved.
 
@@ -21,3 +21,5 @@ Version 94 fixes QWeb compilation by rendering table-cell fields inside spans ra
 Version 95 increases print fonts, removes all heading-table borders, keeps the document heading on one line, and places summary, materials/details and approval history in white cards. Dark table headers, striped rows and summary cell gridlines are removed.
 
 The first request-summary card uses slightly smaller labels and values (10px / 13px), while materials, details and approval-history typography stays larger.
+
+Version 96 removes document subtitles, replaces the heading table with borderless blocks, applies inline border resets to tables and their rows/cells to defeat external-layout grid rules, and increases print typography. Only the white card outline and horizontal material/approval separators remain. Odoo PDF verification after upgrade is still required.
