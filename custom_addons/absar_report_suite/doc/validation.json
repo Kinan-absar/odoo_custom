@@ -1,15 +1,13 @@
 {
-  "version": "18.0.2.0.11",
+  "version": "18.0.2.0.12",
   "base_version": "18.0.2.0.8",
   "result": "PASS",
   "checks": [
     "Suite validator",
-    "PO business directives unchanged",
-    "All other report templates identical to 18.0.2.0.8",
-    "Original header, paper formats and signature block retained",
-    "Order Items title removed",
-    "Compact supplier card; 15px name",
-    "Totals rows have separator lines and tighter spacing",
+    "Supplier prints name and VAT only",
+    "Vendor reference, MR and order date preserved",
+    "All other report XML unchanged",
+    "Totals separators removed; tight spacing retained",
     "ZIP integrity"
   ],
   "live_odoo_tested": false

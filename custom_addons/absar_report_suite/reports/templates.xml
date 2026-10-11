@@ -687,7 +687,7 @@
 .absar-po-white .po-lines .o_line_note td {font-style:italic;text-align:left!important;}
 .absar-po-white .po-totals {width:42%;margin-left:auto;margin-bottom:10px;page-break-inside:avoid;}
 .absar-po-white .po-totals table {width:100%;border-collapse:collapse;font-size:14px!important;}
-.absar-po-white .po-totals td {padding:3px 5px!important;line-height:1.25!important;color:#182f43!important;border-bottom:1px solid #e0e7eb!important;}
+.absar-po-white .po-totals td {padding:3px 5px!important;line-height:1.25!important;color:#182f43!important;border-bottom:0!important;}
 .absar-po-white .po-totals td:last-child {text-align:right!important;white-space:nowrap;}
 .absar-po-white .po-totals .o_total td {font-weight:700!important;font-size:15px!important;padding-top:4px!important;padding-bottom:4px!important;}
 .absar-po-white .po-notes {font-size:12px!important;line-height:1.45;margin:0!important;}
@@ -706,21 +706,6 @@
     <div class="po-supplier-name">
   <span t-field="o.partner_id.name"/>
 </div>
-    <div>
-      <span t-field="o.partner_id.street"/>
-      <t t-if="o.partner_id.street2">, <span t-field="o.partner_id.street2"/></t>
-    </div>
-    <div>
-      <span t-field="o.partner_id.city"/>
-      <t t-if="o.partner_id.state_id">, <span t-field="o.partner_id.state_id.name"/></t>
-      <t t-if="o.partner_id.zip"> <span t-field="o.partner_id.zip"/></t>
-    </div>
-    <div t-if="o.partner_id.country_id">
-      <span t-field="o.partner_id.country_id.name"/>
-    </div>
-    <t t-if="o.partner_id.phone">
-      <div>📞 <span t-field="o.partner_id.phone"/></div>
-    </t>
     <t t-if="o.partner_id.vat">
       <div><strong>VAT:</strong> <span t-field="o.partner_id.vat"/></div>
     </t>
@@ -806,10 +791,10 @@
             <t t-set="same_tax_base" t-value="tax_totals['same_tax_base']"/>
             <t t-foreach="tax_totals['subtotals']" t-as="subtotal">
                 <tr class="o_subtotal " style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-                    <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+                    <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                         <span t-out="subtotal['name']">Untaxed Amount</span>
                     </td>
-                    <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+                    <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                         <span t-att-class="oe_subtotal_footer_separator" t-out="subtotal['base_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">27.00</span>
                     </td>
                 </tr>
@@ -817,20 +802,20 @@
                 <t t-foreach="subtotal['tax_groups']" t-as="tax_group">
                     <tr class="o_taxes " style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
                         <t t-if="same_tax_base or tax_group['display_base_amount_currency'] is None">
-                            <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+                            <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                                 <span class="text-nowrap" t-out="tax_group['group_name']">Tax 15%</span>
                             </td>
-                            <td class="text-end o_price_total" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+                            <td class="text-end o_price_total" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                                 <span class="text-nowrap" t-out="tax_group['tax_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">1.05</span>
                             </td>
                         </t>
                         <t t-else="">
-                            <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+                            <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                                 <span t-out="tax_group['group_name']">Tax 15%</span>
                                 <span> on </span>
                                 <span class="text-nowrap" t-out="tax_group['display_base_amount_currency']">27.00</span>
                             </td>
-                            <td class="text-end o_price_total" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+                            <td class="text-end o_price_total" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                                 <span class="text-nowrap" t-out="tax_group['tax_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">4.05</span>
                             </td>
                         </t>
@@ -839,16 +824,16 @@
             </t>
 
             <tr t-if="'cash_rounding_base_amount_currency' in tax_totals" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-                <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">Rounding</td>
-                <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+                <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">Rounding</td>
+                <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                     <span t-out="tax_totals['cash_rounding_base_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">0</span>
                 </td>
             </tr>
             
             <!--Total amount with all taxes-->
             <tr class="o_total " style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-                <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><strong>Total</strong></td>
-                <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+                <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;"><strong>Total</strong></td>
+                <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                     <strong t-out="tax_totals['total_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">31.05</strong>
                 </td>
             </tr>

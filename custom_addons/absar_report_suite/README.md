@@ -76,3 +76,7 @@ Purchase order tables now also opt out of external-layout table decorations and 
 ## Compact PO from 18.0.2.0.8 — 18.0.2.0.11
 
 Rebuilt directly from the 18.0.2.0.8 ZIP. Supplier card padding and line spacing are reduced; supplier name is 15px beside 13–14px details. Order Items heading removed. Totals have tighter row spacing and a subtle line beneath each row. All other report templates, letterhead/footer, paper formats, report routing and original signature block retain 18.0.2.0.8 behavior. No changes from 18.0.2.0.9 or 18.0.2.0.10 are included. Verify actual staging PDF pagination.
+
+## PO supplier name and VAT only — 18.0.2.0.12
+
+The supplier card shows name and VAT number only. Supplier address and phone are omitted from the printout; Vendor Reference, MR and Order Date remain. Totals underline separators removed; compact spacing and bold Total remain. No stored supplier data changed. Invoice, header, margins and signature layout retain the 18.0.2.0.8 base.
