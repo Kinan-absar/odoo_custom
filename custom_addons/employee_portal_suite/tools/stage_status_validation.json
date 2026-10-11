@@ -1,0 +1,12 @@
+{
+  "result": "PASS",
+  "checks": [
+    "Python and manifest XML syntax",
+    "Pending step advances and arbitrary custom stage names",
+    "Returned stage and legacy/completed statuses",
+    "MR clarification badge preserved",
+    "Computed field dependency invalidation",
+    "Inherited view XPath targets and resulting status fields"
+  ],
+  "live_odoo_tested": false
+}

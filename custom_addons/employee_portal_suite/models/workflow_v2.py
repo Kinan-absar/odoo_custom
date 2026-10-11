@@ -495,7 +495,12 @@ class WorkflowRequestMixin(models.AbstractModel):
         compute_sudo=True, store=False,
     )
 
+    approval_status_color = fields.Integer(
+        compute='_compute_approval_status_label', compute_sudo=True, store=False,
+    )
+
     @api.depends('state', 'current_approval_line_id', 'current_approval_line_id.name',
+                 'current_approval_line_id.sequence', 'approval_line_ids.sequence',
                  'approval_line_ids.state', 'approval_line_ids.name')
     def _compute_approval_status_label(self):
         labels = dict(self._fields['state']._description_selection(self.env))
@@ -508,6 +513,17 @@ class WorkflowRequestMixin(models.AbstractModel):
                 if line and line.name:
                     label = _('Returned for Correction — %s') % line.name
             rec.approval_status_label = label
+            legacy_colors = {'purchase': 1, 'store': 2, 'project_manager': 3,
+                             'director': 4, 'ceo': 5, 'manager': 1, 'hr': 2,
+                             'finance': 3, 'returned': 13, 'approved': 14, 'rejected': 15}
+            color = legacy_colors.get(rec.state, 0)
+            if rec.state == 'workflow' and rec.current_approval_line_id:
+                # Rank the snapshot sequences, including skipped steps, to keep colors stable.
+                sequences = sorted(set(rec.approval_line_ids.mapped('sequence')))
+                sequence = rec.current_approval_line_id.sequence
+                rank = sequences.index(sequence) if sequence in sequences else 0
+                color = 1 + rank % 12
+            rec.approval_status_color = color
 
     def _workflow_notify_line(self, line):
         self.ensure_one()
