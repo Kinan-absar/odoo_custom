@@ -32,7 +32,8 @@ class TestAbsarReports(TransactionCase):
     def test_render_purchase_sale_and_journal(self):
         partner = self.env['res.partner'].create({'name': 'ABSAR Report Test'})
         po = self.env['purchase.order'].create({'partner_id': partner.id})
-        so = self.env['sale.order'].create({'partner_id': partner.id})
+        project = self.env['project.project'].create({'name': 'ABSAR Report Project'})
+        so = self.env['sale.order'].create({'partner_id': partner.id, 'project_id': project.id})
         journal = self.env['account.journal'].search([
             ('company_id', '=', self.env.company.id), ('type', '=', 'general')], limit=1)
         self.assertTrue(journal, 'Test company needs a general journal')
@@ -44,6 +45,15 @@ class TestAbsarReports(TransactionCase):
                 self._action(alias), record.ids)
             self.assertIn(b'Absar Header', html)
             self.assertIn(record.name.encode(), html)
+        purchase_html, _ = self.env['ir.actions.report']._render_qweb_html(
+            self._action('purchase_report'), po.ids)
+        self.assertIn(b'Purchase Order #', purchase_html)
+        sale_html, _ = self.env['ir.actions.report']._render_qweb_html(
+            self._action('quotation_report'), so.ids)
+        self.assertIn(b'Project:', sale_html)
+        self.assertIn(project.name.encode(), sale_html)
+        self.assertIn(b'absar-sale-document', sale_html)
+        self.assertIn(b'border-bottom:1px solid #177b83', sale_html)
         html, _ = self.env['ir.actions.report']._render_qweb_html(
             self._action('proforma_report'), so.ids)
         self.assertIn(b'Pro-Forma Invoice', html)

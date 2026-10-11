@@ -17,7 +17,8 @@ def checked(name):
 for path in ROOT.rglob('*.py'):
     ast.parse(path.read_text())
 checked('Python syntax')
-assert manifest['version'] == '18.0.2.0.25'
+assert manifest['version'] == '18.0.2.0.27'
+assert 'sale_project' in manifest['depends']
 assert not {'wm_journal_entry_report', 'sale_pdf_quote_builder', 'studio_customization'} & set(manifest['depends'])
 records = {}
 for filename in manifest['data']:
@@ -48,6 +49,19 @@ assert 'border:0!important' in E.tostring(views['absar_report_suite.report_style
 for asset in ['letterhead', 'footer', 'stamp']:
     with Image.open(ROOT / 'static/img' / (asset + '.png')) as im: im.verify()
 checked('Journal footer, purchase routing and three image files')
+
+sale_view = E.tostring(views['absar_report_suite.sale_document']).decode()
+purchase_view = E.tostring(views['absar_report_suite.purchase_document']).decode()
+assert 'doc.project_id.name' in sale_view and 'x_studio_many2one_field_6j0_1i331v3dj' not in sale_view
+assert 'Project:' in sale_view and 'absar-sale-heading' in sale_view
+assert 'doc.partner_id.name' in sale_view and 'doc.partner_id.vat' in sale_view
+assert '&quot;address&quot;' not in sale_view
+assert 'Purchase Order #' in purchase_view and 'o.name' in purchase_view
+assert 'border:0!important;padding:0!important;margin:0!important' in sale_view
+assert 'absar-sale-document' in sale_view and 'border-bottom:1px solid #177b83!important' in sale_view
+assert 'background:#fff!important;color:#182f43!important' in sale_view
+assert 'border-radius:10px!important' in sale_view and 'border-left:4px solid #177b83!important' in sale_view
+checked('Sales, quotation and proforma match the rounded teal card, open table and clean heading design; PO title label')
 
 # Exercise the actual action setup code against an in-memory ORM substitute.
 class Link:

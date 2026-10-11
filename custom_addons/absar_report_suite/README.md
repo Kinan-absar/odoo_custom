@@ -148,3 +148,17 @@ Validation: offline module checks and XML/QWeb parsing passed. Odoo PDF renderin
 The shared report stylesheet now defines the teal card treatment for quotation, proforma, subcontractor and subcontractor payment certificate outputs. The earlier templates carried card classes without the shared declarations, so those reports kept their old appearance. The certificate supplier, summary, line, totals and notes sections now use the same cards. Existing invoice, invoice-with-payment, purchase order and journal voucher card styles remain. The report action setup version is synchronized for upgrade.
 
 Validation: offline suite, XML/QWeb checks and card-selector assertions passed. Odoo PDF rendering after upgrade remains to be verified.
+
+
+## Sales header and compact project/customer details — 18.0.2.0.26
+
+Sales order, quotation and proforma share a clean two-sided header: document title and number on the left, linked project on the right. The project comes from the standard `sale.order.project_id` field (provided by `sale_project`), replacing the Studio-specific field. Sales titles no longer have an underline. Customer details are reduced to the name and VAT number; reference, date, expiration and all remaining report content are preserved. Purchase orders label the existing PO number with “Purchase Order #”.
+
+Validation: offline suite and XML/QWeb checks passed. Odoo upgrade and PDF rendering remain to be verified.
+
+
+## Sales, quotation and proforma match the invoice/JV card treatment — 18.0.2.0.27
+
+Sales order, quotation and proforma now use the same compact, white rounded cards with a slim teal accent, navy text, teal table header rule and light row separators used by the invoice and journal voucher. Their document title has no underline and the project remains aligned at the right. Customer details show only name and VAT. References, dates, expiration and remaining report content are preserved. The styling is scoped to these sales reports.
+
+Validation: offline suite, source checks and ZIP integrity passed. Live Odoo PDF rendering remains required.

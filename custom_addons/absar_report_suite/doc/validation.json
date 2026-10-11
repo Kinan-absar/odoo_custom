@@ -1,6 +1,6 @@
 {
-  "version": "18.0.2.0.25",
-  "base_version": "18.0.2.0.24",
+  "version": "18.0.2.0.27",
+  "base_version": "18.0.2.0.26",
   "result": "PASS",
   "checks": [
     "Suite validator",
@@ -8,7 +8,10 @@
     "High-specificity rule overrides legacy information-panel border",
     "Quotation, proforma, subcontract and certificate sections have explicit teal cards",
     "Invoice, invoice-with-payment, PO and journal voucher retain card styling",
-    "Action setup version synchronized for upgrade"
+    "Action setup version synchronized for upgrade",
+    "Sales reports use standard project_id, compact name/VAT block, aligned header, and no title underline",
+    "Purchase report labels the PO number with Purchase Order #",
+    "Sales reports use compact white cards, slim teal accent, open table styling, teal header rule, and matching navy typography"
   ],
   "live_odoo_tested": false
 }
