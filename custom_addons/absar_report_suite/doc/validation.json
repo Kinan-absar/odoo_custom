@@ -1,5 +1,5 @@
 {
-  "version": "18.0.2.0.20",
+  "version": "18.0.2.0.21",
   "base_version": "18.0.2.0.8",
   "result": "PASS",
   "checks": [
@@ -23,7 +23,9 @@
     "Invoice/journal business directives unchanged; other templates unchanged",
     "Tapered rounded border styling on PO/invoice/journal cards",
     "QR stays borderless; business directives unchanged",
-    "Explicit top/bottom edge elements close all tapered card borders"
+    "Explicit top/bottom edge elements close all tapered card borders",
+    "Journal details: no title; two aligned field pairs in two compact rows",
+    "Journal business directives preserved; all other report templates unchanged"
   ],
   "live_odoo_tested": false
 }

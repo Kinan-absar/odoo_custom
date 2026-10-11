@@ -114,3 +114,9 @@ PO, both invoice variants and journal voucher cards use a fuller 3px teal left e
 ## Explicit closed tapered card edges — 18.0.2.0.20
 
 Tapered cards render explicit positioned top and bottom edge elements inside each rounded container rather than relying on generated pseudo-elements. This addresses missing top edges shown in the uploaded invoice screenshot. Applies to PO, invoice and journal cards; QR stays borderless. Actual PDF appearance needs staging verification.
+
+## Compact journal voucher details — 18.0.2.0.21
+
+Removed the Voucher Details heading. Accounting Date and Reference share the left column; Company and Journal Type share the right column. Labels and values are aligned side by side in two compact rows with reduced card padding. Long values can wrap. Rounded tapered teal edges remain in place.
+
+Validation: offline suite checks and QWeb directive preservation passed. Fresh staging PDF rendering remains required.
