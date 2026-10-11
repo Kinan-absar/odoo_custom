@@ -578,6 +578,11 @@
 .absar-report table tbody tr.o_line_section td {background:#e1eaf0!important;}
 .absar-report table tbody tr.o_line_note td {background:#f7fafc!important;}
 .absar-purchase-page .row.col-12 h4,.absar-purchase-page .row.col-12 h4 * {color:#000!important;font-weight:700!important;}
+
+
+/* Shared card treatment used by quotation, proforma, subcontractor and certificate reports. */
+.absar-report .absar-tapered-card {border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;}
+.absar-report #informations.absar-tapered-card {border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;}
 </style>
       </t>
     </field>
@@ -886,7 +891,7 @@
             </strong>
           </h5>
         </div>
-        <div class="row mt-4 mb-2 absar-tapered-card absar-sale-information" id="informations" style="padding:12px 14px;margin:14px 0 16px;">
+        <div class="row mt-4 mb-2 absar-tapered-card absar-sale-information" id="informations" style="padding:12px 14px;margin:14px 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
           <div t-if="doc.partner_id" class="col-6 mb-2">
             <strong>Customer:</strong>
             
@@ -915,7 +920,7 @@
         <t t-set="lines_to_report" t-value="doc._get_order_lines_to_report()"/>
         <t t-set="display_discount" t-value="any(l.discount for l in lines_to_report)"/>
         <div class="oe_structure"/>
-        <div class="absar-tapered-card absar-sale-lines-card" style="padding:8px 12px;margin:0 0 16px;"><table class="table table-sm o_main_table mt-4">
+        <div class="absar-tapered-card absar-sale-lines-card" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm o_main_table mt-4">
           <thead style="display: table-row-group">
             <tr>
               <th name="th_description" class="text-start">Description</th>
@@ -1014,7 +1019,7 @@
           <h4 name="h_optional_products">
                 Options
             </h4>
-          <div class="absar-tapered-card absar-sale-options-card" style="padding:8px 12px;margin:14px 0;"><table name="table_optional_products" class="table table-sm">
+          <div class="absar-tapered-card absar-sale-options-card" style="padding:8px 12px;margin:14px 0;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table name="table_optional_products" class="table table-sm">
             <thead class="fw-bold">
               <tr>
                 <td name="th_option_name" class="text-start">Description</td>
@@ -1045,7 +1050,7 @@
           </table></div>
           <div class="oe_structure">​</div>
         </div>
-        <div class="absar-tapered-card absar-sale-terms-card" style="padding:12px 14px;margin-top:14px;">
+        <div class="absar-tapered-card absar-sale-terms-card" style="padding:12px 14px;margin-top:14px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
           <span t-field="doc.note" t-attf-style="#{'text-align:justify;text-justify:inter-word;' if doc.company_id.terms_type != 'html' else ''}" name="order_note"/>
           <p t-if="not is_html_empty(doc.payment_term_id.note)">
             <span t-field="doc.payment_term_id.note">The payment should also be transmitted with love</span>
@@ -1234,7 +1239,7 @@
           <h2 t-if="o.state == 'cancel'">Cancelled Purchase Order #<span t-field="o.name"/>
           </h2>
         </div>
-        <div id="informations" class="row absar-tapered-card absar-subcontract-information" style="padding:12px 14px;margin:14px 0 16px;">
+        <div id="informations" class="row absar-tapered-card absar-subcontract-information" style="padding:12px 14px;margin:14px 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
           <div t-if="o.partner_id" class="col-4 bm-2">
             <strong>Supplier:</strong>
             <p t-field="o.partner_id" t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;, &quot;vat&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}" class="m-0"/>
@@ -1252,7 +1257,7 @@
             <p t-field="o.date_order" t-options="{&quot;widget&quot;:&quot;date&quot;}" class="m-0"/>
           </div>
         </div>
-        <div class="absar-tapered-card absar-subcontract-lines-card" style="padding:8px 12px;margin:0 0 16px;"><table class="table table-sm o_main_table mt-4 mb-4">
+        <div class="absar-tapered-card absar-subcontract-lines-card" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm o_main_table mt-4 mb-4">
   <thead style="display: table-row-group">
     <tr>
       <th name="th_description"><strong>Description</strong></th>
@@ -1315,14 +1320,14 @@
   </tbody>
 </table></div>
 <div id="total" style="width: 100%;">
-  <div style="width:40%;margin-left:auto;padding:10px 12px;" class="absar-tapered-card absar-subcontract-totals-card">
+  <div style="width:40%;margin-left:auto;padding:10px 12px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;" class="absar-tapered-card absar-subcontract-totals-card">
     <table class="table table-sm">
       <t t-set="tax_totals" t-value="o.tax_totals"/>
       <t t-call="absar_report_suite.subcontract_tax_totals"/>
     </table>
   </div>
 </div>
-      <p t-field="o.notes" class="mt-3 absar-tapered-card absar-subcontract-notes-card" style="padding:12px 14px;margin-top:14px;"/>
+      <p t-field="o.notes" class="mt-3 absar-tapered-card absar-subcontract-notes-card" style="padding:12px 14px;margin-top:14px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"/>
         <div class="oe_structure">
           <div class="container o_text_columns absar-signatures">
             <div class="row">
@@ -1447,7 +1452,7 @@
         <div class="row align-items-start" style="margin-top:10px;">
 
             <!-- LEFT: SUBCONTRACTOR -->
-            <div class="col-6">
+            <div class="col-6 absar-tapered-card absar-certificate-supplier" style="padding:12px 14px;margin:10px 0;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
                 <div style="padding:8px 0;">
                     <div style="color:#714B67; font-weight:800; font-size:16px; margin-bottom:6px;">
                         Subcontractor / المقاول
@@ -1518,7 +1523,7 @@
         <!-- ========================= -->
         <!--  CERTIFICATE INFO         -->
         <!-- ========================= -->
-        <div class="row mt-4" style="font-size:12px; line-height:1.6;">
+        <div class="row mt-4 absar-tapered-card absar-certificate-info" style="padding:10px 14px;margin:14px 0;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
             <table class="inv-info">
                 <tr>
                     <td class="label-left">Certificate No</td>
@@ -1549,7 +1554,7 @@
         <t t-set="display_discount" t-value="any(l.discount for l in o.invoice_line_ids)"/>
 <t t-set="lines" t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
 
-<table class="table table-sm table-bordered" name="invoice_line_table" style="border-color:#ccc; font-size:13px; border-collapse:collapse; width:100%; page-break-inside:auto;">
+<div class="absar-tapered-card absar-certificate-lines" style="padding:8px 12px;margin:0 0 16px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;"><table class="table table-sm table-bordered" name="invoice_line_table" style="border-color:#ccc; font-size:13px; border-collapse:collapse; width:100%; page-break-inside:auto;">
 
   <!-- ===== TABLE HEADER ===== -->
   <thead style="background-color:#f8f8f8; border-bottom:2px solid #714B67;">
@@ -1634,13 +1639,13 @@
 
     </t>
   </tbody>
-        </table>
+        </table></div>
 
         <!-- ========================= -->
         <!--  TOTALS                   -->
         <!-- ========================= -->
         <div class="row justify-content-end mt-3">
-            <div class="col-6">
+            <div class="col-6 absar-tapered-card absar-certificate-totals" style="padding:10px 12px;margin-top:14px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
                 <table class="table table-sm table-borderless text-end">
                     <tr>
                         <td><strong>Subtotal / الإجمالي الفرعي</strong></td>
@@ -1674,7 +1679,7 @@
         <!-- ========================= -->
         <t t-if="o.narration">
             <div class="row mt-3">
-                <div class="col-6">
+                <div class="col-6 absar-tapered-card absar-certificate-notes" style="padding:12px 14px;margin-top:14px;border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;box-shadow:0 0 15px rgba(23,123,131,.25)!important;">
                     <strong>Notes / ملاحظات</strong><br/>
                     <span t-out="o.narration"/>
                 </div>

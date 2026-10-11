@@ -1,12 +1,14 @@
 {
-  "version": "18.0.2.0.24",
-  "base_version": "18.0.2.0.23",
+  "version": "18.0.2.0.25",
+  "base_version": "18.0.2.0.24",
   "result": "PASS",
   "checks": [
     "Suite validator",
-    "Quotation and proforma details, lines, totals, terms and options use teal accent cards",
-    "Subcontractor details, lines, totals and notes use teal accent cards",
-    "Business fields, calculations and routing preserved"
+    "Shared stylesheet now covers sale/proforma/subcontract/certificate card selectors",
+    "High-specificity rule overrides legacy information-panel border",
+    "Quotation, proforma, subcontract and certificate sections have explicit teal cards",
+    "Invoice, invoice-with-payment, PO and journal voucher retain card styling",
+    "Action setup version synchronized for upgrade"
   ],
   "live_odoo_tested": false
 }

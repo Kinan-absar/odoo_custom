@@ -141,3 +141,10 @@ Validation: offline suite and XML/QWeb checks passed. Fresh staging PDF renderin
 Quotation and proforma reports share the same teal card styling around customer/order details, lines, totals, terms and optional products. Subcontractor reports use it around supplier/order details, lines, totals and notes. Cards retain a 6px deep-teal left accent, thin teal outline on the other sides, 16px corners and soft teal shadow. Report content and calculations are preserved.
 
 Validation: offline module checks and XML/QWeb parsing passed. Odoo PDF rendering after upgrade remains to be verified.
+
+
+## Enforced card styling across all ABSAR report outputs — 18.0.2.0.25
+
+The shared report stylesheet now defines the teal card treatment for quotation, proforma, subcontractor and subcontractor payment certificate outputs. The earlier templates carried card classes without the shared declarations, so those reports kept their old appearance. The certificate supplier, summary, line, totals and notes sections now use the same cards. Existing invoice, invoice-with-payment, purchase order and journal voucher card styles remain. The report action setup version is synchronized for upgrade.
+
+Validation: offline suite, XML/QWeb checks and card-selector assertions passed. Odoo PDF rendering after upgrade remains to be verified.
