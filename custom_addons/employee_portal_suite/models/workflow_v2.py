@@ -490,6 +490,25 @@ class WorkflowRequestMixin(models.AbstractModel):
 
     workflow_progress_html = fields.Html(compute='_compute_workflow_progress_html', sanitize=False)
 
+    approval_status_label = fields.Char(
+        string='Status', compute='_compute_approval_status_label',
+        compute_sudo=True, store=False,
+    )
+
+    @api.depends('state', 'current_approval_line_id', 'current_approval_line_id.name',
+                 'approval_line_ids.state', 'approval_line_ids.name')
+    def _compute_approval_status_label(self):
+        labels = dict(self._fields['state']._description_selection(self.env))
+        for rec in self:
+            label = labels.get(rec.state, rec.state or '')
+            if rec.state == 'workflow' and rec.current_approval_line_id:
+                label = rec.current_approval_line_id.name or label
+            elif rec.state == 'returned':
+                line = rec.approval_line_ids.filtered(lambda step: step.state == 'returned')[:1]
+                if line and line.name:
+                    label = _('Returned for Correction — %s') % line.name
+            rec.approval_status_label = label
+
     def _workflow_notify_line(self, line):
         self.ensure_one()
         users = line.sudo()._effective_users()

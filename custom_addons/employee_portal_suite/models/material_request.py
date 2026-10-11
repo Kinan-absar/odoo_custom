@@ -429,7 +429,7 @@ class MaterialRequest(models.Model):
         store=False
     )
 
-    @api.depends("state", "needs_clarification", "clarification_stage")
+    @api.depends("state", "needs_clarification", "clarification_stage", "approval_status_label")
     def _compute_display_state(self):
         stage_labels = dict(self._fields['state'].selection)
 
@@ -438,7 +438,7 @@ class MaterialRequest(models.Model):
                 stage_name = stage_labels.get(rec.clarification_stage, "")
                 rec.display_state = f"🚩 Clarification — {stage_name}"
             else:
-                rec.display_state = stage_labels.get(rec.state, "")
+                rec.display_state = rec.approval_status_label
 
 
 
