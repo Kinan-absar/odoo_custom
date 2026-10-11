@@ -94,3 +94,11 @@ PO supplier/details, items, terms and optional shipping cards receive explicit i
 ## Matching invoice teal card outlines — 18.0.2.0.15
 
 Both invoice variants now use the same explicit 1px teal card outlines as the approved PO. Customer, QR, invoice details, items, totals and optional note/currency cards are covered. Existing layout, payment display flags, computations, content and transparent hidden table borders remain unchanged. All PO changes are retained.
+
+## Invoice closed outlines and borderless QR — 18.0.2.0.16
+
+QR wrapper no longer uses the card class and explicitly has no border, outline or shadow. Customer, invoice details and items cards use explicit thin teal borders on all four sides, with square corners for consistent PDF edges. Existing content, QR generation, payment flags, totals and PO layout are preserved. Check actual staging output.
+
+## Compact bilingual invoice details — 18.0.2.0.17
+
+The invoice details card has two columns: Invoice No, Invoice Date and Due Date on the left; Source and Payment Reference on the right. Each row retains English label, centered value and Arabic label. Card padding and row spacing are reduced. Optional field logic and all invoice business directives are unchanged. Existing closed teal border and borderless QR are retained; PO unchanged.

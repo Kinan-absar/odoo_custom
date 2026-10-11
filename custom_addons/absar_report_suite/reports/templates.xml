@@ -112,6 +112,9 @@
 
 .absar-invoice-cards table.o_ignore_layout_styling {border-width:0!important;border-style:none!important;outline:none!important;box-shadow:none!important;}
 .absar-invoice-cards .absar-total-table tr:not(.absar-grand-total) td strong {font-size:13px!important;}
+
+.absar-invoice-cards .inv-info-column .inv-info td {padding:5px 4px!important;vertical-align:top;}
+.absar-invoice-cards .inv-info-column .inv-info .value {overflow-wrap:break-word;word-wrap:break-word;}
 </style>
                <div class="page absar-invoice-cards"><!-- ========================= -->
     <!--  CENTER TITLE (Dynamic)   -->
@@ -173,7 +176,7 @@
 
       <!-- LEFT: CUSTOMER BLOCK -->
       <div class="col-6">
-        <div class="absar-card" style="min-height:130px;border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;">
+        <div class="absar-card" style="min-height:130px;border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;border-top:1px solid #177b83!important;border-right:1px solid #177b83!important;border-bottom:1px solid #177b83!important;border-left:1px solid #177b83!important;border-radius:0!important;outline:none!important;box-shadow:none!important;">
           <div class="absar-card-title">
             Customer / العميل
           </div>
@@ -201,8 +204,8 @@
 
       <!-- RIGHT: QR CODE -->
       <div class="col-6 text-end">
-        <div class="absar-card absar-qr-wrap" style="min-height:130px;border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;" t-if="o.l10n_sa_qr_code_str">
-          <img t-att-src="'/report/barcode/?barcode_type=QR&amp;value=' + quote_plus(o.l10n_sa_qr_code_str) + '&amp;width=140&amp;height=140'" class="absar-qr-img" alt="ZATCA QR"/>
+        <div class="absar-qr-wrap" style="min-height:130px;padding:12px 14px;border:0!important;border-style:none!important;border-color:transparent!important;border-radius:0!important;outline:none!important;box-shadow:none!important;background:#fff!important;" t-if="o.l10n_sa_qr_code_str">
+          <img t-att-src="'/report/barcode/?barcode_type=QR&amp;value=' + quote_plus(o.l10n_sa_qr_code_str) + '&amp;width=140&amp;height=140'" class="absar-qr-img" alt="ZATCA QR" style="border:0!important;border-style:none!important;border-color:transparent!important;outline:none!important;box-shadow:none!important;"/>
         </div>
       </div>
 
@@ -211,11 +214,10 @@
 
             <div class="absar-invoice-page">
 <!-- INVOICE DETAILS: clean design (only underline under values) -->
-<div class="absar-info-wrap inv-card" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;">
+<div class="absar-info-wrap inv-card" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;border-top:1px solid #177b83!important;border-right:1px solid #177b83!important;border-bottom:1px solid #177b83!important;border-left:1px solid #177b83!important;border-radius:0!important;outline:none!important;box-shadow:none!important;padding:8px 12px!important;">
 
 
-  <table class="inv-info o_ignore_layout_styling" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-    <tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+  <div class="inv-info-column" style="float:left;width:50%;padding-right:12px;box-sizing:border-box;"><table class="inv-info o_ignore_layout_styling" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
       <td class="label-left" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Invoice No</td>
       <td class="value" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-if="o.name != '/'" t-field="o.name"/></td>
       <td class="label-right" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">رقم الفاتورة</td>
@@ -230,7 +232,7 @@
       <td class="value" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.invoice_date_due"/></td>
       <td class="label-right" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">تاريخ الاستحقاق</td>
     </tr>
-    <tr t-if="o.invoice_origin" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+    </table></div><div class="inv-info-column" style="float:left;width:50%;padding-left:12px;box-sizing:border-box;"><table class="inv-info o_ignore_layout_styling" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><tr t-if="o.invoice_origin" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
       <td class="label-left" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Source</td>
       <td class="value" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.invoice_origin"/></td>
       <td class="label-right" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">المصدر</td>
@@ -240,8 +242,7 @@
       <td class="value" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.payment_reference"/></td>
       <td class="label-right" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">مرجع الدفع</td>
     </tr>
-  </table>
-</div>
+  </table></div><div style="clear:both;"/></div>
 
 
   <!-- Add small space since address_layout removed -->
@@ -253,7 +254,7 @@
 <t t-set="display_discount" t-value="any(l.discount for l in o.invoice_line_ids)"/>
 <t t-set="lines" t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
 
-<div class="inv-card inv-lines-card" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;"><table class="table table-sm o_ignore_layout_styling" name="invoice_line_table" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+<div class="inv-card inv-lines-card" style="border:1px solid #177b83!important;border-width:1px!important;border-style:solid!important;border-color:#177b83!important;border-radius:7px;background:#fff!important;box-shadow:none!important;border-top:1px solid #177b83!important;border-right:1px solid #177b83!important;border-bottom:1px solid #177b83!important;border-left:1px solid #177b83!important;border-radius:0!important;outline:none!important;box-shadow:none!important;"><table class="table table-sm o_ignore_layout_styling" name="invoice_line_table" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
 
   <!-- ===== TABLE HEADER ===== -->
   <thead style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">

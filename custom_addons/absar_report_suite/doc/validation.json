@@ -1,5 +1,5 @@
 {
-  "version": "18.0.2.0.15",
+  "version": "18.0.2.0.17",
   "base_version": "18.0.2.0.8",
   "result": "PASS",
   "checks": [
@@ -12,7 +12,12 @@
     "Inline 1px teal outlines on PO card containers",
     "Other report templates unchanged",
     "Matching inline 1px teal outlines on invoice cards",
-    "Invoice business directives unchanged; PO template unchanged"
+    "Invoice business directives unchanged; PO template unchanged",
+    "QR wrapper and image borderless",
+    "Customer/details/items: explicit four-sided teal outline",
+    "Invoice business directives preserved and PO unchanged",
+    "Three invoice detail rows left; source/payment reference right",
+    "All invoice business directives preserved; other report XML unchanged"
   ],
   "live_odoo_tested": false
 }
