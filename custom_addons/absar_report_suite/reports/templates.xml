@@ -214,31 +214,31 @@
 <div class="absar-info-wrap inv-card">
 
 
-  <table class="inv-info o_ignore_layout_styling" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-    <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-      <td class="label-left" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Invoice No</td>
-      <td class="value" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-if="o.name != '/'" t-field="o.name"/></td>
-      <td class="label-right" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">رقم الفاتورة</td>
+  <table class="inv-info o_ignore_layout_styling" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+    <tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <td class="label-left" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Invoice No</td>
+      <td class="value" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-if="o.name != '/'" t-field="o.name"/></td>
+      <td class="label-right" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">رقم الفاتورة</td>
     </tr>
-    <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-      <td class="label-left" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Invoice Date</td>
-      <td class="value" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.invoice_date"/></td>
-      <td class="label-right" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">تاريخ الفاتورة</td>
+    <tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <td class="label-left" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Invoice Date</td>
+      <td class="value" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.invoice_date"/></td>
+      <td class="label-right" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">تاريخ الفاتورة</td>
     </tr>
-    <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-      <td class="label-left" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Due Date</td>
-      <td class="value" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.invoice_date_due"/></td>
-      <td class="label-right" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">تاريخ الاستحقاق</td>
+    <tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <td class="label-left" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Due Date</td>
+      <td class="value" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.invoice_date_due"/></td>
+      <td class="label-right" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">تاريخ الاستحقاق</td>
     </tr>
-    <tr t-if="o.invoice_origin" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-      <td class="label-left" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Source</td>
-      <td class="value" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.invoice_origin"/></td>
-      <td class="label-right" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">المصدر</td>
+    <tr t-if="o.invoice_origin" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <td class="label-left" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Source</td>
+      <td class="value" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.invoice_origin"/></td>
+      <td class="label-right" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">المصدر</td>
     </tr>
-    <tr t-if="o.payment_reference" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-      <td class="label-left" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Payment Reference</td>
-      <td class="value" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.payment_reference"/></td>
-      <td class="label-right" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">مرجع الدفع</td>
+    <tr t-if="o.payment_reference" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <td class="label-left" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Payment Reference</td>
+      <td class="value" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.payment_reference"/></td>
+      <td class="label-right" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">مرجع الدفع</td>
     </tr>
   </table>
 </div>
@@ -253,40 +253,40 @@
 <t t-set="display_discount" t-value="any(l.discount for l in o.invoice_line_ids)"/>
 <t t-set="lines" t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
 
-<div class="inv-card inv-lines-card"><table class="table table-sm o_ignore_layout_styling" name="invoice_line_table" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+<div class="inv-card inv-lines-card"><table class="table table-sm o_ignore_layout_styling" name="invoice_line_table" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
 
   <!-- ===== TABLE HEADER ===== -->
-  <thead style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-    <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-      <th class="text-start" t-att-style="('width:27%;' if display_discount else 'width:34%;') + 'border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;' ">
+  <thead style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+    <tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <th class="text-start" t-att-style="('width:27%;' if display_discount else 'width:34%;') + 'border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;' ">
         <strong>Description</strong><br/><span>الوصف</span>
       </th>
-      <th class="text-end" style="width:8%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
+      <th class="text-end" style="width:8%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Quantity</strong><br/><span>الكمية</span>
       </th>
-      <th class="text-end" style="width:15%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
+      <th class="text-end" style="width:15%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Unit Price</strong><br/><span>سعر الوحدة</span>
       </th>
-      <th t-if="display_discount" class="text-end" style="width:7%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
+      <th t-if="display_discount" class="text-end" style="width:7%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
   <strong>Disc.%</strong><br/>
   <span>خصم %</span>
 </th>
 
-      <th class="text-end" style="width:15%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
+      <th class="text-end" style="width:15%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Amount</strong><br/><span>المبلغ قبل الضريبة</span>
       </th>
-      <th class="text-end" style="width:13%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
+      <th class="text-end" style="width:13%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Taxes 15%</strong><br/><span>الضرائب</span>
       </th>
 
-      <th class="text-end" style="width:15%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
+      <th class="text-end" style="width:15%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Total Price</strong><br/><span>المبلغ شامل الضريبة</span>
       </th>
     </tr>
   </thead>
 
   <!-- ===== TABLE BODY ===== -->
-  <tbody class="invoice_tbody" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+  <tbody class="invoice_tbody" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
     <!-- Track subtotals -->
     <t t-set="current_subtotal" t-value="0"/>
     <t t-set="current_section" t-value="None"/>
@@ -297,29 +297,29 @@
       <!-- Regular invoice lines -->
       <t t-if="line.display_type not in ('line_note', 'line_section')">
         <t t-set="current_subtotal" t-value="current_subtotal + (line.price_subtotal or 0.0)"/>
-        <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-          <td class="text-start" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+        <tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td class="text-start" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <t t-set="line_name" t-value="line.with_context(lang=o.partner_id.lang).product_id.display_name               if line.product_id and line.name in (                 line.with_context(lang=line.env['res.lang']._get_code('ar_001')).product_id.display_name,                 line.with_context(lang='en_US').product_id.display_name               ) else line.name"/>
             <span t-out="line_name" t-options="{'widget': 'text'}"/>
           </td>
-          <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.quantity"/></td>
-          <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.price_unit"/></td>
-          <td t-if="display_discount" class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+          <td class="text-end" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.quantity"/></td>
+          <td class="text-end" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.price_unit"/></td>
+          <td t-if="display_discount" class="text-end" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
   <span t-field="line.discount"/>
 </td>
-          <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.price_subtotal"/></td>
-          <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+          <td class="text-end" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.price_subtotal"/></td>
+          <td class="text-end" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
   <span t-out="sum(line.tax_ids.compute_all(line.price_unit, line.currency_id, line.quantity, product=line.product_id, partner=line.partner_id)['taxes'][i]['amount'] for i in range(len(line.tax_ids)))" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
 </td>
 
-          <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.price_total"/></td>
+          <td class="text-end" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.price_total"/></td>
         </tr>
       </t>
 
       <!-- Section header -->
       <t t-if="line.display_type == 'line_section'">
-        <tr class="absar-section-row" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;" t-att-colspan="7 if display_discount else 6">
+        <tr class="absar-section-row" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;" t-att-colspan="7 if display_discount else 6">
             <span t-field="line.name" t-options="{'widget': 'text'}"/>
           </td>
         </tr>
@@ -329,8 +329,8 @@
 
       <!-- Note lines -->
       <t t-if="line.display_type == 'line_note'">
-        <tr class="absar-note-row" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;" t-att-colspan="7 if display_discount else 6">
+        <tr class="absar-note-row" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;" t-att-colspan="7 if display_discount else 6">
             <span t-field="line.name" t-options="{'widget': 'text'}"/>
           </td>
         </tr>
@@ -338,8 +338,8 @@
 
       <!-- Subtotal (before VAT) -->
       <t t-if="current_section and (line_last or lines[line_index+1].display_type == 'line_section')">
-        <tr class="is-subtotal text-end" style="background-color:#fafafa;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;" t-att-colspan="7 if display_discount else 6">
+        <tr class="is-subtotal text-end" style="background-color:#fafafa;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;" t-att-colspan="7 if display_discount else 6">
             <strong><span dir="ltr">Subtotal (Before VAT)</span> / <span dir="rtl" lang="ar">الإجمالي الفرعي (قبل الضريبة)</span></strong> <span t-out="current_subtotal" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}" style="display:inline-block;direction:ltr;white-space:nowrap;"/>
           </td>
         </tr>
@@ -358,10 +358,10 @@
   <!-- =================== -->
   <div class="row justify-content-end mt-2 absar-total-wrap">
     <div class="col-6">
-      <div class="inv-card"><table class="table table-sm table-borderless text-end absar-total-table o_ignore_layout_styling" style="page-break-inside: avoid;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-        <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Subtotal / الإجمالي الفرعي</strong></td>
-          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.amount_untaxed"/></td>
+      <div class="inv-card"><table class="table table-sm table-borderless text-end absar-total-table o_ignore_layout_styling" style="page-break-inside: avoid;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+        <tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Subtotal / الإجمالي الفرعي</strong></td>
+          <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.amount_untaxed"/></td>
         </tr>
 
         <t t-set="tax_totals" t-value="o.tax_totals"/>
@@ -369,11 +369,11 @@
         <t t-foreach="tax_totals['subtotals']" t-as="subtotal">
          <t t-foreach="subtotal['tax_groups']" t-as="tax_group">
           <t t-if="tax_group['group_name'] != 'Retention'">
-            <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-              <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+            <tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+              <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
                 <strong><t t-esc="tax_group['group_name']"/></strong>
               </td>
-              <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+              <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
                 <span t-out="tax_group['tax_amount_currency']" t-options="{'widget': 'monetary', 'display_currency': currency}"/>
               </td>
             </tr>
@@ -381,14 +381,14 @@
         </t>
         </t>
 
-        <tr class="o_total absar-grand-total" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Total / المجموع</strong></td>
-          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.amount_total"/></td>
+        <tr class="o_total absar-grand-total" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Total / المجموع</strong></td>
+          <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.amount_total"/></td>
         </tr>
         <t t-if="print_with_payments and o.payment_state != 'invoicing_legacy'"><t t-set="payments_vals" t-value="(o.sudo().invoice_payments_widget or {}).get('content', [])"/>
 <t t-foreach="payments_vals" t-as="payment">
-<tr t-if="not payment.get('is_exchange')" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Paid on / دفعة بتاريخ</strong><br/><span t-out="payment['date']" t-options="{'widget': 'date'}"/></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-out="payment['amount']" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td></tr>
-</t><tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Amount Due / المبلغ المستحق</strong></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong t-field="o.amount_residual"/></td></tr></t></table>
+<tr t-if="not payment.get('is_exchange')" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Paid on / دفعة بتاريخ</strong><br/><span t-out="payment['date']" t-options="{'widget': 'date'}"/></td><td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-out="payment['amount']" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td></tr>
+</t><tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Amount Due / المبلغ المستحق</strong></td><td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong t-field="o.amount_residual"/></td></tr></t></table>
     </div></div>
   </div>
 
@@ -671,7 +671,7 @@
 .absar-po-white .po-heading {overflow:hidden;margin:8px 0 20px;border:0!important;background:#fff!important;}
 .absar-po-white .po-heading h2 {font-size:28px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;padding:0!important;}
 .absar-po-white .po-project {font-size:18px!important;font-weight:700!important;color:#182f43!important;overflow-wrap:break-word;}
-.absar-po-white .po-card {border:1px solid #e0e7eb!important;border-radius:7px;background:#fff!important;padding:12px 14px;margin-bottom:16px;}
+.absar-po-white .po-card {border:0.75px solid #177b83!important;border-radius:7px;background:#fff!important;padding:12px 14px;margin-bottom:16px;}
 .absar-po-white h3 {font-size:18px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0 0 10px!important;padding:0!important;page-break-after:avoid;}
 .absar-po-white .po-details {overflow:hidden;page-break-inside:avoid;padding:8px 12px!important;margin-bottom:10px!important;}
 .absar-po-white .po-label {font-size:11px!important;font-weight:700!important;text-transform:uppercase;color:#627782!important;margin-bottom:3px;}
@@ -700,7 +700,7 @@
 <div class="page absar-po-white">
 <div class="po-heading"><div style="float:left;width:40%;"><h2><span t-field="o.name"/></h2><span t-if="'revision' in o._fields and o.revision &gt; 0">Revision <span t-field="o.revision"/></span><span t-if="o.state in ['draft','sent','to approve']" style="display:block;font-size:12px;">Request for Quotation</span><span t-if="o.state == 'cancel'" style="display:block;font-size:12px;">Cancelled Purchase Order</span></div>
 <div style="float:right;width:60%;text-align:right;" class="po-project" t-if="'project_id' in o._fields and o.project_id">Project: <span t-field="o.project_id.name"/></div></div>
-<div class="po-card po-details"><div class="po-supplier" style="float:left;width:49%;padding-right:14px;box-sizing:border-box;">
+<div class="po-card po-details"><div class="po-supplier" style="float:left;width:50%;padding-right:10px;box-sizing:border-box;">
   <div>
     <div class="po-label"><strong>Supplier:</strong></div>
     <div class="po-supplier-name">
@@ -711,35 +711,34 @@
     </t>
   </div>
 </div>
-<div class="po-details-right" style="float:right;width:49%;">
-<div style="float:left;width:52%;"><div class="po-label">Vendor Reference</div><div class="po-value"><span t-if="o.partner_ref" t-field="o.partner_ref"/><span t-else="">-</span></div>
-<div style="margin-top:8px;" t-if="'material_request_id' in o._fields and o.material_request_id"><div class="po-label">MR</div><div class="po-value"><span t-field="o.material_request_id.name"/></div></div></div>
-<div style="float:right;width:45%;"><t t-if="o.state in ['purchase','done'] and o.date_approve"><div class="po-label">Order Date</div><div class="po-value"><span t-field="o.date_approve" t-options="{'widget':'date'}"/></div></t><t t-elif="o.date_order"><div class="po-label">Order Deadline</div><div class="po-value"><span t-field="o.date_order" t-options="{'widget':'date'}"/></div></t></div></div></div>
+<div style="float:left;width:19%;padding-right:10px;box-sizing:border-box;"><div class="po-label">Vendor Reference</div><div class="po-value"><span t-if="o.partner_ref" t-field="o.partner_ref"/><span t-else="">-</span></div>
+</div>
+<div style="float:left;width:14%;padding-right:10px;box-sizing:border-box;" t-if="'material_request_id' in o._fields and o.material_request_id"><div class="po-label">MR</div><div class="po-value"><span t-field="o.material_request_id.name"/></div></div><div style="float:left;width:17%;padding-right:10px;box-sizing:border-box;"><t t-if="o.state in ['purchase','done'] and o.date_approve"><div class="po-label">Order Date</div><div class="po-value"><span t-field="o.date_approve" t-options="{'widget':'date'}"/></div></t><t t-elif="o.date_order"><div class="po-label">Order Deadline</div><div class="po-value"><span t-field="o.date_order" t-options="{'widget':'date'}"/></div></t></div><div style="clear:both;"/></div>
 <div class="po-card" t-if="o.dest_address_id"><div class="po-label">Shipping Address</div><div t-field="o.dest_address_id" t-options="{'widget':'contact','fields':['address','name','phone'],'no_marker':True}"/></div>
-<div class="po-card po-items"><table class="po-lines o_ignore_layout_styling" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-  <t t-set="display_discount" t-value="any(l.discount for l in o.order_line)"/><thead style="display:table-header-group;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-    <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-      <th style="width:45%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Description</th>
-      <th style="width:10%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Tax</th>
-      <th style="width:13%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Quantity</th>
-      <th style="width:14%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Unit Price</th>
-      <th t-if="display_discount" class="text-end" style="width:7%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Disc.%</th><th class="text-end" style="width:18%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Amount</th>
+<div class="po-card po-items"><table class="po-lines o_ignore_layout_styling" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+  <t t-set="display_discount" t-value="any(l.discount for l in o.order_line)"/><thead style="display:table-header-group;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+    <tr style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <th style="width:45%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Description</th>
+      <th style="width:10%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Tax</th>
+      <th style="width:13%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Quantity</th>
+      <th style="width:14%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Unit Price</th>
+      <th t-if="display_discount" class="text-end" style="width:7%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Disc.%</th><th class="text-end" style="width:18%;;border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Amount</th>
     </tr>
   </thead>
-  <tbody style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+  <tbody style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
     <t t-set="display_discount" t-value="any(l.discount for l in o.order_line)"/><t t-set="current_section" t-value="None"/><t t-set="current_subtotal" t-value="0"/>
     <t t-foreach="o.order_line" t-as="line">
       <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal"/>
-      <tr t-att-class="'bg-200 fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <tr t-att-class="'bg-200 fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
         <t t-if="not line.display_type">
-          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+          <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.name"/>
           </td>
-          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+          <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <t t-set="taxes" t-value="', '.join([(tax.invoice_label or tax.name) for tax in line.taxes_id])"/>
             <span t-out="taxes"/>
           </td>
-          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+          <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.product_uom_qty"/>
             <span t-field="line.product_uom"/>
             <span t-if="line.product_packaging_id">
@@ -747,29 +746,29 @@
               <span t-field="line.product_packaging_id"/>)
             </span>
           </td>
-          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+          <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.price_unit" t-options="{&quot;widget&quot;:&quot;float&quot;,&quot;precision&quot;:2}"/>
           </td>
-          <td t-if="display_discount" class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.discount"/>%</td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+          <td t-if="display_discount" class="text-end" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.discount"/>%</td><td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.price_subtotal" t-options="{&quot;widget&quot;:&quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}"/>
           </td>
         </t>
         <t t-if="line.display_type == 'line_section'">
-          <td colspan="99" id="section" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+          <td colspan="99" id="section" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.name"/>
           </td>
           <t t-set="current_section" t-value="line"/>
           <t t-set="current_subtotal" t-value="0"/>
         </t>
         <t t-if="line.display_type == 'line_note'">
-          <td colspan="99" id="note" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+          <td colspan="99" id="note" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.name"/>
           </td>
         </t>
       </tr>
       <t t-if="current_section and (line_last or o.order_line[line_index+1].display_type == 'line_section')">
-        <tr class="is-subtotal text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-          <td colspan="99" id="subtotal" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+        <tr class="is-subtotal text-end" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td colspan="99" id="subtotal" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <strong class="mr16">Subtotal</strong>
             <span t-esc="current_subtotal" t-options="{&quot;widget&quot;:&quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}"/>
           </td>
@@ -780,7 +779,7 @@
 </table>
 
 </div>
-<div class="po-totals" id="total"><table style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;" class="o_ignore_layout_styling"><t t-set="tax_totals" t-value="o.tax_totals"/><!--
+<div class="po-totals" id="total"><table style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;" class="o_ignore_layout_styling"><t t-set="tax_totals" t-value="o.tax_totals"/><!--
                 Generic template to display tax totals in pdf reports.
                 Used by invoices, SO and PO.
 
@@ -790,32 +789,32 @@
             -->
             <t t-set="same_tax_base" t-value="tax_totals['same_tax_base']"/>
             <t t-foreach="tax_totals['subtotals']" t-as="subtotal">
-                <tr class="o_subtotal " style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-                    <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
+                <tr class="o_subtotal " style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                    <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                         <span t-out="subtotal['name']">Untaxed Amount</span>
                     </td>
-                    <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
+                    <td class="text-end" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                         <span t-att-class="oe_subtotal_footer_separator" t-out="subtotal['base_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">27.00</span>
                     </td>
                 </tr>
 
                 <t t-foreach="subtotal['tax_groups']" t-as="tax_group">
-                    <tr class="o_taxes " style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                    <tr class="o_taxes " style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
                         <t t-if="same_tax_base or tax_group['display_base_amount_currency'] is None">
-                            <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
+                            <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                                 <span class="text-nowrap" t-out="tax_group['group_name']">Tax 15%</span>
                             </td>
-                            <td class="text-end o_price_total" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
+                            <td class="text-end o_price_total" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                                 <span class="text-nowrap" t-out="tax_group['tax_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">1.05</span>
                             </td>
                         </t>
                         <t t-else="">
-                            <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
+                            <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                                 <span t-out="tax_group['group_name']">Tax 15%</span>
                                 <span> on </span>
                                 <span class="text-nowrap" t-out="tax_group['display_base_amount_currency']">27.00</span>
                             </td>
-                            <td class="text-end o_price_total" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
+                            <td class="text-end o_price_total" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                                 <span class="text-nowrap" t-out="tax_group['tax_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">4.05</span>
                             </td>
                         </t>
@@ -823,17 +822,17 @@
                 </t>
             </t>
 
-            <tr t-if="'cash_rounding_base_amount_currency' in tax_totals" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-                <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">Rounding</td>
-                <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
+            <tr t-if="'cash_rounding_base_amount_currency' in tax_totals" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">Rounding</td>
+                <td class="text-end" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                     <span t-out="tax_totals['cash_rounding_base_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">0</span>
                 </td>
             </tr>
             
             <!--Total amount with all taxes-->
-            <tr class="o_total " style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-                <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;"><strong>Total</strong></td>
-                <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
+            <tr class="o_total " style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                <td style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;"><strong>Total</strong></td>
+                <td class="text-end" style=";border:0!important;border-color:transparent!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:0!important;">
                     <strong t-out="tax_totals['total_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">31.05</strong>
                 </td>
             </tr>

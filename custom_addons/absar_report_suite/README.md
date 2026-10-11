@@ -80,3 +80,9 @@ Rebuilt directly from the 18.0.2.0.8 ZIP. Supplier card padding and line spacing
 ## PO supplier name and VAT only — 18.0.2.0.12
 
 The supplier card shows name and VAT number only. Supplier address and phone are omitted from the printout; Vendor Reference, MR and Order Date remain. Totals underline separators removed; compact spacing and bold Total remain. No stored supplier data changed. Invoice, header, margins and signature layout retain the 18.0.2.0.8 base.
+
+## PO one-row details and teal card outline — 18.0.2.0.13
+
+Supplier, Vendor Reference, MR and Order Date share a row with widths 50%, 19%, 14% and 17%. VAT stays under supplier name. Optional MR behavior and confirmed/draft date logic are unchanged. PO cards use a 0.75px teal outline (#177b83), matching the item header separator color with a thinner stroke. Other reports and business directives are unchanged.
+
+Invisible table borders explicitly use transparent color in PO and invoice. Uploaded PDFs contain zero-area dark edge fills that can appear as hairlines in some viewers. Transparent hidden borders prevent the source from using the dark text color for those fills. Intentional teal header rules and item separators retain their explicit bottom border colors. Actual PDF viewer rendering must be verified after upgrading.

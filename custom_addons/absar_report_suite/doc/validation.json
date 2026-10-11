@@ -1,13 +1,13 @@
 {
-  "version": "18.0.2.0.12",
+  "version": "18.0.2.0.13",
   "base_version": "18.0.2.0.8",
   "result": "PASS",
   "checks": [
     "Suite validator",
-    "Supplier prints name and VAT only",
-    "Vendor reference, MR and order date preserved",
-    "All other report XML unchanged",
-    "Totals separators removed; tight spacing retained",
+    "PO details share one row with supplier at 50% width",
+    "Thin teal PO card borders",
+    "Hidden PO/invoice table borders explicitly transparent",
+    "Business directives unchanged",
     "ZIP integrity"
   ],
   "live_odoo_tested": false
