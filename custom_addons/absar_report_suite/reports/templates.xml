@@ -1118,65 +1118,46 @@
     <field name="key">absar_report_suite.purchase_document</field>
     <field name="type">qweb</field>
     <field name="arch" type="xml">
-      <t t-name="absar_report_suite.purchase_document"><t t-set="company" t-value="o.company_id.sudo()"/><t t-set="layout_document_title" t-value="False"/><t t-call="absar_report_suite.business_layout">
-        <t t-call="absar_report_suite.report_styles"/>
-      <t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
-      <t t-set="address">
-        <div t-field="o.partner_id" t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;, &quot;vat&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
-      </t>
-      <t t-if="o.dest_address_id">
-        <t t-set="information_block">
-          <strong>Shipping address:</strong>
-          <div t-if="o.dest_address_id">
-            <div t-field="o.dest_address_id" t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}" name="purchase_shipping_address"/>
-          </div>
-        </t>
-      </t>
-      <div class="page absar-report absar-purchase-page">
-         <div class="oe_structure"/>
-        <div class="margin-top:0;">
-     <div class="row col-12 mb-2">
-  <!-- Request for Quotation -->
-  <div class="col-6" t-if="o.state in ['draft', 'sent', 'to approve']">
-    <h4 class="text-warning" style="font-size:16px; margin:0;">
-      Request for Quotation #<span t-field="o.name"/>
-      <t t-if="(o.revision if 'revision' in o._fields else False) &gt; 0"> (R-<t t-esc="o.revision"/>)</t>
-    </h4>
-  </div>
-
- <!-- Purchase Order -->
-<div class="col-6" t-if="o.state in ['purchase', 'done']">
-  <h4 class="text-warning" style="font-size:16px; margin:0;">
-    Purchase Order #
-    <span t-field="o.name"/>
-    <t t-if="(o.revision if 'revision' in o._fields else False) &gt; 0"> (R-<t t-esc="o.revision"/>)</t>
-  </h4>
-</div>
-
-  <!-- Cancelled Purchase Order -->
-  <div class="col-6" t-if="o.state == 'cancel'">
-    <h4 class="text-warning" style="font-size:16px; margin:0;">
-      Cancelled Purchase Order #<span t-field="o.name"/>
-      <t t-if="(o.revision if 'revision' in o._fields else False) &gt; 0"> (R-<t t-esc="o.revision"/>)</t>
-    </h4>
-  </div>
-
-  <!-- Project (always on the right if exists) -->
-<div class="col-6 text-end" t-if="(o.project_id if 'project_id' in o._fields else False)">
-    <h4 class="text-warning" style="font-size:14px;  margin:0;">
-      <strong>Project:</strong>
-      <span t-field="o.project_id"/>
-    </h4>
-  </div>
-
-</div>
-
-        </div>
-        <div id="informations" class="row ">
-          <div t-if="o.partner_id" class="col-6 bm-2">
-  <div style="font-size:11px; line-height:1.3;">
-    <div><strong>Supplier:</strong></div>
-    <div class="absar-partner-name" style="font-weight:700;white-space:normal;overflow-wrap:break-word;">
+      <t t-name="absar_report_suite.purchase_document">
+<t t-set="company" t-value="o.company_id.sudo()"/><t t-set="layout_document_title" t-value="False"/>
+<t t-call="absar_report_suite.business_layout">
+<t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
+<style>
+.absar-po-white {font-family:Arial,'Cairo',sans-serif!important;font-size:14px!important;line-height:1.4;color:#182f43!important;}
+.absar-po-white .po-heading {overflow:hidden;margin:8px 0 20px;border:0!important;background:#fff!important;}
+.absar-po-white .po-heading h2 {font-size:28px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;padding:0!important;}
+.absar-po-white .po-project {font-size:18px!important;font-weight:700!important;color:#182f43!important;overflow-wrap:break-word;}
+.absar-po-white .po-card {border:1px solid #e0e7eb!important;border-radius:7px;background:#fff!important;padding:12px 14px;margin-bottom:16px;}
+.absar-po-white h3 {font-size:18px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0 0 10px!important;padding:0!important;page-break-after:avoid;}
+.absar-po-white .po-details {overflow:hidden;page-break-inside:avoid;}
+.absar-po-white .po-label {font-size:11px!important;font-weight:700!important;text-transform:uppercase;color:#627782!important;margin-bottom:3px;}
+.absar-po-white .po-value {font-size:14px!important;font-weight:600!important;color:#182f43!important;overflow-wrap:break-word;}
+.absar-po-white .po-supplier {font-size:13px!important;line-height:1.5;}
+.absar-po-white .po-supplier-name {font-size:18px!important;font-weight:700!important;color:#182f43!important;margin:4px 0 6px;overflow-wrap:break-word;}
+.absar-po-white .po-lines {width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px!important;}
+.absar-po-white .po-lines th {font-size:12px!important;font-weight:700!important;text-align:left;padding:7px 5px!important;color:#182f43!important;}
+.absar-po-white .po-lines td {padding:6px 5px!important;vertical-align:top;font-size:13px!important;overflow-wrap:break-word;word-wrap:break-word;color:#182f43!important;}
+.absar-po-white .po-lines th:not(:first-child),.absar-po-white .po-lines td:not(:first-child) {text-align:right!important;}
+.absar-po-white .po-lines tr {page-break-inside:avoid;}
+.absar-po-white .po-lines .o_line_section td {font-weight:700!important;text-align:left!important;}
+.absar-po-white .po-lines .o_line_note td {font-style:italic;text-align:left!important;}
+.absar-po-white .po-totals {width:42%;margin-left:auto;margin-bottom:18px;page-break-inside:avoid;}
+.absar-po-white .po-totals table {width:100%;border-collapse:collapse;font-size:14px!important;}
+.absar-po-white .po-totals td {padding:4px 5px!important;color:#182f43!important;}
+.absar-po-white .po-totals td:last-child {text-align:right!important;white-space:nowrap;}
+.absar-po-white .po-totals .o_total td {font-weight:700!important;font-size:17px!important;padding-top:8px!important;}
+.absar-po-white .po-notes {font-size:12px!important;line-height:1.45;margin:0!important;}
+.absar-po-white .po-notes p {margin:0 0 5px!important;}
+.absar-po-white .po-signatures {overflow:hidden;page-break-inside:avoid;margin:18px 0 8px;}
+.absar-po-white .po-signatures h5 {font-size:16px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;}
+</style>
+<div class="page absar-po-white">
+<div class="po-heading"><div style="float:left;width:40%;"><h2><span t-field="o.name"/></h2><span t-if="'revision' in o._fields and o.revision &gt; 0">Revision <span t-field="o.revision"/></span><span t-if="o.state in ['draft','sent','to approve']" style="display:block;font-size:12px;">Request for Quotation</span><span t-if="o.state == 'cancel'" style="display:block;font-size:12px;">Cancelled Purchase Order</span></div>
+<div style="float:right;width:60%;text-align:right;" class="po-project" t-if="'project_id' in o._fields and o.project_id">Project: <span t-field="o.project_id.name"/></div></div>
+<div class="po-card po-details"><div class="po-supplier" style="float:left;width:49%;padding-right:14px;box-sizing:border-box;">
+  <div>
+    <div class="po-label"><strong>Supplier:</strong></div>
+    <div class="po-supplier-name">
   <span t-field="o.partner_id.name"/>
 </div>
     <div>
@@ -1199,68 +1180,35 @@
     </t>
   </div>
 </div>
-<!-- Vendor Reference + MR Reference (same column) -->
-<div t-if="o.partner_ref or (o.material_request_id if 'material_request_id' in o._fields else False)" class="col-3 bm-2">
-    <div style="font-size:11px; line-height:1.3;">
-        <strong>Vendor Ref:</strong>
-        <span t-field="o.partner_ref"/>
-
-        <t t-if="(o.material_request_id if 'material_request_id' in o._fields else False)">
-            <br/>
-            <div style="margin-top:2px;">
-                <strong>MR Ref:</strong>
-                <span t-field="o.material_request_id.name"/>
-            </div>
-        </t>
-    </div>
-</div>
-
-<!-- Order Date -->
-<div t-if="o.state in ['purchase','done'] and o.date_approve" class="col-3 bm-2">
-  <div style="font-size:11px; line-height:1.3;">
-    <div><strong>Order Date:</strong></div>
-    <div style="font-weight:600;">
-      <span t-field="o.date_approve" t-options="{&quot;widget&quot;:&quot;date&quot;}"/>
-    </div>
-  </div>
-</div>
-
-<!-- Order Deadline -->
-<div t-elif="o.date_order" class="col-3 bm-2">
-  <div style="font-size:11px; line-height:1.3;">
-    <div><strong>Order Deadline:</strong></div>
-    <div style="font-weight:600;">
-      <span t-field="o.date_order" t-options="{&quot;widget&quot;:&quot;date&quot;}"/>
-    </div>
-  </div>
-</div>
-
-
-        </div>
-     <table class="table table-sm o_main_table mt-4 mb-4" t-attf-style="font-size:11px; line-height:1.3; border-collapse:collapse; width:100%; border:1px solid black;">
-  <t t-set="display_discount" t-value="any(l.discount for l in o.order_line)"/><thead style="display: table-row-group">
-    <tr>
-      <th style="border:1px solid black; padding:3px; background-color:#d9edf7; font-weight:bold;">Description</th>
-      <th style="border:1px solid black; padding:3px; text-align:right; background-color:#d9edf7; font-weight:bold;">Taxes</th>
-      <th style="border:1px solid black; padding:3px; text-align:right; background-color:#d9edf7; font-weight:bold;">Qty</th>
-      <th style="border:1px solid black; padding:3px; text-align:right; background-color:#d9edf7; font-weight:bold;">Unit Price</th>
-      <th t-if="display_discount" class="text-end">Disc.%</th><th class="text-end">Amount</th>
+<div class="po-details-right" style="float:right;width:49%;">
+<div style="float:left;width:52%;"><div class="po-label">Vendor Reference</div><div class="po-value"><span t-if="o.partner_ref" t-field="o.partner_ref"/><span t-else="">-</span></div>
+<div style="margin-top:15px;" t-if="'material_request_id' in o._fields and o.material_request_id"><div class="po-label">MR</div><div class="po-value"><span t-field="o.material_request_id.name"/></div></div></div>
+<div style="float:right;width:45%;"><t t-if="o.state in ['purchase','done'] and o.date_approve"><div class="po-label">Order Date</div><div class="po-value"><span t-field="o.date_approve" t-options="{'widget':'date'}"/></div></t><t t-elif="o.date_order"><div class="po-label">Order Deadline</div><div class="po-value"><span t-field="o.date_order" t-options="{'widget':'date'}"/></div></t></div></div></div>
+<div class="po-card" t-if="o.dest_address_id"><div class="po-label">Shipping Address</div><div t-field="o.dest_address_id" t-options="{'widget':'contact','fields':['address','name','phone'],'no_marker':True}"/></div>
+<div class="po-card po-items"><h3>Order Items</h3><table class="po-lines" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+  <t t-set="display_discount" t-value="any(l.discount for l in o.order_line)"/><thead style="display:table-header-group;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+    <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <th style="width:45%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Description</th>
+      <th style="width:10%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Tax</th>
+      <th style="width:13%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Quantity</th>
+      <th style="width:14%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Unit Price</th>
+      <th t-if="display_discount" class="text-end" style="width:7%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Disc.%</th><th class="text-end" style="width:18%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Amount</th>
     </tr>
   </thead>
-  <tbody>
+  <tbody style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
     <t t-set="display_discount" t-value="any(l.discount for l in o.order_line)"/><t t-set="current_section" t-value="None"/><t t-set="current_subtotal" t-value="0"/>
     <t t-foreach="o.order_line" t-as="line">
       <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal"/>
-      <tr t-att-class="'bg-200 fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''">
+      <tr t-att-class="'bg-200 fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
         <t t-if="not line.display_type">
-          <td t-attf-style="border:1px solid black; padding:3px; vertical-align:middle;">
+          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.name"/>
           </td>
-          <td t-attf-style="border:1px solid black; padding:3px; vertical-align:middle; text-align:right; white-space:nowrap;">
+          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <t t-set="taxes" t-value="', '.join([(tax.invoice_label or tax.name) for tax in line.taxes_id])"/>
             <span t-out="taxes"/>
           </td>
-          <td t-attf-style="border:1px solid black; padding:3px; vertical-align:middle; text-align:right;">
+          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.product_uom_qty"/>
             <span t-field="line.product_uom"/>
             <span t-if="line.product_packaging_id">
@@ -1268,29 +1216,29 @@
               <span t-field="line.product_packaging_id"/>)
             </span>
           </td>
-          <td t-attf-style="border:1px solid black; padding:3px; vertical-align:middle; text-align:right;">
+          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.price_unit" t-options="{&quot;widget&quot;:&quot;float&quot;,&quot;precision&quot;:2}"/>
           </td>
-          <td t-if="display_discount" class="text-end"><span t-field="line.discount"/>%</td><td t-attf-style="border:1px solid black; padding:3px; vertical-align:middle; text-align:right;">
+          <td t-if="display_discount" class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.discount"/>%</td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.price_subtotal" t-options="{&quot;widget&quot;:&quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}"/>
           </td>
         </t>
         <t t-if="line.display_type == 'line_section'">
-          <td colspan="99" id="section" t-attf-style="border:1px solid black; padding:3px; vertical-align:middle;">
+          <td colspan="99" id="section" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.name"/>
           </td>
           <t t-set="current_section" t-value="line"/>
           <t t-set="current_subtotal" t-value="0"/>
         </t>
         <t t-if="line.display_type == 'line_note'">
-          <td colspan="99" id="note" t-attf-style="border:1px solid black; padding:3px; vertical-align:middle;">
+          <td colspan="99" id="note" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.name"/>
           </td>
         </t>
       </tr>
       <t t-if="current_section and (line_last or o.order_line[line_index+1].display_type == 'line_section')">
-        <tr class="is-subtotal text-end">
-          <td colspan="99" id="subtotal" t-attf-style="border:1px solid black; padding:3px; text-align:right;">
+        <tr class="is-subtotal text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td colspan="99" id="subtotal" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <strong class="mr16">Subtotal</strong>
             <span t-esc="current_subtotal" t-options="{&quot;widget&quot;:&quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}"/>
           </td>
@@ -1300,32 +1248,69 @@
   </tbody>
 </table>
 
-<div id="total" style="width: 100%;">
-  <div style="width: 40%; margin-left: auto; font-size:11px; line-height:1.3;">
-    <table class="table table-sm table">
-      <t t-set="tax_totals" t-value="o.tax_totals"/>
-      <t t-call="absar_report_suite.purchase_tax_totals"/>
-    </table>
-  </div>
 </div>
-        <p t-field="o.notes" class="mt-3"/>
-        <div class="oe_structure">
-          <div class="container o_text_columns absar-signatures">
-            <div class="row">
-              <div class="col-6">
-                
-                <h5 style="font-size:16px;">Projects Director</h5>
-              </div>
-              <div class="col-6 text-end">
-                
-                <h5 style="font-size:16px;">Chief Executive Officer</h5></div>
-            </div><div style="text-align:center;page-break-inside:avoid;margin:8px 0 0;"><img alt="Company stamp" style="width:120px;display:inline-block;" t-att-src="image_data_uri(env.ref('absar_report_suite.stamp_image').sudo().datas)"/></div>
-          </div>
+<div class="po-totals" id="total"><table style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><t t-set="tax_totals" t-value="o.tax_totals"/><!--
+                Generic template to display tax totals in pdf reports.
+                Used by invoices, SO and PO.
+
+                ARGUMENTS:
+                - currency: The res.currency to use.
+                - tax_totals: dict in the form generated by account.move's _get_tax_totals.
+            -->
+            <t t-set="same_tax_base" t-value="tax_totals['same_tax_base']"/>
+            <t t-foreach="tax_totals['subtotals']" t-as="subtotal">
+                <tr class="o_subtotal " style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                    <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                        <span t-out="subtotal['name']">Untaxed Amount</span>
+                    </td>
+                    <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                        <span t-att-class="oe_subtotal_footer_separator" t-out="subtotal['base_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">27.00</span>
+                    </td>
+                </tr>
+
+                <t t-foreach="subtotal['tax_groups']" t-as="tax_group">
+                    <tr class="o_taxes " style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                        <t t-if="same_tax_base or tax_group['display_base_amount_currency'] is None">
+                            <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                                <span class="text-nowrap" t-out="tax_group['group_name']">Tax 15%</span>
+                            </td>
+                            <td class="text-end o_price_total" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                                <span class="text-nowrap" t-out="tax_group['tax_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">1.05</span>
+                            </td>
+                        </t>
+                        <t t-else="">
+                            <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                                <span t-out="tax_group['group_name']">Tax 15%</span>
+                                <span> on </span>
+                                <span class="text-nowrap" t-out="tax_group['display_base_amount_currency']">27.00</span>
+                            </td>
+                            <td class="text-end o_price_total" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                                <span class="text-nowrap" t-out="tax_group['tax_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">4.05</span>
+                            </td>
+                        </t>
+                    </tr>
+                </t>
+            </t>
+
+            <tr t-if="'cash_rounding_base_amount_currency' in tax_totals" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Rounding</td>
+                <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                    <span t-out="tax_totals['cash_rounding_base_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">0</span>
+                </td>
+            </tr>
+            
+            <!--Total amount with all taxes-->
+            <tr class="o_total " style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Total</strong></td>
+                <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+                    <strong t-out="tax_totals['total_amount_currency']" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}">31.05</strong>
+                </td>
+            </tr>
+        </table></div>
+<div class="po-card po-terms" t-if="o.notes"><p t-field="o.notes" class="po-notes"/>
         </div>
-      </div>
-    </t>
-  </t>
-    </field>
+<div class="po-signatures"><div style="float:left;width:50%;"><h5>Projects Director</h5></div><div style="float:right;width:50%;text-align:right;"><h5>Chief Executive Officer</h5></div><div style="clear:both;text-align:center;margin-top:8px;"><img alt="Company stamp" t-att-src="image_data_uri(env.ref('absar_report_suite.stamp_image').sudo().datas)" style="width:120px;display:inline-block;"/></div></div>
+</div></t></t></field>
   </record>
   <record id="sale_document" model="ir.ui.view">
     <field name="name">ABSAR Sale Document</field>

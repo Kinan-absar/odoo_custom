@@ -1,12 +1,13 @@
 {
-  "version": "18.0.2.0.4",
+  "version": "18.0.2.0.5",
   "result": "PASS",
   "checks": [
     "Existing suite validator",
-    "Analytic names: empty, split, multiple plans, missing IDs and decimal percentages",
-    "Partner and analytic QWeb columns",
-    "No forbidden t-field placement",
-    "Other report XML elements unchanged"
+    "PO field and monetary options preserved",
+    "Section subtotal/discount/packaging/tax instructions preserved",
+    "Other report XML records unchanged",
+    "QWeb field placement",
+    "ZIP integrity"
   ],
   "live_odoo_tested": false
 }

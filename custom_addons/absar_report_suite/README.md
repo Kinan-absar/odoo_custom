@@ -50,3 +50,9 @@ Use the deployment's configured addons paths. Main deployment should follow succ
 English Journal Voucher on the left, voucher number centered, Arabic title on the right. White cards with one subtle outline; no heading frame or inner cell grid. Voucher details include accounting date, reference, company and journal name. Journal lines show account, description, partner, analytic allocation (including percentages and multiple plans), debit and credit. Company-currency precision and original debit/credit totals are retained. Empty partner/analytic values show a dash. Packaged company letterhead and the company/page/printed-by footer are retained.
 
 Only the journal template changes; existing report bindings, cleanup safeguards, PO filenames and other designs remain. Replace the addon and upgrade ABSAR Unified Reports on staging. Check a split analytic allocation, partner values, multi-page entries and batch printing. Local validation passed; live Odoo installation/PDF rendering has not been performed.
+
+## Purchase order redesign — 18.0.2.0.5
+
+PO number on the left; Project: followed by the project name on the right. Untitled supplier card with supplier/address/VAT, vendor reference, MR and order date. White order-item card, thin horizontal separators, unframed heading, readable totals and existing terms. Original Projects Director/Chief Executive Officer labels and company stamp retained. RFQ/cancelled status, revisions, shipping addresses, discounts, packaging, sections and subtotals retained. Existing tax calculations, report bindings, PO filenames and journal redesign are preserved.
+
+Replace the addon and upgrade ABSAR Unified Reports on staging. Print PO 237 and a longer PO, verify totals/discounts/notes, then test Send to Sign and check placeholder placement after the report redesign. The sample fits one page; live Odoo pagination can vary with content and PDF fonts. Live Odoo installation and rendering were not tested.
