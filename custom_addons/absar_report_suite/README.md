@@ -120,3 +120,10 @@ Tapered cards render explicit positioned top and bottom edge elements inside eac
 Removed the Voucher Details heading. Accounting Date and Reference share the left column; Company and Journal Type share the right column. Labels and values are aligned side by side in two compact rows with reduced card padding. Long values can wrap. Rounded tapered teal edges remain in place.
 
 Validation: offline suite checks and QWeb directive preservation passed. Fresh staging PDF rendering remains required.
+
+
+## Smooth single-line teal cards — 18.0.2.0.22
+
+Removed the separate top and bottom gradient strokes that overlapped the rounded outline and caused doubled, uneven-looking corners. Invoice, purchase order and journal voucher cards now use one continuous 1px teal border with a consistent 12px radius. Card content and layout are unchanged; the invoice QR remains borderless.
+
+Validation: offline suite and XML/QWeb checks passed. Fresh staging PDF rendering remains required.

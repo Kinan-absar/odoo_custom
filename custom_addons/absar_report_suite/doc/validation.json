@@ -1,31 +1,13 @@
 {
-  "version": "18.0.2.0.21",
-  "base_version": "18.0.2.0.8",
+  "version": "18.0.2.0.22",
+  "base_version": "18.0.2.0.21",
   "result": "PASS",
   "checks": [
     "Suite validator",
-    "PO details share one row with supplier at 50% width",
-    "Thin teal PO card borders",
-    "Hidden PO/invoice table borders explicitly transparent",
-    "Business directives unchanged",
-    "ZIP integrity",
-    "Inline 1px teal outlines on PO card containers",
-    "Other report templates unchanged",
-    "Matching inline 1px teal outlines on invoice cards",
-    "Invoice business directives unchanged; PO template unchanged",
-    "QR wrapper and image borderless",
-    "Customer/details/items: explicit four-sided teal outline",
-    "Invoice business directives preserved and PO unchanged",
-    "Three invoice detail rows left; source/payment reference right",
-    "All invoice business directives preserved; other report XML unchanged",
-    "Rounded invoice card corners; QR borderless",
-    "Journal cards have thin teal rounded outlines",
-    "Invoice/journal business directives unchanged; other templates unchanged",
-    "Tapered rounded border styling on PO/invoice/journal cards",
-    "QR stays borderless; business directives unchanged",
-    "Explicit top/bottom edge elements close all tapered card borders",
-    "Journal details: no title; two aligned field pairs in two compact rows",
-    "Journal business directives preserved; all other report templates unchanged"
+    "One continuous 1px teal outline per card; no extra edge overlays",
+    "Rounded invoice, PO and journal voucher cards use identical border styling",
+    "Invoice QR remains borderless",
+    "Business content and report layouts preserved"
   ],
   "live_odoo_tested": false
 }
