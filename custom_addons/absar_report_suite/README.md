@@ -68,3 +68,7 @@ Replace absar_report_suite and upgrade ABSAR Unified Reports on staging. Print b
 Invoice line columns now total 100% with or without discounts. Section, note and subtotal rows span exactly six or seven displayed columns, preventing phantom columns and a blank strip at the right. Bilingual subtotal labels keep currency values in left-to-right order. The invoice grand total uses the same `o_total` styling as the purchase order, including company total color. A4 paper size and existing margins are unchanged. Offline validation passed; verify both invoice variants after upgrading staging.
 
 Payment rows are restored inside the right-hand totals card, directly below Total, only for Invoice with Payment. Invoice tables opt out of Odoo external-layout table decoration so inner frames do not appear inside cards.
+
+## PO table border reset — 18.0.2.0.8
+
+Purchase order tables now also opt out of external-layout table decorations and explicitly suppress their outer table border, outline and shadow. The card outlines and item row separators remain. All invoice fixes from 18.0.2.0.7 are included. No PO fields, tax computations, signature labels, report routing or paper margins changed. Verify actual PDF rendering on staging after upgrade.

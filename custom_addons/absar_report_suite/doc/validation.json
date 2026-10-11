@@ -1,5 +1,5 @@
 {
-  "version": "18.0.2.0.7",
+  "version": "18.0.2.0.8",
   "result": "PASS",
   "checks": [
     "Suite validator",
@@ -9,7 +9,10 @@
     "Payments inside totals card; default payment flag unchanged",
     "Invoice tables opt out of external layout decorations",
     "PO total styling reused",
-    "ZIP integrity"
+    "ZIP integrity",
+    "PO business directives unchanged",
+    "PO tables opt out of layout decorations",
+    "Invoice fixes retained unchanged"
   ],
   "live_odoo_tested": false
 }

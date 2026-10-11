@@ -694,6 +694,8 @@
 .absar-po-white .po-notes p {margin:0 0 5px!important;}
 .absar-po-white .po-signatures {overflow:hidden;page-break-inside:avoid;margin:18px 0 8px;}
 .absar-po-white .po-signatures h5 {font-size:16px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;}
+
+.absar-po-white table.o_ignore_layout_styling {border-width:0!important;border-style:none!important;outline:none!important;box-shadow:none!important;}
 </style>
 <div class="page absar-po-white">
 <div class="po-heading"><div style="float:left;width:40%;"><h2><span t-field="o.name"/></h2><span t-if="'revision' in o._fields and o.revision &gt; 0">Revision <span t-field="o.revision"/></span><span t-if="o.state in ['draft','sent','to approve']" style="display:block;font-size:12px;">Request for Quotation</span><span t-if="o.state == 'cancel'" style="display:block;font-size:12px;">Cancelled Purchase Order</span></div>
@@ -729,7 +731,7 @@
 <div style="margin-top:15px;" t-if="'material_request_id' in o._fields and o.material_request_id"><div class="po-label">MR</div><div class="po-value"><span t-field="o.material_request_id.name"/></div></div></div>
 <div style="float:right;width:45%;"><t t-if="o.state in ['purchase','done'] and o.date_approve"><div class="po-label">Order Date</div><div class="po-value"><span t-field="o.date_approve" t-options="{'widget':'date'}"/></div></t><t t-elif="o.date_order"><div class="po-label">Order Deadline</div><div class="po-value"><span t-field="o.date_order" t-options="{'widget':'date'}"/></div></t></div></div></div>
 <div class="po-card" t-if="o.dest_address_id"><div class="po-label">Shipping Address</div><div t-field="o.dest_address_id" t-options="{'widget':'contact','fields':['address','name','phone'],'no_marker':True}"/></div>
-<div class="po-card po-items"><h3>Order Items</h3><table class="po-lines" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+<div class="po-card po-items"><h3>Order Items</h3><table class="po-lines o_ignore_layout_styling" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
   <t t-set="display_discount" t-value="any(l.discount for l in o.order_line)"/><thead style="display:table-header-group;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
     <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
       <th style="width:45%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">Description</th>
@@ -793,7 +795,7 @@
 </table>
 
 </div>
-<div class="po-totals" id="total"><table style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><t t-set="tax_totals" t-value="o.tax_totals"/><!--
+<div class="po-totals" id="total"><table style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;" class="o_ignore_layout_styling"><t t-set="tax_totals" t-value="o.tax_totals"/><!--
                 Generic template to display tax totals in pdf reports.
                 Used by invoices, SO and PO.
 
