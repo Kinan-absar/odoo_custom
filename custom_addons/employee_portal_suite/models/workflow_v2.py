@@ -630,6 +630,8 @@ class WorkflowRequestMixin(models.AbstractModel):
             line = rec.approval_line_ids.sudo().filtered(lambda l: l.state == 'returned').sorted(lambda l: (l.sequence, l.id))[:1]
             if not line:
                 raise UserError(_('No returned workflow step was found.'))
+            if rec._name == 'material.request':
+                rec._check_delivery_date()
             now = fields.Datetime.now()
             sla = line.source_step_id.sla_hours if line.source_step_id else 0.0
             line.write({

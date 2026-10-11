@@ -92,7 +92,15 @@
                                         <th>Comment</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody t-if="o.workflow_id">
+                                    <tr t-foreach="o.approval_line_ids.sorted(lambda line: (line.sequence, line.id))" t-as="line">
+                                        <td><span t-field="line.name"/> (<span t-field="line.state"/>)</td>
+                                        <td><span t-field="line.approved_by"/><span t-if="line.state == 'rejected'" t-field="line.rejected_by"/></td>
+                                        <td><span t-out="line.approved_date or line.rejected_date or ''"/></td>
+                                        <td><span t-field="line.comment"/><div t-if="line.override_reason">Override: <span t-field="line.override_reason"/></div></td>
+                                    </tr>
+                                </tbody>
+                                <tbody t-else="">
 
                                     <tr>
                                         <td>Purchase Representative</td>

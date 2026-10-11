@@ -45,7 +45,7 @@ class MaterialRequest(models.Model):
     )
 
     worksite = fields.Char(string="Worksite", required=True)
-    delivery_date = fields.Date(string="Delivery Date")
+    delivery_date = fields.Date(string="Delivery Date", help="Required before submission; at least three days after Request Date.")
 
     line_ids = fields.One2many(
         'material.request.line',
@@ -394,6 +394,10 @@ class MaterialRequest(models.Model):
 
     def write(self, vals):
         vals = dict(vals)
+        if vals.get('state') in ('workflow', 'purchase', 'store', 'project_manager', 'director', 'ceo', 'approved'):
+            self._check_delivery_date(vals)
+        elif 'delivery_date' in vals or 'request_date' in vals:
+            self.filtered(lambda rec: rec.state not in ('draft', 'returned', 'rejected'))._check_delivery_date(vals)
         if "project_id" in vals or "employee_id" in vals:
             for rec in self:
                 employee = self.env["hr.employee"].browse(vals.get("employee_id")) if vals.get("employee_id") else rec.employee_id
@@ -629,7 +633,9 @@ class MaterialRequest(models.Model):
                 location = employee._find_project_location(project) if project else False
                 vals["work_location_id"] = location.id if location else False
 
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records.filtered(lambda rec: rec.state not in ('draft', 'returned', 'rejected'))._check_delivery_date()
+        return records
 
     # ---------------------------------------------------------
     # GENERIC STATE ADVANCE
@@ -945,7 +951,19 @@ class MaterialRequest(models.Model):
     # ---------------------------------------------------------
     # ACTIONS
     # ---------------------------------------------------------
+    def _check_delivery_date(self, values=None):
+        values = values or {}
+        for rec in self:
+            delivery = fields.Date.to_date(values.get('delivery_date', rec.delivery_date))
+            requested = fields.Date.to_date(values.get('request_date', rec.request_date))
+            if not delivery:
+                raise UserError(_('Set a Delivery Date before submitting the Material Request.'))
+            if not requested or delivery < requested + timedelta(days=3):
+                raise UserError(_('Delivery Date must be at least three days after Request Date.'))
+        return True
+
     def action_submit(self):
+        self._check_delivery_date()
         for rec in self:
             if rec.state != "draft":
                 raise UserError("Only draft requests can be submitted.")
