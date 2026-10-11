@@ -1,5 +1,5 @@
 {
-  "version": "18.0.2.0.9",
+  "version": "18.0.2.0.10",
   "result": "PASS",
   "checks": [
     "Suite validator",
@@ -16,7 +16,10 @@
     "Compact paper format assigned only to PO and both invoice variants",
     "PO and invoice business directives preserved",
     "All other report templates unchanged",
-    "Compact letterhead and reduced name sizes"
+    "Compact letterhead and reduced name sizes",
+    "Full-width undistorted PO/invoice letterhead restored",
+    "PO stamp between signature areas; anchor labels unchanged",
+    "PO terms spacing reduced"
   ],
   "live_odoo_tested": false
 }

@@ -76,3 +76,9 @@ Purchase order tables now also opt out of external-layout table decorations and 
 ## Compact PO and invoice headers — 18.0.2.0.9
 
 Supplier and customer names are 16px, still larger than body details. PO and both invoice variants use a dedicated compact A4 layout: letterhead at 90% width, 38mm top margin, 26mm bottom margin, and 33mm header spacing. This provides 13mm more body height; PO card, heading and signature spacing is slightly tighter. Other reports retain their existing layout and paper format. Longer documents still paginate normally. Signature labels remain unchanged. Verify actual PDFs on staging.
+
+## PO signature block fit — 18.0.2.0.10
+
+The stamp now sits between the two signature areas on the same row instead of below the labels, at 85px width. The complete block remains together. Terms keep their existing font size with slightly tighter line, list and card spacing. Signature anchor labels remain unchanged. All invoice and compact header changes remain. Actual staging pagination must be checked; long POs still use additional pages.
+
+The compact layout restores the letterhead to full width and its natural proportions. Extra room comes from reduced page margins and vertical spacing, not narrowing or distorting the letterhead image.

@@ -9,11 +9,11 @@
 
   <t t-set="o" t-value="o or doc"/><t t-set="company" t-value="o.company_id.sudo()"/><!-- HEADER IMAGE ONLY -->
   <div class="header" style=" margin-top: -10px;  text-align: center;">
-    <img t-att-src="image_data_uri(env.ref('absar_report_suite.letterhead_image').sudo().datas)" style="width:90%;max-height:200px;object-fit:contain;" alt="Absar Header"/>
+    <img t-att-src="image_data_uri(env.ref('absar_report_suite.letterhead_image').sudo().datas)" style="width:100%;max-height:230px;object-fit:contain;" alt="Absar Header"/>
   </div>
 
   <!-- BODY -->
-  <div t-attf-class="article o_report_layout_wave o_table_striped o_company_#{company.id}_layout" t-att-style="report_type != 'pdf' and 'margin-top:200px;' or ''" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+  <div t-attf-class="article o_report_layout_wave o_table_striped o_company_#{company.id}_layout" t-att-style="report_type != 'pdf' and 'margin-top:210px;' or ''" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
     <t t-set="custom_layout_address" t-value="True"/>
     <t t-call="web.address_layout"/>
     <h2 t-out="layout_document_title"/>
@@ -721,12 +721,17 @@
 .absar-po-white .po-totals td {padding:4px 5px!important;color:#182f43!important;}
 .absar-po-white .po-totals td:last-child {text-align:right!important;white-space:nowrap;}
 .absar-po-white .po-totals .o_total td {font-weight:700!important;font-size:17px!important;padding-top:8px!important;}
-.absar-po-white .po-notes {font-size:12px!important;line-height:1.45;margin:0!important;}
+.absar-po-white .po-notes {font-size:12px!important;line-height:1.35;margin:0!important;}
 .absar-po-white .po-notes p {margin:0 0 5px!important;}
 .absar-po-white .po-signatures {overflow:hidden;page-break-inside:avoid;margin:12px 0 8px;}
 .absar-po-white .po-signatures h5 {font-size:16px!important;font-weight:700!important;color:#182f43!important;border:0!important;margin:0!important;}
 
 .absar-po-white table.o_ignore_layout_styling {border-width:0!important;border-style:none!important;outline:none!important;box-shadow:none!important;}
+
+.absar-po-white .po-terms {padding-top:9px!important;padding-bottom:9px!important;margin-bottom:8px!important;}
+.absar-po-white .po-notes ul {margin-top:0!important;margin-bottom:0!important;padding-left:20px!important;}
+.absar-po-white .po-notes li {margin:0 0 3px!important;}
+.absar-po-white .po-signatures {margin-top:8px!important;min-height:90px;}
 </style>
 <div class="page absar-po-white">
 <div class="po-heading"><div style="float:left;width:40%;"><h2><span t-field="o.name"/></h2><span t-if="'revision' in o._fields and o.revision &gt; 0">Revision <span t-field="o.revision"/></span><span t-if="o.state in ['draft','sent','to approve']" style="display:block;font-size:12px;">Request for Quotation</span><span t-if="o.state == 'cancel'" style="display:block;font-size:12px;">Cancelled Purchase Order</span></div>
@@ -886,7 +891,7 @@
         </table></div>
 <div class="po-card po-terms" t-if="o.notes"><p t-field="o.notes" class="po-notes"/>
         </div>
-<div class="po-signatures"><div style="float:left;width:50%;"><h5>Projects Director</h5></div><div style="float:right;width:50%;text-align:right;"><h5>Chief Executive Officer</h5></div><div style="clear:both;text-align:center;margin-top:8px;"><img alt="Company stamp" t-att-src="image_data_uri(env.ref('absar_report_suite.stamp_image').sudo().datas)" style="width:120px;display:inline-block;"/></div></div>
+<div class="po-signatures"><div style="float:left;width:40%;padding-top:4px;"><h5>Projects Director</h5></div><div style="float:left;width:20%;text-align:center;"><img alt="Company stamp" t-att-src="image_data_uri(env.ref('absar_report_suite.stamp_image').sudo().datas)" style="width:85px;height:auto;display:inline-block;"/></div><div style="float:right;width:40%;text-align:right;padding-top:4px;"><h5>Chief Executive Officer</h5></div><div style="clear:both;"/></div>
 </div></t></t></field>
   </record>
   <record id="sale_document" model="ir.ui.view">
