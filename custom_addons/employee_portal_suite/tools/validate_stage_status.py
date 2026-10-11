@@ -7,7 +7,7 @@ from lxml import etree as E
 ROOT=Path(__file__).resolve().parents[1]
 for path in ROOT.rglob('*.py'):ast.parse(path.read_text())
 manifest=ast.literal_eval((ROOT/'__manifest__.py').read_text())
-assert manifest['version']=='18.0.1.20.90'
+assert manifest['version']=='18.0.1.20.92'
 for name in manifest['data']:
     if name.endswith('.xml'):E.parse(str(ROOT/name))
 def method(filename,name):
