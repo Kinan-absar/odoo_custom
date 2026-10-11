@@ -26,7 +26,7 @@
       "alias": "purchase_report",
       "name": "Purchase Order",
       "model": "purchase.order",
-      "report_name": "absar_report_suite.purchase",
+      "report_name": "purchase.report_purchaseorder",
       "xmlid": "purchase.action_report_purchase_order",
       "paper": "business",
       "bound": true,

@@ -1,4 +1,4 @@
-"""Preserve existing report action IDs after declarative XML loading."""
+"""Reuse existing action IDs; create an action only when no compatible one exists."""
 import json
 import logging
 from pathlib import Path
@@ -25,10 +25,17 @@ class AbsarReportSetup(models.AbstractModel):
         env = self.env
         actions = env['ir.actions.report'].sudo()
         params = env['ir.config_parameter'].sudo()
+        metadata = env['ir.model.data'].sudo()
         config = json.loads((Path(__file__).resolve().parents[1] / 'data/integration.json').read_text())
         backup = json.loads(params.get_param(_BACKUP, '{}'))
-        owned = actions.browse([env.ref(_MODULE + '.' + r['alias']).id for r in config['reports']])
+        action_ids = metadata.search([('module', '=', _MODULE), ('model', '=', 'ir.actions.report')])
+        # Existing module actions no longer have declarative XML records. Protect
+        # referenced/fallback records from Odoo's end-of-upgrade XML garbage collector.
+        action_ids.write({'noupdate': True})
+        owned = actions.browse(action_ids.mapped('res_id')).exists()
         bound = actions.browse()
+        routes = {}
+        duplicates = actions.browse()
 
         def remember(record):
             key = str(record.id)
@@ -40,7 +47,7 @@ class AbsarReportSetup(models.AbstractModel):
                 backup[key] = values
 
         for item in config['reports']:
-            canonical = env.ref(_MODULE + '.' + item['alias'])
+            canonical = env.ref(_MODULE + '.' + item['alias'], raise_if_not_found=False)
             preferred = env.ref(item['xmlid'], raise_if_not_found=False) if item.get('xmlid') else False
             if preferred and (preferred._name != 'ir.actions.report' or preferred.model != item['model']):
                 preferred = False
@@ -49,59 +56,70 @@ class AbsarReportSetup(models.AbstractModel):
                 '|', ('report_name', 'in', [item['legacy_report'], item['report_name']] + item.get('old_reports', [])),
                 ('name', '=', item['name']),
             ], order='id')
-            if preferred and preferred not in candidates:
-                candidates |= preferred
-            # Stable external IDs take precedence; duplicate display names cannot block install.
             saved_id = params.get_param(_MODULE + '.target.' + item['alias'])
             saved = actions.browse(int(saved_id)).exists() if saved_id and saved_id.isdigit() else False
             if saved and saved.model != item['model']:
                 saved = False
-            target = saved or preferred or candidates[:1] or canonical
-            params.set_param(_MODULE + '.target.' + item['alias'], str(target.id))
-            values = {field: canonical[field] for field in _FIELDS}
-            for field in ['paperformat_id', 'binding_model_id']:
-                values[field] = values[field].id or False
-            values['binding_model_id'] = env['ir.model']._get(item['model']).id
-            if target != canonical:
+            # Prefer a previously selected non-owned action. Reuse a module-owned
+            # fallback only if no pre-existing action can be reused.
+            target = (saved if saved and saved not in owned else False) or preferred or candidates[:1] or saved or canonical
+            values = {
+                'name': item['name'], 'model': item['model'], 'report_type': 'qweb-pdf',
+                'report_name': item['report_name'], 'report_file': item['report_name'],
+                'paperformat_id': env.ref(_MODULE + '.' + item['paper'] + '_paperformat').id,
+                'binding_model_id': env['ir.model']._get(item['model']).id,
+                'binding_type': 'report', 'binding_view_types': 'list,form', 'attachment_use': False,
+            }
+            previous = backup.get(str(target.id), {}) if target else {}
+            filename = previous.get('print_report_name') or (target.print_report_name if target else False)
+            if item['alias'] == 'purchase_report':
+                full_expression = filename and all(field in filename for field in (
+                    'partner_id', 'project_id', 'material_request_id'))
+                if not full_expression:
+                    filename = 'object._absar_report_filename()'
+            values['print_report_name'] = filename or item.get('print_report_name') or (
+                'object.name' if item['model'] == 'sale.order' else 'object._get_report_base_filename()')
+            if target:
                 remember(target)
                 target.write(values)
-                canonical.write({'binding_model_id': False})
             else:
-                canonical.write({'binding_model_id': env['ir.model']._get(item['model']).id})
+                target = actions.create(values)
+                metadata.create({'module': _MODULE, 'name': item['alias'],
+                                 'model': 'ir.actions.report', 'res_id': target.id, 'noupdate': True})
+                owned |= target
+            routes[item['alias']] = target
+            params.set_param(_MODULE + '.target.' + item['alias'], str(target.id))
             bound |= target
-            for duplicate in candidates - target:
-                remember(duplicate)
-                duplicate.write({'binding_model_id': False})
+            duplicate = candidates - target
+            if canonical and canonical != target:
+                duplicate |= canonical
+            for record in duplicate:
+                remember(record)
+                record.write({'binding_model_id': False})
+            duplicates |= duplicate
 
-        # Keep standard internal invoice and sales buttons on the same designs.
         standard = {
             'account.account_invoices': 'invoice_payment_report',
             'account.account_invoices_without_payment': 'invoice_report',
             'sale.action_report_saleorder': 'quotation_report',
             'sale.action_report_pro_forma_invoice': 'proforma_report',
         }
+        protected = bound
         for xmlid, alias in standard.items():
             report = env.ref(xmlid, raise_if_not_found=False)
             if not report:
                 continue
-            canonical = env.ref(_MODULE + '.' + alias)
+            target = routes[alias]
             remember(report)
-            values = {'report_name': canonical.report_name, 'report_file': canonical.report_file,
-                      'paperformat_id': canonical.paperformat_id.id, 'attachment_use': False}
+            values = {'report_name': target.report_name, 'report_file': target.report_file,
+                      'paperformat_id': target.paperformat_id.id, 'attachment_use': False}
             if report not in bound:
                 values['binding_model_id'] = False
             report.write(values)
+            protected |= report
 
-        retired = actions.search([('report_name', 'in', config['retired_templates']), ('id', 'not in', (owned | bound).ids)])
-        for xmlid in config['retired_xmlids']:
-            record = env.ref(xmlid, raise_if_not_found=False)
-            if record and record._name == 'ir.actions.report' and record not in (owned | bound):
-                retired |= record
-        for record in retired:
-            remember(record)
-            record.write({'binding_model_id': False})
         params.set_param(_BACKUP, json.dumps(backup, ensure_ascii=False))
-        cleanup_reports(env, config, owned | bound)
-        params.set_param(_MODULE + '.applied_version', '18.0.2.0.1')
-        _logger.info('ABSAR reports 18.0.2.0.1 configured: %s active report bindings', len(bound))
+        cleanup_reports(env, config, protected, duplicate_action_ids=duplicates.ids)
+        params.set_param(_MODULE + '.applied_version', '18.0.2.0.2')
+        _logger.info('ABSAR reports 18.0.2.0.2 configured: %s active report bindings', len(bound))
         return True

@@ -7,7 +7,7 @@ from odoo import fields
 from .cleanup_plan import plan_cleanup
 
 
-def cleanup_reports(env, config, keep):
+def cleanup_reports(env, config, keep, duplicate_action_ids=()):
     reports = env['ir.actions.report'].sudo().search([])
     views = env['ir.ui.view'].sudo().with_context(active_test=False).search([('type', '=', 'qweb')])
     all_ui_views = env['ir.ui.view'].sudo().with_context(active_test=False).search([])
@@ -24,6 +24,7 @@ def cleanup_reports(env, config, keep):
     candidates |= {('ir.actions.report', report.id) for report in reports
                    if report.report_name in config['retired_templates']
                    or xmlids.get(('ir.actions.report', report.id), set()) & retired_xmlids}
+    candidates |= {('ir.actions.report', record_id) for record_id in duplicate_action_ids}
     protected = {('ir.actions.report', record.id) for record in keep}
     protected |= {('ir.ui.view', view.id) for view in views
                   if view.key and view.key.startswith('absar_report_suite.')}
@@ -107,7 +108,7 @@ def cleanup_reports(env, config, keep):
     doomed_views = views.browse(sorted(i for model, i in removable if model == 'ir.ui.view'))
     doomed_reports = reports.browse(sorted(i for model, i in removable if model == 'ir.actions.report'))
     summary = {
-        'version': '18.0.2.0.1', 'date': str(fields.Datetime.now()),
+        'version': '18.0.2.0.2', 'date': str(fields.Datetime.now()),
         'deleted_actions': doomed_reports.read(['name', 'model', 'report_name']),
         'deleted_views': doomed_views.read(['name', 'key']),
         'preserved': [{'model': model, 'id': record_id, 'reason': reason}

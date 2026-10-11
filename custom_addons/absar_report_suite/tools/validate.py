@@ -17,7 +17,7 @@ def checked(name):
 for path in ROOT.rglob('*.py'):
     ast.parse(path.read_text())
 checked('Python syntax')
-assert manifest['version'] == '18.0.2.0.1'
+assert manifest['version'] == '18.0.2.0.2'
 assert not {'wm_journal_entry_report', 'sale_pdf_quote_builder', 'studio_customization'} & set(manifest['depends'])
 records = {}
 for filename in manifest['data']:
@@ -67,13 +67,16 @@ class RS:
         return getattr(self,key)
     def __getattr__(self, key):
         if key=='id':return self.ids[0] if self.ids else False
-        if key=='_name':return 'ir.actions.report'
+        if key=='_name':return self.model_obj.technical_name
         value=self.model_obj.rows[self.id].get(key,False)
         return Link(value) if key in ['paperformat_id','binding_model_id'] else value
     def exists(self):return RS(self.model_obj,[i for i in self.ids if i in self.model_obj.rows])
     def sudo(self):return self
     def write(self, values):
         for i in self.ids:self.model_obj.rows[i].update(values)
+    def mapped(self, field):return [self.model_obj.rows[i][field] for i in self.ids]
+    def unlink(self):
+        for i in self.ids:self.model_obj.rows.pop(i,None)
     def read(self, fields):
         result=[]
         for i in self.ids:
@@ -84,7 +87,10 @@ class RS:
             result.append(row)
         return result
 class ActionModel:
+    technical_name='ir.actions.report'
     def __init__(self):self.rows={}
+    def create(self, values):
+        i=max(self.rows,default=0)+1;self.rows[i]=dict(values);return self.browse(i)
     def sudo(self):return self
     def browse(self, ids=()):return RS(self,[ids] if isinstance(ids,int) else ids)
     def search(self,domain,order=None):
@@ -102,6 +108,13 @@ class ActionModel:
             for token in it:parts.append(consume(token))
             return all(parts)
         return self.browse([i for i,row in self.rows.items() if match(i,row)])
+class Metadata(ActionModel):
+    technical_name='ir.model.data'
+    def __init__(self,env):super().__init__();self.env=env
+    def create(self,values):
+        row=super().create(values)
+        self.env.refs[values['module']+'.'+values['name']]=values['res_id']
+        return row
 class Params:
     def __init__(self):self.values={}
     def sudo(self):return self
@@ -109,42 +122,51 @@ class Params:
     def set_param(self,k,v):self.values[k]=v
 class Env:
     su=True
-    def __init__(self):self.actions=ActionModel();self.params=Params();self.refs={}
+    def __init__(self):self.actions=ActionModel();self.params=Params();self.refs={};self.metadata=Metadata(self)
     def __getitem__(self,k):
         if k=='ir.actions.report':return self.actions
+        if k=='ir.model.data':return self.metadata
         if k=='ir.config_parameter':return self.params
         if k=='ir.model':return types.SimpleNamespace(_get=lambda name:Link({'account.move':1,'purchase.order':2,'sale.order':3}[name]))
         raise KeyError(k)
     def ref(self,k,raise_if_not_found=True):
-        if k in self.refs:return self.actions.browse(self.refs[k])
+        if k.endswith('_paperformat'):return Link(10 if 'business' in k else 11)
+        if k in self.refs:return self.actions.browse(self.refs[k]).exists()
         if raise_if_not_found:raise KeyError(k)
         return False
-odoo=types.ModuleType('odoo');odoo.api=types.SimpleNamespace(model=lambda f:f);odoo.models=types.SimpleNamespace(AbstractModel=object);odoo.fields=types.SimpleNamespace(Datetime=types.SimpleNamespace(now=lambda:'TEST'))
+odoo=types.ModuleType('odoo');odoo.api=types.SimpleNamespace(model=lambda f:f);odoo.models=types.SimpleNamespace(AbstractModel=object,Model=object);odoo.fields=types.SimpleNamespace(Datetime=types.SimpleNamespace(now=lambda:'TEST'))
 errors=types.ModuleType('odoo.exceptions');errors.AccessError=type('AccessError',(Exception,),{})
 sys.modules['odoo']=odoo;sys.modules['odoo.exceptions']=errors
 pkg=types.ModuleType('absar_test');pkg.__path__=[str(ROOT/'models')];sys.modules['absar_test']=pkg
 spec=importlib.util.spec_from_file_location('absar_test.report_setup',ROOT/'models/report_setup.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
-module.cleanup_reports=lambda env,config,keep: {}
+from absar_test.cleanup_plan import plan_cleanup
+def simulated_cleanup(env,config,keep,duplicate_action_ids=()):
+    candidates={('ir.actions.report',i) for i in duplicate_action_ids}
+    owners={}
+    for xmlid,i in env.refs.items():owners.setdefault(('ir.actions.report',i),set()).add(xmlid.split('.')[0])
+    removable,_=plan_cleanup(candidates,owners,{('ir.actions.report',i) for i in keep.ids},[])
+    for _,i in removable:
+        env.actions.browse(i).unlink()
+        env.metadata.search([('res_id','=',i)]).unlink()
+        env.refs={k:v for k,v in env.refs.items() if v!=i}
+    return {}
+module.cleanup_reports=simulated_cleanup
 config=json.loads((ROOT/'data/integration.json').read_text())
-def scenario(existing, extras=False):
+def scenario(existing, upgrade=False):
     env=Env()
+    rich_po = "'%s - %s - %s - %s' % (object.name, object.partner_id.name, object.project_id.name, object.material_request_id.name)"
     for i,item in enumerate(config['reports'],1):
-        canonical=records[item['alias']]
-        values={f.get('name'): f.text for f in canonical.findall('field') if f.get('ref') is None and f.get('eval') is None}
-        values.update(paperformat_id=10 if item['paper']=='business' else 11,binding_model_id={'account.move':1,'purchase.order':2,'sale.order':3}[item['model']],attachment_use=False)
-        env.actions.rows[i]=values;env.refs['absar_report_suite.'+item['alias']]=i
+        values={'name':item['name'],'model':item['model'],'report_name':item['legacy_report'],
+                'report_file':item['legacy_report'],'paperformat_id':99,'binding_model_id':1,
+                'print_report_name':rich_po if item['alias']=='purchase_report' else "'Original filename - %s' % object.name"}
         if existing:
-            legacy=dict(values,report_name=item['legacy_report'],report_file=item['legacy_report'],paperformat_id=99)
-            env.actions.rows[i+100]=legacy
+            env.actions.rows[i+100]=values
             if item.get('xmlid'):env.refs[item['xmlid']]=i+100
-    if extras:
-        for j,(xmlid,alias) in enumerate({'account.account_invoices':'invoice_payment_report','account.account_invoices_without_payment':'invoice_report','sale.action_report_saleorder':'quotation_report','sale.action_report_pro_forma_invoice':'proforma_report'}.items(),201):
-            item=next(r for r in config['reports'] if r['alias']==alias)
-            env.actions.rows[j]={'name':'Standard '+alias,'model':item['model'],'report_name':'standard.'+alias,'binding_model_id':1,'paperformat_id':98}
-            env.refs[xmlid]=j
-        item=next(r for r in config['reports'] if r['alias']=='purchase_report')
-        env.actions.rows[300]={'name':item['name'],'model':item['model'],'report_name':item['legacy_report'],'binding_model_id':2,'paperformat_id':97}
-    # Unrelated report must survive byte-for-byte.
+        if upgrade:
+            env.actions.rows[i]=dict(values,report_name='absar_report_suite.'+item['alias'],print_report_name='object.name')
+            env.metadata.create({'module':'absar_report_suite','name':item['alias'],
+                                 'model':'ir.actions.report','res_id':i,'noupdate':False})
+            env.params.set_param('absar_report_suite.target.'+item['alias'],str(i+100))
     env.actions.rows[999]={'name':'Unrelated','model':'account.move','report_name':'other.report','binding_model_id':1}
     untouched=dict(env.actions.rows[999])
     setup=module.AbsarReportSetup();setup.env=env
@@ -154,19 +176,44 @@ def scenario(existing, extras=False):
     assert state==env.actions.rows
     assert first==json.loads(env.params.get_param('absar_report_suite.original_report_actions'))
     assert env.actions.rows[999]==untouched
+    assert len(env.actions.rows)==9, env.actions.rows
     for item in config['reports']:
         target=int(env.params.get_param('absar_report_suite.target.'+item['alias']))
-        assert env.actions.rows[target]['report_name']==item['report_name']
-        assert env.actions.rows[target]['binding_model_id']
-    if existing:
-        assert len(first)==(13 if extras else 8)
-        assert all(first[str(i+100)]['paperformat_id']==99 for i in range(1,9))
-    if extras:
-        assert not env.actions.rows[300]['binding_model_id']
-        for i in range(201,205):
-            assert env.actions.rows[i]['report_name'].startswith('absar_report_suite.')
-    checked('Setup, repeat update, retained actions and unrelated records: '+str(existing)+'; duplicates and standard buttons: '+str(extras))
+        row=env.actions.rows[target]
+        assert row['report_name']==item['report_name']
+        assert row['binding_model_id']
+        if existing:assert row['print_report_name']==(rich_po if item['alias']=='purchase_report' else "'Original filename - %s' % object.name")
+    purchase_id=int(env.params.get_param('absar_report_suite.target.purchase_report'))
+    assert env.actions.rows[purchase_id]['report_name']=='purchase.report_purchaseorder'
+    if not existing:assert env.actions.rows[purchase_id]['print_report_name']=='object._absar_report_filename()'
+    if upgrade:assert all(i not in env.actions.rows for i in range(1,9))
+    checked('Actual setup: fresh='+str(not existing)+'; duplicate upgrade='+str(upgrade)+'; repeat setup and filenames')
 scenario(False);scenario(True);scenario(True,True)
+# Prove original backup wins over the regressed short filename on an upgrade.
+env=Env();env.actions.rows[42]={'name':'Purchase Order','model':'purchase.order','report_name':'absar_report_suite.purchase','print_report_name':'object.name'}
+env.refs['purchase.action_report_purchase_order']=42
+env.params.set_param('absar_report_suite.original_report_actions',json.dumps({'42':{'print_report_name':"'%s - %s - %s - %s' % (object.name, object.partner_id.name, object.project_id.name, object.material_request_id.name)"}}))
+setup=module.AbsarReportSetup();setup.env=env;setup.apply()
+assert env.actions.rows[42]['print_report_name']=="'%s - %s - %s - %s' % (object.name, object.partner_id.name, object.project_id.name, object.material_request_id.name)"
+bridge=E.parse(str(ROOT/'reports/compatibility.xml'))
+assert bridge.find('template').get('inherit_id')=='purchase.report_purchaseorder'
+assert bridge.xpath('//t[@t-call="absar_report_suite.purchase"]')
+assert not any(r.get('model')=='ir.actions.report' for r in records.values())
+checked('Saved rich filename restored; legacy PO QWeb bridge and no declarative duplicate action creation')
+spec=importlib.util.spec_from_file_location('absar_test.purchase_order',ROOT/'models/purchase_order.py')
+po_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(po_module)
+class DummyPurchase(po_module.PurchaseOrder):
+    def __init__(self, optional=True, state='purchase'):
+        self.name='P00123';self.partner_id=types.SimpleNamespace(name='Supplier Test');self.state=state
+        self._fields={'project_id','material_request_id'} if optional else set()
+        self.links={'project_id':types.SimpleNamespace(display_name='Project Test'),
+                    'material_request_id':types.SimpleNamespace(display_name='MR/0123')}
+    def ensure_one(self):pass
+    def __getitem__(self,name):return self.links[name]
+assert DummyPurchase()._absar_report_filename()=='P00123 - Supplier Test - Project Test - MR/0123'
+assert DummyPurchase(state='draft')._absar_report_filename()=='RFQ - P00123 - Supplier Test - Project Test - MR/0123'
+assert DummyPurchase(optional=False)._absar_report_filename()=='P00123 - Supplier Test'
+checked('Actual PO filename helper: supplier/project/MR; RFQ prefix; absent optional fields')
 assert 'state' not in module._FIELDS
 assert 'unlink(' not in (ROOT/'models/report_setup.py').read_text()
 checked('Report rebinding does not force module state')

@@ -1,9 +1,15 @@
 """Odoo integration tests; run on staging with --test-enable."""
 from odoo.tests import TransactionCase, tagged
+from odoo.tools.safe_eval import safe_eval
 
 
 @tagged('post_install', '-at_install', 'absar_reports')
 class TestAbsarReports(TransactionCase):
+    def _action(self, alias):
+        record_id = self.env['ir.config_parameter'].sudo().get_param(
+            'absar_report_suite.target.' + alias)
+        return self.env['ir.actions.report'].browse(int(record_id)).exists()
+
     def test_repeat_setup_and_action_routes(self):
         setup = self.env['absar.report.setup']
         params = self.env['ir.config_parameter'].sudo()
@@ -20,7 +26,8 @@ class TestAbsarReports(TransactionCase):
             action = self.env['ir.actions.report'].browse(int(record_id))
             self.assertTrue(action.exists())
             self.assertTrue(action.binding_model_id)
-            self.assertTrue(action.report_name.startswith('absar_report_suite.'))
+            self.assertTrue(action.report_name.startswith('absar_report_suite.') or
+                            action.report_name == 'purchase.report_purchaseorder')
 
     def test_render_purchase_sale_and_journal(self):
         partner = self.env['res.partner'].create({'name': 'ABSAR Report Test'})
@@ -34,14 +41,14 @@ class TestAbsarReports(TransactionCase):
                               ('quotation_report', so), ('proforma_report', so),
                               ('journal_report', move)]:
             html, _ = self.env['ir.actions.report']._render_qweb_html(
-                'absar_report_suite.' + alias, record.ids)
+                self._action(alias), record.ids)
             self.assertIn(b'Absar Header', html)
             self.assertIn(record.name.encode(), html)
         html, _ = self.env['ir.actions.report']._render_qweb_html(
-            'absar_report_suite.proforma_report', so.ids)
+            self._action('proforma_report'), so.ids)
         self.assertIn(b'Pro-Forma Invoice', html)
         html, _ = self.env['ir.actions.report']._render_qweb_html(
-            'absar_report_suite.journal_report', move.ids)
+            self._action('journal_report'), move.ids)
         self.assertIn(b'Printed by:', html)
         self.assertNotIn(b'Footer Image', html)
 
@@ -54,7 +61,7 @@ class TestAbsarReports(TransactionCase):
             'move_type': 'out_invoice', 'partner_id': partner.id, 'journal_id': journal.id})
         for alias in ['invoice_report', 'invoice_payment_report', 'certificate_report']:
             html, _ = self.env['ir.actions.report']._render_qweb_html(
-                'absar_report_suite.' + alias, invoice.ids)
+                self._action(alias), invoice.ids)
             self.assertIn(b'Absar Header', html)
             self.assertIn(partner.name.encode(), html)
 
@@ -98,3 +105,39 @@ class TestAbsarReports(TransactionCase):
         self.assertTrue(self.env.ref('absar_report_suite.purchase').exists())
         self.env['absar.report.setup'].apply()
         self.assertTrue(dependency.exists())
+
+    def test_legacy_po_signing_reference_and_pdf(self):
+        reports = self.env['ir.actions.report']
+        self.assertEqual(reports._get_report('purchase.report_purchaseorder'),
+                         self._action('purchase_report'))
+        partner = self.env['res.partner'].create({'name': 'Signing Filename Supplier'})
+        po = self.env['purchase.order'].create({'partner_id': partner.id})
+        filename = safe_eval(self._action('purchase_report').print_report_name, {'object': po})
+        self.assertIn(po.name, filename)
+        self.assertIn(partner.name, filename)
+        pdf, fmt = reports._render_qweb_pdf('purchase.report_purchaseorder', po.ids)
+        self.assertEqual(fmt, 'pdf')
+        self.assertTrue(pdf.startswith(b'%PDF'))
+        # Exercise the signing package builder without creating a request or sending mail.
+        if hasattr(po, '_absar_build_signing_package_pdf'):
+            package = po._absar_build_signing_package_pdf()
+            if isinstance(package, tuple):
+                package = package[0]
+            self.assertTrue(package.startswith(b'%PDF'))
+
+    def test_cleanup_of_module_owned_duplicate_and_upgrade_tracking(self):
+        metadata = self.env['ir.model.data']
+        alias = 'purchase_report'
+        old_alias = metadata.search([('module', '=', 'absar_report_suite'), ('name', '=', alias)])
+        if old_alias:
+            self.skipTest('This database uses the module action as its only canonical PO action')
+        target = self._action(alias)
+        duplicate = target.copy({'binding_model_id': False, 'report_name': 'absar_report_suite.purchase'})
+        metadata.create({'module': 'absar_report_suite', 'name': alias,
+                         'model': 'ir.actions.report', 'res_id': duplicate.id, 'noupdate': False})
+        self.env['absar.report.setup'].apply()
+        self.assertFalse(duplicate.exists())
+        self.assertTrue(target.exists())
+        self.assertEqual(self._action(alias), target)
+        self.env['absar.report.setup'].apply()
+        self.assertFalse(self.env.ref('absar_report_suite.' + alias, raise_if_not_found=False))
