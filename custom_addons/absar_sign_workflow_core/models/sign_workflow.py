@@ -1,7 +1,8 @@
 import base64
 
 from odoo import Command, api, fields, models, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import AccessError, ValidationError, UserError
+from ..tools.document_names import signing_title
 
 
 class AbsarSignWorkflow(models.Model):
@@ -386,7 +387,7 @@ class AbsarSignWorkflowService(models.AbstractModel):
             "res_id": record.id,
         })
         template = self.env["sign.template"].create({
-            "name": f"{document_label} - {filename[:-4]}",
+            "name": signing_title(record._name, document_label, filename[:-4]),
             "attachment_id": attachment.id,
             "absar_workflow_id": workflow.id,
             "absar_source_model": record._name,
@@ -399,6 +400,34 @@ class AbsarSignWorkflowService(models.AbstractModel):
             "total": len(steps), "role": first.name
         }
         return template, workflow, status
+
+    @api.model
+    def remove_duplicate_po_title_prefixes(self):
+        """Fix existing unsigned PO titles without changing signed documents."""
+        if not self.env.su and not self.env.user.has_group('base.group_system'):
+            raise AccessError(_('Only Settings administrators can update signing titles.'))
+        if 'purchase.order' not in self.env:
+            return True
+        requests = self.env['sign.request'].sudo()
+        templates = self.env['sign.template'].sudo().search([
+            ('absar_source_model', '=', 'purchase.order'), ('name', '=like', 'PO - %')])
+        for template in templates:
+            po = self.env['purchase.order'].sudo().browse(template.absar_source_id).exists()
+            if not po or not template.name.startswith('PO - ' + po.name):
+                continue
+            linked = requests.search([('template_id', '=', template.id)])
+            if any(request.state == 'signed' for request in linked):
+                continue
+            old_name = template.name
+            new_name = old_name[5:]
+            template.write({'name': new_name})
+            attachment = template.attachment_id
+            if attachment and attachment.name == old_name + '.pdf':
+                attachment.write({'name': new_name + '.pdf'})
+            for request in linked:
+                if request.state not in ('signed', 'canceled', 'refused') and request.reference == old_name:
+                    request.write({'reference': new_name})
+        return True
 
     @api.model
     def sync_record(self, record, skip_context_key):

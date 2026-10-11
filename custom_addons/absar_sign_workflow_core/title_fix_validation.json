@@ -1,0 +1,13 @@
+{
+  "result": "PASS",
+  "checks": [
+    "Python/XML syntax",
+    "PO title without extra prefix",
+    "Other document titles unchanged",
+    "Unsigned template/attachment/request renamed",
+    "Signed and unrelated titles preserved",
+    "Repeat upgrade",
+    "Core without purchase installed"
+  ],
+  "live_odoo_tested": false
+}
