@@ -56,3 +56,9 @@ Only the journal template changes; existing report bindings, cleanup safeguards,
 PO number on the left; Project: followed by the project name on the right. Untitled supplier card with supplier/address/VAT, vendor reference, MR and order date. White order-item card, thin horizontal separators, unframed heading, readable totals and existing terms. Original Projects Director/Chief Executive Officer labels and company stamp retained. RFQ/cancelled status, revisions, shipping addresses, discounts, packaging, sections and subtotals retained. Existing tax calculations, report bindings, PO filenames and journal redesign are preserved.
 
 Replace the addon and upgrade ABSAR Unified Reports on staging. Print PO 237 and a longer PO, verify totals/discounts/notes, then test Send to Sign and check placeholder placement after the report redesign. The sample fits one page; live Odoo pagination can vary with content and PDF fonts. Live Odoo installation and rendering were not tested.
+
+## Invoice cards — 18.0.2.0.6
+
+Existing bilingual layout retained: centered title, customer left, QR right, English/value/Arabic detail rows and original item columns. Navy text and white rounded cards replace grey/purple fills and inner grids. No added card headings. Existing Invoice and Invoice with Payment report routes retained. QR generation, calculation directives, sections/subtotals, currencies and payment values are unchanged. PO and journal designs retained.
+
+Replace absar_report_suite and upgrade ABSAR Unified Reports on staging. Print both versions of INVAB/2026/068; check QR, bilingual alignment, negative down payment, totals and payment visibility. Check longer invoices for pagination. Local checks passed; live Odoo rendering and installation have not been tested.

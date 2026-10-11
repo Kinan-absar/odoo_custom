@@ -71,500 +71,43 @@
         <t t-set="company" t-value="o.company_id.sudo()"/><t t-set="layout_document_title" t-value="False"/><t t-call="absar_report_suite.business_layout">
 
        <style>
-    /* =========================================================
-       ABSAR EXECUTIVE INVOICE
-       Premium / bold / clean / print-safe
-    ========================================================== */
-
-    .absar-invoice-page {
-        color:#23252a;
-        font-size:13px;
-        line-height:1.5;
-    }
-
-    .absar-invoice-page * {
-        box-sizing:border-box;
-    }
-
-
-    /* =========================================================
-       TITLE - STRONG EXECUTIVE BAND
-    ========================================================== */
-
-    .absar-invoice-page .absar-title-wrap {
-        margin:6px 0 18px 0;
-        padding:16px 18px;
-
-        background:#4f3548;
-
-        border-left:7px solid #8d6682;
-        border-radius:10px;
-    }
-
-    .absar-invoice-page .absar-title {
-        margin:0;
-
-        color:#000000;
-
-        font-size:29px;
-        line-height:1.15;
-
-        font-weight:800;
-        letter-spacing:-0.2px;
-    }
-
-    .absar-invoice-page .absar-title .absar-ar-title {
-        color:#f2eaf0;
-
-        font-size:24px;
-        font-weight:600;
-    }
-
-
-    /* =========================================================
-       TOP CUSTOMER / QR AREA
-    ========================================================== */
-
-    .absar-invoice-page .absar-top-row {
-        margin-top:12px;
-        margin-bottom:18px;
-    }
-
-    .absar-invoice-page .absar-card {
-        min-height:145px;
-
-        padding:15px 17px;
-
-        background:#ffffff;
-
-        border:1px solid #dde0e4;
-        border-radius:10px;
-
-        border-left:5px solid #714B67;
-    }
-
-    .absar-invoice-page .absar-card-title {
-        margin-bottom:8px;
-
-        color:#714B67;
-
-        font-size:13px;
-        font-weight:800;
-
-        text-transform:uppercase;
-        letter-spacing:.3px;
-    }
-
-    .absar-invoice-page .absar-customer-name {
-        margin-bottom:5px;
-
-        color:#202226;
-
-        font-size:17px;
-        font-weight:800;
-    }
-
-
-    /* =========================================================
-       QR - MAKE IT LOOK DELIBERATE
-    ========================================================== */
-
-    .absar-invoice-page .absar-qr-wrap {
-        text-align:center;
-        padding-top:4px;
-    }
-
-    .absar-invoice-page .absar-qr-img {
-        display:inline-block;
-
-        width:150px;
-        height:150px;
-
-        padding:8px;
-
-        background:#fff;
-
-        border:1px solid #714B67;
-        border-radius:10px;
-    }
-
-    .absar-invoice-page .absar-qr-label {
-        margin-top:7px;
-
-        color:#585b61;
-
-        font-size:10.5px;
-        font-weight:700;
-
-        letter-spacing:.2px;
-    }
-
-
-    /* =========================================================
-       INVOICE INFO
-       No more "form-looking" underlines
-    ========================================================== */
-
-    .absar-invoice-page .absar-info-wrap {
-        margin-top:10px !important;
-        margin-bottom:20px !important;
-
-        padding:0;
-
-        background:#f5f3f5;
-
-        border:1px solid #ded8dd;
-        border-radius:10px;
-
-        overflow:hidden;
-    }
-
-    .absar-invoice-page table.inv-info,
-    .absar-invoice-page table.inv-info * {
-        box-shadow:none !important;
-    }
-
-    .absar-invoice-page .inv-info {
-        width:100%;
-        border-collapse:collapse !important;
-    }
-
-    .absar-invoice-page .inv-info tr {
-        border-bottom:1px solid #dddfe3;
-    }
-
-    .absar-invoice-page .inv-info tr:last-child {
-        border-bottom:none;
-    }
-
-    .absar-invoice-page .inv-info td {
-        padding:10px 12px !important;
-        vertical-align:middle;
-
-        border:none !important;
-    }
-
-    .absar-invoice-page .inv-info .label-left {
-        width:31%;
-
-        text-align:left !important;
-
-        color:#5e6268;
-
-        font-size:12.5px;
-        font-weight:700;
-    }
-
-    .absar-invoice-page .inv-info .value {
-        width:38%;
-
-        text-align:center;
-
-        background:#ffffff !important;
-
-        color:#212327;
-
-        font-size:14px;
-        font-weight:800;
-
-        border-left:1px solid #dedfe3 !important;
-        border-right:1px solid #dedfe3 !important;
-        border-bottom:none !important;
-    }
-
-    .absar-invoice-page .inv-info .label-right {
-        width:31%;
-
-        text-align:right !important;
-        direction:rtl !important;
-
-        color:#5e6268;
-
-        font-size:12.5px;
-        font-weight:700;
-    }
-
-
-    /* =========================================================
-       PRODUCT TABLE - THE MAIN WOW PART
-    ========================================================== */
-
-    .absar-invoice-page table[name='invoice_line_table'] {
-        width:100%;
-
-        margin-top:8px;
-        margin-bottom:18px;
-
-        border-collapse:collapse !important;
-        border-spacing:0 !important;
-
-        border:none !important;
-
-        font-size:11.7px !important;
-        line-height:1.4;
-    }
-
-
-    /* TABLE HEADER */
-
-    .absar-invoice-page
-    table[name='invoice_line_table'] thead {
-        display:table-header-group;
-    }
-
-    .absar-invoice-page
-    table[name='invoice_line_table'] thead th {
-        padding:10px 6px !important;
-
-        background:#343239 !important;
-
-        color:#ffffff !important;
-
-        border:none !important;
-        border-right:1px solid #504d55 !important;
-
-        font-size:11px !important;
-        line-height:1.35;
-
-        font-weight:700 !important;
-
-        vertical-align:middle;
-    }
-
-    .absar-invoice-page
-    table[name='invoice_line_table'] thead th:last-child {
-        border-right:none !important;
-    }
-
-    .absar-invoice-page
-    table[name='invoice_line_table'] thead th strong {
-        color:#ffffff !important;
-
-        font-size:11.2px !important;
-        font-weight:800 !important;
-    }
-
-    .absar-invoice-page
-    table[name='invoice_line_table'] thead th span {
-        color:#d9c3d2 !important;
-
-        font-size:10.8px !important;
-        font-weight:600;
-    }
-
-
-    /* NORMAL ROWS */
-
-    .absar-invoice-page
-    table[name='invoice_line_table'] tbody td {
-        padding:9px 6px !important;
-
-        color:#292b30;
-
-        font-size:11.8px !important;
-        line-height:1.45;
-
-        vertical-align:top;
-
-        border:none !important;
-        border-bottom:1px solid #e3e5e8 !important;
-    }
-
-    .absar-invoice-page
-    table[name='invoice_line_table'] tbody tr:nth-child(even) td {
-        background:#fbfbfc;
-    }
-
-    .absar-invoice-page
-    table[name='invoice_line_table'] tbody tr {
-        page-break-inside:avoid;
-    }
-
-
-    /* DESCRIPTION COLUMN */
-
-    .absar-invoice-page
-    table[name='invoice_line_table'] tbody td:first-child {
-        font-weight:600;
-    }
-
-
-    /* SECTION ROW */
-
-    .absar-invoice-page
-    table[name='invoice_line_table']
-    tr.absar-section-row td {
-        padding:9px 8px !important;
-
-        background:#ece5ea !important;
-
-        color:#4b3144 !important;
-
-        font-size:12.5px !important;
-        font-weight:800;
-
-        border-top:2px solid #714B67 !important;
-        border-bottom:1px solid #d9cdd6 !important;
-    }
-
-
-    /* NOTE ROW */
-
-    .absar-invoice-page
-    table[name='invoice_line_table']
-    tr.absar-note-row td {
-        padding:8px !important;
-
-        background:#f7f7f8 !important;
-
-        color:#666a70 !important;
-
-        font-size:11.5px !important;
-
-        font-style:italic;
-    }
-
-
-    /* SECTION SUBTOTAL */
-
-    .absar-invoice-page
-    table[name='invoice_line_table']
-    tr.is-subtotal td {
-        padding:8px !important;
-
-        background:#f2f0f2 !important;
-
-        color:#3f4146;
-
-        font-size:12px !important;
-        font-weight:800;
-
-        border-bottom:2px solid #d2c8cf !important;
-    }
-
-
-    /* =========================================================
-       TOTALS - STRONG FINANCIAL ENDING
-    ========================================================== */
-
-    .absar-invoice-page .absar-total-wrap {
-        margin-top:15px !important;
-    }
-
-    .absar-invoice-page .absar-total-table {
-        width:100%;
-
-        border-collapse:separate !important;
-        border-spacing:0;
-
-        border:1px solid #d7d9dd;
-
-        border-radius:10px;
-
-        overflow:hidden;
-
-        background:#ffffff;
-
-        font-size:12.5px !important;
-    }
-
-    .absar-invoice-page .absar-total-table td {
-        padding:9px 12px !important;
-
-        border-bottom:1px solid #e5e6e8 !important;
-
-        font-size:12.5px !important;
-    }
-
-    .absar-invoice-page .absar-total-table tr:last-child td {
-        border-bottom:none !important;
-    }
-
-
-    /* GRAND TOTAL */
-
-    .absar-invoice-page .absar-grand-total td {
-        padding-top:13px !important;
-        padding-bottom:13px !important;
-
-        background:#4f3548 !important;
-
-        color:#ffffff !important;
-
-        border-color:#4f3548 !important;
-
-        font-size:16px !important;
-        font-weight:800 !important;
-    }
-
-    .absar-invoice-page .absar-grand-total strong,
-    .absar-invoice-page .absar-grand-total span {
-        color:#ffffff !important;
-        font-size:16px !important;
-        font-weight:800 !important;
-    }
-
-
-    /* =========================================================
-       MULTI CURRENCY
-    ========================================================== */
-
-    .absar-invoice-page .absar-multi-currency {
-        margin-top:14px !important;
-
-        padding:11px 12px !important;
-
-        background:#f5f3f5;
-
-        border:1px solid #ded8dd !important;
-        border-radius:8px;
-
-        font-size:11.5px;
-    }
-
-
-    /* =========================================================
-       NOTES / TERMS
-    ========================================================== */
-
-    .absar-invoice-page .absar-note-block {
-        margin-top:12px;
-
-        padding:12px 14px;
-
-        border-left:4px solid #714B67;
-
-        background:#f8f7f8;
-
-        font-size:12px;
-        line-height:1.55;
-    }
-
-    .absar-invoice-page .absar-note-block strong:first-child {
-        color:#4f3548;
-
-        font-size:12.5px;
-        font-weight:800;
-    }
-
-
-    /* =========================================================
-       RTL / PRINT
-    ========================================================== */
-
-    .absar-invoice-page [dir='rtl'] {
-        text-align:right;
-    }
-
-    .absar-invoice-page table thead {
-        display:table-header-group;
-    }
-
-    .absar-invoice-page #total {
-        page-break-inside:avoid;
-    }
+.absar-invoice-cards {font-family:Arial,'Cairo',sans-serif!important;color:#182f43!important;font-size:13px!important;line-height:1.45;}
+.absar-invoice-cards .absar-title-wrap {margin:8px 0 18px!important;text-align:center;}
+.absar-invoice-cards .absar-title {color:#182f43!important;font-size:26px!important;font-weight:700!important;border:0!important;background:none!important;margin:0!important;padding:0!important;}
+.absar-invoice-cards .absar-card,.absar-invoice-cards .inv-card {background:#fff!important;border:1px solid #e0e7eb!important;border-radius:7px!important;padding:12px 14px!important;box-shadow:none!important;}
+.absar-invoice-cards .absar-card-title {font-size:12px!important;color:#627782!important;font-weight:600!important;border:0!important;background:none!important;padding:0!important;margin-bottom:5px;}
+.absar-invoice-cards .absar-customer-name {font-size:17px!important;color:#182f43!important;font-weight:700!important;margin-bottom:5px;}
+.absar-invoice-cards .absar-top-row {margin-bottom:14px!important;page-break-inside:avoid;}
+.absar-invoice-cards .absar-top-row .col-6 {padding-left:6px!important;padding-right:6px!important;}
+.absar-invoice-cards .absar-qr-wrap {text-align:center!important;}
+.absar-invoice-cards .absar-qr-img {width:140px;height:140px;border:0!important;padding:0!important;background:#fff!important;}
+.absar-invoice-cards .absar-info-wrap {display:block!important;margin:0 0 14px!important;font-size:13px!important;page-break-inside:avoid;}
+.absar-invoice-cards .inv-info {width:100%;table-layout:fixed;border-collapse:collapse;}
+.absar-invoice-cards .inv-info td {padding:7px 6px!important;vertical-align:middle;}
+.absar-invoice-cards .inv-info .label-left {width:31%;text-align:left!important;color:#627782!important;}
+.absar-invoice-cards .inv-info .label-right {width:31%;text-align:right!important;color:#627782!important;direction:rtl;}
+.absar-invoice-cards .inv-info .value {width:38%;text-align:center!important;font-weight:700!important;color:#182f43!important;}
+.absar-invoice-cards .inv-lines-card {margin-bottom:14px;}
+.absar-invoice-cards table[name="invoice_line_table"] {width:100%;table-layout:fixed;border-collapse:collapse;margin:0!important;font-size:12px!important;}
+.absar-invoice-cards table[name="invoice_line_table"] th {font-size:11px!important;font-weight:700!important;color:#182f43!important;padding:7px 4px!important;vertical-align:top;}
+.absar-invoice-cards table[name="invoice_line_table"] td {font-size:12px!important;color:#182f43!important;padding:6px 4px!important;vertical-align:top;overflow-wrap:break-word;word-wrap:break-word;}
+.absar-invoice-cards table[name="invoice_line_table"] thead {display:table-header-group;}
+.absar-invoice-cards table[name="invoice_line_table"] tr {page-break-inside:avoid;}
+.absar-invoice-cards .absar-section-row td {font-weight:700!important;}
+.absar-invoice-cards .absar-note-row td {font-style:italic;}
+.absar-invoice-cards .absar-total-wrap {margin-top:0!important;margin-bottom:12px!important;page-break-inside:avoid;}
+.absar-invoice-cards .absar-total-table {width:100%;table-layout:auto;border-collapse:collapse;margin:0!important;}
+.absar-invoice-cards .absar-total-table td {padding:6px 4px!important;font-size:13px!important;color:#182f43!important;}
+.absar-invoice-cards .absar-total-table td:last-child {white-space:nowrap!important;text-align:right!important;}
+.absar-invoice-cards .absar-grand-total td,.absar-invoice-cards .absar-grand-total strong,.absar-invoice-cards .absar-grand-total span {font-size:16px!important;font-weight:700!important;color:#182f43!important;}
+.absar-invoice-cards .inv-payments {margin-bottom:14px;page-break-inside:avoid;}
+.absar-invoice-cards .inv-payments table {width:100%;border-collapse:collapse;}
+.absar-invoice-cards .inv-payments td {padding:6px 4px!important;color:#182f43!important;font-size:13px!important;}
+.absar-invoice-cards .inv-payments td:last-child {text-align:right!important;white-space:nowrap;}
+.absar-invoice-cards .absar-multi-currency {white-space:normal!important;background:#fff!important;border:1px solid #e0e7eb!important;border-radius:7px;padding:12px;margin:12px 0!important;}
+.absar-invoice-cards .absar-note-block {background:#fff!important;border:1px solid #e0e7eb!important;border-radius:7px;padding:12px 14px!important;color:#182f43!important;font-size:12px!important;}
 </style>
-               <!-- ========================= -->
+               <div class="page absar-invoice-cards"><!-- ========================= -->
     <!--  CENTER TITLE (Dynamic)   -->
     <!-- ========================= -->
     <div class="text-center mt-3 mb-3 absar-title-wrap absar-invoice-page">
@@ -660,44 +203,42 @@
     </div>
 
 
-            <div class="page mb-5 absar-invoice-page">
+            <div class="absar-invoice-page">
 <!-- INVOICE DETAILS: clean design (only underline under values) -->
-<div class="row mt-4 absar-info-wrap" style="font-size:12px; line-height:1.6;">
+<div class="absar-info-wrap inv-card">
 
 
-  <table class="inv-info">
-    <tr>
-      <td class="label-left">Invoice No</td>
-      <td class="value"><span t-if="o.name != '/'" t-field="o.name"/></td>
-      <td class="label-right">رقم الفاتورة</td>
+  <table class="inv-info" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+    <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <td class="label-left" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Invoice No</td>
+      <td class="value" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-if="o.name != '/'" t-field="o.name"/></td>
+      <td class="label-right" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">رقم الفاتورة</td>
     </tr>
-    <tr>
-      <td class="label-left">Invoice Date</td>
-      <td class="value"><span t-field="o.invoice_date"/></td>
-      <td class="label-right">تاريخ الفاتورة</td>
+    <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <td class="label-left" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Invoice Date</td>
+      <td class="value" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.invoice_date"/></td>
+      <td class="label-right" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">تاريخ الفاتورة</td>
     </tr>
-    <tr>
-      <td class="label-left">Due Date</td>
-      <td class="value"><span t-field="o.invoice_date_due"/></td>
-      <td class="label-right">تاريخ الاستحقاق</td>
+    <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <td class="label-left" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Due Date</td>
+      <td class="value" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.invoice_date_due"/></td>
+      <td class="label-right" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">تاريخ الاستحقاق</td>
     </tr>
-    <tr t-if="o.invoice_origin">
-      <td class="label-left">Source</td>
-      <td class="value"><span t-field="o.invoice_origin"/></td>
-      <td class="label-right">المصدر</td>
+    <tr t-if="o.invoice_origin" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <td class="label-left" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Source</td>
+      <td class="value" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.invoice_origin"/></td>
+      <td class="label-right" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">المصدر</td>
     </tr>
-    <tr t-if="o.payment_reference">
-      <td class="label-left">Payment Reference</td>
-      <td class="value"><span t-field="o.payment_reference"/></td>
-      <td class="label-right">مرجع الدفع</td>
+    <tr t-if="o.payment_reference" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <td class="label-left" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Payment Reference</td>
+      <td class="value" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.payment_reference"/></td>
+      <td class="label-right" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">مرجع الدفع</td>
     </tr>
   </table>
 </div>
 
 
   <!-- Add small space since address_layout removed -->
-  <div style="margin-top: 25px;"/>
-
   <!-- ========================= -->
  <!-- ========================= -->
 <!-- ========================= -->
@@ -706,40 +247,40 @@
 <t t-set="display_discount" t-value="any(l.discount for l in o.invoice_line_ids)"/>
 <t t-set="lines" t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
 
-<table class="table table-sm" name="invoice_line_table">
+<div class="inv-card inv-lines-card"><table class="table table-sm" name="invoice_line_table" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
 
   <!-- ===== TABLE HEADER ===== -->
-  <thead>
-    <tr>
-      <th class="text-start" style="width:30%;">
+  <thead style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+    <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <th class="text-start" style="width:30%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Description</strong><br/><span>الوصف</span>
       </th>
-      <th class="text-end" style="width:8%;">
+      <th class="text-end" style="width:8%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Quantity</strong><br/><span>الكمية</span>
       </th>
-      <th class="text-end" style="width:12%;">
+      <th class="text-end" style="width:12%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Unit Price</strong><br/><span>سعر الوحدة</span>
       </th>
-      <th t-if="display_discount" class="text-end" style="width:7%;">
+      <th t-if="display_discount" class="text-end" style="width:7%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
   <strong>Disc.%</strong><br/>
   <span>خصم %</span>
 </th>
 
-      <th class="text-end" style="width:13%;">
+      <th class="text-end" style="width:13%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Amount</strong><br/><span>المبلغ قبل الضريبة</span>
       </th>
-      <th class="text-end" style="width:12%;">
+      <th class="text-end" style="width:12%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Taxes 15%</strong><br/><span>الضرائب</span>
       </th>
 
-      <th class="text-end" style="width:15%;">
+      <th class="text-end" style="width:15%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Total Price</strong><br/><span>المبلغ شامل الضريبة</span>
       </th>
     </tr>
   </thead>
 
   <!-- ===== TABLE BODY ===== -->
-  <tbody class="invoice_tbody">
+  <tbody class="invoice_tbody" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
     <!-- Track subtotals -->
     <t t-set="current_subtotal" t-value="0"/>
     <t t-set="current_section" t-value="None"/>
@@ -750,29 +291,29 @@
       <!-- Regular invoice lines -->
       <t t-if="line.display_type not in ('line_note', 'line_section')">
         <t t-set="current_subtotal" t-value="current_subtotal + (line.price_subtotal or 0.0)"/>
-        <tr>
-          <td class="text-start">
+        <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td class="text-start" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <t t-set="line_name" t-value="line.with_context(lang=o.partner_id.lang).product_id.display_name               if line.product_id and line.name in (                 line.with_context(lang=line.env['res.lang']._get_code('ar_001')).product_id.display_name,                 line.with_context(lang='en_US').product_id.display_name               ) else line.name"/>
             <span t-out="line_name" t-options="{'widget': 'text'}"/>
           </td>
-          <td class="text-end"><span t-field="line.quantity"/></td>
-          <td class="text-end"><span t-field="line.price_unit"/></td>
-          <td t-if="display_discount" class="text-end">
+          <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.quantity"/></td>
+          <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.price_unit"/></td>
+          <td t-if="display_discount" class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
   <span t-field="line.discount"/>
 </td>
-          <td class="text-end"><span t-field="line.price_subtotal"/></td>
-          <td class="text-end">
+          <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.price_subtotal"/></td>
+          <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
   <span t-out="sum(line.tax_ids.compute_all(line.price_unit, line.currency_id, line.quantity, product=line.product_id, partner=line.partner_id)['taxes'][i]['amount'] for i in range(len(line.tax_ids)))" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
 </td>
 
-          <td class="text-end"><span t-field="line.price_total"/></td>
+          <td class="text-end" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;"><span t-field="line.price_total"/></td>
         </tr>
       </t>
 
       <!-- Section header -->
       <t t-if="line.display_type == 'line_section'">
-        <tr class="absar-section-row">
-          <td colspan="99">
+        <tr class="absar-section-row" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td colspan="99" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.name" t-options="{'widget': 'text'}"/>
           </td>
         </tr>
@@ -782,8 +323,8 @@
 
       <!-- Note lines -->
       <t t-if="line.display_type == 'line_note'">
-        <tr class="absar-note-row">
-          <td colspan="99">
+        <tr class="absar-note-row" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td colspan="99" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <span t-field="line.name" t-options="{'widget': 'text'}"/>
           </td>
         </tr>
@@ -791,8 +332,8 @@
 
       <!-- Subtotal (before VAT) -->
       <t t-if="current_section and (line_last or lines[line_index+1].display_type == 'line_section')">
-        <tr class="is-subtotal text-end" style="background-color:#fafafa;">
-          <td colspan="99">
+        <tr class="is-subtotal text-end" style="background-color:#fafafa;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td colspan="99" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
             <strong>Subtotal (Before VAT) / الإجمالي الفرعي (قبل الضريبة)</strong>
             <span t-out="current_subtotal" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
           </td>
@@ -807,15 +348,15 @@
 
 
 
-  <!-- =================== -->
+  </div><!-- =================== -->
   <!--  Totals / Summary   -->
   <!-- =================== -->
   <div class="row justify-content-end mt-2 absar-total-wrap">
     <div class="col-6">
-      <table class="table table-sm table-borderless text-end absar-total-table" style="page-break-inside: avoid;">
-        <tr>
-          <td><strong>Subtotal / الإجمالي الفرعي</strong></td>
-          <td><span t-field="o.amount_untaxed"/></td>
+      <div class="inv-card"><table class="table table-sm table-borderless text-end absar-total-table" style="page-break-inside: avoid;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+        <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Subtotal / الإجمالي الفرعي</strong></td>
+          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.amount_untaxed"/></td>
         </tr>
 
         <t t-set="tax_totals" t-value="o.tax_totals"/>
@@ -823,11 +364,11 @@
         <t t-foreach="tax_totals['subtotals']" t-as="subtotal">
          <t t-foreach="subtotal['tax_groups']" t-as="tax_group">
           <t t-if="tax_group['group_name'] != 'Retention'">
-            <tr>
-              <td>
+            <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+              <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
                 <strong><t t-esc="tax_group['group_name']"/></strong>
               </td>
-              <td>
+              <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
                 <span t-out="tax_group['tax_amount_currency']" t-options="{'widget': 'monetary', 'display_currency': currency}"/>
               </td>
             </tr>
@@ -835,20 +376,18 @@
         </t>
         </t>
 
-        <tr class="absar-grand-total">
-          <td><strong>Total / المجموع</strong></td>
-          <td><span t-field="o.amount_total"/></td>
+        <tr class="absar-grand-total" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Total / المجموع</strong></td>
+          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.amount_total"/></td>
         </tr>
-        <t t-if="print_with_payments and o.payment_state != 'invoicing_legacy'">
-<t t-set="payments_vals" t-value="(o.sudo().invoice_payments_widget or {}).get('content', [])"/>
-<t t-foreach="payments_vals" t-as="payment">
-<tr t-if="not payment.get('is_exchange')"><td><strong>Paid on / دفعة بتاريخ</strong><br/><span t-out="payment['date']" t-options="{'widget': 'date'}"/></td><td><span t-out="payment['amount']" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td></tr>
-</t><tr><td><strong>Amount Due / المبلغ المستحق</strong></td><td><strong t-field="o.amount_residual"/></td></tr></t>
-      </table>
-    </div>
+        </table>
+    </div></div>
   </div>
 
-  <!-- =================== -->
+  <div class="inv-card inv-payments" t-if="print_with_payments and o.payment_state != 'invoicing_legacy'"><table style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><t t-set="payments_vals" t-value="(o.sudo().invoice_payments_widget or {}).get('content', [])"/>
+<t t-foreach="payments_vals" t-as="payment">
+<tr t-if="not payment.get('is_exchange')" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Paid on / دفعة بتاريخ</strong><br/><span t-out="payment['date']" t-options="{'widget': 'date'}"/></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-out="payment['amount']" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td></tr>
+</t><tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Amount Due / المبلغ المستحق</strong></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong t-field="o.amount_residual"/></td></tr></table></div><!-- =================== -->
   <!--  Multi-Currency Row -->
   <!-- =================== -->
   <div t-if="o.currency_id != o.company_id.currency_id" class="row clearfix ms-auto text-nowrap border-top border-bottom p-2 mt-2 absar-multi-currency">
@@ -914,7 +453,7 @@
 
 </div>
 
-        </t>
+        </div></t>
     </t>
     </field>
   </record>

@@ -1,11 +1,11 @@
 {
-  "version": "18.0.2.0.5",
+  "version": "18.0.2.0.6",
   "result": "PASS",
   "checks": [
-    "Existing suite validator",
-    "PO field and monetary options preserved",
-    "Section subtotal/discount/packaging/tax instructions preserved",
-    "Other report XML records unchanged",
+    "Suite validator",
+    "Invoice business directives unchanged",
+    "Other report XML unchanged",
+    "Payment flags retained",
     "QWeb field placement",
     "ZIP integrity"
   ],
