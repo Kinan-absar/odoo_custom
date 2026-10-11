@@ -17,8 +17,7 @@ class TestAbsarReports(TransactionCase):
         before = params.get_param('absar_report_suite.original_report_actions')
         routes = {r: params.get_param('absar_report_suite.target.' + r) for r in [
             'invoice_report', 'invoice_payment_report', 'purchase_report', 'rfq_report',
-            'quotation_report', 'proforma_report', 'journal_report',
-            'certificate_report', 'subcontract_report']}
+            'quotation_report', 'proforma_report', 'journal_report']}
         setup.apply()
         self.assertEqual(before, params.get_param('absar_report_suite.original_report_actions'))
         for alias, record_id in routes.items():
@@ -44,7 +43,7 @@ class TestAbsarReports(TransactionCase):
             ('company_id', '=', self.env.company.id), ('type', '=', 'general')], limit=1)
         self.assertTrue(journal, 'Test company needs a general journal')
         move = self.env['account.move'].create({'journal_id': journal.id})
-        for alias, record in [('purchase_report', po), ('rfq_report', po), ('subcontract_report', po),
+        for alias, record in [('purchase_report', po), ('rfq_report', po),
                               ('quotation_report', so), ('proforma_report', so),
                               ('journal_report', move)]:
             html, _ = self.env['ir.actions.report']._render_qweb_html(
@@ -64,6 +63,8 @@ class TestAbsarReports(TransactionCase):
         self.assertIn(project.name.encode(), sale_html)
         self.assertIn(b'ABSAR Report Project', sale_html)
         self.assertIn(b'absar-sale-document', sale_html)
+        self.assertIn(b'o_ignore_layout_styling absar-unified-table', sale_html)
+        self.assertNotIn(b'table table-sm o_main_table', sale_html)
         self.assertIn(b'o_ignore_layout_styling', sale_html)
         self.assertIn(b'border-bottom:1px solid #177b83', sale_html)
         html, _ = self.env['ir.actions.report']._render_qweb_html(
@@ -74,18 +75,37 @@ class TestAbsarReports(TransactionCase):
         self.assertIn(b'Printed by:', html)
         self.assertNotIn(b'Footer Image', html)
 
-    def test_render_invoice_payment_and_certificate(self):
+    def test_render_invoice_and_invoice_payment(self):
         partner = self.env['res.partner'].create({'name': 'ABSAR Invoice Test'})
         journal = self.env['account.journal'].search([
             ('company_id', '=', self.env.company.id), ('type', '=', 'sale')], limit=1)
         self.assertTrue(journal, 'Test company needs a sales journal')
         invoice = self.env['account.move'].create({
             'move_type': 'out_invoice', 'partner_id': partner.id, 'journal_id': journal.id})
-        for alias in ['invoice_report', 'invoice_payment_report', 'certificate_report']:
+        for alias in ['invoice_report', 'invoice_payment_report']:
             html, _ = self.env['ir.actions.report']._render_qweb_html(
                 self._action(alias), invoice.ids)
             self.assertIn(b'Absar Header', html)
             self.assertIn(partner.name.encode(), html)
+
+
+    def test_obsolete_subcontract_reports_have_no_print_actions(self):
+        params = self.env['ir.config_parameter'].sudo()
+        actions = self.env['ir.actions.report'].sudo()
+        for alias in ['certificate_report', 'subcontract_report']:
+            self.assertFalse(params.get_param('absar_report_suite.target.' + alias))
+        for model, report_names in [
+            ('purchase.order', ['absar_report_suite.subcontract', 'absar.subcontract']),
+            ('account.move', ['absar_report_suite.certificate', 'account.report_invoice_copy_1_copy_1_copy_3']),
+        ]:
+            for report_name in report_names:
+                self.assertFalse(actions.search([('model', '=', model), ('report_name', '=', report_name),
+                                                 ('binding_model_id', '!=', False)]))
+        views = self.env['ir.ui.view'].sudo().with_context(active_test=False)
+        retired_keys = ['absar_report_suite.subcontract', 'absar_report_suite.subcontract_document',
+                        'absar_report_suite.subcontract_tax_totals', 'absar_report_suite.certificate',
+                        'absar_report_suite.certificate_bilingual']
+        self.assertFalse(views.search([('key', 'in', retired_keys)]))
 
     def test_cleanup_removes_unused_and_preserves_references(self):
         views = self.env['ir.ui.view']

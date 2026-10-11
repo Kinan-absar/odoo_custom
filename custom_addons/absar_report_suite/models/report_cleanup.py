@@ -27,7 +27,8 @@ def cleanup_reports(env, config, keep, duplicate_action_ids=()):
     candidates |= {('ir.actions.report', record_id) for record_id in duplicate_action_ids}
     protected = {('ir.actions.report', record.id) for record in keep}
     protected |= {('ir.ui.view', view.id) for view in views
-                  if view.key and view.key.startswith('absar_report_suite.')}
+                  if view.key and view.key.startswith('absar_report_suite.')
+                  and view.key not in retired_keys}
     targets = {}
     for view in views:
         node = ('ir.ui.view', view.id)
@@ -108,7 +109,7 @@ def cleanup_reports(env, config, keep, duplicate_action_ids=()):
     doomed_views = views.browse(sorted(i for model, i in removable if model == 'ir.ui.view'))
     doomed_reports = reports.browse(sorted(i for model, i in removable if model == 'ir.actions.report'))
     summary = {
-        'version': '18.0.2.0.31', 'date': str(fields.Datetime.now()),
+        'version': '18.0.2.0.32', 'date': str(fields.Datetime.now()),
         'deleted_actions': doomed_reports.read(['name', 'model', 'report_name']),
         'deleted_views': doomed_views.read(['name', 'key']),
         'preserved': [{'model': model, 'id': record_id, 'reason': reason}

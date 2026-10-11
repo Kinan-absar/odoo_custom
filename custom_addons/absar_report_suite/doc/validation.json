@@ -1,13 +1,13 @@
 {
-  "version": "18.0.2.0.31",
-  "base_version": "18.0.2.0.30",
+  "version": "18.0.2.0.32",
+  "base_version": "18.0.2.0.31",
   "result": "PASS",
   "checks": [
     "Python syntax",
     "Manifest data order and unique XML record identities",
     "QWeb calls, expression syntax and portable assets",
     "Journal footer, purchase routing and three image files",
-    "All routed reports include the distinct Odoo RFQ action; rounded cards, open teal-rule tables, visible invoice totals, actual construction project relation",
+    "All routed reports include the distinct Odoo RFQ action; sales tables opt out of Bootstrap borders; retired subcontract reports are absent",
     "Actual setup: fresh=True; duplicate upgrade=False; repeat setup and filenames",
     "Actual setup: fresh=False; duplicate upgrade=False; repeat setup and filenames",
     "Actual setup: fresh=False; duplicate upgrade=True; repeat setup and filenames",
@@ -19,5 +19,6 @@
   ],
   "live_odoo_tested": false,
   "staging_action_audit": "Read-only audit of 102 Odoo report actions; distinct Request for Quotation action is routed through the suite.",
-  "staging_sales_order_field_audit": "S00480 was inspected read-only; the real construction project field is construction_project_id, populated as Bathroom repair and maintenance Exit 4. The Studio project field is empty."
+  "staging_sales_order_field_audit": "S00480 was inspected read-only; the real construction project field is construction_project_id, populated as Bathroom repair and maintenance Exit 4. The Studio project field is empty.",
+  "live_pdf_rendering_tested": false
 }

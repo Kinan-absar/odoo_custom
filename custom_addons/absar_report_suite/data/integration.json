@@ -78,29 +78,6 @@
         "wm_journal_entry_report.report_journal_document"
       ],
       "legacy_report": "wm_journal_entry_report.report_journal"
-    },
-    {
-      "alias": "certificate_report",
-      "name": "Subcontractor Payment Certificate",
-      "model": "account.move",
-      "report_name": "absar_report_suite.certificate",
-      "xmlid": null,
-      "paper": "business",
-      "bound": true,
-      "old_reports": [],
-      "legacy_report": "account.report_invoice_copy_1_copy_1_copy_3"
-    },
-    {
-      "alias": "subcontract_report",
-      "name": "عقد مقاولة من الباطن / Subcontract Agreement",
-      "model": "purchase.order",
-      "report_name": "absar_report_suite.subcontract",
-      "xmlid": null,
-      "paper": "business",
-      "bound": true,
-      "old_reports": [],
-      "print_report_name": "'Subcontract Agreement - %s' % object.name",
-      "legacy_report": "absar.subcontract"
     }
   ],
   "retired_templates": [
@@ -176,7 +153,11 @@
     "web_studio.report_editor_customization_full.view._account.report_invoice_document_copy_1",
     "web_studio.report_editor_customization_full.view._account.report_invoice_document_copy_1_copy_1",
     "web_studio.report_editor_customization_full.view._purchase.report_purchaseorder_document_copy_1",
-    "wm_journal_entry_report.report_journal_document_custom"
+    "wm_journal_entry_report.report_journal_document_custom",
+    "absar_report_suite.certificate",
+    "absar_report_suite.subcontract",
+    "account.report_invoice_copy_1_copy_1_copy_3",
+    "absar.subcontract"
   ],
   "retired_xmlids": [
     "studio_customization.purchase_order_173782fb-fb0e-47e9-bca3-7722ad3c5b3e",
@@ -485,6 +466,46 @@
     {
       "key": "web_studio.report_editor_customization_full.view._account.report_invoice_document_copy_1_copy_1",
       "xmlid": "studio_customization.web_studio_report_ed_61eb2a70-2ca9-479f-87e2-2739ab9d652f"
+    },
+    {
+      "key": "absar_report_suite.certificate",
+      "xmlid": null
+    },
+    {
+      "key": "absar_report_suite.certificate_bilingual",
+      "xmlid": null
+    },
+    {
+      "key": "absar_report_suite.subcontract",
+      "xmlid": null
+    },
+    {
+      "key": "absar_report_suite.subcontract_document",
+      "xmlid": null
+    },
+    {
+      "key": "absar_report_suite.subcontract_tax_totals",
+      "xmlid": null
+    }
+  ],
+  "retire_reports": [
+    {
+      "alias": "certificate_report",
+      "model": "account.move",
+      "name": "Subcontractor Payment Certificate",
+      "report_names": [
+        "absar_report_suite.certificate",
+        "account.report_invoice_copy_1_copy_1_copy_3"
+      ]
+    },
+    {
+      "alias": "subcontract_report",
+      "model": "purchase.order",
+      "name": "عقد مقاولة من الباطن / Subcontract Agreement",
+      "report_names": [
+        "absar_report_suite.subcontract",
+        "absar.subcontract"
+      ]
     }
   ]
 }

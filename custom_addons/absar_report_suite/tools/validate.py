@@ -17,7 +17,7 @@ def checked(name):
 for path in ROOT.rglob('*.py'):
     ast.parse(path.read_text())
 checked('Python syntax')
-assert manifest['version'] == '18.0.2.0.31'
+assert manifest['version'] == '18.0.2.0.32'
 assert 'sale_project' in manifest['depends']
 assert not {'wm_journal_entry_report', 'sale_pdf_quote_builder', 'studio_customization'} & set(manifest['depends'])
 records = {}
@@ -62,24 +62,22 @@ assert 'border:0!important;padding:0!important;margin:0!important' in sale_view
 assert 'absar-sale-document' in sale_view and 'border-bottom:1px solid #177b83!important' in sale_view
 assert 'background:#fff!important;color:#182f43!important' in sale_view
 assert 'absar-unified-total-card' in sale_view and 'Project:' in sale_view
-assert 'table class="o_ignore_layout_styling"' in sale_view
+assert 'o_ignore_layout_styling absar-unified-table' in sale_view
+assert 'class="table table-sm o_main_table' not in sale_view
 assert 'table class="table table-sm table-borderless"' not in sale_view
 assert 'Purchase Order #' in purchase_view and 'Request for Quotation #' in purchase_view
-assert any(item['alias']=='rfq_report' and item['legacy_report']=='purchase.report_purchasequotation' for item in json.loads((ROOT/'data/integration.json').read_text())['reports'])
-subcontract_view=E.tostring(views['absar_report_suite.subcontract_document']).decode()
-certificate_view=E.tostring(views['absar_report_suite.certificate_bilingual']).decode()
-assert 'absar-unified-document' in subcontract_view and 'absar-unified-table' in subcontract_view
-assert 'absar-unified-total-card' in subcontract_view
-assert 'absar-unified-document' in certificate_view and 'absar-unified-table' in certificate_view
-assert 'absar-unified-total-card' in certificate_view
+config=json.loads((ROOT/'data/integration.json').read_text())
+assert any(item['alias']=='rfq_report' and item['legacy_report']=='purchase.report_purchasequotation' for item in config['reports'])
+assert {'certificate_report','subcontract_report'} == {item['alias'] for item in config['retire_reports']}
+assert not {'certificate_report','subcontract_report'} & {item['alias'] for item in config['reports']}
+assert not {'absar_report_suite.subcontract_document','absar_report_suite.certificate_bilingual'} & set(views)
 assert 'background:#fff!important;color:#182f43!important' in E.tostring(views['absar_report_suite.report_styles']).decode()
 assert 'font-size:18px!important' in sale_view and 'font-size:18px!important' in purchase_view
 assert 'box-shadow:0 2px 10px rgba(23,123,131,.12)!important' in E.tostring(views['absar_report_suite.report_styles']).decode()
 assert 'border-left:6px solid #177b83!important' in E.tostring(views['absar_report_suite.report_styles']).decode()
 assert 'inset 5px 0 0 #177b83' not in E.tostring(views['absar_report_suite.report_styles']).decode()
-assert 't-if="o.notes and not is_html_empty(o.notes)"' in E.tostring(views['absar_report_suite.subcontract_document']).decode()
 assert 'absar-unified-total-card table tbody tr.o_total *' in E.tostring(views['absar_report_suite.report_styles']).decode()
-checked('All routed reports include the distinct Odoo RFQ action; rounded cards, open teal-rule tables, visible invoice totals, actual construction project relation')
+checked('All routed reports include the distinct Odoo RFQ action; sales tables opt out of Bootstrap borders; retired subcontract reports are absent')
 
 # Exercise the actual action setup code against an in-memory ORM substitute.
 class Link:
@@ -199,6 +197,15 @@ def scenario(existing, upgrade=False):
             env.metadata.create({'module':'absar_report_suite','name':item['alias'],
                                  'model':'ir.actions.report','res_id':i,'noupdate':False})
             env.params.set_param('absar_report_suite.target.'+item['alias'],str(i+100))
+    retired_ids=[]
+    for i,item in enumerate(config['retire_reports'],800):
+        row={'name':item['name'],'model':item['model'],'report_name':item['report_names'][0],
+             'report_file':item['report_names'][0],'paperformat_id':99,'binding_model_id':1,
+             'print_report_name':'object.name'}
+        env.actions.rows[i]=row
+        retired_ids.append(i)
+        if upgrade:
+            env.params.set_param('absar_report_suite.target.'+item['alias'],str(i))
     env.actions.rows[999]={'name':'Unrelated','model':'account.move','report_name':'other.report','binding_model_id':1}
     untouched=dict(env.actions.rows[999])
     setup=module.AbsarReportSetup();setup.env=env
@@ -209,6 +216,9 @@ def scenario(existing, upgrade=False):
     assert first==json.loads(env.params.get_param('absar_report_suite.original_report_actions'))
     assert env.actions.rows[999]==untouched
     assert len(env.actions.rows)==len(config['reports'])+1, env.actions.rows
+    assert all(i not in env.actions.rows for i in retired_ids)
+    assert all(not env.params.get_param('absar_report_suite.target.'+item['alias'])
+               for item in config['retire_reports'])
     for item in config['reports']:
         target=int(env.params.get_param('absar_report_suite.target.'+item['alias']))
         row=env.actions.rows[target]

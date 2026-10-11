@@ -95,6 +95,26 @@ class AbsarReportSetup(models.AbstractModel):
                 record.write({'binding_model_id': False})
             duplicates |= duplicate
 
+        # Retire obsolete print actions by clearing their model bindings first,
+        # then allow the cleanup graph to delete actions with no remaining use.
+        # This also covers databases upgraded from an earlier suite version.
+        for item in config.get('retire_reports', []):
+            targets = actions.browse()
+            saved_id = params.get_param(_MODULE + '.target.' + item['alias'])
+            saved = actions.browse(int(saved_id)).exists() if saved_id and saved_id.isdigit() else False
+            if saved and saved.model == item['model']:
+                targets |= saved
+            for report_name in item.get('report_names', []):
+                targets |= actions.search([('model', '=', item['model']),
+                                           ('report_name', '=', report_name)])
+            targets |= actions.search([('model', '=', item['model']), ('name', '=', item['name'])])
+            for record in targets:
+                remember(record)
+                if record.binding_model_id:
+                    record.write({'binding_model_id': False})
+            duplicates |= targets
+            params.set_param(_MODULE + '.target.' + item['alias'], '')
+
         standard = {
             'account.account_invoices': 'invoice_payment_report',
             'account.account_invoices_without_payment': 'invoice_report',
@@ -117,6 +137,6 @@ class AbsarReportSetup(models.AbstractModel):
 
         params.set_param(_BACKUP, json.dumps(backup, ensure_ascii=False))
         cleanup_reports(env, config, protected, duplicate_action_ids=duplicates.ids)
-        params.set_param(_MODULE + '.applied_version', '18.0.2.0.31')
-        _logger.info('ABSAR reports 18.0.2.0.31 configured: %s active report bindings', len(bound))
+        params.set_param(_MODULE + '.applied_version', '18.0.2.0.32')
+        _logger.info('ABSAR reports 18.0.2.0.32 configured: %s active report bindings', len(bound))
         return True

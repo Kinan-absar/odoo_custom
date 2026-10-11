@@ -1,4 +1,4 @@
-# ABSAR Unified Reports — 18.0.2.0.3
+# ABSAR Unified Reports — 18.0.2.0.32
 
 Keep the technical folder name `absar_report_suite`. This update fixes the report-action duplication and Purchase Order signing/filename regressions from 18.0.2.0.0–18.0.2.0.1.
 
@@ -10,7 +10,7 @@ Keep the technical folder name `absar_report_suite`. This update fixes the repor
 - Uses the same PO filename structure as the signing title: PO number, supplier, MR, then project, without an added PO/RFQ prefix. A revision suffix is included when present. Optional project/MR fields can be absent. This explicit filename setting replaces older saved expressions so they cannot reintroduce duplicate prefixes or a different field order.
 - Keeps the existing report designs, packaged letterhead/footer/stamp and dedicated JV footer.
 
-Reports: Invoice, Invoice with Payment, Purchase Order, Quotation / Order, Pro-forma Invoice, Journal Voucher, Subcontractor Payment Certificate and Subcontract Agreement.
+Reports: Invoice, Invoice with Payment, Purchase Order, Quotation / Order, Pro-forma Invoice and Journal Voucher.
 
 ## Upgrade staging
 
@@ -20,7 +20,7 @@ Reports: Invoice, Invoice with Payment, Purchase Order, Quotation / Order, Pro-f
 4. Check the Print menu on a PO and invoice: each desired report should appear once.
 5. Print a PO containing a supplier, project and MR. Check the downloaded filename and the design/amounts.
 6. Use Send to Sign on a suitable staging test PO with the correct workflow. Check the generated title, PO PDF, quotation/MR attachments, and signature positions.
-7. Print invoice/payment, quotation/proforma, JV and subcontract reports as before.
+7. Print invoice/payment, quotation/proforma and JV reports as before.
 
 Technical Reports may still contain distinct system actions, or an old custom action referenced by a retained setting/button. The cleanup logs why records are preserved; it does not delete every report with a similar display name.
 
@@ -176,3 +176,10 @@ Validation: offline suite, source checks and ZIP integrity passed. Live Odoo PDF
 Sales order, quotation and pro-forma headers now read the actual Odoo project selector on these records (`sale.order.construction_project_id`), not the empty Studio field. They fall back to Odoo linked Projects only on databases without that selector. Purchase, subcontract and sales headings use a shared 18px size, matching the Project label. Cards use a rounded 6px teal left rail with one thin outline on the other edges, avoiding the doubled inset stripe and keeping the intended accent. Nested tables keep clean separators without boxed borders, total text remains visible, and empty subcontract notes no longer render an empty card.
 
 Offline validation passed. The staging Sales Order S00480 form was inspected read-only and confirmed the real project field is `construction_project_id` (value: “Bathroom repair and maintenance Exit 4”); the Studio project field is separate and empty. The report action list was reviewed read-only (102 actions), and RFQ routing is included. Live PDF rendering was not performed.
+
+
+## Retire subcontract reports and remove sales table frames — 18.0.2.0.32
+
+The unused Subcontract Agreement and Subcontractor Payment Certificate reports are removed from the module templates and their Purchase/Bill Print bindings are retired during upgrade. The regular Purchase Order, invoice and bill reports remain. Sales order, quotation, pro-forma and optional-product description tables now use the same Odoo layout-styling opt-out as the Purchase Order table, so browser layout styles do not draw a second box inside the teal card.
+
+Offline validation checks the retirement behavior, sales table classes, XML/QWeb references and package integrity. Live Odoo installation and PDF rendering still need verification after upgrading the module.
