@@ -44,3 +44,9 @@ odoo-bin -d STAGING_DATABASE -u absar_report_suite --test-enable --test-tags /ab
 ```
 
 Use the deployment's configured addons paths. Main deployment should follow successful staging upgrade and workflow verification.
+
+## Journal voucher redesign — 18.0.2.0.4
+
+English Journal Voucher on the left, voucher number centered, Arabic title on the right. White cards with one subtle outline; no heading frame or inner cell grid. Voucher details include accounting date, reference, company and journal name. Journal lines show account, description, partner, analytic allocation (including percentages and multiple plans), debit and credit. Company-currency precision and original debit/credit totals are retained. Empty partner/analytic values show a dash. Packaged company letterhead and the company/page/printed-by footer are retained.
+
+Only the journal template changes; existing report bindings, cleanup safeguards, PO filenames and other designs remain. Replace the addon and upgrade ABSAR Unified Reports on staging. Check a split analytic allocation, partner values, multi-page entries and batch printing. Local validation passed; live Odoo installation/PDF rendering has not been performed.
