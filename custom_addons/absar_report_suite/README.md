@@ -62,3 +62,9 @@ Replace the addon and upgrade ABSAR Unified Reports on staging. Print PO 237 and
 Existing bilingual layout retained: centered title, customer left, QR right, English/value/Arabic detail rows and original item columns. Navy text and white rounded cards replace grey/purple fills and inner grids. No added card headings. Existing Invoice and Invoice with Payment report routes retained. QR generation, calculation directives, sections/subtotals, currencies and payment values are unchanged. PO and journal designs retained.
 
 Replace absar_report_suite and upgrade ABSAR Unified Reports on staging. Print both versions of INVAB/2026/068; check QR, bilingual alignment, negative down payment, totals and payment visibility. Check longer invoices for pagination. Local checks passed; live Odoo rendering and installation have not been tested.
+
+## Invoice table alignment — 18.0.2.0.7
+
+Invoice line columns now total 100% with or without discounts. Section, note and subtotal rows span exactly six or seven displayed columns, preventing phantom columns and a blank strip at the right. Bilingual subtotal labels keep currency values in left-to-right order. The invoice grand total uses the same `o_total` styling as the purchase order, including company total color. A4 paper size and existing margins are unchanged. Offline validation passed; verify both invoice variants after upgrading staging.
+
+Payment rows are restored inside the right-hand totals card, directly below Total, only for Invoice with Payment. Invoice tables opt out of Odoo external-layout table decoration so inner frames do not appear inside cards.

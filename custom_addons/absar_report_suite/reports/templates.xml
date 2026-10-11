@@ -99,13 +99,19 @@
 .absar-invoice-cards .absar-total-table {width:100%;table-layout:auto;border-collapse:collapse;margin:0!important;}
 .absar-invoice-cards .absar-total-table td {padding:6px 4px!important;font-size:13px!important;color:#182f43!important;}
 .absar-invoice-cards .absar-total-table td:last-child {white-space:nowrap!important;text-align:right!important;}
-.absar-invoice-cards .absar-grand-total td,.absar-invoice-cards .absar-grand-total strong,.absar-invoice-cards .absar-grand-total span {font-size:16px!important;font-weight:700!important;color:#182f43!important;}
+.absar-invoice-cards .absar-grand-total td {font-weight:700!important;font-size:17px!important;padding-top:8px!important;}
 .absar-invoice-cards .inv-payments {margin-bottom:14px;page-break-inside:avoid;}
 .absar-invoice-cards .inv-payments table {width:100%;border-collapse:collapse;}
 .absar-invoice-cards .inv-payments td {padding:6px 4px!important;color:#182f43!important;font-size:13px!important;}
 .absar-invoice-cards .inv-payments td:last-child {text-align:right!important;white-space:nowrap;}
 .absar-invoice-cards .absar-multi-currency {white-space:normal!important;background:#fff!important;border:1px solid #e0e7eb!important;border-radius:7px;padding:12px;margin:12px 0!important;}
 .absar-invoice-cards .absar-note-block {background:#fff!important;border:1px solid #e0e7eb!important;border-radius:7px;padding:12px 14px!important;color:#182f43!important;font-size:12px!important;}
+
+.absar-invoice-cards table[name="invoice_line_table"] td:not(:first-child) {white-space:nowrap!important;}
+.absar-invoice-cards table[name="invoice_line_table"] .absar-note-row td,.absar-invoice-cards table[name="invoice_line_table"] .absar-section-row td {white-space:normal!important;}
+
+.absar-invoice-cards table.o_ignore_layout_styling {border-width:0!important;border-style:none!important;outline:none!important;box-shadow:none!important;}
+.absar-invoice-cards .absar-total-table tr:not(.absar-grand-total) td strong {font-size:13px!important;}
 </style>
                <div class="page absar-invoice-cards"><!-- ========================= -->
     <!--  CENTER TITLE (Dynamic)   -->
@@ -208,7 +214,7 @@
 <div class="absar-info-wrap inv-card">
 
 
-  <table class="inv-info" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+  <table class="inv-info o_ignore_layout_styling" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
     <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
       <td class="label-left" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">Invoice No</td>
       <td class="value" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-if="o.name != '/'" t-field="o.name"/></td>
@@ -247,18 +253,18 @@
 <t t-set="display_discount" t-value="any(l.discount for l in o.invoice_line_ids)"/>
 <t t-set="lines" t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
 
-<div class="inv-card inv-lines-card"><table class="table table-sm" name="invoice_line_table" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+<div class="inv-card inv-lines-card"><table class="table table-sm o_ignore_layout_styling" name="invoice_line_table" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
 
   <!-- ===== TABLE HEADER ===== -->
   <thead style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
     <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-      <th class="text-start" style="width:30%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
+      <th class="text-start" t-att-style="('width:27%;' if display_discount else 'width:34%;') + 'border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;' ">
         <strong>Description</strong><br/><span>الوصف</span>
       </th>
       <th class="text-end" style="width:8%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Quantity</strong><br/><span>الكمية</span>
       </th>
-      <th class="text-end" style="width:12%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
+      <th class="text-end" style="width:15%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Unit Price</strong><br/><span>سعر الوحدة</span>
       </th>
       <th t-if="display_discount" class="text-end" style="width:7%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
@@ -266,10 +272,10 @@
   <span>خصم %</span>
 </th>
 
-      <th class="text-end" style="width:13%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
+      <th class="text-end" style="width:15%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Amount</strong><br/><span>المبلغ قبل الضريبة</span>
       </th>
-      <th class="text-end" style="width:12%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
+      <th class="text-end" style="width:13%;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:2px solid #177b83!important;">
         <strong>Taxes 15%</strong><br/><span>الضرائب</span>
       </th>
 
@@ -313,7 +319,7 @@
       <!-- Section header -->
       <t t-if="line.display_type == 'line_section'">
         <tr class="absar-section-row" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-          <td colspan="99" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;" t-att-colspan="7 if display_discount else 6">
             <span t-field="line.name" t-options="{'widget': 'text'}"/>
           </td>
         </tr>
@@ -324,7 +330,7 @@
       <!-- Note lines -->
       <t t-if="line.display_type == 'line_note'">
         <tr class="absar-note-row" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-          <td colspan="99" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
+          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;" t-att-colspan="7 if display_discount else 6">
             <span t-field="line.name" t-options="{'widget': 'text'}"/>
           </td>
         </tr>
@@ -333,9 +339,8 @@
       <!-- Subtotal (before VAT) -->
       <t t-if="current_section and (line_last or lines[line_index+1].display_type == 'line_section')">
         <tr class="is-subtotal text-end" style="background-color:#fafafa;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
-          <td colspan="99" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;">
-            <strong>Subtotal (Before VAT) / الإجمالي الفرعي (قبل الضريبة)</strong>
-            <span t-out="current_subtotal" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+          <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;border-bottom:1px solid #e0e7eb!important;" t-att-colspan="7 if display_discount else 6">
+            <strong><span dir="ltr">Subtotal (Before VAT)</span> / <span dir="rtl" lang="ar">الإجمالي الفرعي (قبل الضريبة)</span></strong> <span t-out="current_subtotal" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}" style="display:inline-block;direction:ltr;white-space:nowrap;"/>
           </td>
         </tr>
       </t>
@@ -353,7 +358,7 @@
   <!-- =================== -->
   <div class="row justify-content-end mt-2 absar-total-wrap">
     <div class="col-6">
-      <div class="inv-card"><table class="table table-sm table-borderless text-end absar-total-table" style="page-break-inside: avoid;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+      <div class="inv-card"><table class="table table-sm table-borderless text-end absar-total-table o_ignore_layout_styling" style="page-break-inside: avoid;;border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
         <tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
           <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Subtotal / الإجمالي الفرعي</strong></td>
           <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.amount_untaxed"/></td>
@@ -376,18 +381,18 @@
         </t>
         </t>
 
-        <tr class="absar-grand-total" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
+        <tr class="o_total absar-grand-total" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;">
           <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Total / المجموع</strong></td>
           <td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-field="o.amount_total"/></td>
         </tr>
-        </table>
+        <t t-if="print_with_payments and o.payment_state != 'invoicing_legacy'"><t t-set="payments_vals" t-value="(o.sudo().invoice_payments_widget or {}).get('content', [])"/>
+<t t-foreach="payments_vals" t-as="payment">
+<tr t-if="not payment.get('is_exchange')" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Paid on / دفعة بتاريخ</strong><br/><span t-out="payment['date']" t-options="{'widget': 'date'}"/></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-out="payment['amount']" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td></tr>
+</t><tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Amount Due / المبلغ المستحق</strong></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong t-field="o.amount_residual"/></td></tr></t></table>
     </div></div>
   </div>
 
-  <div class="inv-card inv-payments" t-if="print_with_payments and o.payment_state != 'invoicing_legacy'"><table style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><t t-set="payments_vals" t-value="(o.sudo().invoice_payments_widget or {}).get('content', [])"/>
-<t t-foreach="payments_vals" t-as="payment">
-<tr t-if="not payment.get('is_exchange')" style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Paid on / دفعة بتاريخ</strong><br/><span t-out="payment['date']" t-options="{'widget': 'date'}"/></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><span t-out="payment['amount']" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td></tr>
-</t><tr style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong>Amount Due / المبلغ المستحق</strong></td><td style=";border:0!important;background:#fff!important;outline:0!important;box-shadow:none!important;"><strong t-field="o.amount_residual"/></td></tr></table></div><!-- =================== -->
+  <!-- =================== -->
   <!--  Multi-Currency Row -->
   <!-- =================== -->
   <div t-if="o.currency_id != o.company_id.currency_id" class="row clearfix ms-auto text-nowrap border-top border-bottom p-2 mt-2 absar-multi-currency">

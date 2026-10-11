@@ -1,12 +1,14 @@
 {
-  "version": "18.0.2.0.6",
+  "version": "18.0.2.0.7",
   "result": "PASS",
   "checks": [
     "Suite validator",
     "Invoice business directives unchanged",
     "Other report XML unchanged",
-    "Payment flags retained",
-    "QWeb field placement",
+    "100% widths and exact column spans with/without discount",
+    "Payments inside totals card; default payment flag unchanged",
+    "Invoice tables opt out of external layout decorations",
+    "PO total styling reused",
     "ZIP integrity"
   ],
   "live_odoo_tested": false
