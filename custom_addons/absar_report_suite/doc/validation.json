@@ -1,5 +1,5 @@
 {
-  "version": "18.0.2.0.17",
+  "version": "18.0.2.0.18",
   "base_version": "18.0.2.0.8",
   "result": "PASS",
   "checks": [
@@ -17,7 +17,10 @@
     "Customer/details/items: explicit four-sided teal outline",
     "Invoice business directives preserved and PO unchanged",
     "Three invoice detail rows left; source/payment reference right",
-    "All invoice business directives preserved; other report XML unchanged"
+    "All invoice business directives preserved; other report XML unchanged",
+    "Rounded invoice card corners; QR borderless",
+    "Journal cards have thin teal rounded outlines",
+    "Invoice/journal business directives unchanged; other templates unchanged"
   ],
   "live_odoo_tested": false
 }

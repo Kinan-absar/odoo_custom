@@ -102,3 +102,7 @@ QR wrapper no longer uses the card class and explicitly has no border, outline o
 ## Compact bilingual invoice details — 18.0.2.0.17
 
 The invoice details card has two columns: Invoice No, Invoice Date and Due Date on the left; Source and Payment Reference on the right. Each row retains English label, centered value and Arabic label. Card padding and row spacing are reduced. Optional field logic and all invoice business directives are unchanged. Existing closed teal border and borderless QR are retained; PO unchanged.
+
+## Rounded teal invoice and journal cards — 18.0.2.0.18
+
+Invoice customer, details and items card corners are rounded at 7px. Journal voucher details and entries cards receive matching thin 1px teal outlines and rounded corners. Invoice QR remains borderless. All content, compact invoice detail columns, partner/analytic columns, computations, report routing and PO styling are preserved.
