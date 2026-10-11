@@ -1,4 +1,4 @@
-# Request printouts — 18.0.1.20.93
+# Request printouts — 18.0.1.20.94
 
 Both request printouts now share a navy/teal design with a clear title, request number, actual stage label, two-column request summary, readable tables, and a detailed approval history. Material lines are numbered, quantities aligned, units compact, with alternating row backgrounds and repeating table headers. Employee Requests include project, direct manager, request type and leave dates/type when relevant. Multi-line descriptions and comments are preserved.
 
@@ -15,3 +15,5 @@ Replace employee_portal_suite, commit/push to staging, upgrade Employee Portal S
 ## Validation
 
 Python/XML checks passed. Both actual report template bodies were rendered offline with dynamic, legacy, rejected, returned, approved and long-content fixture data. Sample PDFs were inspected, and long material lists repeated table headers correctly. The offline renderer uses a sample company header/footer; production company branding comes from Odoo. Odoo/wkhtmltopdf rendering still needs staging verification after upgrade.
+
+Version 94 fixes QWeb compilation by rendering table-cell fields inside spans rather than on td elements. The print design is unchanged.

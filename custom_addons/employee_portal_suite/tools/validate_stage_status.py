@@ -7,7 +7,7 @@ from lxml import etree as E
 ROOT=Path(__file__).resolve().parents[1]
 for path in ROOT.rglob('*.py'):ast.parse(path.read_text())
 manifest=ast.literal_eval((ROOT/'__manifest__.py').read_text())
-assert manifest['version']=='18.0.1.20.93'
+assert manifest['version']=='18.0.1.20.94'
 for name in manifest['data']:
     if name.endswith('.xml'):E.parse(str(ROOT/name))
 def method(filename,name):
@@ -86,3 +86,8 @@ for key in ['view_employee_request_form','view_material_request_form']:
     assert parents[key].xpath('.//field[@name="approval_status_label"]')
     assert parents[key].xpath('.//button[@name="action_workflow_approve"]')
 print(json.dumps({'result':'PASS','checks':['Python and manifest XML syntax','Pending step advances and arbitrary custom stage names','Returned stage and legacy/completed statuses','MR clarification badge preserved','Computed field dependency invalidation','Inherited view XPath targets and resulting status fields'],'live_odoo_tested':False},indent=2))
+
+# Guard against QWeb compile errors on structural HTML elements.
+for file in (ROOT/"reports").glob("*.xml"):
+    for node in E.parse(str(file)).xpath("//*[@t-field]"):
+        assert node.tag not in ("table","tbody","thead","tfoot","tr","td","th","li","ul","ol","dl","dt","dd"), (file.name,node.tag,node.get("t-field"))
