@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="report_job_costing">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="data" t-value="breakdowns.get(doc.id, {})"/>
+                <t t-call="web.external_layout">
+                    <div class="page construction-report ccm-job-costing-print-report">
+                        <t t-call="construction_contract_management.report_construction_common_styles"/>
+                        <style type="text/css">
+                            .ccm-job-costing-print-report .report-header { border-left: 5px solid #197e87 !important; border-radius: 14px; }
+                            .ccm-job-costing-print-report .print-summary { width: 100%; border-collapse: separate; border-spacing: 8px; margin: 0 -8px 12px; }
+                            .ccm-job-costing-print-report .print-summary td { width: 25%; padding: 11px 12px; border: 1px solid #dce7e9; border-radius: 10px; background: #fbfdfd; }
+                            .ccm-job-costing-print-report .print-label { display: block; color: #71838d; font-size: 8pt; font-weight: 700; text-transform: uppercase; }
+                            .ccm-job-costing-print-report .print-amount { display: block; margin-top: 4px; color: #19354a; font-size: 12pt; font-weight: 800; }
+                            .ccm-job-costing-print-report .print-profit { border-left: 4px solid #197e87 !important; }
+                            .ccm-job-costing-print-report .account-card { margin: 9px 0; border: 1px solid #dce7e9; border-left: 4px solid #197e87; border-radius: 10px; overflow: hidden; background: #fff; page-break-inside: avoid; }
+                            .ccm-job-costing-print-report .account-heading { padding: 10px 12px; background: #f8fbfb; font-weight: 800; color: #19354a; }
+                            .ccm-job-costing-print-report .account-heading small { display: inline-block; margin-left: 6px; color: #71838d; font-size: 8pt; font-weight: 400; }
+                            .ccm-job-costing-print-report .account-total { float: right; color: #19354a; font-weight: 800; }
+                            .ccm-job-costing-print-report .account-table { width: 100%; border-collapse: collapse; }
+                            .ccm-job-costing-print-report .account-table td { padding: 7px 12px; border-top: 1px solid #edf1f2; color: #536a75; }
+                            .ccm-job-costing-print-report .account-table td:last-child { text-align: right; color: #19354a; font-weight: 700; }
+                            .ccm-job-costing-print-report .print-note { margin-top: 12px; color: #71838d; font-size: 8pt; }
+                        </style>
+                        <div class="report-header">
+                            <div class="report-title-row">
+                                <div class="report-title-main">
+                                    <div class="report-eyebrow">Construction · Job Costing</div>
+                                    <h1 class="report-title">Job Costing Report</h1>
+                                    <div class="report-subtitle"><span t-esc="doc.display_name"/></div>
+                                </div>
+                                <div class="report-title-side">
+                                    <div class="report-badge"><span t-esc="doc.company_id.name"/></div>
+                                    <div style="margin-top:8px;color:#19354a;font-weight:700">Project: <span t-esc="doc.project_id.display_name or '—'"/></div>
+                                </div>
+                            </div>
+                        </div>
+                        <table class="print-summary">
+                            <tr>
+                                <td><span class="print-label">Actual Revenue</span><span class="print-amount" t-esc="format_amount(doc, data.get('revenue_total', 0))"/></td>
+                                <td><span class="print-label">Actual Cost</span><span class="print-amount" t-esc="format_amount(doc, data.get('cost_total', 0))"/></td>
+                                <td class="print-profit"><span class="print-label">Actual Profit</span><span class="print-amount" t-esc="format_amount(doc, data.get('profit_total', 0))"/></td>
+                                <td><span class="print-label">Profit Margin</span><span class="print-amount"><span t-esc="'%.2f' % (data.get('margin', 0))"/>%</span></td>
+                            </tr>
+                        </table>
+                        <t t-set="account_sections" t-value="[('vendor_bills', 'Vendor Bills', 'Expense accounts', 'vendor_total'), ('customer_invoices', 'Customer Invoices', 'Revenue accounts', 'invoice_total'), ('credit_notes', 'Credit Notes', 'Revenue accounts', 'credit_note_total'), ('overhead', 'Overhead', 'Expense accounts', 'overhead_total')]"/>
+                        <t t-foreach="account_sections" t-as="section">
+                            <div class="account-card">
+                                <div class="account-heading">
+                                    <span t-esc="section[1]"/><small t-esc="section[2]"/>
+                                    <span class="account-total" t-esc="format_amount(doc, data.get(section[3], 0))"/>
+                                </div>
+                                <t t-if="expanded.get(section[0])">
+                                    <table class="account-table"><tbody>
+                                        <t t-foreach="data.get('groups', {}).get(section[0], [])" t-as="account_row">
+                                            <tr><td t-esc="account_row.get('account')"/><td t-esc="format_amount(doc, account_row.get('amount', 0))"/></tr>
+                                        </t>
+                                    </tbody></table>
+                                </t>
+                            </div>
+                        </t>
+                        <div class="print-note">Printed account rows reflect the sections expanded in the job costing view. The report retains the existing project accounting rules.</div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

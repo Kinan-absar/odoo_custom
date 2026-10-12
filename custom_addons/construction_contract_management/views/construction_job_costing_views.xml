@@ -49,54 +49,7 @@
                             <field name="actual_cost_amount" readonly="1"/>
                         </group>
                     </group>
-                    <div class="ccm_actual_profit_header">
-                        <h4>ACTUAL PROFITABILITY</h4>
-                        <div class="ccm_actual_profit_project">
-                            <span>Project:</span>
-                            <field name="project_id" readonly="1" nolabel="1" options="{'no_open': True}"/>
-                        </div>
-                    </div>
-                    <div class="ccm_actual_profit_table_wrap">
-                        <table class="table table-sm ccm_actual_profit_table">
-                            <thead>
-                                <tr><th scope="col">Actual Profitability Breakdown</th><th scope="col">Amount</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Customer Invoice Revenue (Net of Credit Notes)</td>
-                                    <td><field name="invoice_revenue_credit_amount" readonly="1" nolabel="1"/></td>
-                                </tr>
-                                <tr>
-                                    <td>Customer Advance Recovered</td>
-                                    <td><field name="miscellaneous_revenue_credit_amount" readonly="1" nolabel="1"/></td>
-                                </tr>
-                                <tr class="ccm_actual_profit_subtotal">
-                                    <td>Total Actual Revenue</td>
-                                    <td><field name="actual_revenue_amount" readonly="1" nolabel="1"/></td>
-                                </tr>
-                                <tr>
-                                    <td>Vendor Bill Cost</td>
-                                    <td><field name="vendor_bill_cost_amount" readonly="1" nolabel="1"/></td>
-                                </tr>
-                                <tr>
-                                    <td>Overhead</td>
-                                    <td><field name="other_accounting_cost_amount" readonly="1" nolabel="1"/></td>
-                                </tr>
-                                <tr class="ccm_actual_profit_subtotal">
-                                    <td>Total Actual Cost</td>
-                                    <td><field name="actual_cost_amount" readonly="1" nolabel="1"/></td>
-                                </tr>
-                                <tr class="ccm_actual_profit_total">
-                                    <td>Actual Profit</td>
-                                    <td><field name="actual_profit_amount" readonly="1" nolabel="1" decoration-danger="actual_profit_amount &lt; 0" decoration-success="actual_profit_amount &gt;= 0"/></td>
-                                </tr>
-                                <tr class="ccm_actual_profit_total">
-                                    <td>Actual Profit Margin</td>
-                                    <td><field name="actual_profit_margin_percent" readonly="1" nolabel="1"/> %</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <field name="job_costing_breakdown_json" widget="ccm_job_costing_breakdown" nolabel="1" readonly="1"/>
 
                     <separator string="Budget Health"/>
                     <group>

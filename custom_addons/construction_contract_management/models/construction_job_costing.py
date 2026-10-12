@@ -1,3 +1,5 @@
+import json
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
@@ -203,6 +205,10 @@ class ConstructionContractJobCosting(models.Model):
         string='Budget Consumed %',
         compute='_compute_job_costing',
     )
+    job_costing_breakdown_json = fields.Text(
+        compute='_compute_job_costing',
+        string='Job Cost Account Breakdown',
+    )
 
     @api.onchange('project_id')
     def _onchange_project_job_cost_analytic(self):
@@ -365,6 +371,7 @@ class ConstructionContractJobCosting(models.Model):
             rec.forecast_margin_percent = 0.0
             rec.budget_variance = 0.0
             rec.budget_consumed_percent = 0.0
+            rec.job_costing_breakdown_json = '{}'
 
             if not rec.analytic_account_id:
                 continue
@@ -378,6 +385,10 @@ class ConstructionContractJobCosting(models.Model):
             miscellaneous_credits = 0.0
             invoice_credits = 0.0
             invoice_debits = 0.0
+            account_groups = {
+                'vendor_bills': {}, 'customer_invoices': {},
+                'credit_notes': {}, 'overhead': {},
+            }
             advance_move_ids = set(rec.env['construction.advance'].search([
                 ('contract_id', '=', rec.id),
                 ('move_id', '!=', False),
@@ -401,13 +412,35 @@ class ConstructionContractJobCosting(models.Model):
                 if bucket == 'vendor':
                     vendor_bill_debits += debit
                     vendor_bill_credits += credit
+                    if line.account_id.account_type in ('expense', 'expense_depreciation', 'expense_direct_cost'):
+                        group = account_groups['vendor_bills']
+                        group[line.account_id.id] = group.get(line.account_id.id, 0.0) + debit - credit
                 elif bucket == 'invoice':
                     invoice_credits += credit
                     invoice_debits += debit
+                    if line.account_id.account_type in ('income', 'income_other'):
+                        key = 'credit_notes' if line.move_id.move_type == 'out_refund' else 'customer_invoices'
+                        group = account_groups[key]
+                        group[line.account_id.id] = group.get(line.account_id.id, 0.0) + (debit - credit if key == 'credit_notes' else credit - debit)
                 elif bucket == 'miscellaneous':
                     miscellaneous_debits += debit
                     miscellaneous_credits += credit
+                    if line.account_id.account_type in ('expense', 'expense_depreciation', 'expense_direct_cost'):
+                        group = account_groups['overhead']
+                        group[line.account_id.id] = group.get(line.account_id.id, 0.0) + debit
 
+            serialized_groups = {}
+            for group_name, amounts in account_groups.items():
+                account_ids = list(amounts)
+                accounts = rec.env['account.account'].browse(account_ids)
+                account_by_id = {account.id: account for account in accounts}
+                serialized_groups[group_name] = [
+                    {'account_id': account_id,
+                     'account': account_by_id[account_id].display_name,
+                     'amount': amounts[account_id]}
+                    for account_id in sorted(account_ids, key=lambda account_id: account_by_id[account_id].display_name.lower())
+                    if abs(amounts[account_id]) > 0.000001
+                ]
             rec.vendor_bill_cost_amount = vendor_bill_debits - vendor_bill_credits
             rec.other_accounting_cost_amount = miscellaneous_debits
             rec.actual_cost_amount = rec.vendor_bill_cost_amount + miscellaneous_debits
@@ -474,6 +507,20 @@ class ConstructionContractJobCosting(models.Model):
                 rec.actual_cost_amount / rec.job_cost_budget * 100.0
                 if rec.job_cost_budget else 0.0
             )
+            rec.job_costing_breakdown_json = json.dumps({
+                'groups': serialized_groups,
+                'project': rec.project_id.display_name or '',
+                'contract': rec.display_name or '',
+                'currency': rec.currency_id.symbol or '',
+                'vendor_total': rec.vendor_bill_cost_amount,
+                'invoice_total': sum(row['amount'] for row in serialized_groups['customer_invoices']),
+                'credit_note_total': sum(row['amount'] for row in serialized_groups['credit_notes']),
+                'overhead_total': rec.other_accounting_cost_amount,
+                'revenue_total': rec.actual_revenue_amount,
+                'cost_total': rec.actual_cost_amount,
+                'profit_total': rec.actual_profit_amount,
+                'margin': rec.actual_profit_margin_percent,
+            })
 
     def action_use_project_analytic_account(self):
         """Backward-compatible action for views stored in existing databases.
@@ -593,3 +640,29 @@ class AccountMoveLineConstructionJobCost(models.Model):
             ):
                 line.with_context(check_move_validity=False).analytic_distribution = {str(analytic.id): 100.0}
         return lines
+
+
+class ReportConstructionJobCosting(models.AbstractModel):
+    _name = 'report.construction_contract_management.report_job_costing'
+    _description = 'Construction Job Costing Report'
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        docs = self.env['construction.contract'].browse(docids)
+        try:
+            expanded = json.loads(self.env.context.get('job_costing_expanded') or '{}')
+        except (TypeError, ValueError):
+            expanded = {}
+        breakdowns = {}
+        for doc in docs:
+            try:
+                breakdowns[doc.id] = json.loads(doc.job_costing_breakdown_json or '{}')
+            except (TypeError, ValueError):
+                breakdowns[doc.id] = {}
+        return {
+            'doc_ids': docs.ids,
+            'doc_model': 'construction.contract',
+            'docs': docs,
+            'breakdowns': breakdowns,
+            'expanded': expanded,
+        }

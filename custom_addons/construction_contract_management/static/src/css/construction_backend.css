@@ -306,3 +306,55 @@
     .ccm_form .ccm_actual_profit_project { max-width: 100%; }
     .ccm_form .ccm_actual_profit_project .o_field_widget { min-width: 0; }
 }
+
+/* Account level job costing: one restrained teal edge, with no nested table borders. */
+.ccm-job-cost-report-card {
+    width: 100%; margin: 12px 0 20px; padding: 20px 22px;
+    border: 1px solid #197e87; border-left: 5px solid #197e87; border-radius: 14px;
+    background: #fff; box-shadow: 0 5px 18px rgba(25, 126, 135, .10);
+    color: #19354a;
+}
+.ccm-job-cost-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-bottom: 15px; border-bottom: 1px solid #e4ecee; }
+.ccm-job-cost-eyebrow { color: #197e87; font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.ccm-job-cost-card-heading h3 { margin: 3px 0 0; color: #19354a; font-size: 20px; font-weight: 750; }
+.ccm-job-cost-heading-side { display: flex; align-items: center; gap: 18px; }
+.ccm-job-cost-project { display: grid; gap: 2px; text-align: right; }
+.ccm-job-cost-project span { color: #718490; font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.ccm-job-cost-project strong { color: #19354a; font-size: 13px; }
+.ccm-job-cost-print { border-radius: 8px; background: #197e87; border-color: #197e87; }
+.ccm-job-cost-totals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 15px 0; }
+.ccm-job-cost-total-card { min-width: 0; padding: 12px 14px; border: 1px solid #e0e9eb; border-radius: 10px; background: #f9fbfb; }
+.ccm-job-cost-total-card span { display: block; margin-bottom: 5px; color: #6b7f89; font-size: 10px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+.ccm-job-cost-total-card strong { color: #19354a; font-size: 15px; font-variant-numeric: tabular-nums; }
+.ccm-job-cost-total-card.is-negative strong { color: #c94742; }
+.ccm-job-cost-total-card.is-positive strong { color: #197e87; }
+.ccm-job-cost-sections { display: grid; gap: 8px; }
+.ccm-job-cost-section { overflow: hidden; border: 1px solid #e0e9eb; border-radius: 10px; background: #fff; }
+.ccm-job-cost-section-toggle { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px 15px; border: 0; background: #fff; color: #19354a; text-align: left; }
+.ccm-job-cost-section-toggle:hover { background: #f7fbfb; }
+.ccm-job-cost-chevron { display: grid; width: 20px; height: 20px; flex: 0 0 20px; place-items: center; border-radius: 50%; background: #e8f4f4; color: #197e87; transition: transform .18s ease; }
+.ccm-job-cost-chevron.is-open { transform: rotate(90deg); }
+.ccm-job-cost-section-label { display: grid; gap: 2px; }
+.ccm-job-cost-section-label strong { font-size: 13px; }
+.ccm-job-cost-section-label small { color: #81929a; font-size: 10px; }
+.ccm-job-cost-section-amount { margin-left: auto; color: #19354a; font-size: 13px; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ccm-job-cost-account-list { padding: 0 15px 7px 47px; background: #fbfdfd; }
+.ccm-job-cost-account-row { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; border-top: 1px solid #edf1f2; color: #536a75; font-size: 12px; }
+.ccm-job-cost-account-row span:last-child { color: #19354a; font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ccm-job-cost-empty { padding: 10px 0; border-top: 1px solid #edf1f2; color: #81929a; font-size: 12px; }
+.ccm-job-cost-card-footnote { margin-top: 12px; color: #81929a; font-size: 10px; line-height: 1.45; }
+@media (max-width: 900px) {
+    .ccm-job-cost-totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ccm-job-cost-card-heading, .ccm-job-cost-heading-side { align-items: flex-start; }
+    .ccm-job-cost-heading-side { flex-direction: column; gap: 9px; }
+}
+@media (max-width: 575px) {
+    .ccm-job-cost-report-card { padding: 15px 12px; }
+    .ccm-job-cost-card-heading { flex-direction: column; }
+    .ccm-job-cost-heading-side { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; }
+    .ccm-job-cost-project { text-align: left; }
+    .ccm-job-cost-totals { gap: 7px; }
+    .ccm-job-cost-total-card { padding: 10px; }
+    .ccm-job-cost-total-card strong { font-size: 13px; }
+    .ccm-job-cost-account-list { padding-left: 15px; }
+}
