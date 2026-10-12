@@ -24,9 +24,19 @@ class TestAbsarReports(TransactionCase):
             self.assertEqual(record_id, params.get_param('absar_report_suite.target.' + alias))
             action = self.env['ir.actions.report'].browse(int(record_id))
             self.assertTrue(action.exists())
-            self.assertTrue(action.binding_model_id)
+            if alias in ('invoice_report', 'invoice_payment_report'):
+                self.assertFalse(action.binding_model_id,
+                                 'invoice PDFs are selected from the contextual direct-print dialog')
+            else:
+                self.assertTrue(action.binding_model_id)
             self.assertTrue(action.report_name.startswith('absar_report_suite.') or
                             action.report_name == 'purchase.report_purchaseorder')
+        if 'absar.print.wizard' in self.env:
+            account_move_bindings = self.env['ir.actions.report'].search([
+                ('model', '=', 'account.move'), ('binding_model_id', '!=', False),
+                ('binding_type', '=', 'report')])
+            self.assertEqual(account_move_bindings, self._action('journal_report'),
+                             'Journal Voucher should be the only generic Print action for account moves')
 
     def test_render_purchase_sale_and_journal(self):
         partner = self.env['res.partner'].create({'name': 'ABSAR Report Test'})
@@ -119,6 +129,14 @@ class TestAbsarReports(TransactionCase):
                         'absar_report_suite.subcontract_tax_totals', 'absar_report_suite.certificate',
                         'absar_report_suite.certificate_bilingual']
         self.assertFalse(views.search([('key', 'in', retired_keys)]))
+
+    def test_duplicate_tax_invoice_header_button_is_hidden(self):
+        view = self.env['ir.ui.view'].sudo().create({
+            'name': 'ABSAR print button cleanup fixture', 'model': 'account.move',
+            'type': 'form', 'arch_db': '<form><header><button name="x" string="Print Tax Inv"/></header></form>',
+        })
+        self.env['absar.report.setup']._hide_tax_invoice_buttons()
+        self.assertIn('invisible="True"', view.arch_db)
 
     def test_cleanup_removes_unused_and_preserves_references(self):
         views = self.env['ir.ui.view']

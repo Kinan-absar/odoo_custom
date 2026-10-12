@@ -1,7 +1,9 @@
 import json
+from types import SimpleNamespace
 from odoo.tests.common import TransactionCase, new_test_user
 from odoo.tests import tagged
 from odoo.exceptions import AccessError, UserError
+from ..models.printing import _filter_account_move_reports
 
 @tagged('post_install', '-at_install')
 class TestDirectPrint(TransactionCase):
@@ -57,3 +59,16 @@ class TestDirectPrint(TransactionCase):
             wizard._report_args()
         with self.assertRaises(UserError):
             wizard_model.open_for_records('res.partner', [], 'form')
+
+    def test_account_move_reports_are_contextual_and_journal_voucher_is_default(self):
+        journal = SimpleNamespace(id=1, name='Journal Entries', report_name='absar_report_suite.journal')
+        invoice = SimpleNamespace(id=2, name='Invoice', report_name='absar_report_suite.invoice')
+        invoice_copy = SimpleNamespace(id=3, name='Invoice copy(1)', report_name='studio_customization.invoice_copy')
+        timesheets = SimpleNamespace(id=4, name='Timesheets', report_name='hr_timesheet.report_timesheet')
+        reports = [invoice, timesheets, invoice_copy, journal]
+
+        misc_reports = _filter_account_move_reports(reports, {'entry'})
+        self.assertEqual(misc_reports, [journal])
+
+        bill_reports = _filter_account_move_reports(reports, {'in_invoice'})
+        self.assertEqual(bill_reports, [journal, invoice])

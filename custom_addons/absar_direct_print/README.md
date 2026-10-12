@@ -53,3 +53,5 @@ Turn off Show print options to restore normal report behavior per user. Stop the
 18.0.1.0.1: supply explicit form views in both dynamic window actions for Odoo 18 action preprocessing.
 
 18.0.1.0.2: compact browser report header/body spacing and avoid double PDF header margin in HTML printing. Generated PDFs and office printing are unchanged.
+
+18.0.1.0.7: account entries default to Journal Voucher. Miscellaneous entries offer only Journal Voucher; invoices and bills offer Journal Voucher followed by the unified Invoice PDF. Older report copies and unrelated reports such as Timesheets are excluded.

@@ -8,6 +8,34 @@ from odoo.exceptions import AccessError, UserError, ValidationError
 
 MAX_PDF = 25 * 1024 * 1024
 
+
+def _account_move_report_kind(report):
+    """Return the supported account.move print purpose for an Odoo report."""
+    report_name = (getattr(report, 'report_name', '') or '').lower()
+    label = (getattr(report, 'name', '') or '').lower().strip()
+    if 'journal' in report_name or 'voucher' in report_name or 'journal' in label or 'voucher' in label:
+        return 'journal'
+    # Only the unified invoice PDF belongs in this chooser. Older Studio copies,
+    # tax-invoice buttons and unrelated reports should not be selectable here.
+    if report_name == 'absar_report_suite.invoice' or label == 'invoice':
+        return 'invoice'
+    return False
+
+
+def _filter_account_move_reports(reports, move_types=None):
+    """Keep only a move's valid reports and put its Journal Voucher first."""
+    categories = {'journal'}
+    if not move_types or set(move_types).issubset({
+            'in_invoice', 'in_refund', 'out_invoice', 'out_refund', 'in_receipt', 'out_receipt'}):
+        categories.add('invoice')
+    eligible = [report for report in reports if _account_move_report_kind(report) in categories]
+    eligible.sort(key=lambda report: (
+        0 if _account_move_report_kind(report) == 'journal' else 1,
+        (getattr(report, 'name', '') or '').casefold(),
+        getattr(report, 'id', 0),
+    ))
+    return eligible
+
 class PrintStation(models.Model):
     _name = 'absar.print.station'
     _description = 'Office Print Station'
@@ -120,26 +148,48 @@ class PrintWizard(models.TransientModel):
     station_id = fields.Many2one('absar.print.station', default=lambda s:s.env.user.absar_print_station_id)
     copies = fields.Integer(default=1)
     @api.model
-    def available_reports(self, model_name, view_type):
+    def available_reports(self, model_name, view_type, record_ids=None):
         if not self.env.user.has_group('absar_direct_print.group_print_user'):
             return []
         if model_name not in self.env or view_type not in ('form', 'list'):
             return []
         self.env[model_name].check_access_rights('read')
-        reports = self.env['ir.actions.report'].search([
-            ('model', '=', model_name), ('report_type', '=', 'qweb-pdf'),
-            ('binding_model_id.model', '=', model_name), ('binding_type', '=', 'report')])
-        return [{'id': r.id, 'name': r.name} for r in reports
-                if view_type in (r.binding_view_types or '').split(',')
-                and (not r.groups_id or r.groups_id & self.env.user.groups_id)]
+        domain = [('model', '=', model_name), ('report_type', '=', 'qweb-pdf')]
+        if model_name == 'account.move':
+            # Invoice printing stays available in this chooser for invoices and
+            # bills, while the native Print menu is reserved for Journal Voucher.
+            domain += ['|', ('binding_model_id.model', '=', model_name),
+                       ('report_name', 'in', ['absar_report_suite.invoice',
+                                              'absar_report_suite.journal'])]
+        else:
+            domain += [('binding_model_id.model', '=', model_name), ('binding_type', '=', 'report')]
+        reports = self.env['ir.actions.report'].search(domain)
+        reports = reports.filtered(lambda r:
+            (model_name == 'account.move' and _account_move_report_kind(r))
+            or (model_name != 'account.move' and r.binding_type == 'report'
+                and view_type in (r.binding_view_types or '').split(',')))
+        reports = reports.filtered(lambda r: not r.groups_id or r.groups_id & self.env.user.groups_id)
+        if model_name == 'account.move':
+            params = self.env['ir.config_parameter'].sudo()
+            route_ids = set()
+            for alias in ('journal_report', 'invoice_report'):
+                value = params.get_param('absar_report_suite.target.' + alias)
+                if value and value.isdigit():
+                    route_ids.add(int(value))
+            if route_ids:
+                reports = reports.filtered(lambda r: r.id in route_ids)
+            moves = self.env[model_name].browse(record_ids or []).exists()
+            move_types = set(moves.mapped('move_type')) if moves else None
+            reports = _filter_account_move_reports(reports, move_types)
+        return [{'id': r.id, 'name': r.name} for r in reports]
 
     @api.model
     def open_for_records(self, model_name, ids, view_type):
-        reports = self.available_reports(model_name, view_type)
-        if not reports:
-            raise UserError(_('No PDF reports are available for this page.'))
         if not isinstance(ids, list) or not ids or any(type(i) is not int or i <= 0 for i in ids):
             raise UserError(_('Select saved records to print.'))
+        reports = self.available_reports(model_name, view_type, ids)
+        if not reports:
+            raise UserError(_('No PDF reports are available for this page.'))
         records = self.env[model_name].browse(ids).exists()
         records.check_access('read')
         if len(records) != len(set(ids)):
@@ -159,7 +209,9 @@ class PrintWizard(models.TransientModel):
             payload = json.loads(wizard.payload or '{}')
             model_name = (payload.get('context') or {}).get('active_model')
             if payload.get('view_type'):
-                wizard.available_report_ids = [r['id'] for r in self.available_reports(model_name, payload['view_type'])]
+                active_ids = (payload.get('context') or {}).get('active_ids')
+                wizard.available_report_ids = [r['id'] for r in self.available_reports(
+                    model_name, payload['view_type'], active_ids)]
             else:
                 wizard.available_report_ids = wizard.report_id
 
