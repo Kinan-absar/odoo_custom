@@ -47,7 +47,9 @@
                             <field name="forecast_margin_percent" readonly="1"/>
                         </group>
                     </group>
-                    <field name="job_costing_breakdown_json" widget="ccm_job_costing_breakdown" nolabel="1" readonly="1"/>
+                    <group col="4" class="ccm_job_costing_schedule_group">
+                        <field name="job_costing_breakdown_json" widget="ccm_job_costing_breakdown" nolabel="1" readonly="1" colspan="4"/>
+                    </group>
                 </page>
             </xpath>
         </field>

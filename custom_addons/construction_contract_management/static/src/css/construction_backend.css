@@ -307,52 +307,37 @@
     .ccm_form .ccm_actual_profit_project .o_field_widget { min-width: 0; }
 }
 
-/* Compact schedule for the form tab; the card treatment is reserved for PDF. */
-.ccm_job_costing_overview { margin-bottom: 12px; }
-.ccm-job-costing-schedule { width: 100%; margin: 8px 0 18px; color: #19354a; }
-.ccm-job-costing-schedule-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid #dce4e7; }
-.ccm-job-costing-eyebrow { display: block; color: #197e87; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-.ccm-job-costing-schedule-head h3 { margin: 2px 0 0; color: #19354a; font-size: 16px; font-weight: 700; }
-.ccm-job-costing-head-right { display: flex; align-items: center; gap: 16px; }
-.ccm-job-costing-project { display: grid; gap: 1px; text-align: right; }
-.ccm-job-costing-project span { color: #718490; font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.ccm-job-costing-project strong { font-size: 12px; font-weight: 600; }
-.ccm-job-costing-print { padding: 5px 10px; border-color: #cbd7da; color: #36505b; font-size: 12px; }
-.ccm-job-costing-totals, .ccm-job-costing-breakdown { width: 100%; border-collapse: collapse; }
-.ccm-job-costing-totals { margin: 6px 0 12px; }
-.ccm-job-costing-totals td { width: 25%; padding: 8px 12px 8px 0; border-bottom: 1px solid #e8edef; vertical-align: middle; }
-.ccm-job-costing-totals td + td { padding-left: 12px; border-left: 1px solid #e8edef; }
-.ccm-job-costing-totals span { display: block; color: #718490; font-size: 9px; font-weight: 700; text-transform: uppercase; }
-.ccm-job-costing-totals strong { display: block; margin-top: 2px; color: #19354a; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.ccm-job-costing-totals strong.is-positive { color: #197e87; }
-.ccm-job-costing-totals strong.is-negative { color: #c94742; }
-.ccm-job-costing-breakdown thead th { padding: 6px 10px; border-bottom: 1px solid #cfdadd; color: #718490; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+/* Plain, full-width profitability table in the form; card styling stays in the PDF. */
+.ccm_job_costing_schedule_group { width: 100%; }
+.ccm_job_costing_schedule_group .o_field_widget { width: 100% !important; max-width: none !important; }
+.ccm-job-costing-table-wrap { width: 100%; margin: 8px 0 16px; color: #19354a; }
+.ccm-job-costing-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 5px 0; }
+.ccm-job-costing-toolbar > strong { color: #19354a; font-size: 14px; font-weight: 700; }
+.ccm-job-costing-print { padding: 2px 4px; color: #197e87; font-size: 12px; text-decoration: none; }
+.ccm-job-costing-print:hover { color: #126871; }
+.ccm-job-costing-breakdown { width: 100%; margin: 0; border-collapse: collapse; table-layout: fixed; }
+.ccm-job-costing-breakdown thead th { padding: 7px 10px; border-top: 1px solid #d8e0e3; border-bottom: 1px solid #cbd5d9; color: #718490; font-size: 10px; font-weight: 700; text-transform: uppercase; }
 .ccm-job-costing-breakdown th:first-child { text-align: left; }
-.ccm-job-costing-breakdown th:last-child { width: 24%; }
-.ccm-job-costing-breakdown td { padding: 0 10px; border-bottom: 1px solid #e8edef; }
-.ccm-job-costing-section-row { background: #f8fafb; }
-.ccm-job-costing-toggle { display: flex; width: 100%; align-items: center; gap: 8px; min-height: 34px; padding: 5px 0; border: 0; background: transparent; color: #19354a; text-align: left; font-size: 12px; font-weight: 650; }
+.ccm-job-costing-breakdown th:last-child { width: 30%; }
+.ccm-job-costing-breakdown td { padding: 5px 10px; border-bottom: 1px solid #e7ecee; vertical-align: middle; }
+.ccm-job-costing-total-row td { min-height: 34px; color: #19354a; font-size: 13px; font-weight: 700; }
+.ccm-job-costing-total-row .ccm-job-costing-amount { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ccm-job-costing-profit-row td { border-top: 1px solid #ccd7da; }
+.ccm-job-costing-amount.is-positive { color: #197e87; }
+.ccm-job-costing-amount.is-negative { color: #c94742; }
+.ccm-job-costing-section-row td { padding-top: 2px; padding-bottom: 2px; }
+.ccm-job-costing-toggle { display: inline-flex; width: 100%; min-height: 29px; align-items: center; gap: 8px; padding: 3px 0 3px 16px; border: 0; background: transparent; color: #536a75; text-align: left; font-size: 12px; font-weight: 500; }
 .ccm-job-costing-toggle:hover { color: #197e87; }
-.ccm-job-costing-toggle i { width: 12px; color: #197e87; font-size: 10px; transition: transform .16s ease; }
+.ccm-job-costing-toggle i { width: 10px; color: #197e87; font-size: 9px; transition: transform .16s ease; }
 .ccm-job-costing-toggle i.is-open { transform: rotate(90deg); }
-.ccm-job-costing-toggle small { color: #81929a; font-size: 10px; font-weight: 400; }
-.ccm-job-costing-amount { color: #19354a; font-size: 12px; font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.ccm-job-costing-account-row td { min-height: 28px; padding-top: 6px; padding-bottom: 6px; color: #536a75; font-size: 11px; }
-.ccm-job-costing-account-row td:first-child { padding-left: 32px; }
-.ccm-job-costing-account-row .ccm-job-costing-amount { color: #536a75; font-weight: 500; }
+.ccm-job-costing-section-row .ccm-job-costing-amount { color: #536a75; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ccm-job-costing-account-row td { color: #71808a; font-size: 11px; }
+.ccm-job-costing-account-row td:first-child { padding-left: 48px; }
+.ccm-job-costing-account-row .ccm-job-costing-amount { color: #536a75; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ccm-job-costing-empty td { color: #81929a; font-style: italic; }
-@media (max-width: 800px) {
-    .ccm_job_costing_overview { display: block; }
-    .ccm-job-costing-totals td { padding-right: 6px; }
-    .ccm-job-costing-totals td + td { padding-left: 6px; }
-    .ccm-job-costing-totals strong { font-size: 11px; }
-}
 @media (max-width: 575px) {
-    .ccm-job-costing-schedule-head, .ccm-job-costing-head-right { align-items: flex-start; }
-    .ccm-job-costing-schedule-head { flex-direction: column; }
-    .ccm-job-costing-head-right { width: 100%; justify-content: space-between; }
-    .ccm-job-costing-project { text-align: left; }
-    .ccm-job-costing-totals { table-layout: fixed; }
-    .ccm-job-costing-totals span { font-size: 8px; }
-    .ccm-job-costing-totals strong { white-space: normal; overflow-wrap: anywhere; }
+    .ccm-job-costing-breakdown th:last-child { width: 42%; }
+    .ccm-job-costing-breakdown td { padding-right: 6px; padding-left: 6px; }
+    .ccm-job-costing-total-row td { font-size: 12px; }
+    .ccm-job-costing-amount { white-space: normal !important; overflow-wrap: anywhere; }
 }
