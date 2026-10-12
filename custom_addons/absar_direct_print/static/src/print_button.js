@@ -13,8 +13,12 @@ function setupPrint(controller, viewType) {
     controller.absarPrintAction = useService("action");
     onWillStart(async () => {
         if (controller.env.inDialog || !controller.props.resModel) return;
+        const recordId = viewType === "form" ? controller.model?.root?.resId : undefined;
+        const recordIds = recordId
+            ? [recordId]
+            : [];
         const reports = await controller.absarPrintOrm.call(
-            "absar.print.wizard", "available_reports", [controller.props.resModel, viewType]
+            "absar.print.wizard", "available_reports", [controller.props.resModel, viewType, recordIds]
         );
         controller.absarPrint.available = reports.length > 0;
     });
