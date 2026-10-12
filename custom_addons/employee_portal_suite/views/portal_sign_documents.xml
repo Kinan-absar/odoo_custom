@@ -1,254 +1,101 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-
 <template id="portal_sign_documents_page">
     <t t-call="employee_portal_suite.employee_portal_layout">
-
-        <div class="container mt-4">
-
-            <h3>Documents to Sign</h3>
-
-            <!-- FILTER BUTTONS -->
-            <div class="btn-group mt-3 mb-3">
-                <a href="/my/employee/sign?filter=pending"
-                   t-att-class="'btn btn-sm ' + ('btn-primary' if current_filter=='pending' else 'btn-outline-primary')">
-                    Pending
-                </a>
-                <a href="/my/employee/sign?filter=signed"
-                   t-att-class="'btn btn-sm ' + ('btn-success' if current_filter=='signed' else 'btn-outline-success')">
-                    Signed
-                </a>
-                <a href="/my/employee/sign?filter=rejected"
-                   t-att-class="'btn btn-sm ' + ('btn-danger' if current_filter=='rejected' else 'btn-outline-danger')">
-                    Rejected
-                </a>
+        <style>
+            .eps-sign-page{max-width:1380px;margin:0 auto;padding:20px 18px 42px}
+            .eps-sign-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+            .eps-sign-heading h1{margin:0;color:#1e2535;font-size:28px;font-weight:750;letter-spacing:-.02em}
+            .eps-sign-heading p{margin:3px 0 0;color:#8891a3;font-size:13px}
+            .eps-sign-tabs{display:inline-flex;padding:3px;border:1px solid #e1e5eb;background:#fff;border-radius:11px;gap:2px}
+            .eps-sign-tab{padding:7px 13px;border-radius:8px;text-decoration:none!important;color:#667085;font-size:13px;font-weight:650;line-height:1}
+            .eps-sign-tab:hover{background:#f6f4f6;color:#714b67}
+            .eps-sign-tab.active.pending{background:#714b67;color:#fff}
+            .eps-sign-tab.active.signed{background:#eaf8ef;color:#198754}
+            .eps-sign-tab.active.rejected{background:#fff0f1;color:#c23b4a}
+            .eps-sign-search{position:relative;margin-bottom:12px}
+            .eps-sign-search input{width:100%;height:42px;border:1px solid #e2e6ec;border-radius:11px;background:#fff;padding:0 76px 0 14px;color:#252b38;font-size:13px;box-shadow:0 2px 8px rgba(20,28,45,.025)}
+            .eps-sign-search input:focus{outline:none;border-color:#b49bab;box-shadow:0 0 0 3px rgba(113,75,103,.08)}
+            .eps-sign-search button{position:absolute;right:5px;top:4px;width:34px;height:34px;border:0;background:transparent;color:#98a1b2;border-radius:8px}
+            .eps-sign-search .clear-search{position:absolute;right:47px;top:50%;transform:translateY(-50%);width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:#98a1b2;text-decoration:none!important;border-radius:7px;font-size:13px;line-height:1}.eps-sign-search .clear-search:hover{background:#f4f5f7;color:#714b67}
+            .eps-sign-list{background:#fff;border:1px solid #e5e8ed;border-radius:13px;overflow:hidden;box-shadow:0 5px 18px rgba(24,32,48,.035)}
+            .eps-sign-row{display:grid;grid-template-columns:minmax(0,1fr) 112px 108px 190px 108px;align-items:center;column-gap:14px;padding:12px 14px;border-bottom:1px solid #edf0f3;min-height:60px}
+            .eps-sign-row:last-child{border-bottom:0}
+            .eps-sign-row:not(.head):hover{background:#fbfbfc}
+            .eps-sign-row.head{min-height:auto;padding-top:9px;padding-bottom:9px;background:#fafbfc;color:#7a8394;font-size:11px;font-weight:750;text-transform:uppercase;letter-spacing:.045em}
+            .eps-doc{min-width:0;display:flex;align-items:center;gap:10px}
+            .eps-doc-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#f3eef2;color:#714b67;flex:0 0 auto}
+            .eps-doc-name{font-size:14px;font-weight:650;color:#222a3a;line-height:1.3;white-space:normal;word-break:break-word}
+            .eps-date{font-size:12.5px;color:#7e8798;white-space:nowrap}
+            .eps-status{display:inline-flex;align-items:center;justify-content:center;width:max-content;min-width:66px;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:750}
+            .eps-status.pending{background:#fff4cc;color:#8a6500}.eps-status.signed{background:#e1f6e8;color:#167b40}.eps-status.rejected{background:#fde7ea;color:#b63242}
+            .eps-workflow{font-size:12.5px;color:#4f5869;line-height:1.3}
+            .eps-action{text-align:right;white-space:nowrap}
+            .eps-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 11px;border-radius:8px;text-decoration:none!important;font-size:12px;font-weight:700}
+            .eps-btn.sign{background:#714b67;color:#fff!important;box-shadow:0 3px 8px rgba(113,75,103,.15)}
+            .eps-btn.download{border:1px solid #dfe3e8;background:#fff;color:#576174!important}
+            .eps-waiting-action{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 10px;border-radius:8px;background:#f7f1df;color:#8a7a55;border:1px solid #eadfbe;font-size:12px;font-weight:650;white-space:nowrap}
+            .eps-empty{text-align:center;padding:46px 20px;color:#8a93a3}
+            .eps-mobile-card{background:#fff;border:1px solid #e5e8ed;border-radius:12px;padding:13px;margin-bottom:10px;box-shadow:0 4px 14px rgba(24,32,48,.035)}
+            .eps-mobile-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.eps-mobile-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:11px;padding-top:10px;border-top:1px solid #eef0f3}
+            @media(max-width:767.98px){.eps-sign-page{padding:16px 11px 34px}.eps-sign-toolbar{align-items:flex-start;flex-direction:column}.eps-sign-heading h1{font-size:24px}.eps-sign-tabs{width:100%}.eps-sign-tab{flex:1;text-align:center}.eps-workflow{font-size:12px}}
+        </style>
+        <div class="eps-sign-page">
+            <div class="eps-sign-toolbar">
+                <div class="eps-sign-heading">
+                    <h1>Documents to Sign</h1>
+                    <p>Signature requests assigned to you</p>
+                </div>
+                <div class="eps-sign-tabs">
+                    <a href="/my/employee/sign?filter=pending" t-att-class="'eps-sign-tab pending ' + ('active pending' if current_filter=='pending' else '')">Pending</a>
+                    <a href="/my/employee/sign?filter=signed" t-att-class="'eps-sign-tab signed ' + ('active signed' if current_filter=='signed' else '')">Signed</a>
+                    <a href="/my/employee/sign?filter=rejected" t-att-class="'eps-sign-tab rejected ' + ('active rejected' if current_filter=='rejected' else '')">Rejected</a>
+                </div>
             </div>
-            <form method="get" class="sign-search-form">
+            <form method="get" class="eps-sign-search">
                 <input type="hidden" name="filter" t-att-value="current_filter"/>
-
-                <div class="position-relative">
-
-                    <input type="text"
-                        id="signSearchInput"
-                        name="search"
-                        t-att-value="search or ''"
-                        placeholder="Search document..."
-                        class="form-control mobile-search"/>
-
-                    <button type="submit" class="search-btn">
-                        <i class="fa fa-search"></i>
-                    </button>
-
-                    <t t-if="search">
-                        <a t-att-href="'/my/employee/sign?filter=%s' % current_filter"
-                        class="clear-search">
-                            <i class="fa fa-times"></i>
-                        </a>
-                    </t>
-
-                </div>
+                <input type="text" id="signSearchInput" name="search" t-att-value="search or ''" placeholder="Search documents..."/>
+                <t t-if="search"><a t-att-href="'/my/employee/sign?filter=%s' % current_filter" class="clear-search"><i class="fa fa-times"/></a></t>
+                <button type="submit"><i class="fa fa-search"/></button>
             </form>
-
-
-            <!-- EMPTY STATE -->
             <t t-if="not documents">
-                <p>No documents found.</p>
+                <div class="eps-sign-list eps-empty"><i class="fa fa-file-text-o fa-2x mb-2"/><div class="fw-semibold">No documents found</div></div>
             </t>
-
-            <!-- TABLE -->
             <t t-if="documents">
-                <!-- ========================= -->
-                <!-- DESKTOP TABLE (UNCHANGED) -->
-                <!-- ========================= -->
-
-                <div class="d-none d-md-block">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Filename</th>
-                            <th>Date</th>
-                            <th>Your Status</th>
-                            <th>Workflow</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-
-                        <t t-foreach="documents" t-as="doc">
-
-                            <t t-set="item" t-value="doc['item']"/>
-                            <t t-set="filename" t-value="doc['filename']"/>
-                            <t t-set="date" t-value="doc['date']"/>
-                            <t t-set="your_status" t-value="doc['your_status']"/>
-                            <t t-set="workflow_status" t-value="doc['workflow_status']"/>
-                            
-
-                            <tr>
-
-                                <!-- FILE -->
-                                <td>
-                                    <t t-out="filename"/>
-                                </td>
-
-                                <!-- DATE -->
-                                <td>
-                                    <t t-out="date"/>
-                                </td>
-
-                                <!-- YOUR STATUS BADGE -->
-                                <td>
-                                    <t t-if="'🟢' in your_status">
-                                        <span class="badge bg-success">Signed</span>
-                                    </t>
-                                    <t t-elif="'🟡' in your_status">
-                                        <span class="badge bg-warning text-dark">Pending</span>
-                                    </t>
-                                    <t t-elif="'🔴' in your_status">
-                                        <span class="badge bg-danger">Rejected</span>
-                                    </t>
-                                </td>
-
-                                <!-- WORKFLOW -->
-                                <td>
-                                    <t t-out="workflow_status"/>
-                                </td>
-
-                                <!-- ACTIONS -->
-                                <td class="text-end">
-
-                                  <!-- REJECTED -->
-                                    <t t-if="'🔴' in workflow_status">
-                                        <span class="badge bg-danger">Rejected</span>
-                                    </t>
-
-                                    <!-- PENDING -->
-                                    <t t-elif="'🟡' in your_status">
-                                        <a class="btn btn-sm btn-primary"
-                                           t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1">
-                                            Sign
-                                        </a>
-                                    </t>
-
-
-                                    <!-- DOWNLOAD FINAL PDF (FIXED TOKEN!) -->
-                                    <t t-if="item.sign_request_id.state == 'signed'">
-                                        <a class="btn btn-sm btn-outline-secondary ms-1"
-                                           t-attf-href="/sign/download/{{ item.sign_request_id.id }}/{{ item.sign_request_id.access_token }}/completed"
-                                           target="_blank">
-                                            Download
-                                        </a>
-                                    </t>
-
-                                </td>
-
-                            </tr>
-                        </t>
-
-                    </tbody>
-                </table>
-                 </div>
-                  <!-- ========================= -->
-    <!-- MOBILE CARDS -->
-    <!-- ========================= -->
-
-    <div class="d-md-none">
-
-        <t t-foreach="documents" t-as="doc">
-
-            <t t-set="item" t-value="doc['item']"/>
-            <t t-set="filename" t-value="doc['filename']"/>
-            <t t-set="date" t-value="doc['date']"/>
-            <t t-set="your_status" t-value="doc['your_status']"/>
-            <t t-set="workflow_status" t-value="doc['workflow_status']"/>
-
-            <div class="card mb-3 rounded-4 shadow-sm">
-                <div class="card-body small">
-
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="fw-semibold">
-                            <t t-out="filename"/>
+                <div class="eps-sign-list d-none d-md-block">
+                    <div class="eps-sign-row head"><div>Document</div><div>Date</div><div>Your Status</div><div>Workflow</div><div class="text-end">Action</div></div>
+                    <t t-foreach="documents" t-as="doc">
+                        <t t-set="item" t-value="doc['item']"/><t t-set="your_status" t-value="doc['your_status']"/><t t-set="workflow_status" t-value="doc['workflow_status']"/>
+                        <div class="eps-sign-row">
+                            <div class="eps-doc"><span class="eps-doc-icon"><i class="fa fa-file-text-o"/></span><div class="eps-doc-name"><t t-out="doc['filename']"/></div></div>
+                            <div class="eps-date"><t t-out="doc['date']"/></div>
+                            <div><t t-if="'🟢' in your_status"><span class="eps-status signed">Signed</span></t><t t-elif="'🟡' in your_status"><span class="eps-status pending">Pending</span></t><t t-elif="'🔴' in your_status"><span class="eps-status rejected">Rejected</span></t></div>
+                            <div class="eps-workflow"><t t-out="workflow_status"/></div>
+                            <div class="eps-action">
+                                <t t-if="doc.get('can_sign')"><a class="eps-btn sign" t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1"><i class="fa fa-pencil"/>Sign</a></t>
+                                <t t-elif="'🟡' in your_status"><span class="eps-waiting-action"><i class="fa fa-clock-o me-1"/>Waiting</span></t>
+                                <t t-if="item.sign_request_id.state == 'signed'"><a class="eps-btn download" t-attf-href="/sign/download/{{ item.sign_request_id.id }}/{{ item.sign_request_id.access_token }}/completed" target="_blank"><i class="fa fa-download"/>Download</a></t>
+                            </div>
                         </div>
-
-                        <div>
-                            <t t-if="'🟢' in your_status">
-                                <span class="badge bg-success">Signed</span>
-                            </t>
-                            <t t-elif="'🟡' in your_status">
-                                <span class="badge bg-warning text-dark">Pending</span>
-                            </t>
-                            <t t-elif="'🔴' in your_status">
-                                <span class="badge bg-danger">Rejected</span>
-                            </t>
-                        </div>
-                    </div>
-
-                    <div class="text-muted small mb-2">
-                        <t t-out="date"/>
-                    </div>
-
-                    <div class="text-muted small mb-3">
-                        <t t-out="workflow_status"/>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2">
-
-                        <t t-if="'🔴' in workflow_status">
-                            <span class="badge bg-danger">Rejected</span>
-                        </t>
-
-                        <t t-elif="'🟡' in your_status">
-                            <a class="btn btn-sm btn-primary"
-                               t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1">
-                                Sign
-                            </a>
-                        </t>
-
-
-
-                        <t t-if="item.sign_request_id.state == 'signed'">
-                            <a class="btn btn-sm btn-outline-secondary"
-                               t-attf-href="/sign/download/{{ item.sign_request_id.id }}/{{ item.sign_request_id.access_token }}/completed"
-                               target="_blank">
-                                Download
-                            </a>
-                        </t>
-
-                    </div>
-
+                    </t>
                 </div>
-            </div>
-
-        </t>
-
-    </div>
-
+                <div class="d-md-none">
+                    <t t-foreach="documents" t-as="doc">
+                        <t t-set="item" t-value="doc['item']"/><t t-set="your_status" t-value="doc['your_status']"/><t t-set="workflow_status" t-value="doc['workflow_status']"/>
+                        <div class="eps-mobile-card">
+                            <div class="eps-mobile-top"><div class="eps-doc-name"><t t-out="doc['filename']"/></div><t t-if="'🟢' in your_status"><span class="eps-status signed">Signed</span></t><t t-elif="'🟡' in your_status"><span class="eps-status pending">Pending</span></t><t t-elif="'🔴' in your_status"><span class="eps-status rejected">Rejected</span></t></div>
+                            <div class="eps-mobile-bottom"><div><div class="eps-date mb-1"><i class="fa fa-calendar-o me-1"/><t t-out="doc['date']"/></div><div class="eps-workflow"><t t-out="workflow_status"/></div></div><div><t t-if="doc.get('can_sign')"><a class="eps-btn sign" t-attf-href="/sign/document/{{ item.sign_request_id.id }}/{{ doc['access_token'] }}?portal=1">Sign</a></t><t t-elif="'🟡' in your_status"><span class="eps-waiting-action"><i class="fa fa-clock-o me-1"/>Waiting</span></t><t t-if="item.sign_request_id.state == 'signed'"><a class="eps-btn download" t-attf-href="/sign/download/{{ item.sign_request_id.id }}/{{ item.sign_request_id.access_token }}/completed" target="_blank"><i class="fa fa-download"/></a></t></div></div>
+                        </div>
+                    </t>
+                </div>
             </t>
         </div>
         <script>
-        document.addEventListener("DOMContentLoaded", function() {
-
-            const input = document.getElementById("signSearchInput");
-            if (!input) return;
-
-            input.addEventListener("input", function() {
-
-                if (this.value.trim() === "") {
-
-                    const filter = new URLSearchParams(window.location.search)
-                        .get('filter') || 'pending';
-
-                    window.location.href =
-                        "/my/employee/sign?filter=" + filter;
-                }
-
+            document.addEventListener("DOMContentLoaded", function () {
+                const input = document.getElementById("signSearchInput"); if (!input) return;
+                input.addEventListener("input", function () { if (this.value.trim() === "") { const filter = new URLSearchParams(window.location.search).get('filter') || 'pending'; window.location.href = "/my/employee/sign?filter=" + filter; } });
             });
-
-        });
         </script>
-
-
     </t>
 </template>
-
 </odoo>

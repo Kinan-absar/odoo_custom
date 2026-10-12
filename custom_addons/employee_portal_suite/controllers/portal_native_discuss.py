@@ -192,6 +192,10 @@ class EmployeePortalNativeDiscussController(http.Controller):
         now = fields.Datetime.now()
         channel = request.env['discuss.channel'].sudo().create({
             'channel_type': 'group',
+            # Portal group conversations are chats, not meeting links.  Odoo's
+            # group-channel default can be video_full_screen, which makes the
+            # public Discuss surface open the meeting/camera welcome screen.
+            'default_display_mode': False,
             'name': (name or '').strip() or ', '.join(target_users.mapped('name')),
             'is_employee_portal_channel': True,
             'channel_member_ids': [
@@ -291,7 +295,12 @@ class EmployeePortalNativeDiscussController(http.Controller):
         if not channel or not self._is_allowed_channel(channel, user):
             return request.not_found()
         if channel.channel_type != 'channel':
-            channel.sudo().write({'is_employee_portal_channel': True})
+            vals = {'is_employee_portal_channel': True}
+            # A portal group is a normal chat conversation.  Never let Odoo's
+            # meeting display mode take over merely because channel_type=group.
+            if channel.channel_type == 'group' and channel.default_display_mode:
+                vals['default_display_mode'] = False
+            channel.sudo().write(vals)
         channel_user = channel.with_user(user)
         store = Store()
         store.add({

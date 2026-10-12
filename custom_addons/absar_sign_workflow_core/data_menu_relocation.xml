@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <function model="absar.sign.workflow" name="_relocate_menu_into_sign_configuration"/>
+</odoo>

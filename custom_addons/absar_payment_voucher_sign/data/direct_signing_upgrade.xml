@@ -1,0 +1,3 @@
+<odoo>
+    <function model="account.payment.voucher" name="_migrate_to_direct_signing"/>
+</odoo>

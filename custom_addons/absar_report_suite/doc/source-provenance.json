@@ -1,0 +1,92 @@
+[
+  {
+    "template": "journal_document",
+    "checkpoint_key": "wm_journal_entry_report.report_journal_document",
+    "source_sha256": "970bf2ede09ff805163a6dc631ea9f7079d56bb0070b6ec70dc10c76f7a77cbf"
+  },
+  {
+    "template": "journal",
+    "checkpoint_key": "wm_journal_entry_report.report_journal",
+    "source_sha256": "11f6482770f3ca3912289f577b1804b8aecae4f914489fdd952c74a35528d3fb"
+  },
+  {
+    "template": "invoice_document",
+    "checkpoint_key": "absar.invoice_document",
+    "source_sha256": "519a59afea700584f834d4b9cd01a0a09fb10a2d16e17649bedbb6646470a2e3"
+  },
+  {
+    "template": "invoice",
+    "checkpoint_key": "absar.invoice",
+    "source_sha256": "c02769fbb094264fb6db22ced0645cd12f8b3c58fdface8ad50fb8d8f24dd6e0"
+  },
+  {
+    "template": "invoice_with_payment",
+    "checkpoint_key": "absar.invoice_with_payment",
+    "source_sha256": "7db13a8f42456fd2ccd13eb61239ee8121171f282966a1018b1f998078f3405c"
+  },
+  {
+    "template": "report_styles",
+    "checkpoint_key": "absar.report_styles",
+    "source_sha256": "4d5bfab27805e3635497d9aae9bb3f3c994043609e65c432ea1564a805ada19f"
+  },
+  {
+    "template": "journal_layout",
+    "checkpoint_key": "absar.journal_layout",
+    "source_sha256": "2a6cd9198016871b43aac355ad817bcf70d9d96f8ffd59ef5d7fad5f8835f0cc"
+  },
+  {
+    "template": "subcontract",
+    "checkpoint_key": "absar.subcontract",
+    "source_sha256": "1f4dd1ed62f9cb13b19fd5f1be69893b2f2e61741a0b82417c0f9a155946e899"
+  },
+  {
+    "template": "business_layout",
+    "checkpoint_key": "web.external_layout_wave",
+    "source_sha256": "1b6ce24a0adb2feef0e2544fee441db99069f4c6de50e8edecda1fb9fdd7f161"
+  },
+  {
+    "template": "purchase",
+    "checkpoint_key": "purchase.report_purchaseorder",
+    "source_sha256": "a9423b824dcd9902e226e0ba8a1823786e8c759ae24215e9c273419245660868"
+  },
+  {
+    "template": "purchase_document",
+    "checkpoint_key": "web_studio.report_editor_customization_full.view._purchase.report_purchaseorder_document",
+    "source_sha256": "d87166679bc0e96036684c59587c03bb9e342462644de4ec8ec3890213e4cc6a"
+  },
+  {
+    "template": "sale_document",
+    "checkpoint_key": "web_studio.report_editor_customization_full.view._sale.report_saleorder_document",
+    "source_sha256": "48943c4a189a8a8ffc51d1aeebb137572edf4d7d798d046975a72bd8c1986fe6"
+  },
+  {
+    "template": "purchase_tax_totals",
+    "checkpoint_key": "purchase.document_tax_totals_copy_4",
+    "source_sha256": "ec4f8a52cdec7b7740d04c085e210591a8fc6e2f18d38345834e9a51c41fe5c9"
+  },
+  {
+    "template": "sale_tax_totals",
+    "checkpoint_key": "sale.document_tax_totals_copy_4",
+    "source_sha256": "5b79d212c429fa96c454b3c9cdda0403abb564243fa8f24136f8d57c3e0d9b83"
+  },
+  {
+    "template": "subcontract_document",
+    "checkpoint_key": "purchase.report_purchaseorder_document_copy_4_copy_2",
+    "source_sha256": "d75fd173d5e6fc6fffd859e316730a6bfbcf1bc8c57f76bac3664550596f4966"
+  },
+  {
+    "template": "subcontract_tax_totals",
+    "checkpoint_key": "purchase.document_tax_totals_copy_4_copy_2",
+    "source_sha256": "58b90c3f182e5125e988fb6b4a58bcf5985687c45522b1d1fa8c5d3beac20b65"
+  },
+  {
+    "template": "certificate",
+    "checkpoint_key": "account.report_invoice_copy_1_copy_1_copy_3",
+    "source_sha256": "80041898750d48ee24a8b50d1b1fbaedfca30965827b7ce1bdc98051410a3b6f"
+  },
+  {
+    "template": "certificate_bilingual",
+    "checkpoint_key": "l10n_gcc_invoice.arabic_english_invoice_copy_1_copy_1_copy_3",
+    "source_sha256": "ce279557c9e183703def3d7b0e6ac95080155b7f900069e25d1fdf031e266b4c"
+  }
+]

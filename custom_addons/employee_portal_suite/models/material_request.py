@@ -45,7 +45,7 @@ class MaterialRequest(models.Model):
     )
 
     worksite = fields.Char(string="Worksite", required=True)
-    delivery_date = fields.Date(string="Delivery Date")
+    delivery_date = fields.Date(string="Delivery Date", help="Required before submission; at least three days after Request Date.")
 
     line_ids = fields.One2many(
         'material.request.line',
@@ -90,6 +90,18 @@ class MaterialRequest(models.Model):
         compute="_compute_project_approvers",
         store=True,
         readonly=True
+    )
+
+    workflow_id = fields.Many2one(
+        'employee.portal.workflow', string='Approval Workflow', readonly=True, copy=False, tracking=True
+    )
+    approval_line_ids = fields.One2many(
+        'employee.portal.workflow.approval.line', 'material_request_id',
+        string='Workflow Approval Steps', readonly=True, copy=False
+    )
+    current_approval_line_id = fields.Many2one(
+        'employee.portal.workflow.approval.line',
+        string='Current Approval Step', compute='_compute_current_approval_line', store=False
     )
     last_log_note = fields.Text(
         string="Last Log Note",
@@ -382,6 +394,10 @@ class MaterialRequest(models.Model):
 
     def write(self, vals):
         vals = dict(vals)
+        if vals.get('state') in ('workflow', 'purchase', 'store', 'project_manager', 'director', 'ceo', 'approved'):
+            self._check_delivery_date(vals)
+        elif 'delivery_date' in vals or 'request_date' in vals:
+            self.filtered(lambda rec: rec.state not in ('draft', 'returned', 'rejected'))._check_delivery_date(vals)
         if "project_id" in vals or "employee_id" in vals:
             for rec in self:
                 employee = self.env["hr.employee"].browse(vals.get("employee_id")) if vals.get("employee_id") else rec.employee_id
@@ -413,7 +429,7 @@ class MaterialRequest(models.Model):
         store=False
     )
 
-    @api.depends("state", "needs_clarification", "clarification_stage")
+    @api.depends("state", "needs_clarification", "clarification_stage", "approval_status_label")
     def _compute_display_state(self):
         stage_labels = dict(self._fields['state'].selection)
 
@@ -422,7 +438,7 @@ class MaterialRequest(models.Model):
                 stage_name = stage_labels.get(rec.clarification_stage, "")
                 rec.display_state = f"🚩 Clarification — {stage_name}"
             else:
-                rec.display_state = stage_labels.get(rec.state, "")
+                rec.display_state = rec.approval_status_label
 
 
 
@@ -431,6 +447,7 @@ class MaterialRequest(models.Model):
     # ---------------------------------------------------------
     state = fields.Selection([
         ('draft', 'Draft'),
+        ('workflow', 'Workflow Approval'),
         ('purchase', 'Purchase Representative'),
         ('store', 'Store Manager'),
         ('project_manager', 'Project Manager'),
@@ -616,7 +633,9 @@ class MaterialRequest(models.Model):
                 location = employee._find_project_location(project) if project else False
                 vals["work_location_id"] = location.id if location else False
 
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records.filtered(lambda rec: rec.state not in ('draft', 'returned', 'rejected'))._check_delivery_date()
+        return records
 
     # ---------------------------------------------------------
     # GENERIC STATE ADVANCE
@@ -706,6 +725,129 @@ class MaterialRequest(models.Model):
             note=note
         )
         #helper
+
+    @api.depends('approval_line_ids.state')
+    def _compute_current_approval_line(self):
+        for rec in self:
+            rec.current_approval_line_id = rec.approval_line_ids.filtered(lambda l: l.state == 'pending')[:1]
+
+    def _resolve_custom_workflow(self):
+        self.ensure_one()
+        return self.env['employee.portal.workflow'].sudo().resolve_workflow(
+            'material_request', project=self.project_id,
+            company=(self.project_id.company_id if self.project_id else self.employee_id.company_id)
+        )
+
+    def _notify_workflow_line(self, line):
+        self.ensure_one()
+        for user in line.sudo().approver_user_ids:
+            self._notify_user(
+                user,
+                _('Material Request %s requires your approval') % self.name,
+                _('Approval step "%s" is waiting for your action.') % line.name,
+            )
+            self._schedule_activity(
+                user,
+                _('Workflow Approval Needed'),
+                _('Please review Material Request %s - %s.') % (self.name, line.name),
+            )
+
+    def _start_custom_workflow(self, workflow):
+        self.ensure_one()
+        steps = workflow.sudo().step_ids.sorted(lambda step: (step.sequence, step.id))
+        if not steps:
+            raise UserError(_('The selected workflow has no approval steps.'))
+        line_model = self.env['employee.portal.workflow.approval.line'].sudo()
+        values = []
+        for index, step in enumerate(steps):
+            users = step.sudo().resolve_users(self)
+            if not users:
+                raise UserError(_(
+                    'Workflow step "%s" has no approver. Check the project responsible employee, role users, or specific user.'
+                ) % step.name)
+            values.append({
+                'material_request_id': self.id,
+                'workflow_id': workflow.id,
+                'source_step_id': step.id,
+                'sequence': step.sequence,
+                'name': step.name,
+                'approver_type': step.approver_type,
+                'role_name': (step.approval_role_id.name if step.approval_role_id else (step.role_assignment_id.name if step.role_assignment_id else False)),
+                'approver_user_ids': [(6, 0, users.ids)],
+                'state': 'pending' if index == 0 else 'waiting',
+            })
+        self.sudo().approval_line_ids.unlink()
+        lines = line_model.create(values)
+        self.sudo().write({'workflow_id': workflow.id, 'state': 'workflow'})
+        self.message_post(body=_('Material Request submitted using workflow: %s') % workflow.display_name)
+        self.activity_ids.action_done()
+        self._notify_workflow_line(lines.filtered(lambda l: l.state == 'pending')[:1])
+
+    def _finish_custom_workflow(self):
+        self.ensure_one()
+        self.sudo().write({'state': 'approved'})
+        self._send_final_pdf_and_notify_all(
+            report_xmlid='employee_portal_suite.material_request_pdf',
+            subject=f'Material Request {self.name} – Approved',
+            body=f'Material Request {self.name} has been fully approved. Please find the attached document.'
+        )
+        self.message_post(body=_('Material Request fully approved through configurable workflow.'))
+        self.activity_ids.action_done()
+        if self.employee_id.user_id:
+            self.env['employee.portal.telegram.service'].sudo().send_to_user(
+                self.employee_id.user_id,
+                f'Material Request {self.name} approved',
+                f'Your Material Request {self.name} has been fully approved.',
+                f'/my/employee/material/{self.id}'
+            )
+
+    def action_workflow_approve(self):
+        for rec in self:
+            if rec.state != 'workflow':
+                raise UserError(_('This Material Request is not in configurable workflow approval.'))
+            line = rec.current_approval_line_id.sudo()
+            if not line:
+                raise UserError(_('No pending workflow step was found.'))
+            actor = self.env['res.users'].browse(self.env.context.get('workflow_actor_user_id')) or self.env.user
+            if not line.can_user_approve(actor):
+                raise UserError(_('You are not an eligible approver for the current workflow step.'))
+            line.write({
+                'state': 'approved',
+                'approved_by': actor.id,
+                'approved_date': fields.Datetime.now(),
+            })
+            rec.activity_ids.action_done()
+            next_line = rec.approval_line_ids.sudo().filtered(lambda l: l.state == 'waiting').sorted(lambda l: (l.sequence, l.id))[:1]
+            if next_line:
+                next_line.write({'state': 'pending'})
+                rec.message_post(body=_('Workflow step approved: %s. Next step: %s.') % (line.name, next_line.name))
+                rec._notify_workflow_line(next_line)
+            else:
+                rec._finish_custom_workflow()
+        return True
+
+    def action_workflow_reject(self):
+        for rec in self:
+            if rec.state != 'workflow':
+                raise UserError(_('This Material Request is not in configurable workflow approval.'))
+            line = rec.current_approval_line_id.sudo()
+            actor = self.env['res.users'].browse(self.env.context.get('workflow_actor_user_id')) or self.env.user
+            if not line or not line.can_user_approve(actor):
+                raise UserError(_('You are not allowed to reject the current workflow step.'))
+            line.write({
+                'state': 'rejected',
+                'rejected_by': actor.id,
+                'rejected_date': fields.Datetime.now(),
+            })
+            rec.sudo().write({
+                'state_before_reject': 'workflow',
+                'rejected_by': actor.id,
+                'state': 'rejected',
+            })
+            rec.message_post(body=_('Material Request rejected at workflow step: %s') % line.name)
+            rec.activity_ids.action_done()
+        return True
+
     def _check_approval(self, required_state, required_group):
         self.ensure_one()
 
@@ -752,7 +894,10 @@ class MaterialRequest(models.Model):
         if any(user.has_group(group) for group in broad_groups):
             return []
 
-        domains = []
+        dynamic_ids = self.env['employee.portal.workflow.approval.line'].sudo().request_ids_for_user(
+            user, 'material_request'
+        )
+        domains = [[("id", "in", dynamic_ids)]] if dynamic_ids else []
         if user.has_group("employee_portal_suite.group_employee_portal_employee"):
             domains.append([("employee_id.user_id", "=", user.id)])
         if user.has_group("employee_portal_suite.group_mr_store_manager"):
@@ -765,6 +910,8 @@ class MaterialRequest(models.Model):
     def _portal_can_view(self, user=None):
         self.ensure_one()
         user = user or self.env.user
+        if self.approval_line_ids.filtered(lambda line: line.user_has_approval_involvement(user)):
+            return True
         domain = self._portal_visibility_domain(user)
         if not domain:
             return True
@@ -773,6 +920,10 @@ class MaterialRequest(models.Model):
     def _portal_can_approve(self, user=None):
         self.ensure_one()
         user = user or self.env.user
+
+        if self.state == 'workflow':
+            line = self.current_approval_line_id.sudo()
+            return bool(line and line.can_user_approve(user))
 
         # Super Administrator is an explicit workflow override role.
         if user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
@@ -800,7 +951,19 @@ class MaterialRequest(models.Model):
     # ---------------------------------------------------------
     # ACTIONS
     # ---------------------------------------------------------
+    def _check_delivery_date(self, values=None):
+        values = values or {}
+        for rec in self:
+            delivery = fields.Date.to_date(values.get('delivery_date', rec.delivery_date))
+            requested = fields.Date.to_date(values.get('request_date', rec.request_date))
+            if not delivery:
+                raise UserError(_('Set a Delivery Date before submitting the Material Request.'))
+            if not requested or delivery < requested + timedelta(days=3):
+                raise UserError(_('Delivery Date must be at least three days after Request Date.'))
+        return True
+
     def action_submit(self):
+        self._check_delivery_date()
         for rec in self:
             if rec.state != "draft":
                 raise UserError("Only draft requests can be submitted.")
@@ -809,6 +972,11 @@ class MaterialRequest(models.Model):
                 raise UserError(_("You must add at least one material line before submitting the request."))
             if not rec.project_id:
                 raise UserError(_("You must select the project for this Material Request before submitting it."))
+
+            workflow = rec._resolve_custom_workflow()
+            if workflow:
+                rec._start_custom_workflow(workflow)
+                continue
 
             rec.state = "purchase"
             rec.message_post(body="Material Request submitted.")
@@ -959,6 +1127,9 @@ class MaterialRequest(models.Model):
             "director": self.director_comment,
             "ceo": self.ceo_comment,
         }
+        if self.state_before_reject == 'workflow':
+            rejected_line = self.approval_line_ids.filtered(lambda l: l.state == 'rejected')[:1]
+            return rejected_line.comment if rejected_line else ''
         return comments.get(self.state_before_reject) or ""
 
     # ---------------------------------------------------------
@@ -967,6 +1138,24 @@ class MaterialRequest(models.Model):
     def get_portal_timeline(self):
         self.ensure_one()
         timeline = []
+
+        if self.workflow_id:
+            for line in self.approval_line_ids.sorted(lambda l: (l.sequence, l.id)):
+                if line.state == 'approved':
+                    timeline.append({
+                        'stage': line.name,
+                        'approved_by': line.approved_by.name if line.approved_by else '',
+                        'date': line.approved_date,
+                        'comment': line.comment or '',
+                    })
+                elif line.state == 'rejected':
+                    timeline.append({
+                        'stage': f'{line.name} - Rejected',
+                        'approved_by': line.rejected_by.name if line.rejected_by else '',
+                        'date': line.rejected_date,
+                        'comment': line.comment or '',
+                    })
+            return timeline
 
         stages = [
             ("purchase", "Purchase Representative", self.purchase_approved_by, self.purchase_approved_date, self.purchase_comment),
@@ -1020,6 +1209,7 @@ class MaterialRequest(models.Model):
         data = {
             'all_count': self.search_count(domain),
             'draft_count': self.search_count([('state', '=', 'draft')]),
+            'workflow_count': self.search_count([('state', '=', 'workflow')]),
             'purchase_count': self.search_count([('state', '=', 'purchase')]),
             'store_count': self.search_count([('state', '=', 'store')]),
             'project_manager_count': self.search_count([('state', '=', 'project_manager')]),
@@ -1036,6 +1226,7 @@ class MaterialRequest(models.Model):
 
     def get_readable_status(self):
         mapping = {
+            "workflow": "Workflow Approval",
             "purchase": "Pending Purchase",
             "store": "Pending Store Manager",
             "project_manager": "Pending PM",

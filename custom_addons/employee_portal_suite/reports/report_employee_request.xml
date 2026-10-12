@@ -1,112 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <odoo>
-
-    <template id="report_employee_request_document">
-        <t t-name="employee_portal_suite.report_employee_request_document">
-
-            <!-- Use correct Odoo report layout -->
-            <t t-call="web.external_layout">
-
-                <!-- Loop through docs exactly like Material Request -->
-                <t t-foreach="docs" t-as="doc">
-
-                    <main class="mt32 mb32">
-                        <div class="page">
-
-                            <h2>Employee Request</h2>
-
-                            <!-- BASIC INFO -->
-                            <table class="table table-sm mt-3">
-                                <tr>
-                                    <th>Request Number:</th>
-                                    <td><t t-out="doc.name"/></td>
-                                </tr>
-
-                                <tr>
-                                    <th>Employee:</th>
-                                    <td><t t-out="doc.employee_id.name"/></td>
-                                </tr>
-
-                                <tr>
-                                    <th>Manager:</th>
-                                    <td><t t-out="doc.manager_id.name"/></td>
-                                </tr>
-
-                                <tr>
-                                    <th>Request Type:</th>
-                                    <td><t t-out="doc.get_request_type_display()"/></td>
-                                </tr>
-
-                                <tr>
-                                    <th>Date:</th>
-                                    <td><t t-out="doc.request_date"/></td>
-                                </tr>
-                            </table>
-
-                            <!-- DESCRIPTION -->
-                            <h4 class="mt-4">Description</h4>
-                            <p><t t-out="doc.description"/></p>
-
-                            <!-- APPROVAL HISTORY -->
-                            <h4 class="mt-4">Approval Timeline</h4>
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Stage</th>
-                                        <th>Approved By</th>
-                                        <th>Date</th>
-                                        <th>Comment</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-
-                                    <tr>
-                                        <td>Manager</td>
-                                        <td><t t-out="doc.manager_approved_by.name or ''"/></td>
-                                        <td><t t-out="doc.manager_approved_date or ''"/></td>
-                                        <td><t t-out="doc.manager_comment or ''"/></td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>HR</td>
-                                        <td><t t-out="doc.hr_approved_by.name or ''"/></td>
-                                        <td><t t-out="doc.hr_approved_date or ''"/></td>
-                                        <td><t t-out="doc.hr_comment or ''"/></td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>Finance</td>
-                                        <td><t t-out="doc.finance_approved_by.name or ''"/></td>
-                                        <td><t t-out="doc.finance_approved_date or ''"/></td>
-                                        <td><t t-out="doc.finance_comment or ''"/></td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>CEO</td>
-                                        <td><t t-out="doc.ceo_approved_by.name or ''"/></td>
-                                        <td><t t-out="doc.ceo_approved_date or ''"/></td>
-                                        <td><t t-out="doc.ceo_comment or ''"/></td>
-                                    </tr>
-
-                                    <!-- REJECTED -->
-                                    <t t-if="doc.state == 'rejected'">
-                                        <tr style="color:red;">
-                                            <td><strong>Rejected</strong></td>
-                                            <td><t t-out="doc.rejected_by.name if doc.rejected_by else ''"/></td>
-                                            <td><t t-out="doc.write_date"/></td>
-                                            <td><t t-out="doc.manager_comment or doc.hr_comment or doc.finance_comment or doc.ceo_comment"/></td>
-                                        </tr>
-                                    </t>
-
-                                </tbody>
-                            </table>
-
-                        </div>
-                    </main>
-
-                </t>
-            </t>
+  <template id="report_employee_request_document">
+    <t t-call="web.html_container">
+      <t t-foreach="docs" t-as="o">
+        <t t-call="web.external_layout">
+          <div class="page eps-print"><t t-call="employee_portal_suite.request_report_styles"/>
+<div class="eps-title" style="border:0 !important; background:white !important; overflow:hidden; width:100%; margin:8px 0 14px;"><div style="float:left;width:60%;border:0 !important;background:white !important;"><h2 style="font-size:30px !important; font-weight:700 !important; border:0 !important; margin:0 !important; color:#142e43 !important;">Employee Request</h2></div><div style="float:right;width:40%;text-align:right;border:0 !important;background:white !important;"><div class="eps-number" t-field="o.name"/><span class="eps-status" t-out="o.approval_status_label"/></div></div><div class="eps-card"><h3>Request Summary</h3><table class="eps-summary" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><tbody style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><tr style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Requested by</span><span class="eps-value" t-field="o.employee_id"/></td><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Request date</span><span class="eps-value" t-field="o.request_date"/></td></tr><tr style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Project</span><span class="eps-value" t-field="o.project_id"/></td><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Direct manager</span><span class="eps-value" t-field="o.manager_id"/></td></tr><tr style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><td colspan="2" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Request type</span><span class="eps-value" t-out="o.get_request_type_display()"/></td></tr><tr t-if="o.request_type == 'leave'" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Leave from</span><span class="eps-value" t-field="o.leave_from"/></td><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Leave to</span><span class="eps-value" t-field="o.leave_to"/></td></tr><tr t-if="o.request_type == 'leave' and o.time_off_type_id" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><td colspan="2" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Time off type</span><span class="eps-value" t-field="o.time_off_type_id"/></td></tr></tbody></table>
+</div><div class="eps-card"><h3>Request Details</h3><div class="eps-notes" t-if="o.description" t-field="o.description"/><div class="eps-notes eps-muted" t-else="">No description provided.</div>
+</div><t t-set="legacy_steps" t-value="[('Direct Manager', 'manager', o.manager_approved_by, o.manager_approved_date, o.manager_comment), ('HR', 'hr', o.hr_approved_by, o.hr_approved_date, o.hr_comment), ('Finance', 'finance', o.finance_approved_by, o.finance_approved_date, o.finance_comment), ('CEO', 'ceo', o.ceo_approved_by, o.ceo_approved_date, o.ceo_comment)]"/><t t-call="employee_portal_suite.request_report_approval_table"/>
+</div>
         </t>
-    </template>
-
+      </t>
+    </t>
+  </template>
 </odoo>

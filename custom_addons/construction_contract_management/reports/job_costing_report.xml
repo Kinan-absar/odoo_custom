@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="report_job_costing">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="data" t-value="breakdowns.get(doc.id, {})"/>
+                <t t-call="web.external_layout">
+                    <div class="page construction-report ccm-job-costing-print-report">
+                        <t t-call="construction_contract_management.report_construction_common_styles"/>
+                        <style type="text/css">
+                            .ccm-job-costing-print-report .report-header { border-left: 5px solid #197e87 !important; border-radius: 14px; }
+                            .ccm-job-costing-print-report .profitability-table { width: 100%; margin: 12px 0 0; border-collapse: collapse; border: 1px solid #d7e3e5; border-radius: 12px; overflow: hidden; }
+                            .ccm-job-costing-print-report .profitability-table thead th { padding: 10px 13px; border-bottom: 1px solid #cbd9dc; background: #f5f9f9; color: #526a74; font-size: 9pt; font-weight: 700; text-transform: uppercase; }
+                            .ccm-job-costing-print-report .profitability-table th:first-child { text-align: left; }
+                            .ccm-job-costing-print-report .profitability-table th:last-child { width: 30%; text-align: right; }
+                            .ccm-job-costing-print-report .profitability-table td { padding: 8px 13px; border-bottom: 1px solid #e7edef; color: #19354a; vertical-align: middle; }
+                            .ccm-job-costing-print-report .profitability-table .total-row td { font-weight: 700; }
+                            .ccm-job-costing-print-report .profitability-table .profit-row td { border-top: 1px solid #cbd9dc; color: #197e87; font-weight: 800; }
+                            .ccm-job-costing-print-report .profitability-table .amount { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+                            .ccm-job-costing-print-report .profitability-table .account-section td { padding-top: 5px; padding-bottom: 5px; color: #536a75; font-size: 9pt; }
+                            .ccm-job-costing-print-report .profitability-table .account-section td:first-child { padding-left: 28px; }
+                            .ccm-job-costing-print-report .profitability-table .account-section .amount { font-weight: 600; }
+                            .ccm-job-costing-print-report .profitability-table .account-detail td { padding-top: 5px; padding-bottom: 5px; color: #71808a; font-size: 8.5pt; }
+                            .ccm-job-costing-print-report .profitability-table .account-detail td:first-child { padding-left: 48px; }
+                            .ccm-job-costing-print-report .profitability-table .account-detail .amount { color: #536a75; }
+                        </style>
+                        <div class="report-header">
+                            <div class="report-title-row">
+                                <div class="report-title-main">
+                                    <div class="report-eyebrow">Construction · Job Costing</div>
+                                    <h1 class="report-title">Job Costing Report</h1>
+                                    <div class="report-subtitle"><span t-esc="doc.display_name"/></div>
+                                </div>
+                                <div class="report-title-side">
+                                    <div class="report-badge"><span t-esc="doc.company_id.name"/></div>
+                                    <div style="margin-top:8px;color:#19354a;font-weight:700">Project: <span t-esc="doc.project_id.display_name or '—'"/></div>
+                                </div>
+                            </div>
+                        </div>
+                        <t t-set="account_sections" t-value="[('customer_invoices', 'Customer Invoices', 'invoice_total'), ('credit_notes', 'Credit Notes', 'credit_note_total'), ('vendor_bills', 'Vendor Bills', 'vendor_total'), ('overhead', 'Overhead', 'overhead_total')]"/>
+                        <table class="profitability-table">
+                            <thead><tr><th>Profitability</th><th>Amount</th></tr></thead>
+                            <tbody>
+                                <tr class="total-row"><td>Actual Revenue</td><td class="amount" t-esc="format_amount(doc, data.get('revenue_total', 0))"/></tr>
+                                <t t-foreach="account_sections[:2]" t-as="section">
+                                    <tr class="account-section"><td t-esc="section[1]"/><td class="amount" t-esc="format_amount(doc, data.get(section[2], 0))"/></tr>
+                                    <t t-if="expanded.get(section[0])">
+                                        <t t-foreach="data.get('groups', {}).get(section[0], [])" t-as="account_row">
+                                            <tr class="account-detail"><td t-esc="account_row.get('account')"/><td class="amount" t-esc="format_amount(doc, account_row.get('amount', 0))"/></tr>
+                                        </t>
+                                    </t>
+                                </t>
+                                <tr class="total-row"><td>Actual Cost</td><td class="amount" t-esc="format_amount(doc, data.get('cost_total', 0))"/></tr>
+                                <t t-foreach="account_sections[2:]" t-as="section">
+                                    <tr class="account-section"><td t-esc="section[1]"/><td class="amount" t-esc="format_amount(doc, data.get(section[2], 0))"/></tr>
+                                    <t t-if="expanded.get(section[0])">
+                                        <t t-foreach="data.get('groups', {}).get(section[0], [])" t-as="account_row">
+                                            <tr class="account-detail"><td t-esc="account_row.get('account')"/><td class="amount" t-esc="format_amount(doc, account_row.get('amount', 0))"/></tr>
+                                        </t>
+                                    </t>
+                                </t>
+                                <tr class="profit-row"><td>Actual Profit</td><td class="amount" t-esc="format_amount(doc, data.get('profit_total', 0))"/></tr>
+                                <tr class="total-row"><td>Actual Profit Margin</td><td class="amount"><span t-esc="'%.2f' % (data.get('margin', 0))"/>%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_workflow_approval_line_report_list_ui" model="ir.ui.view">
+        <field name="name">employee.portal.workflow.approval.line.report.list.ui</field>
+        <field name="model">employee.portal.workflow.approval.line</field>
+        <field name="inherit_id" ref="employee_portal_suite.view_workflow_approval_line_report_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="js_class">workflow_report_dashboard_list</attribute>
+                <attribute name="decoration-danger">is_overdue</attribute>
+                <attribute name="decoration-success">state == 'approved'</attribute>
+                <attribute name="decoration-warning">state == 'returned'</attribute>
+                <attribute name="decoration-muted">state == 'skipped'</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_workflow_approval_line_report_search_ui" model="ir.ui.view">
+        <field name="name">employee.portal.workflow.approval.line.report.search.ui</field>
+        <field name="model">employee.portal.workflow.approval.line</field>
+        <field name="inherit_id" ref="employee_portal_suite.view_workflow_approval_line_report_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='overrides']" position="after">
+                <separator/>
+                <filter name="approved" string="Approved" domain="[('state','=','approved')]"/>
+                <filter name="returned" string="Returned" domain="[('state','=','returned')]"/>
+                <filter name="rejected" string="Rejected" domain="[('state','=','rejected')]"/>
+                <filter name="employee_requests" string="Employee Requests" domain="[('request_model_label','=','employee_request')]"/>
+                <filter name="material_requests" string="Material Requests" domain="[('request_model_label','=','material_request')]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_portal_approval_role_kanban" model="ir.ui.view">
+        <field name="name">employee.portal.approval.role.kanban</field>
+        <field name="model">employee.portal.approval.role</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/><field name="description"/><field name="default_user_ids"/><field name="linked_role_assignment_id"/><field name="active"/>
+                <templates><t t-name="card">
+                    <div class="eps_wf_card">
+                        <div class="eps_wf_card_header">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div class="eps_wf_card_title"><field name="name"/></div>
+                                <span t-if="record.active.raw_value" class="badge text-bg-success">Active</span><span t-else="" class="badge text-bg-secondary">Inactive</span>
+                            </div>
+                            <div class="text-muted small mt-1" t-if="record.description.raw_value"><field name="description"/></div>
+                        </div>
+                        <div class="eps_wf_card_meta">
+                            <div><i class="fa fa-users me-1"/> Default approvers</div>
+                            <div class="mt-1"><field name="default_user_ids" widget="many2many_tags"/></div>
+                            <div class="mt-2" t-if="record.linked_role_assignment_id.raw_value"><i class="fa fa-link me-1"/> Linked role: <field name="linked_role_assignment_id"/></div>
+                        </div>
+                    </div>
+                </t></templates>
+            </kanban>
+        </field>
+    </record>
+    <record id="action_employee_portal_approval_roles" model="ir.actions.act_window"><field name="view_mode">kanban,list,form</field></record>
+
+    <record id="view_employee_portal_workflow_kanban" model="ir.ui.view">
+        <field name="name">employee.portal.workflow.kanban</field>
+        <field name="model">employee.portal.workflow</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/><field name="applies_to"/><field name="project_id"/><field name="employee_request_type"/><field name="step_count"/><field name="validation_state"/><field name="active"/>
+                <templates><t t-name="card">
+                    <div class="eps_wf_card">
+                        <div class="eps_wf_card_header">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div><div class="eps_wf_card_title"><field name="name"/></div><div class="text-muted small mt-1"><field name="project_id"/></div></div>
+                                <span t-if="record.validation_state.raw_value == 'valid'" class="badge text-bg-success">Validated</span>
+                                <span t-elif="record.validation_state.raw_value == 'warning'" class="badge text-bg-warning">Warnings</span>
+                                <span t-else="" class="badge text-bg-secondary">Not Validated</span>
+                            </div>
+                        </div>
+                        <div class="eps_wf_card_meta">
+                            <div class="d-flex flex-wrap gap-3">
+                                <span class="eps_wf_card_metric"><i class="fa fa-file-text-o"/> <field name="applies_to"/></span>
+                                <span class="eps_wf_card_metric"><i class="fa fa-list-ol"/> <strong><field name="step_count"/></strong> steps</span>
+                            </div>
+                            <div class="mt-2" t-if="record.employee_request_type.raw_value"><i class="fa fa-filter me-1"/> <field name="employee_request_type"/></div>
+                            <div class="mt-2"><span t-if="record.active.raw_value" class="text-success"><i class="fa fa-circle me-1"/>Active</span><span t-else="" class="text-muted"><i class="fa fa-circle-o me-1"/>Inactive</span></div>
+                        </div>
+                    </div>
+                </t></templates>
+            </kanban>
+        </field>
+    </record>
+    <record id="action_employee_portal_workflows" model="ir.actions.act_window"><field name="view_mode">kanban,list,form</field></record>
+
+    <record id="view_employee_portal_workflow_form_ui" model="ir.ui.view">
+        <field name="name">employee.portal.workflow.form.ui</field><field name="model">employee.portal.workflow</field>
+        <field name="inherit_id" ref="employee_portal_suite.view_employee_portal_workflow_form_v2"/>
+        <field name="arch" type="xml"><xpath expr="//div[contains(@class,'oe_title')]" position="after">
+            <div class="eps_workflow_form_hint"><strong>Workflow Designer</strong><span class="ms-2 text-muted">Define the route, approver source, conditions and SLA. Validate and preview before activation.</span></div>
+        </xpath></field>
+    </record>
+
+    <record id="view_employee_portal_approval_role_form_ui" model="ir.ui.view">
+        <field name="name">employee.portal.approval.role.form.ui</field><field name="model">employee.portal.approval.role</field>
+        <field name="inherit_id" ref="employee_portal_suite.view_employee_portal_approval_role_form"/>
+        <field name="arch" type="xml"><xpath expr="//div[contains(@class,'oe_title')]" position="after">
+            <div class="eps_workflow_form_hint"><strong>Reusable Business Role</strong><span class="ms-2 text-muted">Use one role across projects, then assign different approvers per project when needed.</span></div>
+        </xpath></field>
+    </record>
+
+    <record id="view_employee_portal_project_role_assignment_list_ui" model="ir.ui.view">
+        <field name="name">employee.portal.project.role.assignment.list.ui</field><field name="model">employee.portal.project.role.assignment</field>
+        <field name="inherit_id" ref="employee_portal_suite.view_employee_portal_project_role_assignment_list"/>
+        <field name="arch" type="xml"><xpath expr="//list" position="attributes"><attribute name="decoration-muted">not active</attribute></xpath></field>
+    </record>
+
+    <record id="view_employee_portal_approval_delegation_list_ui" model="ir.ui.view">
+        <field name="name">employee.portal.approval.delegation.list.ui</field><field name="model">employee.portal.approval.delegation</field>
+        <field name="inherit_id" ref="employee_portal_suite.view_employee_portal_approval_delegation_list"/>
+        <field name="arch" type="xml"><xpath expr="//list" position="attributes"><attribute name="decoration-muted">not active</attribute></xpath></field>
+    </record>
+</odoo>

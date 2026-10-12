@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_employee_portal_backend_filter_card_list" model="ir.ui.view">
+        <field name="name">employee.portal.backend.filter.card.list</field>
+        <field name="model">employee.portal.backend.filter.card</field>
+        <field name="arch" type="xml">
+            <list string="Backend Request Cards" default_order="request_kind,sequence,id">
+                <field name="sequence" widget="handle"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="request_kind"/>
+                <field name="label"/>
+                <field name="icon" optional="hide"/>
+                <field name="filter_type"/>
+                <field name="code" optional="show"/>
+                <field name="my_requests_only" optional="hide"/>
+                <field name="color_style"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_employee_portal_backend_filter_card_form" model="ir.ui.view">
+        <field name="name">employee.portal.backend.filter.card.form</field>
+        <field name="model">employee.portal.backend.filter.card</field>
+        <field name="arch" type="xml">
+            <form string="Request Filter Card">
+                <header>
+                    <button name="action_test_filter" type="object" string="Test Filter" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="label"/>
+                        <h1><field name="label" placeholder="e.g. TAAKAD Only"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="active"/>
+                            <field name="request_kind"/>
+                            <field name="filter_type"/>
+                            <field name="code" invisible="filter_type != 'predefined'" required="filter_type == 'predefined'"/>
+                            <field name="custom_domain" invisible="filter_type != 'custom'" required="filter_type == 'custom'" placeholder="[('project_id.name', '=', 'TAAKAD')]"/>
+                        </group>
+                        <group>
+                            <field name="sequence"/>
+                            <field name="color_style"/>
+                            <field name="icon" placeholder="⭐"/>
+                            <field name="my_requests_only"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert" invisible="filter_type != 'custom'">
+                        <strong>Custom domains</strong><br/>
+                        Use a standard Odoo domain, for example:<br/>
+                        <code>[('project_id.name', '=', 'TAAKAD')]</code><br/>
+                        <code>[('request_date', '&gt;=', '2026-10-01')]</code><br/>
+                        Variables available inside the domain: <code>uid</code> and <code>company_id</code>.
+                        Use <strong>Test Filter</strong> before relying on the card.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_employee_portal_backend_filter_card_search" model="ir.ui.view">
+        <field name="name">employee.portal.backend.filter.card.search</field>
+        <field name="model">employee.portal.backend.filter.card</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="label"/>
+                <field name="request_kind"/>
+                <field name="filter_type"/>
+                <filter name="employee_request_cards" string="Employee Requests" domain="[('request_kind','=','employee')]"/>
+                <filter name="material_request_cards" string="Material Requests" domain="[('request_kind','=','material')]"/>
+                <filter name="custom_cards" string="Custom" domain="[('filter_type','=','custom')]"/>
+                <filter name="inactive" string="Inactive" domain="[('active','=',False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_request_kind" string="Request Type" context="{'group_by':'request_kind'}"/>
+                    <filter name="group_filter_type" string="Filter Type" context="{'group_by':'filter_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_employee_portal_backend_filter_cards" model="ir.actions.act_window">
+        <field name="name">Request Filter Cards</field>
+        <field name="res_model">employee.portal.backend.filter.card</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_employee_portal_backend_filter_card_search"/>
+        <field name="context">{'active_test': False, 'search_default_group_request_kind': 1, 'default_filter_type': 'custom'}</field>
+        <field name="help" type="html">
+            <p>Create, rename, order, style, enable or disable the KPI/filter cards shown above backend Employee Request and Material Request lists.</p>
+            <p>Custom cards can use any valid domain for the selected request model.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_employee_portal_backend_filter_cards"
+              name="Request Filter Cards"
+              parent="menu_employee_portal_configuration"
+              action="action_employee_portal_backend_filter_cards"
+              sequence="35"
+              groups="employee_portal_suite.group_employee_portal_superadmin"/>
+</odoo>

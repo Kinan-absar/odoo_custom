@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <odoo>
 
     <!-- ================================================================
@@ -26,70 +26,70 @@
                         </div>
 
                         <!-- Main table grouped by Work Location -->
-                        <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
-                            <thead>
-                                <tr style="background-color: #1a1a2e; color: #ffffff;">
-                                    <th style="padding: 8px 10px; text-align: left; font-weight: 700; border: 1px solid #1a1a2e;">#</th>
-                                    <th style="padding: 8px 10px; text-align: left; font-weight: 700; border: 1px solid #1a1a2e;">Employee</th>
-                                    <th style="padding: 8px 10px; text-align: right; font-weight: 700; border: 1px solid #1a1a2e;">Gross Salary</th>
-                                    <th style="padding: 8px 10px; text-align: right; font-weight: 700; border: 1px solid #1a1a2e;">Deductions</th>
-                                    <th style="padding: 8px 10px; text-align: right; font-weight: 700; border: 1px solid #1a1a2e;">Reimbursements</th>
-                                    <th style="padding: 8px 10px; text-align: right; font-weight: 700; border: 1px solid #1a1a2e;">Net Salary</th>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 9pt;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+                            <thead style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+                                <tr style="background-color: #1a1a2e; color: #ffffff;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+                                    <th style="padding: 8px 10px; text-align: left; font-weight: 700; border: 1px solid #1a1a2e;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">#</th>
+                                    <th style="padding: 8px 10px; text-align: left; font-weight: 700; border: 1px solid #1a1a2e;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">Employee</th>
+                                    <th style="padding: 8px 10px; text-align: right; font-weight: 700; border: 1px solid #1a1a2e;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">Gross Salary</th>
+                                    <th style="padding: 8px 10px; text-align: right; font-weight: 700; border: 1px solid #1a1a2e;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">Deductions</th>
+                                    <th style="padding: 8px 10px; text-align: right; font-weight: 700; border: 1px solid #1a1a2e;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">Reimbursements</th>
+                                    <th style="padding: 8px 10px; text-align: right; font-weight: 700; border: 1px solid #1a1a2e;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">Net Salary</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                 <t t-set="row_num" t-value="0"/>
                                 <t t-foreach="report._get_work_location_groups()" t-as="group">
-                                    <tr style="background-color: #e2e8f0; color: #0f172a; font-weight: 700;">
-                                        <td colspan="6" style="padding: 8px 10px; border: 1px solid #cbd5e1;">
+                                    <tr style="background-color: #e2e8f0; color: #0f172a; font-weight: 700;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+                                        <td colspan="6" style="padding: 8px 10px; border: 1px solid #cbd5e1;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                             Work Location: <t t-out="group['name']"/> — <t t-out="group['employee_count']"/> Employees
                                         </td>
                                     </tr>
 
                                     <t t-foreach="group['lines']" t-as="line">
                                         <t t-set="row_num" t-value="row_num + 1"/>
-                                        <tr t-attf-style="background-color: {{ '#f8fafc' if row_num % 2 == 0 else '#ffffff' }};">
-                                            <td style="padding: 7px 10px; border: 1px solid #e2e8f0; color: #94a3b8; font-size: 8pt;">
+                                        <tr t-attf-style="background-color: {{ '#f8fafc' if row_num % 2 == 0 else '#ffffff' }};" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+                                            <td style="padding: 7px 10px; border: 1px solid #e2e8f0; color: #94a3b8; font-size: 8pt;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                                 <t t-out="row_num"/>
                                             </td>
-                                            <td style="padding: 7px 10px; border: 1px solid #e2e8f0; font-weight: 600; color: #1e293b;">
+                                            <td style="padding: 7px 10px; border: 1px solid #e2e8f0; font-weight: 600; color: #1e293b;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                                 <t t-out="line.employee_id.name"/>
                                             </td>
-                                            <td style="padding: 7px 10px; border: 1px solid #e2e8f0; text-align: right; font-family: monospace; color: #334155;">
+                                            <td style="padding: 7px 10px; border: 1px solid #e2e8f0; text-align: right; font-family: monospace; color: #334155;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                                 <t t-out="'{:,.2f}'.format(line.gross_salary)"/>
                                             </td>
-                                            <td t-attf-style="padding: 7px 10px; border: 1px solid #e2e8f0; text-align: right; font-family: monospace; color: {{ '#dc2626' if (line.attendance_deduction + line.other_deductions) > 0 else '#94a3b8' }};">
-                                                <t t-if="(line.attendance_deduction + line.other_deductions) > 0">
+                                            <td t-attf-style="padding: 7px 10px; border: 1px solid #e2e8f0; text-align: right; font-family: monospace; color: {{ '#dc2626' if (line.attendance_deduction + line.other_deductions) &gt; 0 else '#94a3b8' }};" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+                                                <t t-if="(line.attendance_deduction + line.other_deductions) &gt; 0">
                                                     (<t t-out="'{:,.2f}'.format(line.attendance_deduction + line.other_deductions)"/>)
                                                 </t>
                                                 <t t-else="">—</t>
                                             </td>
-                                            <td t-attf-style="padding: 7px 10px; border: 1px solid #e2e8f0; text-align: right; font-family: monospace; color: {{ '#16a34a' if line.reimbursements > 0 else '#94a3b8' }};">
-                                                <t t-if="line.reimbursements > 0">
+                                            <td t-attf-style="padding: 7px 10px; border: 1px solid #e2e8f0; text-align: right; font-family: monospace; color: {{ '#16a34a' if line.reimbursements &gt; 0 else '#94a3b8' }};" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+                                                <t t-if="line.reimbursements &gt; 0">
                                                     <t t-out="'{:,.2f}'.format(line.reimbursements)"/>
                                                 </t>
                                                 <t t-else="">—</t>
                                             </td>
-                                            <td style="padding: 7px 10px; border: 1px solid #e2e8f0; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;">
+                                            <td style="padding: 7px 10px; border: 1px solid #e2e8f0; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                                 <t t-out="'{:,.2f}'.format(line.net_salary)"/>
                                             </td>
                                         </tr>
                                     </t>
 
-                                    <tr style="background-color: #f1f5f9; color: #0f172a; font-weight: 700;">
-                                        <td colspan="2" style="padding: 8px 10px; border: 1px solid #cbd5e1;">
+                                    <tr style="background-color: #f1f5f9; color: #0f172a; font-weight: 700;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+                                        <td colspan="2" style="padding: 8px 10px; border: 1px solid #cbd5e1;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                             Subtotal — <t t-out="group['name']"/>
                                         </td>
-                                        <td style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;">
+                                        <td style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                             <t t-out="'{:,.2f}'.format(group['gross_salary'])"/>
                                         </td>
-                                        <td style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;">
+                                        <td style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                             (<t t-out="'{:,.2f}'.format(group['deductions'])"/>)
                                         </td>
-                                        <td style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;">
+                                        <td style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                             <t t-out="'{:,.2f}'.format(group['reimbursements'])"/>
                                         </td>
-                                        <td style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;">
+                                        <td style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                             <t t-out="'{:,.2f}'.format(group['net_salary'])"/>
                                         </td>
                                     </tr>
@@ -98,20 +98,20 @@
 
                             <!-- Totals row -->
                             <tfoot>
-                                <tr style="background-color: #1a1a2e; color: #ffffff; font-weight: 700;">
-                                    <td colspan="2" style="padding: 8px 10px; border: 1px solid #1a1a2e; font-size: 8pt; letter-spacing: 0.05em;">
+                                <tr style="background-color: #1a1a2e; color: #ffffff; font-weight: 700;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+                                    <td colspan="2" style="padding: 8px 10px; border: 1px solid #1a1a2e; font-size: 8pt; letter-spacing: 0.05em;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                         GRAND TOTAL — <t t-out="report.total_employees"/> Employees
                                     </td>
-                                    <td style="padding: 8px 10px; border: 1px solid #1a1a2e; text-align: right; font-family: monospace;">
+                                    <td style="padding: 8px 10px; border: 1px solid #1a1a2e; text-align: right; font-family: monospace;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                         <t t-out="'{:,.2f}'.format(report.total_gross_salary)"/>
                                     </td>
-                                    <td style="padding: 8px 10px; border: 1px solid #1a1a2e; text-align: right; font-family: monospace;">
+                                    <td style="padding: 8px 10px; border: 1px solid #1a1a2e; text-align: right; font-family: monospace;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                         (<t t-out="'{:,.2f}'.format(report.total_attendance_deductions + report.total_other_deductions)"/>)
                                     </td>
-                                    <td style="padding: 8px 10px; border: 1px solid #1a1a2e; text-align: right; font-family: monospace;">
+                                    <td style="padding: 8px 10px; border: 1px solid #1a1a2e; text-align: right; font-family: monospace;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                         <t t-out="'{:,.2f}'.format(report.total_reimbursements)"/>
                                     </td>
-                                    <td style="padding: 8px 10px; border: 1px solid #1a1a2e; text-align: right; font-family: monospace;">
+                                    <td style="padding: 8px 10px; border: 1px solid #1a1a2e; text-align: right; font-family: monospace;;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
                                         <t t-out="'{:,.2f}'.format(report.total_net_salary)"/>
                                     </td>
                                 </tr>

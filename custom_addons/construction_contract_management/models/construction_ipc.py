@@ -9,6 +9,7 @@ class ConstructionIPC(models.Model):
     _order = 'id desc'
 
     name = fields.Char(required=True, copy=False, default='New')
+    contract_sequence = fields.Integer(string='Contract Sequence', copy=False, readonly=True, index=True)
     contract_id = fields.Many2one('construction.contract', required=True, ondelete='cascade', tracking=True)
     contract_order_id = fields.Many2one(
         'construction.contract.order', string='Contract Order / Sales Order', tracking=True,
@@ -178,11 +179,40 @@ class ConstructionIPC(models.Model):
             rec.gross_with_vat = gross_with_vat
             rec.net_amount = net
 
+    def _contract_sequence_starts(self, contract_ids):
+        """Return the last used per-contract number, locking contracts for safe allocation."""
+        starts = {}
+        for contract_id in sorted(set(contract_ids)):
+            self.env.cr.execute(
+                "SELECT id FROM construction_contract WHERE id = %s FOR UPDATE",
+                [contract_id],
+            )
+            self.env.cr.execute(
+                """
+                SELECT COALESCE(MAX(contract_sequence), 0), COUNT(*)
+                  FROM construction_ipc
+                 WHERE contract_id = %s
+                """,
+                [contract_id],
+            )
+            max_sequence, record_count = self.env.cr.fetchone()
+            # Legacy records have contract_sequence = 0. Their count establishes
+            # the starting point without renumbering historical documents.
+            starts[contract_id] = max(max_sequence or 0, record_count or 0)
+        return starts
+
     @api.model_create_multi
     def create(self, vals_list):
+        contract_ids = [vals.get('contract_id') for vals in vals_list if vals.get('contract_id')]
+        next_by_contract = self._contract_sequence_starts(contract_ids) if contract_ids else {}
+
         for vals in vals_list:
-            if vals.get('name', 'New') == 'New':
-                vals['name'] = self.env['ir.sequence'].next_by_code('construction.ipc') or 'New'
+            contract_id = vals.get('contract_id')
+            if contract_id and not vals.get('contract_sequence'):
+                next_by_contract[contract_id] = next_by_contract.get(contract_id, 0) + 1
+                vals['contract_sequence'] = next_by_contract[contract_id]
+            if vals.get('name', 'New') == 'New' and vals.get('contract_sequence'):
+                vals['name'] = f"IPC/{fields.Date.to_date(vals.get('date') or fields.Date.context_today(self)).year}/{vals['contract_sequence']:04d}"
         return super().create(vals_list)
 
     def _recompute_contract_progress(self):
@@ -307,13 +337,16 @@ class ConstructionIPC(models.Model):
             invoice_line_vals = []
 
             # 1) Work Done line
-            invoice_line_vals.append((0, 0, {
+            work_line_vals = {
                 'name': f'{rec.name} - Work Done',
                 'quantity': 1.0,
                 'price_unit': rec.current_work_value,
                 'account_id': contract.work_account_id.id,
                 'tax_ids': [(6, 0, contract.tax_id.ids)],
-            }))
+            }
+            if contract.analytic_account_id:
+                work_line_vals['analytic_distribution'] = {str(contract.analytic_account_id.id): 100.0}
+            invoice_line_vals.append((0, 0, work_line_vals))
 
             # 2) Advance Recovery line (optional)
             if rec.advance_recovery_amount > 0:
@@ -345,6 +378,7 @@ class ConstructionIPC(models.Model):
                 'invoice_origin': ' / '.join(filter(None, [rec.sale_order_id.name if rec.sale_order_id else '', rec.name])),
                 'ref': ' / '.join(filter(None, [rec.contract_id.name, rec.sale_order_id.name if rec.sale_order_id else '', rec.name])),
                 'invoice_line_ids': invoice_line_vals,
+                'construction_contract_id': contract.id,
             }
 
             move = self.env['account.move'].create(move_vals)

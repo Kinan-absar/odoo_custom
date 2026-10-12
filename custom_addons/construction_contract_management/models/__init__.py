@@ -10,3 +10,5 @@ from . import sale_order
 
 from . import construction_contract_order
 from . import sale_contract_wizard
+
+from . import construction_job_costing

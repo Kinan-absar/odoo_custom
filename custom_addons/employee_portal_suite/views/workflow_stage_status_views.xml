@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<odoo>
+    <record id="view_employee_request_list_stage_status" model="ir.ui.view">
+        <field name="name">employee.request.list.stage.status</field>
+        <field name="model">employee.request</field>
+        <field name="inherit_id" ref="employee_portal_suite.view_employee_request_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list/field[@name='state']" position="replace">
+                <field name="state" column_invisible="1"/>
+                <field name="approval_status_color" column_invisible="1"/><field name="approval_status_label" string="Status" widget="eps_stage_status_badge"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_material_request_list_stage_status" model="ir.ui.view">
+        <field name="name">material.request.list.stage.status</field>
+        <field name="model">material.request</field>
+        <field name="inherit_id" ref="employee_portal_suite.view_material_request_list"/>
+        <field name="arch" type="xml"><xpath expr="//list/field[@name='display_state']" position="replace"><field name="approval_status_color" column_invisible="1"/><field name="display_state" string="Status" widget="eps_stage_status_badge"/></xpath></field></record>
+    <record id="view_employee_request_form_stage_status" model="ir.ui.view">
+        <field name="name">employee.request.form.stage.status</field>
+        <field name="model">employee.request</field>
+        <field name="inherit_id" ref="employee_portal_suite.view_employee_request_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state'][@widget='statusbar']" position="attributes">
+                <attribute name="invisible">state == 'workflow'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='state'][@widget='statusbar']" position="after">
+                <field name="approval_status_color" invisible="1"/><field name="approval_status_label" widget="eps_stage_status_badge" readonly="1" invisible="state != 'workflow'"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_material_request_form_stage_status" model="ir.ui.view">
+        <field name="name">material.request.form.stage.status</field>
+        <field name="model">material.request</field>
+        <field name="inherit_id" ref="employee_portal_suite.view_material_request_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state'][@widget='statusbar']" position="attributes">
+                <attribute name="invisible">state == 'workflow'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='state'][@widget='statusbar']" position="after">
+                <field name="approval_status_color" invisible="1"/><field name="approval_status_label" widget="eps_stage_status_badge" readonly="1" invisible="state != 'workflow'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

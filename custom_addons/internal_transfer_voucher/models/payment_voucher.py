@@ -1236,6 +1236,56 @@ class AccountPaymentVoucher(models.Model):
         move.action_post()
         rec.state = 'posted'
 
+    def _update_journal_transfer_lines_in_place(self, move, line_commands, move_values):
+        """Reuse draft transfer lines and let Odoo synchronize their tax lines.
+
+        One move write runs the normal dynamic-tax synchronization around all
+        base-line changes. Tax/repartition lines are never explicitly removed or
+        assigned a combined VAT amount; Odoo retains their separate tax identities.
+        """
+        self.ensure_one()
+        remaining = list(move.line_ids.filtered(
+            lambda line: not line.tax_line_id and not line.tax_repartition_line_id
+        ))
+        commands = []
+        for _operation, _identifier, values in line_commands:
+            values = dict(values)
+            is_fee = values.get('name') == _('Bank Fees')
+            is_credit = bool(values.get('credit'))
+
+            def same_role(line):
+                old_fee = bool(line.tax_ids) or line.name == _('Bank Fees')
+                if is_fee:
+                    return old_fee
+                if old_fee:
+                    return False
+                return bool(line.credit) == is_credit
+
+            matching = [line for line in remaining
+                        if line.account_id.id == values['account_id'] and same_role(line)]
+            matching = matching or [line for line in remaining if same_role(line)]
+            # Explicitly clear obsolete values on reused destination/source lines.
+            values.setdefault('debit', 0.0)
+            values.setdefault('credit', 0.0)
+            values.setdefault('tax_ids', [(5, 0, 0)])
+            values.setdefault('analytic_distribution', False)
+            if matching:
+                line = matching[0]
+                remaining.remove(line)
+                commands.append((1, line.id, values))
+            else:
+                commands.append((0, 0, values))
+
+        # Removed destinations remain as zero lines rather than deleting history.
+        for line in remaining:
+            commands.append((1, line.id, {
+                'debit': 0.0, 'credit': 0.0,
+                'tax_ids': [(5, 0, 0)], 'analytic_distribution': False,
+            }))
+        move.with_context(check_move_validity=False).write({
+            **move_values, 'line_ids': commands,
+        })
+
     def _post_journal_transfer(self):
         """Journal Transfer — move funds between journals."""
         rec = self
@@ -1307,17 +1357,7 @@ class AccountPaymentVoucher(models.Model):
                 'journal_id': rec.journal_id.id,
                 'ref': rec.name,
             }
-            has_tax_lines = bool(move.line_ids.filtered(
-                lambda line: line.tax_line_id or line.tax_ids or line.tax_repartition_line_id
-            ))
-            if has_tax_lines:
-                raise UserError(_(
-                    "This journal transfer contains protected VAT lines. To change amounts or fees after posting, "
-                    "create a new transfer or reverse the old one instead of deleting tax lines."
-                ))
-            else:
-                move_vals['line_ids'] = [(5, 0, 0)] + lines
-                move.write(move_vals)
+            rec._update_journal_transfer_lines_in_place(move, lines, move_vals)
         else:
             move = self.env['account.move'].create({
                 'date': rec.date,

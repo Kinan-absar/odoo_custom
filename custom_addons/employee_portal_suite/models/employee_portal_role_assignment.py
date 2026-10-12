@@ -52,5 +52,8 @@ class EmployeePortalRoleAssignment(models.Model):
         self._check_superadmin()
         for rec in self:
             group = rec._group()
-            if group:
-                group.sudo().write({'users': [(6, 0, rec.user_ids.ids)]})
+            if not group:
+                continue
+            # Roles are intentionally independent. In particular, Super
+            # Administrator does not imply or force Administrator membership.
+            group.sudo().write({'users': [(6, 0, rec.user_ids.sudo().ids)]})

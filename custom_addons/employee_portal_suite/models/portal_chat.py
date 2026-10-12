@@ -142,6 +142,9 @@ class PortalChatThread(models.Model):
             create_env = Channel.with_user(current_partner.user_ids[:1] or self.env.user).sudo()
             channel = create_env.create({
                 'channel_type': 'group' if self.is_group or len(partner_ids) > 2 else 'chat',
+                # Employee portal groups are messaging conversations.  Explicitly
+                # disable Odoo's meeting-first display mode for group channels.
+                'default_display_mode': False,
                 'name': self.name or ', '.join(users.partner_id.mapped('name')),
                 'is_employee_portal_channel': True,
             })

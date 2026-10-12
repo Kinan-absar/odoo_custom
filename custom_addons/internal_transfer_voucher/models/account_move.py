@@ -1,9 +1,58 @@
-from odoo import models, _
+from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+
+    payment_voucher_count = fields.Integer(compute='_compute_payment_voucher_count', string='Payment Vouchers')
+
+    def _get_linked_payment_vouchers(self):
+        """Return custom payment vouchers linked to this bill, including already-reconciled ones.
+
+        After a voucher is reconciled, ``bill_ids`` can be cleared by the voucher workflow.
+        Therefore the smart button must also follow the accounting reconciliation from the
+        bill payable line to the voucher's posted journal entry.
+        """
+        self.ensure_one()
+        Voucher = self.env['account.payment.voucher']
+        if self.move_type != 'in_invoice':
+            return Voucher.browse()
+
+        vouchers = Voucher.search([('bill_ids', 'in', self.id)])
+        payable_lines = self.line_ids.filtered(
+            lambda l: l.account_id.account_type == 'liability_payable'
+        )
+        if payable_lines:
+            partials = self.env['account.partial.reconcile'].search([
+                '|',
+                ('debit_move_id', 'in', payable_lines.ids),
+                ('credit_move_id', 'in', payable_lines.ids),
+            ])
+            opposite_lines = (partials.mapped('debit_move_id') | partials.mapped('credit_move_id')) - payable_lines
+            counterpart_moves = opposite_lines.mapped('move_id')
+            if counterpart_moves:
+                vouchers |= Voucher.search([('move_id', 'in', counterpart_moves.ids)])
+        return vouchers
+
+    def _compute_payment_voucher_count(self):
+        for move in self:
+            move.payment_voucher_count = len(move._get_linked_payment_vouchers()) if move.move_type == 'in_invoice' else 0
+
+    def action_view_payment_vouchers(self):
+        self.ensure_one()
+        vouchers = self._get_linked_payment_vouchers()
+        action = {
+            'type': 'ir.actions.act_window',
+            'name': _('Payment Vouchers'),
+            'res_model': 'account.payment.voucher',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', vouchers.ids)],
+            'context': {'default_partner_id': self.commercial_partner_id.id, 'default_bill_ids': [(6, 0, self.ids)]},
+        }
+        if len(vouchers) == 1:
+            action.update({'view_mode': 'form', 'res_id': vouchers.id})
+        return action
 
     def action_open_voucher_payment(self):
         """Open the custom voucher for a posted customer invoice/vendor bill."""

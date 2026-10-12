@@ -1,0 +1,343 @@
+/* Construction workspace only. Native Odoo widgets retain editing and navigation. */
+.ccm_form, .ccm_list, .o_construction_dashboard {
+    --ccm-ink: #19354a;
+    --ccm-accent: #127c80;
+    --ccm-border: #e2e9ec;
+    --ccm-soft: #f5f9fa;
+}
+.ccm_form .o_form_sheet_bg { background: var(--ccm-soft); }
+/* Keep the chatter below construction documents at every viewport size.
+   Odoo adds o-aside on wide screens; override its layout without removing it. */
+.o_form_view:has(.o_form_renderer.ccm_form) .o_content {
+    overflow-y: auto !important;
+}
+.o_form_renderer.ccm_form,
+.ccm_form .o_form_renderer {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 100%;
+    width: 100%;
+    overflow: visible !important;
+}
+.ccm_form .o_form_sheet_bg {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+}
+.ccm_form .o-mail-Form-chatter,
+.ccm_form .o-mail-Form-chatter.o-aside {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    position: relative !important;
+    overflow: visible !important;
+    border-inline-start: 0 !important;
+    border-top: 1px solid var(--ccm-border);
+    background: var(--ccm-soft);
+    padding: 20px;
+    margin-top: 0 !important;
+}
+.ccm_form .o-mail-Form-chatter .o-mail-Chatter {
+    width: 100%;
+    max-width: none;
+    margin-inline: auto;
+    height: auto !important;
+    overflow: visible !important;
+    border: 1px solid var(--ccm-border);
+    border-radius: 12px;
+    background: #fff;
+}
+.ccm_form .o-mail-Form-chatter .o-mail-Chatter-content {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+.ccm_form .o_form_sheet {
+    width: calc(100% - 40px);
+    max-width: none;
+    margin: 16px auto;
+    padding: 22px 26px;
+    border: 1px solid var(--ccm-border);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgb(25 53 74 / 4%);
+}
+.ccm_form .o_form_statusbar {
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--ccm-border);
+    gap: 8px;
+}
+.ccm_form .o_statusbar_buttons { gap: 8px; flex-wrap: wrap; }
+.ccm_form .o_statusbar_buttons .btn,
+.ccm_dialog .btn { border-radius: 8px; font-weight: 600; }
+.ccm_form .o_statusbar_buttons .btn-primary,
+.ccm_dialog .btn-primary { background: var(--ccm-accent); border-color: var(--ccm-accent); }
+.ccm_form .o_statusbar_buttons .btn-primary:hover,
+.ccm_dialog .btn-primary:hover { background: #0e6266; border-color: #0e6266; }
+.ccm_form .oe_button_box { margin-bottom: 12px; }
+.ccm_form .oe_stat_button {
+    border-radius: 8px;
+    border-color: var(--ccm-border);
+    margin-bottom: 6px;
+}
+.ccm_form .oe_stat_button .o_button_icon,
+.ccm_form .oe_stat_button .o_stat_value { color: var(--ccm-accent); }
+.ccm_document_header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 4px 0 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--ccm-border);
+}
+.ccm_document_icon {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    display: grid;
+    place-items: center;
+    background: #eaf5f4;
+    color: var(--ccm-accent);
+    border-radius: 14px;
+    font-size: 23px;
+}
+.ccm_form .ccm_document_title.oe_title { max-width: 100%; margin: 0; }
+.ccm_form .ccm_document_header.oe_title {
+    display: block;
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    min-height: 68px;
+    padding-inline-start: 68px;
+    margin-bottom: 16px;
+}
+.ccm_document_header > .ccm_document_icon {
+    position: absolute;
+    inset-inline-start: 0;
+    top: 4px;
+}
+.ccm_document_type { display: block; font-size: 12px; font-weight: 600; color: #607585; margin-bottom: 6px; }
+.ccm_document_title h1 { font-size: clamp(24px, 2.3vw, 34px); font-weight: 700; color: var(--ccm-ink); margin: 0; }
+.ccm_document_title .o_field_widget { margin-bottom: 0; }
+.ccm_summary_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+}
+.ccm_summary_card { border: 1px solid var(--ccm-border); border-radius: 12px; padding: 14px 16px; background: #fff; min-width: 0; }
+.ccm_summary_card.ccm_summary_accent { background: #f0faf8; border-color: #b9ded7; }
+.ccm_summary_label { display: block; color: #607585; font-size: 12px; font-weight: 600; margin-bottom: 7px; }
+.ccm_summary_value { font-size: clamp(18px, 1.7vw, 24px); font-weight: 700; color: var(--ccm-ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.ccm_summary_accent .ccm_summary_value { color: #0d6864; }
+.ccm_form .o_group { margin-top: 0 !important; margin-bottom: 12px !important; }
+.ccm_form .ccm_field_section { padding: 4px 0 8px; }
+.ccm_form .o_horizontal_separator { color: var(--ccm-ink); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--ccm-border); padding-bottom: 8px; margin-top: 8px !important; margin-bottom: 10px !important; }
+.ccm_form .o_form_label { color: #556b7b; font-weight: 500; }
+.ccm_form .o_input { border-radius: 5px 5px 0 0; }
+.ccm_form .o_input:focus { border-color: var(--ccm-accent); }
+.ccm_form .o_notebook .nav-tabs { border-color: var(--ccm-border); gap: 4px; }
+.ccm_form .o_notebook .nav-link { padding: 9px 12px; color: #607585; font-weight: 600; border: none; border-bottom: 3px solid transparent; background: transparent; }
+.ccm_form .o_notebook .nav-link.active { color: var(--ccm-accent); border-bottom-color: var(--ccm-accent); }
+.ccm_form .o_notebook .tab-content { padding-top: 12px; }
+.ccm_form .badge, .ccm_list .badge { border-radius: 6px; padding: 5px 9px; font-size: 11px; font-weight: 600; }
+/* Root list class is applied by Odoo to the renderer; line tables live in forms. */
+.ccm_list .o_list_table, .ccm_form .o_list_table { border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.ccm_list .o_list_table thead th,
+.ccm_form .o_list_table thead th { background: #edf4f6; color: var(--ccm-ink); font-size: 12px; font-weight: 600; padding-top: 10px; padding-bottom: 10px; border-bottom: 1px solid #d3e0e5; }
+.ccm_list .o_list_table tbody td,
+.ccm_form .o_list_table tbody td { padding-top: 8px; padding-bottom: 8px; border-bottom: 1px solid #edf1f3; vertical-align: middle; }
+.ccm_list .o_list_table tbody tr.o_data_row:nth-child(even):not(.o_selected_row),
+.ccm_form .o_list_table tbody tr.o_data_row:nth-child(even):not(.o_selected_row) { background: #fafcfd; }
+.ccm_list .o_list_table tbody tr.o_data_row:hover:not(.o_selected_row),
+.ccm_form .o_list_table tbody tr.o_data_row:hover:not(.o_selected_row) { background: #eef7f7; }
+.ccm_list .o_list_table tfoot td,
+.ccm_form .o_list_table tfoot td { padding-top: 13px; padding-bottom: 13px; background: #f0f7f6; color: var(--ccm-ink); font-weight: 700; border-top: 1px solid #d3e0e5; font-variant-numeric: tabular-nums; }
+.ccm_list .o_list_number, .ccm_form .o_list_number { font-variant-numeric: tabular-nums; }
+.ccm_form .o_list_table td[name="description"] { min-width: 260px; max-width: 480px; white-space: normal; }
+.ccm_form .o_list_table td[name="description"] .o_field_text { white-space: pre-wrap; }
+.ccm_form .o_list_table td[name="current_qty"] { background: rgb(18 124 128 / 4%); }
+.ccm_form .o_progressbar { min-width: 85px; }
+.ccm_form .o_progressbar .progress-bar { background-color: var(--ccm-accent); }
+.ccm_form .o_field_x2many .o_list_renderer { overflow-x: auto; }
+.ccm_form .o_field_x2many .o_list_table { min-width: 100%; }
+.ccm_dialog .o_group { margin-top: 16px; }
+.ccm_dialog .o_horizontal_separator { color: var(--ccm-ink); }
+/* Keep overview cards aligned with document forms. */
+.o_construction_dashboard .o_form_sheet_bg { background: var(--ccm-soft); }
+.o_construction_dashboard .ccm_dashboard_header { background: #19354a; box-shadow: none; }
+.o_construction_dashboard .ccm_dashboard_header {
+    overflow: visible;
+    gap: 24px;
+    isolation: isolate;
+    z-index: 2;
+}
+.o_construction_dashboard .ccm_dashboard_header::before {
+    inset: 0;
+    width: auto;
+    height: auto;
+    border-radius: inherit;
+    z-index: -1;
+}
+.o_construction_dashboard .ccm_header_left { min-width: 0; }
+.o_construction_dashboard .ccm_header_right {
+    flex: 0 0 320px;
+    width: 320px;
+    max-width: 100%;
+    position: relative;
+}
+.o_construction_dashboard .ccm_contract_filter_pill {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 16px;
+    overflow: visible;
+    backdrop-filter: none;
+}
+.o_construction_dashboard .ccm_filter_label { color: #d4e1e9; }
+.o_construction_dashboard .ccm_filter_field {
+    display: block;
+    position: relative;
+    width: 100%;
+    margin-bottom: 0;
+}
+.o_construction_dashboard .ccm_filter_field .o-autocomplete {
+    position: relative;
+    width: 100%;
+}
+.o_construction_dashboard .ccm_filter_field .o_input {
+    color: #19354a !important;
+    background: #fff !important;
+    border: 1px solid #d5e1e7 !important;
+    border-radius: 6px;
+    padding: 8px 28px 8px 10px;
+    min-height: 36px;
+    width: 100%;
+}
+.o_construction_dashboard .ccm_filter_field .o_input::placeholder { color: #657b8a; }
+.o_construction_dashboard .ccm_filter_field .o_dropdown_button { color: #19354a; }
+.o_construction_dashboard .ccm_filter_field .o-autocomplete--dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    max-height: 280px;
+    overflow-y: auto;
+    transform: none !important;
+    color: #19354a;
+    background: #fff;
+    border: 1px solid #d5e1e7;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgb(25 53 74 / 16%);
+    z-index: 1050;
+}
+@media (max-width: 768px) {
+    .o_construction_dashboard .ccm_dashboard_header { align-items: stretch; gap: 16px; }
+    .o_construction_dashboard .ccm_header_right { flex: 0 0 auto; width: 100%; }
+}
+.o_construction_dashboard .ccm_kpi_card,
+.o_construction_dashboard .ccm_finance_card { box-shadow: 0 3px 14px rgb(25 53 74 / 4%); }
+@media (max-width: 991px) {
+    .ccm_form .o_form_sheet { width: calc(100% - 24px); margin: 12px auto; padding: 22px; }
+    .ccm_summary_grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ccm_form .o_form_statusbar { padding: 8px 12px; }
+}
+@media (max-width: 575px) {
+    .ccm_form .o_form_sheet { width: 100%; margin: 0; border-radius: 0; padding: 18px 14px; }
+    .ccm_document_header { gap: 12px; padding-bottom: 18px; margin-bottom: 18px; }
+    .ccm_form .ccm_document_header.oe_title { padding-inline-start: 54px; margin-bottom: 18px; }
+    .ccm_document_icon { width: 42px; height: 42px; flex-basis: 42px; font-size: 20px; }
+    .ccm_summary_grid { gap: 8px; margin-bottom: 20px; }
+    .ccm_summary_card { padding: 13px 12px; }
+    .ccm_summary_label { font-size: 11px; }
+    .ccm_form .o_notebook .nav-link { padding: 10px; }
+    .ccm_form .o_list_table tbody td { padding-top: 10px; padding-bottom: 10px; }
+}
+
+/* Construction Job Costing: actual profit reconciliation table. */
+.ccm_form .ccm_actual_profit_table_wrap { max-width: 100%; overflow-x: auto; margin: 10px 0 20px; }
+.ccm_form .ccm_actual_profit_table { width: 100%; border-collapse: collapse; color: #19354a; background: #fff; }
+.ccm_form .ccm_actual_profit_table th { padding: 11px 14px; font-weight: 700; border-bottom: 2px solid #c7d5dc; background: #fff; }
+.ccm_form .ccm_actual_profit_table td { padding: 9px 14px; border-bottom: 1px solid #e5eaee; vertical-align: middle; background: #fff; }
+.ccm_form .ccm_actual_profit_table th:last-child,
+.ccm_form .ccm_actual_profit_table td:last-child { width: 42%; text-align: right; white-space: nowrap; }
+.ccm_form .ccm_actual_profit_table td:last-child .o_field_widget { display: inline-block; width: auto; font-variant-numeric: tabular-nums; }
+.ccm_form .ccm_actual_profit_table .ccm_actual_profit_subtotal td { font-weight: 700; border-top: 1px solid #cedce2; }
+.ccm_form .ccm_actual_profit_table .ccm_actual_profit_total td { font-weight: 800; font-size: 15px; border-top: 2px solid #197e87; }
+
+/* Job costing: actual profitability heading and read-only project context. */
+.ccm_form .ccm_actual_profit_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin: 8px 0 12px;
+    padding: 0 0 10px;
+    border-bottom: 1px solid var(--ccm-border, #d4e0e6);
+}
+.ccm_form .ccm_actual_profit_header h4 {
+    margin: 0;
+    color: var(--ccm-ink, #19354a);
+    font-size: 14px;
+    font-weight: 700;
+}
+.ccm_form .ccm_actual_profit_project {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    min-width: 0;
+    max-width: 70%;
+    color: var(--ccm-ink, #19354a);
+    font-size: 13px;
+}
+.ccm_form .ccm_actual_profit_project .o_field_widget {
+    min-width: 180px;
+    max-width: 100%;
+    font-weight: 600;
+}
+@media (max-width: 575px) {
+    .ccm_form .ccm_actual_profit_project { max-width: 100%; }
+    .ccm_form .ccm_actual_profit_project .o_field_widget { min-width: 0; }
+}
+
+/* Plain, full-width profitability table in the form; card styling stays in the PDF. */
+.ccm_job_costing_schedule_group { width: 100%; }
+.ccm_job_costing_schedule_group .o_field_widget { width: 100% !important; max-width: none !important; }
+.ccm-job-costing-table-wrap { width: 100%; margin: 8px 0 16px; color: #19354a; }
+.ccm-job-costing-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 5px 0; }
+.ccm-job-costing-toolbar > strong { color: #19354a; font-size: 14px; font-weight: 700; }
+.ccm-job-costing-print { padding: 2px 4px; color: #197e87; font-size: 12px; text-decoration: none; }
+.ccm-job-costing-print:hover { color: #126871; }
+.ccm-job-costing-breakdown { width: 100%; margin: 0; border-collapse: collapse; table-layout: fixed; }
+.ccm-job-costing-breakdown thead th { padding: 7px 10px; border-top: 1px solid #d8e0e3; border-bottom: 1px solid #cbd5d9; color: #718490; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.ccm-job-costing-breakdown th:first-child { text-align: left; }
+.ccm-job-costing-breakdown th:last-child { width: 30%; }
+.ccm-job-costing-breakdown td { padding: 5px 10px; border-bottom: 1px solid #e7ecee; vertical-align: middle; }
+.ccm-job-costing-total-row td { min-height: 34px; color: #19354a; font-size: 13px; font-weight: 700; }
+.ccm-job-costing-total-row .ccm-job-costing-amount { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ccm-job-costing-profit-row td { border-top: 1px solid #ccd7da; }
+.ccm-job-costing-amount.is-positive { color: #197e87; }
+.ccm-job-costing-amount.is-negative { color: #c94742; }
+.ccm-job-costing-section-row td { padding-top: 2px; padding-bottom: 2px; }
+.ccm-job-costing-toggle { display: inline-flex; width: 100%; min-height: 29px; align-items: center; gap: 8px; padding: 3px 0 3px 16px; border: 0; background: transparent; color: #536a75; text-align: left; font-size: 12px; font-weight: 500; }
+.ccm-job-costing-toggle:hover { color: #197e87; }
+.ccm-job-costing-toggle i { width: 10px; color: #197e87; font-size: 9px; transition: transform .16s ease; }
+.ccm-job-costing-toggle i.is-open { transform: rotate(90deg); }
+.ccm-job-costing-section-row .ccm-job-costing-amount { color: #536a75; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ccm-job-costing-account-row td { color: #71808a; font-size: 11px; }
+.ccm-job-costing-account-row td:first-child { padding-left: 48px; }
+.ccm-job-costing-account-row .ccm-job-costing-amount { color: #536a75; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ccm-job-costing-empty td { color: #81929a; font-style: italic; }
+@media (max-width: 575px) {
+    .ccm-job-costing-breakdown th:last-child { width: 42%; }
+    .ccm-job-costing-breakdown td { padding-right: 6px; padding-left: 6px; }
+    .ccm-job-costing-total-row td { font-size: 12px; }
+    .ccm-job-costing-amount { white-space: normal !important; overflow-wrap: anywhere; }
+}

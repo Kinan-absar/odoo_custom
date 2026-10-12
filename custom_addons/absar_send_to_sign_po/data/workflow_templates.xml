@@ -1,0 +1,5 @@
+<odoo noupdate="1">
+<record id="template_director_ceo" model="absar.sign.workflow"><field name="name">Projects Director → CEO</field><field name="is_template" eval="True"/><field name="active" eval="False"/><field name="model_id" ref="purchase.model_purchase_order"/></record>
+<record id="template_director_ceo_step_1" model="absar.sign.workflow.step"><field name="workflow_id" ref="template_director_ceo"/><field name="sequence">10</field><field name="name">Projects Director</field></record>
+<record id="template_director_ceo_step_2" model="absar.sign.workflow.step"><field name="workflow_id" ref="template_director_ceo"/><field name="sequence">20</field><field name="name">CEO</field></record>
+</odoo>

@@ -1,0 +1,18 @@
+<odoo noupdate="1">
+    <record id="template_payment_voucher_director_ceo" model="absar.sign.workflow">
+        <field name="name">Payment Voucher — Projects Director → CEO</field>
+        <field name="model_id" ref="internal_transfer_voucher.model_account_payment_voucher"/>
+        <field name="is_template" eval="True"/>
+        <field name="active" eval="False"/>
+    </record>
+    <record id="template_payment_voucher_director" model="absar.sign.workflow.step">
+        <field name="workflow_id" ref="template_payment_voucher_director_ceo"/>
+        <field name="sequence">10</field>
+        <field name="name">Projects Director</field>
+    </record>
+    <record id="template_payment_voucher_ceo" model="absar.sign.workflow.step">
+        <field name="workflow_id" ref="template_payment_voucher_director_ceo"/>
+        <field name="sequence">20</field>
+        <field name="name">CEO</field>
+    </record>
+</odoo>

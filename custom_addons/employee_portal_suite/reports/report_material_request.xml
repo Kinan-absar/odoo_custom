@@ -1,156 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <odoo>
-
-    <template id="material_request_pdf_template">
-        <t t-name="employee_portal_suite.material_request_pdf_template">
-
-            <!-- Standard Odoo Layout -->
-            <t t-call="web.external_layout">
-
-                <!-- records -->
-                <t t-foreach="docs" t-as="o">
-
-                    <!-- REQUIRED MAIN WRAPPER -->
-                    <main class="mt32 mb32">
-
-                        <div class="page">
-                            <h2>Material Request</h2>
-
-                            <!-- BASIC INFO -->
-                            <table class="table table-sm mt-3">
-                                <tr>
-                                    <th>Request Number:</th>
-                                    <td><t t-out="o.name"/></td>
-                                </tr>
-                                <tr>
-                                    <th>Employee:</th>
-                                    <td><t t-out="o.employee_id.name"/></td>
-                                </tr>
-                                <tr>
-                                    <th>Worksite:</th>
-                                    <td><t t-out="o.worksite"/></td>
-                                </tr>
-                                <tr>
-                                    <th>Delivery Date:</th>
-                                    <td><t t-out="o.delivery_date"/></td>
-                                </tr>
-                                <tr>
-                                    <th>Date:</th>
-                                    <td><t t-out="o.request_date"/></td>
-                                </tr>
-                                <tr>
-                                    <th>Status:</th>
-                                    <td><t t-out="o.state"/></td>
-                                </tr>
-                                <tr>
-                                <th>Expense Account:</th>
-                                <td>
-                                    <t t-if="o.expense_account_id">
-                                        <t t-out="o.expense_account_id.code"/> —
-                                        <t t-out="o.expense_account_id.name"/>
-                                    </t>
-                                    <t t-else="">
-                                        -
-                                    </t>
-                                </td>
-                            </tr>
-                            </table>
-
-                            <!-- MATERIAL LINES -->
-                            <h4 class="mt-4">Requested Materials</h4>
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Qty</th>
-                                        <th>UoM</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <t t-foreach="o.line_ids" t-as="line">
-                                        <tr>
-                                            <td><t t-out="line.item_name"/></td>
-                                            <td><t t-out="line.qty_required"/></td>
-                                            <td><t t-out="line.uom_id.name"/></td>
-                                        </tr>
-                                    </t>
-                                </tbody>
-                            </table>
-
-                            <!-- APPROVAL TIMELINE -->
-                            <h4 class="mt-4">Approval Timeline</h4>
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Stage</th>
-                                        <th>Approved By</th>
-                                        <th>Date</th>
-                                        <th>Comment</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-
-                                    <tr>
-                                        <td>Purchase Representative</td>
-                                        <td><t t-out="o.purchase_approved_by.name or ''"/></td>
-                                        <td><t t-out="o.purchase_approved_date or ''"/></td>
-                                        <td><t t-out="o.purchase_comment or ''"/></td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>Store Manager</td>
-                                        <td><t t-out="o.store_approved_by.name or ''"/></td>
-                                        <td><t t-out="o.store_approved_date or ''"/></td>
-                                        <td><t t-out="o.store_comment or ''"/></td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>Project Manager</td>
-                                        <td><t t-out="o.project_manager_approved_by.name or ''"/></td>
-                                        <td><t t-out="o.project_manager_approved_date or ''"/></td>
-                                        <td><t t-out="o.project_manager_comment or ''"/></td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>Director</td>
-                                        <td><t t-out="o.director_approved_by.name or ''"/></td>
-                                        <td><t t-out="o.director_approved_date or ''"/></td>
-                                        <td><t t-out="o.director_comment or ''"/></td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>CEO</td>
-                                        <td><t t-out="o.ceo_approved_by.name or ''"/></td>
-                                        <td><t t-out="o.ceo_approved_date or ''"/></td>
-                                        <td><t t-out="o.ceo_comment or ''"/></td>
-                                    </tr>
-
-                                    <!-- Rejection -->
-                                    <t t-if="o.state == 'rejected'">
-                                        <tr style="color: red;">
-                                            <td><strong>Rejected At:</strong></td>
-                                            <td><t t-out="o.state_before_reject"/></td>
-                                            <td><t t-out="o.write_date"/></td>
-                                            <td>
-                                                <t t-out="
-                                                    o.purchase_comment if o.state_before_reject == 'purchase' else
-                                                    o.store_comment if o.state_before_reject == 'store' else
-                                                    o.project_manager_comment if o.state_before_reject == 'project_manager' else
-                                                    o.director_comment if o.state_before_reject == 'director' else
-                                                    o.ceo_comment
-                                                "/>
-                                            </td>
-                                        </tr>
-                                    </t>
-
-                                </tbody>
-                            </table>
-
-                        </div>
-                    </main>
-                </t>
-            </t>
+  <template id="material_request_pdf_template">
+    <t t-call="web.html_container">
+      <t t-foreach="docs" t-as="o">
+        <t t-call="web.external_layout">
+          <div class="page eps-print"><t t-call="employee_portal_suite.request_report_styles"/>
+<div class="eps-title" style="border:0 !important; background:white !important; overflow:hidden; width:100%; margin:8px 0 14px;"><div style="float:left;width:60%;border:0 !important;background:white !important;"><h2 style="font-size:30px !important; font-weight:700 !important; border:0 !important; margin:0 !important; color:#142e43 !important;">Material Request</h2></div><div style="float:right;width:40%;text-align:right;border:0 !important;background:white !important;"><div class="eps-number" t-field="o.name"/><span class="eps-status" t-out="o.display_state"/></div></div><div class="eps-card"><h3>Request Summary</h3><table class="eps-summary" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><tbody style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><tr style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Requested by</span><span class="eps-value" t-field="o.employee_id"/></td><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Request date</span><span class="eps-value" t-field="o.request_date"/></td></tr><tr style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Project</span><span class="eps-value" t-field="o.project_id"/></td><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Required delivery</span><span class="eps-value" t-field="o.delivery_date"/></td></tr><tr style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Worksite</span><span class="eps-value" t-field="o.worksite"/></td><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><span class="eps-label">Expense account</span><span class="eps-value" t-if="o.expense_account_id" t-field="o.expense_account_id"/><span t-else="">-</span></td></tr></tbody></table>
+</div><div class="eps-card"><h3>Requested Materials</h3><table class="eps-table" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><colgroup style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><col style="width:7%;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"/><col style="width:65%;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"/><col style="width:15%;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"/><col style="width:13%;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"/></colgroup><thead style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><tr style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><th class="eps-center" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:2px solid #177b83 !important;">#</th><th style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:2px solid #177b83 !important;">Material / description</th><th class="eps-right" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:2px solid #177b83 !important;">Quantity</th><th style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:2px solid #177b83 !important;">Unit</th></tr></thead><tbody style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><tr t-foreach="o.line_ids" t-as="line" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><td class="eps-center" t-out="line_index + 1" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"/><td class="eps-description" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"><span t-field="line.item_name"/></td><td class="eps-right" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"><span t-field="line.qty_required" t-options="{'widget':'float','precision':2}"/></td><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"><span t-field="line.uom_id"/></td></tr><tr t-if="not o.line_ids" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><td colspan="4" class="eps-muted" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;">No material lines recorded.</td></tr></tbody></table>
+</div><t t-set="legacy_steps" t-value="[('Purchase Representative', 'purchase', o.purchase_approved_by, o.purchase_approved_date, o.purchase_comment), ('Store Manager', 'store', o.store_approved_by, o.store_approved_date, o.store_comment), ('Project Manager', 'project_manager', o.project_manager_approved_by, o.project_manager_approved_date, o.project_manager_comment), ('Projects Director', 'director', o.director_approved_by, o.director_approved_date, o.director_comment), ('CEO', 'ceo', o.ceo_approved_by, o.ceo_approved_date, o.ceo_comment)]"/><t t-call="employee_portal_suite.request_report_approval_table"/>
+</div>
         </t>
-    </template>
-
+      </t>
+    </t>
+  </template>
 </odoo>

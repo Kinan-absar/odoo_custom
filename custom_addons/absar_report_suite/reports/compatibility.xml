@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Keep the standard report name used by Send to Sign while rendering ABSAR. -->
+  <template id="purchase_legacy_bridge" inherit_id="purchase.report_purchaseorder" priority="9999">
+    <xpath expr="." position="replace">
+      <t t-name="purchase.report_purchaseorder">
+        <t t-call="absar_report_suite.purchase"/>
+      </t>
+    </xpath>
+  </template>
+</odoo>

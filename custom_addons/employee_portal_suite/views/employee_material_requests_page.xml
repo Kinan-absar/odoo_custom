@@ -56,6 +56,7 @@
                         <tr>
                             <th>Request #</th>
                             <th>Date</th>
+                            <th>Project</th>
                             <th>Worksite</th>
                             <th>Delivery Date</th>
                             <th>Status</th>
@@ -67,6 +68,7 @@
                             <tr>
                                 <td><t t-out="req.name"/></td>
                                 <td><t t-out="req.request_date"/></td>
+                                <td><t t-out="req.project_id.display_name or '-'"/></td>
                                 <td><t t-out="req.worksite"/></td>
                                 <td><t t-out="req.delivery_date"/></td>
                                 <td><t t-out="status_badge(req)"/></td>
@@ -103,6 +105,11 @@
                         </div>
 
                         <div class="mobile-request-body">
+                            <div>
+                                <span class="label">Project</span>
+                                <div><t t-out="req.project_id.display_name or '-'"/></div>
+                            </div>
+
                             <div>
                                 <span class="label">Worksite</span>
                                 <div><t t-out="req.worksite"/></div>

@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_cash_plan_review_list" model="ir.ui.view">
+        <field name="name">cash.plan.review.list</field>
+        <field name="model">cash.plan.review</field>
+        <field name="arch" type="xml">
+            <list create="0">
+                <header>
+                    <button name="action_run_payment_review_agent" type="object" string="Run Payment Review" class="btn-primary" display="always"/>
+                </header>
+                <field name="review_date"/>
+                <field name="year"/>
+                <field name="name"/>
+                <field name="keep_count"/>
+                <field name="add_count"/>
+                <field name="update_count"/>
+                <field name="remove_count"/>
+                <field name="review_count"/>
+                <field name="safe_count"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_cash_plan_review_form" model="ir.ui.view">
+        <field name="name">cash.plan.review.form</field>
+        <field name="model">cash.plan.review</field>
+        <field name="arch" type="xml">
+            <form string="Payment Review Agent" class="o_payment_review_form">
+                <header>
+                    <button name="action_refresh_review" type="object" string="Run / Refresh Review" class="btn-secondary" invisible="state != 'draft'"/>
+                    <button name="action_open_recommendations" type="object" string="Open Recommendations" class="btn-primary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,partial,applied"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_recommendations" type="object" class="oe_stat_button" icon="fa-list">
+                            <field name="line_ids" widget="statinfo" string="All"/>
+                        </button>
+                        <button name="action_open_recommendations" type="object" class="oe_stat_button" icon="fa-check-circle">
+                            <field name="safe_count" widget="statinfo" string="Safe"/>
+                        </button>
+                        <button name="action_open_recommendations" type="object" class="oe_stat_button" icon="fa-exclamation-circle">
+                            <field name="review_count" widget="statinfo" string="Review"/>
+                        </button>
+                    </div>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <div class="alert alert-info" role="alert">
+                        The detailed recommendations now open in a normal Odoo list with search, filters, grouping and native row selection. Check Decision and Proposed Amount. For a new PO payment, check Amount Reviewed after confirming its installment. Select exactly the rows you want, then use Apply Selected. Locked or outdated recommendations report an error.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="review_date"/>
+                            <field name="year" readonly="state != 'draft'"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Summary">
+                            <field name="keep_count"/>
+                            <field name="add_count"/>
+                            <field name="update_count"/>
+                            <field name="remove_count"/>
+                            <field name="review_count"/>
+                            <field name="safe_count"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_cash_plan_review_line_search" model="ir.ui.view">
+        <field name="name">cash.plan.review.line.search</field>
+        <field name="model">cash.plan.review.line</field>
+        <field name="arch" type="xml">
+            <search string="Payment Review Recommendations">
+                <field name="partner_id" string="Supplier"/>
+                <field name="purchase_order_id" string="PO"/>
+                <field name="plan_line_id" string="Planned Payment"/>
+                <field name="action" string="Decision"/>
+                <field name="agent_action" string="Agent Decision"/>
+                <field name="source_type" string="Source"/>
+                <field name="oldest_due_date"/>
+                <separator/>
+                <filter name="safe" string="Safe Changes" domain="[('can_apply','=',True),('applied','=',False)]"/>
+                <filter name="review" string="Needs Review" domain="[('action','=','review')]"/>
+                <filter name="not_applied" string="Not Applied" domain="[('applied','=',False)]"/>
+                <filter name="applied" string="Applied" domain="[('applied','=',True)]"/>
+                <separator/>
+                <filter name="add" string="Add" domain="[('action','=','add')]"/>
+                <filter name="update" string="Update" domain="[('action','=','update')]"/>
+                <filter name="convert" string="Convert" domain="[('action','=','convert')]"/>
+                <filter name="remove" string="Remove" domain="[('action','=','remove')]"/>
+                <filter name="keep" string="Keep" domain="[('action','=','keep')]"/>
+                <separator/>
+                <filter name="existing" string="Existing Plans" domain="[('source_type','in',('existing_po','existing_payable','existing_retention'))]"/>
+                <filter name="retention_plans" string="Retention" domain="[('source_type','in',('existing_retention','new_retention'))]"/>
+                <filter name="new_candidates" string="New Candidates" domain="[('source_type','in',('new_po','new_payable','new_retention'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Decision" name="group_action" context="{'group_by':'action'}"/>
+                    <filter string="Agent Decision" name="group_agent_action" context="{'group_by':'agent_action'}"/>
+                    <filter string="Supplier" name="group_partner" context="{'group_by':'partner_id'}"/>
+                    <filter string="Source" name="group_source" context="{'group_by':'source_type'}"/>
+                    <filter string="Oldest Due" name="group_due" context="{'group_by':'oldest_due_date:month'}"/>
+                </group>
+                <searchpanel>
+                    <field name="action" string="Decision" enable_counters="1"/>
+                    <field name="source_type" string="Source" enable_counters="1"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_cash_plan_review_line_list" model="ir.ui.view">
+        <field name="name">cash.plan.review.line.list</field>
+        <field name="model">cash.plan.review.line</field>
+        <field name="arch" type="xml">
+            <list string="Payment Review Recommendations" editable="bottom" create="0" delete="0" multi_edit="1" class="o_payment_review_line_list"
+                  decoration-success="action == 'keep'"
+                  decoration-warning="action in ('update','convert','review')"
+                  decoration-danger="action == 'remove'">
+                <header>
+                    <button name="action_apply_selected_from_list" type="object" string="Apply Selected" class="btn-primary" display="always"/>
+                </header>
+                <field name="agent_action" string="Agent" widget="badge" readonly="1" width="95"/>
+                <field name="action" string="Decision" width="125"/>
+                <field name="partner_id" string="Supplier" readonly="1" width="220"/>
+                <field name="source_type" string="Source" readonly="1" width="145" optional="show"/>
+                <field name="plan_line_id" string="Planned Payment" readonly="1" width="190" optional="show"/>
+                <field name="purchase_order_id" string="PO" readonly="1" width="110" optional="show"/>
+                <field name="current_amount" string="Current" readonly="1" width="110"/>
+                <field name="proposed_amount" string="Proposed" width="110"/>
+                <field name="amount_confirmed" string="Amount Reviewed" optional="show" readonly="source_type != 'new_po' or applied"/>
+                <field name="oldest_due_date" string="Oldest Due" readonly="1" width="105" optional="show"/>
+                <field name="reason" string="Reason" readonly="1" class="o_payment_review_wrap o_payment_review_reason" width="420" optional="show"/>
+                <field name="aging_summary" string="Aging Summary" readonly="1" class="o_payment_review_wrap o_payment_review_aging" width="320" optional="show"/>
+                <field name="can_apply" string="Safe" widget="boolean_toggle" readonly="1" width="70" optional="show"/>
+                <field name="applied" string="Applied" widget="boolean_toggle" readonly="1" width="75" optional="show"/>
+                <field name="review_id" column_invisible="True"/>
+                <field name="target_plan_line_id" column_invisible="True"/>
+                <field name="apply" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_cash_plan_review_line" model="ir.actions.act_window">
+        <field name="name">Payment Review Recommendations</field>
+        <field name="res_model">cash.plan.review.line</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_cash_plan_review_line_search"/>
+        <field name="context">{'search_default_not_applied': 1}</field>
+    </record>
+
+    <record id="action_cash_plan_review" model="ir.actions.act_window">
+        <field name="name">Payment Reviews</field>
+        <field name="res_model">cash.plan.review</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_cash_plan_line_list_agent" model="ir.ui.view">
+        <field name="name">cash.plan.line.list.payment.agent</field>
+        <field name="model">cash.plan.line</field>
+        <field name="inherit_id" ref="internal_transfer_voucher.view_cash_plan_line_list"/>
+        <field name="arch" type="xml">
+            <!-- Keep one list header: a second header hides buttons from the base
+                 view. Payment Reviews has its own menu and Run button. -->
+            <xpath expr="//list/header/button[@name='action_submit_selected_to_ceo']" position="attributes">
+                <attribute name="display">always</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

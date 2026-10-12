@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.osv import expression
 import base64
 
@@ -78,11 +78,50 @@ class EmployeeRequest(models.Model):
         tracking=True
     )
 
+    can_create_time_off = fields.Boolean(
+        string='Can Create Time Off',
+        compute='_compute_can_create_time_off',
+        store=False,
+    )
+
+
+    # ---------------------------------------------------------
+    # CONFIGURABLE WORKFLOW
+    # ---------------------------------------------------------
+    available_project_ids = fields.Many2many(
+        'project.project',
+        string='Available Projects',
+        compute='_compute_available_projects',
+    )
+    project_selection_locked = fields.Boolean(
+        string='Project Selection Locked',
+        compute='_compute_available_projects',
+    )
+    project_id = fields.Many2one(
+        'project.project',
+        string='Project',
+        tracking=True,
+        domain="[('id', 'in', available_project_ids)]",
+        help='Project assigned to the employee and used to resolve the project-specific approval workflow.'
+    )
+    workflow_id = fields.Many2one(
+        'employee.portal.workflow', string='Approval Workflow', readonly=True, copy=False, tracking=True
+    )
+    approval_line_ids = fields.One2many(
+        'employee.portal.workflow.approval.line', 'employee_request_id',
+        string='Workflow Approval Steps', readonly=True, copy=False
+    )
+    current_approval_line_id = fields.Many2one(
+        'employee.portal.workflow.approval.line',
+        string='Current Approval Step', compute='_compute_current_approval_line', store=False
+    )
+
     # ---------------------------------------------------------
     # STATE MACHINE
     # ---------------------------------------------------------
     state = fields.Selection([
         ('draft', 'Draft'),
+        ('workflow', 'Workflow Approval'),
         ('manager', 'Manager Approval'),
         ('hr', 'HR Approval'),
         ('finance', 'Finance Approval'),
@@ -129,6 +168,44 @@ class EmployeeRequest(models.Model):
     def _compute_manager(self):
         for rec in self:
             rec.manager_id = rec.employee_id.parent_id
+
+    @api.depends(
+        'employee_id',
+        'employee_id.work_location_ids',
+        'employee_id.work_location_ids.project_line_ids.project_id',
+        'employee_id.work_location_id',
+        'employee_id.work_location_id.project_line_ids.project_id',
+    )
+    def _compute_available_projects(self):
+        for rec in self:
+            projects = (
+                rec.employee_id._get_material_request_projects()
+                if rec.employee_id
+                else self.env['project.project']
+            )
+            rec.available_project_ids = projects
+            rec.project_selection_locked = len(projects) <= 1
+
+    @api.onchange('employee_id')
+    def _onchange_employee_request_projects(self):
+        for rec in self:
+            employee = rec.employee_id
+            projects = employee._get_material_request_projects() if employee else self.env['project.project']
+            if len(projects) == 1:
+                rec.project_id = projects.id
+            elif rec.project_id not in projects:
+                rec.project_id = False
+
+    @api.constrains('employee_id', 'project_id')
+    def _check_employee_request_project(self):
+        for rec in self:
+            if not rec.employee_id or not rec.project_id:
+                continue
+            allowed = rec.employee_id._get_material_request_projects()
+            if rec.project_id not in allowed:
+                raise ValidationError(_(
+                    "The selected project is not configured in any of this employee's work locations."
+                ))
    
    #employee autofilled
     @api.model
@@ -139,6 +216,10 @@ class EmployeeRequest(models.Model):
             if not employee:
                 raise UserError(_("Your user is not linked to an employee."))
             res['employee_id'] = employee.id
+            if 'project_id' in fields_list:
+                projects = employee._get_material_request_projects()
+                if len(projects) == 1:
+                    res['project_id'] = projects.id
         return res
     # ---------------------------------------------------------
     # SEQUENCE ASSIGN
@@ -148,6 +229,11 @@ class EmployeeRequest(models.Model):
         for vals in vals_list:
             if vals.get('name', _('New')) == _('New'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('employee.request.seq') or _('New')
+            employee = self.env['hr.employee'].browse(vals.get('employee_id')) if vals.get('employee_id') else self.env['hr.employee']
+            if employee and not vals.get('project_id'):
+                projects = employee._get_material_request_projects()
+                if len(projects) == 1:
+                    vals['project_id'] = projects.id
         return super().create(vals_list)
 
     # ---------------------------------------------------------
@@ -212,6 +298,131 @@ class EmployeeRequest(models.Model):
                         f"Please review request {rec.name}."
                     )
                     #helper
+
+    @api.depends('approval_line_ids.state')
+    def _compute_current_approval_line(self):
+        for rec in self:
+            rec.current_approval_line_id = rec.approval_line_ids.filtered(lambda l: l.state == 'pending')[:1]
+
+    def _resolve_custom_workflow(self):
+        self.ensure_one()
+        return self.env['employee.portal.workflow'].sudo().resolve_workflow(
+            'employee_request', project=self.project_id, employee_request_type=self.request_type,
+            company=(self.project_id.company_id if self.project_id else self.employee_id.company_id)
+        )
+
+    def _notify_workflow_line(self, line):
+        self.ensure_one()
+        for user in line.sudo().approver_user_ids:
+            self._notify_user(
+                user,
+                _('%s requires your approval') % self.name,
+                _('Approval step "%s" is waiting for your action.') % line.name,
+            )
+            self._schedule_activity(
+                user,
+                _('Workflow Approval Needed'),
+                _('Please review %s - %s.') % (self.name, line.name),
+            )
+
+    def _start_custom_workflow(self, workflow):
+        self.ensure_one()
+        steps = workflow.sudo().step_ids.sorted(lambda step: (step.sequence, step.id))
+        if not steps:
+            raise UserError(_('The selected workflow has no approval steps.'))
+
+        line_model = self.env['employee.portal.workflow.approval.line'].sudo()
+        values = []
+        for index, step in enumerate(steps):
+            users = step.sudo().resolve_users(self)
+            if not users:
+                raise UserError(_(
+                    'Workflow step "%s" has no approver. Check the project responsible employee, role users, or specific user.'
+                ) % step.name)
+            role_name = (step.approval_role_id.name if step.approval_role_id else (step.role_assignment_id.name if step.role_assignment_id else False))
+            values.append({
+                'employee_request_id': self.id,
+                'workflow_id': workflow.id,
+                'source_step_id': step.id,
+                'sequence': step.sequence,
+                'name': step.name,
+                'approver_type': step.approver_type,
+                'role_name': role_name,
+                'approver_user_ids': [(6, 0, users.ids)],
+                'state': 'pending' if index == 0 else 'waiting',
+            })
+        self.sudo().approval_line_ids.unlink()
+        lines = line_model.create(values)
+        self.sudo().write({'workflow_id': workflow.id, 'state': 'workflow'})
+        self.message_post(body=_('Request submitted using workflow: %s') % workflow.display_name)
+        self._close_activities()
+        self._notify_workflow_line(lines.filtered(lambda l: l.state == 'pending')[:1])
+
+    def _finish_custom_workflow(self):
+        self.ensure_one()
+        self.sudo().write({'state': 'approved'})
+        self._send_final_pdf_and_notify_all(
+            report_xmlid='employee_portal_suite.employee_request_pdf',
+            subject=f'Request {self.name} – Fully Approved',
+            body=f'Request {self.name} has been fully approved. Please find the attached document.'
+        )
+        self.message_post(body=_('Request fully approved through configurable workflow.'))
+        self._close_activities()
+        if self.employee_id.user_id:
+            self.env['employee.portal.telegram.service'].sudo().send_to_user(
+                self.employee_id.user_id,
+                f'Request {self.name} approved',
+                f'Your request {self.name} has been fully approved.',
+                f'/my/employee/requests/{self.id}'
+            )
+
+    def action_workflow_approve(self):
+        for rec in self:
+            if rec.state != 'workflow':
+                raise UserError(_('This request is not in configurable workflow approval.'))
+            line = rec.current_approval_line_id.sudo()
+            if not line:
+                raise UserError(_('No pending workflow step was found.'))
+            actor = self.env['res.users'].browse(self.env.context.get('workflow_actor_user_id')) or self.env.user
+            if not line.can_user_approve(actor):
+                raise UserError(_('You are not an eligible approver for the current workflow step.'))
+            line.write({
+                'state': 'approved',
+                'approved_by': actor.id,
+                'approved_date': fields.Datetime.now(),
+            })
+            rec._close_activities()
+            next_line = rec.approval_line_ids.sudo().filtered(lambda l: l.state == 'waiting').sorted(lambda l: (l.sequence, l.id))[:1]
+            if next_line:
+                next_line.write({'state': 'pending'})
+                rec.message_post(body=_('Workflow step approved: %s. Next step: %s.') % (line.name, next_line.name))
+                rec._notify_workflow_line(next_line)
+            else:
+                rec._finish_custom_workflow()
+        return True
+
+    def action_workflow_reject(self):
+        for rec in self:
+            if rec.state != 'workflow':
+                raise UserError(_('This request is not in configurable workflow approval.'))
+            line = rec.current_approval_line_id.sudo()
+            actor = self.env['res.users'].browse(self.env.context.get('workflow_actor_user_id')) or self.env.user
+            if not line or not line.can_user_approve(actor):
+                raise UserError(_('You are not allowed to reject the current workflow step.'))
+            line.write({
+                'state': 'rejected',
+                'rejected_by': actor.id,
+                'rejected_date': fields.Datetime.now(),
+            })
+            rec.sudo().write({
+                'state_before_reject': 'workflow',
+                'rejected_by': actor.id,
+                'state': 'rejected',
+            })
+            rec.message_post(body=_('Request rejected at workflow step: %s') % line.name)
+            rec._close_activities()
+        return True
+
     @api.model
     def _portal_visibility_domain(self, user=None):
         """Return the UNION of every Employee Request role the user has.
@@ -231,7 +442,10 @@ class EmployeeRequest(models.Model):
         if any(user.has_group(group) for group in broad_groups):
             return []
 
-        domains = []
+        dynamic_ids = self.env['employee.portal.workflow.approval.line'].sudo().request_ids_for_user(
+            user, 'employee_request'
+        )
+        domains = [[("id", "in", dynamic_ids)]] if dynamic_ids else []
         if user.has_group("employee_portal_suite.group_employee_portal_employee"):
             domains.append([("employee_id.user_id", "=", user.id)])
 
@@ -247,6 +461,8 @@ class EmployeeRequest(models.Model):
     def _portal_can_view(self, user=None):
         self.ensure_one()
         user = user or self.env.user
+        if self.approval_line_ids.filtered(lambda line: line.user_has_approval_involvement(user)):
+            return True
         domain = self._portal_visibility_domain(user)
         if not domain:
             return True
@@ -255,6 +471,10 @@ class EmployeeRequest(models.Model):
     def _portal_can_approve(self, user=None):
         self.ensure_one()
         user = user or self.env.user
+
+        if self.state == 'workflow':
+            line = self.current_approval_line_id.sudo()
+            return bool(line and line.can_user_approve(user))
 
         # Super Administrator is an explicit workflow override role.
         if user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
@@ -301,6 +521,11 @@ class EmployeeRequest(models.Model):
         for rec in self:
             if rec.state != 'draft':
                 raise UserError(_("Only draft requests can be submitted."))
+
+            workflow = rec._resolve_custom_workflow()
+            if workflow:
+                rec._start_custom_workflow(workflow)
+                continue
 
             rec.state = 'manager'
             rec.message_post(body="Request submitted.")
@@ -389,14 +614,29 @@ class EmployeeRequest(models.Model):
     # ---------------------------------------------------------
     # CREATE ODOO TIME OFF FROM AN APPROVED LEAVE REQUEST
     # ---------------------------------------------------------
+    def _user_can_create_time_off(self):
+        user = self.env.user
+        return bool(
+            user.has_group('employee_portal_suite.group_employee_portal_hr')
+            or user.has_group('employee_portal_suite.group_employee_portal_admin')
+            or user.has_group('employee_portal_suite.group_employee_portal_superadmin')
+        )
+
+    @api.depends('request_type', 'state', 'time_off_id')
+    def _compute_can_create_time_off(self):
+        allowed = self._user_can_create_time_off()
+        for rec in self:
+            rec.can_create_time_off = bool(
+                allowed
+                and rec.request_type == 'leave'
+                and rec.state == 'approved'
+                and not rec.time_off_id
+            )
+
     def action_create_time_off(self):
         self.ensure_one()
 
-        if not (
-            self.env.user.has_group('employee_portal_suite.group_employee_portal_hr')
-            or self.env.user.has_group('employee_portal_suite.group_employee_portal_admin')
-            or self.env.user.has_group('employee_portal_suite.group_employee_portal_superadmin')
-        ):
+        if not self._user_can_create_time_off():
             raise UserError(_("Only HR, Administrator, or Super Administrator can create Time Off from an Employee Request."))
 
         if self.request_type != 'leave':
@@ -494,6 +734,9 @@ class EmployeeRequest(models.Model):
             "finance": self.finance_comment,
             "ceo": self.ceo_comment,
         }
+        if self.state_before_reject == 'workflow':
+            rejected_line = self.approval_line_ids.filtered(lambda l: l.state == 'rejected')[:1]
+            return rejected_line.comment if rejected_line else ''
         return comments.get(self.state_before_reject) or ""
 
     # ---------------------------------------------------------
@@ -502,6 +745,24 @@ class EmployeeRequest(models.Model):
     def get_portal_timeline(self):
         self.ensure_one()
         timeline = []
+
+        if self.workflow_id:
+            for line in self.approval_line_ids.sorted(lambda l: (l.sequence, l.id)):
+                if line.state == 'approved':
+                    timeline.append({
+                        'stage': line.name,
+                        'approved_by': line.approved_by.name if line.approved_by else '',
+                        'date': line.approved_date,
+                        'comment': line.comment or '',
+                    })
+                elif line.state == 'rejected':
+                    timeline.append({
+                        'stage': f'{line.name} - Rejected',
+                        'approved_by': line.rejected_by.name if line.rejected_by else '',
+                        'date': line.rejected_date,
+                        'comment': line.comment or '',
+                    })
+            return timeline
 
         # Normal approval stages
         stages = [
@@ -554,6 +815,7 @@ class EmployeeRequest(models.Model):
         data = {
             'all_count': self.search_count([]),
             'draft_count': self.search_count([('state', '=', 'draft')]),
+            'workflow_count': self.search_count([('state', '=', 'workflow')]),
             'manager_count': self.search_count([('state', '=', 'manager')]),
             'hr_count': self.search_count([('state', '=', 'hr')]),
             'finance_count': self.search_count([('state', '=', 'finance')]),

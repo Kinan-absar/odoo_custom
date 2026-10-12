@@ -1,5 +1,13 @@
 <odoo>
 
+    <record id="action_report_job_costing" model="ir.actions.report">
+        <field name="name">Job Costing Report</field>
+        <field name="model">construction.contract</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">construction_contract_management.report_job_costing</field>
+        <field name="report_file">construction_contract_management.report_job_costing</field>
+    </record>
+
     <record id="action_report_construction_contract" model="ir.actions.report">
         <field name="name">Contract Report</field>
         <field name="model">construction.contract</field>

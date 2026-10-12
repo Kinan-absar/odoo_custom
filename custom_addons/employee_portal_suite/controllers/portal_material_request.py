@@ -1,6 +1,7 @@
 from odoo import http, fields, _
 from odoo.http import request
 import base64
+from datetime import timedelta
 from markupsafe import Markup, escape
 
 def _mr_status_badge(rec):
@@ -19,7 +20,11 @@ def _mr_status_badge(rec):
             'director': 'Director',
             'ceo': 'CEO',
         }
-        lbl = stage_labels.get(rec.state_before_reject, "Unknown Stage")
+        if rec.state_before_reject == 'workflow':
+            rejected_line = rec.approval_line_ids.filtered(lambda l: l.state == 'rejected')[:1]
+            lbl = rejected_line.name if rejected_line else 'Workflow'
+        else:
+            lbl = stage_labels.get(rec.state_before_reject, "Unknown Stage")
 
         reasons = {
             'purchase': rec.purchase_comment,
@@ -28,7 +33,10 @@ def _mr_status_badge(rec):
             'director': rec.director_comment,
             'ceo': rec.ceo_comment,
         }
-        reason = reasons.get(rec.state_before_reject) or "No reason"
+        if rec.state_before_reject == 'workflow':
+            reason = rejected_line.comment if rejected_line else 'No reason'
+        else:
+            reason = reasons.get(rec.state_before_reject) or "No reason"
 
         return Markup('<span class="badge bg-danger">Rejected — %s Stage (%s)</span>') % (escape(lbl), escape(reason))
         # CLARIFICATION OVERRIDE
@@ -42,6 +50,16 @@ def _mr_status_badge(rec):
         }
         clar_label = stage_labels.get(rec.clarification_stage, rec.clarification_stage)
         return Markup('<span class="badge bg-info text-dark">🚩 Clarification — %s</span>') % escape(clar_label)
+
+    if state == 'returned':
+        line = rec.approval_line_ids.filtered(lambda l: l.state == 'returned')[:1]
+        label = line.name if line else 'Workflow'
+        return Markup('<span class="badge bg-info text-dark">Returned for Correction — %s</span>') % escape(label)
+
+    if state == 'workflow':
+        step = rec.current_approval_line_id
+        label = step.name if step else 'Workflow Approval'
+        return Markup('<span class="badge bg-warning text-dark">Pending — %s</span>') % escape(label)
 
     # PENDING STAGE BADGES
     stage_badges = {
@@ -162,6 +180,19 @@ class EmployeePortalMaterialRequests(http.Controller):
                 "error_message": _("Please select one of the projects configured on your work location."),
             })
 
+        # Reject invalid dates before creating the request or any material lines.
+        try:
+            delivery = fields.Date.to_date(post.get('delivery_date'))
+        except (TypeError, ValueError):
+            delivery = False
+        if not delivery or delivery < fields.Date.context_today(request.env['material.request']) + timedelta(days=3):
+            return request.render('employee_portal_suite.employee_material_request_new_form', {
+                'uoms': request.env['uom.uom'].sudo().search([]),
+                'projects': projects,
+                'single_project': projects[:1] if len(projects) == 1 else False,
+                'error_message': _('Set a Delivery Date at least three days after the Request Date.'),
+            })
+
         # Create main request
         rec = request.env["material.request"].sudo().create({
             "employee_id": emp.id,
@@ -224,7 +255,11 @@ class EmployeePortalMaterialRequests(http.Controller):
         user = request.env.user
         Material = request.env["material.request"].sudo()
 
-        # Only approvers allowed
+        has_dynamic_approval = request.env['employee.portal.workflow.approval.line'].sudo().user_has_approval_area_access(
+            user, 'material_request'
+        )
+
+        # Only configured approvers allowed
         if not (
             user.has_group("employee_portal_suite.group_employee_portal_superadmin")
             or user.has_group("employee_portal_suite.group_employee_portal_ceo")
@@ -232,6 +267,7 @@ class EmployeePortalMaterialRequests(http.Controller):
             or user.has_group("employee_portal_suite.group_mr_store_manager")
             or user.has_group("employee_portal_suite.group_mr_project_manager")
             or user.has_group("employee_portal_suite.group_mr_projects_director")
+            or has_dynamic_approval
         ):
             return request.redirect('/my')
 
@@ -246,8 +282,13 @@ class EmployeePortalMaterialRequests(http.Controller):
         pending_list = []
 
         for rec in Material.search([
-            ("state", "in", ["purchase", "store", "project_manager", "director", "ceo"])
+            ("state", "in", ["workflow", "purchase", "store", "project_manager", "director", "ceo"])
         ]):
+
+            if rec.state == 'workflow':
+                if rec._portal_can_approve(user):
+                    pending_list.append(rec)
+                continue
 
             if user.has_group("employee_portal_suite.group_employee_portal_superadmin"):
                 pending_list.append(rec)
@@ -306,6 +347,8 @@ class EmployeePortalMaterialRequests(http.Controller):
             ("ceo_approved_by", "=", user.id),
         ]
         approved_list = Material.search(approved_domain, order="id desc")
+        dynamic_approved = Material.search([('approval_line_ids.approved_by', '=', user.id)], order='id desc')
+        approved_list = Material.browse(list(dict.fromkeys(approved_list.ids + dynamic_approved.ids)))
 
         # ---------------------------------------------------------
         # 3) REJECTED LIST — ONLY if user rejected
@@ -427,7 +470,12 @@ class EmployeePortalMaterialRequests(http.Controller):
         if not rec._portal_can_approve(user):
             return request.redirect(f"/my/employee/material/approvals/{rec.id}")
 
-        if rec.state == "purchase":
+        if rec.state == 'workflow':
+            if rec.current_approval_line_id:
+                rec.current_approval_line_id.sudo().comment = comment or False
+            rec.with_context(workflow_actor_user_id=user.id).action_workflow_approve()
+
+        elif rec.state == "purchase":
             rec.purchase_comment = comment
             rec.action_purchase()
 
@@ -451,6 +499,27 @@ class EmployeePortalMaterialRequests(http.Controller):
         return request.redirect("/my/employee/material/approvals")
 
     # ---------------------------------------------------------
+    # RETURN FOR CORRECTION (configurable workflow only)
+    # ---------------------------------------------------------
+    @http.route("/my/employee/material/requests/return", type="http", auth="user", website=True, csrf=True)
+    def material_return_for_correction(self, **post):
+        user = request.env.user
+        rec = request.env["material.request"].sudo().browse(int(post.get("req_id")))
+        reason = (post.get("reason") or "").strip()
+
+        if not rec.exists():
+            return request.redirect("/my")
+
+        if rec.state != 'workflow' or not rec._portal_can_approve(user):
+            return request.redirect(f"/my/employee/material/approvals/{rec.id}")
+
+        if not reason:
+            return request.redirect(f"/my/employee/material/approvals/{rec.id}")
+
+        rec.with_context(workflow_actor_user_id=user.id)._workflow_return_confirm(reason)
+        return request.redirect("/my/employee/material/approvals")
+
+    # ---------------------------------------------------------
     # REJECT
     # ---------------------------------------------------------
     @http.route("/my/employee/material/requests/reject", type="http", auth="user", website=True, csrf=True)
@@ -470,7 +539,12 @@ class EmployeePortalMaterialRequests(http.Controller):
             return request.redirect(f"/my/employee/material/approvals/{rec.id}")
 
         # assign comment
-        if rec.state == "purchase":
+        if rec.state == 'workflow':
+            if rec.current_approval_line_id:
+                rec.current_approval_line_id.sudo().comment = comment
+            rec.with_context(workflow_actor_user_id=user.id).action_workflow_reject()
+            return request.redirect('/my/employee/material/approvals')
+        elif rec.state == "purchase":
             rec.purchase_comment = comment
         elif rec.state == "store":
             rec.store_comment = comment

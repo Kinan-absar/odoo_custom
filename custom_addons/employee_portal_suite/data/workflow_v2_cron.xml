@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+    <record id="ir_cron_employee_portal_workflow_overdue" model="ir.cron">
+        <field name="name">Employee Portal: Refresh Workflow Overdue Steps</field>
+        <field name="model_id" ref="model_employee_portal_workflow_approval_line"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_update_overdue()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

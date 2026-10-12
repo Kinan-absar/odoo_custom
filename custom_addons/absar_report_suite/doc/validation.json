@@ -1,0 +1,26 @@
+{
+  "version": "18.0.2.0.34",
+  "base_version": "18.0.2.0.33",
+  "result": "PASS",
+  "checks": [
+    "Python syntax",
+    "Manifest data order and unique XML record identities",
+    "QWeb calls, expression syntax and portable assets",
+    "Journal footer, purchase routing and three image files",
+    "Sales description tables explicitly clear frame and vertical cell borders while retaining teal and light row rules",
+    "All routed reports include the distinct Odoo RFQ action; sales tables opt out of Bootstrap borders; retired subcontract reports are absent",
+    "Actual setup: fresh=True; duplicate upgrade=False; repeat setup and filenames",
+    "Actual setup: fresh=False; duplicate upgrade=False; repeat setup and filenames",
+    "Actual setup: fresh=False; duplicate upgrade=True; repeat setup and filenames",
+    "PO filename policy replaces older saved expressions; legacy PO QWeb bridge and no declarative duplicate action creation",
+    "Actual PO filename helper: exact supplied Arabic title, MR/project order, no prefix in draft/confirmed, revisions and absent optional fields",
+    "Report rebinding does not force module state",
+    "Cleanup graph: system ownership, retained inheritance, cycles and external references",
+    "Cleanup allowlist excludes the rebuilt report templates",
+    "Obsolete subcontract report actions are deleted by upgrade setup, not merely unbound"
+  ],
+  "live_odoo_tested": false,
+  "staging_action_audit": "Read-only audit of 102 Odoo report actions; distinct Request for Quotation action is routed through the suite.",
+  "staging_sales_order_field_audit": "S00480 was inspected read-only; the real construction project field is construction_project_id, populated as Bathroom repair and maintenance Exit 4. The Studio project field is empty.",
+  "live_pdf_rendering_tested": false
+}

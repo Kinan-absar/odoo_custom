@@ -3,6 +3,11 @@ from odoo import models, fields, api
 class ProjectProject(models.Model):
     _inherit = "project.project"
 
+    approval_role_assignment_ids = fields.One2many(
+        'employee.portal.project.role.assignment', 'project_id',
+        string='Workflow Approval Roles'
+    )
+
     # --- RESPONSIBLE EMPLOYEES ---
     store_manager_employee_id = fields.Many2one(
         "hr.employee",

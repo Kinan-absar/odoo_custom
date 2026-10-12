@@ -1,0 +1,1 @@
+from odoo.addons.absar_sign_workflow_core.tools.signature_anchors import locate_signature_anchors, resolve_signature_placements

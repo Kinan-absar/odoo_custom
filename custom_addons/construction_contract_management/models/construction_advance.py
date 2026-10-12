@@ -127,6 +127,9 @@ class ConstructionAdvance(models.Model):
                 'journal_id': journal.id,
                 'invoice_origin': rec.name,
                 'ref': rec.name,
+                # Stamp the accounting move with its construction contract so
+                # all posted P&L revenue/cost lines can be picked up by Job Costing.
+                'construction_contract_id': contract.id,
                 'invoice_line_ids': [(0, 0, {
                     'name': f'{rec.name} - Advance Payment',
                     'quantity': 1.0,
