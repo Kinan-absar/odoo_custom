@@ -1,6 +1,6 @@
 {
-  "version": "18.0.2.0.35",
-  "base_version": "18.0.2.0.34",
+  "version": "18.0.2.0.34",
+  "base_version": "18.0.2.0.33",
   "result": "PASS",
   "checks": [
     "Python syntax",
@@ -17,13 +17,10 @@
     "Report rebinding does not force module state",
     "Cleanup graph: system ownership, retained inheritance, cycles and external references",
     "Cleanup allowlist excludes the rebuilt report templates",
-    "Obsolete subcontract report actions are deleted by upgrade setup, not merely unbound",
-    "Accounting print bindings retain only Journal Voucher in the native account.move menu when Direct Print is installed; contextual dialog offers JV only for miscellaneous entries and JV plus Invoice PDF for invoices and bills.",
-    "Tax Invoice form button is hidden idempotently by adding an invisible attribute to matching account.move form buttons."
+    "Obsolete subcontract report actions are deleted by upgrade setup, not merely unbound"
   ],
   "live_odoo_tested": false,
-  "staging_action_audit": "Read-only screen inspection of a live miscellaneous journal entry. The print chooser and its report actions were not changed on staging.",
+  "staging_action_audit": "Read-only audit of 102 Odoo report actions; distinct Request for Quotation action is routed through the suite.",
   "staging_sales_order_field_audit": "S00480 was inspected read-only; the real construction project field is construction_project_id, populated as Bathroom repair and maintenance Exit 4. The Studio project field is empty.",
-  "live_pdf_rendering_tested": false,
-  "staging_readonly_ui_inspection": "Read-only inspection of MISC/2026/10/0004 confirmed the separate Print JV and Print Tax Inv buttons; no server action was changed."
+  "live_pdf_rendering_tested": false
 }

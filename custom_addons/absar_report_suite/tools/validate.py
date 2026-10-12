@@ -17,7 +17,7 @@ def checked(name):
 for path in ROOT.rglob('*.py'):
     ast.parse(path.read_text())
 checked('Python syntax')
-assert manifest['version'] == '18.0.2.0.35'
+assert manifest['version'] == '18.0.2.0.34'
 assert 'sale_project' in manifest['depends']
 assert not {'wm_journal_entry_report', 'sale_pdf_quote_builder', 'studio_customization'} & set(manifest['depends'])
 records = {}
@@ -133,7 +133,6 @@ class ActionModel:
                     a=consume(next(it));b=consume(next(it));return a or b if token=='|' else a and b
                 key,op,val=token;actual=i if key=='id' else row.get(key,False)
                 if op=='=':return actual==val
-                if op=='!=':return actual!=val
                 if op=='in':return actual in val
                 if op=='not in':return actual not in val
                 raise AssertionError(op)
@@ -155,13 +154,11 @@ class Params:
     def set_param(self,k,v):self.values[k]=v
 class Env:
     su=True
-    def __contains__(self,k):return k=='absar.print.wizard'
     def __init__(self):self.actions=ActionModel();self.params=Params();self.refs={};self.metadata=Metadata(self)
     def __getitem__(self,k):
         if k=='ir.actions.report':return self.actions
         if k=='ir.model.data':return self.metadata
         if k=='ir.config_parameter':return self.params
-        if k=='ir.ui.view':raise KeyError(k)
         if k=='ir.model':return types.SimpleNamespace(_get=lambda name:Link({'account.move':1,'purchase.order':2,'sale.order':3}[name]))
         raise KeyError(k)
     def ref(self,k,raise_if_not_found=True):
@@ -211,14 +208,15 @@ def scenario(existing, upgrade=False):
         retired_ids.append(i)
         if upgrade:
             env.params.set_param('absar_report_suite.target.'+item['alias'],str(i))
-    env.actions.rows[999]={'name':'Unrelated','model':'account.move','report_name':'other.report','binding_model_id':1,'binding_type':'report'}
+    env.actions.rows[999]={'name':'Unrelated','model':'account.move','report_name':'other.report','binding_model_id':1}
+    untouched=dict(env.actions.rows[999])
     setup=module.AbsarReportSetup();setup.env=env
     setup.apply();first=json.loads(env.params.get_param('absar_report_suite.original_report_actions'))
     state={i:dict(v) for i,v in env.actions.rows.items()}
     setup.apply()
     assert state==env.actions.rows
     assert first==json.loads(env.params.get_param('absar_report_suite.original_report_actions'))
-    assert not env.actions.rows[999]['binding_model_id']
+    assert env.actions.rows[999]==untouched
     assert len(env.actions.rows)==len(config['reports'])+1, env.actions.rows
     assert all(i not in env.actions.rows for i in retired_ids)
     assert all(not env.params.get_param('absar_report_suite.target.'+item['alias'])
@@ -227,18 +225,13 @@ def scenario(existing, upgrade=False):
         target=int(env.params.get_param('absar_report_suite.target.'+item['alias']))
         row=env.actions.rows[target]
         assert row['report_name']==item['report_name']
-        assert bool(row['binding_model_id']) == (item['model'] != 'account.move' or item['alias'] == 'journal_report')
+        assert row['binding_model_id']
         if existing:assert row['print_report_name']==('object._absar_report_filename()' if item['alias'] in ('purchase_report','rfq_report') else "'Original filename - %s' % object.name")
     purchase_id=int(env.params.get_param('absar_report_suite.target.purchase_report'))
     assert env.actions.rows[purchase_id]['report_name']=='purchase.report_purchaseorder'
     if not existing:assert env.actions.rows[purchase_id]['print_report_name']=='object._absar_report_filename()'
     if upgrade:assert all(i not in env.actions.rows for i in range(1,len(config['reports'])+1))
     checked('Actual setup: fresh='+str(not existing)+'; duplicate upgrade='+str(upgrade)+'; repeat setup and filenames')
-    if 'absar.print.wizard' in env:
-        assert not env.actions.rows[999]['binding_model_id']
-        assert not env.actions.rows[int(env.params.get_param('absar_report_suite.target.invoice_report'))]['binding_model_id']
-        assert env.actions.rows[int(env.params.get_param('absar_report_suite.target.journal_report'))]['binding_model_id']
-        checked('Direct Print: native account.move menu keeps Journal Voucher and unbinds Invoice, Timesheets and other reports')
 scenario(False);scenario(True);scenario(True,True)
 # Prove an older rich expression cannot reintroduce a prefix or the wrong field order.
 env=Env();env.actions.rows[42]={'name':'Purchase Order','model':'purchase.order','report_name':'absar_report_suite.purchase','print_report_name':'object.name'}
@@ -275,8 +268,6 @@ setup_source=(ROOT/'models/report_setup.py').read_text()
 assert "targets.unlink()" in setup_source
 assert "record.write({'state':" not in setup_source
 checked('Report rebinding does not force module state')
-assert "'print tax inv', 'print tax invoice'" in setup_source and "button.set('invisible', 'True')" in setup_source
-checked('Legacy Print Tax Inv header button is hidden without deleting its action')
 from absar_test.cleanup_plan import plan_cleanup
 a=('ir.ui.view',1);b=('ir.ui.view',2);c=('ir.actions.report',3);system=('ir.ui.view',4);retained=('ir.ui.view',5)
 remove,reasons=plan_cleanup({a,b,c,system},{a:{'studio_customization'},b:set(),c:{'studio_customization'},system:{'account'}},set(),[(a,b),(c,a)])

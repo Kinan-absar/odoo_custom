@@ -197,10 +197,3 @@ Offline validation passes. This version has not been installed or rendered live 
 Upgrade setup now deletes the exact Subcontract Agreement and Subcontractor Payment Certificate report actions, in addition to retiring their report templates. They will no longer remain in Technical Reports after upgrading.
 
 Offline validation passes. The action deletion is covered by the upgrade setup simulation and Odoo integration test; live Odoo upgrade has not been run.
-
-
-## Contextual accounting print choices — 18.0.2.0.35
-
-Journal Voucher is now the only native account.move Print-menu action. The direct-print dialog defaults to Journal Voucher and shows only Journal Voucher for miscellaneous entries; invoices and vendor bills also retain the unified Invoice PDF option. Older invoice copies, tax-invoice shortcuts, and unrelated reports such as Timesheets are excluded. The duplicate “Print Tax Inv” Studio header button is hidden during report setup. The original report action bindings are saved and restored if the module is uninstalled.
-
-Offline validation and filtering tests pass; staging upgrade and PDF printing must be verified after installing the ZIP.

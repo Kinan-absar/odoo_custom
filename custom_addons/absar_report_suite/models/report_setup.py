@@ -2,7 +2,6 @@
 import json
 import logging
 from pathlib import Path
-from lxml import etree
 from odoo import api, models
 from odoo.exceptions import AccessError
 from .report_cleanup import cleanup_reports
@@ -96,19 +95,6 @@ class AbsarReportSetup(models.AbstractModel):
                 record.write({'binding_model_id': False})
             duplicates |= duplicate
 
-        # On account.move, the generic Print menu is reserved for Journal
-        # Voucher. The direct-print dialog exposes the invoice PDF separately
-        # for invoices and bills and hides it for miscellaneous journal entries.
-        if 'absar.print.wizard' in env:
-            for record in actions.search([
-                    ('model', '=', 'account.move'), ('binding_model_id', '!=', False),
-                    ('binding_type', '=', 'report')]):
-                if record != routes['journal_report']:
-                    remember(record)
-                    record.write({'binding_model_id': False})
-
-        self._hide_tax_invoice_buttons()
-
         # Retire obsolete print actions by clearing their model bindings first,
         # then allow the cleanup graph to delete actions with no remaining use.
         # This also covers databases upgraded from an earlier suite version.
@@ -152,29 +138,6 @@ class AbsarReportSetup(models.AbstractModel):
 
         params.set_param(_BACKUP, json.dumps(backup, ensure_ascii=False))
         cleanup_reports(env, config, protected, duplicate_action_ids=duplicates.ids)
-        params.set_param(_MODULE + '.applied_version', '18.0.2.0.35')
-        _logger.info('ABSAR reports 18.0.2.0.35 configured: %s active report bindings', len(bound))
+        params.set_param(_MODULE + '.applied_version', '18.0.2.0.34')
+        _logger.info('ABSAR reports 18.0.2.0.34 configured: %s active report bindings', len(bound))
         return True
-
-    @api.model
-    def _hide_tax_invoice_buttons(self):
-        """Hide legacy Studio header buttons that duplicate invoice printing."""
-        try:
-            view_model = self.env['ir.ui.view']
-        except KeyError:
-            return
-        views = view_model.sudo().with_context(active_test=False).search([
-            ('model', '=', 'account.move'), ('type', '=', 'form'), ('active', '=', True)])
-        for view in views:
-            try:
-                root = etree.fromstring((view.arch_db or '').encode())
-            except (etree.XMLSyntaxError, ValueError):
-                continue
-            changed = False
-            for button in root.xpath(".//button[@string]"):
-                label = ' '.join((button.get('string') or '').lower().split())
-                if label in {'print tax inv', 'print tax invoice'} and button.get('invisible') != 'True':
-                    button.set('invisible', 'True')
-                    changed = True
-            if changed:
-                view.write({'arch_db': etree.tostring(root, encoding='unicode')})
