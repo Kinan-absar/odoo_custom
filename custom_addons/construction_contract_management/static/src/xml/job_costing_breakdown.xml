@@ -1,41 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="construction_contract_management.JobCostingBreakdown" owl="1">
-        <div class="ccm-job-cost-report-card">
-            <div class="ccm-job-cost-card-heading">
+        <div class="ccm-job-costing-schedule">
+            <div class="ccm-job-costing-schedule-head">
                 <div>
-                    <div class="ccm-job-cost-eyebrow">Actual profitability</div>
+                    <span class="ccm-job-costing-eyebrow">Actual Profitability</span>
                     <h3>Job Cost Breakdown</h3>
                 </div>
-                <div class="ccm-job-cost-heading-side">
-                    <div class="ccm-job-cost-project"><span>Project</span><strong t-esc="payload.project || '—'"/></div>
-                    <button type="button" class="btn btn-primary ccm-job-cost-print" t-on-click="printReport">
+                <div class="ccm-job-costing-head-right">
+                    <div class="ccm-job-costing-project"><span>Project</span><strong t-esc="payload.project || '—'"/></div>
+                    <button type="button" class="btn btn-secondary ccm-job-costing-print" t-on-click="printReport">
                         <i class="fa fa-print me-1"/> Print report
                     </button>
                 </div>
             </div>
-            <div class="ccm-job-cost-totals">
-                <div class="ccm-job-cost-total-card"><span>Actual Revenue</span><strong t-esc="formatAmount(payload.revenue_total)"/></div>
-                <div class="ccm-job-cost-total-card"><span>Actual Cost</span><strong t-esc="formatAmount(payload.cost_total)"/></div>
-                <div class="ccm-job-cost-total-card" t-att-class="payload.profit_total &lt; 0 ? 'is-negative' : 'is-positive'"><span>Actual Profit</span><strong t-esc="formatAmount(payload.profit_total)"/></div>
-                <div class="ccm-job-cost-total-card"><span>Actual Profit Margin</span><strong><t t-esc="(payload.margin || 0).toFixed(2)"/>%</strong></div>
-            </div>
-            <div class="ccm-job-cost-sections">
-                <section t-foreach="sections" t-as="section" t-key="section.key" class="ccm-job-cost-section">
-                    <button type="button" class="ccm-job-cost-section-toggle" t-on-click="() => this.toggleSection(section.key)" t-att-aria-expanded="state.expanded[section.key] ? 'true' : 'false'">
-                        <span class="ccm-job-cost-chevron" t-att-class="state.expanded[section.key] ? 'is-open' : ''"><i class="fa fa-chevron-right"/></span>
-                        <span class="ccm-job-cost-section-label"><strong t-esc="section.label"/><small t-esc="section.hint"/></span>
-                        <span class="ccm-job-cost-section-amount" t-esc="formatAmount(section.total)"/>
-                    </button>
-                    <div t-if="state.expanded[section.key]" class="ccm-job-cost-account-list">
-                        <div t-if="!section.rows.length" class="ccm-job-cost-empty">No matching accounts for this project.</div>
-                        <div t-foreach="section.rows" t-as="row" t-key="row.account_id" class="ccm-job-cost-account-row">
-                            <span t-esc="row.account"/><span t-esc="formatAmount(row.amount)"/>
-                        </div>
-                    </div>
-                </section>
-            </div>
-            <div class="ccm-job-cost-card-footnote">Account details are limited to expense accounts for costs and revenue accounts for invoices and credit notes. Project cost and revenue totals retain the existing accounting rules.</div>
+            <table class="ccm-job-costing-totals" aria-label="Actual profitability totals">
+                <tbody><tr>
+                    <td><span>Actual Revenue</span><strong t-esc="formatAmount(payload.revenue_total)"/></td>
+                    <td><span>Actual Cost</span><strong t-esc="formatAmount(payload.cost_total)"/></td>
+                    <td><span>Actual Profit</span><strong t-att-class="payload.profit_total &lt; 0 ? 'is-negative' : 'is-positive'" t-esc="formatAmount(payload.profit_total)"/></td>
+                    <td><span>Profit Margin</span><strong><t t-esc="(payload.margin || 0).toFixed(2)"/>%</strong></td>
+                </tr></tbody>
+            </table>
+            <table class="ccm-job-costing-breakdown" aria-label="Job cost breakdown by account">
+                <thead><tr><th>Category / Account</th><th class="text-end">Amount</th></tr></thead>
+                <tbody>
+                    <t t-foreach="sections" t-as="section" t-key="section.key">
+                        <tr class="ccm-job-costing-section-row">
+                            <td>
+                                <button type="button" class="ccm-job-costing-toggle" t-on-click="() => this.toggleSection(section.key)" t-att-aria-expanded="state.expanded[section.key] ? 'true' : 'false'">
+                                    <i class="fa fa-chevron-right" t-att-class="state.expanded[section.key] ? 'is-open' : ''"/>
+                                    <span t-esc="section.label"/><small t-esc="section.hint"/>
+                                </button>
+                            </td>
+                            <td class="text-end ccm-job-costing-amount" t-esc="formatAmount(section.total)"/>
+                        </tr>
+                        <t t-if="state.expanded[section.key]">
+                            <tr t-if="!section.rows.length" class="ccm-job-costing-account-row ccm-job-costing-empty"><td colspan="2">No matching accounts.</td></tr>
+                            <tr t-foreach="section.rows" t-as="row" t-key="row.account_id" class="ccm-job-costing-account-row">
+                                <td t-esc="row.account"/><td class="text-end ccm-job-costing-amount" t-esc="formatAmount(row.amount)"/>
+                            </tr>
+                        </t>
+                    </t>
+                </tbody>
+            </table>
         </div>
     </t>
 </templates>

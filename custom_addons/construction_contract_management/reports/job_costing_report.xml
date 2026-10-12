@@ -21,7 +21,6 @@
                             .ccm-job-costing-print-report .account-table { width: 100%; border-collapse: collapse; }
                             .ccm-job-costing-print-report .account-table td { padding: 7px 12px; border-top: 1px solid #edf1f2; color: #536a75; }
                             .ccm-job-costing-print-report .account-table td:last-child { text-align: right; color: #19354a; font-weight: 700; }
-                            .ccm-job-costing-print-report .print-note { margin-top: 12px; color: #71838d; font-size: 8pt; }
                         </style>
                         <div class="report-header">
                             <div class="report-title-row">
@@ -60,7 +59,6 @@
                                 </t>
                             </div>
                         </t>
-                        <div class="print-note">Printed account rows reflect the sections expanded in the job costing view. The report retains the existing project accounting rules.</div>
                     </div>
                 </t>
             </t>

@@ -2,6 +2,7 @@ import json
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+from odoo.tools.misc import formatLang
 
 
 def _distribution_has_account(distribution, account_id):
@@ -665,4 +666,7 @@ class ReportConstructionJobCosting(models.AbstractModel):
             'docs': docs,
             'breakdowns': breakdowns,
             'expanded': expanded,
+            'format_amount': lambda doc, amount: formatLang(
+                doc.env, amount or 0.0, currency_obj=doc.currency_id,
+            ),
         }

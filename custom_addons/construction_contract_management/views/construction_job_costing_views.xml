@@ -22,48 +22,32 @@
 
             <xpath expr="//notebook" position="inside">
                 <page string="Job Costing" name="ccm_job_costing" invisible="contract_direction != 'inbound'">
-                    <group>
-                        <group string="Setup" class="ccm_field_section">
+                    <group col="4" class="ccm_job_costing_overview">
+                        <group string="Setup &amp; Budget" class="ccm_field_section">
                             <field name="analytic_account_id" options="{'no_create': True, 'no_create_edit': True}"/>
                             <field name="job_cost_budget"/>
                             <field name="forecast_remaining_cost"/>
+                            <field name="budget_variance" readonly="1" decoration-danger="budget_variance &lt; 0" decoration-success="budget_variance &gt;= 0"/>
+                            <field name="budget_consumed_percent" readonly="1"/>
                         </group>
-                        <group string="Profitability" class="ccm_field_section">
+                        <group string="Purchase Commitments" class="ccm_field_section">
+                            <field name="purchase_commitment_amount" readonly="1"/>
+                            <field name="purchase_billed_amount" readonly="1"/>
+                            <field name="open_purchase_commitment" readonly="1"/>
+                        </group>
+                        <group string="Actual Cost" class="ccm_field_section">
+                            <field name="vendor_bill_cost_amount" readonly="1"/>
+                            <field name="other_accounting_cost_amount" readonly="1"/>
+                            <field name="actual_cost_amount" readonly="1"/>
+                        </group>
+                        <group string="Forecast" class="ccm_field_section">
                             <field name="revised_amount" readonly="1" string="Revised Contract Revenue"/>
                             <field name="forecast_final_cost" readonly="1"/>
                             <field name="forecast_profit" readonly="1" decoration-danger="forecast_profit &lt; 0" decoration-success="forecast_profit &gt;= 0"/>
                             <field name="forecast_margin_percent" readonly="1"/>
                         </group>
                     </group>
-
-                    <separator string="Cost Position"/>
-                    <group col="4">
-                        <group string="Committed &amp; Billed" class="ccm_field_section">
-                            <field name="purchase_commitment_amount" readonly="1"/>
-                            <field name="purchase_billed_amount" readonly="1"/>
-                            <field name="open_purchase_commitment" readonly="1"/>
-                        </group>
-                        <group string="Actual &amp; Forecast" class="ccm_field_section">
-                            <field name="vendor_bill_cost_amount" readonly="1"/>
-                            <field name="other_accounting_cost_amount" readonly="1"/>
-                            <field name="actual_cost_amount" readonly="1"/>
-                        </group>
-                    </group>
                     <field name="job_costing_breakdown_json" widget="ccm_job_costing_breakdown" nolabel="1" readonly="1"/>
-
-                    <separator string="Budget Health"/>
-                    <group>
-                        <group class="ccm_field_section">
-                            <field name="budget_variance" readonly="1" decoration-danger="budget_variance &lt; 0" decoration-success="budget_variance &gt;= 0"/>
-                            <field name="budget_consumed_percent" readonly="1"/>
-                        </group>
-                        <group class="ccm_field_section">
-                            <div class="o_form_label">How it works</div>
-                            <div class="text-muted">
-                                Actual Cost = (Vendor Bills debit - Vendor Bills credit) + Miscellaneous Operations debit. Actual Revenue = posted customer invoice work credits minus customer credit-note work debits (excluding VAT, receivables, customer advances and retention) + recovered-advance credits from miscellaneous entries. Actual Profit = Actual Revenue - Actual Cost. Actual Margin = Actual Profit / Actual Revenue. Only posted journal items allocated to the selected Job Cost Analytic Account (or explicitly linked to this contract) are included; figures follow Debit and Credit columns rather than account types. Open PO Commitment = confirmed PO value less posted PO bills. Forecast Final Cost = Actual Cost + Open PO Commitment + Uncommitted Forecast Cost. Forecast Profit = Revised Contract Revenue less Forecast Final Cost.
-                            </div>
-                        </group>
-                    </group>
                 </page>
             </xpath>
         </field>
