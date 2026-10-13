@@ -1,57 +1,35 @@
-# Absar Direct Print — Odoo 18
+# Absar Direct Print — 18.0.1.0.8
 
-Version 18.0.1.0.2. Independent add-on; does not modify Employee Portal Suite or Construction.
+One office Windows computer can now use multiple printers through one station and one pairing key. The existing Windows app is compatible; no app update is needed.
 
-## Install on staging
+## Upgrade and connect Canon + Epson
 
-1. Put `absar_direct_print` in your repository's `custom_addons`, push, and wait for the staging build.
-2. Update the Apps list and install **Absar Direct Print**.
-3. The administrator receives Direct Print Manager access. Give other internal users **Direct Print User** in Settings → Users → Access Rights.
-4. In your user Preferences enable **Show print options**. Refresh the browser after installation.
-5. Use an existing report from Odoo's Print menu. The new dialog offers **Browser Print**, **Print to Office**, and **Download PDF**.
+1. Replace the existing `custom_addons/absar_direct_print` folder with this version. Push and upgrade **Absar Direct Print**, then refresh Odoo.
+2. Keep the station currently connected to your Windows app (the Canon station in your screenshot). In **Settings → Direct Print → Office Stations**, you can rename it **Office Computer**. Keep its existing pairing key in the app; do not renew it just for this update.
+3. Leave the app running. It reports all printers installed on the computer, and Odoo automatically updates **Printers on this computer**. Refresh the station form after a few seconds; Canon and Epson should be listed if Windows detects both.
+4. Open a document's printer icon. Select **Office Computer** under **Office station**, then select **Canon MF440 Series** or **EPSONC66C03 (L14150 Series)** under **Printer**, choose copies, and click **Print**.
+5. Set **Office Computer** as your default station in user Preferences if desired.
 
-## Browser test — no Windows app needed
+The old Epson station is no longer needed for new print jobs. Existing jobs remain tied to their original station; this update does not move, cancel, or reprint them. Review any queued Epson jobs before retiring that station.
 
-Select Browser Print. Allow the report tab to open. It renders Odoo's HTML report and requests the browser print dialog after images and fonts load. If the browser suppresses automatic printing, press the report's Print button. Select your local printer and confirm.
+## Printer selection
 
-HTML print layout can differ from the PDF, especially headers, footers and page counters. Check the browser preview first. The office option uses the original generated PDF. Reports exposed only through a custom direct-download URL, Excel exports, and portal print links are outside the initial integration. Standard backend `ir.actions.report` PDF actions are intercepted, including custom reports using that standard action.
+- Each station represents one Windows computer. Each detected printer belongs to that station.
+- **Default Windows printer** on the station remains an optional default. The print dialog preselects that printer when detected, or the only detected printer if exactly one exists.
+- Selecting another printer overrides the default for that job. Leaving Printer empty uses the station default, then the app's local default, then Windows default.
+- Printers missing from the app's latest report are hidden from new selections. Submitting a saved selection for a removed printer or a different station is rejected.
+- Printer names come from Windows and cannot be created or edited by ordinary Odoo users. Existing company and allowed-user restrictions continue to apply.
 
-## Office test
+If Epson is not listed, verify it is installed and can print from the Windows account running the app. A disconnected or sleeping PC cannot receive jobs. **Active** on an Odoo station is an administrative setting, not a live connection indicator; check **Last Seen**.
 
-1. Direct Print → Office Stations → New. Name it `Office Windows` and choose its company.
-2. If multiple printers exist, enter the exact Windows printer name. Empty uses the default selected locally in the app, then the Windows default.
-3. Save. Click **Pair / Renew Key**. Copy the Odoo HTTPS address and key into the Windows app.
-4. Restrict Allowed users if needed. Empty allows all Direct Print users with access to that company.
-5. Select the station in your Preferences as your default, or choose it in each print dialog.
-6. Start the app on Windows; the station's Last seen should update within a few seconds.
-7. Print one test report with one copy. Confirm paper output before trying real documents.
+The existing printer icon placement, Settings menus, invoice/Journal Voucher report filtering, and native Print buttons are retained.
 
-## Queue behavior
+## Job status
 
-Queued: waiting for the app. Processing: claimed by that station. Sent to Windows: PDF print command succeeded and the job was handed to the print system; NOT physical delivery confirmation. Failed: print command or input validation failed. Needs review: app interruption, lost receipt, or timeout; check the printer before a manager retries.
+Queued means waiting for the app. Processing means claimed. Sent to Windows confirms submission to the print system, not physical paper output. For Failed, inspect Message and the Windows printer queue. For Needs review, check whether paper already printed before retrying.
 
-A claimed job is marked Needs review after 10 minutes when the station next polls. It is never automatically requeued. Local durable receipts prevent automatic repeated submission after restart. A manager's explicit Retry permits another attempt and can create another paper copy. Pending jobs are cancelled from Print Jobs. Jobs already processing cannot reliably be cancelled here; use the Windows printer queue.
-
-Unsubmitted PDF data expires after 7 days. History expires after 30 days. Expired jobs need a new report generation. Maximum PDF size 25 MB; 1–20 copies.
-
-## Security and connections
-
-Report rendering runs with the sender's Odoo permissions. Jobs are scoped to station and company; ordinary users see their own jobs. The desktop uses a revocable station key, not an Odoo user password. Pairing keys are stored encrypted with Windows DPAPI for the current Windows account. Treat a key like a password: anyone holding it can retrieve PDFs queued to that station.
-
-Only outbound HTTPS from Windows to Odoo is used. No router port forwarding, inbound listening service or separate paid printing relay. Pair staging separately; pairing keys do not need to be reused on production. Remove or revoke test stations before a database is cloned or exposed to a different environment. Existing queued PDFs are snapshots; access revoked later does not remove an already queued document—cancel that job explicitly.
+PDF limit: 25 MB. Copies: 1–20. PDF snapshots expire after 7 days; history after 30 days. The app uses outbound HTTPS and an encrypted pairing key; it does not require an Odoo password or a paid cloud printing subscription.
 
 ## Validation
 
-Python compile checks, XML/manifest/reference checks, and six worker unit tests pass. Odoo TransactionCase tests are included for staging/test environments: station restrictions, job ACLs, cross-company boundaries, and wizard ownership. They have not been executed in a live Odoo server here. Windows setup, DPAPI, and physical printing require a Windows staging test; they have not been executed on your computer.
-
-To run Odoo tests in a dedicated disposable database: enable tests and use tag `/absar_direct_print`. Do not use a production database for installation tests.
-
-## Uninstall / disable
-
-Turn off Show print options to restore normal report behavior per user. Stop the desktop app to stop receiving new work. Revoke a station key to disconnect it. Remove the add-on through Odoo before removing its source folder. Do not delete the source of an installed module first.
-
-18.0.1.0.1: supply explicit form views in both dynamic window actions for Odoo 18 action preprocessing.
-
-18.0.1.0.2: compact browser report header/body spacing and avoid double PDF header margin in HTML printing. Generated PDFs and office printing are unchanged.
-
-18.0.1.0.7: account entries default to Journal Voucher. Miscellaneous entries offer only Journal Voucher; invoices and bills offer Journal Voucher followed by the unified Invoice PDF. Older report copies and unrelated reports such as Timesheets are excluded.
+Python compilation, XML/assets/access definitions and Odoo 18 inherited-template anchors were checked. Seven tests passed against the unchanged Windows worker, including sequential routing to Canon and Epson using the same station key. Odoo TransactionCase tests for discovery, defaults, station/company restrictions and printer removal are included; a live Odoo runtime and physical printers were unavailable for local execution. Upgrade and verify one copy on each printer in your environment.

@@ -43,10 +43,30 @@ class PrintStation(models.Model):
     active = fields.Boolean(default=True)
     company_id = fields.Many2one('res.company', required=True, default=lambda s: s.env.company)
     allowed_user_ids = fields.Many2many('res.users', string='Allowed users', help='Empty allows all Direct Print users in this company.')
-    printer_name = fields.Char(string='Windows printer name', help='Leave empty to use the desktop default printer.')
+    printer_name = fields.Char(string='Default Windows printer', help='Optional default for this computer. Choose another detected printer in the print dialog.')
+    printer_ids = fields.One2many('absar.print.printer', 'station_id', string='Detected printers', readonly=True)
     last_seen = fields.Datetime(readonly=True)
     client_printers = fields.Text(readonly=True)
     token_hash = fields.Char(copy=False, groups='absar_direct_print.group_print_manager')
+    def _sync_printers(self, names):
+        """Update the read-only printer directory from this station's authenticated app."""
+        self.ensure_one()
+        if not isinstance(names, list):
+            return
+        clean = list(dict.fromkeys(name for name in names[:100]
+                                   if isinstance(name, str) and name.strip() and len(name) <= 500))
+        directory = self.env['absar.print.printer'].sudo().with_context(active_test=False)
+        existing = directory.search([('station_id', '=', self.id)])
+        by_name = {printer.name: printer for printer in existing}
+        for name in clean:
+            if name in by_name:
+                if not by_name[name].active:
+                    by_name[name].write({'active': True})
+            else:
+                directory.create({'name': name, 'station_id': self.id})
+        existing.filtered(lambda printer: printer.active and printer.name not in clean).write({'active': False})
+        self.sudo().write({'client_printers': json.dumps(clean, ensure_ascii=False)})
+
     def action_pair(self):
         self.ensure_one()
         if not self.env.user.has_group('absar_direct_print.group_print_manager'):
@@ -66,6 +86,17 @@ class PrintStation(models.Model):
             raise AccessError(_('This station is unavailable for your company.'))
         if self.allowed_user_ids and self.env.user not in self.allowed_user_ids:
             raise AccessError(_('You are not allowed to use this station.'))
+
+class PrintPrinter(models.Model):
+    _name = 'absar.print.printer'
+    _description = 'Detected Windows Printer'
+    _order = 'name, id'
+    name = fields.Char(required=True, readonly=True)
+    station_id = fields.Many2one('absar.print.station', required=True, readonly=True, ondelete='cascade')
+    company_id = fields.Many2one(related='station_id.company_id', store=True, readonly=True)
+    active = fields.Boolean(default=True, readonly=True)
+    _sql_constraints = [('station_printer_unique', 'unique(station_id, name)',
+                         'A printer can only be listed once per station.')]
 
 class PrintPair(models.TransientModel):
     _name = 'absar.print.pair'
@@ -146,7 +177,30 @@ class PrintWizard(models.TransientModel):
     report_id = fields.Many2one('ir.actions.report', required=True)
     payload = fields.Text(required=True, readonly=True)
     station_id = fields.Many2one('absar.print.station', default=lambda s:s.env.user.absar_print_station_id)
+    printer_id = fields.Many2one('absar.print.printer', string='Printer',
+        compute='_compute_printer_id', store=True, readonly=False, precompute=True,
+        help='Choose a printer on this computer. Leave empty to use the station or Windows default.')
     copies = fields.Integer(default=1)
+
+    @api.depends('station_id')
+    def _compute_printer_id(self):
+        for wizard in self:
+            printers = wizard.station_id.printer_ids.filtered('active')
+            preferred = printers.filtered(lambda printer: printer.name == wizard.station_id.printer_name)
+            wizard.printer_id = preferred[:1] or (printers if len(printers) == 1 else False)
+
+    def _print_destination(self):
+        self.ensure_one()
+        if not self.station_id:
+            raise UserError(_('Select an office print station.'))
+        self.station_id._check_sender()
+        if self.printer_id:
+            self.printer_id.check_access('read')
+            if self.printer_id.station_id != self.station_id or not self.printer_id.active:
+                raise UserError(_('This printer is unavailable for the selected station. Choose another printer.'))
+            return self.printer_id.name
+        return self.station_id.printer_name or ''
+
     @api.model
     def available_reports(self, model_name, view_type, record_ids=None):
         if not self.env.user.has_group('absar_direct_print.group_print_user'):
@@ -266,9 +320,7 @@ class PrintWizard(models.TransientModel):
         return report.with_context(ctx), ids, payload.get('data') or None
     def action_office(self):
         report, ids, data = self._report_args()
-        if not self.station_id:
-            raise UserError(_('Select an office print station.'))
-        self.station_id._check_sender()
+        printer_name = self._print_destination()
         if not 1 <= self.copies <= 20:
             raise UserError(_('Copies must be between 1 and 20.'))
         pdf = report._render_qweb_pdf(report.report_name, ids, data=data)[0]
@@ -277,7 +329,7 @@ class PrintWizard(models.TransientModel):
         # Create as sudo only after report rendering under the requesting user's permissions.
         job = self.env['absar.print.job'].sudo().create({'name':report.name,'station_id':self.station_id.id,
             'user_id':self.env.uid, 'copies':self.copies,
-            'printer_name':self.station_id.printer_name, 'pdf_data':base64.b64encode(pdf)})
+            'printer_name':printer_name, 'pdf_data':base64.b64encode(pdf)})
         return {'type':'ir.actions.client','tag':'display_notification','params':{
             'title':_('Queued for office printing'), 'message':_('Job #%s will be received by %s when its app is online.') % (job.id,self.station_id.name),
             'type':'success','sticky':False,'next':{'type':'ir.actions.act_window_close'}}}

@@ -72,3 +72,45 @@ class TestDirectPrint(TransactionCase):
 
         bill_reports = _filter_account_move_reports(reports, {'in_invoice'})
         self.assertEqual(bill_reports, [journal, invoice])
+
+    def _printer_test_wizard(self, station):
+        report = self.env['ir.actions.report'].create({
+            'name': 'Printer routing test', 'model': 'res.partner', 'report_type': 'qweb-pdf',
+            'report_name': 'absar_direct_print.printer_routing_test'})
+        return self.env['absar.print.wizard'].with_user(self.user).create({
+            'report_id': report.id, 'payload': json.dumps({'context': {}, 'data': {}}),
+            'station_id': station.id})
+
+    def test_multiple_printers_and_station_default(self):
+        self.station.printer_name = 'Canon MF440 Series'
+        self.station._sync_printers(['Canon MF440 Series', 'EPSONC66C03 (L14150 Series)', 'Canon MF440 Series'])
+        printers = self.station.printer_ids
+        self.assertEqual(len(printers), 2)
+        wizard = self._printer_test_wizard(self.station)
+        self.assertEqual(wizard._print_destination(), 'Canon MF440 Series')
+        epson = printers.filtered(lambda printer: printer.name.startswith('EPSON'))
+        wizard.printer_id = epson
+        self.assertEqual(wizard._print_destination(), 'EPSONC66C03 (L14150 Series)')
+        self.station._sync_printers(['Canon MF440 Series'])
+        self.assertFalse(epson.active)
+        with self.assertRaises(UserError):
+            wizard._print_destination()
+        self.station._sync_printers(['Canon MF440 Series', 'EPSONC66C03 (L14150 Series)'])
+        self.assertTrue(epson.active)
+        self.assertEqual(wizard._print_destination(), epson.name)
+
+    def test_printer_directory_is_read_only_and_station_scoped(self):
+        self.station._sync_printers(['Canon'])
+        other_station = self.env['absar.print.station'].create({'name': 'Other PC', 'company_id': self.env.company.id})
+        other_station._sync_printers(['Epson'])
+        wizard = self._printer_test_wizard(self.station)
+        wizard.printer_id = other_station.printer_ids
+        with self.assertRaises(UserError):
+            wizard._print_destination()
+        with self.assertRaises(AccessError):
+            self.env['absar.print.printer'].with_user(self.user).create({'name': 'Bypass', 'station_id': self.station.id})
+        other_company = self.env['res.company'].create({'name': 'Printer Test Company'})
+        foreign = self.env['absar.print.station'].create({'name': 'Foreign', 'company_id': other_company.id})
+        foreign._sync_printers(['Foreign printer'])
+        with self.assertRaises(AccessError):
+            foreign.printer_ids.with_user(self.user).check_access('read')

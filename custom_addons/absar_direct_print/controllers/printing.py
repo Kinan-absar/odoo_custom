@@ -23,7 +23,8 @@ class DirectPrintController(http.Controller):
     def poll(self):
         station=self._station()
         body=request.httprequest.get_json(silent=True) or {}
-        station.write({'last_seen':fields.Datetime.now(), 'client_printers':str(body.get('printers',''))[:4000]})
+        station.write({'last_seen':fields.Datetime.now()})
+        station._sync_printers(body.get('printers'))
         jobs=request.env['absar.print.job'].sudo()
         # A lost receipt must never automatically result in another physical print.
         jobs.search([('station_id','=',station.id),('state','=','claimed'),('claimed_at','<',fields.Datetime.now()-timedelta(minutes=10))]).write({'state':'uncertain','message':'Station did not confirm submission. Check the printer before retrying.'})
