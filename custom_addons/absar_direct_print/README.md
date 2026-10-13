@@ -1,4 +1,4 @@
-# Absar Direct Print — 18.0.1.0.9
+# Absar Direct Print — 18.0.1.0.10
 
 The print dialog contains Report, Printer, and Copies. Office station is hidden and selected automatically. Canon is preselected when detected and enabled, unless you explicitly choose another default.
 
@@ -28,4 +28,10 @@ The printer icon placement, Settings menus, native Print buttons and existing in
 
 ## Validation
 
-Python compilation, XML, manifest/assets, ACLs and inherited Odoo 18 anchors checked. Seven existing Windows worker tests pass. Odoo tests for detection, defaults, visibility persistence, blocked destinations and access restrictions are included but could not be run without a live Odoo runtime. The Canon driver/queue issue needs a separate physical-printer test; this update changes selection and configuration.
+Python compilation, XML, manifest/assets, ACLs and inherited Odoo 18 anchors checked. Eight Windows worker tests and seven controller tests with mocked Odoo HTTP/ORM fixtures pass. Odoo tests for detection, defaults, visibility persistence, blocked destinations and access restrictions are included but could not be run without a live Odoo runtime. The Canon driver/queue issue needs a separate physical-printer test; this update changes selection and configuration.
+
+## Receipt recovery fix
+
+The app retries pending job receipts before polling. Previously a receipt for a deleted job or obsolete claim returned HTTP 401, blocking future polling even when the station key was valid. This release discards those obsolete receipts without modifying any job. The existing app records the acknowledgment and resumes polling; its durable receipt journal is preserved and the discarded receipt never triggers a print.
+
+Invalid or inactive station keys still return 401. Pairing checks, secrets, station ownership and matching-current-claim requirements are preserved. This fix addresses a possible receipt-loop cause; it does not prove the live connection has a valid key, and it does not address the separate Canon driver/queue issue.

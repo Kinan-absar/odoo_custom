@@ -48,10 +48,14 @@ class DirectPrintController(http.Controller):
             raise BadRequest('Invalid receipt')
         request.env.cr.execute('SELECT id FROM absar_print_job WHERE id=%s AND station_id=%s FOR UPDATE',[b['id'],station.id])
         if not request.env.cr.fetchone():
-            raise Unauthorized()
+            # The station key is already validated. Old local receipts may outlive
+            # job cleanup or a restored staging database. Discard the receipt,
+            # without changing any job, so the existing app can resume polling.
+            return self._json({'ok': False, 'discarded': True, 'reason': 'Receipt no longer matches a station job.'})
         job=request.env['absar.print.job'].sudo().browse(b['id'])
         if not secrets.compare_digest(job.claim_id or '',str(b.get('claim',''))):
-            raise Unauthorized()
+            # Never apply an old receipt to a newer claim or an unclaimed job.
+            return self._json({'ok': False, 'discarded': True, 'reason': 'Receipt no longer matches the current claim.'})
         if job.state in ('claimed','uncertain'):
             vals={'state':b['state'],'finished_at':fields.Datetime.now(),'message':str(b.get('message',''))[:2000]}
             if b['state']=='submitted':
