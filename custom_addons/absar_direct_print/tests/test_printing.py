@@ -114,3 +114,31 @@ class TestDirectPrint(TransactionCase):
         foreign._sync_printers(['Foreign printer'])
         with self.assertRaises(AccessError):
             foreign.printer_ids.with_user(self.user).check_access('read')
+
+    def test_visibility_survives_discovery_and_canon_is_default(self):
+        self.station._sync_printers(['EPSONC66C03 (L14150 Series)', 'Canon MF440 Series', 'Microsoft Print to PDF'])
+        wizard = self._printer_test_wizard(self.station)
+        self.assertEqual(wizard.printer_id.name, 'Canon MF440 Series')
+        hidden = self.station.printer_ids.filtered(lambda printer: printer.name == 'Microsoft Print to PDF')
+        hidden.sudo().show_in_wizard = False
+        self.station._sync_printers(['EPSONC66C03 (L14150 Series)', 'Canon MF440 Series', 'Microsoft Print to PDF'])
+        self.assertFalse(hidden.show_in_wizard)
+        wizard.printer_id = hidden
+        with self.assertRaises(UserError):
+            wizard._print_destination()
+        fresh = self._printer_test_wizard(self.station)
+        self.assertEqual(fresh.printer_id.name, 'Canon MF440 Series')
+        self.station.default_printer_id = self.station.printer_ids.filtered(lambda printer: printer.name.startswith('EPSON'))
+        configured = self._printer_test_wizard(self.station)
+        self.assertEqual(configured.printer_id, self.station.default_printer_id)
+        with self.assertRaises(AccessError):
+            hidden.with_user(self.user).write({'show_in_wizard': True})
+        with self.assertRaises(AccessError):
+            hidden.with_user(self.env.ref('base.user_admin')).write({'name': 'Changed Windows identity'})
+
+    def test_automatic_station_respects_user_preference_and_allowed_users(self):
+        self.user.sudo().absar_print_station_id = self.station
+        model = self.env['absar.print.wizard'].with_user(self.user)
+        self.assertEqual(model._default_station(), self.station)
+        self.station.allowed_user_ids = self.other
+        self.assertNotEqual(model._default_station(), self.station)

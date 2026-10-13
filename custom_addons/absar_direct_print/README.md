@@ -1,35 +1,31 @@
-# Absar Direct Print — 18.0.1.0.8
+# Absar Direct Print — 18.0.1.0.9
 
-One office Windows computer can now use multiple printers through one station and one pairing key. The existing Windows app is compatible; no app update is needed.
+The print dialog contains Report, Printer, and Copies. Office station is hidden and selected automatically. Canon is preselected when detected and enabled, unless you explicitly choose another default.
 
-## Upgrade and connect Canon + Epson
+## Upgrade
 
-1. Replace the existing `custom_addons/absar_direct_print` folder with this version. Push and upgrade **Absar Direct Print**, then refresh Odoo.
-2. Keep the station currently connected to your Windows app (the Canon station in your screenshot). In **Settings → Direct Print → Office Stations**, you can rename it **Office Computer**. Keep its existing pairing key in the app; do not renew it just for this update.
-3. Leave the app running. It reports all printers installed on the computer, and Odoo automatically updates **Printers on this computer**. Refresh the station form after a few seconds; Canon and Epson should be listed if Windows detects both.
-4. Open a document's printer icon. Select **Office Computer** under **Office station**, then select **Canon MF440 Series** or **EPSONC66C03 (L14150 Series)** under **Printer**, choose copies, and click **Print**.
-5. Set **Office Computer** as your default station in user Preferences if desired.
+Replace `custom_addons/absar_direct_print`, push, upgrade **Absar Direct Print**, and refresh Odoo. The Windows app and its existing pairing key remain unchanged.
 
-The old Epson station is no longer needed for new print jobs. Existing jobs remain tied to their original station; this update does not move, cancel, or reprint them. Review any queued Epson jobs before retiring that station.
+## Choose which printers appear
 
-## Printer selection
+Open **Settings → Direct Print → Office Stations** and open the station connected to your Windows app. Under **Printers on this computer**:
 
-- Each station represents one Windows computer. Each detected printer belongs to that station.
-- **Default Windows printer** on the station remains an optional default. The print dialog preselects that printer when detected, or the only detected printer if exactly one exists.
-- Selecting another printer overrides the default for that job. Leaving Printer empty uses the station default, then the app's local default, then Windows default.
-- Printers missing from the app's latest report are hidden from new selections. Submitting a saved selection for a removed printer or a different station is rejected.
-- Printer names come from Windows and cannot be created or edited by ordinary Odoo users. Existing company and allowed-user restrictions continue to apply.
+- Keep **Show in print dialog** checked for Canon and Epson.
+- Untick it for Microsoft Print to PDF, OneNote, XPS, and any other printer you do not want offered.
+- Set **Default printer** to **Canon MF440 Series** and save.
 
-If Epson is not listed, verify it is installed and can print from the Windows account running the app. A disconnected or sleeping PC cannot receive jobs. **Active** on an Odoo station is an administrative setting, not a live connection indicator; check **Last Seen**.
+The Windows app manages detected names and availability. Refreshing discovery never resets your Show in print dialog choices. Only Direct Print Managers can change these settings.
 
-The existing printer icon placement, Settings menus, invoice/Journal Voucher report filtering, and native Print buttons are retained.
+The default follows your configured Default printer, then an enabled Canon printer, then the station's legacy default name, then the first enabled printer. Printing requires an enabled, detected printer from the selected station. A removed or disabled printer is rejected, even if an older open dialog still contains that selection.
 
-## Job status
+## Automatic office computer
 
-Queued means waiting for the app. Processing means claimed. Sent to Windows confirms submission to the print system, not physical paper output. For Failed, inspect Message and the Windows printer queue. For Needs review, check whether paper already printed before retrying.
+The print dialog uses your default station from user Preferences when permitted. Otherwise it uses the most recently connected permitted station, preferring the current company. Set your user default to the computer currently connected to the Windows app if an old station still exists. The station is retained internally to route jobs correctly and is hidden in the dialog.
 
-PDF limit: 25 MB. Copies: 1–20. PDF snapshots expire after 7 days; history after 30 days. The app uses outbound HTTPS and an encrypted pairing key; it does not require an Odoo password or a paid cloud printing subscription.
+One connected office computer can serve both Canon and Epson using one pairing key. Old stations and queued jobs are preserved; jobs are not moved or reprinted by this upgrade.
+
+The printer icon placement, Settings menus, native Print buttons and existing invoice / Journal Voucher filtering are retained.
 
 ## Validation
 
-Python compilation, XML/assets/access definitions and Odoo 18 inherited-template anchors were checked. Seven tests passed against the unchanged Windows worker, including sequential routing to Canon and Epson using the same station key. Odoo TransactionCase tests for discovery, defaults, station/company restrictions and printer removal are included; a live Odoo runtime and physical printers were unavailable for local execution. Upgrade and verify one copy on each printer in your environment.
+Python compilation, XML, manifest/assets, ACLs and inherited Odoo 18 anchors checked. Seven existing Windows worker tests pass. Odoo tests for detection, defaults, visibility persistence, blocked destinations and access restrictions are included but could not be run without a live Odoo runtime. The Canon driver/queue issue needs a separate physical-printer test; this update changes selection and configuration.

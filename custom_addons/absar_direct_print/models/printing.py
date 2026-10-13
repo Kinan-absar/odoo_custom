@@ -2,7 +2,7 @@ import base64
 import hashlib
 import json
 import secrets
-from datetime import timedelta
+from datetime import datetime, timedelta
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError, ValidationError
 
@@ -44,8 +44,17 @@ class PrintStation(models.Model):
     company_id = fields.Many2one('res.company', required=True, default=lambda s: s.env.company)
     allowed_user_ids = fields.Many2many('res.users', string='Allowed users', help='Empty allows all Direct Print users in this company.')
     printer_name = fields.Char(string='Default Windows printer', help='Optional default for this computer. Choose another detected printer in the print dialog.')
-    printer_ids = fields.One2many('absar.print.printer', 'station_id', string='Detected printers', readonly=True)
+    printer_ids = fields.One2many('absar.print.printer', 'station_id', string='Detected printers')
+    default_printer_id = fields.Many2one('absar.print.printer', string='Default printer',
+        domain="[('station_id', '=', id), ('active', '=', True), ('show_in_wizard', '=', True)]")
     last_seen = fields.Datetime(readonly=True)
+
+    @api.constrains('default_printer_id')
+    def _check_default_printer(self):
+        for station in self:
+            if station.default_printer_id and station.default_printer_id.station_id != station:
+                raise ValidationError(_('The default printer must belong to this office computer.'))
+
     client_printers = fields.Text(readonly=True)
     token_hash = fields.Char(copy=False, groups='absar_direct_print.group_print_manager')
     def _sync_printers(self, names):
@@ -95,6 +104,13 @@ class PrintPrinter(models.Model):
     station_id = fields.Many2one('absar.print.station', required=True, readonly=True, ondelete='cascade')
     company_id = fields.Many2one(related='station_id.company_id', store=True, readonly=True)
     active = fields.Boolean(default=True, readonly=True)
+    show_in_wizard = fields.Boolean(string='Show in print dialog', default=True)
+
+    def write(self, vals):
+        if not self.env.su and set(vals) - {'show_in_wizard'}:
+            raise AccessError(_('Detected printer details can only be updated by the Windows app.'))
+        return super().write(vals)
+
     _sql_constraints = [('station_printer_unique', 'unique(station_id, name)',
                          'A printer can only be listed once per station.')]
 
@@ -176,18 +192,37 @@ class PrintWizard(models.TransientModel):
     name = fields.Char(readonly=True)
     report_id = fields.Many2one('ir.actions.report', required=True)
     payload = fields.Text(required=True, readonly=True)
-    station_id = fields.Many2one('absar.print.station', default=lambda s:s.env.user.absar_print_station_id)
+    station_id = fields.Many2one('absar.print.station', default=lambda self: self._default_station())
+
+    @api.model
+    def _default_station(self):
+        stations = self.env['absar.print.station'].search([('active', '=', True)])
+        stations = stations.filtered(lambda station: station.company_id in self.env.companies
+            and (not station.allowed_user_ids or self.env.user in station.allowed_user_ids))
+        preferred = self.env.user.absar_print_station_id
+        if preferred in stations:
+            return preferred
+        # The desktop currently polling Odoo is normally the only live station.
+        stations = stations.sorted(lambda station: (
+            station.company_id == self.env.company, bool(station.last_seen),
+            station.last_seen or datetime.min), reverse=True)
+        return stations[:1]
+
     printer_id = fields.Many2one('absar.print.printer', string='Printer',
         compute='_compute_printer_id', store=True, readonly=False, precompute=True,
-        help='Choose a printer on this computer. Leave empty to use the station or Windows default.')
+        help='Choose one of the printers enabled in Settings → Direct Print.')
     copies = fields.Integer(default=1)
 
     @api.depends('station_id')
     def _compute_printer_id(self):
         for wizard in self:
-            printers = wizard.station_id.printer_ids.filtered('active')
-            preferred = printers.filtered(lambda printer: printer.name == wizard.station_id.printer_name)
-            wizard.printer_id = preferred[:1] or (printers if len(printers) == 1 else False)
+            printers = wizard.station_id.printer_ids.filtered(lambda printer: printer.active and printer.show_in_wizard)
+            preferred = wizard.station_id.default_printer_id & printers
+            if not preferred:
+                preferred = printers.filtered(lambda printer: printer.name.lower().startswith('canon'))
+            if not preferred:
+                preferred = printers.filtered(lambda printer: printer.name == wizard.station_id.printer_name)
+            wizard.printer_id = preferred[:1] or printers[:1]
 
     def _print_destination(self):
         self.ensure_one()
@@ -196,10 +231,10 @@ class PrintWizard(models.TransientModel):
         self.station_id._check_sender()
         if self.printer_id:
             self.printer_id.check_access('read')
-            if self.printer_id.station_id != self.station_id or not self.printer_id.active:
+            if self.printer_id.station_id != self.station_id or not self.printer_id.active or not self.printer_id.show_in_wizard:
                 raise UserError(_('This printer is unavailable for the selected station. Choose another printer.'))
             return self.printer_id.name
-        return self.station_id.printer_name or ''
+        raise UserError(_('Choose an enabled printer. A print manager can enable printers in Settings → Direct Print.'))
 
     @api.model
     def available_reports(self, model_name, view_type, record_ids=None):
