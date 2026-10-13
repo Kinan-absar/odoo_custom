@@ -5,4 +5,5 @@
  <record id="job_company_rule" model="ir.rule"><field name="name">Print jobs: companies</field><field name="model_id" ref="model_absar_print_job"/><field name="domain_force">[('company_id','in',company_ids)]</field></record>
  <record id="job_user_rule" model="ir.rule"><field name="name">Print jobs: own</field><field name="model_id" ref="model_absar_print_job"/><field name="groups" eval="[(4,ref('group_print_user'))]"/><field name="domain_force">[('user_id','=',user.id)]</field></record>
  <record id="job_manager_rule" model="ir.rule"><field name="name">Print jobs: managers</field><field name="model_id" ref="model_absar_print_job"/><field name="groups" eval="[(4,ref('group_print_manager'))]"/><field name="domain_force">[(1,'=',1)]</field></record>
+ <record id="printer_company_rule" model="ir.rule"><field name="name">Detected printers: companies</field><field name="model_id" ref="model_absar_print_printer"/><field name="domain_force">[('company_id','in',company_ids)]</field></record>
 </odoo>

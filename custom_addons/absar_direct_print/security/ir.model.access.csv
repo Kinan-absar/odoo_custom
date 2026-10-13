@@ -5,3 +5,6 @@ job_user,Job user,model_absar_print_job,group_print_user,1,0,0,0
 job_manager,Job manager,model_absar_print_job,group_print_manager,1,1,0,1
 wizard_user,Print wizard,model_absar_print_wizard,group_print_user,1,1,1,1
 pair_manager,Pair station,model_absar_print_pair,group_print_manager,1,1,1,1
+
+printer_user,Detected printer user,model_absar_print_printer,group_print_user,1,0,0,0
+printer_manager,Detected printer manager,model_absar_print_printer,group_print_manager,1,1,0,0
