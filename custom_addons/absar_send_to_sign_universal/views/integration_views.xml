@@ -1,0 +1,38 @@
+<odoo>
+    <record id="integration_list" model="ir.ui.view">
+        <field name="name">absar.sign.universal.integration.list</field>
+        <field name="model">absar.sign.universal.integration</field>
+        <field name="arch" type="xml"><list decoration-muted="not active">
+            <field name="name"/><field name="model_id"/><field name="report_id"/>
+            <field name="auto_send"/><field name="active"/>
+        </list></field>
+    </record>
+    <record id="integration_form" model="ir.ui.view">
+        <field name="name">absar.sign.universal.integration.form</field>
+        <field name="model">absar.sign.universal.integration</field>
+        <field name="arch" type="xml"><form string="Universal Signing">
+            <header><button name="action_refresh_buttons" type="object" string="Refresh Buttons" groups="base.group_system"/></header>
+            <sheet>
+                <div class="oe_title"><label for="name"/><h1><field name="name"/></h1></div>
+                <group>
+                    <group><field name="model_id" options="{'no_create': True}"/><field name="model_name" invisible="1"/>
+                        <field name="report_id" options="{'no_create': True}"/>
+                        <field name="form_view_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                        <field name="active"/>
+                    </group>
+                    <group><field name="project_field_id" options="{'no_create': True}"/>
+                        <field name="state_field_id" options="{'no_create': True}"/>
+                        <field name="allowed_states" placeholder="e.g. posted or sale,done"/>
+                        <field name="auto_send"/>
+                    </group>
+                </group>
+                <div class="text-muted mb-3">Choose a model and its PDF report, then activate to add Send to Sign to its form. Leave Form Views empty to use all current primary forms. Configure signers and placement in Signing Workflows for the same model and company. A project workflow takes priority over the company default.</div>
+                <div class="text-muted mb-3">Printed headings, saved positions and manual placement are supported. Direct sending requires all positions to resolve without errors. Existing specialized PO, voucher and construction buttons continue to use their current integrations.</div>
+                <notebook><page string="Generated Buttons"><field name="generated_view_ids"><list create="0" edit="0" delete="0"><field name="name"/><field name="inherit_id"/><field name="active"/></list></field></page></notebook>
+            </sheet>
+        </form></field>
+    </record>
+    <record id="integration_action" model="ir.actions.act_window"><field name="name">Universal Signing</field><field name="res_model">absar.sign.universal.integration</field><field name="view_mode">list,form</field><field name="context">{'active_test': False}</field></record>
+    <menuitem id="menu_universal_signing" name="Universal Signing" parent="absar_sign_workflow_core.menu_absar_document_signing_configuration" action="integration_action" sequence="92" groups="base.group_system"/>
+    <function model="absar.sign.universal.integration" name="_relocate_menu"/>
+</odoo>

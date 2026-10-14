@@ -1,0 +1,24 @@
+<odoo>
+    <record id="document_list" model="ir.ui.view">
+        <field name="name">absar.sign.universal.document.list</field><field name="model">absar.sign.universal.document</field>
+        <field name="arch" type="xml"><list create="0" edit="0" delete="0"><field name="name"/><field name="revision"/><field name="integration_id"/><field name="workflow_id"/><field name="state"/><field name="user_id"/><field name="create_date"/><field name="company_id" groups="base.group_multi_company"/></list></field>
+    </record>
+    <record id="document_form" model="ir.ui.view">
+        <field name="name">absar.sign.universal.document.form</field><field name="model">absar.sign.universal.document</field>
+        <field name="arch" type="xml"><form create="0" edit="0" delete="0">
+            <header>
+                <button name="action_open_source" type="object" string="Open Document"/>
+                <button name="action_open_signing" type="object" string="Open Signing" class="btn-primary"/>
+                <button name="action_send_ready" type="object" string="Send Ready Template" invisible="state != 'prepared' or placement_issues" confirm="Send this prepared document to the configured signers?"/>
+                <button name="action_new_revision" type="object" string="New Signing Revision" invisible="state not in ('prepared', 'signed', 'canceled', 'refused', 'expired')" confirm="Prepare a new signing revision? The previous template and request will remain in history."/>
+            </header>
+            <sheet><h1><field name="name"/></h1><group><field name="state"/><field name="revision"/><field name="integration_id"/><field name="workflow_id"/><field name="template_id"/><field name="request_id"/><field name="user_id"/><field name="company_id" groups="base.group_multi_company"/></group>
+                <group invisible="not placement_issues"><field name="placement_issues"/></group>
+            </sheet>
+        </form></field>
+    </record>
+    <record id="document_search" model="ir.ui.view"><field name="name">absar.sign.universal.document.search</field><field name="model">absar.sign.universal.document</field><field name="arch" type="xml"><search><field name="name"/><field name="integration_id"/><field name="workflow_id"/><filter name="mine" string="My Preparations" domain="[('user_id', '=', uid)]"/><group><filter name="by_integration" string="Document Type" context="{'group_by': 'integration_id'}"/></group></search></field></record>
+    <record id="document_action" model="ir.actions.act_window"><field name="name">Universal Signing History</field><field name="res_model">absar.sign.universal.document</field><field name="view_mode">list,form</field></record>
+    <menuitem id="menu_universal_history" name="Universal Signing History" parent="absar_sign_workflow_core.menu_absar_document_signing_root" action="document_action" sequence="93" groups="sign.group_sign_user"/>
+<function model="absar.sign.universal.integration" name="_relocate_menu"/>
+</odoo>

@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+integration_admin,Universal signing admin,model_absar_sign_universal_integration,base.group_system,1,1,1,1
+integration_reader,Universal signing read,model_absar_sign_universal_integration,base.group_user,1,0,0,0
+document_user,Universal signing history,model_absar_sign_universal_document,sign.group_sign_user,1,0,0,0
+document_admin,Universal signing history admin,model_absar_sign_universal_document,base.group_system,1,0,0,0

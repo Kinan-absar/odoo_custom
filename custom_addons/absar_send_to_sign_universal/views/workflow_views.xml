@@ -1,0 +1,15 @@
+<odoo>
+    <record id="workflow_universal_placement" model="ir.ui.view">
+        <field name="name">absar.sign.workflow.universal.placement</field>
+        <field name="model">absar.sign.workflow</field>
+        <field name="inherit_id" ref="absar_sign_workflow_core.view_absar_sign_workflow_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@invisible]" position="attributes"><attribute name="invisible">False</attribute></xpath>
+            <xpath expr="//field[@name='step_ids']/list/field[@name='po_placement_mode']" position="attributes"><attribute name="column_invisible">False</attribute></xpath>
+            <xpath expr="//field[@name='step_ids']/list/field[@name='po_printed_heading']" position="attributes"><attribute name="column_invisible">False</attribute></xpath>
+            <xpath expr="//field[@name='step_ids']/list/field[@name='po_signature_page']" position="attributes"><attribute name="column_invisible">False</attribute></xpath>
+            <xpath expr="//field[@name='step_ids']/list/field[@name='po_signature_x']" position="attributes"><attribute name="column_invisible">False</attribute></xpath>
+            <xpath expr="//field[@name='step_ids']/list/field[@name='po_signature_y']" position="attributes"><attribute name="column_invisible">False</attribute></xpath>
+        </field>
+    </record>
+</odoo>
