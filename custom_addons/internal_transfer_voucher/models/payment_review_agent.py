@@ -22,8 +22,8 @@ class CashPlanReview(models.Model):
     )
     state = fields.Selection([
         ('draft', 'Review'),
-        ('partial', 'Partially Applied'),
-        ('applied', 'Safe Changes Applied'),
+        ('partial', 'Partially Resolved'),
+        ('applied', 'Completed'),
     ], default='draft', readonly=True, tracking=True)
     line_ids = fields.One2many('cash.plan.review.line', 'review_id', string='Recommendations', copy=False)
 
@@ -31,6 +31,7 @@ class CashPlanReview(models.Model):
     add_count = fields.Integer(compute='_compute_summary')
     update_count = fields.Integer(compute='_compute_summary')
     remove_count = fields.Integer(compute='_compute_summary')
+    skip_count = fields.Integer(compute='_compute_summary')
     review_count = fields.Integer(compute='_compute_summary')
     safe_count = fields.Integer(compute='_compute_summary', string='Safe Changes')
     selected_count = fields.Integer(compute='_compute_summary', string='Selected')
@@ -42,6 +43,7 @@ class CashPlanReview(models.Model):
             rec.add_count = len(rec.line_ids.filtered(lambda l: l.action == 'add'))
             rec.update_count = len(rec.line_ids.filtered(lambda l: l.action in ('update', 'convert')))
             rec.remove_count = len(rec.line_ids.filtered(lambda l: l.action == 'remove'))
+            rec.skip_count = len(rec.line_ids.filtered(lambda l: l.action == 'skip'))
             rec.review_count = len(rec.line_ids.filtered(lambda l: l.action == 'review'))
             rec.safe_count = len(rec.line_ids.filtered(lambda l: l.can_apply and not l.applied))
             rec.selected_count = len(rec.line_ids.filtered(lambda l: l.apply and not l.applied))
@@ -143,8 +145,10 @@ class CashPlanReviewLine(models.Model):
         ('update', 'Update'),
         ('convert', 'Convert to Payable'),
         ('remove', 'Remove'),
+        ('skip', 'Skip'),
         ('review', 'Review'),
-    ], string='Decision', required=True)
+    ], string='Decision', required=True,
+        help='Your selected decision controls what is applied. Keep, Skip, or Review are available for any source. New candidates can be added; existing plans can be updated or removed; existing PO plans can also be converted. Keep and Skip resolve without changing a payment. Approved, executed, or voucher-linked payments remain protected.')
     source_type = fields.Selection([
         ('existing_po', 'Existing PO Plan'),
         ('existing_payable', 'Existing Payable Plan'),
@@ -186,6 +190,70 @@ class CashPlanReviewLine(models.Model):
                 vals['agent_action'] = vals['action']
         return super().create(vals_list)
 
+    @api.onchange('action', 'source_type')
+    def _onchange_action_source_compatibility(self):
+        for rec in self:
+            allowed = rec._allowed_decisions()
+            if rec.action and rec.action not in allowed:
+                if rec.action == 'remove' and rec.source_type in ('new_po', 'new_payable', 'new_retention'):
+                    rec.action = 'skip'
+                    return {'warning': {
+                        'title': _('Candidate skipped'),
+                        'message': _('This is a candidate, so no planned payment exists to remove. Decision was changed to Skip; applying it resolves the candidate without creating a payment.'),
+                    }}
+                rec.action = 'review'
+                return {'warning': {
+                    'title': _('Decision not available for this recommendation'),
+                    'message': _('Choose one of the supported decisions for this source. Use Skip to resolve a candidate without creating a payment.'),
+                }}
+
+    @api.constrains('source_type', 'action')
+    def _check_action_source_compatibility(self):
+        for rec in self:
+            if rec.action and rec.action not in rec._allowed_decisions():
+                raise UserError(rec._decision_block_reason())
+
+    def _allowed_decisions(self):
+        self.ensure_one()
+        if self.source_type in ('existing_po', 'existing_payable', 'existing_retention'):
+            actions = ['keep', 'update', 'remove', 'skip', 'review']
+            if self.source_type == 'existing_po':
+                actions.append('convert')
+            return actions
+        if self.source_type in ('new_po', 'new_payable', 'new_retention'):
+            return ['keep', 'add', 'skip', 'review']
+        return ['review']
+
+    def _decision_block_reason(self):
+        self.ensure_one()
+        if self.applied:
+            return _('This recommendation is already resolved.')
+        if self.action not in self._allowed_decisions():
+            return _('The selected decision is not available for this source. A new candidate cannot be removed because no planned payment exists; choose Skip to resolve it without creating a payment.')
+        if self.action == 'review':
+            return _('This recommendation is marked Review and needs manual review.')
+        if self.action in ('keep', 'skip'):
+            return False
+        if self.action in ('add', 'update', 'remove', 'convert') and not self.partner_id:
+            return _('This recommendation has no supplier. Run a new Payment Review.')
+        if self.action in ('update', 'remove', 'convert'):
+            if not self.plan_line_id:
+                return _('There is no existing planned payment for this decision.')
+            if not self._safe_line(self.plan_line_id):
+                return _('This planned payment is linked to a voucher or transfer, approved, executed, unplanned, or otherwise locked.')
+            if self.action in ('update', 'convert') and self.proposed_amount <= 0:
+                return _('Enter a positive proposed amount before applying this decision.')
+        if self.action == 'add' and self.proposed_amount <= 0:
+            return _('Enter a positive proposed amount before adding a planned payment.')
+        if self.action == 'add' and self.source_type == 'new_po':
+            if not self.amount_confirmed:
+                return _('Review and confirm the PO installment amount first.')
+            if not self._eligible_new_po(self.purchase_order_id):
+                return _('The PO is no longer eligible for a new planned payment.')
+        if self.action == 'add' and self.source_type == 'new_retention' and not self.purchase_order_id:
+            return _('This retention candidate has no unambiguous PO.')
+        return False
+
     @api.depends(
         'action', 'source_type', 'proposed_amount', 'amount_confirmed', 'applied',
         'partner_id', 'plan_line_id.state', 'plan_line_id.ceo_decision',
@@ -215,8 +283,10 @@ class CashPlanReviewLine(models.Model):
 
     def _decision_is_safely_applicable(self):
         self.ensure_one()
-        if self.applied or self.action in ('keep', 'review'):
+        if self.applied or self.action == 'review' or self.action not in self._allowed_decisions():
             return False
+        if self.action in ('keep', 'skip'):
+            return True
         if not self.partner_id:
             return False
         if self.action == 'add':
@@ -250,19 +320,32 @@ class CashPlanReviewLine(models.Model):
         reviews = self.mapped('review_id')
         if len(reviews) != 1:
             raise UserError(_('Apply recommendations from one Payment Review at a time.'))
-        unsafe = self.filtered(lambda l: not l._decision_is_safely_applicable())
-        if unsafe:
-            labels = []
-            for line in unsafe[:8]:
-                note = _(' — confirm Amount Reviewed after checking the PO installment') if line.source_type == 'new_po' and not line.amount_confirmed else ''
-                labels.append('%s - %s%s' % (line.partner_id.display_name or _('No Supplier'), dict(line._fields['action'].selection).get(line.action, line.action), note))
-            raise UserError(_('Selected recommendations cannot be applied:\n- %s\nReview the decision, amount, and current payment/PO state. No selected changes were applied.') % '\n- '.join(labels))
+        # Validate every selected line against its chosen decision and current
+        # accounting state before changing any plan. This also reports multiple
+        # independent blockers together instead of failing on the first row.
+        blockers = []
+        for line in self:
+            reason = line._decision_block_reason()
+            if not reason:
+                try:
+                    line._validate_live_recommendation()
+                except UserError as error:
+                    reason = str(error.args[0]) if error.args else _('The live payment or PO state changed.')
+            if reason:
+                label = line.partner_id.display_name if line.partner_id else _('No Supplier')
+                decision = dict(line._fields['action'].selection).get(line.action, line.action)
+                blockers.append('%s — %s: %s' % (label, decision, reason))
+        if blockers:
+            shown = blockers[:8]
+            if len(blockers) > len(shown):
+                shown.append(_('…and %s more blocker(s).') % (len(blockers) - len(shown)))
+            raise UserError(_('No selected changes were applied. Fix the following blocker(s) and try again:\n- %s') % '\n- '.join(shown))
         # A transaction error rolls back every selected mutation; no partial success is hidden.
         for line in self:
             line._apply_recommendation()
         self.write({'apply': False})
-        remaining = reviews.line_ids.filtered(lambda l: not l.applied and l._decision_is_safely_applicable())
-        reviews.state = 'partial' if remaining else 'applied'
+        unresolved = reviews.line_ids.filtered(lambda l: not l.applied)
+        reviews.state = 'partial' if unresolved else 'applied'
         return {
             'type': 'ir.actions.client', 'tag': 'display_notification',
             'params': {
@@ -296,6 +379,11 @@ class CashPlanReviewLine(models.Model):
 
     def _validate_live_recommendation(self):
         """Reject snapshots whose liability, source, or coverage has changed."""
+        self.ensure_one()
+        if self.action in ('keep', 'skip'):
+            return
+        if self.action not in self._allowed_decisions():
+            raise UserError(self._decision_block_reason())
         agent = self.env['cash.plan.line']
         company = self.review_id.company_id
         po = self.purchase_order_id
@@ -316,13 +404,11 @@ class CashPlanReviewLine(models.Model):
                 if company.currency_id.compare_amounts(self.proposed_amount, max(data['net_due'], 0.0)):
                     raise UserError(_('The supplier payable balance changed or the proposed amount differs from the current balance. Run a new review.'))
                 self.bill_ids = [(6, 0, data['bills'].ids)]
-            if self.action == 'remove' and self.agent_action == 'remove':
-                others = (self._active_supplier_plans() - line).filtered(lambda l: agent._agent_plan_basis(l) == 'payable')
-                if data['net_due'] > 0 and not others:
-                    raise UserError(_('This supplier still has a positive payable balance and no other balance plan. Run a new review.'))
         if self.source_type in ('new_retention', 'existing_retention'):
-            if not po or len(line.purchase_order_ids) > 1:
+            if not po or (line and len(line.purchase_order_ids) > 1):
                 raise UserError(_('Retention requires one unambiguous PO reference.'))
+            if self.action == 'remove':
+                return
             same_po = self._active_supplier_plans().filtered(
                 lambda l: agent._agent_plan_basis(l) == 'retention' and l.purchase_order_ids == po
             )
@@ -334,7 +420,7 @@ class CashPlanReviewLine(models.Model):
             if not clear or (self.action != 'remove' and not pdata['fully_invoiced_by_amount']):
                 raise UserError(_('Current posted invoices / account 201019 do not support a safe retention allocation. Run a new review.'))
             expected = 0.0 if self.action == 'remove' else amount
-            if (self.action == 'remove' and not company.currency_id.is_zero(amount)) or company.currency_id.compare_amounts(self.proposed_amount, expected):
+            if company.currency_id.compare_amounts(self.proposed_amount, expected):
                 raise UserError(_('The open PO retention differs from this recommendation. Run a new review.'))
             self.bill_ids = [(6, 0, pdata['bills'].ids)]
             if self.source_type == 'new_retention':
@@ -357,20 +443,57 @@ class CashPlanReviewLine(models.Model):
         if self.source_type == 'existing_po' and self.action == 'update':
             if not self._eligible_new_po(po) or company.currency_id.compare_amounts(self.proposed_amount, agent._agent_po_due_company_currency(po, company)) > 0:
                 raise UserError(_('The PO is no longer eligible or the proposed amount exceeds its remaining balance. Run a new review.'))
-        if self.source_type == 'existing_po' and self.action == 'remove' and self.agent_action == 'remove':
-            due = agent._agent_po_due_company_currency(po, company) if po else 0.0
-            payable = agent._agent_get_payable_data(company).get(self.partner_id.commercial_partner_id.id, agent._agent_empty_payable_data())
-            if po and po.state in ('purchase', 'done') and due > 0 and not (agent._agent_po_posted_bills(po) and payable['net_due'] <= 0):
-                raise UserError(_('The PO still has an outstanding obligation. Run a new review.'))
+        if self.action == 'add' and self.source_type == 'new_payable':
+            candidates = self._active_supplier_plans()
+            if candidates.filtered(lambda l: agent._agent_plan_basis(l) == 'payable'):
+                raise UserError(_('A supplier-balance planned payment now exists for this supplier. Run a new review.'))
+            if candidates.filtered(lambda l: agent._agent_plan_basis(l) == 'po' and len(l.purchase_order_ids) > 1):
+                raise UserError(_('An active multi-PO payment may already cover these bills. Consolidate it before adding a supplier-balance plan.'))
+        if self.action == 'add' and self.source_type == 'new_po':
+            existing = agent.search([
+                ('company_id', '=', company.id), ('flow_type', '=', 'out'),
+                ('transaction_type', '=', 'supplier'), ('state', 'not in', ('executed', 'cancel')),
+                ('purchase_order_ids', 'in', po.id),
+            ], limit=1)
+            if existing:
+                raise UserError(_('This PO is already represented by an active planned payment. Run a new review.'))
+        if self.action == 'add' and self.source_type == 'new_retention':
+            same_po = self._active_supplier_plans().filtered(
+                lambda l: agent._agent_plan_basis(l) == 'retention' and l.purchase_order_ids == po
+            )
+            if same_po:
+                raise UserError(_('A retention planned payment already exists for %s. Run a new review.') % po.name)
+            floating = self._active_supplier_plans().filtered(
+                lambda l: agent._agent_plan_basis(l) == 'retention' and len(l.purchase_order_ids) != 1
+            )
+            if floating:
+                raise UserError(_('An existing retention plan has no single PO allocation. Resolve it before adding PO retention.'))
+            account = self.env['account.account'].search([('company_ids', 'in', company.id), ('code', '=', '201019')], limit=1)
+            if not account:
+                raise UserError(_('Account 201019 Retention Payable is missing for this company.'))
+        if self.action == 'convert':
+            targets = (self._active_supplier_plans() - line).filtered(
+                lambda l: agent._agent_plan_basis(l) == 'payable'
+            )
+            if len(targets) > 1:
+                raise UserError(_('Multiple supplier-balance plans exist. Resolve duplicates and run a new review.'))
+            if targets and (line.payment_voucher_id or line.receipt_voucher_id or line.internal_transfer_id):
+                raise UserError(_('This replaced PO payment is linked to a voucher or transfer. Unlink it manually before conversion.'))
+            if targets and not self._safe_line(targets[:1]):
+                raise UserError(_('The target supplier-balance planned payment is approved, executed, or locked.'))
 
     def _apply_recommendation(self):
         self.ensure_one()
         if not self._decision_is_safely_applicable():
-            raise UserError(_('This recommendation is already applied, review-only, unconfirmed, or locked. No change was applied.'))
+            raise UserError(self._decision_block_reason() or _('This recommendation cannot be safely applied.'))
         # Serialize agent mutations for one supplier; re-query duplicate targets afterwards.
         if self.partner_id:
             self.env.cr.execute('SELECT id FROM res_partner WHERE id = %s FOR UPDATE', [self.partner_id.commercial_partner_id.id])
         self._validate_live_recommendation()
+
+        if self.action in ('keep', 'skip'):
+            self.applied = True
+            return
 
         line = self.plan_line_id
         company = self.review_id.company_id
@@ -536,6 +659,9 @@ class CashPlanReviewLine(models.Model):
             and line.state == 'planned'
             and decision in ('not_sent', 'pending', 'held', 'rejected', False)
             and not line.is_unplanned
+            and not getattr(line, 'payment_voucher_id', False)
+            and not getattr(line, 'receipt_voucher_id', False)
+            and not getattr(line, 'internal_transfer_id', False)
         )
 
     def _prepare_line_for_agent_change(self, line):
