@@ -132,8 +132,6 @@ class PortalSales(http.Controller):
 
     @http.route(BASE, type='http', auth='user', website=True)
     def list_orders(self, **kw):
-        if request.env.user.has_group('absar_portal_sales.group_portal_sales_creator'):
-            request.env['portal.report.seen'].sudo()._mark_seen(request.env.user.id, 'sales_decision')
         user = request.env.user
         can_prepare = user.has_group('absar_portal_sales.group_portal_sales_creator')
         can_monitor = user.has_group('absar_portal_sales.group_portal_sales_monitor')
@@ -149,8 +147,6 @@ class PortalSales(http.Controller):
 
     @http.route(BASE + '/approvals', type='http', auth='user', website=True)
     def approval_queue(self, **kw):
-        self._allowed(approve=True)
-        request.env['portal.report.seen'].sudo()._mark_seen(request.env.user.id, 'sales_approval')
         return self._list_view(queue=True, params=kw)
 
     @http.route(BASE + '/new', type='http', auth='user', website=True)
@@ -194,8 +190,6 @@ class PortalSales(http.Controller):
     @http.route(BASE + '/<int:order_id>', type='http', auth='user', website=True)
     def show_order(self, order_id, **kw):
         order = self._order(order_id)
-        if order.absar_portal_creator_id.id == request.env.user.id:
-            request.env['portal.report.seen'].sudo()._mark_seen(request.env.user.id, 'sales_decision')
         return self._render('absar_portal_sales.sales_detail', order=order,
             can_edit=(request.env.user.has_group('absar_portal_sales.group_portal_sales_creator') and order.absar_portal_creator_id.id == request.env.user.id and order.absar_portal_review_state in ('draft','returned') and order.state=='draft'),
             can_review=(request.env.user.has_group('absar_portal_sales.group_portal_sales_approver') and order.absar_portal_review_state=='submitted' and order.absar_portal_creator_id.id != request.env.user.id),
@@ -373,12 +367,12 @@ class PortalSales(http.Controller):
             if action=='approve' and order.absar_portal_creator_id.id == request.env.user.id: raise Forbidden()
             if action=='approve':
                 order.sudo().write({'absar_portal_review_state':'approved','absar_portal_approver_id':request.env.user.id})
-                order._absar_portal_notify_creator(_('Your quotation %s has been approved for sending.') % order.name, event_type='approved')
+                order._absar_portal_notify_creator(_('Your quotation %s has been approved for sending.') % order.name)
             else:
                 note=(post.get('note') or '').strip()
                 if not note: raise Forbidden()
                 order.sudo().write({'absar_portal_review_state':'returned','absar_portal_review_note':note[:3000]})
-                order._absar_portal_notify_creator(_('Your quotation %s was returned for correction: %s') % (order.name,note[:500]), event_type='returned')
+                order._absar_portal_notify_creator(_('Your quotation %s was returned for correction: %s') % (order.name,note[:500]))
         else: raise Forbidden()
         return request.redirect('%s/%s' % (BASE,order.id))
 
