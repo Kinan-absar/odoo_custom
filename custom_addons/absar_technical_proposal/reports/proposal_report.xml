@@ -1,0 +1,74 @@
+<odoo>
+ <record id="action_report_absar_technical_proposal" model="ir.actions.report">
+  <field name="name">Technical &amp; Financial Proposal</field>
+  <field name="model">sale.order</field>
+  <field name="report_type">qweb-pdf</field>
+  <field name="report_name">absar_technical_proposal.report_technical_proposal</field>
+  <field name="report_file">absar_technical_proposal.report_technical_proposal</field>
+  <field name="print_report_name">'Technical Proposal - %s' % (object.name or 'Draft')</field>
+ </record>
+ <template id="report_technical_proposal">
+  <t t-call="web.html_container"><t t-foreach="docs" t-as="o"><t t-call="web.external_layout">
+   <div class="page" style="font-family:Arial,sans-serif;color:#1a2b3d;font-size:11px;">
+    <style>
+     .absar-prop h1 {text-align:center;color:#193858;font-size:21px;margin:15px 0 8px;font-weight:800;}
+     .absar-prop h2 {font-size:14px;color:#193858;margin:20px 0 8px;padding-bottom:5px;border-bottom:1px solid #d8a75b;page-break-after:avoid;}
+     .absar-prop .meta {text-align:center;line-height:1.6;color:#4d5b67;margin-bottom:21px;}
+     .absar-prop table {width:100%;border-collapse:collapse;margin:10px 0 15px;}
+     .absar-prop th {background:#193858;color:white;padding:8px 6px;border:1px solid #b9c5cf;text-align:left;}
+     .absar-prop td {padding:8px 6px;border:1px solid #d2dce4;vertical-align:top;}
+     .absar-prop .num {text-align:right;white-space:nowrap;}
+     .absar-prop .total {background:#eaf0f4;font-weight:bold;}
+     .absar-prop .content {line-height:1.65;overflow-wrap:break-word;}
+     .absar-prop .sign {width:48%;display:inline-block;vertical-align:top;margin-top:22px;}
+     .absar-prop .sign-line {border-bottom:1px solid #647889;margin:29px 15px 8px 0;}
+    </style>
+    <div class="absar-prop">
+     <h1><span t-esc="o.absar_proposal_title or 'TECHNICAL &amp; FINANCIAL PROPOSAL'"/></h1>
+     <div class="meta"><div><strong>Project:</strong> <span t-esc="o.construction_project_id.name or o.name"/></div>
+      <div><strong>Customer:</strong> <span t-esc="o.partner_id.name"/></div>
+      <div><strong>Submitted by:</strong> <span t-esc="o.company_id.name"/></div>
+      <div><strong>Date:</strong> <span t-field="o.date_order" t-options="{'widget':'date'}"/> &#160; <strong>Ref:</strong> <span t-esc="o.absar_proposal_reference or o.name"/></div>
+     </div>
+     <t t-set="section_number" t-value="0"/>
+     <t t-foreach="o.absar_proposal_section_ids.sorted(key=lambda x: (x.sequence, x.id))" t-as="s">
+      <t t-if="s.include_in_report and s.section_type in ('executive', 'quantity')">
+       <t t-set="section_number" t-value="section_number + 1"/>
+       <div t-if="s.page_break_before" style="page-break-before:always;"/>
+       <h2><span t-esc="section_number"/>. <span t-esc="s.name"/></h2>
+       <div class="content" t-field="s.content"/>
+      </t>
+     </t>
+     <t t-set="section_number" t-value="section_number + 1"/>
+     <h2><span t-esc="section_number"/>. Bill of Quantities (BOQ)</h2>
+     <table><thead><tr><th style="width:49%;">Item Description</th><th>Unit</th><th class="num">Qty</th><th class="num">Unit Rate</th><th class="num">Amount</th></tr></thead>
+      <tbody><t t-foreach="o.order_line.sorted(key=lambda x: (x.sequence, x.id))" t-as="line">
+       <t t-if="line.display_type"><tr><td colspan="5"><strong t-esc="line.name"/></td></tr></t>
+       <t t-else=""><tr><td><span t-field="line.name"/></td><td><span t-esc="line.product_uom.name or ''"/></td><td class="num"><span t-esc="'%.2f' % line.product_uom_qty"/></td><td class="num"><span t-field="line.price_unit" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td><td class="num"><span t-field="line.price_subtotal" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr></t>
+      </t>
+      <tr class="total"><td colspan="4">TOTAL PROJECT VALUE (VAT Exclusive)</td><td class="num"><span t-field="o.amount_untaxed" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
+      <tr><td colspan="4">VAT</td><td class="num"><span t-field="o.amount_tax" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
+      <tr class="total"><td colspan="4">TOTAL (VAT Inclusive)</td><td class="num"><span t-field="o.amount_total" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
+      </tbody></table>
+     <t t-if="o.absar_proposal_payment_ids">
+      <t t-set="section_number" t-value="section_number + 1"/><h2><span t-esc="section_number"/>. Commercial &amp; Payment Terms</h2>
+      <table><thead><tr><th>Payment Milestone</th><th class="num">Percentage</th><th class="num">Amount (VAT Exclusive)</th><th>Due Condition</th></tr></thead><tbody>
+       <tr t-foreach="o.absar_proposal_payment_ids.sorted(key=lambda x: (x.sequence, x.id))" t-as="p"><td t-esc="p.name"/><td class="num"><span t-esc="'%.2f' % p.percentage"/>%</td><td class="num"><span t-field="p.amount" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td><td t-esc="p.due_condition or ''"/></tr>
+      </tbody></table>
+     </t>
+     <t t-foreach="o.absar_proposal_section_ids.sorted(key=lambda x: (x.sequence, x.id))" t-as="s">
+      <t t-if="s.include_in_report and s.section_type not in ('executive', 'quantity')">
+       <t t-set="section_number" t-value="section_number + 1"/>
+       <div t-if="s.page_break_before" style="page-break-before:always;"/>
+       <h2><span t-esc="section_number"/>. <span t-esc="s.name"/></h2>
+       <div class="content" t-field="s.content"/>
+      </t>
+     </t>
+     <t t-set="section_number" t-value="section_number + 1"/><h2><span t-esc="section_number"/>. Authorization &amp; Sign-Off</h2>
+     <div class="sign"><strong>For <span t-esc="o.company_id.name"/></strong><div class="sign-line"/>Authorized Signature<div class="sign-line"/>Name: <span t-esc="o.absar_proposal_signatory or ''"/><div class="sign-line"/>Title: <span t-esc="o.absar_proposal_signatory_title or ''"/><div class="sign-line"/>Date</div>
+     <div class="sign" style="margin-left:3%;"><strong>For <span t-esc="o.partner_id.name"/></strong><div class="sign-line"/>Authorized Signature<div class="sign-line"/>Name: <span t-esc="o.absar_proposal_customer_signatory or ''"/><div class="sign-line"/>Title: <span t-esc="o.absar_proposal_customer_signatory_title or ''"/><div class="sign-line"/>Date</div>
+    </div>
+   </div>
+  </t></t></t>
+ </template>
+</odoo>
