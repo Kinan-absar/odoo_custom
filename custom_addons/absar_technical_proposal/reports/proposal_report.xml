@@ -25,26 +25,26 @@
      .atp .sec-no{display:inline-block;color:#177b83!important;font-weight:800!important;margin-right:8px;}
      .atp .prose{font-size:13px!important;line-height:1.57!important;overflow-wrap:break-word;}
      .atp .prose p{margin:0 0 7px!important;}
-     /* BOQ must flow across PDF pages: no clipping, no all-page wrapper borders. */
-     .atp .boq-wrap{margin:0 0 13px!important;padding:0!important;border:0!important;outline:0!important;box-shadow:none!important;overflow:visible!important;}
-     .atp table.boq{width:100%!important;border:0!important;outline:0!important;border-collapse:collapse!important;border-spacing:0!important;table-layout:fixed!important;margin:0!important;box-shadow:none!important;background:transparent!important;}
-     .atp table.boq, .atp table.boq *{box-shadow:none!important;outline:0!important;}
-     .atp table.boq thead tr{background:#177b83!important;page-break-inside:avoid!important;}
-     .atp table.boq thead th{background:#177b83!important;color:#fff!important;font-size:12px!important;font-weight:700!important;padding:10px 7px!important;border:0!important;border-bottom:2px solid #12666d!important;vertical-align:middle!important;}
-     .atp table.boq tbody tr{page-break-inside:avoid!important;}
-     .atp table.boq tbody td{border:0!important;border-bottom:1px solid #dbe4e8!important;padding:9px 7px!important;vertical-align:top!important;background:transparent!important;}
-     .atp table.boq tbody tr:nth-child(even){background:#eff5f6!important;}
-     .atp table.boq tbody tr:nth-child(odd){background:#fff!important;}
-     .atp .boq-wrap > table.boq{border-left:0!important;border-right:0!important;}
-     .atp table.boq thead{display:table-header-group!important;}
-
-     .atp table.boq td{font-size:12px!important;overflow-wrap:break-word;}
-
-     .atp .num{text-align:right!important;white-space:nowrap;}
-     .atp .totalbox{margin:9px 0 0 auto;width:50%;page-break-inside:avoid;}
-     .atp .totalbox table{width:100%;border-collapse:collapse;border:0!important;}
-     .atp .totalbox td{border:0!important;padding:5px!important;font-size:13px!important;}
-     .atp .grand td{border-top:1px solid #177b83!important;font-weight:800;font-size:15px!important;}
+     /* Reuse the quotation's unified table and total-card styling. */
+     .atp.absar-unified-document .absar-sale-lines-card{padding:8px 12px!important;margin:0 0 14px!important;overflow:visible!important;page-break-inside:auto!important;}
+     .atp.absar-unified-document table.atp-boq{width:100%!important;table-layout:fixed!important;border:0!important;border-collapse:collapse!important;border-spacing:0!important;outline:0!important;box-shadow:none!important;margin:0!important;}
+     .atp.absar-unified-document table.atp-boq thead{display:table-header-group!important;}
+     .atp.absar-unified-document table.atp-boq thead th{background:#fff!important;color:#182f43!important;font-size:12px!important;font-weight:700!important;border:0!important;border-bottom:1px solid #177b83!important;padding:8px 6px!important;text-align:left!important;}
+     .atp.absar-unified-document table.atp-boq tbody td{color:#182f43!important;background:#fff!important;border:0!important;border-bottom:1px solid #dbe4e8!important;padding:7px 6px!important;vertical-align:top!important;font-size:12px!important;overflow-wrap:break-word!important;}
+     .atp.absar-unified-document table.atp-boq tbody tr:nth-child(even) td{background:#fff!important;}
+     .atp.absar-unified-document table.atp-boq tbody tr.o_line_section td{background:#f6f9fa!important;font-weight:700!important;}
+     .atp.absar-unified-document table.atp-boq tbody tr.o_line_note td{color:#627782!important;font-style:italic!important;}
+     .atp.absar-unified-document table.atp-boq tr{page-break-inside:avoid!important;}
+     .atp.absar-unified-document table.atp-boq th.num,.atp.absar-unified-document table.atp-boq td.num{text-align:right!important;white-space:nowrap!important;}
+     .atp.absar-unified-document .atp-total-card{float:right!important;clear:both!important;width:50%!important;box-sizing:border-box!important;margin:8px 0 14px auto!important;padding:8px 10px!important;page-break-inside:avoid!important;}
+     .atp.absar-unified-document .atp-total-card table,.atp.absar-unified-document .atp-total-card tbody,.atp.absar-unified-document .atp-total-card tr,.atp.absar-unified-document .atp-total-card td{border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;}
+     .atp.absar-unified-document .atp-total-card table{width:100%!important;border-collapse:collapse!important;margin:0!important;}
+     .atp.absar-unified-document .atp-total-card td{padding:6px 4px!important;font-size:13px!important;color:#182f43!important;}
+     .atp.absar-unified-document .atp-total-card .atp-vat td{background:#eef3f6!important;}
+     .atp.absar-unified-document .atp-total-card .atp-grand td{font-weight:700!important;font-size:16px!important;padding:9px 4px!important;}
+     .atp.absar-unified-document .atp-total-card td:last-child{text-align:right!important;white-space:nowrap!important;}
+     .atp .num{text-align:right!important;white-space:nowrap!important;}
+     .atp .after-boq{clear:both!important;}
      .atp .milestone{width:100%;border-collapse:collapse;border:0!important;}
      .atp .milestone th{color:#182f43!important;text-align:left;border:0!important;border-bottom:2px solid #177b83!important;padding:8px 5px;}
      .atp .milestone td{border:0!important;border-bottom:1px solid #dbe4e8!important;padding:8px 5px;vertical-align:top;}
@@ -53,7 +53,7 @@
      .atp .signlabel{font-size:11px;color:#627782;}
      .atp .pagebreak{page-break-before:always;}
     </style>
-    <div class="page absar-report atp">
+    <div class="page absar-report absar-unified-document atp">
      <div class="heading">
       <h1 t-esc="o.absar_proposal_title or 'Technical &amp; Financial Proposal'"/>
       <div class="project">Project: <span t-esc="o.construction_project_id.name if o.construction_project_id else (o.name or '')"/></div>
@@ -78,11 +78,11 @@
      </t>
      <t t-set="num" t-value="num+1"/>
      <h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/> Bill of Quantities</h2>
-     <div class="boq-wrap"><table class="boq"><thead><tr>
-      <th style="width:47%">Description</th><th style="width:9%">Unit</th><th class="num" style="width:12%">Qty</th><th class="num" style="width:16%">Unit Rate</th><th class="num" style="width:16%">Amount</th>
+     <div class="absar-tapered-card absar-sale-lines-card"><table class="o_ignore_layout_styling absar-unified-table atp-boq"><thead><tr>
+      <th style="width:47%">Description</th><th style="width:9%">Unit</th><th class="num" style="width:12%;text-align:right!important">Qty</th><th class="num" style="width:16%;text-align:right!important">Unit Rate</th><th class="num" style="width:16%;text-align:right!important">Amount</th>
      </tr></thead><tbody>
       <t t-foreach="o.order_line.sorted(key=lambda l:(l.sequence,l.id))" t-as="line">
-       <tr t-if="line.display_type"><td colspan="5"><strong t-esc="line.name"/></td></tr>
+       <tr t-if="line.display_type" t-att-class="'o_line_section' if line.display_type == 'line_section' else 'o_line_note'"><td colspan="5"><strong t-if="line.display_type == 'line_section'" t-esc="line.name"/><span t-else="" t-esc="line.name"/></td></tr>
        <tr t-else=""><td><span t-field="line.name"/></td><td><span t-esc="line.product_uom.name or ''"/></td>
         <td class="num"><span t-esc="'%.2f' % line.product_uom_qty"/></td>
         <td class="num"><span t-field="line.price_unit" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td>
@@ -90,11 +90,11 @@
        </tr>
       </t>
      </tbody></table></div>
-     <div class="card totalbox"><table>
-      <tr><td>Subtotal (VAT Exclusive)</td><td class="num"><span t-field="o.amount_untaxed" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
-      <tr><td>VAT</td><td class="num"><span t-field="o.amount_tax" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
-      <tr class="grand"><td>Total Proposal Value</td><td class="num"><span t-field="o.amount_total" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
-     </table></div>
+     <div class="absar-unified-total-card absar-tapered-card atp-total-card"><table class="o_ignore_layout_styling">
+      <tbody><tr><td>Subtotal (VAT Exclusive)</td><td><span t-field="o.amount_untaxed" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
+      <tr class="atp-vat"><td>VAT</td><td><span t-field="o.amount_tax" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
+      <tr class="atp-grand"><td>Total Proposal Value</td><td><span t-field="o.amount_total" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr></tbody>
+     </table></div><div class="after-boq"/>
      <t t-if="o.absar_proposal_payment_ids">
       <t t-set="num" t-value="num+1"/><h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/> Payment Schedule</h2>
       <div class="card"><table class="milestone"><thead><tr><th>Milestone</th><th class="num">%</th><th class="num">Amount (Excl. VAT)</th><th>Due condition</th></tr></thead><tbody>

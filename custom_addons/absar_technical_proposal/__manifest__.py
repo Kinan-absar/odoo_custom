@@ -1,6 +1,6 @@
 {
  'name': 'ABSAR Technical & Financial Proposals',
- 'version': '18.0.1.1.2',
+ 'version': '18.0.1.1.3',
  'summary': 'Editable technical proposals, reusable sections, milestones and PDF from Sales Quotations',
  'category': 'Sales/Sales',
  'author': 'ABSAR Al Omran Construction Company',
