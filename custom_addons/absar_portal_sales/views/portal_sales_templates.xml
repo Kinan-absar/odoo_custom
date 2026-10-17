@@ -4,7 +4,7 @@
    <div class="container aps-wrap py-4">
     <div class="aps-head"><h3 t-out="'Quotation Monitoring' if monitoring else ('Pending Approvals' if queue_only else 'My Quotations &amp; Proposals')"/><a t-if="can_create and not monitoring and not queue_only" class="btn btn-primary" href="/my/employee/sales/new">+ New Offer</a></div>
     <div class="aps-list-nav">
-     <a href="/my/employee/sales" t-att-class="'aps-list-tab active' if not monitoring and not queue_only else 'aps-list-tab'">My Quotations</a>
+     <a t-if="can_create" href="/my/employee/sales" t-att-class="'aps-list-tab active' if not monitoring and not queue_only else 'aps-list-tab'">My Quotations</a>
      <a t-if="is_monitor" href="/my/employee/sales/monitor" t-att-class="'aps-list-tab active' if monitoring else 'aps-list-tab'">Quotation Monitoring</a>
      <a t-if="is_approver" href="/my/employee/sales/approvals" t-att-class="'aps-list-tab active' if queue_only else 'aps-list-tab'">Pending Approvals (<t t-out="pending_count"/>)</a>
     </div>

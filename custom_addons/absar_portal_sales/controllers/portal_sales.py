@@ -132,6 +132,13 @@ class PortalSales(http.Controller):
 
     @http.route(BASE, type='http', auth='user', website=True)
     def list_orders(self, **kw):
+        user = request.env.user
+        can_prepare = user.has_group('absar_portal_sales.group_portal_sales_creator')
+        can_monitor = user.has_group('absar_portal_sales.group_portal_sales_monitor')
+        if not can_prepare and can_monitor:
+            return request.redirect(BASE + '/monitor')
+        # My Quotations must never become a monitor-only landing page.
+        self._allowed()
         return self._list_view(params=kw)
 
     @http.route(BASE + '/monitor', type='http', auth='user', website=True)
