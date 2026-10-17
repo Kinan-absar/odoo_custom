@@ -1,0 +1,14 @@
+<odoo>
+  <record id="view_partner_form_absar_sales_customer" model="ir.ui.view">
+    <field name="name">res.partner.form.absar.sales.customer</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_partner_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//sheet" position="inside">
+        <group string="ABSAR Sales Customer" name="absar_sales_customer_group">
+          <field name="absar_is_sales_customer"/>
+        </group>
+      </xpath>
+    </field>
+  </record>
+</odoo>

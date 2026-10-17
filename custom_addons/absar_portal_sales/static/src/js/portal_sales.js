@@ -103,3 +103,22 @@ document.addEventListener('DOMContentLoaded', () => {
   rate?.addEventListener('input', sync);
   sync();
 });
+
+// Only show projects assigned to the selected quotation customer.
+document.addEventListener('DOMContentLoaded', () => {
+  const customer = document.querySelector('.aps-customer-select');
+  const select = document.querySelector('.aps-project-select');
+  if (!customer || !select) return;
+  const refresh = () => {
+    const customerId = customer.selectedOptions[0]?.dataset.commercialId || '';
+    Array.from(select.options).forEach(option => {
+      if (!option.value) return;
+      const matches = Boolean(customerId) && option.dataset.customerId === customerId;
+      option.hidden = !matches;
+      option.disabled = !matches;
+      if (!matches && option.selected) select.value = '';
+    });
+  };
+  customer.addEventListener('change', refresh);
+  refresh();
+});

@@ -49,7 +49,7 @@ class PortalSales(http.Controller):
 
     def _partners(self):
         return request.env['res.partner'].sudo().search([
-            ('customer_rank','>',0), ('active','=',True),
+            ('absar_is_sales_customer','=',True), ('active','=',True),
             '|', ('company_id','=',False), ('company_id','in',request.env.user.company_ids.ids)
         ], limit=500, order='name')
 
@@ -58,6 +58,13 @@ class PortalSales(http.Controller):
             ('active','=',True), '|', ('company_id','=',False),
             ('company_id','in',request.env.user.company_ids.ids)
         ], limit=500, order='name')
+
+    def _customer_projects(self, partner):
+        """Only company-compatible projects assigned to this customer's commercial entity."""
+        customer = partner.commercial_partner_id
+        return self._projects().filtered(
+            lambda p: p.partner_id and p.partner_id.commercial_partner_id == customer
+        )
 
     def _units(self):
         return request.env['uom.uom'].sudo().search([('active','=',True)],order='name',limit=400)
@@ -166,7 +173,7 @@ class PortalSales(http.Controller):
                 raise UserError(_('Invalid document type.'))
             project_id = int(post.get('project_id') or 0)
             project = request.env['project.project'].sudo().browse(project_id).exists() if project_id else False
-            if project_id and (not project or project not in self._projects()):
+            if project_id and (not project or project not in self._customer_projects(partner)):
                 raise UserError(_('Select an available project.'))
             vals = {
                 'partner_id':partner.id, 'company_id':user.company_id.id, 'user_id':user.id,
@@ -193,7 +200,7 @@ class PortalSales(http.Controller):
         return self._render('absar_portal_sales.sales_detail', order=order,
             can_edit=(request.env.user.has_group('absar_portal_sales.group_portal_sales_creator') and order.absar_portal_creator_id.id == request.env.user.id and order.absar_portal_review_state in ('draft','returned') and order.state=='draft'),
             can_review=(request.env.user.has_group('absar_portal_sales.group_portal_sales_approver') and order.absar_portal_review_state=='submitted' and order.absar_portal_creator_id.id != request.env.user.id),
-            templates=self._templates(),projects=self._projects(),units=self._units())
+            templates=self._templates(),projects=self._customer_projects(order.partner_id),units=self._units())
 
     @http.route(BASE + '/<int:order_id>/save', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def save_order(self, order_id, **post):
@@ -201,7 +208,7 @@ class PortalSales(http.Controller):
         vals={'absar_proposal_reference':False, 'user_id':order.absar_portal_creator_id.id}
         project_id = int(post.get('project_id') or 0)
         project = request.env['project.project'].sudo().browse(project_id).exists() if project_id else False
-        if project_id and (not project or project not in self._projects()):
+        if project_id and (not project or project not in self._customer_projects(order.partner_id)):
             raise Forbidden()
         vals['construction_project_id'] = project.id if project else False
         if order.absar_proposal_type=='technical':
@@ -210,7 +217,7 @@ class PortalSales(http.Controller):
             vals['validity_date']=fields.Date.to_date(post['validity_date']) if post.get('validity_date') else False
             order.sudo().write(vals)
         except (ValueError,ValidationError) as exc:
-            return self._render('absar_portal_sales.sales_detail',order=order,can_edit=True,can_review=False,error=str(exc),templates=self._templates(),projects=self._projects(),units=self._units())
+            return self._render('absar_portal_sales.sales_detail',order=order,can_edit=True,can_review=False,error=str(exc),templates=self._templates(),projects=self._customer_projects(order.partner_id),units=self._units())
         return request.redirect('%s/%s' % (BASE, order.id))
 
     @http.route(BASE + '/<int:order_id>/line/add', type='http', auth='user', website=True, methods=['POST'], csrf=True)

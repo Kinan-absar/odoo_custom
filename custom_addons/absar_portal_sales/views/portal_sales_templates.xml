@@ -2,10 +2,10 @@
  <template id="sales_list" name="Employee Portal Sales List">
   <t t-call="employee_portal_suite.employee_portal_layout">
    <div class="container aps-wrap py-4">
-    <div class="aps-head"><h3 t-out="'Quotation Monitoring' if monitoring else ('Pending Approvals' if queue_only else 'My Quotations &amp; Proposals')"/><a t-if="can_create and not monitoring and not queue_only" class="btn btn-primary" href="/my/employee/sales/new">+ New Offer</a></div>
+    <div class="aps-head"><h3 t-out="'Sales Monitoring' if monitoring else ('Pending Approvals' if queue_only else 'My Quotations &amp; Proposals')"/><a t-if="can_create and not monitoring and not queue_only" class="btn btn-primary" href="/my/employee/sales/new">+ New Offer</a></div>
     <div class="aps-list-nav">
      <a t-if="can_create" href="/my/employee/sales" t-att-class="'aps-list-tab active' if not monitoring and not queue_only else 'aps-list-tab'">My Quotations</a>
-     <a t-if="is_monitor" href="/my/employee/sales/monitor" t-att-class="'aps-list-tab active' if monitoring else 'aps-list-tab'">Quotation Monitoring</a>
+     <a t-if="is_monitor" href="/my/employee/sales/monitor" t-att-class="'aps-list-tab active' if monitoring else 'aps-list-tab'">Sales Monitoring</a>
      <a t-if="is_approver" href="/my/employee/sales/approvals" t-att-class="'aps-list-tab active' if queue_only else 'aps-list-tab'">Pending Approvals (<t t-out="pending_count"/>)</a>
     </div>
     <p class="text-muted" t-if="monitoring">Read-only visibility across your allowed companies. Backend quotations and confirmed Sales Orders can be filtered separately.</p>
@@ -46,8 +46,8 @@
     <div t-if="error" class="alert alert-danger" t-out="error"/>
     <form method="post" action="/my/employee/sales/create" class="aps-panel aps-form">
      <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-     <label>Customer</label><select name="partner_id" class="form-select" required="required"><option value="">Select customer</option><option t-foreach="partners" t-as="p" t-att-value="p.id" t-out="p.name"/></select>
-     <label>Project (optional)</label><select name="project_id" class="form-select"><option value="">Choose a project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-out="project.name"/></select>
+     <label>Customer</label><select name="partner_id" class="form-select aps-customer-select" required="required"><option value="">Select customer</option><option t-foreach="partners" t-as="p" t-att-data-commercial-id="p.commercial_partner_id.id" t-att-value="p.id" t-out="p.name"/></select>
+     <label>Project (optional)</label><select name="project_id" class="form-select aps-project-select"><option value="">Choose a project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-data-customer-id="project.partner_id.commercial_partner_id.id if project.partner_id else 0" t-out="project.name"/></select>
      <label>Offer type</label><select name="kind" class="form-select"><option value="standard">Standard Quotation</option><option value="technical">Technical &amp; Financial Proposal</option></select>
      <label>Technical proposal template (optional)</label><select name="template_id" class="form-select"><option value="">None</option><option t-foreach="templates" t-as="t" t-att-value="t.id" t-out="t.name"/></select>
      <label>Expiration date (optional)</label><input type="date" name="validity_date" class="form-control"/>
@@ -66,7 +66,7 @@
     <div class="aps-panel"><h5>Offer details</h5><div class="row"><div class="col-md-4"><span class="text-muted">Customer</span><p t-out="order.partner_id.name"/></div><div class="col-md-4"><span class="text-muted">Document type</span><p t-out="dict(order._fields['absar_proposal_type'].selection).get(order.absar_proposal_type)"/></div><div class="col-md-4"><span class="text-muted">Project</span><p t-out="order.construction_project_id.name or 'Not assigned'"/></div><div class="col-md-4"><span class="text-muted">Salesperson</span><p t-out="order.user_id.name or order.absar_portal_creator_id.name"/></div></div>
      <form t-if="can_edit" t-att-action="'/my/employee/sales/%s/save' % order.id" method="post" class="row g-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
       <div class="col-md-4"><label>Proposal reference (automatic)</label><input class="form-control" t-att-value="order.name" readonly="readonly"/></div>
-      <div class="col-md-4"><label>Project</label><select class="form-select" name="project_id"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-selected="order.construction_project_id.id == project.id and 'selected' or None" t-out="project.name"/></select></div><div class="col-md-4"><label>Expiration date</label><input class="form-control" type="date" name="validity_date" t-att-value="order.validity_date or ''"/></div>
+      <div class="col-md-4"><label>Project</label><select class="form-select aps-project-select" name="project_id"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-data-customer-id="project.partner_id.commercial_partner_id.id if project.partner_id else 0" t-att-selected="order.construction_project_id.id == project.id and 'selected' or None" t-out="project.name"/></select></div><div class="col-md-4"><label>Expiration date</label><input class="form-control" type="date" name="validity_date" t-att-value="order.validity_date or ''"/></div>
       <div t-if="order.absar_proposal_type == 'technical'" class="col-md-4"><label>Proposal title</label><input class="form-control" name="title" t-att-value="order.absar_proposal_title or ''"/></div>
       <div class="col-12"><button class="btn btn-outline-primary">Save Details</button></div>
      </form>
