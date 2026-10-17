@@ -1,12 +1,30 @@
 <odoo>
  <template id="portal_sales_nav" inherit_id="employee_portal_suite.employee_portal_layout" name="Portal Sales Navigation">
-  <xpath expr="//a[@href='/my/employee/material' and contains(@class,'ep-sidebar-link')]" position="after">
-   <t t-if="request.env.user.has_group('absar_portal_sales.group_portal_sales_creator')"><a href="/my/employee/sales" class="ep-sidebar-link"><i class="fa fa-file-text"/>My Quotations</a></t>
-   <t t-if="request.env.user.has_group('absar_portal_sales.group_portal_sales_monitor')"><a href="/my/employee/sales/monitor" class="ep-sidebar-link"><i class="fa fa-eye"/>Quotation Monitoring</a></t>
+  <!-- Dedicated Sales section immediately after Approvals in desktop sidebar. -->
+  <xpath expr="//div[@id='ep-section-approvals']" position="after">
+   <t t-if="request.env.user.has_group('absar_portal_sales.group_portal_sales_creator') or request.env.user.has_group('absar_portal_sales.group_portal_sales_monitor') or request.env.user.has_group('absar_portal_sales.group_portal_sales_approver')">
+    <div class="ep-sidebar-section" id="ep-section-sales">
+     <div class="ep-sidebar-section-title">Sales</div>
+     <div class="ep-sidebar-section-links">
+      <t t-if="request.env.user.has_group('absar_portal_sales.group_portal_sales_creator')"><a href="/my/employee/sales" class="ep-sidebar-link"><i class="fa fa-file-text-o"/>My Quotations</a></t>
+      <t t-if="request.env.user.has_group('absar_portal_sales.group_portal_sales_monitor')"><a href="/my/employee/sales/monitor" class="ep-sidebar-link"><i class="fa fa-eye"/>Quotation Monitoring</a></t>
+      <t t-if="request.env.user.has_group('absar_portal_sales.group_portal_sales_approver')"><a href="/my/employee/sales/approvals" class="ep-sidebar-link"><i class="fa fa-check-square-o"/>Quotation Approvals</a></t>
+     </div>
+    </div>
+   </t>
   </xpath>
-  <xpath expr="//a[@href='/my/employee/material' and contains(@class,'ep-sub-link')]" position="after">
-   <t t-if="request.env.user.has_group('absar_portal_sales.group_portal_sales_creator')"><a href="/my/employee/sales" class="ep-sub-link">My Quotations</a></t>
-   <t t-if="request.env.user.has_group('absar_portal_sales.group_portal_sales_monitor')"><a href="/my/employee/sales/monitor" class="ep-sub-link">Quotation Monitoring</a></t>
+  <!-- Matching dropdown in the portal's top navigation. -->
+  <xpath expr="//div[@class='ep-dropdown-menu' and @id='app-d']/parent::div" position="after">
+   <t t-if="request.env.user.has_group('absar_portal_sales.group_portal_sales_creator') or request.env.user.has_group('absar_portal_sales.group_portal_sales_monitor') or request.env.user.has_group('absar_portal_sales.group_portal_sales_approver')">
+    <div class="ep-dropdown">
+     <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'aps-sales-d')">Sales &#9662;</button>
+     <div id="aps-sales-d" class="ep-dropdown-menu">
+      <t t-if="request.env.user.has_group('absar_portal_sales.group_portal_sales_creator')"><a href="/my/employee/sales" class="ep-sub-link">My Quotations</a></t>
+      <t t-if="request.env.user.has_group('absar_portal_sales.group_portal_sales_monitor')"><a href="/my/employee/sales/monitor" class="ep-sub-link">Quotation Monitoring</a></t>
+      <t t-if="request.env.user.has_group('absar_portal_sales.group_portal_sales_approver')"><a href="/my/employee/sales/approvals" class="ep-sub-link">Quotation Approvals</a></t>
+     </div>
+    </div>
+   </t>
   </xpath>
  </template>
 </odoo>
