@@ -1,5 +1,5 @@
 <odoo>
-  <record id="group_portal_purchase_monitor" model="res.groups">
-    <field name="name">Employee Portal: Purchase Monitoring (Read Only)</field>
-  </record>
+ <record id="group_portal_purchase_monitor" model="res.groups"><field name="name">Employee Portal: Purchase Monitoring (Read Only)</field></record>
+ <record id="group_portal_purchase_preparer" model="res.groups"><field name="name">Employee Portal: Purchase - Prepare RFQs</field></record>
+ <record id="group_portal_purchase_approver" model="res.groups"><field name="name">Employee Portal: Purchase - Approve RFQs</field></record>
 </odoo>

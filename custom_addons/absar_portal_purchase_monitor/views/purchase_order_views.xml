@@ -1,0 +1,7 @@
+<odoo><record id="purchase_order_form_portal_review" model="ir.ui.view">
+ <field name="name">purchase.order.form.portal.review</field><field name="model">purchase.order</field>
+ <field name="inherit_id" ref="purchase.purchase_order_form"/><field name="arch" type="xml">
+ <xpath expr="//sheet" position="inside"><group string="Portal Purchase Review"><field name="absar_portal_preparer_id" readonly="1"/><field name="absar_portal_review_state" readonly="1"/><field name="absar_portal_review_note" readonly="1"/>
+ <button name="action_absar_portal_approve" type="object" string="Approve Portal RFQ" class="btn-primary" groups="absar_portal_purchase_monitor.group_portal_purchase_approver" invisible="absar_portal_review_state != 'submitted'"/>
+ <button name="action_absar_portal_return" type="object" string="Return to Preparer" groups="absar_portal_purchase_monitor.group_portal_purchase_approver" invisible="absar_portal_review_state != 'submitted'"/>
+ </group></xpath></field></record></odoo>
