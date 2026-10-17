@@ -79,8 +79,14 @@
       </div>
       <div class="metadata-row">
        <div class="metadata-cell"><span class="smalllabel">Prepared by</span><span t-esc="o.company_id.name"/></div>
-       <div class="metadata-cell"><span class="smalllabel">Proposal date</span><span t-field="o.date_order" t-options="{'widget':'date'}"/>
-        <t t-if="o.validity_date"><div style="margin-top:7px;"><span class="smalllabel">Offer valid until</span><strong t-field="o.validity_date"/></div></t></div>
+       <div class="metadata-cell">
+        <div style="display:inline-block;width:48%;vertical-align:top;">
+         <span class="smalllabel">Proposal date</span><span t-field="o.date_order" t-options="{'widget':'date'}"/>
+        </div>
+        <div t-if="o.validity_date" style="display:inline-block;width:49%;vertical-align:top;">
+         <span class="smalllabel">Offer valid until</span><strong t-field="o.validity_date"/>
+        </div>
+       </div>
       </div>
      </div></div>
      <t t-set="num" t-value="0"/>
