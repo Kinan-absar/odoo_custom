@@ -21,7 +21,10 @@
      .atp .metadata-row{display:table-row!important;}
      .atp .metadata-cell{display:table-cell!important;width:50%!important;vertical-align:top!important;padding:6px 18px 6px 0!important;font-size:13px!important;border:0!important;outline:none!important;box-shadow:none!important;}
      .atp .smalllabel{display:block;font-size:11px;font-weight:700;color:#627782;margin-bottom:2px;}
-     .atp .sec-title{font-weight:700!important;color:#182f43!important;font-size:17px!important;margin:11px 0 10px!important;border:0!important;page-break-after:avoid;}
+     .atp .sec-title{font-weight:700!important;color:#182f43!important;font-size:17px!important;margin:27px 0 7px!important;padding:0!important;border:0!important;page-break-after:avoid!important;clear:both!important;}
+     .atp .sec-title + .card{margin-top:0!important;margin-bottom:4px!important;}
+     .atp .sec-title + .absar-sale-lines-card{margin-top:0!important;}
+     .atp .metadata-grid{margin-bottom:0!important;}
      .atp .sec-no{display:inline-block;color:#177b83!important;font-weight:800!important;margin-right:8px;}
      .atp .prose{font-size:13px!important;line-height:1.57!important;overflow-wrap:break-word;}
      .atp .prose p{margin:0 0 7px!important;}
