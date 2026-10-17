@@ -1,0 +1,20 @@
+<odoo>
+ <record id="sale_order_portal_review_view" model="ir.ui.view">
+  <field name="name">sale.order.absar.portal.review</field>
+  <field name="model">sale.order</field>
+  <field name="inherit_id" ref="sale.view_order_form"/>
+  <field name="arch" type="xml">
+   <xpath expr="//sheet/notebook" position="inside">
+    <page string="Portal Sales Review" groups="absar_portal_sales.group_portal_sales_approver">
+     <div class="alert alert-info" role="alert">Approve for Sending keeps this record as a quotation; it does not confirm the Sales Order.</div>
+     <group><group><field name="absar_portal_creator_id" readonly="1"/><field name="absar_portal_review_state" readonly="1"/></group>
+     <group><field name="absar_portal_approver_id" readonly="1"/><field name="absar_portal_review_note" readonly="absar_portal_review_state != 'submitted'"/></group></group>
+     <div class="d-flex gap-2" invisible="absar_portal_review_state != 'submitted' or state != 'draft'">
+      <button type="object" name="action_absar_portal_approve" string="Approve for Sending" class="btn-primary" groups="absar_portal_sales.group_portal_sales_approver"/>
+      <button type="object" name="action_absar_portal_return" string="Return for Correction" groups="absar_portal_sales.group_portal_sales_approver"/>
+     </div>
+    </page>
+   </xpath>
+  </field>
+ </record>
+</odoo>

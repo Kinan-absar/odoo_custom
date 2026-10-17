@@ -1,0 +1,5 @@
+<odoo>
+  <record id="group_portal_purchase_monitor" model="res.groups">
+    <field name="name">Employee Portal: Purchase Monitoring (Read Only)</field>
+  </record>
+</odoo>

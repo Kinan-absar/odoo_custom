@@ -1,0 +1,24 @@
+<odoo>
+ <template id="purchase_monitor_nav" inherit_id="employee_portal_suite.employee_portal_layout" name="Purchase Monitoring Navigation">
+  <xpath expr="//div[@id='ep-section-approvals']" position="after">
+   <t t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor')">
+    <div class="ep-sidebar-section" id="ep-section-purchase-monitor">
+     <div class="ep-sidebar-section-title">Purchase</div>
+     <div class="ep-sidebar-section-links">
+      <a href="/my/employee/purchase-monitor" class="ep-sidebar-link"><i class="fa fa-shopping-cart"/> Purchase Monitoring</a>
+     </div>
+    </div>
+   </t>
+  </xpath>
+  <xpath expr="//div[@class='ep-dropdown-menu' and @id='app-d']/parent::div" position="after">
+   <t t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor')">
+    <div class="ep-dropdown">
+     <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'apm-purchase-d')">Purchase &#9662;</button>
+     <div id="apm-purchase-d" class="ep-dropdown-menu">
+      <a href="/my/employee/purchase-monitor" class="ep-sub-link">Purchase Monitoring</a>
+     </div>
+    </div>
+   </t>
+  </xpath>
+ </template>
+</odoo>

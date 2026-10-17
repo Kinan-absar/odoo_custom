@@ -1,0 +1,134 @@
+<odoo>
+ <template id="sales_list" name="Employee Portal Sales List">
+  <t t-call="employee_portal_suite.employee_portal_layout">
+   <div class="container aps-wrap py-4">
+    <div class="aps-head"><h3 t-out="'Quotation Monitoring' if monitoring else ('Pending Approvals' if queue_only else 'My Quotations &amp; Proposals')"/><a t-if="can_create and not monitoring and not queue_only" class="btn btn-primary" href="/my/employee/sales/new">+ New Offer</a></div>
+    <div class="aps-list-nav">
+     <a t-if="can_create" href="/my/employee/sales" t-att-class="'aps-list-tab active' if not monitoring and not queue_only else 'aps-list-tab'">My Quotations</a>
+     <a t-if="is_monitor" href="/my/employee/sales/monitor" t-att-class="'aps-list-tab active' if monitoring else 'aps-list-tab'">Quotation Monitoring</a>
+     <a t-if="is_approver" href="/my/employee/sales/approvals" t-att-class="'aps-list-tab active' if queue_only else 'aps-list-tab'">Pending Approvals (<t t-out="pending_count"/>)</a>
+    </div>
+    <p class="text-muted" t-if="monitoring">Read-only visibility across your allowed companies. Backend quotations and confirmed Sales Orders can be filtered separately.</p>
+    <form class="aps-monitor-filters" t-att-action="'/my/employee/sales/monitor' if monitoring else ('/my/employee/sales/approvals' if queue_only else '/my/employee/sales')" method="get">
+     <input class="form-control" name="q" type="search" t-att-value="q" placeholder="Search quotation, customer, project, salesperson"/>
+     <select t-if="monitoring" name="source" class="form-select" aria-label="Source"><option value="all">All sources</option><option value="portal" t-att-selected="source == 'portal' and 'selected' or None">Portal</option><option value="backend" t-att-selected="source == 'backend' and 'selected' or None">Backend</option></select>
+     <select t-if="monitoring" name="sales_state" class="form-select" aria-label="Sales status"><option value="all">All sales statuses</option><option value="quotation" t-att-selected="sales_state == 'quotation' and 'selected' or None">Quotations</option><option value="order" t-att-selected="sales_state == 'order' and 'selected' or None">Sales Orders</option><option value="cancel" t-att-selected="sales_state == 'cancel' and 'selected' or None">Cancelled</option></select>
+     <select t-if="monitoring" name="review" class="form-select" aria-label="Internal review"><option value="all">All review statuses</option><option value="na" t-att-selected="review == 'na' and 'selected' or None">Not applicable (backend)</option><option value="draft" t-att-selected="review == 'draft' and 'selected' or None">Portal draft</option><option value="submitted" t-att-selected="review == 'submitted' and 'selected' or None">Awaiting approval</option><option value="approved" t-att-selected="review == 'approved' and 'selected' or None">Approved</option><option value="returned" t-att-selected="review == 'returned' and 'selected' or None">Returned</option></select>
+     <button class="btn btn-outline-primary" type="submit">Filter</button>
+    </form>
+    <p class="aps-result-count"><t t-out="total_count"/> matching records · Page <t t-out="page"/> of <t t-out="pages"/></p>
+    <div class="aps-offer-list" aria-label="Sales quotations and proposals">
+     <t t-foreach="orders" t-as="o">
+      <a class="aps-offer-row aps-click-row" t-att-href="'/my/employee/sales/%s' % o.id" t-att-data-href="'/my/employee/sales/%s' % o.id" aria-label="Open quotation">
+       <div class="aps-offer-main">
+        <div class="aps-offer-top"><strong class="aps-offer-number" t-out="o.name"/><span class="aps-offer-type" t-out="dict(o._fields['absar_proposal_type'].selection).get(o.absar_proposal_type) or 'Quotation'"/><span class="aps-offer-type" t-out="'Portal' if o.absar_portal_creator_id else 'Backend'"/></div>
+        <div class="aps-offer-customer" t-out="o.partner_id.name"/>
+        <div class="aps-offer-project"><span class="aps-mini-label">Project:</span> <span t-out="o.construction_project_id.name or 'Not assigned'"/></div>
+        <div class="aps-offer-creator">Salesperson: <span t-out="o.user_id.name or 'Unassigned'"/><t t-if="o.absar_portal_creator_id"> · Prepared by <span t-out="o.absar_portal_creator_id.name"/></t></div>
+       </div>
+       <div class="aps-offer-side">
+        <span class="aps-mini-label">Value excluding VAT</span><strong class="aps-offer-value"><t t-out="'{:,.2f}'.format(o.amount_untaxed)"/> <t t-out="o.currency_id.name"/></strong>
+        <span class="aps-status aps-status-sales" t-out="dict(o._fields['state'].selection).get(o.state) or o.state"/>
+        <span t-if="o.absar_portal_creator_id" t-att-class="'aps-status aps-status-' + (o.absar_portal_review_state or 'draft')" t-out="dict(o._fields['absar_portal_review_state'].selection).get(o.absar_portal_review_state)"/>
+        <span t-else="" class="aps-muted-tag">No portal review</span>
+       </div><span class="aps-offer-arrow" aria-hidden="true">&#8594;</span>
+      </a>
+     </t>
+     <div t-if="not orders" class="aps-panel aps-offer-empty">No quotations match these filters.</div>
+    </div>
+    <nav class="aps-pagination" aria-label="Quotation pages"><a t-if="page &gt; 1" class="btn btn-outline-secondary" t-att-href="previous_url">&#8592; Previous</a><span>Page <t t-out="page"/> / <t t-out="pages"/></span><a t-if="page &lt; pages" class="btn btn-outline-secondary" t-att-href="next_url">Next &#8594;</a></nav>
+   </div>
+  </t>
+ </template>
+ <template id="sales_new" name="New Portal Sales Offer">
+  <t t-call="employee_portal_suite.employee_portal_layout">
+   <div class="container aps-wrap py-4"><a href="/my/employee/sales">&#8592; Sales &amp; Proposals</a><h3 class="mt-3">Create an offer</h3>
+    <div t-if="error" class="alert alert-danger" t-out="error"/>
+    <form method="post" action="/my/employee/sales/create" class="aps-panel aps-form">
+     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+     <label>Customer</label><select name="partner_id" class="form-select" required="required"><option value="">Select customer</option><option t-foreach="partners" t-as="p" t-att-value="p.id" t-out="p.name"/></select>
+     <label>Project (optional)</label><select name="project_id" class="form-select"><option value="">Choose a project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-out="project.name"/></select>
+     <label>Offer type</label><select name="kind" class="form-select"><option value="standard">Standard Quotation</option><option value="technical">Technical &amp; Financial Proposal</option></select>
+     <label>Technical proposal template (optional)</label><select name="template_id" class="form-select"><option value="">None</option><option t-foreach="templates" t-as="t" t-att-value="t.id" t-out="t.name"/></select>
+     <label>Expiration date (optional)</label><input type="date" name="validity_date" class="form-control"/>
+     <button class="btn btn-primary mt-3">Create Draft</button>
+    </form>
+   </div>
+  </t>
+ </template>
+ <template id="sales_detail" name="Portal Sales Offer Editor">
+  <t t-call="employee_portal_suite.employee_portal_layout">
+   <div class="container aps-wrap py-4"><a t-att-href="'/my/employee/sales/monitor' if request.env.user.has_group('absar_portal_sales.group_portal_sales_monitor') and not order.absar_portal_creator_id else '/my/employee/sales'">&#8592; Quotations</a>
+    <div class="aps-head mt-3"><div><h3><t t-out="order.name"/> · <t t-out="order.partner_id.name"/></h3><span t-if="order.absar_portal_creator_id" t-att-class="'aps-status aps-status-' + (order.absar_portal_review_state or 'draft')" t-out="dict(order._fields['absar_portal_review_state'].selection).get(order.absar_portal_review_state)"/><span t-else="" class="aps-muted-tag">Backend quotation · No portal review</span></div>
+     <a t-if="order.absar_portal_review_state == 'approved'" t-att-href="'/my/employee/sales/%s/pdf' % order.id" class="btn btn-outline-primary" target="_blank">Print / Download PDF</a></div>
+    <div t-if="error or request.params.get('error')" class="alert alert-warning" t-out="error or 'The requested change could not be saved. Check the values and try again.'"/>
+    <div t-if="order.absar_portal_review_note" class="alert alert-info"><strong>Reviewer note:</strong> <t t-out="order.absar_portal_review_note"/></div>
+    <div class="aps-panel"><h5>Offer details</h5><div class="row"><div class="col-md-4"><span class="text-muted">Customer</span><p t-out="order.partner_id.name"/></div><div class="col-md-4"><span class="text-muted">Document type</span><p t-out="dict(order._fields['absar_proposal_type'].selection).get(order.absar_proposal_type)"/></div><div class="col-md-4"><span class="text-muted">Project</span><p t-out="order.construction_project_id.name or 'Not assigned'"/></div><div class="col-md-4"><span class="text-muted">Salesperson</span><p t-out="order.user_id.name or order.absar_portal_creator_id.name"/></div></div>
+     <form t-if="can_edit" t-att-action="'/my/employee/sales/%s/save' % order.id" method="post" class="row g-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+      <div class="col-md-4"><label>Proposal reference (automatic)</label><input class="form-control" t-att-value="order.name" readonly="readonly"/></div>
+      <div class="col-md-4"><label>Project</label><select class="form-select" name="project_id"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-selected="order.construction_project_id.id == project.id and 'selected' or None" t-out="project.name"/></select></div><div class="col-md-4"><label>Expiration date</label><input class="form-control" type="date" name="validity_date" t-att-value="order.validity_date or ''"/></div>
+      <div t-if="order.absar_proposal_type == 'technical'" class="col-md-4"><label>Proposal title</label><input class="form-control" name="title" t-att-value="order.absar_proposal_title or ''"/></div>
+      <div class="col-12"><button class="btn btn-outline-primary">Save Details</button></div>
+     </form>
+    </div>
+    <div class="aps-panel aps-boq-panel"><h5>Bill of Quantities / Order Lines</h5><p class="aps-help">Add items below. Click a description to read longer details.</p>
+     <div class="table-responsive"><table class="table aps-boq-table">
+      <colgroup><col style="width:42%"/><col style="width:12%"/><col style="width:12%"/><col style="width:14%"/><col style="width:14%"/><col style="width:6%"/></colgroup>
+      <thead><tr><th>Description</th><th>Unit</th><th class="text-end">Quantity</th><th class="text-end">Unit Rate</th><th class="text-end">Subtotal</th><th aria-label="Actions"/></tr></thead>
+      <tbody>
+       <tr t-foreach="order.order_line" t-as="l" t-if="not l.display_type" class="aps-boq-data-row">
+        <td class="aps-boq-description"><details class="aps-line-details"><summary t-out="l.name"/></details></td><td t-out="l.product_uom.name"/>
+        <td class="text-end" t-out="'%.2f' % l.product_uom_qty"/>
+        <td class="text-end" t-out="'%.2f' % l.price_unit"/>
+        <td class="text-end" t-out="'%.2f' % l.price_subtotal"/>
+        <td class="aps-boq-remove"><form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/line/%s/delete' % (order.id,l.id)"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button type="submit" class="aps-boq-delete" title="Remove item" aria-label="Remove item">&#215;</button></form></td>
+       </tr>
+       <tr t-if="can_edit" class="aps-boq-add-link-row"><td colspan="6"><button type="button" class="aps-boq-add-link" aria-expanded="false" aria-controls="aps-boq-edit-row">+ Add Item</button></td></tr>
+       <tr t-if="can_edit" id="aps-boq-edit-row" class="aps-boq-edit-row" hidden="hidden">
+        <td><form id="aps-boq-new-form" method="post" t-att-action="'/my/employee/sales/%s/line/add' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><textarea name="description" class="form-control" rows="2" placeholder="Item description" aria-label="Item description" required="required"/></form></td>
+        <td><select name="uom_id" form="aps-boq-new-form" class="form-select" aria-label="Unit"><option t-foreach="units" t-as="unit" t-att-value="unit.id" t-att-selected="unit.name == 'Units' and 'selected' or None" t-out="unit.name"/></select></td>
+        <td><input name="qty" form="aps-boq-new-form" class="form-control text-end" type="number" min="0.001" step="any" value="1" aria-label="Quantity" required="required"/></td>
+        <td><input name="rate" form="aps-boq-new-form" class="form-control text-end" type="number" min="0" step="any" value="0" aria-label="Unit rate" required="required"/></td>
+        <td class="aps-boq-preview"><span class="aps-boq-preview-amount">0.00</span> <t t-out="order.currency_id.name"/></td>
+        <td class="aps-boq-edit-actions"><button type="submit" form="aps-boq-new-form" class="aps-boq-save" title="Save item">Save</button><button type="button" class="aps-boq-cancel" title="Cancel">Cancel</button></td>
+       </tr>
+      </tbody></table></div>
+     <div class="aps-total">Proposal value (excluding VAT): <strong><t t-out="'{:,.2f}'.format(order.amount_untaxed)"/> <t t-out="order.currency_id.name"/></strong></div>
+    </div>
+    <t t-if="order.absar_proposal_type == 'technical'">
+     <div class="aps-panel"><h5>Technical Proposal Template</h5>
+      <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/template' % order.id" class="row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-8"><select name="template_id" class="form-select" required="required"><option value="">Choose a template</option><option t-foreach="templates" t-as="t" t-att-value="t.id" t-out="t.name"/></select></div><div class="col-md-4"><button class="btn btn-outline-primary" data-aps-confirm="Replace existing proposal sections and milestones with the selected template?">Load / Replace Template</button></div></form>
+      <p t-if="not can_edit" class="text-muted" t-out="order.absar_proposal_template_id.name or 'Custom proposal'"/>
+     </div>
+     <div class="aps-panel"><h5>Technical Sections</h5><p t-if="can_edit" class="text-muted small">Set the Order number and save to move a section to that position.</p><div class="aps-sortable" t-att-data-reorder-url="'/my/employee/sales/%s/sections/reorder' % order.id" t-att-data-csrf="request.csrf_token()"><details t-foreach="order.absar_proposal_section_ids.sorted(key=lambda s:(s.sequence,s.id))" t-as="s" class="aps-section aps-section-compact" t-att-data-section-id="s.id"><summary class="aps-section-heading"><span class="aps-section-number" t-out="s_index + 1"/><span class="aps-section-name" t-out="s.name"/><span t-if="not s.include_in_report" class="aps-muted-tag">Hidden from PDF</span><span class="aps-section-toggle">Edit / View</span></summary><div class="aps-section-expanded">
+      
+      <form t-att-action="'/my/employee/sales/%s/section/%s/save' % (order.id,s.id)" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+       <div class="d-flex align-items-center gap-2 mb-2"><label class="mb-0" for="aps-section-order">Order</label><input type="number" name="position" min="1" t-att-max="len(order.absar_proposal_section_ids)" t-att-value="s_index + 1" class="form-control form-control-sm" style="width:85px"/><span class="text-muted small">Set the position, then Save Section</span></div><label>Section type</label><select name="section_type" class="form-select" t-att-disabled="not can_edit and 'disabled' or None"><option t-foreach="s._fields['section_type'].selection" t-as="opt" t-att-value="opt[0]" t-att-selected="s.section_type == opt[0] and 'selected' or None" t-out="opt[1]"/></select>
+       <label class="mt-2">Section title</label><input class="form-control" name="name" t-att-value="s.name" t-att-readonly="not can_edit and 'readonly' or None"/>
+       <label class="mt-2">Content</label>
+       <div class="aps-editor" t-att-data-editable="can_edit and '1' or '0'">
+        <div t-if="can_edit" class="aps-editor-toolbar" role="toolbar" aria-label="Format text"><button type="button" data-aps-format="bold" title="Bold"><b>B</b></button><button type="button" data-aps-format="italic" title="Italic"><i>I</i></button><button type="button" data-aps-format="underline" title="Underline"><u>U</u></button><select aria-label="Text size" class="aps-font-size"><option value="">Text size</option><option value="2">Small</option><option value="3">Normal</option><option value="4">Large</option><option value="5">Extra large</option></select><button type="button" data-aps-format="insertUnorderedList" title="Bullet list">&#8226; List</button></div>
+        <div class="aps-editor-body" t-att-contenteditable="can_edit and 'true' or 'false'" t-field="s.content"/>
+        <textarea name="content" hidden="hidden" t-out="s.content or ''"/>
+       </div>
+       <div t-if="can_edit" class="d-flex gap-3 align-items-center mt-2"><label><input type="checkbox" name="include" value="1" t-att-checked="s.include_in_report and 'checked' or None"/> Include in PDF</label><label><input type="checkbox" name="page_break" value="1" t-att-checked="s.page_break_before and 'checked' or None"/> New PDF page</label><button class="btn btn-sm btn-outline-primary">Save Section</button></div>
+      </form>
+      <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/section/%s/delete' % (order.id,s.id)" class="mt-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-sm btn-outline-danger" data-aps-confirm="Remove this section?">Delete Section</button></form>
+     </div></details>
+     </div><details t-if="can_edit" class="aps-add-section"><summary>+ Add Section</summary><form method="post" t-att-action="'/my/employee/sales/%s/section/add' % order.id" class="aps-new row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-3"><select class="form-select" name="section_type"><option t-foreach="order.env['absar.proposal.section']._fields['section_type'].selection" t-as="opt" t-att-value="opt[0]" t-out="opt[1]"/></select></div><div class="col-md-4"><input class="form-control" name="name" placeholder="New section title" required="required"/></div><div class="col-md-5"><textarea class="form-control" rows="2" name="content" placeholder="Initial text (can be formatted after adding)"/></div><div class="col-12 d-flex gap-3 align-items-center"><label>Order <input type="number" class="form-control form-control-sm" style="width:85px" name="position" min="1" t-att-max="len(order.absar_proposal_section_ids) + 1" t-att-value="len(order.absar_proposal_section_ids) + 1"/></label><label><input type="checkbox" name="page_break" value="1"/> Start on new PDF page</label><button class="btn btn-outline-primary">Save New Section</button></div></form></details>
+     </div>
+     <div class="aps-panel"><h5>Payment Milestones</h5><div class="table-responsive"><table class="table"><thead><tr><th>Milestone</th><th>%</th><th>Due condition</th><th/></tr></thead><tbody><tr t-foreach="order.absar_proposal_payment_ids" t-as="p"><td t-out="p.name"/><td t-out="p.percentage"/><td t-out="p.due_condition"/><td><form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/milestone/%s/delete' % (order.id,p.id)"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-sm btn-outline-danger">Remove</button></form></td></tr></tbody></table></div>
+      <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/milestone/add' % order.id" class="row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-4"><input class="form-control" name="name" placeholder="Milestone" required="required"/></div><div class="col-md-2"><input class="form-control" name="percentage" type="number" step="0.01" min="0" max="100" placeholder="%" required="required"/></div><div class="col-md-4"><input class="form-control" name="due_condition" placeholder="Payment due condition"/></div><div class="col-md-2"><button class="btn btn-outline-primary">Add</button></div></form>
+     </div>
+    </t>
+    <div t-if="order.absar_portal_creator_id" class="aps-panel"><h5>Internal Review</h5>
+     <p class="text-muted">Submission locks the draft. Approval permits PDF access but does not send the quotation or confirm the Sales Order.</p>
+     <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="submit"/><button class="btn btn-primary" t-att-disabled="not order.order_line and 'disabled' or None">Submit for Approval</button></form>
+     <div t-if="can_review" class="d-flex gap-3 flex-wrap"><form method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="approve"/><button class="btn btn-success">Approve for Sending</button></form>
+      <form method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id" class="d-flex gap-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="return"/><input class="form-control" name="note" placeholder="Reason for correction" required="required"/><button class="btn btn-outline-danger">Return</button></form></div>
+    </div>
+    <div class="aps-modal" id="aps-modal" hidden="hidden"><div class="aps-modal-content" role="dialog" aria-modal="true" aria-labelledby="aps-modal-title"><h5 id="aps-modal-title">Confirm action</h5><p id="aps-modal-text"/><div class="d-flex gap-2 justify-content-end"><button type="button" class="btn btn-light" id="aps-modal-cancel">Cancel</button><button type="button" class="btn btn-primary" id="aps-modal-ok">Continue</button></div></div></div>
+   </div>
+  </t>
+ </template>
+</odoo>
