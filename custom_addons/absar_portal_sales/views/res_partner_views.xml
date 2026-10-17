@@ -4,10 +4,8 @@
     <field name="model">res.partner</field>
     <field name="inherit_id" ref="base.view_partner_form"/>
     <field name="arch" type="xml">
-      <xpath expr="//sheet" position="inside">
-        <group string="ABSAR Sales Customer" name="absar_sales_customer_group">
-          <field name="absar_is_sales_customer"/>
-        </group>
+      <xpath expr="//field[@name='category_id']" position="after">
+        <field name="absar_is_sales_customer" string="Customer / Client"/>
       </xpath>
     </field>
   </record>
