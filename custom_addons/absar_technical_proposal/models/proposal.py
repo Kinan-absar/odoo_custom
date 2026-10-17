@@ -36,6 +36,11 @@ class ProposalTemplateSection(models.Model):
     include_in_report = fields.Boolean(default=True)
     page_break_before = fields.Boolean()
 
+    @api.onchange('section_type')
+    def _onchange_section_type_name(self):
+        if not self.name:
+            self.name = dict(SECTION_TYPES).get(self.section_type, '')
+
 class ProposalTemplatePayment(models.Model):
     _name = 'absar.proposal.template.payment'
     _description = 'Proposal Template Payment Milestone'
@@ -57,7 +62,6 @@ class ProposalSection(models.Model):
     _order = 'sequence, id'
     order_id = fields.Many2one('sale.order', required=True, ondelete='cascade', index=True)
     company_id = fields.Many2one(related='order_id.company_id', store=True, readonly=True)
-    company_id = fields.Many2one(related='order_id.company_id', store=True, readonly=True)
     sequence = fields.Integer(default=10)
     section_type = fields.Selection(SECTION_TYPES, required=True, default='custom')
     name = fields.Char(required=True)
@@ -65,12 +69,16 @@ class ProposalSection(models.Model):
     include_in_report = fields.Boolean(default=True)
     page_break_before = fields.Boolean()
 
+    @api.onchange('section_type')
+    def _onchange_section_type_name(self):
+        if not self.name:
+            self.name = dict(SECTION_TYPES).get(self.section_type, '')
+
 class ProposalPayment(models.Model):
     _name = 'absar.proposal.payment'
     _description = 'Quotation Proposal Payment Milestone'
     _order = 'sequence, id'
     order_id = fields.Many2one('sale.order', required=True, ondelete='cascade', index=True)
-    company_id = fields.Many2one(related='order_id.company_id', store=True, readonly=True)
     company_id = fields.Many2one(related='order_id.company_id', store=True, readonly=True)
     sequence = fields.Integer(default=10)
     name = fields.Char(required=True)

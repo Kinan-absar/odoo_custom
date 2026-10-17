@@ -1,74 +1,105 @@
 <odoo>
  <record id="action_report_absar_technical_proposal" model="ir.actions.report">
-  <field name="name">Technical &amp; Financial Proposal</field>
-  <field name="model">sale.order</field>
+  <field name="name">Technical &amp; Financial Proposal</field><field name="model">sale.order</field>
   <field name="report_type">qweb-pdf</field>
   <field name="report_name">absar_technical_proposal.report_technical_proposal</field>
   <field name="report_file">absar_technical_proposal.report_technical_proposal</field>
   <field name="print_report_name">'Technical Proposal - %s' % (object.name or 'Draft')</field>
  </record>
  <template id="report_technical_proposal">
-  <t t-call="web.html_container"><t t-foreach="docs" t-as="o"><t t-call="web.external_layout">
-   <div class="page" style="font-family:Arial,sans-serif;color:#1a2b3d;font-size:11px;">
+  <t t-call="web.html_container"><t t-foreach="docs" t-as="o">
+   <t t-set="company" t-value="o.company_id.sudo()"/><t t-set="layout_document_title" t-value="False"/>
+   <t t-call="absar_report_suite.business_layout">
+    <t t-call="absar_report_suite.report_styles"/>
     <style>
-     .absar-prop h1 {text-align:center;color:#193858;font-size:21px;margin:15px 0 8px;font-weight:800;}
-     .absar-prop h2 {font-size:14px;color:#193858;margin:20px 0 8px;padding-bottom:5px;border-bottom:1px solid #d8a75b;page-break-after:avoid;}
-     .absar-prop .meta {text-align:center;line-height:1.6;color:#4d5b67;margin-bottom:21px;}
-     .absar-prop table {width:100%;border-collapse:collapse;margin:10px 0 15px;}
-     .absar-prop th {background:#193858;color:white;padding:8px 6px;border:1px solid #b9c5cf;text-align:left;}
-     .absar-prop td {padding:8px 6px;border:1px solid #d2dce4;vertical-align:top;}
-     .absar-prop .num {text-align:right;white-space:nowrap;}
-     .absar-prop .total {background:#eaf0f4;font-weight:bold;}
-     .absar-prop .content {line-height:1.65;overflow-wrap:break-word;}
-     .absar-prop .sign {width:48%;display:inline-block;vertical-align:top;margin-top:22px;}
-     .absar-prop .sign-line {border-bottom:1px solid #647889;margin:29px 15px 8px 0;}
+     .atp {font-family:Arial,'Cairo',sans-serif!important;color:#182f43!important;font-size:13px!important;line-height:1.48!important;}
+     .atp .heading{margin:4px 0 14px;overflow:hidden;page-break-inside:avoid;}
+     .atp .heading h1{font-size:21px!important;line-height:1.25;color:#182f43!important;font-weight:800!important;margin:0 0 6px!important;border:0!important;}
+     .atp .eyebrow{font-size:11px;letter-spacing:1.1px;text-transform:uppercase;font-weight:700;color:#177b83;}
+     .atp .project{font-size:16px;font-weight:700;line-height:1.35;}
+     .atp .card{border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;padding:11px 14px!important;margin:0 0 13px!important;box-shadow:0 2px 10px rgba(23,123,131,.10)!important;}
+     .atp .metadata{width:100%;border-collapse:collapse!important;border:0!important;}
+     .atp .metadata td{width:50%;border:0!important;vertical-align:top;padding:4px 8px 4px 0!important;font-size:13px;}
+     .atp .smalllabel{display:block;font-size:11px;font-weight:700;color:#627782;margin-bottom:2px;}
+     .atp .sec-title{font-weight:700!important;color:#182f43!important;font-size:17px!important;margin:11px 0 10px!important;border:0!important;page-break-after:avoid;}
+     .atp .sec-no{display:inline-block;color:#177b83!important;font-weight:800!important;margin-right:8px;}
+     .atp .prose{font-size:13px!important;line-height:1.57!important;overflow-wrap:break-word;}
+     .atp .prose p{margin:0 0 7px!important;}
+     .atp .boq{width:100%!important;border-collapse:collapse!important;border:0!important;table-layout:fixed;margin:0!important;}
+     .atp .boq thead{display:table-header-group;}
+     .atp .boq th{font-size:12px;font-weight:700;color:#182f43;background:#fff!important;padding:8px 5px;border:0!important;border-bottom:2px solid #177b83!important;}
+     .atp .boq td{padding:8px 5px!important;border:0!important;border-bottom:1px solid #dbe4e8!important;vertical-align:top;font-size:12px!important;overflow-wrap:break-word;}
+     .atp .boq tr{page-break-inside:avoid;}
+     .atp .num{text-align:right!important;white-space:nowrap;}
+     .atp .totalbox{margin:9px 0 0 auto;width:50%;page-break-inside:avoid;}
+     .atp .totalbox table{width:100%;border-collapse:collapse;border:0!important;}
+     .atp .totalbox td{border:0!important;padding:5px!important;font-size:13px!important;}
+     .atp .grand td{border-top:1px solid #177b83!important;font-weight:800;font-size:15px!important;}
+     .atp .milestone{width:100%;border-collapse:collapse;border:0!important;}
+     .atp .milestone th{color:#182f43!important;text-align:left;border:0!important;border-bottom:2px solid #177b83!important;padding:8px 5px;}
+     .atp .milestone td{border:0!important;border-bottom:1px solid #dbe4e8!important;padding:8px 5px;vertical-align:top;}
+     .atp .signcol{width:47%;display:inline-block;vertical-align:top;}
+     .atp .signblank{border-bottom:1px solid #a9bfc1;height:26px;margin:7px 10px 6px 0;}
+     .atp .signlabel{font-size:11px;color:#627782;}
+     .atp .pagebreak{page-break-before:always;}
     </style>
-    <div class="absar-prop">
-     <h1><span t-esc="o.absar_proposal_title or 'TECHNICAL &amp; FINANCIAL PROPOSAL'"/></h1>
-     <div class="meta"><div><strong>Project:</strong> <span t-esc="o.construction_project_id.name or o.name"/></div>
-      <div><strong>Customer:</strong> <span t-esc="o.partner_id.name"/></div>
-      <div><strong>Submitted by:</strong> <span t-esc="o.company_id.name"/></div>
-      <div><strong>Date:</strong> <span t-field="o.date_order" t-options="{'widget':'date'}"/> &#160; <strong>Ref:</strong> <span t-esc="o.absar_proposal_reference or o.name"/></div>
+    <div class="page absar-report atp">
+     <div class="heading"><div class="eyebrow">ABSAR / Technical Submission</div>
+      <h1 t-esc="o.absar_proposal_title or 'TECHNICAL &amp; FINANCIAL PROPOSAL'"/>
+      <div class="project">Project: <span t-esc="o.construction_project_id.name if o.construction_project_id else (o.name or '')"/></div>
      </div>
-     <t t-set="section_number" t-value="0"/>
-     <t t-foreach="o.absar_proposal_section_ids.sorted(key=lambda x: (x.sequence, x.id))" t-as="s">
-      <t t-if="s.include_in_report and s.section_type in ('executive', 'quantity')">
-       <t t-set="section_number" t-value="section_number + 1"/>
-       <div t-if="s.page_break_before" style="page-break-before:always;"/>
-       <h2><span t-esc="section_number"/>. <span t-esc="s.name"/></h2>
-       <div class="content" t-field="s.content"/>
+     <div class="card"><table class="metadata"><tr>
+      <td><span class="smalllabel">Prepared for</span><strong t-esc="o.partner_id.name"/></td>
+      <td><span class="smalllabel">Proposal reference</span><strong t-esc="o.absar_proposal_reference or o.name"/></td>
+     </tr><tr><td><span class="smalllabel">Prepared by</span><span t-esc="o.company_id.name"/></td>
+      <td><span class="smalllabel">Proposal date</span><span t-field="o.date_order" t-options="{'widget':'date'}"/></td>
+     </tr></table></div>
+     <t t-set="num" t-value="0"/>
+     <t t-foreach="o.absar_proposal_section_ids.sorted(key=lambda s:(s.sequence,s.id))" t-as="s">
+      <t t-if="s.include_in_report and s.section_type in ('executive','quantity')">
+       <t t-set="num" t-value="num+1"/><div t-if="s.page_break_before" class="pagebreak"/>
+       <h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/><span t-esc="s.name"/></h2>
+       <div class="card"><div class="prose" t-field="s.content"/></div>
       </t>
      </t>
-     <t t-set="section_number" t-value="section_number + 1"/>
-     <h2><span t-esc="section_number"/>. Bill of Quantities (BOQ)</h2>
-     <table><thead><tr><th style="width:49%;">Item Description</th><th>Unit</th><th class="num">Qty</th><th class="num">Unit Rate</th><th class="num">Amount</th></tr></thead>
-      <tbody><t t-foreach="o.order_line.sorted(key=lambda x: (x.sequence, x.id))" t-as="line">
-       <t t-if="line.display_type"><tr><td colspan="5"><strong t-esc="line.name"/></td></tr></t>
-       <t t-else=""><tr><td><span t-field="line.name"/></td><td><span t-esc="line.product_uom.name or ''"/></td><td class="num"><span t-esc="'%.2f' % line.product_uom_qty"/></td><td class="num"><span t-field="line.price_unit" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td><td class="num"><span t-field="line.price_subtotal" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr></t>
+     <t t-set="num" t-value="num+1"/>
+     <h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/> Bill of Quantities</h2>
+     <div class="card"><table class="boq"><thead><tr>
+      <th style="width:47%">Description</th><th style="width:9%">Unit</th><th class="num" style="width:12%">Qty</th><th class="num" style="width:16%">Unit Rate</th><th class="num" style="width:16%">Amount</th>
+     </tr></thead><tbody>
+      <t t-foreach="o.order_line.sorted(key=lambda l:(l.sequence,l.id))" t-as="line">
+       <tr t-if="line.display_type"><td colspan="5"><strong t-esc="line.name"/></td></tr>
+       <tr t-else=""><td><span t-field="line.name"/></td><td><span t-esc="line.product_uom.name or ''"/></td>
+        <td class="num"><span t-esc="'%.2f' % line.product_uom_qty"/></td>
+        <td class="num"><span t-field="line.price_unit" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td>
+        <td class="num"><span t-field="line.price_subtotal" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td>
+       </tr>
       </t>
-      <tr class="total"><td colspan="4">TOTAL PROJECT VALUE (VAT Exclusive)</td><td class="num"><span t-field="o.amount_untaxed" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
-      <tr><td colspan="4">VAT</td><td class="num"><span t-field="o.amount_tax" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
-      <tr class="total"><td colspan="4">TOTAL (VAT Inclusive)</td><td class="num"><span t-field="o.amount_total" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
-      </tbody></table>
+     </tbody></table></div>
+     <div class="card totalbox"><table>
+      <tr><td>Subtotal (VAT Exclusive)</td><td class="num"><span t-field="o.amount_untaxed" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
+      <tr><td>VAT</td><td class="num"><span t-field="o.amount_tax" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
+      <tr class="grand"><td>Total Proposal Value</td><td class="num"><span t-field="o.amount_total" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
+     </table></div>
      <t t-if="o.absar_proposal_payment_ids">
-      <t t-set="section_number" t-value="section_number + 1"/><h2><span t-esc="section_number"/>. Commercial &amp; Payment Terms</h2>
-      <table><thead><tr><th>Payment Milestone</th><th class="num">Percentage</th><th class="num">Amount (VAT Exclusive)</th><th>Due Condition</th></tr></thead><tbody>
-       <tr t-foreach="o.absar_proposal_payment_ids.sorted(key=lambda x: (x.sequence, x.id))" t-as="p"><td t-esc="p.name"/><td class="num"><span t-esc="'%.2f' % p.percentage"/>%</td><td class="num"><span t-field="p.amount" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td><td t-esc="p.due_condition or ''"/></tr>
-      </tbody></table>
+      <t t-set="num" t-value="num+1"/><h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/> Payment Schedule</h2>
+      <div class="card"><table class="milestone"><thead><tr><th>Milestone</th><th class="num">%</th><th class="num">Amount (Excl. VAT)</th><th>Due condition</th></tr></thead><tbody>
+       <tr t-foreach="o.absar_proposal_payment_ids.sorted(key=lambda p:(p.sequence,p.id))" t-as="p"><td t-esc="p.name"/><td class="num"><span t-esc="'%.2f' % p.percentage"/>%</td><td class="num"><span t-field="p.amount" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td><td t-esc="p.due_condition or ''"/></tr>
+      </tbody></table></div>
      </t>
-     <t t-foreach="o.absar_proposal_section_ids.sorted(key=lambda x: (x.sequence, x.id))" t-as="s">
-      <t t-if="s.include_in_report and s.section_type not in ('executive', 'quantity')">
-       <t t-set="section_number" t-value="section_number + 1"/>
-       <div t-if="s.page_break_before" style="page-break-before:always;"/>
-       <h2><span t-esc="section_number"/>. <span t-esc="s.name"/></h2>
-       <div class="content" t-field="s.content"/>
+     <t t-foreach="o.absar_proposal_section_ids.sorted(key=lambda s:(s.sequence,s.id))" t-as="s">
+      <t t-if="s.include_in_report and s.section_type not in ('executive','quantity')">
+       <t t-set="num" t-value="num+1"/><div t-if="s.page_break_before" class="pagebreak"/>
+       <h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/><span t-esc="s.name"/></h2>
+       <div class="card"><div class="prose" t-field="s.content"/></div>
       </t>
      </t>
-     <t t-set="section_number" t-value="section_number + 1"/><h2><span t-esc="section_number"/>. Authorization &amp; Sign-Off</h2>
-     <div class="sign"><strong>For <span t-esc="o.company_id.name"/></strong><div class="sign-line"/>Authorized Signature<div class="sign-line"/>Name: <span t-esc="o.absar_proposal_signatory or ''"/><div class="sign-line"/>Title: <span t-esc="o.absar_proposal_signatory_title or ''"/><div class="sign-line"/>Date</div>
-     <div class="sign" style="margin-left:3%;"><strong>For <span t-esc="o.partner_id.name"/></strong><div class="sign-line"/>Authorized Signature<div class="sign-line"/>Name: <span t-esc="o.absar_proposal_customer_signatory or ''"/><div class="sign-line"/>Title: <span t-esc="o.absar_proposal_customer_signatory_title or ''"/><div class="sign-line"/>Date</div>
+     <t t-set="num" t-value="num+1"/><h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/> Acceptance &amp; Authorization</h2>
+     <div class="card" style="page-break-inside:avoid;"><div class="signcol"><strong t-esc="o.company_id.name"/><div class="signblank"/><div class="signlabel">Authorized Signature</div><div class="signblank"/><div class="signlabel">Name: <span t-esc="o.absar_proposal_signatory or ''"/></div><div class="signblank"/><div class="signlabel">Title: <span t-esc="o.absar_proposal_signatory_title or ''"/></div><div class="signblank"/><div class="signlabel">Date</div></div>
+      <div class="signcol" style="margin-left:4%"><strong t-esc="o.partner_id.name"/><div class="signblank"/><div class="signlabel">Authorized Signature</div><div class="signblank"/><div class="signlabel">Name: <span t-esc="o.absar_proposal_customer_signatory or ''"/></div><div class="signblank"/><div class="signlabel">Title: <span t-esc="o.absar_proposal_customer_signatory_title or ''"/></div><div class="signblank"/><div class="signlabel">Date</div></div>
+     </div>
     </div>
-   </div>
-  </t></t></t>
+   </t>
+  </t></t>
  </template>
 </odoo>
