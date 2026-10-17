@@ -1,63 +1,49 @@
 <odoo>
- <template id="purchase_prepare_list" name="My Purchase RFQs">
-  <t t-call="employee_portal_suite.employee_portal_layout">
-   <div class="container apm-shell my-4"><div class="apm-title"><div><h2>My Purchase RFQs</h2><p>Prepare and submit purchase requests for approval</p></div><a href="/my/employee/purchase/new" class="btn btn-primary">+ New RFQ</a></div>
-    <div class="apm-table-wrap"><table class="apm-table"><thead><tr><th>RFQ</th><th>Supplier</th><th>Project</th><th>Buyer</th><th>RFQ Date</th><th>Review / PO status</th><th class="apm-num">Total</th></tr></thead><tbody>
-     <t t-foreach="orders" t-as="po"><tr class="apm-clickrow" t-att-data-href="'/my/employee/purchase/%d' % po.id" onclick="window.location.href=this.dataset.href"><td><strong t-out="po.name"/></td><td t-out="po.partner_id.name"/><td t-out="po.absar_portal_project_id.name or '—'"/><td t-out="po.user_id.name or '—'"/><td t-out="str(po.date_order.date()) if po.date_order else '—'"/><td><span t-out="dict(po._fields['absar_portal_review_state'].selection).get(po.absar_portal_review_state) or 'Draft'"/> / <span t-out="dict(po._fields['state'].selection).get(po.state)"/></td><td class="apm-num" t-out="'%.2f' % po.amount_total"/></tr></t>
-     <tr t-if="not orders"><td colspan="7">No RFQs yet.</td></tr>
-    </tbody></table></div>
+ <template id="purchase_prepare_list" name="Portal Purchase RFQs">
+  <t t-call="employee_portal_suite.employee_portal_layout"><main class="apw-shell">
+   <div class="apw-heading"><div><h2 t-out="'Purchase Confirmations' if confirmations else 'Purchase Approvals' if approval else 'My Purchase RFQs'"/><p t-out="'Confirm independently approved RFQs through the native purchase workflow' if confirmations else 'Review submitted RFQs without changing their contents' if approval else 'Prepare, save and submit your purchase RFQs'"/></div><a t-if="not approval and not confirmations" href="/my/employee/purchase/new" class="btn btn-primary">New RFQ</a></div>
+   <form class="apw-toolbar" method="get"><input class="form-control apw-search" name="q" t-att-value="q" placeholder="Search RFQ, vendor, MR or reference" aria-label="Search RFQs"/>
+    <select name="review" class="form-select" aria-label="Review status"><option value="all" t-att-selected="review == 'all'">All review statuses</option><option value="draft" t-att-selected="review == 'draft'">Draft</option><option value="submitted" t-att-selected="review == 'submitted'">Awaiting Approval</option><option value="approved" t-att-selected="review == 'approved'">Approved</option><option value="returned" t-att-selected="review == 'returned'">Returned</option></select>
+    <select name="sort" class="form-select" aria-label="Sort"><option value="newest">Newest</option><option value="reference" t-att-selected="sort == 'reference'">Reference</option><option value="vendor" t-att-selected="sort == 'vendor'">Vendor</option><option value="amount" t-att-selected="sort == 'amount'">Highest amount</option><option value="date" t-att-selected="sort == 'date'">Order date</option></select><select name="group_by" class="form-select" aria-label="Group by"><option value="">No grouping</option><option value="vendor" t-att-selected="group_by == 'vendor'">Group by Vendor</option><option value="project" t-att-selected="group_by == 'project'">Group by Project</option><option value="buyer" t-att-selected="group_by == 'buyer'">Group by Buyer</option><option value="company" t-att-selected="group_by == 'company'">Group by Company</option><option value="review" t-att-selected="group_by == 'review'">Group by Review</option></select><button class="btn btn-primary">Search</button><a t-att-href="'/my/employee/purchase/confirmations' if confirmations else '/my/employee/purchase/approvals' if approval else '/my/employee/purchase'" class="btn btn-light">Clear</a>
+   </form>
+   <p class="apw-help" t-if="group_by">Groups follow the selected sort across the result set. A group can continue onto the next page.</p><div class="apw-table-scroll"><table class="apw-table"><thead><tr><th>Reference</th><th>Vendor</th><th>Project</th><th>MR</th><th>Buyer</th><th>Company</th><th>Review</th><th>Purchase status</th><th>Currency</th><th class="num">Total</th></tr></thead><tbody>
+    <t t-set="last_group" t-value="False"/><t t-foreach="orders" t-as="po"><tr t-if="group_by and group_labels.get(po.id) != last_group"><td colspan="10" class="apw-section" t-out="group_labels.get(po.id)"/></tr><t t-set="last_group" t-value="group_labels.get(po.id)"/><tr><td><a t-att-href="'/my/employee/purchase/%s' % po.id" t-out="po.name"/></td><td t-out="po.partner_id.name"/><td t-out="po.project_id.display_name if 'project_id' in po._fields else po.absar_portal_project_id.display_name or '—'"/><td t-out="po.material_request_id.name or '—'"/><td t-out="po.user_id.name or '—'"/><td t-out="po.company_id.name"/><td><span class="apw-badge" t-out="dict(po._fields['absar_portal_review_state']._description_selection(po.env)).get(po.absar_portal_review_state, 'Draft')"/></td><td t-out="dict(po._fields['state']._description_selection(po.env)).get(po.state)"/><td t-out="po.currency_id.name"/><td class="num" t-out="'%.2f' % po.amount_total"/></tr>
+    </t><tr t-if="not orders"><td colspan="10" class="apw-empty">No RFQs match your search.</td></tr>
+   </tbody></table></div><t t-call="absar_portal_purchase_monitor.purchase_pager"/>
+  </main></t>
+ </template>
+ <template id="purchase_prepare_detail" name="Purchase Workspace Editor">
+  <t t-call="employee_portal_suite.employee_portal_layout"><main id="apw-root" class="apw-shell">
+   <a t-att-href="boot['back_url']">← Purchase workspace</a>
+   <div class="apw-heading"><div><h2 t-out="boot['name']"/><p t-out="boot['company_name']"/></div><div><span class="apw-badge" t-out="boot['review']"/> <span class="apw-badge" t-out="boot['state']"/></div></div>
+   <p t-if="not boot['project_integration']" class="alert alert-warning">The backend Project integration addon is not installed. Project selection requires that addon.</p>
+   <p t-if="boot['note']" class="alert alert-info"><strong>Review note: </strong><t t-out="boot['note']"/></p>
+   <div id="apw-error" class="alert alert-danger" role="alert" hidden="hidden"/>
+   <div id="apw-status" role="status" aria-live="polite"/>
+   <div class="apw-actions">
+    <t t-if="not boot['readonly']"><button class="btn btn-primary" type="button" data-action="save">Save Draft</button><button class="btn btn-outline-primary" type="button" data-action="submit">Submit for Approval</button></t>
+    <t t-if="boot['can_review']"><button t-if="boot['review'] == 'submitted'" class="btn btn-primary" type="button" data-action="approve">Approve RFQ</button><button class="btn btn-outline-secondary" type="button" data-action="return">Return for Correction</button></t>
+    <button t-if="boot['can_confirm']" type="button" class="btn btn-primary" data-action="confirm">Confirm PO</button>
+    <span t-if="boot['readonly']" class="apw-help">Read-only · Purchase approval and signature status are separate.</span>
    </div>
-  </t>
+   <div class="apw-sheet">
+    <div class="apw-form-grid" id="apw-header"/>
+    <div class="apw-tabs" role="tablist" aria-label="Purchase information"><button type="button" role="tab" aria-selected="true" data-tab="products">Products</button><button type="button" role="tab" aria-selected="false" data-tab="other">Other Information</button><button type="button" role="tab" aria-selected="false" data-tab="payments">Payments</button><button type="button" role="tab" aria-selected="false" data-tab="signing">Signing Package</button></div>
+    <section data-panel="products" role="tabpanel"><div class="apw-table-scroll"><table class="apw-table apw-lines"><thead><tr><th>Product / Description</th><th>Analytic Distribution</th><th class="num">Quantity</th><th>UoM</th><th class="num">Unit Price</th><th class="num">Disc.%</th><th>Taxes</th><th class="num">Amount</th><th>Actions</th></tr></thead><tbody id="apw-lines"/></table></div>
+     <div t-if="not boot['readonly']" class="apw-line-actions"><button type="button" class="btn btn-link" data-action="add">Add a product</button><button type="button" class="btn btn-link" data-action="section">Add a section</button><button type="button" class="btn btn-link" data-action="note">Add a note</button><button type="button" class="btn btn-outline-primary" data-action="catalog">Catalog</button><button t-if="boot['can_create_product']" type="button" class="btn btn-outline-secondary" data-action="product">Create Product</button></div>
+     <div class="apw-footer-grid"><div><label for="apw-notes">Terms and Conditions</label><textarea id="apw-notes" class="form-control" rows="5" t-att-disabled="boot['readonly']"/><p class="apw-help">Times use <t t-out="boot['timezone']"/>. Save Draft saves the complete form and all lines.</p></div><div class="apw-totals" id="apw-totals"><p>Use Recalculate to load native tax totals.</p></div></div>
+     <button t-if="not boot['readonly']" type="button" class="btn btn-light" data-action="recalculate">Recalculate totals</button>
+    </section>
+    <section data-panel="other" role="tabpanel" hidden="hidden"><div id="apw-other" class="apw-form-grid"/></section>
+    <section data-panel="payments" role="tabpanel" hidden="hidden"><p>Financial records are read-only in this workspace.</p><t t-if="po and po.state in ('purchase', 'done')"><p t-if="'amount_paid' in po._fields">Paid (PO linked): <strong t-field="po.amount_paid"/></p><a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor')" t-att-href="'/my/employee/purchase-monitor/%s' % po.id">Open purchase monitoring details</a></t><p t-else="">Payment monitoring becomes available after purchase confirmation.</p></section>
+    <section data-panel="signing" role="tabpanel" hidden="hidden"><p t-if="po and 'signature_status_text' in po._fields"><strong t-field="po.signature_status_text"/></p><p>Signing package order: Purchase Order → supplier quotation PDF(s) → linked Material Request.</p><p>Signature requests and quotation attachments continue through the installed backend Send-to-Sign workflow.</p><p t-if="po and 'quotation_attachment_ids' in po._fields"><t t-foreach="po.quotation_attachment_ids" t-as="attachment"><span class="apw-badge" t-out="attachment.name"/> </t></p></section>
+   </div>
+   <input id="apw-csrf" type="hidden" t-att-value="request.csrf_token()"/>
+   <pre id="apw-boot" hidden="hidden" t-out="boot_json"/>
+   <noscript><p class="alert alert-warning">Enable JavaScript to use the purchase editor.</p></noscript>
+  </main></t>
  </template>
- <template id="purchase_prepare_new" name="New Purchase RFQ">
-  <t t-call="employee_portal_suite.employee_portal_layout"><div class="container apm-shell my-4">
-   <a class="apm-back" href="/my/employee/purchase">&#8592; My Purchase RFQs</a><h2>Create Request for Quotation</h2>
-   <div class="apm-editor-card"><form method="post" action="/my/employee/purchase/new"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-    <div class="apm-form-grid"><div><label>Vendor *</label><select name="partner_id" required="required" class="form-select"><option value="">Select vendor</option><t t-foreach="suppliers" t-as="vendor"><option t-att-value="vendor.id" t-out="vendor.display_name"/></t></select></div><div><label>Source / Reference</label><input class="form-control" name="origin" placeholder="MR or project reference"/></div><div><label>Project</label><select name="project_id" class="form-select"><option value="">No project</option><t t-foreach="projects" t-as="project"><option t-att-value="project.id" t-out="project.display_name"/></t></select></div></div>
-    <div class="apm-form-actions"><button type="submit" class="btn btn-primary">Create Draft RFQ</button></div>
-   </form></div>
-  </div></t>
- </template>
- <template id="purchase_prepare_detail" name="Purchase RFQ Editor">
-  <t t-call="employee_portal_suite.employee_portal_layout"><div class="container apm-shell my-4">
-   <a class="apm-back" href="/my/employee/purchase">&#8592; My Purchase RFQs</a>
-   <div class="apm-title"><div><h2><t t-out="po.name"/> <small>Purchase RFQ</small></h2><p><t t-out="po.partner_id.name"/> · <t t-out="po.company_id.name"/></p></div><span class="apm-pill" t-out="dict(po._fields['absar_portal_review_state'].selection).get(po.absar_portal_review_state)"/></div>
-   <t t-if="editable">
-    <form class="apm-editor-card" t-att-action="'/my/employee/purchase/%d/save' % po.id" method="post">
-     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-     <div class="apm-form-head"><h3>Purchase RFQ Details</h3><span class="apm-note">Edit the fields below, then Save Details</span></div>
-     <div class="apm-form-grid apm-header-grid">
-      <div><label>Vendor *</label><select name="partner_id" required="required" class="form-select"><t t-foreach="suppliers" t-as="vendor"><option t-att-value="vendor.id" t-att-selected="vendor.id == po.partner_id.id" t-out="vendor.display_name"/></t></select></div>
-      <div><label>Buyer / Purchase Representative</label><select name="user_id" class="form-select"><option value="">Default buyer</option><t t-foreach="buyers" t-as="buyer"><option t-att-value="buyer.id" t-att-selected="buyer.id == po.user_id.id" t-out="buyer.name"/></t></select></div>
-      <div><label>Project</label><select name="project_id" class="form-select"><option value="">No project</option><t t-foreach="projects" t-as="project"><option t-att-value="project.id" t-att-selected="project.id == po.absar_portal_project_id.id" t-out="project.display_name"/></t></select></div>
-      <div><label>Source Document / MR</label><input class="form-control" name="origin" t-att-value="po.origin or ''"/></div>
-      <div><label>Vendor Reference</label><input class="form-control" name="partner_ref" t-att-value="po.partner_ref or ''"/></div>
-      <div><label>Expected Arrival</label><input class="form-control" type="date" name="date_planned" t-att-value="str(po.date_planned.date()) if po.date_planned else ''"/></div>
-      <div class="apm-grid-full"><label>Terms and Conditions / Notes</label><textarea class="form-control" rows="3" name="notes" t-out="po.notes or ''"/></div>
-     </div>
-     <div class="apm-form-actions"><button type="submit" class="btn btn-primary">Save Details</button><span class="apm-note">RFQ: <strong t-out="po.name"/> · Currency: <strong t-out="po.currency_id.name"/></span></div>
-    </form>
-   </t>
-   <t t-else=""><div class="apm-info"><div><label>RFQ Date</label><span t-out="po.date_order.date() if po.date_order else ''"/></div><div><label>Vendor</label><span t-out="po.partner_id.display_name"/></div><div><label>Project</label><span t-out="po.absar_portal_project_id.display_name or '—'"/></div><div><label>Reference / MR</label><span t-out="po.origin or '—'"/></div><div><label>Buyer</label><span t-out="po.user_id.name or '—'"/></div><div><label>Total</label><span t-out="'%.2f %s' % (po.amount_total, po.currency_id.name)"/></div></div></t>
-   <h3 class="apm-subtitle">Order Lines</h3><div class="apm-table-wrap"><table class="apm-table"><thead><tr><th>Product / Description</th><th>Expense Account</th><th>Analytic Distribution</th><th class="apm-num">Qty</th><th class="apm-num">Rate</th><th class="apm-num">Subtotal</th><th t-if="editable">Actions</th></tr></thead><tbody>
-    <t t-foreach="po.order_line" t-as="line"><tr t-if="not line.display_type"><td><strong t-out="line.product_id.display_name"/><small t-out="line.name"/></td><td t-out="line.absar_expense_account_id.display_name or 'Automatic'"/><td t-out="line.analytic_distribution or '—'"/><td class="apm-num" t-out="'%.2f' % line.product_qty"/><td class="apm-num" t-out="'%.2f' % line.price_unit"/><td class="apm-num" t-out="'%.2f' % line.price_subtotal"/><td t-if="editable"><form method="post" t-att-action="'/my/employee/purchase/%d/line/%d/remove' % (po.id,line.id)"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="apm-link-danger" type="submit">Remove</button></form></td></tr></t>
-    <tr t-if="not po.order_line"><td t-att-colspan="7 if editable else 6" class="apm-empty">No items added yet.</td></tr></tbody></table></div>
-   <t t-if="editable"><details class="apm-editor-card apm-line-editor"><summary>+ Add a line</summary>
-    <form t-att-action="'/my/employee/purchase/%d/line' % po.id" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-     <div class="apm-form-grid"><div><label>Product</label><select required="required" name="product_id" class="form-select"><option value="">Select product</option><t t-foreach="products" t-as="p"><option t-att-value="p.id" t-out="p.display_name"/></t></select></div><div><label>Description (optional)</label><input name="description" class="form-control"/></div><div><label>Quantity</label><input required="required" type="number" min="0.00001" step="any" name="qty" value="1" class="form-control"/></div><div><label>Unit Price</label><input required="required" type="number" min="0" step="any" name="price" value="0" class="form-control"/></div><div><label>Expense Account</label><select name="account_id" class="form-select"><option value="">Automatic (from product)</option><t t-foreach="accounts" t-as="a"><option t-att-value="a.id" t-out="a.display_name"/></t></select></div><div><label>Analytic Account</label><select name="analytic_id" class="form-select"><option value="">No analytic</option><t t-foreach="analytics" t-as="a"><option t-att-value="a.id" t-out="a.display_name"/></t></select></div><div><label>Analytic %</label><input name="analytic_percent" value="100" type="number" min="0" max="100" step="any" class="form-control"/></div></div>
-     <div class="apm-form-actions"><button type="submit" class="btn btn-primary">Add Line</button></div>
-    </form></details>
-    <details class="apm-editor-card apm-line-editor"><summary>+ Create a product</summary><form t-att-action="'/my/employee/purchase/%d/product' % po.id" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="apm-form-grid"><div><label>Product Name</label><input required="required" name="name" maxlength="150" class="form-control"/></div></div><div class="apm-form-actions"><button type="submit" class="btn btn-primary">Create Product</button></div></form></details>
-    <form t-att-action="'/my/employee/purchase/%d/submit' % po.id" method="post" class="apm-form-actions"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button type="submit" class="btn btn-primary">Submit for Approval</button><small>Submission will not automatically confirm the PO.</small></form>
-   </t><t t-else=""><p class="apm-note">This RFQ is read-only while awaiting approval or after confirmation.</p></t>
-  </div></t>
- </template>
- <template id="purchase_approval_list" name="Purchase RFQ Approvals">
-  <t t-call="employee_portal_suite.employee_portal_layout"><div class="container apm-shell my-4"><h2>Purchase RFQ Approvals</h2><p>Submitted portal RFQs awaiting your decision.</p>
-   <t t-foreach="orders" t-as="po"><div class="apm-editor-card"><div class="apm-title"><div><h3 t-out="po.name"/><p><t t-out="po.partner_id.display_name"/> · Prepared by <t t-out="po.absar_portal_preparer_id.name"/></p></div><strong t-out="'%.2f %s' % (po.amount_total,po.currency_id.name)"/></div>
-   <p><strong>Project:</strong> <t t-out="po.absar_portal_project_id.display_name or '—'"/></p><ul><t t-foreach="po.order_line" t-as="line"><li t-if="not line.display_type"><t t-out="line.name"/> — <t t-out="line.product_qty"/> × <t t-out="line.price_unit"/></li></t></ul>
-   <form class="apm-form-actions" t-att-action="'/my/employee/purchase/approvals/%d/approve' % po.id" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-primary" type="submit">Approve &amp; Confirm PO</button></form>
-   <form t-att-action="'/my/employee/purchase/approvals/%d/return' % po.id" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><label>Correction note</label><input class="form-control" name="note" maxlength="500"/><button class="btn btn-light mt-2" type="submit">Return for Correction</button></form>
-   </div></t><p t-if="not orders">No pending RFQs.</p></div></t>
- </template>
+ <!-- Keep old XML identifiers on upgrade. Old mutation routes are removed. -->
+ <template id="purchase_prepare_new"><t t-call="absar_portal_purchase_monitor.purchase_prepare_detail"/></template>
+ <template id="purchase_approval_list"><t t-call="absar_portal_purchase_monitor.purchase_prepare_list"/></template>
 </odoo>
