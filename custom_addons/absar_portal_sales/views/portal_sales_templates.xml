@@ -1,0 +1,77 @@
+<odoo>
+ <template id="sales_list" name="Employee Portal Sales List">
+  <t t-call="employee_portal_suite.employee_portal_layout">
+   <div class="container aps-wrap py-4"><div class="aps-head"><h3>Sales &amp; Proposals</h3><a class="btn btn-primary" href="/my/employee/sales/new">+ New Offer</a></div>
+    <p class="text-muted">Prepare quotations and technical proposals for internal approval.</p>
+    <div class="aps-panel table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Number</th><th>Customer</th><th>Type</th><th>Prepared by</th><th>Value (excl. VAT)</th><th>Review</th><th/></tr></thead><tbody>
+     <t t-foreach="orders" t-as="o"><tr><td><strong t-out="o.name"/></td><td t-out="o.partner_id.name"/><td t-out="dict(o._fields['absar_proposal_type'].selection).get(o.absar_proposal_type)"/><td t-out="o.absar_portal_creator_id.name"/><td><t t-out="'%.2f' % o.amount_untaxed"/> <t t-out="o.currency_id.name"/></td><td><span class="aps-status" t-out="dict(o._fields['absar_portal_review_state'].selection).get(o.absar_portal_review_state)"/></td><td><a t-att-href="'/my/employee/sales/%s' % o.id">Open</a></td></tr></t>
+     <tr t-if="not orders"><td colspan="7" class="text-muted">No portal sales records yet.</td></tr>
+    </tbody></table></div>
+   </div>
+  </t>
+ </template>
+ <template id="sales_new" name="New Portal Sales Offer">
+  <t t-call="employee_portal_suite.employee_portal_layout">
+   <div class="container aps-wrap py-4"><a href="/my/employee/sales">&#8592; Sales &amp; Proposals</a><h3 class="mt-3">Create an offer</h3>
+    <div t-if="error" class="alert alert-danger" t-out="error"/>
+    <form method="post" action="/my/employee/sales/create" class="aps-panel aps-form">
+     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+     <label>Customer</label><select name="partner_id" class="form-select" required="required"><option value="">Select customer</option><option t-foreach="partners" t-as="p" t-att-value="p.id" t-out="p.name"/></select>
+     <label>Offer type</label><select name="kind" class="form-select"><option value="standard">Standard Quotation</option><option value="technical">Technical &amp; Financial Proposal</option></select>
+     <label>Technical proposal template (optional)</label><select name="template_id" class="form-select"><option value="">None</option><option t-foreach="templates" t-as="t" t-att-value="t.id" t-out="t.name"/></select>
+     <label>Expiration date (optional)</label><input type="date" name="validity_date" class="form-control"/>
+     <button class="btn btn-primary mt-3">Create Draft</button>
+    </form>
+   </div>
+  </t>
+ </template>
+ <template id="sales_detail" name="Portal Sales Offer Editor">
+  <t t-call="employee_portal_suite.employee_portal_layout">
+   <div class="container aps-wrap py-4"><a href="/my/employee/sales">&#8592; Sales &amp; Proposals</a>
+    <div class="aps-head mt-3"><div><h3><t t-out="order.name"/> · <t t-out="order.partner_id.name"/></h3><span class="aps-status" t-out="dict(order._fields['absar_portal_review_state'].selection).get(order.absar_portal_review_state)"/></div>
+     <a t-if="order.absar_portal_review_state == 'approved'" t-att-href="'/my/employee/sales/%s/pdf' % order.id" class="btn btn-outline-primary" target="_blank">View PDF</a></div>
+    <div t-if="error or request.params.get('error')" class="alert alert-warning" t-out="error or 'The requested change could not be saved. Check the values and try again.'"/>
+    <div t-if="order.absar_portal_review_note" class="alert alert-info"><strong>Reviewer note:</strong> <t t-out="order.absar_portal_review_note"/></div>
+    <div class="aps-panel"><h5>Offer details</h5><div class="row"><div class="col-md-4"><span class="text-muted">Customer</span><p t-out="order.partner_id.name"/></div><div class="col-md-4"><span class="text-muted">Document type</span><p t-out="dict(order._fields['absar_proposal_type'].selection).get(order.absar_proposal_type)"/></div><div class="col-md-4"><span class="text-muted">Sales status</span><p t-out="order.state"/></div></div>
+     <form t-if="can_edit" t-att-action="'/my/employee/sales/%s/save' % order.id" method="post" class="row g-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+      <div class="col-md-4"><label>Proposal reference</label><input class="form-control" name="reference" t-att-value="order.absar_proposal_reference or ''"/></div>
+      <div class="col-md-4"><label>Expiration date</label><input class="form-control" type="date" name="validity_date" t-att-value="order.validity_date or ''"/></div>
+      <div t-if="order.absar_proposal_type == 'technical'" class="col-md-4"><label>Proposal title</label><input class="form-control" name="title" t-att-value="order.absar_proposal_title or ''"/></div>
+      <div class="col-12"><button class="btn btn-outline-primary">Save Details</button></div>
+     </form>
+    </div>
+    <div class="aps-panel"><h5>Bill of Quantities / Order Lines</h5><div class="table-responsive"><table class="table"><thead><tr><th>Description</th><th>Quantity</th><th>Unit Rate</th><th>Subtotal</th><th/></tr></thead><tbody>
+     <tr t-foreach="order.order_line" t-as="l"><td style="white-space:pre-wrap" t-out="l.name"/><td t-out="l.product_uom_qty if not l.display_type else ''"/><td t-out="l.price_unit if not l.display_type else ''"/><td t-out="l.price_subtotal if not l.display_type else ''"/><td><form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/line/%s/delete' % (order.id,l.id)"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-sm btn-outline-danger">Remove</button></form></td></tr>
+    </tbody></table></div><div class="aps-total">Proposal value (excluding VAT): <strong><t t-out="'%.2f' % order.amount_untaxed"/> <t t-out="order.currency_id.name"/></strong></div>
+    <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/line/add' % order.id" class="row g-2 mt-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+     <div class="col-md-6"><label>Item description</label><textarea class="form-control" name="description" rows="2" required="required"/></div><div class="col-md-2"><label>Quantity</label><input type="number" class="form-control" name="qty" min="0" step="any" value="1" required="required"/></div><div class="col-md-2"><label>Unit rate</label><input type="number" class="form-control" name="rate" min="0" step="any" value="0" required="required"/></div><div class="col-md-2 align-self-end"><button class="btn btn-primary">Add Item</button></div>
+    </form></div>
+    <t t-if="order.absar_proposal_type == 'technical'">
+     <div class="aps-panel"><h5>Technical Proposal Template</h5>
+      <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/template' % order.id" class="row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-8"><select name="template_id" class="form-select" required="required"><option value="">Choose a template</option><option t-foreach="templates" t-as="t" t-att-value="t.id" t-out="t.name"/></select></div><div class="col-md-4"><button class="btn btn-outline-primary" onclick="return confirm('Replace existing proposal sections and milestones with the selected template?')">Load / Replace Template</button></div></form>
+      <p t-if="not can_edit" class="text-muted" t-out="order.absar_proposal_template_id.name or 'Custom proposal'"/>
+     </div>
+     <div class="aps-panel"><h5>Technical Sections</h5><div t-foreach="order.absar_proposal_section_ids.sorted(key=lambda s:(s.sequence,s.id))" t-as="s" class="aps-section">
+      <form t-att-action="'/my/employee/sales/%s/section/%s/save' % (order.id,s.id)" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+       <label>Section title</label><input class="form-control" name="name" t-att-value="s.name" t-att-readonly="not can_edit and 'readonly' or None"/>
+       <label class="mt-2">Content (HTML supported; server sanitized)</label><textarea class="form-control" rows="6" name="content" t-att-readonly="not can_edit and 'readonly' or None" t-out="s.content or ''"/>
+       <div t-if="can_edit" class="d-flex gap-3 align-items-center mt-2"><label><input type="checkbox" name="include" value="1" t-att-checked="s.include_in_report and 'checked' or None"/> Include in PDF</label><button class="btn btn-sm btn-outline-primary">Save Section</button></div>
+      </form>
+      <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/section/%s/delete' % (order.id,s.id)" class="mt-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this section?')">Delete Section</button></form>
+     </div>
+     <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/section/add' % order.id" class="aps-new row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-4"><input class="form-control" name="name" placeholder="New section title" required="required"/></div><div class="col-md-8"><textarea class="form-control" rows="2" name="content" placeholder="Section text (optional)"/></div><div class="col-12"><button class="btn btn-outline-primary">+ Add Section</button></div></form>
+     </div>
+     <div class="aps-panel"><h5>Payment Milestones</h5><div class="table-responsive"><table class="table"><thead><tr><th>Milestone</th><th>%</th><th>Due condition</th><th/></tr></thead><tbody><tr t-foreach="order.absar_proposal_payment_ids" t-as="p"><td t-out="p.name"/><td t-out="p.percentage"/><td t-out="p.due_condition"/><td><form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/milestone/%s/delete' % (order.id,p.id)"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-sm btn-outline-danger">Remove</button></form></td></tr></tbody></table></div>
+      <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/milestone/add' % order.id" class="row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-4"><input class="form-control" name="name" placeholder="Milestone" required="required"/></div><div class="col-md-2"><input class="form-control" name="percentage" type="number" step="0.01" min="0" max="100" placeholder="%" required="required"/></div><div class="col-md-4"><input class="form-control" name="due_condition" placeholder="Payment due condition"/></div><div class="col-md-2"><button class="btn btn-outline-primary">Add</button></div></form>
+     </div>
+    </t>
+    <div class="aps-panel"><h5>Internal Review</h5>
+     <p class="text-muted">Submission locks the draft. Approval permits PDF access but does not send the quotation or confirm the Sales Order.</p>
+     <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="submit"/><button class="btn btn-primary" t-att-disabled="not order.order_line and 'disabled' or None">Submit for Approval</button></form>
+     <div t-if="can_review" class="d-flex gap-3 flex-wrap"><form method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="approve"/><button class="btn btn-success">Approve for Sending</button></form>
+      <form method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id" class="d-flex gap-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="return"/><input class="form-control" name="note" placeholder="Reason for correction" required="required"/><button class="btn btn-outline-danger">Return</button></form></div>
+    </div>
+   </div>
+  </t>
+ </template>
+</odoo>

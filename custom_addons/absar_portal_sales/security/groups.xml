@@ -1,0 +1,9 @@
+<odoo>
+ <record id="group_portal_sales_creator" model="res.groups">
+  <field name="name">Employee Portal: Sales &amp; Proposals - Prepare</field>
+ </record>
+ <record id="group_portal_sales_approver" model="res.groups">
+  <field name="name">Employee Portal: Sales &amp; Proposals - Approve</field>
+  <field name="implied_ids" eval="[(4, ref('absar_portal_sales.group_portal_sales_creator'))]"/>
+ </record>
+</odoo>
