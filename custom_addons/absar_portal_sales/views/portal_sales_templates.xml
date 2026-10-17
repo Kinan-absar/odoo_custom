@@ -108,7 +108,7 @@
        <label class="mt-2">Content</label>
        <div class="aps-editor" t-att-data-editable="can_edit and '1' or '0'">
         <div t-if="can_edit" class="aps-editor-toolbar" role="toolbar" aria-label="Format text"><button type="button" data-aps-format="bold" title="Bold"><b>B</b></button><button type="button" data-aps-format="italic" title="Italic"><i>I</i></button><button type="button" data-aps-format="underline" title="Underline"><u>U</u></button><select aria-label="Text size" class="aps-font-size"><option value="">Text size</option><option value="2">Small</option><option value="3">Normal</option><option value="4">Large</option><option value="5">Extra large</option></select><button type="button" data-aps-format="insertUnorderedList" title="Bullet list">&#8226; List</button></div>
-        <div class="aps-editor-body" t-att-contenteditable="can_edit and 'true' or 'false'" t-field="s.content"/>
+        <div class="aps-editor-body" t-att-contenteditable="can_edit and 'true' or 'false'" role="textbox" aria-multiline="true" aria-label="Section content"><t t-if="s.content"><span t-field="s.content"/></t></div>
         <textarea name="content" hidden="hidden" t-out="s.content or ''"/>
        </div>
        <div t-if="can_edit" class="d-flex gap-3 align-items-center mt-2"><label><input type="checkbox" name="include" value="1" t-att-checked="s.include_in_report and 'checked' or None"/> Include in PDF</label><label><input type="checkbox" name="page_break" value="1" t-att-checked="s.page_break_before and 'checked' or None"/> New PDF page</label><button class="btn btn-sm btn-outline-primary">Save Section</button></div>
