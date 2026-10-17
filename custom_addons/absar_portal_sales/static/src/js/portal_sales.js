@@ -20,11 +20,28 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   ok.addEventListener('click', () => { if (form) { const selected = form; close(); selected.requestSubmit(); } });
 });
+document.addEventListener('DOMContentLoaded', () => {
 // Make each row navigable without interfering with regular links.
-document.querySelectorAll('.aps-click-row').forEach(row => {
-  const open = () => { if (row.dataset.href) window.location.assign(row.dataset.href); };
-  row.addEventListener('click', e => { if (!e.target.closest('a, button, form, input')) open(); });
-  row.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target === row) open(); });
+// One click opens the quotation; the row also gets selected styling.
+// Register after DOM load so the page rows exist when listeners are attached.
+document.querySelectorAll('.aps-click-row[data-href]').forEach(row => {
+  const open = () => {
+    const href = row.getAttribute('data-href');
+    if (!href) return;
+    document.querySelectorAll('.aps-click-row.aps-row-selected').forEach(other => other.classList.remove('aps-row-selected'));
+    row.classList.add('aps-row-selected');
+    window.location.assign(href);
+  };
+  row.addEventListener('click', event => {
+    if (event.target.closest('a, button, input, select, textarea, form')) return;
+    open();
+  });
+  row.addEventListener('keydown', event => {
+    if (event.target === row && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      open();
+    }
+  });
 });
 // Rich-text content is posted through the existing HTML field; Odoo sanitizes on write.
 document.querySelectorAll('.aps-editor').forEach(editor => {
@@ -53,60 +70,36 @@ document.querySelectorAll('.aps-cancel-add').forEach(button => {
     if (details) details.open = false;
   });
 });
-// Only drag the handle (not the whole form with editable text fields).
-document.querySelectorAll('.aps-sortable').forEach(list => {
-  let dragged = null;
-  let originalOrder = null;
-  const sections = () => Array.from(list.querySelectorAll('.aps-section[data-section-id]'));
-  const clear = () => {
-    sections().forEach(s => s.classList.remove('aps-dragging','aps-drop-target'));
-    dragged = null;
-    originalOrder = null;
+
+});
+
+// Compact inline BOQ editor: reveal exactly one editable row below the existing items.
+document.addEventListener('DOMContentLoaded', () => {
+  const openButton = document.querySelector('.aps-boq-add-link');
+  const editRow = document.getElementById('aps-boq-edit-row');
+  if (!openButton || !editRow) return;
+  const cancel = editRow.querySelector('.aps-boq-cancel');
+  const qty = editRow.querySelector('input[name="qty"]');
+  const rate = editRow.querySelector('input[name="rate"]');
+  const preview = editRow.querySelector('.aps-boq-preview-amount');
+  const form = document.getElementById('aps-boq-new-form');
+  const sync = () => {
+    const amount = Number(qty?.value || 0) * Number(rate?.value || 0);
+    if (preview) preview.textContent = Number.isFinite(amount) ? amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '0.00';
   };
-  const submitOrder = () => {
-    if (!dragged) return;
-    const order = sections().map(s => s.dataset.sectionId);
-    if (order.join(',') === originalOrder) { clear(); return; }
-    const form = document.createElement('form');
-    form.method = 'POST'; form.action = list.dataset.reorderUrl;
-    [['csrf_token', list.dataset.csrf], ['section_ids', order.join(',')]].forEach(([name,value]) => {
-      const input = document.createElement('input'); input.type='hidden'; input.name=name; input.value=value;
-      form.appendChild(input);
-    });
-    document.body.appendChild(form);
-    form.submit();
-  };
-  sections().forEach(section => {
-    const handle = section.querySelector('.aps-drag-handle');
-    if (!handle) return;
-    handle.draggable = true;
-    handle.addEventListener('dragstart', event => {
-      dragged = section;
-      originalOrder = sections().map(s => s.dataset.sectionId).join(',');
-      section.classList.add('aps-dragging');
-      event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', section.dataset.sectionId);
-    });
-    section.addEventListener('dragover', event => {
-      if (!dragged || dragged === section) return;
-      event.preventDefault();
-      event.dataTransfer.dropEffect = 'move';
-      const bounds = section.getBoundingClientRect();
-      list.insertBefore(dragged, event.clientY < bounds.top + bounds.height / 2 ? section : section.nextSibling);
-      section.classList.add('aps-drop-target');
-    });
-    section.addEventListener('dragleave', () => section.classList.remove('aps-drop-target'));
-    section.addEventListener('drop', event => {
-      if (!dragged) return;
-      event.preventDefault(); event.stopPropagation();
-      submitOrder();
-    });
-    handle.addEventListener('dragend', clear);
+  openButton.addEventListener('click', () => {
+    editRow.hidden = false;
+    openButton.setAttribute('aria-expanded', 'true');
+    editRow.querySelector('textarea[name="description"]')?.focus();
   });
-  list.addEventListener('dragover', event => { if (dragged) event.preventDefault(); });
-  list.addEventListener('drop', event => {
-    if (!dragged) return;
-    event.preventDefault();
-    submitOrder();
+  cancel?.addEventListener('click', () => {
+    editRow.hidden = true;
+    openButton.setAttribute('aria-expanded', 'false');
+    form?.reset();
+    sync();
+    openButton.focus();
   });
+  qty?.addEventListener('input', sync);
+  rate?.addEventListener('input', sync);
+  sync();
 });

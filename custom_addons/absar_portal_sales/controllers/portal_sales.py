@@ -183,6 +183,23 @@ class PortalSales(http.Controller):
         order.sudo().action_absar_load_proposal_template()
         return request.redirect('%s/%s' % (BASE,order.id))
 
+    def _place_section(self, order, section, raw_position):
+        """Insert a section at the requested 1-based position, shifting others."""
+        sections = list(order.absar_proposal_section_ids.sorted(key=lambda s: (s.sequence, s.id)))
+        if section not in sections:
+            raise Forbidden()
+        sections.remove(section)
+        try:
+            position = int(raw_position)
+        except (TypeError, ValueError):
+            raise Forbidden()
+        if position < 1 or position > len(sections) + 1:
+            raise Forbidden()
+        sections.insert(position - 1, section)
+        for index, item in enumerate(sections, 1):
+            if item.sequence != index * 10:
+                item.sudo().write({'sequence': index * 10})
+
     @http.route(BASE + '/<int:order_id>/section/add', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def add_section(self,order_id,**post):
         order=self._order(order_id); self._editable(order)
@@ -192,7 +209,8 @@ class PortalSales(http.Controller):
         section_type=post.get('section_type') or 'custom'
         allowed=dict(request.env['absar.proposal.section']._fields['section_type'].selection)
         if section_type not in allowed: raise Forbidden()
-        request.env['absar.proposal.section'].sudo().create({'order_id':order.id,'name':name,'section_type':section_type,'content':post.get('content') or '', 'page_break_before':post.get('page_break')=='1','sequence':max(order.absar_proposal_section_ids.mapped('sequence') or [0])+10})
+        section = request.env['absar.proposal.section'].sudo().create({'order_id':order.id,'name':name,'section_type':section_type,'content':post.get('content') or '', 'page_break_before':post.get('page_break')=='1','sequence':max(order.absar_proposal_section_ids.mapped('sequence') or [0])+10})
+        self._place_section(order, section, post.get('position') or len(order.absar_proposal_section_ids))
         return request.redirect('%s/%s' % (BASE,order.id))
 
     @http.route(BASE + '/<int:order_id>/section/<int:section_id>/save', type='http', auth='user', website=True, methods=['POST'], csrf=True)
@@ -205,6 +223,7 @@ class PortalSales(http.Controller):
         section_type=post.get('section_type') or section.section_type
         if section_type not in dict(section._fields['section_type'].selection): raise Forbidden()
         section.sudo().write({'name':name,'section_type':section_type,'content':post.get('content') or '', 'include_in_report':post.get('include')=='1','page_break_before':post.get('page_break')=='1'})
+        self._place_section(order, section, post.get('position'))
         return request.redirect('%s/%s' % (BASE,order.id))
 
     @http.route(BASE + '/<int:order_id>/section/<int:section_id>/move', type='http', auth='user', website=True, methods=['POST'], csrf=True)
