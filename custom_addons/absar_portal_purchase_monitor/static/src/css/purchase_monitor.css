@@ -5,3 +5,5 @@
 .apm-form-grid label{font-weight:600;color:#334f5f;display:block;margin-bottom:5px;}
 .apm-form-actions{display:flex;gap:14px;align-items:center;margin:16px 0;}
 @media(max-width:750px){.apm-form-grid{grid-template-columns:1fr}}
+
+.apm-form-head{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #e5eeee;padding-bottom:14px}.apm-form-head h3{font-size:18px;margin:0}.apm-header-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.apm-grid-full{grid-column:1/-1}.apm-line-editor{padding:12px 17px}.apm-link-danger{border:0;background:transparent;color:#b23b44;cursor:pointer;font-size:12px}.apm-table th:last-child,.apm-table td:last-child{width:auto}.apm-table-wrap{box-shadow:0 1px 4px rgba(20,45,52,.04)}@media(max-width:900px){.apm-header-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.apm-header-grid{grid-template-columns:1fr}}

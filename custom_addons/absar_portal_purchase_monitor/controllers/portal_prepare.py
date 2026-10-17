@@ -19,7 +19,7 @@ class PortalPurchasePrepare(http.Controller):
         po = request.env['purchase.order'].sudo().browse(po_id).exists()
         if not po or po.company_id not in user.company_ids or po.absar_portal_preparer_id.id != user.id:
             raise NotFound()
-        if editable and (po.state not in ('draft', 'sent') or po.absar_portal_review_state not in ('draft', 'returned')):
+        if editable and (po.state not in ('draft', 'sent') or po.absar_portal_review_state not in (False, 'draft', 'returned')):
             raise Forbidden()
         return po
 
@@ -30,7 +30,7 @@ class PortalPurchasePrepare(http.Controller):
         accounts = request.env['account.account'].sudo().search([('deprecated', '=', False), ('company_ids', 'in', [cid]), ('account_type', 'in', ['expense','expense_direct_cost','expense_depreciation','asset_fixed','asset_current'])], order='code', limit=500) if 'company_ids' in request.env['account.account']._fields else request.env['account.account'].sudo().search([('deprecated','=',False),('company_id','=',cid),('account_type','in',['expense','expense_direct_cost','expense_depreciation','asset_fixed','asset_current'])], order='code', limit=500)
         analytics = request.env['account.analytic.account'].sudo().search(['|', ('company_id', '=', False), ('company_id', '=', cid)], order='name', limit=500)
         projects = request.env['project.project'].sudo().search(['|', ('company_id', '=', False), ('company_id', '=', cid)], order='name', limit=300) if 'project.project' in request.env else request.env['purchase.order'].browse()
-        return dict(suppliers=suppliers, products=products, accounts=accounts, analytics=analytics, projects=projects)
+        return dict(suppliers=suppliers, products=products, accounts=accounts, analytics=analytics, projects=projects, currencies=request.env['res.currency'].sudo().search([('active','=',True)], order='name'), buyers=request.env['res.users'].sudo().search([('share','=',False),('company_ids','in',[cid])], order='name', limit=200))
 
     @http.route(BASE, type='http', auth='user', website=True)
     def mine(self, **kw):
@@ -58,6 +58,7 @@ class PortalPurchasePrepare(http.Controller):
                 'origin': (post.get('origin') or '')[:200],
                 'absar_portal_project_id': project.id if project else False,
                 'absar_portal_preparer_id': user.id,
+                'absar_portal_review_state': 'draft',
             })
             return request.redirect(BASE + '/%d' % po.id)
         return request.render('absar_portal_purchase_monitor.purchase_prepare_new', self._models(user))
@@ -67,7 +68,7 @@ class PortalPurchasePrepare(http.Controller):
         po = self._mine(po_id, editable=False)
         user = request.env.user
         vals = self._models(user)
-        vals.update(po=po, editable=po.state in ('draft', 'sent') and po.absar_portal_review_state in ('draft','returned'))
+        vals.update(po=po, editable=po.state in ('draft', 'sent') and po.absar_portal_review_state in (False,'draft','returned'))
         return request.render('absar_portal_purchase_monitor.purchase_prepare_detail', vals)
 
     @http.route(BASE + '/approvals', type='http', auth='user', website=True)
@@ -90,6 +91,39 @@ class PortalPurchasePrepare(http.Controller):
         else:
             raise NotFound()
         return request.redirect(BASE + '/approvals')
+
+    @http.route(BASE + '/<int:po_id>/save', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def save_header(self, po_id, **post):
+        po = self._mine(po_id)
+        partner = request.env['res.partner'].sudo().browse(int(post.get('partner_id') or 0)).exists()
+        if not partner or partner.supplier_rank <= 0 or (partner.company_id and partner.company_id != po.company_id):
+            raise BadRequest('Select a valid supplier.')
+        project_id = int(post.get('project_id') or 0)
+        project = request.env['project.project'].sudo().browse(project_id).exists() if project_id else False
+        if project_id and (not project or project.company_id and project.company_id != po.company_id):
+            raise BadRequest('Invalid project.')
+        vals = {'partner_id': partner.id, 'absar_portal_project_id': project.id if project else False,
+                'origin': (post.get('origin') or '')[:200], 'notes': (post.get('notes') or '')[:10000]}
+        if post.get('date_planned'):
+            vals['date_planned'] = post['date_planned']
+        if post.get('partner_ref'):
+            vals['partner_ref'] = post['partner_ref'][:200]
+        if post.get('user_id'):
+            buyer = request.env['res.users'].sudo().browse(int(post['user_id'])).exists()
+            if not buyer or buyer.share or po.company_id not in buyer.company_ids:
+                raise BadRequest('Invalid buyer.')
+            vals['user_id'] = buyer.id
+        po.with_company(po.company_id).sudo().write(vals)
+        return request.redirect(BASE + '/%d' % po.id)
+
+    @http.route(BASE + '/<int:po_id>/line/<int:line_id>/remove', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def remove_line(self, po_id, line_id, **post):
+        po = self._mine(po_id)
+        line = po.order_line.filtered(lambda x: x.id == line_id)
+        if not line:
+            raise NotFound()
+        line.sudo().unlink()
+        return request.redirect(BASE + '/%d' % po.id)
 
     @http.route(BASE + '/<int:po_id>/product', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def product(self, po_id, **post):

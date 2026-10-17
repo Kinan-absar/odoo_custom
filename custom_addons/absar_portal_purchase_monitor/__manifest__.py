@@ -1,6 +1,6 @@
 {
  'name': 'ABSAR Portal Purchase Monitoring & RFQ Preparation',
- 'version': '18.0.1.1.0', 'category': 'Purchases',
+ 'version': '18.0.1.2.0', 'category': 'Purchases',
  'summary': 'Purchase monitoring plus controlled RFQ preparation and review in Employee Portal',
  'author': 'ABSAR Al Omran Construction Company', 'license': 'LGPL-3',
  'depends': ['employee_portal_suite', 'purchase', 'account', 'mail', 'analytic', 'project'],
