@@ -43,16 +43,26 @@
     </div>
     <div class="aps-panel"><h5>Bill of Quantities / Order Lines</h5><div class="table-responsive"><table class="table"><thead><tr><th>Description</th><th>Unit</th><th class="text-end">Quantity</th><th class="text-end">Unit Rate</th><th class="text-end">Subtotal</th><th/></tr></thead><tbody>
      <tr t-foreach="order.order_line" t-as="l"><td style="white-space:pre-wrap" t-out="l.name"/><td t-out="l.product_uom.name if not l.display_type else ''"/><td class="text-end" t-out="'%.2f' % l.product_uom_qty if not l.display_type else ''"/><td class="text-end" t-out="'%.2f' % l.price_unit if not l.display_type else ''"/><td class="text-end" t-out="'%.2f' % l.price_subtotal if not l.display_type else ''"/><td><form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/line/%s/delete' % (order.id,l.id)"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-sm btn-outline-danger">Remove</button></form></td></tr>
+     <tr t-if="can_edit" class="aps-inline-add-row"><td colspan="6">
+      <details class="aps-add-item"><summary>+ Add Item</summary>
+       <form method="post" t-att-action="'/my/employee/sales/%s/line/add' % order.id" class="aps-inline-add-form">
+        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+        <div class="aps-add-description"><label>Description</label><textarea class="form-control" name="description" rows="2" required="required"/></div>
+        <div><label>Unit</label><select name="uom_id" class="form-select"><option t-foreach="units" t-as="unit" t-att-value="unit.id" t-att-selected="unit.name == 'Units' and 'selected' or None" t-out="unit.name"/></select></div>
+        <div><label>Quantity</label><input type="number" class="form-control" name="qty" min="0.001" step="any" value="1" required="required"/></div>
+        <div><label>Unit rate</label><input type="number" class="form-control" name="rate" min="0" step="any" value="0" required="required"/></div>
+        <div class="aps-add-actions"><button type="submit" class="aps-text-action">Save &amp; Add Item</button><button type="button" class="aps-text-action aps-cancel-add">Cancel</button></div>
+       </form>
+      </details>
+     </td></tr>
     </tbody></table></div>
-    <details t-if="can_edit" class="aps-add-item"><summary>+ Add Item</summary><form method="post" t-att-action="'/my/employee/sales/%s/line/add' % order.id" class="row g-2 mt-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-     <div class="col-md-4"><label>Item description</label><textarea class="form-control" name="description" rows="2" required="required"/></div><div class="col-md-2"><label>Quantity</label><input type="number" class="form-control" name="qty" min="0" step="any" value="1" required="required"/></div><div class="col-md-2"><label>Unit</label><select name="uom_id" class="form-select"><option t-foreach="units" t-as="unit" t-att-value="unit.id" t-att-selected="unit.name == 'Units' and 'selected' or None" t-out="unit.name"/></select></div><div class="col-md-2"><label>Unit rate</label><input type="number" class="form-control" name="rate" min="0" step="any" value="0" required="required"/></div><div class="col-md-2 align-self-end"><button class="btn btn-primary">Add Item</button></div>
-    </form></details><div class="aps-total">Proposal value (excluding VAT): <strong><t t-out="'%.2f' % order.amount_untaxed"/> <t t-out="order.currency_id.name"/></strong></div></div>
+    <div class="aps-total">Proposal value (excluding VAT): <strong><t t-out="'%.2f' % order.amount_untaxed"/> <t t-out="order.currency_id.name"/></strong></div></div>
     <t t-if="order.absar_proposal_type == 'technical'">
      <div class="aps-panel"><h5>Technical Proposal Template</h5>
       <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/template' % order.id" class="row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-8"><select name="template_id" class="form-select" required="required"><option value="">Choose a template</option><option t-foreach="templates" t-as="t" t-att-value="t.id" t-out="t.name"/></select></div><div class="col-md-4"><button class="btn btn-outline-primary" data-aps-confirm="Replace existing proposal sections and milestones with the selected template?">Load / Replace Template</button></div></form>
       <p t-if="not can_edit" class="text-muted" t-out="order.absar_proposal_template_id.name or 'Custom proposal'"/>
      </div>
-     <div class="aps-panel"><h5>Technical Sections</h5><p t-if="can_edit" class="text-muted small">Drag the handle to reorder sections, or use Move Up / Move Down.</p><div class="aps-sortable" t-att-data-reorder-url="'/my/employee/sales/%s/sections/reorder' % order.id" t-att-data-csrf="request.csrf_token()"><div t-foreach="order.absar_proposal_section_ids.sorted(key=lambda s:(s.sequence,s.id))" t-as="s" class="aps-section" t-att-data-section-id="s.id" t-att-draggable="can_edit and 'true' or 'false'">
+     <div class="aps-panel"><h5>Technical Sections</h5><p t-if="can_edit" class="text-muted small">Drag the handle to reorder sections, or use Move Up / Move Down.</p><div class="aps-sortable" t-att-data-reorder-url="'/my/employee/sales/%s/sections/reorder' % order.id" t-att-data-csrf="request.csrf_token()"><div t-foreach="order.absar_proposal_section_ids.sorted(key=lambda s:(s.sequence,s.id))" t-as="s" class="aps-section" t-att-data-section-id="s.id">
       <div t-if="can_edit" class="aps-drag-handle" draggable="true" title="Drag to reorder">&#9776; Drag to reorder</div>
       <form t-att-action="'/my/employee/sales/%s/section/%s/save' % (order.id,s.id)" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
        <label>Section type</label><select name="section_type" class="form-select" t-att-disabled="not can_edit and 'disabled' or None"><option t-foreach="s._fields['section_type'].selection" t-as="opt" t-att-value="opt[0]" t-att-selected="s.section_type == opt[0] and 'selected' or None" t-out="opt[1]"/></select>

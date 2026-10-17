@@ -46,31 +46,67 @@ document.querySelectorAll('.aps-editor').forEach(editor => {
   });
   sync();
 });
-// Native HTML drag/reorder: post only a complete ordered set of section IDs.
+// Inline item entry stays inside the table; Cancel collapses the editor.
+document.querySelectorAll('.aps-cancel-add').forEach(button => {
+  button.addEventListener('click', () => {
+    const details = button.closest('details');
+    if (details) details.open = false;
+  });
+});
+// Only drag the handle (not the whole form with editable text fields).
 document.querySelectorAll('.aps-sortable').forEach(list => {
   let dragged = null;
-  list.querySelectorAll('.aps-section[draggable="true"]').forEach(section => {
-    section.addEventListener('dragstart', event => {
-      if (!event.target.closest('.aps-drag-handle')) { event.preventDefault(); return; }
-      dragged = section; section.classList.add('aps-dragging');
+  let originalOrder = null;
+  const sections = () => Array.from(list.querySelectorAll('.aps-section[data-section-id]'));
+  const clear = () => {
+    sections().forEach(s => s.classList.remove('aps-dragging','aps-drop-target'));
+    dragged = null;
+    originalOrder = null;
+  };
+  const submitOrder = () => {
+    if (!dragged) return;
+    const order = sections().map(s => s.dataset.sectionId);
+    if (order.join(',') === originalOrder) { clear(); return; }
+    const form = document.createElement('form');
+    form.method = 'POST'; form.action = list.dataset.reorderUrl;
+    [['csrf_token', list.dataset.csrf], ['section_ids', order.join(',')]].forEach(([name,value]) => {
+      const input = document.createElement('input'); input.type='hidden'; input.name=name; input.value=value;
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+  };
+  sections().forEach(section => {
+    const handle = section.querySelector('.aps-drag-handle');
+    if (!handle) return;
+    handle.draggable = true;
+    handle.addEventListener('dragstart', event => {
+      dragged = section;
+      originalOrder = sections().map(s => s.dataset.sectionId).join(',');
+      section.classList.add('aps-dragging');
       event.dataTransfer.effectAllowed = 'move';
       event.dataTransfer.setData('text/plain', section.dataset.sectionId);
     });
     section.addEventListener('dragover', event => {
       if (!dragged || dragged === section) return;
       event.preventDefault();
-      const middle = section.getBoundingClientRect().top + section.offsetHeight / 2;
-      list.insertBefore(dragged, event.clientY < middle ? section : section.nextSibling);
+      event.dataTransfer.dropEffect = 'move';
+      const bounds = section.getBoundingClientRect();
+      list.insertBefore(dragged, event.clientY < bounds.top + bounds.height / 2 ? section : section.nextSibling);
+      section.classList.add('aps-drop-target');
     });
+    section.addEventListener('dragleave', () => section.classList.remove('aps-drop-target'));
     section.addEventListener('drop', event => {
-      event.preventDefault(); if (!dragged) return;
-      const values = [...list.querySelectorAll('.aps-section')].map(s => s.dataset.sectionId);
-      const form = document.createElement('form'); form.method = 'POST'; form.action = list.dataset.reorderUrl;
-      [['csrf_token',list.dataset.csrf],['section_ids',values.join(',')]].forEach(([key,val]) => {
-        const field = document.createElement('input'); field.type = 'hidden'; field.name = key; field.value = val; form.appendChild(field);
-      });
-      document.body.appendChild(form); form.submit();
+      if (!dragged) return;
+      event.preventDefault(); event.stopPropagation();
+      submitOrder();
     });
-    section.addEventListener('dragend', () => { section.classList.remove('aps-dragging'); dragged = null; });
+    handle.addEventListener('dragend', clear);
+  });
+  list.addEventListener('dragover', event => { if (dragged) event.preventDefault(); });
+  list.addEventListener('drop', event => {
+    if (!dragged) return;
+    event.preventDefault();
+    submitOrder();
   });
 });
