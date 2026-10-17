@@ -103,7 +103,7 @@ class PortalSales(http.Controller):
             if project_id and (not project or project not in self._projects()):
                 raise UserError(_('Select an available project.'))
             vals = {
-                'partner_id':partner.id, 'company_id':user.company_id.id,
+                'partner_id':partner.id, 'company_id':user.company_id.id, 'user_id':user.id,
                 'absar_proposal_type':kind, 'absar_portal_creator_id':user.id,
                 'absar_portal_review_state':'draft', 'construction_project_id':project.id if project else False,
             }
@@ -132,7 +132,7 @@ class PortalSales(http.Controller):
     @http.route(BASE + '/<int:order_id>/save', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def save_order(self, order_id, **post):
         order=self._order(order_id); self._editable(order)
-        vals={'absar_proposal_reference':False}
+        vals={'absar_proposal_reference':False, 'user_id':order.absar_portal_creator_id.id}
         project_id = int(post.get('project_id') or 0)
         project = request.env['project.project'].sudo().browse(project_id).exists() if project_id else False
         if project_id and (not project or project not in self._projects()):

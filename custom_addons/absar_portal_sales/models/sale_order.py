@@ -1,4 +1,4 @@
-from odoo import fields, models, _
+from odoo import api, fields, models, _
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
@@ -10,6 +10,15 @@ class SaleOrder(models.Model):
         string='Portal Review', default='draft', copy=False, tracking=True, index=True)
     absar_portal_review_note = fields.Text(string='Review Notes', copy=False)
     absar_portal_approver_id = fields.Many2one('res.users', string='Portal Approved By', readonly=True, copy=False)
+
+    @api.model
+    def _absar_portal_sync_salesperson(self):
+        orders = self.sudo().search([('absar_portal_creator_id', '!=', False),
+                                     ('state', 'in', ('draft', 'sent'))])
+        for order in orders:
+            if order.user_id != order.absar_portal_creator_id:
+                order.sudo().write({'user_id': order.absar_portal_creator_id.id})
+        return True
 
     def _absar_portal_notify_reviewers(self):
         self.ensure_one()
