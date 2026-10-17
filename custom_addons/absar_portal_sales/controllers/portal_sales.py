@@ -5,6 +5,7 @@ from odoo.http import request
 from odoo.tools import float_compare
 from odoo.osv import expression
 from urllib.parse import urlencode
+import json
 
 BASE = '/my/employee/sales'
 
@@ -235,7 +236,18 @@ class PortalSales(http.Controller):
             vals={'order_id':order.id,'name':name,'product_uom_qty':qty,'price_unit':rate,'product_uom':unit.id}
             request.env['sale.order.line'].sudo().create(vals)
         except (UserError,ValidationError) as exc:
+            if request.httprequest.headers.get('X-APS-Inline') == '1':
+                return request.make_response(json.dumps({'ok':False,'error':str(exc)}), headers=[('Content-Type','application/json')], status=400)
             return request.redirect('%s/%s?error=add_line' % (BASE,order.id))
+        if request.httprequest.headers.get('X-APS-Inline') == '1':
+            line = order.order_line.sorted(key=lambda l:l.id)[-1]
+            return request.make_response(json.dumps({
+                'ok':True,'id':line.id,'description':line.name,
+                'unit':line.product_uom.name,'qty':line.product_uom_qty,
+                'rate':line.price_unit,'subtotal':line.price_subtotal,
+                'total':order.amount_untaxed,'currency':order.currency_id.name,
+                'delete_url':'%s/%s/line/%s/delete' % (BASE,order.id,line.id),
+            }),headers=[('Content-Type','application/json')])
         return request.redirect('%s/%s' % (BASE,order.id))
 
     @http.route(BASE + '/<int:order_id>/line/<int:line_id>/delete', type='http', auth='user', website=True, methods=['POST'], csrf=True)
@@ -367,6 +379,7 @@ class PortalSales(http.Controller):
                 if float_compare(total,100,precision_digits=2): raise Forbidden()
             order.sudo().write({'absar_portal_review_state':'submitted','absar_portal_review_note':False})
             order._absar_portal_notify_reviewers()
+            return request.redirect(BASE)
         elif action in ('approve','return'):
             self._allowed(approve=True)
             if not order.absar_portal_creator_id or order.absar_portal_review_state!='submitted' or order.state!='draft': raise Forbidden()
