@@ -25,11 +25,21 @@
      .atp .sec-no{display:inline-block;color:#177b83!important;font-weight:800!important;margin-right:8px;}
      .atp .prose{font-size:13px!important;line-height:1.57!important;overflow-wrap:break-word;}
      .atp .prose p{margin:0 0 7px!important;}
-     .atp .boq{width:100%!important;border-collapse:collapse!important;border:0!important;table-layout:fixed;margin:0!important;}
-     .atp .boq thead{display:table-header-group;}
-     .atp .boq th{font-size:12px;font-weight:700;color:#182f43;background:#fff!important;padding:8px 5px;border:0!important;border-bottom:2px solid #177b83!important;}
-     .atp .boq td{padding:8px 5px!important;border:0!important;border-bottom:1px solid #dbe4e8!important;vertical-align:top;font-size:12px!important;overflow-wrap:break-word;}
-     .atp .boq tr{page-break-inside:avoid;}
+     /* BOQ must flow across PDF pages: no clipping, no all-page wrapper borders. */
+     .atp .boq-wrap{margin:0 0 13px!important;padding:0!important;border:0!important;outline:0!important;box-shadow:none!important;overflow:visible!important;}
+     .atp table.boq{width:100%!important;border:0!important;outline:0!important;border-collapse:collapse!important;border-spacing:0!important;table-layout:fixed!important;margin:0!important;box-shadow:none!important;background:transparent!important;}
+     .atp table.boq, .atp table.boq *{box-shadow:none!important;outline:0!important;}
+     .atp table.boq thead tr{background:#177b83!important;page-break-inside:avoid!important;}
+     .atp table.boq thead th{background:#177b83!important;color:#fff!important;font-size:12px!important;font-weight:700!important;padding:10px 7px!important;border:0!important;border-bottom:2px solid #12666d!important;vertical-align:middle!important;}
+     .atp table.boq tbody tr{page-break-inside:avoid!important;}
+     .atp table.boq tbody td{border:0!important;border-bottom:1px solid #dbe4e8!important;padding:9px 7px!important;vertical-align:top!important;background:transparent!important;}
+     .atp table.boq tbody tr:nth-child(even){background:#eff5f6!important;}
+     .atp table.boq tbody tr:nth-child(odd){background:#fff!important;}
+     .atp .boq-wrap > table.boq{border-left:0!important;border-right:0!important;}
+     .atp table.boq thead{display:table-header-group!important;}
+
+     .atp table.boq td{font-size:12px!important;overflow-wrap:break-word;}
+
      .atp .num{text-align:right!important;white-space:nowrap;}
      .atp .totalbox{margin:9px 0 0 auto;width:50%;page-break-inside:avoid;}
      .atp .totalbox table{width:100%;border-collapse:collapse;border:0!important;}
@@ -68,7 +78,7 @@
      </t>
      <t t-set="num" t-value="num+1"/>
      <h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/> Bill of Quantities</h2>
-     <div class="card"><table class="boq"><thead><tr>
+     <div class="boq-wrap"><table class="boq"><thead><tr>
       <th style="width:47%">Description</th><th style="width:9%">Unit</th><th class="num" style="width:12%">Qty</th><th class="num" style="width:16%">Unit Rate</th><th class="num" style="width:16%">Amount</th>
      </tr></thead><tbody>
       <t t-foreach="o.order_line.sorted(key=lambda l:(l.sequence,l.id))" t-as="line">
