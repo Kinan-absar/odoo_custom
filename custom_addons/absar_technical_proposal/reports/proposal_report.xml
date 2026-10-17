@@ -13,13 +13,13 @@
     <t t-call="absar_report_suite.report_styles"/>
     <style>
      .atp {font-family:Arial,'Cairo',sans-serif!important;color:#182f43!important;font-size:13px!important;line-height:1.48!important;}
-     .atp .heading{margin:4px 0 14px;overflow:hidden;page-break-inside:avoid;}
-     .atp .heading h1{font-size:21px!important;line-height:1.25;color:#182f43!important;font-weight:800!important;margin:0 0 6px!important;border:0!important;}
-     .atp .eyebrow{font-size:11px;letter-spacing:1.1px;text-transform:uppercase;font-weight:700;color:#177b83;}
-     .atp .project{font-size:16px;font-weight:700;line-height:1.35;}
-     .atp .card{border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;padding:11px 14px!important;margin:0 0 13px!important;box-shadow:0 2px 10px rgba(23,123,131,.10)!important;}
-     .atp .metadata{width:100%;border-collapse:collapse!important;border:0!important;}
-     .atp .metadata td{width:50%;border:0!important;vertical-align:top;padding:4px 8px 4px 0!important;font-size:13px;}
+     .atp .heading{margin:6px 0 16px;overflow:hidden;page-break-inside:avoid;text-align:center!important;}
+     .atp .heading h1{font-size:24px!important;line-height:1.25;color:#182f43!important;font-weight:800!important;margin:0 0 8px!important;border:0!important;text-align:center!important;text-transform:none!important;}
+     .atp .project{font-size:18px;font-weight:700;line-height:1.35;text-align:center!important;color:#182f43!important;}
+     .atp .card{border:1px solid #63aeb2!important;border-left:6px solid #177b83!important;border-radius:16px!important;background:#fff!important;padding:11px 14px!important;margin:0 0 13px!important;box-shadow:0 2px 10px rgba(23,123,131,.10)!important;overflow:hidden!important;}
+     .atp .metadata-grid{width:100%!important;display:table!important;border:0!important;border-collapse:separate!important;border-spacing:0!important;outline:none!important;box-shadow:none!important;}
+     .atp .metadata-row{display:table-row!important;}
+     .atp .metadata-cell{display:table-cell!important;width:50%!important;vertical-align:top!important;padding:6px 18px 6px 0!important;font-size:13px!important;border:0!important;outline:none!important;box-shadow:none!important;}
      .atp .smalllabel{display:block;font-size:11px;font-weight:700;color:#627782;margin-bottom:2px;}
      .atp .sec-title{font-weight:700!important;color:#182f43!important;font-size:17px!important;margin:11px 0 10px!important;border:0!important;page-break-after:avoid;}
      .atp .sec-no{display:inline-block;color:#177b83!important;font-weight:800!important;margin-right:8px;}
@@ -44,16 +44,20 @@
      .atp .pagebreak{page-break-before:always;}
     </style>
     <div class="page absar-report atp">
-     <div class="heading"><div class="eyebrow">ABSAR / Technical Submission</div>
-      <h1 t-esc="o.absar_proposal_title or 'TECHNICAL &amp; FINANCIAL PROPOSAL'"/>
+     <div class="heading">
+      <h1 t-esc="o.absar_proposal_title or 'Technical &amp; Financial Proposal'"/>
       <div class="project">Project: <span t-esc="o.construction_project_id.name if o.construction_project_id else (o.name or '')"/></div>
      </div>
-     <div class="card"><table class="metadata"><tr>
-      <td><span class="smalllabel">Prepared for</span><strong t-esc="o.partner_id.name"/></td>
-      <td><span class="smalllabel">Proposal reference</span><strong t-esc="o.absar_proposal_reference or o.name"/></td>
-     </tr><tr><td><span class="smalllabel">Prepared by</span><span t-esc="o.company_id.name"/></td>
-      <td><span class="smalllabel">Proposal date</span><span t-field="o.date_order" t-options="{'widget':'date'}"/></td>
-     </tr></table></div>
+     <div class="card"><div class="metadata-grid">
+      <div class="metadata-row">
+       <div class="metadata-cell"><span class="smalllabel">Prepared for</span><strong t-esc="o.partner_id.name"/></div>
+       <div class="metadata-cell"><span class="smalllabel">Proposal reference</span><strong t-esc="o.absar_proposal_reference or o.name"/></div>
+      </div>
+      <div class="metadata-row">
+       <div class="metadata-cell"><span class="smalllabel">Prepared by</span><span t-esc="o.company_id.name"/></div>
+       <div class="metadata-cell"><span class="smalllabel">Proposal date</span><span t-field="o.date_order" t-options="{'widget':'date'}"/></div>
+      </div>
+     </div></div>
      <t t-set="num" t-value="0"/>
      <t t-foreach="o.absar_proposal_section_ids.sorted(key=lambda s:(s.sequence,s.id))" t-as="s">
       <t t-if="s.include_in_report and s.section_type in ('executive','quantity')">
