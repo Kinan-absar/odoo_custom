@@ -1,27 +1,42 @@
 <odoo>
  <template id="sales_list" name="Employee Portal Sales List">
   <t t-call="employee_portal_suite.employee_portal_layout">
-   <div class="container aps-wrap py-4"><div class="aps-head"><h3>Sales &amp; Proposals</h3><a t-if="can_create" class="btn btn-primary" href="/my/employee/sales/new">+ New Offer</a></div>
-    <p class="text-muted">Prepare quotations and technical proposals for internal approval. Approval never confirms a Sales Order.</p><a t-if="is_approver" class="btn btn-outline-primary mb-3" href="/my/employee/sales/approvals">Pending Approvals (<t t-out="pending_count"/>)</a>
+   <div class="container aps-wrap py-4">
+    <div class="aps-head"><h3 t-out="'Quotation Monitoring' if monitoring else ('Pending Approvals' if queue_only else 'My Quotations &amp; Proposals')"/><a t-if="can_create and not monitoring and not queue_only" class="btn btn-primary" href="/my/employee/sales/new">+ New Offer</a></div>
+    <div class="aps-list-nav">
+     <a href="/my/employee/sales" t-att-class="'aps-list-tab active' if not monitoring and not queue_only else 'aps-list-tab'">My Quotations</a>
+     <a t-if="is_monitor" href="/my/employee/sales/monitor" t-att-class="'aps-list-tab active' if monitoring else 'aps-list-tab'">Quotation Monitoring</a>
+     <a t-if="is_approver" href="/my/employee/sales/approvals" t-att-class="'aps-list-tab active' if queue_only else 'aps-list-tab'">Pending Approvals (<t t-out="pending_count"/>)</a>
+    </div>
+    <p class="text-muted" t-if="monitoring">Read-only visibility across your allowed companies. Backend quotations and confirmed Sales Orders can be filtered separately.</p>
+    <form class="aps-monitor-filters" t-att-action="'/my/employee/sales/monitor' if monitoring else ('/my/employee/sales/approvals' if queue_only else '/my/employee/sales')" method="get">
+     <input class="form-control" name="q" type="search" t-att-value="q" placeholder="Search quotation, customer, project, salesperson"/>
+     <select t-if="monitoring" name="source" class="form-select" aria-label="Source"><option value="all">All sources</option><option value="portal" t-att-selected="source == 'portal' and 'selected' or None">Portal</option><option value="backend" t-att-selected="source == 'backend' and 'selected' or None">Backend</option></select>
+     <select t-if="monitoring" name="sales_state" class="form-select" aria-label="Sales status"><option value="all">All sales statuses</option><option value="quotation" t-att-selected="sales_state == 'quotation' and 'selected' or None">Quotations</option><option value="order" t-att-selected="sales_state == 'order' and 'selected' or None">Sales Orders</option><option value="cancel" t-att-selected="sales_state == 'cancel' and 'selected' or None">Cancelled</option></select>
+     <select t-if="monitoring" name="review" class="form-select" aria-label="Internal review"><option value="all">All review statuses</option><option value="na" t-att-selected="review == 'na' and 'selected' or None">Not applicable (backend)</option><option value="draft" t-att-selected="review == 'draft' and 'selected' or None">Portal draft</option><option value="submitted" t-att-selected="review == 'submitted' and 'selected' or None">Awaiting approval</option><option value="approved" t-att-selected="review == 'approved' and 'selected' or None">Approved</option><option value="returned" t-att-selected="review == 'returned' and 'selected' or None">Returned</option></select>
+     <button class="btn btn-outline-primary" type="submit">Filter</button>
+    </form>
+    <p class="aps-result-count"><t t-out="total_count"/> matching records · Page <t t-out="page"/> of <t t-out="pages"/></p>
     <div class="aps-offer-list" aria-label="Sales quotations and proposals">
      <t t-foreach="orders" t-as="o">
       <a class="aps-offer-row aps-click-row" t-att-href="'/my/employee/sales/%s' % o.id" t-att-data-href="'/my/employee/sales/%s' % o.id" aria-label="Open quotation">
        <div class="aps-offer-main">
-        <div class="aps-offer-top"><strong class="aps-offer-number" t-out="o.name"/><span class="aps-offer-type" t-out="dict(o._fields['absar_proposal_type'].selection).get(o.absar_proposal_type)"/></div>
+        <div class="aps-offer-top"><strong class="aps-offer-number" t-out="o.name"/><span class="aps-offer-type" t-out="dict(o._fields['absar_proposal_type'].selection).get(o.absar_proposal_type) or 'Quotation'"/><span class="aps-offer-type" t-out="'Portal' if o.absar_portal_creator_id else 'Backend'"/></div>
         <div class="aps-offer-customer" t-out="o.partner_id.name"/>
         <div class="aps-offer-project"><span class="aps-mini-label">Project:</span> <span t-out="o.construction_project_id.name or 'Not assigned'"/></div>
-        <div class="aps-offer-creator">Prepared by <span t-out="o.absar_portal_creator_id.name or '—'"/></div>
+        <div class="aps-offer-creator">Salesperson: <span t-out="o.user_id.name or 'Unassigned'"/><t t-if="o.absar_portal_creator_id"> · Prepared by <span t-out="o.absar_portal_creator_id.name"/></t></div>
        </div>
        <div class="aps-offer-side">
-        <span class="aps-mini-label">Value excluding VAT</span>
-        <strong class="aps-offer-value"><t t-out="'{:,.2f}'.format(o.amount_untaxed)"/> <t t-out="o.currency_id.name"/></strong>
-        <span t-att-class="'aps-status aps-status-' + (o.absar_portal_review_state or 'draft')" t-out="dict(o._fields['absar_portal_review_state'].selection).get(o.absar_portal_review_state)"/>
-       </div>
-       <span class="aps-offer-arrow" aria-hidden="true">&#8594;</span>
+        <span class="aps-mini-label">Value excluding VAT</span><strong class="aps-offer-value"><t t-out="'{:,.2f}'.format(o.amount_untaxed)"/> <t t-out="o.currency_id.name"/></strong>
+        <span class="aps-status aps-status-sales" t-out="dict(o._fields['state'].selection).get(o.state) or o.state"/>
+        <span t-if="o.absar_portal_creator_id" t-att-class="'aps-status aps-status-' + (o.absar_portal_review_state or 'draft')" t-out="dict(o._fields['absar_portal_review_state'].selection).get(o.absar_portal_review_state)"/>
+        <span t-else="" class="aps-muted-tag">No portal review</span>
+       </div><span class="aps-offer-arrow" aria-hidden="true">&#8594;</span>
       </a>
      </t>
-     <div t-if="not orders" class="aps-panel aps-offer-empty">No offers found. Create your first draft quotation or technical proposal.</div>
+     <div t-if="not orders" class="aps-panel aps-offer-empty">No quotations match these filters.</div>
     </div>
+    <nav class="aps-pagination" aria-label="Quotation pages"><a t-if="page &gt; 1" class="btn btn-outline-secondary" t-att-href="previous_url">&#8592; Previous</a><span>Page <t t-out="page"/> / <t t-out="pages"/></span><a t-if="page &lt; pages" class="btn btn-outline-secondary" t-att-href="next_url">Next &#8594;</a></nav>
    </div>
   </t>
  </template>
@@ -43,8 +58,8 @@
  </template>
  <template id="sales_detail" name="Portal Sales Offer Editor">
   <t t-call="employee_portal_suite.employee_portal_layout">
-   <div class="container aps-wrap py-4"><a href="/my/employee/sales">&#8592; Sales &amp; Proposals</a>
-    <div class="aps-head mt-3"><div><h3><t t-out="order.name"/> · <t t-out="order.partner_id.name"/></h3><span t-att-class="'aps-status aps-status-' + (order.absar_portal_review_state or 'draft')" t-out="dict(order._fields['absar_portal_review_state'].selection).get(order.absar_portal_review_state)"/></div>
+   <div class="container aps-wrap py-4"><a t-att-href="'/my/employee/sales/monitor' if request.env.user.has_group('absar_portal_sales.group_portal_sales_monitor') and not order.absar_portal_creator_id else '/my/employee/sales'">&#8592; Quotations</a>
+    <div class="aps-head mt-3"><div><h3><t t-out="order.name"/> · <t t-out="order.partner_id.name"/></h3><span t-if="order.absar_portal_creator_id" t-att-class="'aps-status aps-status-' + (order.absar_portal_review_state or 'draft')" t-out="dict(order._fields['absar_portal_review_state'].selection).get(order.absar_portal_review_state)"/><span t-else="" class="aps-muted-tag">Backend quotation · No portal review</span></div>
      <a t-if="order.absar_portal_review_state == 'approved'" t-att-href="'/my/employee/sales/%s/pdf' % order.id" class="btn btn-outline-primary" target="_blank">Print / Download PDF</a></div>
     <div t-if="error or request.params.get('error')" class="alert alert-warning" t-out="error or 'The requested change could not be saved. Check the values and try again.'"/>
     <div t-if="order.absar_portal_review_note" class="alert alert-info"><strong>Reviewer note:</strong> <t t-out="order.absar_portal_review_note"/></div>
@@ -106,7 +121,7 @@
       <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/milestone/add' % order.id" class="row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-4"><input class="form-control" name="name" placeholder="Milestone" required="required"/></div><div class="col-md-2"><input class="form-control" name="percentage" type="number" step="0.01" min="0" max="100" placeholder="%" required="required"/></div><div class="col-md-4"><input class="form-control" name="due_condition" placeholder="Payment due condition"/></div><div class="col-md-2"><button class="btn btn-outline-primary">Add</button></div></form>
      </div>
     </t>
-    <div class="aps-panel"><h5>Internal Review</h5>
+    <div t-if="order.absar_portal_creator_id" class="aps-panel"><h5>Internal Review</h5>
      <p class="text-muted">Submission locks the draft. Approval permits PDF access but does not send the quotation or confirm the Sales Order.</p>
      <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="submit"/><button class="btn btn-primary" t-att-disabled="not order.order_line and 'disabled' or None">Submit for Approval</button></form>
      <div t-if="can_review" class="d-flex gap-3 flex-wrap"><form method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="approve"/><button class="btn btn-success">Approve for Sending</button></form>

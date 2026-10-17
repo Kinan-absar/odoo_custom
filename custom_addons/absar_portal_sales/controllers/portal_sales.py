@@ -3,6 +3,8 @@ from odoo import http, fields, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 from odoo.tools import float_compare
+from odoo.osv import expression
+from urllib.parse import urlencode
 
 BASE = '/my/employee/sales'
 
@@ -20,9 +22,15 @@ class PortalSales(http.Controller):
     def _order(self, order_id, review=False):
         user = self._allowed(approve=review, view=not review)
         order = request.env['sale.order'].sudo().browse(order_id).exists()
-        if not order or not order.absar_portal_creator_id or order.company_id not in user.company_ids:
+        if not order or order.company_id not in user.company_ids:
             raise NotFound()
-        if not review and order.absar_portal_creator_id.id != user.id and not user.has_group('absar_portal_sales.group_portal_sales_approver') and not (user.has_group('absar_portal_sales.group_portal_sales_monitor') and order.absar_portal_review_state in ('submitted','approved','returned')):
+        creator = order.absar_portal_creator_id
+        is_monitor = user.has_group('absar_portal_sales.group_portal_sales_monitor')
+        is_approver = user.has_group('absar_portal_sales.group_portal_sales_approver')
+        if review:
+            if not creator or creator.id == user.id:
+                raise NotFound()
+        elif not ((creator and creator.id == user.id) or (is_approver and creator) or is_monitor):
             raise NotFound()
         return order
 
@@ -63,25 +71,76 @@ class PortalSales(http.Controller):
         kw.setdefault('error', False)
         return request.render(template, kw)
 
+    def _list_view(self, *, monitor=False, queue=False, params=None):
+        user = self._allowed(approve=True) if queue else self._allowed(view=True)
+        is_approver = user.has_group('absar_portal_sales.group_portal_sales_approver')
+        is_monitor = user.has_group('absar_portal_sales.group_portal_sales_monitor')
+        if monitor and not is_monitor:
+            raise Forbidden()
+        params = params or {}
+        domain = [('company_id', 'in', user.company_ids.ids)]
+        if queue:
+            domain += [('absar_portal_creator_id','!=',False), ('absar_portal_creator_id','!=',user.id),
+                       ('absar_portal_review_state','=','submitted'), ('state','=','draft')]
+        elif not monitor:
+            domain += [('absar_portal_creator_id','=',user.id)]
+        else:
+            source = params.get('source', 'all')
+            if source == 'portal':
+                domain += [('absar_portal_creator_id','!=',False)]
+            elif source == 'backend':
+                domain += [('absar_portal_creator_id','=',False)]
+            state = params.get('sales_state', 'all')
+            if state == 'quotation':
+                domain += [('state','in',['draft','sent'])]
+            elif state == 'order':
+                domain += [('state','in',['sale','done'])]
+            elif state == 'cancel':
+                domain += [('state','=','cancel')]
+            review = params.get('review', 'all')
+            if review in ('draft','submitted','approved','returned'):
+                domain += [('absar_portal_creator_id','!=',False),('absar_portal_review_state','=',review)]
+            elif review == 'na':
+                domain += [('absar_portal_creator_id','=',False)]
+        query = (params.get('q') or '').strip()[:120]
+        if query:
+            domain = expression.AND([domain, ['|','|','|',
+                ('name','ilike',query),('partner_id.name','ilike',query),
+                ('construction_project_id.name','ilike',query),('user_id.name','ilike',query)]])
+        model = request.env['sale.order'].sudo()
+        count = model.search_count(domain)
+        per_page = 20
+        try:
+            page = max(1, min(int(params.get('page') or 1), max(1, (count + per_page - 1) // per_page)))
+        except (ValueError,TypeError):
+            page = 1
+        orders = model.search(domain, limit=per_page, offset=(page-1)*per_page, order='date_order desc, id desc')
+        pending_count = model.search_count([('company_id','in',user.company_ids.ids),
+                ('absar_portal_creator_id','!=',False),('absar_portal_creator_id','!=',user.id),
+                ('absar_portal_review_state','=','submitted'),('state','=','draft')]) if is_approver else 0
+        base_url = BASE + ('/approvals' if queue else '/monitor' if monitor else '')
+        def page_url(target):
+            args = {k:params.get(k) for k in ('q','source','sales_state','review') if params.get(k) and params.get(k) != 'all'}
+            args['page'] = target
+            return base_url + '?' + urlencode(args)
+        return self._render('absar_portal_sales.sales_list', orders=orders,
+            is_approver=is_approver, can_create=user.has_group('absar_portal_sales.group_portal_sales_creator'),
+            is_monitor=is_monitor, monitoring=monitor, queue_only=queue, pending_count=pending_count,
+            page=page, pages=max(1,(count+per_page-1)//per_page), total_count=count,
+            previous_url=page_url(page-1), next_url=page_url(page+1), q=query,
+            source=params.get('source','all'), sales_state=params.get('sales_state','all'),review=params.get('review','all'))
+
     @http.route(BASE, type='http', auth='user', website=True)
     def list_orders(self, **kw):
-        user = self._allowed(view=True)
-        is_monitor = user.has_group('absar_portal_sales.group_portal_sales_monitor')
-        is_approver = user.has_group('absar_portal_sales.group_portal_sales_approver')
-        domain = [('absar_portal_creator_id','!=',False),('company_id','in',user.company_ids.ids)]
-        if not is_approver:
-            if is_monitor:
-                domain += [('absar_portal_review_state','in',('submitted','approved','returned'))]
-            else:
-                domain += [('absar_portal_creator_id','=',user.id)]
-        orders = request.env['sale.order'].sudo().search(domain, limit=100, order='id desc')
-        return self._render('absar_portal_sales.sales_list', orders=orders, is_approver=is_approver, can_create=user.has_group('absar_portal_sales.group_portal_sales_creator'), pending_count=len(orders.filtered(lambda o:o.absar_portal_review_state=='submitted')))
+        return self._list_view(params=kw)
+
+    @http.route(BASE + '/monitor', type='http', auth='user', website=True)
+    def monitor_orders(self, **kw):
+        return self._list_view(monitor=True, params=kw)
 
     @http.route(BASE + '/approvals', type='http', auth='user', website=True)
     def approval_queue(self, **kw):
-        user=self._allowed(approve=True)
-        orders=request.env['sale.order'].sudo().search([('absar_portal_review_state','=','submitted'),('absar_portal_creator_id','!=',user.id),('company_id','in',user.company_ids.ids),('state','=','draft')],order='write_date desc',limit=100)
-        return self._render('absar_portal_sales.sales_list',orders=orders,is_approver=True,can_create=True,pending_count=len(orders),queue_only=True)
+        return self._list_view(queue=True, params=kw)
 
     @http.route(BASE + '/new', type='http', auth='user', website=True)
     def new_order(self, **kw):
@@ -296,7 +355,7 @@ class PortalSales(http.Controller):
             order._absar_portal_notify_reviewers()
         elif action in ('approve','return'):
             self._allowed(approve=True)
-            if order.absar_portal_review_state!='submitted' or order.state!='draft': raise Forbidden()
+            if not order.absar_portal_creator_id or order.absar_portal_review_state!='submitted' or order.state!='draft': raise Forbidden()
             if order.absar_portal_creator_id.id == request.env.user.id: raise Forbidden()
             if action=='approve' and order.absar_portal_creator_id.id == request.env.user.id: raise Forbidden()
             if action=='approve':
