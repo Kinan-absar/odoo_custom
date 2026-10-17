@@ -28,6 +28,20 @@
      /* Reuse the quotation's unified table and total-card styling. */
      .atp.absar-unified-document .absar-sale-lines-card{padding:8px 12px!important;margin:0 0 14px!important;overflow:visible!important;page-break-inside:auto!important;}
      .atp.absar-unified-document table.atp-boq{width:100%!important;table-layout:fixed!important;border:0!important;border-collapse:collapse!important;border-spacing:0!important;outline:0!important;box-shadow:none!important;margin:0!important;}
+     /* Browser PDF engines can draw inherited left/right table grid edges.
+        The teal card is the only outer frame; preserve horizontal dividers only. */
+     .atp.absar-unified-document .absar-sale-lines-card{padding:8px 12px!important;box-sizing:border-box!important;}
+     .atp.absar-unified-document .absar-sale-lines-card table.atp-boq,
+     .atp.absar-unified-document .absar-sale-lines-card table.atp-boq thead,
+     .atp.absar-unified-document .absar-sale-lines-card table.atp-boq tbody,
+     .atp.absar-unified-document .absar-sale-lines-card table.atp-boq tr{
+       border:0 none transparent!important;outline:0 none!important;box-shadow:none!important;background-image:none!important;
+     }
+     .atp.absar-unified-document .absar-sale-lines-card table.atp-boq th,
+     .atp.absar-unified-document .absar-sale-lines-card table.atp-boq td{
+       border-left:0 none transparent!important;border-right:0 none transparent!important;
+       border-top:0 none transparent!important;outline:0 none!important;box-shadow:none!important;
+     }
      .atp.absar-unified-document table.atp-boq thead{display:table-header-group!important;}
      .atp.absar-unified-document table.atp-boq thead th{background:#fff!important;color:#182f43!important;font-size:12px!important;font-weight:700!important;border:0!important;border-bottom:1px solid #177b83!important;padding:8px 6px!important;text-align:left!important;}
      .atp.absar-unified-document table.atp-boq tbody td{color:#182f43!important;background:#fff!important;border:0!important;border-bottom:1px solid #dbe4e8!important;padding:7px 6px!important;vertical-align:top!important;font-size:12px!important;overflow-wrap:break-word!important;}
