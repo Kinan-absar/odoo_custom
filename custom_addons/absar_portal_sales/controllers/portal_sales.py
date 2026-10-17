@@ -7,20 +7,22 @@ from odoo.tools import float_compare
 BASE = '/my/employee/sales'
 
 class PortalSales(http.Controller):
-    def _allowed(self, approve=False):
+    def _allowed(self, approve=False, view=False):
         user = request.env.user
         if not user.employee_id or user.has_group('employee_portal_suite.group_attendance_only'):
             raise Forbidden()
+        if view and user.has_group('absar_portal_sales.group_portal_sales_monitor'):
+            return user
         if not user.has_group('absar_portal_sales.group_portal_sales_approver' if approve else 'absar_portal_sales.group_portal_sales_creator'):
             raise Forbidden()
         return user
 
     def _order(self, order_id, review=False):
-        user = self._allowed(approve=review)
+        user = self._allowed(approve=review, view=not review)
         order = request.env['sale.order'].sudo().browse(order_id).exists()
         if not order or not order.absar_portal_creator_id or order.company_id not in user.company_ids:
             raise NotFound()
-        if not review and order.absar_portal_creator_id.id != user.id and not user.has_group('absar_portal_sales.group_portal_sales_approver'):
+        if not review and order.absar_portal_creator_id.id != user.id and not user.has_group('absar_portal_sales.group_portal_sales_approver') and not (user.has_group('absar_portal_sales.group_portal_sales_monitor') and order.absar_portal_review_state in ('submitted','approved','returned')):
             raise NotFound()
         return order
 
@@ -63,19 +65,23 @@ class PortalSales(http.Controller):
 
     @http.route(BASE, type='http', auth='user', website=True)
     def list_orders(self, **kw):
-        user = self._allowed()
+        user = self._allowed(view=True)
+        is_monitor = user.has_group('absar_portal_sales.group_portal_sales_monitor')
         is_approver = user.has_group('absar_portal_sales.group_portal_sales_approver')
         domain = [('absar_portal_creator_id','!=',False),('company_id','in',user.company_ids.ids)]
         if not is_approver:
-            domain += [('absar_portal_creator_id','=',user.id)]
+            if is_monitor:
+                domain += [('absar_portal_review_state','in',('submitted','approved','returned'))]
+            else:
+                domain += [('absar_portal_creator_id','=',user.id)]
         orders = request.env['sale.order'].sudo().search(domain, limit=100, order='id desc')
-        return self._render('absar_portal_sales.sales_list', orders=orders, is_approver=is_approver, pending_count=len(orders.filtered(lambda o:o.absar_portal_review_state=='submitted')))
+        return self._render('absar_portal_sales.sales_list', orders=orders, is_approver=is_approver, can_create=user.has_group('absar_portal_sales.group_portal_sales_creator'), pending_count=len(orders.filtered(lambda o:o.absar_portal_review_state=='submitted')))
 
     @http.route(BASE + '/approvals', type='http', auth='user', website=True)
     def approval_queue(self, **kw):
         user=self._allowed(approve=True)
         orders=request.env['sale.order'].sudo().search([('absar_portal_review_state','=','submitted'),('absar_portal_creator_id','!=',user.id),('company_id','in',user.company_ids.ids),('state','=','draft')],order='write_date desc',limit=100)
-        return self._render('absar_portal_sales.sales_list',orders=orders,is_approver=True,pending_count=len(orders),queue_only=True)
+        return self._render('absar_portal_sales.sales_list',orders=orders,is_approver=True,can_create=True,pending_count=len(orders),queue_only=True)
 
     @http.route(BASE + '/new', type='http', auth='user', website=True)
     def new_order(self, **kw):
@@ -119,7 +125,7 @@ class PortalSales(http.Controller):
     def show_order(self, order_id, **kw):
         order = self._order(order_id)
         return self._render('absar_portal_sales.sales_detail', order=order,
-            can_edit=(order.absar_portal_creator_id.id == request.env.user.id and order.absar_portal_review_state in ('draft','returned') and order.state=='draft'),
+            can_edit=(request.env.user.has_group('absar_portal_sales.group_portal_sales_creator') and order.absar_portal_creator_id.id == request.env.user.id and order.absar_portal_review_state in ('draft','returned') and order.state=='draft'),
             can_review=(request.env.user.has_group('absar_portal_sales.group_portal_sales_approver') and order.absar_portal_review_state=='submitted' and order.absar_portal_creator_id.id != request.env.user.id),
             templates=self._templates(),projects=self._projects(),units=self._units())
 
@@ -214,6 +220,21 @@ class PortalSales(http.Controller):
             values[idx],values[other]=values[other],values[idx]
             for i,item in enumerate(values): item.sudo().write({'sequence':(i+1)*10})
         return request.redirect('%s/%s' % (BASE,order.id))
+
+    @http.route(BASE + '/<int:order_id>/sections/reorder', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def reorder_sections(self, order_id, **post):
+        order = self._order(order_id)
+        self._editable(order)
+        try:
+            incoming = [int(value) for value in (post.get('section_ids') or '').split(',') if value.strip()]
+        except ValueError:
+            raise Forbidden()
+        existing = order.absar_proposal_section_ids.ids
+        if len(incoming) != len(existing) or len(set(incoming)) != len(existing) or set(incoming) != set(existing):
+            raise Forbidden()
+        for index, section_id in enumerate(incoming, start=1):
+            order.absar_proposal_section_ids.filtered(lambda x: x.id == section_id).sudo().write({'sequence': index * 10})
+        return request.redirect('%s/%s' % (BASE, order.id))
 
     @http.route(BASE + '/<int:order_id>/section/<int:section_id>/delete', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def delete_section(self,order_id,section_id,**post):
