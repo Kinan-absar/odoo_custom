@@ -1,0 +1,62 @@
+<odoo>
+ <template id="purchase_monitor_list" name="Purchase Monitoring List">
+  <t t-call="employee_portal_suite.employee_portal_layout">
+   <div class="container apm-shell my-4">
+    <div class="apm-title"><div><h2>Purchase Monitoring</h2><p>Confirmed purchase orders · Read only</p></div><span class="apm-count"><t t-out="total"/> POs</span></div>
+    <form action="/my/employee/purchase-monitor" method="get" class="apm-filter">
+     <input type="search" name="q" t-att-value="q" placeholder="Search PO, supplier, or origin..." class="form-control"/>
+     <select name="status" class="form-select">
+      <option value="all" t-att-selected="status == 'all'">All confirmed</option>
+      <option value="purchase" t-att-selected="status == 'purchase'">Purchase orders</option>
+      <option value="done" t-att-selected="status == 'done'">Locked / Done</option>
+     </select>
+     <button type="submit" class="btn btn-primary">Search</button>
+     <a href="/my/employee/purchase-monitor" class="btn btn-light">Clear</a>
+    </form>
+    <div class="apm-table-wrap">
+     <table class="apm-table">
+      <thead><tr><th>Purchase Order / Supplier</th><th>Project / MR</th><th>Signature</th><th class="apm-num">PO Value</th><th class="apm-num">Invoiced</th><th class="apm-num">Paid*</th><th class="apm-num">Balance Due*</th><th></th></tr></thead>
+      <tbody>
+       <t t-foreach="rows" t-as="r">
+        <tr class="apm-clickrow" t-att-data-href="'/my/employee/purchase-monitor/%d' % r['po'].id" onclick="window.location.href=this.dataset.href" tabindex="0" onkeydown="if(event.key==='Enter'){window.location.href=this.dataset.href}">
+         <td><strong t-out="r['po'].name"/><small t-out="r['po'].partner_id.name"/><small t-out="r['po'].date_order.date() if r['po'].date_order else ''"/></td>
+         <td><span t-out="r['project']"/><small>MR: <t t-out="r['mr']"/></small></td>
+         <td><span class="apm-pill" t-out="r['signature']"/></td>
+         <td class="apm-num"><span t-out="'%.2f' % r['po'].amount_total"/><small t-out="r['po'].currency_id.name"/></td>
+         <td class="apm-num" t-out="'%.2f' % r['financial']['invoiced']"/>
+         <td class="apm-num" t-out="'%.2f' % r['financial']['paid']"/>
+         <td class="apm-num apm-due" t-out="'%.2f' % r['financial']['due']"/>
+         <td class="apm-arrow">&#8594;</td>
+        </tr>
+       </t>
+       <tr t-if="not rows"><td colspan="8" class="apm-empty">No confirmed purchase orders match these filters.</td></tr>
+      </tbody>
+     </table>
+    </div>
+    <div class="apm-footer"><p>* Paid and due are derived from posted vendor bills; shared-bill payments are proportionally estimated. Figures include VAT and may differ from payment-voucher allocations.</p>
+     <div class="apm-pages"><a t-if="page &gt; 1" t-att-href="previous_url">&#8592; Previous</a><span>Page <t t-out="page"/> of <t t-out="pages"/></span><a t-if="page &lt; pages" t-att-href="next_url">Next &#8594;</a></div>
+    </div>
+   </div>
+  </t>
+ </template>
+ <template id="purchase_monitor_detail" name="Purchase Monitoring Detail">
+  <t t-call="employee_portal_suite.employee_portal_layout">
+   <div class="container apm-shell my-4">
+    <a href="/my/employee/purchase-monitor" class="apm-back">&#8592; Purchase Monitoring</a>
+    <div class="apm-title"><div><h2 t-out="row['po'].name"/><p t-out="row['po'].partner_id.name"/></div><span class="apm-pill" t-out="row['signature']"/></div>
+    <div class="apm-cards">
+     <div><label>PO Value (incl. VAT)</label><strong t-out="'%.2f' % row['po'].amount_total"/></div>
+     <div><label>Invoiced (posted)</label><strong t-out="'%.2f' % row['financial']['invoiced']"/></div>
+     <div><label>Paid (estimated)*</label><strong t-out="'%.2f' % row['financial']['paid']"/></div>
+     <div><label>Balance Due (estimated)*</label><strong t-out="'%.2f' % row['financial']['due']"/></div>
+    </div>
+    <div class="apm-info"><div><label>Project</label><span t-out="row['project']"/></div><div><label>Related Material Request</label><span t-out="row['mr']"/></div><div><label>PO Status</label><span t-out="row['po'].state"/></div><div><label>Signing Status</label><span t-out="row['signature']"/></div><div><label>Not Yet Invoiced (approx.)</label><span t-out="'%.2f' % row['unbilled']"/></div><div><label>Currency</label><span t-out="row['po'].currency_id.name"/></div></div>
+    <h3 class="apm-subtitle">Order Lines</h3>
+    <div class="apm-table-wrap"><table class="apm-table"><thead><tr><th>Description</th><th class="apm-num">Qty</th><th class="apm-num">Unit Price</th><th class="apm-num">Subtotal</th></tr></thead><tbody>
+     <t t-foreach="row['po'].order_line" t-as="l"><tr t-if="not l.display_type"><td t-out="l.name"/><td class="apm-num" t-out="'%.2f' % l.product_qty"/><td class="apm-num" t-out="'%.2f' % l.price_unit"/><td class="apm-num" t-out="'%.2f' % l.price_subtotal"/></tr></t>
+    </tbody></table></div>
+    <p class="apm-note">* Payment amounts use bill-level settlement ratios, so a vendor bill covering multiple POs results in estimated PO allocations. No approval or PO modification actions are available here.</p>
+   </div>
+  </t>
+ </template>
+</odoo>
