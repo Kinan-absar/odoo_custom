@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class AbsarSalesBellEvent(models.Model):
@@ -13,6 +16,46 @@ class AbsarSalesBellEvent(models.Model):
     title = fields.Char(required=True)
     is_read = fields.Boolean(default=False, index=True)
     company_id = fields.Many2one('res.company', related='order_id.company_id', store=True)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Deliver EPS Web Push for the same events already used by the bell.
+
+        Push delivery is best-effort and must never block saving a quotation or
+        creating its normal bell notification.
+        """
+        events = super().create(vals_list)
+        push = self.env['employee.portal.webpush.service'].sudo()
+        for event in events:
+            try:
+                recipient = event.user_id
+                order = event.order_id
+                if not recipient.active or not order.exists():
+                    continue
+                if event.event_type == 'submitted':
+                    title = _('Quotation %s awaiting approval') % order.name
+                    body = _('A quotation has been submitted for your review.')
+                elif event.event_type == 'approved':
+                    title = _('Quotation %s approved') % order.name
+                    body = _('Your quotation has been approved for sending.')
+                elif event.event_type == 'returned':
+                    title = _('Quotation %s returned') % order.name
+                    body = _('Your quotation was returned for correction.')
+                else:
+                    continue
+                # EPS maps portal paths to /web for internal recipients. Send
+                # internal approvers to the backend order; portal employees
+                # to the same notification click route as the existing bell.
+                path = ('/my/employee/sales/notifications/%s' % event.id
+                        if recipient.share else
+                        '/web#id=%s&model=sale.order&view_type=form' % order.id)
+                push.send_to_user(
+                    recipient, title, body, path=path,
+                    kind='portal', tag='absar-sales-review-%s' % event.id,
+                )
+            except Exception:
+                _logger.exception('Sales review web push failed for event %s', event.id)
+        return events
 
 
 class SaleOrder(models.Model):
