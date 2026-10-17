@@ -122,9 +122,16 @@
        <div class="card"><div class="prose" t-field="s.content"/></div>
       </t>
      </t>
-     <t t-set="num" t-value="num+1"/><h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/> Acceptance &amp; Authorization</h2>
-     <div class="card" style="page-break-inside:avoid;"><div class="signcol"><strong t-esc="o.company_id.name"/><div class="signblank"/><div class="signlabel">Authorized Signature</div><div class="signblank"/><div class="signlabel">Name: <span t-esc="o.absar_proposal_signatory or ''"/></div><div class="signblank"/><div class="signlabel">Title: <span t-esc="o.absar_proposal_signatory_title or ''"/></div><div class="signblank"/><div class="signlabel">Date</div></div>
-      <div class="signcol" style="margin-left:4%"><strong t-esc="o.partner_id.name"/><div class="signblank"/><div class="signlabel">Authorized Signature</div><div class="signblank"/><div class="signlabel">Name: <span t-esc="o.absar_proposal_customer_signatory or ''"/></div><div class="signblank"/><div class="signlabel">Title: <span t-esc="o.absar_proposal_customer_signatory_title or ''"/></div><div class="signblank"/><div class="signlabel">Date</div></div>
+     <t t-set="num" t-value="num+1"/>
+     <h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/> Proposal Confirmation &amp; Next Steps</h2>
+     <div class="card atp-closing" style="page-break-inside:avoid;">
+      <div class="prose">
+       <p>We appreciate the opportunity to submit our Technical &amp; Financial Proposal for your consideration.</p>
+       <p>Should our proposal meet your technical and commercial requirements, kindly confirm your acceptance by issuing an official Purchase Order or written confirmation referencing this proposal, including the agreed scope of work, contract value, and payment terms.</p>
+       <p>Upon receipt of your confirmation and fulfillment of the agreed commercial conditions, ABSAR Al Omran Company will coordinate the necessary arrangements to commence the works.</p>
+       <p>We look forward to your favorable response and the opportunity to work together.</p>
+       <p style="margin-top:14px!important;font-weight:700;color:#182f43;" t-esc="o.company_id.name"/>
+      </div>
      </div>
     </div>
    </t>
