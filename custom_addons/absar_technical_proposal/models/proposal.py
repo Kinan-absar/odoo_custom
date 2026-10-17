@@ -10,8 +10,15 @@ SECTION_TYPES = [
     ('commercial', 'Commercial Terms / Exclusions'),
     ('legal', 'Legal & Contractual Clauses'),
     ('schedule', 'Execution Schedule'),
+    ('confirmation', 'Proposal Confirmation & Next Steps'),
     ('custom', 'Custom Section'),
 ]
+
+CONFIRMATION_DEFAULT = """<p>We appreciate the opportunity to submit our Technical &amp; Financial Proposal for your consideration.</p>
+<p>Should our proposal meet your technical and commercial requirements, kindly confirm your acceptance by issuing an official Purchase Order or written confirmation referencing this proposal, including the agreed scope of work, contract value, and payment terms.</p>
+<p>Upon receipt of your confirmation and fulfillment of the agreed commercial conditions, ABSAR Al Omran Company will coordinate the necessary arrangements to commence the works.</p>
+<p>We look forward to your favorable response and the opportunity to work together.</p>"""
+
 
 class ProposalTemplate(models.Model):
     _name = 'absar.proposal.template'
@@ -38,8 +45,10 @@ class ProposalTemplateSection(models.Model):
 
     @api.onchange('section_type')
     def _onchange_section_type_name(self):
-        if not self.name:
+        if not self.name or self.name in dict(SECTION_TYPES).values():
             self.name = dict(SECTION_TYPES).get(self.section_type, '')
+        if self.section_type == 'confirmation' and not self.content:
+            self.content = CONFIRMATION_DEFAULT
 
 class ProposalTemplatePayment(models.Model):
     _name = 'absar.proposal.template.payment'
@@ -71,8 +80,10 @@ class ProposalSection(models.Model):
 
     @api.onchange('section_type')
     def _onchange_section_type_name(self):
-        if not self.name:
+        if not self.name or self.name in dict(SECTION_TYPES).values():
             self.name = dict(SECTION_TYPES).get(self.section_type, '')
+        if self.section_type == 'confirmation' and not self.content:
+            self.content = CONFIRMATION_DEFAULT
 
 class ProposalPayment(models.Model):
     _name = 'absar.proposal.payment'
@@ -116,14 +127,21 @@ class SaleOrder(models.Model):
         template = self.absar_proposal_template_id
         if not template:
             raise UserError(_('Select a proposal template first.'))
+        sections = [(0, 0, {
+            'sequence': s.sequence, 'section_type': s.section_type, 'name': s.name,
+            'content': s.content, 'include_in_report': s.include_in_report,
+            'page_break_before': s.page_break_before,
+        }) for s in template.section_ids]
+        if not any(s.section_type == 'confirmation' for s in template.section_ids):
+            sections.append((0, 0, {
+                'sequence': 999, 'section_type': 'confirmation',
+                'name': 'Proposal Confirmation & Next Steps',
+                'content': CONFIRMATION_DEFAULT, 'include_in_report': True,
+            }))
         self.write({
             'absar_proposal_type': 'technical',
             'absar_proposal_title': template.title,
-            'absar_proposal_section_ids': [(5, 0, 0)] + [(0, 0, {
-                'sequence': s.sequence, 'section_type': s.section_type, 'name': s.name,
-                'content': s.content, 'include_in_report': s.include_in_report,
-                'page_break_before': s.page_break_before,
-            }) for s in template.section_ids],
+            'absar_proposal_section_ids': [(5, 0, 0)] + sections,
             'absar_proposal_payment_ids': [(5, 0, 0)] + [(0, 0, {
                 'sequence': p.sequence, 'name': p.name, 'percentage': p.percentage,
                 'due_condition': p.due_condition,

@@ -79,7 +79,8 @@
       </div>
       <div class="metadata-row">
        <div class="metadata-cell"><span class="smalllabel">Prepared by</span><span t-esc="o.company_id.name"/></div>
-       <div class="metadata-cell"><span class="smalllabel">Proposal date</span><span t-field="o.date_order" t-options="{'widget':'date'}"/></div>
+       <div class="metadata-cell"><span class="smalllabel">Proposal date</span><span t-field="o.date_order" t-options="{'widget':'date'}"/>
+        <t t-if="o.validity_date"><div style="margin-top:7px;"><span class="smalllabel">Offer valid until</span><strong t-field="o.validity_date"/></div></t></div>
       </div>
      </div></div>
      <t t-set="num" t-value="0"/>
@@ -104,11 +105,13 @@
        </tr>
       </t>
      </tbody></table></div>
-     <div class="absar-unified-total-card absar-tapered-card atp-total-card"><table class="o_ignore_layout_styling">
-      <tbody><tr><td>Subtotal (VAT Exclusive)</td><td><span t-field="o.amount_untaxed" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
-      <tr class="atp-vat"><td>VAT</td><td><span t-field="o.amount_tax" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr>
-      <tr class="atp-grand"><td>Total Proposal Value</td><td><span t-field="o.amount_total" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></td></tr></tbody>
-     </table></div><div class="after-boq"/>
+     <div class="absar-unified-total-card absar-tapered-card atp-total-card">
+      <div style="display:table;width:100%;padding:7px 4px;">
+       <div style="display:table-cell;font-weight:700;font-size:15px;">Total Proposal Value (VAT Exclusive)</div>
+       <div style="display:table-cell;text-align:right;font-weight:700;font-size:16px;white-space:nowrap;"><span t-field="o.amount_untaxed" t-options="{'widget':'monetary','display_currency':o.currency_id}"/></div>
+      </div>
+      <div style="color:#627782;font-size:11px;padding:0 4px 4px;">Prices exclude VAT. Applicable VAT will be added to invoices in accordance with Saudi tax regulations.</div>
+     </div><div class="after-boq"/>
      <t t-if="o.absar_proposal_payment_ids">
       <t t-set="num" t-value="num+1"/><h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/> Payment Schedule</h2>
       <div class="card"><table class="milestone"><thead><tr><th>Milestone</th><th class="num">%</th><th class="num">Amount (Excl. VAT)</th><th>Due condition</th></tr></thead><tbody>
@@ -116,23 +119,32 @@
       </tbody></table></div>
      </t>
      <t t-foreach="o.absar_proposal_section_ids.sorted(key=lambda s:(s.sequence,s.id))" t-as="s">
-      <t t-if="s.include_in_report and s.section_type not in ('executive','quantity')">
+      <t t-if="s.include_in_report and s.section_type not in ('executive','quantity','confirmation')">
        <t t-set="num" t-value="num+1"/><div t-if="s.page_break_before" class="pagebreak"/>
        <h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/><span t-esc="s.name"/></h2>
        <div class="card"><div class="prose" t-field="s.content"/></div>
       </t>
      </t>
-     <t t-set="num" t-value="num+1"/>
-     <h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/> Proposal Confirmation &amp; Next Steps</h2>
-     <div class="card atp-closing" style="page-break-inside:avoid;">
-      <div class="prose">
+     <t t-set="confirmation_sections" t-value="o.absar_proposal_section_ids.filtered(lambda s: s.section_type == 'confirmation' and s.include_in_report).sorted(key=lambda s:(s.sequence,s.id))"/>
+     <t t-if="confirmation_sections">
+      <t t-foreach="confirmation_sections" t-as="confirmation">
+       <t t-set="num" t-value="num+1"/>
+       <div t-if="confirmation.page_break_before" class="pagebreak"/>
+       <h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/><span t-esc="confirmation.name"/></h2>
+       <div class="card atp-closing"><div class="prose" t-field="confirmation.content"/><p style="margin-top:14px!important;font-weight:700;color:#182f43;" t-esc="o.company_id.name"/></div>
+      </t>
+     </t>
+     <t t-else="">
+      <t t-set="num" t-value="num+1"/>
+      <h2 class="sec-title"><span class="sec-no" t-esc="'%02d' % num"/> Proposal Confirmation &amp; Next Steps</h2>
+      <div class="card atp-closing"><div class="prose">
        <p>We appreciate the opportunity to submit our Technical &amp; Financial Proposal for your consideration.</p>
        <p>Should our proposal meet your technical and commercial requirements, kindly confirm your acceptance by issuing an official Purchase Order or written confirmation referencing this proposal, including the agreed scope of work, contract value, and payment terms.</p>
        <p>Upon receipt of your confirmation and fulfillment of the agreed commercial conditions, ABSAR Al Omran Company will coordinate the necessary arrangements to commence the works.</p>
        <p>We look forward to your favorable response and the opportunity to work together.</p>
        <p style="margin-top:14px!important;font-weight:700;color:#182f43;" t-esc="o.company_id.name"/>
-      </div>
-     </div>
+      </div></div>
+     </t>
     </div>
    </t>
   </t></t>
