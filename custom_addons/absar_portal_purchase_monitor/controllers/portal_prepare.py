@@ -49,7 +49,7 @@ class PortalPurchasePrepare(http.Controller):
     def _actor(self, role=None):
         user = request.env.user
         roles = ('preparer', 'approver', 'monitor')
-        if (not user.active or (user.share and not user.sudo().employee_id) or
+        if (not user.active or (user.share and not user.sudo().with_company(user.company_id).employee_id) or
                 user.has_group('employee_portal_suite.group_attendance_only') or
                 not any(user.has_group(PREFIX + 'group_portal_purchase_' + r)
                         for r in ((role,) if role else roles))):
@@ -337,6 +337,8 @@ class PortalPurchasePrepare(http.Controller):
         orders = model.search(domain, order=order, limit=20, offset=(page - 1) * 20)
         base = BASE + ('/confirmations' if confirmations else '/approvals' if approval else '')
         page_url = lambda n: base + '?' + urlencode(dict(q=q, review=review, sort=sort, group_by=group_by, page=n))
+        if approval or confirmations:
+            request.env['portal.report.seen'].sudo()._mark_seen(user.id, 'purchase_approval')
         return request.render(PREFIX + 'purchase_prepare_list', dict(
             orders=orders, orders_only=False, group_by=group_by, group_labels={po.id: (dict(po._fields[group_field]._description_selection(po.env)).get(po[group_field], 'Not set') if group_field == 'absar_portal_review_state' else po[group_field].display_name or 'Not set') for po in orders} if group_field else {}, approval=approval, confirmations=confirmations, q=q, review=review, sort=sort,
             page=page, pages=max(1, math.ceil(count / 20)), total=count,
@@ -381,6 +383,7 @@ class PortalPurchasePrepare(http.Controller):
                     attachments=[{'id': a.id, 'name': a.name} for a in attachments],
                     totals=dict(untaxed=po.amount_untaxed, tax=po.amount_tax, total=po.amount_total, currency=po.currency_id.name) if po else None,
                     back_url=BASE if user.has_group(PREFIX + 'group_portal_purchase_preparer') else BASE + '/approvals' if user.has_group(PREFIX + 'group_portal_purchase_approver') else '/my/employee/purchase-monitor',
+                    approvers=[{'name': u.name, 'account_type': 'Portal' if u.share else 'Internal'} for u in po.absar_portal_reviewer_ids] if po else [],
                     id=po.id if po else False, name=po.name if po else _('New'),
                     state=po.state if po else 'draft',
                     review=po.absar_portal_review_state if po else 'draft',

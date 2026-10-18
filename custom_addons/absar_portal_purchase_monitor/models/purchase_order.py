@@ -21,9 +21,24 @@ class PurchaseOrder(models.Model):
     absar_portal_approver_id = fields.Many2one('res.users', readonly=True, copy=False)
     absar_portal_approved_on = fields.Datetime(readonly=True, copy=False)
 
+    absar_portal_reviewer_ids = fields.Many2many(
+        'res.users', string='Eligible Approvers', compute='_compute_portal_reviewers', compute_sudo=True)
+
+    @api.depends('company_id', 'absar_portal_preparer_id', 'user_id')
+    def _compute_portal_reviewers(self):
+        for po in self:
+            po.absar_portal_reviewer_ids = po._portal_reviewers()
+
+    def _portal_reviewers(self):
+        self.ensure_one()
+        issuer = self.absar_portal_preparer_id or self.user_id
+        return self.env.ref(PREFIX + 'group_portal_purchase_approver').sudo().users.filtered(
+            lambda u: u.active and not u.has_group('employee_portal_suite.group_attendance_only') and
+            (not u.share or u.with_company(u.company_id).employee_id) and u != issuer and self.company_id in u.company_ids)
+
     def _portal_actor(self, role):
         user = self.env.user.sudo(False)
-        if (not user.active or (user.share and not user.sudo().employee_id) or
+        if (not user.active or (user.share and not user.sudo().with_company(user.company_id).employee_id) or
                 user.has_group('employee_portal_suite.group_attendance_only') or
                 not user.has_group(PREFIX + 'group_portal_purchase_' + role)):
             raise AccessError(_('You do not have the required purchase workspace permission.'))
@@ -88,9 +103,7 @@ class PurchaseOrder(models.Model):
         # The analytic mixin enforces applicability per plan with this context.
         if hasattr(lines, '_validate_analytic_distribution'):
             lines.with_context(validate_analytic=True)._validate_analytic_distribution()
-        group = self.env.ref(PREFIX + 'group_portal_purchase_approver')
-        reviewers = group.sudo().users.filtered(
-            lambda u: u.active and not u.has_group('employee_portal_suite.group_attendance_only') and (not u.share or u.employee_id) and u != user and self.company_id in u.company_ids)
+        reviewers = self._portal_reviewers()
         if not reviewers:
             raise UserError(_('No independent Purchase Approver is available for this company. Save as a draft and ask your administrator to assign one.'))
         self.sudo().write({'absar_portal_review_state': 'submitted',

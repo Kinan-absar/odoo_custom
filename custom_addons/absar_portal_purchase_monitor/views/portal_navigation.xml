@@ -4,14 +4,14 @@
    <t t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor') or request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer') or request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver')">
     <div class="ep-sidebar-section" id="ep-section-purchase-monitor"><div class="ep-sidebar-section-title">Purchase</div><div class="ep-sidebar-section-links"><t t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')"><a href="/my/employee/purchase" class="ep-sidebar-link"><i class="fa fa-file-text-o"/> My Purchase RFQs</a></t>
      <t t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor')"><a href="/my/employee/purchase-monitor" class="ep-sidebar-link"><i class="fa fa-shopping-cart"/> Purchase Monitoring</a></t>
-     <t t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver')"><a href="/my/employee/purchase/approvals" class="ep-sidebar-link"><i class="fa fa-check-square-o"/> Purchase Approvals</a></t>
+     <t t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver')"><a href="/my/employee/purchase/approvals" class="ep-sidebar-link"><i class="fa fa-check-square-o"/> Purchase Approvals<span class="apw-nav-count" t-if="ep_notif_summary.get('purchase_approval', {}).get('count', 0)" t-out="ep_notif_summary['purchase_approval']['count']"/></a></t>
     </div></div>
    </t>
   </xpath>
   <xpath expr="//div[@class='ep-dropdown-menu' and @id='app-d']/parent::div" position="after">
    <t t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor') or request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer') or request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver')"><div class="ep-dropdown"><button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'apm-purchase-d')">Purchase ▾</button><div id="apm-purchase-d" class="ep-dropdown-menu"><t t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')"><a href="/my/employee/purchase" class="ep-sub-link">My Purchase RFQs</a></t>
     <t t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor')"><a href="/my/employee/purchase-monitor" class="ep-sub-link">Purchase Monitoring</a></t>
-    <t t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver')"><a href="/my/employee/purchase/approvals" class="ep-sub-link">Purchase Approvals</a></t>
+    <t t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver')"><a href="/my/employee/purchase/approvals" class="ep-sub-link">Purchase Approvals<span class="apw-nav-count" t-if="ep_notif_summary.get('purchase_approval', {}).get('count', 0)" t-out="ep_notif_summary['purchase_approval']['count']"/></a></t>
    </div></div></t>
   </xpath>
  </template>

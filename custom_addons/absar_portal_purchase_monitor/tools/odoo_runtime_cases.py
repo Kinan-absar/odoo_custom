@@ -230,6 +230,9 @@ def check_runtime(env, service, payload):
     assert native_order.state == 'draft' and native_order.absar_portal_review_state == 'submitted'
     assert native_order.absar_portal_preparer_id == internal_issuer and native_order.user_id == internal_issuer
     assert not native_order.picking_ids
+    assert portal_reviewer in native_order.sudo().absar_portal_reviewer_ids
+    assert manager in native_order.sudo().absar_portal_reviewer_ids
+    assert internal_issuer not in native_order.sudo().absar_portal_reviewer_ids
     for operation in (native_order.button_confirm, native_order.button_approve,
                       native_order.action_absar_portal_approve_confirm):
         try:
@@ -238,6 +241,88 @@ def check_runtime(env, service, payload):
             pass
         else:
             raise AssertionError('Internal issuer must not bypass approval')
+    # Real inherited portal bell summary: no native activity or push subscription
+    # is needed to discover a pending internal-issued RFQ in the portal.
+    markers = env['portal.report.seen'].sudo()
+    portal_attention = markers._get_notification_summary(portal_reviewer)
+    assert 'fixture_existing' in portal_attention
+    pending_count = portal_attention['purchase_approval']['count']
+    assert pending_count > 0 and portal_attention['purchase_approval']['new'] > 0
+    assert portal_attention['purchase_approval']['url'] == '/my/employee/purchase/approvals'
+    assert not markers._get_purchase_approval_summary(internal_issuer)
+    assert not markers._get_purchase_approval_summary(monitor)
+    assert 'purchase_approval' not in markers._get_notification_summary(actor)
+    # Exercise the actual queue GET: internal-issued RFQ is in the portal list,
+    # and visiting the list sets the newly registered purchase seen marker.
+    from types import SimpleNamespace
+    request.env = env(user=portal_reviewer.id, context=dict(issuer_env.context))
+    request.httprequest = SimpleNamespace(path='/my/employee/purchase/approvals')
+    request.render = lambda template, values: values
+    try:
+        listing = service.listing.__wrapped__(service)
+        assert native_order.id in listing['orders'].ids
+        assert markers._get_last_seen(portal_reviewer.id, 'purchase_approval')
+        assert service._boot(service._record(native_order.id))['approvers']
+    finally:
+        request.env = issuer_env
+    # Load the real inherited EPS home template and render its attention card.
+    # A tiny outer layout replaces unrelated EPS navigation in this probe.
+    layout = env['ir.ui.view'].create({'name': 'Disposable outer portal layout', 'type': 'qweb',
+        'key': 'employee_portal_suite.employee_portal_layout',
+        'arch_db': '<t t-name="employee_portal_suite.employee_portal_layout"><main><t t-out="0"/></main></t>'})
+    env['ir.model.data'].create({'module': 'employee_portal_suite', 'name': 'employee_portal_layout',
+                                  'model': 'ir.ui.view', 'res_id': layout.id})
+    salary_group = env['res.groups'].create({'name': 'Disposable Salary Viewer'})
+    env['ir.model.data'].create({'module': 'employee_portal_suite', 'name': 'group_salary_report_viewer',
+                                  'model': 'res.groups', 'res_id': salary_group.id})
+    dashboard_path = addon.parents[1] / 'inspection/eps/employee_portal_suite/views/employee_dashboard_page.xml'
+    with dashboard_path.open('rb') as source:
+        convert_xml_import(env, 'employee_portal_suite', source, {}, mode='update')
+    with (addon / 'views/portal_purchase_attention.xml').open('rb') as source:
+        convert_xml_import(env, 'absar_portal_purchase_monitor', source, {}, mode='update')
+    dashboard_values = dict.fromkeys([
+        'my_request_count', 'my_material_count', 'employee_pending_count', 'new_employee_pending_count',
+        'material_pending_count', 'new_material_pending_count', 'can_er_approval_page', 'can_mr_approval_page',
+        'pending_sign_count', 'new_pending_sign_count', 'salary_report_count', 'new_salary_report_count',
+        'portal_report_count', 'new_portal_report_count', 'can_manage_portal_reports', 'contract_count',
+        'ipc_count', 'variation_count', 'measurement_count', 'show_construction_cards',
+        'attendance_checked_in', 'can_use_attendance'], 0)
+    dashboard_values['recent_activities'] = []
+    for viewer in (portal_reviewer, monitor):
+        dashboard_values['request'] = SimpleNamespace(env=env(user=viewer.id, context=dict(issuer_env.context)))
+        html = env['ir.qweb'].with_context(minimal_qcontext=True)._render(
+            'employee_portal_suite.employee_portal_dashboard', dict(dashboard_values))
+        document = etree.HTML(str(html))
+        cards = document.xpath('//a[@href="/my/employee/purchase/approvals"]')
+        assert bool(cards) == (viewer == portal_reviewer)
+        assert bool(document.xpath('//div[@class="attention-clear"]')) == (viewer == monitor)
+    print('PASS: actual portal queue GET lists internal-issued RFQ and marks seen; inherited EPS home compiles/renders attention for Approver and all-clear for Monitor.')
+
+    # Other-company and self-issued fixtures must never inflate the count.
+    other_company = env['res.company'].create({'name': 'Disposable foreign purchase company'})
+    env['stock.warehouse'].create({'name': 'Foreign purchase warehouse', 'code': 'FPO', 'company_id': other_company.id})
+    excluded = env['purchase.order'].create([
+        {'partner_id': vendor.id, 'company_id': other_company.id,
+         'absar_portal_preparer_id': actor.id, 'absar_portal_review_state': 'submitted'},
+        {'partner_id': vendor.id, 'company_id': order.company_id.id,
+         'absar_portal_preparer_id': portal_reviewer.id, 'absar_portal_review_state': 'submitted'},
+    ])
+    assert markers._get_purchase_approval_summary(portal_reviewer)['count'] == pending_count
+    # Eligibility must not depend on the submitting user's active company:
+    # a portal approver's employee may belong to their primary company.
+    portal_reviewer.write({'company_ids': [(4, other_company.id)]})
+    assert portal_reviewer in excluded[0].with_company(other_company)._portal_reviewers()
+    assert markers._get_purchase_approval_summary(portal_reviewer)['count'] == pending_count + 1
+    portal_reviewer.write({'company_ids': [(3, other_company.id)]})
+    assert markers._get_purchase_approval_summary(portal_reviewer)['count'] == pending_count
+    markers._mark_seen(portal_reviewer.id, 'purchase_approval')
+    # Simulate opening the queue in a subsequent request, after earlier writes.
+    from datetime import timedelta
+    markers.search([('user_id', '=', portal_reviewer.id), ('report_type', '=', 'purchase_approval')]).write(
+        {'last_seen_date': native_order.write_date + timedelta(seconds=1)})
+    summary = markers._get_purchase_approval_summary(portal_reviewer)
+    assert summary['count'] == pending_count and summary['new'] == 0
+
     # Return from the portal, correct in native Purchase and resubmit.
     request.env = env(user=portal_reviewer.id, context=dict(issuer_env.context))
     try:
@@ -247,10 +332,12 @@ def check_runtime(env, service, payload):
         request.env = issuer_env
     native_order.invalidate_recordset()
     assert native_order.state == 'draft' and native_order.absar_portal_review_state == 'returned'
+    assert markers._get_purchase_approval_summary(portal_reviewer)['count'] == pending_count - 1
     native_order.order_line[0].write({'price_unit': 12})
     native_order.button_confirm()
     native_order.invalidate_recordset()
     assert native_order.absar_portal_review_state == 'submitted' and not native_order.picking_ids
+    assert markers._get_purchase_approval_summary(portal_reviewer)['count'] == pending_count
     # It appears in the same queue, and a portal Approver can approve it.
     assert native_order.sudo().filtered_domain(action.domain and __import__('ast').literal_eval(action.domain))
     request.env = env(user=portal_reviewer.id, context=dict(issuer_env.context))
@@ -263,6 +350,8 @@ def check_runtime(env, service, payload):
     assert native_order.state in ('purchase', 'done')
     assert native_order.absar_portal_approver_id == portal_reviewer
     assert native_order.user_id == internal_issuer and portal_reviewer.share
+    assert markers._get_purchase_approval_summary(portal_reviewer)['count'] == pending_count - 1
+    print('PASS: portal approval bell/home summary includes internal requests, scopes company/role/self, acknowledges seen separately from pending, and updates on return/resubmit/confirmation.')
     native_arch = env['purchase.order'].with_user(internal_issuer).get_view(
         view_id=env.ref('purchase.purchase_order_form').id, view_type='form')['arch']
     native_document = etree.fromstring(native_arch.encode())

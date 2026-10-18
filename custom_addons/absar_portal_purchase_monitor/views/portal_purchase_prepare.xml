@@ -23,12 +23,12 @@
    <div id="apw-status" role="status" aria-live="polite"/>
    <div class="apw-actions">
     <a t-if="boot['id']" class="btn btn-outline-secondary" t-att-href="'/my/employee/purchase/%s/print' % boot['id']">Print PDF</a>
-    <t t-if="not boot['readonly']"><button class="btn btn-primary" type="button" data-action="save">Save Draft</button><button class="btn btn-outline-primary" type="button" data-action="submit">Submit for Confirmation</button></t>
-    <t t-if="boot['can_review']"><button t-if="boot['review'] == 'submitted'" class="btn btn-primary" type="button" data-action="approve_confirm">Approve &amp; Confirm</button><button t-if="boot['review'] == 'submitted'" class="btn btn-primary" type="button" data-action="approve">Approve RFQ</button><button class="btn btn-outline-secondary" type="button" data-action="return">Return for Correction</button></t>
+    <t t-if="not boot['readonly']"><button class="btn btn-primary" type="button" data-action="save">Save Draft</button><button class="btn btn-outline-primary" type="button" data-action="submit">Submit for Approval</button></t>
+    <t t-if="boot['can_review']"><button t-if="boot['review'] == 'submitted'" class="btn btn-primary" type="button" data-action="approve_confirm">Approve &amp; Confirm</button><button t-if="boot['review'] == 'submitted'" class="btn btn-primary" type="button" data-action="approve">Approve Only</button><button class="btn btn-outline-secondary" type="button" data-action="return">Return for Correction</button></t>
     <button t-if="boot['can_confirm']" type="button" class="btn btn-primary" data-action="confirm">Confirm PO</button>
     <span t-if="boot['readonly']" class="apw-help">Read-only</span>
    </div>
-   <p t-if="boot['review'] == 'submitted'" class="alert alert-info">Submitted to the Purchase team for approval and confirmation.</p>
+   <p t-if="boot['review'] == 'submitted'" class="alert alert-info">Submitted for approval and confirmation.<t t-if="boot.get('approvers')"> Eligible Approvers: <t t-foreach="boot['approvers']" t-as="reviewer"><t t-if="not reviewer_first">, </t><t t-out="reviewer['name']"/> (<t t-out="reviewer['account_type']"/>)</t>.</t><t t-else=""> No eligible Approver is currently assigned to this company.</t></p>
    <div class="apw-workflow-status" aria-label="Purchase status"><t t-foreach="[('draft', 'RFQ'), ('sent', 'RFQ Sent'), ('to approve', 'Awaiting Manager Approval'), ('purchase', 'Purchase Order'), ('done', 'Locked'), ('cancel', 'Cancelled')]" t-as="step"><span t-att-class="'is-current' if boot['state'] == step[0] else ''" t-out="step[1]"/></t></div>
    <div class="apw-sheet">
     <div class="apw-form-grid" id="apw-header"/>

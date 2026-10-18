@@ -1,6 +1,16 @@
-# ABSAR Portal Purchase Workspace — 18.0.1.5.6
+# ABSAR Portal Purchase Workspace — 18.0.1.5.7
 
 A dedicated employee-portal purchasing interface, following the Purchase app's familiar navigation, document layout and workflow. This replaces the 1.4 native-backend host. It does not promise every internal purchasing, accounting, stock or signing function.
+
+## Portal approval attention in 18.0.1.5.7
+
+Internal To Do activities are supplementary. Every eligible portal or internal Approver can see submitted RFQs through the shared queue, independently of native mail activities or a device push subscription. Purchase approvals now appear in the portal notification bell, sidebar count and home Needs Your Attention card. The summary uses the same company, independent issuer, RFQ state and submitted review conditions as the default approval queue; issuer-only, monitor-only, Attendance Only and inactive accounts receive no approval counts.
+
+Opening the approval queue acknowledges the new indicator while retaining the pending home/sidebar count until the request is resolved. Returning, resubmitting or confirming a request updates the persistent count. These markers reuse EPS's existing notification model; no generic purchase or HR access is granted. Existing pending requests are counted after upgrade as well as new submissions.
+
+The native Purchase Review tab and portal submitted banner show **Eligible Approvers**, including portal and internal accounts. The displayed list and submission recipients use the same eligibility helper. This is a group review pool, not an assignment to only the native To Do activity's user. Portal Submit is labelled **Submit for Approval**, matching the internal form; Approve Only is explicitly labelled separately from Approve & Confirm.
+
+Browser checks on staging were limited to the signed-in Fahed Issuer account: RFQ list/status, read-only submitted order and displayed totals, purchasing product form defaults, and unsaved MR-to-RFQ import. No staging order/product was saved or confirmed. Switching to another account was blocked by automatic approval review, so live internal/Approver checks and the final deployment still require authorized access. Local Odoo/PostgreSQL tests cover internal creation, submission, shared portal review/return/resubmit/confirmation and the role/company/notification boundaries. The runtime uses the actual EPS seen-marker fields/helpers with a minimal base summary bridge; it does not run the entire EPS/Enterprise stack.
 
 ## Internal and portal submissions in 18.0.1.5.6
 

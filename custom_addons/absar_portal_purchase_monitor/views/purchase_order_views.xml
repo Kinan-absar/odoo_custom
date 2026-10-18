@@ -18,6 +18,7 @@
    <xpath expr="//sheet/notebook" position="inside"><page name="absar_portal_purchase_review" string="Purchase Review" invisible="not absar_portal_preparer_id"><group>
    <field name="absar_portal_preparer_id" readonly="1"/>
    <field name="absar_portal_review_state" readonly="1"/>
+   <field name="absar_portal_reviewer_ids" widget="many2many_tags" readonly="1" options="{'no_open': True, 'no_create': True}"/>
    <field name="absar_portal_approver_id" readonly="1"/>
    <field name="absar_portal_approved_on" readonly="1"/>
    <field name="absar_portal_review_note" readonly="state not in ['draft', 'sent']"/>
