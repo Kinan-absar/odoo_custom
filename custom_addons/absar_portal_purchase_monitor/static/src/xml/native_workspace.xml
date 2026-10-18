@@ -1,0 +1,14 @@
+<templates xml:space="preserve">
+ <t t-name="absar_portal_purchase_monitor.NativeWorkspace">
+  <nav class="absar_purchase_nav o_main_navbar" aria-label="Purchase navigation">
+   <a class="o_menu_brand" href="/my/employee">Employee Portal</a>
+   <button class="btn" t-on-click="() => this.open('rfq')">Requests for Quotation</button>
+   <button class="btn" t-on-click="() => this.open('orders')">Purchase Orders</button>
+   <button class="btn" t-on-click="() => this.open('products')">Products</button>
+   <button t-if="boot.roles.preparer" class="btn" t-on-click="() => this.open('mr')">Material Requests</button>
+  </nav>
+  <div t-if="state.error" class="alert alert-danger m-3" role="alert" t-esc="state.error"/>
+  <ActionContainer/>
+  <MainComponentsContainer/>
+ </t>
+</templates>
