@@ -1,0 +1,45 @@
+<odoo>
+ <template id="purchase_prepare_list" name="Portal Purchase RFQs">
+  <t t-call="absar_portal_purchase_monitor.purchase_approval_list"/></template>
+ <template id="purchase_prepare_detail" name="Purchase Workspace Editor">
+  <t t-call="employee_portal_suite.employee_portal_layout"><main id="apw-root" class="apw-shell"><t t-call="absar_portal_purchase_monitor.purchase_workspace_nav" t-if="not boot['approval_view']"/>
+   <div class="apw-breadcrumb"><a t-att-href="boot['back_url']" t-out="'Purchase Monitoring' if boot['back_url'] == '/my/employee/purchase-monitor' else 'Purchase Approvals' if boot['approval_view'] else 'Purchase'"/><span>/</span><span t-out="boot['name']"/></div>
+   <div class="apw-heading"><div><h2 t-out="boot['name']"/><p t-out="boot['company_name']"/></div><div><span class="apw-badge" t-out="boot['review']"/> <span class="apw-badge" t-out="boot['state']"/></div></div>
+   <p t-if="boot.get('mr_source')" class="alert alert-info">Materials imported from <strong t-out="boot['mr_source']"/>. Choose a product for unmatched materials and check vendor prices before saving.</p>
+   <p t-if="not boot['project_integration']" class="alert alert-warning">The backend Project integration addon is not installed. Project selection requires that addon.</p>
+   <p t-if="boot['note']" class="alert alert-info"><strong>Review note: </strong><t t-out="boot['note']"/></p>
+   <div id="apw-error" class="alert alert-danger" role="alert" hidden="hidden"/>
+   <div id="apw-status" role="status" aria-live="polite"/>
+   <div class="apw-actions">
+    <a t-if="boot['id']" class="btn btn-outline-secondary" t-att-href="'/my/employee/purchase/%s/print' % boot['id']">Print PDF</a>
+    <t t-if="not boot['readonly']"><button class="btn btn-primary" type="button" data-action="save">Save Draft</button><button class="btn btn-outline-primary" type="button" data-action="submit">Submit for Approval</button></t>
+    <t t-if="boot['can_review']"><button t-if="boot['review'] == 'submitted'" class="btn btn-primary" type="button" data-action="approve_confirm">Approve &amp; Confirm</button><button t-if="boot['review'] == 'submitted'" class="btn btn-primary" type="button" data-action="approve">Approve Only</button><button class="btn btn-outline-secondary" type="button" data-action="return">Return for Correction</button></t>
+    <button t-if="boot['can_confirm']" type="button" class="btn btn-primary" data-action="confirm">Confirm PO</button>
+    <span t-if="boot['readonly']" class="apw-help">Read-only</span>
+   </div>
+   <p t-if="boot['review'] == 'submitted'" class="alert alert-info">Submitted for approval and confirmation.<t t-if="boot.get('approvers')"> Eligible Approvers: <t t-foreach="boot['approvers']" t-as="reviewer"><t t-if="not reviewer_first">, </t><t t-out="reviewer['name']"/> (<t t-out="reviewer['account_type']"/>)</t>.</t><t t-else=""> No eligible Approver is currently assigned to this company.</t></p>
+   <div class="apw-workflow-status" aria-label="Purchase status"><t t-foreach="[('draft', 'RFQ'), ('sent', 'RFQ Sent'), ('to approve', 'Awaiting Manager Approval'), ('purchase', 'Purchase Order'), ('done', 'Locked'), ('cancel', 'Cancelled')]" t-as="step"><span t-att-class="'is-current' if boot['state'] == step[0] else ''" t-out="step[1]"/></t></div>
+   <div class="apw-sheet">
+    <div class="apw-form-grid" id="apw-header"/>
+    <div class="apw-tabs" role="tablist" aria-label="Purchase information"><button type="button" role="tab" aria-selected="true" data-tab="products">Products</button><button type="button" role="tab" aria-selected="false" data-tab="other">Other Information</button><button type="button" role="tab" aria-selected="false" data-tab="payments">Payments</button><button type="button" role="tab" aria-selected="false" data-tab="signing">Signing Package</button></div>
+    <section data-panel="products" role="tabpanel"><div class="apw-table-scroll"><table class="apw-table apw-lines"><thead><tr><th>Product / Description</th><th>Analytic Distribution</th><th class="num">Quantity</th><th>UoM</th><th class="num">Unit Price</th><th class="num">Disc.%</th><th>Taxes</th><th class="num">Amount</th><th>Actions</th></tr></thead><tbody id="apw-lines"/></table></div>
+     <div t-if="not boot['readonly']" class="apw-line-actions"><button type="button" class="btn btn-link" data-action="add">Add a product</button><button type="button" class="btn btn-link" data-action="section">Add a section</button><button type="button" class="btn btn-link" data-action="note">Add a note</button><button type="button" class="btn btn-outline-primary" data-action="catalog">Catalog</button><button t-if="boot['can_create_product']" type="button" class="btn btn-outline-secondary" data-action="product">Create Product</button></div>
+     <div class="apw-footer-grid"><div><label for="apw-notes">Terms and Conditions</label><textarea id="apw-notes" class="form-control" rows="5" t-att-disabled="boot['readonly']"/><p class="apw-help">Dates use <t t-out="boot['timezone']"/>. Saving includes all order lines.</p></div><div class="apw-totals" id="apw-totals"><p>Use Recalculate to load native tax totals.</p></div></div>
+     <button t-if="not boot['readonly']" type="button" class="btn btn-light" data-action="recalculate">Recalculate totals</button>
+    </section>
+    <section data-panel="other" role="tabpanel" hidden="hidden"><div id="apw-other" class="apw-form-grid"/></section>
+    <section data-panel="payments" role="tabpanel" hidden="hidden"><p>Financial records are read-only in this workspace.</p><t t-if="po and po.state in ('purchase', 'done')"><p t-if="'amount_paid' in po._fields">Paid (PO linked): <strong t-field="po.amount_paid"/></p><a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor')" t-att-href="'/my/employee/purchase-monitor/%s' % po.id">Open purchase monitoring details</a></t><p t-else="">Payment monitoring becomes available after purchase confirmation.</p></section>
+    <section data-panel="signing" role="tabpanel" hidden="hidden">
+     <h5>Supplier quotations</h5><div id="apw-attachments"/>
+     <div t-if="not boot['readonly'] and boot['id']" class="apw-actions"><label>Quotation PDF<input type="file" id="apw-quotation-file" accept="application/pdf,.pdf" class="form-control"/></label><button type="button" class="btn btn-outline-primary" data-action="upload">Upload Quotation</button><small class="apw-help">PDF, up to 1.4 MB</small></div>
+     <p t-if="not boot['id']" class="apw-help">Save the RFQ before uploading quotations.</p><p t-if="po and 'signature_status_text' in po._fields"><strong t-field="po.signature_status_text"/></p><p>Signing package order: Purchase Order → supplier quotation PDF(s) → linked Material Request.</p><p>Signature requests and quotation attachments continue through the installed backend Send-to-Sign workflow.</p></section>
+   </div>
+   <input id="apw-csrf" type="hidden" t-att-value="request.csrf_token()"/>
+   <pre id="apw-boot" hidden="hidden" t-out="boot_json"/>
+   <noscript><p class="alert alert-warning">Enable JavaScript to use the purchase editor.</p></noscript>
+  </main></t>
+ </template>
+ <!-- Keep old XML identifiers on upgrade. Old mutation routes are removed. -->
+ <template id="purchase_prepare_new"><t t-call="absar_portal_purchase_monitor.purchase_prepare_detail"/></template>
+ <template id="purchase_approval_list"><t t-call="absar_portal_purchase_monitor.purchase_prepare_list"/></template>
+</odoo>

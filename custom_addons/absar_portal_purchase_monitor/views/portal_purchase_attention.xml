@@ -1,0 +1,16 @@
+<odoo>
+ <template id="purchase_approval_dashboard" inherit_id="employee_portal_suite.employee_portal_dashboard" name="Purchase Approval Attention">
+  <xpath expr="//section[contains(concat(' ', normalize-space(@class), ' '), ' needs-attention ')]" position="before">
+   <t t-set="apw_purchase_attention" t-value="request.env['portal.report.seen'].sudo()._get_purchase_approval_summary(request.env.user)"/>
+  </xpath>
+  <xpath expr="//div[@class='attention-total']/t" position="attributes">
+   <attribute name="t-out">employee_pending_count + material_pending_count + pending_sign_count + apw_purchase_attention.get('count', 0)</attribute>
+  </xpath>
+  <xpath expr="//div[@class='attention-grid']" position="inside">
+   <a t-if="apw_purchase_attention.get('count', 0)" href="/my/employee/purchase/approvals" class="attention-item"><span class="attention-icon warning"><i class="fa fa-shopping-cart"/></span><span><strong><t t-out="apw_purchase_attention['count']"/> Purchase Request<t t-if="apw_purchase_attention['count'] != 1">s</t></strong><small>Waiting for your approval</small></span><i class="fa fa-angle-right ms-auto"/></a>
+  </xpath>
+  <xpath expr="//t[div[@class='attention-clear']]" position="attributes">
+   <attribute name="t-if">employee_pending_count + material_pending_count + pending_sign_count + apw_purchase_attention.get('count', 0) == 0</attribute>
+  </xpath>
+ </template>
+</odoo>

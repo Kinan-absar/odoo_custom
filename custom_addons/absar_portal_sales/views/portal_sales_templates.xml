@@ -93,7 +93,7 @@
         <td class="aps-boq-edit-actions"><button type="submit" form="aps-boq-new-form" class="aps-boq-save" title="Save item">Save</button><button type="button" class="aps-boq-cancel" title="Cancel">Cancel</button></td>
        </tr>
       </tbody></table></div>
-     <div class="aps-total">Proposal value (excluding VAT): <strong><t t-out="'{:,.2f}'.format(order.amount_untaxed)"/> <t t-out="order.currency_id.name"/></strong></div>
+     <div class="aps-total">Proposal value (excluding VAT): <strong class="aps-boq-total-value"><t t-out="'{:,.2f}'.format(order.amount_untaxed)"/> <t t-out="order.currency_id.name"/></strong></div>
     </div>
     <t t-if="order.absar_proposal_type == 'technical'">
      <div class="aps-panel"><h5>Technical Proposal Template</h5>

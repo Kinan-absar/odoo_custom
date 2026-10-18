@@ -102,6 +102,81 @@ document.addEventListener('DOMContentLoaded', () => {
   qty?.addEventListener('input', sync);
   rate?.addEventListener('input', sync);
   sync();
+
+  // Save using the existing authenticated Odoo route, without reloading the page.
+  // If JavaScript is unavailable the original POST form still works normally.
+  form?.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (!form.reportValidity() || form.dataset.saving === '1') return;
+    const save = editRow.querySelector('.aps-boq-save');
+    const feedback = document.createElement('div');
+    feedback.className = 'aps-boq-inline-error';
+    feedback.setAttribute('role', 'alert');
+    editRow.querySelectorAll('.aps-boq-inline-error').forEach(el => el.remove());
+    form.dataset.saving = '1';
+    if (save) save.disabled = true;
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST', body: new FormData(form),
+        headers: {'X-APS-Inline': '1', 'Accept': 'application/json'},
+        credentials: 'same-origin'
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Unable to save item.');
+      const row = document.createElement('tr');
+      row.className = 'aps-boq-data-row';
+      const desc = document.createElement('td');
+      desc.className = 'aps-boq-description';
+      const details = document.createElement('details');
+      details.className = 'aps-line-details';
+      const summary = document.createElement('summary');
+      summary.textContent = result.description;
+      details.appendChild(summary);
+      desc.appendChild(details);
+      row.appendChild(desc);
+      const append = (value, className='') => {
+        const cell = document.createElement('td');
+        if (className) cell.className = className;
+        cell.textContent = value;
+        row.appendChild(cell);
+      };
+      const number = value => Number(value).toFixed(2);
+      append(result.unit);
+      append(number(result.qty), 'text-end');
+      append(number(result.rate), 'text-end');
+      append(number(result.subtotal), 'text-end');
+      const removeCell = document.createElement('td');
+      removeCell.className = 'aps-boq-remove';
+      const removeForm = document.createElement('form');
+      removeForm.method = 'post';
+      removeForm.action = result.delete_url;
+      const csrf = document.createElement('input');
+      csrf.type = 'hidden'; csrf.name = 'csrf_token';
+      csrf.value = form.querySelector('[name="csrf_token"]')?.value || '';
+      removeForm.appendChild(csrf);
+      const remove = document.createElement('button');
+      remove.type = 'submit'; remove.className = 'aps-boq-delete';
+      remove.title = 'Remove item'; remove.setAttribute('aria-label', 'Remove item');
+      remove.textContent = '×';
+      removeForm.appendChild(remove);
+      removeCell.appendChild(removeForm);
+      row.appendChild(removeCell);
+      const linkRow = document.querySelector('.aps-boq-add-link-row');
+      linkRow?.parentNode.insertBefore(row, linkRow);
+      const total = document.querySelector('.aps-boq-total-value');
+      if (total) total.textContent = Number(result.total).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + ' ' + result.currency;
+      form.reset(); sync();
+      editRow.hidden = true;
+      openButton.setAttribute('aria-expanded', 'false');
+      openButton.focus();
+    } catch (error) {
+      feedback.textContent = error.message || 'Unable to save item. Please try again.';
+      editRow.querySelector('td')?.appendChild(feedback);
+    } finally {
+      delete form.dataset.saving;
+      if (save) save.disabled = false;
+    }
+  });
 });
 
 // Only show projects assigned to the selected quotation customer.
