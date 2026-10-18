@@ -223,7 +223,14 @@ class PortalPurchasePrepare(http.Controller):
         if display:
             if display not in ('line_section', 'line_note'):
                 raise ValidationError(_('Invalid row type.'))
-            return {'display_type': display, 'name': str(data.get('name') or '')[:4000] or _('Untitled')}
+            # Purchase's web form supplies zero quantities for non-product rows.
+            # product_qty is required even though a section/note has no product;
+            # omitting it leaves NULL during ORM create and violates NOT NULL.
+            return {'display_type': display, 'name': str(data.get('name') or '')[:4000] or _('Untitled'),
+                    'product_id': False, 'product_qty': 0.0, 'product_uom_qty': 0.0,
+                    'product_uom': False, 'price_unit': 0.0, 'discount': 0.0,
+                    'date_planned': False, 'taxes_id': [(5, 0, 0)],
+                    'analytic_distribution': False, 'absar_expense_account_id': False}
         product = self._choice('product', data.get('product_id'), company, True)
         qty = number(data.get('product_qty', 1), _('Quantity'))
         if qty <= 0:
@@ -468,7 +475,10 @@ class PortalPurchasePrepare(http.Controller):
             for item in lines:
                 vals = self._line(item, order, defaults=bool(data.get('defaults')))
                 commands.append((0, 0, vals))
-            order.order_line = commands
+            # _line() creates temporary defaulting lines; the inverse order_id
+            # adds them to that parent's in-memory order_line cache. Build the
+            # preview from a fresh parent so only submitted rows are included.
+            order = model.new(dict(header, order_line=commands))
             # A new() order is a cache-only record. Recompute after attaching all
             # lines so totals cannot retain the empty-order cache populated by
             # a native/custom onchange. Use the same tax methods as Purchase.
@@ -519,7 +529,14 @@ class PortalPurchasePrepare(http.Controller):
             if po:
                 if str(data.get('notes') or '') == self._plain(po.notes):
                     header.pop('notes', None)  # Preserve existing rich text unless terms were edited.
+                # Settle native header-dependent defaults first. Applying the
+                # vendor/currency and line edits in one parent write can run the
+                # price/discount compute after the explicit line values were set.
+                # The user's validated line values must be applied last.
+                line_commands = header.pop('order_line')
                 po.write(header)
+                po.order_line.flush_recordset()
+                po.write({'order_line': line_commands})
             else:
                 header['absar_portal_preparer_id'] = user.id
                 po = model.create(header)

@@ -16,7 +16,7 @@ namespace = {'ValidationError': ValidationError, '_': lambda value: value,
              'expression': Expression(), 'BASE': '/my/employee/purchase', 'json': json}
 cls = next(n for n in tree.body if isinstance(n, ast.ClassDef))
 methods = [n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name in
-           {'_choice', '_scope', '_json', 'preview', 'product_defaults'}]
+           {'_choice', '_scope', '_line', '_json', 'preview', 'product_defaults'}]
 for method in methods: method.decorator_list = []
 new_cls = ast.ClassDef(name='Service', bases=[], keywords=[], body=methods, decorator_list=[])
 functions = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'integer']
@@ -29,6 +29,10 @@ for invalid in [True, -1, 'NewId_3', [1], 1.5]:
     else: raise AssertionError(invalid)
 
 service = namespace['Service']()
+for kind in ('line_section', 'line_note'):
+    values = service._line({'display_type': kind, 'name': 'Test'}, NS(company_id=NS(id=7)))
+    assert values['product_qty'] == values['price_unit'] == values['product_uom_qty'] == 0
+    assert values['product_id'] is False and values['date_planned'] is False
 class Model:
     def browse(self): return []
     def search(self, *args, **kwargs): return []
@@ -74,7 +78,12 @@ class Virtual:
 preview = namespace['Service'](); preview._actor = lambda *a: None
 preview._company = lambda *a: NS(id=7)
 preview._header = lambda *a: {}
-preview._env = lambda *a: {'purchase.order': ScopedModel()}
+class PreviewModel(ScopedModel):
+    def new(self, values):
+        record = Virtual()
+        record.order_line = values['order_line']
+        return record
+preview._env = lambda *a: {'purchase.order': PreviewModel()}
 preview._native_order = lambda *a: Virtual()
 preview._line = lambda data, *a, **kw: data
 preview._serialize_line = lambda row: row[2]

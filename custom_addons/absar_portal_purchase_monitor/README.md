@@ -1,6 +1,15 @@
-# ABSAR Portal Purchase Workspace — 18.0.1.5.1
+# ABSAR Portal Purchase Workspace — 18.0.1.5.2
 
 A dedicated employee-portal purchasing interface, following the Purchase app's familiar navigation, document layout and workflow. This replaces the 1.4 native-backend host. It does not promise every internal purchasing, accounting, stock or signing function.
+
+## Fixes in 18.0.1.5.2
+
+The reported zero amounts and draft-save failure were reproduced with actual Odoo 18 models and PostgreSQL.
+
+- Defaulting a product line automatically attaches a temporary line to the virtual parent via the inverse relation. Reusing that parent for preview duplicated the products and reset prices. Preview now constructs a fresh parent containing exactly the validated submitted rows, then runs native amount/tax calculations.
+- Section/note payloads omitted `product_qty`. Odoo's SQL field is NOT NULL even for these rows, producing `NotNullViolation` on draft creation. Sections/notes now explicitly supply zero quantities/prices and empty product/accounting fields.
+- Existing RFQs now settle vendor/currency/header-dependent native computations before applying the validated line changes. This preserves manually entered prices and discounts when quantities or the vendor change.
+- Existing company-wide project/MR choices, product creation, portal roles and native-host withdrawal remain in place.
 
 ## Fixes in 18.0.1.5.1
 
@@ -63,7 +72,7 @@ Accounts must be active, employee-linked and outside Attendance Only. Company, p
 
 1. Back up staging and keep the previous addon revision. Replace the technical folder `absar_portal_purchase_monitor` in the custom-addons branch; EPS itself is unchanged.
 2. Let the Odoo.sh build/restart complete, then upgrade **ABSAR Portal Purchase Workspace** in Apps. A file replacement without a restart/module upgrade does not execute the permission withdrawal.
-3. Verify version `18.0.1.5.1`. Existing Portal account types and purchasing roles remain unchanged. Native Workspace Access is no longer needed.
+3. Verify version `18.0.1.5.2`. Existing Portal account types and purchasing roles remain unchanged. Native Workspace Access is no longer needed.
 4. Hard-refresh the portal. Use the Purchase sidebar links or `/my/employee/purchase` for a preparer. Confirmers/reviewers can use their dedicated links; monitoring users can open Purchase Orders.
 5. Verify that the old native model ACLs/rules are gone and the native host is no longer served. Then complete the acceptance checks below on staging.
 
@@ -71,9 +80,15 @@ Dependencies: `employee_portal_suite`, `purchase_stock`, `project_purchase`, `ac
 
 ## Validation and remaining work
 
-Executed locally: Python/XML/QWeb/JavaScript checks, inherited-view and package checks, isolated validator/workflow checks, migration ownership/idempotency checks, MR proposal checks, and targeted regressions for optional IDs, unavailable selections, company lookup scope, product origin IDs, preview recomputation, product form payloads and stale amounts.
+Executed locally:
 
-The open staging portal was inspected in an unsaved RFQ and the product dialog. This patch has **not** been deployed or successfully tested through an Odoo save/submit/product-create cycle. No confirmed PO or financial action was performed. The complete EPS/Enterprise runtime is unavailable locally; native/custom constraints still require staging acceptance after upgrading.
+- Real Odoo 18 Community core (`1f2b50ad`) and PostgreSQL 16, with this addon's actual purchasing model/controller source and a minimal MR bridge. The full EPS/Enterprise/custom signing stack was not installed locally.
+- Reproduced the old preview returning eight rows for five submitted rows and zero totals; reproduced SQL `NotNullViolation` for section `product_qty` during save.
+- Verified the corrected preview contains exactly three products, one section and one note, with untaxed 162,930.00, VAT 24,439.50 and total 187,369.50 SAR; verified the same values on a persisted draft.
+- Real ORM regression cases for draft create/edit, quantity/price/discount changes, vendor change, submission without PO confirmation, product defaults/create/add, and a user remaining Portal without Internal User membership (`tools/odoo_runtime_cases.py`). Fixtures were rolled back.
+- Python/XML/QWeb/JavaScript and package checks; isolated validator/workflow, migration scope/idempotency and MR proposal checks; frontend payload, amount-cache and persistent-total-panel tests.
+
+The final ZIP has not been deployed by the agent. The local tests exercise real ORM calculations and writes, not this staging database's complete extension stack or end-to-end browser execution. Staging acceptance after upgrading is still required for custom signing/report behavior and company-specific constraints.
 
 After an authorized staging upgrade, test:
 
