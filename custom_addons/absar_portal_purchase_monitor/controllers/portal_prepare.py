@@ -300,7 +300,10 @@ class PortalPurchasePrepare(http.Controller):
     def listing(self, **kw):
         confirmations = request.httprequest.path.endswith('/confirmations')
         approval = request.httprequest.path.endswith('/approvals')
-        user = self._actor('approver' if confirmations or approval else 'preparer')
+        if confirmations:
+            self._actor('approver')
+            return request.redirect(BASE + '/approvals')
+        user = self._actor('approver' if approval else 'preparer')
         domain = [('company_id', 'in', user.company_ids.ids)]
         if confirmations:
             domain += [('absar_portal_preparer_id', '!=', False), ('state', 'in', ['draft', 'sent'])]
@@ -348,6 +351,7 @@ class PortalPurchasePrepare(http.Controller):
         user = self._actor('preparer' if not po else None)
         company = po.company_id if po else company or user.company_id
         readonly = bool(po and not po._portal_editable(user))
+        approval_view = bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_preparer_id != user)
         vals = dict(company_id=company.id, currency_id=company.currency_id.id,
                     date_order=self._local(fields.Datetime.now()), date_planned='', notes='', lines=[])
         def choice(record):
@@ -379,10 +383,10 @@ class PortalPurchasePrepare(http.Controller):
         attachments = request.env['ir.attachment'].sudo().search([
             ('res_model', '=', 'purchase.order'), ('res_id', '=', po.id), ('mimetype', '=', 'application/pdf'),
             '|', ('company_id', '=', False), ('company_id', '=', company.id)], order='id') if po else request.env['ir.attachment'].browse()
-        return dict(values=vals, selected=selected, readonly=readonly,
+        return dict(values=vals, selected=selected, readonly=readonly, approval_view=approval_view,
                     attachments=[{'id': a.id, 'name': a.name} for a in attachments],
                     totals=dict(untaxed=po.amount_untaxed, tax=po.amount_tax, total=po.amount_total, currency=po.currency_id.name) if po else None,
-                    back_url=BASE if user.has_group(PREFIX + 'group_portal_purchase_preparer') else BASE + '/approvals' if user.has_group(PREFIX + 'group_portal_purchase_approver') else '/my/employee/purchase-monitor',
+                    back_url=BASE + '/approvals' if approval_view else BASE if user.has_group(PREFIX + 'group_portal_purchase_preparer') else BASE + '/approvals' if user.has_group(PREFIX + 'group_portal_purchase_approver') else '/my/employee/purchase-monitor',
                     approvers=[{'name': u.name, 'account_type': 'Portal' if u.share else 'Internal'} for u in po.absar_portal_reviewer_ids] if po else [],
                     id=po.id if po else False, name=po.name if po else _('New'),
                     state=po.state if po else 'draft',

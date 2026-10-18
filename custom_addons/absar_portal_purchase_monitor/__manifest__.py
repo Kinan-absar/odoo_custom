@@ -1,5 +1,5 @@
 {'name': 'ABSAR Portal Purchase Workspace',
- 'version': '18.0.1.5.7',
+ 'version': '18.0.1.5.8',
  'category': 'Purchases',
  'summary': 'Dedicated employee portal purchasing with controlled RFQ, product '
             'and MR workflows',
@@ -17,6 +17,7 @@
           'views/portal_navigation.xml',
           'views/portal_purchase_attention.xml',
           'views/portal_purchase_prepare.xml',
+          'views/portal_purchase_approval_list.xml',
           'views/portal_workspace_pages.xml'],
  'assets': {'web.assets_frontend': ['absar_portal_purchase_monitor/static/src/css/purchase_monitor.css',
                                     'absar_portal_purchase_monitor/static/src/js/purchase_ui.js',

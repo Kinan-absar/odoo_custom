@@ -1,6 +1,12 @@
-# ABSAR Portal Purchase Workspace — 18.0.1.5.7
+# ABSAR Portal Purchase Workspace — 18.0.1.5.8
 
 A dedicated employee-portal purchasing interface, following the Purchase app's familiar navigation, document layout and workflow. This replaces the 1.4 native-backend host. It does not promise every internal purchasing, accounting, stock or signing function.
+
+## Single Approver page in 18.0.1.5.8
+
+Approvers have one **Purchase Approvals** list with search, review status, sorting and grouping, plus the scoped request detail needed to review/return/confirm. The approval list uses the original Purchase Monitoring list design: compact title/count, filters, rounded table, supplier/project/MR details and clickable rows. Opening a request retains the existing purchase order form and approval actions. Monitor list links now open that same form with editing/approval/product-creation controls disabled; the Monitor company/confirmed-order scope remains enforced. The approval list and review detail omit the Purchase app header/navigation. They do not offer New RFQ. Detail breadcrumbs return to Purchase Approvals even when a user also holds Issuer rights.
+
+The Products directory now requires Issuer, matching product creation. An Approver-only account cannot open it directly. Old Purchase Orders and Confirmations bookmarks for Approver-only accounts lead to the single Purchase Approvals page. Issuer RFQ lists use the same Monitoring table style, and Issuer Purchase Orders reuse the actual financial monitoring list with the existing own-order scope and links to the purchase order form. An Issuer who also holds Approver keeps their separate issuance pages and own confirmed orders; a Monitor keeps the original monitoring list and opens the shared purchase order form in read-only mode. No group assignments or workflow actions are changed.
 
 ## Portal approval attention in 18.0.1.5.7
 
@@ -106,7 +112,7 @@ Accounts must be active and outside Attendance Only. Portal users must be employ
 
 1. Back up staging and keep the previous addon revision. Replace the technical folder `absar_portal_purchase_monitor` in the custom-addons branch; EPS itself is unchanged.
 2. Let the Odoo.sh build/restart complete, then upgrade **ABSAR Portal Purchase Workspace** in Apps. A file replacement without a restart/module upgrade does not execute the permission withdrawal.
-3. Verify version `18.0.1.5.6` and the three named addon groups. Account types remain unchanged; legacy role memberships merge as described above.
+3. Verify version `18.0.1.5.8` and the three named addon groups. Account types remain unchanged; legacy role memberships merge as described above.
 4. Hard-refresh the portal. Use the Purchase sidebar links or `/my/employee/purchase` for a preparer. Approvers use Purchase Approvals; monitoring users can open Purchase Orders.
 5. Verify that the old native model ACLs/rules are gone and the native host is no longer served. Then complete the acceptance checks below on staging.
 

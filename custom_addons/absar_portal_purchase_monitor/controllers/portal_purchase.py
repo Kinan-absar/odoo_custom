@@ -60,7 +60,14 @@ class PortalPurchaseMonitor(http.Controller):
     @http.route(BASE, type='http', auth='user', website=True)
     def list_orders(self, **kw):
         user = self._user()
+        return request.render(PREFIX + 'purchase_monitor_list', self._list_values(user, kw))
+
+    def _list_values(self, user, kw, extra_domain=None, list_url=BASE, detail_base_url=BASE,
+                     title='Purchase Monitoring', description='Confirmed purchase orders · Read only',
+                     show_workspace=False):
         domain = [('state', 'in', ['purchase', 'done']), ('company_id', 'in', user.company_ids.ids)]
+        if extra_domain:
+            domain = expression.AND([domain, extra_domain])
         q = str(kw.get('q') or '').strip()[:120]
         if q:
             search = ['|', '|', '|', ('name', 'ilike', q), ('partner_id.name', 'ilike', q),
@@ -94,11 +101,11 @@ class PortalPurchaseMonitor(http.Controller):
         if group_field:
             order = group_field + ',' + order
         pos = model.search(domain, order=order, limit=20, offset=(page - 1) * 20)
-        page_url = lambda n: BASE + '?' + urlencode(dict(q=q, status=status, billing=billing, sort=sort, group_by=group_by, page=n))
-        return request.render(PREFIX + 'purchase_monitor_list', dict(
+        page_url = lambda n: list_url + '?' + urlencode(dict(q=q, status=status, billing=billing, sort=sort, group_by=group_by, page=n))
+        return dict(list_url=list_url, detail_base_url=detail_base_url, title=title, description=description, show_workspace=show_workspace,
             rows=self._rows(pos), group_by=group_by, group_labels={po.id: po[group_field].display_name or 'Not set' for po in pos} if group_field else {}, q=q, status=status, billing=billing, sort=sort,
             total=total, page=page, pages=pages,
-            previous_url=page_url(page - 1), next_url=page_url(page + 1)))
+            previous_url=page_url(page - 1), next_url=page_url(page + 1))
 
     @http.route(BASE + '/<int:po_id>', type='http', auth='user', website=True)
     def order_detail(self, po_id, **kw):
@@ -106,4 +113,4 @@ class PortalPurchaseMonitor(http.Controller):
         po = request.env['purchase.order'].sudo().browse(po_id).exists()
         if not po or po.state not in ('purchase', 'done') or po.company_id not in user.company_ids:
             raise NotFound()
-        return request.render(PREFIX + 'purchase_monitor_detail', dict(row=self._rows(po)[0]))
+        return request.redirect('/my/employee/purchase/%s?from_monitor=1' % po.id)

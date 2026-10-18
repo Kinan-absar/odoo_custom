@@ -10,6 +10,7 @@ from odoo.http import content_disposition
 from odoo.http import request
 from odoo.osv import expression
 from .portal_prepare import PortalPurchasePrepare, BASE, PREFIX, integer
+from .portal_purchase import PortalPurchaseMonitor
 
 
 class PortalPurchaseDirectory(PortalPurchasePrepare):
@@ -28,33 +29,17 @@ class PortalPurchaseDirectory(PortalPurchasePrepare):
         user = self._actor()
         if user.has_group(PREFIX + 'group_portal_purchase_monitor'):
             return request.redirect('/my/employee/purchase-monitor')
-        scope = []
-        if user.has_group(PREFIX + 'group_portal_purchase_monitor'):
-            scope.append([(1, '=', 1)])
-        if user.has_group(PREFIX + 'group_portal_purchase_preparer'):
-            scope.append([('absar_portal_preparer_id', '=', user.id)])
-        if any(user.has_group(PREFIX + 'group_portal_purchase_' + r) for r in ('approver',)):
-            scope.append([('absar_portal_preparer_id', '!=', False)])
-        domain = expression.AND([[('company_id', 'in', user.company_ids.ids), ('state', 'in', ['purchase', 'done'])], expression.OR(scope)])
-        q = str(kw.get('q') or '').strip()[:120]
-        if q:
-            domain = expression.AND([domain, ['|', '|', ('name', 'ilike', q), ('partner_id.name', 'ilike', q), ('material_request_id.name', 'ilike', q)]])
-        sort = kw.get('sort', 'newest')
-        sorts = {'newest':'id desc', 'reference':'name asc,id desc', 'vendor':'partner_id,id desc', 'amount':'amount_total desc,id desc', 'date':'date_order desc,id desc'}
-        group_by = kw.get('group_by', '')
-        groups = {'vendor':'partner_id', 'project':'project_id', 'buyer':'user_id', 'company':'company_id', 'review':'absar_portal_review_state'}
-        field = groups.get(group_by)
-        values = self._page(request.env['purchase.order'].sudo(), domain, kw, BASE+'/orders',
-                            order=(field+',' if field else '')+sorts.get(sort,sorts['newest']), q=q, sort=sort, group_by=group_by)
-        pos = values.pop('records')
-        values.update(orders=pos, orders_only=True, approval=False, confirmations=False,
-                      q=q, review='all', sort=sort, group_by=group_by if field else '',
-                      group_labels={po.id: (dict(po._fields[field]._description_selection(po.env)).get(po[field], 'Not set') if field=='absar_portal_review_state' else po[field].display_name or 'Not set') for po in pos} if field else {})
-        return request.render(PREFIX+'purchase_prepare_list', values)
+        if not user.has_group(PREFIX + 'group_portal_purchase_preparer'):
+            return request.redirect(BASE + '/approvals')
+        values = PortalPurchaseMonitor()._list_values(
+            user, kw, extra_domain=[('absar_portal_preparer_id', '=', user.id)],
+            list_url=BASE + '/orders', detail_base_url=BASE,
+            title='Purchase Orders', description='Your confirmed purchase orders', show_workspace=True)
+        return request.render(PREFIX + 'purchase_monitor_list', values)
 
     @http.route(BASE + '/products', type='http', auth='user', website=True)
     def products(self, **kw):
-        user = self._actor()
+        user = self._actor('preparer')
         company = self._company(kw.get('company_id'))
         model, domain, order = self._scope('product', company)
         q = str(kw.get('q') or '').strip()[:120]
@@ -109,8 +94,6 @@ class PortalPurchaseDirectory(PortalPurchasePrepare):
     @http.route([BASE + '/new', BASE + '/<int:po_id>'], type='http', auth='user', website=True, methods=['GET'])
     def editor(self, po_id=None, mr_id=None, **kw):
         po = self._record(po_id) if po_id else False
-        if po and request.env.user.has_group(PREFIX + 'group_portal_purchase_monitor') and po.state in ('purchase', 'done'):
-            return request.redirect('/my/employee/purchase-monitor/%s' % po.id)
         company = None
         mr = False
         if not po and mr_id:
@@ -121,6 +104,8 @@ class PortalPurchaseDirectory(PortalPurchasePrepare):
             company = self._company((candidate.project_id.company_id or candidate.employee_id.company_id).id)
             mr = self._choice('mr', candidate.id, company, True)
         boot = self._boot(po, company=company)
+        if po and kw.get('from_monitor') == '1' and request.env.user.has_group(PREFIX + 'group_portal_purchase_monitor'):
+            boot.update(back_url='/my/employee/purchase-monitor', approval_view=False)
         if mr:
             info = self._mr_data(mr, company)
             boot['values'].update(material_request_id=mr.id, project_id=mr.project_id.id,
