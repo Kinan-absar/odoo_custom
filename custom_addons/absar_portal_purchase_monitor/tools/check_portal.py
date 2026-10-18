@@ -18,7 +18,7 @@ def check(value):
  checks+=1
 
 manifest=ast.literal_eval((ROOT/'__manifest__.py').read_text())
-check(manifest['version']=='18.0.1.5.2')
+check(manifest['version']=='18.0.1.5.3')
 check(set(manifest['assets'])=={'web.assets_frontend'})
 check('assets_backend' not in repr(manifest))
 check('security/ir.model.access.csv' not in manifest['data'])

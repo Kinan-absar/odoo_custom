@@ -1,6 +1,10 @@
-# ABSAR Portal Purchase Workspace — 18.0.1.5.2
+# ABSAR Portal Purchase Workspace — 18.0.1.5.3
 
 A dedicated employee-portal purchasing interface, following the Purchase app's familiar navigation, document layout and workflow. This replaces the 1.4 native-backend host. It does not promise every internal purchasing, accounting, stock or signing function.
+
+## Layout change in 18.0.1.5.3
+
+Move the backend Portal Purchase Review fields and existing review buttons into a final notebook tab, following Signing Package. The inherited view appends the page at priority 1000, after the standard purchase/signing extension views. The tab remains visible only for portal-prepared orders.
 
 ## Fixes in 18.0.1.5.2
 
@@ -72,7 +76,7 @@ Accounts must be active, employee-linked and outside Attendance Only. Company, p
 
 1. Back up staging and keep the previous addon revision. Replace the technical folder `absar_portal_purchase_monitor` in the custom-addons branch; EPS itself is unchanged.
 2. Let the Odoo.sh build/restart complete, then upgrade **ABSAR Portal Purchase Workspace** in Apps. A file replacement without a restart/module upgrade does not execute the permission withdrawal.
-3. Verify version `18.0.1.5.2`. Existing Portal account types and purchasing roles remain unchanged. Native Workspace Access is no longer needed.
+3. Verify version `18.0.1.5.3`. Existing Portal account types and purchasing roles remain unchanged. Native Workspace Access is no longer needed.
 4. Hard-refresh the portal. Use the Purchase sidebar links or `/my/employee/purchase` for a preparer. Confirmers/reviewers can use their dedicated links; monitoring users can open Purchase Orders.
 5. Verify that the old native model ACLs/rules are gone and the native host is no longer served. Then complete the acceptance checks below on staging.
 
