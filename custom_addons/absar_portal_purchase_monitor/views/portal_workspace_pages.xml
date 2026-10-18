@@ -6,8 +6,8 @@
    <a href="/my/employee/purchase/orders" t-att-class="'active' if request.httprequest.path.endswith('/orders') else ''">Purchase Orders</a>
    <a href="/my/employee/purchase/products" t-att-class="'active' if request.httprequest.path.endswith('/products') else ''">Products</a>
    <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')" href="/my/employee/purchase/material-requests" t-att-class="'active' if request.httprequest.path.endswith('/material-requests') else ''">Material Requests</a>
-   <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver')" href="/my/employee/purchase/approvals">Approvals</a>
-   <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_confirmer')" href="/my/employee/purchase/confirmations">Confirmations</a>
+   <a t-if="(not request.env.user.share and request.env.user.has_group('purchase.group_purchase_manager') and request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver'))" href="/my/employee/purchase/approvals">Approvals</a>
+   <a t-if="(not request.env.user.share and request.env.user.has_group('purchase.group_purchase_manager') and request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_confirmer'))" href="/my/employee/purchase/confirmations">Confirmations</a>
   </nav>
  </template>
  <template id="purchase_product_directory" name="Portal Purchasing Products">

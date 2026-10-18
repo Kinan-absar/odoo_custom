@@ -158,6 +158,7 @@ class PortalPurchasePrepare(http.Controller):
             raise ValidationError(_('The backend project integration addon must be installed first.'))
         vals = dict(partner_id=vendor.id, partner_ref=str(data.get('partner_ref') or '')[:200],
                     company_id=company.id, currency_id=currency.id,
+                    user_id=request.env.user.id,
                     date_order=self._utc(data.get('date_order')) or fields.Datetime.now(),
                     origin=str(data.get('origin') or '')[:200],
                     material_request_id=mr.id or False)
@@ -165,7 +166,7 @@ class PortalPurchasePrepare(http.Controller):
         vals['notes'] = str(Markup('<div style="white-space:pre-wrap">%s</div>') % str(data.get('notes') or '')[:20000])
         if 'project_id' in model._fields:
             vals['project_id'] = project.id or False
-        for kind, field in [('buyer', 'user_id'), ('payment_term', 'payment_term_id'),
+        for kind, field in [('payment_term', 'payment_term_id'),
                             ('fiscal_position', 'fiscal_position_id'), ('incoterm', 'incoterm_id'),
                             ('picking_type', 'picking_type_id')]:
             if field in model._fields:
@@ -360,13 +361,14 @@ class PortalPurchasePrepare(http.Controller):
         selected = {}
         for field in names:
             if po and field in po._fields:
-                selected[field] = choice(po[field])
+                selected[field] = choice(po.absar_portal_preparer_id or po.user_id) if field == 'user_id' else choice(po[field])
             else:
                 selected[field] = None
         if not po:
             selected['currency_id'] = choice(company.currency_id)
-            # Do not preselect a portal user as a backend buyer.
-            selected['user_id'] = choice(user) if not user.share else None
+            # Buyer is the preparing employee's existing portal account. This
+            # relation does not change the user's account type or group rights.
+            selected['user_id'] = choice(user)
             picking = self._scope('picking_type', company)
             selected['picking_type_id'] = choice(picking[0].search(picking[1], limit=1))
         for field, selection in selected.items():
@@ -388,12 +390,11 @@ class PortalPurchasePrepare(http.Controller):
                     company_name=company.name, companies=[{'id': c.id, 'label': c.name, 'currency': choice(c.currency_id), 'picking_type': choice(self._scope('picking_type', c)[0].search(self._scope('picking_type', c)[1], limit=1))} for c in user.company_ids],
                     timezone=user.tz or 'UTC',
                     can_create_product=user.has_group(PREFIX + 'group_portal_purchase_product_creator') and not readonly,
-                    can_review=bool(po and po.absar_portal_preparer_id and po.absar_portal_preparer_id != user and
-                        user.has_group(PREFIX + 'group_portal_purchase_approver') and
+                    can_review=bool(po and not user.share and user.has_group('purchase.group_purchase_manager') and po.absar_portal_preparer_id and po.absar_portal_preparer_id != user and
                         po.state in ('draft', 'sent') and po.absar_portal_review_state in ('submitted', 'approved')),
-                    can_confirm=bool(po and po.absar_portal_approver_id and
+                    can_confirm=bool(po and not user.share and user.has_group('purchase.group_purchase_manager') and po.absar_portal_approver_id and
                         po.absar_portal_review_state == 'approved' and po.state in ('draft', 'sent') and
-                        user.has_group(PREFIX + 'group_portal_purchase_confirmer')),
+                        po.absar_portal_preparer_id != user),
                     project_integration='project_id' in request.env['purchase.order']._fields)
 
     def _plain(self, value):

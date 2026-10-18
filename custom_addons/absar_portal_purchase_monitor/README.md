@@ -1,6 +1,14 @@
-# ABSAR Portal Purchase Workspace — 18.0.1.5.3
+# ABSAR Portal Purchase Workspace — 18.0.1.5.4
 
 A dedicated employee-portal purchasing interface, following the Purchase app's familiar navigation, document layout and workflow. This replaces the 1.4 native-backend host. It does not promise every internal purchasing, accounting, stock or signing function.
+
+## Internal approval and Buyer in 18.0.1.5.4
+
+- **Submit for Confirmation** saves and submits an RFQ as a request for an existing internal Purchase Administrator. Submission does not run purchase confirmation or create receipts. The native RFQ state stays Draft/Sent while the separate review status is Awaiting Internal Approval.
+- Internal users open **Purchase → Orders → Portal Requests to Approve**, or the matching search filter. The native form has an **Approve & Confirm** button for Purchase Administrators and an **Approve Only** option in the final Portal Purchase Review tab. The normal installed `button_confirm` chain handles receipts, native double validation and signing checks; exceptions roll back the approval/confirmation transaction.
+- Internal Purchase Administrators in the same permitted company receive the request and a review activity. The preparer cannot approve their own request. Legacy portal review/confirm groups no longer authorize these actions; they do not grant internal access.
+- Buyer defaults to the preparing employee's existing account, is read-only in the portal, and appears in both portal and internal lists. This assignment does not change account type or grant any group/ACL. The upgrade fills only previously empty Buyers, preserving explicitly assigned Buyers.
+- Previously unconfirmed approvals by portal-only accounts return to the internal pending queue. Confirmed orders are not reopened.
 
 ## Layout change in 18.0.1.5.3
 
@@ -39,7 +47,7 @@ Only the normal website/portal frontend assets are loaded. Dedicated portal cont
 - A shared product creation dialog on both the RFQ form and Products directory: goods/service, inventory tracking, category, UoM/purchase UoM, internal reference, barcode, cost, purchase description, purchase taxes, expense account and bill-control policy. Existing master products are not editable through this portal.
 - Material Requests shows only approved requests requiring a PO, across the selected permitted company, regardless of employee project assignment. Material details can be expanded before choosing Create RFQ.
 - Create RFQ from an MR opens an **unsaved** form with project/MR/source and requested descriptions, quantities and units. An existing product is preselected only for one exact name match with a compatible UoM category. Missing/ambiguous products are highlighted for selection or explicitly authorized creation. No products or POs are automatically created by opening a page. Selecting an MR on the form can set its project; importing/replacing lines is an explicit action.
-- Save Draft, Submit, Approve/Return and Confirm remain distinct actions. Approval never confirms a PO. Self-approval and editing another preparer's RFQ are rejected. Native double validation remains an internal manager step where configured.
+- Save Draft, Submit, Approve/Return and Confirm remain distinct actions. Approve Only never confirms a PO; the internal Approve & Confirm action explicitly performs both steps. Self-approval and editing another preparer's RFQ are rejected. Native double validation remains an internal manager step where configured.
 - Supplier quotation PDFs can be uploaded to an existing editable RFQ (maximum 1.4 MB), linked to the installed quotation field when present, and downloaded through an order-scoped route. There is no arbitrary attachment/model upload parameter.
 - Print PDF renders the standard RFQ or PO report only after checking access to that exact order. Printing itself does not mark an RFQ sent or change approval state.
 - Payments/signing information remains read-only. Existing allocation monitoring, posted credits, linked PO payments and installed signing-status text are preserved. Accounting posting, stock validation, signature sending and external vendor emails are not added as portal operations.
@@ -65,10 +73,10 @@ The existing 1.3 migration is retained for older installations: compatible legac
 | Role | Access |
 | --- | --- |
 | Prepare RFQs | Create RFQs; edit own draft/sent RFQs with Draft/Returned review status; company-wide approved-MR workflow. |
-| Approve RFQs | Review company portal RFQs; approve/return another preparer's submission. |
+| Approve RFQs | Legacy portal review visibility; approval/return requires an internal Purchase Administrator. |
 | Purchase Monitoring | Read confirmed company orders and financial monitoring. |
 | Create Products | Additional permission for a preparer to create purchasing products. |
-| Confirm Approved RFQs | Confirm independently approved portal RFQs through Odoo's normal purchasing method chain. |
+| Confirm Approved RFQs | Legacy visibility; native confirmation requires an internal Purchase Administrator. |
 
 Accounts must be active, employee-linked and outside Attendance Only. Company, project, ownership, role and workflow checks are enforced at the endpoints and model review actions. POST mutations require CSRF; lookups accept only an allowlist of types. The portal receives no blanket purchasing, product, accounting or HR model ACLs from this release.
 
@@ -76,7 +84,7 @@ Accounts must be active, employee-linked and outside Attendance Only. Company, p
 
 1. Back up staging and keep the previous addon revision. Replace the technical folder `absar_portal_purchase_monitor` in the custom-addons branch; EPS itself is unchanged.
 2. Let the Odoo.sh build/restart complete, then upgrade **ABSAR Portal Purchase Workspace** in Apps. A file replacement without a restart/module upgrade does not execute the permission withdrawal.
-3. Verify version `18.0.1.5.3`. Existing Portal account types and purchasing roles remain unchanged. Native Workspace Access is no longer needed.
+3. Verify version `18.0.1.5.4`. Existing Portal account types and purchasing roles remain unchanged. Native Workspace Access is no longer needed.
 4. Hard-refresh the portal. Use the Purchase sidebar links or `/my/employee/purchase` for a preparer. Confirmers/reviewers can use their dedicated links; monitoring users can open Purchase Orders.
 5. Verify that the old native model ACLs/rules are gone and the native host is no longer served. Then complete the acceptance checks below on staging.
 
@@ -89,7 +97,7 @@ Executed locally:
 - Real Odoo 18 Community core (`1f2b50ad`) and PostgreSQL 16, with this addon's actual purchasing model/controller source and a minimal MR bridge. The full EPS/Enterprise/custom signing stack was not installed locally.
 - Reproduced the old preview returning eight rows for five submitted rows and zero totals; reproduced SQL `NotNullViolation` for section `product_qty` during save.
 - Verified the corrected preview contains exactly three products, one section and one note, with untaxed 162,930.00, VAT 24,439.50 and total 187,369.50 SAR; verified the same values on a persisted draft.
-- Real ORM regression cases for draft create/edit, quantity/price/discount changes, vendor change, submission without PO confirmation, product defaults/create/add, and a user remaining Portal without Internal User membership (`tools/odoo_runtime_cases.py`). Fixtures were rolled back.
+- Real ORM regression cases for draft create/edit, quantity/price/discount/vendor changes, submit without PO confirmation, portal confirmation denial, internal manager approval/confirmation, Buyer identity, native view/action loading, Buyer migration, product defaults/create/add, and a user remaining Portal without Internal User membership (`tools/odoo_runtime_cases.py`). Fixtures were rolled back.
 - Python/XML/QWeb/JavaScript and package checks; isolated validator/workflow, migration scope/idempotency and MR proposal checks; frontend payload, amount-cache and persistent-total-panel tests.
 
 The final ZIP has not been deployed by the agent. The local tests exercise real ORM calculations and writes, not this staging database's complete extension stack or end-to-end browser execution. Staging acceptance after upgrading is still required for custom signing/report behavior and company-specific constraints.

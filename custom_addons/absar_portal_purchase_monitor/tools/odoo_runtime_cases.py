@@ -5,6 +5,11 @@ administrator fixture environment. The caller MUST roll back the transaction.
 This is not a production maintenance script or an HTTP endpoint.
 """
 from copy import deepcopy
+from pathlib import Path
+import importlib.util
+from odoo.exceptions import AccessError
+from odoo.tools.convert import convert_xml_import
+from lxml import etree
 
 
 def check_runtime(env, service, payload):
@@ -29,6 +34,7 @@ def check_runtime(env, service, payload):
     saved = call('save', payload)
     order = env['purchase.order'].browse(int(saved['url'].rsplit('/', 1)[1]))
     assert order.state == 'draft' and order.absar_portal_review_state == 'draft'
+    assert order.user_id == actor
     assert len(order.order_line) == 5
     close(order.amount_total, preview['total'])
     assert order.order_line[-2:].mapped('product_qty') == [0.0, 0.0]
@@ -61,6 +67,52 @@ def check_runtime(env, service, payload):
     order.invalidate_recordset()
     assert order.state == 'draft' and order.absar_portal_review_state == 'submitted'
 
+    try:
+        order.with_user(actor).action_absar_portal_approve_confirm()
+    except AccessError:
+        pass
+    else:
+        raise AssertionError('Portal preparer must not approve or confirm')
+    assert not actor.has_group('base.group_user')
+    manager = env['res.users'].with_context(no_reset_password=True).create({
+        'name': 'Disposable Purchase Manager', 'login': 'portal-runtime-manager',
+        'company_id': order.company_id.id, 'company_ids': [(6, 0, [order.company_id.id])],
+        'groups_id': [(6, 0, [env.ref('base.group_user').id, env.ref('purchase.group_purchase_manager').id])],
+    })
+    assert not manager.share
+    order.with_user(manager).action_absar_portal_approve_confirm()
+    order.invalidate_recordset()
+    assert order.state in ('purchase', 'done')
+    assert order.absar_portal_review_state == 'approved' and order.absar_portal_approver_id == manager
+    assert order.user_id == actor and not actor.has_group('base.group_user')
+
+    # Load the actual inherited form/search views and internal queue action.
+    # This exercises Odoo's view validator rather than only XML syntax checks.
+    addon = Path(__file__).resolve().parents[1]
+    with (addon / 'views/purchase_order_views.xml').open('rb') as source:
+        convert_xml_import(env, 'absar_portal_purchase_monitor', source, {}, mode='update')
+    arch = env['purchase.order'].with_user(manager).get_view(
+        view_id=env.ref('purchase.purchase_order_form').id, view_type='form')['arch']
+    document = etree.fromstring(arch.encode())
+    assert document.xpath("//button[@name='action_absar_portal_approve_confirm']")
+    assert document.xpath("//page[@name='absar_portal_purchase_review']")
+    action = env.ref('absar_portal_purchase_monitor.action_portal_purchase_requests')
+    assert action.res_model == 'purchase.order'
+
+    legacy = env['purchase.order'].create({
+        'partner_id': order.partner_id.id, 'company_id': order.company_id.id,
+        'user_id': False, 'absar_portal_preparer_id': actor.id,
+        'absar_portal_review_state': 'approved', 'absar_portal_approver_id': actor.id,
+    })
+    migration_path = addon / 'migrations/18.0.1.5.4/post-migration.py'
+    spec = importlib.util.spec_from_file_location('buyer_migration', migration_path)
+    migration = importlib.util.module_from_spec(spec); spec.loader.exec_module(migration)
+    migration.migrate(env.cr, '18.0.1.5.3')
+    legacy.invalidate_recordset()
+    assert legacy.user_id == actor and legacy.absar_portal_review_state == 'submitted'
+    order.invalidate_recordset()
+    assert order.state in ('purchase', 'done') and order.absar_portal_approver_id == manager
+
     defaults = call('product_defaults', {'company_id': payload['company_id']})
     for key in ('categ_id', 'uom_id', 'uom_po_id'):
         assert isinstance(defaults[key]['id'], int) and defaults[key]['id'] > 0
@@ -81,4 +133,4 @@ def check_runtime(env, service, payload):
     assert len(product_preview['lines']) == 1
     close(product_preview['lines'][0]['product_qty'], 2)
     close(product_preview['lines'][0]['price_unit'], 8.75)
-    print('PASS: real Odoo ORM portal preview, five exact rows, native VAT totals, draft create/edit, submit without confirmation, product defaults/create/add.')
+    print('PASS: real Odoo ORM preview/totals, draft create/edit, internal request, portal confirmation denied, manager approve/confirm, buyer identity, native view/action loading, buyer migration and product defaults/create/add.')

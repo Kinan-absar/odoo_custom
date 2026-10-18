@@ -14,7 +14,7 @@ class PurchaseOrder(models.Model):
     absar_portal_project_id = fields.Many2one('project.project', string='Portal Project (Legacy)', check_company=True)
     absar_portal_preparer_id = fields.Many2one('res.users', string='Portal Prepared By', readonly=True, copy=False, index=True)
     absar_portal_review_state = fields.Selection([
-        ('draft', 'Draft'), ('submitted', 'Awaiting Approval'),
+        ('draft', 'Draft'), ('submitted', 'Awaiting Internal Approval'),
         ('approved', 'Approved'), ('returned', 'Returned for Correction')],
         default='draft', string='Portal Review Status', copy=False, tracking=True, index=True)
     absar_portal_review_note = fields.Text('Review Note', copy=False)
@@ -27,6 +27,13 @@ class PurchaseOrder(models.Model):
                 user.has_group('employee_portal_suite.group_attendance_only') or
                 not user.has_group(PREFIX + 'group_portal_purchase_' + role)):
             raise AccessError(_('You do not have the required purchase workspace permission.'))
+        return user
+
+    def _portal_internal_approver(self):
+        user = self.env.user.sudo(False)
+        if (not user.active or user.share or
+                not user.has_group('purchase.group_purchase_manager')):
+            raise AccessError(_('This request must be approved and confirmed by an internal Purchase Administrator.'))
         return user
 
     def _portal_lock(self):
@@ -85,21 +92,22 @@ class PurchaseOrder(models.Model):
         # The analytic mixin enforces applicability per plan with this context.
         if hasattr(lines, '_validate_analytic_distribution'):
             lines.with_context(validate_analytic=True)._validate_analytic_distribution()
+        group = self.env.ref('purchase.group_purchase_manager')
+        reviewers = group.sudo().users.filtered(
+            lambda u: u.active and not u.share and u != user and self.company_id in u.company_ids)
+        if not reviewers:
+            raise UserError(_('No internal Purchase Administrator is available for this company. Save as a draft and ask your administrator to assign one.'))
         self.sudo().write({'absar_portal_review_state': 'submitted',
                            'absar_portal_review_note': False,
                            'absar_portal_approver_id': False, 'absar_portal_approved_on': False})
-        group = self.env.ref(PREFIX + 'group_portal_purchase_approver')
-        reviewers = group.sudo().users.filtered(
-            lambda u: u != user and u.employee_id and self.company_id in u.company_ids and
-            not u.has_group('employee_portal_suite.group_attendance_only'))
-        self._portal_notify(reviewers, _('RFQ %s submitted') % self.name,
-                            _('%s submitted this RFQ for review.') % user.name)
-        for reviewer in reviewers.filtered(lambda u: not u.share):
+        self._portal_notify(reviewers, _('RFQ %s awaiting your confirmation') % self.name,
+                            _('%s requests your approval and confirmation in Purchase → Orders → Portal Requests to Approve.') % user.name)
+        for reviewer in reviewers:
             self.sudo().activity_schedule('mail.mail_activity_data_todo', user_id=reviewer.id,
                                          summary='Portal RFQ review: %s' % self.name)
 
     def action_absar_portal_approve(self):
-        user = self._portal_actor('approver')
+        user = self._portal_internal_approver()
         for po in self:
             po._portal_lock()
             po._portal_check_company(user)
@@ -111,11 +119,24 @@ class PurchaseOrder(models.Model):
                              'absar_portal_approved_on': fields.Datetime.now()})
             po._portal_close_activities()
             po._portal_notify(po.absar_portal_preparer_id, _('RFQ %s approved') % po.name,
-                              _('Approved by %s. Purchase confirmation is a separate action.') % user.name)
+                              _('Approved by %s.') % user.name)
         return True
 
+    def action_absar_portal_approve_confirm(self):
+        self.ensure_one()
+        user = self._portal_internal_approver()
+        self._portal_lock()
+        self._portal_check_company(user)
+        if (not self.absar_portal_preparer_id or self.absar_portal_preparer_id == user or
+                self.absar_portal_review_state != 'submitted' or self.state not in ('draft', 'sent')):
+            raise UserError(_('Only another employee’s submitted RFQ can be approved and confirmed.'))
+        self.action_absar_portal_approve()
+        # Invoke the complete native/installed confirmation chain. Submission
+        # itself never invokes this method, creates receipts, or confirms a PO.
+        return self.with_context(validate_analytic=True).button_confirm()
+
     def action_absar_portal_return(self):
-        user = self._portal_actor('approver')
+        user = self._portal_internal_approver()
         for po in self:
             po._portal_lock()
             po._portal_check_company(user)
@@ -133,7 +154,7 @@ class PurchaseOrder(models.Model):
         return True
 
     def action_absar_portal_confirm(self):
-        user = self._portal_actor('confirmer')
+        user = self._portal_internal_approver()
         self.ensure_one()
         self._portal_lock()
         self._portal_check_company(user)
@@ -149,6 +170,7 @@ class PurchaseOrder(models.Model):
     def button_confirm(self):
         for po in self:
             if po.absar_portal_preparer_id:
+                po._portal_internal_approver()
                 po._portal_lock()
                 if (po.absar_portal_review_state != 'approved' or not po.absar_portal_approver_id or
                         po.absar_portal_approver_id == po.absar_portal_preparer_id):
@@ -158,6 +180,7 @@ class PurchaseOrder(models.Model):
     def button_approve(self, force=False):
         for po in self:
             if po.absar_portal_preparer_id:
+                po._portal_internal_approver()
                 po._portal_lock()
             if po.absar_portal_preparer_id and (po.absar_portal_review_state != 'approved' or
                     not po.absar_portal_approver_id or po.absar_portal_approver_id == po.absar_portal_preparer_id):

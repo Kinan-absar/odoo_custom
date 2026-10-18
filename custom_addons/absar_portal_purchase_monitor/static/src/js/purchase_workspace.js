@@ -188,7 +188,9 @@ function startPurchaseWorkspace() {
         }
         headerChoice(header, 'Project', 'project_id', 'project', 'All active projects available to this company.');
         headerChoice(header, 'Currency *', 'currency_id', 'currency');
-        headerChoice(other, 'Buyer', 'user_id', 'buyer');
+        const buyer = text('input', ''); buyer.className = 'form-control';
+        buyer.value = labels.user_id?.label || ''; buyer.readOnly = true;
+        field('Buyer', buyer, other, 'The employee who prepared this request.');
         const company = document.createElement('select'); company.className = 'form-select';
         company.disabled = readonly || Boolean(boot.id);
         for (const c of boot.companies) {const o = text('option', c.label); o.value = c.id; company.append(o);}
@@ -196,7 +198,7 @@ function startPurchaseWorkspace() {
         company.addEventListener('change', () => {
             if (dirty && !window.confirm('Changing company clears vendor, project, accounting selections and lines. Continue?')) {company.value = state.company_id; return;}
             state.company_id = Number(company.value); state.lines = []; state.material_request_id = 0;
-            for (const k of Object.keys(labels)) {labels[k] = null; state[k] = 0;}
+            for (const k of Object.keys(labels)) {if (k !== 'user_id') {labels[k] = null; state[k] = 0;}}
             const selectedCompany = boot.companies.find(c => c.id === state.company_id);
             labels.currency_id = selectedCompany?.currency || null; state.currency_id = labels.currency_id?.id || 0;
             labels.picking_type_id = selectedCompany?.picking_type || null; state.picking_type_id = labels.picking_type_id?.id || 0;
