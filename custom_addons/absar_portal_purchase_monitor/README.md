@@ -1,6 +1,16 @@
-# ABSAR Portal Purchase Workspace — 18.0.1.5.5
+# ABSAR Portal Purchase Workspace — 18.0.1.5.6
 
 A dedicated employee-portal purchasing interface, following the Purchase app's familiar navigation, document layout and workflow. This replaces the 1.4 native-backend host. It does not promise every internal purchasing, accounting, stock or signing function.
+
+## Internal and portal submissions in 18.0.1.5.6
+
+Both internal and portal issuers use the same request/approval fields, queue and Approver role. In native Purchase, the original Confirm buttons now say **Submit for Approval**. Submission records the issuing account as Issuer and Buyer and leaves the RFQ in Draft/Sent with Awaiting Approval status. An Approver opens **Requests to Approve** in Purchase, or **Purchase Approvals** in the portal, and chooses **Approve & Confirm** (or returns it with a correction note). Approve Only remains optional; it requires the separate Confirm Approved RFQ action afterwards.
+
+The original `button_confirm` method also routes unapproved RFQs to submission, so an existing server action or direct call cannot silently confirm an unreviewed native RFQ. Direct `button_approve` cannot skip independent review. This applies to native confirmation callers as well as the form; integrations that previously confirmed RFQs automatically must now use the shared submission/review process. Submitted RFQs cannot be submitted again or confirmed by their issuer, even if that issuer also has Approver rights. Changes to submitted/approved content invalidate review and require resubmission.
+
+An internal issuer can submit their own assigned-buyer RFQ; another buyer's draft cannot be claimed. Portal issuers remain employee-linked; internal issuers may use their existing account without an employee record. The upgrade adds Issuer to existing internal Purchase Users without altering their account type. On fresh installations or for new purchasers, assign Issuer explicitly; Approver remains a separate role. Previously confirmed orders and their financial documents are not reopened.
+
+Studio approval rules are not removed or edited by this addon. Remove a redundant Studio rule separately when switching to the shared workflow. Odoo's company-level two-step purchase validation is also separate: above its threshold, a portal Approver without native Purchase Administrator rights may still leave an order To Approve. The installed signing, stock and native validation chain remains in place.
 
 ## Unified roles and original monitoring design in 18.0.1.5.5
 
@@ -80,13 +90,13 @@ The existing 1.3 migration is retained for older installations: compatible legac
 | Approver | Independently approve, return and confirm submitted requests. |
 | Monitor | Read confirmed company orders in the original monitoring layout. |
 
-Accounts must be active and outside Attendance Only. Portal users and issuers must be employee-linked. Internal approvers/monitors can use their existing account without an employee link. Company, project, ownership, role and workflow checks are enforced at endpoints and model review actions. POST mutations require CSRF; lookups accept only allowlisted types. No blanket purchasing, product, accounting or HR model ACLs are granted.
+Accounts must be active and outside Attendance Only. Portal users must be employee-linked. Internal users can use their existing account without an employee link. Company, project, ownership, role and workflow checks are enforced at endpoints and model review actions. POST mutations require CSRF; lookups accept only allowlisted types. No blanket purchasing, product, accounting or HR model ACLs are granted.
 
 ## Install / upgrade on staging
 
 1. Back up staging and keep the previous addon revision. Replace the technical folder `absar_portal_purchase_monitor` in the custom-addons branch; EPS itself is unchanged.
 2. Let the Odoo.sh build/restart complete, then upgrade **ABSAR Portal Purchase Workspace** in Apps. A file replacement without a restart/module upgrade does not execute the permission withdrawal.
-3. Verify version `18.0.1.5.5` and the three named addon groups. Account types remain unchanged; legacy role memberships merge as described above.
+3. Verify version `18.0.1.5.6` and the three named addon groups. Account types remain unchanged; legacy role memberships merge as described above.
 4. Hard-refresh the portal. Use the Purchase sidebar links or `/my/employee/purchase` for a preparer. Approvers use Purchase Approvals; monitoring users can open Purchase Orders.
 5. Verify that the old native model ACLs/rules are gone and the native host is no longer served. Then complete the acceptance checks below on staging.
 
@@ -99,7 +109,7 @@ Executed locally:
 - Real Odoo 18 Community core (`1f2b50ad`) and PostgreSQL 16, with this addon's actual purchasing model/controller source and a minimal MR bridge. The full EPS/Enterprise/custom signing stack was not installed locally.
 - Reproduced the old preview returning eight rows for five submitted rows and zero totals; reproduced SQL `NotNullViolation` for section `product_qty` during save.
 - Verified the corrected preview contains exactly three products, one section and one note, with untaxed 162,930.00, VAT 24,439.50 and total 187,369.50 SAR; verified the same values on a persisted draft.
-- Real ORM regression cases for draft create/edit, quantity/price/discount/vendor changes, submit without PO confirmation, issuer confirmation denial, portal and internal Approver approval/confirmation, idempotent role consolidation, Buyer identity, native view/action loading, Buyer migration, product defaults/create/add, and a user remaining Portal without Internal User membership (`tools/odoo_runtime_cases.py`). Fixtures were rolled back.
+- Real ORM regression cases for draft create/edit, quantity/price/discount/vendor changes, submit without PO confirmation, issuer confirmation denial, portal and internal Approver approval/confirmation, idempotent role consolidation and internal Issuer migration, native internal submission routed to the shared portal approval queue, prevention of issuer confirmation, Buyer identity, native view/action loading, Buyer migration, product defaults/create/add, and a user remaining Portal without Internal User membership (`tools/odoo_runtime_cases.py`). Fixtures were rolled back.
 - Python/XML/QWeb/JavaScript and package checks; isolated validator/workflow, migration scope/idempotency and MR proposal checks; frontend payload, amount-cache and persistent-total-panel tests.
 
 The final ZIP has not been deployed by the agent. The local tests exercise real ORM calculations and writes, not this staging database's complete extension stack or end-to-end browser execution. Staging acceptance after upgrading is still required for custom signing/report behavior and company-specific constraints.

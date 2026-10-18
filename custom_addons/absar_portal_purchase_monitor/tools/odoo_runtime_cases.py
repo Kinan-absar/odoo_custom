@@ -204,6 +204,72 @@ def check_runtime(env, service, payload):
     assert manager.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver')
     print('PASS: portal/internal unified approval, no self approval or account conversion; legacy role migration idempotent.')
 
+    # An internal Purchase user without an employee link issues directly in the
+    # native app. Original Confirm RPC submits; no PO/receipt is created yet.
+    internal_issuer = env['res.users'].with_context(no_reset_password=True).create({
+        'name': 'Disposable Internal Issuer', 'login': 'internal-runtime-issuer',
+        'company_id': order.company_id.id, 'company_ids': [(6, 0, [order.company_id.id])],
+        'groups_id': [(6, 0, [env.ref('base.group_user').id, env.ref('purchase.group_purchase_user').id])],
+    })
+    assert not internal_issuer.employee_id
+    spec = importlib.util.spec_from_file_location('internal_issuer_migration', addon / 'migrations/18.0.1.5.6/pre-migration.py')
+    migration = importlib.util.module_from_spec(spec); spec.loader.exec_module(migration)
+    for repeat in range(2):
+        migration.migrate(env.cr, '18.0.1.5.5')
+    assert internal_issuer.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')
+    assert not actor.has_group('base.group_user') and portal_reviewer.share
+    native_order = env['purchase.order'].with_user(internal_issuer).create({
+        'partner_id': vendor.id, 'company_id': order.company_id.id, 'user_id': internal_issuer.id,
+        'order_line': [(0, 0, {'product_id': order.order_line[0].product_id.id,
+            'name': 'Native internal-issued product', 'product_qty': 2, 'price_unit': 10,
+            'product_uom': order.order_line[0].product_uom.id, 'date_planned': '2026-10-18 10:00:00'})],
+    })
+    assert not native_order.absar_portal_preparer_id
+    native_order.button_confirm()
+    native_order.invalidate_recordset()
+    assert native_order.state == 'draft' and native_order.absar_portal_review_state == 'submitted'
+    assert native_order.absar_portal_preparer_id == internal_issuer and native_order.user_id == internal_issuer
+    assert not native_order.picking_ids
+    for operation in (native_order.button_confirm, native_order.button_approve,
+                      native_order.action_absar_portal_approve_confirm):
+        try:
+            operation()
+        except (AccessError, UserError):
+            pass
+        else:
+            raise AssertionError('Internal issuer must not bypass approval')
+    # Return from the portal, correct in native Purchase and resubmit.
+    request.env = env(user=portal_reviewer.id, context=dict(issuer_env.context))
+    try:
+        call('decision', {'id': native_order.id, 'action': 'return',
+                          'note': 'Correct the unit price', 'version': str(native_order.write_date)})
+    finally:
+        request.env = issuer_env
+    native_order.invalidate_recordset()
+    assert native_order.state == 'draft' and native_order.absar_portal_review_state == 'returned'
+    native_order.order_line[0].write({'price_unit': 12})
+    native_order.button_confirm()
+    native_order.invalidate_recordset()
+    assert native_order.absar_portal_review_state == 'submitted' and not native_order.picking_ids
+    # It appears in the same queue, and a portal Approver can approve it.
+    assert native_order.sudo().filtered_domain(action.domain and __import__('ast').literal_eval(action.domain))
+    request.env = env(user=portal_reviewer.id, context=dict(issuer_env.context))
+    try:
+        assert service._record(native_order.id).absar_portal_preparer_id == internal_issuer
+        call('decision', {'id': native_order.id, 'action': 'approve_confirm', 'version': str(native_order.write_date)})
+    finally:
+        request.env = issuer_env
+    native_order.invalidate_recordset()
+    assert native_order.state in ('purchase', 'done')
+    assert native_order.absar_portal_approver_id == portal_reviewer
+    assert native_order.user_id == internal_issuer and portal_reviewer.share
+    native_arch = env['purchase.order'].with_user(internal_issuer).get_view(
+        view_id=env.ref('purchase.purchase_order_form').id, view_type='form')['arch']
+    native_document = etree.fromstring(native_arch.encode())
+    assert native_document.xpath("//button[@name='button_confirm'][@string='Submit for Approval']")
+    print('PASS: internal native creation -> original Confirm RPC submits only -> shared portal queue -> return/correct/resubmit -> independent portal approval confirms; internal issuer bypass denied; issuer migration idempotent.')
+
+
     defaults = call('product_defaults', {'company_id': payload['company_id']})
     for key in ('categ_id', 'uom_id', 'uom_po_id'):
         assert isinstance(defaults[key]['id'], int) and defaults[key]['id'] > 0

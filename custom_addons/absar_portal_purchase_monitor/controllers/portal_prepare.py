@@ -49,7 +49,7 @@ class PortalPurchasePrepare(http.Controller):
     def _actor(self, role=None):
         user = request.env.user
         roles = ('preparer', 'approver', 'monitor')
-        if (not user.active or ((user.share or role == 'preparer') and not user.sudo().employee_id) or
+        if (not user.active or (user.share and not user.sudo().employee_id) or
                 user.has_group('employee_portal_suite.group_attendance_only') or
                 not any(user.has_group(PREFIX + 'group_portal_purchase_' + r)
                         for r in ((role,) if role else roles))):

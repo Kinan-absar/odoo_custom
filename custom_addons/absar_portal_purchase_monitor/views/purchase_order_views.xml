@@ -5,33 +5,39 @@
   <field name="priority">1000</field>
   <field name="arch" type="xml">
    <xpath expr="//header" position="inside">
-    <button name="action_absar_portal_approve_confirm" type="object" string="Approve &amp; Confirm" context="{'validate_analytic': True}" class="btn-primary" groups="absar_portal_purchase_monitor.group_portal_purchase_approver" invisible="not absar_portal_preparer_id or absar_portal_review_state != 'submitted' or state not in ['draft', 'sent']"/>
+    <button name="action_absar_portal_approve_confirm" type="object" string="Approve &amp; Confirm" context="{'validate_analytic': True}" class="btn-primary" groups="absar_portal_purchase_monitor.group_portal_purchase_approver" invisible="not absar_portal_preparer_id or absar_portal_preparer_id == uid or absar_portal_review_state != 'submitted' or state not in ['draft', 'sent']"/>
    </xpath>
-   <xpath expr="//button[@id='draft_confirm']" position="attributes"><attribute name="invisible" add="(absar_portal_preparer_id and absar_portal_review_state != 'approved')" separator=" or "/></xpath>
-   <xpath expr="//button[@id='bid_confirm']" position="attributes"><attribute name="invisible" add="(absar_portal_preparer_id and absar_portal_review_state != 'approved')" separator=" or "/></xpath>
-   <xpath expr="//sheet/notebook" position="inside"><page name="absar_portal_purchase_review" string="Portal Purchase Review" invisible="not absar_portal_preparer_id"><group>
+   <xpath expr="//button[@id='draft_confirm'] | //button[@id='bid_confirm']" position="attributes">
+    <attribute name="string">Submit for Approval</attribute>
+    <attribute name="groups">absar_portal_purchase_monitor.group_portal_purchase_preparer</attribute>
+    <attribute name="invisible" add="(absar_portal_preparer_id and absar_portal_review_state not in [False, 'draft', 'returned'])" separator=" or "/>
+   </xpath>
+   <xpath expr="//header" position="inside">
+    <button name="action_absar_portal_confirm" type="object" string="Confirm Approved RFQ" class="btn-primary" groups="absar_portal_purchase_monitor.group_portal_purchase_approver" invisible="not absar_portal_preparer_id or absar_portal_preparer_id == uid or absar_portal_review_state != 'approved' or state not in ['draft', 'sent']"/>
+   </xpath>
+   <xpath expr="//sheet/notebook" position="inside"><page name="absar_portal_purchase_review" string="Purchase Review" invisible="not absar_portal_preparer_id"><group>
    <field name="absar_portal_preparer_id" readonly="1"/>
    <field name="absar_portal_review_state" readonly="1"/>
    <field name="absar_portal_approver_id" readonly="1"/>
    <field name="absar_portal_approved_on" readonly="1"/>
    <field name="absar_portal_review_note" readonly="state not in ['draft', 'sent']"/>
-   <button name="action_absar_portal_approve" type="object" string="Approve Only" groups="absar_portal_purchase_monitor.group_portal_purchase_approver" invisible="absar_portal_review_state != 'submitted' or state not in ['draft', 'sent']"/>
-   <button name="action_absar_portal_return" type="object" string="Return to Preparer" groups="absar_portal_purchase_monitor.group_portal_purchase_approver" invisible="absar_portal_review_state not in ['submitted', 'approved'] or state not in ['draft', 'sent']"/>
+   <button name="action_absar_portal_approve" type="object" string="Approve Only" groups="absar_portal_purchase_monitor.group_portal_purchase_approver" invisible="absar_portal_preparer_id == uid or absar_portal_review_state != 'submitted' or state not in ['draft', 'sent']"/>
+   <button name="action_absar_portal_return" type="object" string="Return to Preparer" groups="absar_portal_purchase_monitor.group_portal_purchase_approver" invisible="absar_portal_preparer_id == uid or absar_portal_review_state not in ['submitted', 'approved'] or state not in ['draft', 'sent']"/>
   </group></page></xpath></field>
  </record>
  <record id="purchase_order_search_portal_pending" model="ir.ui.view">
   <field name="name">purchase.order.search.portal.pending</field><field name="model">purchase.order</field>
   <field name="inherit_id" ref="purchase.purchase_order_view_search"/>
   <field name="arch" type="xml"><xpath expr="//search" position="inside">
-   <filter name="absar_portal_pending" string="Portal Requests to Approve" domain="[('absar_portal_preparer_id', '!=', False), ('absar_portal_review_state', '=', 'submitted'), ('state', 'in', ['draft', 'sent'])]"/>
+   <filter name="absar_portal_pending" string="Requests to Approve" domain="[('absar_portal_preparer_id', '!=', False), ('absar_portal_review_state', '=', 'submitted'), ('state', 'in', ['draft', 'sent'])]"/>
   </xpath></field>
  </record>
  <record id="action_portal_purchase_requests" model="ir.actions.act_window">
-  <field name="name">Portal Requests to Approve</field><field name="res_model">purchase.order</field>
+  <field name="name">Requests to Approve</field><field name="res_model">purchase.order</field>
   <field name="view_mode">list,form</field><field name="view_id" ref="purchase.purchase_order_tree"/>
   <field name="search_view_id" ref="purchase.purchase_order_view_search"/>
   <field name="domain">[('absar_portal_preparer_id', '!=', False), ('absar_portal_review_state', '=', 'submitted'), ('state', 'in', ['draft', 'sent'])]</field>
   <field name="context">{'quotation_only': True, 'create': False}</field>
  </record>
- <menuitem id="menu_portal_purchase_requests" name="Portal Requests to Approve" parent="purchase.menu_procurement_management" action="action_portal_purchase_requests" sequence="5" groups="absar_portal_purchase_monitor.group_portal_purchase_approver"/>
+ <menuitem id="menu_portal_purchase_requests" name="Requests to Approve" parent="purchase.menu_procurement_management" action="action_portal_purchase_requests" sequence="5" groups="absar_portal_purchase_monitor.group_portal_purchase_approver"/>
 </odoo>
