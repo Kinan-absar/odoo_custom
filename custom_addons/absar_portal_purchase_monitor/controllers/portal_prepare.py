@@ -1,10 +1,12 @@
 import json
 import math
+import logging
+import uuid
 from datetime import datetime
 from urllib.parse import urlencode
 import pytz
 from markupsafe import Markup
-from werkzeug.exceptions import Forbidden, NotFound
+from werkzeug.exceptions import Forbidden, NotFound, HTTPException
 from odoo import fields, http, _
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.http import request
@@ -12,11 +14,12 @@ from odoo.osv import expression
 
 BASE = '/my/employee/purchase'
 PREFIX = 'absar_portal_purchase_monitor.'
+_logger = logging.getLogger(__name__)
 
 
 def integer(value, default=0):
     try:
-        if isinstance(value, bool) or (isinstance(value, float) and not value.is_integer()):
+        if value is True or (isinstance(value, float) and not value.is_integer()):
             raise ValueError()
         value = int(value or default)
     except (TypeError, ValueError, OverflowError):
@@ -97,7 +100,7 @@ class PortalPurchasePrepare(http.Controller):
             'uom': ('uom.uom', [('active', '=', True)], 'name'),
             'category': ('product.category', [], 'complete_name'),
             'picking_type': ('stock.picking.type', [('active', '=', True), ('code', '=', 'incoming')], 'name'),
-            'mr': ('material.request', [('project_id', 'in', self._projects(company).ids), ('state', '=', 'approved'), ('no_po_required', '=', False)], 'id desc'),
+            'mr': ('material.request', [('state', '=', 'approved'), ('no_po_required', '=', False)], 'id desc'),
         }
         if model not in models:
             raise ValidationError(_('Unsupported lookup.'))
@@ -109,21 +112,17 @@ class PortalPurchasePrepare(http.Controller):
             domain += ['|', ('company_id', '=', False), ('company_id', '=', company.id)]
         if model == 'mr':
             domain += ['|', ('project_id.company_id', '=', company.id), '&', ('project_id.company_id', '=', False), ('employee_id.company_id', '=', company.id)]
-        if model == 'project':
-            domain += [('id', 'in', self._projects(company).ids)]
         return records, domain, order
 
-    def _projects(self, company):
-        employee = request.env.user.sudo().employee_id
-        return employee._get_material_request_projects().sudo().filtered(
-            lambda p: p.active and (not p.company_id or p.company_id == company))
-
     def _choice(self, kind, value, company, required=False):
-        ident = integer(value)
+        try:
+            ident = integer(value)
+        except ValidationError:
+            raise ValidationError(_('Invalid identifier for %s. Select a value from the list.') % kind)
         if not ident and not required:
-            model, _, _ = self._scope(kind, company)
+            model, domain, sort_order = self._scope(kind, company)
             return model.browse()
-        model, domain, _ = self._scope(kind, company)
+        model, domain, sort_order = self._scope(kind, company)
         record = model.search(expression.AND([domain, [('id', '=', ident)]]), limit=1)
         if not record:
             raise ValidationError(_('Invalid or unavailable %s selection.') % kind)
@@ -246,7 +245,7 @@ class PortalPurchasePrepare(http.Controller):
         vals = {'product_id': product.id, 'product_qty': qty, 'product_uom': uom.id,
                 'name': native.name, 'price_unit': native.price_unit,
                 'date_planned': native.date_planned or order.date_order,
-                'taxes_id': [(6, 0, native.taxes_id.ids)],
+                'taxes_id': [(6, 0, native.taxes_id._origin.ids)],
                 'analytic_distribution': native.analytic_distribution or {}}
         if 'discount' in Line._fields:
             vals['discount'] = native.discount
@@ -283,6 +282,12 @@ class PortalPurchasePrepare(http.Controller):
                 return request.make_json_response(fn(data))
         except (AccessError, UserError, ValidationError, ValueError, TypeError, KeyError) as exc:
             return request.make_json_response({'error': str(exc)}, status=400)
+        except HTTPException as exc:
+            return request.make_json_response({'error': _('This operation is not available to your account. Reload and check your purchase role.')}, status=exc.code)
+        except Exception:
+            reference = uuid.uuid4().hex[:12]
+            _logger.exception('Portal purchase failure %s on %s', reference, request.httprequest.path)
+            return request.make_json_response({'error': _('The operation failed and was rolled back. Server log reference: %s') % reference}, status=500)
 
     @http.route([BASE, BASE + '/approvals', BASE + '/confirmations'], type='http', auth='user', website=True)
     def listing(self, **kw):
@@ -337,7 +342,7 @@ class PortalPurchasePrepare(http.Controller):
         vals = dict(company_id=company.id, currency_id=company.currency_id.id,
                     date_order=self._local(fields.Datetime.now()), date_planned='', notes='', lines=[])
         def choice(record):
-            return {'id': record.id, 'label': record.display_name} if record else None
+            return {'id': record._origin.id, 'label': record.display_name} if record and record._origin.id else None
         if po:
             vals.update({k: po[k] or '' for k in ['partner_ref', 'origin', 'incoterm_location']})
             vals.update(date_order=self._local(po.date_order), date_planned=self._local(po.date_planned), notes=self._plain(po.notes),
@@ -401,13 +406,13 @@ class PortalPurchasePrepare(http.Controller):
             account = line.product_id.with_company(line.company_id).property_account_expense_id or line.product_id.categ_id.property_account_expense_categ_id
         return dict(id=line.id if isinstance(line.id, int) else 0,
                     display_type=line.display_type or '', name=line.name or '',
-                    product_id=line.product_id.id or 0, product_label=line.product_id.display_name or '',
-                    product_qty=line.product_qty, product_uom=line.product_uom.id or 0,
+                    product_id=line.product_id._origin.id or 0, product_label=line.product_id.display_name or '',
+                    product_qty=line.product_qty, product_uom=line.product_uom._origin.id or 0,
                     uom_label=line.product_uom.display_name or '', price_unit=line.price_unit,
                     discount=line.discount if 'discount' in line._fields else 0,
                     date_planned=self._local(line.date_planned),
-                    taxes_id=line.taxes_id.ids, taxes=[{'id': t.id, 'label': t.display_name} for t in line.taxes_id],
-                    absar_expense_account_id=line.absar_expense_account_id.id or 0,
+                    taxes_id=line.taxes_id._origin.ids, taxes=[{'id': t._origin.id, 'label': t.display_name} for t in line.taxes_id if t._origin.id],
+                    absar_expense_account_id=line.absar_expense_account_id._origin.id or 0,
                     account_label=line.absar_expense_account_id.display_name or '',
                     default_account=account.display_name or '',
                     analytic_distribution=line.analytic_distribution or {}, analytic_labels=analytic_labels,
@@ -438,8 +443,6 @@ class PortalPurchasePrepare(http.Controller):
                 elif kind == 'account':
                     term = ['|', ('name', 'ilike', q), ('code', 'ilike', q)]
                 domain = expression.AND([domain, term])
-            if kind == 'mr' and data.get('project_id'):
-                domain += [('project_id', '=', integer(data['project_id']))]
             if kind == 'uom' and data.get('product_id'):
                 product = self._choice('product', data['product_id'], company, True)
                 domain += [('category_id', '=', product.uom_id.category_id.id)]
@@ -466,6 +469,11 @@ class PortalPurchasePrepare(http.Controller):
                 vals = self._line(item, order, defaults=bool(data.get('defaults')))
                 commands.append((0, 0, vals))
             order.order_line = commands
+            # A new() order is a cache-only record. Recompute after attaching all
+            # lines so totals cannot retain the empty-order cache populated by
+            # a native/custom onchange. Use the same tax methods as Purchase.
+            order.order_line._compute_amount()
+            order._amount_all()
             for native in order.order_line:
                 output.append(self._serialize_line(native))
             return dict(lines=output, untaxed=order.amount_untaxed, tax=order.amount_tax,
@@ -555,7 +563,7 @@ class PortalPurchasePrepare(http.Controller):
             choices = {}
             for name in ('currency_id', 'payment_term_id', 'fiscal_position_id'):
                 record = order[name]
-                choices[name] = {'id': record.id, 'label': record.display_name} if record else None
+                choices[name] = {'id': record._origin.id, 'label': record.display_name} if record and record._origin.id else None
             return {'selected': choices, 'notes': self._plain(order.notes)}
         return self._json(run)
 
@@ -569,11 +577,13 @@ class PortalPurchasePrepare(http.Controller):
             defaults = Product.default_get(['categ_id', 'uom_id', 'uom_po_id', 'purchase_method', 'supplier_taxes_id', 'type'])
             defaults.update(purchase_ok=True, sale_ok=False, company_id=company.id)
             product = Product.new(defaults)
-            choice = lambda r: {'id': r.id, 'label': r.display_name} if r else None
+            # Delegated product defaults may be pseudo-records with an origin.
+            # Only real database identifiers may cross the portal boundary.
+            choice = lambda r: {'id': r._origin.id, 'label': r.display_name} if r and r._origin.id else None
             return dict(categ_id=choice(product.categ_id), uom_id=choice(product.uom_id),
                         uom_po_id=choice(product.uom_po_id),
                         purchase_method=product.purchase_method,
-                        supplier_taxes=[choice(t) for t in product.supplier_taxes_id])
+                        supplier_taxes=[choice(t) for t in product.supplier_taxes_id if t._origin.id])
         return self._json(run)
 
     @http.route(BASE + '/product-create', type='http', auth='user', methods=['POST'], csrf=True)
@@ -605,6 +615,8 @@ class PortalPurchasePrepare(http.Controller):
                 vals['purchase_method'] = data['purchase_method']
             taxes = data.get('supplier_taxes_id')
             if taxes is not None:
+                if not isinstance(taxes, list) or len(taxes) > 50:
+                    raise ValidationError(_('Invalid purchase taxes.'))
                 vals['supplier_taxes_id'] = [(6, 0, [self._choice('tax', t, company, True).id for t in taxes])]
             vals['barcode'] = str(data.get('barcode') or '')[:100] or False
             vals['description_purchase'] = str(data.get('description_purchase') or '')[:4000]

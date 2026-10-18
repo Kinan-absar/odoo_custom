@@ -27,14 +27,14 @@
  <template id="purchase_mr_directory" name="Approved Material Requests for Purchasing">
   <t t-call="employee_portal_suite.employee_portal_layout"><main class="apw-shell">
    <t t-call="absar_portal_purchase_monitor.purchase_workspace_nav"/>
-   <div class="apw-heading"><div><p class="apw-eyebrow">Purchase / Material Requests</p><h2>Material Requests</h2><p>Approved requests requiring a PO, from your assigned projects</p></div></div>
+   <div class="apw-heading"><div><p class="apw-eyebrow">Purchase / Material Requests</p><h2>Material Requests</h2><p>Approved requests requiring a PO, in the selected company</p></div></div>
    <form class="apw-toolbar" method="get"><input class="form-control apw-search" name="q" t-att-value="q" placeholder="Search MR or project" aria-label="Search Material Requests"/>
     <select name="company_id" class="form-select" aria-label="Company"><t t-foreach="companies" t-as="c"><option t-att-value="c.id" t-att-selected="c == company" t-out="c.name"/></t></select><button class="btn btn-primary">Search</button><a href="/my/employee/purchase/material-requests" class="btn btn-light">Clear</a></form>
    <div class="apw-table-scroll"><table class="apw-table"><thead><tr><th>Material Request</th><th>Project</th><th>Requested By</th><th>Required Date</th><th>Materials</th><th>Existing POs</th><th/></tr></thead><tbody>
     <t t-foreach="records" t-as="mr"><tr><td><strong t-out="mr.name"/></td><td t-out="mr.project_id.display_name"/><td t-out="mr.employee_id.name"/><td t-out="mr.delivery_date or '—'"/><td>
      <details><summary t-out="'%s materials' % len(mr.line_ids)"/><ul class="apw-mr-materials"><t t-foreach="mr.line_ids" t-as="line"><li><span t-out="line.item_name"/> · <strong t-out="line.qty_required"/> <t t-out="line.uom_id.display_name or ''"/></li></t></ul></details>
     </td><td t-out="mr.po_name or '—'"/><td><a class="btn btn-outline-primary btn-sm" t-att-href="'/my/employee/purchase/new?mr_id=%s' % mr.id">Create RFQ</a></td></tr></t>
-    <tr t-if="not records"><td colspan="7" class="apw-empty">No approved Material Requests are available for your assigned projects in this company.</td></tr>
+    <tr t-if="not records"><td colspan="7" class="apw-empty">No approved Material Requests are available in this company.</td></tr>
    </tbody></table></div><t t-call="absar_portal_purchase_monitor.purchase_pager"/>
   </main></t>
  </template>

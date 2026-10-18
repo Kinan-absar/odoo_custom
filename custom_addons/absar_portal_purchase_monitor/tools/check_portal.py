@@ -18,7 +18,7 @@ def check(value):
  checks+=1
 
 manifest=ast.literal_eval((ROOT/'__manifest__.py').read_text())
-check(manifest['version']=='18.0.1.5.0')
+check(manifest['version']=='18.0.1.5.1')
 check(set(manifest['assets'])=={'web.assets_frontend'})
 check('assets_backend' not in repr(manifest))
 check('security/ir.model.access.csv' not in manifest['data'])
@@ -81,11 +81,11 @@ for filename in ['portal_prepare.py','portal_purchase.py','portal_directory.py']
 for path in (ROOT/'static/src/js').glob('*.js'):
  text=path.read_text()
  check('/web/dataset' not in text and 'call_kw' not in text and 'assets_backend' not in text)
-# Approved/assigned/company-scoped MR lookup and no generic attachment target.
+# Approved/company-scoped MR lookup and no generic attachment target.
 controller=(ROOT/'controllers/portal_prepare.py').read_text()
 check("('state', '=', 'approved')" in controller)
 check("('no_po_required', '=', False)" in controller)
-check("('project_id', 'in', self._projects(company).ids)" in controller)
+check("self._projects" not in controller)
 directory=(ROOT/'controllers/portal_directory.py').read_text()
 check("attachment.res_model != 'purchase.order' or attachment.res_id != po.id" in directory)
 check("'res_model': 'purchase.order', 'res_id': po.id" in directory)

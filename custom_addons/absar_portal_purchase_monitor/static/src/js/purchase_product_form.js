@@ -6,6 +6,7 @@ export async function openPurchaseProductDialog({post, modal, field, input, look
         for (const key of ['categ_id', 'uom_id', 'uom_po_id']) values[key] = defaults[key]?.id || 0;
         values.purchase_method = defaults.purchase_method || 'receive';
         values.supplier_taxes_id = defaults.supplier_taxes.map(t => t.id);
+        const selectedTaxes = new Map(defaults.supplier_taxes.map(t => [t.id, t]));
         const grid = document.createElement('div'); grid.className = 'apw-form-grid'; view.body.append(grid);
         field('Product Name *', input('', 'text', v => {values.name = v;}), grid);
         const type = document.createElement('select'); type.className = 'form-select';
@@ -25,16 +26,24 @@ export async function openPurchaseProductDialog({post, modal, field, input, look
         policy.value = values.purchase_method;
         policy.addEventListener('change', () => {values.purchase_method = policy.value;}); field('Bill Control Policy', policy, grid);
         const taxHost = document.createElement('div');
-        const taxSummary = text('p', defaults.supplier_taxes.map(t => t.label).join(', ') || 'No default purchase taxes.'); taxHost.append(taxSummary);
-        taxHost.append(lookup('tax', null, item => {if (!item) return; values.supplier_taxes_id ||= []; if (!values.supplier_taxes_id.includes(item.id)) values.supplier_taxes_id.push(item.id); taxSummary.textContent += ' ' + item.label;}));
-        taxHost.append(button('No purchase tax', () => {values.supplier_taxes_id = []; taxSummary.textContent = 'No purchase taxes.';}));
+        const taxSummary = text('p', ''); taxHost.append(taxSummary);
+        const renderTaxes = () => {taxSummary.textContent = [...selectedTaxes.values()].map(t => t.label).join(', ') || 'No purchase taxes.'; values.supplier_taxes_id = [...selectedTaxes.keys()];};
+        renderTaxes();
+        taxHost.append(lookup('tax', null, item => {if (!item) return; selectedTaxes.set(item.id, item); renderTaxes();}));
+        taxHost.append(button('No purchase tax', () => {selectedTaxes.clear(); renderTaxes();}));
         field('Purchase Taxes', taxHost, grid);
         const message = text('p', '', 'text-danger'); view.body.append(message);
         const save = button(saveLabel, async () => {
             save.disabled = true;
             try {
+                if (!values.name?.trim()) throw new Error('Enter a product name.');
+                for (const [key, label] of [['categ_id', 'Category'], ['uom_id', 'Unit of Measure']]) {
+                    if (!Number.isSafeInteger(values[key]) || values[key] <= 0) throw new Error('Select ' + label + ' from the list.');
+                }
                 const item = await post('/product-create', values);
-                await onCreate(item); view.dialog.close();
+                // Product creation succeeded. A subsequent RFQ default failure
+                // must never leave a Create button that creates it a second time.
+                view.dialog.close(); await onCreate(item);
             } catch (error) {message.textContent = error.message; save.disabled = false;}
         }, 'btn btn-primary');
         view.foot.append(save);

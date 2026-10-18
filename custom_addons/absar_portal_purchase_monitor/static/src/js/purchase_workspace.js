@@ -13,6 +13,7 @@ function startPurchaseWorkspace() {
     const csrf = document.getElementById('apw-csrf').value;
     let dirty = false, busy = false, previewSequence = 0, pendingComputations = 0;
     let totals = boot.totals || null;
+    let totalsPending = false;
     const errorBox = document.getElementById('apw-error');
     const status = document.getElementById('apw-status');
     let previewTimer;
@@ -24,13 +25,22 @@ function startPurchaseWorkspace() {
         return node;
     };
     const money = value => Number(value || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    const amountKey = line => JSON.stringify([line.product_qty, line.price_unit, line.discount || 0,
+        line.taxes_id, line.product_uom, state.currency_id, state.company_id]);
+    const lineAmount = line => line._amountKey === amountKey(line) ? line.price_subtotal :
+        (Number(line.product_qty) || 0) * (Number(line.price_unit) || 0) * (1 - (Number(line.discount) || 0) / 100);
+    state.lines.forEach(line => {line._amountKey = amountKey(line);});
     const changed = () => {
-        dirty = true; previewSequence++; totals = null; renderTotals();
+        dirty = true; previewSequence++; totalsPending = true; renderTotals();
+        root.querySelectorAll('[data-line-amount]').forEach(node => {
+            const line = state.lines[Number(node.dataset.lineAmount)];
+            if (line) node.textContent = money(lineAmount(line));
+        });
         clearTimeout(previewTimer);
         previewTimer = setTimeout(() => {
             const lines = state.lines.filter(line => !line.display_type);
             if (!busy && !pendingComputations && state.partner_id && state.currency_id && state.picking_type_id &&
-                    lines.length && lines.every(line => line.product_id && line.product_qty > 0)) {
+                    lines.every(line => line.product_id && line.product_qty > 0)) {
                 recalculate().catch(showError);
             }
         }, 450);
@@ -44,7 +54,9 @@ function startPurchaseWorkspace() {
             body: new URLSearchParams({csrf_token: csrf, payload: JSON.stringify(payload)})
         });
         const type = response.headers.get('content-type') || '';
-        if (!type.includes('application/json')) throw new Error('Your session or purchase permission has changed. Reload this page.');
+        if (!type.includes('application/json')) throw new Error(response.status === 401 || response.status === 403 ?
+            'Your session or purchase permission has changed. Reload this page.' :
+            'The server returned an unexpected response (HTTP ' + response.status + '). Ask your administrator to check the server log.');
         const result = await response.json();
         if (!response.ok || result.error) throw new Error(result.error || 'The request could not be completed.');
         return result;
@@ -170,11 +182,11 @@ function startPurchaseWorkspace() {
             for (const line of state.lines) if (!line.display_type) line.date_planned = v;
             renderLines();
         }), header, 'Sets the arrival date on all product lines. Individual dates remain editable below.');
-        headerChoice(header, 'Material Request', 'material_request_id', 'mr', 'Approved requests from your assigned projects.');
+        headerChoice(header, 'Material Request', 'material_request_id', 'mr', 'All approved requests requiring a PO in this company.');
         if (!readonly && state.material_request_id) {
             header.append(button('Import Material Request lines', () => importMaterial().catch(showError), 'btn btn-outline-secondary'));
         }
-        headerChoice(header, 'Project', 'project_id', 'project', 'Uses employee work location project assignments.');
+        headerChoice(header, 'Project', 'project_id', 'project', 'All active projects available to this company.');
         headerChoice(header, 'Currency *', 'currency_id', 'currency');
         headerChoice(other, 'Buyer', 'user_id', 'buyer');
         const company = document.createElement('select'); company.className = 'form-select';
@@ -223,7 +235,7 @@ function startPurchaseWorkspace() {
             for (const [name, item] of Object.entries(result.selected)) {labels[name] = item; state[name] = item?.id || 0;}
             if (!state.notes) {state.notes = result.notes; byId('apw-notes').value = state.notes;}
             renderHeader(); changed(); repriceAll();
-        } finally {pendingComputations--;}
+        } finally {pendingComputations--; if (!pendingComputations) changed();}
     }
     async function reprice(line) {
         if (!line.product_id || !state.partner_id) return;
@@ -241,7 +253,7 @@ function startPurchaseWorkspace() {
             line.default_account = native.default_account;
             changed(); renderLines();
         } catch (error) {showError(error);}
-        finally {pendingComputations--;}
+        finally {pendingComputations--; if (!pendingComputations) changed();}
     }
     function repriceAll() {
         for (const line of state.lines) if (!line.display_type) reprice(line);
@@ -261,16 +273,18 @@ function startPurchaseWorkspace() {
         const sequence = (line._sequence || 0) + 1; line._sequence = sequence;
         pendingComputations++;
         line.product_id = product.id; line.product_label = product.label;
+        line._manualPrice = false;
         line.product_uom = 0;
         try {
             const response = await post('/preview', {...payload(), defaults: true, lines: [line]});
             if (line._sequence !== sequence) return;
             const ident = line.id;
-            Object.assign(line, response.lines[0], {id: ident, _sequence: sequence, _manualPrice: false});
+            const manualPrice = line._manualPrice ? {price_unit: line.price_unit, discount: line.discount, _manualPrice: true} : {_manualPrice: false};
+            Object.assign(line, response.lines[0], {id: ident, _sequence: sequence}, manualPrice);
             if (state.date_planned) line.date_planned = state.date_planned;
             changed(); renderLines();
         } catch (error) {showError(error);}
-        finally {pendingComputations--;}
+        finally {pendingComputations--; if (!pendingComputations) changed();}
     }
     function renderLines() {
         const host = byId('apw-lines'); host.replaceChildren();
@@ -311,7 +325,8 @@ function startPurchaseWorkspace() {
                     if (item && !line.taxes_id.includes(item.id)) {line.taxes_id.push(item.id); line.taxes.push(item); changed(); renderLines();}
                 }));
                 cell(tax);
-                cell(text('span', money(line.price_subtotal ?? line.product_qty * line.price_unit * (1 - (line.discount || 0) / 100))), 'num');
+                const amount = text('span', money(lineAmount(line))); amount.dataset.lineAmount = String(index);
+                cell(amount, 'num');
             }
             const actions = document.createElement('div'); actions.className = 'apw-row-actions';
             if (!readonly) {
@@ -342,18 +357,24 @@ function startPurchaseWorkspace() {
     function renderTotals() {
         const host = byId('apw-totals'); host.replaceChildren();
         const untaxed = state.lines.filter(l => !l.display_type).reduce((sum, l) => sum + l.product_qty * l.price_unit * (1 - (l.discount || 0) / 100), 0);
-        for (const [label, value] of totals ? [['Untaxed Amount', totals.untaxed], ['Taxes', totals.tax], ['Total', totals.total]] : [['Untaxed estimate', untaxed]]) {
-            const row = text('p', label); row.append(text('strong', money(value))); host.append(row);
+        const empty = !state.lines.some(line => !line.display_type);
+        const values = totals && !totalsPending ? [totals.untaxed, totals.tax, totals.total] :
+            empty ? [0, 0, 0] : [untaxed, null, null];
+        for (const [index, label] of ['Untaxed Amount', 'Taxes', 'Total'].entries()) {
+            const row = text('p', label); row.append(text('strong', values[index] === null ?
+                (totals ? money(index === 1 ? totals.tax : totals.total) : 'Calculating…') : money(values[index]))); host.append(row);
         }
-        host.append(text('small', totals ? totals.currency : 'Tax totals pending recalculation', 'apw-help'));
+        host.setAttribute('aria-busy', String(totalsPending && !empty));
+        host.append(text('small', totalsPending && !empty ? 'Updating totals… Previous tax/total remain visible until calculated.' :
+            (totals?.currency || labels.currency_id?.label || ''), 'apw-help'));
     }
     async function recalculate() {
         const seq = ++previewSequence;
         const response = await post('/preview', payload());
         if (seq !== previewSequence) return;
-        totals = response;
+        totals = response; totalsPending = false;
         response.lines.forEach((native, index) => {
-            if (state.lines[index]) {state.lines[index].price_subtotal = native.price_subtotal; state.lines[index].price_total = native.price_total;}
+            if (state.lines[index]) {state.lines[index].price_subtotal = native.price_subtotal; state.lines[index].price_total = native.price_total; state.lines[index]._amountKey = amountKey(state.lines[index]);}
         });
         renderLines(); renderTotals();
     }
