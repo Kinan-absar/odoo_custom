@@ -97,7 +97,7 @@ class PortalPurchasePrepare(http.Controller):
             'uom': ('uom.uom', [('active', '=', True)], 'name'),
             'category': ('product.category', [], 'complete_name'),
             'picking_type': ('stock.picking.type', [('active', '=', True), ('code', '=', 'incoming')], 'name'),
-            'mr': ('material.request', [('project_id', 'in', self._projects(company).ids)], 'id desc'),
+            'mr': ('material.request', [('project_id', 'in', self._projects(company).ids), ('state', '=', 'approved'), ('no_po_required', '=', False)], 'id desc'),
         }
         if model not in models:
             raise ValidationError(_('Unsupported lookup.'))
@@ -107,6 +107,8 @@ class PortalPurchasePrepare(http.Controller):
             domain += [('company_ids', 'in', [company.id])]
         elif 'company_id' in records._fields:
             domain += ['|', ('company_id', '=', False), ('company_id', '=', company.id)]
+        if model == 'mr':
+            domain += ['|', ('project_id.company_id', '=', company.id), '&', ('project_id.company_id', '=', False), ('employee_id.company_id', '=', company.id)]
         if model == 'project':
             domain += [('id', 'in', self._projects(company).ids)]
         return records, domain, order
@@ -293,7 +295,7 @@ class PortalPurchasePrepare(http.Controller):
         elif approval:
             domain += [('absar_portal_preparer_id', '!=', False), ('absar_portal_preparer_id', '!=', user.id)]
         else:
-            domain += [('absar_portal_preparer_id', '=', user.id)]
+            domain += [('absar_portal_preparer_id', '=', user.id), ('state', 'not in', ['purchase', 'done'])]
         q = str(kw.get('q') or '').strip()[:120]
         if q:
             domain = expression.AND([domain, ['|', '|', '|', ('name', 'ilike', q),
@@ -324,13 +326,13 @@ class PortalPurchasePrepare(http.Controller):
         base = BASE + ('/confirmations' if confirmations else '/approvals' if approval else '')
         page_url = lambda n: base + '?' + urlencode(dict(q=q, review=review, sort=sort, group_by=group_by, page=n))
         return request.render(PREFIX + 'purchase_prepare_list', dict(
-            orders=orders, group_by=group_by, group_labels={po.id: (dict(po._fields[group_field]._description_selection(po.env)).get(po[group_field], 'Not set') if group_field == 'absar_portal_review_state' else po[group_field].display_name or 'Not set') for po in orders} if group_field else {}, approval=approval, confirmations=confirmations, q=q, review=review, sort=sort,
+            orders=orders, orders_only=False, group_by=group_by, group_labels={po.id: (dict(po._fields[group_field]._description_selection(po.env)).get(po[group_field], 'Not set') if group_field == 'absar_portal_review_state' else po[group_field].display_name or 'Not set') for po in orders} if group_field else {}, approval=approval, confirmations=confirmations, q=q, review=review, sort=sort,
             page=page, pages=max(1, math.ceil(count / 20)), total=count,
             previous_url=page_url(page - 1), next_url=page_url(page + 1)))
 
-    def _boot(self, po=False):
+    def _boot(self, po=False, company=None):
         user = self._actor('preparer' if not po else None)
-        company = po.company_id if po else user.company_id
+        company = po.company_id if po else company or user.company_id
         readonly = bool(po and not po._portal_editable(user))
         vals = dict(company_id=company.id, currency_id=company.currency_id.id,
                     date_order=self._local(fields.Datetime.now()), date_planned='', notes='', lines=[])
@@ -359,7 +361,11 @@ class PortalPurchasePrepare(http.Controller):
             vals[field] = selection['id'] if selection else 0
         if po:
             vals['lines'] = [self._serialize_line(line) for line in po.order_line]
+        attachments = request.env['ir.attachment'].sudo().search([
+            ('res_model', '=', 'purchase.order'), ('res_id', '=', po.id), ('mimetype', '=', 'application/pdf'),
+            '|', ('company_id', '=', False), ('company_id', '=', company.id)], order='id') if po else request.env['ir.attachment'].browse()
         return dict(values=vals, selected=selected, readonly=readonly,
+                    attachments=[{'id': a.id, 'name': a.name} for a in attachments],
                     totals=dict(untaxed=po.amount_untaxed, tax=po.amount_tax, total=po.amount_total, currency=po.currency_id.name) if po else None,
                     back_url=BASE if user.has_group(PREFIX + 'group_portal_purchase_preparer') else BASE + '/approvals' if user.has_group(PREFIX + 'group_portal_purchase_approver') else BASE + '/confirmations',
                     id=po.id if po else False, name=po.name if po else _('New'),
@@ -367,7 +373,7 @@ class PortalPurchasePrepare(http.Controller):
                     review=po.absar_portal_review_state if po else 'draft',
                     version=str(po.write_date) if po else '',
                     note=po.absar_portal_review_note or '' if po else '',
-                    company_name=company.name, companies=[{'id': c.id, 'label': c.name} for c in user.company_ids],
+                    company_name=company.name, companies=[{'id': c.id, 'label': c.name, 'currency': choice(c.currency_id), 'picking_type': choice(self._scope('picking_type', c)[0].search(self._scope('picking_type', c)[1], limit=1))} for c in user.company_ids],
                     timezone=user.tz or 'UTC',
                     can_create_product=user.has_group(PREFIX + 'group_portal_purchase_product_creator') and not readonly,
                     can_review=bool(po and po.absar_portal_preparer_id and po.absar_portal_preparer_id != user and
@@ -600,6 +606,13 @@ class PortalPurchasePrepare(http.Controller):
             taxes = data.get('supplier_taxes_id')
             if taxes is not None:
                 vals['supplier_taxes_id'] = [(6, 0, [self._choice('tax', t, company, True).id for t in taxes])]
+            vals['barcode'] = str(data.get('barcode') or '')[:100] or False
+            vals['description_purchase'] = str(data.get('description_purchase') or '')[:4000]
+            if data.get('standard_price') not in (None, ''):
+                cost = number(data['standard_price'], _('Cost'))
+                if cost < 0:
+                    raise ValidationError(_('Cost cannot be negative.'))
+                vals['standard_price'] = cost
             product = model.create(vals)
             return {'id': product.id, 'label': product.display_name}
         return self._json(run)

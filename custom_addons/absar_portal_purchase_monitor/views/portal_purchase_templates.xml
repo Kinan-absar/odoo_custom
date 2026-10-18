@@ -1,7 +1,7 @@
 <odoo>
  <template id="purchase_monitor_list" name="Purchase Monitoring">
   <t t-call="employee_portal_suite.employee_portal_layout">
-   <main class="apw-shell">
+   <main class="apw-shell"><t t-call="absar_portal_purchase_monitor.purchase_workspace_nav"/>
     <div class="apw-heading"><div><h2>Purchase Orders</h2><p>Read-only purchase monitoring</p></div><span class="apw-badge">Monitoring</span></div>
     <form class="apw-toolbar" method="get">
      <input class="form-control apw-search" name="q" t-att-value="q" placeholder="Search PO, vendor, MR or reference" aria-label="Search purchase orders"/>
@@ -21,7 +21,7 @@
  </template>
  <template id="purchase_pager"><div class="apw-pager"><span><t t-out="total"/> records · Page <t t-out="page"/> / <t t-out="pages"/></span><div><a t-if="page &gt; 1" t-att-href="previous_url" class="btn btn-light">Previous</a><a t-if="page &lt; pages" t-att-href="next_url" class="btn btn-light">Next</a></div></div></template>
  <template id="purchase_monitor_detail" name="Purchase Order Monitoring Detail">
-  <t t-call="employee_portal_suite.employee_portal_layout"><main class="apw-shell"><a href="/my/employee/purchase-monitor">← Purchase Orders</a><div class="apw-heading"><h2 t-out="row['po'].name"/><span class="apw-badge" t-out="row['signature']"/></div>
+  <t t-call="employee_portal_suite.employee_portal_layout"><main class="apw-shell"><t t-call="absar_portal_purchase_monitor.purchase_workspace_nav"/><a href="/my/employee/purchase-monitor">← Purchase Orders</a><div class="apw-heading"><h2 t-out="row['po'].name"/><span class="apw-badge" t-out="row['signature']"/></div>
    <div class="apw-sheet"><div class="apw-form-grid"><div><label>Vendor</label><p t-out="row['po'].partner_id.display_name"/></div><div><label>Project</label><p t-out="row['project']"/></div><div><label>Material Request</label><p t-out="row['mr']"/></div><div><label>Company / currency</label><p><t t-out="row['po'].company_id.name"/> · <t t-out="row['po'].currency_id.name"/></p></div></div>
     <div class="apw-table-scroll"><table class="apw-table"><thead><tr><th>Product / description</th><th class="num">Quantity</th><th>UoM</th><th class="num">Received</th><th class="num">Billed</th><th class="num">Unit price</th><th>Taxes</th><th class="num">Subtotal</th></tr></thead><tbody><t t-foreach="row['po'].order_line" t-as="line"><tr t-if="line.display_type"><td colspan="8" t-att-class="'apw-section' if line.display_type == 'line_section' else 'apw-note'" t-out="line.name"/></tr><tr t-else=""><td t-out="line.name"/><td class="num" t-out="line.product_qty"/><td t-out="line.product_uom.name"/><td class="num" t-out="line.qty_received"/><td class="num" t-out="line.qty_invoiced"/><td class="num" t-out="'%.2f' % line.price_unit"/><td t-out="', '.join(line.taxes_id.mapped('name'))"/><td class="num" t-out="'%.2f' % line.price_subtotal"/></tr></t></tbody></table></div>
     <div class="apw-monitor-totals"><p>PO total <strong t-out="'%.2f' % row['po'].amount_total"/></p><p>Net billed <strong t-out="'%.2f' % row['billed']"/></p><p>Paid (PO linked) <strong t-out="'%.2f' % row['paid'] if row['paid'] is not None else 'Unavailable'"/></p><p>Billed balance due <strong t-out="'%.2f' % row['due']"/></p><p>Bill settlement (allocated) <strong t-out="'%.2f' % row['settled']"/></p><p>Unbilled <strong t-out="'%.2f' % row['unbilled']"/></p></div>

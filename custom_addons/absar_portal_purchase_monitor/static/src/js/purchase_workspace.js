@@ -1,4 +1,6 @@
 /** @odoo-module **/
+import { createPurchaseUI } from "./purchase_ui";
+import { openPurchaseProductDialog } from "./purchase_product_form";
 // No backend webclient RPC or generic model access is exposed to portal users.
 function startPurchaseWorkspace() {
     const root = document.getElementById('apw-root');
@@ -13,6 +15,7 @@ function startPurchaseWorkspace() {
     let totals = boot.totals || null;
     const errorBox = document.getElementById('apw-error');
     const status = document.getElementById('apw-status');
+    let previewTimer;
     const byId = id => document.getElementById(id);
     const text = (tag, value, className = '') => {
         const node = document.createElement(tag);
@@ -21,7 +24,17 @@ function startPurchaseWorkspace() {
         return node;
     };
     const money = value => Number(value || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    const changed = () => {dirty = true; previewSequence++; totals = null; renderTotals();};
+    const changed = () => {
+        dirty = true; previewSequence++; totals = null; renderTotals();
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(() => {
+            const lines = state.lines.filter(line => !line.display_type);
+            if (!busy && !pendingComputations && state.partner_id && state.currency_id && state.picking_type_id &&
+                    lines.length && lines.every(line => line.product_id && line.product_qty > 0)) {
+                recalculate().catch(showError);
+            }
+        }, 450);
+    };
     const showError = error => {errorBox.textContent = error.message || String(error); errorBox.hidden = false; errorBox.scrollIntoView({block: 'nearest'});};
     const clearError = () => {errorBox.hidden = true; errorBox.textContent = '';};
     async function post(path, payload) {
@@ -80,14 +93,14 @@ function startPurchaseWorkspace() {
         options.setAttribute('role', 'listbox');
         options.hidden = true;
         options.setAttribute('popover', 'manual');
-        const closeOptions = () => {if (options.matches(':popover-open')) options.hidePopover(); options.hidden = true; box.setAttribute('aria-expanded', 'false');};
+        const closeOptions = () => {if (typeof options.hidePopover === 'function' && options.matches(':popover-open')) options.hidePopover(); options.hidden = true; box.setAttribute('aria-expanded', 'false');};
         const openOptions = () => {
             options.hidden = false;
             const rect = box.getBoundingClientRect();
             options.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 300)) + 'px';
             options.style.top = Math.min(rect.bottom + 2, window.innerHeight - 220) + 'px';
             options.style.width = Math.min(Math.max(rect.width, 280), window.innerWidth - 24) + 'px';
-            options.showPopover(); box.setAttribute('aria-expanded', 'true');
+            if (typeof options.showPopover === 'function') options.showPopover(); box.setAttribute('aria-expanded', 'true');
         };
         let timer, sequence = 0, selectedId = selected?.id;
         async function search() {
@@ -143,20 +156,24 @@ function startPurchaseWorkspace() {
             if (name === 'partner_id' && item) vendorDefaults().catch(showError);
             else if (['currency_id', 'fiscal_position_id'].includes(name) && state.partner_id) repriceAll();
             if (name === 'project_id') {state.material_request_id = 0; labels.material_request_id = null; renderHeader();}
+            if (name === 'material_request_id' && item) linkMaterial(item.id).catch(showError);
         }), host, hint);
     }
     function renderHeader() {
         const header = byId('apw-header'), other = byId('apw-other');
         header.replaceChildren(); other.replaceChildren();
         headerChoice(header, 'Vendor *', 'partner_id', 'vendor');
-        field('Order Deadline *', input(state.date_order, 'datetime-local', v => {state.date_order = v;}), header);
+        field(['purchase', 'done'].includes(boot.state) ? 'Order Date' : 'Order Deadline *', input(state.date_order, 'datetime-local', v => {state.date_order = v;}), header);
         field('Vendor Reference', input(state.partner_ref, 'text', v => {state.partner_ref = v;}), header);
         field('Expected Arrival', input(state.date_planned, 'datetime-local', v => {
             state.date_planned = v;
             for (const line of state.lines) if (!line.display_type) line.date_planned = v;
             renderLines();
         }), header, 'Sets the arrival date on all product lines. Individual dates remain editable below.');
-        headerChoice(header, 'Material Request', 'material_request_id', 'mr', 'Select a request belonging to the selected assigned project.');
+        headerChoice(header, 'Material Request', 'material_request_id', 'mr', 'Approved requests from your assigned projects.');
+        if (!readonly && state.material_request_id) {
+            header.append(button('Import Material Request lines', () => importMaterial().catch(showError), 'btn btn-outline-secondary'));
+        }
         headerChoice(header, 'Project', 'project_id', 'project', 'Uses employee work location project assignments.');
         headerChoice(header, 'Currency *', 'currency_id', 'currency');
         headerChoice(other, 'Buyer', 'user_id', 'buyer');
@@ -168,7 +185,10 @@ function startPurchaseWorkspace() {
             if (dirty && !window.confirm('Changing company clears vendor, project, accounting selections and lines. Continue?')) {company.value = state.company_id; return;}
             state.company_id = Number(company.value); state.lines = []; state.material_request_id = 0;
             for (const k of Object.keys(labels)) {labels[k] = null; state[k] = 0;}
-            state.currency_id = 0; changed(); renderHeader(); renderLines();
+            const selectedCompany = boot.companies.find(c => c.id === state.company_id);
+            labels.currency_id = selectedCompany?.currency || null; state.currency_id = labels.currency_id?.id || 0;
+            labels.picking_type_id = selectedCompany?.picking_type || null; state.picking_type_id = labels.picking_type_id?.id || 0;
+            changed(); renderHeader(); renderLines();
         });
         field('Company', company, other);
         field('Source Document', input(state.origin, 'text', v => {state.origin = v;}), other);
@@ -177,6 +197,21 @@ function startPurchaseWorkspace() {
         headerChoice(other, 'Fiscal Position', 'fiscal_position_id', 'fiscal_position');
         headerChoice(other, 'Incoterm', 'incoterm_id', 'incoterm');
         field('Incoterm Location', input(state.incoterm_location, 'text', v => {state.incoterm_location = v;}), other);
+    }
+    async function linkMaterial(id) {
+        const info = await post('/mr-info', {company_id: state.company_id, mr_id: id});
+        if (state.material_request_id !== id) return;
+        state.project_id = info.project.id; labels.project_id = info.project;
+        if (!state.origin) state.origin = info.name;
+        changed(); renderHeader();
+    }
+    async function importMaterial() {
+        if (!state.material_request_id) throw new Error('Choose a Material Request first.');
+        if (state.lines.length && !window.confirm('Replace current draft lines with the selected Material Request materials?')) return;
+        const info = await post('/mr-info', {company_id: state.company_id, mr_id: state.material_request_id});
+        state.project_id = info.project.id; labels.project_id = info.project;
+        state.lines = info.lines; changed(); renderHeader(); renderLines();
+        repriceAll();
     }
     let vendorSequence = 0;
     async function vendorDefaults() {
@@ -219,6 +254,10 @@ function startPurchaseWorkspace() {
     }
     async function defaultsFor(line, product) {
         if (!product) {line.product_id = 0; line.product_label = ''; return;}
+        if (!state.partner_id) {
+            line.product_id = product.id; line.product_label = product.label; line.product_uom = 0;
+            changed(); renderLines(); return;
+        }
         const sequence = (line._sequence || 0) + 1; line._sequence = sequence;
         pendingComputations++;
         line.product_id = product.id; line.product_label = product.label;
@@ -243,7 +282,9 @@ function startPurchaseWorkspace() {
                 const label = input(line.name, 'text', v => {line.name = v;});
                 const td = cell(label, line.display_type === 'line_section' ? 'apw-section' : 'apw-note'); td.colSpan = 8;
             } else {
+                if (!line.product_id) row.classList.add('apw-products-missing');
                 const productCell = document.createElement('div');
+                if (!line.product_id && line.name) productCell.append(text('small', 'Select a product for this material', 'apw-help'));
                 productCell.append(lookup('product', {id: line.product_id, label: line.product_label}, item => defaultsFor(line, item)));
                 const description = document.createElement('textarea'); description.className = 'form-control apw-description'; description.rows = 2;
                 description.value = line.name; description.disabled = readonly; description.setAttribute('aria-label', 'Line description');
@@ -330,7 +371,7 @@ function startPurchaseWorkspace() {
     }
     function analyticDialog(line) {
         const view = modal('Analytic Distribution');
-        view.body.append(text('p', 'Choose one account per plan in each row. Each used plan must total 100%.', 'apw-help'));
+        view.body.append(text('p', 'Allocate each plan to 100%. A row can combine one account from each plan.', 'apw-help'));
         const rows = Object.entries(line.analytic_distribution || {}).map(([key, pct]) => ({
             accounts: key.split(',').map(id => line.analytic_labels?.[id] || {id: Number(id), label: id}), pct
         }));
@@ -415,51 +456,57 @@ function startPurchaseWorkspace() {
         load(true);
     }
     async function productDialog() {
-        const defaults = await post('/product-defaults', {company_id: state.company_id});
-        const view = modal('Create Purchasing Product');
-        const values = {company_id: state.company_id, type: 'consu', is_storable: false, purchase_method: 'receive'};
-        for (const key of ['categ_id', 'uom_id', 'uom_po_id']) values[key] = defaults[key]?.id || 0;
-        values.purchase_method = defaults.purchase_method || 'receive';
-        values.supplier_taxes_id = defaults.supplier_taxes.map(t => t.id);
-        const grid = document.createElement('div'); grid.className = 'apw-form-grid'; view.body.append(grid);
-        field('Product Name *', input('', 'text', v => {values.name = v;}), grid);
-        const type = document.createElement('select'); type.className = 'form-select';
-        for (const [v, label] of [['consu', 'Goods'], ['service', 'Service']]) {const o = text('option', label); o.value = v; type.append(o);}
-        type.addEventListener('change', () => {values.type = type.value;}); field('Product Type', type, grid);
-        const track = document.createElement('input'); track.type = 'checkbox'; track.addEventListener('change', () => {values.is_storable = track.checked;}); field('Track Inventory (Goods)', track, grid);
-        field('Category *', lookup('category', defaults.categ_id, item => {values.categ_id = item?.id || 0;}), grid);
-        field('Unit of Measure *', lookup('uom', defaults.uom_id, item => {values.uom_id = item?.id || 0;}), grid);
-        field('Purchase Unit', lookup('uom', defaults.uom_po_id, item => {values.uom_po_id = item?.id || 0;}), grid, 'Defaults to the product unit.');
-        field('Internal Reference', input('', 'text', v => {values.default_code = v;}), grid);
-        field('Expense Account', lookup('account', null, item => {values.property_account_expense_id = item?.id || 0;}), grid, 'Leave empty to use the category expense account.');
-        const policy = document.createElement('select'); policy.className = 'form-select';
-        for (const [v, label] of [['receive', 'On received quantities'], ['purchase', 'On ordered quantities']]) {const o = text('option', label); o.value = v; policy.append(o);}
-        policy.value = values.purchase_method;
-        policy.addEventListener('change', () => {values.purchase_method = policy.value;}); field('Bill Control Policy', policy, grid);
-        const taxHost = document.createElement('div');
-        const taxSummary = text('p', defaults.supplier_taxes.map(t => t.label).join(', ') || 'No default purchase taxes.'); taxHost.append(taxSummary);
-        taxHost.append(lookup('tax', null, item => {if (!item) return; values.supplier_taxes_id ||= []; if (!values.supplier_taxes_id.includes(item.id)) values.supplier_taxes_id.push(item.id); taxSummary.textContent += ' ' + item.label;}));
-        taxHost.append(button('No purchase tax', () => {values.supplier_taxes_id = []; taxSummary.textContent = 'No purchase taxes.';}));
-        field('Purchase Taxes', taxHost, grid);
-        const message = text('p', '', 'text-danger'); view.body.append(message);
-        const save = button('Create and Add', async () => {
-            save.disabled = true;
-            try {
-                const item = await post('/product-create', values);
-                const line = blankLine(); state.lines.push(line);
-                changed(); await defaultsFor(line, item); view.dialog.close();
-            } catch (error) {message.textContent = error.message; save.disabled = false;}
-        }, 'btn btn-primary');
-        view.foot.append(save);
+        const ui = createPurchaseUI({root, post, companyId: state.company_id});
+        await openPurchaseProductDialog({...ui, post, companyId: state.company_id, onCreate: async item => {
+            const line = blankLine(); state.lines.push(line);
+            changed(); await defaultsFor(line, item);
+        }});
+    }
+    function renderAttachments() {
+        const host = byId('apw-attachments'); host.replaceChildren();
+        for (const attachment of boot.attachments || []) {
+            const link = text('a', attachment.name, 'apw-chip');
+            link.href = '/my/employee/purchase/' + boot.id + '/attachments/' + attachment.id;
+            host.append(link);
+        }
+        if (!host.childNodes.length) host.append(text('p', 'No quotation PDFs attached.', 'apw-help'));
+    }
+    async function uploadQuotation() {
+        const file = byId('apw-quotation-file')?.files[0];
+        if (!file || !file.name.toLowerCase().endsWith('.pdf') || file.size > 1400000) throw new Error('Choose a PDF no larger than 1.4 MB.');
+        const data = await new Promise((resolve, reject) => {
+            const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(',')[1]); reader.onerror = () => reject(new Error('Cannot read the PDF.')); reader.readAsDataURL(file);
+        });
+        const result = await post('/' + boot.id + '/quotation-upload', {name:file.name, data, version:boot.version});
+        boot.version = result.version; boot.attachments ||= []; boot.attachments.push(result);
+        byId('apw-quotation-file').value = ''; renderAttachments();
     }
     async function decision(action) {
         let note = '';
         if (action === 'return') {
-            note = window.prompt('Explain the correction required:');
+            note = await new Promise(resolve => {
+                const view = modal('Return for Correction');
+                const description = document.createElement('textarea'); description.className = 'form-control';
+                description.rows = 4; description.maxLength = 2000; description.setAttribute('aria-label', 'Correction required');
+                view.body.append(text('p', 'Explain what the preparer should correct.'), description);
+                const message = text('p', '', 'text-danger'); view.body.append(message);
+                view.foot.append(button('Return RFQ', () => {
+                    if (!description.value.trim()) {message.textContent = 'A correction note is required.'; return;}
+                    resolve(description.value.trim()); view.dialog.close();
+                }, 'btn btn-primary'), button('Cancel', () => view.dialog.close()));
+                view.dialog.addEventListener('close', () => resolve(null)); description.focus();
+            });
             if (note === null) return;
-            if (!note.trim()) throw new Error('A correction note is required.');
         }
-        if (action === 'confirm' && !window.confirm('Confirm this approved RFQ through Odoo? This may create receipts and run the installed purchase/signing workflow.')) return;
+        if (action === 'confirm') {
+            const confirmed = await new Promise(resolve => {
+                const view = modal('Confirm Purchase Order');
+                view.body.append(text('p', 'Confirm this independently approved RFQ? Odoo may create receipts and run the installed purchase/signing workflow.'));
+                view.foot.append(button('Confirm Purchase Order', () => {resolve(true); view.dialog.close();}, 'btn btn-primary'), button('Cancel', () => view.dialog.close()));
+                view.dialog.addEventListener('close', () => resolve(false));
+            });
+            if (!confirmed) return;
+        }
         const response = await post('/' + boot.id + '/decision', {action, note, version: boot.version});
         dirty = false; window.location.assign(response.url);
     }
@@ -485,7 +532,8 @@ function startPurchaseWorkspace() {
                 if (pendingComputations) throw new Error('Wait for product and vendor defaults to finish loading, then save.');
                 const result = await post('/save', {...payload(), submit: action === 'submit'});
                 dirty = false; window.location.assign(result.url);
-            } else if (action === 'recalculate') await recalculate();
+            } else if (action === 'upload') await uploadQuotation();
+            else if (action === 'recalculate') await recalculate();
             else await decision(action);
         } catch (error) {showError(error);}
         finally {busy = false; root.classList.remove('apw-busy'); status.textContent = '';}
@@ -494,7 +542,7 @@ function startPurchaseWorkspace() {
     byId('apw-notes').addEventListener('input', event => {state.notes = event.target.value; changed();});
     window.addEventListener('beforeunload', event => {if (dirty) {event.preventDefault(); event.returnValue = '';}});
     state.lines.forEach(line => {line._manualPrice = Boolean(line.id);});
-    renderHeader(); renderLines(); renderTotals();
+    renderHeader(); renderLines(); renderTotals(); renderAttachments();
     if (!readonly && state.partner_id && state.lines.some(l => !l.display_type)) recalculate().catch(showError);
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startPurchaseWorkspace);

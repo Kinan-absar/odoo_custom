@@ -2,15 +2,14 @@
  <record id="purchase_order_form_portal_review" model="ir.ui.view">
   <field name="name">purchase.order.form.portal.review</field><field name="model">purchase.order</field>
   <field name="inherit_id" ref="purchase.purchase_order_form"/>
-  <field name="arch" type="xml"><xpath expr="//header" position="inside"><field name="absar_native_can_edit" invisible="1"/><button name="action_absar_portal_submit" type="object" string="Submit for Approval" class="btn-primary" groups="absar_portal_purchase_monitor.group_portal_purchase_preparer" invisible="not absar_portal_preparer_id or absar_portal_review_state not in [False, 'draft', 'returned'] or state not in ['draft', 'sent']"/></xpath><xpath expr="//sheet" position="inside"><group string="Portal Purchase Review" invisible="not absar_portal_preparer_id">
+  <field name="arch" type="xml"><xpath expr="//sheet" position="inside"><group string="Portal Purchase Review" invisible="not absar_portal_preparer_id">
    <field name="absar_portal_preparer_id" readonly="1"/>
    <field name="absar_portal_review_state" readonly="1"/>
    <field name="absar_portal_approver_id" readonly="1"/>
    <field name="absar_portal_approved_on" readonly="1"/>
-   <field name="absar_portal_review_note" readonly="1"/>
+   <field name="absar_portal_review_note" readonly="state not in ['draft', 'sent']"/>
    <button name="action_absar_portal_approve" type="object" string="Approve Portal RFQ" class="btn-primary" groups="absar_portal_purchase_monitor.group_portal_purchase_approver" invisible="absar_portal_review_state != 'submitted' or state not in ['draft', 'sent']"/>
-   <button name="action_open_absar_portal_return" type="object" string="Return to Preparer" groups="absar_portal_purchase_monitor.group_portal_purchase_approver" invisible="absar_portal_review_state not in ['submitted', 'approved'] or state not in ['draft', 'sent']"/>
+   <button name="action_absar_portal_return" type="object" string="Return to Preparer" groups="absar_portal_purchase_monitor.group_portal_purchase_approver" invisible="absar_portal_review_state not in ['submitted', 'approved'] or state not in ['draft', 'sent']"/>
   </group></xpath></field>
  </record>
- <record id="portal_return_form" model="ir.ui.view"><field name="name">absar.portal.purchase.return.form</field><field name="model">absar.portal.purchase.return</field><field name="arch" type="xml"><form string="Return RFQ for Correction"><group><field name="purchase_id"/><field name="note"/></group><footer><button name="action_return" type="object" string="Return RFQ" class="btn-primary"/><button string="Cancel" special="cancel"/></footer></form></field></record>
 </odoo>

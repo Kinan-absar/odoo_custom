@@ -1,0 +1,41 @@
+<odoo>
+ <template id="purchase_workspace_nav" name="Purchase Portal Navigation">
+  <nav class="apw-app-nav" aria-label="Purchase workspace">
+   <span class="apw-app-title"><i class="fa fa-shopping-cart"/> Purchase</span>
+   <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')" href="/my/employee/purchase" t-att-class="'active' if request.httprequest.path in ['/my/employee/purchase', '/my/employee/purchase/new'] else ''">Requests for Quotation</a>
+   <a href="/my/employee/purchase/orders" t-att-class="'active' if request.httprequest.path.endswith('/orders') else ''">Purchase Orders</a>
+   <a href="/my/employee/purchase/products" t-att-class="'active' if request.httprequest.path.endswith('/products') else ''">Products</a>
+   <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')" href="/my/employee/purchase/material-requests" t-att-class="'active' if request.httprequest.path.endswith('/material-requests') else ''">Material Requests</a>
+   <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver')" href="/my/employee/purchase/approvals">Approvals</a>
+   <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_confirmer')" href="/my/employee/purchase/confirmations">Confirmations</a>
+  </nav>
+ </template>
+ <template id="purchase_product_directory" name="Portal Purchasing Products">
+  <t t-call="employee_portal_suite.employee_portal_layout"><main class="apw-shell" id="apw-products" t-att-data-company-id="company.id">
+   <t t-call="absar_portal_purchase_monitor.purchase_workspace_nav"/>
+   <div class="apw-heading"><div><p class="apw-eyebrow">Purchase / Products</p><h2>Products</h2><p>Purchasing products available to your company</p></div><button t-if="can_create" type="button" class="btn btn-primary" data-product-new="1">New Product</button></div>
+   <div role="alert" class="alert alert-danger" hidden="hidden"/>
+   <form class="apw-toolbar" method="get"><input name="q" class="form-control apw-search" placeholder="Search product or internal reference" aria-label="Search products" t-att-value="q"/>
+    <select name="company_id" class="form-select" aria-label="Company"><t t-foreach="companies" t-as="c"><option t-att-value="c.id" t-att-selected="c == company" t-out="c.name"/></t></select><button class="btn btn-primary">Search</button><a href="/my/employee/purchase/products" class="btn btn-light">Clear</a></form>
+   <div class="apw-table-scroll"><table class="apw-table"><thead><tr><th>Product</th><th>Internal Reference</th><th>Type</th><th>Purchase Unit</th><th>Company</th></tr></thead><tbody>
+    <t t-foreach="records" t-as="product"><tr><td><strong t-out="product.name"/><small t-if="product.description_purchase" t-out="product.description_purchase"/></td><td t-out="product.default_code or '—'"/><td t-out="'Service' if product.type == 'service' else 'Goods'"/><td t-out="product.uom_po_id.display_name"/><td t-out="product.company_id.name or 'Shared'"/></tr></t>
+    <tr t-if="not records"><td colspan="5" class="apw-empty">No products match your search.</td></tr>
+   </tbody></table></div><t t-call="absar_portal_purchase_monitor.purchase_pager"/>
+   <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+  </main></t>
+ </template>
+ <template id="purchase_mr_directory" name="Approved Material Requests for Purchasing">
+  <t t-call="employee_portal_suite.employee_portal_layout"><main class="apw-shell">
+   <t t-call="absar_portal_purchase_monitor.purchase_workspace_nav"/>
+   <div class="apw-heading"><div><p class="apw-eyebrow">Purchase / Material Requests</p><h2>Material Requests</h2><p>Approved requests requiring a PO, from your assigned projects</p></div></div>
+   <form class="apw-toolbar" method="get"><input class="form-control apw-search" name="q" t-att-value="q" placeholder="Search MR or project" aria-label="Search Material Requests"/>
+    <select name="company_id" class="form-select" aria-label="Company"><t t-foreach="companies" t-as="c"><option t-att-value="c.id" t-att-selected="c == company" t-out="c.name"/></t></select><button class="btn btn-primary">Search</button><a href="/my/employee/purchase/material-requests" class="btn btn-light">Clear</a></form>
+   <div class="apw-table-scroll"><table class="apw-table"><thead><tr><th>Material Request</th><th>Project</th><th>Requested By</th><th>Required Date</th><th>Materials</th><th>Existing POs</th><th/></tr></thead><tbody>
+    <t t-foreach="records" t-as="mr"><tr><td><strong t-out="mr.name"/></td><td t-out="mr.project_id.display_name"/><td t-out="mr.employee_id.name"/><td t-out="mr.delivery_date or '—'"/><td>
+     <details><summary t-out="'%s materials' % len(mr.line_ids)"/><ul class="apw-mr-materials"><t t-foreach="mr.line_ids" t-as="line"><li><span t-out="line.item_name"/> · <strong t-out="line.qty_required"/> <t t-out="line.uom_id.display_name or ''"/></li></t></ul></details>
+    </td><td t-out="mr.po_name or '—'"/><td><a class="btn btn-outline-primary btn-sm" t-att-href="'/my/employee/purchase/new?mr_id=%s' % mr.id">Create RFQ</a></td></tr></t>
+    <tr t-if="not records"><td colspan="7" class="apw-empty">No approved Material Requests are available for your assigned projects in this company.</td></tr>
+   </tbody></table></div><t t-call="absar_portal_purchase_monitor.purchase_pager"/>
+  </main></t>
+ </template>
+</odoo>
