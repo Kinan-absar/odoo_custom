@@ -7,7 +7,10 @@
    <button class="btn" t-on-click="() => this.open('products')">Products</button>
    <button t-if="boot.roles.preparer" class="btn" t-on-click="() => this.open('mr')">Material Requests</button>
   </nav>
-  <div t-if="state.error" class="alert alert-danger m-3" role="alert" t-esc="state.error"/>
+  <div t-if="state.error" class="alert alert-danger m-3" role="alert">
+   <div class="text-prewrap" t-esc="state.error"/>
+   <details t-if="state.errorDetails"><summary>Technical details</summary><pre class="mt-2 text-wrap" t-esc="state.errorDetails"/></details>
+  </div>
   <ActionContainer/>
   <MainComponentsContainer/>
  </t>

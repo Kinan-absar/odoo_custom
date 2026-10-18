@@ -1,8 +1,14 @@
-# ABSAR Native Portal Purchase Workspace — 18.0.1.4.1
+# ABSAR Native Portal Purchase Workspace — 18.0.1.4.2
 
 **Native integration candidate; not installed or runtime-validated on staging.** This release replaces the hand-written portal PO editor with an isolated host for Odoo 18's actual action service, Purchase views, form/list controllers, search controls, widgets, catalog and product dialogs. It is not a screenshot replica or an iframe of an impersonated internal session.
 
 The employee remains a Portal user. Normal authenticated ORM calls use actual ACLs, global company/ownership rules and model guards. The module does not set Internal User, imply Purchase User, forge session administrator flags, or expose a generic sudo RPC dispatcher.
+
+## 1.4.2 native startup fix
+
+Initialize `useOwnDebugContext` in the workspace root, as Odoo's own WebClient does. When developer mode is active, native views use the debug-category hook; without the root context the native component fails during its lifecycle. Startup/navigation failures now display the nested OWL/RPC cause and expandable technical details instead of only the generic lifecycle wrapper. Dynamic error text is escaped.
+
+The authorized Purchase page on staging 39570132 was reproduced in the browser. Its captured console error shows an underlying server RPC failure wrapped in an OWL lifecycle error; the previous UI/log output does not expose the server traceback. This patch preserves and displays that RPC traceback in expandable technical details and logs it separately. The debug-context initialization fixes an additional identified developer-mode startup omission; it is not claimed to fix the unobserved server exception. A module upgrade/reload is needed to reveal and diagnose that server exception. No access groups or business records were changed by the agent.
 
 ## 1.4.1 installation fix
 
@@ -55,7 +61,7 @@ Do not deploy this candidate as an already-tested replacement for every internal
 ## Install / upgrade on staging
 
 1. Commit the single `absar_portal_purchase_monitor` folder to the custom-addons repository branch connected to staging. Replace the existing folder with that technical name. EPS itself is unchanged.
-2. Allow the Odoo.sh build to finish. Upgrade **ABSAR Portal Purchase Workspace** in Apps; copying files without a module upgrade is insufficient. Verify version `18.0.1.4.1` and the `project_purchase` dependency.
+2. Allow the Odoo.sh build to finish. Upgrade **ABSAR Portal Purchase Workspace** in Apps; copying files without a module upgrade is insufficient. Verify version `18.0.1.4.2` and the `project_purchase` dependency.
 3. Use designated employee Portal test accounts. Assign **Purchase - Native Workspace Access** plus Prepare, Approve, Monitor or Confirm as appropriate. Product creation additionally needs Prepare and Create Products. Keep Portal selected as the user type.
 4. Reload browser assets and open `/my/employee/purchase`. The installed current version having no portal PO page is expected before this addon is installed.
 5. Complete the acceptance checks below. Back up the staging database and retain the previous addon revision before upgrading. Removing Native Workspace Access removes the new native ACL entry point; role assignments are not migrated automatically.
