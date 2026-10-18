@@ -1393,6 +1393,59 @@
         word-break: break-word;
     }
 }
+
+                /* Desktop workspace: fluid beside the existing 260px sidebar.
+                   Keep all mobile rules and component-specific widths intact. */
+                @media (min-width: 769px) {
+                    .ep-portal-main {
+                        margin-left: 260px;
+                        min-width: 0;
+                        padding: 72px 28px 40px !important;
+                    }
+                    .ep-portal-main #wrap.container,
+                    .ep-portal-main #wrap .container {
+                        width: 100%;
+                        max-width: none;
+                        padding-left: 0;
+                        padding-right: 0;
+                    }
+                    .ep-portal-main #wrap.container {
+                        margin-top: 0 !important;
+                        margin-bottom: 0 !important;
+                    }
+                    .ep-portal-main #wrap > .container {
+                        margin-top: 0 !important;
+                    }
+                    .portal-announcement-wrapper {
+                        width: calc(100% - 316px);
+                        max-width: none;
+                        margin: 72px 28px 0 288px;
+                        padding: 0;
+                    }
+                    .portal-announcement-wrapper .portal-announcement:last-child {
+                        margin-bottom: 0;
+                    }
+                    .portal-announcement-wrapper ~ .ep-portal-main {
+                        padding-top: 24px !important;
+                    }
+                    .ep-portal-main .ep-dashboard-grid {
+                        margin-top: 0 !important;
+                    }
+                    .ep-dashboard-grid > .needs-attention {
+                        margin-top: 0;
+                    }
+                }
+                @media (min-width: 1200px) {
+                    .ep-dashboard-grid > .ep-dashboard-tile {
+                        flex: 0 0 auto;
+                        width: 33.33333333%;
+                    }
+                }
+                @media (min-width: 1600px) {
+                    .ep-dashboard-grid > .ep-dashboard-tile {
+                        width: 25%;
+                    }
+                }
             </style>
 
             <t t-set="ep_notif_summary"
@@ -1599,7 +1652,7 @@
             <!-- ================================================================
                  MAIN CONTENT
                  ================================================================ -->
-            <main>
+            <main class="ep-portal-main">
                 <div id="wrap" class="container mt-3 mb-5">
                     <t t-out="0"/>
                 </div>

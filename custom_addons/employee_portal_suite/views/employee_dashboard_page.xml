@@ -421,7 +421,7 @@
             /* Legacy Telegram connection UI removed; notifications use Web Push. */
             .needs-attention{background:#fff;border:1px solid #e6e8f0;border-radius:22px;padding:22px;box-shadow:0 8px 24px rgba(15,23,42,.05)}.attention-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px}.attention-kicker{font-size:11px;font-weight:800;letter-spacing:.08em;color:#64748b}.attention-title{font-size:21px;margin:3px 0 0}.attention-total{font-size:12px;font-weight:700;color:#4f46e5;background:#eef2ff;padding:7px 10px;border-radius:999px}.attention-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.attention-item{display:flex;align-items:center;gap:12px;border:1px solid #e8eaf2;border-radius:15px;padding:15px;color:#111827;text-decoration:none!important;background:#fff}.attention-item:hover{border-color:#c7c9f8;box-shadow:0 8px 20px rgba(79,70,229,.08)}.attention-item strong,.attention-item small{display:block}.attention-item strong{font-size:13px}.attention-item small{font-size:11px;color:#64748b;margin-top:3px}.attention-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#ecfdf5;color:#10b981;flex:0 0 38px}.attention-icon.warning{background:#fff7ed;color:#f59e0b}.attention-icon.dark{background:#f1f5f9;color:#334155}.attention-clear{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:16px;background:#f8fafc;border-radius:14px;color:#334155}.attention-clear i{font-size:24px;color:#10b981}.attention-clear strong,.attention-clear small{display:block}.attention-clear small{color:#64748b}@media(min-width:769px){.needs-attention{margin-top:34px}}@media(max-width:900px){.attention-grid{grid-template-columns:1fr}.attention-head{align-items:center}.needs-attention{padding:18px}}
             </style>
-            <div class="row mt-4 g-3">
+            <div class="row mt-4 g-3 ep-dashboard-grid">
 
 
                 <section class="needs-attention mb-4">
@@ -435,7 +435,7 @@
                 </section>
 
                 <!-- EMPLOYEE REQUESTS -->
-                <div class="col-6 col-md-6">
+                <div class="col-6 col-md-6 ep-dashboard-tile">
                     <a href="/my/employee/requests" class="dashboard-link">
                         <div class="dashboard-card">
                             <div class="card-top">
@@ -457,7 +457,7 @@
 
 
                 <!-- MATERIAL REQUESTS -->
-                <div class="col-6 col-md-6">
+                <div class="col-6 col-md-6 ep-dashboard-tile">
                     <a href="/my/employee/material" class="dashboard-link">
                         <div class="dashboard-card">
                             <div class="card-top">
@@ -480,7 +480,7 @@
 
                 <!-- EMPLOYEE APPROVALS -->
                 <t t-if="can_er_approval_page">
-                    <div class="col-6 col-md-6">
+                    <div class="col-6 col-md-6 ep-dashboard-tile">
                         <a href="/my/employee/approvals" class="dashboard-link">
                             <div class="dashboard-card">
                                 <div class="card-top">
@@ -516,7 +516,7 @@
 
                 <!-- MATERIAL APPROVALS -->
                 <t t-if="can_mr_approval_page">
-                    <div class="col-6 col-md-6">
+                    <div class="col-6 col-md-6 ep-dashboard-tile">
                         <a href="/my/employee/material/approvals" class="dashboard-link">
                             <div class="dashboard-card">
                                 <div class="card-top">
@@ -551,7 +551,7 @@
 
 
                 <!-- SIGNATURES -->
-                <div class="col-6 col-md-6">
+                <div class="col-6 col-md-6 ep-dashboard-tile">
                     <a href="/my/employee/sign" class="dashboard-link">
                         <div class="dashboard-card">
                             <div class="card-top">
@@ -582,7 +582,7 @@
 
                 <!-- SALARY REPORTS (read-only portal viewer group) -->
                 <t t-if="request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')">
-                    <div class="col-6 col-md-6">
+                    <div class="col-6 col-md-6 ep-dashboard-tile">
                         <a href="/my/employee/salary-reports" class="dashboard-link">
                             <div class="dashboard-card">
                                 <div class="card-top">
@@ -615,7 +615,7 @@
 
                 <!-- PORTAL REPORTS (visible by selected portal groups) -->
                 <t t-if="portal_report_count &gt; 0 or can_manage_portal_reports">
-                    <div class="col-6 col-md-6">
+                    <div class="col-6 col-md-6 ep-dashboard-tile">
                         <a href="/my/employee/reports" class="dashboard-link">
                             <div class="dashboard-card">
                                 <div class="card-top">
@@ -647,7 +647,7 @@
 
                 <!-- ATTENDANCE (only for group_portal_attendance_user) -->
                 <t t-if="can_use_attendance">
-                <div class="col-6 col-md-6">
+                <div class="col-6 col-md-6 ep-dashboard-tile">
                     <a href="/my/employee/attendance" class="dashboard-link">
                         <div class="dashboard-card"
                             t-att-style="'background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid rgba(16,185,129,0.18);' if attendance_checked_in else ''">
