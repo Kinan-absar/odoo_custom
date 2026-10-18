@@ -97,3 +97,14 @@
 /* Keep the section content editor visible even when its HTML is empty. */
 .aps-editor .aps-editor-body{display:block!important;min-height:160px!important;width:100%!important;background:#fff!important;cursor:text!important;border:0!important;}
 .aps-editor .aps-editor-body[contenteditable="true"]:empty:before{content:"Type the section content here...";color:#81939a;pointer-events:none;}
+
+/* Use the fluid Employee Portal desktop workspace; retain the mobile layout. */
+@media (min-width: 769px) {
+    .ep-portal-main #wrap .aps-wrap {
+        width: 100%;
+        max-width: none !important;
+        padding-left: 0;
+        padding-right: 0;
+        padding-top: 0 !important;
+    }
+}

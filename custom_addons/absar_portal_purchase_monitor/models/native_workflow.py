@@ -1,8 +1,8 @@
 import ast
-from copy import deepcopy
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError
 from .native_access import native_portal, guard_actor
+from .native_view import prepare_native_arch
 
 # An identity token cannot be supplied by a JSON-RPC caller as a context boolean.
 _SENT_OPERATION = object()
@@ -35,7 +35,7 @@ class PurchaseOrder(models.Model):
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
         if native_portal(self.env):
-            arch = deepcopy(arch)
+            arch = prepare_native_arch(arch, purchase=True)
             preparer = self.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')
             arch.set('delete', 'false')
             if not preparer:

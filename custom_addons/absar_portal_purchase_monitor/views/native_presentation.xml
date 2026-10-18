@@ -5,37 +5,7 @@
     <field name="model">purchase.order</field>
     <field name="inherit_id" ref="purchase.purchase_order_form"/>
     <field name="arch" type="xml">
-      <xpath expr="(//button[@name='print_quotation'])[2]" position="attributes">
-        <attribute name="groups">base.group_user,absar_portal_purchase_monitor.group_portal_purchase_native</attribute>
-      </xpath>
-      <xpath expr="(//button[@name='print_quotation'])[1]" position="attributes">
-        <attribute name="groups">base.group_user,absar_portal_purchase_monitor.group_portal_purchase_native</attribute>
-      </xpath>
-      <xpath expr="(//field[@name='analytic_distribution'])[2]" position="attributes">
-        <attribute name="groups">analytic.group_analytic_accounting,absar_portal_purchase_monitor.group_portal_purchase_native</attribute>
-      </xpath>
-      <xpath expr="(//field[@name='analytic_distribution'])[1]" position="attributes">
-        <attribute name="groups">analytic.group_analytic_accounting,absar_portal_purchase_monitor.group_portal_purchase_native</attribute>
-      </xpath>
-      <xpath expr="(//field[@name='product_uom'][@groups='uom.group_uom'])[3]" position="attributes">
-        <attribute name="groups">uom.group_uom,absar_portal_purchase_monitor.group_portal_purchase_native</attribute>
-      </xpath>
-      <xpath expr="(//field[@name='product_uom'][@groups='uom.group_uom'])[2]" position="attributes">
-        <attribute name="groups">uom.group_uom,absar_portal_purchase_monitor.group_portal_purchase_native</attribute>
-      </xpath>
-      <xpath expr="(//field[@name='product_uom'][@groups='uom.group_uom'])[1]" position="attributes">
-        <attribute name="groups">uom.group_uom,absar_portal_purchase_monitor.group_portal_purchase_native</attribute>
-      </xpath>
-      <xpath expr="(//field[@name='currency_id'][@groups='base.group_multi_currency'])[1]" position="attributes">
-        <attribute name="groups">base.group_multi_currency,absar_portal_purchase_monitor.group_portal_purchase_native</attribute>
-      </xpath>
-      <xpath expr="(//field[@name='company_id'][@groups='base.group_multi_company'])[1]" position="attributes">
-        <attribute name="groups">base.group_multi_company,absar_portal_purchase_monitor.group_portal_purchase_native</attribute>
-      </xpath>
-      <xpath expr="(//field[@name='product_uom'][@groups='!uom.group_uom'])[1]" position="attributes">
-        <attribute name="groups">!uom.group_uom,!absar_portal_purchase_monitor.group_portal_purchase_native</attribute>
-      </xpath>
-    </field>
+      <!--Presentation groups are adapted on the resolved native architecture; no numbered or group-dependent XPath.--><xpath expr="//form" position="attributes"><attribute name="class" add="absar_native_purchase_form" separator=" "/></xpath></field>
   </record>
   <record id="material_request_list_native_purchase" model="ir.ui.view">
     <field name="name">material.request.list.portal.purchase</field>
@@ -48,4 +18,4 @@
       </xpath>
     </field>
   </record>
-<record id="product_form_native_presentation" model="ir.ui.view"><field name="name">product.template.form.portal.native.presentation</field><field name="model">product.template</field><field name="inherit_id" ref="product.product_template_form_view"/><field name="arch" type="xml"><xpath expr="(//*[@groups=&quot;uom.group_uom&quot;])[4]" position="attributes"><attribute name="groups">uom.group_uom,absar_portal_purchase_monitor.group_portal_purchase_native</attribute></xpath><xpath expr="(//*[@groups=&quot;uom.group_uom&quot;])[3]" position="attributes"><attribute name="groups">uom.group_uom,absar_portal_purchase_monitor.group_portal_purchase_native</attribute></xpath><xpath expr="(//*[@groups=&quot;uom.group_uom&quot;])[2]" position="attributes"><attribute name="groups">uom.group_uom,absar_portal_purchase_monitor.group_portal_purchase_native</attribute></xpath><xpath expr="(//*[@groups=&quot;uom.group_uom&quot;])[1]" position="attributes"><attribute name="groups">uom.group_uom,absar_portal_purchase_monitor.group_portal_purchase_native</attribute></xpath></field></record></odoo>
+<record id="product_form_native_presentation" model="ir.ui.view"><field name="name">product.template.form.portal.native.presentation</field><field name="model">product.template</field><field name="inherit_id" ref="product.product_template_form_view"/><field name="arch" type="xml"><!--Presentation groups are adapted on the resolved native architecture; no numbered or group-dependent XPath.--><xpath expr="//form" position="attributes"><attribute name="class" add="absar_native_product_form" separator=" "/></xpath></field></record></odoo>

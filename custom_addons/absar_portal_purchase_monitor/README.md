@@ -1,8 +1,14 @@
-# ABSAR Native Portal Purchase Workspace — 18.0.1.4.0
+# ABSAR Native Portal Purchase Workspace — 18.0.1.4.1
 
 **Native integration candidate; not installed or runtime-validated on staging.** This release replaces the hand-written portal PO editor with an isolated host for Odoo 18's actual action service, Purchase views, form/list controllers, search controls, widgets, catalog and product dialogs. It is not a screenshot replica or an iframe of an impersonated internal session.
 
 The employee remains a Portal user. Normal authenticated ORM calls use actual ACLs, global company/ownership rules and model guards. The module does not set Internal User, imply Purchase User, forge session administrator flags, or expose a generic sudo RPC dispatcher.
+
+## 1.4.1 installation fix
+
+The reported staging upgrade failed because the product view inheritance required the fourth node with an exact UoM group attribute. Installed Odoo revisions/extensions can have fewer such nodes. All numbered/group-dependent Purchase and Product inheritance selectors are removed. Native display-group adaptation now visits only controls actually present in the resolved architecture, while preserving a separate copy and existing access rules. The retained view IDs use only the standard form root as an inheritance target.
+
+The patch includes regression checks for different numbers of UoM controls, absent controls, nested product/line controls, negative fallback groups and unchanged source architectures. These are local checks; a live module upgrade is still required to verify the complete database.
 
 ## What changed
 
@@ -49,7 +55,7 @@ Do not deploy this candidate as an already-tested replacement for every internal
 ## Install / upgrade on staging
 
 1. Commit the single `absar_portal_purchase_monitor` folder to the custom-addons repository branch connected to staging. Replace the existing folder with that technical name. EPS itself is unchanged.
-2. Allow the Odoo.sh build to finish. Upgrade **ABSAR Portal Purchase Workspace** in Apps; copying files without a module upgrade is insufficient. Verify version `18.0.1.4.0` and the `project_purchase` dependency.
+2. Allow the Odoo.sh build to finish. Upgrade **ABSAR Portal Purchase Workspace** in Apps; copying files without a module upgrade is insufficient. Verify version `18.0.1.4.1` and the `project_purchase` dependency.
 3. Use designated employee Portal test accounts. Assign **Purchase - Native Workspace Access** plus Prepare, Approve, Monitor or Confirm as appropriate. Product creation additionally needs Prepare and Create Products. Keep Portal selected as the user type.
 4. Reload browser assets and open `/my/employee/purchase`. The installed current version having no portal PO page is expected before this addon is installed.
 5. Complete the acceptance checks below. Back up the staging database and retain the previous addon revision before upgrading. Removing Native Workspace Access removes the new native ACL entry point; role assignments are not migrated automatically.
@@ -61,7 +67,7 @@ Upgrade migration `18.0.1.3.0` is retained for databases upgrading from older ve
 Performed locally:
 
 - Python compilation; XML, manifest/asset-path and expression parsing; native Purchase/Product/EPS inheritance XPath checks; retained record/template XML IDs; ZIP integrity.
-- Native JavaScript syntax check.
+- Native JavaScript syntax check; 58 view-compatibility regression checks in `tools/check_native_views.py`.
 - `tools/check_native.py`: 1,279 isolated role/company/ownership scope, bootstrap encoding and opt-in ACL checks.
 - `tools/check_logic.py`: 50 inherited isolated validator, approval and financial-allocation checks.
 
@@ -89,4 +95,4 @@ Use explicit permission before creating/saving test business records. This packa
 7. Try direct RPC reads/writes across owners/companies, review-state injection, moving lines, changing template/variant ownership, spoofed context actor/sent flags and unauthorized product creation. Compare visible controls with actual permissions.
 8. Open a real confirmed PO with bill/payment/signing extensions. Check every tab, custom field, print report, smart button and wizard against internal behavior. Resolve extension-specific ACLs and approved role scope before claiming complete parity.
 
-No screenshot of the reported error was attached in this turn. A live traceback or the missing screenshot is still needed to identify that specific error; none is claimed fixed by inspection alone.
+The supplied upgrade traceback identifies the numbered product UoM XPath failure corrected in 1.4.1. The corrected package still needs a live staging upgrade and browser acceptance.

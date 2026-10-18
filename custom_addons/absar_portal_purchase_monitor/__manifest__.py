@@ -1,5 +1,5 @@
 {'name': 'ABSAR Portal Purchase Workspace',
- 'version': '18.0.1.4.0',
+ 'version': '18.0.1.4.1',
  'category': 'Purchases',
  'summary': 'Native Odoo Purchase views for scoped employee portal users',
  'author': 'ABSAR Al Omran Construction Company',

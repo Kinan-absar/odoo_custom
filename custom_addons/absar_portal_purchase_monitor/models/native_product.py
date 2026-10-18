@@ -1,7 +1,7 @@
-from copy import deepcopy
 from odoo import api, models, _
 from odoo.exceptions import AccessError, ValidationError
 from .native_access import native_portal, guard_actor, check_relation, check_fields, company_record
+from .native_view import prepare_native_arch
 
 PRODUCT_FIELDS = {
     'name', 'default_code', 'barcode', 'type', 'is_storable', 'purchase_ok', 'sale_ok',
@@ -55,11 +55,12 @@ class ProductTemplate(models.Model):
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
-        if native_portal(self.env) and not self.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_product_creator'):
-            arch = deepcopy(arch)
-            arch.set('create', 'false')
-            arch.set('edit', 'false')
-            arch.set('delete', 'false')
+        if native_portal(self.env):
+            arch = prepare_native_arch(arch)
+            if not self.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_product_creator'):
+                arch.set('create', 'false')
+                arch.set('edit', 'false')
+                arch.set('delete', 'false')
         return arch, view
 
     @api.model_create_multi
@@ -88,11 +89,12 @@ class ProductProduct(models.Model):
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
         arch, view = super()._get_view(view_id, view_type, **options)
-        if native_portal(self.env) and not self.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_product_creator'):
-            arch = deepcopy(arch)
-            arch.set('create', 'false')
-            arch.set('edit', 'false')
-            arch.set('delete', 'false')
+        if native_portal(self.env):
+            arch = prepare_native_arch(arch)
+            if not self.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_product_creator'):
+                arch.set('create', 'false')
+                arch.set('edit', 'false')
+                arch.set('delete', 'false')
         return arch, view
 
     @api.model_create_multi

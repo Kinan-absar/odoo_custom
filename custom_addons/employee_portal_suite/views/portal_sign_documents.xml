@@ -39,6 +39,15 @@
             .eps-mobile-card{background:#fff;border:1px solid #e5e8ed;border-radius:12px;padding:13px;margin-bottom:10px;box-shadow:0 4px 14px rgba(24,32,48,.035)}
             .eps-mobile-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.eps-mobile-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:11px;padding-top:10px;border-top:1px solid #eef0f3}
             @media(max-width:767.98px){.eps-sign-page{padding:16px 11px 34px}.eps-sign-toolbar{align-items:flex-start;flex-direction:column}.eps-sign-heading h1{font-size:24px}.eps-sign-tabs{width:100%}.eps-sign-tab{flex:1;text-align:center}.eps-workflow{font-size:12px}}
+            /* Align the signing list with the shared desktop workspace. */
+            @media (min-width: 769px) {
+                .ep-portal-main .eps-sign-page {
+                    width: 100%;
+                    max-width: none;
+                    margin: 0;
+                    padding: 0 0 42px;
+                }
+            }
         </style>
         <div class="eps-sign-page">
             <div class="eps-sign-toolbar">
