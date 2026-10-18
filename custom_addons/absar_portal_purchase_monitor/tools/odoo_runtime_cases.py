@@ -7,7 +7,8 @@ This is not a production maintenance script or an HTTP endpoint.
 from copy import deepcopy
 from pathlib import Path
 import importlib.util
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
+from werkzeug.exceptions import Forbidden, NotFound
 from odoo.tools.convert import convert_xml_import
 from lxml import etree
 
@@ -16,7 +17,7 @@ def check_runtime(env, service, payload):
     def call(method, data):
         service._json = lambda run: run(deepcopy(data))
         endpoint = getattr(service, method)
-        return endpoint.__wrapped__(service)
+        return endpoint.__wrapped__(service, po_id=data['id']) if method == 'decision' else endpoint.__wrapped__(service)
 
     def close(actual, expected):
         assert abs(actual - expected) < 0.00001, (actual, expected)
@@ -61,6 +62,16 @@ def check_runtime(env, service, payload):
     close(order.amount_total, vendor_preview['total'])
     close(order.order_line[0].discount, 10)
 
+    portal_reviewer = env['res.users'].with_context(no_reset_password=True).create({
+        'name': 'Disposable Portal Approver', 'login': 'portal-runtime-approver',
+        'company_id': order.company_id.id, 'company_ids': [(6, 0, [order.company_id.id])],
+        'groups_id': [(6, 0, [env.ref('base.group_portal').id,
+                              env.ref('absar_portal_purchase_monitor.group_portal_purchase_approver').id])],
+    })
+    env['hr.employee'].create({'name': portal_reviewer.name, 'user_id': portal_reviewer.id,
+                              'company_id': order.company_id.id})
+    assert portal_reviewer.share and not portal_reviewer.has_group('base.group_user')
+
     # Submission must keep the document an RFQ and record a separate review.
     edit.update(version=str(order.write_date), submit=True)
     call('save', edit)
@@ -77,7 +88,7 @@ def check_runtime(env, service, payload):
     manager = env['res.users'].with_context(no_reset_password=True).create({
         'name': 'Disposable Purchase Manager', 'login': 'portal-runtime-manager',
         'company_id': order.company_id.id, 'company_ids': [(6, 0, [order.company_id.id])],
-        'groups_id': [(6, 0, [env.ref('base.group_user').id, env.ref('purchase.group_purchase_manager').id])],
+        'groups_id': [(6, 0, [env.ref('base.group_user').id, env.ref('purchase.group_purchase_manager').id, env.ref('absar_portal_purchase_monitor.group_portal_purchase_approver').id])],
     })
     assert not manager.share
     order.with_user(manager).action_absar_portal_approve_confirm()
@@ -113,6 +124,86 @@ def check_runtime(env, service, payload):
     order.invalidate_recordset()
     assert order.state in ('purchase', 'done') and order.absar_portal_approver_id == manager
 
+    # The same Approver role authorizes a separate portal account. It must
+    # retain its account type while invoking the native confirmation chain.
+    portal_payload = deepcopy(payload)
+    portal_payload['submit'] = True
+    portal_saved = call('save', portal_payload)
+    portal_order = env['purchase.order'].browse(int(portal_saved['url'].rsplit('/', 1)[1]))
+    assert portal_order.state == 'draft' and portal_order.absar_portal_review_state == 'submitted'
+    request = service._actor.__func__.__globals__['request']
+    issuer_env = request.env
+    request.env = env(user=portal_reviewer.id, context=dict(issuer_env.context))
+    try:
+        boot = service._boot(service._record(portal_order.id))
+        assert boot['can_review'] and not boot['can_create_product']
+        call('decision', {'id': portal_order.id, 'action': 'approve_confirm', 'version': str(portal_order.write_date)})
+    finally:
+        request.env = issuer_env
+    portal_order.invalidate_recordset()
+    assert portal_order.state in ('purchase', 'done')
+    assert portal_order.absar_portal_approver_id == portal_reviewer
+    assert portal_reviewer.share and not portal_reviewer.has_group('base.group_user')
+    assert not portal_reviewer.has_group('purchase.group_purchase_user')
+
+    # Monitor can read confirmed company orders, never draft/edit/product actions.
+    monitor = env['res.users'].with_context(no_reset_password=True).create({
+        'name': 'Disposable Portal Monitor', 'login': 'portal-runtime-monitor',
+        'company_id': order.company_id.id, 'company_ids': [(6, 0, [order.company_id.id])],
+        'groups_id': [(6, 0, [env.ref('base.group_portal').id,
+                              env.ref('absar_portal_purchase_monitor.group_portal_purchase_monitor').id])],
+    })
+    env['hr.employee'].create({'name': monitor.name, 'user_id': monitor.id, 'company_id': order.company_id.id})
+    request.env = env(user=monitor.id, context=dict(issuer_env.context))
+    try:
+        assert service._record(order.id) == order
+        assert service._boot(service._record(order.id))['readonly']
+        for operation in (lambda: service._record(legacy.id),
+                          lambda: service._record(order.id, edit=True),
+                          lambda: call('product_defaults', {'company_id': payload['company_id']})):
+            try:
+                operation()
+            except (Forbidden, NotFound, AccessError):
+                pass
+            else:
+                raise AssertionError('Monitor must remain read only and cannot see drafts')
+    finally:
+        request.env = issuer_env
+    # Even a user with both roles cannot approve their own submitted request.
+    own_payload = deepcopy(payload); own_payload['submit'] = True
+    own_saved = call('save', own_payload)
+    own_order = env['purchase.order'].browse(int(own_saved['url'].rsplit('/', 1)[1]))
+    actor.sudo().write({'groups_id': [(4, env.ref('absar_portal_purchase_monitor.group_portal_purchase_approver').id)]})
+    try:
+        own_order.with_user(actor).sudo().action_absar_portal_approve_confirm()
+    except UserError:
+        pass
+    else:
+        raise AssertionError('Combined Issuer/Approver must not self approve')
+    actor.sudo().write({'groups_id': [(3, env.ref('absar_portal_purchase_monitor.group_portal_purchase_approver').id)]})
+
+    # Exercise actual role consolidation twice, including aliases and memberships.
+    legacy_groups = {}
+    for name in ('confirmer', 'product_creator', 'native'):
+        group = env['res.groups'].create({'name': 'Legacy ' + name})
+        env['ir.model.data'].create({'module': 'absar_portal_purchase_monitor',
+            'name': 'group_portal_purchase_' + name, 'model': 'res.groups', 'res_id': group.id})
+        legacy_groups[name] = group
+    legacy_groups['confirmer'].users = [(4, portal_reviewer.id)]
+    legacy_groups['product_creator'].users = [(4, actor.id)]
+    migration_path = addon / 'migrations/18.0.1.5.5/pre-migration.py'
+    spec = importlib.util.spec_from_file_location('role_migration', migration_path)
+    migration = importlib.util.module_from_spec(spec); spec.loader.exec_module(migration)
+    for repeat in range(2):
+        migration.migrate(env.cr, '18.0.1.5.4')
+    assert env.ref('absar_portal_purchase_monitor.group_portal_purchase_confirmer') == env.ref('absar_portal_purchase_monitor.group_portal_purchase_approver')
+    assert env.ref('absar_portal_purchase_monitor.group_portal_purchase_product_creator') == env.ref('absar_portal_purchase_monitor.group_portal_purchase_preparer')
+    assert not env.ref('absar_portal_purchase_monitor.group_portal_purchase_native', raise_if_not_found=False)
+    assert not env['res.groups'].browse([group.id for group in legacy_groups.values()]).exists()
+    assert actor.share and portal_reviewer.share and not actor.has_group('base.group_user')
+    assert manager.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver')
+    print('PASS: portal/internal unified approval, no self approval or account conversion; legacy role migration idempotent.')
+
     defaults = call('product_defaults', {'company_id': payload['company_id']})
     for key in ('categ_id', 'uom_id', 'uom_po_id'):
         assert isinstance(defaults[key]['id'], int) and defaults[key]['id'] > 0
@@ -133,4 +224,4 @@ def check_runtime(env, service, payload):
     assert len(product_preview['lines']) == 1
     close(product_preview['lines'][0]['product_qty'], 2)
     close(product_preview['lines'][0]['price_unit'], 8.75)
-    print('PASS: real Odoo ORM preview/totals, draft create/edit, internal request, portal confirmation denied, manager approve/confirm, buyer identity, native view/action loading, buyer migration and product defaults/create/add.')
+    print('PASS: real Odoo ORM preview/totals, draft create/edit, submission request, issuer confirmation denied, unified portal/internal approve/confirm, buyer identity, native view/action loading, buyer migration and product defaults/create/add.')

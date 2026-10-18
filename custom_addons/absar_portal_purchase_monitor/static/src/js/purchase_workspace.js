@@ -521,10 +521,10 @@ function startPurchaseWorkspace() {
             });
             if (note === null) return;
         }
-        if (action === 'confirm') {
+        if (action === 'confirm' || action === 'approve_confirm') {
             const confirmed = await new Promise(resolve => {
                 const view = modal('Confirm Purchase Order');
-                view.body.append(text('p', 'Confirm this independently approved RFQ? Odoo may create receipts and run the installed purchase/signing workflow.'));
+                view.body.append(text('p', 'Approve and confirm this purchase request? Odoo may create receipts and run the installed purchase/signing workflow.'));
                 view.foot.append(button('Confirm Purchase Order', () => {resolve(true); view.dialog.close();}, 'btn btn-primary'), button('Cancel', () => view.dialog.close()));
                 view.dialog.addEventListener('close', () => resolve(false));
             });

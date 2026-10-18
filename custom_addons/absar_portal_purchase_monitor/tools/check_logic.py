@@ -78,7 +78,7 @@ class Order(Model):
         self.absar_portal_approver_id=False; self.id=3
     def __iter__(self): return iter([self])
     def _portal_actor(self,role): return reviewer
-    def _portal_internal_approver(self): return reviewer
+    def _portal_approver(self): return reviewer
     def _portal_lock(self): pass
     def _portal_check_company(self,u): pass
     def sudo(self): return self

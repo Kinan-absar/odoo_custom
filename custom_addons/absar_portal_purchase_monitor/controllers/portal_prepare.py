@@ -48,8 +48,8 @@ class PortalPurchasePrepare(http.Controller):
 
     def _actor(self, role=None):
         user = request.env.user
-        roles = ('preparer', 'approver', 'monitor', 'confirmer')
-        if (not user.active or not user.employee_id or
+        roles = ('preparer', 'approver', 'monitor')
+        if (not user.active or ((user.share or role == 'preparer') and not user.sudo().employee_id) or
                 user.has_group('employee_portal_suite.group_attendance_only') or
                 not any(user.has_group(PREFIX + 'group_portal_purchase_' + r)
                         for r in ((role,) if role else roles))):
@@ -74,9 +74,8 @@ class PortalPurchasePrepare(http.Controller):
             raise NotFound()
         owner = po.absar_portal_preparer_id == user and user.has_group(PREFIX + 'group_portal_purchase_preparer')
         reviewer = bool(po.absar_portal_preparer_id) and user.has_group(PREFIX + 'group_portal_purchase_approver')
-        confirmer = bool(po.absar_portal_preparer_id) and user.has_group(PREFIX + 'group_portal_purchase_confirmer')
         monitor = po.state in ('purchase', 'done') and user.has_group(PREFIX + 'group_portal_purchase_monitor')
-        if not (owner or reviewer or confirmer or monitor):
+        if not (owner or reviewer or monitor):
             raise NotFound()
         if edit and not po._portal_editable(user):
             raise AccessError(_('This RFQ is not an editable draft belonging to you.'))
@@ -301,7 +300,7 @@ class PortalPurchasePrepare(http.Controller):
     def listing(self, **kw):
         confirmations = request.httprequest.path.endswith('/confirmations')
         approval = request.httprequest.path.endswith('/approvals')
-        user = self._actor('confirmer' if confirmations else 'approver' if approval else 'preparer')
+        user = self._actor('approver' if confirmations or approval else 'preparer')
         domain = [('company_id', 'in', user.company_ids.ids)]
         if confirmations:
             domain += [('absar_portal_preparer_id', '!=', False), ('state', 'in', ['draft', 'sent'])]
@@ -381,7 +380,7 @@ class PortalPurchasePrepare(http.Controller):
         return dict(values=vals, selected=selected, readonly=readonly,
                     attachments=[{'id': a.id, 'name': a.name} for a in attachments],
                     totals=dict(untaxed=po.amount_untaxed, tax=po.amount_tax, total=po.amount_total, currency=po.currency_id.name) if po else None,
-                    back_url=BASE if user.has_group(PREFIX + 'group_portal_purchase_preparer') else BASE + '/approvals' if user.has_group(PREFIX + 'group_portal_purchase_approver') else BASE + '/confirmations',
+                    back_url=BASE if user.has_group(PREFIX + 'group_portal_purchase_preparer') else BASE + '/approvals' if user.has_group(PREFIX + 'group_portal_purchase_approver') else '/my/employee/purchase-monitor',
                     id=po.id if po else False, name=po.name if po else _('New'),
                     state=po.state if po else 'draft',
                     review=po.absar_portal_review_state if po else 'draft',
@@ -389,10 +388,10 @@ class PortalPurchasePrepare(http.Controller):
                     note=po.absar_portal_review_note or '' if po else '',
                     company_name=company.name, companies=[{'id': c.id, 'label': c.name, 'currency': choice(c.currency_id), 'picking_type': choice(self._scope('picking_type', c)[0].search(self._scope('picking_type', c)[1], limit=1))} for c in user.company_ids],
                     timezone=user.tz or 'UTC',
-                    can_create_product=user.has_group(PREFIX + 'group_portal_purchase_product_creator') and not readonly,
-                    can_review=bool(po and not user.share and user.has_group('purchase.group_purchase_manager') and po.absar_portal_preparer_id and po.absar_portal_preparer_id != user and
+                    can_create_product=user.has_group(PREFIX + 'group_portal_purchase_preparer') and not readonly,
+                    can_review=bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_preparer_id and po.absar_portal_preparer_id != user and
                         po.state in ('draft', 'sent') and po.absar_portal_review_state in ('submitted', 'approved')),
-                    can_confirm=bool(po and not user.share and user.has_group('purchase.group_purchase_manager') and po.absar_portal_approver_id and
+                    can_confirm=bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_approver_id and
                         po.absar_portal_review_state == 'approved' and po.state in ('draft', 'sent') and
                         po.absar_portal_preparer_id != user),
                     project_integration='project_id' in request.env['purchase.order']._fields)
@@ -551,9 +550,9 @@ class PortalPurchasePrepare(http.Controller):
         def run(data):
             po = self._record(po_id)
             action = data.get('action')
-            if action not in ('approve', 'return', 'confirm'):
+            if action not in ('approve', 'return', 'confirm', 'approve_confirm'):
                 raise ValidationError(_('Unknown decision.'))
-            self._actor('confirmer' if action == 'confirm' else 'approver')
+            self._actor('approver')
             po._portal_lock()
             if str(po.write_date) != data.get('version'):
                 raise UserError(_('This RFQ changed. Reload before reviewing.'))
@@ -565,7 +564,7 @@ class PortalPurchasePrepare(http.Controller):
             elif action == 'approve':
                 po.action_absar_portal_approve()
             else:
-                result = po.action_absar_portal_confirm()
+                result = po.action_absar_portal_approve_confirm() if action == 'approve_confirm' else po.action_absar_portal_confirm()
                 if isinstance(result, dict):
                     raise UserError(_('Confirmation requires a backend wizard. Please complete it in Purchase; no changes were saved.'))
             return {'url': BASE + '/%s' % po.id}
@@ -589,7 +588,7 @@ class PortalPurchasePrepare(http.Controller):
     def product_defaults(self, **kw):
         def run(data):
             self._actor('preparer')
-            self._actor('product_creator')
+            self._actor('preparer')
             company = self._company(data.get('company_id'))
             Product = self._env(company)['product.product'].sudo().with_company(company)
             defaults = Product.default_get(['categ_id', 'uom_id', 'uom_po_id', 'purchase_method', 'supplier_taxes_id', 'type'])
@@ -608,7 +607,7 @@ class PortalPurchasePrepare(http.Controller):
     def create_product(self, **kw):
         def run(data):
             self._actor('preparer')
-            self._actor('product_creator')
+            self._actor('preparer')
             company = self._company(data.get('company_id'))
             name = str(data.get('name') or '').strip()[:150]
             if not name:

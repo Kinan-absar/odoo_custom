@@ -26,12 +26,14 @@ class PortalPurchaseDirectory(PortalPurchasePrepare):
     @http.route(BASE + '/orders', type='http', auth='user', website=True)
     def orders(self, **kw):
         user = self._actor()
+        if user.has_group(PREFIX + 'group_portal_purchase_monitor'):
+            return request.redirect('/my/employee/purchase-monitor')
         scope = []
         if user.has_group(PREFIX + 'group_portal_purchase_monitor'):
             scope.append([(1, '=', 1)])
         if user.has_group(PREFIX + 'group_portal_purchase_preparer'):
             scope.append([('absar_portal_preparer_id', '=', user.id)])
-        if any(user.has_group(PREFIX + 'group_portal_purchase_' + r) for r in ('approver', 'confirmer')):
+        if any(user.has_group(PREFIX + 'group_portal_purchase_' + r) for r in ('approver',)):
             scope.append([('absar_portal_preparer_id', '!=', False)])
         domain = expression.AND([[('company_id', 'in', user.company_ids.ids), ('state', 'in', ['purchase', 'done'])], expression.OR(scope)])
         q = str(kw.get('q') or '').strip()[:120]
@@ -60,7 +62,7 @@ class PortalPurchaseDirectory(PortalPurchasePrepare):
             domain = expression.AND([domain, ['|', ('name','ilike',q), ('default_code','ilike',q)]])
         values = self._page(model, domain, kw, BASE+'/products', order='name,id', q=q, company_id=company.id)
         values.update(q=q, company=company, companies=user.company_ids,
-                      can_create=user.has_group(PREFIX+'group_portal_purchase_preparer') and user.has_group(PREFIX+'group_portal_purchase_product_creator'))
+                      can_create=user.has_group(PREFIX+'group_portal_purchase_preparer'))
         return request.render(PREFIX+'purchase_product_directory', values)
 
     @http.route(BASE + '/material-requests', type='http', auth='user', website=True)
@@ -107,6 +109,8 @@ class PortalPurchaseDirectory(PortalPurchasePrepare):
     @http.route([BASE + '/new', BASE + '/<int:po_id>'], type='http', auth='user', website=True, methods=['GET'])
     def editor(self, po_id=None, mr_id=None, **kw):
         po = self._record(po_id) if po_id else False
+        if po and request.env.user.has_group(PREFIX + 'group_portal_purchase_monitor') and po.state in ('purchase', 'done'):
+            return request.redirect('/my/employee/purchase-monitor/%s' % po.id)
         company = None
         mr = False
         if not po and mr_id:
@@ -129,7 +133,7 @@ class PortalPurchaseDirectory(PortalPurchasePrepare):
     def legacy_native_url(self, action_path=None, **kw):
         # Inert compatibility for bookmarked native-host URLs. Never reload backend assets.
         user = self._actor()
-        target = BASE if user.has_group(PREFIX+'group_portal_purchase_preparer') else BASE+'/approvals' if user.has_group(PREFIX+'group_portal_purchase_approver') else BASE+'/confirmations' if user.has_group(PREFIX+'group_portal_purchase_confirmer') else BASE+'/orders'
+        target = BASE if user.has_group(PREFIX+'group_portal_purchase_preparer') else BASE+'/approvals' if user.has_group(PREFIX+'group_portal_purchase_approver') else BASE+'/orders'
         return request.redirect(target)
 
     @http.route(BASE + '/<int:po_id>/quotation-upload', type='http', auth='user', methods=['POST'], csrf=True)
