@@ -112,7 +112,8 @@ class PortalPurchaseDirectory(PortalPurchasePrepare):
                                   origin=mr.name, lines=info['lines'])
             boot['selected'].update(material_request_id={'id':mr.id,'label':mr.name}, project_id=info['project'])
             boot['mr_source'] = mr.name
-        return request.render(PREFIX+'purchase_prepare_detail', dict(boot_json=json.dumps(boot), boot=boot, po=po))
+        monitoring = PortalPurchaseMonitor()._rows(po)[0] if po and po.state in ('purchase', 'done') else False
+        return request.render(PREFIX+'purchase_prepare_detail', dict(boot_json=json.dumps(boot), boot=boot, po=po, monitoring=monitoring))
 
     @http.route([BASE+'/app', BASE+'/app/<path:action_path>'], type='http', auth='user', website=True)
     def legacy_native_url(self, action_path=None, **kw):

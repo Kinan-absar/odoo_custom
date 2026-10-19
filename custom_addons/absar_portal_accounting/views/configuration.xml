@@ -3,6 +3,7 @@
         <field name="name">Accounting Workspace</field><field name="url">/my/employee/accounting</field><field name="target">self</field>
     </record>
     <record id="company_portal_accounting" model="ir.ui.view">
+        <field name="active" eval="False"/>
         <field name="name">res.company.portal.accounting</field><field name="model">res.company</field>
         <field name="inherit_id" ref="base.view_company_form"/>
         <field name="arch" type="xml">
@@ -12,6 +13,25 @@
                         <field name="portal_accounting_review_internal"/></group>
                     <p>Assign Accounting Preparer, Accounting Approver or Accounting Monitor on the user. Only journals selected here are available. Portal roles do not grant internal accounting permissions.</p>
                 </page>
+            </xpath>
+        </field>
+    </record>
+    <record id="settings_portal_accounting" model="ir.ui.view">
+        <field name="name">res.config.settings.portal.accounting</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='account']" position="inside">
+                <block title="Employee Portal Accounting" name="employee_portal_accounting" groups="base.group_system">
+                    <setting id="portal_accounting_journals" string="Portal Journals" company_dependent="1"
+                        help="Choose which journals the employee accounting workspace may use in this company. Leaving this empty disables the workspace.">
+                        <field name="portal_accounting_journal_ids" widget="many2many_tags" domain="[('company_id', '=', company_id)]" options="{'no_create': True}"/>
+                    </setting>
+                    <setting id="portal_accounting_internal_review" string="Review Internal Submissions Too" company_dependent="1"
+                        help="Send manual internal bills, miscellaneous entries and vouchers in the selected journals through the same approval process.">
+                        <field name="portal_accounting_review_internal"/>
+                    </setting>
+                </block>
             </xpath>
         </field>
     </record>

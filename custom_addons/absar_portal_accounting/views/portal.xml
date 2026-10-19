@@ -20,19 +20,20 @@
                 <option t-foreach="companies" t-as="c" t-att-value="c.id" t-att-selected="c == company" t-out="c.name"/>
             </select></label></form>
         </div>
-        <div class="aca-alert" t-if="not configured">An administrator must select the available journals under Settings → Users &amp; Companies → Companies → Portal Accounting before this workspace can be used.</div>
+        <div class="aca-alert" t-if="not configured">An administrator must select the available journals under Accounting → Configuration → Settings → Employee Portal Accounting before this workspace can be used.</div>
     </template>
     <template id="home">
-        <t t-call="employee_portal_suite.employee_portal_layout"><main class="aca">
+        <t t-call="employee_portal_suite.employee_portal_layout"><section class="aca">
             <t t-call="absar_portal_accounting.header"/>
             <h2>Accounting Workspace</h2><p>Prepare, review and monitor your accounting documents.</p>
-            <div class="aca-cards"><a t-foreach="kinds.items()" t-as="area" class="aca-card" t-att-href="'/my/employee/accounting/%s?company_id=%s' % (area[0], company.id)">
-                <span t-out="area[1][1]"/><strong t-out="counts[area[0]]"/>
+            <div class="aca-cards"><a t-foreach="kinds.items()" t-as="area" class="aca-card" t-att-data-area="area[0]" t-att-style="'--card-order:%s' % area_index" t-att-href="'/my/employee/accounting/%s?company_id=%s' % (area[0], company.id)">
+                <div class="aca-card-top"><span class="aca-card-icon" aria-hidden="true"><i t-att-class="'fa ' + {'bills':'fa-file-text-o','refunds':'fa-undo','journals':'fa-book','payments':'fa-credit-card','receipts':'fa-sign-in','planned':'fa-calendar-check-o','planned-receipts':'fa-calendar-plus-o'}[area[0]]"/></span><span class="aca-card-arrow" aria-hidden="true">↗</span></div>
+                <span class="aca-card-name" t-out="area[1][1]"/><div class="aca-card-bottom"><div><strong t-out="counts[area[0]]"/><span class="aca-mini"> documents</span></div><span class="aca-card-open">Open workspace →</span></div>
             </a></div>
-        </main></t>
+        </section></t>
     </template>
     <template id="listing">
-        <t t-call="employee_portal_suite.employee_portal_layout"><main class="aca">
+        <t t-call="employee_portal_suite.employee_portal_layout"><section class="aca">
             <t t-call="absar_portal_accounting.header"/>
             <div class="aca-title"><h2 t-out="title"/>
                 <a class="aca-primary" t-if="roles['preparer'] and configured" t-att-href="'/my/employee/accounting/%s/new?company_id=%s' % (kind, company.id)">New</a>
@@ -44,38 +45,38 @@
                     <t t-if="kind not in ('planned','planned-receipts')"><option t-foreach="[('draft','Draft'),('submitted','Awaiting Approval'),('posted','Posted'),('cancel','Cancelled')]" t-as="s" t-att-value="s[0]" t-att-selected="status == s[0]" t-out="s[1]"/></t>
                 </select><button>Search</button>
                 <a t-att-href="'/my/employee/accounting/%s?company_id=%s' % (kind, company.id)">Clear</a>
-                <span><t t-out="count"/> records</span>
+                <span class="aca-record-count"><t t-out="count"/> records</span>
             </form>
             <form method="post" t-att-action="'/my/employee/accounting/planned/submit-selected'">
             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="company_id" t-att-value="company.id"/>
-            <button class="primary" t-if="kind == 'planned' and roles['preparer']">Submit Selected to CEO</button>
-            <div class="aca-table-wrap"><table class="aca-table"><thead><tr>
-                <th t-if="kind == 'planned' and roles['preparer']">Select</th>
-                <th>Number / Name</th><th>Partner / Reference</th><th>Date</th><th>Journal</th><th>Amount</th><th>Status</th><th>Review</th><th>Prepared by</th>
+            <div class="aca-bulk-bar" t-if="kind == 'planned' and roles['preparer']"><span>Select drafts to request approval</span><button class="primary">Submit Selected to CEO</button></div>
+            <div class="aca-table-wrap"><table class="aca-table aca-list-table"><thead><tr>
+                <th class="aca-select-col" t-if="kind == 'planned' and roles['preparer']">Select</th>
+                <th class="aca-name-col">Number / Name</th><th class="aca-partner-col">Partner / Reference</th><th class="aca-date-col">Date</th><th class="aca-journal-col">Journal</th><th class="aca-money">Amount</th><th>Status</th><th>Review</th><th class="aca-issuer-col">Prepared by</th>
             </tr></thead><tbody>
                 <tr t-foreach="rows" t-as="row">
                     <td t-if="kind == 'planned' and roles['preparer']"><input type="checkbox" name="record_id" t-att-value="row['id']" t-att-disabled="row['state'] != 'planned' or row['review'] != 'not_sent'" t-att-aria-label="'Select ' + row['name']"/>
                         <input type="hidden" t-att-name="'version_%s' % row['id']" t-att-value="row['version']"/></td>
-                    <td><a t-att-href="'/my/employee/accounting/%s/%s?company_id=%s' % (kind,row['id'],company.id)" t-out="row['name']"/></td>
-                    <td t-out="row['partner']"/><td t-out="row['date']"/><td t-out="row['journal']"/>
+                    <td class="aca-name-col"><a t-att-href="'/my/employee/accounting/%s/%s?company_id=%s' % (kind,row['id'],company.id)" t-out="row['name']"/></td>
+                    <td class="aca-partner-col" t-out="row['partner']"/><td class="aca-date-col" t-out="row['date']"/><td class="aca-journal-col" t-out="row['journal']"/>
                     <td class="aca-money"><t t-out="'{:,.2f}'.format(row['amount'])"/> <t t-out="row['currency']"/></td>
-                    <td><span class="aca-badge" t-out="row['state']"/></td><td t-out="row['review'].replace('_',' ').title()"/><td t-out="row['issuer']"/>
+                    <td><span class="aca-badge" t-att-data-state="row['state']" t-out="row['state'].replace('_',' ').title()"/></td><td t-out="row['review'].replace('_',' ').title()"/><td class="aca-issuer-col" t-out="row['issuer']"/>
                 </tr>
-                <tr t-if="not rows"><td colspan="8">No documents found.</td></tr>
+                <tr t-if="not rows"><td class="aca-empty" t-att-colspan="9 if kind == 'planned' and roles['preparer'] else 8">No documents found.</td></tr>
             </tbody></table></div></form>
             <div class="aca-pager">
                 <a t-if="page &gt; 1" t-att-href="'?company_id=%s&amp;page=%s&amp;q=%s&amp;status=%s' % (company.id,page-1,quote_plus(q),status)">Previous</a>
                 <span>Page <t t-out="page"/></span>
                 <a t-if="page * 40 &lt; count" t-att-href="'?company_id=%s&amp;page=%s&amp;q=%s&amp;status=%s' % (company.id,page+1,quote_plus(q),status)">Next</a>
             </div>
-        </main></t>
+        </section></t>
     </template>
     <template id="detail">
-        <t t-call="employee_portal_suite.employee_portal_layout"><main class="aca">
+        <t t-call="employee_portal_suite.employee_portal_layout"><section class="aca">
             <t t-call="absar_portal_accounting.header"/>
             <a t-att-href="'/my/employee/accounting/%s?company_id=%s' % (kind, company.id)" t-out="title"/>
             <div id="aca-editor" t-att-data-boot="boot_json" t-att-data-csrf="request.csrf_token()"/>
             <noscript>Enable JavaScript to use the accounting form.</noscript>
-        </main></t>
+        </section></t>
     </template>
 </odoo>

@@ -30,3 +30,15 @@
 .apw-nav-count{margin-left:auto;padding:2px 8px;border-radius:12px;background:#d8f0ec;color:#12665c;font-size:11px;font-weight:700;line-height:1.5}
 
 .apm-filter{flex-wrap:wrap}.apm-table td a{color:inherit;text-decoration:none}.apm-filter+.apm-note{margin:0 0 12px}
+
+/* Boxed purchase-order header, shared visual language with Accounting. */
+#apw-header.apw-form-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:0 0 24px}
+#apw-header.apw-form-grid>div{display:block;min-width:0}
+#apw-header.apw-form-grid>div>label{display:block;font-size:12px;font-weight:500;color:#526c76;margin-bottom:6px}
+#apw-header .form-control,#apw-header .form-select{width:100%;min-height:40px;padding:8px 11px;border:1px solid #cddbdd;border-radius:8px;background:#fff;color:#20333c;transition:border-color .15s,box-shadow .15s}
+#apw-header .form-control:focus,#apw-header .form-select:focus{border-color:#087f83;box-shadow:0 0 0 3px #087f8314}
+#apw-header .form-control:disabled{background:#f7fafb;border-color:#dce6e8;color:#3b505a}
+#apw-header .apw-help{display:block;margin-top:5px;line-height:1.45;font-size:11px;color:#738890}
+#apw-header>.btn{align-self:end;justify-self:start;min-height:40px}
+@media(max-width:1150px){#apw-header.apw-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#apw-header.apw-form-grid{grid-template-columns:1fr}}

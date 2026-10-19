@@ -1,6 +1,12 @@
-# ABSAR Portal Purchase Workspace — 18.0.1.5.8
+# ABSAR Portal Purchase Workspace — 18.0.1.5.9
 
 A dedicated employee-portal purchasing interface, following the Purchase app's familiar navigation, document layout and workflow. This replaces the 1.4 native-backend host. It does not promise every internal purchasing, accounting, stock or signing function.
+
+## Full regression checks and Payments tab in 18.0.1.5.9
+
+The shared order form now displays the existing order-scoped financial monitoring summary directly in Payments, including posted invoicing, allocated settlement/due, optional PO-linked paid and unbilled value. The obsolete monitoring-detail link was removed because the Monitor detail URL now redirects to the same shared form. Monitor remains read only and keeps the confirmed-order/company scope.
+
+Remove a duplicate legacy template declaration so Purchase Approvals has one loaded XML definition. Package checks now reject duplicate loaded XML identifiers. Expanded real Odoo tests render the Issuer/Approver/Monitor lists and shared forms, exercise directory routes, and compare native one-step and two-step purchase validation separately from Studio. No Studio configuration or company approval setting is changed by this release.
 
 ## Single Approver page in 18.0.1.5.8
 
@@ -112,7 +118,7 @@ Accounts must be active and outside Attendance Only. Portal users must be employ
 
 1. Back up staging and keep the previous addon revision. Replace the technical folder `absar_portal_purchase_monitor` in the custom-addons branch; EPS itself is unchanged.
 2. Let the Odoo.sh build/restart complete, then upgrade **ABSAR Portal Purchase Workspace** in Apps. A file replacement without a restart/module upgrade does not execute the permission withdrawal.
-3. Verify version `18.0.1.5.8` and the three named addon groups. Account types remain unchanged; legacy role memberships merge as described above.
+3. Verify version `18.0.1.5.9` and the three named addon groups. Account types remain unchanged; legacy role memberships merge as described above.
 4. Hard-refresh the portal. Use the Purchase sidebar links or `/my/employee/purchase` for a preparer. Approvers use Purchase Approvals; monitoring users can open Purchase Orders.
 5. Verify that the old native model ACLs/rules are gone and the native host is no longer served. Then complete the acceptance checks below on staging.
 

@@ -28,7 +28,15 @@
      <button t-if="not boot['readonly']" type="button" class="btn btn-light" data-action="recalculate">Recalculate totals</button>
     </section>
     <section data-panel="other" role="tabpanel" hidden="hidden"><div id="apw-other" class="apw-form-grid"/></section>
-    <section data-panel="payments" role="tabpanel" hidden="hidden"><p>Financial records are read-only in this workspace.</p><t t-if="po and po.state in ('purchase', 'done')"><p t-if="'amount_paid' in po._fields">Paid (PO linked): <strong t-field="po.amount_paid"/></p><a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor')" t-att-href="'/my/employee/purchase-monitor/%s' % po.id">Open purchase monitoring details</a></t><p t-else="">Payment monitoring becomes available after purchase confirmation.</p></section>
+    <section data-panel="payments" role="tabpanel" hidden="hidden"><p>Financial records are read-only in this workspace.</p>
+ <t t-if="monitoring"><div class="apm-cards" data-purchase-financial-summary="1">
+  <div><label>PO Value (incl. VAT)</label><strong t-out="'%.2f' % monitoring['po'].amount_total"/></div>
+  <div><label>Invoiced (posted)</label><strong t-out="'%.2f' % monitoring['billed']"/></div>
+  <div><label>Bill Settlement (allocated)</label><strong t-out="'%.2f' % monitoring['settled']"/></div>
+  <div><label>Balance Due (allocated)</label><strong t-out="'%.2f' % monitoring['due']"/></div>
+ </div><p t-if="monitoring['paid'] is not None">Paid (PO linked): <strong t-out="'%.2f' % monitoring['paid']"/></p><p>Not yet invoiced: <strong t-out="'%.2f' % monitoring['unbilled']"/> <t t-out="monitoring['po'].currency_id.name"/></p><p class="apm-note">Settlement and balance due are allocated from posted vendor bills and credits. Shared-bill settlements may differ from PO-linked payment vouchers.</p></t>
+ <p t-else="">Payment monitoring becomes available after purchase confirmation.</p>
+</section>
     <section data-panel="signing" role="tabpanel" hidden="hidden">
      <h5>Supplier quotations</h5><div id="apw-attachments"/>
      <div t-if="not boot['readonly'] and boot['id']" class="apw-actions"><label>Quotation PDF<input type="file" id="apw-quotation-file" accept="application/pdf,.pdf" class="form-control"/></label><button type="button" class="btn btn-outline-primary" data-action="upload">Upload Quotation</button><small class="apw-help">PDF, up to 1.4 MB</small></div>
@@ -41,5 +49,4 @@
  </template>
  <!-- Keep old XML identifiers on upgrade. Old mutation routes are removed. -->
  <template id="purchase_prepare_new"><t t-call="absar_portal_purchase_monitor.purchase_prepare_detail"/></template>
- <template id="purchase_approval_list"><t t-call="absar_portal_purchase_monitor.purchase_prepare_list"/></template>
-</odoo>
+ </odoo>

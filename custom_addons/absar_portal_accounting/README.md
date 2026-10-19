@@ -1,4 +1,4 @@
-# ABSAR Employee Portal Accounting — 18.0.1.0.0
+# ABSAR Employee Portal Accounting — 18.0.1.0.2
 
 An additional module for Odoo 18, Employee Portal Suite and the existing
 `internal_transfer_voucher` module (source integration tested against
@@ -29,9 +29,9 @@ An additional module for Odoo 18, Employee Portal Suite and the existing
    Employee Portal Suite and Payment & Receipt Voucher. Restart the build.
 2. Update the Apps List, remove the Apps-only filter, search for
    **ABSAR Employee Portal Accounting**, and install it.
-3. Under **Settings → Users & Companies → Companies**, open the company and
-   its **Portal Accounting** tab. Select the journals that this workspace may
-   use. No journals are enabled automatically. Include the relevant purchase,
+3. Under **Accounting → Configuration → Settings → Employee Portal Accounting**,
+   select the company and the journals that this workspace may use. Save settings.
+   Existing journal selections are preserved when upgrading. No journals are enabled automatically. Include the relevant purchase,
    miscellaneous, bank/cash and journal-transfer destination journals.
 4. Keep **Review Internal Submissions Too** enabled to send manual native
    bills, miscellaneous entries and vouchers in these journals through the
@@ -109,7 +109,29 @@ portal submission to shared approval, native resets, duplicate references,
 company/journal boundaries, no sales-invoice creation and no portal conversion.
 Actual QWeb forms/list/report rendering and frontend DOM fixtures are checked.
 
-The new module is **not installed on staging yet**. The full live Employee
+This design update has **not been deployed to staging yet**. The full live Employee
 Portal Suite, Enterprise/localization, custom Studio and signing combination
 must be smoke-tested there before production. PDF report HTML is validated;
 the staging PDF renderer and final browser layouts still need that check.
+
+## 18.0.1.0.2 design update
+
+- Four workspace cards per desktop row, two on smaller screens and one on
+  mobile, with subtle entrance/hover motion and reduced-motion support.
+- Contained list scrolling, stable date/amount columns, grouped bulk controls
+  and readable document names.
+- Purchase-style accounting lines: core values in the main row, account and
+  analytic details below; journal lines retain foreign amount, due date and
+  tax-grid controls below their main row. Save payloads are preserved.
+- Journal selection and internal review settings now live under Accounting →
+  Configuration → Settings → Employee Portal Accounting. They still persist
+  on the company; existing selections are retained. The previous company tab
+  is inactive.
+- This update adds no workflow or role changes. Keep your Employee Portal
+  Suite unchanged. Accounting uses section elements inside the existing EPS
+  layout, so the global EPS main spacing applies only once. The bundle also
+  includes Purchase Workspace 18.0.1.5.10 (boxed upper PO fields only).
+- Additional local upgrade/QWeb tests cover the settings move, company
+  isolation, existing values, all seven cards, the bulk list and empty list.
+  Frontend checks exercise saving rearranged journal details. Full live
+  Enterprise layout verification remains after staging deployment.

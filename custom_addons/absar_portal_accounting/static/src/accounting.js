@@ -318,13 +318,13 @@
             return grid;
         }
         function lineTable() {
-            const journal = state.kind === 'journals', wrap = el('div', {class: 'aca-table-wrap'}), table = el('table', {class: 'aca-table'});
-            const titles = journal ? ['Label', 'Account', 'Partner', 'Debit', 'Credit', 'Foreign Amount', 'Due Date', 'Tax Grids', 'Analytic', 'Actions'] :
-                ['Product / Description', 'Account', 'Quantity', 'UoM', 'Unit Price', 'Discount %', 'Taxes', 'Analytic', 'Amount', 'Actions'];
+            const journal = state.kind === 'journals', wrap = el('div', {class: 'aca-table-wrap'}), table = el('table', {class: 'aca-table aca-lines'});
+            const titles = journal ? ['Label', 'Account', 'Partner', 'Debit', 'Credit', 'Actions'] :
+                ['Product / Description', 'Quantity', 'UoM', 'Unit Price', 'Discount %', 'Taxes', 'Amount', 'Actions'];
             table.append(el('thead', {}, [el('tr', {}, titles.map(text => el('th', {text})))]));
             const body = el('tbody');
             state.lines.forEach((row, index) => {
-                const tr = el('tr'), td = (child, className = '') => {const cell = el('td', {class: className}, [child]); tr.append(cell); return cell;};
+                const tr = el('tr', {class:'aca-line-row'}), details = el('div', {class:'aca-line-details'}), td = (child, className = '') => {const cell = el('td', {class: className}, [child]); tr.append(cell); return cell;};
                 if (['line_section','line_note'].includes(row.display_type)) {
                     const cell = td(input('name', 'text', row)); cell.colSpan = titles.length - 1;
                 } else {
@@ -337,13 +337,15 @@
                         render(); schedulePreview();
                     }));
                     desc.append(input('name', 'text', row)); td(desc, 'desc');
-                    td(picker('account', {id: row.account_id, name: row.account_name}, selected => {
+                    const account = picker('account', {id: row.account_id, name: row.account_name}, selected => {
                         row.account_id = selected.id; row.account_name = selected.name; render(); schedulePreview();
-                    }), 'account');
+                    });
+                    if (journal) td(account, 'account');
+                    else details.append(label('Expense Account', account));
                     if (journal) {
                         td(picker('partner', {id: row.partner_id, name: row.partner_name}, selected => {row.partner_id = selected.id; row.partner_name = selected.name; render();}));
-                        for (const key of ['debit','credit','amount_currency']) td(input(key, 'number', row, drawTotals));
-                        td(input('date_maturity','date',row));
+                        for (const key of ['debit','credit']) td(input(key, 'number', row, drawTotals));
+                        details.append(label('Foreign Amount',input('amount_currency','number',row,drawTotals)), label('Due Date',input('date_maturity','date',row)));
                         const grids=el('div');
                         grids.append(picker('tax-grid', null, selected=>{
                             row.tax_tag_ids ||= [];row.grid_names ||= [];
@@ -355,7 +357,7 @@
                             if(state.editable)pill.append(button('×',()=>{row.tax_tag_ids=row.tax_tag_ids.filter(id=>id!==grid.id);row.grid_names=row.grid_names.filter(g=>g.id!==grid.id);render();}));
                             grids.append(pill);
                         }
-                        td(grids);
+                        details.append(label('Tax Grids', grids));
                     } else {
                         td(input('quantity', 'number', row));
                         td(picker('uom', {id: row.product_uom_id, name: row.uom_name}, selected => {row.product_uom_id=selected.id;row.uom_name=selected.name;render();schedulePreview();}));
@@ -373,16 +375,24 @@
                         }
                         td(taxes);
                     }
-                    td(analytic(row));
+                    details.append(label('Analytic Distribution', analytic(row)));
                     if (!journal) td(el('span', {'data-line-amount':index,text:row._amountKey===lineKey(row)?money(row.subtotal):'Calculating…'}), 'aca-money');
                 }
-                const controls = el('div');
+                const controls = el('div', {class:'aca-row-actions'});
                 if (state.editable) {
                     controls.append(button('↑', () => {if(index) [state.lines[index-1],state.lines[index]]=[state.lines[index],state.lines[index-1]];revision++;render();}),
                         button('↓', () => {if(index < state.lines.length-1) [state.lines[index+1],state.lines[index]]=[state.lines[index],state.lines[index+1]];revision++;render();}),
                         button('Remove', () => {state.lines.splice(index,1);revision++;render();schedulePreview();}));
                 }
+                for (const control of controls.children) {
+                    control.setAttribute('aria-label', (control.textContent === '↑' ? 'Move line up' : control.textContent === '↓' ? 'Move line down' : 'Remove line') + ' ' + (index+1));
+                    control.setAttribute('title', control.getAttribute('aria-label'));
+                }
                 td(controls); body.append(tr);
+                if (details.children.length) {
+                    const cell=el('td', {colspan:titles.length}, [details]);
+                    body.append(el('tr', {class:'aca-line-detail-row'}, [cell]));
+                }
             });
             table.append(body); wrap.append(table); return wrap;
         }
