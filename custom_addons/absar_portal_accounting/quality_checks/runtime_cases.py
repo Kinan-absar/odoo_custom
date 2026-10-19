@@ -86,7 +86,7 @@ def run(env):
     submitted=prep._act(company,'bills',move.id,'submit',{'version':saved['version']})
     assert move.state=='draft' and move.portal_accounting_review=='submitted'
     deny(lambda:move._post())
-    move.action_post() # native first-click submission must also leave it in draft
+    deny(lambda:move.action_post()) # native posting cannot bypass required review
     assert move.state=='draft' and move.portal_accounting_review=='submitted'
     deny(lambda:prep._act(company,'bills',move.id,'post',{'version':submitted['version']}))
     issuer.groups_id=[Command.link(env.ref('absar_portal_accounting.group_approver').id)]
@@ -242,7 +242,8 @@ def run(env):
 
     # Posted-voucher reset delegates to existing native reconciliation checks.
     voucher=approve._act(company,'payments',pv.id,'reset',{'version':str(pv.write_date),'comment':'Test corrected allocation'})
-    assert pv.state=='draft' and voucher['review']=='returned'
+    assert pv.state=='posted' and voucher['portal_accounting_reset_pending']
+    assert pv.portal_accounting_reset_requested_by==reviewer
     dollar=env.ref('base.USD');dollar.active=True
     deny(lambda:prep._save(company,'payments',dict(pay,currency_id=dollar.id)))
     transfer_draft=prep._save(company,'payments',dict(pay,payment_method='journal_transfer',account_id=False,bill_ids=[],
@@ -250,11 +251,12 @@ def run(env):
     tv=env['account.payment.voucher'].browse(transfer_draft['id'])
     tv.line_ids[0].write({'amount':50})
     assert tv.portal_accounting_review=='returned'
-    print('PASS: native reset-to-draft, company-currency voucher guard and child-allocation review invalidation.',flush=True)
+    print('PASS: permission-only posted-voucher reset request, company-currency voucher guard and child-allocation review invalidation.',flush=True)
 
     internal=env['res.users'].with_context(no_reset_password=True).create({'name':'Native Accounting Issuer','login':'native-accounting-issuer',
         'company_id':company.id,'company_ids':[Command.set(company.ids)],'groups_id':[Command.set([
         env.ref('base.group_user').id,env.ref('account.group_account_user').id])]})
+    internal.groups_id=[Command.link(env.ref('absar_portal_accounting.group_preparer').id)]
     raw=prep._move_values(company,'bills',dict(bill,ref='NATIVE-BILL'))
     native=env['account.move'].with_user(internal).create(raw)
     result=native.action_post()
@@ -308,6 +310,8 @@ def run(env):
     check(sum(fee_move.line_ids.mapped('debit')),111.5)
     check(sum(fee_move.line_ids.mapped('credit')),111.5)
     print('PASS: recipient bank search, explicit native PO-overpayment confirmation and bank-fee VAT balanced posting.',flush=True)
+    from roles_cases import run as run_roles
+    run_roles(env, locals())
     mandatory_plan=env['account.analytic.plan'].create({'name':'Required Test Plan','default_applicability':'mandatory'})
     env['account.analytic.account'].create({'name':'Required Test Account','plan_id':mandatory_plan.id,'company_id':company.id})
     mandatory=prep._save(company,'bills',dict(bill,ref='MANDATORY-ANALYTIC',submit=True))
@@ -318,3 +322,6 @@ def run(env):
     post_buttons=native_arch.xpath("//header/button[@name='action_post']")
     assert len(post_buttons)==2 and all('portal_accounting_requires_review' in b.get('invisible','') for b in post_buttons)
     print('PASS: both native entry Post and bill Confirm buttons use the shared review visibility condition.',flush=True)
+
+    from design_cases import run as run_design
+    run_design(env)

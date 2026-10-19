@@ -203,7 +203,7 @@
         function action(name, extra = {}) {return run('action', {id: state.id, version: state.version, action: name, ...extra});}
         function reviewDialog(returning = false) {
             const backdrop = el('div', {class: 'aca-dialog-backdrop'}), box = el('div', {class: 'aca aca-dialog', role: 'dialog', 'aria-modal': 'true'});
-            box.append(el('h3', {text: returning ? 'Return for correction' : 'Approve and post'}));
+            box.append(el('h3', {text: returning ? 'Return for correction' : state.can_post ? 'Post document' : 'Approve and post'}));
             box.append(el('p', {text: returning ? 'Explain what needs to change.' : 'This posts the document using the existing accounting workflow.'}));
             const comment = el('textarea', {'aria-label': 'Review comment'}); box.append(comment);
             let abnormal;
@@ -218,17 +218,21 @@
                 overpayment = el('input', {type: 'checkbox'});
                 box.append(label('I explicitly approve the PO overpayment detailed above.', overpayment));
             }
-            box.append(button('Cancel', () => backdrop.remove()), button(returning ? 'Return' : 'Approve & Post', () => {
+            box.append(button('Cancel', () => backdrop.remove()), button(returning ? 'Return' : state.can_post ? 'Post' : 'Approve & Post', () => {
                 if (returning && !comment.value.trim()) {comment.focus(); return;}
-                backdrop.remove(); action(returning ? 'return' : 'post', {comment: comment.value, confirm_overpayment: overpayment?.checked === true, confirm_abnormal:abnormal?.checked===true});
+                backdrop.remove();
+                const flags={comment:comment.value,confirm_overpayment:overpayment?.checked===true,confirm_abnormal:abnormal?.checked===true};
+                if (!returning && state.can_post) run('save',{...state,...flags,submit:false,post:true});
+                else action(returning?'return':'post',flags);
             }, true));
             backdrop.append(box); document.body.append(backdrop); comment.focus();
         }
         function actions() {
             const box = el('div', {class: 'aca-actions'});
             if (state.editable) {
-                box.append(button('Save Draft', () => run('save', {...state, submit: false}), true));
-                if (state.kind !== 'planned-receipts') box.append(button(isPlan() ? 'Submit to CEO' : 'Submit for Approval', () => run('save', {...state, submit: true})));
+                box.append(button('Save Draft', () => run('save', {...state, submit: false, post:false}), true));
+                if (state.can_post && !isPlan()) box.append(button('Post',()=>reviewDialog(),true));
+                else if (state.kind !== 'planned-receipts' && (isPlan() || state.review_required !== false)) box.append(button(isPlan() ? 'Submit to CEO' : 'Submit for Approval', () => run('save', {...state, submit: true, post:false})));
                 if (state.id && !isPlan()) box.append(button('Cancel Draft', () => {
                     if (window.confirm('Cancel this draft document?')) action('cancel');
                 }));
@@ -236,16 +240,20 @@
             if (state.can_review && !isPlan()) box.append(button('Approve & Post', () => reviewDialog(), true), button('Return for Correction', () => reviewDialog(true)));
             if (state.id && ['payments', 'receipts'].includes(state.kind)) {
                 if (state.editable) box.append(button('Find Matching ' + (state.kind === 'payments' ? 'Bills' : 'Invoices'), () => action('find')));
-                if (state.state === 'posted' && state.roles.approver) box.append(button('Reconcile', () => action('reconcile')), button('Unreconcile', () => {
+                if (state.state === 'posted' && (state.roles.approver || state.roles.direct)) box.append(button('Reconcile', () => action('reconcile')), button('Unreconcile', () => {
                     if (window.confirm('Remove only the reconciliations managed by this voucher?')) action('unreconcile');
                 }));
             }
             if (state.id && ['bills', 'refunds', 'journals', 'payments', 'receipts'].includes(state.kind)) box.append(el('a', {text: 'Print PDF', class: 'aca-primary', target: '_blank', rel: 'noopener', href: BASE + '/' + state.kind + '/' + state.id + '/print?company_id=' + state.company_id}));
+            if(state.id && (isMove() || (['payments','receipts'].includes(state.kind) && state.state==='posted'))) box.append(el('a',{text:'Print Journal Entry',class:'aca-print-link',target:'_blank',rel:'noopener',href:BASE+'/'+state.kind+'/'+state.id+'/print?company_id='+state.company_id+'&journal_entry=1'}));
             if (state.id && state.kind === 'bills' && state.state === 'posted' && state.roles.preparer && state.balance_due > 0) box.append(el('a', {text:'Create Payment Voucher',class:'aca-primary',href:BASE+'/payments/new?company_id='+state.company_id+'&bill_id='+state.id}));
-            if (state.id && !isPlan() && state.roles.approver && ['posted','cancel'].includes(state.state)) box.append(button('Reset to Draft', () => {
-                const comment = window.prompt('Reason for resetting this document. Odoo lock-date and reconciliation checks still apply.');
-                if (comment?.trim()) action('reset', {comment});
-            }));
+            if (state.id && !isPlan() && (state.roles.preparer || state.roles.approver) && ['posted','cancel'].includes(state.state)) {
+                if (state.portal_accounting_reset_pending) box.append(el('span',{class:'aca-mini',text:'Reset permission requested — awaiting internal review'}));
+                else box.append(button('Request Reset to Draft', () => {
+                    const comment=window.prompt('Why is a reset needed? The document stays posted until an authorized internal user completes the existing reset approval.');
+                    if(comment?.trim())action('request-reset',{comment});
+                }));
+            }
             if (isPlan() && state.id) {
                 if(state.roles.preparer&&!state.editable&&state.state!=='executed'){
                     if(state.reset_request_pending)box.append(el('span',{class:'aca-mini',text:'Reset approval pending'}));
@@ -436,7 +444,7 @@
         function render() {
             state.selections ||= {};state.allocations ||= [];state.destinations ||= [];state.lines ||= [];
             root.replaceChildren();
-            root.append(el('div',{class:'aca-title'},[el('h2',{text:state.name||'New'}),el('span',{class:'aca-badge',text:state.state+' · '+String(state.review).replaceAll('_',' ')})]));
+            root.append(el('div',{class:'aca-title'},[el('h2',{text:state.name||'New'}),el('span',{class:'aca-badge',text:state.state+(state.review_required || isPlan()?' · '+String(state.review).replaceAll('_',' '):'')})]));
             root.append(actions());status=el('div',{class:'aca-status',role:'status','aria-live':'polite'});root.append(status);
             if(state.comment)root.append(el('div',{class:'aca-alert',text:state.comment}));
             if(state.warnings)root.append(el('div',{class:'aca-alert',text:state.warnings}));
@@ -444,6 +452,7 @@
             const tabs=el('div',{class:'aca-tabs',role:'tablist'});
             const choices=isMove()?[['lines',state.kind==='journals'?'Journal Items':'Invoice Lines'],['journal','Journal Preview'],['other','Other Information'],['attachments','Attachments']]:
                 [['links','Documents & Allocations'],['other','Notes'],['attachments','Attachments']];
+            if(state.id)choices.push(['history','Activity Log']);
             if(!choices.some(c=>c[0]===tab))tab=choices[0][0];
             for(const [key,text] of choices)tabs.append(el('button',{type:'button',role:'tab','aria-selected':key===tab,text,onclick:()=>{tab=key;render();}}));
             surface.append(tabs);const panel=el('div',{role:'tabpanel'});
@@ -459,6 +468,9 @@
                 panel.append(el('p',{class:'aca-mini',text:'Journal items from the last saved draft. Save after editing to refresh them.'}));
                 const table=el('table',{class:'aca-table'});table.append(el('thead',{},[el('tr',{},['Account','Partner','Label','Debit','Credit'].map(text=>el('th',{text})))]));
                 const body=el('tbody');for(const row of state.journal_items||[])body.append(el('tr',{},['account','partner','name','debit','credit'].map(k=>el('td',{text:['debit','credit'].includes(k)?money(row[k]):row[k]||''}))));table.append(body);panel.append(el('div',{class:'aca-table-wrap'},[table]));
+            } else if(tab==='history') {
+                for(const item of state.history||[])panel.append(el('article',{class:'aca-history'},[el('strong',{text:item.author}),el('time',{text:item.date}),el('p',{text:item.body})]));
+                if(!state.history?.length)panel.append(el('p',{class:'aca-mini',text:'No activity recorded yet.'}));
             } else if(tab==='links')panel.append(linksPanel());
             else if(tab==='other')panel.append(label(isMove()?'Terms and Conditions':'Notes',input(isMove()?'narration':'description','textarea')));
             else panel.append(attachments());

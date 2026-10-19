@@ -1,7 +1,7 @@
 <odoo>
     <template id="navigation" inherit_id="employee_portal_suite.employee_portal_layout" priority="90">
         <xpath expr="//nav[@id='ep-desktop-sidebar-nav']" position="inside">
-            <div class="ep-sidebar-section" t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only') and (request.env.user.has_group('absar_portal_accounting.group_preparer') or request.env.user.has_group('absar_portal_accounting.group_approver') or request.env.user.has_group('absar_portal_accounting.group_monitor'))">
+            <div class="ep-sidebar-section" t-if="request.env.user.share and not request.env.user.has_group('employee_portal_suite.group_attendance_only') and (request.env.user.has_group('absar_portal_accounting.group_accountant') or request.env.user.has_group('absar_portal_accounting.group_preparer') or request.env.user.has_group('absar_portal_accounting.group_approver') or request.env.user.has_group('absar_portal_accounting.group_monitor'))">
                 <div class="ep-sidebar-section-title">Accounting</div><div class="ep-sidebar-section-links">
                     <a href="/my/employee/accounting" class="ep-sidebar-link"><i class="fa fa-book"/>Accounting Workspace</a>
                 </div>
@@ -9,17 +9,16 @@
         </xpath>
     </template>
     <template id="header">
-        <nav class="aca-nav" aria-label="Accounting workspace">
-            <a t-att-href="'/my/employee/accounting?company_id=%s' % company.id"><strong>Accounting</strong></a>
-            <t t-foreach="kinds.items()" t-as="area">
-                <a t-att-href="'/my/employee/accounting/%s?company_id=%s' % (area[0], company.id)" t-out="area[1][1]"/>
-            </t>
-        </nav>
-        <div class="aca-company"><span t-out="company.name"/>
-            <form method="get" t-if="len(companies) &gt; 1"><label>Company <select name="company_id" onchange="this.form.submit()">
+        <header class="aca-workspace-header">
+            <div class="aca-workspace-brand"><span class="aca-workspace-icon"><i class="fa fa-book" aria-hidden="true"/></span><div><a t-att-href="'/my/employee/accounting?company_id=%s' % company.id">Accounting</a><span t-out="company.name"/></div></div>
+            <form class="aca-company-switch" method="get" t-if="len(companies) &gt; 1"><label>Company <select name="company_id" onchange="this.form.submit()">
                 <option t-foreach="companies" t-as="c" t-att-value="c.id" t-att-selected="c == company" t-out="c.name"/>
             </select></label></form>
-        </div>
+            <nav class="aca-nav" aria-label="Accounting workspace">
+                <a t-att-href="'/my/employee/accounting?company_id=%s' % company.id" t-att-class="'is-active' if request.httprequest.path.rstrip('/') == '/my/employee/accounting' else ''">Overview</a>
+                <t t-foreach="kinds.items()" t-as="area"><a t-att-href="'/my/employee/accounting/%s?company_id=%s' % (area[0], company.id)" t-att-class="'is-active' if request.httprequest.path.startswith('/my/employee/accounting/' + area[0] + '/') or request.httprequest.path.rstrip('/') == '/my/employee/accounting/' + area[0] else ''" t-out="area[1][1]"/></t>
+            </nav>
+        </header>
         <div class="aca-alert" t-if="not configured">An administrator must select the available journals under Accounting → Configuration → Settings → Employee Portal Accounting before this workspace can be used.</div>
     </template>
     <template id="home">

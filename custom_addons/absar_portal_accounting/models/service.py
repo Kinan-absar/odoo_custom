@@ -9,6 +9,8 @@ from datetime import date
 from odoo import api, fields, models, _, Command
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.osv import expression
+from odoo.tools import html2plaintext
+from .accounting import _REVIEW_TOKEN
 
 PREFIX = 'absar_portal_accounting.'
 KINDS = {
@@ -28,7 +30,10 @@ class PortalAccountingService(models.AbstractModel):
 
     def _actor(self, role=None):
         user = self.env.user
-        roles = {r: user.has_group(PREFIX + 'group_' + r) for r in ('preparer', 'approver', 'monitor')}
+        roles = {r: user.has_group(PREFIX + 'group_' + r) for r in ('preparer', 'approver', 'monitor', 'accountant')}
+        roles['restricted'] = roles['preparer']
+        roles['direct'] = roles['accountant'] and not roles['restricted']
+        roles['preparer'] = roles['preparer'] or roles['accountant']
         if not user.active or user._is_public() or not any(roles.values()) or (role and not roles[role]):
             raise AccessError(_('You do not have access to this accounting operation.'))
         if user.has_group('employee_portal_suite.group_attendance_only'):
@@ -140,6 +145,16 @@ class PortalAccountingService(models.AbstractModel):
 
     def _record(self, company, kind, record_id):
         model = self._kind(kind)[0]
+        if not self.env.user.share:
+            subtype = self._kind(kind)[2]
+            domain = [('id','=',self._id(record_id)),('company_id','=',company.id)]
+            if model == 'account.move':
+                domain += [('move_type','=',subtype)]
+            record = self.env[model].with_company(company).search(domain, limit=1)
+            if not record:
+                raise AccessError(_('Accounting record is unavailable.'))
+            record.check_access('write')
+            return record.sudo()
         record = self._env(company)[model].search(expression.AND([
             self._domain(company, kind), [('id', '=', self._id(record_id))]]), limit=1)
         if not record:
@@ -172,7 +187,7 @@ class PortalAccountingService(models.AbstractModel):
                     record.amount_total if record._name == 'account.move' else record.amount),
                 'currency': record.currency_id.name, 'state': record.state,
                 'version': str(record.write_date),
-                'review': record.ceo_decision if planned else record.portal_accounting_review,
+                'review': record.ceo_decision if planned else (record.portal_accounting_review if record.portal_accounting_review_required else 'not_required'),
                 'issuer': record.portal_accounting_issuer_id.name or record.create_uid.name}
 
     def _options(self, company, resource, query='', kind='bills', partner_id=False):
@@ -430,20 +445,26 @@ class PortalAccountingService(models.AbstractModel):
                     raise UserError(_('Submitted or executed planned movements cannot be edited.'))
             elif record.state != 'draft' or record.portal_accounting_review in ('submitted', 'approved'):
                 raise UserError(_('Only an editable draft or returned document can be saved.'))
-            # A portal preparer cannot take ownership of another employee's draft.
-            if record.portal_accounting_issuer_id and record.portal_accounting_issuer_id != user:
-                raise AccessError(_('This draft belongs to another preparer.'))
+            # Restricted drafts remain with their preparer. Regular accountants can
+            # collaborate on ordinary drafts within the permitted journals.
+            if record.portal_accounting_issuer_id and record.portal_accounting_issuer_id != user and not (roles['direct'] and not record.portal_accounting_review_required):
+                raise AccessError(_('This restricted draft belongs to another preparer.'))
             if model == 'account.move':
                 line_key = 'line_ids' if kind == 'journals' else 'invoice_line_ids'
                 vals[line_key] = [Command.clear()] + vals[line_key]
             if kind == 'payments':
                 vals['line_ids'] = [Command.clear()] + vals['line_ids']
                 vals['po_allocation_ids'] = [Command.clear()] + vals['po_allocation_ids']
-            record.write(dict(vals, portal_accounting_review='draft', portal_accounting_reviewer_id=False,
+            record.write(dict(vals, portal_accounting_review_required=record.portal_accounting_review_required or roles['restricted'], portal_accounting_review='draft', portal_accounting_reviewer_id=False,
                               portal_accounting_issuer_id=user.id))
         else:
-            record = self._env(company)[model].create(dict(vals, portal_accounting_issuer_id=user.id))
-        if data.get('submit'):
+            record = self._env(company)[model].create(dict(vals, portal_accounting_issuer_id=user.id, portal_accounting_review_required=roles['restricted']))
+        self._audit(record, 'Saved draft', ', '.join(sorted(vals)))
+        if data.get('post'):
+            if not roles['direct'] or model == 'cash.plan.line':
+                raise AccessError(_('Direct posting is not available to this user.'))
+            self._act(company, kind, record.id, 'post', dict(data, version=str(record.write_date)))
+        elif data.get('submit'):
             self._act(company, kind, record.id, 'submit', {'version': str(record.write_date)})
         return self._detail(company, kind, record.id)
 
@@ -457,17 +478,20 @@ class PortalAccountingService(models.AbstractModel):
             return self._plan_action(company, kind, record, action, data, user, roles)
         if action == 'submit':
             self._actor('preparer')
-            if record.state != 'draft' or record.portal_accounting_review not in ('draft', 'returned'):
-                raise UserError(_('Only editable drafts can be submitted.'))
+            if not record.portal_accounting_review_required or record.state != 'draft' or record.portal_accounting_review not in ('draft', 'returned'):
+                raise UserError(_('Only restricted editable drafts can be submitted.'))
             if record.portal_accounting_issuer_id != user:
                 raise AccessError(_('Only the preparer can submit this document.'))
             record.write({'portal_accounting_review': 'submitted', 'portal_accounting_comment': False})
         elif action in ('return', 'post'):
-            self._actor('approver')
-            if record.state != 'draft' or record.portal_accounting_review != 'submitted':
-                raise UserError(_('Only submitted drafts can be reviewed.'))
-            if record.portal_accounting_issuer_id == user:
-                raise AccessError(_('Another accounting approver must review your document.'))
+            if record.portal_accounting_review_required:
+                self._actor('approver')
+                if record.state != 'draft' or record.portal_accounting_review != 'submitted':
+                    raise UserError(_('Only submitted drafts can be reviewed.'))
+                if record.portal_accounting_issuer_id == user:
+                    raise AccessError(_('Another accounting approver must review your document.'))
+            elif action != 'post' or not roles['direct'] or record.state != 'draft':
+                raise AccessError(_('Direct posting is not permitted.'))
             if action == 'return':
                 if not comment:
                     raise ValidationError(_('Enter a reason for returning the document.'))
@@ -491,13 +515,13 @@ class PortalAccountingService(models.AbstractModel):
                     duplicate=self._env(company)['account.move'].browse(found[0] if found else [])
                     if duplicate:
                         raise UserError(_('A bill/credit note with this vendor reference already exists: %s') % duplicate.display_name)
-                record.write({'portal_accounting_review': 'approved', 'portal_accounting_reviewer_id': user.id,
+                record.write({'portal_accounting_review': 'approved' if record.portal_accounting_review_required else 'draft', 'portal_accounting_reviewer_id': user.id if record.portal_accounting_review_required else False,
                               'portal_accounting_comment': comment})
-                result = record.with_context(_absar_accounting_action=True, validate_analytic=True).action_post()
+                result = record.with_context(_absar_accounting_token=_REVIEW_TOKEN, validate_analytic=True).action_post()
                 if isinstance(result, dict) and result.get('res_model') == 'account.payment.voucher.overpayment.confirm':
                     wizard = self._env(company)[result['res_model']].browse(result['res_id'])
                     if data.get('confirm_overpayment') is True and wizard.voucher_id == record:
-                        wizard.with_context(_absar_accounting_action=True, validate_analytic=True).action_confirm()
+                        wizard.with_context(_absar_accounting_token=_REVIEW_TOKEN, validate_analytic=True).action_confirm()
                     else:
                         # Raising inside the controller's savepoint rolls review back.
                         raise UserError(_('PO OVERPAYMENT: %s. Review these amounts and explicitly confirm overpayment to continue.') % wizard.message)
@@ -508,36 +532,54 @@ class PortalAccountingService(models.AbstractModel):
                 if record.state != 'posted':
                     raise UserError(_('The accounting method did not post this document.'))
         elif action in ('reconcile', 'unreconcile'):
-            self._actor('approver')
+            if not (roles['approver'] or roles['direct']):
+                raise AccessError(_('Accounting posting permission is required.'))
             if kind not in ('payments', 'receipts') or record.state != 'posted':
                 raise UserError(_('Only posted vouchers can be reconciled.'))
             method = ('action_reconcile_bills' if kind == 'payments' else 'action_reconcile_invoices') if action == 'reconcile' else (
                 'action_unreconcile_bills' if kind == 'payments' else 'action_unreconcile_invoices')
             getattr(record, method)()
-        elif action == 'reset':
-            self._actor('approver')
+        elif action in ('reset', 'request-reset'):
+            if not (roles['preparer'] or roles['approver']):
+                raise AccessError(_('Accounting access is required.'))
             if record.state not in ('posted', 'cancel') or not comment:
-                raise UserError(_('Enter a reason to reset a posted or cancelled document.'))
-            getattr(record, 'button_draft' if record._name == 'account.move' else 'action_reset_to_draft')()
-            record.write({'portal_accounting_review': 'returned', 'portal_accounting_reviewer_id': False,
-                          'portal_accounting_comment': comment})
+                raise UserError(_('Enter a reason for requesting a reset.'))
+            if record.portal_accounting_reset_pending:
+                raise UserError(_('A reset request is already pending.'))
+            # Vouchers deliberately reject business writes after posting. These
+            # three administrative fields do not modify accounting amounts/state.
+            models.Model.write(record, {'portal_accounting_reset_pending': True,
+                          'portal_accounting_reset_requested_by': user.id,
+                          'portal_accounting_reset_reason': comment})
+            managers = self._env(company)['res.users'].search([('active','=',True),('share','=',False),
+                ('company_ids','in',company.id),('groups_id','in',self.env.ref('account.group_account_manager').id)])
+            for manager in managers:
+                record.activity_schedule('mail.mail_activity_data_todo', user_id=manager.id,
+                    summary=_('Reset to Draft permission requested'), note=comment)
+            action = 'Requested Reset to Draft (document remains posted/cancelled)'
         elif action == 'cancel':
             self._actor('preparer')
-            if record.state != 'draft' or record.portal_accounting_review not in ('draft', 'returned') or record.portal_accounting_issuer_id != user:
-                raise AccessError(_('Only the preparer can cancel their editable draft.'))
+            if record.state != 'draft' or record.portal_accounting_review not in ('draft', 'returned') or (record.portal_accounting_issuer_id != user and not (roles['direct'] and not record.portal_accounting_review_required)):
+                raise AccessError(_('Only an authorized preparer can cancel this draft.'))
             getattr(record, 'button_cancel' if record._name == 'account.move' else 'action_cancel')()
         elif action == 'find':
             self._actor('preparer')
             if kind not in ('payments', 'receipts') or record.state != 'draft' or record.portal_accounting_review not in ('draft', 'returned'):
                 raise UserError(_('Find matching documents on an editable draft voucher.'))
-            if record.portal_accounting_issuer_id != user:
+            if record.portal_accounting_issuer_id != user and not (roles['direct'] and not record.portal_accounting_review_required):
                 raise AccessError(_('Only the preparer may change selected documents.'))
             getattr(record, 'action_find_matching_bills' if kind == 'payments' else 'action_find_matching_invoices')()
         else:
             raise AccessError(_('Unsupported accounting action.'))
-        record.message_post(body=_('Portal accounting: %(action)s by %(user)s. %(comment)s',
-                                  action=action, user=user.name, comment=comment), message_type='comment', subtype_xmlid='mail.mt_note')
+        self._audit(record, action, comment)
         return self._detail(company, kind, record.id)
+
+    def _audit(self, record, action, detail=''):
+        user = self.env.user
+        record.message_post(body=_('Accounting: %(action)s by %(user)s. %(detail)s',
+            action=action, user=user.name, detail=detail), message_type='comment',
+            subtype_xmlid='mail.mt_note', author_id=user.partner_id.id,
+            email_from=user.email_formatted or record.company_id.partner_id.email_formatted or 'Accounting <noreply@localhost>')
 
     def _plan_action(self, company, kind, record, action, data, user, roles):
         if action == 'request-reset':
@@ -575,7 +617,7 @@ class PortalAccountingService(models.AbstractModel):
                 raise UserError(_('No voucher was created.'))
             self._journal(company, voucher.journal_id.id)
             if not voucher.portal_accounting_issuer_id:
-                voucher.write({'portal_accounting_issuer_id': user.id})
+                voucher.write({'portal_accounting_issuer_id': user.id, 'portal_accounting_review_required': roles['restricted']})
             return {'redirect': '/my/employee/accounting/%s/%s?company_id=%s' % (target_kind, voucher.id, company.id)}
         else:
             raise AccessError(_('This planning action is not available. Payment execution remains with the existing internal execution managers.'))
@@ -609,23 +651,25 @@ class PortalAccountingService(models.AbstractModel):
                 'date': fields.Date.context_today(self).isoformat(), 'invoice_date': fields.Date.context_today(self).isoformat(),
                 'lines': [], 'bill_ids': [], 'invoice_ids': [], 'purchase_order_ids': [], 'allocations': [], 'destinations': [],
                 'selections': {}, 'roles': roles, 'state': 'draft', 'review': 'draft', 'name': 'New',
-                'version': '', 'editable': roles['preparer'], 'can_review': False,
+                'version': '', 'editable': roles['preparer'], 'can_review': False, 'can_post': roles['direct'], 'review_required':roles['restricted'],
                 'is_ceo': user.has_group('employee_portal_suite.group_employee_portal_ceo'), 'attachments': []}
         if not record:
             return data
         data.update(self._row(record, kind), version=str(record.write_date),
-                    review=record.ceo_decision if model == 'cash.plan.line' else record.portal_accounting_review,
+                    review=record.ceo_decision if model == 'cash.plan.line' else (record.portal_accounting_review if record.portal_accounting_review_required else 'not_required'),
+                    review_required=record.portal_accounting_review_required,
                     comment=record.portal_accounting_comment or '', issuer_id=record.portal_accounting_issuer_id.id)
-        data['editable'] = roles['preparer'] and (not record.portal_accounting_issuer_id or record.portal_accounting_issuer_id == user) and (
+        data['editable'] = roles['preparer'] and (not record.portal_accounting_issuer_id or record.portal_accounting_issuer_id == user or (roles['direct'] and not record.portal_accounting_review_required)) and (
             record.state == 'planned' and record.ceo_decision in ('not_sent', 'not_required') and not record.is_unplanned if model == 'cash.plan.line'
             else record.state == 'draft' and record.portal_accounting_review in ('draft', 'returned'))
-        data['can_review'] = roles['approver'] and record.portal_accounting_issuer_id != user and (
+        data['can_post'] = roles['direct'] and data['editable'] and not record.portal_accounting_review_required
+        data['can_review'] = record.portal_accounting_review_required and roles['approver'] and record.portal_accounting_issuer_id != user and (
             record.state == 'draft' and record.portal_accounting_review == 'submitted')
         scalar_fields = ['ref', 'payment_reference', 'invoice_date', 'invoice_date_due', 'narration', 'description', 'payment_method', 'receipt_method',
                          'amount', 'forecast_amount', 'transaction_type', 'priority', 'funding_status', 'analytic_distribution',
                          'has_bank_fees', 'fee_amount', 'fee_analytic_distribution', 'approved_amount', 'actual_amount',
                          'ceo_comment', 'planned_date', 'allocated_amount', 'remaining_to_reconcile']
-        scalar_fields += ['reset_request_pending']
+        scalar_fields += ['reset_request_pending', 'portal_accounting_reset_pending']
         for name in scalar_fields:
             if name in record._fields:
                 value = record[name]
@@ -670,6 +714,7 @@ class PortalAccountingService(models.AbstractModel):
         attachments = self._env(company)['ir.attachment'].search([
             ('res_model', '=', model), ('res_id', '=', record.id), ('type', '=', 'binary')], limit=100)
         data['attachments'] = [{'id': a.id, 'name': a.name} for a in attachments]
+        data['history'] = [{'date':str(m.date), 'author':m.author_id.name or '', 'body':html2plaintext(m.body)} for m in record.message_ids.sorted('id',reverse=True)[:100]]
         return data
 
     def _po_lines(self, company, po_id):

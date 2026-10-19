@@ -14,6 +14,8 @@ BASE = '/my/employee/accounting'
 
 class PortalAccounting(http.Controller):
     def _service(self):
+        if not request.env.user.share:
+            raise Forbidden(_('Internal users must use the Accounting application.'))
         service = request.env['absar.portal.accounting.service']
         try:
             service._actor()
@@ -28,6 +30,8 @@ class PortalAccounting(http.Controller):
 
     @http.route(BASE, type='http', auth='user', website=True, methods=['GET'])
     def home(self, company_id=None, **kw):
+        if not request.env.user.share:
+            return request.redirect('/odoo')
         service = self._service()
         company = service._company(company_id)
         counts = {kind: service._env(company)[spec[0]].search_count(service._domain(company, kind)) for kind, spec in KINDS.items()}
@@ -35,6 +39,8 @@ class PortalAccounting(http.Controller):
 
     @http.route(BASE + '/<string:kind>', type='http', auth='user', website=True, methods=['GET'])
     def listing(self, kind, company_id=None, q='', status='', page=1, **kw):
+        if not request.env.user.share:
+            return request.redirect('/odoo')
         service = self._service()
         company = service._company(company_id)
         try:
@@ -60,6 +66,8 @@ class PortalAccounting(http.Controller):
     @http.route([BASE + '/<string:kind>/new', BASE + '/<string:kind>/<int:record_id>'],
                 type='http', auth='user', website=True, methods=['GET'])
     def detail(self, kind, record_id=None, company_id=None, **kw):
+        if not request.env.user.share:
+            return request.redirect('/odoo')
         service = self._service()
         company = service._company(company_id)
         try:
@@ -136,8 +144,7 @@ class PortalAccounting(http.Controller):
                     'name': upload.filename.rsplit('/', 1)[-1][:200], 'type': 'binary',
                     'datas': base64.b64encode(blob), 'res_model': record._name, 'res_id': record.id,
                     'company_id': company.id, 'public': False})
-                record.message_post(body=_('Supporting document added through the accounting portal.'),
-                                    attachment_ids=attachment.ids, subtype_xmlid='mail.mt_note')
+                service._audit(record, 'Attached supporting document', attachment.name)
             return request.redirect(BASE + '/%s/%s?company_id=%s' % (kind, record_id, company.id))
         except (AccessError, UserError, ValidationError) as exc:
             return request.make_response(str(exc), status=400)
@@ -157,11 +164,19 @@ class PortalAccounting(http.Controller):
             ('X-Content-Type-Options', 'nosniff')])
 
     @http.route(BASE + '/<string:kind>/<int:record_id>/print', type='http', auth='user', website=True, methods=['GET'])
-    def print_record(self, kind, record_id, company_id=None, **kw):
+    def print_record(self, kind, record_id, company_id=None, journal_entry=None, **kw):
         service = self._service()
         company = service._company(company_id)
         record = service._record(company, kind, record_id)
-        if kind in ('bills', 'refunds'):
+        if journal_entry == '1':
+            if kind not in ('bills','refunds','journals','payments','receipts'):
+                raise NotFound()
+            if record._name != 'account.move':
+                record = record.move_id
+                if not record:
+                    raise UserError(_('Post the voucher before printing its journal entry.'))
+            report = 'absar_portal_accounting.report_journal'
+        elif kind in ('bills', 'refunds'):
             report = 'account.account_invoices'
         elif kind == 'journals':
             report = 'absar_portal_accounting.report_journal'

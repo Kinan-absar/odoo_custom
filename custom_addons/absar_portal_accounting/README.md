@@ -1,137 +1,119 @@
-# ABSAR Employee Portal Accounting — 18.0.1.0.2
+# ABSAR Employee Portal Accounting — 18.0.1.1.0
 
-An additional module for Odoo 18, Employee Portal Suite and the existing
-`internal_transfer_voucher` module (source integration tested against
-18.0.2.52.0). It does not replace or modify those module folders.
+Employee accounting for Odoo 18 with the existing Employee Portal Suite and
+Payment & Receipt Voucher module. Employee Portal Suite is unchanged.
 
-## Included
+## Choose how each person works
 
-- Vendor bills and vendor credit notes: drafts, purchase-order billable-line
-  import, expense accounts, units, discounts, taxes, analytic distributions,
-  currencies, bill/accounting dates, references, recipient bank, payment terms,
-  sections/notes, native totals preview and saved journal items.
-- Miscellaneous journal entries: debit/credit balancing, line partners, due
-  dates, foreign amounts, tax grids and analytic distributions.
-- Payment and receipt vouchers: existing accounting posting, matching,
-  reconciliation/unreconciliation, payment methods, journal-transfer
-  destinations, PO allocations, bank fees and supporting documents.
-- Planned payments/receipts: preparation, bulk outgoing submission to CEO,
-  existing CEO approve/adjust/hold/reject logic, addition to existing weekly
-  plans and creation of the draft accounting voucher at the existing handoff.
-- Shared lists, search, company switching, forms, attachment upload/download,
-  PDF printing, cancellation of editable drafts and native reset-to-draft checks.
-- Sales invoice **creation and editing are excluded**. Receipt matching can
-  select existing posted customer invoices belonging to the selected partner.
-
-## Install and configure on staging
-
-1. Add the `absar_portal_accounting` folder to the same custom-addons path as
-   Employee Portal Suite and Payment & Receipt Voucher. Restart the build.
-2. Update the Apps List, remove the Apps-only filter, search for
-   **ABSAR Employee Portal Accounting**, and install it.
-3. Under **Accounting → Configuration → Settings → Employee Portal Accounting**,
-   select the company and the journals that this workspace may use. Save settings.
-   Existing journal selections are preserved when upgrading. No journals are enabled automatically. Include the relevant purchase,
-   miscellaneous, bank/cash and journal-transfer destination journals.
-4. Keep **Review Internal Submissions Too** enabled to send manual native
-   bills, miscellaneous entries and vouchers in these journals through the
-   same review. Their first posting request submits them and leaves them in
-   Draft. Native forms show Submit for Approval. Automatic bank-payment,
-   statement and stock entries are excluded from this manual review hook.
-5. On each intended user, assign the appropriate **Portal Accounting** role:
-   **Accounting Preparer**, **Accounting Approver** or **Accounting Monitor**.
-   Roles apply to internal and employee-linked portal accounts. Assign roles
-   explicitly; installation does not enroll users or change account types.
-6. Open the employee portal's **Accounting Workspace** link, or
-   `/my/employee/accounting`.
-
-| Role | Permission |
+| Person / role | Behavior |
 | --- | --- |
-| Preparer | Create/edit own or unclaimed drafts, attach evidence, submit, cancel own editable drafts, prepare planned movements and create vouchers at the existing handoff |
-| Approver | Read, independently approve/post, return with a reason, reconcile vouchers and request native reset-to-draft |
-| Monitor | Read lists, forms and documents within company/journal scope |
+| Regular portal accountant: Accounting User (Direct Posting) | Create and save drafts, post bills/credits/miscellaneous entries/payment and receipt vouchers directly, match/reconcile vouchers, print documents and their journal entries, request permission to reset posted documents |
+| Restricted staff: Accounting Preparer | Prepare and submit for independent approval; cannot post their own document |
+| Accounting Approver | Approve/post or return someone else's restricted submissions |
+| Accounting Monitor | Read records and documents in the permitted scope |
+| Internal accountant outside Preparer/Approver | Continue using the native Accounting application and existing permissions, without the new submission step |
 
-CEO cash-planning decisions still require the **existing EPS CEO role**, in
-addition to access to this workspace. Assigning Accounting Approver does not
-grant CEO or payment-execution authority. Existing treasury bridge pages
-continue to work.
+These roles do not imply internal-user or native accounting groups. Portal
+accounts must be linked to employees. Internal staff need their existing
+native accounting/voucher permissions in addition to any optional review role.
+Internal users cannot use the portal accounting routes: page requests return
+to the backend and portal API requests are rejected. The backend no longer
+contains an Open Accounting Workspace button.
 
-The existing **internal Payment Execution Managers** retain Mark as Paid and
-execution/reset approvals. Portal preparers do not receive that internal group.
-Native voucher users still need the existing voucher/planning permissions;
-this module does not repair or broaden their original ACLs.
+Preparer can be combined with Approver, but that person cannot approve their
+own submission. If Direct Posting and Preparer are both assigned, Preparer
+wins and independent review is required. Direct Posting plus Approver allows
+a regular accountant to post their own ordinary documents and independently
+review restricted colleagues' submissions.
 
-## Review and accounting protections
+## Upgrade and configure
 
-- The preparer cannot approve their own document, including when holding both
-  roles. Submitted documents are locked in the portal until returned.
-- Native changes to a submitted bill/entry/voucher or its lines invalidate the
-  review. Portal-origin documents cannot post through the native posting chain
-  while unapproved. Existing records are not posted or migrated on installation.
-- Company, journal, partner, account, PO, tax and analytic relations are checked
-  before privileged operations. Portal groups do not imply internal/accounting
-  groups and receive no generic accounting model ACLs.
-- Row locks and record versions reject stale actions. Controller savepoints
-  roll back failed saves, postings and bulk submissions together.
-- Native accounting methods retain lock-date, balance, tax, reconciliation and
-  custom voucher checks, including mandatory analytic distributions. Native
-  abnormal amount/date warnings require explicit portal acknowledgment.
-  Duplicate vendor references are checked across the
-  company with normalized reference matching and a transaction lock.
-- PO overpayment uses the existing voucher confirmation wizard. Posting first
-  shows its details; the approver must explicitly confirm the overpayment.
+1. Replace the addon folder, restart the server and upgrade the module.
+2. Keep the company's journal selection under Accounting > Configuration >
+   Settings > Employee Portal Accounting. Existing selections are retained.
+   Empty selection denies portal accounting access. The old company-wide
+   internal-review checkbox is no longer used; review is role-based.
+3. For a REGULAR portal accountant, select Accounting User (Direct Posting)
+   and remove Accounting Preparer. For a restricted employee, keep Preparer.
+   Assign Approver only to the people who review restricted submissions.
+   This upgrade does not assign or remove user groups automatically.
+4. Internal staff use native forms. Restricted preparers have Submit for
+   Approval. Independent approvers have Approve & Post / Return for Correction;
+   enter the return reason in Accounting Review / Reset Requests. Native
+   posting warnings and PO overpayments require explicit confirmation.
+5. Existing accounting documents already awaiting approval remain protected;
+   the upgrade does not silently post or release them. Existing documents with
+   an issuer from the previous release are marked as requiring review.
 
-## Limits of this first accounting release
+Internal Preparer restrictions apply to manual vendor bills/credits,
+miscellaneous entries and vouchers. They also apply outside the portal journal
+selection. Native approvers review such records through their existing native
+company/model permissions. Portal users remain limited to the explicit journal
+selection and permitted companies. No sales-invoice creation/editing is added.
 
-- Your voucher engine posts amounts in company currency, so portal vouchers
-  require company currency. Vendor bills use native currency handling.
-- Weekly-plan creation/maintenance, execution, cash forecasting, Payment
-  Reviews, bank statement reconciliation, assets, payroll, full accounting
-  reports and signing workflows remain in their existing applications.
-- Planned-payment reset approval stays with the existing internal workflow.
-  Portal preparers can request that reset; an internal execution manager must
-  approve it before editing becomes available again.
-  Financial posting is not a bank transfer and does not execute a payment.
-- No internal-user license conclusion follows from these technical access
-  controls; commercial licensing remains governed by your Odoo agreement.
+## Reset to Draft
+
+Every portal posting role can REQUEST a reset with a reason; none of these
+roles resets a posted document directly through the portal. The request keeps
+the accounting document posted, stores the requester/reason, adds a note and
+creates activities for existing internal Accounting Managers in that company.
+The permission request is administrative metadata; voucher amounts and posted
+journal entries remain immutable.
+
+An authorized internal user opens the native document and uses its EXISTING
+Reset to Draft button, including existing Studio approvals, lock-date and
+reconciliation checks. A reset request does not grant Studio approval, does
+not call button_draft, and does not execute the reset. This module does not
+replace the existing Studio rule or create approval on the user's behalf.
+The native reset clears the pending request once the document becomes Draft.
+
+The staging bill inspected has a Studio approval named
+“Request Reset to Draft – Vendor Bill”, with Kinan Ammar as approver and user
+to notify. That configuration was inspected without modification. Its full
+Studio execution is not reproduced by the local Community test environment.
+
+## Activity history and printing
+
+Portal create/write operations retain the employee's actual create_uid and
+write_uid. Completed saves, posting, review/return, attachment additions and
+reset requests add notes with the acting employee as author. Native state
+tracking continues to operate. The portal Activity Log reads the document's
+chatter; internal staff see it in the normal chatter. This is document action
+history, not a keystroke log or an immutable external audit ledger.
+
+Print PDF keeps the document report. Print Journal Entry prints the accounting
+move behind vendor bills, credit notes, miscellaneous entries, and posted
+payment/receipt vouchers. A voucher needs a posted accounting move first.
+The new compact app headers have a clear current section. Desktop cards remain
+four per row, and the accounting/PO form styling is retained.
+
+## Existing financial boundaries
+
+Native balance, VAT, lock dates, mandatory analytics, duplicate vendor
+references, voucher overpayment confirmation and reconciliation checks remain.
+Submitted documents cannot be edited through the portal until returned.
+Company/journal/related-record scope, stale-version locks and savepoint rollback
+remain enforced. Accounting/Voucher models receive no new generic portal ACLs.
+The only new ACL is for an internal-only posting-warning transient wizard;
+portal users are explicitly denied creating/confirming that wizard.
+
+CEO payment planning, weekly-plan approval, execution-manager actions and
+planned-payment reset approvals retain the existing voucher workflow. Ordinary
+accounting posting permission does not execute a bank transfer. Vouchers keep
+the existing company's currency restriction; bills retain native currencies.
 
 ## Validation
 
-The staging backend was inspected without saving/posting live records. The
-actual new module installs/upgrades in a disposable Odoo 18 database alongside
-the **full original voucher source**. A minimal EPS fixture replaces only the
-Enterprise-dependent outer portal module in that local test environment.
+Real local Odoo 18 ORM tests use the full original voucher source. Tests cover
+normal direct portal posting for bills/JVs/PVs/RVs, attribution, posted locks,
+permission-only reset requests, restricted native and portal submissions,
+independent native return/approve, combined roles, native overpayment warnings,
+portal/backend route separation, journal report routing, company scope,
+accounting/tax/analytic/reconciliation/PO/planning regressions, settings and QWeb.
+Actual JavaScript DOM fixtures verify Post/save payloads, approval controls,
+readonly monitoring, totals, history, print links and reset request controls.
 
-Real ORM tests cover bills/credits/VAT, preview rollback, PO linking, balanced
-entries, vouchers, reconciliation/unreconciliation, unplanned actuals, journal
-transfers, CEO planning/adjustments, internal execution handoff, internal and
-portal submission to shared approval, native resets, duplicate references,
-company/journal boundaries, no sales-invoice creation and no portal conversion.
-Actual QWeb forms/list/report rendering and frontend DOM fixtures are checked.
-
-This design update has **not been deployed to staging yet**. The full live Employee
-Portal Suite, Enterprise/localization, custom Studio and signing combination
-must be smoke-tested there before production. PDF report HTML is validated;
-the staging PDF renderer and final browser layouts still need that check.
-
-## 18.0.1.0.2 design update
-
-- Four workspace cards per desktop row, two on smaller screens and one on
-  mobile, with subtle entrance/hover motion and reduced-motion support.
-- Contained list scrolling, stable date/amount columns, grouped bulk controls
-  and readable document names.
-- Purchase-style accounting lines: core values in the main row, account and
-  analytic details below; journal lines retain foreign amount, due date and
-  tax-grid controls below their main row. Save payloads are preserved.
-- Journal selection and internal review settings now live under Accounting →
-  Configuration → Settings → Employee Portal Accounting. They still persist
-  on the company; existing selections are retained. The previous company tab
-  is inactive.
-- This update adds no workflow or role changes. Keep your Employee Portal
-  Suite unchanged. Accounting uses section elements inside the existing EPS
-  layout, so the global EPS main spacing applies only once. The bundle also
-  includes Purchase Workspace 18.0.1.5.10 (boxed upper PO fields only).
-- Additional local upgrade/QWeb tests cover the settings move, company
-  isolation, existing values, all seven cards, the bulk list and empty list.
-  Frontend checks exercise saving rearranged journal details. Full live
-  Enterprise layout verification remains after staging deployment.
+The local environment substitutes the EPS outer module because full EPS
+requires Enterprise components. No Employee Portal Suite source is changed.
+The release is not deployed yet. Full live Enterprise/Studio execution and
+final browser layout/PDF appearance still need staging verification.

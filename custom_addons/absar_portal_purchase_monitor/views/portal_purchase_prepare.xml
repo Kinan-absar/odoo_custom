@@ -2,7 +2,7 @@
  <template id="purchase_prepare_list" name="Portal Purchase RFQs">
   <t t-call="absar_portal_purchase_monitor.purchase_approval_list"/></template>
  <template id="purchase_prepare_detail" name="Purchase Workspace Editor">
-  <t t-call="employee_portal_suite.employee_portal_layout"><main id="apw-root" class="apw-shell"><t t-call="absar_portal_purchase_monitor.purchase_workspace_nav" t-if="not boot['approval_view']"/>
+  <t t-call="employee_portal_suite.employee_portal_layout"><section id="apw-root" class="apw-shell"><t t-call="absar_portal_purchase_monitor.purchase_workspace_nav" t-if="not boot['approval_view']"/>
    <div class="apw-breadcrumb"><a t-att-href="boot['back_url']" t-out="'Purchase Monitoring' if boot['back_url'] == '/my/employee/purchase-monitor' else 'Purchase Approvals' if boot['approval_view'] else 'Purchase'"/><span>/</span><span t-out="boot['name']"/></div>
    <div class="apw-heading"><div><h2 t-out="boot['name']"/><p t-out="boot['company_name']"/></div><div><span class="apw-badge" t-out="boot['review']"/> <span class="apw-badge" t-out="boot['state']"/></div></div>
    <p t-if="boot.get('mr_source')" class="alert alert-info">Materials imported from <strong t-out="boot['mr_source']"/>. Choose a product for unmatched materials and check vendor prices before saving.</p>
@@ -45,7 +45,7 @@
    <input id="apw-csrf" type="hidden" t-att-value="request.csrf_token()"/>
    <pre id="apw-boot" hidden="hidden" t-out="boot_json"/>
    <noscript><p class="alert alert-warning">Enable JavaScript to use the purchase editor.</p></noscript>
-  </main></t>
+  </section></t>
  </template>
  <!-- Keep old XML identifiers on upgrade. Old mutation routes are removed. -->
  <template id="purchase_prepare_new"><t t-call="absar_portal_purchase_monitor.purchase_prepare_detail"/></template>

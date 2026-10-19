@@ -23,6 +23,11 @@ def run(env):
     combined=etree.fromstring(env['res.config.settings'].get_view(view_id=env.ref('account.res_config_settings_view_form').id,view_type='form')['arch'])
     assert len(combined.xpath("//app[@name='account']/block[@name='employee_portal_accounting']"))==1
     assert len(combined.xpath("//setting[@id='portal_accounting_journals']/field[@name='portal_accounting_journal_ids']"))==1
+    assert not combined.xpath("//setting[@id='portal_accounting_internal_review']")
+    native=etree.fromstring(env['account.move'].get_view(env.ref('account.view_move_form').id,'form')['arch'])
+    assert not native.xpath("//a[contains(text(),'Open Accounting Workspace')]")
+    inherited=etree.fromstring(env.ref('absar_portal_accounting.move_portal_review').arch_db)
+    assert inherited.xpath("//button[@name='action_portal_accounting_approve']")
     assert env['res.config.settings']._fields['portal_accounting_journal_ids'].groups=='base.group_system'
     print('PASS: settings view registry, existing journal selections retained, related settings persist to company, company isolation and legacy tab deactivated.',flush=True)
     from odoo.addons.absar_portal_accounting.models.service import KINDS
