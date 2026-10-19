@@ -1,0 +1,69 @@
+<odoo>
+    <record id="action_portal_workspace" model="ir.actions.act_url">
+        <field name="name">Accounting Workspace</field><field name="url">/my/employee/accounting</field><field name="target">self</field>
+    </record>
+    <record id="company_portal_accounting" model="ir.ui.view">
+        <field name="name">res.company.portal.accounting</field><field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Portal Accounting" groups="base.group_system">
+                    <group><field name="portal_accounting_journal_ids" widget="many2many_tags" domain="[('company_id', '=', id)]" options="{'no_create': True}"/>
+                        <field name="portal_accounting_review_internal"/></group>
+                    <p>Assign Accounting Preparer, Accounting Approver or Accounting Monitor on the user. Only journals selected here are available. Portal roles do not grant internal accounting permissions.</p>
+                </page>
+            </xpath>
+        </field>
+    </record>
+    <record id="move_portal_review" model="ir.ui.view">
+        <field name="name">account.move.portal.review</field><field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+        <xpath expr="//header" position="inside">
+            <field name="portal_accounting_requires_review" invisible="1"/>
+            <button name="action_portal_accounting_submit" type="object" string="Submit for Approval" class="oe_highlight" groups="account.group_account_invoice"
+                invisible="not portal_accounting_requires_review or portal_accounting_review in ('submitted','approved')"/>
+        </xpath>
+        <xpath expr="//button[@name='action_post']" position="attributes">
+            <attribute name="invisible" add="(portal_accounting_requires_review and portal_accounting_review != 'approved')" separator=" or "/>
+        </xpath>
+        <xpath expr="//button[@name='action_post' and not(contains(@invisible, 'portal_accounting_requires_review'))]" position="attributes">
+            <attribute name="invisible" add="(portal_accounting_requires_review and portal_accounting_review != 'approved')" separator=" or "/>
+        </xpath>
+        <xpath expr="//notebook" position="inside">
+            <page string="Portal Accounting Review" invisible="not portal_accounting_issuer_id">
+                <group><field name="portal_accounting_issuer_id"/><field name="portal_accounting_review"/>
+                <field name="portal_accounting_reviewer_id"/><field name="portal_accounting_comment"/></group>
+                <a type="action" name="%(action_portal_workspace)d" class="btn btn-secondary">Open Accounting Workspace</a>
+            </page>
+        </xpath></field>
+    </record>
+    <record id="payment_portal_review" model="ir.ui.view">
+        <field name="name">account.payment.voucher.portal.review</field><field name="model">account.payment.voucher</field>
+        <field name="inherit_id" ref="internal_transfer_voucher.view_payment_voucher_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside"><field name="portal_accounting_requires_review" invisible="1"/>
+                <button name="action_portal_accounting_submit" type="object" string="Submit for Approval" class="oe_highlight" invisible="not portal_accounting_requires_review or portal_accounting_review in ('submitted','approved')"/>
+            </xpath>
+            <xpath expr="//button[@name='action_post']" position="attributes"><attribute name="invisible" add="(portal_accounting_requires_review and portal_accounting_review != 'approved')" separator=" or "/></xpath>
+            <xpath expr="//sheet" position="inside"><group string="Portal Accounting Review" invisible="not portal_accounting_issuer_id">
+                <field name="portal_accounting_issuer_id"/><field name="portal_accounting_review"/><field name="portal_accounting_reviewer_id"/><field name="portal_accounting_comment"/>
+                <a type="action" name="%(action_portal_workspace)d" class="btn btn-secondary">Open Accounting Workspace</a>
+            </group></xpath>
+        </field>
+    </record>
+    <record id="receipt_portal_review" model="ir.ui.view">
+        <field name="name">account.receipt.voucher.portal.review</field><field name="model">account.receipt.voucher</field>
+        <field name="inherit_id" ref="internal_transfer_voucher.view_receipt_voucher_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside"><field name="portal_accounting_requires_review" invisible="1"/>
+                <button name="action_portal_accounting_submit" type="object" string="Submit for Approval" class="oe_highlight" invisible="not portal_accounting_requires_review or portal_accounting_review in ('submitted','approved')"/>
+            </xpath>
+            <xpath expr="//button[@name='action_post']" position="attributes"><attribute name="invisible" add="(portal_accounting_requires_review and portal_accounting_review != 'approved')" separator=" or "/></xpath>
+            <xpath expr="//sheet" position="inside"><group string="Portal Accounting Review" invisible="not portal_accounting_issuer_id">
+                <field name="portal_accounting_issuer_id"/><field name="portal_accounting_review"/><field name="portal_accounting_reviewer_id"/><field name="portal_accounting_comment"/>
+                <a type="action" name="%(action_portal_workspace)d" class="btn btn-secondary">Open Accounting Workspace</a>
+            </group></xpath>
+        </field>
+    </record>
+</odoo>

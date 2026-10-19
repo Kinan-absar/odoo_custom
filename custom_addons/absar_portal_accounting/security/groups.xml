@@ -1,0 +1,17 @@
+<odoo>
+    <record id="module_category_portal_accounting" model="ir.module.category">
+        <field name="name">Portal Accounting</field><field name="sequence">38</field>
+    </record>
+    <record id="group_preparer" model="res.groups">
+        <field name="name">Accounting Preparer</field><field name="category_id" ref="module_category_portal_accounting"/>
+        <field name="comment">Prepare bills, miscellaneous entries, vouchers and planned payments in the employee portal. Does not grant internal accounting access.</field>
+    </record>
+    <record id="group_approver" model="res.groups">
+        <field name="name">Accounting Approver</field><field name="category_id" ref="module_category_portal_accounting"/>
+        <field name="comment">Review and post portal accounting submissions. Independent review required. CEO planning decisions retain the existing CEO role.</field>
+    </record>
+    <record id="group_monitor" model="res.groups">
+        <field name="name">Accounting Monitor</field><field name="category_id" ref="module_category_portal_accounting"/>
+        <field name="comment">Read the accounting workspace within configured company and journal boundaries.</field>
+    </record>
+</odoo>
