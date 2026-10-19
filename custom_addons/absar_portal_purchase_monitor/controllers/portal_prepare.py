@@ -388,8 +388,16 @@ class PortalPurchasePrepare(http.Controller):
             '|', ('company_id', '=', False), ('company_id', '=', company.id)], order='id') if po else request.env['ir.attachment'].browse()
         operator=user.has_group(PREFIX+'group_portal_purchase_user')
         finance=any(user.has_group('absar_portal_accounting.group_'+role) for role in ('preparer','accountant')) if 'absar.portal.accounting.service' in request.env else False
-        return dict(uses_review=bool(po.absar_portal_preparer_id) if po else not operator, can_work=operator, can_bill=bool(operator and finance and po and po.state=='purchase' and po.invoice_status=='to invoice'),
-                    can_direct_confirm=bool(operator and po and not po.absar_portal_preparer_id and po.state in ('draft','sent')), values=vals, selected=selected, readonly=readonly, approval_view=approval_view,
+        bill_reason=''
+        if operator and po:
+            if po.state not in ('purchase','done'):
+                bill_reason=_('Confirm the purchase order before creating a vendor bill. Approval alone does not confirm the order.')
+            elif not finance:
+                bill_reason=_('Vendor bill preparation requires Accounting User (Direct Posting) or Accounting Preparer in addition to Purchase User.')
+            elif po.invoice_status != 'to invoice':
+                bill_reason=_('No quantities are available to bill. Check existing draft/posted bills; products billed on received quantities must first be received.')
+        return dict(show_bill=bool(operator and po and po.state!='cancel'), bill_reason=bill_reason, uses_review=True, can_work=operator, can_bill=bool(operator and finance and po and po.state in ('purchase','done') and po.invoice_status=='to invoice'),
+                    can_direct_confirm=False, values=vals, selected=selected, readonly=readonly, approval_view=approval_view,
                     attachments=[{'id': a.id, 'name': a.name} for a in attachments],
                     totals=dict(untaxed=po.amount_untaxed, tax=po.amount_tax, total=po.amount_total, currency=po.currency_id.name) if po else None,
                     back_url=BASE + '/approvals' if approval_view else BASE if user.has_group(PREFIX + 'group_portal_purchase_preparer') else BASE + '/approvals' if user.has_group(PREFIX + 'group_portal_purchase_approver') else '/my/employee/purchase-monitor',
@@ -402,11 +410,11 @@ class PortalPurchasePrepare(http.Controller):
                     company_name=company.name, companies=[{'id': c.id, 'label': c.name, 'currency': choice(c.currency_id), 'picking_type': choice(self._scope('picking_type', c)[0].search(self._scope('picking_type', c)[1], limit=1))} for c in user.company_ids],
                     timezone=user.tz or 'UTC',
                     can_create_product=user.has_group(PREFIX + 'group_portal_purchase_preparer') and not readonly,
-                    can_review=bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_preparer_id and po.absar_portal_preparer_id != user and
+                    can_review=bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_preparer_id and user not in (po.absar_portal_preparer_id,po.absar_portal_submitter_id) and
                         po.state in ('draft', 'sent') and po.absar_portal_review_state in ('submitted', 'approved')),
                     can_confirm=bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_approver_id and
                         po.absar_portal_review_state == 'approved' and po.state in ('draft', 'sent') and
-                        po.absar_portal_preparer_id != user),
+                        user not in (po.absar_portal_preparer_id,po.absar_portal_submitter_id)),
                     project_integration='project_id' in request.env['purchase.order']._fields)
 
     def _plain(self, value):
@@ -548,14 +556,15 @@ class PortalPurchasePrepare(http.Controller):
                 # The user's validated line values must be applied last.
                 if user.has_group(PREFIX+'group_portal_purchase_user'):
                     header['user_id']=po.user_id.id or user.id
-                    if not po.absar_portal_preparer_id:header['absar_portal_working_order']=True
+                    if not po.absar_portal_preparer_id:header['absar_portal_preparer_id']=user.id
+                    header['absar_portal_working_order']=False
                 line_commands = header.pop('order_line')
                 po.write(header)
                 po.order_line.flush_recordset()
                 po.write({'order_line': line_commands})
             else:
-                header['absar_portal_preparer_id'] = False if user.has_group(PREFIX+'group_portal_purchase_user') else user.id
-                header['absar_portal_working_order'] = user.has_group(PREFIX+'group_portal_purchase_user')
+                header['absar_portal_preparer_id'] = user.id
+                header['absar_portal_working_order'] = False
                 po = model.create(header)
             if data.get('submit'):
                 po._portal_submit()
@@ -568,13 +577,11 @@ class PortalPurchasePrepare(http.Controller):
             po = self._record(po_id)
             action = data.get('action')
             if action == 'work_confirm':
+                # Old cached clients may still send this action. It submits,
+                # never confirms, and uses the same independent-review path.
                 self._actor('user');po._portal_lock()
-                if str(po.write_date)!=data.get('version'):raise UserError(_('This RFQ changed. Reload before confirming.'))
-                if po.absar_portal_preparer_id:raise AccessError(_('This issuer RFQ requires its existing approval.'))
-                po.write({'absar_portal_working_order':True})
-                result=po.button_confirm()
-                if isinstance(result,dict):raise UserError(_('A native purchase wizard is required. No changes were saved.'))
-                po.message_post(body=_('Purchase order confirmed by %s.') % request.env.user.name,subtype_xmlid='mail.mt_note')
+                if str(po.write_date)!=data.get('version'):raise UserError(_('This RFQ changed. Reload before submitting.'))
+                po._portal_submit()
                 return {'url':BASE+'/%s'%po.id}
             if action not in ('approve', 'return', 'confirm', 'approve_confirm'):
                 raise ValidationError(_('Unknown decision.'))

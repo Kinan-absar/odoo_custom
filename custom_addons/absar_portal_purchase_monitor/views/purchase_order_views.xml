@@ -16,7 +16,7 @@
     <button name="action_absar_portal_confirm" type="object" string="Confirm Approved RFQ" class="btn-primary" groups="absar_portal_purchase_monitor.group_portal_purchase_approver" invisible="not absar_portal_preparer_id or absar_portal_preparer_id == uid or absar_portal_review_state != 'approved' or state not in ['draft', 'sent']"/>
    </xpath>
    <xpath expr="//sheet/notebook" position="inside"><page name="absar_portal_purchase_review" string="Purchase Review" invisible="not absar_portal_preparer_id"><group>
-   <field name="absar_portal_preparer_id" readonly="1"/>
+   <field name="absar_portal_preparer_id" readonly="1"/><field name="absar_portal_submitter_id" readonly="1"/>
    <field name="absar_portal_review_state" readonly="1"/>
    <field name="absar_portal_reviewer_ids" widget="many2many_tags" readonly="1" options="{'no_open': True, 'no_create': True}"/>
    <field name="absar_portal_approver_id" readonly="1"/>

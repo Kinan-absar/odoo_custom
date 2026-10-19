@@ -5,6 +5,7 @@ from odoo.exceptions import AccessError, UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 PREFIX = 'absar_portal_purchase_monitor.'
+_CONFIRM_TOKEN=object()
 
 
 class PurchaseOrder(models.Model):
@@ -14,6 +15,7 @@ class PurchaseOrder(models.Model):
     absar_portal_project_id = fields.Many2one('project.project', string='Portal Project (Legacy)', check_company=True)
     absar_portal_working_order = fields.Boolean(readonly=True, copy=False, default=False)
     absar_portal_preparer_id = fields.Many2one('res.users', string='Issuer', readonly=True, copy=False, index=True)
+    absar_portal_submitter_id = fields.Many2one('res.users',string='Submitted By',readonly=True,copy=False)
     absar_portal_review_state = fields.Selection([
         ('draft', 'Draft'), ('submitted', 'Awaiting Approval'),
         ('approved', 'Approved'), ('returned', 'Returned for Correction')],
@@ -25,7 +27,7 @@ class PurchaseOrder(models.Model):
     absar_portal_reviewer_ids = fields.Many2many(
         'res.users', string='Eligible Approvers', compute='_compute_portal_reviewers', compute_sudo=True)
 
-    @api.depends('company_id', 'absar_portal_preparer_id', 'user_id')
+    @api.depends('company_id', 'absar_portal_preparer_id', 'absar_portal_submitter_id', 'user_id')
     def _compute_portal_reviewers(self):
         for po in self:
             po.absar_portal_reviewer_ids = po._portal_reviewers()
@@ -35,7 +37,7 @@ class PurchaseOrder(models.Model):
         issuer = self.absar_portal_preparer_id or self.user_id
         return self.env.ref(PREFIX + 'group_portal_purchase_approver').sudo().users.filtered(
             lambda u: u.active and not u.has_group('employee_portal_suite.group_attendance_only') and
-            (not u.share or u.with_company(u.company_id).employee_id) and u != issuer and self.company_id in u.company_ids)
+            (not u.share or u.with_company(u.company_id).employee_id) and u != issuer and u != self.absar_portal_submitter_id and self.company_id in u.company_ids)
 
     def _portal_actor(self, role):
         user = self.env.user.sudo(False)
@@ -62,7 +64,7 @@ class PurchaseOrder(models.Model):
         self.ensure_one()
         return bool(user.has_group(PREFIX + 'group_portal_purchase_preparer') and
                     not user.has_group('employee_portal_suite.group_attendance_only') and
-                    self.company_id in user.company_ids and (self.absar_portal_preparer_id == user or user.has_group(PREFIX+'group_portal_purchase_user')) and
+                    self.company_id in user.company_ids and (user in (self.absar_portal_preparer_id,self.absar_portal_submitter_id) or user.has_group(PREFIX+'group_portal_purchase_user')) and
                     self.state in ('draft', 'sent') and
                     self.absar_portal_review_state in (False, 'draft', 'returned'))
 
@@ -95,7 +97,7 @@ class PurchaseOrder(models.Model):
         user = self._portal_actor('preparer')
         self._portal_lock()
         if not self._portal_editable(user):
-            raise UserError(_('Only your own editable draft RFQ can be submitted.'))
+            raise UserError(_('Only an accessible editable draft RFQ can be submitted.'))
         lines = self.order_line.filtered(lambda l: not l.display_type)
         if not lines or any(not l.product_id or l.product_qty <= 0 for l in lines):
             raise ValidationError(_('Add at least one product with a positive quantity.'))
@@ -104,6 +106,10 @@ class PurchaseOrder(models.Model):
         # The analytic mixin enforces applicability per plan with this context.
         if hasattr(lines, '_validate_analytic_distribution'):
             lines.with_context(validate_analytic=True)._validate_analytic_distribution()
+        # The submitting employee is accountable even when an all-document
+        # user prepares another buyer's draft. No working role bypasses review.
+        self.sudo().write({'absar_portal_preparer_id':self.absar_portal_preparer_id.id or user.id,
+                           'absar_portal_submitter_id':user.id,'absar_portal_working_order':False})
         reviewers = self._portal_reviewers()
         if not reviewers:
             raise UserError(_('No independent Purchase Approver is available for this company. Save as a draft and ask your administrator to assign one.'))
@@ -121,7 +127,7 @@ class PurchaseOrder(models.Model):
         for po in self:
             po._portal_lock()
             po._portal_check_company(user)
-            if (not po.absar_portal_preparer_id or po.absar_portal_preparer_id == user or
+            if (not po.absar_portal_preparer_id or user in (po.absar_portal_preparer_id,po.absar_portal_submitter_id) or
                     po.absar_portal_review_state != 'submitted' or po.state not in ('draft', 'sent')):
                 raise UserError(_('Only another preparer’s submitted RFQ can be approved.'))
             po.sudo().write({'absar_portal_review_state': 'approved',
@@ -137,7 +143,7 @@ class PurchaseOrder(models.Model):
         user = self._portal_approver()
         self._portal_lock()
         self._portal_check_company(user)
-        if (not self.absar_portal_preparer_id or self.absar_portal_preparer_id == user or
+        if (not self.absar_portal_preparer_id or user in (self.absar_portal_preparer_id,self.absar_portal_submitter_id) or
                 self.absar_portal_review_state != 'submitted' or self.state not in ('draft', 'sent')):
             raise UserError(_('Only another employee’s submitted RFQ can be approved and confirmed.'))
         self.action_absar_portal_approve()
@@ -150,7 +156,7 @@ class PurchaseOrder(models.Model):
         for po in self:
             po._portal_lock()
             po._portal_check_company(user)
-            if (not po.absar_portal_preparer_id or po.absar_portal_preparer_id == user or
+            if (not po.absar_portal_preparer_id or user in (po.absar_portal_preparer_id,po.absar_portal_submitter_id) or
                     po.absar_portal_review_state not in ('submitted', 'approved') or
                     po.state not in ('draft', 'sent')):
                 raise UserError(_('Only another preparer’s unconfirmed submitted or approved RFQ can be returned.'))
@@ -191,29 +197,14 @@ class PurchaseOrder(models.Model):
             if not po.absar_portal_preparer_id:
                 # An internal issuer adopts only their own native RFQ. Never
                 # claim another buyer's draft or change existing review history.
-                if ((po.user_id and po.user_id != user) or
-                        (not po.user_id and po.create_uid != user)):
+                if (not user.has_group(PREFIX+'group_portal_purchase_user') and
+                        ((po.user_id and po.user_id != user) or (not po.user_id and po.create_uid != user))):
                     raise UserError(_('Only the assigned buyer can submit this RFQ.'))
-                po.write({'absar_portal_preparer_id': user.id, 'user_id': user.id})
+                po.sudo().write({'absar_portal_preparer_id': user.id, 'user_id': user.id})
             po._portal_submit()
         return True
 
     def button_confirm(self):
-        if self.env.user.has_group(PREFIX+'group_portal_purchase_user'):
-            user=self._portal_actor('user')
-            for po in self.filtered(lambda order:not order.absar_portal_preparer_id):
-                po._portal_check_company(user)
-                po.write({'absar_portal_working_order':True})
-        ordinary = self.filtered('absar_portal_working_order')
-        if ordinary:
-            user=self._portal_actor('user')
-            for po in ordinary:
-                po._portal_check_company(user)
-                if po.absar_portal_preparer_id:
-                    raise UserError(_('An issuer document cannot bypass its existing review.'))
-            if len(ordinary)!=len(self):
-                raise UserError(_('Confirm ordinary and issuer documents separately.'))
-            return super(PurchaseOrder, ordinary).button_confirm()
         rfqs = self.filtered(lambda po: po.state in ('draft', 'sent'))
         pending = rfqs.filtered(lambda po: not po.absar_portal_preparer_id or
                                 po.absar_portal_review_state != 'approved')
@@ -228,27 +219,23 @@ class PurchaseOrder(models.Model):
             po._portal_lock()
             po._portal_check_company(user)
             if (not po.absar_portal_approver_id or
-                    po.absar_portal_preparer_id == user or
+                    user in (po.absar_portal_preparer_id,po.absar_portal_submitter_id) or
                     po.absar_portal_approver_id == po.absar_portal_preparer_id):
                 raise UserError(_('This RFQ must be independently approved before confirmation.'))
-        return super().button_confirm()
+        return super(PurchaseOrder,self.with_context(_absar_purchase_confirm_token=_CONFIRM_TOKEN)).button_confirm()
 
     def button_approve(self, force=False):
         for po in self:
-            if po.absar_portal_working_order:
-                user=self._portal_actor('user');po._portal_check_company(user)
-                if po.absar_portal_preparer_id:raise UserError(_('Issuer review cannot be bypassed.'))
-                continue
             if po.state not in ('draft', 'sent', 'to approve'):
                 continue
             user = po._portal_approver()
             po._portal_lock()
             po._portal_check_company(user)
             if (not po.absar_portal_preparer_id or po.absar_portal_review_state != 'approved' or
-                    not po.absar_portal_approver_id or po.absar_portal_preparer_id == user or
+                    not po.absar_portal_approver_id or user in (po.absar_portal_preparer_id,po.absar_portal_submitter_id) or
                     po.absar_portal_approver_id == po.absar_portal_preparer_id):
                 raise UserError(_('Independent purchase review approval is required first.'))
-        return super().button_approve(force=force)
+        return super(PurchaseOrder,self.with_context(_absar_purchase_confirm_token=_CONFIRM_TOKEN)).button_approve(force=force)
 
     def _portal_invalidate_review(self):
         for po in self.sorted('id'):
@@ -264,6 +251,12 @@ class PurchaseOrder(models.Model):
                     po._portal_close_activities()
 
     def write(self, vals):
+        if vals.get('state') in ('purchase','done') and not self.env.su and self.env.context.get('_absar_purchase_confirm_token') is not _CONFIRM_TOKEN:
+            if any(po.state not in ('purchase','done') for po in self):
+                raise AccessError(_('Use independent Purchase approval and confirmation.'))
+        metadata={'absar_portal_preparer_id','absar_portal_submitter_id','absar_portal_review_state','absar_portal_approver_id','absar_portal_approved_on'}
+        if metadata.intersection(vals) and not self.env.su:
+            raise AccessError(_('Purchase approval metadata can only be changed through the review actions.'))
         content_fields = {'partner_id', 'partner_ref', 'project_id', 'material_request_id',
                           'currency_id', 'company_id', 'date_order', 'date_planned', 'notes',
                           'payment_term_id', 'fiscal_position_id', 'incoterm_id',

@@ -1,5 +1,3 @@
-18.0.1.6.0
-Purchase User (All Company Documents) adds company-scoped working access to RFQs and purchase orders. Ordinary working RFQs confirm through native Odoo purchase confirmation. Existing issuer review workflows remain enforced. This role implies the portal preparer role only, never Internal User.
-Create Vendor Bill also requires Accounting User (Direct Posting) or Accounting Preparer and creates a native linked draft bill using billable quantities.
-Matching Accounting workspace header, in-page dialogs and paginated Search More selectors included.
-Employee Portal Suite is unchanged.
+18.0.1.6.2
+Independent approval is mandatory for the own-document Issuer/Prepare and all-company User groups. The User role expands visibility, not confirmation authority. Save Draft sends no approval notification; Submit for Approval notifies eligible independent approvers.
+The original issuer retains ownership when a working user submits on their behalf; the actual submitter is recorded separately and cannot approve that submission. Changes invalidate approval. No internal user groups are implied. Employee Portal Suite and Accounting posting rules are unchanged.

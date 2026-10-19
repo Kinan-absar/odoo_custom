@@ -3,7 +3,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const source=fs.readFileSync(new URL('../static/src/accounting.js', import.meta.url),'utf8');
 class Element {
-    constructor(tag){this.tagName=tag;this.children=[];this.handlers={};this.dataset={};this.disabled=false;this.isConnected=true;this.value='';}
+    constructor(tag){this.tagName=tag;this.children=[];this.handlers={};this.dataset={};this.disabled=false;this.isConnected=true;this.value='';this.style={};}
     append(...children){this.children.push(...children);}
     replaceChildren(...children){this.children=children;}
     addEventListener(name,fn){this.handlers[name]=fn;}
@@ -11,6 +11,10 @@ class Element {
     getAttribute(name){return this[name];}
     remove(){this.isConnected=false;}
     focus(){}
+    getBoundingClientRect(){return {left:100,top:650,bottom:690,width:350};}
+    showPopover(){this.popoverOpen=true;}
+    hidePopover(){this.popoverOpen=false;}
+    matches(selector){return selector===':popover-open'&&!!this.popoverOpen;}
     querySelectorAll(selector){return walk(this).filter(n=>selector==='button'?n.tagName==='button':selector==='[data-totals]'?'totals'in n.dataset:selector==='[data-line-amount]'?n['data-line-amount']!==undefined:false);}
     querySelector(selector){return this.querySelectorAll(selector)[0];}
 }
@@ -26,7 +30,7 @@ function mount(boot){
     root.dataset={boot:JSON.stringify(boot),csrf:'csrf-fixture'};body.append(root);
     const document={readyState:'complete',body,createElement:tag=>new Element(tag),getElementById:()=>root};
     const context=vm.createContext({document,URLSearchParams,console,history:{replaceState(){}},
-        setTimeout:fn=>{timer=fn;return 1;},clearTimeout(){timer=null;},window:{confirm:()=>true,prompt:()=>null,location:{assign(){}}},
+        setTimeout:fn=>{timer=fn;return 1;},clearTimeout(){timer=null;},window:{innerWidth:1200,innerHeight:800,addEventListener(){},confirm:()=>true,prompt:()=>null,location:{assign(){}}},
         fetch:async(url,options)=>{const data=JSON.parse(options.body.get('payload'));calls.push({url,data});
             assert.equal(options.body.get('csrf_token'),'csrf-fixture');
             const result=url.endsWith('/options')?Array.from({length:Math.min(data.limit||30,65-(data.offset||0))},(_,i)=>({id:1000+(data.offset||0)+i,name:'Partner '+((data.offset||0)+i)})):url.endsWith('/defaults')?{journal_id:3,currency_id:1,currency_name:'SAR',invoice_payment_term_id:false,selections:{journal_id:{id:3,name:'Purchase'},currency_id:{id:1,name:'SAR'},invoice_payment_term_id:{id:false,name:''}}}:url.endsWith('/preview')?{untaxed:200,tax:30,total:230,currency:'SAR',line_amounts:[200]}:
@@ -88,3 +92,11 @@ find(search.root,'Search More…').handlers.click();await search.settle();find(s
 assert(search.calls.some(c=>c.url.endsWith('/options')&&c.data.offset===30));
 find(search.body,'Partner 31').handlers.click();await search.settle();assert(search.calls.some(c=>c.url.endsWith('/defaults')&&c.data.partner_id===1031));
 console.log('PASS: missing journal stops misleading calculating state; in-page reason dialog sends reset request; Search More pages beyond 30 and selected partner loads supplier defaults.');
+
+const overlay=mount(fixture);
+const accountSearch=walk(overlay.root).find(n=>n['aria-label']==='account search');accountSearch.handlers.focus();await overlay.settle();
+const options=walk(overlay.root).find(n=>n.className==='aca-options' && n.popoverOpen);
+assert(options && options.style.position==='fixed');assert(Number.parseInt(options.style.top)<650);assert.equal(options.style.width,'350px');
+find(options,'Search More…').handlers.click();
+const searchDialog=walk(overlay.body).find(n=>n.className?.includes('aca-search-dialog'));assert(searchDialog);assert(find(searchDialog,'Search Accounts'));assert(find(searchDialog,'Close'));
+console.log('PASS: dropdown uses top-layer popover positioned above near-bottom field; Search More has dedicated compact dialog/header.');

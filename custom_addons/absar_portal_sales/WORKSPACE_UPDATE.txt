@@ -1,4 +1,3 @@
-18.0.1.4.0
-Sales User (All Company Documents) adds company-scoped access to quotations and sales orders, editing of drafts, and native sales confirmation. Issuer documents retain their submitted/approved review locks. The role implies the portal creator role only, never Internal User.
-Matching workspace header and paginated Search More selectors included.
-Employee Portal Suite is unchanged.
+18.0.1.4.1
+Independent approval is mandatory for the own-document Issuer/Prepare and all-company User groups. The User role expands visibility, not confirmation authority. Save Draft sends no approval notification; Submit for Approval notifies eligible independent approvers.
+The original issuer retains ownership when a working user submits on their behalf; the actual submitter is recorded separately and cannot approve that submission. Changes invalidate approval. No internal user groups are implied. Employee Portal Suite and Accounting posting rules are unchanged.

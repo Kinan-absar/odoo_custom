@@ -26,7 +26,12 @@
             for (const child of children) if (child !== undefined && child !== null) node.append(child);
             return node;
         }
-        let status, previewError='', vendorSequence=0;
+        let status, previewError='', vendorSequence=0, closePicker;
+        if (typeof window !== 'undefined' && window.addEventListener) {
+            window.addEventListener('resize',()=>closePicker?.());
+            window.addEventListener('scroll',event=>{if(!event.target.closest?.('.aca-options'))closePicker?.();},true);
+        }
+        const resourceTitle = resource => ({partner:'Partners',product:'Products',account:'Accounts',journal:'Journals',currency:'Currencies',uom:'Units of Measure','tax-grid':'Tax Grids',tax:'Taxes',po:'Purchase Orders',bank:'Bank Accounts','payment-term':'Payment Terms',analytic:'Analytic Accounts'}[resource] || resource.replaceAll('-',' '));
         function say(message, error = false) {
             if (status) {status.textContent = message; status.className = 'aca-status' + (error ? ' error' : '');}
         }
@@ -74,7 +79,7 @@
             });
         }
         function searchMore(resource, query, choose) {
-            const backdrop=el('div',{class:'aca-dialog-backdrop'}),dialog=el('div',{class:'aca aca-dialog',role:'dialog','aria-modal':'true','aria-label':'Search '+resource});
+            const backdrop=el('div',{class:'aca-dialog-backdrop'}),dialog=el('div',{class:'aca aca-dialog',role:'dialog','aria-modal':'true','aria-label':'Search '+resourceTitle(resource)});
             const search=el('input',{type:'search','aria-label':'Search records',placeholder:'Search by name or reference…'});search.value=query||'';
             const list=el('div',{class:'aca-search-results'}),pager=el('div',{class:'aca-pager'});let offset=0,sequence=0;
             async function load(){const seq=++sequence;list.replaceChildren(el('p',{text:'Searching…'}));try{
@@ -86,7 +91,8 @@
             }catch(error){list.replaceChildren(el('p',{text:error.message}));}}
             search.addEventListener('input',()=>{offset=0;load();});
             dialog.addEventListener('keydown',event=>{if(event.key==='Escape')backdrop.remove();});
-            dialog.append(el('h3',{text:'Search '+resource}),search,list,pager,button('Close',()=>backdrop.remove()));backdrop.append(dialog);document.body.append(backdrop);load();search.focus();
+            const head=el('div',{class:'aca-dialog-head'});head.append(el('h3',{text:'Search '+resourceTitle(resource)}),button('Close',()=>backdrop.remove()));
+            dialog.className+=' aca-search-dialog';dialog.append(head,search,list,pager);backdrop.append(dialog);document.body.append(backdrop);load();search.focus();
         }
         async function supplierDefaults(partnerId) {
             const sequence=++vendorSequence;
@@ -104,26 +110,40 @@
                 autocomplete: 'off', 'aria-expanded': 'false', disabled, placeholder: 'Search ' + resource + '…'});
             control.value = selected?.name || '';
             const options = el('div', {class: 'aca-options', role: 'listbox', hidden: true});
+            options.setAttribute('popover','manual');
+            const close=()=>{if(typeof options.hidePopover==='function' && options.matches(':popover-open'))options.hidePopover();options.hidden=true;control.setAttribute('aria-expanded','false');};
+            const show=()=>{
+                if(closePicker!==close)closePicker?.();closePicker=close;
+                options.hidden=false;
+                if(control.getBoundingClientRect){
+                    const rect=control.getBoundingClientRect(),vw=window.innerWidth,vh=window.innerHeight;
+                    const width=Math.min(Math.max(rect.width,300),vw-24),below=vh-rect.bottom-12,above=rect.top-12;
+                    const up=below<180 && above>below,height=Math.min(280,Math.max(100,up?above:below));
+                    Object.assign(options.style,{position:'fixed',left:Math.max(12,Math.min(rect.left,vw-width-12))+'px',top:(up?Math.max(12,rect.top-height-4):rect.bottom+4)+'px',width:width+'px',maxHeight:height+'px',margin:'0',right:'auto',bottom:'auto'});
+                }
+                if(typeof options.showPopover==='function'&&!options.matches(':popover-open'))options.showPopover();
+                control.setAttribute('aria-expanded','true');
+            };
             async function load() {
                 const seq = ++requestId;
                 try {
                     const rows = await api('options', {resource, q: control.value, partner_id: state.partner_id});
                     if (seq !== requestId || !box.isConnected) return;
-                    options.replaceChildren(); options.hidden = false; control.setAttribute('aria-expanded', 'true');
+                    options.replaceChildren(); show();
                     if (!rows.length) options.append(el('div', {class: 'aca-mini', text: 'No matching records'}));
                     for (const row of rows.slice(0,30)) options.append(el('button', {type: 'button', role: 'option', text: row.name,
                         onmousedown: event => event.preventDefault(), onclick: () => {
-                            selected=row;control.value = row.name; options.hidden = true; control.setAttribute('aria-expanded', 'false');
+                            selected=row;control.value = row.name; close();
                             choose(row); revision++;
                         }}));
-                    options.append(button('Search More…',()=>{options.hidden=true;searchMore(resource,control.value,row=>{selected=row;control.value=row.name;choose(row);});}));
+                    options.append(button('Search More…',()=>{close();searchMore(resource,control.value,row=>{selected=row;control.value=row.name;choose(row);});}));
                 } catch (error) {say(error.message, true);}
             }
             control.addEventListener('focus', () => {control.value = ''; load();});
             control.addEventListener('input', () => {clearTimeout(timer); timer = setTimeout(load, 180);});
-            box.addEventListener('focusout', () => setTimeout(()=>{if(!box.contains(document.activeElement)){options.hidden=true;control.setAttribute('aria-expanded','false');control.value=selected?.name||'';}},100));
+            box.addEventListener('focusout', () => setTimeout(()=>{if(!box.contains(document.activeElement)){close();requestId++;control.value=selected?.name||'';}},100));
             control.addEventListener('keydown', event => {
-                if (event.key === 'Escape') {options.hidden = true; control.blur();}
+                if (event.key === 'Escape') {close();control.blur();}
                 if (event.key === 'ArrowDown') {event.preventDefault(); options.querySelector('button')?.focus();}
             });
             box.append(control, options);
@@ -488,6 +508,7 @@
             return box;
         }
         function render() {
+            closePicker?.();closePicker=null;
             state.selections ||= {};state.allocations ||= [];state.destinations ||= [];state.lines ||= [];
             root.replaceChildren();
             root.append(el('div',{class:'aca-title'},[el('h2',{text:state.name||'New'}),el('span',{class:'aca-badge',text:state.state+(state.review_required || isPlan()?' · '+String(state.review).replaceAll('_',' '):'')})]));
@@ -505,9 +526,10 @@
             if(tab==='lines') {
                 panel.append(lineTable());
                 if(state.editable){
-                    panel.append(button('Add a Line',()=>{state.lines.push({name:'',quantity:1,price_unit:0,discount:0,debit:0,credit:0,taxes_id:[],tax_names:[],analytic_distribution:{}});render();}));
-                    if(isBill())for(const [type,text]of [['line_section','Add a Section'],['line_note','Add a Note']])panel.append(button(text,()=>{state.lines.push({display_type:type,name:''});render();}));
-                    panel.append(button('Recalculate Totals',preview));
+                    const lineActions=el('div',{class:'aca-line-actions'});
+                    lineActions.append(button('Add a Line',()=>{state.lines.push({name:'',quantity:1,price_unit:0,discount:0,debit:0,credit:0,taxes_id:[],tax_names:[],analytic_distribution:{}});render();}));
+                    if(isBill())for(const [type,text]of [['line_section','Add a Section'],['line_note','Add a Note']])lineActions.append(button(text,()=>{state.lines.push({display_type:type,name:''});render();}));
+                    lineActions.append(button('Recalculate Totals',preview));panel.append(lineActions);
                 }
                 panel.append(el('div',{class:'aca-totals','data-totals':'true'}));
             } else if(tab==='journal') {

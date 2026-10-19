@@ -41,7 +41,7 @@ class PortalSales(http.Controller):
     def _editable(self, order):
         if self._operator() and order.state in ('draft','sent') and (not order.absar_portal_creator_id or order.absar_portal_review_state in ('draft','returned')):
             return
-        if order.absar_portal_creator_id.id != request.env.user.id or order.absar_portal_review_state not in ('draft','returned') or order.state != 'draft':
+        if order.absar_portal_creator_id.id != request.env.user.id or order.absar_portal_review_state not in ('draft','returned') or order.state not in ('draft','sent'):
             raise Forbidden()
 
     def _num(self, value, field='Amount'):
@@ -94,7 +94,7 @@ class PortalSales(http.Controller):
         domain = [('company_id', 'in', user.company_ids.ids)]
         if queue:
             domain += [('absar_portal_creator_id','!=',False), ('absar_portal_creator_id','!=',user.id),
-                       ('absar_portal_review_state','=','submitted'), ('state','=','draft')]
+                       ('absar_portal_review_state','=','submitted'), ('state','in',['draft','sent'])]
         elif not monitor and not self._operator():
             domain += [('absar_portal_creator_id','=',user.id)]
         else:
@@ -130,7 +130,7 @@ class PortalSales(http.Controller):
         orders = model.search(domain, limit=per_page, offset=(page-1)*per_page, order='date_order desc, id desc')
         pending_count = model.search_count([('company_id','in',user.company_ids.ids),
                 ('absar_portal_creator_id','!=',False),('absar_portal_creator_id','!=',user.id),
-                ('absar_portal_review_state','=','submitted'),('state','=','draft')]) if is_approver else 0
+                ('absar_portal_review_state','=','submitted'),('state','in',['draft','sent'])]) if is_approver else 0
         base_url = BASE + ('/approvals' if queue else '/monitor' if monitor else '')
         def page_url(target):
             args = {k:params.get(k) for k in ('q','source','sales_state','review') if params.get(k) and params.get(k) != 'all'}
@@ -202,7 +202,7 @@ class PortalSales(http.Controller):
                 raise UserError(_('Select an available project.'))
             vals = {
                 'partner_id':partner.id, 'company_id':user.company_id.id, 'user_id':user.id,
-                'absar_proposal_type':kind, 'absar_portal_creator_id':False if self._operator() else user.id,
+                'absar_proposal_type':kind, 'absar_portal_creator_id':user.id,
                 'absar_portal_review_state':'draft', 'construction_project_id':project.id if project else False,
             }
             if post.get('validity_date'):
@@ -225,9 +225,9 @@ class PortalSales(http.Controller):
         can_edit=False
         try:self._editable(order);can_edit=True
         except Forbidden:pass
-        return self._render('absar_portal_sales.sales_detail', order=order, can_confirm=self._operator() and order.state in ('draft','sent') and (not order.absar_portal_creator_id or order.absar_portal_review_state=='approved'),
+        return self._render('absar_portal_sales.sales_detail', order=order, can_confirm=order._absar_portal_can_confirm(request.env.user),
             can_edit=can_edit,
-            can_review=(request.env.user.has_group('absar_portal_sales.group_portal_sales_approver') and order.absar_portal_review_state=='submitted' and order.absar_portal_creator_id.id != request.env.user.id),
+            can_review=(request.env.user.has_group('absar_portal_sales.group_portal_sales_approver') and order.absar_portal_review_state=='submitted' and request.env.user not in (order.absar_portal_creator_id,order.absar_portal_submitter_id)),
             templates=self._templates(),projects=self._customer_projects(order.partner_id),units=self._units())
 
     @http.route(BASE + '/<int:order_id>/save', type='http', auth='user', website=True, methods=['POST'], csrf=True)
@@ -399,39 +399,28 @@ class PortalSales(http.Controller):
         order=self._order(order_id)
         action=post.get('action')
         if action=='confirm':
-            if not self._operator() or order.state not in ('draft','sent') or (order.absar_portal_creator_id and order.absar_portal_review_state!='approved'):raise Forbidden()
+            if not order._absar_portal_can_confirm(request.env.user):raise Forbidden()
             order.sudo().with_company(order.company_id).action_confirm()
             order.message_post(body=_('Sales order confirmed by %s.') % request.env.user.name,subtype_xmlid='mail.mt_note')
         elif action=='submit':
-            if not order.absar_portal_creator_id:raise Forbidden()
             self._editable(order)
-            if not order.order_line: raise Forbidden()
-            if order.absar_proposal_type=='technical' and order.absar_proposal_payment_ids:
-                total=sum(order.absar_proposal_payment_ids.mapped('percentage'))
-                if float_compare(total,100,precision_digits=2): raise Forbidden()
-            order.sudo().write({'absar_portal_review_state':'submitted','absar_portal_review_note':False})
-            order._absar_portal_notify_reviewers()
+            order._absar_portal_submit()
             return request.redirect(BASE)
         elif action in ('approve','return'):
             self._allowed(approve=True)
-            if not order.absar_portal_creator_id or order.absar_portal_review_state!='submitted' or order.state!='draft': raise Forbidden()
-            if order.absar_portal_creator_id.id == request.env.user.id: raise Forbidden()
-            if action=='approve' and order.absar_portal_creator_id.id == request.env.user.id: raise Forbidden()
-            if action=='approve':
-                order.sudo().write({'absar_portal_review_state':'approved','absar_portal_approver_id':request.env.user.id})
-                order._absar_portal_notify_creator(_('Your quotation %s has been approved for sending.') % order.name)
+            if action=='approve':order.action_absar_portal_approve()
             else:
                 note=(post.get('note') or '').strip()
-                if not note: raise Forbidden()
-                order.sudo().write({'absar_portal_review_state':'returned','absar_portal_review_note':note[:3000]})
-                order._absar_portal_notify_creator(_('Your quotation %s was returned for correction: %s') % (order.name,note[:500]))
+                if not note:raise Forbidden()
+                order.sudo().write({'absar_portal_review_note':note[:3000]})
+                order.action_absar_portal_return()
         else: raise Forbidden()
         return request.redirect('%s/%s' % (BASE,order.id))
 
     @http.route(BASE + '/<int:order_id>/pdf', type='http', auth='user', website=True)
     def pdf(self,order_id,**kw):
         order=self._order(order_id)
-        if order.absar_portal_creator_id and order.absar_portal_review_state!='approved': raise Forbidden()
+        if order.state in ('draft','sent') and (order.absar_portal_review_state!='approved' or not order.absar_portal_approver_id): raise Forbidden()
         report='absar_technical_proposal.report_technical_proposal' if order.absar_proposal_type=='technical' else 'sale.report_saleorder'
         content,_=request.env['ir.actions.report'].sudo()._render_qweb_pdf(report,[order.id])
         return request.make_response(content,headers=[('Content-Type','application/pdf'),('Content-Disposition','inline; filename="%s.pdf"' % order.name.replace('/','-'))])

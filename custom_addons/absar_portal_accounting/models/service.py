@@ -742,7 +742,7 @@ class PortalAccountingService(models.AbstractModel):
         user,roles=self._actor('preparer')
         if not user.has_group('absar_portal_purchase_monitor.group_portal_purchase_user'):
             raise AccessError(_('The Purchase User working role is required to create vendor bills from orders.'))
-        po=self._relation(company,'purchase.order',po_id,[('company_id','=',company.id),('state','=','purchase')],True)
+        po=self._relation(company,'purchase.order',po_id,[('company_id','=',company.id),('state','in',['purchase','done'])],True)
         po._portal_lock()
         if str(po.write_date)!=version:
             raise UserError(_('This purchase order changed. Reload it before creating a bill.'))

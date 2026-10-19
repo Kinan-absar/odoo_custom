@@ -56,7 +56,7 @@
  <template id="sales_detail" name="Portal Sales Offer Editor">
   <t t-call="employee_portal_suite.employee_portal_layout">
    <div class="container aps-wrap py-4" t-att-data-sales-partner="order.partner_id.id"><t t-call="absar_portal_sales.sales_workspace_header"/><a t-att-href="'/my/employee/sales/monitor' if request.env.user.has_group('absar_portal_sales.group_portal_sales_monitor') and not order.absar_portal_creator_id else '/my/employee/sales'">← Quotations</a>
-    <div class="aps-head mt-3"><div><h3><t t-out="order.name"/> · <t t-out="order.partner_id.name"/></h3><span t-if="order.absar_portal_creator_id" t-att-class="'aps-status aps-status-' + (order.absar_portal_review_state or 'draft')" t-out="dict(order._fields['absar_portal_review_state'].selection).get(order.absar_portal_review_state)"/><span t-else="" class="aps-muted-tag">Standard workflow · No issuer review</span></div>
+    <div class="aps-head mt-3"><div><h3><t t-out="order.name"/> · <t t-out="order.partner_id.name"/></h3><span t-if="order.absar_portal_creator_id" t-att-class="'aps-status aps-status-' + (order.absar_portal_review_state or 'draft')" t-out="dict(order._fields['absar_portal_review_state'].selection).get(order.absar_portal_review_state)"/><span t-else="" class="aps-muted-tag">Approval required before confirmation</span></div>
      <a t-if="not order.absar_portal_creator_id or order.absar_portal_review_state == 'approved'" t-att-href="'/my/employee/sales/%s/pdf' % order.id" class="btn btn-outline-primary" target="_blank">Print / Download PDF</a></div>
     <div t-if="error or request.params.get('error')" class="alert alert-warning" t-out="error or 'The requested change could not be saved. Check the values and try again.'"/>
     <div t-if="order.absar_portal_review_note" class="alert alert-info"><strong>Reviewer note:</strong> <t t-out="order.absar_portal_review_note"/></div>
@@ -121,9 +121,9 @@
     <div t-if="can_confirm" class="aps-panel">
      <form t-if="can_confirm" method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="confirm"/><button class="btn btn-primary" data-aps-confirm="Confirm this quotation as a sales order?">Confirm Sales Order</button></form>
     </div>
-    <div t-if="order.absar_portal_creator_id" class="aps-panel"><h5>Internal Review</h5>
+    <div t-if="order.absar_portal_creator_id or can_edit" class="aps-panel"><h5>Approval Review</h5>
      <p class="text-muted">Submission locks the draft. Approval permits PDF access but does not send the quotation or confirm the Sales Order.</p>
-     <form t-if="can_edit and order.absar_portal_creator_id" method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="submit"/><button class="btn btn-primary" t-att-disabled="not order.order_line and 'disabled' or None">Submit for Approval</button></form>
+     <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="submit"/><button class="btn btn-primary" t-att-disabled="not order.order_line and 'disabled' or None">Submit for Approval</button></form>
      <div t-if="can_review" class="d-flex gap-3 flex-wrap"><form method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="approve"/><button class="btn btn-success">Approve for Sending</button></form>
       <form method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id" class="d-flex gap-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="return"/><input class="form-control" name="note" placeholder="Reason for correction" required="required"/><button class="btn btn-outline-danger">Return</button></form></div>
     </div>
