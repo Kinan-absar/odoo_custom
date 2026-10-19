@@ -26,6 +26,15 @@ class Element {
     close() {this.closed=true;}
 }
 const text = (tag, value) => Object.assign(new Element(tag), {textContent:value});
+// Values must enter the save state while typing, before blur or a server rerender.
+let committed = '', changes = 0;
+const inputContext = vm.createContext({document:{createElement:tag=>new Element(tag)}, readonly:false,
+    changed:()=>changes++});
+vm.runInContext(source.slice(source.indexOf('    function input('), source.indexOf('    function button('))+'\nthis.input=input;', inputContext);
+const reference = inputContext.input('', 'text', value=>{committed=value;});
+reference.value = 'QA reference'; reference.handlers.input();
+assert.equal(committed, 'QA reference'); assert.equal(changes, 1);
+reference.handlers.change(); assert.equal(changes, 1); // blur must not recalculate twice
 const host = new Element('div');
 Object.assign(ctx, {byId:()=>host, text, totals:null, totalsPending:true, labels:{currency_id:{label:'SAR'}}, money:value=>Number(value).toFixed(2)});
 vm.runInContext(source.slice(source.indexOf('    function renderTotals()'), source.indexOf('    async function recalculate()'))+'\nthis.renderTotals=renderTotals;',ctx);

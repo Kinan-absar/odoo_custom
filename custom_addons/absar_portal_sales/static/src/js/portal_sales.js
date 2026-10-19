@@ -163,6 +163,10 @@ document.addEventListener('DOMContentLoaded', () => {
       row.appendChild(removeCell);
       const linkRow = document.querySelector('.aps-boq-add-link-row');
       linkRow?.parentNode.insertBefore(row, linkRow);
+      // The first saved line makes an editable draft eligible for submission.
+      // Keep the review control in sync with this successful server response.
+      const submitReview = document.querySelector('[data-aps-submit-review]');
+      if (submitReview) submitReview.disabled = false;
       const total = document.querySelector('.aps-boq-total-value');
       if (total) total.textContent = Number(result.total).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + ' ' + result.currency;
       form.reset(); sync();

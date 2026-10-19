@@ -79,7 +79,14 @@ function startPurchaseWorkspace() {
         node.disabled = readonly;
         if (type === 'number') node.step = 'any';
         if (type === 'datetime-local') node.step = '1';
-        node.addEventListener('change', () => {onChange(node.value); changed();});
+        let lastValue = node.value;
+        const commit = () => {
+            if (node.value === lastValue) return;
+            lastValue = node.value;
+            onChange(node.value); changed();
+        };
+        node.addEventListener('input', commit);
+        node.addEventListener('change', commit);
         return node;
     }
     function button(label, callback, cls = 'btn btn-light') {

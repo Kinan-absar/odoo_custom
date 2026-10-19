@@ -123,7 +123,7 @@
     </div>
     <div t-if="order.absar_portal_creator_id or can_edit" class="aps-panel"><h5>Approval Review</h5>
      <p class="text-muted">Submission locks the draft. Approval permits PDF access but does not send the quotation or confirm the Sales Order.</p>
-     <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="submit"/><button class="btn btn-primary" t-att-disabled="not order.order_line and 'disabled' or None">Submit for Approval</button></form>
+     <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="submit"/><button class="btn btn-primary" data-aps-submit-review="1" t-att-disabled="not order.order_line and 'disabled' or None">Submit for Approval</button></form>
      <div t-if="can_review" class="d-flex gap-3 flex-wrap"><form method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="approve"/><button class="btn btn-success">Approve for Sending</button></form>
       <form method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id" class="d-flex gap-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="return"/><input class="form-control" name="note" placeholder="Reason for correction" required="required"/><button class="btn btn-outline-danger">Return</button></form></div>
     </div>

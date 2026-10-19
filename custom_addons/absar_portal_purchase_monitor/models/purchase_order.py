@@ -14,6 +14,15 @@ class PurchaseOrder(models.Model):
     # Retained for upgrade compatibility; new forms use actual project_id.
     absar_portal_project_id = fields.Many2one('project.project', string='Portal Project (Legacy)', check_company=True)
     absar_portal_working_order = fields.Boolean(readonly=True, copy=False, default=False)
+    absar_portal_requires_review = fields.Boolean(compute='_compute_portal_requires_review')
+
+    @api.depends('absar_portal_preparer_id','absar_portal_working_order')
+    @api.depends_context('uid')
+    def _compute_portal_requires_review(self):
+        enrolled=self.env.user.has_group(PREFIX+'group_portal_purchase_preparer')
+        for po in self:
+            po.absar_portal_requires_review=bool(po.absar_portal_preparer_id or po.absar_portal_working_order or enrolled)
+
     absar_portal_preparer_id = fields.Many2one('res.users', string='Issuer', readonly=True, copy=False, index=True)
     absar_portal_submitter_id = fields.Many2one('res.users',string='Submitted By',readonly=True,copy=False)
     absar_portal_review_state = fields.Selection([
@@ -205,6 +214,11 @@ class PurchaseOrder(models.Model):
         return True
 
     def button_confirm(self):
+        managed=self.filtered('absar_portal_requires_review')
+        if not managed:
+            return super(PurchaseOrder,self.with_context(_absar_purchase_confirm_token=_CONFIRM_TOKEN)).button_confirm()
+        if managed!=self:
+            raise UserError(_('Confirm review-managed and ordinary native orders separately.'))
         rfqs = self.filtered(lambda po: po.state in ('draft', 'sent'))
         pending = rfqs.filtered(lambda po: not po.absar_portal_preparer_id or
                                 po.absar_portal_review_state != 'approved')
@@ -226,6 +240,8 @@ class PurchaseOrder(models.Model):
 
     def button_approve(self, force=False):
         for po in self:
+            if not po.absar_portal_requires_review:
+                continue
             if po.state not in ('draft', 'sent', 'to approve'):
                 continue
             user = po._portal_approver()
