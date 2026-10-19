@@ -197,3 +197,26 @@ document.addEventListener('DOMContentLoaded', () => {
   customer.addEventListener('change', refresh);
   refresh();
 });
+
+// Search More on each relation selector, with scoped server pagination.
+document.addEventListener('DOMContentLoaded',()=>{
+ for(const select of document.querySelectorAll('select[name="partner_id"],select[name="project_id"],select[name="uom_id"],select[name="template_id"]')){
+  if(select.disabled)continue;
+  const more=document.createElement('button');more.type='button';more.className='btn btn-sm btn-link';more.textContent='Search More…';select.after(more);
+  more.addEventListener('click',()=>{
+   const dialog=document.createElement('dialog');dialog.className='aps-search-dialog';
+   const title=document.createElement('h4');title.textContent='Search '+select.name.replace('_id','');
+   const input=document.createElement('input');input.type='search';input.className='form-control';input.placeholder='Search…';input.setAttribute('aria-label','Search records');
+   const rows=document.createElement('div'),pager=document.createElement('div');let offset=0,sequence=0;
+   const btn=(text,run)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.className='btn btn-light';b.addEventListener('click',run);return b;};
+   async function load(){const seq=++sequence;rows.textContent='Searching…';try{
+    const partner=document.querySelector('[name="partner_id"]');
+    const result=await fetch('/my/employee/sales/search-more',{method:'POST',credentials:'same-origin',body:new URLSearchParams({csrf_token:select.closest('form').querySelector('[name="csrf_token"]').value,payload:JSON.stringify({kind:select.name,q:input.value,offset,partner_id:partner?.value||document.querySelector('[data-sales-partner]')?.dataset.salesPartner})})});
+    if(!result.ok)throw new Error('Search is unavailable for this selection.');const data=await result.json();if(seq!==sequence)return;rows.replaceChildren();
+    for(const item of data.items)rows.append(btn(item.name,()=>{let option=Array.from(select.options).find(o=>o.value===String(item.id));if(!option){option=document.createElement('option');option.value=item.id;select.append(option);}option.textContent=item.name;option.dataset.commercialId=item.customer_id;option.dataset.customerId=item.customer_id;option.disabled=false;option.hidden=false;select.value=item.id;select.dispatchEvent(new Event('change',{bubbles:true}));dialog.close();}));
+    if(!data.items.length)rows.textContent='No matching records';pager.replaceChildren();if(offset)pager.append(btn('Previous',()=>{offset=Math.max(0,offset-30);load();}));if(data.more)pager.append(btn('Next',()=>{offset+=30;load();}));
+   }catch(error){rows.textContent=error.message;}}
+   input.addEventListener('input',()=>{offset=0;load();});dialog.append(title,input,rows,pager,btn('Close',()=>dialog.close()));dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();load();input.focus();
+  });
+ }
+});

@@ -29,7 +29,7 @@ function mount(boot){
         setTimeout:fn=>{timer=fn;return 1;},clearTimeout(){timer=null;},window:{confirm:()=>true,prompt:()=>null,location:{assign(){}}},
         fetch:async(url,options)=>{const data=JSON.parse(options.body.get('payload'));calls.push({url,data});
             assert.equal(options.body.get('csrf_token'),'csrf-fixture');
-            const result=url.endsWith('/preview')?{untaxed:200,tax:30,total:230,currency:'SAR',line_amounts:[200]}:
+            const result=url.endsWith('/options')?Array.from({length:Math.min(data.limit||30,65-(data.offset||0))},(_,i)=>({id:1000+(data.offset||0)+i,name:'Partner '+((data.offset||0)+i)})):url.endsWith('/defaults')?{journal_id:3,currency_id:1,currency_name:'SAR',invoice_payment_term_id:false,selections:{journal_id:{id:3,name:'Purchase'},currency_id:{id:1,name:'SAR'},invoice_payment_term_id:{id:false,name:''}}}:url.endsWith('/preview')?{untaxed:200,tax:30,total:230,currency:'SAR',line_amounts:[200]}:
                 {...boot,...data,id:42,version:'saved-version',editable:!data.submit,review:data.submit?'submitted':boot.review};
             return {json:async()=>({ok:true,result})};}});
     vm.runInContext(source,context);
@@ -68,10 +68,23 @@ console.log('PASS: journal detail fields remain editable and preserve accounts, 
 const normal=mount({...fixture,can_post:true,review_required:false,review:'not_required',roles:{preparer:true,direct:true,accountant:true,approver:false}});
 assert(find(normal.root,'Post'));assert(!find(normal.root,'Submit for Approval'));assert(!find(normal.root,'Approve & Post'));
 find(normal.root,'Post').handlers.click();
-walk(normal.body).filter(n=>n.textContent==='Post').at(-1).handlers.click();await normal.settle();
+assert(!walk(normal.body).some(n=>n.attrs?.role==='dialog'));await normal.settle();
 assert.equal(normal.calls.at(-1).data.post,true);assert.equal(normal.calls.at(-1).data.submit,false);
 const postedNormal=mount({...fixture,id:42,state:'posted',editable:false,can_post:false,review_required:false,roles:{preparer:true,direct:true,accountant:true,approver:false},history:[{author:'Employee',date:'2026-10-19',body:'Accounting: post by Employee.'}]});
 assert(!find(postedNormal.root,'Reset to Draft'));assert(find(postedNormal.root,'Request Reset to Draft'));
 assert(find(postedNormal.root,'Print Journal Entry')['href'].endsWith('&journal_entry=1'));
 find(postedNormal.root,'Activity Log').handlers.click();assert(find(postedNormal.root,'Accounting: post by Employee.'));
-console.log('PASS: direct Post dialog/save payload, no approval controls for ordinary accountant, reset request only, JV print link and activity log.');
+console.log('PASS: direct Post save payload without confirmation, no approval controls for ordinary accountant, reset request only, JV print link and activity log.');
+
+const missing=mount({...fixture,journal_id:false});
+const changed=walk(missing.root).find(n=>n['aria-label']==='quantity');changed.value='3';changed.handlers.input();await missing.tick();
+assert.equal(missing.calls.length,0);assert(find(missing.root,'Choose journal to calculate totals.'));assert.equal(missing.root.querySelectorAll('[data-line-amount]')[0].textContent,'—');
+const reset=mount({...fixture,id:42,state:'posted',editable:false,can_post:false,review_required:false,roles:{preparer:true,direct:true,accountant:true,approver:false}});
+find(reset.root,'Request Reset to Draft').handlers.click();
+const reason=walk(reset.body).find(n=>n['aria-label']==='Reason');reason.value='Correct the account';find(reset.body,'Continue').handlers.click();await reset.settle();
+assert.equal(reset.calls.at(-1).data.action,'request-reset');assert.equal(reset.calls.at(-1).data.comment,'Correct the account');
+const search=mount(fixture);walk(search.root).find(n=>n['aria-label']==='partner search').handlers.focus();await search.settle();
+find(search.root,'Search More…').handlers.click();await search.settle();find(search.body,'Next').handlers.click();await search.settle();
+assert(search.calls.some(c=>c.url.endsWith('/options')&&c.data.offset===30));
+find(search.body,'Partner 31').handlers.click();await search.settle();assert(search.calls.some(c=>c.url.endsWith('/defaults')&&c.data.partner_id===1031));
+console.log('PASS: missing journal stops misleading calculating state; in-page reason dialog sends reset request; Search More pages beyond 30 and selected partner loads supplier defaults.');

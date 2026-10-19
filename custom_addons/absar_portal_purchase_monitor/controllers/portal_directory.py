@@ -24,6 +24,18 @@ class PortalPurchaseDirectory(PortalPurchasePrepare):
                     page=page, pages=max(1, math.ceil(count/20)), total=count,
                     previous_url=page_url(page-1), next_url=page_url(page+1))
 
+    @http.route(BASE + '/<int:po_id>/create-bill', type='http', auth='user', methods=['POST'], csrf=True)
+    def create_vendor_bill(self,po_id,**kw):
+        def run(data):
+            self._actor('user')
+            po=self._record(po_id)
+            if 'absar.portal.accounting.service' not in request.env:
+                raise ValidationError(_('Install the employee accounting workspace to prepare the vendor bill.'))
+            service=request.env['absar.portal.accounting.service']
+            company=service._company(po.company_id.id)
+            return service._create_bill_from_po(company,po.id,data.get('version'))
+        return self._json(run)
+
     @http.route(BASE + '/orders', type='http', auth='user', website=True)
     def orders(self, **kw):
         user = self._actor()
@@ -32,9 +44,9 @@ class PortalPurchaseDirectory(PortalPurchasePrepare):
         if not user.has_group(PREFIX + 'group_portal_purchase_preparer'):
             return request.redirect(BASE + '/approvals')
         values = PortalPurchaseMonitor()._list_values(
-            user, kw, extra_domain=[('absar_portal_preparer_id', '=', user.id)],
+            user, kw, extra_domain=[] if user.has_group(PREFIX+'group_portal_purchase_user') else [('absar_portal_preparer_id', '=', user.id)],
             list_url=BASE + '/orders', detail_base_url=BASE,
-            title='Purchase Orders', description='Your confirmed purchase orders', show_workspace=True)
+            title='Purchase Orders', description='All purchase orders in your allowed companies' if user.has_group(PREFIX+'group_portal_purchase_user') else 'Your confirmed purchase orders', show_workspace=True)
         return request.render(PREFIX + 'purchase_monitor_list', values)
 
     @http.route(BASE + '/products', type='http', auth='user', website=True)

@@ -117,3 +117,11 @@ The local environment substitutes the EPS outer module because full EPS
 requires Enterprise components. No Employee Portal Suite source is changed.
 The release is not deployed yet. Full live Enterprise/Studio execution and
 final browser layout/PDF appearance still need staging verification.
+
+## Workspace update 18.0.1.2.0
+
+Normal Post saves and posts directly; only actual accounting or PO overpayment warnings require acknowledgment. Print Journal Entry reuses the existing system Print JV action `wm_journal_entry_report.account_journal`, including bills and vouchers' underlying journal entries. Install that existing report addon; the portal reports a clear error if unavailable instead of printing a different layout.
+
+New documents default to an allowed purchase/general journal; vendor purchase currency and payment terms default from the supplier. Search More supports scoped paging. Missing required selections show actionable messages instead of a stuck calculation.
+
+Purchase User (All Company Documents) can create a draft vendor bill from a confirmed billable PO when also assigned Accounting User (Direct Posting) or Accounting Preparer. Native purchase invoicing determines quantities, and the configured accounting review rules still apply. Employee Portal Suite is not modified.

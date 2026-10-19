@@ -12,7 +12,7 @@
         function drawLineAmounts() {
             for(const node of root.querySelectorAll('[data-line-amount]')) {
                 const row=state.lines[Number(node.getAttribute('data-line-amount'))];
-                node.textContent=row && row._amountKey===lineKey(row)?money(row.subtotal):'Calculating…';
+                node.textContent=row && row._amountKey===lineKey(row)?money(row.subtotal):(previewError?'—':'Calculating…');
             }
         }
         function el(tag, attrs = {}, children = []) {
@@ -26,7 +26,7 @@
             for (const child of children) if (child !== undefined && child !== null) node.append(child);
             return node;
         }
-        let status;
+        let status, previewError='', vendorSequence=0;
         function say(message, error = false) {
             if (status) {status.textContent = message; status.className = 'aca-status' + (error ? ' error' : '');}
         }
@@ -60,6 +60,43 @@
             node.addEventListener('change', () => {state[name] = node.value; revision++; render();});
             return label(title, node);
         }
+        function ask(message, reason=false) {
+            return new Promise(resolve=>{
+                const previous=document.activeElement;
+                const backdrop=el('div',{class:'aca-dialog-backdrop'}),dialog=el('div',{class:'aca aca-dialog',role:'dialog','aria-modal':'true','aria-label':reason?'Enter a reason':'Confirm action'});
+                const finish=value=>{backdrop.remove();previous?.focus();resolve(value);};
+                dialog.append(el('h3',{text:reason?'Enter a reason':'Confirm action'}),el('p',{text:message}));
+                let input;
+                if(reason){input=el('textarea',{'aria-label':'Reason',placeholder:'Enter the reason…'});dialog.append(input);}
+                dialog.append(button('Cancel',()=>finish(reason?null:false)),button('Continue',()=>{if(reason&&!input.value.trim()){input.focus();return;}finish(reason?input.value.trim():true);},true));
+                dialog.addEventListener('keydown',event=>{if(event.key==='Escape')finish(reason?null:false);});
+                backdrop.append(dialog);document.body.append(backdrop);if(input)input.focus();
+            });
+        }
+        function searchMore(resource, query, choose) {
+            const backdrop=el('div',{class:'aca-dialog-backdrop'}),dialog=el('div',{class:'aca aca-dialog',role:'dialog','aria-modal':'true','aria-label':'Search '+resource});
+            const search=el('input',{type:'search','aria-label':'Search records',placeholder:'Search by name or reference…'});search.value=query||'';
+            const list=el('div',{class:'aca-search-results'}),pager=el('div',{class:'aca-pager'});let offset=0,sequence=0;
+            async function load(){const seq=++sequence;list.replaceChildren(el('p',{text:'Searching…'}));try{
+                const rows=await api('options',{resource,q:search.value,partner_id:state.partner_id,offset,limit:31});if(seq!==sequence)return;
+                list.replaceChildren();for(const row of rows.slice(0,30))list.append(button(row.name,()=>{backdrop.remove();choose(row);revision++;}));
+                if(!rows.length)list.append(el('p',{text:'No matching records'}));
+                pager.replaceChildren();if(offset)pager.append(button('Previous',()=>{offset=Math.max(0,offset-30);load();}));
+                pager.append(el('span',{text:'Page '+(offset/30+1)}));if(rows.length>30)pager.append(button('Next',()=>{offset+=30;load();}));
+            }catch(error){list.replaceChildren(el('p',{text:error.message}));}}
+            search.addEventListener('input',()=>{offset=0;load();});
+            dialog.addEventListener('keydown',event=>{if(event.key==='Escape')backdrop.remove();});
+            dialog.append(el('h3',{text:'Search '+resource}),search,list,pager,button('Close',()=>backdrop.remove()));backdrop.append(dialog);document.body.append(backdrop);load();search.focus();
+        }
+        async function supplierDefaults(partnerId) {
+            const sequence=++vendorSequence;
+            try {const defaults=await api('defaults',{partner_id:partnerId});if(sequence!==vendorSequence||state.partner_id!==partnerId)return;
+                state.currency_id=defaults.currency_id;state.currency_name=defaults.currency_name;state.selections.currency_id=defaults.selections.currency_id;
+                if(!state.journal_id){state.journal_id=defaults.journal_id;state.selections.journal_id=defaults.selections.journal_id;}
+                state.invoice_payment_term_id=defaults.invoice_payment_term_id;state.selections.invoice_payment_term_id=defaults.selections.invoice_payment_term_id;
+                state.partner_bank_id=false;state.selections.partner_bank_id=null;revision++;render();schedulePreview();
+            }catch(error){say(error.message,true);}
+        }
         function picker(resource, selected, choose, disabled = !state.editable) {
             let requestId = 0, timer;
             const box = el('div', {class: 'aca-picker'});
@@ -74,28 +111,30 @@
                     if (seq !== requestId || !box.isConnected) return;
                     options.replaceChildren(); options.hidden = false; control.setAttribute('aria-expanded', 'true');
                     if (!rows.length) options.append(el('div', {class: 'aca-mini', text: 'No matching records'}));
-                    for (const row of rows) options.append(el('button', {type: 'button', role: 'option', text: row.name,
+                    for (const row of rows.slice(0,30)) options.append(el('button', {type: 'button', role: 'option', text: row.name,
                         onmousedown: event => event.preventDefault(), onclick: () => {
-                            control.value = row.name; options.hidden = true; control.setAttribute('aria-expanded', 'false');
+                            selected=row;control.value = row.name; options.hidden = true; control.setAttribute('aria-expanded', 'false');
                             choose(row); revision++;
                         }}));
+                    options.append(button('Search More…',()=>{options.hidden=true;searchMore(resource,control.value,row=>{selected=row;control.value=row.name;choose(row);});}));
                 } catch (error) {say(error.message, true);}
             }
             control.addEventListener('focus', () => {control.value = ''; load();});
             control.addEventListener('input', () => {clearTimeout(timer); timer = setTimeout(load, 180);});
-            control.addEventListener('blur', () => {options.hidden = true; control.setAttribute('aria-expanded', 'false'); control.value = selected?.name || '';});
+            box.addEventListener('focusout', () => setTimeout(()=>{if(!box.contains(document.activeElement)){options.hidden=true;control.setAttribute('aria-expanded','false');control.value=selected?.name||'';}},100));
             control.addEventListener('keydown', event => {
                 if (event.key === 'Escape') {options.hidden = true; control.blur();}
                 if (event.key === 'ArrowDown') {event.preventDefault(); options.querySelector('button')?.focus();}
             });
             box.append(control, options);
-            if (!disabled && selected?.id) box.append(button('Clear', () => {choose({id: false, name: ''}); revision++; render();}));
+            if (!disabled && selected?.id) {const clear=button('×',()=>{choose({id:false,name:''});revision++;render();});clear.setAttribute('aria-label','Clear '+resource);clear.setAttribute('title','Clear selection');box.append(clear);}
             return box;
         }
         function relation(title, name, resource, onPick) {
             return label(title, picker(resource, state.selections[name], row => {
                 state[name] = row.id; state.selections[name] = row;
                 if(name==='currency_id')state.currency_name=row.name;
+                if(name==='partner_id' && isBill())supplierDefaults(row.id);
                 if (onPick) onPick(row);
                 render(); if (isMove()) schedulePreview();
             }));
@@ -160,21 +199,28 @@
         }
         async function preview() {
             if (!state.editable || !isMove() || busy) return;
+            const missing=[];
+            if(!state.journal_id)missing.push('journal');
+            if(isBill()&&!state.partner_id)missing.push('vendor');
+            if(state.lines.some(row=>!['line_section','line_note'].includes(row.display_type)&&!row.account_id))missing.push('line account');
+            if(missing.length||!state.lines.length){previewError=missing.length?'Choose '+missing.join(', ')+' to calculate totals.':'Add a line to calculate totals.';drawLineAmounts();drawTotals();say(previewError);return;}
+            previewError='';
             const seq = revision;
             const totals = root.querySelector('[data-totals]');
             if (totals) totals.dataset.pending = 'true';
             try {
                 const result = await api('preview', state);
                 if (seq !== revision) return;
-                state.untaxed = result.untaxed; state.tax = result.tax; state.total = result.total;
+                previewError='';state.untaxed = result.untaxed; state.tax = result.tax; state.total = result.total;
                 state.currency_name=result.currency;
                 (result.line_amounts||[]).forEach((value,index)=>{if(state.lines[index]){state.lines[index].subtotal=value;state.lines[index]._amountKey=lineKey(state.lines[index]);}});
                 drawLineAmounts();drawTotals(); say('Totals updated.');
-            } catch (error) {if (seq === revision) say('Totals pending: ' + error.message, true);}
+            } catch (error) {if (seq === revision) {previewError=error.message;drawLineAmounts();drawTotals();say('Totals unavailable: '+error.message,true);}}
         }
         function drawTotals() {
             const node = root.querySelector('[data-totals]'); if (!node) return;
             node.replaceChildren(); node.dataset.pending = 'false';
+            if(previewError){node.append(el('p',{class:'aca-mini',text:previewError}));return;}
             if (state.kind === 'journals') {
                 const debit = state.lines.reduce((n, l) => n + Number(l.debit || 0), 0);
                 const credit = state.lines.reduce((n, l) => n + Number(l.credit || 0), 0);
@@ -189,7 +235,7 @@
             try {
                 const result = await api(operation, payload);
                 if (result.redirect) {window.location.assign(result.redirect); return;}
-                state = result; revision++;
+                state = result; previewError=''; revision++;
                 for(const row of state.lines||[])if(row.subtotal!==undefined)row._amountKey=lineKey(row);
                 if (state.id) history.replaceState(null, '', BASE + '/' + state.kind + '/' + state.id + '?company_id=' + state.company_id);
                 busy = false; render(); say('Saved successfully.');
@@ -231,17 +277,17 @@
             const box = el('div', {class: 'aca-actions'});
             if (state.editable) {
                 box.append(button('Save Draft', () => run('save', {...state, submit: false, post:false}), true));
-                if (state.can_post && !isPlan()) box.append(button('Post',()=>reviewDialog(),true));
+                if (state.can_post && !isPlan()) box.append(button('Post',()=>{if(state.warnings || accountingNotice || overpaymentNotice) reviewDialog(); else run('save',{...state,submit:false,post:true});},true));
                 else if (state.kind !== 'planned-receipts' && (isPlan() || state.review_required !== false)) box.append(button(isPlan() ? 'Submit to CEO' : 'Submit for Approval', () => run('save', {...state, submit: true, post:false})));
-                if (state.id && !isPlan()) box.append(button('Cancel Draft', () => {
-                    if (window.confirm('Cancel this draft document?')) action('cancel');
+                if (state.id && !isPlan()) box.append(button('Cancel Draft', async () => {
+                    if (await ask('Cancel this draft document?')) action('cancel');
                 }));
             }
             if (state.can_review && !isPlan()) box.append(button('Approve & Post', () => reviewDialog(), true), button('Return for Correction', () => reviewDialog(true)));
             if (state.id && ['payments', 'receipts'].includes(state.kind)) {
                 if (state.editable) box.append(button('Find Matching ' + (state.kind === 'payments' ? 'Bills' : 'Invoices'), () => action('find')));
-                if (state.state === 'posted' && (state.roles.approver || state.roles.direct)) box.append(button('Reconcile', () => action('reconcile')), button('Unreconcile', () => {
-                    if (window.confirm('Remove only the reconciliations managed by this voucher?')) action('unreconcile');
+                if (state.state === 'posted' && (state.roles.approver || state.roles.direct)) box.append(button('Reconcile', () => action('reconcile')), button('Unreconcile', async () => {
+                    if (await ask('Remove only the reconciliations managed by this voucher?')) action('unreconcile');
                 }));
             }
             if (state.id && ['bills', 'refunds', 'journals', 'payments', 'receipts'].includes(state.kind)) box.append(el('a', {text: 'Print PDF', class: 'aca-primary', target: '_blank', rel: 'noopener', href: BASE + '/' + state.kind + '/' + state.id + '/print?company_id=' + state.company_id}));
@@ -249,24 +295,24 @@
             if (state.id && state.kind === 'bills' && state.state === 'posted' && state.roles.preparer && state.balance_due > 0) box.append(el('a', {text:'Create Payment Voucher',class:'aca-primary',href:BASE+'/payments/new?company_id='+state.company_id+'&bill_id='+state.id}));
             if (state.id && !isPlan() && (state.roles.preparer || state.roles.approver) && ['posted','cancel'].includes(state.state)) {
                 if (state.portal_accounting_reset_pending) box.append(el('span',{class:'aca-mini',text:'Reset permission requested — awaiting internal review'}));
-                else box.append(button('Request Reset to Draft', () => {
-                    const comment=window.prompt('Why is a reset needed? The document stays posted until an authorized internal user completes the existing reset approval.');
+                else box.append(button('Request Reset to Draft', async () => {
+                    const comment=await ask('Why is a reset needed? The document stays posted until an authorized internal user completes the existing reset approval.',true);
                     if(comment?.trim())action('request-reset',{comment});
                 }));
             }
             if (isPlan() && state.id) {
                 if(state.roles.preparer&&!state.editable&&state.state!=='executed'){
                     if(state.reset_request_pending)box.append(el('span',{class:'aca-mini',text:'Reset approval pending'}));
-                    else box.append(button('Request Reset to Draft',()=>{
-                        if(window.confirm('Request approval from an existing Payment Execution Manager to reset this movement?'))action('request-reset');
+                    else box.append(button('Request Reset to Draft',async ()=>{
+                        if(await ask('Request approval from an existing Payment Execution Manager to reset this movement?'))action('request-reset');
                     }));
                 }
                 if (state.roles.preparer && (state.state === 'executed' || state.kind === 'planned-receipts')) box.append(button('Create Voucher', () => action('create-voucher')));
                 if (state.is_ceo && !state.run_id) box.append(button('Add to Weekly Plan', () => planDialog()));
                 if (state.is_ceo && state.kind === 'planned' && ['pending', 'held'].includes(state.review)) {
                     box.append(button('Approve Payment', () => planDialog(true), true));
-                    for (const [name, title] of [['hold', 'Hold'], ['reject', 'Reject']]) box.append(button(title, () => {
-                        const comment = window.prompt('CEO comment'); if (comment !== null) action(name, {comment});
+                    for (const [name, title] of [['hold', 'Hold'], ['reject', 'Reject']]) box.append(button(title, async () => {
+                        const comment = await ask('CEO comment',true); if (comment !== null) action(name, {comment});
                     }));
                 }
             }
@@ -298,7 +344,7 @@
                 if (state.editable) grid.append(label('Auto-complete from Purchase Order', picker('po', null, async row => {
                     try {
                         const result = await api('po-lines', {po_id: row.id});
-                        if (state.lines.length && !window.confirm('Replace the current bill lines with this PO’s billable lines?')) return;
+                        if (state.lines.length && !await ask('Replace the current bill lines with this PO’s billable lines?')) return;
                         Object.assign(state, result);
                         state.selections.partner_id = {id: result.partner_id, name: result.partner_name};
                         state.selections.currency_id = {id: result.currency_id, name: result.currency_name};
@@ -384,7 +430,7 @@
                         td(taxes);
                     }
                     details.append(label('Analytic Distribution', analytic(row)));
-                    if (!journal) td(el('span', {'data-line-amount':index,text:row._amountKey===lineKey(row)?money(row.subtotal):'Calculating…'}), 'aca-money');
+                    if (!journal) td(el('span', {'data-line-amount':index,text:row._amountKey===lineKey(row)?money(row.subtotal):(previewError?'—':'Calculating…')}), 'aca-money');
                 }
                 const controls = el('div', {class:'aca-row-actions'});
                 if (state.editable) {

@@ -109,13 +109,15 @@ def run(env, f):
         except Forbidden:pass
         else:raise AssertionError('Internal portal API must be blocked')
     finally:module.request=original
+    jv_report=env['ir.actions.report'].create({'name':'Existing system JV fixture','model':'account.move','report_type':'qweb-pdf','report_name':'existing.system.jv'})
+    env['ir.model.data'].create({'module':'wm_journal_entry_report','name':'account_journal','model':'ir.actions.report','res_id':jv_report.id})
     report_class=type(env['ir.actions.report']);original_pdf=report_class._render_qweb_pdf;calls=[]
     report_class._render_qweb_pdf=lambda self,ref,res_ids=None,**kw:(calls.append((ref,res_ids)) or (b'%PDF-test','pdf'))
     module.request=SimpleNamespace(env=env(user=f['issuer'].id),make_response=lambda data,headers:Response(data,headers=headers))
     try:
         controller.print_record('bills',f['move'].id,company_id=company.id,journal_entry='1')
-        assert calls[-1]==('absar_portal_accounting.report_journal',f['move'].ids)
+        assert calls[-1]==('wm_journal_entry_report.account_journal',f['move'].ids)
         controller.print_record('payments',f['pv'].id,company_id=company.id,journal_entry='1')
-        assert calls[-1]==('absar_portal_accounting.report_journal',f['pv'].move_id.ids)
+        assert calls[-1]==('wm_journal_entry_report.account_journal',f['pv'].move_id.ids)
     finally:module.request=original;report_class._render_qweb_pdf=original_pdf
     print('PASS: internal users redirected to backend, portal API blocked for internal users, bill/voucher JV print routes target actual account.move entries.',flush=True)

@@ -12,8 +12,10 @@
    <div id="apw-status" role="status" aria-live="polite"/>
    <div class="apw-actions">
     <a t-if="boot['id']" class="btn btn-outline-secondary" t-att-href="'/my/employee/purchase/%s/print' % boot['id']">Print PDF</a>
-    <t t-if="not boot['readonly']"><button class="btn btn-primary" type="button" data-action="save">Save Draft</button><button class="btn btn-outline-primary" type="button" data-action="submit">Submit for Approval</button></t>
+    <t t-if="not boot['readonly']"><button class="btn btn-primary" type="button" data-action="save">Save Draft</button><button t-if="boot['uses_review']" class="btn btn-outline-primary" type="button" data-action="submit">Submit for Approval</button></t>
     <t t-if="boot['can_review']"><button t-if="boot['review'] == 'submitted'" class="btn btn-primary" type="button" data-action="approve_confirm">Approve &amp; Confirm</button><button t-if="boot['review'] == 'submitted'" class="btn btn-primary" type="button" data-action="approve">Approve Only</button><button class="btn btn-outline-secondary" type="button" data-action="return">Return for Correction</button></t>
+    <button t-if="boot['can_direct_confirm']" type="button" class="btn btn-primary" data-action="work_confirm">Confirm Purchase Order</button>
+    <button t-if="boot['can_bill']" type="button" class="btn btn-primary" data-action="create_bill">Create Vendor Bill</button>
     <button t-if="boot['can_confirm']" type="button" class="btn btn-primary" data-action="confirm">Confirm PO</button>
     <span t-if="boot['readonly']" class="apw-help">Read-only</span>
    </div>

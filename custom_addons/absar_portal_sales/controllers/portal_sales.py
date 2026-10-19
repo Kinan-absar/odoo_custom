@@ -10,6 +10,9 @@ import json
 BASE = '/my/employee/sales'
 
 class PortalSales(http.Controller):
+    def _operator(self):
+        return request.env.user.has_group('absar_portal_sales.group_portal_sales_user')
+
     def _allowed(self, approve=False, view=False):
         user = request.env.user
         if not user.employee_id or user.has_group('employee_portal_suite.group_attendance_only'):
@@ -31,11 +34,13 @@ class PortalSales(http.Controller):
         if review:
             if not creator or creator.id == user.id:
                 raise NotFound()
-        elif not ((creator and creator.id == user.id) or (is_approver and creator) or is_monitor):
+        elif not (self._operator() or (creator and creator.id == user.id) or (is_approver and creator) or is_monitor):
             raise NotFound()
         return order
 
     def _editable(self, order):
+        if self._operator() and order.state in ('draft','sent') and (not order.absar_portal_creator_id or order.absar_portal_review_state in ('draft','returned')):
+            return
         if order.absar_portal_creator_id.id != request.env.user.id or order.absar_portal_review_state not in ('draft','returned') or order.state != 'draft':
             raise Forbidden()
 
@@ -48,27 +53,27 @@ class PortalSales(http.Controller):
             raise UserError(_('%s must be a nonnegative finite number.') % field)
         return result
 
-    def _partners(self):
+    def _partners(self, limit=500):
         return request.env['res.partner'].sudo().search([
             ('absar_is_sales_customer','=',True), ('active','=',True),
             '|', ('company_id','=',False), ('company_id','in',request.env.user.company_ids.ids)
-        ], limit=500, order='name')
+        ], limit=limit, order='name')
 
-    def _projects(self):
+    def _projects(self, limit=500):
         return request.env['project.project'].sudo().search([
             ('active','=',True), '|', ('company_id','=',False),
             ('company_id','in',request.env.user.company_ids.ids)
-        ], limit=500, order='name')
+        ], limit=limit, order='name')
 
     def _customer_projects(self, partner):
         """Only company-compatible projects assigned to this customer's commercial entity."""
         customer = partner.commercial_partner_id
-        return self._projects().filtered(
+        return self._projects(limit=None).filtered(
             lambda p: p.partner_id and p.partner_id.commercial_partner_id == customer
         )
 
     def _units(self):
-        return request.env['uom.uom'].sudo().search([('active','=',True)],order='name',limit=400)
+        return request.env['uom.uom'].sudo().search([('active','=',True)],order='name')
 
     def _templates(self):
         return request.env['absar.proposal.template'].sudo().search([
@@ -90,7 +95,7 @@ class PortalSales(http.Controller):
         if queue:
             domain += [('absar_portal_creator_id','!=',False), ('absar_portal_creator_id','!=',user.id),
                        ('absar_portal_review_state','=','submitted'), ('state','=','draft')]
-        elif not monitor:
+        elif not monitor and not self._operator():
             domain += [('absar_portal_creator_id','=',user.id)]
         else:
             source = params.get('source', 'all')
@@ -138,6 +143,25 @@ class PortalSales(http.Controller):
             previous_url=page_url(page-1), next_url=page_url(page+1), q=query,
             source=params.get('source','all'), sales_state=params.get('sales_state','all'),review=params.get('review','all'))
 
+    @http.route(BASE+'/search-more',type='http',auth='user',methods=['POST'],csrf=True)
+    def search_more(self,**post):
+        self._allowed()
+        data=json.loads(post.get('payload') or '{}');kind=data.get('kind');q=str(data.get('q') or '')[:120]
+        allowed=[('active','=',True),'|',('company_id','=',False),('company_id','in',request.env.user.company_ids.ids)]
+        if kind=='partner_id':model='res.partner';domain=allowed+[('absar_is_sales_customer','=',True)]
+        elif kind=='project_id':
+            partner=request.env['res.partner'].sudo().browse(int(data.get('partner_id') or 0)).exists()
+            if not partner or partner not in self._partners(limit=None):raise Forbidden()
+            model='project.project';domain=allowed+[('partner_id.commercial_partner_id','=',partner.commercial_partner_id.id)]
+        elif kind=='uom_id':model='uom.uom';domain=[('active','=',True)]
+        elif kind=='template_id':model='absar.proposal.template';domain=allowed
+        else:raise Forbidden()
+        if q:domain=expression.AND([domain,[('name','ilike',q)]])
+        offset=max(0,min(int(data.get('offset') or 0),100000))
+        records=request.env[model].sudo().search(domain,order='name,id',offset=offset,limit=31)
+        return request.make_json_response({'items':[{'id':r.id,'name':r.display_name,
+            'customer_id':r.commercial_partner_id.id if kind=='partner_id' else r.partner_id.commercial_partner_id.id if kind=='project_id' else 0} for r in records[:30]],'more':len(records)>30})
+
     @http.route(BASE, type='http', auth='user', website=True)
     def list_orders(self, **kw):
         user = request.env.user
@@ -167,7 +191,7 @@ class PortalSales(http.Controller):
         user = self._allowed()
         try:
             partner = request.env['res.partner'].sudo().browse(int(post.get('partner_id') or 0)).exists()
-            if not partner or partner not in self._partners():
+            if not partner or partner not in self._partners(limit=None):
                 raise UserError(_('Select an available customer.'))
             kind = post.get('kind')
             if kind not in ('standard','technical'):
@@ -178,7 +202,7 @@ class PortalSales(http.Controller):
                 raise UserError(_('Select an available project.'))
             vals = {
                 'partner_id':partner.id, 'company_id':user.company_id.id, 'user_id':user.id,
-                'absar_proposal_type':kind, 'absar_portal_creator_id':user.id,
+                'absar_proposal_type':kind, 'absar_portal_creator_id':False if self._operator() else user.id,
                 'absar_portal_review_state':'draft', 'construction_project_id':project.id if project else False,
             }
             if post.get('validity_date'):
@@ -198,15 +222,18 @@ class PortalSales(http.Controller):
     @http.route(BASE + '/<int:order_id>', type='http', auth='user', website=True)
     def show_order(self, order_id, **kw):
         order = self._order(order_id)
-        return self._render('absar_portal_sales.sales_detail', order=order,
-            can_edit=(request.env.user.has_group('absar_portal_sales.group_portal_sales_creator') and order.absar_portal_creator_id.id == request.env.user.id and order.absar_portal_review_state in ('draft','returned') and order.state=='draft'),
+        can_edit=False
+        try:self._editable(order);can_edit=True
+        except Forbidden:pass
+        return self._render('absar_portal_sales.sales_detail', order=order, can_confirm=self._operator() and order.state in ('draft','sent') and (not order.absar_portal_creator_id or order.absar_portal_review_state=='approved'),
+            can_edit=can_edit,
             can_review=(request.env.user.has_group('absar_portal_sales.group_portal_sales_approver') and order.absar_portal_review_state=='submitted' and order.absar_portal_creator_id.id != request.env.user.id),
             templates=self._templates(),projects=self._customer_projects(order.partner_id),units=self._units())
 
     @http.route(BASE + '/<int:order_id>/save', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def save_order(self, order_id, **post):
         order=self._order(order_id); self._editable(order)
-        vals={'absar_proposal_reference':False, 'user_id':order.absar_portal_creator_id.id}
+        vals={'absar_proposal_reference':False, 'user_id':(order.user_id or order.absar_portal_creator_id or request.env.user).id}
         project_id = int(post.get('project_id') or 0)
         project = request.env['project.project'].sudo().browse(project_id).exists() if project_id else False
         if project_id and (not project or project not in self._customer_projects(order.partner_id)):
@@ -371,7 +398,12 @@ class PortalSales(http.Controller):
     def workflow(self,order_id,**post):
         order=self._order(order_id)
         action=post.get('action')
-        if action=='submit':
+        if action=='confirm':
+            if not self._operator() or order.state not in ('draft','sent') or (order.absar_portal_creator_id and order.absar_portal_review_state!='approved'):raise Forbidden()
+            order.sudo().with_company(order.company_id).action_confirm()
+            order.message_post(body=_('Sales order confirmed by %s.') % request.env.user.name,subtype_xmlid='mail.mt_note')
+        elif action=='submit':
+            if not order.absar_portal_creator_id:raise Forbidden()
             self._editable(order)
             if not order.order_line: raise Forbidden()
             if order.absar_proposal_type=='technical' and order.absar_proposal_payment_ids:
@@ -399,7 +431,7 @@ class PortalSales(http.Controller):
     @http.route(BASE + '/<int:order_id>/pdf', type='http', auth='user', website=True)
     def pdf(self,order_id,**kw):
         order=self._order(order_id)
-        if order.absar_portal_review_state!='approved': raise Forbidden()
+        if order.absar_portal_creator_id and order.absar_portal_review_state!='approved': raise Forbidden()
         report='absar_technical_proposal.report_technical_proposal' if order.absar_proposal_type=='technical' else 'sale.report_saleorder'
         content,_=request.env['ir.actions.report'].sudo()._render_qweb_pdf(report,[order.id])
         return request.make_response(content,headers=[('Content-Type','application/pdf'),('Content-Disposition','inline; filename="%s.pdf"' % order.name.replace('/','-'))])

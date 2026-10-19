@@ -75,7 +75,8 @@ class PortalPurchasePrepare(http.Controller):
         owner = po.absar_portal_preparer_id == user and user.has_group(PREFIX + 'group_portal_purchase_preparer')
         reviewer = bool(po.absar_portal_preparer_id) and user.has_group(PREFIX + 'group_portal_purchase_approver')
         monitor = po.state in ('purchase', 'done') and user.has_group(PREFIX + 'group_portal_purchase_monitor')
-        if not (owner or reviewer or monitor):
+        operator=user.has_group(PREFIX+'group_portal_purchase_user')
+        if not (owner or reviewer or monitor or operator):
             raise NotFound()
         if edit and not po._portal_editable(user):
             raise AccessError(_('This RFQ is not an editable draft belonging to you.'))
@@ -309,6 +310,8 @@ class PortalPurchasePrepare(http.Controller):
             domain += [('absar_portal_preparer_id', '!=', False), ('state', 'in', ['draft', 'sent'])]
         elif approval:
             domain += [('absar_portal_preparer_id', '!=', False), ('absar_portal_preparer_id', '!=', user.id)]
+        elif user.has_group(PREFIX+'group_portal_purchase_user'):
+            domain += [('state','not in',['purchase','done'])]
         else:
             domain += [('absar_portal_preparer_id', '=', user.id), ('state', 'not in', ['purchase', 'done'])]
         q = str(kw.get('q') or '').strip()[:120]
@@ -351,7 +354,7 @@ class PortalPurchasePrepare(http.Controller):
         user = self._actor('preparer' if not po else None)
         company = po.company_id if po else company or user.company_id
         readonly = bool(po and not po._portal_editable(user))
-        approval_view = bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_preparer_id != user)
+        approval_view = bool(po and not user.has_group(PREFIX+'group_portal_purchase_user') and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_preparer_id != user)
         vals = dict(company_id=company.id, currency_id=company.currency_id.id,
                     date_order=self._local(fields.Datetime.now()), date_planned='', notes='', lines=[])
         def choice(record):
@@ -383,7 +386,10 @@ class PortalPurchasePrepare(http.Controller):
         attachments = request.env['ir.attachment'].sudo().search([
             ('res_model', '=', 'purchase.order'), ('res_id', '=', po.id), ('mimetype', '=', 'application/pdf'),
             '|', ('company_id', '=', False), ('company_id', '=', company.id)], order='id') if po else request.env['ir.attachment'].browse()
-        return dict(values=vals, selected=selected, readonly=readonly, approval_view=approval_view,
+        operator=user.has_group(PREFIX+'group_portal_purchase_user')
+        finance=any(user.has_group('absar_portal_accounting.group_'+role) for role in ('preparer','accountant')) if 'absar.portal.accounting.service' in request.env else False
+        return dict(uses_review=bool(po.absar_portal_preparer_id) if po else not operator, can_work=operator, can_bill=bool(operator and finance and po and po.state=='purchase' and po.invoice_status=='to invoice'),
+                    can_direct_confirm=bool(operator and po and not po.absar_portal_preparer_id and po.state in ('draft','sent')), values=vals, selected=selected, readonly=readonly, approval_view=approval_view,
                     attachments=[{'id': a.id, 'name': a.name} for a in attachments],
                     totals=dict(untaxed=po.amount_untaxed, tax=po.amount_tax, total=po.amount_total, currency=po.currency_id.name) if po else None,
                     back_url=BASE + '/approvals' if approval_view else BASE if user.has_group(PREFIX + 'group_portal_purchase_preparer') else BASE + '/approvals' if user.has_group(PREFIX + 'group_portal_purchase_approver') else '/my/employee/purchase-monitor',
@@ -540,12 +546,16 @@ class PortalPurchasePrepare(http.Controller):
                 # vendor/currency and line edits in one parent write can run the
                 # price/discount compute after the explicit line values were set.
                 # The user's validated line values must be applied last.
+                if user.has_group(PREFIX+'group_portal_purchase_user'):
+                    header['user_id']=po.user_id.id or user.id
+                    if not po.absar_portal_preparer_id:header['absar_portal_working_order']=True
                 line_commands = header.pop('order_line')
                 po.write(header)
                 po.order_line.flush_recordset()
                 po.write({'order_line': line_commands})
             else:
-                header['absar_portal_preparer_id'] = user.id
+                header['absar_portal_preparer_id'] = False if user.has_group(PREFIX+'group_portal_purchase_user') else user.id
+                header['absar_portal_working_order'] = user.has_group(PREFIX+'group_portal_purchase_user')
                 po = model.create(header)
             if data.get('submit'):
                 po._portal_submit()
@@ -557,6 +567,15 @@ class PortalPurchasePrepare(http.Controller):
         def run(data):
             po = self._record(po_id)
             action = data.get('action')
+            if action == 'work_confirm':
+                self._actor('user');po._portal_lock()
+                if str(po.write_date)!=data.get('version'):raise UserError(_('This RFQ changed. Reload before confirming.'))
+                if po.absar_portal_preparer_id:raise AccessError(_('This issuer RFQ requires its existing approval.'))
+                po.write({'absar_portal_working_order':True})
+                result=po.button_confirm()
+                if isinstance(result,dict):raise UserError(_('A native purchase wizard is required. No changes were saved.'))
+                po.message_post(body=_('Purchase order confirmed by %s.') % request.env.user.name,subtype_xmlid='mail.mt_note')
+                return {'url':BASE+'/%s'%po.id}
             if action not in ('approve', 'return', 'confirm', 'approve_confirm'):
                 raise ValidationError(_('Unknown decision.'))
             self._actor('approver')

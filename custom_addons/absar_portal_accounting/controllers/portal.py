@@ -104,7 +104,9 @@ class PortalAccounting(http.Controller):
                 kind = data.get('kind', 'bills')
                 service._kind(kind)
                 if operation == 'options':
-                    result = service._options(company, data.get('resource'), data.get('q', ''), kind, data.get('partner_id'))
+                    result = service._options(company, data.get('resource'), data.get('q', ''), kind, data.get('partner_id'), data.get('offset',0), data.get('limit',30))
+                elif operation == 'defaults':
+                    result = service._defaults(company,kind,data.get('partner_id'))
                 elif operation == 'save':
                     result = service._save(company, kind, data)
                 elif operation == 'action':
@@ -175,17 +177,21 @@ class PortalAccounting(http.Controller):
                 record = record.move_id
                 if not record:
                     raise UserError(_('Post the voucher before printing its journal entry.'))
-            report = 'absar_portal_accounting.report_journal'
+            report = 'wm_journal_entry_report.account_journal'
         elif kind in ('bills', 'refunds'):
             report = 'account.account_invoices'
         elif kind == 'journals':
-            report = 'absar_portal_accounting.report_journal'
+            report = 'wm_journal_entry_report.account_journal'
         elif kind == 'payments':
             report = 'internal_transfer_voucher.action_payment_voucher_pdf'
         elif kind == 'receipts':
             report = 'internal_transfer_voucher.action_receipt_voucher_pdf'
         else:
             raise NotFound()
+        if report == 'wm_journal_entry_report.account_journal':
+            action = request.env.ref(report, raise_if_not_found=False)
+            if not action or action._name != 'ir.actions.report' or action.model != 'account.move':
+                raise UserError(_('The existing Print JV report (wm_journal_entry_report) must be installed to print journal entries.'))
         pdf, _format = service._env(company)['ir.actions.report']._render_qweb_pdf(report, res_ids=record.ids)
         return request.make_response(pdf, headers=[('Content-Type', 'application/pdf'),
             ('Content-Disposition', content_disposition('%s.pdf' % (record.name or 'Document')))])

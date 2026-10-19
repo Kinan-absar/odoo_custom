@@ -134,7 +134,7 @@ function startPurchaseWorkspace() {
                     options.append(choice);
                 }
                 if (!result.items.length) options.append(text('div', 'No matches', 'apw-help'));
-                if (result.more) options.append(text('div', 'Type more to narrow the results.', 'apw-help'));
+                options.append(button('Search More…',()=>{closeOptions();createPurchaseUI({root,post,companyId:state.company_id}).searchMore(kind,box.value,item=>{box.value=item.label;selectedId=item.id;onSelect(item);changed();},extras);},'apw-option'));
                 options.append(button('Clear selection', () => {
                     box.value = ''; selectedId = null; closeOptions(); onSelect(null); changed();
                 }, 'apw-option'));
@@ -195,8 +195,8 @@ function startPurchaseWorkspace() {
         company.disabled = readonly || Boolean(boot.id);
         for (const c of boot.companies) {const o = text('option', c.label); o.value = c.id; company.append(o);}
         company.value = state.company_id;
-        company.addEventListener('change', () => {
-            if (dirty && !window.confirm('Changing company clears vendor, project, accounting selections and lines. Continue?')) {company.value = state.company_id; return;}
+        company.addEventListener('change', async () => {
+            if (dirty && !await ask('Changing company clears vendor, project, accounting selections and lines. Continue?')) {company.value = state.company_id; return;}
             state.company_id = Number(company.value); state.lines = []; state.material_request_id = 0;
             for (const k of Object.keys(labels)) {if (k !== 'user_id') {labels[k] = null; state[k] = 0;}}
             const selectedCompany = boot.companies.find(c => c.id === state.company_id);
@@ -221,7 +221,7 @@ function startPurchaseWorkspace() {
     }
     async function importMaterial() {
         if (!state.material_request_id) throw new Error('Choose a Material Request first.');
-        if (state.lines.length && !window.confirm('Replace current draft lines with the selected Material Request materials?')) return;
+        if (state.lines.length && !await ask('Replace current draft lines with the selected Material Request materials?')) return;
         const info = await post('/mr-info', {company_id: state.company_id, mr_id: state.material_request_id});
         state.project_id = info.project.id; labels.project_id = info.project;
         state.lines = info.lines; changed(); renderHeader(); renderLines();
@@ -392,6 +392,13 @@ function startPurchaseWorkspace() {
         root.append(dialog); dialog.showModal();
         return {dialog, body, foot};
     }
+    function ask(message) {
+        return new Promise(resolve=>{const view=modal('Confirm action');let settled=false;
+            const finish=value=>{if(!settled){settled=true;resolve(value);}view.dialog.close();};
+            view.body.append(text('p',message));view.foot.append(button('Cancel',()=>finish(false)),button('Continue',()=>finish(true),'btn btn-primary'));
+            view.dialog.addEventListener('close',()=>{if(!settled){settled=true;resolve(false);}});
+        });
+    }
     function analyticDialog(line) {
         const view = modal('Analytic Distribution');
         view.body.append(text('p', 'Allocate each plan to 100%. A row can combine one account from each plan.', 'apw-help'));
@@ -555,6 +562,8 @@ function startPurchaseWorkspace() {
                 if (pendingComputations) throw new Error('Wait for product and vendor defaults to finish loading, then save.');
                 const result = await post('/save', {...payload(), submit: action === 'submit'});
                 dirty = false; window.location.assign(result.url);
+            } else if (action === 'create_bill') {
+                if(await ask('Create a draft vendor bill using this purchase order’s currently billable quantities?')){const result=await post('/'+boot.id+'/create-bill',{version:boot.version});dirty=false;window.location.assign(result.url);}
             } else if (action === 'upload') await uploadQuotation();
             else if (action === 'recalculate') await recalculate();
             else await decision(action);

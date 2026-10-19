@@ -9,4 +9,5 @@
  <record id="group_portal_sales_monitor" model="res.groups">
   <field name="name">Employee Portal: Sales &amp; Proposals - Monitor (Read Only)</field>
  </record>
+ <record id="group_portal_sales_user" model="res.groups"><field name="name">Sales User (All Company Documents)</field><field name="implied_ids" eval="[(4, ref('group_portal_sales_creator'))]"/><field name="comment">Work on all company-compatible quotations and sales orders. Existing issuer approvals remain required. Grants no internal accounting or sales model ACLs.</field></record>
 </odoo>

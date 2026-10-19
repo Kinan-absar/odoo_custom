@@ -190,7 +190,23 @@ class PortalAccountingService(models.AbstractModel):
                 'review': record.ceo_decision if planned else (record.portal_accounting_review if record.portal_accounting_review_required else 'not_required'),
                 'issuer': record.portal_accounting_issuer_id.name or record.create_uid.name}
 
-    def _options(self, company, resource, query='', kind='bills', partner_id=False):
+    def _defaults(self, company, kind, partner_id=False):
+        self._actor('preparer')
+        self._kind(kind)
+        journal_type = 'purchase' if kind in ('bills','refunds') else 'general' if kind == 'journals' else 'bank'
+        journals = self._env(company)['account.journal'].search([
+            ('id','in',company.portal_accounting_journal_ids.ids),('company_id','=',company.id),('type','=',journal_type)], order='sequence,id', limit=1)
+        partner = self._partner(company, partner_id) if partner_id else self._env(company)['res.partner'].browse()
+        currency = partner.with_company(company).property_purchase_currency_id if partner and kind in ('bills','refunds') else self._env(company)['res.currency'].browse()
+        currency = currency or (journals.currency_id if kind in ('bills','refunds','journals') else self._env(company)['res.currency'].browse()) or company.currency_id
+        term = partner.with_company(company).property_supplier_payment_term_id if partner else self._env(company)['account.payment.term'].browse()
+        result = {'currency_id':currency.id, 'currency_name':currency.name, 'journal_id':journals.id or False,
+                  'invoice_payment_term_id':term.id or False, 'selections':{}}
+        for key, record in [('journal_id',journals),('currency_id',currency),('invoice_payment_term_id',term)]:
+            result['selections'][key] = {'id':record.id or False,'name':record.display_name or ''}
+        return result
+
+    def _options(self, company, resource, query='', kind='bills', partner_id=False, offset=0, limit=30):
         self._actor()
         self._kind(kind)
         if not company.portal_accounting_journal_ids:
@@ -238,9 +254,11 @@ class PortalAccountingService(models.AbstractModel):
             partner = self._partner(company, partner_id, True)
             domain += [('partner_id', '=', partner.id)]
         if query:
-            search_field = 'acc_number' if resource == 'bank' else ('code' if resource == 'account' and str(query).isdigit() else 'name')
-            domain += [(search_field, 'ilike', str(query)[:120])]
-        records = self._env(company)[model].search(domain, limit=30)
+            search_fields = {'account':['name','code'], 'product':['name','default_code','barcode'], 'partner':['name','ref','vat'], 'bank':['acc_number']}.get(resource,['name'])
+            domain = expression.AND([domain, expression.OR([[(field,'ilike',str(query)[:120])] for field in search_fields])])
+        offset = max(0,min(int(offset or 0),100000))
+        limit = max(1,min(int(limit or 30),81))
+        records = self._env(company)[model].search(domain, limit=limit, offset=offset, order='id')
         result = []
         for r in records:
             data = {'id': r.id, 'name': r[label]}
@@ -654,6 +672,9 @@ class PortalAccountingService(models.AbstractModel):
                 'version': '', 'editable': roles['preparer'], 'can_review': False, 'can_post': roles['direct'], 'review_required':roles['restricted'],
                 'is_ceo': user.has_group('employee_portal_suite.group_employee_portal_ceo'), 'attachments': []}
         if not record:
+            if roles['preparer']:
+                defaults=self._defaults(company,kind)
+                data.update(defaults)
             return data
         data.update(self._row(record, kind), version=str(record.write_date),
                     review=record.ceo_decision if model == 'cash.plan.line' else (record.portal_accounting_review if record.portal_accounting_review_required else 'not_required'),
@@ -717,6 +738,27 @@ class PortalAccountingService(models.AbstractModel):
         data['history'] = [{'date':str(m.date), 'author':m.author_id.name or '', 'body':html2plaintext(m.body)} for m in record.message_ids.sorted('id',reverse=True)[:100]]
         return data
 
+    def _create_bill_from_po(self, company, po_id, version):
+        user,roles=self._actor('preparer')
+        if not user.has_group('absar_portal_purchase_monitor.group_portal_purchase_user'):
+            raise AccessError(_('The Purchase User working role is required to create vendor bills from orders.'))
+        po=self._relation(company,'purchase.order',po_id,[('company_id','=',company.id),('state','=','purchase')],True)
+        po._portal_lock()
+        if str(po.write_date)!=version:
+            raise UserError(_('This purchase order changed. Reload it before creating a bill.'))
+        defaults=self._defaults(company,'bills',po.partner_id.id)
+        journal=self._journal(company,defaults['journal_id'],['purchase'])
+        before=po.invoice_ids
+        po.with_context(default_journal_id=journal.id,allowed_company_ids=[company.id]).action_create_invoice()
+        po.invalidate_recordset()
+        created=po.invoice_ids-before
+        if len(created)!=1 or created.move_type!='in_invoice':
+            raise UserError(_('Expected one native draft vendor bill. No bill was created.'))
+        self._journal(company,created.journal_id.id,['purchase'])
+        created.write({'portal_accounting_issuer_id':user.id,'portal_accounting_review_required':roles['restricted']})
+        self._audit(created,'Created draft vendor bill from purchase order',po.name)
+        return {'url':'/my/employee/accounting/bills/%s?company_id=%s'%(created.id,company.id)}
+
     def _po_lines(self, company, po_id):
         self._actor('preparer')
         po = self._relation(company, 'purchase.order', po_id,
@@ -745,6 +787,12 @@ class PortalAccountingService(models.AbstractModel):
         self._actor('preparer')
         if kind not in ('bills', 'refunds', 'journals'):
             raise AccessError(_('Preview is available for bills and journal entries.'))
+        data = dict(data)
+        defaults = self._defaults(company,kind,data.get('partner_id'))
+        for key in ('journal_id','currency_id'):
+            if not data.get(key):data[key]=defaults[key]
+        if not data.get('journal_id'):
+            raise ValidationError(_('Select an available journal of the correct type in Accounting Settings.'))
         vals = self._move_values(company, kind, data)
         class PreviewRollback(Exception):
             pass

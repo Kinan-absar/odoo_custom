@@ -93,3 +93,5 @@
 .aca .aca-print-link{border:1px solid #ccdadd;border-radius:8px;padding:8px 13px;background:#fff;color:#087f83}
 .aca-history{border-bottom:1px solid #e3ebed;padding:14px 0}.aca-history time{color:#728790;font-size:11px;margin-left:12px}.aca-history p{margin:7px 0 0;white-space:pre-wrap}
 @media(max-width:600px){.aca-workspace-header{padding:12px 12px 0;gap:12px}.aca-workspace-brand a{font-size:17px}.aca-company-switch{margin-left:0;width:100%}.aca-workspace-header .aca-nav{font-size:11px}}
+
+.aca-picker>input{padding-right:34px}.aca-picker>button{position:absolute;right:4px;top:4px;min-height:30px;width:28px;padding:0;border:0;background:transparent;color:#728790;font-size:19px}.aca-picker>button:hover{background:#e8f4f3}.aca-search-results{display:flex;flex-direction:column;gap:4px;max-height:45vh;overflow:auto;margin-top:14px}.aca-search-results>button{text-align:left;width:100%}.aca-dialog:focus{outline:none}

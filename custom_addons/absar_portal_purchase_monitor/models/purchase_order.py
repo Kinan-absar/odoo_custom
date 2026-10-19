@@ -12,6 +12,7 @@ class PurchaseOrder(models.Model):
 
     # Retained for upgrade compatibility; new forms use actual project_id.
     absar_portal_project_id = fields.Many2one('project.project', string='Portal Project (Legacy)', check_company=True)
+    absar_portal_working_order = fields.Boolean(readonly=True, copy=False, default=False)
     absar_portal_preparer_id = fields.Many2one('res.users', string='Issuer', readonly=True, copy=False, index=True)
     absar_portal_review_state = fields.Selection([
         ('draft', 'Draft'), ('submitted', 'Awaiting Approval'),
@@ -61,7 +62,7 @@ class PurchaseOrder(models.Model):
         self.ensure_one()
         return bool(user.has_group(PREFIX + 'group_portal_purchase_preparer') and
                     not user.has_group('employee_portal_suite.group_attendance_only') and
-                    self.company_id in user.company_ids and self.absar_portal_preparer_id == user and
+                    self.company_id in user.company_ids and (self.absar_portal_preparer_id == user or user.has_group(PREFIX+'group_portal_purchase_user')) and
                     self.state in ('draft', 'sent') and
                     self.absar_portal_review_state in (False, 'draft', 'returned'))
 
@@ -198,6 +199,21 @@ class PurchaseOrder(models.Model):
         return True
 
     def button_confirm(self):
+        if self.env.user.has_group(PREFIX+'group_portal_purchase_user'):
+            user=self._portal_actor('user')
+            for po in self.filtered(lambda order:not order.absar_portal_preparer_id):
+                po._portal_check_company(user)
+                po.write({'absar_portal_working_order':True})
+        ordinary = self.filtered('absar_portal_working_order')
+        if ordinary:
+            user=self._portal_actor('user')
+            for po in ordinary:
+                po._portal_check_company(user)
+                if po.absar_portal_preparer_id:
+                    raise UserError(_('An issuer document cannot bypass its existing review.'))
+            if len(ordinary)!=len(self):
+                raise UserError(_('Confirm ordinary and issuer documents separately.'))
+            return super(PurchaseOrder, ordinary).button_confirm()
         rfqs = self.filtered(lambda po: po.state in ('draft', 'sent'))
         pending = rfqs.filtered(lambda po: not po.absar_portal_preparer_id or
                                 po.absar_portal_review_state != 'approved')
@@ -219,6 +235,10 @@ class PurchaseOrder(models.Model):
 
     def button_approve(self, force=False):
         for po in self:
+            if po.absar_portal_working_order:
+                user=self._portal_actor('user');po._portal_check_company(user)
+                if po.absar_portal_preparer_id:raise UserError(_('Issuer review cannot be bypassed.'))
+                continue
             if po.state not in ('draft', 'sent', 'to approve'):
                 continue
             user = po._portal_approver()

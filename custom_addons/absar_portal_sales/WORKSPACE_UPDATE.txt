@@ -1,0 +1,4 @@
+18.0.1.4.0
+Sales User (All Company Documents) adds company-scoped access to quotations and sales orders, editing of drafts, and native sales confirmation. Issuer documents retain their submitted/approved review locks. The role implies the portal creator role only, never Internal User.
+Matching workspace header and paginated Search More selectors included.
+Employee Portal Suite is unchanged.

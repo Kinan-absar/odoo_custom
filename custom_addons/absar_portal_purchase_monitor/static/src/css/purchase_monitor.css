@@ -48,3 +48,10 @@
 .apw-shell .apw-app-title{font-size:19px;margin-right:16px;white-space:nowrap}
 .apw-shell .apw-app-nav a{font-size:12px;padding:9px 11px;border-radius:7px;white-space:nowrap}
 @media(max-width:600px){.apw-shell .apw-app-nav{padding:6px;min-height:48px}.apw-shell .apw-app-title{font-size:17px;margin-right:8px}}
+
+.apw-workspace-header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:#fff;border:1px solid #dce7e8;border-radius:12px;padding:16px 18px 0;margin:0 0 22px;box-shadow:0 2px 8px #18384204}
+.apw-workspace-brand{display:flex;align-items:center;gap:11px}.apw-workspace-brand>div{display:flex;flex-direction:column;gap:2px}.apw-workspace-brand strong{font-size:19px;color:#203e4b}.apw-workspace-brand small{font-size:11px;color:#728790}.apw-workspace-icon{display:grid;place-items:center;background:#e8f4f3;color:#087f83;width:38px;height:38px;border-radius:11px;font-size:19px}
+.apw-workspace-header .apw-app-nav{flex-basis:100%;display:flex;flex-wrap:nowrap;gap:3px;overflow-x:auto;border:0;border-top:1px solid #edf2f3;box-shadow:none;border-radius:0;margin:0;padding:9px 0;font-size:12px;min-height:0}.apw-workspace-header .apw-app-nav a{padding:8px 10px;white-space:nowrap;border-radius:7px;color:#607984;font-size:12px}.apw-workspace-header .apw-app-nav a.active{color:#087f83;background:#e8f4f3}
+@media(max-width:600px){.apw-workspace-header{padding:12px 12px 0}.apw-workspace-brand strong{font-size:17px}}
+
+.apw-search-results{max-height:45vh;overflow:auto;margin-top:14px}.apw-search-results>.apw-option{border-bottom:1px solid #edf2f3;border-radius:5px}.apw-workspace-header .apw-app-nav{align-items:center}
