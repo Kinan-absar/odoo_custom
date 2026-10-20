@@ -190,6 +190,10 @@ class PortalAccounting(http.Controller):
             raise NotFound()
         if report == 'wm_journal_entry_report.account_journal':
             action = request.env.ref(report, raise_if_not_found=False)
+            # The bill/voucher was authorized above. Portal users cannot read
+            # report action metadata; inspect only this fixed server-side action.
+            if action:
+                action = action.sudo()
             if not action or action._name != 'ir.actions.report' or action.model != 'account.move':
                 raise UserError(_('The existing Print JV report (wm_journal_entry_report) must be installed to print journal entries.'))
         pdf, _format = service._env(company)['ir.actions.report']._render_qweb_pdf(report, res_ids=record.ids)

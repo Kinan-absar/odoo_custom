@@ -125,3 +125,9 @@ Normal Post saves and posts directly; only actual accounting or PO overpayment w
 New documents default to an allowed purchase/general journal; vendor purchase currency and payment terms default from the supplier. Search More supports scoped paging. Missing required selections show actionable messages instead of a stuck calculation.
 
 Purchase User (All Company Documents) can create a draft vendor bill from a confirmed billable PO when also assigned Accounting User (Direct Posting) or Accounting Preparer. Native purchase invoicing determines quantities, and the configured accounting review rules still apply. Employee Portal Suite is not modified.
+
+## Workspace update 18.0.1.2.2
+
+Fix portal Print JV failing with 403 on Report Action metadata. After validating the portal role, company and requested document, the controller reads the fixed existing JV action's metadata with sudo, matching the already elevated PDF renderer. No portal ACL, group membership or report layout changes.
+
+Local verification: print-route fixtures cover portal metadata denial, bill/voucher/journal report targets, missing or incorrect report configuration, and document authorization before metadata elevation. Python and XML syntax checks pass. These fixtures do not render a real Odoo PDF. Upgrade and verify the downloaded PDF on staging.
