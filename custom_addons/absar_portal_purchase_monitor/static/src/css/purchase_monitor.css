@@ -107,3 +107,9 @@
 .apw-dialog input[type=checkbox]{width:auto;min-height:0}
 #apw-root .apw-grid-help{font-size:11px;color:#70868e;margin:7px 0 0}
 @media(max-width:760px){#apw-root .apw-sheet{padding:14px 10px}.apw-dialog{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:14px}.apw-dialog .apw-product-grid{grid-template-columns:1fr}}
+
+/* Receipt entry stays usable while the confirmed PO itself is read-only. */
+.apw-dialog .apw-receipt-lines{min-width:620px;margin-top:12px}
+.apw-dialog .apw-receipt-lines th{font-size:12px;white-space:normal}
+.apw-dialog .apw-receipt-lines input{width:110px;text-align:right;font-variant-numeric:tabular-nums}
+.apw-dialog .apw-receipt-lines td{vertical-align:middle}

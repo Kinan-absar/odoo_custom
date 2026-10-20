@@ -36,6 +36,22 @@ class PortalPurchaseDirectory(PortalPurchasePrepare):
             return service._create_bill_from_po(company,po.id,data.get('version'))
         return self._json(run)
 
+    @http.route(BASE + '/<int:po_id>/receipts', type='http', auth='user', methods=['POST'], csrf=True)
+    def receipts(self, po_id, **kw):
+        def run(data):
+            po = self._record(po_id)
+            return {'receipts': po._portal_receipts()}
+        return self._json(run)
+
+    @http.route(BASE + '/<int:po_id>/receive', type='http', auth='user', methods=['POST'], csrf=True)
+    def receive(self, po_id, **kw):
+        def run(data):
+            po = self._record(po_id)
+            result = po._portal_receive(data.get('receipt_id'), data.get('version'), data.get('quantities'))
+            result['url'] = BASE + '/%s' % po.id
+            return result
+        return self._json(run)
+
     @http.route(BASE + '/orders', type='http', auth='user', website=True)
     def orders(self, **kw):
         user = self._actor()

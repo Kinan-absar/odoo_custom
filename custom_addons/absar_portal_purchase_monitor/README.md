@@ -1,7 +1,7 @@
 # ABSAR Portal Purchase Workspace
 
-Version 18.0.1.6.5.
+Version 18.0.1.6.6.
 
-Compact keyboard-editable PO grid and full product create/edit forms with expense-account configuration. Includes the single-step purchase approval from 1.6.4. Role definitions unchanged.
+Adds native supplier receipt entry/validation to confirmed portal POs so received quantities can become billable. Includes the compact product grid, full product forms and single-step approvals from previous releases.
 
-See WORKSPACE_UPDATE.txt for upgrade instructions, behavior and verification limits.
+See WORKSPACE_UPDATE.txt for upgrade instructions and test limits.

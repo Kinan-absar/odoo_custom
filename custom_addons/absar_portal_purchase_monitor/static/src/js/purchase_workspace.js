@@ -1,6 +1,7 @@
 /** @odoo-module **/
 import { createPurchaseUI } from "./purchase_ui";
 import { openPurchaseProductDialog } from "./purchase_product_form";
+import { openPurchaseReceiptDialog } from "./purchase_receipt";
 // No backend webclient RPC or generic model access is exposed to portal users.
 function startPurchaseWorkspace() {
     const root = document.getElementById('apw-root');
@@ -566,6 +567,9 @@ function startPurchaseWorkspace() {
                 if (pendingComputations) throw new Error('Wait for product and vendor defaults to finish loading, then save.');
                 const result = await post('/save', {...payload(), submit: action === 'submit'});
                 dirty = false; window.location.assign(result.url);
+            } else if (action === 'receive') {
+                const ui = createPurchaseUI({root, post, companyId: state.company_id});
+                await openPurchaseReceiptDialog({post, poId: boot.id, ui, onDone: result => window.location.assign(result.url)});
             } else if (action === 'create_bill') {
                 if(await ask('Create a draft vendor bill using this purchase order’s currently billable quantities?')){const result=await post('/'+boot.id+'/create-bill',{version:boot.version});dirty=false;window.location.assign(result.url);}
             } else if (action === 'upload') await uploadQuotation();

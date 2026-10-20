@@ -396,7 +396,7 @@ class PortalPurchasePrepare(http.Controller):
                 bill_reason=_('Vendor bill preparation requires Accounting User (Direct Posting) or Accounting Preparer in addition to Purchase User.')
             elif po.invoice_status != 'to invoice':
                 bill_reason=_('No quantities are available to bill. Check existing draft/posted bills; products billed on received quantities must first be received.')
-        return dict(show_bill=bool(operator and po and po.state!='cancel'), bill_reason=bill_reason, uses_review=True, can_work=operator, can_bill=bool(operator and finance and po and po.state in ('purchase','done') and po.invoice_status=='to invoice'),
+        return dict(can_receive=bool(po and po.state in ('purchase','done') and user.has_group(PREFIX+'group_portal_purchase_preparer') and (operator or po.absar_portal_preparer_id == user)), show_bill=bool(operator and po and po.state!='cancel'), bill_reason=bill_reason, uses_review=True, can_work=operator, can_bill=bool(operator and finance and po and po.state in ('purchase','done') and po.invoice_status=='to invoice'),
                     can_direct_confirm=False, values=vals, selected=selected, readonly=readonly, approval_view=approval_view,
                     attachments=[{'id': a.id, 'name': a.name} for a in attachments],
                     totals=dict(untaxed=po.amount_untaxed, tax=po.amount_tax, total=po.amount_total, currency=po.currency_id.name) if po else None,

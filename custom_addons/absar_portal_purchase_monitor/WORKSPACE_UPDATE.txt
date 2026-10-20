@@ -1,34 +1,28 @@
-ABSAR PURCHASE PORTAL 18.0.1.6.5 - 2026-10-20
+ABSAR PURCHASE PORTAL 18.0.1.6.6 - 2026-10-20
 
-Includes 18.0.1.6.4 single-step approval changes.
+RECEIVE PRODUCTS
+Confirmed/locked POs now have Receive Products in the portal for eligible purchase preparers. Own-document issuers can receive their own POs; all-document purchase users can receive accessible company POs. Monitor/approver-only accounts do not receive new stock-writing rights.
+The dialog lists pending native incoming supplier receipts, quantities remaining on each receipt, quantities previously received on the PO, and Receive Now inputs.
+Enter quantities delivered now, or use Set Remaining Quantities, then Validate Receipt. The native Odoo receipt is validated. Partial receipts preserve the remainder through the native backorder flow. The PO reloads so received/billable quantities and Create Vendor Bill availability are recalculated.
+A receipt is never silently completed just to unlock billing. Quantity inputs start at zero.
 
-UI AND PRODUCT CHANGES
-- Compact, single-row product grid. Description is an inline one-line field; prices/quantities align as table cells.
-- Enter advances to the next editable column. Shift+Enter goes back. Enter at the final column creates the next product row. Arrow keys navigate dropdown choices; Space opens a focused analytic action.
-- Product selection waits for defaults before advancing. Current input/focus is preserved when asynchronous pricing/totals redraw the rows.
-- Product dropdown has Create and Edit... and Open / Edit Product. The selected product has an open-form icon. Product directory names also open the form.
-- Full product create/edit form includes Expense Account. Clearing it uses the category expense account.
-- Expense-account field removed from PO line details. Editing product properties from a PO preserves entered PO prices, quantities, text and taxes.
-- Previously saved legacy line-account overrides are preserved unless the product is explicitly selected/updated. Their presence is disclosed under Line Details.
-- Product updates use dedicated scoped endpoints, Issuer permission, allowed-company product/account selections, explicit field validation and optimistic version checks. Shared product general details apply across companies; its account/cost properties use the selected company. Other-company tax defaults are preserved.
-- Dropdowns fit available viewport space and follow their input when scrolling. Late lookup results do not reopen dismissed dropdowns.
-- Search and product dialogs have contained scroll areas and visible header/footer within the viewport.
-- Arrival/received/billed information moved to the line details (...) action.
-- Existing Purchase groups and approval policy retained. Sales, Accounting and Employee Portal Suite not modified or included.
+GUARDS AND LIMITS
+Company, PO ownership/scope, receipt membership, exact move IDs, non-negative finite quantities, remaining demand, current state and optimistic receipt/move/lot versions are checked.
+PO/receipt/move locks serialize duplicate submissions. All active receipt moves receive an explicit quantity, including zero for items not delivered.
+Receipts containing unrelated/other-PO stock moves require internal Inventory. Returns/internal transfers are excluded.
+Lot/serial assignments must be prepared in Inventory. Native validation/installed stock hooks remain active. Unsupported additional Inventory wizard steps roll the request back rather than recording a false success.
+Operation types configured never to create backorders must have backorders enabled before receiving partially through the portal, preventing accidental cancellation of the remainder.
+This dialog handles native supplier stock receipts. Services/manual receipt quantities remain handled in internal Purchase. Native downstream warehouse steps remain unchanged.
 
-INSTALL ON STAGING
-Replace only the absar_portal_purchase_monitor folder, restart/rebuild, upgrade ABSAR Portal Purchase Workspace, then hard-refresh the browser to reload frontend assets. Do not uninstall.
+INSTALL
+Replace absar_portal_purchase_monitor only, restart/rebuild staging, upgrade ABSAR Portal Purchase Workspace, then hard-refresh the browser. Do not uninstall. Includes all 1.6.5 product/grid changes and 1.6.4 single-step PO approvals. Existing group definitions remain unchanged. Employee Portal Suite, Sales and Accounting are not modified or included.
 
-LOCAL CHECKS
-Python and XML parsed. JS syntax checks passed.
-Actual JS module/DOM-fixture checks passed: viewport dropdown geometry, Create and Edit option, asynchronous Enter selection, late-response cancellation, compact rows, forward/back/next-row keyboard navigation, state/focus preservation, negotiated PO data retained on product account change, product edit prefill and versioned save.
-Actual controller helper fixtures passed: product-update role gating, company-scoped selections, whitelist, stale-version rejection, row-lock calls, finite cost validation, explicit account clearing, tax deduplication and preservation of other-company taxes.
-Existing isolated validator, financial calculation, preview/defaulting, amount/tax frontend and single-step approval checks passed.
-No live Odoo 18.0.1.6.5 upgrade, browser layout verification or full ORM integration test was performed. This is a staging-test release.
+USAGE
+Approved PO -> Receive Products -> enter delivered quantities (or Set Remaining Quantities) -> Validate Receipt -> refreshed PO -> Create Vendor Bill.
+A separate draft/posted vendor bill may already consume billable quantities; receiving does not bypass duplicate-billing controls.
 
-QUICK STAGING TEST
-1. Select a vendor. Add a product and press Enter through the row; enter quantity/price, then continue into the next row.
-2. Type a new product name; select Create and Edit..., choose its expense account, and save.
-3. Open an existing selected product, change its expense account, save, and verify the PO's entered price/quantity are preserved.
-4. Save/reopen the PO. Check Search More and product forms at desktop/mobile widths.
-5. Submit as Issuer, approve as another Approver, receive if needed and create the linked draft bill. Confirm its expense account comes from the product.
+VERIFICATION
+Python/XML and JavaScript syntax checked; ZIP integrity verified.
+Actual model helpers executed with isolated recordset fixtures for full receipt, partial receipt/native backorder wizard invocation, explicitly unreceived rows, duplicate completion, invalid/negative/non-finite/over quantities, stale versions, foreign/mixed/company receipts, role/owner/state and lot/serial guards. Unsupported validation actions are rejected.
+Actual receipt JavaScript executed with DOM fixtures for positive-quantity requirement, exact partial quantities, receipt/version payload, and PO refresh only after successful validation. Existing grid/navigation and single-step PO approval fixture checks passed.
+No live Odoo ORM/stock valuation/warehouse integration or staging upgrade was performed for 18.0.1.6.6. This release still requires staging testing.
