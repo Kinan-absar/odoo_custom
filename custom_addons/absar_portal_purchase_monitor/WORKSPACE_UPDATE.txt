@@ -1,26 +1,34 @@
-ABSAR PURCHASE 18.0.1.6.4 - 2026-10-20
+ABSAR PURCHASE PORTAL 18.0.1.6.5 - 2026-10-20
 
-Changes in this release:
-- Issuer uses Submit for Approval. Native Confirm buttons are hidden for review-managed orders.
-- Approver uses one Approve action. It completes native PO confirmation, including stock receipts and installed confirmation hooks. No Approve Only or separate Confirm action.
-- The independent review is the single approval level for managed purchase orders, including when native amount-based double validation is configured. Ordinary native orders retain native settings.
-- Existing approved-but-unconfirmed managed drafts can be completed through the same Approve action. No existing orders are confirmed by upgrading.
-- Portal purchasing labels use Draft PO/Purchase Order rather than a separate RFQ workflow.
-- Self-approval, actual-submitter exclusion and allowed-company checks remain enforced.
-- Existing All Company Documents group definitions, automatic group assignments, document visibility and role checks are unchanged. No role migration is included.
-- Employee Portal Suite, Sales and Accounting are unchanged and excluded.
+Includes 18.0.1.6.4 single-step approval changes.
 
-Upgrade:
-Replace only absar_portal_purchase_monitor, restart/rebuild staging, upgrade ABSAR Portal Purchase Workspace, then refresh the browser. Do not uninstall.
+UI AND PRODUCT CHANGES
+- Compact, single-row product grid. Description is an inline one-line field; prices/quantities align as table cells.
+- Enter advances to the next editable column. Shift+Enter goes back. Enter at the final column creates the next product row. Arrow keys navigate dropdown choices; Space opens a focused analytic action.
+- Product selection waits for defaults before advancing. Current input/focus is preserved when asynchronous pricing/totals redraw the rows.
+- Product dropdown has Create and Edit... and Open / Edit Product. The selected product has an open-form icon. Product directory names also open the form.
+- Full product create/edit form includes Expense Account. Clearing it uses the category expense account.
+- Expense-account field removed from PO line details. Editing product properties from a PO preserves entered PO prices, quantities, text and taxes.
+- Previously saved legacy line-account overrides are preserved unless the product is explicitly selected/updated. Their presence is disclosed under Line Details.
+- Product updates use dedicated scoped endpoints, Issuer permission, allowed-company product/account selections, explicit field validation and optimistic version checks. Shared product general details apply across companies; its account/cost properties use the selected company. Other-company tax defaults are preserved.
+- Dropdowns fit available viewport space and follow their input when scrolling. Late lookup results do not reopen dismissed dropdowns.
+- Search and product dialogs have contained scroll areas and visible header/footer within the viewport.
+- Arrival/received/billed information moved to the line details (...) action.
+- Existing Purchase groups and approval policy retained. Sales, Accounting and Employee Portal Suite not modified or included.
 
-Testing performed locally:
-Changed approval methods executed on isolated fixtures: independent actor/company/state checks, legacy action aliases, native-confirm invocation, no success notification before completion, one Approve button, both native Confirm buttons covered.
-44 existing isolated validator and financial checks passed; frontend fixture checks passed; all Python and XML parsed successfully. Original group definitions compared byte-for-byte with the prior ZIP.
-No Odoo runtime or live staging upgrade was performed for 18.0.1.6.4. The actual installed Studio/signing/stock integration still requires staging testing.
+INSTALL ON STAGING
+Replace only the absar_portal_purchase_monitor folder, restart/rebuild, upgrade ABSAR Portal Purchase Workspace, then hard-refresh the browser to reload frontend assets. Do not uninstall.
 
-Suggested staging checks:
-1. Issuer: create a draft, Submit for Approval; no native PO confirmation yet.
-2. Independent Approver: receive activity and Approve; PO becomes confirmed immediately.
-3. Return for Correction: reason required, issuer edits and resubmits.
-4. Internal user without Issuer: ordinary unmanaged PO retains native confirmation.
-5. Verify the existing portal All Company Documents behavior remains as before.
+LOCAL CHECKS
+Python and XML parsed. JS syntax checks passed.
+Actual JS module/DOM-fixture checks passed: viewport dropdown geometry, Create and Edit option, asynchronous Enter selection, late-response cancellation, compact rows, forward/back/next-row keyboard navigation, state/focus preservation, negotiated PO data retained on product account change, product edit prefill and versioned save.
+Actual controller helper fixtures passed: product-update role gating, company-scoped selections, whitelist, stale-version rejection, row-lock calls, finite cost validation, explicit account clearing, tax deduplication and preservation of other-company taxes.
+Existing isolated validator, financial calculation, preview/defaulting, amount/tax frontend and single-step approval checks passed.
+No live Odoo 18.0.1.6.5 upgrade, browser layout verification or full ORM integration test was performed. This is a staging-test release.
+
+QUICK STAGING TEST
+1. Select a vendor. Add a product and press Enter through the row; enter quantity/price, then continue into the next row.
+2. Type a new product name; select Create and Edit..., choose its expense account, and save.
+3. Open an existing selected product, change its expense account, save, and verify the PO's entered price/quantity are preserved.
+4. Save/reopen the PO. Check Search More and product forms at desktop/mobile widths.
+5. Submit as Issuer, approve as another Approver, receive if needed and create the linked draft bill. Confirm its expense account comes from the product.

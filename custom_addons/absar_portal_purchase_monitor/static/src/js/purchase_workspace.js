@@ -95,79 +95,16 @@ function startPurchaseWorkspace() {
         node.addEventListener('click', callback);
         return node;
     }
-    function lookup(kind, selected, onSelect, extras = {}) {
-        const wrap = document.createElement('div');
-        wrap.className = 'apw-lookup';
-        const box = document.createElement('input');
-        box.className = 'form-control';
-        box.value = selected?.label || '';
-        box.placeholder = 'Search…';
-        box.setAttribute('aria-label', kind + ' search');
-        box.setAttribute('role', 'combobox');
-        box.setAttribute('aria-expanded', 'false');
-        box.autocomplete = 'off';
-        box.disabled = readonly;
-        const options = document.createElement('div');
-        options.className = 'apw-options';
-        options.setAttribute('role', 'listbox');
-        options.hidden = true;
-        options.setAttribute('popover', 'manual');
-        const closeOptions = () => {if (typeof options.hidePopover === 'function' && options.matches(':popover-open')) options.hidePopover(); options.hidden = true; box.setAttribute('aria-expanded', 'false');};
-        const openOptions = () => {
-            options.hidden = false;
-            const rect = box.getBoundingClientRect();
-            options.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 300)) + 'px';
-            options.style.top = Math.min(rect.bottom + 2, window.innerHeight - 220) + 'px';
-            options.style.width = Math.min(Math.max(rect.width, 280), window.innerWidth - 24) + 'px';
-            if (typeof options.showPopover === 'function') options.showPopover(); box.setAttribute('aria-expanded', 'true');
-        };
-        let timer, sequence = 0, selectedId = selected?.id;
-        async function search() {
-            if (readonly) return;
-            const seq = ++sequence;
-            options.replaceChildren(text('div', 'Searching…', 'apw-help'));
-            openOptions();
-            try {
-                const result = await post('/lookup', {kind, q: box.value, company_id: state.company_id, project_id: state.project_id, ...extras});
-                if (seq !== sequence) return;
-                options.replaceChildren();
-                for (const item of result.items) {
-                    const choice = button(item.label + (item.plan ? ' · ' + item.plan : ''), () => {
-                        box.value = item.label; selectedId = item.id;
-                        closeOptions();
-                        onSelect(item); changed();
-                    }, 'apw-option');
-                    choice.setAttribute('role', 'option');
-                    options.append(choice);
-                }
-                if (!result.items.length) options.append(text('div', 'No matches', 'apw-help'));
-                options.append(button('Search More…',()=>{closeOptions();createPurchaseUI({root,post,companyId:state.company_id}).searchMore(kind,box.value,item=>{box.value=item.label;selectedId=item.id;onSelect(item);changed();},extras);},'apw-option'));
-                options.append(button('Clear selection', () => {
-                    box.value = ''; selectedId = null; closeOptions(); onSelect(null); changed();
-                }, 'apw-option'));
-            } catch (error) {options.replaceChildren(text('div', error.message, 'apw-help'));}
-        }
-        box.addEventListener('input', () => {
-            if (selectedId) {selectedId = null; onSelect(null); changed();}
-            clearTimeout(timer); timer = setTimeout(search, 220);
-        });
-        box.addEventListener('focus', () => {
-            if (selectedId) {
-                options.replaceChildren(button('Search another selection', () => {box.value = ''; selectedId = null; onSelect(null); search();}, 'apw-option'),
-                    button('Clear selection', () => {box.value = ''; selectedId = null; onSelect(null); closeOptions(); changed();}, 'apw-option'));
-                openOptions();
-            } else search();
-        });
-        box.addEventListener('keydown', event => {
-            if (event.key === 'Escape') {closeOptions();}
-            if (event.key === 'ArrowDown') {event.preventDefault(); options.querySelector('button')?.focus();}
-            if (event.key === 'Enter') event.preventDefault();
-        });
-        wrap.addEventListener('focusout', () => setTimeout(() => {
-            if (!wrap.contains(document.activeElement)) {closeOptions();}
-        }, 100));
-        wrap.append(box, options);
-        return wrap;
+    function lookup(kind, selected, onSelect, extras = {}, actions = {}) {
+        const ui = createPurchaseUI({root, post, companyId: state.company_id, readonly});
+        return ui.lookup(kind, selected, async item => {await onSelect(item); if (!readonly) changed();}, extras,
+            {...actions, onError: showError});
+    }
+    async function productForm(productId, initialName, onSaved) {
+        const ui = createPurchaseUI({root, post, companyId: state.company_id});
+        await openPurchaseProductDialog({...ui, post, companyId: state.company_id,
+            productId, initialName, saveLabel: productId ? 'Save Product' : 'Create and Add',
+            onCreate: async item => {await onSaved(item);}});
     }
     function headerChoice(host, label, name, kind, hint) {
         field(label, lookup(kind, labels[name], item => {
@@ -180,6 +117,7 @@ function startPurchaseWorkspace() {
     }
     function renderHeader() {
         const header = byId('apw-header'), other = byId('apw-other');
+        [header, other].forEach(host => host.querySelectorAll('.apw-lookup').forEach(node => node.dispatchEvent(new Event('apw-dispose'))));
         header.replaceChildren(); other.replaceChildren();
         headerChoice(header, 'Vendor *', 'partner_id', 'vendor');
         field(['purchase', 'done'].includes(boot.state) ? 'Order Date' : 'Order Deadline *', input(state.date_order, 'datetime-local', v => {state.date_order = v;}), header);
@@ -273,8 +211,21 @@ function startPurchaseWorkspace() {
             analytic_distribution: {}, analytic_labels: {}, date_planned: state.date_planned || '',
             absar_expense_account_id: 0, account_label: '', default_account: ''};
     }
+    async function selectLineProduct(line, item) {
+        if (readonly) return;
+        if (item?.product_updated && item.id === line.product_id) {
+            // Catalog/account changes must not reprice a negotiated PO line.
+            for (const row of state.lines.filter(row => row.product_id === item.id)) {
+                row.product_label = item.label; row.default_account = item.default_account || '';
+                row.absar_expense_account_id = 0; row.account_label = '';
+            }
+            changed(); renderLines(); return;
+        }
+        return defaultsFor(line, item);
+    }
     async function defaultsFor(line, product) {
         if (!product) {line.product_id = 0; line.product_label = ''; return;}
+        line.absar_expense_account_id = 0; line.account_label = '';
         if (!state.partner_id) {
             line.product_id = product.id; line.product_label = product.label; line.product_uom = 0;
             changed(); renderLines(); return;
@@ -286,7 +237,7 @@ function startPurchaseWorkspace() {
         line.product_uom = 0;
         try {
             const response = await post('/preview', {...payload(), defaults: true, lines: [line]});
-            if (line._sequence !== sequence) return;
+            if (line._sequence !== sequence || !state.lines.includes(line)) return;
             const ident = line.id;
             const manualPrice = line._manualPrice ? {price_unit: line.price_unit, discount: line.discount, _manualPrice: true} : {_manualPrice: false};
             Object.assign(line, response.lines[0], {id: ident, _sequence: sequence}, manualPrice);
@@ -296,11 +247,25 @@ function startPurchaseWorkspace() {
         finally {pendingComputations--; if (!pendingComputations) changed();}
     }
     function renderLines() {
-        const host = byId('apw-lines'); host.replaceChildren();
+        const host = byId('apw-lines');
+        const active = document.activeElement, activeRow = active?.closest('[data-grid-row]');
+        const focus = activeRow && host.contains(active) ? {
+            row: Number(activeRow.dataset.gridRow), column: Number(active.closest('td').dataset.gridColumn),
+            description: active.classList.contains('apw-description'), start: active.selectionStart, end: active.selectionEnd,
+            query: active.getAttribute('role') === 'combobox' && !state.lines[Number(activeRow.dataset.gridRow)]?.product_id ? active.value : null
+        } : null;
+        host.querySelectorAll('.apw-lookup').forEach(node => node.dispatchEvent(new Event('apw-dispose')));
+        host.replaceChildren();
         if (!state.lines.length) {const row = document.createElement('tr'), cell = text('td', 'Add a product, section or note.', 'apw-empty'); cell.colSpan = 9; row.append(cell); host.append(row);}
         state.lines.forEach((line, index) => {
-            const row = document.createElement('tr');
-            function cell(node, className = '') {const td = document.createElement('td'); td.className = className; td.append(node); row.append(td); return td;}
+            const row = document.createElement('tr'); row.dataset.gridRow = String(index);
+            function cell(node, className = '') {
+                const td = document.createElement('td'); td.className = className; td.dataset.gridColumn = String(row.children.length);
+                td.append(node); row.append(td);
+                const entry = node.matches?.('input, textarea, button') ? node : (node.querySelector('input') || node.querySelector('button'));
+                if (entry && row.children.length <= 7 && !node.classList?.contains('apw-row-actions')) {entry.dataset.gridEntry = '1'; entry.setAttribute('aria-label', entry.getAttribute('aria-label') || ['Product', 'Analytic distribution', 'Quantity', 'Unit', 'Unit price', 'Discount', 'Taxes'][row.children.length-1]);}
+                return td;
+            }
             if (line.display_type) {
                 const label = input(line.name, 'text', v => {line.name = v;});
                 const td = cell(label, line.display_type === 'line_section' ? 'apw-section' : 'apw-note'); td.colSpan = 8;
@@ -308,10 +273,11 @@ function startPurchaseWorkspace() {
                 if (!line.product_id) row.classList.add('apw-products-missing');
                 const productCell = document.createElement('div');
                 if (!line.product_id && line.name) productCell.append(text('small', 'Select a product for this material', 'apw-help'));
-                productCell.append(lookup('product', {id: line.product_id, label: line.product_label}, item => defaultsFor(line, item)));
-                const description = document.createElement('textarea'); description.className = 'form-control apw-description'; description.rows = 2;
+                productCell.append(lookup('product', {id: line.product_id, label: line.product_label},
+                    item => selectLineProduct(line, item), {}, {productForm, advance: () => moveGrid(index, 0, 1)}));
+                const description = document.createElement('textarea'); description.className = 'form-control apw-description'; description.rows = 1;
                 description.value = line.name; description.disabled = readonly; description.setAttribute('aria-label', 'Line description');
-                description.addEventListener('change', () => {line.name = description.value; changed();});
+                description.addEventListener('input', () => {line.name = description.value; changed();});
                 productCell.append(description); cell(productCell);
                 const analytic = document.createElement('div');
                 const descriptionText = Object.entries(line.analytic_distribution || {}).map(([key, pct]) =>
@@ -321,7 +287,7 @@ function startPurchaseWorkspace() {
                 cell(input(line.product_qty, 'number', v => {line.product_qty = Number(v); reprice(line);}), 'num');
                 cell(lookup('uom', {id: line.product_uom, label: line.uom_label}, item => {
                     line.product_uom = item?.id || 0; line.uom_label = item?.label || ''; if (item) reprice(line);
-                }, {product_id: line.product_id}));
+                }, {product_id: line.product_id}, {advance: () => moveGrid(index, 3, 1)}));
                 cell(input(line.price_unit, 'number', v => {line.price_unit = Number(v); line._manualPrice = true;}), 'num');
                 cell(input(line.discount || 0, 'number', v => {line.discount = Number(v);}), 'num');
                 const tax = document.createElement('div');
@@ -332,31 +298,62 @@ function startPurchaseWorkspace() {
                 }
                 if (!readonly) tax.append(lookup('tax', null, item => {
                     if (item && !line.taxes_id.includes(item.id)) {line.taxes_id.push(item.id); line.taxes.push(item); changed(); renderLines();}
-                }));
-                cell(tax);
+                }, {}, {advance: () => moveGrid(index, 6, 1)}));
+                cell(tax, 'apw-tax-cell');
                 const amount = text('span', money(lineAmount(line))); amount.dataset.lineAmount = String(index);
                 cell(amount, 'num');
             }
             const actions = document.createElement('div'); actions.className = 'apw-row-actions';
             if (!readonly) {
+                if (!line.display_type) actions.append(button('⋯', () => lineDetails(line), 'apw-line-more'));
                 actions.append(button('↑', () => moveLine(index, -1)), button('↓', () => moveLine(index, 1)),
                     button('Remove', () => {state.lines.splice(index, 1); changed(); renderLines();}));
             }
+            actions.querySelectorAll('button').forEach(node => {node.setAttribute('aria-label', node.textContent === '⋯' ? 'Line details' : node.textContent === 'Remove' ? 'Remove line' : node.textContent === '↑' ? 'Move line up' : 'Move line down'); node.title = node.getAttribute('aria-label');});
             cell(actions); host.append(row);
-            if (!line.display_type) {
-                const extraRow = document.createElement('tr'), td = document.createElement('td'); td.colSpan = 9;
-                const details = document.createElement('details');
-                details.append(text('summary', 'Arrival · Expense account · Received / Billed'));
-                const grid = document.createElement('div'); grid.className = 'apw-form-grid apw-line-details';
-                field('Expected Arrival', input(line.date_planned, 'datetime-local', v => {line.date_planned = v;}), grid);
-                field('Expense Account', lookup('account', {id: line.absar_expense_account_id, label: line.account_label}, item => {
-                    line.absar_expense_account_id = item?.id || 0; line.account_label = item?.label || '';
-                }), grid, 'Automatic: ' + (line.default_account || 'product/category expense account'));
-                grid.append(text('p', `Received: ${line.qty_received || 0} · Billed: ${line.qty_invoiced || 0}`));
-                if (!readonly) grid.append(button('Apply vendor defaults', () => defaultsFor(line, {id: line.product_id, label: line.product_label})));
-                details.append(grid); td.append(details); extraRow.append(td); host.append(extraRow);
-            }
         });
+        if (focus) {
+            const row = host.querySelector('[data-grid-row="' + focus.row + '"]');
+            const cell = row?.querySelector('[data-grid-column="' + focus.column + '"]');
+            const target = focus.description ? cell?.querySelector('.apw-description') : cell?.querySelector('[data-grid-entry]');
+            if (target && !target.disabled) {
+                if (focus.query !== null && !state.lines[focus.row]?.product_id) target.value = focus.query;
+                target.dataset.suppressLookupOnce = '1'; target.focus({preventScroll: true});
+                if (typeof focus.start === 'number' && target.setSelectionRange && target.type !== 'number') {
+                    try {target.setSelectionRange(focus.start, focus.end);} catch (_) { /* date/number control */ }
+                }
+            }
+        }
+    }
+    function focusGrid(rowIndex, column) {
+        const node = byId('apw-lines').querySelector('[data-grid-row="' + rowIndex + '"] [data-grid-column="' + column + '"] [data-grid-entry]');
+        if (node && !node.disabled) {node.focus(); node.select?.(); node.scrollIntoView({block: 'nearest', inline: 'nearest'}); return true;}
+        return false;
+    }
+    function moveGrid(rowIndex, column, direction) {
+        const host = byId('apw-lines');
+        const entries = [...host.querySelectorAll('[data-grid-entry]')].filter(n => !n.disabled);
+        const index = entries.findIndex(n => Number(n.closest('[data-grid-row]').dataset.gridRow) === rowIndex && Number(n.closest('td').dataset.gridColumn) === column);
+        const next = entries[index + direction];
+        if (next) {next.focus(); next.select?.(); next.scrollIntoView({block: 'nearest', inline: 'nearest'}); return;}
+        if (direction > 0 && !readonly && state.lines[rowIndex]?.product_id) {
+            state.lines.push(blankLine()); changed(); renderLines(); focusGrid(state.lines.length - 1, 0);
+        }
+    }
+    byId('apw-lines').addEventListener('keydown', event => {
+        if (event.key !== 'Enter' || event.defaultPrevented || event.isComposing || event.target.closest('.apw-options') || readonly) return;
+        if (event.ctrlKey && event.target.tagName === 'TEXTAREA') return;
+        const row = event.target.closest('[data-grid-row]'), cell = event.target.closest('td');
+        if (!row || !cell || !event.target.matches('[data-grid-entry], .apw-description')) return;
+        event.preventDefault(); moveGrid(Number(row.dataset.gridRow), Number(cell.dataset.gridColumn), event.shiftKey ? -1 : 1);
+    });
+    function lineDetails(line) {
+        const view = modal('Line Details'), grid = document.createElement('div'); grid.className = 'apw-form-grid';
+        view.body.append(grid);
+        field('Expected Arrival', input(line.date_planned, 'datetime-local', value => {line.date_planned = value;}), grid);
+        view.body.append(text('p', `Received: ${line.qty_received || 0} · Billed: ${line.qty_invoiced || 0}`));
+        if (line.absar_expense_account_id) view.body.append(text('p', 'This saved line has a legacy account override. Selecting its product again applies the product account.', 'apw-help'));
+        view.foot.append(button('Done', () => view.dialog.close(), 'btn btn-primary'));
     }
     function moveLine(index, offset) {
         const dest = index + offset; if (dest < 0 || dest >= state.lines.length) return;
@@ -395,7 +392,7 @@ function startPurchaseWorkspace() {
         const body = document.createElement('div'); dialog.append(body);
         const foot = document.createElement('div'); foot.className = 'apw-actions'; dialog.append(foot);
         const previousFocus = document.activeElement;
-        dialog.addEventListener('close', () => {dialog.remove(); previousFocus?.focus();});
+        dialog.addEventListener('close', () => {dialog.querySelectorAll('.apw-lookup').forEach(node => node.dispatchEvent(new Event('apw-dispose'))); dialog.remove(); if (previousFocus?.isConnected) previousFocus.focus();});
         root.append(dialog); dialog.showModal();
         return {dialog, body, foot};
     }

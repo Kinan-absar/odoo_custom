@@ -630,45 +630,100 @@ class PortalPurchasePrepare(http.Controller):
                         supplier_taxes=[choice(t) for t in product.supplier_taxes_id if t._origin.id])
         return self._json(run)
 
+    def _product_values(self, data, company):
+        name = str(data.get('name') or '').strip()[:150]
+        if not name:
+            raise ValidationError(_('Product name is required.'))
+        kind = data.get('type', 'consu')
+        if kind not in ('consu', 'service'):
+            raise ValidationError(_('Choose Goods or Service.'))
+        category = self._choice('category', data.get('categ_id'), company, True)
+        uom = self._choice('uom', data.get('uom_id'), company, True)
+        purchase_uom = self._choice('uom', data.get('uom_po_id') or uom.id, company, True)
+        if uom.category_id != purchase_uom.category_id:
+            raise ValidationError(_('Purchase unit must have the same category as the product unit.'))
+        vals = dict(name=name, type=kind, purchase_ok=True, sale_ok=False,
+                    company_id=company.id, categ_id=category.id, uom_id=uom.id,
+                    uom_po_id=purchase_uom.id, default_code=str(data.get('default_code') or '')[:100])
+        model = self._env(company)['product.product'].sudo().with_company(company)
+        if 'is_storable' in model._fields:
+            vals['is_storable'] = kind == 'consu' and bool(data.get('is_storable'))
+        if 'property_account_expense_id' in data:
+            account = self._choice('account', data.get('property_account_expense_id'), company)
+            vals['property_account_expense_id'] = account.id or False
+        if data.get('purchase_method') in ('purchase', 'receive'):
+            vals['purchase_method'] = data['purchase_method']
+        taxes = data.get('supplier_taxes_id')
+        if taxes is not None:
+            if not isinstance(taxes, list) or len(taxes) > 50:
+                raise ValidationError(_('Invalid purchase taxes.'))
+            vals['supplier_taxes_id'] = [(6, 0, list(dict.fromkeys(self._choice('tax', t, company, True).id for t in taxes)))]
+        vals['barcode'] = str(data.get('barcode') or '')[:100] or False
+        vals['description_purchase'] = str(data.get('description_purchase') or '')[:4000]
+        if data.get('standard_price') not in (None, ''):
+            cost = number(data['standard_price'], _('Cost'))
+            if cost < 0:
+                raise ValidationError(_('Cost cannot be negative.'))
+            vals['standard_price'] = cost
+        return vals
+
+    def _product_version(self, product):
+        return '%s|%s' % (product.write_date, product.product_tmpl_id.write_date)
+
+    @http.route(BASE + '/product-read', type='http', auth='user', methods=['POST'], csrf=True)
+    def read_product(self, **kw):
+        def run(data):
+            user = self._actor()
+            company = self._company(data.get('company_id'))
+            product = self._choice('product', data.get('id'), company, True).with_company(company)
+            pick = lambda r: {'id': r.id, 'label': r.display_name} if r else None
+            account = product.property_account_expense_id
+            return dict(id=product.id, version=self._product_version(product), name=product.name,
+                label=product.display_name, can_edit=user.has_group(PREFIX+'group_portal_purchase_preparer'),
+                shared=not bool(product.company_id), type=product.type,
+                is_storable=bool(product.is_storable) if 'is_storable' in product._fields else False,
+                categ_id=pick(product.categ_id), uom_id=pick(product.uom_id), uom_po_id=pick(product.uom_po_id),
+                default_code=product.default_code or '', barcode=product.barcode or '', standard_price=product.standard_price,
+                description_purchase=product.description_purchase or '', purchase_method=product.purchase_method,
+                property_account_expense_id=pick(account),
+                category_expense_account=product.categ_id.property_account_expense_categ_id.display_name or '',
+                supplier_taxes=[pick(t) for t in product.supplier_taxes_id if t.company_id == company])
+        return self._json(run)
+
     @http.route(BASE + '/product-create', type='http', auth='user', methods=['POST'], csrf=True)
     def create_product(self, **kw):
         def run(data):
             self._actor('preparer')
+            company = self._company(data.get('company_id'))
+            vals = self._product_values(data, company)
+            product = self._env(company)['product.product'].sudo().with_company(company).create(vals)
+            return {'id': product.id, 'label': product.display_name}
+        return self._json(run)
+
+    @http.route(BASE + '/product-update', type='http', auth='user', methods=['POST'], csrf=True)
+    def update_product(self, **kw):
+        def run(data):
             self._actor('preparer')
             company = self._company(data.get('company_id'))
-            name = str(data.get('name') or '').strip()[:150]
-            if not name:
-                raise ValidationError(_('Product name is required.'))
-            kind = data.get('type', 'consu')
-            if kind not in ('consu', 'service'):
-                raise ValidationError(_('Choose Goods or Service.'))
-            category = self._choice('category', data.get('categ_id'), company, True)
-            uom = self._choice('uom', data.get('uom_id'), company, True)
-            purchase_uom = self._choice('uom', data.get('uom_po_id') or uom.id, company, True)
-            if uom.category_id != purchase_uom.category_id:
-                raise ValidationError(_('Purchase unit must have the same category as the product unit.'))
-            vals = dict(name=name, type=kind, purchase_ok=True, sale_ok=False,
-                        company_id=company.id, categ_id=category.id, uom_id=uom.id,
-                        uom_po_id=purchase_uom.id, default_code=str(data.get('default_code') or '')[:100])
-            model = self._env(company)['product.product'].sudo().with_company(company)
-            if 'is_storable' in model._fields:
-                vals['is_storable'] = kind == 'consu' and bool(data.get('is_storable'))
-            if data.get('property_account_expense_id'):
-                vals['property_account_expense_id'] = self._choice('account', data['property_account_expense_id'], company, True).id
-            if data.get('purchase_method') in ('purchase', 'receive'):
-                vals['purchase_method'] = data['purchase_method']
-            taxes = data.get('supplier_taxes_id')
-            if taxes is not None:
-                if not isinstance(taxes, list) or len(taxes) > 50:
-                    raise ValidationError(_('Invalid purchase taxes.'))
-                vals['supplier_taxes_id'] = [(6, 0, [self._choice('tax', t, company, True).id for t in taxes])]
-            vals['barcode'] = str(data.get('barcode') or '')[:100] or False
-            vals['description_purchase'] = str(data.get('description_purchase') or '')[:4000]
-            if data.get('standard_price') not in (None, ''):
-                cost = number(data['standard_price'], _('Cost'))
-                if cost < 0:
-                    raise ValidationError(_('Cost cannot be negative.'))
-                vals['standard_price'] = cost
-            product = model.create(vals)
-            return {'id': product.id, 'label': product.display_name}
+            product = self._choice('product', data.get('id'), company, True).with_company(company)
+            # Lock both rows: product variants share template properties.
+            request.env.cr.execute('SELECT id FROM product_template WHERE id=%s FOR UPDATE', [product.product_tmpl_id.id])
+            request.env.cr.execute('SELECT id FROM product_product WHERE id=%s FOR UPDATE', [product.id])
+            product.invalidate_recordset()
+            product.product_tmpl_id.invalidate_recordset()
+            if not data.get('version') or data['version'] != self._product_version(product):
+                raise UserError(_('This product changed since you opened it. Close and reopen the product form.'))
+            vals = self._product_values(data, company)
+            # Updating an existing product must not move companies, disable sales
+            # or change purchasing availability as a side effect of this form.
+            for key in ('company_id', 'sale_ok', 'purchase_ok'):
+                vals.pop(key, None)
+            if 'supplier_taxes_id' in vals:
+                # Shared products may carry tax defaults for several companies.
+                selected = vals['supplier_taxes_id'][0][2]
+                other = product.supplier_taxes_id.filtered(lambda t: t.company_id != company).ids
+                vals['supplier_taxes_id'] = [(6, 0, list(dict.fromkeys(selected + other)))]
+            product.write(vals)
+            return {'id': product.id, 'label': product.display_name, 'product_updated': True,
+                    'default_account': (product.property_account_expense_id or product.categ_id.property_account_expense_categ_id).display_name or ''}
         return self._json(run)
