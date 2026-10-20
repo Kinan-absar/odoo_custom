@@ -15,12 +15,15 @@ class PurchaseOrder(models.Model):
     absar_portal_project_id = fields.Many2one('project.project', string='Portal Project (Legacy)', check_company=True)
     absar_portal_working_order = fields.Boolean(readonly=True, copy=False, default=False)
     absar_portal_requires_review = fields.Boolean(compute='_compute_portal_requires_review')
+    absar_portal_all_documents = fields.Boolean(compute='_compute_portal_requires_review')
 
     @api.depends('absar_portal_preparer_id','absar_portal_working_order')
     @api.depends_context('uid')
     def _compute_portal_requires_review(self):
         enrolled=self.env.user.has_group(PREFIX+'group_portal_purchase_preparer')
+        all_documents=self.env.user.has_group(PREFIX+'group_portal_purchase_user')
         for po in self:
+            po.absar_portal_all_documents=all_documents
             po.absar_portal_requires_review=bool(po.absar_portal_preparer_id or po.absar_portal_working_order or enrolled)
 
     absar_portal_preparer_id = fields.Many2one('res.users', string='Issuer', readonly=True, copy=False, index=True)
@@ -98,7 +101,7 @@ class PurchaseOrder(models.Model):
 
     def _portal_close_activities(self):
         activities = self.sudo().activity_ids.filtered(
-            lambda a: a.summary == 'Portal RFQ review: %s' % self.name and
+            lambda a: a.summary in ('Portal RFQ review: %s' % self.name, 'Purchase order review: %s' % self.name) and
             a.activity_type_id == self.env.ref('mail.mail_activity_data_todo'))
         activities.action_feedback(feedback=_('Portal review completed.'))
 
@@ -125,40 +128,50 @@ class PurchaseOrder(models.Model):
         self.sudo().write({'absar_portal_review_state': 'submitted',
                            'absar_portal_review_note': False,
                            'absar_portal_approver_id': False, 'absar_portal_approved_on': False})
-        self._portal_notify(reviewers, _('RFQ %s awaiting your confirmation') % self.name,
-                            _('%s requests your approval and confirmation in Purchase Approvals.') % user.name)
+        self._portal_notify(reviewers, _('Purchase order %s awaiting approval') % self.name,
+                            _('%s submitted a purchase order for your approval.') % user.name)
         for reviewer in reviewers.filtered(lambda u: not u.share):
             self.sudo().activity_schedule('mail.mail_activity_data_todo', user_id=reviewer.id,
-                                         summary='Portal RFQ review: %s' % self.name)
+                                         summary='Purchase order review: %s' % self.name)
 
     def action_absar_portal_approve(self):
+        """One approval action completes the native PO confirmation chain."""
         user = self._portal_approver()
-        for po in self:
+        for po in self.sorted('id'):
             po._portal_lock()
             po._portal_check_company(user)
-            if (not po.absar_portal_preparer_id or user in (po.absar_portal_preparer_id,po.absar_portal_submitter_id) or
-                    po.absar_portal_review_state != 'submitted' or po.state not in ('draft', 'sent')):
-                raise UserError(_('Only another preparer’s submitted RFQ can be approved.'))
+            if (not po.absar_portal_preparer_id or
+                    user in (po.absar_portal_preparer_id, po.absar_portal_submitter_id) or
+                    po.absar_portal_review_state not in ('submitted', 'approved') or
+                    po.state not in ('draft', 'sent')):
+                raise UserError(_('Only another issuer’s submitted purchase order can be approved.'))
+            # Older releases could leave an approved draft. The same Approve
+            # action finishes that draft after validating the independent actor.
             po.sudo().write({'absar_portal_review_state': 'approved',
                              'absar_portal_approver_id': user.id,
                              'absar_portal_approved_on': fields.Datetime.now()})
+            result = po.sudo().with_company(po.company_id).with_context(
+                validate_analytic=True, _absar_purchase_approval_token=_CONFIRM_TOKEN
+            ).button_confirm()
+            if isinstance(result, dict) or po.state not in ('purchase', 'done'):
+                raise UserError(_('Purchase approval could not complete confirmation. No approval was saved; resolve the installed purchase workflow and retry.'))
             po._portal_close_activities()
-            po._portal_notify(po.absar_portal_preparer_id, _('RFQ %s approved') % po.name,
+            po._portal_notify(po.absar_portal_preparer_id, _('Purchase order %s approved') % po.name,
                               _('Approved by %s.') % user.name)
         return True
 
     def action_absar_portal_approve_confirm(self):
+        # Compatibility for cached portal pages and old backend actions.
+        return self.action_absar_portal_approve()
+
+    def _approval_allowed(self):
         self.ensure_one()
-        user = self._portal_approver()
-        self._portal_lock()
-        self._portal_check_company(user)
-        if (not self.absar_portal_preparer_id or user in (self.absar_portal_preparer_id,self.absar_portal_submitter_id) or
-                self.absar_portal_review_state != 'submitted' or self.state not in ('draft', 'sent')):
-            raise UserError(_('Only another employee’s submitted RFQ can be approved and confirmed.'))
-        self.action_absar_portal_approve()
-        # Invoke the complete native/installed confirmation chain. Submission
-        # itself never invokes this method, creates receipts, or confirms a PO.
-        return self.sudo().with_company(self.company_id).with_context(validate_analytic=True).button_confirm()
+        if (self.env.context.get('_absar_purchase_approval_token') is _CONFIRM_TOKEN and
+                self.absar_portal_review_state == 'approved' and self.absar_portal_approver_id):
+            # Independent review is the single approval level for managed POs.
+            # Native receipt creation and installed confirmation hooks still run.
+            return True
+        return super()._approval_allowed()
 
     def action_absar_portal_return(self):
         user = self._portal_approver()
@@ -174,23 +187,13 @@ class PurchaseOrder(models.Model):
             po.sudo().write({'absar_portal_review_state': 'returned',
                              'absar_portal_approver_id': False, 'absar_portal_approved_on': False})
             po._portal_close_activities()
-            po._portal_notify(po.absar_portal_preparer_id, _('RFQ %s returned') % po.name,
+            po._portal_notify(po.absar_portal_preparer_id, _('Purchase order %s returned') % po.name,
                               po.absar_portal_review_note)
         return True
 
     def action_absar_portal_confirm(self):
-        user = self._portal_approver()
-        self.ensure_one()
-        self._portal_lock()
-        self._portal_check_company(user)
-        if (not self.absar_portal_preparer_id or self.absar_portal_review_state != 'approved' or
-                not self.absar_portal_approver_id or
-                self.absar_portal_approver_id == self.absar_portal_preparer_id or
-                self.state not in ('draft', 'sent')):
-            raise UserError(_('Independent purchase approval is required before confirmation.'))
-        # Never write native state directly or auto-approve native to-approve.
-        # Keep caller identity so hard-coded checks in installed signing hooks apply.
-        return self.sudo().with_company(self.company_id).with_context(validate_analytic=True).button_confirm()
+        # Legacy confirmation links use the same independent approval action.
+        return self.action_absar_portal_approve()
 
     def action_absar_portal_submit(self):
         """Native Purchase entry point; the portal uses its scoped controller."""
@@ -262,7 +265,7 @@ class PurchaseOrder(models.Model):
                         'absar_portal_review_state': 'returned',
                         'absar_portal_approver_id': False,
                         'absar_portal_approved_on': False,
-                        'absar_portal_review_note': _('RFQ contents changed. Please check and resubmit for approval.'),
+                        'absar_portal_review_note': _('Purchase order contents changed. Please check and resubmit for approval.'),
                     })
                     po._portal_close_activities()
 

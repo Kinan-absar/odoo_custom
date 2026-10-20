@@ -391,7 +391,7 @@ class PortalPurchasePrepare(http.Controller):
         bill_reason=''
         if operator and po:
             if po.state not in ('purchase','done'):
-                bill_reason=_('Confirm the purchase order before creating a vendor bill. Approval alone does not confirm the order.')
+                bill_reason=_('The purchase order must be approved before creating a vendor bill.')
             elif not finance:
                 bill_reason=_('Vendor bill preparation requires Accounting User (Direct Posting) or Accounting Preparer in addition to Purchase User.')
             elif po.invoice_status != 'to invoice':
@@ -412,9 +412,7 @@ class PortalPurchasePrepare(http.Controller):
                     can_create_product=user.has_group(PREFIX + 'group_portal_purchase_preparer') and not readonly,
                     can_review=bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_preparer_id and user not in (po.absar_portal_preparer_id,po.absar_portal_submitter_id) and
                         po.state in ('draft', 'sent') and po.absar_portal_review_state in ('submitted', 'approved')),
-                    can_confirm=bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_approver_id and
-                        po.absar_portal_review_state == 'approved' and po.state in ('draft', 'sent') and
-                        user not in (po.absar_portal_preparer_id,po.absar_portal_submitter_id)),
+                    can_confirm=False,
                     project_integration='project_id' in request.env['purchase.order']._fields)
 
     def _plain(self, value):
@@ -594,12 +592,8 @@ class PortalPurchasePrepare(http.Controller):
                     raise ValidationError(_('A correction note is required.'))
                 po.write({'absar_portal_review_note': str(data['note'])[:2000]})
                 po.action_absar_portal_return()
-            elif action == 'approve':
-                po.action_absar_portal_approve()
             else:
-                result = po.action_absar_portal_approve_confirm() if action == 'approve_confirm' else po.action_absar_portal_confirm()
-                if isinstance(result, dict):
-                    raise UserError(_('Confirmation requires a backend wizard. Please complete it in Purchase; no changes were saved.'))
+                po.action_absar_portal_approve()
             return {'url': BASE + '/%s' % po.id}
         return self._json(run)
 

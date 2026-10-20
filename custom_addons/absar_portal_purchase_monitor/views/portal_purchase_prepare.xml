@@ -4,7 +4,7 @@
  <template id="purchase_prepare_detail" name="Purchase Workspace Editor">
   <t t-call="employee_portal_suite.employee_portal_layout"><section id="apw-root" class="apw-shell"><t t-call="absar_portal_purchase_monitor.purchase_workspace_nav" t-if="not boot['approval_view']"/>
    <div class="apw-breadcrumb"><a t-att-href="boot['back_url']" t-out="'Purchase Monitoring' if boot['back_url'] == '/my/employee/purchase-monitor' else 'Purchase Approvals' if boot['approval_view'] else 'Purchase'"/><span>/</span><span t-out="boot['name']"/></div>
-   <div class="apw-heading"><div><h2 t-out="boot['name']"/><p t-out="boot['company_name']"/></div><div><span class="apw-badge" t-out="boot['review']"/> <span class="apw-badge" t-out="boot['state']"/></div></div>
+   <div class="apw-heading"><div><h2 t-out="boot['name']"/><p t-out="boot['company_name']"/></div><div><span class="apw-badge" t-out="boot['review']"/> <span class="apw-badge" t-out="{'draft': 'Draft PO', 'sent': 'Draft PO Sent', 'purchase': 'Purchase Order', 'done': 'Locked', 'cancel': 'Cancelled'}.get(boot['state'], boot['state'])"/></div></div>
    <p t-if="boot.get('mr_source')" class="alert alert-info">Materials imported from <strong t-out="boot['mr_source']"/>. Choose a product for unmatched materials and check vendor prices before saving.</p>
    <p t-if="not boot['project_integration']" class="alert alert-warning">The backend Project integration addon is not installed. Project selection requires that addon.</p>
    <p t-if="boot['note']" class="alert alert-info"><strong>Review note: </strong><t t-out="boot['note']"/></p>
@@ -13,15 +13,13 @@
    <div class="apw-actions">
     <a t-if="boot['id']" class="btn btn-outline-secondary" t-att-href="'/my/employee/purchase/%s/print' % boot['id']">Print PDF</a>
     <t t-if="not boot['readonly']"><button class="btn btn-primary" type="button" data-action="save">Save Draft</button><button t-if="boot['uses_review']" class="btn btn-outline-primary" type="button" data-action="submit">Submit for Approval</button></t>
-    <t t-if="boot['can_review']"><button t-if="boot['review'] == 'submitted'" class="btn btn-primary" type="button" data-action="approve_confirm">Approve &amp; Confirm</button><button t-if="boot['review'] == 'submitted'" class="btn btn-primary" type="button" data-action="approve">Approve Only</button><button class="btn btn-outline-secondary" type="button" data-action="return">Return for Correction</button></t>
-    <button t-if="boot['can_direct_confirm']" type="button" class="btn btn-primary" data-action="work_confirm">Confirm Purchase Order</button>
+    <t t-if="boot['can_review']"><button class="btn btn-primary" type="button" data-action="approve">Approve</button><button class="btn btn-outline-secondary" type="button" data-action="return">Return for Correction</button></t>
     <button t-if="boot['show_bill']" t-att-disabled="not boot['can_bill']" t-att-title="boot['bill_reason'] or 'Create a draft vendor bill from billable quantities'" type="button" class="btn btn-primary" data-action="create_bill">Create Vendor Bill</button>
-    <button t-if="boot['can_confirm']" type="button" class="btn btn-primary" data-action="confirm">Confirm PO</button>
     <span t-if="boot['readonly']" class="apw-help">Read-only</span>
    </div>
    <p t-if="boot['show_bill'] and boot['bill_reason']" class="apw-help apw-bill-help" role="status" t-out="boot['bill_reason']"/>
-   <p t-if="boot['review'] == 'submitted'" class="alert alert-info">Submitted for approval and confirmation.<t t-if="boot.get('approvers')"> Eligible Approvers: <t t-foreach="boot['approvers']" t-as="reviewer"><t t-if="not reviewer_first">, </t><t t-out="reviewer['name']"/> (<t t-out="reviewer['account_type']"/>)</t>.</t><t t-else=""> No eligible Approver is currently assigned to this company.</t></p>
-   <div class="apw-workflow-status" aria-label="Purchase status"><t t-foreach="[('draft', 'RFQ'), ('sent', 'RFQ Sent'), ('to approve', 'Awaiting Manager Approval'), ('purchase', 'Purchase Order'), ('done', 'Locked'), ('cancel', 'Cancelled')]" t-as="step"><span t-att-class="'is-current' if boot['state'] == step[0] else ''" t-out="step[1]"/></t></div>
+   <p t-if="boot['review'] == 'submitted'" class="alert alert-info">Awaiting approval. Approval confirms this purchase order.<t t-if="boot.get('approvers')"> Eligible Approvers: <t t-foreach="boot['approvers']" t-as="reviewer"><t t-if="not reviewer_first">, </t><t t-out="reviewer['name']"/> (<t t-out="reviewer['account_type']"/>)</t>.</t><t t-else=""> No eligible Approver is currently assigned to this company.</t></p>
+   <div class="apw-workflow-status" aria-label="Purchase status"><t t-foreach="[('draft', 'Draft PO'), ('sent', 'Draft PO Sent'), ('to approve', 'Awaiting Manager Approval'), ('purchase', 'Purchase Order'), ('done', 'Locked'), ('cancel', 'Cancelled')]" t-as="step"><span t-att-class="'is-current' if boot['state'] == step[0] else ''" t-out="step[1]"/></t></div>
    <div class="apw-sheet">
     <div class="apw-form-grid" id="apw-header"/>
     <div class="apw-tabs" role="tablist" aria-label="Purchase information"><button type="button" role="tab" aria-selected="true" data-tab="products">Products</button><button type="button" role="tab" aria-selected="false" data-tab="other">Other Information</button><button type="button" role="tab" aria-selected="false" data-tab="payments">Payments</button><button type="button" role="tab" aria-selected="false" data-tab="signing">Signing Package</button></div>

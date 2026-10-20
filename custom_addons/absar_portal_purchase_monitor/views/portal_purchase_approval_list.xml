@@ -2,8 +2,8 @@
  <template id="purchase_approval_list" name="Purchase Approvals — Monitoring List Design">
   <t t-call="employee_portal_suite.employee_portal_layout">
    <div class="container apm-shell my-4">
-    <t t-if="not approval" t-call="absar_portal_purchase_monitor.purchase_workspace_nav"/><div class="apm-title"><div><h2 t-out="'Purchase Approvals' if approval else 'Requests for Quotation'"/><p t-out="'Review submitted RFQs' if approval else 'Prepare and follow your supplier quotations'"/></div><span class="apm-count"><t t-out="total"/> requests</span><a t-if="not approval" href="/my/employee/purchase/new" class="btn btn-primary">New RFQ</a></div>
-    <form class="apm-filter" method="get"><input class="form-control apw-search" name="q" t-att-value="q" placeholder="Search RFQ, vendor, MR or reference" aria-label="Search RFQs"/>
+    <t t-if="not approval" t-call="absar_portal_purchase_monitor.purchase_workspace_nav"/><div class="apm-title"><div><h2 t-out="'Purchase Approvals' if approval else 'Purchase Orders'"/><p t-out="'Review purchase orders awaiting approval' if approval else 'Draft purchase orders and approval status'"/></div><span class="apm-count"><t t-out="total"/> requests</span><a t-if="not approval" href="/my/employee/purchase/new" class="btn btn-primary">New Purchase Order</a></div>
+    <form class="apm-filter" method="get"><input class="form-control apw-search" name="q" t-att-value="q" placeholder="Search PO, vendor, MR or reference" aria-label="Search Purchase Orders"/>
     <select t-if="not orders_only" name="review" class="form-select" aria-label="Review status"><option value="all" t-att-selected="review == 'all'">All review statuses</option><option value="draft" t-att-selected="review == 'draft'">Draft</option><option value="submitted" t-att-selected="review == 'submitted'">Awaiting Approval</option><option value="approved" t-att-selected="review == 'approved'">Approved</option><option value="returned" t-att-selected="review == 'returned'">Returned</option></select>
     <select name="sort" class="form-select" aria-label="Sort"><option value="newest">Newest</option><option value="reference" t-att-selected="sort == 'reference'">Reference</option><option value="vendor" t-att-selected="sort == 'vendor'">Vendor</option><option value="amount" t-att-selected="sort == 'amount'">Highest amount</option><option value="date" t-att-selected="sort == 'date'">Order date</option></select><select name="group_by" class="form-select" aria-label="Group by"><option value="">No grouping</option><option value="vendor" t-att-selected="group_by == 'vendor'">Group by Vendor</option><option value="project" t-att-selected="group_by == 'project'">Group by Project</option><option value="buyer" t-att-selected="group_by == 'buyer'">Group by Buyer</option><option value="company" t-att-selected="group_by == 'company'">Group by Company</option><option value="review" t-att-selected="group_by == 'review'">Group by Review</option></select><button class="btn btn-primary">Search</button><a t-att-href="'/my/employee/purchase/orders' if orders_only else '/my/employee/purchase/confirmations' if confirmations else '/my/employee/purchase/approvals' if approval else '/my/employee/purchase'" class="btn btn-light">Clear</a>
    </form>
@@ -17,12 +17,12 @@
        <td><span t-out="po.project_id.display_name if 'project_id' in po._fields else po.absar_portal_project_id.display_name or '—'"/><small>MR: <t t-out="po.material_request_id.name or '—'"/></small></td>
        <td><span t-out="po.absar_portal_preparer_id.name or po.user_id.name or '—'"/><small t-out="po.company_id.name"/></td>
        <td><span class="apm-pill" t-out="dict(po._fields['absar_portal_review_state']._description_selection(po.env)).get(po.absar_portal_review_state, 'Draft')"/></td>
-       <td t-out="dict(po._fields['state']._description_selection(po.env)).get(po.state)"/>
+       <td t-out="{'draft': 'Draft PO', 'sent': 'Draft PO Sent', 'purchase': 'Purchase Order', 'done': 'Locked', 'cancel': 'Cancelled'}.get(po.state, po.state)"/>
        <td class="apm-num"><span t-out="'%.2f' % po.amount_total"/><small t-out="po.currency_id.name"/></td><td class="apm-arrow">→</td>
       </tr>
      </t><tr t-if="not orders"><td colspan="7" class="apm-empty">No purchase requests match these filters.</td></tr></tbody>
     </table></div>
-    <div class="apm-footer"><p t-out="'Review a request to approve, confirm or return it for correction.' if approval else 'Open a request to prepare it or follow its approval status.'"/><div class="apm-pages"><a t-if="page &gt; 1" t-att-href="previous_url">← Previous</a><span>Page <t t-out="page"/> of <t t-out="pages"/></span><a t-if="page &lt; pages" t-att-href="next_url">Next →</a></div></div>
+    <div class="apm-footer"><p t-out="'Review a request to approve or return it for correction.' if approval else 'Open a request to prepare it or follow its approval status.'"/><div class="apm-pages"><a t-if="page &gt; 1" t-att-href="previous_url">← Previous</a><span>Page <t t-out="page"/> of <t t-out="pages"/></span><a t-if="page &lt; pages" t-att-href="next_url">Next →</a></div></div>
    </div>
   </t>
  </template>

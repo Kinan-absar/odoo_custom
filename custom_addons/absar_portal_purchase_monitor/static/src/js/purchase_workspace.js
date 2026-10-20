@@ -527,7 +527,7 @@ function startPurchaseWorkspace() {
                 description.rows = 4; description.maxLength = 2000; description.setAttribute('aria-label', 'Correction required');
                 view.body.append(text('p', 'Explain what the preparer should correct.'), description);
                 const message = text('p', '', 'text-danger'); view.body.append(message);
-                view.foot.append(button('Return RFQ', () => {
+                view.foot.append(button('Return Purchase Order', () => {
                     if (!description.value.trim()) {message.textContent = 'A correction note is required.'; return;}
                     resolve(description.value.trim()); view.dialog.close();
                 }, 'btn btn-primary'), button('Cancel', () => view.dialog.close()));
@@ -535,11 +535,11 @@ function startPurchaseWorkspace() {
             });
             if (note === null) return;
         }
-        if (action === 'confirm' || action === 'approve_confirm') {
+        if (action === 'approve' || action === 'confirm' || action === 'approve_confirm') {
             const confirmed = await new Promise(resolve => {
-                const view = modal('Confirm Purchase Order');
-                view.body.append(text('p', 'Approve and confirm this purchase request? Odoo may create receipts and run the installed purchase/signing workflow.'));
-                view.foot.append(button('Confirm Purchase Order', () => {resolve(true); view.dialog.close();}, 'btn btn-primary'), button('Cancel', () => view.dialog.close()));
+                const view = modal('Approve Purchase Order');
+                view.body.append(text('p', 'Approve this purchase order? It will become a confirmed PO and Odoo will run the purchase workflow.'));
+                view.foot.append(button('Approve', () => {resolve(true); view.dialog.close();}, 'btn btn-primary'), button('Cancel', () => view.dialog.close()));
                 view.dialog.addEventListener('close', () => resolve(false));
             });
             if (!confirmed) return;

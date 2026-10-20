@@ -1,7 +1,7 @@
 <odoo>
  <template id="purchase_workspace_nav" name="Purchase Portal Navigation">
   <header class="apw-workspace-header" t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')"><div class="apw-workspace-brand"><span class="apw-workspace-icon"><i class="fa fa-shopping-cart" aria-hidden="true"/></span><div><strong>Purchase</strong><small t-out="request.env.company.name"/></div></div><nav class="apw-app-nav" aria-label="Purchase workspace">
-   <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')" href="/my/employee/purchase" t-att-class="'active' if request.httprequest.path in ['/my/employee/purchase', '/my/employee/purchase/new'] else ''">Requests for Quotation</a>
+   <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')" href="/my/employee/purchase" t-att-class="'active' if request.httprequest.path in ['/my/employee/purchase', '/my/employee/purchase/new'] else ''">Draft Purchase Orders</a>
    <a t-att-class="'active' if request.httprequest.path.endswith('/orders') else ''" t-att-href="'/my/employee/purchase-monitor' if request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor') else '/my/employee/purchase/orders'">Purchase Orders</a>
    <a href="/my/employee/purchase/products" t-att-class="'active' if request.httprequest.path.endswith('/products') else ''">Products</a>
    <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')" href="/my/employee/purchase/material-requests" t-att-class="'active' if request.httprequest.path.endswith('/material-requests') else ''">Material Requests</a>
@@ -31,7 +31,7 @@
    <div class="apw-table-scroll"><table class="apw-table"><thead><tr><th>Material Request</th><th>Project</th><th>Requested By</th><th>Required Date</th><th>Materials</th><th>Existing POs</th><th/></tr></thead><tbody>
     <t t-foreach="records" t-as="mr"><tr><td><strong t-out="mr.name"/></td><td t-out="mr.project_id.display_name"/><td t-out="mr.employee_id.name"/><td t-out="mr.delivery_date or '—'"/><td>
      <details><summary t-out="'%s materials' % len(mr.line_ids)"/><ul class="apw-mr-materials"><t t-foreach="mr.line_ids" t-as="line"><li><span t-out="line.item_name"/> · <strong t-out="line.qty_required"/> <t t-out="line.uom_id.display_name or ''"/></li></t></ul></details>
-    </td><td t-out="mr.po_name or '—'"/><td><a class="btn btn-outline-primary btn-sm" t-att-href="'/my/employee/purchase/new?mr_id=%s' % mr.id">Create RFQ</a></td></tr></t>
+    </td><td t-out="mr.po_name or '—'"/><td><a class="btn btn-outline-primary btn-sm" t-att-href="'/my/employee/purchase/new?mr_id=%s' % mr.id">Create Purchase Order</a></td></tr></t>
     <tr t-if="not records"><td colspan="7" class="apw-empty">No approved Material Requests are available in this company.</td></tr>
    </tbody></table></div><t t-call="absar_portal_purchase_monitor.purchase_pager"/>
   </section></t>

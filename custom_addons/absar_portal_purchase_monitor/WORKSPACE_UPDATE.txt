@@ -1,3 +1,26 @@
-18.0.1.6.2
-Independent approval is mandatory for the own-document Issuer/Prepare and all-company User groups. The User role expands visibility, not confirmation authority. Save Draft sends no approval notification; Submit for Approval notifies eligible independent approvers.
-The original issuer retains ownership when a working user submits on their behalf; the actual submitter is recorded separately and cannot approve that submission. Changes invalidate approval. No internal user groups are implied. Employee Portal Suite and Accounting posting rules are unchanged.
+ABSAR PURCHASE 18.0.1.6.4 - 2026-10-20
+
+Changes in this release:
+- Issuer uses Submit for Approval. Native Confirm buttons are hidden for review-managed orders.
+- Approver uses one Approve action. It completes native PO confirmation, including stock receipts and installed confirmation hooks. No Approve Only or separate Confirm action.
+- The independent review is the single approval level for managed purchase orders, including when native amount-based double validation is configured. Ordinary native orders retain native settings.
+- Existing approved-but-unconfirmed managed drafts can be completed through the same Approve action. No existing orders are confirmed by upgrading.
+- Portal purchasing labels use Draft PO/Purchase Order rather than a separate RFQ workflow.
+- Self-approval, actual-submitter exclusion and allowed-company checks remain enforced.
+- Existing All Company Documents group definitions, automatic group assignments, document visibility and role checks are unchanged. No role migration is included.
+- Employee Portal Suite, Sales and Accounting are unchanged and excluded.
+
+Upgrade:
+Replace only absar_portal_purchase_monitor, restart/rebuild staging, upgrade ABSAR Portal Purchase Workspace, then refresh the browser. Do not uninstall.
+
+Testing performed locally:
+Changed approval methods executed on isolated fixtures: independent actor/company/state checks, legacy action aliases, native-confirm invocation, no success notification before completion, one Approve button, both native Confirm buttons covered.
+44 existing isolated validator and financial checks passed; frontend fixture checks passed; all Python and XML parsed successfully. Original group definitions compared byte-for-byte with the prior ZIP.
+No Odoo runtime or live staging upgrade was performed for 18.0.1.6.4. The actual installed Studio/signing/stock integration still requires staging testing.
+
+Suggested staging checks:
+1. Issuer: create a draft, Submit for Approval; no native PO confirmation yet.
+2. Independent Approver: receive activity and Approve; PO becomes confirmed immediately.
+3. Return for Correction: reason required, issuer edits and resubmits.
+4. Internal user without Issuer: ordinary unmanaged PO retains native confirmation.
+5. Verify the existing portal All Company Documents behavior remains as before.
