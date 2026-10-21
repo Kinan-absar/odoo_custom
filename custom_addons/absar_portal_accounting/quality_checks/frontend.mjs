@@ -101,3 +101,9 @@ assert(options && options.style.position==='fixed');assert(Number.parseInt(optio
 find(options,'Search More…').handlers.click();
 const searchDialog=walk(overlay.body).find(n=>n.className?.includes('aca-search-dialog'));assert(searchDialog);assert(find(searchDialog,'Search Accounts'));assert(find(searchDialog,'Close'));
 console.log('PASS: dropdown uses top-layer popover positioned above near-bottom field; Search More has dedicated compact dialog/header.');
+const undated=mount({...fixture,invoice_date:false});
+find(undated.root,'Submit for Approval').handlers.click();await undated.settle();
+assert.equal(undated.calls.length,0);
+assert(find(undated.root,'Set the Bill Date before submitting for approval.'));
+assert(find(undated.root,'Save Draft').disabled===false);
+console.log('PASS: portal Submit stops locally on missing Bill Date without sending a request or disabling the form.');

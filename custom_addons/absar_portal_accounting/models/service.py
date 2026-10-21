@@ -505,6 +505,8 @@ class PortalAccountingService(models.AbstractModel):
                     raise UserError(_('Only submitted drafts can be reviewed.'))
                 if record.portal_accounting_issuer_id == user:
                     raise AccessError(_('Another accounting approver must review your document.'))
+                if action == 'post':
+                    record._portal_accounting_validate_submission()
             elif action != 'post' or not roles['direct'] or record.state != 'draft':
                 raise AccessError(_('Direct posting is not permitted.'))
             if action == 'return':

@@ -58,14 +58,14 @@ class Base:
 source=Path(__file__).parents[1]/'models'/'accounting.py'
 tree=ast.parse(source.read_text())
 cls=next(n for n in tree.body if isinstance(n,ast.ClassDef) and n.name=='PortalReview')
-selected={'write','_portal_accounting_reviewers','_portal_accounting_path','_portal_accounting_notify','_portal_accounting_notify_submission'}
+selected={'write','_portal_accounting_reviewers','_portal_accounting_path','_portal_accounting_notify','_portal_accounting_notify_submission','_portal_accounting_validate_submission','_portal_accounting_reviewer_edit_allowed'}
 methods=[n for n in cls.body if isinstance(n,ast.FunctionDef) and n.name in selected]
 for n in methods:n.decorator_list=[]
 node=ast.ClassDef(name='PortalReview',bases=[ast.Name(id='Base',ctx=ast.Load())],keywords=[],body=methods,decorator_list=[])
 namespace=dict(Base=Base,AccessError=AccessError,UserError=UserError,Markup=Markup,_=lambda text:text,_REVIEW_TOKEN=object())
 exec(compile(ast.fix_missing_locations(ast.Module(body=[node],type_ignores=[])),str(source),'exec'),namespace)
 class Record(namespace['PortalReview']):
-    id=40;_name='account.move';move_type='in_invoice';display_name='Draft Bill';journal_id=10
+    id=40;_name='account.move';move_type='in_invoice';invoice_date='2026-10-21';display_name='Draft Bill';journal_id=10
     company_id=company;portal_accounting_issuer_id=NS(id=1);env=Env()
     portal_accounting_review='draft';portal_accounting_review_required=True;state='draft'
     def __iter__(self):return iter([self])

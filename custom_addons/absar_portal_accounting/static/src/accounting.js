@@ -273,6 +273,7 @@
         }
         async function run(operation, payload) {
             if (busy) return;
+            if(operation==='save'&&payload.submit&&isBill()&&!payload.invoice_date){say('Set the Bill Date before submitting for approval.',true);return;}
             busy = true; clearTimeout(previewTimer); root.querySelectorAll('button').forEach(b => b.disabled = true); say('Working…');
             try {
                 const result = await api(operation, payload);

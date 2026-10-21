@@ -42,6 +42,26 @@ class PortalReview(models.AbstractModel):
     portal_accounting_reset_reason = fields.Text(readonly=True, copy=False)
     portal_accounting_can_review = fields.Boolean(compute='_compute_portal_accounting_can_review')
 
+    def _portal_accounting_validate_submission(self, values=None):
+        for record in self:
+            if record._name == 'account.move' and record.move_type in ('in_invoice', 'in_refund'):
+                bill_date = (values or {}).get('invoice_date', record.invoice_date)
+                if not bill_date:
+                    raise UserError(_('Set the Bill Date before submitting for approval.'))
+
+    def _portal_accounting_reviewer_edit_allowed(self):
+        """An independent native reviewer may correct the draft they will post.
+
+        Native write ACLs still apply. Issuer edits and edits after approval
+        invalidate review; portal reviewers have no draft-save permission.
+        """
+        self.ensure_one()
+        return bool(not self.env.user.share and self.env.uid != self.portal_accounting_issuer_id.id
+            and self.env.user.has_group('absar_portal_accounting.group_approver')
+            and not self.env.user.has_group('employee_portal_suite.group_attendance_only')
+            and self.state == 'draft' and self.portal_accounting_review_required
+            and self.portal_accounting_review == 'submitted')
+
     def _portal_accounting_path(self, user):
         self.ensure_one()
         kind = {'account.payment.voucher': 'payments', 'account.receipt.voucher': 'receipts'}.get(self._name)
@@ -188,6 +208,13 @@ class PortalReview(models.AbstractModel):
         if len(pending) != len(self):
             raise UserError(_('Post reviewed and unreviewed documents separately. No documents were posted.'))
         self.check_access('write')
+        # Serialize double clicks and validate the current database state.
+        for record in pending.sorted('id'):
+            self.env.cr.execute('SELECT id FROM "' + record._table + '" WHERE id=%s FOR UPDATE', [record.id])
+            record.invalidate_recordset()
+            if record.state != 'draft' or record.portal_accounting_review not in (False, 'draft', 'returned'):
+                raise UserError(_('This document is already awaiting approval or was changed. Refresh the form.'))
+            record._portal_accounting_validate_submission()
         for record in pending:
             record.sudo().write({'portal_accounting_review_required': True, 'portal_accounting_issuer_id': record.portal_accounting_issuer_id.id or self.env.uid,
                           'portal_accounting_review': 'submitted', 'portal_accounting_reviewer_id': False,
@@ -200,8 +227,9 @@ class PortalReview(models.AbstractModel):
     def _portal_submission_action(self):
         return {'type':'ir.actions.client', 'tag':'display_notification', 'params':{
             'title':_('Submitted for Accounting Approval'),
-            'message':_('The document remains in Draft until an independent Accounting Approver posts it using their accounting screen.'),
-            'type':'success', 'sticky':True}}
+            'message':_('Submitted. The approver has been notified.'),
+            'type':'success', 'sticky':False,
+            'next': {'type':'ir.actions.client', 'tag':'reload'}}}
 
     def _portal_accounting_lock(self, version):
         self.ensure_one()
@@ -226,9 +254,13 @@ class PortalReview(models.AbstractModel):
         business = {k for k in vals if not k.startswith(('portal_accounting_', 'message_', 'activity_'))
                     and k not in ('access_token', 'access_url', 'access_warning')}
         submitted = self.filtered(lambda r: r.portal_accounting_review == 'submitted')
+        if vals.get('portal_accounting_review') == 'submitted':
+            self._portal_accounting_validate_submission(vals)
         if business and self.env.context.get('_absar_accounting_token') is not _REVIEW_TOKEN:
             for record in self:
-                if record.state == 'draft' and record.portal_accounting_review_required and record.portal_accounting_review in ('submitted', 'approved'):
+                if (record.state == 'draft' and record.portal_accounting_review_required
+                        and record.portal_accounting_review in ('submitted', 'approved')
+                        and not record._portal_accounting_reviewer_edit_allowed()):
                     super(PortalReview, record).write({
                         'portal_accounting_review': 'returned',
                         'portal_accounting_reviewer_id': False,
@@ -278,7 +310,8 @@ class MoveLine(models.Model):
 
     def write(self, vals):
         moves = self.move_id.filtered(lambda m: m.state == 'draft' and m.portal_accounting_review_required
-                                     and m.portal_accounting_review in ('submitted', 'approved'))
+                                     and m.portal_accounting_review in ('submitted', 'approved')
+                                     and not m._portal_accounting_reviewer_edit_allowed())
         if moves and self.env.context.get('_absar_accounting_token') is not _REVIEW_TOKEN:
             moves.sudo().write({'portal_accounting_review': 'returned', 'portal_accounting_reviewer_id': False,
                          'portal_accounting_comment': _('Entry lines changed; submit it again for review.')})
@@ -289,14 +322,16 @@ class MoveLine(models.Model):
         records = super().create(vals_list)
         if self.env.context.get('_absar_accounting_token') is not _REVIEW_TOKEN:
             records.move_id.filtered(lambda m: m.state == 'draft' and m.portal_accounting_review_required
-                and m.portal_accounting_review in ('submitted', 'approved')).sudo().write({
+                and m.portal_accounting_review in ('submitted', 'approved')
+                and not m._portal_accounting_reviewer_edit_allowed()).sudo().write({
                     'portal_accounting_review': 'returned', 'portal_accounting_reviewer_id': False})
         return records
 
     def unlink(self):
         if self.env.context.get('_absar_accounting_token') is not _REVIEW_TOKEN:
             self.move_id.filtered(lambda m: m.state == 'draft' and m.portal_accounting_review_required
-                and m.portal_accounting_review in ('submitted', 'approved')).sudo().write({
+                and m.portal_accounting_review in ('submitted', 'approved')
+                and not m._portal_accounting_reviewer_edit_allowed()).sudo().write({
                     'portal_accounting_review': 'returned', 'portal_accounting_reviewer_id': False})
         return super().unlink()
 
@@ -335,7 +370,8 @@ class PlanLine(models.Model):
 def _invalidate_voucher_review(vouchers):
     if not vouchers.env.context.get('_absar_accounting_action'):
         vouchers.filtered(lambda v: v.state == 'draft' and v.portal_accounting_review_required
-            and v.portal_accounting_review in ('submitted', 'approved')).sudo().write({
+            and v.portal_accounting_review in ('submitted', 'approved')
+            and not v._portal_accounting_reviewer_edit_allowed()).sudo().write({
                 'portal_accounting_review': 'returned', 'portal_accounting_reviewer_id': False,
                 'portal_accounting_comment': _('Voucher allocations changed; submit again for review.')})
 

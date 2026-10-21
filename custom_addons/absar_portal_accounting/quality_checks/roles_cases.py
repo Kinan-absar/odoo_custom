@@ -58,9 +58,13 @@ def run(env, f):
     # The same internal employee is restricted only after explicit group assignment.
     native.groups_id=[Command.link(env.ref('absar_portal_accounting.group_preparer').id),Command.link(env.ref('absar_portal_accounting.group_approver').id)]
     raw=f['prep']._move_values(company,'bills',dict(bill,ref='RESTRICTED-NATIVE'))
-    restricted=env['account.move'].with_user(native).create(raw)
+    restricted=env['account.move'].with_user(native).create(dict(raw,invoice_date=False))
+    deny(lambda:restricted.action_portal_accounting_submit())
+    assert restricted.portal_accounting_review=='draft'
+    restricted.invoice_date=raw['invoice_date']
     restricted.with_context(_absar_accounting_action=True).action_post()
     assert restricted.state=='draft' and restricted.portal_accounting_review_required and restricted.portal_accounting_review=='submitted'
+    deny(lambda:restricted.action_portal_accounting_submit())
     deny(lambda:restricted.action_portal_accounting_approve())
     deny(lambda:restricted.write({'portal_accounting_review_required':False}))
     deny(lambda:env['account.move'].with_user(native).create(dict(raw,portal_accounting_review='approved')))
@@ -71,6 +75,10 @@ def run(env, f):
     assert not view.xpath("//a[contains(text(),'Open Accounting Workspace')]")
     reviewed=restricted.with_user(approver)
     assert reviewed.portal_accounting_can_review
+    reviewed.ref=False
+    assert reviewed.portal_accounting_review=='submitted' and reviewed.portal_accounting_can_review
+    reviewed.invoice_line_ids[0].name='Reviewed label'
+    assert reviewed.portal_accounting_review=='submitted' and reviewed.portal_accounting_can_review
     reviewed.portal_accounting_comment='Correct reference';reviewed.action_portal_accounting_return()
     assert restricted.portal_accounting_review=='returned'
     restricted.action_portal_accounting_submit();reviewed.action_portal_accounting_approve()
