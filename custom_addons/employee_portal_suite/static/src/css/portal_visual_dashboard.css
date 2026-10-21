@@ -30,3 +30,71 @@
 @media(max-width:1150px){.eps-v-charts,.eps-v-work{grid-template-columns:minmax(0,1fr)}.eps-v-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.eps-v-summary>div:nth-child(2){border:0}.eps-v-heading{align-items:flex-start}.eps-v-updated{flex-direction:column;align-items:flex-end}.eps-v-plan{flex-wrap:wrap}.eps-v-plan>div:first-of-type{flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){#eps-visual-dashboard,.eps-v-week-stack{animation:none}.eps-v-donut{transition:none}}
 }
+
+/* Attention-led desktop composition. */
+@media(min-width:769px){
+#eps-visual-dashboard{--v-line:#dfe8ea;color:#263f4b}
+#eps-visual-dashboard .eps-v-heading{margin-bottom:24px;align-items:flex-end}
+#eps-visual-dashboard .eps-v-heading h1{font-size:28px;margin:7px 0 0;letter-spacing:-.035em}
+#eps-visual-dashboard .eps-v-eyebrow{font-size:10px;letter-spacing:.12em;font-weight:750;color:#6d8992;margin:0 0 6px}
+#eps-visual-dashboard .eps-v-date{font-size:12px;color:#718995;margin:0 0 3px;white-space:nowrap}
+.eps-v-attention{background:linear-gradient(115deg,#153a46 0%,#164952 65%,#10646a 100%);border:1px solid #164952;border-radius:20px;padding:26px 28px;margin-bottom:24px;color:#fff;box-shadow:0 12px 28px #163d4910}
+.eps-v-attention-heading{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:23px}
+.eps-v-priority-label{display:flex;align-items:center;gap:7px;color:#b4d6d7;font-size:10px;letter-spacing:.13em;font-weight:750}
+.eps-v-priority-label i{width:6px;height:6px;border-radius:50%;background:#efbd67}
+.eps-v-attention h2{font-size:24px;font-weight:750;letter-spacing:-.025em;line-height:1.25;color:#fff;margin:9px 0}
+.eps-v-attention-heading p{font-size:12px;color:#c5dcdf;margin:0;line-height:1.6}
+.eps-v-attention-total{display:flex;align-items:center;gap:12px;padding-left:24px;border-left:1px solid #ffffff28;flex-shrink:0}
+.eps-v-attention-total strong{font-size:49px;font-weight:700;letter-spacing:-.055em;line-height:1}
+.eps-v-attention-total span{font-size:11px;max-width:45px;line-height:1.5;color:#c5dcdf}
+.eps-v-action-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px}
+#eps-visual-dashboard a.eps-v-action{display:flex;flex-direction:column;gap:14px;color:#fff;border:1px solid #ffffff29;border-radius:12px;padding:16px 18px;background:#ffffff0b;transition:background .18s,border-color .18s,transform .18s}
+#eps-visual-dashboard a.eps-v-action:hover{background:#ffffff19;border-color:#ffffff65;transform:translateY(-2px)}
+.eps-v-action>div{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.eps-v-action-label{font-size:12px;font-weight:600;line-height:1.45;max-width:180px}
+.eps-v-action strong{font-size:29px;font-weight:700;line-height:1;letter-spacing:-.035em}
+.eps-v-action-open{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:10px;color:#bcd7d9}
+.eps-v-action-open i{font-size:10px}
+.eps-v-insights{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(290px,1fr);gap:24px;margin-bottom:24px;align-items:stretch}
+.eps-v-insights>.eps-v-today:only-child{grid-column:1/-1}
+#eps-visual-dashboard .eps-v-panel{border-radius:16px;padding:24px;box-shadow:0 3px 12px #24485203}
+#eps-visual-dashboard .eps-v-panel-head{margin-bottom:18px}
+#eps-visual-dashboard .eps-v-panel-head h2{font-size:16px;letter-spacing:-.02em;margin:0 0 7px;color:#213b48}
+#eps-visual-dashboard .eps-v-panel-head p{font-size:11px;line-height:1.5;color:#83979e}
+#eps-visual-dashboard .eps-v-status-chart{justify-content:flex-start;gap:38px;min-height:190px;padding:6px 8px}
+#eps-visual-dashboard .eps-v-donut{width:176px;height:176px;flex-basis:176px}
+#eps-visual-dashboard .eps-v-donut>div{width:138px;height:138px}
+#eps-visual-dashboard .eps-v-donut strong{font-size:36px;letter-spacing:-.045em;font-weight:750}
+#eps-visual-dashboard .eps-v-donut span{font-size:10px}
+#eps-visual-dashboard .eps-v-legend{flex:1;gap:0;min-width:0}
+#eps-visual-dashboard .eps-v-legend>div{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid #edf2f3;font-size:12px}
+#eps-visual-dashboard .eps-v-legend>div:last-child{border-bottom:0}
+#eps-visual-dashboard .eps-v-legend a{flex:1;min-width:0;line-height:1.4;font-weight:550}
+#eps-visual-dashboard .eps-v-legend a:hover{color:#087f83}
+#eps-visual-dashboard .eps-v-legend .eps-v-share{font-size:10px;color:#84989f;white-space:nowrap;margin-left:auto}
+#eps-visual-dashboard .eps-v-legend strong{font-size:13px;margin-left:0;min-width:22px;text-align:right}
+.eps-v-today>.eps-v-panel-head>i{font-size:19px;color:#9eb7bc;padding-top:12px}
+.eps-v-overview-row{display:flex;align-items:center;gap:12px;border-bottom:1px solid #edf2f3;padding:13px 0}
+.eps-v-overview-row>div{flex:1;min-width:0}
+.eps-v-overview-icon{display:grid;place-items:center;width:35px;height:35px;flex:0 0 35px;background:#eff6f6;color:#087f83;border-radius:10px;font-size:15px}
+.eps-v-overview-row small{display:block;color:#84969d;font-size:10px;margin-bottom:4px}
+.eps-v-overview-row strong{display:block;font-size:12px;color:#2f4b58;font-weight:650}
+.eps-v-overview-row>i{color:#9bb4ba;font-size:13px}
+.eps-v-overview-row:hover strong{color:#087f83}
+.eps-v-overview-note{font-size:10px;color:#91a3aa;line-height:1.5;margin:15px 0 0}
+.eps-v-history{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-top:24px}
+#eps-visual-dashboard .eps-v-cash{margin-top:0}
+#eps-visual-dashboard .eps-v-plan{padding:16px 0}
+#eps-visual-dashboard .eps-v-plan:last-child{padding-bottom:0}
+#eps-visual-dashboard :is(.eps-v-action,.eps-v-overview-row,.eps-v-legend a):focus-visible{outline:2px solid #2ba5ab;outline-offset:4px}
+#eps-visual-dashboard .eps-v-action:focus-visible{outline-color:#fff}
+@media(max-width:1150px){
+.eps-v-insights{grid-template-columns:minmax(0,1fr)}
+#eps-visual-dashboard .eps-v-date{white-space:normal;text-align:right;max-width:145px}
+.eps-v-attention{padding:22px}
+.eps-v-attention-total strong{font-size:40px}
+#eps-visual-dashboard .eps-v-status-chart{gap:24px}
+.eps-v-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){#eps-visual-dashboard .eps-v-action{transition:none}#eps-visual-dashboard a.eps-v-action:hover{transform:none}}
+}

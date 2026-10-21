@@ -90,6 +90,16 @@ class EmployeePortalVisualDashboard(EmployeePortalMain):
                 cash.append({'name': run.name, 'company': run.company_id.name,
                              'currency': run.currency_id.name, 'planned': run.forecast_outflow,
                              'actual': run.actual_outflow, 'url': '/my/employee/treasury/plans/%s' % run.id})
+        active_queues = [dict(item) for item in queues if item['count'] > 0]
+        palette = ['#087f83', '#e5aa45', '#7195c4', '#9b86b6', '#5aa58d', '#cc7f81']
+        pending = sum(item['count'] for item in active_queues)
+        queue_segments, queue_offset = [], 0
+        for index, item in enumerate(active_queues):
+            item['color'] = palette[index % len(palette)]
+            item['share'] = item['count'] / pending * 100
+            end = queue_offset + item['share'] * 3.6
+            queue_segments.append('%s %.4fdeg %.4fdeg' % (item['color'], queue_offset, end))
+            queue_offset = end
         total = sum(counts.values())
         offset = 0
         segments = []
@@ -99,9 +109,10 @@ class EmployeePortalVisualDashboard(EmployeePortalMain):
             segments.append('%s %.4fdeg %.4fdeg' % (COLORS[key], offset, offset+angle))
             offset += angle
         return {'counts': counts, 'total': total, 'weeks': weeks, 'queues': queues, 'cash': cash,
-                'pending': sum(q['count'] for q in queues),
+                'pending': pending, 'active_queues': active_queues,
+                'queue_gradient': 'conic-gradient(%s)' % ','.join(queue_segments) if pending else '#edf2f4',
+                'weekly_total': sum(week['total'] for week in weeks),
                 'gradient': 'conic-gradient(%s)' % ','.join(segments) if total else '#edf2f4',
                 'colors': COLORS, 'today': today.strftime('%A, %d %B %Y'),
-                'updated': fields.Datetime.context_timestamp(user, fields.Datetime.now()).strftime('%H:%M'),
                 'week_max': max([w['total'] for w in weeks] + [1]),
                 'queue_max': max([q['count'] for q in queues] + [1])}
