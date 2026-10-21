@@ -2,7 +2,7 @@
 <odoo>
  <template id="visual_desktop_dashboard" name="Desktop My Work dashboard">
   <t t-set="vd" t-value="visual_dashboard"/>
-  <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_visual_dashboard.css?v=18.0.1.20.105"/>
+  <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_visual_dashboard.css?v=18.0.1.20.106"/>
   <section id="eps-visual-dashboard" aria-label="My Work Today">
    <header class="eps-v-heading"><div><p class="eps-v-eyebrow" t-out="vd['today']"/><h1>Good to see you, <t t-out="request.env.user.partner_id.name.split(' ')[0]"/>.</h1><p>Your work, approvals and updates in one place.</p></div><div class="eps-v-updated"><span>Updated <t t-out="vd['updated']"/></span><a href="/my/employee" class="eps-v-refresh"><i class="fa fa-refresh" aria-hidden="true"/> Refresh</a></div></header>
    <div class="eps-v-summary">
@@ -23,7 +23,7 @@
      <div class="eps-v-week-legend"><span><i class="eps-v-er"/>Employee</span><span><i class="eps-v-mr"/>Material</span></div>
      <div class="eps-v-weeks" role="list" aria-label="Weekly request counts">
       <div t-foreach="vd['weeks']" t-as="week" role="listitem" class="eps-v-week" t-att-title="'Week of %s: %s employee, %s material requests' % (week['label'],week['employee'],week['material'])" t-att-aria-label="'Week of %s: %s employee, %s material requests' % (week['label'],week['employee'],week['material'])">
-       <strong t-out="week['total']"/><div class="eps-v-week-track"><div class="eps-v-week-stack" t-att-style="'height:%.2f%%' % (week['total'] / vd['week_max'] * 100)"><div class="eps-v-mr" t-att-style="'flex:%s' % week['material']"/><div class="eps-v-er" t-att-style="'flex:%s' % week['employee']"/></div></div><span t-out="week['label']"/>
+       <strong t-out="week['total']"/><div class="eps-v-week-track"><div class="eps-v-week-stack" t-att-style="'height:{:.2f}%'.format(week['total'] / vd['week_max'] * 100)"><div class="eps-v-mr" t-att-style="'flex:{}'.format(week['material'])"/><div class="eps-v-er" t-att-style="'flex:{}'.format(week['employee'])"/></div></div><span t-out="week['label']"/>
       </div>
      </div>
     </article>
@@ -31,7 +31,7 @@
    <div class="eps-v-work">
     <article class="eps-v-panel"><div class="eps-v-panel-head"><div><h2>Needs my action</h2><p>Open a queue to review its documents.</p></div><span class="eps-v-tag"><t t-out="vd['pending']"/> waiting</span></div>
      <div t-if="not vd['queues'] or not vd['pending']" class="eps-v-all-clear"><i class="fa fa-check-circle" aria-hidden="true"/><strong>You're all caught up</strong><span>No pending actions in your available queues.</span></div>
-     <a t-foreach="vd['queues']" t-as="queue" t-if="queue['count']" class="eps-v-queue" t-att-href="queue['url']"><div><strong t-out="queue['label']"/><span class="eps-v-work-track"><i t-att-style="'width:%.2f%%' % (queue['count'] / vd['queue_max'] * 100)"/></span></div><b t-out="queue['count']"/><i class="fa fa-angle-right" aria-hidden="true"/></a>
+     <a t-foreach="vd['queues']" t-as="queue" t-if="queue['count']" class="eps-v-queue" t-att-href="queue['url']"><div><strong t-out="queue['label']"/><span class="eps-v-work-track"><i t-att-style="'width:{:.2f}%'.format(queue['count'] / vd['queue_max'] * 100)"/></span></div><b t-out="queue['count']"/><i class="fa fa-angle-right" aria-hidden="true"/></a>
     </article>
     <article class="eps-v-panel"><div class="eps-v-panel-head"><div><h2>Your recent documents</h2><p>Your latest employee and material requests</p></div></div>
      <a t-foreach="recent_activities" t-as="act" class="eps-v-document" t-att-href="('/my/employee/requests/%s' if act._name == 'employee.request' else '/my/employee/material/%s') % act.id"><span class="eps-v-doc-icon"><i t-att-class="'fa fa-file-text-o' if act._name == 'employee.request' else 'fa fa-cubes'" aria-hidden="true"/></span><div><strong t-out="act.name"/><small><t t-out="'Employee Request' if act._name == 'employee.request' else 'Material Request'"/> · <span t-field="act.create_date" t-options="{'widget':'date'}"/></small></div><span class="eps-v-doc-status" t-out="dict(act._fields['state'].selection).get(act.state, act.state)"/></a>
@@ -39,7 +39,7 @@
     </article>
    </div>
    <article t-if="vd['cash']" class="eps-v-panel eps-v-cash"><div class="eps-v-panel-head"><div><h2>This week's cash plans</h2><p>Planned and actual outgoing amounts · each plan shown in its own currency</p></div></div>
-    <a t-foreach="vd['cash']" t-as="plan" class="eps-v-plan" t-att-href="plan['url']"><t t-set="cash_max" t-value="max(abs(plan['planned']), abs(plan['actual']), 1)"/><div><strong t-out="plan['name']"/><small><t t-out="plan['company']"/> · <t t-out="plan['currency']"/></small></div><div class="eps-v-cash-rows"><div><span>Planned</span><div class="eps-v-cash-track"><i t-att-style="'width:%.2f%%' % (abs(plan['planned']) / cash_max * 100)"/></div><b t-out="'{:,.2f}'.format(plan['planned'])"/></div><div><span>Actual</span><div class="eps-v-cash-track"><i class="eps-v-actual" t-att-style="'width:%.2f%%' % (abs(plan['actual']) / cash_max * 100)"/></div><b t-out="'{:,.2f}'.format(plan['actual'])"/></div></div><i class="fa fa-angle-right" aria-hidden="true"/></a>
+    <a t-foreach="vd['cash']" t-as="plan" class="eps-v-plan" t-att-href="plan['url']"><t t-set="cash_max" t-value="max(abs(plan['planned']), abs(plan['actual']), 1)"/><div><strong t-out="plan['name']"/><small><t t-out="plan['company']"/> · <t t-out="plan['currency']"/></small></div><div class="eps-v-cash-rows"><div><span>Planned</span><div class="eps-v-cash-track"><i t-att-style="'width:{:.2f}%'.format(abs(plan['planned']) / cash_max * 100)"/></div><b t-out="'{:,.2f}'.format(plan['planned'])"/></div><div><span>Actual</span><div class="eps-v-cash-track"><i class="eps-v-actual" t-att-style="'width:{:.2f}%'.format(abs(plan['actual']) / cash_max * 100)"/></div><b t-out="'{:,.2f}'.format(plan['actual'])"/></div></div><i class="fa fa-angle-right" aria-hidden="true"/></a>
    </article>
   </section>
  </template>
