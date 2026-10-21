@@ -1,3 +1,5 @@
+Current list update: short rows with separate aligned columns; whole-row opening retained.
+
 # Current update: 2026-10-21
 Quotation / Order Date is visible on new and saved portal forms, in the user's
 timezone. It is required when saving, with invalid/ambiguous times rejected.
@@ -10,7 +12,7 @@ inline descriptions (Ctrl+Enter retains multiline entry). Rows can be reordered.
 No automatic Sales revision mechanism was added. Existing Studio revision and
 print reports are unchanged; technical-proposal revision changes are excluded.
 
-# ABSAR Portal Sales 18.0.1.4.5
+# ABSAR Portal Sales 18.0.1.4.6
 
 Portal and internal issuer workflow:
 1. Preparer: Submit for Approval. Approver: Approve or Return.

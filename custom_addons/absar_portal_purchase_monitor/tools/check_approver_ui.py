@@ -67,7 +67,7 @@ assert eval(nav_condition, {'request':request})
 views = etree.parse(str(ROOT/'views/portal_purchase_prepare.xml'))
 shared = etree.parse(str(ROOT/'views/portal_purchase_approval_list.xml'))
 assert views.xpath('//template[@id="purchase_prepare_list"]/*[@t-call="absar_portal_purchase_monitor.purchase_approval_list"]')
-assert shared.xpath('//div[@class="absar-record-list"]//article[@class="absar-record-card"][@t-att-data-record-href]')
+assert shared.xpath('//div[contains(@class,"absar-record-list")]//article[@class="absar-record-card"][@t-att-data-record-href]')
 for approval in (True, False):
     values = dict(approval=approval, confirmations=False, orders_only=False, request=request)
     nav = shared.xpath('//*[@t-call="absar_portal_purchase_monitor.purchase_workspace_nav"]')[0]
