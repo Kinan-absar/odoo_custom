@@ -1,5 +1,5 @@
 {'name': 'ABSAR Portal Purchase Workspace',
- 'version': '18.0.1.6.8',
+ 'version': '18.0.1.6.9',
  'category': 'Purchases',
  'summary': 'Dedicated employee portal purchasing with controlled RFQ, product '
             'and MR workflows',
@@ -24,6 +24,6 @@
         'absar_portal_purchase_monitor/static/src/js/purchase_product_form.js',
         'absar_portal_purchase_monitor/static/src/js/purchase_receipt.js',
         'absar_portal_purchase_monitor/static/src/js/purchase_workspace.js',
-                                    'absar_portal_purchase_monitor/static/src/js/purchase_directory.js']},
+                                    'absar_portal_purchase_monitor/static/src/js/purchase_directory.js', 'absar_portal_purchase_monitor/static/src/mobile_cards.css']},
  'installable': True,
  'application': False}
