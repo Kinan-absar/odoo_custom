@@ -107,7 +107,7 @@
             let requestId = 0, timer, active=-1, choices=[], latestLoad=null, queued=false;
             const box = el('div', {class: 'aca-picker'});
             const control = el('input', {type: 'text', role: 'combobox', 'aria-label': resource + ' search',
-                autocomplete: 'off', 'aria-expanded': 'false', disabled, placeholder: 'Search ' + resource + '…'});
+                autocomplete: 'off', 'aria-expanded': 'false', disabled, placeholder: disabled?'':'Search ' + resource + '…'});
             control.value = selected?.name || '';
             const options = el('div', {class: 'aca-options', role: 'listbox', hidden: true});
             options.setAttribute('popover','manual');
@@ -203,10 +203,17 @@
             }
             box.append(pills); return box;
         }
+        function analyticText(target, key='analytic_distribution') {
+            return Object.entries(target[key]||{}).map(([ids,percent])=>{
+                const name=String(ids).split(',').map(id=>state.analytic_names?.[id]||'Analytic '+id).join(' / ');
+                return name+(Number(percent)===100?'':' ('+percent+'%)');
+            }).join(', ');
+        }
         function analytic(target, key = 'analytic_distribution') {
-            const control = button(Object.keys(target[key] || {}).length ? 'Edit distribution' : 'Set distribution', () => {
+            if(!state.editable&&!Object.keys(target[key]||{}).length)return el('span');
+            const control = button(analyticText(target,key) || 'Set distribution', () => {
                 const original = target[key] || {};
-                let rows = Object.entries(original).map(([id, percent]) => ({id, percent, name: 'Analytic ' + id}));
+                let rows = Object.entries(original).map(([id, percent]) => ({id, percent, name: String(id).split(',').map(part=>state.analytic_names?.[part]||'Analytic '+part).join(' / ')}));
                 const backdrop = el('div', {class: 'aca-dialog-backdrop'}), dialog = el('div', {class: 'aca aca-dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Analytic distribution'});
                 function draw() {
                     dialog.replaceChildren(el('h3', {text: 'Analytic distribution'}));
@@ -228,12 +235,14 @@
                             if (!row.id || !Number.isFinite(row.percent) || row.percent < 0 || row.percent > 100) {say('Choose analytic accounts and percentages between 0 and 100.', true); return;}
                             distribution[row.id] = row.percent;
                         }
+                        state.analytic_names||={};for(const row of rows)if(!String(row.id).includes(','))state.analytic_names[row.id]=row.name;
                         target[key] = distribution; revision++; backdrop.remove(); render();
                     }, true));
                 }
                 backdrop.append(dialog); document.body.append(backdrop); draw();
             });
-            return control;
+            control.className='aca-analytic-control';control.setAttribute('title',analyticText(target,key)||'Set distribution');
+            control.setAttribute('aria-label','Analytic distribution');return control;
         }
         function schedulePreview() {
             clearTimeout(previewTimer);
@@ -473,10 +482,24 @@
                 row.taxes_id=(selected.tax_ids||[]).map(t=>t.id);row.tax_names=selected.tax_ids||[];}
             revision++;render();schedulePreview();
         }
+        function lineTags(row, grids=false) {
+            const ids=grids?'tax_tag_ids':'taxes_id', names=grids?'grid_names':'tax_names';
+            const box=el('div',{class:'aca-line-tags'});
+            if(state.editable){const add=picker(grids?'tax-grid':'tax',null,selected=>{
+                row[ids]||=[];row[names]||=[];
+                if(!row[ids].includes(selected.id)){row[ids].push(selected.id);row[names].push(selected);}
+                revision++;render();schedulePreview();
+            });add.className+=' aca-tag-add';add.querySelector('input').setAttribute('placeholder','+');add.querySelector('input').setAttribute('aria-label',grids?'Add tax grid':'Add tax');box.append(add);}
+            for(const item of row[names]||[]){const chip=el('span',{class:'aca-pill',text:item.name});
+                if(state.editable)chip.append(button('×',()=>{row[ids]=row[ids].filter(id=>id!==item.id);row[names]=row[names].filter(t=>t.id!==item.id);revision++;render();schedulePreview();}));
+                box.append(chip);
+            }
+            return box;
+        }
         function lineTable() {
-            const journal=state.kind==='journals',wrap=el('div',{class:'aca-table-wrap'}),table=el('table',{class:'aca-table aca-lines aca-grid-lines'});
-            const titles=journal?['Label','Account','Partner','Debit','Credit','Analytic','Actions']:
-                ['Product','Description','Account','Quantity','UoM','Unit Price','Discount %','Taxes','Analytic','Amount','Actions'];
+            const journal=state.kind==='journals',wrap=el('div',{class:'aca-table-wrap'}),table=el('table',{class:'aca-table aca-lines aca-grid-lines '+(journal?'aca-journal-lines':'aca-invoice-lines')});
+            const titles=journal?['Account','Partner','Label','Analytic Distribution','Taxes','Debit','Credit','Tax Grids','']:
+                ['Product','Account','Analytic','Quantity','Price','Disc.%','Taxes','Amount','Company Currency',''];
             table.append(el('thead',{},[el('tr',{},titles.map(text=>el('th',{text})))]));
             const body=el('tbody');
             state.lines.forEach((row,index)=>{
@@ -490,37 +513,35 @@
                 if(['line_section','line_note'].includes(row.display_type)){
                     const cell=td(input('name','text',row),'aca-section');cell.colSpan=titles.length-1;
                 }else{
-                    if(!journal){const product=el('div',{class:'aca-product-cell'},[picker('product',{id:row.product_id,name:row.product_name},selected=>selectProduct(row,selected))]);
+                    if(!journal){const product=el('div',{class:'aca-product-cell',title:row.name||''},[picker('product',{id:row.product_id,name:row.product_name||row.name},selected=>selectProduct(row,selected))]);
                         if(row.product_id){const open=button('↗',()=>productForm(row.product_id,'',selected=>selectProduct(row,selected)));
                             open.setAttribute('aria-label','Open product '+(index+1));open.setAttribute('title','Open product');product.append(open);}td(product,'desc');}
-                    td(input('name','text',row),'aca-description');
                     td(picker('account',{id:row.account_id,name:row.account_name},selected=>{
                         row.account_id=selected.id;row.account_name=selected.name;revision++;render();schedulePreview();}),'account');
                     if(journal){
                         td(picker('partner',{id:row.partner_id,name:row.partner_name},selected=>{row.partner_id=selected.id;row.partner_name=selected.name;revision++;render();}));
-                        for(const key of ['debit','credit'])td(input(key,'number',row,drawTotals));
+                        td(input('name','text',row),'aca-description');
+                    }
+                    td(analytic(row),'aca-analytic-cell');
+                    if(journal){
+                        td(lineTags(row),'aca-tax-cell');
+                        for(const key of ['debit','credit'])td(input(key,'number',row,drawTotals),'aca-money');
+                        td(lineTags(row,true),'aca-tax-grid-cell');
                     }else{
                         td(input('quantity','number',row));
-                        td(picker('uom',{id:row.product_uom_id,name:row.uom_name},selected=>{row.product_uom_id=selected.id;row.uom_name=selected.name;revision++;render();schedulePreview();}));
                         for(const key of ['price_unit','discount'])td(input(key,'number',row));
-                        const taxes=el('div');taxes.append(picker('tax',null,selected=>{
-                            row.taxes_id||=[];row.tax_names||=[];
-                            if(!row.taxes_id.includes(selected.id)){row.taxes_id.push(selected.id);row.tax_names.push(selected);}
-                            revision++;render();schedulePreview();}));
-                        for(const tax of row.tax_names||[]){const chip=el('span',{class:'aca-pill',text:tax.name});
-                            if(state.editable)chip.append(button('×',()=>{row.taxes_id=row.taxes_id.filter(id=>id!==tax.id);row.tax_names=row.tax_names.filter(t=>t.id!==tax.id);revision++;render();schedulePreview();}));taxes.append(chip);}
-                        td(taxes);
+                        td(lineTags(row),'aca-tax-cell');
+                        td(el('span',{'data-line-amount':index,text:row._amountKey===lineKey(row)?money(row.subtotal):(previewError?'—':'Calculating…')}),'aca-money',false);
+                        td(el('span',{text:state.company_currency_name||'',title:'Company currency'}),'aca-company-currency',false);
                     }
-                    td(analytic(row));
-                    if(!journal)td(el('span',{'data-line-amount':index,text:row._amountKey===lineKey(row)?money(row.subtotal):(previewError?'—':'Calculating…')}),'aca-money',false);
                 }
                 const controls=el('div',{class:'aca-row-actions'});
-                if(journal)controls.append(button('Details',()=>journalLineDetails(row)));
+                controls.append(button('⋯',()=>lineDetails(row,journal)));
                 if(state.editable)controls.append(button('↑',()=>{if(index)[state.lines[index-1],state.lines[index]]=[state.lines[index],state.lines[index-1]];revision++;render();}),
                     button('↓',()=>{if(index<state.lines.length-1)[state.lines[index+1],state.lines[index]]=[state.lines[index],state.lines[index+1]];revision++;render();}),
                     button('×',()=>{state.lines.splice(index,1);revision++;render();schedulePreview();}));
-                for(const control of controls.children){control.setAttribute('aria-label',(control.textContent==='↑'?'Move line up':control.textContent==='↓'?'Move line down':control.textContent==='×'?'Remove line':control.textContent)+' '+(index+1));}
-                td(controls,'',false);body.append(tr);
+                for(const control of controls.children){const title=(control.textContent==='↑'?'Move line up':control.textContent==='↓'?'Move line down':control.textContent==='×'?'Remove line':'Line details')+' '+(index+1);control.setAttribute('aria-label',title);control.setAttribute('title',title);}
+                td(controls,'aca-line-tools',false);body.append(tr);
             });
             table.addEventListener('keydown',event=>{
                 if(event.key!=='Enter'||event.isComposing||event.target.tagName==='TEXTAREA')return;
@@ -530,16 +551,26 @@
             });
             table.append(body);wrap.append(table);return wrap;
         }
-        function journalLineDetails(row) {
-            const backdrop=el('div',{class:'aca-dialog-backdrop'}),dialog=el('div',{class:'aca aca-dialog',role:'dialog','aria-modal':'true','aria-label':'Journal item details'});
-            dialog.append(el('h3',{text:'Journal Item Details'}),label('Foreign Amount',input('amount_currency','number',row,drawTotals)),label('Due Date',input('date_maturity','date',row)));
-            const grids=el('div'),tags=el('div',{class:'aca-pills'});
-            function draw(){tags.replaceChildren();for(const tag of row.grid_names||[]){const pill=el('span',{class:'aca-pill',text:tag.name});
-                if(state.editable)pill.append(button('×',()=>{row.tax_tag_ids=row.tax_tag_ids.filter(id=>id!==tag.id);row.grid_names=row.grid_names.filter(t=>t.id!==tag.id);revision++;draw();}));tags.append(pill);}}
-            grids.append(picker('tax-grid',null,selected=>{row.tax_tag_ids||=[];row.grid_names||=[];
-                if(!row.tax_tag_ids.includes(selected.id)){row.tax_tag_ids.push(selected.id);row.grid_names.push(selected);revision++;draw();}}),tags);draw();
-            dialog.append(label('Tax Grids',grids),button('Close',()=>{backdrop.remove();schedulePreview();}));
-            dialog.addEventListener('keydown',event=>{if(event.key==='Escape')backdrop.remove();});backdrop.append(dialog);document.body.append(backdrop);
+        function lineDetails(row,journal) {
+            const backdrop=el('div',{class:'aca-dialog-backdrop'}),dialog=el('div',{class:'aca aca-dialog',role:'dialog','aria-modal':'true','aria-label':'Line details'});
+            dialog.append(el('h3',{text:journal?'Journal Item Details':'Invoice Line Details'}));
+            if(journal)dialog.append(label('Foreign Amount',input('amount_currency','number',row,drawTotals)),label('Due Date',input('date_maturity','date',row)));
+            else dialog.append(label('Description',input('name','text',row)),label('Unit of Measure',picker('uom',{id:row.product_uom_id,name:row.uom_name},selected=>{row.product_uom_id=selected.id;row.uom_name=selected.name;revision++;schedulePreview();})));
+            const close=()=>{backdrop.remove();render();schedulePreview();};
+            dialog.append(button('Close',close));dialog.addEventListener('keydown',event=>{if(event.key==='Escape')close();});
+            backdrop.append(dialog);document.body.append(backdrop);
+        }
+        function journalItemsTable() {
+            const table=el('table',{class:'aca-table aca-journal-preview'});
+            const titles=['Account','Partner','Label','Analytic Distribution','Taxes','Debit','Credit','Tax Grids'];
+            table.append(el('thead',{},[el('tr',{},titles.map(text=>el('th',{text})))]));
+            const body=el('tbody');
+            for(const row of state.journal_items||[]){const tr=el('tr');
+                for(const [key,text] of [['account',row.account],['partner',row.partner],['name',row.name],['analytic',analyticText(row)],['tax',(row.tax_names||[]).map(t=>t.name).join(', ')],['debit',money(row.debit)],['credit',money(row.credit)],['grids',(row.grid_names||[]).map(t=>t.name).join(', ')]])
+                    tr.append(el('td',{class:['debit','credit'].includes(key)?'aca-money':key==='analytic'?'aca-analytic-cell':'',text:text||''}));
+                body.append(tr);
+            }
+            table.append(body);return el('div',{class:'aca-table-wrap'},[table]);
         }
         function linksPanel() {
             const box = el('div'), incoming = ['receipts','planned-receipts'].includes(state.kind);
@@ -590,7 +621,7 @@
             if(state.warnings)root.append(el('div',{class:'aca-alert',text:state.warnings}));
             const surface=el('section',{class:'aca-surface'});surface.append(headerFields());
             const tabs=el('div',{class:'aca-tabs',role:'tablist'});
-            const choices=isMove()?[['lines',state.kind==='journals'?'Journal Items':'Invoice Lines'],['journal','Journal Preview'],['other','Other Information'],['attachments','Attachments']]:
+            const choices=isMove()?[['lines',state.kind==='journals'?'Journal Items':'Invoice Lines'],...(state.kind==='journals'?[]:[['journal','Journal Items']]),['other','Other Information'],['attachments','Attachments']]:
                 [['links','Documents & Allocations'],['other','Notes'],['attachments','Attachments']];
             if(state.id)choices.push(['history','Activity Log']);
             if(!choices.some(c=>c[0]===tab))tab=choices[0][0];
@@ -607,8 +638,7 @@
                 panel.append(el('div',{class:'aca-totals','data-totals':'true'}));
             } else if(tab==='journal') {
                 panel.append(el('p',{class:'aca-mini',text:'Journal items from the last saved draft. Save after editing to refresh them.'}));
-                const table=el('table',{class:'aca-table aca-journal-preview'});table.append(el('thead',{},[el('tr',{},['Account','Partner','Label','Debit','Credit'].map(text=>el('th',{text})))]));
-                const body=el('tbody');for(const row of state.journal_items||[])body.append(el('tr',{},['account','partner','name','debit','credit'].map(k=>el('td',{text:['debit','credit'].includes(k)?money(row[k]):row[k]||''}))));table.append(body);panel.append(el('div',{class:'aca-table-wrap'},[table]));
+                panel.append(journalItemsTable());
             } else if(tab==='history') {
                 for(const item of state.history||[])panel.append(el('article',{class:'aca-history'},[el('strong',{text:item.author}),el('time',{text:item.date}),el('p',{text:item.body})]));
                 if(!state.history?.length)panel.append(el('p',{class:'aca-mini',text:'No activity recorded yet.'}));

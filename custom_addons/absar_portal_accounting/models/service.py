@@ -217,7 +217,7 @@ class PortalAccountingService(models.AbstractModel):
             'account': ('account.account', [('company_ids', 'in', company.id), ('deprecated', '=', False)], 'display_name'),
             'product-category': ('product.category', [], 'display_name'),
             'product': ('product.product', cdom + [('purchase_ok', '=', True)], 'display_name'),
-            'tax': ('account.tax', [('company_id', '=', company.id), ('type_tax_use', 'in', ['purchase', 'none'])], 'name'),
+            'tax': ('account.tax', [('company_id', '=', company.id), ('type_tax_use', 'in', ['purchase', 'sale', 'none'] if kind == 'journals' else ['purchase', 'none'])], 'name'),
             'analytic': ('account.analytic.account', cdom, 'display_name'),
             'currency': ('res.currency', [('active', '=', True)], 'name'),
             'term': ('account.payment.term', cdom, 'name'),
@@ -278,6 +278,13 @@ class PortalAccountingService(models.AbstractModel):
             records |= self._relation(company, model, value, domain, True)
         return records
 
+    def _analytic_name_map(self, company, distributions):
+        ids = {int(part) for distribution in distributions for key in (distribution or {})
+               for part in str(key).split(',') if part.isdigit() and int(part) > 0}
+        accounts = self._env(company)['account.analytic.account'].search([
+            ('id', 'in', sorted(ids)), '|', ('company_id', '=', False), ('company_id', '=', company.id)])
+        return {str(account.id): account.display_name for account in accounts}
+
     def _move_values(self, company, kind, data):
         subtype = self._kind(kind)[2]
         journal = self._journal(company, data.get('journal_id'), ['general'] if subtype == 'entry' else ['purchase'])
@@ -316,6 +323,9 @@ class PortalAccountingService(models.AbstractModel):
                     [('applicability', '=', 'taxes'), '|', ('country_id', '=', False),
                      ('country_id', '=', company.account_fiscal_country_id.id)])
                 line['tax_tag_ids'] = [Command.set(tags.ids)]
+                taxes = self._m2m(company, 'account.tax', row.get('taxes_id', []),
+                    [('company_id', '=', company.id), ('type_tax_use', 'in', ['purchase', 'sale', 'none'])])
+                line['tax_ids'] = [Command.set(taxes.ids)]
                 if currency != company.currency_id:
                     line.update(currency_id=currency.id, amount_currency=self._number(row.get('amount_currency')))
             else:
@@ -668,6 +678,7 @@ class PortalAccountingService(models.AbstractModel):
         model, title, subtype = self._kind(kind)
         record = self._record(company, kind, record_id) if record_id else False
         data = {'id': record.id if record else 0, 'company_id': company.id, 'kind': kind,
+                'company_currency_name': company.currency_id.name, 'analytic_names': {},
                 'currency_id': company.currency_id.id, 'currency_name': company.currency_id.name,
                 'date': fields.Date.context_today(self).isoformat(), 'invoice_date': fields.Date.context_today(self).isoformat(),
                 'lines': [], 'bill_ids': [], 'invoice_ids': [], 'purchase_order_ids': [], 'allocations': [], 'destinations': [],
@@ -711,6 +722,7 @@ class PortalAccountingService(models.AbstractModel):
                 data['selections'][name] = [{'id': r.id, 'name': r.display_name} for r in record[name]]
         if model == 'account.move':
             data['warnings'] = '\n'.join(filter(None, [record.abnormal_amount_warning, record.abnormal_date_warning]))
+            data['analytic_names'] = self._analytic_name_map(company, record.line_ids.mapped('analytic_distribution'))
             lines = record.line_ids if kind == 'journals' else record.invoice_line_ids
             for line in lines:
                 row = {'name': line.name or '', 'account_id': line.account_id.id, 'account_name': line.account_id.display_name or '',
@@ -729,7 +741,10 @@ class PortalAccountingService(models.AbstractModel):
             data.update(untaxed=record.amount_untaxed, tax=record.amount_tax, total=record.amount_total,
                         balance_due=record.amount_residual,
                         journal_items=[{'account': l.account_id.display_name, 'partner': l.partner_id.display_name,
-                                        'name': l.name or '', 'debit': l.debit, 'credit': l.credit} for l in record.line_ids])
+                                        'name': l.name or '', 'debit': l.debit, 'credit': l.credit,
+                                        'analytic_distribution': l.analytic_distribution or {},
+                                        'tax_names': [{'id': t.id, 'name': t.name} for t in l.tax_ids],
+                                        'grid_names': [{'id': t.id, 'name': t.display_name} for t in l.tax_tag_ids]} for l in record.line_ids])
         if kind == 'payments':
             data['allocations'] = [{'purchase_order_id': r.purchase_order_id.id, 'name': r.purchase_order_id.display_name,
                                     'amount': r.amount} for r in record.po_allocation_ids]
@@ -766,7 +781,8 @@ class PortalAccountingService(models.AbstractModel):
         self._actor('preparer')
         po = self._relation(company, 'purchase.order', po_id,
             [('company_id', '=', company.id), ('state', 'in', ['purchase', 'done'])], True)
-        data = {'partner_id': po.partner_id.id, 'partner_name': po.partner_id.display_name,
+        data = {'analytic_names': self._analytic_name_map(company, po.order_line.mapped('analytic_distribution')),
+                'partner_id': po.partner_id.id, 'partner_name': po.partner_id.display_name,
                 'currency_id': po.currency_id.id, 'currency_name': po.currency_id.name, 'ref': po.partner_ref or '', 'lines': []}
         for line in po.order_line:
             if line.display_type:

@@ -150,3 +150,20 @@
 .aca-grid-lines .desc>.aca-product-cell{display:flex;align-items:center;gap:2px}
 .aca-journal-preview{min-width:850px;font-variant-numeric:tabular-nums}
 .aca-journal-preview th,.aca-journal-preview td{padding:8px;border-right:1px solid #e4edef}
+
+/* Match native invoice and journal column order. */
+.aca-invoice-lines{min-width:1200px}.aca-journal-lines{min-width:1200px}
+.aca-grid-lines .aca-analytic-cell{min-width:190px;max-width:290px}
+.aca-grid-lines .aca-analytic-control{max-width:270px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#fff1b8;border:0;color:#5c4911;text-align:left}
+.aca-grid-lines .aca-tax-cell,.aca-grid-lines .aca-tax-grid-cell{min-width:140px;max-width:210px}
+.aca-line-tags>.aca-picker>input{min-width:100px}
+.aca-grid-lines .aca-company-currency{min-width:100px;padding-top:9px;white-space:nowrap}
+.aca-grid-lines .aca-line-tools{width:1%;white-space:nowrap}
+.aca-grid-lines .aca-line-tools .aca-row-actions{opacity:.35}
+.aca-grid-lines tr:hover .aca-row-actions,.aca-grid-lines tr:focus-within .aca-row-actions{opacity:1}
+.aca-journal-preview{min-width:1200px}
+.aca-journal-preview .aca-analytic-cell{min-width:190px}
+.aca-line-tags{display:flex;align-items:center;flex-wrap:wrap;gap:3px;min-height:32px}
+.aca-grid-lines .aca-line-tags>.aca-tag-add{min-width:28px;width:28px;flex:0 0 28px;order:2}
+.aca-grid-lines .aca-line-tags>.aca-tag-add>input{min-width:0;width:28px;padding:3px;text-align:center}
+.aca-grid-lines .aca-line-tags>.aca-pill{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:23px}

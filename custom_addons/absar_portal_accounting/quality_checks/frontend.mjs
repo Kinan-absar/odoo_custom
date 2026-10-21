@@ -15,7 +15,7 @@ class Element {
     showPopover(){this.popoverOpen=true;}
     hidePopover(){this.popoverOpen=false;}
     matches(selector){return selector===':popover-open'&&!!this.popoverOpen;}
-    querySelectorAll(selector){return walk(this).filter(n=>selector==='button'?n.tagName==='button':selector==='[data-totals]'?'totals'in n.dataset:selector==='[data-line-amount]'?n['data-line-amount']!==undefined:false);}
+    querySelectorAll(selector){return walk(this).filter(n=>selector==='input'?n.tagName==='input':selector==='button'?n.tagName==='button':selector==='[data-totals]'?'totals'in n.dataset:selector==='[data-line-amount]'?n['data-line-amount']!==undefined:false);}
     querySelector(selector){return this.querySelectorAll(selector)[0];}
 }
 function walk(node){return [node,...node.children.flatMap(child=>typeof child==='object'?walk(child):[])];}
@@ -62,8 +62,8 @@ assert(find(p.root,'Submit to CEO'));assert(!find(p.root,'Mark as Paid'));
 console.log('PASS: actual frontend mount, numeric edits and server totals, CSRF/save payload, Monitor readonly controls, Approver actions/return and planned-payment execution boundary.');
 // Rearranged detail fields still participate in draft edits and serialization.
 const j=mount({...fixture,kind:'journals',lines:[{name:'Accrual',account_id:8,partner_id:7,debit:100,credit:0,amount_currency:100,date_maturity:'2026-11-01',tax_tag_ids:[11],grid_names:[{id:11,name:'Tax Grid'}],analytic_distribution:{'5':100}}]});
-find(j.root,'Details').handlers.click();
-assert(find(j.body,'Foreign Amount'));assert(find(j.body,'Due Date'));assert(find(j.body,'Tax Grids'));assert(find(j.root,'Edit distribution'));
+find(j.root,'⋯').handlers.click();
+assert(find(j.body,'Foreign Amount'));assert(find(j.body,'Due Date'));assert(find(j.body,'Tax Grids'));assert(find(j.root,'Analytic 5'));
 const foreign=walk(j.body).find(n=>n['aria-label']==='amount_currency');foreign.value='125';foreign.handlers.input();
 const due=walk(j.body).find(n=>n['aria-label']==='date_maturity');due.value='2026-12-01';due.handlers.input();
 find(j.root,'Save Draft').handlers.click();await j.settle();

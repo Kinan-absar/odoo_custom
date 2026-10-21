@@ -151,3 +151,16 @@ Native submission locks and rereads documents, rejects already pending submissio
 An independent internal Accounting Approver may correct a pending draft (including reference and journal lines) and approve/post the corrected version. These edits keep the bill Awaiting Approval. Native accounting write permissions still apply. Issuer edits, attendance-only users, portal actors and changes after approval do not qualify for that exception and continue to require resubmission. The shared date guard still blocks posting an undated bill. Existing bills already returned under the old behavior must be corrected/resubmitted once; no historical review status is rewritten.
 
 Local regression fixtures cover missing dates, duplicate submission, batch prevalidation, the toast/reload action, native reviewer versus issuer edits, child-line create/write/delete, notification transitions, portal form submission, grid, products and Print JV. Native Odoo integration cases were updated but cannot be executed in this workspace. No live Odoo/browser/mail/PDF verification was performed for this release. Includes all Accounting 18.0.1.2.3 changes; Employee Portal Suite, Purchase and Sales are unchanged.
+
+## Workspace update 18.0.1.2.5
+
+Portal columns now match the supplied native screenshots in order:
+
+- Invoice Lines: Product, Account, Analytic, Quantity, Price, Disc.%, Taxes, Amount, Company Currency.
+- Journal Items: Account, Partner, Label, Analytic Distribution, Taxes, Debit, Credit, Tax Grids.
+
+Description and UoM remain editable from the invoice row's ellipsis (line details), without extra default columns. Product opening/creation/editing and keyboard navigation remain available. Analytic cells show scoped analytic account names. Journal taxes and tax grids appear inline; manual journal tax selections are validated by company and passed to Odoo's native accounting engine. The bill's saved Journal Items tab uses the same eight journal columns and remains read-only so computed tax/payable lines are not rewritten through invoice editing.
+
+Company Currency is the actual company currency name, independent of document currency. Row controls use an unlabeled utility cell. No changes to internal form columns or to Employee Portal Suite. All earlier Accounting fixes are included.
+
+Local checks cover exact invoice/manual-journal/saved-bill-journal header order, analytic/tax/grid values, row navigation and focus, product edit preservation, journal tax/grid scope and serialization, analytic label scope, Python/XML/JS syntax and prior approval/date/notification/Print JV regressions. These are ORM/DOM fixtures. Live browser layout and native tax computation still require staging verification; no live Odoo test was run for this release.

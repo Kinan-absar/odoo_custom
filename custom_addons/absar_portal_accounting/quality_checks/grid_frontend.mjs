@@ -38,8 +38,8 @@ const root=new Node('section');document={createElement:t=>new Node(t),activeElem
 const body=new Node('body');body.append(root);document.body=body;
 const window={innerWidth:1200,innerHeight:700,addEventListener(){},removeEventListener(){}};
 Object.assign(globalThis,{document,window});
-const boot={company_id:1,kind:'bills',name:'New',state:'draft',editable:true,review_required:true,review:'draft',roles:{preparer:true},selections:{},
-    currency_id:1,journal_id:2,partner_id:3,lines:[{product_id:9,product_name:'Cement',name:'Negotiated description',quantity:4,price_unit:23,discount:2,account_id:8,account_name:'Materials',product_uom_id:1,uom_name:'Unit',taxes_id:[15],tax_names:[{id:15,name:'VAT'}],analytic_distribution:{}}]};
+const boot={company_id:1,company_currency_name:'SAR',analytic_names:{'5':'PHC Project'},kind:'bills',name:'New',state:'draft',editable:true,review_required:true,review:'draft',roles:{preparer:true},selections:{},
+    currency_id:1,journal_id:2,partner_id:3,lines:[{product_id:9,product_name:'Cement',name:'Negotiated description',quantity:4,price_unit:23,discount:2,account_id:8,account_name:'Materials',product_uom_id:1,uom_name:'Unit',taxes_id:[15],tax_names:[{id:15,name:'VAT'}],analytic_distribution:{'5':100}}]};
 root.dataset={boot:JSON.stringify(boot),csrf:'test'};
 const calls=[];let resolveOptions;
 const product={id:9,name:'Cement revised',type:'consu',is_storable:false,can_edit:true,shared:true,version:'p1',categ_id:{id:1,name:'Materials'},uom_id:{id:1,name:'Unit'},uom_po_id:{id:1,name:'Unit'},property_account_expense_id:{id:8,name:'Materials'},purchase_method:'receive',supplier_taxes:[{id:15,name:'VAT'}],standard_price:10};
@@ -57,15 +57,17 @@ source=source.replace("        state.payment_method ||=", "        root.test={mo
 vm.runInContext(source,ctx);
 const settle=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
 const key=async(node,key,shiftKey=false)=>{node.dispatchEvent({type:'keydown',key,shiftKey,preventDefault(){this.defaultPrevented=true;},stopPropagation(){this.stopped=true;}});await settle();};
+assert.deepEqual(root.querySelectorAll('thead th').map(n=>n.textContent),['Product','Account','Analytic','Quantity','Price','Disc.%','Taxes','Amount','Company Currency','']);
+assert(root.textContent.includes('PHC Project'));assert(root.textContent.includes('SAR'));
 assert.equal(root.querySelectorAll('[data-grid-row]').length,1);
 assert.equal(root.querySelectorAll('.aca-line-detail-row').length,0);
-assert.equal(root.querySelectorAll('[data-grid-entry]').length,9);
+assert.equal(root.querySelectorAll('[data-grid-entry]').length,7);
 let quantity=root.querySelector('[data-grid-column="3"] input');quantity.focus();quantity.value='12';quantity.dispatchEvent({type:'input'});
 root.test.render();quantity=root.querySelector('[data-grid-column="3"] input');assert.equal(document.activeElement,quantity);assert.equal(Number(quantity.value),12);
 await key(quantity,'Enter');assert.equal(document.activeElement.closest('td').dataset.gridColumn,'4');
 await key(document.activeElement,'Enter',true);assert.equal(document.activeElement.closest('td').dataset.gridColumn,'3');
-root.test.moveGrid(0,8,1);assert.equal(root.test.state.lines.length,2);assert.equal(document.activeElement.closest('[data-grid-row]').dataset.gridRow,'1');
-// Enter waits for pending product search/selection, then advances into Description.
+root.test.moveGrid(0,6,1);assert.equal(root.test.state.lines.length,2);assert.equal(document.activeElement.closest('[data-grid-row]').dataset.gridRow,'1');
+// Enter waits for pending product search/selection, then advances into Account.
 deferOptions=true;const lookup=root.querySelector('[data-grid-row="0"] [data-grid-column="0"] input');lookup.focus();
 await settle();const pending=key(lookup,'Enter');assert.equal(root.test.state.lines[0].product_name,'Cement');
 resolveOptions();await pending;await settle();assert.equal(root.test.state.lines[0].product_name,'Selected Product');
@@ -78,7 +80,7 @@ const dialog=body.querySelector('[role="dialog"]');assert(dialog.textContent.inc
 const productName=dialog.querySelector('[aria-label="name"]');productName.value='Edited Cement';productName.dispatchEvent({type:'input'});
 dialog.querySelectorAll('button').find(n=>n.textContent==='Save Product').click();await settle();
 assert.equal(line.product_name,'Edited Cement');assert.equal(line.name,'Negotiated');assert.equal(line.price_unit,23);assert.equal(line.quantity,12);assert.deepEqual([...line.taxes_id],[15]);
-assert.equal(calls.at(-1).payload.version,'p1');assert.equal(calls.at(-1).payload.property_account_expense_id,8);
+assert.equal(calls.findLast(c=>c.url.endsWith('/product-update')).payload.version,'p1');assert.equal(calls.findLast(c=>c.url.endsWith('/product-update')).payload.property_account_expense_id,8);
 // Create and Edit is offered directly in the product dropdown.
 const productSearch=root.querySelector('[data-grid-row="0"] [data-grid-column="0"] input');productSearch.focus();await settle();
 assert(root.textContent.includes('Create and Edit…'));
@@ -88,10 +90,15 @@ const lateEnter=key(productSearch,'Enter');await settle();
 await key(productSearch,'Escape');resolveOptions();await lateEnter;await settle();
 assert.equal(productSearch.getAttribute('aria-expanded'),'false');
 root.test.state.kind='journals';root.test.state.lines=[{name:'Accrual',account_id:8,account_name:'Expense',partner_id:3,partner_name:'Vendor',debit:100,credit:0,analytic_distribution:{}}];
-root.test.render();assert.equal(root.querySelectorAll('[data-grid-row]').length,1);assert.equal(root.querySelectorAll('[data-grid-entry]').length,6);
-const debit=root.querySelector('[data-grid-column="3"] input');debit.focus();debit.value='150';debit.dispatchEvent({type:'input'});
-await key(debit,'Enter');assert.equal(document.activeElement.closest('td').dataset.gridColumn,'4');
+root.test.render();assert.deepEqual(root.querySelectorAll('thead th').map(n=>n.textContent),['Account','Partner','Label','Analytic Distribution','Taxes','Debit','Credit','Tax Grids','']);assert.equal(root.querySelectorAll('[data-grid-row]').length,1);assert.equal(root.querySelectorAll('[data-grid-entry]').length,8);
+const debit=root.querySelector('[data-grid-column="5"] input');debit.focus();debit.value='150';debit.dispatchEvent({type:'input'});
+await key(debit,'Enter');assert.equal(document.activeElement.closest('td').dataset.gridColumn,'6');
 assert.equal(root.test.state.lines[0].debit,150);
 root.test.state.editable=false;root.test.render();assert(root.querySelectorAll('.aca-grid-lines input').every(n=>n.disabled));
 
-console.log('PASS: compact single rows, nine invoice edit columns, typing/focus preservation, Enter/Shift+Enter, new row at end, Enter waits for async product search, product form expense account, versioned update preserves negotiated line data, Create and Edit option, Escape closes dropdown (DOM fixtures).');
+console.log('PASS: compact single rows, matching native invoice/journal columns, typing/focus preservation, Enter/Shift+Enter, new row at end, Enter waits for async product search, product form expense account, versioned update preserves negotiated line data, Create and Edit option, Escape closes dropdown (DOM fixtures).');
+root.test.state.kind='bills';root.test.state.journal_items=[{account:'Expense',partner:'Vendor',name:'Materials',analytic_distribution:{'5':100},tax_names:[{id:15,name:'VAT 15%'}],grid_names:[{id:4,name:'Tax Grid'}],debit:100,credit:0}];
+root.test.render();root.querySelectorAll('[role="tab"]').find(n=>n.textContent==='Journal Items').click();
+assert.deepEqual(root.querySelectorAll('thead th').map(n=>n.textContent),['Account','Partner','Label','Analytic Distribution','Taxes','Debit','Credit','Tax Grids']);
+assert(root.textContent.includes('PHC Project'));assert(root.textContent.includes('VAT 15%'));assert(root.textContent.includes('Tax Grid'));
+console.log('PASS: saved bill Journal Items tab uses all eight matching native columns with analytic, tax and grid values.');
