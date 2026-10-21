@@ -1,0 +1,49 @@
+/* Portal-only presentation. Backend lists, report PDFs and transaction forms keep their logic. */
+.ep-portal-main{--bs-primary:#087f83;--bs-primary-rgb:8,127,131;--bs-link-color:#087f83;--bs-link-hover-color:#07686b;--eps-primary:#087f83;--eps-border:#d8e8e9}
+.ep-portal-main .btn-primary{background:#087f83!important;border:1px solid #087f83!important;color:#fff!important;box-shadow:none!important;transform:none!important}
+.ep-portal-main .btn-primary:hover,.ep-portal-main .btn-primary:focus-visible{background:#07686b!important;border-color:#07686b!important}
+.ep-portal-main .btn-outline-primary{--bs-btn-color:#087f83;--bs-btn-border-color:#087f83;--bs-btn-hover-bg:#087f83;--bs-btn-hover-border-color:#087f83;--bs-btn-active-bg:#07686b;--bs-btn-active-border-color:#07686b;color:#087f83;border-color:#087f83}
+.ep-portal-main .btn-outline-primary:hover,.ep-portal-main .btn-outline-primary:active{color:#fff;background:#087f83;border-color:#087f83}
+.ep-portal-main .text-primary{color:#087f83!important}.ep-portal-main .badge-primary,.ep-portal-main .bg-primary{background-color:#087f83!important;color:white!important}
+.ep-portal-main :is(input,select,textarea):focus{border-color:#087f83;box-shadow:0 0 0 3px rgba(8,127,131,.1)}
+.ep-portal-main .eps-list-page-card{border:0!important;background:transparent!important;box-shadow:none!important}
+.ep-portal-main .eps-list-scroll{overflow-x:auto!important;max-width:100%;padding:0 2px 5px;isolation:isolate}
+.ep-portal-main table.eps-compact-list{width:100%!important;min-width:var(--eps-list-width,900px);table-layout:fixed;border-collapse:separate!important;border-spacing:0 5px!important;background:transparent!important;margin:8px 0 0!important;border:0!important;font-size:13px;line-height:1.4;color:#203b4a}
+.ep-portal-main table.eps-compact-list thead{background:transparent!important}
+.ep-portal-main table.eps-compact-list th{background:transparent!important;border:0!important;color:#617580!important;font-size:11px!important;font-weight:700!important;vertical-align:middle!important;padding:7px 13px!important;white-space:nowrap!important;text-transform:none!important;letter-spacing:0!important;box-shadow:none!important}
+.ep-portal-main table.eps-compact-list tbody tr{height:48px;background:transparent!important}
+.ep-portal-main table.eps-compact-list td{height:48px;background:#fff!important;vertical-align:middle!important;padding:9px 13px!important;border:0!important;border-top:1px solid #d8e8e9!important;border-bottom:1px solid #d8e8e9!important;box-shadow:none!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important;font-size:13px!important;line-height:1.4!important}
+.ep-portal-main table.eps-compact-list td:first-child{border-left:4px solid #19858c!important;border-radius:8px 0 0 8px!important;font-weight:650}
+.ep-portal-main table.eps-compact-list td:last-child{border-right:1px solid #d8e8e9!important;border-radius:0 8px 8px 0!important}
+.ep-portal-main table.eps-compact-list td[colspan]{border-left:1px solid #d8e8e9!important;border-radius:8px!important}
+.ep-portal-main table.eps-compact-list .eps-record-row{cursor:pointer}
+.ep-portal-main table.eps-compact-list .eps-record-row:hover td,.ep-portal-main table.eps-compact-list .eps-row-selected td{background:#f0faf9!important}
+.ep-portal-main table.eps-compact-list .eps-record-row:focus-visible{outline:2px solid #087f83;outline-offset:-2px}
+.ep-portal-main table.eps-compact-list td a:not(.btn){color:#087f83!important;font-weight:650;text-decoration:none}
+.ep-portal-main table.eps-compact-list td .badge{font-size:11px!important;padding:4px 8px!important;font-weight:600!important;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.ep-portal-main table.eps-compact-list td .btn{padding:4px 9px!important;min-height:28px!important;font-size:12px!important}
+.ep-portal-main table.eps-compact-list :is(td,th).text-end,.ep-portal-main table.eps-compact-list :is(td,th).text-right,.ep-portal-main table.eps-compact-list .eps-list-amount{text-align:right!important;font-variant-numeric:tabular-nums}
+.ep-portal-main .eps-record-reference{font-weight:700;color:#087f83;text-decoration:none}
+.ep-portal-main .portal-report-desc{display:none}
+/* Signature requests remain subject to the existing can_sign gate. */
+.ep-portal-main .eps-sign-list:not(.eps-empty){background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:auto!important;padding:0 2px}
+.ep-portal-main .eps-sign-row{grid-template-columns:minmax(320px,1fr) 120px 110px 230px 170px!important;min-width:1050px;min-height:48px!important;padding:8px 13px!important;gap:14px!important;background:white;border:1px solid #d8e8e9!important;border-left:4px solid #19858c!important;border-radius:8px!important;margin-bottom:5px;line-height:1.35}
+.ep-portal-main .eps-sign-row.head{min-height:0!important;background:transparent!important;border-color:transparent!important;font-size:11px!important;padding:7px 13px!important}
+.ep-portal-main .eps-sign-row.eps-record-row{cursor:pointer}.ep-portal-main .eps-sign-row.eps-record-row:hover{background:#f0faf9}
+.ep-portal-main .eps-sign-row .eps-doc-icon{display:none}.ep-portal-main .eps-sign-row .eps-doc-name{font-size:13px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important}.ep-portal-main .eps-sign-row .eps-workflow{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ep-portal-main .eps-sign-row .eps-btn{height:28px}.ep-portal-main .eps-sign-row .eps-btn.sign{background:#087f83!important;box-shadow:none!important}
+/* Histories and dashboard document links follow the same compact surface. */
+@media(min-width:768px){
+.ep-portal-main .history-row.eps-attendance-row{display:grid!important;grid-template-columns:28px minmax(190px,1fr) minmax(300px,2fr) 100px;min-height:48px;padding:9px 13px!important;border:1px solid #d8e8e9!important;border-left:4px solid #19858c!important;background:#fff;border-radius:8px!important;margin:5px 0!important}
+.ep-portal-main .history-row.eps-attendance-row :is(.history-date,.history-times,.history-hours){margin:0!important;font-size:13px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ep-portal-main .history-row .history-icon{width:24px;height:24px;font-size:12px;border-radius:6px}
+.ep-portal-main .activity-card{padding:10px 14px!important;min-height:48px!important;border:1px solid #d8e8e9!important;border-left:4px solid #19858c!important;border-radius:8px!important;margin:5px 0!important;background:white!important}.ep-portal-main .activity-card .activity-content{display:flex;justify-content:space-between;align-items:center;gap:14px;min-width:0;flex:1}.ep-portal-main .activity-card .activity-time{white-space:nowrap;margin:0!important}
+}
+/* Treasury's ledger is a grid because each record owns independent review forms. */
+.ep-portal-main .eps-ledger-scroll{overflow-x:auto;padding:0 2px 5px}
+.ep-portal-main .eps-payment-ledger .ept-ledger-head,.ep-portal-main .eps-payment-ledger .ept-row{display:grid!important;grid-template-columns:180px 130px 100px 150px 180px 160px 140px 130px 130px 140px 90px!important;gap:14px!important;min-width:1770px!important;align-items:center!important}
+.ep-portal-main .eps-plan-ledger .ept-ledger-head,.ep-portal-main .eps-plan-ledger .ept-row{display:grid!important;grid-template-columns:180px 130px 100px 180px 160px 140px 130px 130px 130px 130px 140px!important;gap:14px!important;min-width:1770px!important;align-items:center!important}
+.ep-portal-main .eps-ledger-scroll .ept-ledger-head{padding:8px 14px 8px 18px!important;font-size:11px!important;color:#617580!important;background:transparent!important;text-transform:none!important;letter-spacing:0!important}
+.ep-portal-main .eps-ledger-scroll .ept-row{min-height:48px!important;padding:9px 14px!important;border:1px solid #d8e8e9!important;border-left:4px solid #19858c!important;border-radius:8px!important;margin:5px 0!important;background:white!important}
+.ep-portal-main .eps-ledger-scroll .ept-row>div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;line-height:1.35}.ep-portal-main .eps-ledger-scroll .ept-row .ept-row-title{font-size:13px!important}.ep-portal-main .eps-ledger-scroll .ept-row .ept-amount{font-size:13px!important}.ep-portal-main .eps-ledger-scroll .ept-row-wrap{border:0!important;background:transparent!important;margin:0!important;box-shadow:none!important}.ep-portal-main .eps-ledger-scroll .ept-day-block{margin:0!important;padding:0!important}.ep-portal-main .eps-ledger-scroll .ept-plan-badge{margin:0!important}.ep-portal-main .eps-ledger-scroll .ept-row[data-eps-expand]{cursor:pointer}.ep-portal-main .eps-ledger-scroll .ept-row[data-eps-expand]:hover{background:#f0faf9!important}
+.ep-portal-main .eps-row-details{min-width:1770px;background:#fff;border:1px solid #d8e8e9;border-radius:8px;padding:14px;margin:0 0 8px;max-width:none}.ep-portal-main .eps-row-details[hidden]{display:none!important}.ep-portal-main .eps-row-details>.js-add-plan-form{max-width:450px}.ep-portal-main .eps-row-details .ept-review-panel{border:0!important;margin:0!important}.ep-portal-main .eps-record-row:focus-visible{outline:2px solid #087f83;outline-offset:-2px}
+
+.ep-portal-main .eps-flow-reference{display:flex;gap:8px;align-items:center}.ep-portal-main .eps-flow-reference .fa{flex-shrink:0;font-size:12px}

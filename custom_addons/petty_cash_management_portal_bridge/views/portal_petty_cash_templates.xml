@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
 
     <template id="portal_petty_cash_list" name="Petty Cash List">
@@ -11,41 +11,36 @@
                         <h2 class="mb-0 fw-semibold">My Petty Cash Reports</h2>
 
                         <form action="/my/employee/petty-cash/create" method="post">
-                            <input type="hidden"
-                                name="csrf_token"
-                                t-att-value="request.csrf_token()"/>
-                            <button type="submit"
-                                    class="btn btn-primary rounded-pill px-4">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4">
                                 + New Report
                             </button>
                         </form>
                     </div>
                 </div>
 
-                <div class="card shadow-sm border-0 rounded-4 d-none d-md-block">
-                    <div class="card-body p-0">
-                        <table class="table table-hover table-sm mb-0 align-middle">
-                            <thead class="table-light">
+                <div class="card shadow-sm border-0 rounded-4 d-none d-md-block eps-list-page-card">
+                    <div class="card-body p-0 eps-list-scroll">
+                        <table class="table table-hover table-sm mb-0 align-middle eps-compact-list" style="--eps-list-width:530px">
+                            <colgroup><col style="width:125px"/><col style="width:115px"/><col style="width:140px"/><col style="width:150px"/></colgroup><thead class="table-light">
                                 <tr>
                                     <th class="ps-4">Reference</th>
                                     <th>Date</th>
-                                    <th>Total</th>
+                                    <th class="eps-list-amount">Total</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <t t-foreach="reports" t-as="report">
-                                    <tr>
+                                    <tr t-att-data-eps-record-href="'/my/employee/petty-cash/%s' % report.id" tabindex="0" role="link" class="eps-record-row">
                                         <td class="ps-4">
-                                            <a class="fw-semibold text-decoration-none"
-                                               t-att-href="'/my/employee/petty-cash/%s' % report.id">
+                                            <a class="fw-semibold text-decoration-none" t-att-href="'/my/employee/petty-cash/%s' % report.id">
                                                 <t t-esc="report.name"/>
                                             </a>
                                         </td>
                                         <td><t t-esc="report.date"/></td>
                                         <td class="fw-semibold">
-                                            <span t-field="report.amount_total"
-                                                  t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                            <span t-field="report.amount_total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: report.currency_id}"/>
                                         </td>
                                         <td>
                                             <t t-out="status_badge(report)"/>
@@ -59,8 +54,7 @@
 
                 <div class="d-md-none">
                     <t t-foreach="reports" t-as="report">
-                        <a t-att-href="'/my/employee/petty-cash/%s' % report.id"
-                           class="mobile-request-card">
+                        <a t-att-href="'/my/employee/petty-cash/%s' % report.id" class="mobile-request-card">
 
                             <div class="mobile-request-top">
                                 <div>
@@ -80,9 +74,7 @@
                             <div class="mobile-request-body">
                                 <div>
                                     <span class="label">Total</span>
-                                    <span class="fw-semibold"
-                                          t-field="report.amount_total"
-                                          t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                    <span class="fw-semibold" t-field="report.amount_total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: report.currency_id}"/>
                                 </div>
                             </div>
 
@@ -172,8 +164,7 @@
 
             <div class="container py-4">
 
-                <a t-att-href="back_url"
-                   class="text-decoration-none small text-muted">
+                <a t-att-href="back_url" class="text-decoration-none small text-muted">
                     ← Back
                 </a>
 
@@ -225,9 +216,7 @@
                             </div>
                             <div class="col-md-4">
                                 <strong>Total:</strong><br/>
-                                <span class="fw-semibold"
-                                      t-field="report.amount_total"
-                                      t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                <span class="fw-semibold" t-field="report.amount_total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: report.currency_id}"/>
                             </div>
                         </div>
 
@@ -240,21 +229,13 @@
 
                             <h6 class="fw-semibold mb-3">Report Attachments</h6>
 
-                            <form t-att-action="'/my/employee/petty-cash/%s/upload-attachment' % report.id"
-                                  method="post"
-                                  enctype="multipart/form-data">
+                            <form t-att-action="'/my/employee/petty-cash/%s/upload-attachment' % report.id" method="post" enctype="multipart/form-data">
 
-                                <input type="hidden"
-                                       name="csrf_token"
-                                       t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
                                 <div class="input-group">
-                                    <input type="file"
-                                           name="attachment"
-                                           class="form-control form-control-sm"
-                                           required="required"/>
-                                    <button type="submit"
-                                            class="btn btn-outline-primary btn-sm">
+                                    <input type="file" name="attachment" class="form-control form-control-sm" required="required"/>
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">
                                         Upload
                                     </button>
                                 </div>
@@ -279,25 +260,16 @@
                                 <t t-foreach="attachments" t-as="att">
                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
 
-                                        <a class="text-decoration-none"
-                                           t-att-href="'/my/employee/petty-cash/attachment/%s/download' % att.id"
-                                           target="_blank">
+                                        <a class="text-decoration-none" t-att-href="'/my/employee/petty-cash/attachment/%s/download' % att.id" target="_blank">
                                             📎 <t t-esc="att.name"/>
                                         </a>
 
                                         <t t-if="is_owner and report.state == 'draft'">
-                                            <form t-att-action="'/my/employee/petty-cash/attachment/%s/delete' % att.id"
-                                                  method="post"
-                                                  class="d-inline">
+                                            <form t-att-action="'/my/employee/petty-cash/attachment/%s/delete' % att.id" method="post" class="d-inline">
 
-                                                <input type="hidden"
-                                                       name="csrf_token"
-                                                       t-att-value="request.csrf_token()"/>
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
-                                                <button type="submit"
-                                                        class="border-0 bg-transparent text-danger"
-                                                        style="font-size:16px;"
-                                                        title="Delete">
+                                                <button type="submit" class="border-0 bg-transparent text-danger" style="font-size:16px;" title="Delete">
                                                     ×
                                                 </button>
                                             </form>
@@ -316,16 +288,12 @@
 
                         <h6 class="fw-semibold mb-3">Expense Lines</h6>
 
-                        <form t-att-action="'/my/employee/petty-cash/%s/add-line' % report.id"
-                              method="post"
-                              enctype="multipart/form-data">
+                        <form t-att-action="'/my/employee/petty-cash/%s/add-line' % report.id" method="post" enctype="multipart/form-data" class=" eps-list-scroll">
 
-                            <input type="hidden"
-                                   name="csrf_token"
-                                   t-att-value="request.csrf_token()"/>
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
-                            <table class="table table-sm table-hover align-middle">
-                                <thead class="table-light">
+                            <table class="table table-sm table-hover align-middle eps-compact-list eps-record-lines" style="--eps-list-width:1110px">
+                                <colgroup><col style="width:150px"/><col style="width:210px"/><col style="width:150px"/><col style="width:150px"/><col style="width:150px"/><col style="width:150px"/><col style="width:150px"/></colgroup><thead class="table-light">
                                     <tr>
                                         <th>Date</th>
                                         <th>Details</th>
@@ -333,7 +301,7 @@
                                         <th>Untaxed</th>
                                         <th>VAT</th>
                                         <th>Total</th>
-                                        <th></th>
+                                        <th/>
                                     </tr>
                                 </thead>
 
@@ -354,28 +322,22 @@
                                             </td>
                                             <td><t t-esc="line.category_id.name"/></td>
                                             <td>
-                                                <span t-field="line.amount_before_vat"
-                                                      t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                                <span t-field="line.amount_before_vat" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: report.currency_id}"/>
                                             </td>
                                             <td>
-                                                <span t-field="line.vat_amount"
-                                                      t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                                <span t-field="line.vat_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: report.currency_id}"/>
                                             </td>
                                             <td class="fw-semibold">
-                                                <span t-field="line.amount_total"
-                                                      t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                                <span t-field="line.amount_total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: report.currency_id}"/>
                                             </td>
-                                            <td></td>
+                                            <td/>
                                         </tr>
                                     </t>
 
                                     <t t-if="is_owner and report.state == 'draft'">
                                         <tr>
                                             <td>
-                                                <input type="date"
-                                                       name="date"
-                                                       class="form-control form-control-sm"
-                                                       required="required"/>
+                                                <input type="date" name="date" class="form-control form-control-sm" required="required"/>
                                             </td>
                                             <td>
                                                 <input type="text" name="description" class="form-control form-control-sm mb-1" placeholder="Description"/>
@@ -386,9 +348,7 @@
                                                 <input type="text" name="zone" class="form-control form-control-sm" placeholder="Zone"/>
                                             </td>
                                             <td>
-                                                <select name="category_id"
-                                                        class="form-control form-control-sm"
-                                                        required="required">
+                                                <select name="category_id" class="form-control form-control-sm" required="required">
                                                     <t t-foreach="categories" t-as="cat">
                                                         <option t-att-value="cat.id">
                                                             <t t-esc="cat.name"/>
@@ -397,19 +357,14 @@
                                                 </select>
                                             </td>
                                             <td>
-                                                <input type="number"
-                                                       step="0.01"
-                                                       name="amount_before_vat"
-                                                       class="form-control form-control-sm"
-                                                       required="required"/>
+                                                <input type="number" step="0.01" name="amount_before_vat" class="form-control form-control-sm" required="required"/>
                                             </td>
                                             <td class="text-center">
                                                 <input type="checkbox" name="vat_applicable" checked="checked"/>
                                             </td>
                                             <td>-</td>
                                             <td>
-                                                <button type="submit"
-                                                        class="btn btn-success btn-sm rounded-pill px-3">
+                                                <button type="submit" class="btn btn-success btn-sm rounded-pill px-3">
                                                     Add
                                                 </button>
                                             </td>
@@ -425,16 +380,11 @@
                 </div>
 
                 <t t-if="is_owner and report.state == 'draft'">
-                    <form t-att-action="'/my/employee/petty-cash/%s/submit' % report.id"
-                          method="post"
-                          class="text-end">
+                    <form t-att-action="'/my/employee/petty-cash/%s/submit' % report.id" method="post" class="text-end">
 
-                        <input type="hidden"
-                               name="csrf_token"
-                               t-att-value="request.csrf_token()"/>
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
-                        <button type="submit"
-                                class="btn btn-warning rounded-pill px-4">
+                        <button type="submit" class="btn btn-warning rounded-pill px-4">
                             Submit Report
                         </button>
                     </form>
@@ -523,15 +473,15 @@
                     <a t-att-class="'btn btn-sm rounded-pill ' + ('btn-primary' if status == 'all' else 'btn-outline-secondary')" href="/my/employee/petty-cash/approvals?status=all">All</a>
                 </div>
 
-                <div class="card shadow-sm border-0 rounded-4 d-none d-md-block">
-                    <div class="card-body p-0">
-                        <table class="table table-hover table-sm mb-0 align-middle">
-                            <thead class="table-light">
+                <div class="card shadow-sm border-0 rounded-4 d-none d-md-block eps-list-page-card">
+                    <div class="card-body p-0 eps-list-scroll">
+                        <table class="table table-hover table-sm mb-0 align-middle eps-compact-list" style="--eps-list-width:845px">
+                            <colgroup><col style="width:125px"/><col style="width:190px"/><col style="width:115px"/><col style="width:140px"/><col style="width:125px"/><col style="width:150px"/></colgroup><thead class="table-light">
                                 <tr>
                                     <th class="ps-4">Reference</th>
                                     <th>Submitted By</th>
                                     <th>Date</th>
-                                    <th>Total</th>
+                                    <th class="eps-list-amount">Total</th>
                                     <th>Attachments</th>
                                     <th>Status</th>
                                 </tr>
@@ -541,7 +491,7 @@
                                     <tr><td colspan="6" class="text-center text-muted py-5">No reports found.</td></tr>
                                 </t>
                                 <t t-foreach="reports" t-as="report">
-                                    <tr>
+                                    <tr t-att-data-eps-record-href="'/my/employee/petty-cash/%s' % report.id" tabindex="0" role="link" class="eps-record-row">
                                         <td class="ps-4">
                                             <a class="fw-semibold text-decoration-none" t-att-href="'/my/employee/petty-cash/%s' % report.id">
                                                 <t t-esc="report.name"/>
@@ -550,7 +500,7 @@
                                         <td><t t-esc="report.user_id.name"/></td>
                                         <td><t t-esc="report.date"/></td>
                                         <td class="fw-semibold">
-                                            <span t-field="report.amount_total" t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                            <span t-field="report.amount_total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: report.currency_id}"/>
                                         </td>
                                         <td><t t-esc="attachment_counts.get(report.id, 0)"/></td>
                                         <td><t t-out="status_badge(report)"/></td>
@@ -577,7 +527,7 @@
                             <div class="mobile-request-body">
                                 <div>
                                     <span class="label">Total</span>
-                                    <span class="fw-semibold" t-field="report.amount_total" t-options='{"widget": "monetary", "display_currency": report.currency_id}'/>
+                                    <span class="fw-semibold" t-field="report.amount_total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: report.currency_id}"/>
                                 </div>
                                 <div>
                                     <span class="label">Attachments</span>

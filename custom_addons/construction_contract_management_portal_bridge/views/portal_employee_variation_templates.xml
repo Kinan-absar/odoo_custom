@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
     <!-- Variations List with NEW button -->
     <template id="portal_employee_variations" name="Employee Portal - Variations">
@@ -60,28 +60,28 @@
                         </form>
                     </div>
 
-                    <div class="table-responsive mt-3 construction-desktop-table">
-                        <table class="table table-hover">
-                            <thead class="thead-light">
+                    <div class="table-responsive mt-3 construction-desktop-table eps-list-scroll">
+                        <table class="table table-hover eps-compact-list" style="--eps-list-width:1100px">
+                            <colgroup><col style="width:125px"/><col style="width:190px"/><col style="width:190px"/><col style="width:115px"/><col style="width:190px"/><col style="width:140px"/><col style="width:150px"/></colgroup><thead class="thead-light">
                                 <tr>
                                     <th>Variation #</th>
                                     <th>Contract</th>
                                     <th>Project</th>
                                     <th>Date</th>
                                     <th>Description</th>
-                                    <th class="text-right">Amount</th>
+                                    <th class="text-right eps-list-amount">Amount</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <t t-foreach="variations" t-as="variation">
-                                    <tr>
+                                    <tr t-attf-data-eps-record-href="/my/employee/variation/#{variation.id}" tabindex="0" role="link" class="eps-record-row">
                                         <td><a t-attf-href="/my/employee/variation/#{variation.id}"><t t-esc="variation.name"/></a></td>
                                         <td><span t-field="variation.contract_id"/></td>
                                         <td><span t-field="variation.contract_id.project_id"/></td>
                                         <td><span t-field="variation.date"/></td>
                                         <td><span t-field="variation.description"/></td>
-                                        <td class="text-right"><span t-field="variation.total_amount" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></td>
+                                        <td class="text-right"><span t-field="variation.total_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: variation.currency_id}"/></td>
                                         <td>
                                             <span t-if="variation.state == 'draft'" class="badge badge-secondary">Draft</span>
                                             <span t-if="variation.state == 'submitted'" class="badge badge-info">Submitted</span>
@@ -112,7 +112,7 @@
                                     </div>
                                     <div>
                                         <span class="construction-mobile-card-label">Amount</span>
-                                        <div class="construction-mobile-card-value"><span t-field="variation.total_amount" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></div>
+                                        <div class="construction-mobile-card-value"><span t-field="variation.total_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: variation.currency_id}"/></div>
                                     </div>
                                     <div>
                                         <span class="construction-mobile-card-label">Status</span>
@@ -259,7 +259,7 @@
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-4"><strong>Total Amount:</strong></div>
-                                    <div class="col-8"><span t-field="variation.total_amount" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></div>
+                                    <div class="col-8"><span t-field="variation.total_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: variation.currency_id}"/></div>
                                 </div>
                             </div>
                         </div>
@@ -436,8 +436,8 @@
                 <td class="text-right"><span t-field="line.variation_qty"/></td>
                 <td class="text-right"><span t-field="line.revised_qty"/></td>
                 <td><span t-field="line.uom_id"/></td>
-                <td class="text-right"><span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></td>
-                <td class="text-right"><span t-field="line.amount" t-options='{"widget": "monetary", "display_currency": variation.currency_id}'/></td>
+                <td class="text-right"><span t-field="line.unit_rate" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: variation.currency_id}"/></td>
+                <td class="text-right"><span t-field="line.amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: variation.currency_id}"/></td>
             </tr>
             <tr t-if="line.type == 'new' and line.created_boq_line_id">
                 <td colspan="10" class="text-muted small">
@@ -496,7 +496,7 @@
 
                 <t t-if="error_message">
                     <div class="variation-form-popup" role="alert">
-                        <i class="fa fa-exclamation-circle mr-1"></i>
+                        <i class="fa fa-exclamation-circle mr-1"/>
                         <strong>Could not create variation.</strong>
                         <div class="mt-1">
                             <t t-esc="error_message"/>
@@ -531,12 +531,12 @@
 
                         <div class="form-group">
                             <label for="description">Description of Change *</label>
-                            <textarea name="description" id="description" class="form-control" rows="4" required="required" placeholder="Describe the scope change or variation request..."></textarea>
+                            <textarea name="description" id="description" class="form-control" rows="4" required="required" placeholder="Describe the scope change or variation request..."/>
                         </div>
 
                         <div class="form-group">
                             <label for="reason">Reason for Variation</label>
-                            <textarea name="reason" id="reason" class="form-control" rows="3" placeholder="Explain why this variation is needed..."></textarea>
+                            <textarea name="reason" id="reason" class="form-control" rows="3" placeholder="Explain why this variation is needed..."/>
                         </div>
 
                         <div class="alert alert-info">

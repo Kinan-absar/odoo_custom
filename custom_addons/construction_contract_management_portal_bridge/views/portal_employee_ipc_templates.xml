@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
     <!-- IPCs List -->
     <template id="portal_employee_ipcs" name="Employee Portal - IPCs">
@@ -55,9 +55,9 @@
                         </form>
                     </div>
 
-                    <div class="table-responsive mt-3 construction-desktop-table">
-                        <table class="table table-hover">
-                            <thead class="thead-light">
+                    <div class="table-responsive mt-3 construction-desktop-table eps-list-scroll">
+                        <table class="table table-hover eps-compact-list" style="--eps-list-width:1655px">
+                            <colgroup><col style="width:125px"/><col style="width:190px"/><col style="width:190px"/><col style="width:190px"/><col style="width:115px"/><col style="width:180px"/><col style="width:140px"/><col style="width:140px"/><col style="width:150px"/><col style="width:150px"/><col style="width:85px"/></colgroup><thead class="thead-light">
                                 <tr>
                                     <th>IPC #</th>
                                     <th>Contract</th>
@@ -65,24 +65,24 @@
                                     <th>Project</th>
                                     <th>Date</th>
                                     <th>Period</th>
-                                    <th class="text-right">Current Value</th>
-                                    <th class="text-right">Net Amount</th>
+                                    <th class="text-right eps-list-amount">Current Value</th>
+                                    <th class="text-right eps-list-amount">Net Amount</th>
                                     <th>Payment</th>
                                     <th>Status</th>
-                                    <th></th>
+                                    <th/>
                                 </tr>
                             </thead>
                             <tbody>
                                 <t t-foreach="ipcs" t-as="ipc">
-                                    <tr>
+                                    <tr t-attf-data-eps-record-href="/my/employee/ipc/#{ipc.id}" tabindex="0" role="link" class="eps-record-row">
                                         <td><a t-attf-href="/my/employee/ipc/#{ipc.id}"><t t-esc="ipc.name"/></a></td>
                                         <td><span t-field="ipc.contract_id"/></td>
                                         <td><t t-if="ipc.contract_order_id"><t t-esc="ipc.sale_order_id.name"/><t t-if="ipc.contract_order_id.scope_name"> · <t t-esc="ipc.contract_order_id.scope_name"/></t></t><t t-else="">-</t></td>
                                         <td><span t-field="ipc.contract_id.project_id"/></td>
                                         <td><span t-field="ipc.ipc_date"/></td>
                                         <td><span t-field="ipc.period_from"/> - <span t-field="ipc.period_to"/></td>
-                                        <td class="text-right"><span t-field="ipc.current_work_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
-                                        <td class="text-right"><span t-field="ipc.net_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></td>
+                                        <td class="text-right"><span t-field="ipc.current_work_value" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/></td>
+                                        <td class="text-right"><span t-field="ipc.net_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/></td>
                                         <td>
                                             <span t-if="ipc.payment_status == 'no_move'" class="badge badge-secondary">Not Invoiced</span>
                                             <span t-if="ipc.payment_status == 'not_paid'" class="badge badge-warning">Not Paid</span>
@@ -131,11 +131,11 @@
                                     </div>
                                     <div>
                                         <span class="construction-mobile-card-label">Current Value</span>
-                                        <div class="construction-mobile-card-value"><span t-field="ipc.current_work_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                        <div class="construction-mobile-card-value"><span t-field="ipc.current_work_value" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/></div>
                                     </div>
                                     <div>
                                         <span class="construction-mobile-card-label">Net Amount</span>
-                                        <div class="construction-mobile-card-value"><span t-field="ipc.net_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                        <div class="construction-mobile-card-value"><span t-field="ipc.net_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/></div>
                                     </div>
                                     <div>
                                         <span class="construction-mobile-card-label">Payment</span>
@@ -335,36 +335,36 @@
                             <div class="card-body">
                                 <div class="row mb-2">
                                     <div class="col-7"><strong>Previous Certified:</strong></div>
-                                    <div class="col-5 text-right"><span t-field="ipc.previous_certified_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.previous_certified_value" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-7"><strong>Current Work Value:</strong></div>
-                                    <div class="col-5 text-right"><span t-field="ipc.current_work_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.current_work_value" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-7"><strong>Cumulative Certified:</strong></div>
-                                    <div class="col-5 text-right"><span t-field="ipc.cumulative_certified_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.cumulative_certified_value" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-7"><strong>Advance Recovery:</strong></div>
-                                    <div class="col-5 text-right"><span t-field="ipc.advance_recovery_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.advance_recovery_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-7"><strong>VAT:</strong></div>
-                                    <div class="col-5 text-right"><span t-field="ipc.vat_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.vat_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-7"><strong>Retention:</strong></div>
-                                    <div class="col-5 text-right"><span t-field="ipc.retention_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.retention_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-7"><strong>Deductions:</strong></div>
-                                    <div class="col-5 text-right"><span t-field="ipc.deduction_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></div>
+                                    <div class="col-5 text-right"><span t-field="ipc.deduction_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/></div>
                                 </div>
                                 <hr/>
                                 <div class="row mb-2">
                                     <div class="col-7"><strong>Net Amount:</strong></div>
-                                    <div class="col-5 text-right"><strong><span t-field="ipc.net_amount" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/></strong></div>
+                                    <div class="col-5 text-right"><strong><span t-field="ipc.net_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/></strong></div>
                                 </div>
                             </div>
                         </div>
@@ -431,7 +431,7 @@
                                         <td class="text-right">
                                             <span t-esc="'{} {:,.2f}'.format(ipc.currency_id.symbol or '', section_total or 0.0)"/>
                                         </td>
-                                        <td></td>
+                                        <td/>
                                     </tr>
                                 </t>
 
@@ -448,7 +448,7 @@
 
                             <!-- Normal line -->
                             <t t-else="">
-                                <t t-if="line.current_value and line.current_value > 0">
+                                <t t-if="line.current_value and line.current_value &gt; 0">
                                     <t t-if="not section_has_visible_lines and current_section">
                                         <tr class="ipc-section">
                                             <td colspan="8">
@@ -490,13 +490,13 @@
                                             </div>
                                         </td>
                                         <td class="text-right money-text">
-                                            <span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
+                                            <span t-field="line.unit_rate" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/>
                                         </td>
                                         <td class="text-right money-text">
-                                            <span t-field="line.current_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
+                                            <span t-field="line.current_value" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/>
                                         </td>
                                         <td class="text-right money-text">
-                                            <span t-field="line.cumulative_value" t-options='{"widget": "monetary", "display_currency": ipc.currency_id}'/>
+                                            <span t-field="line.cumulative_value" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: ipc.currency_id}"/>
                                         </td>
                                     </tr>
                                 </t>
@@ -511,7 +511,7 @@
                                 <td class="text-right">
                                     <span t-esc="'{} {:,.2f}'.format(ipc.currency_id.symbol or '', section_total or 0.0)"/>
                                 </td>
-                                <td></td>
+                                <td/>
                             </tr>
                         </t>
 
@@ -520,7 +520,7 @@
                             <td class="text-right">
                                 <span t-esc="'{} {:,.2f}'.format(ipc.currency_id.symbol or '', grand_total or 0.0)"/>
                             </td>
-                            <td></td>
+                            <td/>
                         </tr>
                     </tbody>
                 </table>

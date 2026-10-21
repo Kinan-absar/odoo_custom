@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
 
     <template id="portal_reports_list" name="Portal Reports List">
@@ -48,19 +48,18 @@
 
             <t t-if="reports">
                 <div class="portal-report-table-card">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0 portal-report-table">
-                            <thead>
+                    <div class="table-responsive eps-list-scroll">
+                        <table class="table table-hover mb-0 portal-report-table eps-compact-list" style="--eps-list-width:515px">
+                            <colgroup><col style="width:190px"/><col style="width:115px"/><col style="width:125px"/></colgroup><thead>
                                 <tr>
                                     <th>Report</th>
                                     <th>Date</th>
                                     <th>File</th>
-                                    <th class="text-end">Action</th>
-                                </tr>
+                                    </tr>
                             </thead>
                             <tbody>
                                 <t t-foreach="reports" t-as="report">
-                                    <tr>
+                                    <tr t-att-data-eps-record-href="'/my/employee/reports/%s' % report.id" tabindex="0" role="link" class="eps-record-row">
                                         <td>
                                             <a class="portal-report-title-link" t-att-href="'/my/employee/reports/%s' % report.id">
                                                 <t t-out="report.name"/>
@@ -74,16 +73,11 @@
                                         </td>
                                         <td>
                                             <t t-if="report.filename">
-                                                <i class="fa fa-file-pdf-o me-1 text-danger"></i>
+                                                <i class="fa fa-file-pdf-o me-1 text-danger"/>
                                                 <span t-out="report.filename"/>
                                             </t>
                                         </td>
-                                        <td class="text-end">
-                                            <a t-att-href="'/my/employee/reports/%s' % report.id" class="btn btn-outline-primary btn-sm">
-                                                <i class="fa fa-eye me-1"></i> Open
-                                            </a>
-                                        </td>
-                                    </tr>
+                                        </tr>
                                 </t>
                             </tbody>
                         </table>
@@ -121,21 +115,21 @@
             <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
                 <div>
                     <a href="/my/employee/reports" class="text-muted small text-decoration-none">
-                        <i class="fa fa-chevron-left me-1"></i> Back to Reports
+                        <i class="fa fa-chevron-left me-1"/> Back to Reports
                     </a>
                     <h4 class="mb-1 mt-2"><t t-out="report.name"/></h4>
                     <div class="text-muted small">
-                        <i class="fa fa-calendar-o me-1"></i>
+                        <i class="fa fa-calendar-o me-1"/>
                         <t t-out="report.date.strftime('%d %b %Y') if report.date else ''"/>
                         <t t-if="report.filename">
                             <span class="mx-2">•</span>
-                            <i class="fa fa-file-pdf-o me-1"></i>
+                            <i class="fa fa-file-pdf-o me-1"/>
                             <t t-out="report.filename"/>
                         </t>
                     </div>
                 </div>
                 <a t-att-href="'/my/employee/reports/%s/download' % report.id" class="btn btn-primary">
-                    <i class="fa fa-download me-1"></i> Download PDF
+                    <i class="fa fa-download me-1"/> Download PDF
                 </a>
             </div>
 
@@ -143,7 +137,7 @@
                 <t t-if="report.description">
                     <p class="text-muted mb-3"><t t-out="report.description"/></p>
                 </t>
-                <iframe class="portal-report-viewer" t-att-src="'/my/employee/reports/%s/view' % report.id"></iframe>
+                <iframe class="portal-report-viewer" t-att-src="'/my/employee/reports/%s/view' % report.id"/>
             </div>
         </t>
     </template>

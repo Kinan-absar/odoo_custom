@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
   <template id="portal_treasury_payment_list" name="CEO Payment Approvals">
     <t t-call="employee_portal_suite.employee_portal_layout">
@@ -7,10 +7,10 @@
            Payment Approvals — ledger-style redesign (matches plan detail)
            ============================================================ */
         .ept-page a.ept-back { color: var(--text-secondary, #6B7280); font-weight: 600; font-size: 13.5px; text-decoration: none !important; display: inline-flex; align-items: center; gap: 6px; }
-        .ept-page a.ept-back:hover { color: var(--app-primary, #4F46E5); }
+        .ept-page a.ept-back:hover { color: var(--app-primary, #087f83); }
 
         /* --- Hero --- */
-        .ept-hero { background: linear-gradient(135deg, var(--app-primary-light, #6366F1) 0%, var(--app-primary-dark, #3730A3) 100%); border-radius: 26px; padding: 28px 30px; color: #fff; position: relative; overflow: hidden; box-shadow: 0 20px 45px rgba(79,70,229,.25); margin-top: 14px; }
+        .ept-hero { background: linear-gradient(135deg, var(--app-primary-light, #159398) 0%, var(--app-primary-dark, #07686b) 100%); border-radius: 26px; padding: 28px 30px; color: #fff; position: relative; overflow: hidden; box-shadow: 0 20px 45px rgba(8,127,131,.25); margin-top: 14px; }
         .ept-hero::after { content: ''; position: absolute; top: -60%; right: -10%; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.20), transparent 70%); pointer-events: none; }
         .ept-hero-row { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; }
         .ept-hero-name { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 4px 0; color: #fff; }
@@ -21,8 +21,8 @@
         .ept-flow-step { background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16); border-radius: 16px; padding: 12px 18px; min-width: 150px; }
         .ept-flow-step-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; opacity: .75; font-weight: 700; }
         .ept-flow-step-value { font-size: 19px; font-weight: 800; margin-top: 2px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .ept-flow-step.ept-flow-final { background: #fff; color: var(--app-primary-dark, #3730A3); }
-        .ept-flow-step.ept-flow-final .ept-flow-step-label { color: var(--app-primary, #4F46E5); opacity: 1; }
+        .ept-flow-step.ept-flow-final { background: #fff; color: var(--app-primary-dark, #07686b); }
+        .ept-flow-step.ept-flow-final .ept-flow-step-label { color: var(--app-primary, #087f83); opacity: 1; }
         @media (max-width: 767.98px) {
           .ept-flow-strip { gap: 10px; }
           .ept-flow-step { min-width: 42%; padding: 10px 14px; }
@@ -34,7 +34,7 @@
         .ept-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 18px; }
         .ept-kpi-card { background: var(--surface, #fff); border-radius: 20px; padding: 16px 20px; box-shadow: var(--shadow-sm, 0 4px 12px rgba(26,27,46,.08)); border: 2px solid transparent; text-decoration: none !important; display: block; transition: all .15s ease; }
         .ept-kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md, 0 10px 24px rgba(26,27,46,.1)); }
-        .ept-kpi-card.ept-kpi-active { border-color: var(--app-primary, #4F46E5); }
+        .ept-kpi-card.ept-kpi-active { border-color: var(--app-primary, #087f83); }
         .ept-kpi-icon { width: 34px; height: 34px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 14px; margin-bottom: 10px; }
         .ept-kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-secondary, #6B7280); }
         .ept-kpi-value { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary, #1A1B2E); margin-top: 2px; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -47,8 +47,8 @@
         /* --- Filter pills --- */
         .ept-pill-filter { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 14px 22px 0; }
         .ept-pill { flex-shrink: 0; padding: 7px 15px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--text-secondary, #6B7280); background: var(--surface-2, #F8F8FB); border: 1px solid transparent; text-decoration: none !important; display: inline-flex; align-items: center; gap: 6px; transition: all .15s ease; }
-        .ept-pill:hover { color: var(--app-primary, #4F46E5); }
-        .ept-pill-active { background: var(--app-primary, #4F46E5); color: #fff !important; box-shadow: 0 6px 14px rgba(79,70,229,.22); }
+        .ept-pill:hover { color: var(--app-primary, #087f83); }
+        .ept-pill-active { background: var(--app-primary, #087f83); color: #fff !important; box-shadow: 0 6px 14px rgba(8,127,131,.22); }
         .ept-pill-count { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: rgba(0,0,0,.06); }
         .ept-pill-active .ept-pill-count { background: rgba(255,255,255,.22); color: #fff; }
 
@@ -63,7 +63,7 @@
 
         /* --- Ledger --- */
         .ept-ledger-head { display: grid; grid-template-columns: minmax(230px,1.55fr) minmax(240px,1.45fr) 118px 118px 140px; gap: 18px; padding: 0 26px 13px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-secondary, #6B7280); }
-        .ept-ledger-head > div:nth-child(3), .ept-ledger-head > div:nth-child(4) { text-align: right; }
+        .ept-ledger-head &gt; div:nth-child(3), .ept-ledger-head &gt; div:nth-child(4) { text-align: right; }
 
         .ept-day-block + .ept-day-block { border-top: 1px solid var(--border-light, rgba(0,0,0,.05)); }
         .ept-day-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 22px; background: var(--surface-2, #F8F8FB); flex-wrap: wrap; }
@@ -75,14 +75,14 @@
         .ept-day-block { border-top: 0 !important; }
         .ept-day-block + .ept-day-block { border-top: 0 !important; }
         .ept-row { display: grid; grid-template-columns: minmax(230px,1.55fr) minmax(240px,1.45fr) 118px 118px 140px; gap: 18px; padding: 14px 26px; align-items: center; border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); }
-        .ept-row-wrap:hover .ept-row { background: rgba(79,70,229,0.035); }
+        .ept-row-wrap:hover .ept-row { background: rgba(8,127,131,0.035); }
         .ept-row-wrap + .ept-row-wrap { border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); }
         .ept-flow-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
         .ept-row-title { font-weight: 600; font-size: 13px; }
         .ept-row-sub { font-size: 11.5px; color: var(--text-muted, #9CA3AF); }
         .ept-row-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .ept-po-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; color: var(--app-primary, #4F46E5); background: rgba(79,70,229,.08); border-radius: 8px; padding: .18em .5em; text-decoration: none !important; }
-        .ept-po-chip:hover { background: rgba(79,70,229,.16); }
+        .ept-po-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; color: var(--app-primary, #087f83); background: rgba(8,127,131,.08); border-radius: 8px; padding: .18em .5em; text-decoration: none !important; }
+        .ept-po-chip:hover { background: rgba(8,127,131,.16); }
         .ept-plan-badge .eps-badge { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.25; }
         .js-plan-budget-select { width: 100%; min-width: 0; font-size: 11px; }
         .ept-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; font-size: 12.5px; }
@@ -92,7 +92,7 @@
         .ept-budget-preview strong { color: var(--text-primary, #1A1B2E); font-variant-numeric: tabular-nums; }
         .ept-budget-preview .ept-after-over { color: #B91C1C; font-weight: 700; }
         .ept-budget-preview .ept-after-ok { color: #047857; font-weight: 700; }
-        .ept-confirm-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } .ept-confirm-grid > div { padding:10px 12px; border:1px solid var(--border-light, rgba(0,0,0,.08)); border-radius:10px; background:var(--surface-2,#F8F8FB); display:flex; justify-content:space-between; gap:12px; } .ept-confirm-grid strong { white-space:nowrap; font-variant-numeric:tabular-nums; } .ept-after-over { color:#B91C1C; } .ept-after-ok { color:#047857; } @media(max-width:575px){.ept-confirm-grid{grid-template-columns:1fr;}}
+        .ept-confirm-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } .ept-confirm-grid &gt; div { padding:10px 12px; border:1px solid var(--border-light, rgba(0,0,0,.08)); border-radius:10px; background:var(--surface-2,#F8F8FB); display:flex; justify-content:space-between; gap:12px; } .ept-confirm-grid strong { white-space:nowrap; font-variant-numeric:tabular-nums; } .ept-after-over { color:#B91C1C; } .ept-after-ok { color:#047857; } @media(max-width:575px){.ept-confirm-grid{grid-template-columns:1fr;}}
         .ept-budget-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
         @media (max-width: 767.98px) { .ept-budget-grid { grid-template-columns: 1fr; } }
 
@@ -222,50 +222,27 @@
             <a t-attf-class="ept-pill #{'ept-pill-active' if current_status == 'all' else ''}" href="/my/employee/treasury/payments?status=all">All <span class="ept-pill-count"><t t-esc="counts.get('all', 0)"/></span></a>
           </div>
 
-          <div class="d-none d-lg-block mt-2">
-            <div class="ept-ledger-head">
-              <div>Payment</div>
-              <div>Plan, partner &amp; PO</div>
-              <div>Requested</div>
-              <div>Approved</div>
-              <div>Status</div>
-            </div>
-            <t t-foreach="day_groups" t-as="day">
+          <div class="d-none d-lg-block mt-2 eps-ledger-scroll eps-payment-ledger">
+            <div class="ept-ledger-head"><div>Payment</div><div>Category</div><div>Date</div><div>Weekly Plan</div><div>Partner</div><div>Project</div><div>Purchase Orders</div><div>Requested</div><div>Approved</div><div>Status</div><div>Details</div></div><t t-foreach="day_groups" t-as="day">
               <div class="ept-day-block">
                 <t t-foreach="day['lines']" t-as="line">
                   <t t-set="badge_cls" t-value="{'pending': 'eps-badge-pending', 'approved': 'eps-badge-approved', 'adjusted': 'eps-badge-approved', 'held': 'eps-badge-held', 'rejected': 'eps-badge-rejected'}.get(line.ceo_decision, 'eps-badge-muted')"/>
                   <t t-set="icon_cls" t-value="{'pending': ('rgba(245,158,11,.14)','#B45309','fa-clock-o'), 'approved': ('rgba(16,185,129,.14)','#047857','fa-check'), 'adjusted': ('rgba(16,185,129,.14)','#047857','fa-check'), 'held': ('rgba(234,88,12,.14)','#C2410C','fa-pause'), 'rejected': ('rgba(239,68,68,.14)','#B91C1C','fa-times')}.get(line.ceo_decision, ('rgba(107,114,128,.13)','#4B5563','fa-question'))"/>
                   <div class="ept-row-wrap">
-                    <div class="ept-row">
-                      <div class="d-flex align-items-center gap-3 min-w-0">
-                        <div class="ept-flow-icon flex-shrink-0" t-attf-style="background: #{icon_cls[0]}; color: #{icon_cls[1]};">
-                          <i t-attf-class="fa #{icon_cls[2]}"/>
-                        </div>
-                        <div class="min-w-0">
-                          <div class="ept-row-title ept-row-truncate" t-att-title="line.name"><t t-esc="line.name"/></div>
-                          <div class="ept-row-sub ept-row-truncate"><t t-esc="line.category_id.name"/> · <t t-esc="line.planned_date.strftime('%d %b') if line.planned_date else ''"/></div>
-                        </div>
-                      </div>
-                      <div>
-                        <a t-if="line.run_id" class="ept-row-title ept-row-truncate d-block" t-att-href="'/my/employee/treasury/plans/%s' % line.run_id.id" t-att-title="line.run_id.name"><t t-esc="line.run_id.name"/></a><span t-else="" class="ept-row-sub">Not added to a weekly plan</span>
-                        <div class="ept-row-sub ept-row-truncate" t-if="line.partner_id" t-att-title="line.partner_id.name"><t t-esc="line.partner_id.name"/></div>
-                        <div class="ept-row-sub ept-row-truncate" t-if="line.project_id" t-att-title="line.project_id.name"><t t-esc="line.project_id.name"/></div>
-                        <div class="mt-1" t-if="line.portal_purchase_order_ids">
+                    <div class="ept-row" t-att-data-eps-expand="'eps-payment-details-%s' % line.id" tabindex="0" role="button" aria-expanded="false" t-att-aria-controls="'eps-payment-details-%s' % line.id">
+                      <div t-att-title="line.name"><t t-esc="line.name"/></div><div t-att-title="line.category_id.name or '—'"><t t-esc="line.category_id.name or '—'"/></div><div t-att-title="str(line.planned_date or '')"><t t-esc="str(line.planned_date or '')"/></div><div><a t-if="line.run_id" t-att-href="'/my/employee/treasury/plans/%s' % line.run_id.id" t-att-title="line.run_id.name"><t t-esc="line.run_id.name"/></a><span t-else="">Not in plan</span></div><div t-att-title="line.partner_id.name or '—'"><t t-esc="line.partner_id.name or '—'"/></div><div t-att-title="line.project_id.name or '—'"><t t-esc="line.project_id.name or '—'"/></div><div><div class="mt-1">
                           <a t-foreach="line.portal_purchase_order_ids" t-as="po" t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id" class="ept-po-chip me-1 mb-1" target="_blank" rel="noopener"><i class="fa fa-eye"/> <t t-esc="po.name"/></a>
-                          <div class="ept-row-sub" style="font-size:10px;" t-if="line.purchase_order_ids">Paid <span t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/> · Due <span t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
-                        </div>
-                      </div>
-                      <div class="ept-amount"><span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
+                          </div>
+                      </div><div class="ept-amount"><span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
                       <div class="ept-amount"><span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
-                      <div>
-                        <span t-attf-class="eps-badge #{badge_cls}" t-att-title="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)">
+                      <span t-attf-class="eps-badge #{badge_cls}" t-att-title="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)">
                           <span class="eps-badge-dot"/><t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
                         </span>
-                        <div t-if="line.run_id" class="ept-plan-badge">
-                          <span class="eps-badge eps-badge-approved"><span class="eps-badge-dot"/>Added to <t t-esc="line.run_id.name"/></span>
-                        </div>
-                        <div t-else="" class="ept-plan-badge"><span class="eps-badge eps-badge-muted"><span class="eps-badge-dot"/>Not in weekly plan</span></div>
-                        <form t-if="not line.run_id and available_runs" t-att-action="'/my/employee/treasury/lines/%s/add-to-plan' % line.id" method="post" class="mt-2 js-add-plan-form" t-att-data-payment-amount="line.forecast_amount">
+                        <div><button type="button" class="btn btn-outline-primary btn-sm" data-eps-detail-toggle="1" aria-expanded="false" t-att-aria-controls="'eps-payment-details-%s' % line.id">Details</button></div></div>
+                    <div class="ept-review-note" t-if="line.ceo_decision not in ('pending', 'held') and line.ceo_comment">
+                      <span><i class="fa fa-comment-o me-1"/><t t-esc="line.ceo_comment"/></span>
+                    </div>
+                  <div class="eps-row-details" hidden="hidden" t-att-id="'eps-payment-details-%s' % line.id"><form t-if="not line.run_id and available_runs" t-att-action="'/my/employee/treasury/lines/%s/add-to-plan' % line.id" method="post" class="mt-2 js-add-plan-form" t-att-data-payment-amount="line.forecast_amount">
                           <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                           <input type="hidden" name="return_status" t-att-value="current_status"/>
                           <select name="run_id" class="form-select form-select-sm mb-1 js-plan-budget-select" required="required">
@@ -274,10 +251,7 @@
                           </select>
                           <button class="btn btn-primary btn-sm w-100 mt-1"><i class="fa fa-plus me-1"/>Add to Plan</button>
                         </form>
-                        <div t-if="line.run_id and line.added_to_plan_on" class="ept-row-sub mt-1">Added <t t-esc="line.planned_date"/></div>
-                      </div>
-                    </div>
-                    <div class="ept-review-panel" t-if="line.ceo_decision in ('pending', 'held')">
+                        <div class="ept-review-panel" t-if="line.ceo_decision in ('pending', 'held')">
                       <form t-att-action="'/my/employee/treasury/lines/%s/review' % line.id" method="post">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <div class="ept-review-grid">
@@ -298,10 +272,8 @@
                         </div>
                       </form>
                     </div>
-                    <div class="ept-review-note" t-if="line.ceo_decision not in ('pending', 'held') and line.ceo_comment">
-                      <span><i class="fa fa-comment-o me-1"/><t t-esc="line.ceo_comment"/></span>
-                    </div>
-                  </div>
+                    <div class="ept-row-sub" style="font-size:10px;" t-if="line.purchase_order_ids">Paid <span t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/> · Due <span t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
+                        </div></div>
                 </t>
               </div>
             </t>
@@ -355,10 +327,7 @@
                         <div class="ept-mobile-label">Purchase order</div>
                         <t t-if="line.portal_purchase_order_ids">
                           <div class="d-grid gap-2">
-                            <a t-foreach="line.portal_purchase_order_ids" t-as="po"
-                               t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id"
-                               class="btn btn-outline-primary btn-sm ept-mobile-po"
-                               target="_blank" rel="noopener">
+                            <a t-foreach="line.portal_purchase_order_ids" t-as="po" t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id" class="btn btn-outline-primary btn-sm ept-mobile-po" target="_blank" rel="noopener">
                               <i class="fa fa-eye me-2"/><t t-esc="po.name"/>
                             </a>
                           </div>
@@ -493,10 +462,10 @@
         .eps-treasury-table { font-size: 12px; table-layout: auto; width: 100%; }
         .eps-treasury-table th, .eps-treasury-table td { padding: .7rem .55rem; vertical-align: middle; line-height: 1.4; }
         .eps-treasury-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; color: var(--text-secondary, #6B7280); white-space: nowrap; }
-        .eps-treasury-table thead tr { border-bottom: 2px solid var(--app-primary, #4F46E5); }
+        .eps-treasury-table thead tr { border-bottom: 2px solid var(--app-primary, #087f83); }
         .eps-treasury-table thead { background: var(--surface-2, #F8F8FB); }
         .eps-treasury-table tbody tr { transition: background .15s ease; border-bottom: 1px solid var(--border-light, rgba(0,0,0,.06)); }
-        .eps-treasury-table tbody tr:hover { background: rgba(79,70,229,0.04); }
+        .eps-treasury-table tbody tr:hover { background: rgba(8,127,131,0.04); }
         .eps-treasury-table .eps-money, .eps-treasury-table .eps-date, .eps-treasury-table .eps-status { white-space: nowrap; }
         .eps-treasury-table .eps-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .eps-treasury-table .eps-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; display: block; white-space: nowrap; }
@@ -531,14 +500,14 @@
         .eps-badge-held     { background: rgba(234,88,12,0.14);  color: #C2410C; }
         .eps-badge-rejected { background: rgba(239,68,68,0.14);  color: #B91C1C; }
         .eps-badge-muted    { background: rgba(107,114,128,0.13); color: #4B5563; }
-        .eps-badge-info     { background: rgba(79,70,229,0.13);  color: #4338CA; }
+        .eps-badge-info     { background: rgba(8,127,131,0.13);  color: #07686b; }
         .eps-badge-done     { background: rgba(13,148,136,0.14); color: #0F766E; }
 
         /* --- Filter pills (payment status tabs) --- */
         .eps-pill-filter { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: .2rem; }
         .eps-pill { flex-shrink: 0; padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--text-secondary, #6B7280); background: var(--surface, #fff); border: 1px solid var(--border-light, rgba(0,0,0,.06)); text-decoration: none !important; display: inline-flex; align-items: center; gap: 7px; transition: all .18s ease; box-shadow: 0 1px 2px rgba(26,27,46,.03); }
-        .eps-pill:hover { color: var(--app-primary, #4F46E5); border-color: rgba(79,70,229,.25); }
-        .eps-pill-active { background: var(--app-primary, #4F46E5); border-color: var(--app-primary, #4F46E5); color: #fff !important; box-shadow: 0 6px 16px rgba(79,70,229,.25); }
+        .eps-pill:hover { color: var(--app-primary, #087f83); border-color: rgba(8,127,131,.25); }
+        .eps-pill-active { background: var(--app-primary, #087f83); border-color: var(--app-primary, #087f83); color: #fff !important; box-shadow: 0 6px 16px rgba(8,127,131,.25); }
         .eps-pill-count { font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: rgba(0,0,0,.06); }
         .eps-pill-active .eps-pill-count { background: rgba(255,255,255,.22); color: #fff; }
 
@@ -586,18 +555,18 @@
           </div>
           <a href="/my/employee/treasury/payments" class="btn btn-outline-primary btn-sm">Payment Approvals</a>
         </div>
-        <div class="card border-0 shadow-sm d-none d-lg-block eps-card-table">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 eps-treasury-table">
-              <thead>
+        <div class="card border-0 shadow-sm d-none d-lg-block eps-card-table eps-list-page-card">
+          <div class="table-responsive eps-list-scroll">
+            <table class="table table-hover align-middle mb-0 eps-treasury-table eps-compact-list" style="--eps-list-width:1170px">
+              <colgroup><col style="width:125px"/><col style="width:125px"/><col style="width:140px"/><col style="width:140px"/><col style="width:140px"/><col style="width:125px"/><col style="width:140px"/><col style="width:150px"/><col style="width:85px"/></colgroup><thead>
                 <tr>
                   <th>Plan</th>
                   <th>Week</th>
-                  <th class="text-end">Opening</th>
-                  <th class="text-end">Forecast In</th>
-                  <th class="text-end">Forecast Out</th>
+                  <th class="text-end eps-list-amount">Opening</th>
+                  <th class="text-end eps-list-amount">Forecast In</th>
+                  <th class="text-end eps-list-amount">Forecast Out</th>
                   <th style="width: 12%;">In / Out</th>
-                  <th class="text-end">Forecast Closing</th>
+                  <th class="text-end eps-list-amount">Forecast Closing</th>
                   <th>Status</th>
                   <th/>
                 </tr>
@@ -607,7 +576,7 @@
                   <t t-set="state_cls" t-value="{'draft': 'eps-badge-muted', 'submitted': 'eps-badge-info', 'approved': 'eps-badge-approved', 'in_progress': 'eps-badge-pending', 'done': 'eps-badge-done', 'cancel': 'eps-badge-rejected'}.get(run.state, 'eps-badge-muted')"/>
                   <t t-set="flow_total" t-value="abs(run.forecast_inflow or 0.0) + abs(run.forecast_outflow or 0.0)"/>
                   <t t-set="flow_in_pct" t-value="round(abs(run.forecast_inflow or 0.0) / flow_total * 100, 1) if flow_total else 50"/>
-                  <tr>
+                  <tr t-att-data-eps-record-href="'/my/employee/treasury/plans/%s' % run.id" tabindex="0" role="link" class="eps-record-row">
                     <td class="fw-semibold">
                       <t t-esc="run.name"/>
                     </td>
@@ -697,10 +666,10 @@
            Weekly Cash Plan Detail — ledger-style redesign
            ============================================================ */
         .ept-page a.ept-back { color: var(--text-secondary, #6B7280); font-weight: 600; font-size: 13.5px; text-decoration: none !important; display: inline-flex; align-items: center; gap: 6px; }
-        .ept-page a.ept-back:hover { color: var(--app-primary, #4F46E5); }
+        .ept-page a.ept-back:hover { color: var(--app-primary, #087f83); }
 
         /* --- Hero --- */
-        .ept-hero { background: linear-gradient(135deg, var(--app-primary-light, #6366F1) 0%, var(--app-primary-dark, #3730A3) 100%); border-radius: 26px; padding: 28px 30px; color: #fff; position: relative; overflow: hidden; box-shadow: 0 20px 45px rgba(79,70,229,.25); margin-top: 14px; }
+        .ept-hero { background: linear-gradient(135deg, var(--app-primary-light, #159398) 0%, var(--app-primary-dark, #07686b) 100%); border-radius: 26px; padding: 28px 30px; color: #fff; position: relative; overflow: hidden; box-shadow: 0 20px 45px rgba(8,127,131,.25); margin-top: 14px; }
         .ept-hero::after { content: ''; position: absolute; top: -60%; right: -10%; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.20), transparent 70%); pointer-events: none; }
         .ept-hero-row { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; }
         .ept-hero-name { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 4px 0; color: #fff; }
@@ -712,8 +681,8 @@
         .ept-flow-step { background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16); border-radius: 16px; padding: 12px 18px; min-width: 150px; }
         .ept-flow-step-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; opacity: .75; font-weight: 700; }
         .ept-flow-step-value { font-size: 19px; font-weight: 800; margin-top: 2px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .ept-flow-step.ept-flow-final { background: #fff; color: var(--app-primary-dark, #3730A3); }
-        .ept-flow-step.ept-flow-final .ept-flow-step-label { color: var(--app-primary, #4F46E5); opacity: 1; }
+        .ept-flow-step.ept-flow-final { background: #fff; color: var(--app-primary-dark, #07686b); }
+        .ept-flow-step.ept-flow-final .ept-flow-step-label { color: var(--app-primary, #087f83); opacity: 1; }
         .ept-flow-delta { font-size: 11px; font-weight: 700; margin-top: 3px; }
         .ept-flow-arrow { font-size: 18px; opacity: .55; }
         @media (max-width: 767.98px) {
@@ -768,12 +737,12 @@
         .eps-badge-held     { background: rgba(234,88,12,0.14);  color: #C2410C; }
         .eps-badge-rejected { background: rgba(239,68,68,0.14);  color: #B91C1C; }
         .eps-badge-muted    { background: rgba(107,114,128,0.13); color: #4B5563; }
-        .eps-badge-info     { background: rgba(79,70,229,0.13);  color: #4338CA; }
+        .eps-badge-info     { background: rgba(8,127,131,0.13);  color: #07686b; }
         .eps-badge-done     { background: rgba(13,148,136,0.14); color: #0F766E; }
 
         /* --- Ledger timeline --- */
         .ept-ledger-head { display: grid; grid-template-columns: minmax(225px,1.45fr) minmax(215px,1.25fr) 108px 108px 138px 190px; gap: 18px; padding: 0 26px 13px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-secondary, #6B7280); }
-        .ept-ledger-head > div:nth-child(3), .ept-ledger-head > div:nth-child(4), .ept-ledger-head > div:nth-child(5) { text-align: right; }
+        .ept-ledger-head &gt; div:nth-child(3), .ept-ledger-head &gt; div:nth-child(4), .ept-ledger-head &gt; div:nth-child(5) { text-align: right; }
 
         .ept-day-block + .ept-day-block { border-top: 1px solid var(--border-light, rgba(0,0,0,.05)); }
         .ept-day-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 22px; background: var(--surface-2, #F8F8FB); flex-wrap: wrap; }
@@ -788,7 +757,7 @@
         .ept-day-block { border-top: 0 !important; }
         .ept-day-block + .ept-day-block { border-top: 0 !important; }
         .ept-row { display: grid; grid-template-columns: minmax(225px,1.45fr) minmax(215px,1.25fr) 108px 108px 138px 190px; gap: 18px; padding: 14px 26px; align-items: center; border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); transition: background .15s ease; }
-        .ept-row:hover { background: rgba(79,70,229,0.035); }
+        .ept-row:hover { background: rgba(8,127,131,0.035); }
         .ept-row + .ept-row { border-top: 1px solid var(--border-light, rgba(0,0,0,.04)); }
         .ept-flow-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
         .ept-flow-icon.ept-flow-in { background: rgba(16,185,129,.14); color: #047857; }
@@ -796,8 +765,8 @@
         .ept-row-title { font-weight: 600; font-size: 13px; }
         .ept-row-sub { font-size: 11.5px; color: var(--text-muted, #9CA3AF); }
         .ept-row-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .ept-po-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; color: var(--app-primary, #4F46E5); background: rgba(79,70,229,.08); border-radius: 8px; padding: .18em .5em; text-decoration: none !important; }
-        .ept-po-chip:hover { background: rgba(79,70,229,.16); }
+        .ept-po-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; color: var(--app-primary, #087f83); background: rgba(8,127,131,.08); border-radius: 8px; padding: .18em .5em; text-decoration: none !important; }
+        .ept-po-chip:hover { background: rgba(8,127,131,.16); }
         .ept-amount { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; font-size: 12.5px; }
         .ept-amount-muted { color: var(--text-muted, #9CA3AF); font-weight: 400; text-align: right; white-space: nowrap; font-size: 12.5px; }
 
@@ -858,7 +827,7 @@
 
         <div class="ept-budget-grid">
           <div class="ept-kpi-card">
-            <div class="ept-kpi-icon" style="background: rgba(79,70,229,.12); color: #4F46E5;"><i class="fa fa-money"/></div>
+            <div class="ept-kpi-icon" style="background: rgba(8,127,131,.12); color: #087f83;"><i class="fa fa-money"/></div>
             <div class="ept-kpi-label">Weekly budget</div>
             <div class="ept-kpi-value"><span t-field="run.budget_amount" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div>
             <div class="ept-kpi-sub text-muted">Approved spending limit</div>
@@ -879,13 +848,13 @@
 
         <div class="ept-kpi-grid">
           <div class="ept-kpi-card">
-            <div class="ept-kpi-icon" style="background: rgba(79,70,229,.12); color: #4F46E5;"><i class="fa fa-university"/></div>
+            <div class="ept-kpi-icon" style="background: rgba(8,127,131,.12); color: #087f83;"><i class="fa fa-university"/></div>
             <div class="ept-kpi-label">Opening cash</div>
             <div class="ept-kpi-value"><span t-field="run.opening_balance" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div>
             <div class="ept-kpi-sub text-muted">Start-of-week balance</div>
           </div>
           <div class="ept-kpi-card">
-            <div class="ept-kpi-icon" style="background: rgba(99,102,241,.12); color: #6366F1;"><i class="fa fa-bullseye"/></div>
+            <div class="ept-kpi-icon" style="background: rgba(21,147,152,.12); color: #159398;"><i class="fa fa-bullseye"/></div>
             <div class="ept-kpi-label">Forecast closing</div>
             <div class="ept-kpi-value"><span t-field="run.forecast_closing" t-options="{'widget':'monetary','display_currency':run.currency_id}"/></div>
             <div t-attf-class="ept-kpi-sub #{'text-success' if (run.forecast_closing - run.opening_balance) &gt;= 0 else 'text-danger'}">
@@ -985,49 +954,20 @@
             <span class="small text-muted">Forecast, approval and actual amounts</span>
           </div>
 
-          <div class="d-none d-lg-block">
-            <div class="ept-ledger-head">
-              <div>Movement</div>
-              <div>Partner, project &amp; PO</div>
-              <div>Forecast</div>
-              <div>CEO Amount</div>
-              <div>Actual / Variance</div>
-              <div>Status</div>
-            </div>
-            <t t-foreach="day_groups" t-as="day">
+          <div class="d-none d-lg-block eps-ledger-scroll eps-plan-ledger">
+            <div class="ept-ledger-head"><div>Movement</div><div>Category</div><div>Date</div><div>Partner</div><div>Project</div><div>Purchase Orders</div><div>Forecast</div><div>CEO Amount</div><div>Actual</div><div>Variance</div><div>Status</div></div><t t-foreach="day_groups" t-as="day">
               <div class="ept-day-block">
                 <t t-foreach="day['lines']" t-as="line">
                   <t t-set="ceo_badge_cls" t-value="{'pending': 'eps-badge-pending', 'approved': 'eps-badge-approved', 'adjusted': 'eps-badge-approved', 'held': 'eps-badge-held', 'rejected': 'eps-badge-rejected'}.get(line.ceo_decision, 'eps-badge-muted')"/>
                   <t t-set="line_state_cls" t-value="{'planned': 'eps-badge-info', 'approved': 'eps-badge-approved', 'executed': 'eps-badge-done', 'cancel': 'eps-badge-rejected'}.get(line.state, 'eps-badge-muted')"/>
                   <div class="ept-row">
-                    <div class="d-flex align-items-center gap-3 min-w-0">
-                      <div t-attf-class="ept-flow-icon flex-shrink-0 #{'ept-flow-in' if line.flow_type == 'in' else 'ept-flow-out'}" t-att-title="'Receipt' if line.flow_type == 'in' else 'Payment'">
-                        <i t-attf-class="fa #{'fa-arrow-down' if line.flow_type == 'in' else 'fa-arrow-up'}"/>
-                      </div>
-                      <div class="min-w-0">
-                        <div class="ept-row-title ept-row-truncate" t-att-title="line.name"><t t-esc="line.name"/></div>
-                        <div class="ept-row-sub ept-row-truncate"><t t-esc="line.category_id.name"/> · <t t-esc="line.planned_date.strftime('%d %b') if line.planned_date else ''"/></div>
-                      </div>
-                    </div>
-                    <div>
-                      <div t-if="line.partner_id" class="ept-row-title ept-row-truncate" t-att-title="line.partner_id.name"><t t-esc="line.partner_id.name"/></div>
-                      <div t-if="line.project_id" class="ept-row-sub ept-row-truncate" t-att-title="line.project_id.name"><t t-esc="line.project_id.name"/></div>
-                      <div t-if="not line.partner_id and not line.project_id" class="ept-row-sub">Not specified</div>
-                      <div class="mt-1" t-if="line.purchase_order_ids">
-                        <a t-foreach="line.portal_purchase_order_ids" t-as="po" t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id" class="ept-po-chip me-1 mb-1" target="_blank" rel="noopener"><i class="fa fa-eye"/> <t t-esc="po.name"/></a>
-                        <div class="ept-row-sub" style="font-size:10px;">Paid <span t-field="line.po_amount_paid" t-options="{'widget':'monetary','display_currency':line.currency_id}"/> · Due <span t-field="line.po_balance_due" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
-                      </div>
-                    </div>
-                    <div class="ept-amount"><span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
+                    <div t-att-title="line.name" class="eps-flow-reference"><i t-att-class="'fa ' + ('fa-arrow-down text-success' if line.flow_type == 'in' else 'fa-arrow-up')" t-att-title="'Receipt' if line.flow_type == 'in' else 'Payment'"/><t t-esc="line.name"/></div><div t-att-title="line.category_id.name or '—'"><t t-esc="line.category_id.name or '—'"/></div><div t-att-title="str(line.planned_date or '')"><t t-esc="str(line.planned_date or '')"/></div><div t-att-title="line.partner_id.name or '—'"><t t-esc="line.partner_id.name or '—'"/></div><div t-att-title="line.project_id.name or '—'"><t t-esc="line.project_id.name or '—'"/></div><div t-att-title="('Paid %s / Due %s' % (line.po_amount_paid,line.po_balance_due)) if line.purchase_order_ids else ''"><a t-foreach="line.portal_purchase_order_ids" t-as="po" t-att-href="'/my/employee/treasury/purchase-order/%s' % po.id" class="ept-po-chip me-1 mb-1" target="_blank" rel="noopener"><i class="fa fa-eye"/> <t t-esc="po.name"/></a>
+                        </div><div class="ept-amount"><span t-field="line.forecast_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
                     <div>
                       <span t-if="line.flow_type == 'out'" class="ept-amount"><span t-field="line.approved_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></span>
                       <span t-else="" class="ept-amount-muted">Not required</span>
                     </div>
-                    <div class="text-end">
-                      <div class="ept-amount"><span t-field="line.actual_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
-                      <div t-attf-class="ept-row-sub fw-semibold #{'text-success' if ((line.flow_type == 'in' and line.variance_amount &gt;= 0) or (line.flow_type == 'out' and line.variance_amount &lt;= 0)) else 'text-danger'}">Variance <span t-field="line.variance_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div>
-                    </div>
-                    <div>
+                    <div><span t-field="line.actual_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div><div t-att-class="'text-end ' + ('text-success' if ((line.flow_type == 'in' and line.variance_amount &gt;= 0) or (line.flow_type == 'out' and line.variance_amount &lt;= 0)) else 'text-danger')"><span t-field="line.variance_amount" t-options="{'widget':'monetary','display_currency':line.currency_id}"/></div><div>
                       <span t-if="line.flow_type == 'out'" t-attf-class="eps-badge #{ceo_badge_cls}" t-att-title="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)">
                         <span class="eps-badge-dot"/><t t-esc="dict(line._fields['ceo_decision'].selection).get(line.ceo_decision)"/>
                       </span>
