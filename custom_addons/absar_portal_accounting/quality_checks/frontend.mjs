@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-const source=fs.readFileSync(new URL('../static/src/accounting.js', import.meta.url),'utf8');
+const source=fs.readFileSync(new URL('../static/src/accounting.js', import.meta.url),'utf8').replace(/^import .*$/gm,'');
+const shared=['purchase_ui.js','analytic_editor.js'].map(name=>fs.readFileSync(new URL('../static/src/'+name,import.meta.url),'utf8').replace(/^export /gm,'')).join('\n');
 class Element {
     constructor(tag){this.tagName=tag;this.children=[];this.handlers={};this.dataset={};this.disabled=false;this.isConnected=true;this.value='';this.style={};}
     append(...children){this.children.push(...children);}
@@ -36,7 +37,7 @@ function mount(boot){
             const result=url.endsWith('/options')?Array.from({length:Math.min(data.limit||30,65-(data.offset||0))},(_,i)=>({id:1000+(data.offset||0)+i,name:'Partner '+((data.offset||0)+i)})):url.endsWith('/defaults')?{journal_id:3,currency_id:1,currency_name:'SAR',invoice_payment_term_id:false,selections:{journal_id:{id:3,name:'Purchase'},currency_id:{id:1,name:'SAR'},invoice_payment_term_id:{id:false,name:''}}}:url.endsWith('/preview')?{untaxed:200,tax:30,total:230,currency:'SAR',line_amounts:[200]}:
                 {...boot,...data,id:42,version:'saved-version',editable:!data.submit,review:data.submit?'submitted':boot.review};
             return {json:async()=>({ok:true,result})};}});
-    vm.runInContext(source,context);
+    vm.runInContext(shared+source,context);
     return {root,body,calls,tick:async()=>{if(timer){const fn=timer;timer=null;await fn();}},settle:async()=>{for(let i=0;i<8;i++)await Promise.resolve();}};
 }
 const f=mount(fixture);

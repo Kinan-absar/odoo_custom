@@ -68,30 +68,7 @@
       <div class="col-12"><button class="btn btn-outline-primary">Save Details</button></div>
      </form>
     </div>
-    <div class="aps-panel aps-boq-panel"><h5>Bill of Quantities / Order Lines</h5><p class="aps-help">Add items below. Click a description to read longer details.</p>
-     <div class="table-responsive"><table class="table aps-boq-table">
-      <colgroup><col style="width:42%"/><col style="width:12%"/><col style="width:12%"/><col style="width:14%"/><col style="width:14%"/><col style="width:6%"/></colgroup>
-      <thead><tr><th>Description</th><th>Unit</th><th class="text-end">Quantity</th><th class="text-end">Unit Rate</th><th class="text-end">Subtotal</th><th aria-label="Actions"/></tr></thead>
-      <tbody>
-       <tr t-foreach="order.order_line" t-as="l" t-if="not l.display_type" class="aps-boq-data-row">
-        <td class="aps-boq-description"><details class="aps-line-details"><summary t-out="l.name"/></details></td><td t-out="l.product_uom.name"/>
-        <td class="text-end" t-out="'%.2f' % l.product_uom_qty"/>
-        <td class="text-end" t-out="'%.2f' % l.price_unit"/>
-        <td class="text-end" t-out="'%.2f' % l.price_subtotal"/>
-        <td class="aps-boq-remove"><form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/line/%s/delete' % (order.id,l.id)"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button type="submit" class="aps-boq-delete" title="Remove item" aria-label="Remove item">×</button></form></td>
-       </tr>
-       <tr t-if="can_edit" class="aps-boq-add-link-row"><td colspan="6"><button type="button" class="aps-boq-add-link" aria-expanded="false" aria-controls="aps-boq-edit-row">+ Add Item</button></td></tr>
-       <tr t-if="can_edit" id="aps-boq-edit-row" class="aps-boq-edit-row" hidden="hidden">
-        <td><form id="aps-boq-new-form" method="post" t-att-action="'/my/employee/sales/%s/line/add' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><textarea name="description" class="form-control" rows="2" placeholder="Item description" aria-label="Item description" required="required"/></form></td>
-        <td><select name="uom_id" form="aps-boq-new-form" class="form-select" aria-label="Unit"><option t-foreach="units" t-as="unit" t-att-value="unit.id" t-att-selected="unit.name == 'Units' and 'selected' or None" t-out="unit.name"/></select></td>
-        <td><input name="qty" form="aps-boq-new-form" class="form-control text-end" type="number" min="0.001" step="any" value="1" aria-label="Quantity" required="required"/></td>
-        <td><input name="rate" form="aps-boq-new-form" class="form-control text-end" type="number" min="0" step="any" value="0" aria-label="Unit rate" required="required"/></td>
-        <td class="aps-boq-preview"><span class="aps-boq-preview-amount">0.00</span> <t t-out="order.currency_id.name"/></td>
-        <td class="aps-boq-edit-actions"><button type="submit" form="aps-boq-new-form" class="aps-boq-save" title="Save item">Save</button><button type="button" class="aps-boq-cancel" title="Cancel">Cancel</button></td>
-       </tr>
-      </tbody></table></div>
-     <div class="aps-total">Proposal value (excluding VAT): <strong class="aps-boq-total-value"><t t-out="'{:,.2f}'.format(order.amount_untaxed)"/> <t t-out="order.currency_id.name"/></strong></div>
-    </div>
+    <div class="aps-panel aps-sales-lines-panel"><h5>Order Lines</h5><div id="aps-line-editor" t-att-data-boot="line_boot_json" t-att-data-csrf="request.csrf_token()"/><noscript>Enable JavaScript to view and edit quotation lines.</noscript></div>
     <t t-if="order.absar_proposal_type == 'technical'">
      <div class="aps-panel"><h5>Technical Proposal Template</h5>
       <form t-if="can_edit" method="post" t-att-action="'/my/employee/sales/%s/template' % order.id" class="row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-8"><select name="template_id" class="form-select" required="required"><option value="">Choose a template</option><option t-foreach="templates" t-as="t" t-att-value="t.id" t-out="t.name"/></select></div><div class="col-md-4"><button class="btn btn-outline-primary" data-aps-confirm="Replace existing proposal sections and milestones with the selected template?">Load / Replace Template</button></div></form>

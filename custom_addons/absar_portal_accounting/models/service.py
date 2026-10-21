@@ -116,16 +116,27 @@ class PortalAccountingService(models.AbstractModel):
             return {}
         if not isinstance(distribution, dict) or len(distribution) > 100:
             raise ValidationError(_('Invalid analytic distribution.'))
-        result = {}
+        result, totals = {}, {}
         for key, value in distribution.items():
             ids = [self._id(x) for x in str(key).split(',')]
-            for rid in ids:
-                self._relation(company, 'account.analytic.account', rid,
-                               ['|', ('company_id', '=', False), ('company_id', '=', company.id)], True)
+            if len(ids)>20 or len(set(ids))!=len(ids):
+                raise ValidationError(_('Invalid analytic combination.'))
+            accounts = [self._relation(company, 'account.analytic.account', rid,
+                ['|', ('company_id', '=', False), ('company_id', '=', company.id)], True) for rid in ids]
+            plans = [account.plan_id.root_id.id for account in accounts]
+            if len(plans)!=len(set(plans)):
+                raise ValidationError(_('Use one analytic account per plan in each row.'))
             amount = self._number(value)
-            if not 0 <= amount <= 100:
-                raise ValidationError(_('Analytic percentages must be between 0 and 100.'))
-            result[','.join(map(str, ids))] = amount
+            if not 0 < amount <= 100:
+                raise ValidationError(_('Analytic percentages must be greater than zero and at most 100.'))
+            canonical = ','.join(map(str, sorted(ids)))
+            if canonical in result:
+                raise ValidationError(_('Combine duplicate allocation rows.'))
+            result[canonical] = amount
+            for plan in plans:
+                totals[plan] = totals.get(plan,0)+amount
+        if any(abs(total-100)>.01 for total in totals.values()):
+            raise ValidationError(_('Each used analytic plan must total 100%.'))
         return result
 
     def _domain(self, company, kind):
@@ -265,6 +276,8 @@ class PortalAccountingService(models.AbstractModel):
             data = {'id': r.id, 'name': r[label]}
             if resource in ('bill', 'invoice'):
                 data['name'] = '%s · %.2f %s outstanding' % (r.name, r.amount_residual, r.currency_id.name)
+            if resource == 'analytic':
+                data.update(plan=r.plan_id.root_id.display_name, plan_id=r.plan_id.root_id.id)
             if resource == 'product':
                 data.update(self._product_selection(r, company))
             result.append(data)
@@ -284,6 +297,14 @@ class PortalAccountingService(models.AbstractModel):
         accounts = self._env(company)['account.analytic.account'].search([
             ('id', 'in', sorted(ids)), '|', ('company_id', '=', False), ('company_id', '=', company.id)])
         return {str(account.id): account.display_name for account in accounts}
+
+    def _analytic_label_map(self, company, distributions):
+        ids = {int(part) for distribution in distributions for key in (distribution or {})
+               for part in str(key).split(',') if part.isdigit() and int(part) > 0}
+        accounts = self._env(company)['account.analytic.account'].search([
+            ('id', 'in', sorted(ids)), '|', ('company_id', '=', False), ('company_id', '=', company.id)])
+        return {str(a.id): {'id': a.id, 'label': a.display_name, 'plan': a.plan_id.root_id.display_name,
+                            'plan_id': a.plan_id.root_id.id} for a in accounts}
 
     def _move_values(self, company, kind, data):
         subtype = self._kind(kind)[2]
@@ -678,7 +699,7 @@ class PortalAccountingService(models.AbstractModel):
         model, title, subtype = self._kind(kind)
         record = self._record(company, kind, record_id) if record_id else False
         data = {'id': record.id if record else 0, 'company_id': company.id, 'kind': kind,
-                'company_currency_name': company.currency_id.name, 'analytic_names': {},
+                'company_currency_name': company.currency_id.name, 'analytic_names': {}, 'analytic_labels': {},
                 'currency_id': company.currency_id.id, 'currency_name': company.currency_id.name,
                 'date': fields.Date.context_today(self).isoformat(), 'invoice_date': fields.Date.context_today(self).isoformat(),
                 'lines': [], 'bill_ids': [], 'invoice_ids': [], 'purchase_order_ids': [], 'allocations': [], 'destinations': [],
@@ -720,9 +741,11 @@ class PortalAccountingService(models.AbstractModel):
             if name in record._fields:
                 data[name] = record[name].ids
                 data['selections'][name] = [{'id': r.id, 'name': r.display_name} for r in record[name]]
+        distributions = record.line_ids.mapped('analytic_distribution') if model == 'account.move' else [data.get('analytic_distribution'), data.get('fee_analytic_distribution')]
+        data['analytic_labels'] = self._analytic_label_map(company, distributions)
+        data['analytic_names'] = {key: value['label'] for key, value in data['analytic_labels'].items()}
         if model == 'account.move':
             data['warnings'] = '\n'.join(filter(None, [record.abnormal_amount_warning, record.abnormal_date_warning]))
-            data['analytic_names'] = self._analytic_name_map(company, record.line_ids.mapped('analytic_distribution'))
             lines = record.line_ids if kind == 'journals' else record.invoice_line_ids
             for line in lines:
                 row = {'name': line.name or '', 'account_id': line.account_id.id, 'account_name': line.account_id.display_name or '',
@@ -781,7 +804,8 @@ class PortalAccountingService(models.AbstractModel):
         self._actor('preparer')
         po = self._relation(company, 'purchase.order', po_id,
             [('company_id', '=', company.id), ('state', 'in', ['purchase', 'done'])], True)
-        data = {'analytic_names': self._analytic_name_map(company, po.order_line.mapped('analytic_distribution')),
+        data = {'analytic_labels': self._analytic_label_map(company, po.order_line.mapped('analytic_distribution')),
+                'analytic_names': self._analytic_name_map(company, po.order_line.mapped('analytic_distribution')),
                 'partner_id': po.partner_id.id, 'partner_name': po.partner_id.display_name,
                 'currency_id': po.currency_id.id, 'currency_name': po.currency_id.name, 'ref': po.partner_ref or '', 'lines': []}
         for line in po.order_line:

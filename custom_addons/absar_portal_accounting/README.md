@@ -164,3 +164,26 @@ Description and UoM remain editable from the invoice row's ellipsis (line detail
 Company Currency is the actual company currency name, independent of document currency. Row controls use an unlabeled utility cell. No changes to internal form columns or to Employee Portal Suite. All earlier Accounting fixes are included.
 
 Local checks cover exact invoice/manual-journal/saved-bill-journal header order, analytic/tax/grid values, row navigation and focus, product edit preservation, journal tax/grid scope and serialization, analytic label scope, Python/XML/JS syntax and prior approval/date/notification/Print JV regressions. These are ORM/DOM fixtures. Live browser layout and native tax computation still require staging verification; no live Odoo test was run for this release.
+
+## Workspace update 18.0.1.2.6
+
+Fix the portal Analytic Distribution dialog shown in the screenshot: it now uses a compact dedicated layout rather than the three-column page grid. The analytic account gets the available width, the percentage sits beside it, and long account names wrap in full. Read-only records show plain account text and a percentage instead of clipped disabled inputs. Editable drafts retain the lookup, display the complete selected account name below it, and allow percentage changes. Footer buttons align together, and Escape closes the dialog. A narrow-screen layout keeps both values readable.
+
+Local checks passed: JavaScript syntax, existing frontend and grid fixtures, and a screenshot regression fixture for full long-name display, read-only controls and editable percentage application. No live browser layout test was run. This is an Accounting portal UI update only, with all earlier 18.0.1.2.5 changes included. No workflow, ACL, Employee Portal Suite, Purchase or Sales changes in this release.
+
+## Workspace update 18.0.1.2.7
+
+Use Purchase's allocation editor for portal Accounting, as requested, replacing
+the separate analytic dialog: account chips, one account per root plan in a row,
+combined accounts across plans, percentages, Add a Line, Remove, Apply and Clear
+distribution. Every used root plan must total 100%, enforced in the UI and the
+scoped server validator. Accounting and Sales ship identical Purchase lookup
+helpers and allocation editor files; styles are scoped to these adapters.
+Saved bill/journal, voucher, fee and PO-autocomplete allocations include account
+and root-plan labels. Read-only records retain read-only distribution controls.
+
+All prior Accounting fixes and the native-style invoice/journal column order
+are included. No Employee Portal Suite, Purchase source, ACL or group changes.
+Local existing frontend/grid and approval/date/notification/product/JV checks
+pass, along with actual allocation rule fixtures and combined-account UI tests.
+No live Odoo/browser/pricing/tax/PDF/notification verification for this release.

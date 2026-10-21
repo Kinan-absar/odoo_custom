@@ -167,3 +167,17 @@
 .aca-grid-lines .aca-line-tags>.aca-tag-add{min-width:28px;width:28px;flex:0 0 28px;order:2}
 .aca-grid-lines .aca-line-tags>.aca-tag-add>input{min-width:0;width:28px;padding:3px;text-align:center}
 .aca-grid-lines .aca-line-tags>.aca-pill{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:23px}
+
+/* Analytic distribution uses its own two-column layout, not the page grid. */
+.aca.aca-dialog.aca-analytic-dialog{width:min(680px,calc(100vw - 32px));max-width:680px;padding:20px}
+.aca-analytic-dialog .aca-analytic-rows{display:flex;flex-direction:column;gap:12px}
+.aca-analytic-dialog .aca-analytic-row{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:12px;align-items:start;padding:12px;background:#f8fbfb;border:1px solid #e1ebec;border-radius:8px}
+.aca-analytic-dialog .aca-analytic-row>label{min-width:0;margin:0}
+.aca-analytic-dialog .aca-analytic-row>label>span{margin-bottom:6px;font-weight:600}
+.aca-analytic-dialog .aca-analytic-account,.aca-analytic-dialog .aca-picker{min-width:0}
+.aca-analytic-dialog .aca-analytic-name{padding:9px 0;color:#20333c;font-size:14px;line-height:1.5;white-space:normal;overflow-wrap:anywhere}
+.aca-analytic-dialog .aca-analytic-selected{margin-top:6px;white-space:normal;overflow-wrap:anywhere;font-size:12px;line-height:1.4;color:#526c76}
+.aca-analytic-dialog .aca-analytic-percent{padding:9px 0;font-size:14px;color:#20333c;font-variant-numeric:tabular-nums}
+.aca-analytic-dialog .aca-analytic-remove{margin-top:24px;padding:6px 10px;min-height:40px}
+.aca-analytic-dialog .aca-analytic-footer{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px;border-top:1px solid #e1ebec;padding-top:12px}
+@media(max-width:480px){.aca.aca-dialog.aca-analytic-dialog{width:calc(100vw - 24px);padding:16px}.aca-analytic-dialog .aca-analytic-row{grid-template-columns:minmax(0,1fr) 80px;gap:8px;padding:10px}.aca-analytic-dialog .aca-analytic-remove{grid-column:1/-1;justify-self:end;margin-top:0}.aca-analytic-dialog .aca-analytic-footer{gap:6px}}

@@ -7,9 +7,11 @@ from odoo.osv import expression
 from urllib.parse import urlencode
 import json
 
+from .sales_lines import SalesLinesMixin
+
 BASE = '/my/employee/sales'
 
-class PortalSales(http.Controller):
+class PortalSales(SalesLinesMixin, http.Controller):
     def _operator(self):
         return request.env.user.has_group('absar_portal_sales.group_portal_sales_user')
 
@@ -82,6 +84,8 @@ class PortalSales(http.Controller):
 
     def _render(self, template, **kw):
         kw.setdefault('error', False)
+        if template == 'absar_portal_sales.sales_detail' and kw.get('order'):
+            kw['line_boot_json'] = json.dumps(self._line_boot(kw['order']))
         return request.render(template, kw)
 
     def _list_view(self, *, monitor=False, queue=False, params=None):
@@ -229,6 +233,10 @@ class PortalSales(http.Controller):
             can_edit=can_edit,
             can_review=(request.env.user.has_group('absar_portal_sales.group_portal_sales_approver') and order.absar_portal_review_state=='submitted' and request.env.user not in (order.absar_portal_creator_id,order.absar_portal_submitter_id)),
             templates=self._templates(),projects=self._customer_projects(order.partner_id),units=self._units())
+
+    @http.route(BASE + '/<int:order_id>/line-api/<string:operation>', type='http', auth='user', methods=['POST'], csrf=True)
+    def line_api(self, order_id, operation, **post):
+        return self._line_api(order_id, operation, post)
 
     @http.route(BASE + '/<int:order_id>/save', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def save_order(self, order_id, **post):

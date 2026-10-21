@@ -1,7 +1,11 @@
+/** @odoo-module **/
+import { createPurchaseUI } from "./purchase_ui";
+import { openAnalyticDistribution } from "./analytic_editor";
 (function () {
     'use strict';
     const BASE = '/my/employee/accounting';
     function mount(root) {
+        root.classList?.add('absar-purchase-controls');
         let state = JSON.parse(root.dataset.boot), tab = 'lines', busy = false, revision = 0, previewTimer, overpaymentNotice = '', accountingNotice = '';
         const csrf = root.dataset.csrf;
         const isMove = () => ['bills', 'refunds', 'journals'].includes(state.kind);
@@ -212,34 +216,20 @@
         function analytic(target, key = 'analytic_distribution') {
             if(!state.editable&&!Object.keys(target[key]||{}).length)return el('span');
             const control = button(analyticText(target,key) || 'Set distribution', () => {
-                const original = target[key] || {};
-                let rows = Object.entries(original).map(([id, percent]) => ({id, percent, name: String(id).split(',').map(part=>state.analytic_names?.[part]||'Analytic '+part).join(' / ')}));
-                const backdrop = el('div', {class: 'aca-dialog-backdrop'}), dialog = el('div', {class: 'aca aca-dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Analytic distribution'});
-                function draw() {
-                    dialog.replaceChildren(el('h3', {text: 'Analytic distribution'}));
-                    for (const row of rows) {
-                        const grid = el('div', {class: 'aca-grid'});
-                        grid.append(picker('analytic', {id: row.id, name: row.name}, selected => {row.id = String(selected.id); row.name = selected.name; draw();}, !state.editable));
-                        const percent = el('input', {type: 'number', min: 0, max: 100, step: 'any', 'aria-label': 'Percentage', disabled: !state.editable});
-                        percent.value = row.percent;
-                        percent.addEventListener('input', () => row.percent = Number(percent.value));
-                        grid.append(label('Percentage', percent));
-                        if (state.editable) grid.append(button('Remove', () => {rows = rows.filter(r => r !== row); draw();}));
-                        dialog.append(grid);
-                    }
-                    if (state.editable) dialog.append(button('Add analytic account', () => {rows.push({id: '', name: '', percent: 100}); draw();}));
-                    dialog.append(button('Close', () => backdrop.remove()));
-                    if (state.editable) dialog.append(button('Apply', () => {
-                        const distribution = {};
-                        for (const row of rows) {
-                            if (!row.id || !Number.isFinite(row.percent) || row.percent < 0 || row.percent > 100) {say('Choose analytic accounts and percentages between 0 and 100.', true); return;}
-                            distribution[row.id] = row.percent;
-                        }
-                        state.analytic_names||={};for(const row of rows)if(!String(row.id).includes(','))state.analytic_names[row.id]=row.name;
-                        target[key] = distribution; revision++; backdrop.remove(); render();
-                    }, true));
-                }
-                backdrop.append(dialog); document.body.append(backdrop); draw();
+                const labels={...(state.analytic_labels||{})};
+                for(const [id,name] of Object.entries(state.analytic_names||{}))labels[id]||={id:Number(id),label:name};
+                const ui=createPurchaseUI({root,companyId:state.company_id,readonly:!state.editable,
+                    post:async(path,payload)=>{
+                        const rows=await api('options',{resource:'analytic',q:payload.q,offset:payload.offset,limit:31});
+                        return {items:rows.slice(0,30).map(row=>({...row,label:row.name})),more:rows.length>30};
+                    }});
+                openAnalyticDistribution({ui,distribution:target[key]||{},labels,readonly:!state.editable,
+                    onApply:(distribution,labels)=>{
+                        target[key]=distribution;state.analytic_labels={...(state.analytic_labels||{}),...labels};
+                        state.analytic_names||={};for(const [id,item] of Object.entries(labels))state.analytic_names[id]=item.label;
+                        revision++;render();schedulePreview();
+                    }});
+
             });
             control.className='aca-analytic-control';control.setAttribute('title',analyticText(target,key)||'Set distribution');
             control.setAttribute('aria-label','Analytic distribution');return control;

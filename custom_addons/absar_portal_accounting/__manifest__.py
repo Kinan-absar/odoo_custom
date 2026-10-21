@@ -1,6 +1,6 @@
 {
     'name': 'ABSAR Employee Portal Accounting',
-    'version': '18.0.1.2.5',
+    'version': '18.0.1.2.7',
     'summary': 'Vendor bills, journal entries, vouchers and cash planning in the employee portal',
     'author': 'Kinan',
     'license': 'LGPL-3',
@@ -8,6 +8,9 @@
     'data': ['security/groups.xml', 'security/ir.model.access.csv', 'views/post_confirmation.xml', 'views/configuration.xml', 'views/report.xml', 'views/portal.xml'],
     'assets': {'web.assets_frontend': [
         'absar_portal_accounting/static/src/accounting.css',
+        'absar_portal_accounting/static/src/purchase_controls.css',
+        'absar_portal_accounting/static/src/purchase_ui.js',
+        'absar_portal_accounting/static/src/analytic_editor.js',
         'absar_portal_accounting/static/src/accounting.js',
     ]},
     'installable': True,

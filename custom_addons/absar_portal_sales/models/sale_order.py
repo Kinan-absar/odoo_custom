@@ -204,7 +204,7 @@ class SaleOrderLine(models.Model):
         return super().create(vals_list)
 
     def write(self,vals):
-        if {'product_id','name','product_uom_qty','price_unit','discount','tax_id','product_uom','display_type'}.intersection(vals):
+        if {'product_id','name','product_uom_qty','price_unit','discount','tax_id','product_uom','display_type','analytic_distribution'}.intersection(vals):
             self.order_id._absar_portal_invalidate_review()
         return super().write(vals)
 

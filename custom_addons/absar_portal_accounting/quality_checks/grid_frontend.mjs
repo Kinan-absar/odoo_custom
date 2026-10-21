@@ -44,7 +44,7 @@ root.dataset={boot:JSON.stringify(boot),csrf:'test'};
 const calls=[];let resolveOptions;
 const product={id:9,name:'Cement revised',type:'consu',is_storable:false,can_edit:true,shared:true,version:'p1',categ_id:{id:1,name:'Materials'},uom_id:{id:1,name:'Unit'},uom_po_id:{id:1,name:'Unit'},property_account_expense_id:{id:8,name:'Materials'},purchase_method:'receive',supplier_taxes:[{id:15,name:'VAT'}],standard_price:10};
 let deferOptions=false;
-const ctx=vm.createContext({document,window,URLSearchParams,history:{replaceState(){}},console,
+const ctx=vm.createContext({document,window,Event:class{constructor(type){this.type=type;}},URLSearchParams,history:{replaceState(){}},console,
  setTimeout:fn=>1,clearTimeout(){},fetch:async(url,options)=>{
   const payload=JSON.parse(options.body.get('payload'));calls.push({url,payload});assert.equal(options.body.get('csrf_token'),'test');
   let result;if(url.endsWith('/options')){if(deferOptions)await new Promise(r=>{resolveOptions=r;});result=[{id:9,name:'Selected Product',account_id:8,account_name:'Expense',product_uom_id:1,uom_name:'Unit',tax_ids:[]}];}
@@ -52,9 +52,10 @@ const ctx=vm.createContext({document,window,URLSearchParams,history:{replaceStat
   else if(url.endsWith('/product-update')||url.endsWith('/product-create'))result={id:9,name:payload.name,account_id:8,account_name:'New Expense',product_uom_id:1,uom_name:'Unit',tax_ids:[],product_updated:url.endsWith('/product-update')};
   else throw new Error('Unexpected '+url);
   return {json:async()=>({ok:true,result})};}});
-let source=fs.readFileSync(new URL('../static/src/accounting.js',import.meta.url),'utf8');
+let source=fs.readFileSync(new URL('../static/src/accounting.js',import.meta.url),'utf8').replace(/^import .*$/gm,'');
+const shared=['purchase_ui.js','analytic_editor.js'].map(name=>fs.readFileSync(new URL('../static/src/'+name,import.meta.url),'utf8').replace(/^export /gm,'')).join('\n');
 source=source.replace("        state.payment_method ||=", "        root.test={moveGrid,render,productForm,selectProduct,get state(){return state;}};\n        state.payment_method ||=");
-vm.runInContext(source,ctx);
+vm.runInContext(shared+source,ctx);
 const settle=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
 const key=async(node,key,shiftKey=false)=>{node.dispatchEvent({type:'keydown',key,shiftKey,preventDefault(){this.defaultPrevented=true;},stopPropagation(){this.stopped=true;}});await settle();};
 assert.deepEqual(root.querySelectorAll('thead th').map(n=>n.textContent),['Product','Account','Analytic','Quantity','Price','Disc.%','Taxes','Amount','Company Currency','']);
@@ -102,3 +103,26 @@ root.test.render();root.querySelectorAll('[role="tab"]').find(n=>n.textContent==
 assert.deepEqual(root.querySelectorAll('thead th').map(n=>n.textContent),['Account','Partner','Label','Analytic Distribution','Taxes','Debit','Credit','Tax Grids']);
 assert(root.textContent.includes('PHC Project'));assert(root.textContent.includes('VAT 15%'));assert(root.textContent.includes('Tax Grid'));
 console.log('PASS: saved bill Journal Items tab uses all eight matching native columns with analytic, tax and grid values.');
+// Screenshot regression: full account name, aligned percentage, no edit controls on readonly records.
+const longAnalytic='MEP Jussur Emdad HR - Najm Qantera Company / PHC Site Operations';
+root.test.state.kind='journals';root.test.state.analytic_names={'5':longAnalytic};
+root.test.state.lines[0].analytic_distribution={'5':100};root.test.render();
+root.querySelector('.aca-analytic-control').click();
+let analyticDialog=body.querySelector('.apw-dialog');
+assert.equal(analyticDialog.querySelector('.apw-chip').textContent,longAnalytic);
+assert.equal(Number(analyticDialog.querySelector('[aria-label="Allocation percentage"]').value),100);
+assert(analyticDialog.querySelectorAll('input').every(n=>n.disabled));
+assert(!analyticDialog.querySelectorAll('button').some(n=>n.textContent==='Apply'));
+analyticDialog.querySelectorAll('button').find(n=>n.textContent==='Close').click();
+assert(!body.querySelector('.apw-dialog'));
+// Editable drafts retain selection and percentage editing, with the full selected name below the picker.
+root.test.state.editable=true;root.test.render();root.querySelector('.aca-analytic-control').click();
+analyticDialog=body.querySelector('.apw-dialog');
+assert.equal(analyticDialog.querySelector('.apw-chip').textContent.replace('×',''),longAnalytic);
+const percentage=analyticDialog.querySelector('[aria-label="Allocation percentage"]');percentage.value='25';percentage.dispatchEvent({type:'input'});
+analyticDialog.querySelectorAll('button').find(n=>n.textContent==='Apply').click();
+assert(analyticDialog.textContent.includes('Each used plan must total 100%.'));
+percentage.value='100';percentage.dispatchEvent({type:'input'});analyticDialog.querySelectorAll('button').find(n=>n.textContent==='Apply').click();
+assert.equal(root.test.state.lines[0].analytic_distribution['5'],100);
+assert(!body.querySelector('.apw-dialog'));
+console.log('PASS: analytic dialog shows full readonly name and percentage without edit controls; editable draft displays full selected name and applies percentage to the same account.');
