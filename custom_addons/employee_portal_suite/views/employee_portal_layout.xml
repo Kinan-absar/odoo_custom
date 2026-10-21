@@ -1446,6 +1446,28 @@
                         width: 25%;
                     }
                 }
+
+                /* The same sidebar becomes the phone navigation drawer. */
+                @media(max-width:768px){
+                    .ep-sidebar-brand{display:flex;align-items:center;gap:11px;padding:5px 10px 22px;font-weight:800;color:var(--text-primary);font-size:16px}.ep-sidebar-brand img{width:38px;height:38px;object-fit:contain;border-radius:10px}
+                    .ep-sidebar-nav{display:flex;flex-direction:column;gap:4px;overflow:auto}.ep-sidebar-section{margin-top:14px}.ep-sidebar-section:first-of-type{margin-top:8px}.ep-sidebar-section-title{padding:0 12px 6px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}.ep-sidebar-section-links{display:flex;flex-direction:column;gap:3px}.ep-sidebar-section.ep-empty{display:none!important}.ep-sidebar-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;color:var(--text-secondary);text-decoration:none!important;font-weight:600;font-size:13.5px}.ep-sidebar-link:hover,.ep-sidebar-link.active{background:rgba(8,127,131,.08);color:var(--app-primary)}.ep-sidebar-link i{width:20px;text-align:center;font-size:16px}
+                    .ep-sidebar-bottom{margin-top:auto;border-top:1px solid var(--border-light);padding-top:14px}.ep-sidebar-profile{position:relative}.ep-sidebar-profile-btn{width:100%;border:0;background:transparent;display:flex;align-items:center;gap:10px;padding:9px;border-radius:12px;text-align:left}.ep-sidebar-profile-btn:hover{background:var(--surface-2)}.ep-sidebar-profile-btn img{width:38px;height:38px;border-radius:12px;object-fit:cover}.ep-sidebar-profile-name{font-weight:700;font-size:13px;color:var(--text-primary)}.ep-sidebar-profile-role{font-size:11px;color:var(--text-muted)}.ep-profile-menu{display:none;position:absolute;left:0;right:0;bottom:58px;background:#fff;border:1px solid var(--border-light);border-radius:13px;padding:6px;box-shadow:var(--shadow-lg)}.ep-profile-menu.show{display:block}.ep-profile-menu a{display:flex;align-items:center;gap:9px;padding:10px;border-radius:9px;text-decoration:none!important;color:var(--text-primary);font-size:13px;font-weight:600}.ep-profile-menu a:hover{background:var(--surface-2);color:var(--app-primary)}
+
+                    .ep-desktop-sidebar.ep-mobile-menu-open{display:flex!important;position:fixed;inset:0 auto 0 0;width:min(88vw,340px);height:100dvh;background:var(--surface);border-right:1px solid var(--border-light);z-index:10002;flex-direction:column;padding:18px 14px calc(18px + env(safe-area-inset-bottom));box-sizing:border-box;box-shadow:var(--shadow-lg)}
+                    .ep-desktop-sidebar .ep-sidebar-nav{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+                    .ep-desktop-sidebar .ep-sidebar-brand{padding-right:36px}
+                    .ep-desktop-sidebar .ep-sidebar-bottom{flex-shrink:0}
+                    .ep-mobile-menu-toggle,.ep-mobile-menu-close{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border:1px solid var(--border-light);border-radius:12px;background:var(--surface);color:var(--app-primary);font-size:21px}
+                    .ep-mobile-menu-toggle{margin-right:auto}
+                    .ep-mobile-topbar{display:flex!important}
+                    .ep-mobile-menu-close{position:absolute;right:14px;top:16px}
+                    .ep-mobile-menu-backdrop:not([hidden]){display:block;position:fixed;inset:0;border:0;border-radius:0;background:rgba(15,35,45,.45);z-index:10001;width:100%;height:100%}
+                    .ep-mobile-menu-backdrop[hidden]{display:none!important}
+                    .ep-bottom-nav .ep-nav-left{display:none!important}
+                    .ep-bottom-nav .ep-nav-right{width:100%;justify-content:flex-end!important;flex:none}
+                    .ep-bottom-nav .ep-nav-right > :not(a[href="/web/session/logout"]){display:none!important}
+                    .ep-bottom-nav .ep-nav-right > a[href="/web/session/logout"]{flex:0 0 64px}
+                }
             </style>
 
             <t t-set="ep_notif_summary" t-value="request.env['portal.report.seen'].sudo()._get_notification_summary(request.env.user) if not request.env.user.has_group('employee_portal_suite.group_attendance_only') else {}"/>
@@ -1453,7 +1475,9 @@
             <t t-set="can_er_approval_nav" t-value="'er_approval' in ep_notif_summary"/>
             <t t-set="can_mr_approval_nav" t-value="'mr_approval' in ep_notif_summary"/>
 
-            <aside class="ep-desktop-sidebar">
+            <button type="button" class="ep-mobile-menu-backdrop mobile-only" data-ep-menu-close="1" aria-label="Close navigation" hidden="hidden"/>
+            <aside class="ep-desktop-sidebar" id="ep-shared-sidebar" aria-label="Employee navigation">
+                <button type="button" class="ep-mobile-menu-close mobile-only" data-ep-menu-close="1" aria-label="Close navigation"><i class="fa fa-times" aria-hidden="true"/></button>
                 <div class="ep-sidebar-brand"><img t-att-src="'/web/image/res.company/%s/logo' % request.env.company.id"/><span>Employee Portal</span></div>
                 <nav class="ep-sidebar-nav" id="ep-desktop-sidebar-nav">
                     <a href="/my/employee" class="ep-sidebar-link"><i class="fa fa-home"/>Home</a>
@@ -1587,7 +1611,7 @@
                  MOBILE APP HEADER (home page only)
                  ================================================================ -->
             <t t-if="request.httprequest.path == '/my/employee'">
-                <div class="mobile-app-header mobile-only">
+                <div class="mobile-app-header mobile-only"><button type="button" class="ep-mobile-menu-toggle" aria-label="Open navigation" aria-controls="ep-shared-sidebar" aria-expanded="false"><i class="fa fa-bars" aria-hidden="true"/></button>
                     <div>
                         <div style="font-size:12px; color:var(--text-muted); font-weight:500; margin-bottom:3px;">
                             Welcome back
@@ -1607,9 +1631,9 @@
             </t>
 
             <!-- Compact topbar (bell only) for every other mobile page -->
-            <t t-if="request.httprequest.path != '/my/employee' and not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-                <div class="ep-mobile-topbar mobile-only">
-                    <t t-call="employee_portal_suite.ep_native_communication_actions"/><t t-call="employee_portal_suite.ep_notification_bell"/>
+            <t t-if="request.httprequest.path != '/my/employee'">
+                <div class="ep-mobile-topbar mobile-only"><button type="button" class="ep-mobile-menu-toggle" aria-label="Open navigation" aria-controls="ep-shared-sidebar" aria-expanded="false"><i class="fa fa-bars" aria-hidden="true"/></button>
+                    <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')"><t t-call="employee_portal_suite.ep_native_communication_actions"/><t t-call="employee_portal_suite.ep_notification_bell"/></t>
                 </div>
             </t>
 
@@ -1705,11 +1729,11 @@
 
                 </div>
 
-                <div class="ep-fab-center" id="fabCenterBtn" onclick="toggleFabMenu()">
+                <button type="button" class="ep-fab-center" id="fabCenterBtn" onclick="toggleFabMenu()" aria-label="Create new request">
                     <div class="fab-plus">
                         <i class="fa fa-plus"/>
                     </div>
-                </div>
+                </button>
 
                 <div class="ep-nav-right">
                     <!-- BASIC MODE: Material moves here -->
@@ -1843,7 +1867,7 @@
                 });
             </script>
 
-        <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_compact_lists.css?v=18.0.1.20.101"/></t>
+        <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_compact_lists.css?v=18.0.1.20.102"/></t>
         <script src="/employee_portal_suite/static/src/js/employee_portal_pwa.js?v=2045"/>
     </template>
 
