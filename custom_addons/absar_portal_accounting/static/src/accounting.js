@@ -26,12 +26,12 @@
             for (const child of children) if (child !== undefined && child !== null) node.append(child);
             return node;
         }
-        let status, previewError='', vendorSequence=0, closePicker;
+        let status, previewError='', vendorSequence=0, closePicker, restoringFocus=false;
         if (typeof window !== 'undefined' && window.addEventListener) {
             window.addEventListener('resize',()=>closePicker?.());
             window.addEventListener('scroll',event=>{if(!event.target.closest?.('.aca-options'))closePicker?.();},true);
         }
-        const resourceTitle = resource => ({partner:'Partners',product:'Products',account:'Accounts',journal:'Journals',currency:'Currencies',uom:'Units of Measure','tax-grid':'Tax Grids',tax:'Taxes',po:'Purchase Orders',bank:'Bank Accounts','payment-term':'Payment Terms',analytic:'Analytic Accounts'}[resource] || resource.replaceAll('-',' '));
+        const resourceTitle = resource => ({partner:'Partners',product:'Products',account:'Accounts',journal:'Journals',currency:'Currencies',uom:'Units of Measure','product-category':'Product Categories','tax-grid':'Tax Grids',tax:'Taxes',po:'Purchase Orders',bank:'Bank Accounts','payment-term':'Payment Terms',analytic:'Analytic Accounts'}[resource] || resource.replaceAll('-',' '));
         function say(message, error = false) {
             if (status) {status.textContent = message; status.className = 'aca-status' + (error ? ' error' : '');}
         }
@@ -104,14 +104,14 @@
             }catch(error){say(error.message,true);}
         }
         function picker(resource, selected, choose, disabled = !state.editable) {
-            let requestId = 0, timer;
+            let requestId = 0, timer, active=-1, choices=[], latestLoad=null, queued=false;
             const box = el('div', {class: 'aca-picker'});
             const control = el('input', {type: 'text', role: 'combobox', 'aria-label': resource + ' search',
                 autocomplete: 'off', 'aria-expanded': 'false', disabled, placeholder: 'Search ' + resource + '…'});
             control.value = selected?.name || '';
             const options = el('div', {class: 'aca-options', role: 'listbox', hidden: true});
             options.setAttribute('popover','manual');
-            const close=()=>{if(typeof options.hidePopover==='function' && options.matches(':popover-open'))options.hidePopover();options.hidden=true;control.setAttribute('aria-expanded','false');};
+            const close=()=>{++requestId;clearTimeout(timer);if(typeof options.hidePopover==='function' && options.matches(':popover-open'))options.hidePopover();options.hidden=true;control.setAttribute('aria-expanded','false');};
             const show=()=>{
                 if(closePicker!==close)closePicker?.();closePicker=close;
                 options.hidden=false;
@@ -124,27 +124,49 @@
                 if(typeof options.showPopover==='function'&&!options.matches(':popover-open'))options.showPopover();
                 control.setAttribute('aria-expanded','true');
             };
-            async function load() {
+            async function commit(row, advance=false) {
+                const cell=control.closest?.('[data-grid-column]'), line=control.closest?.('[data-grid-row]');
+                const position=cell&&line?[Number(line.dataset.gridRow),Number(cell.dataset.gridColumn)]:null;
+                selected=row;control.value=row.name;close();
+                try {await choose(row);revision++;if(advance&&position)moveGrid(...position,1);}
+                catch(error){say(error.message,true);}
+            }
+            function load(){queued=false;latestLoad=loadRows();return latestLoad;}
+            async function loadRows() {
                 const seq = ++requestId;
                 try {
                     const rows = await api('options', {resource, q: control.value, partner_id: state.partner_id});
                     if (seq !== requestId || !box.isConnected) return;
-                    options.replaceChildren(); show();
+                    choices=rows.slice(0,30);active=-1;options.replaceChildren(); show();
                     if (!rows.length) options.append(el('div', {class: 'aca-mini', text: 'No matching records'}));
                     for (const row of rows.slice(0,30)) options.append(el('button', {type: 'button', role: 'option', text: row.name,
-                        onmousedown: event => event.preventDefault(), onclick: () => {
-                            selected=row;control.value = row.name; close();
-                            choose(row); revision++;
-                        }}));
-                    options.append(button('Search More…',()=>{close();searchMore(resource,control.value,row=>{selected=row;control.value=row.name;choose(row);});}));
+                        onmousedown: event => event.preventDefault(), onclick: () => commit(row)}));
+                    options.append(button('Search More…',()=>{close();searchMore(resource,control.value,row=>commit(row));}));
+                    if(resource==='product'&&selected?.id)options.append(button('Open / Edit Product…',()=>{
+                        close();productForm(selected.id,'',row=>commit(row));
+                    }));
+                    if(resource==='product'&&!disabled)options.append(button('Create and Edit…',()=>{
+                        const name=control.value;close();productForm(null,name,row=>commit(row));
+                    }));
                 } catch (error) {say(error.message, true);}
             }
-            control.addEventListener('focus', () => {control.value = ''; load();});
-            control.addEventListener('input', () => {clearTimeout(timer); timer = setTimeout(load, 180);});
+            control.addEventListener('focus', () => {if(!restoringFocus){control.value = ''; load();}});
+            control.addEventListener('input', () => {++requestId;choices=[];active=-1;queued=true;clearTimeout(timer);timer=setTimeout(load,180);});
             box.addEventListener('focusout', () => setTimeout(()=>{if(!box.contains(document.activeElement)){close();requestId++;control.value=selected?.name||'';}},100));
-            control.addEventListener('keydown', event => {
-                if (event.key === 'Escape') {close();control.blur();}
-                if (event.key === 'ArrowDown') {event.preventDefault(); options.querySelector('button')?.focus();}
+            control.addEventListener('keydown', async event => {
+                if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();latestLoad=null;queued=false;choices=[];control.value=selected?.name||'';return;}
+                if(!options.hidden&&['ArrowDown','ArrowUp'].includes(event.key)){
+                    event.preventDefault();event.stopPropagation();
+                    active=Math.max(0,Math.min(choices.length-1,active+(event.key==='ArrowDown'?1:-1)));
+                    options.querySelectorAll('[role="option"]').forEach((node,index)=>node.setAttribute('aria-selected',index===active));
+                }
+                if(event.key==='Enter'&&(queued||latestLoad||!options.hidden)){
+                    event.preventDefault();event.stopPropagation();
+                    if(queued){clearTimeout(timer);await load();}else if(latestLoad)await latestLoad;
+                    if(!box.isConnected||document.activeElement!==control)return;
+                    if(choices.length)await commit(choices[Math.max(0,active)],true);
+                    else say('Choose a matching record, or use Create and Edit for a new product.',true);
+                }
             });
             box.append(control, options);
             if (!disabled && selected?.id) {const clear=button('×',()=>{choose({id:false,name:''});revision++;render();});clear.setAttribute('aria-label','Clear '+resource);clear.setAttribute('title','Clear selection');box.append(clear);}
@@ -391,84 +413,132 @@
             }
             return grid;
         }
+        function blankLine() {return {name:'',quantity:1,price_unit:0,discount:0,debit:0,credit:0,taxes_id:[],tax_names:[],analytic_distribution:{}};}
+        function gridControl(row,column) {return root.querySelector(`[data-grid-row="${row}"] [data-grid-column="${column}"] [data-grid-entry]`);}
+        function moveGrid(row,column,direction) {
+            let cells=[...root.querySelectorAll('[data-grid-row] [data-grid-entry]')].filter(n=>!n.disabled);
+            const current=gridControl(row,column),index=cells.indexOf(current);
+            if(index<0)return;
+            let next=cells[index+direction];
+            if(!next&&direction>0&&state.editable&&state.lines.length<200){
+                state.lines.push(blankLine());revision++;render();
+                next=gridControl(state.lines.length-1,0);
+            }
+            if(next){restoringFocus=true;next.focus();restoringFocus=false;next.select?.();next.scrollIntoView?.({block:'nearest',inline:'nearest'});}
+        }
+        async function productForm(productId, initialName='', onSaved=()=>{}) {
+            try {
+                const data=await api(productId?'product-read':'product-defaults',{id:productId});
+                const readonly=!state.editable||!data.can_edit, values={...data,name:data.name||initialName};
+                for(const key of ['categ_id','uom_id','uom_po_id','property_account_expense_id'])values[key]=data[key]?.id||false;
+                const previous=document.activeElement,backdrop=el('div',{class:'aca-dialog-backdrop'}),dialog=el('div',{class:'aca aca-dialog',role:'dialog','aria-modal':'true','aria-label':productId?'Product form':'Create product'});
+                const close=()=>{backdrop.remove();previous?.isConnected&&previous.focus();};
+                dialog.append(el('h3',{text:productId?'Product: '+data.name:'Create Product'}));
+                if(data.shared)dialog.append(el('p',{class:'aca-mini',text:'General details apply across companies. The expense account is saved for the selected company.'}));
+                const grid=el('div',{class:'aca-grid'}),message=el('p',{role:'status',class:'aca-status error'});
+                for(const [title,key,type] of [['Product Name','name','text'],['Internal Reference','default_code','text'],['Barcode','barcode','text'],['Cost','standard_price','number'],['Purchase Description','description_purchase','text']]){
+                    const control=input(key,type,values);control.disabled=readonly;grid.append(label(title,control));
+                }
+                for(const [title,key,choices] of [['Product Type','type',[['consu','Goods'],['service','Service']]],['Bill Control Policy','purchase_method',[['receive','On received quantities'],['purchase','On ordered quantities']]]]){
+                    const control=el('select',{'aria-label':title,disabled:readonly});
+                    for(const [value,text] of choices)control.append(el('option',{value,text}));control.value=values[key];
+                    control.addEventListener('change',()=>{values[key]=control.value;});grid.append(label(title,control));
+                }
+                const tracked=el('input',{type:'checkbox',disabled:readonly,'aria-label':'Track Inventory'});tracked.checked=Boolean(values.is_storable);
+                tracked.addEventListener('change',()=>{values.is_storable=tracked.checked;});grid.append(label('Track Inventory (Goods)',tracked));
+                for(const [title,key,resource] of [['Category','categ_id','product-category'],['Unit of Measure','uom_id','uom'],['Purchase Unit','uom_po_id','uom'],['Expense Account','property_account_expense_id','account']])
+                    grid.append(label(title,picker(resource,data[key],row=>{values[key]=row.id;},readonly)));
+                grid.append(el('p',{class:'aca-mini',text:'An empty expense account uses the category account. '+(data.category_expense_account||'')}));
+                const taxes=new Map((data.supplier_taxes||[]).map(t=>[t.id,t])),taxBox=el('div'),chips=el('div',{class:'aca-pills'});
+                function drawTaxes(){chips.replaceChildren();for(const tax of taxes.values()){
+                    const chip=el('span',{class:'aca-pill',text:tax.name});if(!readonly)chip.append(button('×',()=>{taxes.delete(tax.id);drawTaxes();}));chips.append(chip);}}
+                taxBox.append(picker('tax',null,row=>{taxes.set(row.id,row);drawTaxes();},readonly),chips);drawTaxes();grid.append(label('Purchase Taxes',taxBox));
+                const save=button(productId?'Save Product':'Create and Add',async()=>{
+                    save.disabled=true;message.textContent='';
+                    try{const selected=await api(productId?'product-update':'product-create',{...values,id:productId,supplier_taxes_id:[...taxes.keys()]});
+                        close();await onSaved(selected);
+                    }catch(error){message.textContent=error.message;save.disabled=false;}
+                },true);
+                dialog.append(grid,message,button(readonly?'Close':'Discard',close));if(!readonly)dialog.append(save);
+                dialog.addEventListener('keydown',event=>{if(event.key==='Escape'){event.stopPropagation();close();}});
+                backdrop.append(dialog);document.body.append(backdrop);grid.querySelector('input')?.focus();
+            }catch(error){say(error.message,true);}
+        }
+        function selectProduct(row, selected) {
+            const editing=selected.product_updated&&row.product_id===selected.id;
+            row.product_id=selected.id;row.product_name=selected.name;
+            row.account_id=selected.account_id;row.account_name=selected.account_name;
+            if(!editing){row.name=selected.name;row.product_uom_id=selected.product_uom_id;row.uom_name=selected.uom_name;
+                row.taxes_id=(selected.tax_ids||[]).map(t=>t.id);row.tax_names=selected.tax_ids||[];}
+            revision++;render();schedulePreview();
+        }
         function lineTable() {
-            const journal = state.kind === 'journals', wrap = el('div', {class: 'aca-table-wrap'}), table = el('table', {class: 'aca-table aca-lines'});
-            const titles = journal ? ['Label', 'Account', 'Partner', 'Debit', 'Credit', 'Actions'] :
-                ['Product / Description', 'Quantity', 'UoM', 'Unit Price', 'Discount %', 'Taxes', 'Amount', 'Actions'];
-            table.append(el('thead', {}, [el('tr', {}, titles.map(text => el('th', {text})))]));
-            const body = el('tbody');
-            state.lines.forEach((row, index) => {
-                const tr = el('tr', {class:'aca-line-row'}), details = el('div', {class:'aca-line-details'}), td = (child, className = '') => {const cell = el('td', {class: className}, [child]); tr.append(cell); return cell;};
-                if (['line_section','line_note'].includes(row.display_type)) {
-                    const cell = td(input('name', 'text', row)); cell.colSpan = titles.length - 1;
-                } else {
-                    const desc = el('div');
-                    if (!journal) desc.append(picker('product', {id: row.product_id, name: row.product_name}, selected => {
-                        row.product_id = selected.id; row.product_name = selected.name; row.name = selected.name;
-                        row.account_id = selected.account_id; row.account_name = selected.account_name;
-                        row.product_uom_id = selected.product_uom_id; row.uom_name = selected.uom_name;
-                        row.taxes_id = (selected.tax_ids || []).map(t => t.id); row.tax_names = selected.tax_ids || [];
-                        render(); schedulePreview();
-                    }));
-                    desc.append(input('name', 'text', row)); td(desc, 'desc');
-                    const account = picker('account', {id: row.account_id, name: row.account_name}, selected => {
-                        row.account_id = selected.id; row.account_name = selected.name; render(); schedulePreview();
-                    });
-                    if (journal) td(account, 'account');
-                    else details.append(label('Expense Account', account));
-                    if (journal) {
-                        td(picker('partner', {id: row.partner_id, name: row.partner_name}, selected => {row.partner_id = selected.id; row.partner_name = selected.name; render();}));
-                        for (const key of ['debit','credit']) td(input(key, 'number', row, drawTotals));
-                        details.append(label('Foreign Amount',input('amount_currency','number',row,drawTotals)), label('Due Date',input('date_maturity','date',row)));
-                        const grids=el('div');
-                        grids.append(picker('tax-grid', null, selected=>{
-                            row.tax_tag_ids ||= [];row.grid_names ||= [];
-                            if(!row.tax_tag_ids.includes(selected.id)){row.tax_tag_ids.push(selected.id);row.grid_names.push(selected);}
-                            render();
-                        }));
-                        for(const grid of row.grid_names||[]){
-                            const pill=el('span',{class:'aca-pill',text:grid.name});
-                            if(state.editable)pill.append(button('×',()=>{row.tax_tag_ids=row.tax_tag_ids.filter(id=>id!==grid.id);row.grid_names=row.grid_names.filter(g=>g.id!==grid.id);render();}));
-                            grids.append(pill);
-                        }
-                        details.append(label('Tax Grids', grids));
-                    } else {
-                        td(input('quantity', 'number', row));
-                        td(picker('uom', {id: row.product_uom_id, name: row.uom_name}, selected => {row.product_uom_id=selected.id;row.uom_name=selected.name;render();schedulePreview();}));
-                        for (const key of ['price_unit','discount']) td(input(key, 'number', row));
-                        const taxes = el('div');
-                        taxes.append(picker('tax', null, selected => {
-                            row.taxes_id ||= []; row.tax_names ||= [];
-                            if (!row.taxes_id.includes(selected.id)) {row.taxes_id.push(selected.id); row.tax_names.push(selected);}
-                            render(); schedulePreview();
-                        }));
-                        for (const tax of row.tax_names || []) {
-                            const tag = el('span', {class: 'aca-pill', text: tax.name});
-                            if (state.editable) tag.append(button('×', () => {row.taxes_id = row.taxes_id.filter(id => id !== tax.id); row.tax_names = row.tax_names.filter(t => t.id !== tax.id); render(); schedulePreview();}));
-                            taxes.append(tag);
-                        }
+            const journal=state.kind==='journals',wrap=el('div',{class:'aca-table-wrap'}),table=el('table',{class:'aca-table aca-lines aca-grid-lines'});
+            const titles=journal?['Label','Account','Partner','Debit','Credit','Analytic','Actions']:
+                ['Product','Description','Account','Quantity','UoM','Unit Price','Discount %','Taxes','Analytic','Amount','Actions'];
+            table.append(el('thead',{},[el('tr',{},titles.map(text=>el('th',{text})))]));
+            const body=el('tbody');
+            state.lines.forEach((row,index)=>{
+                const tr=el('tr',{'data-grid-row':index,class:'aca-line-row'});let column=0;
+                const td=(child,cls='',entry=true)=>{
+                    const cell=el('td',{'data-grid-column':column++,class:cls},[child]);
+                    if(entry){const control=child.matches?.('input,select,button')?child:child.querySelector('input,select,button');
+                        if(control&&!control.disabled)control.setAttribute('data-grid-entry','true');}
+                    tr.append(cell);return cell;
+                };
+                if(['line_section','line_note'].includes(row.display_type)){
+                    const cell=td(input('name','text',row),'aca-section');cell.colSpan=titles.length-1;
+                }else{
+                    if(!journal){const product=el('div',{class:'aca-product-cell'},[picker('product',{id:row.product_id,name:row.product_name},selected=>selectProduct(row,selected))]);
+                        if(row.product_id){const open=button('↗',()=>productForm(row.product_id,'',selected=>selectProduct(row,selected)));
+                            open.setAttribute('aria-label','Open product '+(index+1));open.setAttribute('title','Open product');product.append(open);}td(product,'desc');}
+                    td(input('name','text',row),'aca-description');
+                    td(picker('account',{id:row.account_id,name:row.account_name},selected=>{
+                        row.account_id=selected.id;row.account_name=selected.name;revision++;render();schedulePreview();}),'account');
+                    if(journal){
+                        td(picker('partner',{id:row.partner_id,name:row.partner_name},selected=>{row.partner_id=selected.id;row.partner_name=selected.name;revision++;render();}));
+                        for(const key of ['debit','credit'])td(input(key,'number',row,drawTotals));
+                    }else{
+                        td(input('quantity','number',row));
+                        td(picker('uom',{id:row.product_uom_id,name:row.uom_name},selected=>{row.product_uom_id=selected.id;row.uom_name=selected.name;revision++;render();schedulePreview();}));
+                        for(const key of ['price_unit','discount'])td(input(key,'number',row));
+                        const taxes=el('div');taxes.append(picker('tax',null,selected=>{
+                            row.taxes_id||=[];row.tax_names||=[];
+                            if(!row.taxes_id.includes(selected.id)){row.taxes_id.push(selected.id);row.tax_names.push(selected);}
+                            revision++;render();schedulePreview();}));
+                        for(const tax of row.tax_names||[]){const chip=el('span',{class:'aca-pill',text:tax.name});
+                            if(state.editable)chip.append(button('×',()=>{row.taxes_id=row.taxes_id.filter(id=>id!==tax.id);row.tax_names=row.tax_names.filter(t=>t.id!==tax.id);revision++;render();schedulePreview();}));taxes.append(chip);}
                         td(taxes);
                     }
-                    details.append(label('Analytic Distribution', analytic(row)));
-                    if (!journal) td(el('span', {'data-line-amount':index,text:row._amountKey===lineKey(row)?money(row.subtotal):(previewError?'—':'Calculating…')}), 'aca-money');
+                    td(analytic(row));
+                    if(!journal)td(el('span',{'data-line-amount':index,text:row._amountKey===lineKey(row)?money(row.subtotal):(previewError?'—':'Calculating…')}),'aca-money',false);
                 }
-                const controls = el('div', {class:'aca-row-actions'});
-                if (state.editable) {
-                    controls.append(button('↑', () => {if(index) [state.lines[index-1],state.lines[index]]=[state.lines[index],state.lines[index-1]];revision++;render();}),
-                        button('↓', () => {if(index < state.lines.length-1) [state.lines[index+1],state.lines[index]]=[state.lines[index],state.lines[index+1]];revision++;render();}),
-                        button('Remove', () => {state.lines.splice(index,1);revision++;render();schedulePreview();}));
-                }
-                for (const control of controls.children) {
-                    control.setAttribute('aria-label', (control.textContent === '↑' ? 'Move line up' : control.textContent === '↓' ? 'Move line down' : 'Remove line') + ' ' + (index+1));
-                    control.setAttribute('title', control.getAttribute('aria-label'));
-                }
-                td(controls); body.append(tr);
-                if (details.children.length) {
-                    const cell=el('td', {colspan:titles.length}, [details]);
-                    body.append(el('tr', {class:'aca-line-detail-row'}, [cell]));
-                }
+                const controls=el('div',{class:'aca-row-actions'});
+                if(journal)controls.append(button('Details',()=>journalLineDetails(row)));
+                if(state.editable)controls.append(button('↑',()=>{if(index)[state.lines[index-1],state.lines[index]]=[state.lines[index],state.lines[index-1]];revision++;render();}),
+                    button('↓',()=>{if(index<state.lines.length-1)[state.lines[index+1],state.lines[index]]=[state.lines[index],state.lines[index+1]];revision++;render();}),
+                    button('×',()=>{state.lines.splice(index,1);revision++;render();schedulePreview();}));
+                for(const control of controls.children){control.setAttribute('aria-label',(control.textContent==='↑'?'Move line up':control.textContent==='↓'?'Move line down':control.textContent==='×'?'Remove line':control.textContent)+' '+(index+1));}
+                td(controls,'',false);body.append(tr);
             });
-            table.append(body); wrap.append(table); return wrap;
+            table.addEventListener('keydown',event=>{
+                if(event.key!=='Enter'||event.isComposing||event.target.tagName==='TEXTAREA')return;
+                const control=event.target.closest('[data-grid-entry]');if(!control)return;
+                const cell=control.closest('[data-grid-column]'),row=control.closest('[data-grid-row]');
+                event.preventDefault();moveGrid(Number(row.dataset.gridRow),Number(cell.dataset.gridColumn),event.shiftKey?-1:1);
+            });
+            table.append(body);wrap.append(table);return wrap;
+        }
+        function journalLineDetails(row) {
+            const backdrop=el('div',{class:'aca-dialog-backdrop'}),dialog=el('div',{class:'aca aca-dialog',role:'dialog','aria-modal':'true','aria-label':'Journal item details'});
+            dialog.append(el('h3',{text:'Journal Item Details'}),label('Foreign Amount',input('amount_currency','number',row,drawTotals)),label('Due Date',input('date_maturity','date',row)));
+            const grids=el('div'),tags=el('div',{class:'aca-pills'});
+            function draw(){tags.replaceChildren();for(const tag of row.grid_names||[]){const pill=el('span',{class:'aca-pill',text:tag.name});
+                if(state.editable)pill.append(button('×',()=>{row.tax_tag_ids=row.tax_tag_ids.filter(id=>id!==tag.id);row.grid_names=row.grid_names.filter(t=>t.id!==tag.id);revision++;draw();}));tags.append(pill);}}
+            grids.append(picker('tax-grid',null,selected=>{row.tax_tag_ids||=[];row.grid_names||=[];
+                if(!row.tax_tag_ids.includes(selected.id)){row.tax_tag_ids.push(selected.id);row.grid_names.push(selected);revision++;draw();}}),tags);draw();
+            dialog.append(label('Tax Grids',grids),button('Close',()=>{backdrop.remove();schedulePreview();}));
+            dialog.addEventListener('keydown',event=>{if(event.key==='Escape')backdrop.remove();});backdrop.append(dialog);document.body.append(backdrop);
         }
         function linksPanel() {
             const box = el('div'), incoming = ['receipts','planned-receipts'].includes(state.kind);
@@ -508,6 +578,8 @@
             return box;
         }
         function render() {
+            const active=document.activeElement, cell=active?.closest?.('[data-grid-column]'), row=active?.closest?.('[data-grid-row]');
+            const focus=cell&&row?[Number(row.dataset.gridRow),Number(cell.dataset.gridColumn),active.selectionStart,active.selectionEnd]:null;
             closePicker?.();closePicker=null;
             state.selections ||= {};state.allocations ||= [];state.destinations ||= [];state.lines ||= [];
             root.replaceChildren();
@@ -527,14 +599,14 @@
                 panel.append(lineTable());
                 if(state.editable){
                     const lineActions=el('div',{class:'aca-line-actions'});
-                    lineActions.append(button('Add a Line',()=>{state.lines.push({name:'',quantity:1,price_unit:0,discount:0,debit:0,credit:0,taxes_id:[],tax_names:[],analytic_distribution:{}});render();}));
+                    lineActions.append(button('Add a Line',()=>{state.lines.push(blankLine());revision++;render();const next=gridControl(state.lines.length-1,0);next?.focus();}));
                     if(isBill())for(const [type,text]of [['line_section','Add a Section'],['line_note','Add a Note']])lineActions.append(button(text,()=>{state.lines.push({display_type:type,name:''});render();}));
                     lineActions.append(button('Recalculate Totals',preview));panel.append(lineActions);
                 }
                 panel.append(el('div',{class:'aca-totals','data-totals':'true'}));
             } else if(tab==='journal') {
                 panel.append(el('p',{class:'aca-mini',text:'Journal items from the last saved draft. Save after editing to refresh them.'}));
-                const table=el('table',{class:'aca-table'});table.append(el('thead',{},[el('tr',{},['Account','Partner','Label','Debit','Credit'].map(text=>el('th',{text})))]));
+                const table=el('table',{class:'aca-table aca-journal-preview'});table.append(el('thead',{},[el('tr',{},['Account','Partner','Label','Debit','Credit'].map(text=>el('th',{text})))]));
                 const body=el('tbody');for(const row of state.journal_items||[])body.append(el('tr',{},['account','partner','name','debit','credit'].map(k=>el('td',{text:['debit','credit'].includes(k)?money(row[k]):row[k]||''}))));table.append(body);panel.append(el('div',{class:'aca-table-wrap'},[table]));
             } else if(tab==='history') {
                 for(const item of state.history||[])panel.append(el('article',{class:'aca-history'},[el('strong',{text:item.author}),el('time',{text:item.date}),el('p',{text:item.body})]));
@@ -543,6 +615,9 @@
             else if(tab==='other')panel.append(label(isMove()?'Terms and Conditions':'Notes',input(isMove()?'narration':'description','textarea')));
             else panel.append(attachments());
             surface.append(panel);root.append(surface);drawTotals();
+            if(focus){const node=gridControl(focus[0],focus[1]);if(node){restoringFocus=true;node.focus();restoringFocus=false;
+                if(typeof focus[2]==='number'&&['text','search'].includes(node.type))node.setSelectionRange?.(focus[2],focus[3]);}}
+
         }
         state.payment_method ||= 'cash';state.receipt_method ||= 'cash';state.transaction_type ||= state.kind==='planned-receipts'?'customer':'supplier';state.priority ||= '1';state.funding_status ||= 'funded';
         for(const row of state.lines||[])if(row.subtotal!==undefined)row._amountKey=lineKey(row);

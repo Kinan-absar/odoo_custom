@@ -105,6 +105,8 @@ class PortalAccounting(http.Controller):
                 service._kind(kind)
                 if operation == 'options':
                     result = service._options(company, data.get('resource'), data.get('q', ''), kind, data.get('partner_id'), data.get('offset',0), data.get('limit',30))
+                elif operation in ('product-defaults', 'product-read', 'product-create', 'product-update'):
+                    result = service._product_operation(company, kind, operation, data)
                 elif operation == 'defaults':
                     result = service._defaults(company,kind,data.get('partner_id'))
                 elif operation == 'save':

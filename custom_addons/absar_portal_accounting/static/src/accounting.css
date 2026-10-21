@@ -123,3 +123,30 @@
 .aca-line-details>label{min-width:0;max-width:none;margin:0}
 .aca-line-details>label>span{margin-bottom:8px}
 @media(max-width:600px){.aca.aca-dialog{padding:18px;width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}.aca.aca-search-dialog{height:calc(100dvh - 48px)}.aca-line-details{grid-template-columns:1fr}.aca-line-actions button{padding:8px 10px}}
+
+/* Spreadsheet-like line editor; advanced journal fields open on demand. */
+.aca-grid-lines{min-width:1500px;width:100%;table-layout:auto}
+.aca-grid-lines th{padding:9px 8px;border-right:1px solid #e0e9eb}
+.aca-grid-lines td{padding:3px 5px;height:39px;vertical-align:top;border-right:1px solid #e8eff0}
+.aca-grid-lines tbody tr:nth-child(even){background:#fafcfc}
+.aca-grid-lines tbody tr:focus-within{background:#eff8f7}
+.aca-grid-lines input,.aca-grid-lines select{min-height:32px;height:32px;padding:5px 6px;border:1px solid transparent;border-radius:2px;background:transparent}
+.aca-grid-lines input:focus,.aca-grid-lines select:focus{background:#fff;border-color:#087f83;box-shadow:inset 0 0 0 1px #087f83}
+.aca-grid-lines input:disabled{background:transparent}
+.aca-grid-lines .aca-picker{min-width:110px}
+.aca-grid-lines .desc{min-width:210px;width:auto}
+.aca-grid-lines .account{min-width:190px}
+.aca-grid-lines .aca-description{min-width:220px}
+.aca-grid-lines .aca-picker>input{padding-right:26px}
+.aca-grid-lines .aca-picker>button{top:1px;right:0;min-height:30px}
+.aca-grid-lines .aca-product-cell{display:flex;align-items:center;gap:2px}
+.aca-grid-lines .aca-product-cell .aca-picker{flex:1;min-width:170px}
+.aca-grid-lines .aca-product-cell>button{padding:2px 5px;border:0;background:transparent;min-height:30px}
+.aca-grid-lines td>button,.aca-grid-lines .aca-row-actions button{padding:5px 7px;min-height:30px;font-size:11px}
+.aca-grid-lines .aca-pill{font-size:10px;padding:1px 4px;display:inline-flex;align-items:center;margin:1px}
+.aca-grid-lines .aca-money{padding-top:9px;min-width:95px}
+.aca-grid-lines .aca-section input{font-weight:600;width:100%}
+.aca-options [aria-selected=true]{background:#e7f4f3;outline:1px solid #087f83;outline-offset:-1px}
+.aca-grid-lines .desc>.aca-product-cell{display:flex;align-items:center;gap:2px}
+.aca-journal-preview{min-width:850px;font-variant-numeric:tabular-nums}
+.aca-journal-preview th,.aca-journal-preview td{padding:8px;border-right:1px solid #e4edef}

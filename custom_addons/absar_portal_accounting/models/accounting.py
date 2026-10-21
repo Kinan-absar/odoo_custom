@@ -1,8 +1,11 @@
+import logging
+from markupsafe import Markup
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError
 
 # A process-local identity; RPC clients cannot manufacture this trusted context.
 _REVIEW_TOKEN = object()
+_logger = logging.getLogger(__name__)
 
 
 class Company(models.Model):
@@ -38,6 +41,80 @@ class PortalReview(models.AbstractModel):
     portal_accounting_reset_requested_by = fields.Many2one('res.users', readonly=True, copy=False)
     portal_accounting_reset_reason = fields.Text(readonly=True, copy=False)
     portal_accounting_can_review = fields.Boolean(compute='_compute_portal_accounting_can_review')
+
+    def _portal_accounting_path(self, user):
+        self.ensure_one()
+        kind = {'account.payment.voucher': 'payments', 'account.receipt.voucher': 'receipts'}.get(self._name)
+        if self._name == 'account.move':
+            kind = {'in_invoice': 'bills', 'in_refund': 'refunds', 'entry': 'journals'}.get(self.move_type)
+        if user.share:
+            return '/my/employee/accounting/%s/%s?company_id=%s' % (kind, self.id, self.company_id.id)
+        return '/web#id=%s&model=%s&view_type=form' % (self.id, self._name)
+
+    def _portal_accounting_reviewers(self):
+        self.ensure_one()
+        group = self.env.ref('absar_portal_accounting.group_approver')
+        users = self.env['res.users'].sudo().search([
+            ('active', '=', True), ('company_ids', 'in', self.company_id.id),
+            ('groups_id', 'in', group.id),
+            ('id', 'not in', list({self.portal_accounting_issuer_id.id, self.env.uid}))])
+        def eligible(user):
+            if user.has_group('employee_portal_suite.group_attendance_only'):
+                return False
+            if user.share:
+                return bool(user.with_company(self.company_id).employee_id and
+                            self.journal_id in self.company_id.portal_accounting_journal_ids)
+            try:
+                self.with_user(user).check_access('write')
+                return True
+            except AccessError:
+                return False
+        return users.filtered(eligible)
+
+    def _portal_accounting_notify(self, users, title, note):
+        self.ensure_one()
+        users = users.sudo().filtered(lambda u: u.active and self.company_id in u.company_ids)
+        if not users:
+            return
+        # Explicit recipients: a chatter note alone does not alert approvers.
+        for portal in (False, True):
+            recipients = users.filtered(lambda u: bool(u.share) == portal)
+            if recipients:
+                self.sudo().message_post(body=Markup('<p><strong>%s</strong></p><p>%s</p><p><a href="%s">%s</a></p>') % (
+                    title, note, self._portal_accounting_path(recipients[:1]), _('Open accounting document')),
+                    partner_ids=recipients.partner_id.ids, message_type='comment', subtype_xmlid='mail.mt_comment',
+                    author_id=self.env.user.partner_id.id,
+                    email_from=self.env.user.email_formatted or self.company_id.partner_id.email_formatted or 'Accounting <noreply@localhost>')
+        if 'employee.portal.webpush.service' in self.env:
+            for user in users:
+                try:
+                    with self.env.cr.savepoint():
+                        self.env['employee.portal.webpush.service'].sudo().send_to_user(
+                            user, title, note, path=self._portal_accounting_path(user),
+                            tag='accounting-%s-%s' % (self._name, self.id))
+                except Exception:
+                    _logger.warning('Optional accounting webpush failed for %s %s', self._name, self.id, exc_info=True)
+
+    def _portal_accounting_close_review_activities(self):
+        self.ensure_one()
+        self.sudo().activity_ids.filtered(lambda a:
+            a.summary == 'Accounting approval: %s/%s' % (self._name, self.id) and
+            a.activity_type_id == self.env.ref('mail.mail_activity_data_todo')
+        ).action_feedback(feedback=_('Accounting review completed or withdrawn.'))
+
+    def _portal_accounting_notify_submission(self):
+        self.ensure_one()
+        reviewers = self._portal_accounting_reviewers()
+        if not reviewers:
+            raise UserError(_('No independent Accounting Approver with access is available for this company. Assign one before submitting.'))
+        title = _('Accounting document %s awaiting approval') % (self.display_name or self.id)
+        note = _('%s submitted this document for approval and posting.') % self.env.user.name
+        self._portal_accounting_notify(reviewers, title, note)
+        self._portal_accounting_close_review_activities()
+        for reviewer in reviewers.filtered(lambda u: not u.share):
+            self.sudo().activity_schedule('mail.mail_activity_data_todo', user_id=reviewer.id,
+                summary='Accounting approval: %s/%s' % (self._name, self.id),
+                note=Markup('<p>%s</p><a href="%s">%s</a>') % (note, self._portal_accounting_path(reviewer), _('Review document')))
 
     @api.depends_context('uid')
     @api.depends('state', 'portal_accounting_review', 'portal_accounting_issuer_id', 'portal_accounting_review_required')
@@ -148,6 +225,7 @@ class PortalReview(models.AbstractModel):
         # This prevents posting content different from the submitted document.
         business = {k for k in vals if not k.startswith(('portal_accounting_', 'message_', 'activity_'))
                     and k not in ('access_token', 'access_url', 'access_warning')}
+        submitted = self.filtered(lambda r: r.portal_accounting_review == 'submitted')
         if business and self.env.context.get('_absar_accounting_token') is not _REVIEW_TOKEN:
             for record in self:
                 if record.state == 'draft' and record.portal_accounting_review_required and record.portal_accounting_review in ('submitted', 'approved'):
@@ -158,7 +236,13 @@ class PortalReview(models.AbstractModel):
                     })
         if vals.get('state') == 'draft':
             vals = dict(vals, portal_accounting_reset_pending=False)
-        return super().write(vals)
+        result = super().write(vals)
+        for record in self:
+            if record.portal_accounting_review == 'submitted' and record not in submitted:
+                record._portal_accounting_notify_submission()
+            elif record in submitted and record.portal_accounting_review != 'submitted':
+                record._portal_accounting_close_review_activities()
+        return result
 
 
 class AccountMove(models.Model):

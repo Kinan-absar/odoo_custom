@@ -215,6 +215,7 @@ class PortalAccountingService(models.AbstractModel):
         spec = {
             'partner': ('res.partner', cdom, 'display_name'),
             'account': ('account.account', [('company_ids', 'in', company.id), ('deprecated', '=', False)], 'display_name'),
+            'product-category': ('product.category', [], 'display_name'),
             'product': ('product.product', cdom + [('purchase_ok', '=', True)], 'display_name'),
             'tax': ('account.tax', [('company_id', '=', company.id), ('type_tax_use', 'in', ['purchase', 'none'])], 'name'),
             'analytic': ('account.analytic.account', cdom, 'display_name'),
@@ -265,11 +266,7 @@ class PortalAccountingService(models.AbstractModel):
             if resource in ('bill', 'invoice'):
                 data['name'] = '%s · %.2f %s outstanding' % (r.name, r.amount_residual, r.currency_id.name)
             if resource == 'product':
-                account = r.product_tmpl_id.get_product_accounts().get('expense')
-                data.update(account_id=account.id if account else False,
-                            account_name=account.display_name if account else '',
-                            product_uom_id=r.uom_id.id, uom_name=r.uom_id.display_name,
-                            tax_ids=[{'id': t.id, 'name': t.name} for t in r.supplier_taxes_id.filtered(lambda t: t.company_id == company)])
+                data.update(self._product_selection(r, company))
             result.append(data)
         return result
 
@@ -589,6 +586,10 @@ class PortalAccountingService(models.AbstractModel):
             getattr(record, 'action_find_matching_bills' if kind == 'payments' else 'action_find_matching_invoices')()
         else:
             raise AccessError(_('Unsupported accounting action.'))
+        if action in ('return', 'post') and record.portal_accounting_review_required:
+            record._portal_accounting_notify(record.portal_accounting_issuer_id,
+                _('Accounting document %s: %s') % (record.display_name, _('Posted') if action == 'post' else _('Returned for correction')),
+                _('%(user)s: %(comment)s', user=user.name, comment=comment or _('Review completed.')))
         self._audit(record, action, comment)
         return self._detail(company, kind, record.id)
 

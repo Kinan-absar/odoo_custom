@@ -62,9 +62,10 @@ assert(find(p.root,'Submit to CEO'));assert(!find(p.root,'Mark as Paid'));
 console.log('PASS: actual frontend mount, numeric edits and server totals, CSRF/save payload, Monitor readonly controls, Approver actions/return and planned-payment execution boundary.');
 // Rearranged detail fields still participate in draft edits and serialization.
 const j=mount({...fixture,kind:'journals',lines:[{name:'Accrual',account_id:8,partner_id:7,debit:100,credit:0,amount_currency:100,date_maturity:'2026-11-01',tax_tag_ids:[11],grid_names:[{id:11,name:'Tax Grid'}],analytic_distribution:{'5':100}}]});
-assert(find(j.root,'Foreign Amount'));assert(find(j.root,'Due Date'));assert(find(j.root,'Tax Grids'));assert(find(j.root,'Analytic Distribution'));
-const foreign=walk(j.root).find(n=>n['aria-label']==='amount_currency');foreign.value='125';foreign.handlers.input();
-const due=walk(j.root).find(n=>n['aria-label']==='date_maturity');due.value='2026-12-01';due.handlers.input();
+find(j.root,'Details').handlers.click();
+assert(find(j.body,'Foreign Amount'));assert(find(j.body,'Due Date'));assert(find(j.body,'Tax Grids'));assert(find(j.root,'Edit distribution'));
+const foreign=walk(j.body).find(n=>n['aria-label']==='amount_currency');foreign.value='125';foreign.handlers.input();
+const due=walk(j.body).find(n=>n['aria-label']==='date_maturity');due.value='2026-12-01';due.handlers.input();
 find(j.root,'Save Draft').handlers.click();await j.settle();
 const saved=j.calls.at(-1).data.lines[0];assert.equal(saved.amount_currency,125);assert.equal(saved.date_maturity,'2026-12-01');
 assert.equal(saved.account_id,8);assert.deepEqual(saved.tax_tag_ids,[11]);assert.equal(saved.analytic_distribution['5'],100);
