@@ -55,18 +55,18 @@
             <!-- DESKTOP TABLE -->
             <div class="table-responsive d-none d-md-block eps-list-scroll">
                 <table class="table table-hover table-sm align-middle mb-0 material-approvals-table eps-compact-list" style="--eps-list-width:1420px">
-                    <colgroup><col style="width:125px"/><col style="width:190px"/><col style="width:190px"/><col style="width:190px"/><col style="width:150px"/><col style="width:125px"/><col style="width:125px"/><col style="width:125px"/><col style="width:115px"/><col style="width:85px"/></colgroup><!-- One fixed column definition is shared by Pending, Approved, Rejected and All. -->
+                    <!-- One width definition for the nine visible columns, across all filters. -->
                     <colgroup>
-                        <col style="width: 7%;"/>
+                        <col style="width: 9%;"/>
                         <col style="width: 15%;"/>
                         <col style="width: 14%;"/>
-                        <col style="width: 16%;"/>
+                        <col style="width: 15%;"/>
+                        <col style="width: 10%;"/>
                         <col style="width: 9%;"/>
+                        <col style="width: 10%;"/>
+                        <col style="width: 10%;"/>
                         <col style="width: 8%;"/>
-                        <col style="width: 11%;"/>
-                        <col style="width: 9%;"/>
-                        <col style="width: 5%;"/>
-                        </colgroup>
+                    </colgroup>
 
                     <thead class="table-light">
                         <tr>
