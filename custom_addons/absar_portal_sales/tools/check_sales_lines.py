@@ -105,3 +105,37 @@ assert (root/'static/src/js/purchase_ui.js').read_bytes()==(root.parent/'absar_p
 assert (root/'static/src/js/purchase_ui.js').read_bytes()==(root.parent/'absar_portal_accounting/static/src/purchase_ui.js').read_bytes()
 assert (root/'static/src/js/analytic_editor.js').read_bytes()==(root.parent/'absar_portal_accounting/static/src/analytic_editor.js').read_bytes()
 print('PASS: Accounting and Sales share identical Purchase UI helpers/allocation editor; Accounting validates plan totals, duplicate plans/rows and company scope.')
+# New quotations use the same scoped line gateway before their first database save.
+from datetime import date
+ns['fields']=N(Date=N(to_date=date.fromisoformat))
+created=[]
+company=N(id=7);partner=N(id=21,company_id=False);project=N(id=31,company_id=company)
+class Browse:
+    def sudo(self):return self
+    def __init__(self,rows):self.rows=rows;self.current=None
+    def browse(self,rid):self.current=self.rows.get(rid);return self
+    def exists(self):return self.current
+class Orders:
+    def new(self,vals):return N(id=False,company_id=company,partner_id=partner,order_line=Lines([]),values=vals)
+    def sudo(self):return self
+    def with_company(self,c):return self
+    def create(self,vals):created.append(vals);return N(id=55)
+class Env(dict):
+    uid=4
+    cr=request.env.cr
+request.env=Env({'res.partner':Browse({21:partner,99:N(id=99,company_id=N(id=99))}),
+                 'project.project':Browse({31:project}), 'sale.order':Orders()})
+s._allowed=lambda:N(company_id=company,id=4)
+s._partners=lambda limit=None:[partner]
+s._customer_projects=lambda p:[project]
+s._line_env=lambda o:request.env
+s._line_choice=original_choice
+s._line_boot=lambda o:{'saved':True}
+def create(header,rows):return s._line_api(None,'create',{'payload':json.dumps({'header':header,'lines':rows})})
+header=dict(partner_id=21,project_id=31,kind='standard',validity_date='2026-11-01',company_id=99,state='sale',absar_order_review_state='approved')
+r=create(header,[dict(row,id=0)]);assert r.status==200 and r.payload['result']['redirect'].endswith('/55')
+assert created[-1]['company_id']==7 and created[-1]['absar_portal_creator_id']==4 and created[-1]['order_line'][0][0]==0
+assert not {'state','absar_order_review_state'}.intersection(created[-1])
+for patch,rows in [({'partner_id':0},[]),({'partner_id':99},[]),({'project_id':999},[]),({'kind':'bad'},[]),({'validity_date':'invalid'},[]),({},[row]),({},[dict(row,id=0,price_unit='nan')])]:
+    count=len(created);result=create(dict(header,**patch),rows);assert result.status==400 and len(created)==count
+print('PASS: new quotation header and lines save together; customer/project/company/date/type checks and forged state/approval/foreign-line fields rejected (ORM fixtures).')

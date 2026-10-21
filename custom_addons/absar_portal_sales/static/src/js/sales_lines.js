@@ -8,14 +8,16 @@ export function mountSalesLines(root) {
     const csrf=root.dataset.csrf;
     const money=v=>Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
     async function post(path,payload={}){
-        const response=await fetch('/my/employee/sales/'+state.order_id+'/line-api'+path,{method:'POST',credentials:'same-origin',body:new URLSearchParams({csrf_token:csrf,payload:JSON.stringify(payload)})});
+        const headerRoot=document.getElementById('aps-new-details');
+        if(headerRoot)payload.header=Object.fromEntries(['partner_id','project_id','validity_date','kind'].map(key=>[key,headerRoot.querySelector('[name="'+key+'"]')?.value||'']));
+        const response=await fetch((state.order_id?'/my/employee/sales/'+state.order_id+'/line-api':'/my/employee/sales/new-api')+path,{method:'POST',credentials:'same-origin',body:new URLSearchParams({csrf_token:csrf,payload:JSON.stringify(payload)})});
         const data=await response.json();if(!data.ok)throw new Error(data.error||'Unable to update quotation lines.');return data.result;
     }
     const ui=createPurchaseUI({root,post,companyId:state.company_id,readonly:!state.editable});
     const {text,button,lookup,modal}=ui;
     const control=(value,type,change)=>{const node=ui.input(value,type,v=>{change(v);changed();});node.disabled=!state.editable||busy;return node;};
     function blank(){return {id:0,name:'',product_id:0,quantity:1,price_unit:0,discount:0,taxes_id:[],taxes:[],analytic_distribution:{}};}
-    function changed(){dirty=true;revision++;error='';state.lines.forEach(l=>{l._pending=true;});drawTotals();clearTimeout(timer);timer=setTimeout(preview,400);}
+    function changed(){const review=document.querySelector('[data-aps-submit-review]');if(review)review.disabled=true;dirty=true;revision++;error='';state.lines.forEach(l=>{l._pending=true;});drawTotals();clearTimeout(timer);timer=setTimeout(preview,400);}
     function feedback(message){error=message;const node=root.querySelector('[data-sales-status]');if(node)node.textContent=message;drawTotals();}
     async function preview(){
         const seq=revision;
@@ -85,7 +87,7 @@ export function mountSalesLines(root) {
     }
     async function save(){
         if(busy)return;busy=true;clearTimeout(timer);render();feedback('Saving…');
-        try{state=await post('/save',{version:state.version,lines:state.lines});dirty=false;revision++;busy=false;render();feedback('Lines saved.');}
+        try{state=await post(state.order_id?'/save':'/create',{version:state.version,lines:state.lines});if(state.redirect){window.location.assign(state.redirect);return;}dirty=false;revision++;busy=false;render();feedback('Lines saved.');}
         catch(e){busy=false;render();feedback(e.message);}
     }
     function render(){
@@ -118,7 +120,7 @@ export function mountSalesLines(root) {
         });wrap.append(table);root.append(wrap);
         if(state.editable){const actions=text('div','','aps-sales-line-actions');for(const [type,label] of [['','Add a product'],['line_section','Add a section'],['line_note','Add a note']]){
             const add=button(label,()=>{state.lines.push(type?{id:0,display_type:type,name:''}:blank());changed();render();gridControl(state.lines.length-1,0)?.focus();});add.disabled=busy;actions.append(add);}
-            const saveButton=button('Save Lines',save,'btn btn-primary');saveButton.disabled=busy;actions.append(saveButton);root.append(actions);}
+            const saveButton=button(state.order_id?'Save Lines':'Save Quotation',save,'btn btn-primary');saveButton.disabled=busy;actions.append(saveButton);root.append(actions);}
         const totals=text('div','','aps-sales-totals');totals.setAttribute('data-sales-totals','true');root.append(totals);drawTotals();
         const review=document.querySelector('[data-aps-submit-review]');if(review)review.disabled=dirty||!state.lines.some(l=>!l.display_type);
         if(!state.editable)root.querySelectorAll('input,select').forEach(node=>{node.disabled=true;});
@@ -131,6 +133,8 @@ export function mountSalesLines(root) {
         event.preventDefault();event.stopPropagation();
         moveGrid(Number(input.closest('[data-sales-row]').dataset.salesRow),Number(input.closest('[data-sales-column]').dataset.salesColumn),-1);
     },true);
+    const headerRoot=document.getElementById('aps-new-details');
+    headerRoot?.addEventListener('change',()=>{changed();if(state.lines.length)feedback('Customer or details changed. Check line prices and taxes before saving.');});
     render();
     return {get state(){return state;},render,moveGrid,save,preview,selectProduct};
 }

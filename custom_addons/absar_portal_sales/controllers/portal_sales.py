@@ -36,11 +36,14 @@ class PortalSales(SalesLinesMixin, http.Controller):
         if review:
             if not creator or creator.id == user.id:
                 raise NotFound()
-        elif not (self._operator() or (creator and creator.id == user.id) or (is_approver and creator) or is_monitor):
+        elif not (self._operator() or (creator and user in (creator,order.absar_portal_submitter_id,order.absar_order_requester_id)) or (is_approver and creator) or is_monitor):
             raise NotFound()
         return order
 
     def _editable(self, order):
+        if not order.id:
+            self._allowed()
+            return
         if self._operator() and order.state in ('draft','sent') and (not order.absar_portal_creator_id or order.absar_portal_review_state in ('draft','returned')):
             return
         if order.absar_portal_creator_id.id != request.env.user.id or order.absar_portal_review_state not in ('draft','returned') or order.state not in ('draft','sent'):
@@ -86,9 +89,10 @@ class PortalSales(SalesLinesMixin, http.Controller):
         kw.setdefault('error', False)
         if template == 'absar_portal_sales.sales_detail' and kw.get('order'):
             kw['line_boot_json'] = json.dumps(self._line_boot(kw['order']))
+            kw.update(kw['order']._absar_review_permissions(request.env.user))
         return request.render(template, kw)
 
-    def _list_view(self, *, monitor=False, queue=False, params=None):
+    def _list_view(self, *, monitor=False, queue=False, updates=False, params=None):
         user = self._allowed(approve=True) if queue else self._allowed(view=True)
         is_approver = user.has_group('absar_portal_sales.group_portal_sales_approver')
         is_monitor = user.has_group('absar_portal_sales.group_portal_sales_monitor')
@@ -98,7 +102,11 @@ class PortalSales(SalesLinesMixin, http.Controller):
         domain = [('company_id', 'in', user.company_ids.ids)]
         if queue:
             domain += [('absar_portal_creator_id','!=',False), ('absar_portal_creator_id','!=',user.id),
-                       ('absar_portal_review_state','=','submitted'), ('state','in',['draft','sent'])]
+                       ('absar_portal_submitter_id','!=',user.id),('absar_order_requester_id','!=',user.id),
+                       '|',('absar_portal_review_state','=','submitted'),('absar_order_review_state','=','requested'), ('state','in',['draft','sent'])]
+        elif updates:
+            domain += [('absar_sales_decision_at','!=',False),'|','|',
+                ('absar_portal_creator_id','=',user.id),('absar_portal_submitter_id','=',user.id),('absar_order_requester_id','=',user.id)]
         elif not monitor and not self._operator():
             domain += [('absar_portal_creator_id','=',user.id)]
         else:
@@ -131,18 +139,21 @@ class PortalSales(SalesLinesMixin, http.Controller):
             page = max(1, min(int(params.get('page') or 1), max(1, (count + per_page - 1) // per_page)))
         except (ValueError,TypeError):
             page = 1
-        orders = model.search(domain, limit=per_page, offset=(page-1)*per_page, order='date_order desc, id desc')
+        orders = model.search(domain, limit=per_page, offset=(page-1)*per_page, order='absar_sales_decision_at desc, id desc' if updates else 'date_order desc, id desc')
         pending_count = model.search_count([('company_id','in',user.company_ids.ids),
                 ('absar_portal_creator_id','!=',False),('absar_portal_creator_id','!=',user.id),
-                ('absar_portal_review_state','=','submitted'),('state','in',['draft','sent'])]) if is_approver else 0
-        base_url = BASE + ('/approvals' if queue else '/monitor' if monitor else '')
+                ('absar_portal_submitter_id','!=',user.id),('absar_order_requester_id','!=',user.id),
+                '|',('absar_portal_review_state','=','submitted'),('absar_order_review_state','=','requested'),('state','in',['draft','sent'])]) if is_approver else 0
+        if queue or updates:
+            request.env['portal.report.seen'].sudo()._mark_seen(user.id,'sales_approval' if queue else 'sales_review_update')
+        base_url = BASE + ('/approvals' if queue else '/updates' if updates else '/monitor' if monitor else '')
         def page_url(target):
             args = {k:params.get(k) for k in ('q','source','sales_state','review') if params.get(k) and params.get(k) != 'all'}
             args['page'] = target
             return base_url + '?' + urlencode(args)
         return self._render('absar_portal_sales.sales_list', orders=orders,
             is_approver=is_approver, can_create=user.has_group('absar_portal_sales.group_portal_sales_creator'),
-            is_monitor=is_monitor, monitoring=monitor, queue_only=queue, pending_count=pending_count,
+            is_monitor=is_monitor, monitoring=monitor, queue_only=queue, updates_only=updates, pending_count=pending_count,
             page=page, pages=max(1,(count+per_page-1)//per_page), total_count=count,
             previous_url=page_url(page-1), next_url=page_url(page+1), q=query,
             source=params.get('source','all'), sales_state=params.get('sales_state','all'),review=params.get('review','all'))
@@ -185,10 +196,16 @@ class PortalSales(SalesLinesMixin, http.Controller):
     def approval_queue(self, **kw):
         return self._list_view(queue=True, params=kw)
 
+    @http.route(BASE+'/updates',type='http',auth='user',website=True)
+    def review_updates(self, **kw):
+        self._allowed()
+        return self._list_view(updates=True,params=kw)
+
     @http.route(BASE + '/new', type='http', auth='user', website=True)
     def new_order(self, **kw):
         self._allowed()
-        return self._render('absar_portal_sales.sales_new', partners=self._partners(),projects=self._projects(),templates=self._templates(),units=self._units())
+        order,_vals=self._line_new_order({})
+        return self._render('absar_portal_sales.sales_new',line_boot_json=json.dumps(self._line_boot(order)),partners=self._partners(),projects=self._projects(),templates=self._templates(),units=self._units())
 
     @http.route(BASE + '/create', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def create_order(self, **post):
@@ -221,7 +238,7 @@ class PortalSales(SalesLinesMixin, http.Controller):
                 order.action_absar_load_proposal_template()
             return request.redirect('%s/%s' % (BASE, order.id))
         except (ValueError, TypeError, UserError, ValidationError) as exc:
-            return self._render('absar_portal_sales.sales_new',partners=self._partners(),projects=self._projects(),templates=self._templates(),units=self._units(),error=str(exc))
+            return self._render('absar_portal_sales.sales_new',line_boot_json=json.dumps(self._line_boot(self._line_new_order({})[0])),partners=self._partners(),projects=self._projects(),templates=self._templates(),units=self._units(),error=str(exc))
 
     @http.route(BASE + '/<int:order_id>', type='http', auth='user', website=True)
     def show_order(self, order_id, **kw):
@@ -233,6 +250,11 @@ class PortalSales(SalesLinesMixin, http.Controller):
             can_edit=can_edit,
             can_review=(request.env.user.has_group('absar_portal_sales.group_portal_sales_approver') and order.absar_portal_review_state=='submitted' and request.env.user not in (order.absar_portal_creator_id,order.absar_portal_submitter_id)),
             templates=self._templates(),projects=self._customer_projects(order.partner_id),units=self._units())
+
+    @http.route(BASE+'/new-api/<string:operation>', type='http', auth='user', methods=['POST'], csrf=True)
+    def new_line_api(self, operation, **post):
+        self._allowed()
+        return self._line_api(None, operation, post)
 
     @http.route(BASE + '/<int:order_id>/line-api/<string:operation>', type='http', auth='user', methods=['POST'], csrf=True)
     def line_api(self, order_id, operation, **post):
@@ -406,22 +428,22 @@ class PortalSales(SalesLinesMixin, http.Controller):
     def workflow(self,order_id,**post):
         order=self._order(order_id)
         action=post.get('action')
-        if action=='confirm':
-            if not order._absar_portal_can_confirm(request.env.user):raise Forbidden()
-            order.sudo().with_company(order.company_id).action_confirm()
-            order.message_post(body=_('Sales order confirmed by %s.') % request.env.user.name,subtype_xmlid='mail.mt_note')
+        if action=='request_order':
+            order.action_absar_request_order()
         elif action=='submit':
             self._editable(order)
             order._absar_portal_submit()
             return request.redirect(BASE)
-        elif action in ('approve','return'):
+        elif action in ('approve','return','approve_order','return_order'):
             self._allowed(approve=True)
             if action=='approve':order.action_absar_portal_approve()
+            elif action=='approve_order':order.action_absar_approve_order()
             else:
                 note=(post.get('note') or '').strip()
                 if not note:raise Forbidden()
                 order.sudo().write({'absar_portal_review_note':note[:3000]})
-                order.action_absar_portal_return()
+                if action=='return_order':order.action_absar_return_order()
+                else:order.action_absar_portal_return()
         else: raise Forbidden()
         return request.redirect('%s/%s' % (BASE,order.id))
 

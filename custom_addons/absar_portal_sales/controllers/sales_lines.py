@@ -1,6 +1,6 @@
 """Scoped native-style sales lines; portal users receive no generic model ACL."""
 import json
-from odoo import Command, _
+from odoo import Command, fields, _
 from odoo.http import request
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.osv import expression
@@ -8,6 +8,28 @@ from werkzeug.exceptions import Forbidden, NotFound
 
 
 class SalesLinesMixin:
+    def _line_new_order(self, data, required=False):
+        user=self._allowed()
+        header=data.get('header') or {}
+        if not isinstance(header,dict):raise ValidationError(_('Invalid quotation details.'))
+        partner=False
+        if header.get('partner_id'):
+            partner=request.env['res.partner'].sudo().browse(self._line_id(header['partner_id'])).exists()
+            if not partner or partner not in self._partners(limit=None) or (partner.company_id and partner.company_id!=user.company_id):
+                raise ValidationError(_('Select an available customer for this company.'))
+        if required and not partner:raise ValidationError(_('Select a customer.'))
+        project=False
+        if header.get('project_id'):
+            project=request.env['project.project'].sudo().browse(self._line_id(header['project_id'])).exists()
+            if not partner or not project or project not in self._customer_projects(partner) or (project.company_id and project.company_id!=user.company_id):
+                raise ValidationError(_('Select a project assigned to this customer and company.'))
+        kind=header.get('kind') or 'standard'
+        if kind not in ('standard','technical'):raise ValidationError(_('Invalid quotation type.'))
+        vals=dict(partner_id=partner.id if partner else False,company_id=user.company_id.id,user_id=user.id,
+            absar_portal_creator_id=user.id,absar_proposal_type=kind,construction_project_id=project.id if project else False,
+            validity_date=fields.Date.to_date(header['validity_date']) if header.get('validity_date') else False)
+        return request.env['sale.order'].sudo().with_company(user.company_id).new(vals),vals
+
     def _line_env(self, order):
         return request.env(context=dict(request.env.context, allowed_company_ids=[order.company_id.id]))['sale.order'].with_company(order.company_id).sudo().env
 
@@ -87,7 +109,7 @@ class SalesLinesMixin:
         model,domain=self._line_scope(order,'analytic')
         accounts=self._line_env(order)[model].search(expression.AND([domain,[('id','in',sorted(ids))]]))
         labels={str(a.id):dict(id=a.id,label=a.display_name,plan=a.plan_id.root_id.display_name,plan_id=a.plan_id.root_id.id) for a in accounts}
-        return dict(order_id=order.id,company_id=order.company_id.id,editable=editable,version=self._line_version(order),
+        return dict(order_id=order.id or 0,company_id=order.company_id.id,editable=editable,version=self._line_version(order) if order.id else '',
             lines=[self._line_data(l) for l in order.order_line.sorted(lambda l:(l.sequence,l.id))],analytic_labels=labels,
             currency=order.currency_id.name,untaxed=order.amount_untaxed,tax=order.amount_tax,total=order.amount_total)
 
@@ -161,7 +183,9 @@ class SalesLinesMixin:
             data=json.loads(post.get('payload') or '{}')
             if not isinstance(data,dict):raise ValidationError(_('Invalid request.'))
             with request.env.cr.savepoint():
-                order=self._order(order_id)
+                order=self._order(order_id) if order_id else self._line_new_order(data)[0]
+                if not order_id and operation not in ('lookup','defaults','preview','create','product-read','product-defaults','product-create','product-update'):
+                    raise AccessError(_('Unsupported new quotation operation.'))
                 if operation in ('product-read','product-defaults','product-create','product-update'):
                     result=self._line_product(order,operation,data)
                 elif operation=='lookup':
@@ -179,7 +203,8 @@ class SalesLinesMixin:
                     self._editable(order)
                     product=self._line_choice(order,'product',data.get('product_id'))
                     qty=self._num(data.get('quantity') or 1,'Quantity')
-                    values={'order_id':order.id,'product_id':product.id,'product_uom_qty':qty}
+                    if not order.partner_id:raise ValidationError(_('Select a customer before choosing products.'))
+                    values={'order_id':order.id or order,'product_id':product.id,'product_uom_qty':qty}
                     if data.get('uom_id'):
                         unit=self._line_choice(order,'uom',data['uom_id'])
                         if unit.category_id!=product.uom_id.category_id:raise ValidationError(_('Product and unit must have the same unit category.'))
@@ -202,7 +227,19 @@ class SalesLinesMixin:
                         'order_line':[Command.create(dict(vals,sequence=(i+1)*10)) for i,vals in enumerate(values)]})
                     result={'untaxed':virtual.amount_untaxed,'tax':virtual.amount_tax,'total':virtual.amount_total,
                             'line_amounts':[l.price_subtotal for l in virtual.order_line]}
+                elif operation=='create':
+                    if order_id:raise AccessError(_('Use Save Lines for an existing quotation.'))
+                    virtual,vals=self._line_new_order(data,required=True)
+                    raw=data.get('lines')
+                    if not isinstance(raw,list) or len(raw)>200:raise ValidationError(_('Use at most 200 lines.'))
+                    commands=[]
+                    for index,row in enumerate(raw):
+                        if not isinstance(row,dict) or row.get('id'):raise ValidationError(_('Invalid new quotation line.'))
+                        commands.append(Command.create(dict(self._line_values(virtual,row),sequence=(index+1)*10)))
+                    order=self._line_env(virtual)['sale.order'].create(dict(vals,order_line=commands))
+                    result=dict(self._line_boot(order),redirect='/my/employee/sales/%s'%order.id)
                 elif operation=='save':
+                    if not order_id:raise AccessError(_('Save the new quotation first.'))
                     # Parent and child locks protect ownership/state and all line versions.
                     request.env.cr.execute('SELECT id FROM sale_order WHERE id=%s FOR UPDATE',[order.id])
                     request.env.cr.execute('SELECT id FROM sale_order_line WHERE order_id=%s ORDER BY id FOR UPDATE',[order.id])

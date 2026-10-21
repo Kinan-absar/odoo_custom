@@ -37,9 +37,9 @@ class Node {
     showModal(){this.open=true;}
     close(){this.open=false;this.dispatchEvent({type:'close'});}
 }
-const root=new Node('section');document={createElement:t=>new Node(t),activeElement:null,readyState:'loading',getElementById:()=>root,addEventListener(){},querySelector:s=>body.querySelector(s)};
+let headerRoot=null;const root=new Node('section');document={createElement:t=>new Node(t),activeElement:null,readyState:'loading',getElementById:id=>id==='aps-line-editor'?root:id==='aps-new-details'?headerRoot:null,addEventListener(){},querySelector:s=>body.querySelector(s)};
 const body=new Node('body');body.append(root);document.body=body;
-const window={innerWidth:1200,innerHeight:700,addEventListener(){},removeEventListener(){}};
+const redirects=[];const window={location:{assign:path=>redirects.push(path)},innerWidth:1200,innerHeight:700,addEventListener(){},removeEventListener(){}};
 Object.assign(globalThis,{document,window});
 const boot={order_id:5,company_id:7,version:'v1',editable:true,currency:'SAR',untaxed:20,tax:3,total:23,
  analytic_labels:{10:{id:10,label:'PHC Building / Long Project Name',plan:'Projects',plan_id:100}},
@@ -50,6 +50,7 @@ const ctx=vm.createContext({document,window,Event:class{constructor(type){this.t
  fetch:async(url,opts)=>{const data=JSON.parse(opts.body.get('payload'));calls.push({url,data});assert.equal(opts.body.get('csrf_token'),'csrf');let result;
   if(url.endsWith('/lookup'))result={items:[{id:99,label:'Selected '+data.kind,plan_id:100,plan:'Projects'}],more:false};
   else if(url.endsWith('/defaults')){if(waitDefaults)await new Promise(r=>{resolveDefaults=r;});result={id:0,product_id:99,product:{id:99,label:'Selected product'},name:'Native description',quantity:2,uom_id:1,uom:{id:1,label:'Unit'},price_unit:33,discount:0,taxes_id:[15],taxes:[{id:15,label:'VAT 15%'}],analytic_distribution:{},subtotal:66};}
+  else if(url.endsWith('/create'))result={...boot,order_id:55,redirect:'/my/employee/sales/55'};
   else if(url.endsWith('/save'))result={...boot,lines:data.lines,version:'v2'};
   else if(url.endsWith('/preview'))result={untaxed:66,tax:9.9,total:75.9,line_amounts:data.lines.map(()=>66)};
   else throw new Error('Unexpected '+url);
@@ -90,3 +91,13 @@ vm.runInContext(`this.sharedResult=null;openAnalyticDistribution({ui:createPurch
 dialog=body.querySelector('.apw-dialog');assert.equal(dialog.querySelectorAll('.apw-chip').length,2);dialog.querySelectorAll('button').find(n=>n.textContent==='Apply').click();
 assert.equal(ctx.sharedResult.distribution['10,12'],100);assert.equal(ctx.sharedResult.labels['12'].plan_id,200);
 console.log('PASS: shared Purchase allocation editor preserves two accounts from different plans in one 100% row.');
+
+// New quotations expose the same grid immediately and save details + lines once.
+headerRoot=new Node('div');for(const [name,value] of Object.entries({partner_id:'21',project_id:'31',kind:'standard',validity_date:'2026-11-01'})){const input=new Node('input');input.setAttribute('name',name);input.value=value;headerRoot.append(input);}
+body.append(headerRoot);root.dataset.boot=JSON.stringify({...boot,order_id:0,version:'',lines:[{...boot.lines[0],id:0}]});
+vm.runInContext('this.newEditor=mountSalesLines(document.getElementById("aps-line-editor"));',ctx);
+assert(root.textContent.includes('Save Quotation'));await Promise.all([ctx.newEditor.save(),ctx.newEditor.save()]);
+const creates=calls.filter(c=>c.url.endsWith('/new-api/create'));assert.equal(creates.length,1);
+assert.equal(creates[0].data.header.partner_id,'21');assert.equal(creates[0].data.header.project_id,'31');assert.equal(creates[0].data.lines[0].id,0);
+assert.deepEqual(redirects,['/my/employee/sales/55']);
+console.log('PASS: new quotation starts with the same grid, sends details and lines with CSRF, blocks duplicate saves and opens its saved form (DOM fixtures).');

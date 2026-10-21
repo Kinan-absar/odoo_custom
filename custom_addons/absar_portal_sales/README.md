@@ -1,4 +1,28 @@
-# ABSAR Portal Sales 18.0.1.4.3
+# ABSAR Portal Sales 18.0.1.4.4
+
+Portal and internal issuer workflow:
+1. Preparer: Submit for Approval. Approver: Approve or Return.
+2. Approved quotations remain quotations and can be printed.
+3. Preparer: Request Sales Order Approval. Approver: Approve or Return.
+4. Conversion approval calls native confirmation atomically; success creates the
+   Sales Order. Preparers cannot Confirm through a button or direct model call.
+
+Approve and Return are in the top action area. Native Confirm is hidden for
+managed records and custom preparers. Ordinary unmanaged native Sales orders
+retain the standard Odoo workflow. Independent review excludes issuer,
+submitter and conversion requester. Repeated submissions/decisions are rejected
+under a row lock. Content changes invalidate both stages. Failed native
+confirmation leaves the request pending via transaction rollback.
+
+Outcomes notify issuer, submitter and conversion requester with document links,
+internal activities, explicit chatter recipients, and optional EPS push. Sales
+extends the existing EPS notification summary with persistent Sales Approvals
+and Sales Review Updates, so preparer attention does not rely on browser push.
+Employee Portal Suite itself is not modified.
+
+Sales uses a table list. New Quotation opens details and the existing line grid
+on one page; Save Quotation writes the header and lines in one transaction.
+Technical proposal templates/sections/milestones remain on the saved form.
 
 The portal Order Lines grid now follows the supplied internal screenshot:
 Product, Analytic Distribution, Quantity, UoM, Unit Price, Taxes, Disc.%, Amount.
@@ -35,7 +59,7 @@ Enter/Shift+Enter navigate the visible columns. Enter after product selection
 waits for native defaults, and the last editable column can add the next row.
 The main review button is disabled while line edits are unsaved. Product and
 line forms, lookups and saves remain scoped; portal roles receive no backend
-model ACLs. Technical proposal sections, milestones, workflow, print layouts,
+model ACLs. Technical proposal sections, milestones, print layouts,
 roles and Employee Portal Suite are preserved.
 
 Local validation covers Python/XML/JS syntax, actual gateway/validator fixtures,
