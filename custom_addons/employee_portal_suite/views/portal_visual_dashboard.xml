@@ -2,38 +2,25 @@
 <odoo>
  <template id="visual_desktop_dashboard" name="Desktop My Work dashboard">
   <t t-set="vd" t-value="visual_dashboard"/>
-  <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_visual_dashboard.css?v=18.0.1.20.107"/>
+  <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_visual_dashboard.css?v=18.0.1.20.108"/>
   <section id="eps-visual-dashboard" aria-label="My Work Today">
    <header class="eps-v-heading"><div><p class="eps-v-eyebrow">YOUR WORKSPACE</p><h1>Good to see you, <t t-out="request.env.user.partner_id.name.split(' ')[0]"/>.</h1></div><p class="eps-v-date" t-out="vd['today']"/></header>
    <section class="eps-v-attention" aria-labelledby="eps-v-attention-title">
-    <div class="eps-v-attention-heading"><div><span class="eps-v-priority-label"><i/>YOUR PRIORITY</span><h2 id="eps-v-attention-title" t-out="'Needs your attention' if vd['pending'] else 'You’re all caught up'"/><p t-out="'Choose a category to open the documents waiting for you.' if vd['pending'] else 'There are no pending items in your available review queues.'"/></div><div class="eps-v-attention-total"><strong t-out="vd['pending']"/><span>items waiting</span></div></div>
-    <div t-if="vd['pending']" class="eps-v-action-grid">
-     <a t-foreach="vd['active_queues']" t-as="queue" class="eps-v-action" t-att-href="queue['url']"><div><span class="eps-v-action-label" t-out="queue['label']"/><strong t-out="queue['count']"/></div><span class="eps-v-action-open">Open queue <i class="fa fa-arrow-right" aria-hidden="true"/></span></a>
-    </div>
-   </section>
-   <div class="eps-v-insights">
-    <article t-if="vd['pending'] or vd['total']" class="eps-v-panel eps-v-distribution">
-     <div class="eps-v-panel-head"><div><span class="eps-v-eyebrow">AT A GLANCE</span><h2 t-out="'Where your attention is needed' if vd['pending'] else 'Your request statuses'"/><p t-out="'Share of the items currently waiting for you' if vd['pending'] else 'Your employee and material requests · all time'"/></div></div>
-     <div class="eps-v-status-chart">
-      <div class="eps-v-donut" role="img" t-att-aria-label="'{} items waiting across {} categories'.format(vd['pending'],len(vd['active_queues'])) if vd['pending'] else '{} personal requests; status counts in the adjacent legend'.format(vd['total'])" t-att-style="'background:' + (vd['queue_gradient'] if vd['pending'] else vd['gradient'])"><div><strong t-out="vd['pending'] if vd['pending'] else vd['total']"/><span t-out="'awaiting action' if vd['pending'] else 'your requests'"/></div></div>
-      <div t-if="vd['pending']" class="eps-v-legend eps-v-queue-legend"><div t-foreach="vd['active_queues']" t-as="queue"><i t-att-style="'background:' + queue['color']"/><a t-att-href="queue['url']" t-out="queue['label']"/><span class="eps-v-share" t-out="'{:.0f}%'.format(queue['share'])"/><strong t-out="queue['count']"/></div></div>
-      <div t-else="" class="eps-v-legend"><div t-foreach="[('draft','Draft'),('pending','In Approval'),('approved','Approved'),('rejected','Rejected')]" t-as="status"><i t-att-style="'background:' + vd['colors'][status[0]]"/><span t-out="status[1]"/><strong t-out="vd['counts'][status[0]]"/></div></div>
-     </div>
-    </article>
-    <aside class="eps-v-panel eps-v-today"><div class="eps-v-panel-head"><div><span class="eps-v-eyebrow">MY WORKSPACE</span><h2>Today’s overview</h2></div><i class="fa fa-calendar-o" aria-hidden="true"/></div>
-     <a t-if="can_use_attendance" href="/my/employee/attendance" class="eps-v-overview-row"><span class="eps-v-overview-icon"><i class="fa fa-clock-o" aria-hidden="true"/></span><div><small>Attendance</small><strong t-out="'Checked in' if attendance_checked_in else 'Not checked in'"/></div><i class="fa fa-angle-right" aria-hidden="true"/></a>
-     <a t-if="salary_report_count" href="/my/employee/salary-reports" class="eps-v-overview-row"><span class="eps-v-overview-icon"><i class="fa fa-file-text-o" aria-hidden="true"/></span><div><small>Salary reports</small><strong><t t-out="salary_report_count"/> available</strong></div><i class="fa fa-angle-right" aria-hidden="true"/></a>
-     <a t-if="portal_report_count" href="/my/employee/reports" class="eps-v-overview-row"><span class="eps-v-overview-icon"><i class="fa fa-folder-open-o" aria-hidden="true"/></span><div><small>Shared reports</small><strong><t t-out="portal_report_count"/> available</strong></div><i class="fa fa-angle-right" aria-hidden="true"/></a>
-     <div class="eps-v-overview-row"><span class="eps-v-overview-icon"><i class="fa fa-user-o" aria-hidden="true"/></span><div><small>Your requests · ER + MR</small><strong t-out="'{} total · {} this week'.format(vd['total'],vd['weeks'][-1]['total'])"/></div></div>
-     <p class="eps-v-overview-note">Use the sidebar to move between your workspaces.</p>
-    </aside>
-   </div>
-<article t-if="vd['cash']" class="eps-v-panel eps-v-cash"><div class="eps-v-panel-head"><div><h2>This week's cash plans</h2><p>Planned and actual outgoing amounts · each plan shown in its own currency</p></div></div>
-    <a t-foreach="vd['cash']" t-as="plan" class="eps-v-plan" t-att-href="plan['url']"><t t-set="cash_max" t-value="max(abs(plan['planned']), abs(plan['actual']), 1)"/><div><strong t-out="plan['name']"/><small><t t-out="plan['company']"/> · <t t-out="plan['currency']"/></small></div><div class="eps-v-cash-rows"><div><span>Planned</span><div class="eps-v-cash-track"><i t-att-style="'width:{:.2f}%'.format(abs(plan['planned']) / cash_max * 100)"/></div><b t-out="'{:,.2f}'.format(plan['planned'])"/></div><div><span>Actual</span><div class="eps-v-cash-track"><i class="eps-v-actual" t-att-style="'width:{:.2f}%'.format(abs(plan['actual']) / cash_max * 100)"/></div><b t-out="'{:,.2f}'.format(plan['actual'])"/></div></div><i class="fa fa-angle-right" aria-hidden="true"/></a>
-   </article>
-  
-   <div t-if="vd['weekly_total'] or recent_activities" class="eps-v-history">
-<article class="eps-v-panel eps-v-weekly-panel" t-if="vd['weekly_total']"><div class="eps-v-panel-head"><div><h2>Your weekly activity</h2><p>Requests created · last 8 weeks</p></div><span class="eps-v-tag">This week included</span></div>
+ <div class="eps-v-panel-head"><div><h2 id="eps-v-attention-title">Needs your attention</h2><p>Documents waiting for your review or signature</p></div><span class="eps-v-tag"><t t-out="vd['pending']"/> waiting</span></div>
+ <div t-if="vd['pending']" class="eps-v-attention-links"><a t-foreach="vd['active_queues']" t-as="queue" class="eps-v-attention-link" t-att-href="queue['url']"><span t-out="queue['label']"/><strong t-out="queue['count']"/><i class="fa fa-angle-right" aria-hidden="true"/></a></div>
+ <p t-else="" class="eps-v-attention-clear"><i class="fa fa-check-circle" aria-hidden="true"/> You’re all caught up. No pending actions right now.</p>
+</section><div class="eps-v-summary">
+ <div><span>Your requests</span><strong t-out="vd['total']"/><small>Employee and material requests · all time</small></div>
+ <div><span>Created this week</span><strong t-out="vd['weeks'][-1]['total']"/><small>Your requests · week starts Monday</small></div>
+ <div><span>Your approved requests</span><strong t-out="vd['counts']['approved']"/><small>Current approved status · all time</small></div>
+ <div t-if="can_use_attendance"><span>Attendance</span><strong class="eps-v-attendance" t-out="'Checked in' if attendance_checked_in else 'Not checked in'"/><a href="/my/employee/attendance">Open attendance <i class="fa fa-angle-right"/></a></div>
+ <div t-else=""><span>Your requests in approval</span><strong t-out="vd['counts']['pending']"/><small>Your submitted employee and material requests</small></div>
+</div><div class="eps-v-charts"><article class="eps-v-panel">
+ <div class="eps-v-panel-head"><div><h2>Your request statuses</h2><p>Employee and material requests · all time</p></div><span class="eps-v-tag">My documents</span></div>
+ <div class="eps-v-status-chart"><div class="eps-v-donut" role="img" t-att-aria-label="'Your requests: {} draft, {} in approval, {} approved, {} rejected'.format(vd['counts']['draft'],vd['counts']['pending'],vd['counts']['approved'],vd['counts']['rejected'])" t-att-style="'background:' + vd['gradient']"><div><strong t-out="vd['total']"/><span>requests</span></div></div>
+ <div class="eps-v-legend"><div t-foreach="[('draft','Draft'),('pending','In Approval'),('approved','Approved'),('rejected','Rejected')]" t-as="status"><i t-att-style="'background:' + vd['colors'][status[0]]"/><span t-out="status[1]"/><strong t-out="vd['counts'][status[0]]"/></div></div></div>
+ <p t-if="not vd['total']" class="eps-v-empty">No personal requests yet.</p>
+</article><article class="eps-v-panel"><div class="eps-v-panel-head"><div><h2>Your weekly activity</h2><p>Requests created · last 8 weeks</p></div><span class="eps-v-tag">This week included</span></div>
      <div class="eps-v-week-legend"><span><i class="eps-v-er"/>Employee</span><span><i class="eps-v-mr"/>Material</span></div>
      <div class="eps-v-weeks" role="list" aria-label="Weekly request counts">
       <div t-foreach="vd['weeks']" t-as="week" role="listitem" class="eps-v-week" t-att-title="'Week of %s: %s employee, %s material requests' % (week['label'],week['employee'],week['material'])" t-att-aria-label="'Week of %s: %s employee, %s material requests' % (week['label'],week['employee'],week['material'])">
@@ -41,12 +28,15 @@
       </div>
      </div>
     </article>
-   <article class="eps-v-panel eps-v-recent-panel" t-if="recent_activities"><div class="eps-v-panel-head"><div><h2>Your recent documents</h2><p>Your latest employee and material requests</p></div></div>
+   </div><article class="eps-v-panel eps-v-recent-panel"><div class="eps-v-panel-head"><div><h2>Your recent documents</h2><p>Your latest employee and material requests</p></div></div>
      <a t-foreach="recent_activities" t-as="act" class="eps-v-document" t-att-href="('/my/employee/requests/%s' if act._name == 'employee.request' else '/my/employee/material/%s') % act.id"><span class="eps-v-doc-icon"><i t-att-class="'fa fa-file-text-o' if act._name == 'employee.request' else 'fa fa-cubes'" aria-hidden="true"/></span><div><strong t-out="act.name"/><small><t t-out="'Employee Request' if act._name == 'employee.request' else 'Material Request'"/> · <span t-field="act.create_date" t-options="{'widget':'date'}"/></small></div><span class="eps-v-doc-status" t-out="dict(act._fields['state'].selection).get(act.state, act.state)"/></a>
      <div t-if="not recent_activities" class="eps-v-empty">No requests yet. Use the sidebar to start your work.</div>
-    </article>
+    <div t-if="not recent_activities" class="eps-v-empty">No recent personal requests.</div></article>
    
-   </div>
-  </section>
+   <article t-if="vd['cash']" class="eps-v-panel eps-v-cash"><div class="eps-v-panel-head"><div><h2>This week's cash plans</h2><p>Planned and actual outgoing amounts · each plan shown in its own currency</p></div></div>
+    <a t-foreach="vd['cash']" t-as="plan" class="eps-v-plan" t-att-href="plan['url']"><t t-set="cash_max" t-value="max(abs(plan['planned']), abs(plan['actual']), 1)"/><div><strong t-out="plan['name']"/><small><t t-out="plan['company']"/> · <t t-out="plan['currency']"/></small></div><div class="eps-v-cash-rows"><div><span>Planned</span><div class="eps-v-cash-track"><i t-att-style="'width:{:.2f}%'.format(abs(plan['planned']) / cash_max * 100)"/></div><b t-out="'{:,.2f}'.format(plan['planned'])"/></div><div><span>Actual</span><div class="eps-v-cash-track"><i class="eps-v-actual" t-att-style="'width:{:.2f}%'.format(abs(plan['actual']) / cash_max * 100)"/></div><b t-out="'{:,.2f}'.format(plan['actual'])"/></div></div><i class="fa fa-angle-right" aria-hidden="true"/></a>
+   </article>
+  
+   </section>
  </template>
 </odoo>
