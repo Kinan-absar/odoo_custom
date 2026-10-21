@@ -8,6 +8,41 @@
         sidebar.dataset.mobileMenuReady = '1';
         const mobile = window.matchMedia('(max-width: 768px)');
         let opener = null, previousOverflow = '', open = false;
+        // Enhance only the existing, permission-filtered section headings.
+        function configureSections() {
+            sidebar.querySelectorAll('.ep-sidebar-section').forEach(section => {
+                const title = section.querySelector('.ep-sidebar-section-title');
+                if (!title) return;
+                if (!section.dataset.epMenuSectionReady) {
+                    section.dataset.epMenuSectionReady = '1';
+                    const current = section.querySelector('a.active') ||
+                        Array.from(section.querySelectorAll('a[href]')).find(link =>
+                            link.getAttribute('href')?.split('?')[0] === window.location.pathname);
+                    section.dataset.epCollapsed = current || section.id === 'ep-section-my-work' ? 'false' : 'true';
+                    const toggleSection = () => {
+                        if (!mobile.matches) return;
+                        section.dataset.epCollapsed = section.dataset.epCollapsed === 'true' ? 'false' : 'true';
+                        title.setAttribute('aria-expanded', String(section.dataset.epCollapsed !== 'true'));
+                    };
+                    title.addEventListener('click', toggleSection);
+                    title.addEventListener('keydown', event => {
+                        if (mobile.matches && (event.key === 'Enter' || event.key === ' ')) {
+                            event.preventDefault(); toggleSection();
+                        }
+                    });
+                }
+                if (mobile.matches) {
+                    title.setAttribute('role', 'button');
+                    title.setAttribute('tabindex', '0');
+                    title.setAttribute('aria-expanded', String(section.dataset.epCollapsed !== 'true'));
+                } else {
+                    ['role', 'tabindex', 'aria-expanded'].forEach(key => title.removeAttribute(key));
+                }
+            });
+        }
+        configureSections();
+        const navigation = document.getElementById('ep-desktop-sidebar-nav');
+        if (navigation) new MutationObserver(configureSections).observe(navigation, {childList:true, subtree:true});
         const focusable = () => Array.from(sidebar.querySelectorAll('a[href],button:not([disabled]),[tabindex="0"]'))
             .filter(node => node.getClientRects().length);
         function close(restoreFocus = true) {
@@ -57,7 +92,7 @@
                 }
             }
         });
-        mobile.addEventListener('change', () => { if (!mobile.matches) close(false); });
+        mobile.addEventListener('change', () => { configureSections(); if (!mobile.matches) close(false); });
         window.addEventListener('pagehide', () => close(false));
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
