@@ -48,3 +48,10 @@
 .eps-v-recent-panel{margin-bottom:20px}
 .eps-v-cash{margin-top:20px}
 }
+
+/* Pending queues retain a visible amber dot, with a gentle attention pulse. */
+@media(min-width:769px){
+#eps-visual-dashboard .eps-v-attention-link::before{content:'';width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#f5a623;animation:eps-v-attention-pulse 2.2s ease-out infinite}
+@keyframes eps-v-attention-pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,166,35,.30)}65%{box-shadow:0 0 0 6px rgba(245,166,35,0)}}
+@media(prefers-reduced-motion:reduce){#eps-visual-dashboard .eps-v-attention-link::before{animation:none}}
+}
