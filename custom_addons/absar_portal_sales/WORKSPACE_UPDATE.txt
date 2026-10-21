@@ -1,3 +1,11 @@
+18.0.1.4.5 — 2026-10-21
+Quotation/order date on new and saved portal forms, validated in user timezone.
+Purchase-style lines: inline descriptions, add product/section/note, reorder,
+catalog/new product, quantity/unit native defaults, manual price preservation,
+immediate line amounts and native total recalculation. Save Draft saves details
+and lines together. Unified Sales-style card lists and whole-row opening.
+No automatic revisions. Studio revision and reports remain unchanged.
+
 18.0.1.4.4 — 2026-10-21
 Two independent stages: quotation approval, then approval to convert to a Sales Order.
 No preparer Confirm. Approve/Return appear at the top in native and portal forms.

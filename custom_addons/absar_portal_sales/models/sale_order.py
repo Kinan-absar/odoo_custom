@@ -290,7 +290,7 @@ class SaleOrder(models.Model):
                 raise AccessError(_('Request Sales Order approval; the approver confirms the conversion.'))
         if _REVIEW_FIELDS.intersection(vals) and self.env.context.get('_absar_sales_review_token') is not _REVIEW_TOKEN:
             raise AccessError(_('Sales approval metadata can only be changed through the review actions.'))
-        content={'partner_id','company_id','currency_id','pricelist_id','payment_term_id','validity_date','order_line','note',
+        content={'date_order','partner_id','company_id','currency_id','pricelist_id','payment_term_id','validity_date','order_line','note',
                  'construction_project_id','absar_proposal_type','absar_proposal_title','absar_proposal_section_ids','absar_proposal_payment_ids'}
         if content.intersection(vals):self._absar_portal_invalidate_review()
         return super().write(vals)

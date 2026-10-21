@@ -14,13 +14,15 @@
      <button class="btn btn-outline-primary" type="submit">Filter</button>
     </form>
     <p class="aps-result-count"><t t-out="total_count"/> matching records · Page <t t-out="page"/> of <t t-out="pages"/></p>
-    <div class="table-responsive aps-panel"><table class="table table-hover align-middle aps-sales-table"><thead><tr><th>Number</th><th>Customer</th><th>Project</th><th>Salesperson</th><th>Date</th><th class="text-end">Total</th><th>Status</th><th>Approval</th></tr></thead><tbody>
-     <tr t-foreach="orders" t-as="o" class="aps-click-row" t-att-data-href="'/my/employee/sales/%s' % o.id">
-      <td><a t-att-href="'/my/employee/sales/%s' % o.id" t-out="o.name"/></td><td t-out="o.partner_id.name"/><td t-out="o.construction_project_id.name or '—'"/><td t-out="o.user_id.name or '—'"/><td><span t-field="o.date_order" t-options="{'widget':'date'}"/></td>
-      <td class="text-end text-nowrap"><t t-out="'{:,.2f}'.format(o.amount_total)"/> <t t-out="o.currency_id.name"/></td><td t-out="dict(o._fields['state'].selection).get(o.state)"/>
-      <td><span t-if="o.absar_portal_creator_id" class="aps-status" t-out="dict(o._fields['absar_order_review_state'].selection).get(o.absar_order_review_state) if o.absar_order_review_state != 'none' else dict(o._fields['absar_portal_review_state'].selection).get(o.absar_portal_review_state)"/><span t-else="">—</span></td>
-     </tr><tr t-if="not orders"><td colspan="8">No quotations match these filters.</td></tr>
-    </tbody></table></div>
+    <div class="absar-record-list" aria-label="Sales quotations and orders">
+     <article t-foreach="orders" t-as="o" class="absar-record-card" tabindex="0" role="link" t-att-data-record-href="'/my/employee/sales/%s' % o.id" t-att-aria-label="'Open ' + o.name">
+      <div class="absar-record-main"><a class="absar-record-number" t-att-href="'/my/employee/sales/%s' % o.id" t-out="o.name"/><div class="absar-record-party" t-out="o.partner_id.name"/>
+       <div class="absar-record-meta"><span>Project: <t t-out="o.construction_project_id.name or 'Not assigned'"/></span><span>Salesperson: <t t-out="o.user_id.name or '—'"/></span><span><span t-field="o.date_order" t-options="{'widget':'date'}"/></span></div>
+      </div><div class="absar-record-side"><span class="absar-record-caption">Total including VAT</span><strong class="absar-record-value"><t t-out="'{:,.2f}'.format(o.amount_total)"/> <t t-out="o.currency_id.name"/></strong>
+       <span class="absar-record-badge" t-out="dict(o._fields['state'].selection).get(o.state)"/><span t-if="o.absar_portal_creator_id" class="absar-record-badge" t-out="dict(o._fields['absar_order_review_state'].selection).get(o.absar_order_review_state) if o.absar_order_review_state != 'none' else dict(o._fields['absar_portal_review_state'].selection).get(o.absar_portal_review_state)"/>
+      </div>
+     </article><div t-if="not orders" class="absar-record-empty">No quotations match these filters.</div>
+    </div>
     <nav class="aps-pagination" aria-label="Quotation pages"><a t-if="page &gt; 1" class="btn btn-outline-secondary" t-att-href="previous_url">← Previous</a><span>Page <t t-out="page"/> / <t t-out="pages"/></span><a t-if="page &lt; pages" class="btn btn-outline-secondary" t-att-href="next_url">Next →</a></nav>
    </div>
   </t>
@@ -32,7 +34,7 @@
     <div t-if="error" class="alert alert-danger" t-out="error"/>
     <div class="aps-panel"><div id="aps-new-details" class="row g-3 mb-4">
      <div class="col-md-6"><label>Customer</label><select name="partner_id" class="form-select aps-customer-select" required="required"><option value="">Select customer</option><option t-foreach="partners" t-as="p" t-att-data-commercial-id="p.commercial_partner_id.id" t-att-value="p.id" t-out="p.name"/></select></div>
-     <div class="col-md-6"><label>Expiration Date</label><input type="date" name="validity_date" class="form-control"/></div>
+     <div class="col-md-6"><label>Quotation / Order Date</label><input type="datetime-local" name="date_order" class="form-control" step="1" required="required" t-att-value="date_order_local"/></div><div class="col-md-6"><label>Expiration Date</label><input type="date" name="validity_date" class="form-control"/></div>
      <div class="col-md-6"><label>Project</label><select name="project_id" class="form-select aps-project-select"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-data-customer-id="project.partner_id.commercial_partner_id.id if project.partner_id else 0" t-out="project.name"/></select></div>
      <div class="col-md-6"><label>Document Type</label><select name="kind" class="form-select"><option value="standard">Standard Quotation</option><option value="technical">Technical &amp; Financial Proposal</option></select></div>
     </div><h5>Order Lines</h5><div id="aps-line-editor" t-att-data-boot="line_boot_json" t-att-data-csrf="request.csrf_token()"/><noscript>Enable JavaScript to prepare this quotation.</noscript></div>
@@ -55,12 +57,12 @@
     <p t-if="order.absar_order_review_state == 'requested'" class="alert alert-info">Awaiting approval to convert this quotation into a Sales Order.</p>
     <div t-if="error or request.params.get('error')" class="alert alert-warning" t-out="error or 'The requested change could not be saved. Check the values and try again.'"/>
     <div t-if="order.absar_portal_review_note" class="alert alert-info"><strong>Reviewer note:</strong> <t t-out="order.absar_portal_review_note"/></div>
-    <div class="aps-panel"><h5>Quotation Details</h5><div class="row"><div class="col-md-4"><span class="text-muted">Customer</span><p t-out="order.partner_id.name"/></div><div class="col-md-4"><span class="text-muted">Document type</span><p t-out="dict(order._fields['absar_proposal_type'].selection).get(order.absar_proposal_type)"/></div><div class="col-md-4"><span class="text-muted">Project</span><p t-out="order.construction_project_id.name or 'Not assigned'"/></div><div class="col-md-4"><span class="text-muted">Salesperson</span><p t-out="order.user_id.name or order.absar_portal_creator_id.name"/></div></div>
-     <form t-if="can_edit" t-att-action="'/my/employee/sales/%s/save' % order.id" method="post" class="row g-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+    <div class="aps-panel"><h5>Quotation Details</h5><div class="row"><div class="col-md-4"><span class="text-muted">Customer</span><p t-out="order.partner_id.name"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Quotation / Order Date</span><p><span t-field="order.date_order"/></p></div><div class="col-md-4"><span class="text-muted">Document type</span><p t-out="dict(order._fields['absar_proposal_type'].selection).get(order.absar_proposal_type)"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Project</span><p t-out="order.construction_project_id.name or 'Not assigned'"/></div><div t-if="not can_edit and order.validity_date" class="col-md-4"><span class="text-muted">Expiration Date</span><p><span t-field="order.validity_date"/></p></div><div class="col-md-4"><span class="text-muted">Salesperson</span><p t-out="order.user_id.name or order.absar_portal_creator_id.name"/></div></div>
+     <form id="aps-order-details" t-if="can_edit" t-att-action="'/my/employee/sales/%s/save' % order.id" method="post" class="row g-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
       <div class="col-md-4"><label>Proposal reference (automatic)</label><input class="form-control" t-att-value="order.name" readonly="readonly"/></div>
-      <div class="col-md-4"><label>Project</label><select class="form-select aps-project-select" name="project_id"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-data-customer-id="project.partner_id.commercial_partner_id.id if project.partner_id else 0" t-att-selected="order.construction_project_id.id == project.id and 'selected' or None" t-out="project.name"/></select></div><div class="col-md-4"><label>Expiration date</label><input class="form-control" type="date" name="validity_date" t-att-value="order.validity_date or ''"/></div>
+      <div class="col-md-4"><label>Project</label><select class="form-select aps-project-select" name="project_id"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-data-customer-id="project.partner_id.commercial_partner_id.id if project.partner_id else 0" t-att-selected="order.construction_project_id.id == project.id and 'selected' or None" t-out="project.name"/></select></div><div class="col-md-4"><label>Quotation / Order Date</label><input class="form-control" type="datetime-local" name="date_order" step="1" required="required" t-att-value="date_order_local"/></div><div class="col-md-4"><label>Expiration date</label><input class="form-control" type="date" name="validity_date" t-att-value="order.validity_date or ''"/></div>
       <div t-if="order.absar_proposal_type == 'technical'" class="col-md-4"><label>Proposal title</label><input class="form-control" name="title" t-att-value="order.absar_proposal_title or ''"/></div>
-      <div class="col-12"><button class="btn btn-outline-primary">Save Details</button></div>
+      
      </form>
     </div>
     <div class="aps-panel aps-sales-lines-panel"><h5>Order Lines</h5><div id="aps-line-editor" t-att-data-boot="line_boot_json" t-att-data-csrf="request.csrf_token()"/><noscript>Enable JavaScript to view and edit quotation lines.</noscript></div>

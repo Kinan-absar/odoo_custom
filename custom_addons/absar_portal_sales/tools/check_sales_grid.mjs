@@ -60,19 +60,24 @@ vm.runInContext(prefix+'\nthis.editor=mountSalesLines(document.getElementById("a
 const editor=ctx.editor;
 const settle=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
 const key=async(node,key,shiftKey=false)=>{node.dispatchEvent({type:'keydown',key,shiftKey,preventDefault(){this.defaultPrevented=true;},stopPropagation(){this.stopped=true;}});await settle();};
-assert.deepEqual(root.querySelectorAll('thead th').map(n=>n.textContent),['Product','Analytic Distribution','Quantity','UoM','Unit Price','Taxes','Disc.%','Amount','']);
+assert.deepEqual(root.querySelectorAll('thead th').map(n=>n.textContent),['Product','Analytic Distribution','Quantity','UoM','Unit Price','Disc.%','Taxes','Amount','']);
 assert.equal(root.querySelectorAll('[data-sales-entry]').length,7);
 let qty=root.querySelector('[data-sales-column="2"] input');qty.focus();qty.value='4';qty.dispatchEvent({type:'input'});editor.render();
+assert.equal(root.querySelector('[data-sales-amount]').textContent,'40.00');
+assert(root.textContent.includes('Previous tax/total remain visible'));
 assert.equal(Number(document.activeElement.value),4);assert.equal(document.activeElement.closest('td').dataset.salesColumn,'2');
 await key(document.activeElement,'Enter');assert.equal(document.activeElement.closest('td').dataset.salesColumn,'3');
 await key(document.activeElement,'Enter',true);assert.equal(document.activeElement.closest('td').dataset.salesColumn,'2');
 // Purchase lookup waits for native product defaults; the grid does not advance twice.
+assert(calls.some(c=>c.url.endsWith('/defaults')&&c.data.quantity===4));
+assert.equal(editor.state.lines[0].price_unit,10,'Saved negotiated price survives quantity repricing.');
 const lookup=root.querySelector('[data-sales-column="0"] input');lookup.focus();await settle();waitDefaults=true;
 lookup.value='New';lookup.dispatchEvent({type:'input'});lookup.dispatchEvent({type:'focus'});await settle();
-await key(lookup,'Enter');assert.equal(document.activeElement,lookup);resolveDefaults();await settle();
+await key(lookup,'Enter');assert.equal(document.activeElement,lookup);resolveDefaults();await settle();waitDefaults=false;
 assert.equal(editor.state.lines[0].product_id,99);assert.equal(editor.state.lines[0].price_unit,33);
 assert.equal(document.activeElement.closest('td').dataset.salesColumn,'1');
 assert.equal(editor.state.lines[0].analytic_distribution['10'],100);
+const description=root.querySelector('.aps-sales-description');description.focus();description.value='Description under the product';description.dispatchEvent({type:'input'});assert.equal(editor.state.lines[0].name,'Description under the product');await key(description,'Enter');assert.equal(document.activeElement.closest('td').dataset.salesColumn,'1');
 // Product property edits preserve agreed price, quantity, description and taxes.
 const before=editor.state.lines[0];before.name='Negotiated';before.price_unit=29;before.quantity=4;
 await editor.selectProduct(before,{id:99,label:'Renamed product',product_updated:true});
@@ -84,8 +89,11 @@ assert(dialog.querySelectorAll('button').some(n=>n.textContent==='Clear distribu
 dialog.querySelectorAll('button').find(n=>n.textContent==='Close').click();
 await editor.preview();assert(root.textContent.includes('75.90'));
 await editor.save();assert.equal(calls.findLast(c=>c.url.endsWith('/save')).data.version,'v1');assert.equal(editor.state.version,'v2');
+assert(root.querySelector('.aps-sales-description'));
+assert(root.textContent.includes('Catalog')&&root.textContent.includes('New Product')&&root.textContent.includes('Recalculate'));
 editor.moveGrid(0,6,1);assert.equal(editor.state.lines.length,2);assert.equal(document.activeElement.closest('[data-sales-row]').dataset.salesRow,'1');
-editor.state.editable=false;editor.render();assert(!root.textContent.includes('Save Lines'));assert(root.querySelectorAll('input').every(n=>n.disabled));
+const catalogButton=root.querySelectorAll('button').find(n=>n.textContent==='Catalog');catalogButton.click();await settle();const catalogDialog=body.querySelector('.apw-dialog');assert(catalogDialog);const countBefore=editor.state.lines.length;catalogDialog.querySelectorAll('button').find(n=>n.textContent==='Add').click();await settle();assert.equal(editor.state.lines.length,countBefore+1);assert(catalogDialog.parentElement===root&&catalogDialog.open,'Catalog stays open while its line is added.');catalogDialog.querySelectorAll('button').find(n=>n.textContent==='Close').click();
+editor.state.editable=false;editor.render();assert(!root.textContent.includes('Save Draft'));assert(root.querySelectorAll('input').every(n=>n.disabled));
 console.log('PASS: actual Sales grid exact backend columns, typing/focus, Enter/Shift+Enter including lookup, async product defaults before navigation, negotiated data preservation on product edits, Purchase analytic editor, native preview response, CSRF/versioned save, next row, readonly controls (DOM fixtures).');
 vm.runInContext(`this.sharedResult=null;openAnalyticDistribution({ui:createPurchaseUI({root:document.getElementById('aps-line-editor'),post:async()=>({items:[]}),companyId:7}),distribution:{'10,12':100},labels:{10:{id:10,label:'PHC',plan:'Projects',plan_id:100},12:{id:12,label:'MEP',plan:'Departments',plan_id:200}},onApply:(distribution,labels)=>{this.sharedResult={distribution,labels};}});`,ctx);
 dialog=body.querySelector('.apw-dialog');assert.equal(dialog.querySelectorAll('.apw-chip').length,2);dialog.querySelectorAll('button').find(n=>n.textContent==='Apply').click();
@@ -93,11 +101,11 @@ assert.equal(ctx.sharedResult.distribution['10,12'],100);assert.equal(ctx.shared
 console.log('PASS: shared Purchase allocation editor preserves two accounts from different plans in one 100% row.');
 
 // New quotations expose the same grid immediately and save details + lines once.
-headerRoot=new Node('div');for(const [name,value] of Object.entries({partner_id:'21',project_id:'31',kind:'standard',validity_date:'2026-11-01'})){const input=new Node('input');input.setAttribute('name',name);input.value=value;headerRoot.append(input);}
+headerRoot=new Node('div');for(const [name,value] of Object.entries({partner_id:'21',project_id:'31',kind:'standard',date_order:'2026-10-21T15:30:00',validity_date:'2026-11-01'})){const input=new Node('input');input.setAttribute('name',name);input.value=value;headerRoot.append(input);}
 body.append(headerRoot);root.dataset.boot=JSON.stringify({...boot,order_id:0,version:'',lines:[{...boot.lines[0],id:0}]});
 vm.runInContext('this.newEditor=mountSalesLines(document.getElementById("aps-line-editor"));',ctx);
 assert(root.textContent.includes('Save Quotation'));await Promise.all([ctx.newEditor.save(),ctx.newEditor.save()]);
 const creates=calls.filter(c=>c.url.endsWith('/new-api/create'));assert.equal(creates.length,1);
-assert.equal(creates[0].data.header.partner_id,'21');assert.equal(creates[0].data.header.project_id,'31');assert.equal(creates[0].data.lines[0].id,0);
+assert.equal(creates[0].data.header.partner_id,'21');assert.equal(creates[0].data.header.project_id,'31');assert.equal(creates[0].data.header.date_order,'2026-10-21T15:30:00');assert.equal(creates[0].data.lines[0].id,0);
 assert.deepEqual(redirects,['/my/employee/sales/55']);
 console.log('PASS: new quotation starts with the same grid, sends details and lines with CSRF, blocks duplicate saves and opens its saved form (DOM fixtures).');

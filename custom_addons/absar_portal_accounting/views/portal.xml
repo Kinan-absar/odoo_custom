@@ -49,20 +49,13 @@
             <form method="post" t-att-action="'/my/employee/accounting/planned/submit-selected'">
             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="company_id" t-att-value="company.id"/>
             <div class="aca-bulk-bar" t-if="kind == 'planned' and roles['preparer']"><span>Select drafts to request approval</span><button class="primary">Submit Selected to CEO</button></div>
-            <div class="aca-table-wrap"><table class="aca-table aca-list-table"><thead><tr>
-                <th class="aca-select-col" t-if="kind == 'planned' and roles['preparer']">Select</th>
-                <th class="aca-name-col">Number / Name</th><th class="aca-partner-col">Partner / Reference</th><th class="aca-date-col">Date</th><th class="aca-journal-col">Journal</th><th class="aca-money">Amount</th><th>Status</th><th>Review</th><th class="aca-issuer-col">Prepared by</th>
-            </tr></thead><tbody>
-                <tr t-foreach="rows" t-as="row">
-                    <td t-if="kind == 'planned' and roles['preparer']"><input type="checkbox" name="record_id" t-att-value="row['id']" t-att-disabled="row['state'] != 'planned' or row['review'] != 'not_sent'" t-att-aria-label="'Select ' + row['name']"/>
-                        <input type="hidden" t-att-name="'version_%s' % row['id']" t-att-value="row['version']"/></td>
-                    <td class="aca-name-col"><a t-att-href="'/my/employee/accounting/%s/%s?company_id=%s' % (kind,row['id'],company.id)" t-out="row['name']"/></td>
-                    <td class="aca-partner-col" t-out="row['partner']"/><td class="aca-date-col" t-out="row['date']"/><td class="aca-journal-col" t-out="row['journal']"/>
-                    <td class="aca-money"><t t-out="'{:,.2f}'.format(row['amount'])"/> <t t-out="row['currency']"/></td>
-                    <td><span class="aca-badge" t-att-data-state="row['state']" t-out="row['state'].replace('_',' ').title()"/></td><td t-out="row['review'].replace('_',' ').title()"/><td class="aca-issuer-col" t-out="row['issuer']"/>
-                </tr>
-                <tr t-if="not rows"><td class="aca-empty" t-att-colspan="9 if kind == 'planned' and roles['preparer'] else 8">No documents found.</td></tr>
-            </tbody></table></div></form>
+            <div class="absar-record-list" aria-label="Accounting documents">
+             <article t-foreach="rows" t-as="row" class="absar-record-card" tabindex="0" role="link" t-att-data-record-href="'/my/employee/accounting/%s/%s?company_id=%s' % (kind,row['id'],company.id)" t-att-aria-label="'Open ' + row['name']">
+              <div class="absar-record-main"><div class="absar-record-select"><label t-if="kind == 'planned' and roles['preparer']"><input type="checkbox" name="record_id" t-att-value="row['id']" t-att-disabled="row['state'] != 'planned' or row['review'] != 'not_sent'" t-att-aria-label="'Select ' + row['name']"/><input type="hidden" t-att-name="'version_%s' % row['id']" t-att-value="row['version']"/></label><a class="absar-record-number" t-att-href="'/my/employee/accounting/%s/%s?company_id=%s' % (kind,row['id'],company.id)" t-out="row['name']"/></div>
+               <div class="absar-record-party" t-out="row['partner'] or '—'"/><div class="absar-record-meta"><span t-out="row['date']"/><span>Journal: <t t-out="row['journal'] or '—'"/></span><span>Prepared by: <t t-out="row['issuer'] or '—'"/></span></div>
+              </div><div class="absar-record-side"><span class="absar-record-caption">Amount</span><strong class="absar-record-value"><t t-out="'{:,.2f}'.format(row['amount'])"/> <t t-out="row['currency']"/></strong><span class="absar-record-badge" t-out="row['state'].replace('_',' ').title()"/><span class="absar-record-badge" t-out="row['review'].replace('_',' ').title()"/></div>
+             </article><div t-if="not rows" class="absar-record-empty">No documents found.</div>
+            </div></form>
             <div class="aca-pager">
                 <a t-if="page &gt; 1" t-att-href="'?company_id=%s&amp;page=%s&amp;q=%s&amp;status=%s' % (company.id,page-1,quote_plus(q),status)">Previous</a>
                 <span>Page <t t-out="page"/></span>

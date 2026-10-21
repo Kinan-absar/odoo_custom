@@ -6,6 +6,8 @@ from odoo.tools import float_compare
 from odoo.osv import expression
 from urllib.parse import urlencode
 import json
+import pytz
+from datetime import datetime
 
 from .sales_lines import SalesLinesMixin
 
@@ -49,6 +51,20 @@ class PortalSales(SalesLinesMixin, http.Controller):
         if order.absar_portal_creator_id.id != request.env.user.id or order.absar_portal_review_state not in ('draft','returned') or order.state not in ('draft','sent'):
             raise Forbidden()
 
+    def _sales_date_local(self, value):
+        if not value:return ''
+        return pytz.UTC.localize(fields.Datetime.to_datetime(value)).astimezone(
+            pytz.timezone(request.env.user.tz or 'UTC')).strftime('%Y-%m-%dT%H:%M:%S')
+
+    def _sales_date_utc(self, value):
+        if not value:raise ValidationError(_('Set the quotation/order date.'))
+        try:
+            local=datetime.fromisoformat(value)
+            if local.tzinfo:raise ValueError()
+            return pytz.timezone(request.env.user.tz or 'UTC').localize(local,is_dst=None).astimezone(pytz.UTC).replace(tzinfo=None)
+        except (ValueError,TypeError,pytz.AmbiguousTimeError,pytz.NonExistentTimeError,pytz.UnknownTimeZoneError):
+            raise ValidationError(_('Enter a valid quotation/order date in your user timezone.'))
+
     def _num(self, value, field='Amount'):
         try:
             result = float(value or 0)
@@ -88,6 +104,7 @@ class PortalSales(SalesLinesMixin, http.Controller):
     def _render(self, template, **kw):
         kw.setdefault('error', False)
         if template == 'absar_portal_sales.sales_detail' and kw.get('order'):
+            kw['date_order_local']=self._sales_date_local(kw['order'].date_order)
             kw['line_boot_json'] = json.dumps(self._line_boot(kw['order']))
             kw.update(kw['order']._absar_review_permissions(request.env.user))
         return request.render(template, kw)
@@ -205,7 +222,7 @@ class PortalSales(SalesLinesMixin, http.Controller):
     def new_order(self, **kw):
         self._allowed()
         order,_vals=self._line_new_order({})
-        return self._render('absar_portal_sales.sales_new',line_boot_json=json.dumps(self._line_boot(order)),partners=self._partners(),projects=self._projects(),templates=self._templates(),units=self._units())
+        return self._render('absar_portal_sales.sales_new',date_order_local=self._sales_date_local(fields.Datetime.now()),line_boot_json=json.dumps(self._line_boot(order)),partners=self._partners(),projects=self._projects(),templates=self._templates(),units=self._units())
 
     @http.route(BASE + '/create', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def create_order(self, **post):
@@ -238,7 +255,7 @@ class PortalSales(SalesLinesMixin, http.Controller):
                 order.action_absar_load_proposal_template()
             return request.redirect('%s/%s' % (BASE, order.id))
         except (ValueError, TypeError, UserError, ValidationError) as exc:
-            return self._render('absar_portal_sales.sales_new',line_boot_json=json.dumps(self._line_boot(self._line_new_order({})[0])),partners=self._partners(),projects=self._projects(),templates=self._templates(),units=self._units(),error=str(exc))
+            return self._render('absar_portal_sales.sales_new',date_order_local=self._sales_date_local(fields.Datetime.now()),line_boot_json=json.dumps(self._line_boot(self._line_new_order({})[0])),partners=self._partners(),projects=self._projects(),templates=self._templates(),units=self._units(),error=str(exc))
 
     @http.route(BASE + '/<int:order_id>', type='http', auth='user', website=True)
     def show_order(self, order_id, **kw):
@@ -272,6 +289,7 @@ class PortalSales(SalesLinesMixin, http.Controller):
         if order.absar_proposal_type=='technical':
             vals['absar_proposal_title']=(post.get('title') or 'Technical & Financial Proposal')[:160]
         try:
+            vals['date_order']=self._sales_date_utc(post.get('date_order'))
             vals['validity_date']=fields.Date.to_date(post['validity_date']) if post.get('validity_date') else False
             order.sudo().write(vals)
         except (ValueError,ValidationError) as exc:

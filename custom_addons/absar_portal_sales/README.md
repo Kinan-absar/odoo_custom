@@ -1,4 +1,16 @@
-# ABSAR Portal Sales 18.0.1.4.4
+# Current update: 2026-10-21
+Quotation / Order Date is visible on new and saved portal forms, in the user's
+timezone. It is required when saving, with invalid/ambiguous times rejected.
+New and existing header details save with line changes in one transaction.
+Quantity and unit changes request native Sales defaults; manually agreed prices
+are preserved. Line amounts update immediately; native taxes/totals refresh
+asynchronously while previous totals remain visible with an updating notice.
+Catalog stays open while adding lines. Enter/Shift+Enter navigation includes
+inline descriptions (Ctrl+Enter retains multiline entry). Rows can be reordered.
+No automatic Sales revision mechanism was added. Existing Studio revision and
+print reports are unchanged; technical-proposal revision changes are excluded.
+
+# ABSAR Portal Sales 18.0.1.4.5
 
 Portal and internal issuer workflow:
 1. Preparer: Submit for Approval. Approver: Approve or Return.
@@ -20,14 +32,14 @@ extends the existing EPS notification summary with persistent Sales Approvals
 and Sales Review Updates, so preparer attention does not rely on browser push.
 Employee Portal Suite itself is not modified.
 
-Sales uses a table list. New Quotation opens details and the existing line grid
+Sales, Purchase and Accounting use the same card list with whole-row opening. New Quotation opens details and the existing line grid
 on one page; Save Quotation writes the header and lines in one transaction.
 Technical proposal templates/sections/milestones remain on the saved form.
 
-The portal Order Lines grid now follows the supplied internal screenshot:
-Product, Analytic Distribution, Quantity, UoM, Unit Price, Taxes, Disc.%, Amount.
-Description is editable in the row details dialog. Products, sections and notes
-can be added, edited and removed; Save Lines persists the complete draft batch.
+The portal Order Lines grid now follows Purchase entry and navigation:
+Product, Analytic Distribution, Quantity, UoM, Unit Price, Disc.%, Taxes, Amount.
+Description is editable directly below the product dropdown, as in Purchase. Products, sections and notes
+can be added, edited, reordered and removed. Catalog and New Product use the same scoped product choices. Save Draft persists header details and lines together.
 
 The dropdown/modal helper is a byte-identical copy of Purchase's purchase_ui.js.
 The allocation editor follows Purchase: account chips, combined accounts across

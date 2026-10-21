@@ -171,7 +171,7 @@ Fix the portal Analytic Distribution dialog shown in the screenshot: it now uses
 
 Local checks passed: JavaScript syntax, existing frontend and grid fixtures, and a screenshot regression fixture for full long-name display, read-only controls and editable percentage application. No live browser layout test was run. This is an Accounting portal UI update only, with all earlier 18.0.1.2.5 changes included. No workflow, ACL, Employee Portal Suite, Purchase or Sales changes in this release.
 
-## Workspace update 18.0.1.2.7
+## Workspace update 18.0.1.2.8
 
 Use Purchase's allocation editor for portal Accounting, as requested, replacing
 the separate analytic dialog: account chips, one account per root plan in a row,

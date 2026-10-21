@@ -1,5 +1,6 @@
 """Execute actual scoped sales line validators/save gateway with ORM-shaped fixtures."""
-import ast,json
+import ast,json,pytz
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace as N
 from contextlib import nullcontext
@@ -11,8 +12,10 @@ class NotFound(Exception):pass
 root=Path(__file__).parents[1]
 tree=ast.parse((root/'controllers/sales_lines.py').read_text());cls=next(n for n in tree.body if isinstance(n,ast.ClassDef))
 legacy=ast.parse((root/'controllers/portal_sales.py').read_text());num=next(n for c in legacy.body if isinstance(c,ast.ClassDef) for n in c.body if isinstance(n,ast.FunctionDef) and n.name=='_num');cls.body.append(num)
+for name in ('_sales_date_local','_sales_date_utc'):
+    cls.body.append(next(n for c in legacy.body if isinstance(c,ast.ClassDef) for n in c.body if isinstance(n,ast.FunctionDef) and n.name==name))
 commands=N(set=lambda ids:(6,0,ids),create=lambda vals:(0,0,vals),update=lambda rid,vals:(1,rid,vals),delete=lambda rid:(2,rid,0))
-ns=dict(json=json,Command=commands,_=lambda s:s,AccessError=AccessError,UserError=UserError,ValidationError=ValidationError,Forbidden=Forbidden,NotFound=NotFound,expression=N(AND=lambda d:d,OR=lambda d:d))
+ns=dict(json=json,pytz=pytz,datetime=datetime,Command=commands,_=lambda s:s,AccessError=AccessError,UserError=UserError,ValidationError=ValidationError,Forbidden=Forbidden,NotFound=NotFound,expression=N(AND=lambda d:d,OR=lambda d:d))
 exec(compile(ast.fix_missing_locations(ast.Module(body=[cls],type_ignores=[])),'actual sales lines','exec'),ns)
 s=ns['SalesLinesMixin']()
 class Lines(list):
@@ -107,7 +110,7 @@ assert (root/'static/src/js/analytic_editor.js').read_bytes()==(root.parent/'abs
 print('PASS: Accounting and Sales share identical Purchase UI helpers/allocation editor; Accounting validates plan totals, duplicate plans/rows and company scope.')
 # New quotations use the same scoped line gateway before their first database save.
 from datetime import date
-ns['fields']=N(Date=N(to_date=date.fromisoformat))
+ns['fields']=N(Date=N(to_date=date.fromisoformat),Datetime=N(now=lambda:datetime(2026,10,21,12),to_datetime=lambda value:value))
 created=[]
 company=N(id=7);partner=N(id=21,company_id=False);project=N(id=31,company_id=company)
 class Browse:
@@ -121,6 +124,7 @@ class Orders:
     def with_company(self,c):return self
     def create(self,vals):created.append(vals);return N(id=55)
 class Env(dict):
+    user=N(tz='Europe/Berlin')
     uid=4
     cr=request.env.cr
 request.env=Env({'res.partner':Browse({21:partner,99:N(id=99,company_id=N(id=99))}),
@@ -132,10 +136,35 @@ s._line_env=lambda o:request.env
 s._line_choice=original_choice
 s._line_boot=lambda o:{'saved':True}
 def create(header,rows):return s._line_api(None,'create',{'payload':json.dumps({'header':header,'lines':rows})})
-header=dict(partner_id=21,project_id=31,kind='standard',validity_date='2026-11-01',company_id=99,state='sale',absar_order_review_state='approved')
+header=dict(partner_id=21,project_id=31,kind='standard',date_order='2026-10-21T15:30:00',validity_date='2026-11-01',company_id=99,state='sale',absar_order_review_state='approved')
 r=create(header,[dict(row,id=0)]);assert r.status==200 and r.payload['result']['redirect'].endswith('/55')
 assert created[-1]['company_id']==7 and created[-1]['absar_portal_creator_id']==4 and created[-1]['order_line'][0][0]==0
 assert not {'state','absar_order_review_state'}.intersection(created[-1])
-for patch,rows in [({'partner_id':0},[]),({'partner_id':99},[]),({'project_id':999},[]),({'kind':'bad'},[]),({'validity_date':'invalid'},[]),({},[row]),({},[dict(row,id=0,price_unit='nan')])]:
+assert created[-1]['date_order']==datetime(2026,10,21,13,30)
+for patch,rows in [({'date_order':''},[]),({'date_order':'bad'},[]),({'partner_id':0},[]),({'partner_id':99},[]),({'project_id':999},[]),({'kind':'bad'},[]),({'validity_date':'invalid'},[]),({},[row]),({},[dict(row,id=0,price_unit='nan')])]:
     count=len(created);result=create(dict(header,**patch),rows);assert result.status==400 and len(created)==count
 print('PASS: new quotation header and lines save together; customer/project/company/date/type checks and forged state/approval/foreign-line fields rejected (ORM fixtures).')
+
+assert s._sales_date_local(datetime(2026,10,21,13,30))=='2026-10-21T15:30:00'
+for value in ('', 'bad','2026-10-25T02:30:00','2026-03-29T02:30:00','2026-10-21T15:30:00+02:00'):
+    try:s._sales_date_utc(value)
+    except ValidationError:pass
+    else:raise AssertionError(value)
+print('PASS: quotation/order date uses the employee timezone; empty, invalid, ambiguous/nonexistent DST and offset-bearing input rejected.')
+# Existing drafts save header and lines atomically and use the unsaved date for pricing.
+order.partner_id=partner;order.absar_proposal_type='standard'
+order.pricelist_id=N(id=43);order.currency_id=N(id=44);order.fiscal_position_id=N(id=45);order.date_order=datetime(2026,10,21,12)
+combined=dict(header,partner_id=99,company_id=99,state='sale')
+values=s._line_header_values(order,combined)
+assert values['date_order']==datetime(2026,10,21,13,30) and values['construction_project_id']==31
+assert not {'state','company_id','partner_id','absar_order_review_state'}.intersection(values)
+assert s._line_pricing_values(order,{'header':combined})['date_order']==datetime(2026,10,21,13,30)
+count=len(writes)
+r=s._line_api(5,'save',{'payload':json.dumps({'header':combined,'version':s._line_version(order),'lines':[row]})})
+assert r.status==200 and len(writes)==count+1
+assert 'order_line' in writes[-1] and writes[-1]['date_order']==datetime(2026,10,21,13,30)
+for patch in ({'date_order':''},{'date_order':'bad'},{'project_id':999}):
+    count=len(writes)
+    r=s._line_api(5,'save',{'payload':json.dumps({'header':dict(combined,**patch),'version':s._line_version(order),'lines':[row]})})
+    assert r.status==400 and len(writes)==count
+print('PASS: existing quotation saves details + lines in one write; unsaved date drives pricing; invalid dates/projects and forged header fields cannot bypass validation.')

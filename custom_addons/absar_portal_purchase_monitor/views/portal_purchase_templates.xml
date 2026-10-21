@@ -13,25 +13,13 @@
      <button type="submit" class="btn btn-primary">Search</button>
      <a class="btn btn-light" t-att-href="list_url">Clear</a>
     </form>
-    <div class="apm-table-wrap">
-     <table class="apm-table">
-      <thead><tr><th>Purchase Order / Supplier</th><th>Project / MR</th><th>Signature</th><th class="apm-num">PO Value</th><th class="apm-num">Invoiced</th><th class="apm-num">Bill Settlement*</th><th class="apm-num">Balance Due*</th><th/></tr></thead>
-      <tbody>
-       <t t-foreach="rows" t-as="r">
-        <tr class="apm-clickrow" t-att-data-href="'%s/%d' % (detail_base_url, r['po'].id)" onclick="window.location.href=this.dataset.href" tabindex="0" onkeydown="if(event.key==='Enter'){window.location.href=this.dataset.href}">
-         <td><strong t-out="r['po'].name"/><small t-out="r['po'].partner_id.name"/><small>Buyer: <t t-out="(r['po'].absar_portal_preparer_id or r['po'].user_id).name or '—'"/></small><small t-out="r['po'].date_order.date() if r['po'].date_order else ''"/></td>
-         <td><span t-out="r['project']"/><small>MR: <t t-out="r['mr']"/></small></td>
-         <td><span class="apm-pill" t-out="r['signature']"/></td>
-         <td class="apm-num"><span t-out="'%.2f' % r['po'].amount_total"/><small t-out="r['po'].currency_id.name"/></td>
-         <td class="apm-num" t-out="'%.2f' % r['billed']"/>
-         <td class="apm-num" t-out="'%.2f' % r['settled']"/>
-         <td class="apm-num apm-due" t-out="'%.2f' % r['due']"/>
-         <td class="apm-arrow">→</td>
-        </tr>
-       </t>
-       <tr t-if="not rows"><td colspan="8" class="apm-empty">No confirmed purchase orders match these filters.</td></tr>
-      </tbody>
-     </table>
+    <div class="absar-record-list" aria-label="Purchase orders">
+     <article t-foreach="rows" t-as="r" class="absar-record-card" role="link" tabindex="0" t-att-data-record-href="'%s/%d' % (detail_base_url,r['po'].id)" t-att-aria-label="'Open ' + r['po'].name">
+      <div class="absar-record-main"><span class="absar-record-number" t-out="r['po'].name"/><div class="absar-record-party" t-out="r['po'].partner_id.name"/>
+       <div class="absar-record-meta"><span>Project: <t t-out="r['project']"/></span><span>MR: <t t-out="r['mr']"/></span><span>Buyer: <t t-out="(r['po'].absar_portal_preparer_id or r['po'].user_id).name or '—'"/></span><span t-out="r['po'].date_order.date() if r['po'].date_order else ''"/></div>
+       <div class="absar-record-metrics"><div class="absar-record-metric"><span class="absar-record-caption">Invoiced</span><strong t-out="'{:,.2f}'.format(r['billed'])"/></div><div class="absar-record-metric"><span class="absar-record-caption">Bill Settlement*</span><strong t-out="'{:,.2f}'.format(r['settled'])"/></div><div class="absar-record-metric"><span class="absar-record-caption">Balance Due*</span><strong t-out="'{:,.2f}'.format(r['due'])"/></div></div>
+      </div><div class="absar-record-side"><span class="absar-record-caption">Total including VAT</span><strong class="absar-record-value"><t t-out="'{:,.2f}'.format(r['po'].amount_total)"/> <t t-out="r['po'].currency_id.name"/></strong><span class="absar-record-badge" t-out="r['signature']"/></div>
+     </article><div t-if="not rows" class="absar-record-empty">No confirmed purchase orders match these filters.</div>
     </div>
     <div class="apm-footer"><p>* Paid and due are derived from posted vendor bills; shared-bill payments are proportionally estimated. Figures include VAT and may differ from payment-voucher allocations.</p>
      <div class="apm-pages"><a t-if="page &gt; 1" t-att-href="previous_url">← Previous</a><span>Page <t t-out="page"/> of <t t-out="pages"/></span><a t-if="page &lt; pages" t-att-href="next_url">Next →</a></div>

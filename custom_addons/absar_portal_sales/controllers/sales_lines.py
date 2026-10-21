@@ -18,6 +18,7 @@ class SalesLinesMixin:
             if not partner or partner not in self._partners(limit=None) or (partner.company_id and partner.company_id!=user.company_id):
                 raise ValidationError(_('Select an available customer for this company.'))
         if required and not partner:raise ValidationError(_('Select a customer.'))
+        if required and not header.get('date_order'):raise ValidationError(_('Set the quotation/order date.'))
         project=False
         if header.get('project_id'):
             project=request.env['project.project'].sudo().browse(self._line_id(header['project_id'])).exists()
@@ -27,8 +28,30 @@ class SalesLinesMixin:
         if kind not in ('standard','technical'):raise ValidationError(_('Invalid quotation type.'))
         vals=dict(partner_id=partner.id if partner else False,company_id=user.company_id.id,user_id=user.id,
             absar_portal_creator_id=user.id,absar_proposal_type=kind,construction_project_id=project.id if project else False,
+            date_order=self._sales_date_utc(header['date_order']) if header.get('date_order') else fields.Datetime.now(),
             validity_date=fields.Date.to_date(header['validity_date']) if header.get('validity_date') else False)
         return request.env['sale.order'].sudo().with_company(user.company_id).new(vals),vals
+
+    def _line_header_values(self, order, header):
+        if not isinstance(header,dict):raise ValidationError(_('Invalid quotation details.'))
+        project=False
+        if header.get('project_id'):
+            project=request.env['project.project'].sudo().browse(self._line_id(header['project_id'])).exists()
+            if not project or project not in self._customer_projects(order.partner_id) or (project.company_id and project.company_id!=order.company_id):
+                raise ValidationError(_('Select an available project for this customer and company.'))
+        vals=dict(construction_project_id=project.id if project else False,
+            date_order=self._sales_date_utc(header.get('date_order')),
+            validity_date=fields.Date.to_date(header['validity_date']) if header.get('validity_date') else False)
+        if order.absar_proposal_type=='technical':vals['absar_proposal_title']=str(header.get('title') or 'Technical & Financial Proposal')[:160]
+        return vals
+
+    def _line_pricing_values(self, order, data):
+        vals=dict(partner_id=order.partner_id.id,company_id=order.company_id.id,
+            pricelist_id=order.pricelist_id.id,currency_id=order.currency_id.id,
+            fiscal_position_id=order.fiscal_position_id.id,date_order=order.date_order)
+        if order.id and 'header' in data:
+            vals.update(self._line_header_values(order,data['header']))
+        return vals
 
     def _line_env(self, order):
         return request.env(context=dict(request.env.context, allowed_company_ids=[order.company_id.id]))['sale.order'].with_company(order.company_id).sudo().env
@@ -204,7 +227,8 @@ class SalesLinesMixin:
                     product=self._line_choice(order,'product',data.get('product_id'))
                     qty=self._num(data.get('quantity') or 1,'Quantity')
                     if not order.partner_id:raise ValidationError(_('Select a customer before choosing products.'))
-                    values={'order_id':order.id or order,'product_id':product.id,'product_uom_qty':qty}
+                    pricing_order=self._line_env(order)['sale.order'].new(self._line_pricing_values(order,data)) if order.id and 'header' in data else order
+                    values={'order_id':pricing_order.id or pricing_order,'product_id':product.id,'product_uom_qty':qty}
                     if data.get('uom_id'):
                         unit=self._line_choice(order,'uom',data['uom_id'])
                         if unit.category_id!=product.uom_id.category_id:raise ValidationError(_('Product and unit must have the same unit category.'))
@@ -220,11 +244,8 @@ class SalesLinesMixin:
                         if not isinstance(row,dict) or (row.get('id') and self._line_id(row['id']) not in existing):
                             raise AccessError(_('Line is not available in this quotation.'))
                         values.append(self._line_values(order,row))
-                    virtual=self._line_env(order)['sale.order'].new({
-                        'partner_id':order.partner_id.id,'company_id':order.company_id.id,
-                        'pricelist_id':order.pricelist_id.id,'currency_id':order.currency_id.id,
-                        'fiscal_position_id':order.fiscal_position_id.id,'date_order':order.date_order,
-                        'order_line':[Command.create(dict(vals,sequence=(i+1)*10)) for i,vals in enumerate(values)]})
+                    virtual=self._line_env(order)['sale.order'].new(dict(self._line_pricing_values(order,data),
+                        order_line=[Command.create(dict(vals,sequence=(i+1)*10)) for i,vals in enumerate(values)]))
                     result={'untaxed':virtual.amount_untaxed,'tax':virtual.amount_tax,'total':virtual.amount_total,
                             'line_amounts':[l.price_subtotal for l in virtual.order_line]}
                 elif operation=='create':
@@ -265,7 +286,8 @@ class SalesLinesMixin:
                     # Enroll editable native drafts in the existing issuer workflow.
                     if not order.absar_portal_creator_id:
                         order._absar_review_write({'absar_portal_creator_id':request.env.uid,'absar_portal_review_state':'draft'})
-                    order.write({'order_line':commands})
+                    values=self._line_header_values(order,data['header']) if 'header' in data else {}
+                    order.write(dict(values,order_line=commands))
                     result=self._line_boot(order)
                 else:raise AccessError(_('Unsupported operation.'))
             return request.make_json_response({'ok':True,'result':result})
