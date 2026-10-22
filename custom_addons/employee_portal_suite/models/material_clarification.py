@@ -65,13 +65,13 @@ class MaterialRequestClarification(models.Model):
 
     def _clarification_notify(self, user, title, text, path, needs_reply=False):
         self.ensure_one()
-        # Chatter preserves every round. Standard Odoo notifications honour the
-        # recipient's inbox/email preference; the portal push links to the right page.
+        # Chatter preserves every round. MR comments use the native inbox pipeline
+        # and the portal bell; push is optional and never substitutes for in-app delivery.
         path = self.env['employee.portal.webpush.service']._url_for_user(user, path)
         body = Markup('<p><strong>%s</strong></p><p>%s</p><p><a href="%s">%s</a></p>') % (
             title, text, path, _('Open Material Request'),
         )
-        self.sudo().message_post(
+        self.sudo().with_context(eps_mr_explicit_recipients=True).message_post(
             body=body, subject=title, partner_ids=[user.partner_id.id],
             message_type='comment', subtype_xmlid='mail.mt_comment',
             author_id=self.env.user.partner_id.id,

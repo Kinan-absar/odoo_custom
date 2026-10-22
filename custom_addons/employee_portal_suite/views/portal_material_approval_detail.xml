@@ -4,9 +4,9 @@
         <template id="portal_material_approval_detail" name="Material Approval Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
 
-        <div class="container mt-3 employee-req-detail">
+        <div class="container mt-3 employee-req-detail eps-mr-record-layout">
 
-            <!-- ========================= -->
+            <div class="eps-mr-record-main"><!-- ========================= -->
             <!-- BACK BUTTON -->
             <!-- ========================= -->
             <div class="mb-4">
@@ -651,26 +651,7 @@
 
                 </div>
             </div>
-<t t-foreach="request_rec.message_ids.filtered(lambda m: m.message_type == 'comment')" t-as="msg">
-    <div class="border p-2 mb-2">
-        <strong><t t-out="msg.author_id.name or 'Unknown'"/></strong>
-        <small class="text-muted ms-2">
-            <t t-out="msg.date"/>
-        </small>
-        <div class="mt-1">
-            <t t-out="msg.body"/>
-        </div>
-    </div>
-</t>
-
-<form t-att-action="'/my/employee/material/%s/message' % request_rec.id" method="post">
-    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-    <textarea name="message" class="form-control" placeholder="Write something..." required="1"/>
-    <button type="submit" class="btn btn-primary mt-2">
-        Send
-    </button>
-</form>
-        </div>
+</div><t t-call="employee_portal_suite.portal_mr_chatter"><t t-set="mr_approval_view" t-value="True"/></t></div>
         
 
         <!-- TIMELINE CSS (ADDED) -->

@@ -431,12 +431,12 @@ class MaterialRequest(models.Model):
         store=False
     )
 
-    @api.depends("state", "needs_clarification", "clarification_stage", "approval_status_label", "clarification_step_name")
+    @api.depends("state", "needs_clarification", "clarification_stage", "approval_status_label", "clarification_step_name", "clarification_question")
     def _compute_display_state(self):
         stage_labels = dict(self._fields['state'].selection)
 
         for rec in self:
-            if rec.needs_clarification and rec.clarification_stage:
+            if rec.needs_clarification and rec.clarification_stage and rec.clarification_question:
                 stage_name = rec.clarification_step_name or (rec.approval_status_label if rec.clarification_stage == "workflow" else stage_labels.get(rec.clarification_stage, ""))
                 rec.display_state = _("Awaiting requester reply — %s") % stage_name
             else:

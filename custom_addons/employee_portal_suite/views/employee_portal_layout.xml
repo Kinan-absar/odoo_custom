@@ -1899,7 +1899,8 @@
                 });
             </script>
 
-        <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_compact_lists.css?v=18.0.1.20.115"/></t>
+        <script src="/employee_portal_suite/static/src/js/material_chatter.js?v=18.0.1.20.116" defer="defer"/>
+        <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_compact_lists.css?v=18.0.1.20.116"/></t>
         <script src="/employee_portal_suite/static/src/js/employee_portal_pwa.js?v=2045"/>
     </template>
 
@@ -1913,7 +1914,7 @@
          relative to the clicked button instead.
          ================================================================ -->
     <template id="ep_notification_bell">
-        <div class="ep-bell-wrap">
+        <div class="ep-bell-wrap" t-att-data-eps-other-unread="ep_notif_unread_total - ep_notif_summary.get('mr_message', {}).get('new', 0)">
             <div t-att-class="'ep-bell-btn has-unread' if ep_notif_unread_total else 'ep-bell-btn'" onclick="toggleEpBell(event)">
                 <i class="fa fa-bell-o"/>
                 <t t-if="ep_notif_unread_total &gt; 0">
@@ -1928,7 +1929,7 @@
 
                 <t t-if="ep_unread_items">
                     <t t-foreach="ep_unread_items" t-as="ep_item">
-                        <a t-att-href="ep_item[1]['url']" class="ep-bell-item">
+                        <a t-att-href="ep_item[1]['url']" t-att-data-eps-notification-kind="ep_item[0]" class="ep-bell-item">
                             <div class="ep-bell-item-icon">
                                 <i class="fa fa-bell"/>
                             </div>

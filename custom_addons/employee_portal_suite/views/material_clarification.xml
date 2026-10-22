@@ -31,10 +31,10 @@
         <div class="border rounded-3 p-3 mb-3" invisible="not needs_clarification and not clarification_question">
           <div class="d-flex align-items-center justify-content-between mb-2">
             <strong><i class="fa fa-commenting-o me-2"/>Clarification</strong>
-            <span class="badge rounded-pill text-bg-warning" invisible="not needs_clarification">Awaiting requester reply</span>
-            <span class="badge rounded-pill text-bg-success" invisible="needs_clarification">Reply received</span>
+            <span class="badge rounded-pill text-bg-warning" invisible="not needs_clarification or not clarification_question">Awaiting requester reply</span>
+            <span class="badge rounded-pill text-bg-warning" invisible="not needs_clarification or clarification_question">Question required</span><span class="badge rounded-pill text-bg-success" invisible="needs_clarification">Reply received</span>
           </div>
-          <div class="alert alert-warning mb-2" invisible="clarification_question">This older flag has no question. The current approver can use Request Clarification to send one.</div>
+          <div class="alert alert-warning mb-2" invisible="clarification_question">Clarification has not been sent yet. Choose Request Clarification and enter your question.</div>
           <group invisible="not clarification_question">
             <group><field name="clarification_step_name" string="Approval step"/><field name="clarification_requested_by" string="Requested by"/><field name="clarification_requested_on" string="Requested on"/></group>
             <group><field name="clarification_question" string="Question"/><field name="clarification_reply" string="Requester reply"/><field name="clarification_replied_on" string="Replied on" invisible="not clarification_reply"/></group>
@@ -49,8 +49,8 @@
     <section t-if="request_rec.needs_clarification or request_rec.clarification_question" class="eps-clarification-panel mb-3" aria-label="Clarification">
       <div class="eps-clarification-heading">
         <div><span class="eps-clarification-icon"><i class="fa fa-commenting-o" aria-hidden="true"/></span><strong>Clarification</strong></div>
-        <span t-if="request_rec.needs_clarification" class="eps-clarification-state"><t t-if="request_rec.can_reply_clarification">Awaiting your reply</t><t t-else="">Awaiting requester reply</t></span>
-        <span t-else="" class="eps-clarification-state is-replied">Reply received</span>
+        <span t-if="request_rec.needs_clarification and request_rec.clarification_question" class="eps-clarification-state"><t t-if="request_rec.can_reply_clarification">Awaiting your reply</t><t t-else="">Awaiting requester reply</t></span>
+        <span t-elif="request_rec.needs_clarification" class="eps-clarification-state">Question required</span><span t-else="" class="eps-clarification-state is-replied">Reply received</span>
       </div>
       <t t-if="request_rec.clarification_question">
         <div class="eps-clarification-meta"><t t-out="request_rec.clarification_requested_by.name"/> · <t t-out="request_rec.clarification_step_name"/> · <span t-field="request_rec.clarification_requested_on"/></div>
@@ -59,16 +59,9 @@
           <strong><t t-out="request_rec.employee_id.name"/> replied</strong>
           <p class="eps-clarification-message mb-0"><t t-out="request_rec.clarification_reply"/></p>
         </div>
-        <form t-if="request_rec.can_reply_clarification" method="post" action="/my/employee/material/requests/clarification/reply" class="mt-3">
-          <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-          <input type="hidden" name="req_id" t-att-value="request_rec.id"/>
-          <label for="eps-clarification-answer" class="form-label fw-semibold">Your reply</label>
-          <textarea id="eps-clarification-answer" name="answer" rows="3" required="required" class="form-control" placeholder="Answer the question so your approver can continue…"/>
-          <div class="d-flex justify-content-end mt-2"><button class="btn btn-primary rounded-pill" type="submit">Send Reply <i class="fa fa-paper-plane ms-1"/></button></div>
-        </form>
-        <p t-if="request_rec.needs_clarification and not request_rec.can_reply_clarification" class="text-muted small mb-0">Approval is paused at this step until the requester replies.</p>
+        <a t-if="request_rec.can_reply_clarification" class="btn btn-primary rounded-pill mt-2" href="#eps-mr-chatter">Reply in Conversation</a><p t-if="request_rec.needs_clarification and not request_rec.can_reply_clarification" class="text-muted small mb-0">Approval is paused at this step until the requester replies.</p>
       </t>
-      <p t-else="" class="mb-0 text-muted">This older flag has no question. The current approver can use Request Clarification to send one.</p>
+      <p t-else="" class="mb-0 text-muted">Clarification has not been sent yet. Choose Request Clarification and enter your question.</p>
     </section>
   </template>
 </odoo>

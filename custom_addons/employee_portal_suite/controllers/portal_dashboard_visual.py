@@ -56,7 +56,7 @@ class EmployeePortalVisualDashboard(EmployeePortalMain):
             weeks.append({'label': label, 'employee': values[0], 'material': values[1], 'total': sum(values)})
         summary = request.env['portal.report.seen'].sudo()._get_notification_summary(user)
         queues = []
-        for key in ('er_approval', 'mr_approval', 'sign_request', 'purchase_approval', 'sales_approval'):
+        for key in ('er_approval', 'mr_approval', 'mr_message', 'sign_request', 'purchase_approval', 'sales_approval'):
             item = summary.get(key)
             if item:
                 queues.append({'label': str(item['label']), 'count': item['count'], 'url': item['url']})

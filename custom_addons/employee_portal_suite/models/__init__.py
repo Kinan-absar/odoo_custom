@@ -46,3 +46,5 @@ from . import workflow_v2
 from . import backend_filter_card
 
 from . import material_clarification
+
+from . import material_chatter

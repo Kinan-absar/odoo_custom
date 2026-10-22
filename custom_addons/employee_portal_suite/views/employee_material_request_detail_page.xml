@@ -4,8 +4,8 @@
 <template id="employee_material_request_detail_page" name="Material Request Detail">
 <t t-call="employee_portal_suite.employee_portal_layout">
 
-<div class="container mt-3 employee-req-detail">
-    <div class="mb-4">
+<div class="container mt-3 employee-req-detail eps-mr-record-layout">
+    <div class="eps-mr-record-main"><div class="mb-4">
     <a href="/my/employee/material" class="app-back-btn">
         <i class="fa fa-arrow-left"/>
         <span>Back</span>
@@ -293,27 +293,7 @@
         </div>
     </div>
 
-    <t t-foreach="request_rec.message_ids.filtered(lambda m: m.message_type == 'comment')" t-as="msg">
-    <div class="border p-2 mb-2">
-        <strong><t t-out="msg.author_id.name or 'Unknown'"/></strong>
-        <small class="text-muted ms-2">
-            <t t-out="msg.date"/>
-        </small>
-        <div class="mt-1">
-            <t t-out="msg.body"/>
-        </div>
-    </div>
-</t>
-
-<form t-att-action="'/my/employee/material/%s/message' % request_rec.id" method="post">
-    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-    <textarea name="message" class="form-control" placeholder="Write something..." required="1"/>
-    <button type="submit" class="btn btn-primary mt-2">
-        Send
-    </button>
-</form>
-
-</div>
+    </div><t t-call="employee_portal_suite.portal_mr_chatter"><t t-set="mr_approval_view" t-value="False"/></t></div>
 
 
             <script>
