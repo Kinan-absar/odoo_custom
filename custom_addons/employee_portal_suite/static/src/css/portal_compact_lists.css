@@ -47,3 +47,19 @@
 .ep-portal-main .eps-row-details{min-width:1770px;background:#fff;border:1px solid #d8e8e9;border-radius:8px;padding:14px;margin:0 0 8px;max-width:none}.ep-portal-main .eps-row-details[hidden]{display:none!important}.ep-portal-main .eps-row-details>.js-add-plan-form{max-width:450px}.ep-portal-main .eps-row-details .ept-review-panel{border:0!important;margin:0!important}.ep-portal-main .eps-record-row:focus-visible{outline:2px solid #087f83;outline-offset:-2px}
 
 .ep-portal-main .eps-flow-reference{display:flex;gap:8px;align-items:center}.ep-portal-main .eps-flow-reference .fa{flex-shrink:0;font-size:12px}
+
+/* Clearer column headings across EPS and its workspace/bridge document lists. */
+@media(min-width:769px){
+.ep-portal-main table.eps-compact-list thead th{
+    font-size:14px!important;font-weight:700!important;color:#284653!important;
+    padding-top:10px!important;padding-bottom:10px!important;
+    border-bottom:2px solid #087f83!important;
+}
+.ep-portal-main .absar-column-list .absar-list-header,
+.ep-portal-main .eps-ledger-scroll .ept-ledger-head,
+.ep-portal-main .eps-sign-row.head{
+    font-size:14px!important;font-weight:700!important;color:#284653!important;
+    line-height:1.4!important;padding-top:10px!important;padding-bottom:10px!important;
+    border-bottom:2px solid #087f83!important;
+}
+}
