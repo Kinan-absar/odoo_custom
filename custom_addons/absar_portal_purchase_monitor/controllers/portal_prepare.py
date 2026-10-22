@@ -607,6 +607,8 @@ class PortalPurchasePrepare(http.Controller):
             choices = {}
             for name in ('currency_id', 'payment_term_id', 'fiscal_position_id'):
                 record = order[name]
+                if name == 'currency_id' and not record:
+                    record = company.currency_id
                 choices[name] = {'id': record._origin.id, 'label': record.display_name} if record and record._origin.id else None
             return {'selected': choices, 'notes': self._plain(order.notes)}
         return self._json(run)

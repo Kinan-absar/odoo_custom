@@ -39,7 +39,7 @@ class Node {
 }
 let headerRoot=null;const root=new Node('section');document={createElement:t=>new Node(t),activeElement:null,readyState:'loading',getElementById:id=>id==='aps-line-editor'?root:id==='aps-new-details'?headerRoot:null,addEventListener(){},querySelector:s=>body.querySelector(s)};
 const body=new Node('body');body.append(root);document.body=body;
-const redirects=[];const window={location:{assign:path=>redirects.push(path)},innerWidth:1200,innerHeight:700,addEventListener(){},removeEventListener(){}};
+const windowHandlers={};const redirects=[];const window={location:{assign:path=>redirects.push(path)},innerWidth:1200,innerHeight:700,addEventListener:(name,fn)=>{windowHandlers[name]=fn;},removeEventListener:(name,fn)=>{if(windowHandlers[name]===fn)delete windowHandlers[name];}};
 Object.assign(globalThis,{document,window});
 const boot={order_id:5,company_id:7,version:'v1',editable:true,currency:'SAR',untaxed:20,tax:3,total:23,
  analytic_labels:{10:{id:10,label:'PHC Building / Long Project Name',plan:'Projects',plan_id:100}},
@@ -55,19 +55,27 @@ const ctx=vm.createContext({document,window,Event:class{constructor(type){this.t
   else if(url.endsWith('/preview'))result={untaxed:66,tax:9.9,total:75.9,line_amounts:data.lines.map(()=>66)};
   else throw new Error('Unexpected '+url);
   return {json:async()=>({ok:true,result})};}});
-const prefix=['purchase_ui.js','analytic_editor.js','sales_lines.js'].map(n=>fs.readFileSync(new URL('../static/src/js/'+n,import.meta.url),'utf8').replace(/^import .*$/gm,'').replace(/^export /gm,'')).join('\n');
+const prefix=['line_grid.js','purchase_ui.js','analytic_editor.js','sales_lines.js'].map(n=>fs.readFileSync(new URL('../static/src/js/'+n,import.meta.url),'utf8').replace(/^import .*$/gm,'').replace(/^export /gm,'')).join('\n');
 vm.runInContext(prefix+'\nthis.editor=mountSalesLines(document.getElementById("aps-line-editor"));',ctx);
 const editor=ctx.editor;
 const settle=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
 const key=async(node,key,shiftKey=false)=>{node.dispatchEvent({type:'keydown',key,shiftKey,preventDefault(){this.defaultPrevented=true;},stopPropagation(){this.stopped=true;}});await settle();};
-assert.deepEqual(root.querySelectorAll('thead th').map(n=>n.textContent),['Product','Analytic Distribution','Quantity','UoM','Unit Price','Disc.%','Taxes','Amount','']);
+assert.deepEqual(root.querySelectorAll('thead th').map(n=>n.textContent),['Product / Description','Analytic Distribution','Quantity','UoM','Unit Price','Disc.%','Taxes','Amount','']);
 assert.equal(root.querySelectorAll('[data-sales-entry]').length,7);
 let qty=root.querySelector('[data-sales-column="2"] input');qty.focus();qty.value='4';qty.dispatchEvent({type:'input'});editor.render();
-assert.equal(root.querySelector('[data-sales-amount]').textContent,'40.00');
+assert.equal(root.querySelector('[data-sales-amount]').textContent,'20.00');
 assert(root.textContent.includes('Previous tax/total remain visible'));
 assert.equal(Number(document.activeElement.value),4);assert.equal(document.activeElement.closest('td').dataset.salesColumn,'2');
 await key(document.activeElement,'Enter');assert.equal(document.activeElement.closest('td').dataset.salesColumn,'3');
 await key(document.activeElement,'Enter',true);assert.equal(document.activeElement.closest('td').dataset.salesColumn,'2');
+// Tab skips auxiliary controls and uses the same column order as Enter.
+await key(document.activeElement,'Tab');assert.equal(document.activeElement.closest('td').dataset.salesColumn,'3');
+await key(document.activeElement,'Tab',true);assert.equal(document.activeElement.closest('td').dataset.salesColumn,'2');
+const qtyHeader=root.querySelectorAll('thead th')[2];
+qtyHeader.querySelector('.absar-column-resize').dispatchEvent({type:'pointerdown',clientX:100,preventDefault(){},stopPropagation(){this.stopped=true;}});
+windowHandlers.pointermove({clientX:140});windowHandlers.pointerup();
+assert.equal(qtyHeader.style.width,'200px');editor.render();
+assert.equal(root.querySelectorAll('thead th')[2].style.width,'200px','Column size survives line redraw.');
 // Purchase lookup waits for native product defaults; the grid does not advance twice.
 assert(calls.some(c=>c.url.endsWith('/defaults')&&c.data.quantity===4));
 assert.equal(editor.state.lines[0].price_unit,10,'Saved negotiated price survives quantity repricing.');
@@ -93,6 +101,19 @@ assert(root.querySelector('.aps-sales-description'));
 assert(root.textContent.includes('Catalog')&&root.textContent.includes('New Product')&&root.textContent.includes('Recalculate'));
 editor.moveGrid(0,6,1);assert.equal(editor.state.lines.length,2);assert.equal(document.activeElement.closest('[data-sales-row]').dataset.salesRow,'1');
 const catalogButton=root.querySelectorAll('button').find(n=>n.textContent==='Catalog');catalogButton.click();await settle();const catalogDialog=body.querySelector('.apw-dialog');assert(catalogDialog);const countBefore=editor.state.lines.length;catalogDialog.querySelectorAll('button').find(n=>n.textContent==='Add').click();await settle();assert.equal(editor.state.lines.length,countBefore+1);assert(catalogDialog.parentElement===root&&catalogDialog.open,'Catalog stays open while its line is added.');catalogDialog.querySelectorAll('button').find(n=>n.textContent==='Close').click();
+// Delete middle, first and final lines while totals still refer to the old DOM.
+await editor.preview();
+assert.equal(calls.findLast(c=>c.url.endsWith('/preview')).data.lines.length,2,'Untouched empty row is excluded from native calculation.');
+for(const index of [1,0,0]){
+    const row=root.querySelector('[data-sales-row="'+index+'"]');
+    const remove=row.querySelectorAll('.aps-sales-tools button').find(node=>node.textContent==='×');
+    assert(remove);remove.click();await settle();
+}
+assert.equal(editor.state.lines.length,0);
+assert.equal(root.querySelectorAll('[data-sales-amount]').length,0);
+assert(!root.textContent.includes('NaN'));
+assert(root.textContent.includes('0.00'));
+console.log('PASS: deleting middle/first/final Sales rows never reads a removed line; blank rows do not block preview and deleting all rows clears the totals.');
 editor.state.editable=false;editor.render();assert(!root.textContent.includes('Save Draft'));assert(root.querySelectorAll('input').every(n=>n.disabled));
 console.log('PASS: actual Sales grid exact backend columns, typing/focus, Enter/Shift+Enter including lookup, async product defaults before navigation, negotiated data preservation on product edits, Purchase analytic editor, native preview response, CSRF/versioned save, next row, readonly controls (DOM fixtures).');
 vm.runInContext(`this.sharedResult=null;openAnalyticDistribution({ui:createPurchaseUI({root:document.getElementById('aps-line-editor'),post:async()=>({items:[]}),companyId:7}),distribution:{'10,12':100},labels:{10:{id:10,label:'PHC',plan:'Projects',plan_id:100},12:{id:12,label:'MEP',plan:'Departments',plan_id:200}},onApply:(distribution,labels)=>{this.sharedResult={distribution,labels};}});`,ctx);

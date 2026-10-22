@@ -53,7 +53,7 @@ const ctx=vm.createContext({document,window,Event:class{constructor(type){this.t
   else throw new Error('Unexpected '+url);
   return {json:async()=>({ok:true,result})};}});
 let source=fs.readFileSync(new URL('../static/src/accounting.js',import.meta.url),'utf8').replace(/^import .*$/gm,'');
-const shared=['purchase_ui.js','analytic_editor.js'].map(name=>fs.readFileSync(new URL('../static/src/'+name,import.meta.url),'utf8').replace(/^export /gm,'')).join('\n');
+const shared=['line_grid.js','purchase_ui.js','analytic_editor.js'].map(name=>fs.readFileSync(new URL('../static/src/'+name,import.meta.url),'utf8').replace(/^export /gm,'')).join('\n');
 source=source.replace("        state.payment_method ||=", "        root.test={moveGrid,render,productForm,selectProduct,get state(){return state;}};\n        state.payment_method ||=");
 vm.runInContext(shared+source,ctx);
 const settle=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};

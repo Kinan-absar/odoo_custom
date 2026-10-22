@@ -1,4 +1,5 @@
 /** @odoo-module **/
+import { calculationRows, isEmptyDraftLine, decorateLineGrid } from "./line_grid";
 import { createPurchaseUI } from "./purchase_ui";
 import { openPurchaseProductDialog } from "./purchase_product_form";
 import { openPurchaseReceiptDialog } from "./purchase_receipt";
@@ -28,25 +29,18 @@ function startPurchaseWorkspace() {
     const money = value => Number(value || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     const amountKey = line => JSON.stringify([line.product_qty, line.price_unit, line.discount || 0,
         line.taxes_id, line.product_uom, state.currency_id, state.company_id]);
-    const lineAmount = line => line._amountKey === amountKey(line) ? line.price_subtotal :
-        (Number(line.product_qty) || 0) * (Number(line.price_unit) || 0) * (1 - (Number(line.discount) || 0) / 100);
+    const lineAmount = line => line && Number.isFinite(Number(line.price_subtotal)) ? Number(line.price_subtotal) : null;
     state.lines.forEach(line => {line._amountKey = amountKey(line);});
     const changed = () => {
         dirty = true; previewSequence++; totalsPending = true; renderTotals();
         root.querySelectorAll('[data-line-amount]').forEach(node => {
             const line = state.lines[Number(node.dataset.lineAmount)];
-            if (line) node.textContent = money(lineAmount(line));
+            if (line) node.textContent = lineAmount(line) === null ? '—' : money(lineAmount(line));
         });
         clearTimeout(previewTimer);
-        previewTimer = setTimeout(() => {
-            const lines = state.lines.filter(line => !line.display_type);
-            if (!busy && !pendingComputations && state.partner_id && state.currency_id && state.picking_type_id &&
-                    lines.every(line => line.product_id && line.product_qty > 0)) {
-                recalculate().catch(showError);
-            }
-        }, 450);
+        previewTimer = setTimeout(() => {if(!busy&&!pendingComputations)recalculate().catch(showError);}, 250);
     };
-    const showError = error => {errorBox.textContent = error.message || String(error); errorBox.hidden = false; errorBox.scrollIntoView({block: 'nearest'});};
+    const showError = error => {totalsPending=false;renderTotals();errorBox.textContent = error.message || String(error); errorBox.hidden = false; errorBox.scrollIntoView({block: 'nearest'});};
     const clearError = () => {errorBox.hidden = true; errorBox.textContent = '';};
     async function post(path, payload) {
         const response = await fetch('/my/employee/purchase' + path, {
@@ -62,7 +56,7 @@ function startPurchaseWorkspace() {
         if (!response.ok || result.error) throw new Error(result.error || 'The request could not be completed.');
         return result;
     }
-    function payload() {return {...state, id: boot.id, version: boot.version};}
+    function payload() {return {...state, lines:calculationRows(state.lines), id: boot.id, version: boot.version};}
     function field(label, input, host, hint = '') {
         const wrap = document.createElement('div');
         const labelNode = text('label', label);
@@ -110,6 +104,7 @@ function startPurchaseWorkspace() {
     function headerChoice(host, label, name, kind, hint) {
         field(label, lookup(kind, labels[name], item => {
             state[name] = item?.id || 0; labels[name] = item;
+            if(name==='partner_id')vendorSequence++;
             if (name === 'partner_id' && item) vendorDefaults().catch(showError);
             else if (['currency_id', 'fiscal_position_id'].includes(name) && state.partner_id) repriceAll();
             if (name === 'project_id') {state.material_request_id = 0; labels.material_request_id = null; renderHeader();}
@@ -143,6 +138,8 @@ function startPurchaseWorkspace() {
         company.value = state.company_id;
         company.addEventListener('change', async () => {
             if (dirty && !await ask('Changing company clears vendor, project, accounting selections and lines. Continue?')) {company.value = state.company_id; return;}
+            vendorSequence++;
+            totals = null; totalsPending = false;
             state.company_id = Number(company.value); state.lines = []; state.material_request_id = 0;
             for (const k of Object.keys(labels)) {if (k !== 'user_id') {labels[k] = null; state[k] = 0;}}
             const selectedCompany = boot.companies.find(c => c.id === state.company_id);
@@ -185,26 +182,27 @@ function startPurchaseWorkspace() {
             renderHeader(); changed(); repriceAll();
         } finally {pendingComputations--; if (!pendingComputations) changed();}
     }
-    async function reprice(line) {
+    async function reprice(line, force=false) {
         if (!line.product_id || !state.partner_id) return;
         const seq = (line._priceSequence || 0) + 1; line._priceSequence = seq;
+        const vendorVersion=vendorSequence, productId=line.product_id, selection=line._sequence;
         pendingComputations++;
         try {
             const result = await post('/preview', {...payload(), defaults: true, lines: [line]});
-            if (line._priceSequence !== seq) return;
+            if (line._priceSequence !== seq || vendorVersion!==vendorSequence || line.product_id!==productId || line._sequence!==selection || !state.lines.includes(line)) return;
             const native = result.lines[0];
             if (!line.product_uom) {line.product_uom = native.product_uom; line.uom_label = native.uom_label;}
             if (!line.name) line.name = native.name;
             if (!line.date_planned) line.date_planned = native.date_planned;
             if (!line._manualPrice) {line.price_unit = native.price_unit; line.discount = native.discount;}
-            line.taxes_id = native.taxes_id; line.taxes = native.taxes;
+            if(force||!line._manualTaxes){line.taxes_id = native.taxes_id; line.taxes = native.taxes;}
             line.default_account = native.default_account;
             changed(); renderLines();
         } catch (error) {showError(error);}
         finally {pendingComputations--; if (!pendingComputations) changed();}
     }
     function repriceAll() {
-        for (const line of state.lines) if (!line.display_type) reprice(line);
+        for (const line of state.lines) if (!line.display_type) reprice(line,true);
     }
     function blankLine(display = '') {
         return {id: 0, display_type: display, product_id: 0, product_label: '', name: '',
@@ -234,14 +232,15 @@ function startPurchaseWorkspace() {
         const sequence = (line._sequence || 0) + 1; line._sequence = sequence;
         pendingComputations++;
         line.product_id = product.id; line.product_label = product.label;
-        line._manualPrice = false;
+        line._manualPrice = false; line._manualTaxes=false;
         line.product_uom = 0;
         try {
             const response = await post('/preview', {...payload(), defaults: true, lines: [line]});
             if (line._sequence !== sequence || !state.lines.includes(line)) return;
             const ident = line.id;
-            const manualPrice = line._manualPrice ? {price_unit: line.price_unit, discount: line.discount, _manualPrice: true} : {_manualPrice: false};
-            Object.assign(line, response.lines[0], {id: ident, _sequence: sequence}, manualPrice);
+            const manualPrice = line._manualPrice ? {price_unit: line.price_unit, discount: line.discount, price_subtotal:line.price_subtotal, price_total:line.price_total, _manualPrice: true} : {_manualPrice: false};
+            const manualTaxes=line._manualTaxes?{taxes_id:line.taxes_id,taxes:line.taxes}:{};
+            Object.assign(line, response.lines[0], {id: ident, _sequence: sequence}, manualPrice,manualTaxes);
             if (state.date_planned) line.date_planned = state.date_planned;
             changed(); renderLines();
         } catch (error) {showError(error);}
@@ -294,25 +293,26 @@ function startPurchaseWorkspace() {
                 const tax = document.createElement('div');
                 for (const selected of line.taxes || []) {
                     const chip = text('span', selected.label, 'apw-chip');
-                    if (!readonly) chip.append(button('×', () => {line.taxes_id = line.taxes_id.filter(id => id !== selected.id); line.taxes = line.taxes.filter(t => t.id !== selected.id); changed(); renderLines();}, 'apw-chip-remove'));
+                    if (!readonly) chip.append(button('×', () => {line._manualTaxes=true;line.taxes_id = line.taxes_id.filter(id => id !== selected.id); line.taxes = line.taxes.filter(t => t.id !== selected.id); changed(); renderLines();}, 'apw-chip-remove'));
                     tax.append(chip);
                 }
                 if (!readonly) tax.append(lookup('tax', null, item => {
-                    if (item && !line.taxes_id.includes(item.id)) {line.taxes_id.push(item.id); line.taxes.push(item); changed(); renderLines();}
+                    if (item && !line.taxes_id.includes(item.id)) {line._manualTaxes=true;line.taxes_id.push(item.id); line.taxes.push(item); changed(); renderLines();}
                 }, {}, {advance: () => moveGrid(index, 6, 1)}));
                 cell(tax, 'apw-tax-cell');
-                const amount = text('span', money(lineAmount(line))); amount.dataset.lineAmount = String(index);
+                const amount = text('span', lineAmount(line) === null ? '—' : money(lineAmount(line))); amount.dataset.lineAmount = String(index);
                 cell(amount, 'num');
             }
             const actions = document.createElement('div'); actions.className = 'apw-row-actions';
             if (!readonly) {
                 if (!line.display_type) actions.append(button('⋯', () => lineDetails(line), 'apw-line-more'));
                 actions.append(button('↑', () => moveLine(index, -1)), button('↓', () => moveLine(index, 1)),
-                    button('Remove', () => {state.lines.splice(index, 1); changed(); renderLines();}));
+                    button('×', () => {state.lines.splice(index, 1); changed(); renderLines();}));
             }
-            actions.querySelectorAll('button').forEach(node => {node.setAttribute('aria-label', node.textContent === '⋯' ? 'Line details' : node.textContent === 'Remove' ? 'Remove line' : node.textContent === '↑' ? 'Move line up' : 'Move line down'); node.title = node.getAttribute('aria-label');});
+            actions.querySelectorAll('button').forEach(node => {node.setAttribute('aria-label', node.textContent === '⋯' ? 'Line details' : node.textContent === '×' ? 'Remove line' : node.textContent === '↑' ? 'Move line up' : 'Move line down'); node.title = node.getAttribute('aria-label');});
             cell(actions); host.append(row);
         });
+        decorateLineGrid(host.closest('table'),{editor:'purchase',editable:!readonly,entrySelector:'[data-grid-entry]',onAppend:()=>{if(isEmptyDraftLine(state.lines.at(-1)))return false;moveGrid(state.lines.length-1,6,1);},onReorder:(from,to)=>{const [line]=state.lines.splice(from,1);if(line){state.lines.splice(to,0,line);renderLines();changed();}}});
         if (focus) {
             const row = host.querySelector('[data-grid-row="' + focus.row + '"]');
             const cell = row?.querySelector('[data-grid-column="' + focus.column + '"]');
@@ -364,9 +364,8 @@ function startPurchaseWorkspace() {
     function renderTotals() {
         const host = byId('apw-totals'); host.replaceChildren();
         const untaxed = state.lines.filter(l => !l.display_type).reduce((sum, l) => sum + l.product_qty * l.price_unit * (1 - (l.discount || 0) / 100), 0);
-        const empty = !state.lines.some(line => !line.display_type);
-        const values = totals && !totalsPending ? [totals.untaxed, totals.tax, totals.total] :
-            empty ? [0, 0, 0] : [untaxed, null, null];
+        const empty = !calculationRows(state.lines).some(line => !line.display_type);
+        const values = empty ? [0,0,0] : totals ? [totals.untaxed,totals.tax,totals.total] : [null,null,null];
         for (const [index, label] of ['Untaxed Amount', 'Taxes', 'Total'].entries()) {
             const row = text('p', label); row.append(text('strong', values[index] === null ?
                 (totals ? money(index === 1 ? totals.tax : totals.total) : 'Calculating…') : money(values[index]))); host.append(row);
@@ -376,14 +375,25 @@ function startPurchaseWorkspace() {
             (totals?.currency || labels.currency_id?.label || ''), 'apw-help'));
     }
     async function recalculate() {
+        if(pendingComputations)return;
+        const data=payload(), lines=data.lines;
+        const missing=[];
+        if(!state.partner_id)missing.push('vendor');
+        if(!state.currency_id)missing.push('currency');
+        if(!state.picking_type_id)missing.push('operation type');
+        if(lines.some(line=>!line.display_type&&(!line.product_id||!line.product_uom||!(line.product_qty>0))))missing.push('product, unit and positive quantity');
+        if(missing.length){totalsPending=false;renderTotals();status.textContent='Choose '+missing.join(', ')+' to calculate totals.';return;}
         const seq = ++previewSequence;
-        const response = await post('/preview', payload());
-        if (seq !== previewSequence) return;
-        totals = response; totalsPending = false;
-        response.lines.forEach((native, index) => {
-            if (state.lines[index]) {state.lines[index].price_subtotal = native.price_subtotal; state.lines[index].price_total = native.price_total; state.lines[index]._amountKey = amountKey(state.lines[index]);}
-        });
-        renderLines(); renderTotals();
+        totalsPending=true;renderTotals();
+        try {
+            const response = await post('/preview', data);
+            if (seq !== previewSequence) return;
+            totals = response; totalsPending = false;status.textContent='';clearError();
+            response.lines.forEach((native, index) => {
+                const row=lines[index];if(row&&state.lines.includes(row)){row.price_subtotal=native.price_subtotal;row.price_total=native.price_total;row._amountKey=amountKey(row);}
+            });
+            renderLines(); renderTotals();
+        } catch(error) {if(seq===previewSequence){totalsPending=false;renderTotals();throw error;}}
     }
     function modal(title) {
         const dialog = document.createElement('dialog'); dialog.className = 'apw-dialog';
@@ -430,7 +440,7 @@ function startPurchaseWorkspace() {
                 }));
                 const percent = input(r.pct, 'number', v => {r.pct = Number(v);}); percent.min = '0'; percent.max = '100'; percent.setAttribute('aria-label', 'Allocation percentage');
                 row.append(accounts, percent, text('span', '%'));
-                if (!readonly) row.append(button('Remove', () => {rows.splice(i, 1); draw();}));
+                if (!readonly) row.append(button('×', () => {rows.splice(i, 1); draw();}));
                 table.append(row);
             });
         }
@@ -564,6 +574,8 @@ function startPurchaseWorkspace() {
             if (action === 'product') {await productDialog(); return;}
             busy = true; root.classList.add('apw-busy'); status.textContent = 'Working…';
             if (action === 'save' || action === 'submit') {
+                if(!state.partner_id)throw new Error('Choose a vendor from the search results before saving.');
+                if(!state.currency_id)throw new Error('Choose a currency before saving.');
                 if (pendingComputations) throw new Error('Wait for product and vendor defaults to finish loading, then save.');
                 const result = await post('/save', {...payload(), submit: action === 'submit'});
                 dirty = false; window.location.assign(result.url);
@@ -576,12 +588,12 @@ function startPurchaseWorkspace() {
             else if (action === 'recalculate') await recalculate();
             else await decision(action);
         } catch (error) {showError(error);}
-        finally {busy = false; root.classList.remove('apw-busy'); status.textContent = '';}
+        finally {busy = false; root.classList.remove('apw-busy'); if(status.textContent==='Working…')status.textContent = '';}
     });
     byId('apw-notes').value = state.notes || '';
     byId('apw-notes').addEventListener('input', event => {state.notes = event.target.value; changed();});
     window.addEventListener('beforeunload', event => {if (dirty) {event.preventDefault(); event.returnValue = '';}});
-    state.lines.forEach(line => {line._manualPrice = Boolean(line.id);});
+    state.lines.forEach(line => {line._manualPrice = Boolean(line.id);line._manualTaxes=Boolean(line.id);});
     renderHeader(); renderLines(); renderTotals(); renderAttachments();
     if (!readonly && state.partner_id && state.lines.some(l => !l.display_type)) recalculate().catch(showError);
 }

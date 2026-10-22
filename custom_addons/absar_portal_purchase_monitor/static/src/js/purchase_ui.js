@@ -130,6 +130,10 @@ export function createPurchaseUI({root, post, companyId, readonly = false}) {
         box.addEventListener('keydown', event => {
             if (event.key === 'Escape') {event.preventDefault(); close(); return;}
             if (event.key === 'ArrowDown') {event.preventDefault(); options.querySelector('button')?.focus(); return;}
+            if (event.key === 'Tab' && !event.shiftKey && !options.hidden && !selectedItem) {
+                const first=options.querySelector('button[data-lookup-record="1"]');
+                if(first){event.preventDefault();keyboardAdvance=true;first.click();return;}
+            }
             if (event.key === 'Enter') {
                 event.preventDefault();
                 if (selectedItem && box.value === selectedItem.label) {close(); actions.advance?.();}

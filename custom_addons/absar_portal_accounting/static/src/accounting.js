@@ -1,4 +1,5 @@
 /** @odoo-module **/
+import { calculationRows, isEmptyDraftLine, decorateLineGrid } from "./line_grid";
 import { createPurchaseUI } from "./purchase_ui";
 import { openAnalyticDistribution } from "./analytic_editor";
 (function () {
@@ -16,7 +17,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
         function drawLineAmounts() {
             for(const node of root.querySelectorAll('[data-line-amount]')) {
                 const row=state.lines[Number(node.getAttribute('data-line-amount'))];
-                node.textContent=row && row._amountKey===lineKey(row)?money(row.subtotal):(previewError?'—':'Calculating…');
+                node.textContent=row && Number.isFinite(Number(row.subtotal))?money(row.subtotal):'—';
             }
         }
         function el(tag, attrs = {}, children = []) {
@@ -30,7 +31,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
             for (const child of children) if (child !== undefined && child !== null) node.append(child);
             return node;
         }
-        let status, previewError='', vendorSequence=0, closePicker, restoringFocus=false;
+        let status, previewPending=false, previewError='', vendorSequence=0, closePicker, restoringFocus=false;
         if (typeof window !== 'undefined' && window.addEventListener) {
             window.addEventListener('resize',()=>closePicker?.());
             window.addEventListener('scroll',event=>{if(!event.target.closest?.('.aca-options'))closePicker?.();},true);
@@ -235,33 +236,37 @@ import { openAnalyticDistribution } from "./analytic_editor";
             control.setAttribute('aria-label','Analytic distribution');return control;
         }
         function schedulePreview() {
-            clearTimeout(previewTimer);
-            previewTimer = setTimeout(preview, 650);
+            clearTimeout(previewTimer);previewPending=true;drawTotals();
+            previewTimer = setTimeout(preview, 250);
         }
         async function preview() {
             if (!state.editable || !isMove() || busy) return;
+            const lines=calculationRows(state.lines);
+            if(!lines.length){previewPending=false;previewError='';state.untaxed=0;state.tax=0;state.total=0;state.journal_items=[];drawLineAmounts();drawTotals();return;}
             const missing=[];
             if(!state.journal_id)missing.push('journal');
             if(isBill()&&!state.partner_id)missing.push('vendor');
-            if(state.lines.some(row=>!['line_section','line_note'].includes(row.display_type)&&!row.account_id))missing.push('line account');
-            if(missing.length||!state.lines.length){previewError=missing.length?'Choose '+missing.join(', ')+' to calculate totals.':'Add a line to calculate totals.';drawLineAmounts();drawTotals();say(previewError);return;}
+            if(lines.some(row=>!['line_section','line_note'].includes(row.display_type)&&!row.account_id))missing.push('line account');
+            if(missing.length){previewPending=false;previewError=missing.length?'Choose '+missing.join(', ')+' to calculate totals.':'Add a line to calculate totals.';drawLineAmounts();drawTotals();say(previewError);return;}
             previewError='';
             const seq = revision;
             const totals = root.querySelector('[data-totals]');
             if (totals) totals.dataset.pending = 'true';
             try {
-                const result = await api('preview', state);
+                const result = await api('preview', {...state,lines});
                 if (seq !== revision) return;
-                previewError='';state.untaxed = result.untaxed; state.tax = result.tax; state.total = result.total;
-                state.currency_name=result.currency;
-                (result.line_amounts||[]).forEach((value,index)=>{if(state.lines[index]){state.lines[index].subtotal=value;state.lines[index]._amountKey=lineKey(state.lines[index]);}});
+                previewPending=false;previewError='';state.untaxed = result.untaxed; state.tax = result.tax; state.total = result.total;
+                state.currency_name=result.currency;if(result.journal_items)state.journal_items=result.journal_items;
+                const journalHost=root.querySelector('[data-journal-items]');if(journalHost)journalHost.replaceChildren(journalItemsTable().querySelector('table'));
+                (result.line_amounts||[]).forEach((value,index)=>{if(lines[index]&&state.lines.includes(lines[index])){lines[index].subtotal=value;lines[index]._amountKey=lineKey(lines[index]);}});
                 drawLineAmounts();drawTotals(); say('Totals updated.');
-            } catch (error) {if (seq === revision) {previewError=error.message;drawLineAmounts();drawTotals();say('Totals unavailable: '+error.message,true);}}
+            } catch (error) {if (seq === revision) {previewPending=false;previewError=error.message;drawLineAmounts();drawTotals();say('Totals unavailable: '+error.message,true);}}
         }
         function drawTotals() {
             const node = root.querySelector('[data-totals]'); if (!node) return;
-            node.replaceChildren(); node.dataset.pending = 'false';
-            if(previewError){node.append(el('p',{class:'aca-mini',text:previewError}));return;}
+            node.replaceChildren(); node.dataset.pending = String(previewPending);
+            if(previewError)node.append(el('p',{class:'aca-mini',text:previewError}));
+            else if(previewPending)node.append(el('p',{class:'aca-mini',text:'Updating totals… Last calculated amounts remain visible.'}));
             if (state.kind === 'journals') {
                 const debit = state.lines.reduce((n, l) => n + Number(l.debit || 0), 0);
                 const credit = state.lines.reduce((n, l) => n + Number(l.credit || 0), 0);
@@ -273,6 +278,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
         async function run(operation, payload) {
             if (busy) return;
             if(operation==='save'&&payload.submit&&isBill()&&!payload.invoice_date){say('Set the Bill Date before submitting for approval.',true);return;}
+            if(operation==='save'&&isMove())payload={...payload,lines:calculationRows(payload.lines||[])};
             busy = true; clearTimeout(previewTimer); root.querySelectorAll('button').forEach(b => b.disabled = true); say('Working…');
             try {
                 const result = await api(operation, payload);
@@ -420,7 +426,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
             const current=gridControl(row,column),index=cells.indexOf(current);
             if(index<0)return;
             let next=cells[index+direction];
-            if(!next&&direction>0&&state.editable&&state.lines.length<200){
+            if(!next&&direction>0&&state.editable&&state.lines.length<200&&!isEmptyDraftLine(state.lines.at(-1))){
                 state.lines.push(blankLine());revision++;render();
                 next=gridControl(state.lines.length-1,0);
             }
@@ -505,7 +511,9 @@ import { openAnalyticDistribution } from "./analytic_editor";
                 }else{
                     if(!journal){const product=el('div',{class:'aca-product-cell',title:row.name||''},[picker('product',{id:row.product_id,name:row.product_name||row.name},selected=>selectProduct(row,selected))]);
                         if(row.product_id){const open=button('↗',()=>productForm(row.product_id,'',selected=>selectProduct(row,selected)));
-                            open.setAttribute('aria-label','Open product '+(index+1));open.setAttribute('title','Open product');product.append(open);}td(product,'desc');}
+                            open.setAttribute('aria-label','Open product '+(index+1));open.setAttribute('title','Open product');product.append(open);}
+                        const description=input('name','textarea',row);description.className='aca-line-description';description.rows=1;description.setAttribute('aria-label','Line description');
+                        td(el('div',{class:'aca-product-description'},[product,description]),'desc');}
                     td(picker('account',{id:row.account_id,name:row.account_name},selected=>{
                         row.account_id=selected.id;row.account_name=selected.name;revision++;render();schedulePreview();}),'account');
                     if(journal){
@@ -521,25 +529,25 @@ import { openAnalyticDistribution } from "./analytic_editor";
                         td(input('quantity','number',row));
                         for(const key of ['price_unit','discount'])td(input(key,'number',row));
                         td(lineTags(row),'aca-tax-cell');
-                        td(el('span',{'data-line-amount':index,text:row._amountKey===lineKey(row)?money(row.subtotal):(previewError?'—':'Calculating…')}),'aca-money',false);
+                        td(el('span',{'data-line-amount':index,text:Number.isFinite(Number(row.subtotal))?money(row.subtotal):'—'}),'aca-money',false);
                         td(el('span',{text:state.company_currency_name||'',title:'Company currency'}),'aca-company-currency',false);
                     }
                 }
                 const controls=el('div',{class:'aca-row-actions'});
                 controls.append(button('⋯',()=>lineDetails(row,journal)));
-                if(state.editable)controls.append(button('↑',()=>{if(index)[state.lines[index-1],state.lines[index]]=[state.lines[index],state.lines[index-1]];revision++;render();}),
-                    button('↓',()=>{if(index<state.lines.length-1)[state.lines[index+1],state.lines[index]]=[state.lines[index],state.lines[index+1]];revision++;render();}),
+                if(state.editable)controls.append(button('↑',()=>{if(index)[state.lines[index-1],state.lines[index]]=[state.lines[index],state.lines[index-1]];revision++;render();schedulePreview();}),
+                    button('↓',()=>{if(index<state.lines.length-1)[state.lines[index+1],state.lines[index]]=[state.lines[index],state.lines[index+1]];revision++;render();schedulePreview();}),
                     button('×',()=>{state.lines.splice(index,1);revision++;render();schedulePreview();}));
                 for(const control of controls.children){const title=(control.textContent==='↑'?'Move line up':control.textContent==='↓'?'Move line down':control.textContent==='×'?'Remove line':'Line details')+' '+(index+1);control.setAttribute('aria-label',title);control.setAttribute('title',title);}
                 td(controls,'aca-line-tools',false);body.append(tr);
             });
             table.addEventListener('keydown',event=>{
-                if(event.key!=='Enter'||event.isComposing||event.target.tagName==='TEXTAREA')return;
-                const control=event.target.closest('[data-grid-entry]');if(!control)return;
+                if(event.key!=='Enter'||event.defaultPrevented||event.isComposing||(event.ctrlKey&&event.target.tagName==='TEXTAREA'))return;
+                const control=event.target.closest('[data-grid-entry],.aca-line-description');if(!control)return;
                 const cell=control.closest('[data-grid-column]'),row=control.closest('[data-grid-row]');
                 event.preventDefault();moveGrid(Number(row.dataset.gridRow),Number(cell.dataset.gridColumn),event.shiftKey?-1:1);
             });
-            table.append(body);wrap.append(table);return wrap;
+            table.append(body);decorateLineGrid(table,{editor:journal?'journal':'invoice',editable:state.editable&&!busy,entrySelector:'[data-grid-entry]',onAppend:()=>{if(isEmptyDraftLine(state.lines.at(-1)))return false;moveGrid(state.lines.length-1,journal?7:6,1);},onReorder:(from,to)=>{const [line]=state.lines.splice(from,1);if(line){state.lines.splice(to,0,line);revision++;render();schedulePreview();}}});wrap.append(table);return wrap;
         }
         function lineDetails(row,journal) {
             const backdrop=el('div',{class:'aca-dialog-backdrop'}),dialog=el('div',{class:'aca aca-dialog',role:'dialog','aria-modal':'true','aria-label':'Line details'});
@@ -560,7 +568,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
                     tr.append(el('td',{class:['debit','credit'].includes(key)?'aca-money':key==='analytic'?'aca-analytic-cell':'',text:text||''}));
                 body.append(tr);
             }
-            table.append(body);return el('div',{class:'aca-table-wrap'},[table]);
+            table.append(body);decorateLineGrid(table,{editor:'journal-preview',editable:false});return el('div',{class:'aca-table-wrap','data-journal-items':'true'},[table]);
         }
         function linksPanel() {
             const box = el('div'), incoming = ['receipts','planned-receipts'].includes(state.kind);
@@ -601,7 +609,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
         }
         function render() {
             const active=document.activeElement, cell=active?.closest?.('[data-grid-column]'), row=active?.closest?.('[data-grid-row]');
-            const focus=cell&&row?[Number(row.dataset.gridRow),Number(cell.dataset.gridColumn),active.selectionStart,active.selectionEnd]:null;
+            const focus=cell&&row?[Number(row.dataset.gridRow),Number(cell.dataset.gridColumn),active.selectionStart,active.selectionEnd,active.classList?.contains('aca-line-description')]:null;
             closePicker?.();closePicker=null;
             state.selections ||= {};state.allocations ||= [];state.destinations ||= [];state.lines ||= [];
             root.replaceChildren();
@@ -627,7 +635,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
                 }
                 panel.append(el('div',{class:'aca-totals','data-totals':'true'}));
             } else if(tab==='journal') {
-                panel.append(el('p',{class:'aca-mini',text:'Journal items from the last saved draft. Save after editing to refresh them.'}));
+                panel.append(el('p',{class:'aca-mini',text:'Journal items reflect the latest successful calculation.'}));
                 panel.append(journalItemsTable());
             } else if(tab==='history') {
                 for(const item of state.history||[])panel.append(el('article',{class:'aca-history'},[el('strong',{text:item.author}),el('time',{text:item.date}),el('p',{text:item.body})]));
@@ -636,8 +644,8 @@ import { openAnalyticDistribution } from "./analytic_editor";
             else if(tab==='other')panel.append(label(isMove()?'Terms and Conditions':'Notes',input(isMove()?'narration':'description','textarea')));
             else panel.append(attachments());
             surface.append(panel);root.append(surface);drawTotals();
-            if(focus){const node=gridControl(focus[0],focus[1]);if(node){restoringFocus=true;node.focus();restoringFocus=false;
-                if(typeof focus[2]==='number'&&['text','search'].includes(node.type))node.setSelectionRange?.(focus[2],focus[3]);}}
+            if(focus){const node=focus[4]?root.querySelector('[data-grid-row="'+focus[0]+'"] .aca-line-description'):gridControl(focus[0],focus[1]);if(node){restoringFocus=true;node.focus();restoringFocus=false;
+                if(typeof focus[2]==='number'&&(['text','search'].includes(node.type)||node.tagName==='TEXTAREA'))node.setSelectionRange?.(focus[2],focus[3]);}}
 
         }
         state.payment_method ||= 'cash';state.receipt_method ||= 'cash';state.transaction_type ||= state.kind==='planned-receipts'?'customer':'supplier';state.priority ||= '1';state.funding_status ||= 'funded';

@@ -846,7 +846,12 @@ class PortalAccountingService(models.AbstractModel):
                     tracking_disable=True, mail_create_nolog=True, mail_create_nosubscribe=True).create(vals)
                 result = {'untaxed': record.amount_untaxed, 'tax': record.amount_tax,
                           'total': record.amount_total, 'currency': record.currency_id.name,
-                          'line_amounts': record.invoice_line_ids.mapped('price_subtotal') if kind != 'journals' else []}
+                          'line_amounts': record.invoice_line_ids.mapped('price_subtotal') if kind != 'journals' else [],
+                          'journal_items': [{'account': l.account_id.display_name, 'partner': l.partner_id.display_name,
+                                             'name': l.name or '', 'debit': l.debit, 'credit': l.credit,
+                                             'analytic_distribution': l.analytic_distribution or {},
+                                             'tax_names': [{'id': t.id, 'name': t.name} for t in l.tax_ids],
+                                             'grid_names': [{'id': t.id, 'name': t.display_name} for t in l.tax_tag_ids]} for l in record.line_ids]}
                 raise PreviewRollback()
         except PreviewRollback:
             pass

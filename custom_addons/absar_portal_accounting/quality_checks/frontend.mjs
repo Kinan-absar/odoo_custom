@@ -2,9 +2,9 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const source=fs.readFileSync(new URL('../static/src/accounting.js', import.meta.url),'utf8').replace(/^import .*$/gm,'');
-const shared=['purchase_ui.js','analytic_editor.js'].map(name=>fs.readFileSync(new URL('../static/src/'+name,import.meta.url),'utf8').replace(/^export /gm,'')).join('\n');
+const shared=['line_grid.js','purchase_ui.js','analytic_editor.js'].map(name=>fs.readFileSync(new URL('../static/src/'+name,import.meta.url),'utf8').replace(/^export /gm,'')).join('\n');
 class Element {
-    constructor(tag){this.tagName=tag;this.children=[];this.handlers={};this.dataset={};this.disabled=false;this.isConnected=true;this.value='';this.style={};}
+    constructor(tag){this.tagName=tag;this.children=[];this.handlers={};this.dataset={};this.disabled=false;this.isConnected=true;this.value='';this.style={};this.classList={add(){}};}
     append(...children){this.children.push(...children);}
     replaceChildren(...children){this.children=children;}
     addEventListener(name,fn){this.handlers[name]=fn;}

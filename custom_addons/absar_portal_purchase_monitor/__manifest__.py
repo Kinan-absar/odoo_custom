@@ -1,5 +1,5 @@
 {'name': 'ABSAR Portal Purchase Workspace',
- 'version': '18.0.1.6.9',
+ 'version': '18.0.1.6.10',
  'category': 'Purchases',
  'summary': 'Dedicated employee portal purchasing with controlled RFQ, product '
             'and MR workflows',
@@ -19,11 +19,11 @@
           'views/portal_purchase_prepare.xml',
           'views/portal_purchase_approval_list.xml',
           'views/portal_workspace_pages.xml'],
- 'assets': {'web.assets_frontend': ['absar_portal_purchase_monitor/static/src/record_cards.css', 'absar_portal_purchase_monitor/static/src/record_rows.js', 'absar_portal_purchase_monitor/static/src/css/purchase_monitor.css',
+ 'assets': {'web.assets_frontend': ['absar_portal_purchase_monitor/static/src/js/line_grid.js', 'absar_portal_purchase_monitor/static/src/record_cards.css', 'absar_portal_purchase_monitor/static/src/record_rows.js', 'absar_portal_purchase_monitor/static/src/css/purchase_monitor.css',
                                     'absar_portal_purchase_monitor/static/src/js/purchase_ui.js',
         'absar_portal_purchase_monitor/static/src/js/purchase_product_form.js',
         'absar_portal_purchase_monitor/static/src/js/purchase_receipt.js',
         'absar_portal_purchase_monitor/static/src/js/purchase_workspace.js',
-                                    'absar_portal_purchase_monitor/static/src/js/purchase_directory.js', 'absar_portal_purchase_monitor/static/src/mobile_cards.css']},
+                                    'absar_portal_purchase_monitor/static/src/js/purchase_directory.js', 'absar_portal_purchase_monitor/static/src/mobile_cards.css', 'absar_portal_purchase_monitor/static/src/css/line_grid.css']},
  'installable': True,
  'application': False}

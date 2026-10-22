@@ -1,0 +1,23 @@
+/* Shared compact editable-list presentation. Scoped to the three workspaces. */
+.absar-document-lines{width:100%;min-width:1120px;table-layout:fixed;border-collapse:collapse;font-size:13px;}
+.absar-document-lines th{position:relative;padding:9px 10px!important;background:#f4f7f8!important;color:#243e4b;font-weight:650;font-size:12px;text-align:left;border-bottom:1px solid #d8e4e7;}
+.absar-document-lines td{padding:4px 8px!important;vertical-align:top!important;border:1px solid #e7edef;min-width:0!important;max-width:none!important;}
+.absar-document-lines td:first-child{width:27%;}.absar-document-lines th:first-child{width:27%;}
+.absar-document-lines th:nth-child(2){width:15%;}.absar-document-lines th:last-child{width:100px;}
+.absar-document-lines input,.absar-document-lines select,.absar-document-lines textarea{width:100%!important;min-width:0!important;min-height:30px!important;height:30px;padding:4px 5px!important;font:inherit!important;border:1px solid transparent!important;border-radius:3px!important;background:transparent!important;box-shadow:none!important;}
+.absar-document-lines input[type=number]{text-align:right;font-variant-numeric:tabular-nums;}
+.absar-document-lines textarea{height:auto;min-height:24px!important;line-height:1.35!important;resize:vertical;}
+.absar-document-lines tr:focus-within{background:#f0f8f7;}.absar-document-lines input:focus,.absar-document-lines textarea:focus{border-color:#087f83!important;background:#fff!important;outline:0!important;}
+.absar-document-lines .apw-lookup{position:relative;min-width:0;}.absar-document-lines .apw-lookup>input{padding-right:29px!important;}
+.absar-document-lines .apw-open-product{position:absolute;right:2px;top:2px;border:0;background:transparent;color:#087f83;padding:2px 4px;min-height:26px;}
+.absar-document-lines .aps-sales-analytic,.absar-document-lines .aca-analytic-control,.absar-document-lines .apw-analytic{background:transparent!important;color:#087f83!important;border:0!important;padding:5px!important;font-size:12px!important;max-width:100%;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.absar-document-lines .apw-tax-cell>div,.absar-document-lines .aps-sales-taxes,.absar-document-lines .aca-line-tags{display:flex;flex-wrap:wrap;align-items:center;gap:2px;}
+.absar-document-lines .apw-tax-cell .apw-lookup,.absar-document-lines .aps-tax-add,.absar-document-lines .aca-tag-add{width:32px!important;min-width:32px!important;flex:0 0 32px;order:2;}
+.absar-document-lines .apw-tax-cell .apw-lookup input,.absar-document-lines .aps-tax-add input{padding:3px!important;}
+.absar-document-lines .apw-chip,.absar-document-lines .aca-pill{font-size:11px;min-height:23px;padding:2px 5px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+.absar-document-lines .apw-row-actions,.absar-document-lines .aps-sales-tools,.absar-document-lines .aca-row-actions{display:flex;align-items:center;gap:2px;flex-wrap:nowrap;opacity:.4;}
+.absar-document-lines tr:hover .apw-row-actions,.absar-document-lines tr:focus-within .apw-row-actions,.absar-document-lines tr:hover .aps-sales-tools,.absar-document-lines tr:focus-within .aps-sales-tools,.absar-document-lines tr:hover .aca-row-actions,.absar-document-lines tr:focus-within .aca-row-actions{opacity:1;}
+.absar-document-lines .apw-row-actions button,.absar-document-lines .aps-sales-tools button,.absar-document-lines .aca-row-actions button{border:0;background:transparent;padding:3px 4px;min-height:26px;font-size:12px;}
+.absar-row-grip{cursor:grab;color:#80929b;padding:3px;user-select:none;}
+.absar-column-resize{position:absolute;top:0;right:0;width:7px;height:100%;cursor:col-resize;touch-action:none;}.absar-column-resize:hover{background:#087f8340;}
+.absar-document-lines .line_section,.absar-document-lines .apw-section,.absar-document-lines .aca-section{background:#eff6f6;font-weight:650;}.absar-document-lines .line_note{font-style:italic;}

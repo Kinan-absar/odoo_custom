@@ -58,12 +58,13 @@ let resolveSearch;
 const deferred=createPurchaseUI({root,companyId:7,post:()=>new Promise(r=>{resolveSearch=r;})});
 const pending=deferred.lookup('product',null,()=>{});root.append(pending);pending.querySelector('input').focus();pending.dispatchEvent({type:'apw-dispose'});resolveSearch({items:[{id:1,label:'Stale'}]});await Promise.resolve();await Promise.resolve();assert(pending.querySelector('.apw-options').hidden);
 const source=fs.readFileSync(path('purchase_workspace.js'),'utf8');
-const host=new Node('tbody');root.append(host);const state={lines:[{id:1,product_id:9,product_label:'Test',product_qty:2,price_unit:33,discount:0,product_uom:1,uom_label:'Unit',taxes:[],taxes_id:[],name:'Keep description',analytic_distribution:{}}]};
+const host=new Node('tbody'),gridTable=new Node('table');gridTable.append(host);root.append(gridTable);const state={lines:[{id:1,product_id:9,product_label:'Test',product_qty:2,price_unit:33,discount:0,product_uom:1,uom_label:'Unit',taxes:[],taxes_id:[],name:'Keep description',analytic_distribution:{}}]};
 const simpleLookup=()=>{const div=new Node('div');div.className='apw-lookup';div.append(new Node('input'));return div;};
 const ctx=vm.createContext({document,window,Event:class{constructor(type){this.type=type;}},state,readonly:false,
  byId:()=>host,lookup:simpleLookup,productForm(){},money:v=>String(v),lineAmount:l=>l.product_qty*l.price_unit,
  text:(t,v,c='')=>{const n=new Node(t);n.textContent=v;n.className=c;return n;},changed(){},lineDetails(){},
  analyticDialog(){},defaultsFor(){},reprice(){},selectLineProduct(){},moveLine(){}});
+vm.runInContext(fs.readFileSync(path('line_grid.js'),'utf8').replace(/^export /gm,''),ctx);
 for(const [start,end] of [['    function input(','    function button('],['    function button(','    function lookup('],['    function renderLines()','    byId(\'apw-lines\').addEventListener']])vm.runInContext(source.slice(source.indexOf(start),source.indexOf(end)),ctx);
 vm.runInContext('this.renderLines=renderLines;this.moveGrid=moveGrid;',ctx);ctx.renderLines();
 assert.equal(host.children.length,1);assert.equal(host.querySelectorAll('[data-grid-entry]').length,7);assert(!host.textContent.includes('Expense Account'));

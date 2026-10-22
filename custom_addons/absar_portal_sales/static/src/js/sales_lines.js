@@ -1,11 +1,12 @@
 /** @odoo-module **/
+import { calculationRows, isEmptyDraftLine, decorateLineGrid } from './line_grid';
 import { createPurchaseUI } from './purchase_ui';
 import { openAnalyticDistribution } from './analytic_editor';
 
 export function mountSalesLines(root) {
     root.classList?.add('absar-purchase-controls');
     let state=JSON.parse(root.dataset.boot),revision=0,busy=false,dirty=false,timer,restoring=false,error='',pendingComputations=0,headerSequence=0;
-    state.lines.forEach(line=>{line._manualPrice=Boolean(line.id);line._amountKey=amountKey(line);});
+    state.lines.forEach(line=>{line._manualPrice=Boolean(line.id);line._manualTaxes=Boolean(line.id);line._amountKey=amountKey(line);});
     const csrf=root.dataset.csrf;
     const surface=document.createElement('div');root.replaceChildren(surface);
     const money=v=>Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -20,17 +21,18 @@ export function mountSalesLines(root) {
     const {text,button,lookup,modal}=ui;
     const control=(value,type,change)=>{const node=ui.input(value,type,v=>{change(v);changed();});node.disabled=!state.editable||busy;return node;};
     function amountKey(line){return JSON.stringify([line.quantity,line.price_unit,line.discount,line.taxes_id,line.uom_id]);}
-    function lineAmount(line){return line._amountKey===amountKey(line)?line.subtotal:Number(line.quantity||0)*Number(line.price_unit||0)*(1-Number(line.discount||0)/100);}
+    function lineAmount(line){return line && !line.display_type && Number.isFinite(Number(line.subtotal)) ? Number(line.subtotal) : null;}
     function blank(){return {id:0,name:'',product_id:0,quantity:1,price_unit:0,discount:0,taxes_id:[],taxes:[],analytic_distribution:{}};}
-    function changed(){const review=document.querySelector('[data-aps-submit-review]');if(review)review.disabled=true;dirty=true;revision++;error='';state.lines.forEach(l=>{l._pending=true;});drawTotals();clearTimeout(timer);timer=setTimeout(preview,400);}
+    function changed(){const review=document.querySelector('[data-aps-submit-review]');if(review)review.disabled=true;dirty=true;revision++;error='';state.lines.forEach(l=>{l._pending=true;});drawTotals();clearTimeout(timer);timer=setTimeout(preview,250);}
     function feedback(message){error=message;const node=root.querySelector('[data-sales-status]');if(node)node.textContent=message;drawTotals();}
     async function preview(){
         const seq=revision;
         if(!state.editable||busy||pendingComputations)return;
-        if(state.lines.some(l=>!l.display_type&&(!l.name||!l.uom_id||(!l.id&&!l.product_id)))){feedback('Choose a product and unit on each line to calculate totals.');return;}
-        try{const amounts=await post('/preview',{lines:state.lines});if(seq!==revision)return;
+        const lines=calculationRows(state.lines);
+        if(lines.some(l=>!l.display_type&&(!l.name||!l.uom_id||(!l.id&&!l.product_id)))){feedback('Choose a product and unit on each line to calculate totals.');return;}
+        try{const amounts=await post('/preview',{lines});if(seq!==revision)return;
             Object.assign(state,{untaxed:amounts.untaxed,tax:amounts.tax,total:amounts.total});
-            state.lines.forEach((line,i)=>{line.subtotal=amounts.line_amounts[i]||0;line._amountKey=amountKey(line);line._pending=false;});drawTotals();feedback('');
+            lines.forEach((line,i)=>{line.subtotal=amounts.line_amounts[i]??0;line._amountKey=amountKey(line);});state.lines.forEach(line=>{line._pending=false;});drawTotals();feedback('');
         }catch(e){if(seq===revision)feedback(e.message);}
     }
     function analyticName(line){return Object.entries(line.analytic_distribution||{}).map(([key,pct])=>key.split(',').map(id=>state.analytic_labels?.[id]?.label||id).join(' / ')+(Number(pct)===100?'':' ('+pct+'%)')).join(', ');}
@@ -49,15 +51,16 @@ export function mountSalesLines(root) {
     async function selectProduct(line,item){
         if(item?.product_updated&&line.product_id===item.id){for(const other of state.lines.filter(l=>l.product_id===item.id))other.product=item;changed();render();return;}
         const sequence=(line._selectionSequence||0)+1;line._selectionSequence=sequence;
-        line.product_id=item?.id||0;line.product=item||null;line._manualPrice=false;line.uom_id=0;line.uom=null;
+        line.product_id=item?.id||0;line.product=item||null;line._manualPrice=false;line._manualTaxes=false;line.uom_id=0;line.uom=null;
         if(!item){changed();return;}
         pendingComputations++;changed();
         try{const defaults=await post('/defaults',{product_id:item.id,quantity:line.quantity});
             if(line._selectionSequence!==sequence||!state.lines.includes(line))return;
             const keep={id:line.id,analytic_distribution:line.analytic_distribution,_selectionSequence:sequence,
-                ...(line._manualPrice?{price_unit:line.price_unit,discount:line.discount,_manualPrice:true}:{_manualPrice:false})};
+                ...(line._manualTaxes?{taxes_id:line.taxes_id,taxes:line.taxes}:{}),
+                ...(line._manualPrice?{price_unit:line.price_unit,discount:line.discount,subtotal:line.subtotal,_manualPrice:true}:{_manualPrice:false})};
             Object.assign(line,defaults,keep);changed();render();
-        }finally{pendingComputations--;if(!pendingComputations){clearTimeout(timer);timer=setTimeout(preview,400);}}
+        }finally{pendingComputations--;if(!pendingComputations){clearTimeout(timer);timer=setTimeout(preview,250);}}
     }
     async function reprice(line,selectedUnit=null,force=false){
         if(!line.product_id)return;
@@ -68,9 +71,9 @@ export function mountSalesLines(root) {
             line.uom_id=defaults.uom_id;line.uom=defaults.uom;
             if(!line.name)line.name=defaults.name;
             if(force||!line._manualPrice){line.price_unit=defaults.price_unit;line.discount=defaults.discount;}
-            line.taxes_id=defaults.taxes_id;line.taxes=defaults.taxes;changed();render();
+            if(force||!line._manualTaxes){line.taxes_id=defaults.taxes_id;line.taxes=defaults.taxes;}changed();render();
         }catch(e){feedback(e.message);}
-        finally{pendingComputations--;if(!pendingComputations){clearTimeout(timer);timer=setTimeout(preview,400);}}
+        finally{pendingComputations--;if(!pendingComputations){clearTimeout(timer);timer=setTimeout(preview,250);}}
     }
     async function selectUom(line,item){
         if(!item){line.uom_id=0;line.uom=null;changed();return;}
@@ -111,21 +114,21 @@ export function mountSalesLines(root) {
         view.foot.append(button('Done',()=>{view.dialog.close();render();}));
     }
     function tags(line,index){const box=text('div','','aps-sales-taxes');
-        if(state.editable){const add=lookup('tax',null,item=>{if(item&&!line.taxes_id.includes(item.id)){line.taxes_id.push(item.id);line.taxes.push(item);changed();render();}}, {},{advance:()=>moveGrid(index,6,1),onError:e=>feedback(e.message)});add.className+=' aps-tax-add';add.querySelector('input').placeholder='+';box.append(add);}
-        for(const tax of line.taxes||[]){const chip=text('span',tax.label,'apw-chip');if(state.editable)chip.append(button('×',()=>{line.taxes_id=line.taxes_id.filter(id=>id!==tax.id);line.taxes=line.taxes.filter(t=>t.id!==tax.id);changed();render();},'apw-chip-remove'));box.append(chip);}return box;
+        if(state.editable){const add=lookup('tax',null,item=>{if(item&&!line.taxes_id.includes(item.id)){line._manualTaxes=true;line.taxes_id.push(item.id);line.taxes.push(item);changed();render();}}, {},{advance:()=>moveGrid(index,6,1),onError:e=>feedback(e.message)});add.className+=' aps-tax-add';add.querySelector('input').placeholder='+';box.append(add);}
+        for(const tax of line.taxes||[]){const chip=text('span',tax.label,'apw-chip');if(state.editable)chip.append(button('×',()=>{line._manualTaxes=true;line.taxes_id=line.taxes_id.filter(id=>id!==tax.id);line.taxes=line.taxes.filter(t=>t.id!==tax.id);changed();render();},'apw-chip-remove'));box.append(chip);}return box;
     }
     function drawTotals(){
-        const pending=state.lines.some(l=>l._pending),empty=!state.lines.some(l=>!l.display_type);
+        const pending=!error&&state.lines.some(l=>l._pending&&!isEmptyDraftLine(l)),empty=!calculationRows(state.lines).some(l=>!l.display_type);
         const estimate=state.lines.filter(l=>!l.display_type).reduce((sum,l)=>sum+Number(l.quantity||0)*Number(l.price_unit||0)*(1-Number(l.discount||0)/100),0);
         const totals=root.querySelector('[data-sales-totals]');if(totals){totals.replaceChildren();
-            for(const [title,value] of [['Untaxed Amount',empty?0:pending?estimate:state.untaxed],['Taxes',empty?0:state.tax],['Total',empty?0:state.total]]){
+            for(const [title,value] of [['Untaxed Amount',empty?0:state.untaxed],['Taxes',empty?0:state.tax],['Total',empty?0:state.total]]){
                 const row=text('div','');row.append(text('span',title),text('strong',money(value)+' '+state.currency));totals.append(row);}
             totals.setAttribute('aria-busy',String(pending&&!empty));totals.append(text('small',pending&&!empty?'Updating totals… Previous tax/total remain visible until calculated.':'','apw-help'));}
-        root.querySelectorAll('[data-sales-amount]').forEach(node=>{const line=state.lines[Number(node.dataset.salesAmount)];node.textContent=money(lineAmount(line));});
+        root.querySelectorAll('[data-sales-amount]').forEach(node=>{const line=state.lines[Number(node.dataset.salesAmount)];if(line)node.textContent=lineAmount(line)===null?'—':money(lineAmount(line));});
     }
     async function save(){
         if(busy)return;if(pendingComputations){feedback('Wait for product defaults to finish loading, then save.');return;}busy=true;clearTimeout(timer);render();feedback('Saving…');
-        try{state=await post(state.order_id?'/save':'/create',{version:state.version,lines:state.lines});if(state.redirect){window.location.assign(state.redirect);return;}dirty=false;revision++;busy=false;render();state.lines.forEach(line=>{line._manualPrice=Boolean(line.id);line._amountKey=amountKey(line);});feedback('Draft saved.');}
+        try{state=await post(state.order_id?'/save':'/create',{version:state.version,lines:calculationRows(state.lines)});if(state.redirect){window.location.assign(state.redirect);return;}dirty=false;revision++;busy=false;state.lines.forEach(line=>{line._manualPrice=Boolean(line.id);line._manualTaxes=Boolean(line.id);line._amountKey=amountKey(line);});render();feedback('Draft saved.');}
         catch(e){busy=false;render();feedback(e.message);}
     }
     function render(){
@@ -135,7 +138,7 @@ export function mountSalesLines(root) {
         surface.replaceChildren();
         surface.append(text('div',error,'aps-sales-status'));surface.children[0].setAttribute('data-sales-status','true');surface.children[0].setAttribute('role','status');
         const wrap=text('div','','aps-sales-scroll'),table=text('table','','aps-sales-grid');
-        const head=text('thead',''),hr=text('tr','');for(const title of ['Product','Analytic Distribution','Quantity','UoM','Unit Price','Disc.%','Taxes','Amount',''])hr.append(text('th',title));head.append(hr);table.append(head);
+        const head=text('thead',''),hr=text('tr','');for(const title of ['Product / Description','Analytic Distribution','Quantity','UoM','Unit Price','Disc.%','Taxes','Amount',''])hr.append(text('th',title));head.append(hr);table.append(head);
         const body=text('tbody','');
         if(!state.lines.length){const empty=text('tr',''),cell=text('td','Add a product, section or note.','apw-empty');cell.colSpan=9;empty.append(cell);body.append(empty);}
         state.lines.forEach((line,index)=>{
@@ -151,9 +154,9 @@ export function mountSalesLines(root) {
                 const amount=text('span','');amount.setAttribute('data-sales-amount',index);td(amount,false).className='num';
             }
             const tools=text('div','','aps-sales-tools');tools.append(button('⋯',()=>details(line)));
-            if(state.editable)tools.append(button('↑',()=>moveLine(index,-1)),button('↓',()=>moveLine(index,1)),button('Remove',()=>{state.lines.splice(index,1);changed();render();}));td(tools,false);body.append(tr);
+            if(state.editable)tools.append(button('↑',()=>moveLine(index,-1)),button('↓',()=>moveLine(index,1)),button('×',()=>{state.lines.splice(index,1);render();changed();}));td(tools,false);body.append(tr);
         });
-        table.append(body);table.addEventListener('keydown',event=>{
+        table.append(body);decorateLineGrid(table,{editor:'sales',editable:state.editable&&!busy,entrySelector:'[data-sales-entry]',onAppend:()=>{if(isEmptyDraftLine(state.lines.at(-1)))return false;moveGrid(state.lines.length-1,6,1);},onReorder:(from,to)=>{const [line]=state.lines.splice(from,1);if(line){state.lines.splice(to,0,line);render();changed();}}});table.addEventListener('keydown',event=>{
             if(event.key!=='Enter'||event.defaultPrevented||event.isComposing||event.target.closest('.apw-options')||!state.editable)return;if(event.ctrlKey&&event.target.tagName==='TEXTAREA')return;const input=event.target.closest('[data-sales-entry], .aps-sales-description');if(!input)return;
             event.preventDefault();moveGrid(Number(input.closest('[data-sales-row]').dataset.salesRow),Number(input.closest('[data-sales-column]').dataset.salesColumn),event.shiftKey?-1:1);
         });wrap.append(table);surface.append(wrap);

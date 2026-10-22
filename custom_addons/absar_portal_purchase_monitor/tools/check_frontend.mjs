@@ -5,17 +5,18 @@ import assert from 'node:assert/strict';
 const source = fs.readFileSync(new URL('../static/src/js/purchase_workspace.js', import.meta.url), 'utf8');
 const state = {company_id: 1, currency_id: 2, lines: [{product_qty: 1, price_unit: 5000, discount: 0, taxes_id: [3], product_uom: 4, price_subtotal: 5000}]};
 const ctx = vm.createContext({state});
+vm.runInContext(fs.readFileSync(new URL('../static/src/js/line_grid.js',import.meta.url),'utf8').replace(/^export /gm,''),ctx);
 vm.runInContext(source.slice(source.indexOf('    const amountKey ='), source.indexOf('    const changed =')) + '\nthis.lineAmount=lineAmount; this.amountKey=amountKey;', ctx);
 const line = state.lines[0];
 assert.equal(ctx.lineAmount(line), 5000);
 line.product_qty = 2;
-assert.equal(ctx.lineAmount(line), 10000); // old cached 5000 must be ignored
+assert.equal(ctx.lineAmount(line), 5000); // preserve last native amount until the server resolves tax-inclusive prices
 line.discount = 10;
-assert.equal(ctx.lineAmount(line), 9000);
+assert.equal(ctx.lineAmount(line), 5000);
 line.price_subtotal = 7826.09; line._amountKey = ctx.amountKey(line);
 assert.equal(ctx.lineAmount(line), 7826.09); // preserve native included-tax result
 line.price_unit = 100;
-assert.equal(ctx.lineAmount(line), 180);
+assert.equal(ctx.lineAmount(line), 7826.09);
 
 class Element {
     constructor(tag) {this.tagName=tag; this.children=[]; this.handlers={}; this.dataset={};}
