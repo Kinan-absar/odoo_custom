@@ -8,6 +8,7 @@
         </xpath>
 
         <t t-call="web.layout">
+            <t t-set="eps_portal_compact_desktop" t-value="True"/>
 
             <!-- Marker consumed by portal_call_widget.js: only mounts the call
                  widget when a real logged-in portal user is viewing this layout,
@@ -1898,7 +1899,7 @@
                 });
             </script>
 
-        <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_compact_lists.css?v=18.0.1.20.112"/><link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_desktop_density.css?v=18.0.1.20.112"/></t>
+        <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_compact_lists.css?v=18.0.1.20.113"/></t>
         <script src="/employee_portal_suite/static/src/js/employee_portal_pwa.js?v=2045"/>
     </template>
 
@@ -1948,6 +1949,26 @@
     </template>
     <template id="employee_portal_pwa_web_head" inherit_id="web.layout" name="Employee Portal PWA Head">
         <xpath expr="//head" position="inside">
+            <!-- Inline before first paint; the flag is set only by the EPS shell. -->
+            <t t-if="eps_portal_compact_desktop">
+                <style data-eps-desktop-density="1">
+/* Default desktop portal density. Browser zoom remains under the user's control. */
+@media screen and (min-width:769px){
+    html{
+        zoom:.8;
+    }
+    /* Lookup scripts position these top-layer menus using viewport rectangles.
+       Cancel inherited zoom on the menus so their viewport coordinates stay valid. */
+    html :is(.apw-options[popover],.aca-options[popover]){
+        zoom:1.25;
+    }
+}
+@media print{
+    html{zoom:1}
+}
+
+                </style>
+            </t>
             <t t-if="request.httprequest.path.startswith('/my/employee')">
                 <link rel="manifest" href="/my/employee/manifest.webmanifest?v=45" crossorigin="use-credentials" data-employee-portal-pwa="1"/>
                 <meta name="theme-color" content="#0f766e" data-employee-portal-pwa="1"/>
