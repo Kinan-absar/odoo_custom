@@ -1899,8 +1899,8 @@
                 });
             </script>
 
-        <script src="/employee_portal_suite/static/src/js/material_chatter.js?v=18.0.1.20.116" defer="defer"/>
-        <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_compact_lists.css?v=18.0.1.20.116"/></t>
+        <script src="/employee_portal_suite/static/src/js/material_chatter.js?v=18.0.1.20.117" defer="defer"/>
+        <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_compact_lists.css?v=18.0.1.20.117"/></t>
         <script src="/employee_portal_suite/static/src/js/employee_portal_pwa.js?v=2045"/>
     </template>
 

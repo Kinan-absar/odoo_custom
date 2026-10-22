@@ -4,8 +4,8 @@
 <template id="employee_material_request_detail_page" name="Material Request Detail">
 <t t-call="employee_portal_suite.employee_portal_layout">
 
-<div class="container mt-3 employee-req-detail eps-mr-record-layout">
-    <div class="eps-mr-record-main"><div class="mb-4">
+<div class="container mt-3 employee-req-detail eps-mr-page">
+    <div class="eps-mr-record-layout"><div class="eps-mr-record-main"><div class="mb-4">
     <a href="/my/employee/material" class="app-back-btn">
         <i class="fa fa-arrow-left"/>
         <span>Back</span>
@@ -293,7 +293,7 @@
         </div>
     </div>
 
-    </div><t t-call="employee_portal_suite.portal_mr_chatter"><t t-set="mr_approval_view" t-value="False"/></t></div>
+    </div><div class="eps-mr-record-conversation"><t t-call="employee_portal_suite.portal_mr_chatter"><t t-set="mr_approval_view" t-value="False"/></t></div></div></div>
 
 
             <script>

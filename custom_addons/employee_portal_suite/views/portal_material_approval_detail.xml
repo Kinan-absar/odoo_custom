@@ -4,9 +4,9 @@
         <template id="portal_material_approval_detail" name="Material Approval Detail">
         <t t-call="employee_portal_suite.employee_portal_layout">
 
-        <div class="container mt-3 employee-req-detail eps-mr-record-layout">
+        <div class="container mt-3 employee-req-detail eps-mr-page">
 
-            <div class="eps-mr-record-main"><!-- ========================= -->
+            <div class="eps-mr-record-layout"><div class="eps-mr-record-main"><!-- ========================= -->
             <!-- BACK BUTTON -->
             <!-- ========================= -->
             <div class="mb-4">
@@ -651,7 +651,7 @@
 
                 </div>
             </div>
-</div><t t-call="employee_portal_suite.portal_mr_chatter"><t t-set="mr_approval_view" t-value="True"/></t></div>
+</div><div class="eps-mr-record-conversation"><t t-call="employee_portal_suite.portal_mr_chatter"><t t-set="mr_approval_view" t-value="True"/></t></div></div></div>
         
 
         <!-- TIMELINE CSS (ADDED) -->
