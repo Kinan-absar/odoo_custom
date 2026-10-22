@@ -95,6 +95,7 @@
 @media(max-width:768px){.eps-clarification-panel{padding:14px;}.eps-clarification-state{max-width:100%;}.eps-clarification-panel .btn{min-height:42px;}}
 
 /* MR form and one shared conversation, matching backend's side-by-side layout. */
+.eps-mr-record-header{display:flow-root;min-width:0;width:100%;}
 .ep-portal-main .eps-mr-record-layout{width:100%!important;max-width:none!important;display:grid;grid-template-columns:minmax(0,1fr) minmax(310px,360px);grid-template-areas:"form conversation";gap:22px;align-items:start;}
 .ep-portal-main .eps-mr-record-layout::before,.ep-portal-main .eps-mr-record-layout::after{content:none!important;display:none!important;}
 .eps-mr-record-main{grid-area:form;min-width:0;width:100%;}
