@@ -400,6 +400,7 @@ class MaterialRequest(models.Model):
 
     def write(self, vals):
         vals = dict(vals)
+        self._check_clarification_write(vals)
         if vals.get('state') in ('workflow', 'purchase', 'store', 'project_manager', 'director', 'ceo', 'approved'):
             self._check_delivery_date(vals)
         elif 'delivery_date' in vals or 'request_date' in vals:
@@ -413,21 +414,16 @@ class MaterialRequest(models.Model):
                 if len(self) == 1:
                     vals["work_location_id"] = location.id if location else False
 
-        if "needs_clarification" in vals:
-            for rec in self:
-
-                if not rec._can_toggle_clarification():
-                    raise UserError(_("You are not allowed to toggle clarification at this stage."))
-
-                # When turning ON → remember stage
-                if vals.get("needs_clarification"):
-                    vals["clarification_stage"] = rec.state
-
-                # When turning OFF → clear stage
-                else:
-                    vals["clarification_stage"] = False
-
         return super().write(vals)
+
+    def _write_clarification(self, values):
+        """Private transition helper; never accepts unrelated request edits."""
+        allowed = {'needs_clarification', 'clarification_stage', 'clarification_question',
+                   'clarification_reply', 'clarification_requested_by', 'clarification_requested_on',
+                   'clarification_replied_on', 'clarification_step_name'}
+        if set(values) - allowed:
+            raise UserError(_('Invalid clarification update.'))
+        return super(MaterialRequest, self).write(values)
 
     display_state = fields.Char(
         string="Display Status",
@@ -435,14 +431,14 @@ class MaterialRequest(models.Model):
         store=False
     )
 
-    @api.depends("state", "needs_clarification", "clarification_stage", "approval_status_label")
+    @api.depends("state", "needs_clarification", "clarification_stage", "approval_status_label", "clarification_step_name")
     def _compute_display_state(self):
         stage_labels = dict(self._fields['state'].selection)
 
         for rec in self:
             if rec.needs_clarification and rec.clarification_stage:
-                stage_name = stage_labels.get(rec.clarification_stage, "")
-                rec.display_state = f"🚩 Clarification — {stage_name}"
+                stage_name = rec.clarification_step_name or (rec.approval_status_label if rec.clarification_stage == "workflow" else stage_labels.get(rec.clarification_stage, ""))
+                rec.display_state = _("Awaiting requester reply — %s") % stage_name
             else:
                 rec.display_state = rec.approval_status_label
 
@@ -855,6 +851,8 @@ class MaterialRequest(models.Model):
         return True
 
     def _check_approval(self, required_state, required_group):
+        if self.needs_clarification:
+            raise UserError(_("Wait for the requester to reply before approving."))
         self.ensure_one()
 
        # State check

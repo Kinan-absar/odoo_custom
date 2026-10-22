@@ -81,3 +81,15 @@
     padding: .6rem 1.25rem;
     font-weight: 600;
 }
+
+/* Clarification is a conversation panel; it is independent of the approval status. */
+.eps-clarification-panel {padding:18px 20px;background:#fff;border:1px solid #e1e8eb;border-left:3px solid #087f83;border-radius:14px;box-shadow:0 2px 8px #16354705;}
+.eps-clarification-heading,.eps-clarification-heading>div {display:flex;align-items:center;gap:9px;}
+.eps-clarification-heading {justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.eps-clarification-icon {color:#087f83;background:#eaf6f4;border-radius:9px;padding:7px 9px;}
+.eps-clarification-state {font-size:12px;font-weight:600;color:#8a610b;background:#fff5d9;border-radius:20px;padding:5px 11px;}
+.eps-clarification-state.is-replied {color:#176b4b;background:#eaf6ef;}
+.eps-clarification-meta {color:#6b7784;font-size:12px;margin:10px 0;}
+.eps-clarification-message {white-space:pre-wrap;overflow-wrap:anywhere;color:#263544;margin:10px 0;font-size:14px;}
+.eps-clarification-reply,.eps-clarification-compose {background:#f5f9f9;border-radius:10px;padding:12px 14px;}
+@media(max-width:768px){.eps-clarification-panel{padding:14px;}.eps-clarification-state{max-width:100%;}.eps-clarification-panel .btn{min-height:42px;}}
