@@ -63,3 +63,12 @@
     border-bottom:2px solid #087f83!important;
 }
 }
+
+/* Reset legacy column positions after the Treasury ledger was split into columns. */
+.ep-portal-main .eps-ledger-scroll .ept-ledger-head > div{text-align:left!important}
+.ep-portal-main .eps-payment-ledger .ept-ledger-head > div:nth-child(8),
+.ep-portal-main .eps-payment-ledger .ept-ledger-head > div:nth-child(9),
+.ep-portal-main .eps-plan-ledger .ept-ledger-head > div:nth-child(7),
+.ep-portal-main .eps-plan-ledger .ept-ledger-head > div:nth-child(8),
+.ep-portal-main .eps-plan-ledger .ept-ledger-head > div:nth-child(9),
+.ep-portal-main .eps-plan-ledger .ept-ledger-head > div:nth-child(10){text-align:right!important}
