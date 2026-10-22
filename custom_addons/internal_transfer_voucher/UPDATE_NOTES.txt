@@ -1,0 +1,5 @@
+Internal Transfer Voucher 18.0.2.52.2
+CEO Approved Amount remains directly editable for Payment Execution Managers.
+Approve now retains a nonzero saved CEO Approved Amount, instead of replacing it with the forecast. Untouched zero defaults to forecast as before. Different amounts use the existing Adjusted decision and feed Amount to Pay / voucher creation.
+47 offline regression checks passed, including lower/higher approved amounts, untouched default and invalid negative amount. No live Odoo test performed.
+Upgrade Internal Transfer Voucher after installing this ZIP.

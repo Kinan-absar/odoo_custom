@@ -325,4 +325,27 @@ class Tests(unittest.TestCase):
         result=module.CashPlanReviewLine.action_apply_selected_from_list(ActionSet([self.rec]))
         self.assertTrue(self.rec.applied);self.assertEqual(result['params']['type'],'success');self.assertEqual(result['params']['next'],{'type':'ir.actions.act_window_close'})
 
+class ApprovalAmountTests(unittest.TestCase):
+    def approve(self, amount, forecast=100):
+        reviewer=Row(id=8)
+        line=Row(approved_amount=amount, forecast_amount=forecast, flow_type='out',
+                 run_id=Row(id=1), ceo_decision='pending', currency_id=Currency(),
+                 _check_group=lambda *args:None, _notify_weekly_plan_group=lambda *args:None)
+        selection=ActionSet([line]);selection.env=Row(user=reviewer)
+        line.action_ceo_decide=lambda decision, **kw: ceo_module.CashPlanLineCEO.action_ceo_decide(selection, decision, **kw)
+        ceo_module.CashPlanLineCEO.action_approve(selection)
+        ceo_module.CashPlanLineCEO._compute_execution_amount(selection)
+        return line
+    def test_lower_edited_amount_becomes_payment(self):
+        line=self.approve(65)
+        self.assertEqual((line.approved_amount,line.execution_amount,line.ceo_decision),(65,65,'adjusted'))
+    def test_higher_edited_amount_becomes_payment(self):
+        line=self.approve(150)
+        self.assertEqual((line.approved_amount,line.execution_amount,line.ceo_decision),(150,150,'adjusted'))
+    def test_untouched_amount_defaults_to_forecast(self):
+        line=self.approve(0)
+        self.assertEqual((line.approved_amount,line.execution_amount,line.ceo_decision),(100,100,'approved'))
+    def test_negative_amount_rejected(self):
+        with self.assertRaises(UserError):self.approve(-1)
+
 if __name__=='__main__':unittest.main(verbosity=2)

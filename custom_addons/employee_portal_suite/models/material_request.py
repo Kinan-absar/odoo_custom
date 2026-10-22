@@ -366,6 +366,12 @@ class MaterialRequest(models.Model):
         if self.state in ("draft", "approved", "rejected"):
             return False
 
+        # Configurable workflows keep state="workflow" throughout review.
+        # Use the active approval line, including its existing delegation rules.
+        if self.state == "workflow":
+            line = self.current_approval_line_id.sudo()
+            return bool(line and line.can_user_approve(user))
+
         # Project based stages
         if self.state == "store":
             return bool(

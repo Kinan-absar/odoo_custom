@@ -72,3 +72,12 @@
 .ep-portal-main .eps-plan-ledger .ept-ledger-head > div:nth-child(8),
 .ep-portal-main .eps-plan-ledger .ept-ledger-head > div:nth-child(9),
 .ep-portal-main .eps-plan-ledger .ept-ledger-head > div:nth-child(10){text-align:right!important}
+
+/* Approval forms: comfortable rounded actions on desktop and mobile. */
+.ep-portal-main form[action^="/my/employee/requests/"] .btn,
+.ep-portal-main form[action^="/my/employee/material/requests/"] .btn {
+    border-radius: 12px !important;
+    min-height: 40px;
+    padding: .6rem 1.25rem;
+    font-weight: 600;
+}

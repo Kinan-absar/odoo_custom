@@ -359,7 +359,9 @@ class CashPlanLineCEO(models.Model):
             )
             line.action_ceo_decide(
                 'approved',
-                approved_amount=line.forecast_amount,
+                # Submission leaves this field at zero until an amount is entered.
+                # Preserve a reviewer's saved amount; otherwise approve the forecast.
+                approved_amount=line.approved_amount or line.forecast_amount,
                 reviewer=self.env.user,
             )
         return True
