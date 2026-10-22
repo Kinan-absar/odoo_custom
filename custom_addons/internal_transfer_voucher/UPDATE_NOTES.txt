@@ -3,3 +3,8 @@ CEO Approved Amount remains directly editable for Payment Execution Managers.
 Approve now retains a nonzero saved CEO Approved Amount, instead of replacing it with the forecast. Untouched zero defaults to forecast as before. Different amounts use the existing Adjusted decision and feed Amount to Pay / voucher creation.
 47 offline regression checks passed, including lower/higher approved amounts, untouched default and invalid negative amount. No live Odoo test performed.
 Upgrade Internal Transfer Voucher after installing this ZIP.
+
+Internal Transfer Voucher 18.0.2.52.3
+Journal entries now show a clickable Payment Voucher or Receipt Voucher beneath Reference, using the existing voucher.move_id relation. Works for existing and newly posted vouchers. Reference text remains intact; unrelated journal entries/invoices show neither link. Lookup respects normal voucher access rights and record rules. No migration or posting/reconciliation changes.
+Validation: 47 existing offline regressions passed. Additional executed fixtures verified payment/receipt/unrelated-entry/invoice mapping, batched lookup and denied voucher access. Exact reference-field XPath verified against official Odoo 18 view; Python/XML syntax passed. No live Odoo upgrade/browser test performed.
+Upgrade Internal Transfer Voucher.
