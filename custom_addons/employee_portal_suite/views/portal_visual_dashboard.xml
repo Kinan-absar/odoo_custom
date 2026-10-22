@@ -2,7 +2,7 @@
 <odoo>
  <template id="visual_desktop_dashboard" name="Desktop My Work dashboard">
   <t t-set="vd" t-value="visual_dashboard"/>
-  <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_visual_dashboard.css?v=18.0.1.20.109"/>
+  <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_visual_dashboard.css?v=18.0.1.20.110"/>
   <section id="eps-visual-dashboard" aria-label="My Work Today">
    <header class="eps-v-heading"><div><p class="eps-v-eyebrow">YOUR WORKSPACE</p><h1>Good to see you, <t t-out="request.env.user.partner_id.name.split(' ')[0]"/>.</h1></div><p class="eps-v-date" t-out="vd['today']"/></header>
    <section class="eps-v-attention" aria-labelledby="eps-v-attention-title">

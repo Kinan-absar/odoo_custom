@@ -1,0 +1,14 @@
+/* Default desktop portal density. Browser zoom remains under the user's control. */
+@media screen and (min-width:769px){
+    html:has(.ep-portal-main){
+        zoom:.8;
+    }
+    /* Lookup scripts position these top-layer menus using viewport rectangles.
+       Cancel inherited zoom on the menus so their viewport coordinates stay valid. */
+    html:has(.ep-portal-main) :is(.apw-options[popover],.aca-options[popover]){
+        zoom:1.25;
+    }
+}
+@media print{
+    html:has(.ep-portal-main){zoom:1}
+}
