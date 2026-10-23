@@ -68,6 +68,8 @@ vm.runInContext(fs.readFileSync(path('line_grid.js'),'utf8').replace(/^export /g
 for(const [start,end] of [['    function input(','    function button('],['    function button(','    function lookup('],['    function renderLines()','    byId(\'apw-lines\').addEventListener']])vm.runInContext(source.slice(source.indexOf(start),source.indexOf(end)),ctx);
 vm.runInContext('this.renderLines=renderLines;this.moveGrid=moveGrid;',ctx);ctx.renderLines();
 assert.equal(host.children.length,1);assert.equal(host.querySelectorAll('[data-grid-entry]').length,7);assert(!host.textContent.includes('Expense Account'));
+assert.deepEqual(host.children[0].children.map((cell,index)=>cell.classList.contains('num')?index:null).filter(index=>index!==null),[7]);
+assert.equal(host.children[0].children[1].children[0].tagName,'BUTTON');
 const qty=host.querySelector('[data-grid-column="2"] input');qty.focus();qty.value='27';qty.dispatchEvent({type:'input'});assert.equal(state.lines[0].product_qty,27);
 ctx.renderLines();assert.equal(document.activeElement.closest('td').dataset.gridColumn,'2');assert.equal(document.activeElement.value,27);
 ctx.moveGrid(0,2,1);assert.equal(document.activeElement.closest('td').dataset.gridColumn,'3');

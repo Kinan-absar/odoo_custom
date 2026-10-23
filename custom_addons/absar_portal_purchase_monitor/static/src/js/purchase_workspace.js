@@ -283,16 +283,14 @@ function startPurchaseWorkspace() {
                 description.value = line.name; description.disabled = readonly; description.setAttribute('aria-label', 'Line description');
                 description.addEventListener('input', () => {line.name = description.value; changed();});
                 productCell.append(description); cell(productCell);
-                const analytic = document.createElement('div');
                 const descriptionText = Object.entries(line.analytic_distribution || {}).map(([key, pct]) =>
                     key.split(',').map(id => line.analytic_labels?.[id]?.label || id).join(' + ') + ': ' + pct + '%').join('; ');
-                analytic.append(button(descriptionText || (readonly ? '—' : 'Set distribution'), () => analyticDialog(line), 'btn btn-link apw-analytic'));
-                cell(analytic);
-                const quantity=input(line.product_qty, 'number', v => {line.product_qty = Number(v);});quantity.addEventListener('change',()=>reprice(line));cell(quantity, 'num');
+                cell(button(descriptionText || (readonly ? '—' : 'Set distribution'), () => analyticDialog(line), 'apw-analytic'));
+                const quantity=input(line.product_qty, 'number', v => {line.product_qty = Number(v);});quantity.addEventListener('change',()=>reprice(line));cell(quantity);
                 cell(lookup('uom', {id: line.product_uom, label: line.uom_label}, item => {
                     line.product_uom = item?.id || 0; line.uom_label = item?.label || ''; if (item) reprice(line);
                 }, {product_id: line.product_id}, {advance: () => moveGrid(index, 3, 1)}));
-                cell(input(line.price_unit, 'number', v => {line.price_unit = Number(v); line._manualPrice = true;}), 'num');
+                cell(input(line.price_unit, 'number', v => {line.price_unit = Number(v); line._manualPrice = true;}));
                 const tax = document.createElement('div');
                 for (const selected of line.taxes || []) {
                     const chip = text('span', selected.label, 'apw-chip');
@@ -303,7 +301,7 @@ function startPurchaseWorkspace() {
                     if (item && !line.taxes_id.includes(item.id)) {line._manualTaxes=true;line.taxes_id.push(item.id); line.taxes.push(item); changed(); renderLines();}
                 }, {}, {advance: () => moveGrid(index, 5, 1)}));
                 cell(tax, 'apw-tax-cell');
-                cell(input(line.discount || 0, 'number', v => {line.discount = Number(v);}), 'num');
+                cell(input(line.discount || 0, 'number', v => {line.discount = Number(v);}));
                 const amount = text('span', lineAmount(line) === null ? '—' : money(lineAmount(line))); amount.dataset.lineAmount = String(index);
                 cell(amount, 'num');
             }

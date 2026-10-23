@@ -89,13 +89,8 @@
 .apw-dialog .apw-receipt-lines input{width:110px;text-align:right;font-variant-numeric:tabular-nums}
 .apw-dialog .apw-receipt-lines td{vertical-align:middle}
 
-/* A single 32px control track aligns every regular Purchase line cell. */
-#apw-root .apw-lines tbody td:not([colspan]){padding-top:8px!important;padding-bottom:8px!important;vertical-align:top!important;}
-#apw-root .apw-lines tbody td:not([colspan])>div{margin-top:0!important;}
-#apw-root .apw-lines input,#apw-root .apw-lines .apw-analytic{display:block;box-sizing:border-box;height:32px!important;min-height:32px!important;margin:0!important;padding-top:5px!important;padding-bottom:5px!important;line-height:22px!important;}
-#apw-root .apw-lines .apw-analytic{border:0!important;}
-#apw-root .apw-lines .apw-tax-cell>div,#apw-root .apw-lines .apw-row-actions,#apw-root .apw-lines [data-line-amount]{display:flex;align-items:center;min-height:32px;line-height:22px;}
-#apw-root .apw-lines [data-line-amount]{justify-content:flex-end;}
-#apw-root .apw-lines .apw-chip{box-sizing:border-box;min-height:24px;line-height:20px!important;}
-#apw-root .apw-lines .apw-chip-remove{box-sizing:border-box;height:20px!important;min-height:20px!important;line-height:20px!important;padding-top:0!important;padding-bottom:0!important;margin:0!important;}
-#apw-root .apw-lines .apw-row-actions>button{box-sizing:border-box;height:32px;line-height:22px;padding-top:5px!important;padding-bottom:5px!important;margin:0!important;}
+/* Match Sales: inputs use normal cell spacing; only the read-only Amount is .num. */
+#apw-root .apw-lines .apw-description{margin-top:0;}
+#apw-root .apw-lines .apw-chip-remove{font-size:inherit;}
+/* Keep the tax picker on the same line even with long Purchase tax names. */
+#apw-root .apw-lines .apw-tax-cell .apw-chip{min-width:0;max-width:calc(100% - 27px);}
