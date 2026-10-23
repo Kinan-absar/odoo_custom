@@ -23,6 +23,10 @@ export function installDraftNavigation({isDirty, save, onError}) {
         if(!link||link.hasAttribute('download')||(link.target&&link.target!=='_self'))return;
         const url=new URL(link.href,window.location.href),current=new URL(window.location.href);
         if(!['http:','https:'].includes(url.protocol)||(url.origin===current.origin&&url.pathname===current.pathname&&url.search===current.search))return;
+        if(link.hasAttribute('data-draft-cancel')){
+            event.preventDefault();event.stopImmediatePropagation();
+            leaving=true;window.location.assign(url.href);return;
+        }
         document.activeElement?.blur?.();
         if(!dirty())return;
         event.preventDefault();event.stopImmediatePropagation();

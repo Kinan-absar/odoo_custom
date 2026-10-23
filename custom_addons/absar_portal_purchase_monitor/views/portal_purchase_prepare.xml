@@ -12,7 +12,7 @@
    <div id="apw-status" role="status" aria-live="polite"/>
    <div class="apw-actions absar-document-actions">
     <a t-if="boot['id']" class="btn btn-outline-secondary" t-att-href="'/my/employee/purchase/%s/print' % boot['id']">Print PDF</a>
-    <t t-if="not boot['readonly']"><button class="btn btn-primary" type="button" data-action="save">Save Draft</button><button t-if="boot['uses_review']" class="btn btn-outline-primary" type="button" data-action="submit">Submit for Approval</button></t>
+    <t t-if="not boot['readonly']"><button class="btn btn-primary" type="button" data-action="save">Save Draft</button><a class="btn btn-outline-secondary" t-att-href="boot['back_url']" data-draft-cancel="1">Cancel</a><button t-if="boot['uses_review']" class="btn btn-outline-primary" type="button" data-action="submit">Submit for Approval</button></t>
     <t t-if="boot['can_review']"><button class="btn btn-primary" type="button" data-action="approve">Approve</button><button class="btn btn-outline-secondary" type="button" data-action="return">Return for Correction</button></t>
     <button t-if="boot.get('can_receive')" type="button" class="btn btn-outline-primary" data-action="receive">Receive Products</button>
     <button t-if="boot['show_bill']" t-att-disabled="not boot['can_bill']" t-att-title="boot['bill_reason'] or 'Create a draft vendor bill from billable quantities'" type="button" class="btn btn-primary" data-action="create_bill">Create Vendor Bill</button>

@@ -91,3 +91,7 @@
 
 /* UoM uses the same top inset as adjacent Purchase numeric cells. */
 #apw-root .apw-lines td:nth-child(4){padding-top:9px!important;}
+
+/* Tax chips and read-only amounts share the numeric input's vertical center. */
+#apw-root .apw-lines td.apw-tax-cell{padding-top:9px!important;}
+#apw-root .apw-lines [data-line-amount]{display:flex;align-items:center;justify-content:flex-end;min-height:32px;line-height:22px;}

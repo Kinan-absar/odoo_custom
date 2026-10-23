@@ -327,7 +327,8 @@ import { openAnalyticDistribution } from "./analytic_editor";
         function actions() {
             const box = el('div', {class: 'aca-actions absar-document-actions'});
             if (state.editable) {
-                box.append(button('Save Draft', () => run('save', {...state, submit: false, post:false}), true));
+                box.append(button('Save Draft', () => run('save', {...state, submit: false, post:false}), true),
+                    el('a',{text:'Cancel',class:'btn btn-outline-secondary','data-draft-cancel':'1',href:BASE+'/'+state.kind+'?company_id='+state.company_id}));
                 if (state.can_post && !isPlan()) box.append(button('Post',()=>{if(state.warnings || accountingNotice || overpaymentNotice) reviewDialog(); else run('save',{...state,submit:false,post:true});},true));
                 else if (state.kind !== 'planned-receipts' && (isPlan() || state.review_required !== false)) box.append(button(isPlan() ? 'Submit to CEO' : 'Submit for Approval', () => run('save', {...state, submit: true, post:false})));
                 if (state.id && !isPlan()) box.append(button('Cancel Draft', async () => {

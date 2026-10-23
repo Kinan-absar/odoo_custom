@@ -28,7 +28,7 @@
   <t t-call="employee_portal_suite.employee_portal_layout">
    <div class="container aps-wrap py-4"><t t-call="absar_portal_sales.sales_workspace_header"/><a href="/my/employee/sales">← Quotations</a>
     <div class="aps-head mt-3"><div><h3>New Quotation</h3><span class="aps-status">Draft</span></div></div>
-    <div class="aps-sales-actions absar-document-actions mb-3"><button type="button" class="btn btn-primary" data-sales-save="1">Save Draft</button></div>
+    <div class="aps-sales-actions absar-document-actions mb-3"><button type="button" class="btn btn-primary" data-sales-save="1">Save Draft</button><a class="btn btn-outline-secondary" href="/my/employee/sales" data-draft-cancel="1">Cancel</a></div>
     <div t-if="error" class="alert alert-danger" t-out="error"/>
     <div class="aps-panel"><div id="aps-new-details" class="row g-3 mb-4">
      <div class="col-md-6"><label>Customer</label><select name="partner_id" class="form-select aps-customer-select" required="required"><option value="">Select customer</option><option t-foreach="partners" t-as="p" t-att-data-commercial-id="p.commercial_partner_id.id" t-att-value="p.id" t-out="p.name"/></select></div>
@@ -45,7 +45,7 @@
     <div class="aps-head mt-3"><div><h3><t t-out="order.name"/> · <t t-out="order.partner_id.name"/></h3><span class="aps-status aps-status-sales" t-out="dict(order._fields['state'].selection).get(order.state)"/> <span t-if="order.absar_portal_creator_id" t-att-class="'aps-status aps-status-' + (order.absar_portal_review_state or 'draft')" t-out="dict(order._fields['absar_portal_review_state'].selection).get(order.absar_portal_review_state)"/><span t-else="" class="aps-muted-tag">Approval required before confirmation</span></div>
      <a t-if="not order.absar_portal_creator_id or order.absar_portal_review_state == 'approved'" t-att-href="'/my/employee/sales/%s/pdf' % order.id" class="btn btn-outline-primary" target="_blank">Print / Download PDF</a></div>
     <div class="aps-sales-actions absar-document-actions d-flex gap-2 flex-wrap mb-3">
-     <button t-if="can_edit" type="button" class="btn btn-primary" data-sales-save="1">Save Draft</button>
+     <button t-if="can_edit" type="button" class="btn btn-primary" data-sales-save="1">Save Draft</button><a class="btn btn-outline-secondary" href="/my/employee/sales" data-draft-cancel="1">Cancel</a>
      <form t-if="can_submit" method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="submit"/><button class="btn btn-primary" data-aps-submit-review="1" t-att-disabled="not order.order_line and 'disabled' or None">Submit for Approval</button></form>
      <form t-if="can_request_order" method="post" t-att-action="'/my/employee/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="request_order"/><button class="btn btn-primary">Request Sales Order Approval</button></form>
      <t t-if="can_approve or can_approve_order">
