@@ -169,7 +169,10 @@ class SalesLinesMixin:
         product=self._line_choice(order,'product',data['id']) if data.get('id') else False
         if operation in ('product-read','product-defaults'):
             if operation=='product-read' and not product:raise ValidationError(_('Choose a product.'))
-            p=product or Product.new(dict(Product.default_get(['categ_id','uom_id','taxes_id']),type='consu',company_id=order.company_id.id))
+            defaults=Product.default_get(['categ_id','uom_id','taxes_id']) if not product else {}
+            if not product and order.company_id.account_sale_tax_id:
+                defaults['taxes_id']=[Command.set(order.company_id.account_sale_tax_id.ids)]
+            p=product or Product.new(dict(defaults,type='consu',company_id=order.company_id.id))
             pick=lambda r: {'id':r._origin.id,'label':r.display_name} if r and r._origin.id else None
             return dict(id=product.id if product else 0,name=p.name or '',type=p.type,
                 version=('%s|%s'%(p.write_date,p.product_tmpl_id.write_date)) if product else '',
@@ -234,6 +237,11 @@ class SalesLinesMixin:
                         if unit.category_id!=product.uom_id.category_id:raise ValidationError(_('Product and unit must have the same unit category.'))
                         values['product_uom']=unit.id
                     native=self._line_env(order)['sale.order.line'].new(values)
+                    # Use the configured company default only if the product has
+                    # no company tax. A fiscal position may intentionally remove it.
+                    product_taxes=product.taxes_id.filtered(lambda t:t.company_id==order.company_id)
+                    if not product_taxes and order.company_id.account_sale_tax_id:
+                        native.tax_id=pricing_order.fiscal_position_id.map_tax(order.company_id.account_sale_tax_id)
                     result=self._line_data(native)
                 elif operation=='preview':
                     self._editable(order)

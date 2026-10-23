@@ -74,7 +74,7 @@ ctx.moveGrid(0,2,1);assert.equal(document.activeElement.closest('td').dataset.gr
 ctx.moveGrid(0,3,-1);assert.equal(document.activeElement.closest('td').dataset.gridColumn,'2');
 // Editing product properties must leave line amounts and text intact.
 const editCtx=vm.createContext({readonly:false,state,changed(){},renderLines(){}});
-vm.runInContext(source.slice(source.indexOf('    async function selectLineProduct('),source.indexOf('    async function defaultsFor('))+'this.select=selectLineProduct;',editCtx);
+vm.runInContext(source.slice(source.indexOf('    async function selectLineProduct('),source.indexOf('    async function loadProductDefaults('))+'this.select=selectLineProduct;',editCtx);
 await editCtx.select(state.lines[0],{id:9,label:'Renamed',product_updated:true,default_account:'Expense'});
 assert.equal(state.lines[0].price_unit,33);assert.equal(state.lines[0].product_qty,27);assert.equal(state.lines[0].name,'Keep description');assert.equal(state.lines[0].default_account,'Expense');
 console.log('PASS: bounded dropdown placement, Create and Edit option, Enter waits for selection/defaults, stale response ignored, one compact row per line, seven navigation columns, typed values and focus survive redraw, forward/back navigation, expense-account edit preserves negotiated PO data (DOM fixtures).');

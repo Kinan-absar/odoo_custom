@@ -100,7 +100,7 @@ class ProductModel(ScopedModel):
         return NS(categ_id=relation(1), uom_id=relation(2), uom_po_id=relation(2),
                   purchase_method='receive', supplier_taxes_id=[relation(3)])
 product = namespace['Service'](); product._actor = lambda *a: None
-product._company = lambda *a: NS(id=7)
+product._company = lambda *a: NS(id=7,account_purchase_tax_id=False)
 product._env = lambda *a: {'product.product': ProductModel()}
 product._json = lambda run: run({'company_id': 7})
 result = product.product_defaults()

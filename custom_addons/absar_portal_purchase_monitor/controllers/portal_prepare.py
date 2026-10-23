@@ -249,6 +249,8 @@ class PortalPurchasePrepare(http.Controller):
         for name in ('product_qty', 'product_uom'):
             for onchange in native._onchange_methods.get(name, ()):
                 onchange(native)
+        if defaults and not product.supplier_taxes_id.filtered(lambda tax: tax.company_id == company) and company.account_purchase_tax_id:
+            native.taxes_id = order.fiscal_position_id.map_tax(company.account_purchase_tax_id)
         # Computed native purchase fields select seller, lead time, UoM, taxes and price.
         vals = {'product_id': product.id, 'product_qty': qty, 'product_uom': uom.id,
                 'name': native.name, 'price_unit': native.price_unit,
@@ -621,6 +623,8 @@ class PortalPurchasePrepare(http.Controller):
             company = self._company(data.get('company_id'))
             Product = self._env(company)['product.product'].sudo().with_company(company)
             defaults = Product.default_get(['categ_id', 'uom_id', 'uom_po_id', 'purchase_method', 'supplier_taxes_id', 'type'])
+            if company.account_purchase_tax_id:
+                defaults['supplier_taxes_id'] = [(6, 0, company.account_purchase_tax_id.ids)]
             defaults.update(purchase_ok=True, sale_ok=False, company_id=company.id)
             product = Product.new(defaults)
             # Delegated product defaults may be pseudo-records with an origin.

@@ -259,14 +259,14 @@ import { openAnalyticDistribution } from "./analytic_editor";
                 state.currency_name=result.currency;if(result.journal_items)state.journal_items=result.journal_items;
                 const journalHost=root.querySelector('[data-journal-items]');if(journalHost)journalHost.replaceChildren(journalItemsTable().querySelector('table'));
                 (result.line_amounts||[]).forEach((value,index)=>{if(lines[index]&&state.lines.includes(lines[index])){lines[index].subtotal=value;lines[index]._amountKey=lineKey(lines[index]);}});
-                drawLineAmounts();drawTotals(); say('Totals updated.');
+                drawLineAmounts();drawTotals(); say('');
             } catch (error) {if (seq === revision) {previewPending=false;previewError=error.message;drawLineAmounts();drawTotals();say('Totals unavailable: '+error.message,true);}}
         }
         function drawTotals() {
             const node = root.querySelector('[data-totals]'); if (!node) return;
             node.replaceChildren(); node.dataset.pending = String(previewPending);
             if(previewError)node.append(el('p',{class:'aca-mini',text:previewError}));
-            else if(previewPending)node.append(el('p',{class:'aca-mini',text:'Updating totals… Last calculated amounts remain visible.'}));
+            else if(previewPending)node.append(el('p',{class:'aca-mini',text:'Updating…'}));
             if (state.kind === 'journals') {
                 const debit = state.lines.reduce((n, l) => n + Number(l.debit || 0), 0);
                 const credit = state.lines.reduce((n, l) => n + Number(l.credit || 0), 0);
@@ -535,9 +535,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
                 }
                 const controls=el('div',{class:'aca-row-actions'});
                 controls.append(button('⋯',()=>lineDetails(row,journal)));
-                if(state.editable)controls.append(button('↑',()=>{if(index)[state.lines[index-1],state.lines[index]]=[state.lines[index],state.lines[index-1]];revision++;render();schedulePreview();}),
-                    button('↓',()=>{if(index<state.lines.length-1)[state.lines[index+1],state.lines[index]]=[state.lines[index],state.lines[index+1]];revision++;render();schedulePreview();}),
-                    button('×',()=>{state.lines.splice(index,1);revision++;render();schedulePreview();}));
+                if(state.editable)controls.append(button('×',()=>{state.lines.splice(index,1);revision++;render();schedulePreview();}));
                 for(const control of controls.children){const title=(control.textContent==='↑'?'Move line up':control.textContent==='↓'?'Move line down':control.textContent==='×'?'Remove line':'Line details')+' '+(index+1);control.setAttribute('aria-label',title);control.setAttribute('title',title);}
                 td(controls,'aca-line-tools',false);body.append(tr);
             });
@@ -628,10 +626,10 @@ import { openAnalyticDistribution } from "./analytic_editor";
             if(tab==='lines') {
                 panel.append(lineTable());
                 if(state.editable){
-                    const lineActions=el('div',{class:'aca-line-actions'});
-                    lineActions.append(button('Add a Line',()=>{state.lines.push(blankLine());revision++;render();const next=gridControl(state.lines.length-1,0);next?.focus();}));
-                    if(isBill())for(const [type,text]of [['line_section','Add a Section'],['line_note','Add a Note']])lineActions.append(button(text,()=>{state.lines.push({display_type:type,name:''});render();}));
-                    lineActions.append(button('Recalculate Totals',preview));panel.append(lineActions);
+                    const lineActions=el('div',{class:'aca-line-actions absar-line-add'});
+                    lineActions.append(button(isBill()?'Add a product':'Add a line',()=>{state.lines.push(blankLine());revision++;render();const next=gridControl(state.lines.length-1,0);next?.focus();}));
+                    if(isBill())for(const [type,text]of [['line_section','Add a section'],['line_note','Add a note']])lineActions.append(button(text,()=>{state.lines.push({display_type:type,name:''});render();}));
+                    panel.append(lineActions);
                 }
                 panel.append(el('div',{class:'aca-totals','data-totals':'true'}));
             } else if(tab==='journal') {

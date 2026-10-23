@@ -14,6 +14,17 @@ export function isEmptyDraftLine(row) {
 export function calculationRows(lines) { return lines.filter(row => !isEmptyDraftLine(row)); }
 export function decorateLineGrid(table, {editor, editable, entrySelector, onAppend, onReorder} = {}) {
     table.classList.add('absar-document-lines');
+    table.dataset.lineEditor=editor;
+    for(const row of table.querySelectorAll('tbody tr')){
+        const description=row.querySelector('.apw-description,.aps-sales-description,.aca-line-description');
+        const product=row.querySelector('input');
+        if(description){
+            description.classList.add('absar-line-description');
+            const refresh=()=>{description.dataset.duplicate=String(!description.value.trim() || description.value.trim()===(product?.value||'').trim());};
+            refresh();description.addEventListener('input',refresh);
+        }
+        for(const control of row.querySelectorAll('input'))if(control.value)control.title=control.value;
+    }
     table.querySelectorAll('.absar-column-resize').forEach(node=>node.remove());
     const headers = [...table.querySelectorAll('thead th')];
     const saved = widths.get(editor);
@@ -45,7 +56,7 @@ export function decorateLineGrid(table, {editor, editable, entrySelector, onAppe
     if (onReorder) [...table.querySelectorAll('tbody tr')].forEach((row, index) => {
         const tools = row.querySelector('.apw-row-actions,.aps-sales-tools,.aca-row-actions');if (!tools) return;
         const handle = document.createElement('span');handle.className='absar-row-grip';handle.textContent='⠿';handle.draggable=true;handle.title='Drag to reorder line';
-        handle.addEventListener('dragstart',event=>{event.dataTransfer.setData('application/x-absar-line',String(index));event.dataTransfer.effectAllowed='move';});tools.append(handle);
+        handle.addEventListener('dragstart',event=>{event.dataTransfer.setData('application/x-absar-line',String(index));event.dataTransfer.effectAllowed='move';});row.querySelector('td').append(handle);
         row.addEventListener('dragover',event=>{if([...event.dataTransfer.types].includes('application/x-absar-line'))event.preventDefault();});
         row.addEventListener('drop',event=>{const raw=event.dataTransfer.getData('application/x-absar-line');if(raw==='')return;event.preventDefault();const from=Number(raw);if(Number.isInteger(from)&&from!==index)onReorder(from,index);});
     });

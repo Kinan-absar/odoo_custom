@@ -1,5 +1,5 @@
 {'name': 'ABSAR Portal Purchase Workspace',
- 'version': '18.0.1.6.10',
+ 'version': '18.0.1.6.11',
  'category': 'Purchases',
  'summary': 'Dedicated employee portal purchasing with controlled RFQ, product '
             'and MR workflows',

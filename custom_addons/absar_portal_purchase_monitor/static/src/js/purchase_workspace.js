@@ -14,6 +14,11 @@ function startPurchaseWorkspace() {
     const labels = structuredClone(boot.selected);
     const csrf = document.getElementById('apw-csrf').value;
     let dirty = false, busy = false, previewSequence = 0, pendingComputations = 0;
+    const defaultJobs=new Set();
+    function trackDefaults(job){defaultJobs.add(job);job.then(()=>defaultJobs.delete(job),()=>defaultJobs.delete(job));return job;}
+    function vendorDefaults(...args){return trackDefaults(loadVendorDefaults(...args));}
+    function reprice(...args){return trackDefaults(loadLinePrice(...args));}
+    function defaultsFor(...args){return trackDefaults(loadProductDefaults(...args));}
     let totals = boot.totals || null;
     let totalsPending = false;
     const errorBox = document.getElementById('apw-error');
@@ -171,7 +176,7 @@ function startPurchaseWorkspace() {
         repriceAll();
     }
     let vendorSequence = 0;
-    async function vendorDefaults() {
+    async function loadVendorDefaults() {
         const seq = ++vendorSequence;
         pendingComputations++;
         try {
@@ -182,7 +187,7 @@ function startPurchaseWorkspace() {
             renderHeader(); changed(); repriceAll();
         } finally {pendingComputations--; if (!pendingComputations) changed();}
     }
-    async function reprice(line, force=false) {
+    async function loadLinePrice(line, force=false) {
         if (!line.product_id || !state.partner_id) return;
         const seq = (line._priceSequence || 0) + 1; line._priceSequence = seq;
         const vendorVersion=vendorSequence, productId=line.product_id, selection=line._sequence;
@@ -222,7 +227,7 @@ function startPurchaseWorkspace() {
         }
         return defaultsFor(line, item);
     }
-    async function defaultsFor(line, product) {
+    async function loadProductDefaults(line, product) {
         if (!product) {line.product_id = 0; line.product_label = ''; return;}
         line.absar_expense_account_id = 0; line.account_label = '';
         if (!state.partner_id) {
@@ -230,13 +235,14 @@ function startPurchaseWorkspace() {
             changed(); renderLines(); return;
         }
         const sequence = (line._sequence || 0) + 1; line._sequence = sequence;
+        const vendorVersion=vendorSequence;
         pendingComputations++;
         line.product_id = product.id; line.product_label = product.label;
         line._manualPrice = false; line._manualTaxes=false;
         line.product_uom = 0;
         try {
             const response = await post('/preview', {...payload(), defaults: true, lines: [line]});
-            if (line._sequence !== sequence || !state.lines.includes(line)) return;
+            if (line._sequence !== sequence || vendorVersion!==vendorSequence || !state.lines.includes(line)) return;
             const ident = line.id;
             const manualPrice = line._manualPrice ? {price_unit: line.price_unit, discount: line.discount, price_subtotal:line.price_subtotal, price_total:line.price_total, _manualPrice: true} : {_manualPrice: false};
             const manualTaxes=line._manualTaxes?{taxes_id:line.taxes_id,taxes:line.taxes}:{};
@@ -263,7 +269,7 @@ function startPurchaseWorkspace() {
                 const td = document.createElement('td'); td.className = className; td.dataset.gridColumn = String(row.children.length);
                 td.append(node); row.append(td);
                 const entry = node.matches?.('input, textarea, button') ? node : (node.querySelector('input') || node.querySelector('button'));
-                if (entry && row.children.length <= 7 && !node.classList?.contains('apw-row-actions')) {entry.dataset.gridEntry = '1'; entry.setAttribute('aria-label', entry.getAttribute('aria-label') || ['Product', 'Analytic distribution', 'Quantity', 'Unit', 'Unit price', 'Discount', 'Taxes'][row.children.length-1]);}
+                if (entry && row.children.length <= 7 && !node.classList?.contains('apw-row-actions')) {entry.dataset.gridEntry = '1'; entry.setAttribute('aria-label', entry.getAttribute('aria-label') || ['Product', 'Analytic distribution', 'Quantity', 'Unit', 'Unit price', 'Taxes', 'Discount'][row.children.length-1]);}
                 return td;
             }
             if (line.display_type) {
@@ -284,12 +290,11 @@ function startPurchaseWorkspace() {
                     key.split(',').map(id => line.analytic_labels?.[id]?.label || id).join(' + ') + ': ' + pct + '%').join('; ');
                 analytic.append(button(descriptionText || (readonly ? '—' : 'Set distribution'), () => analyticDialog(line), 'btn btn-link apw-analytic'));
                 cell(analytic);
-                cell(input(line.product_qty, 'number', v => {line.product_qty = Number(v); reprice(line);}), 'num');
+                const quantity=input(line.product_qty, 'number', v => {line.product_qty = Number(v);});quantity.addEventListener('change',()=>reprice(line));cell(quantity, 'num');
                 cell(lookup('uom', {id: line.product_uom, label: line.uom_label}, item => {
                     line.product_uom = item?.id || 0; line.uom_label = item?.label || ''; if (item) reprice(line);
                 }, {product_id: line.product_id}, {advance: () => moveGrid(index, 3, 1)}));
                 cell(input(line.price_unit, 'number', v => {line.price_unit = Number(v); line._manualPrice = true;}), 'num');
-                cell(input(line.discount || 0, 'number', v => {line.discount = Number(v);}), 'num');
                 const tax = document.createElement('div');
                 for (const selected of line.taxes || []) {
                     const chip = text('span', selected.label, 'apw-chip');
@@ -298,16 +303,16 @@ function startPurchaseWorkspace() {
                 }
                 if (!readonly) tax.append(lookup('tax', null, item => {
                     if (item && !line.taxes_id.includes(item.id)) {line._manualTaxes=true;line.taxes_id.push(item.id); line.taxes.push(item); changed(); renderLines();}
-                }, {}, {advance: () => moveGrid(index, 6, 1)}));
+                }, {}, {advance: () => moveGrid(index, 5, 1)}));
                 cell(tax, 'apw-tax-cell');
+                cell(input(line.discount || 0, 'number', v => {line.discount = Number(v);}), 'num');
                 const amount = text('span', lineAmount(line) === null ? '—' : money(lineAmount(line))); amount.dataset.lineAmount = String(index);
                 cell(amount, 'num');
             }
             const actions = document.createElement('div'); actions.className = 'apw-row-actions';
             if (!readonly) {
                 if (!line.display_type) actions.append(button('⋯', () => lineDetails(line), 'apw-line-more'));
-                actions.append(button('↑', () => moveLine(index, -1)), button('↓', () => moveLine(index, 1)),
-                    button('×', () => {state.lines.splice(index, 1); changed(); renderLines();}));
+                actions.append(button('×', () => {state.lines.splice(index, 1); renderLines(); changed();}));
             }
             actions.querySelectorAll('button').forEach(node => {node.setAttribute('aria-label', node.textContent === '⋯' ? 'Line details' : node.textContent === '×' ? 'Remove line' : node.textContent === '↑' ? 'Move line up' : 'Move line down'); node.title = node.getAttribute('aria-label');});
             cell(actions); host.append(row);
@@ -371,7 +376,7 @@ function startPurchaseWorkspace() {
                 (totals ? money(index === 1 ? totals.tax : totals.total) : 'Calculating…') : money(values[index]))); host.append(row);
         }
         host.setAttribute('aria-busy', String(totalsPending && !empty));
-        host.append(text('small', totalsPending && !empty ? 'Updating totals… Previous tax/total remain visible until calculated.' :
+        host.append(text('small', totalsPending && !empty ? 'Updating…' :
             (totals?.currency || labels.currency_id?.label || ''), 'apw-help'));
     }
     async function recalculate() {
@@ -392,7 +397,8 @@ function startPurchaseWorkspace() {
             response.lines.forEach((native, index) => {
                 const row=lines[index];if(row&&state.lines.includes(row)){row.price_subtotal=native.price_subtotal;row.price_total=native.price_total;row._amountKey=amountKey(row);}
             });
-            renderLines(); renderTotals();
+            root.querySelectorAll('[data-line-amount]').forEach(node=>{const row=state.lines[Number(node.dataset.lineAmount)];if(row)node.textContent=lineAmount(row)===null?'—':money(lineAmount(row));});
+            renderTotals();
         } catch(error) {if(seq===previewSequence){totalsPending=false;renderTotals();throw error;}}
     }
     function modal(title) {
@@ -576,7 +582,7 @@ function startPurchaseWorkspace() {
             if (action === 'save' || action === 'submit') {
                 if(!state.partner_id)throw new Error('Choose a vendor from the search results before saving.');
                 if(!state.currency_id)throw new Error('Choose a currency before saving.');
-                if (pendingComputations) throw new Error('Wait for product and vendor defaults to finish loading, then save.');
+                while(defaultJobs.size)await Promise.all([...defaultJobs]);
                 const result = await post('/save', {...payload(), submit: action === 'submit'});
                 dirty = false; window.location.assign(result.url);
             } else if (action === 'receive') {

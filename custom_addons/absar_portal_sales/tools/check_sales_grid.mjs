@@ -37,7 +37,7 @@ class Node {
     showModal(){this.open=true;}
     close(){this.open=false;this.dispatchEvent({type:'close'});}
 }
-let headerRoot=null;const root=new Node('section');document={createElement:t=>new Node(t),activeElement:null,readyState:'loading',getElementById:id=>id==='aps-line-editor'?root:id==='aps-new-details'?headerRoot:null,addEventListener(){},querySelector:s=>body.querySelector(s)};
+let headerRoot=null;const root=new Node('section');document={createElement:t=>new Node(t),activeElement:null,readyState:'loading',getElementById:id=>id==='aps-line-editor'?root:id==='aps-new-details'?headerRoot:null,addEventListener(){},querySelector:s=>body.querySelector(s),querySelectorAll:s=>body.querySelectorAll(s)};
 const body=new Node('body');body.append(root);document.body=body;
 const windowHandlers={};const redirects=[];const window={location:{assign:path=>redirects.push(path)},innerWidth:1200,innerHeight:700,addEventListener:(name,fn)=>{windowHandlers[name]=fn;},removeEventListener:(name,fn)=>{if(windowHandlers[name]===fn)delete windowHandlers[name];}};
 Object.assign(globalThis,{document,window});
@@ -60,11 +60,11 @@ vm.runInContext(prefix+'\nthis.editor=mountSalesLines(document.getElementById("a
 const editor=ctx.editor;
 const settle=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
 const key=async(node,key,shiftKey=false)=>{node.dispatchEvent({type:'keydown',key,shiftKey,preventDefault(){this.defaultPrevented=true;},stopPropagation(){this.stopped=true;}});await settle();};
-assert.deepEqual(root.querySelectorAll('thead th').map(n=>n.textContent),['Product / Description','Analytic Distribution','Quantity','UoM','Unit Price','Disc.%','Taxes','Amount','']);
+assert.deepEqual(root.querySelectorAll('thead th').map(n=>n.textContent),['Product','Analytic Distribution','Quantity','UoM','Unit Price','Taxes','Disc.%','Amount','']);
 assert.equal(root.querySelectorAll('[data-sales-entry]').length,7);
-let qty=root.querySelector('[data-sales-column="2"] input');qty.focus();qty.value='4';qty.dispatchEvent({type:'input'});editor.render();
+let qty=root.querySelector('[data-sales-column="2"] input');qty.focus();qty.value='4';qty.dispatchEvent({type:'input'});assert(!calls.some(c=>c.url.endsWith('/defaults')),'Typing quantity does not interrupt the input with defaults redraws.');qty.dispatchEvent({type:'change'});editor.render();
 assert.equal(root.querySelector('[data-sales-amount]').textContent,'20.00');
-assert(root.textContent.includes('Previous tax/total remain visible'));
+assert(root.textContent.includes('Updating…'));
 assert.equal(Number(document.activeElement.value),4);assert.equal(document.activeElement.closest('td').dataset.salesColumn,'2');
 await key(document.activeElement,'Enter');assert.equal(document.activeElement.closest('td').dataset.salesColumn,'3');
 await key(document.activeElement,'Enter',true);assert.equal(document.activeElement.closest('td').dataset.salesColumn,'2');
@@ -98,9 +98,16 @@ dialog.querySelectorAll('button').find(n=>n.textContent==='Close').click();
 await editor.preview();assert(root.textContent.includes('75.90'));
 await editor.save();assert.equal(calls.findLast(c=>c.url.endsWith('/save')).data.version,'v1');assert.equal(editor.state.version,'v2');
 assert(root.querySelector('.aps-sales-description'));
-assert(root.textContent.includes('Catalog')&&root.textContent.includes('New Product')&&root.textContent.includes('Recalculate'));
+assert(root.textContent.includes('Catalog'));
+assert(!root.textContent.includes('New Product')&&!root.textContent.includes('Recalculate')&&!root.textContent.includes('Save Quotation'));
+assert.equal(root.querySelectorAll('.aps-sales-tools button').length,1,'Only Remove is in the Sales row action cell.');
 editor.moveGrid(0,6,1);assert.equal(editor.state.lines.length,2);assert.equal(document.activeElement.closest('[data-sales-row]').dataset.salesRow,'1');
 const catalogButton=root.querySelectorAll('button').find(n=>n.textContent==='Catalog');catalogButton.click();await settle();const catalogDialog=body.querySelector('.apw-dialog');assert(catalogDialog);const countBefore=editor.state.lines.length;catalogDialog.querySelectorAll('button').find(n=>n.textContent==='Add').click();await settle();assert.equal(editor.state.lines.length,countBefore+1);assert(catalogDialog.parentElement===root&&catalogDialog.open,'Catalog stays open while its line is added.');catalogDialog.querySelectorAll('button').find(n=>n.textContent==='Close').click();
+// Native-style drag handle moves the row rather than swapping unrelated rows.
+const rowsBefore=[...editor.state.lines],transfer={types:['application/x-absar-line'],setData(type,value){this.value=value;},getData(){return this.value;}};
+root.querySelector('[data-sales-row="0"] .absar-row-grip').dispatchEvent({type:'dragstart',dataTransfer:transfer});
+root.querySelector('[data-sales-row="2"]').dispatchEvent({type:'drop',dataTransfer:transfer,preventDefault(){}});
+assert.equal(editor.state.lines[2],rowsBefore[0]);assert.equal(editor.state.lines[0],rowsBefore[1]);assert.equal(editor.state.lines[1],rowsBefore[2]);
 // Delete middle, first and final lines while totals still refer to the old DOM.
 await editor.preview();
 assert.equal(calls.findLast(c=>c.url.endsWith('/preview')).data.lines.length,2,'Untouched empty row is excluded from native calculation.');
@@ -123,10 +130,22 @@ console.log('PASS: shared Purchase allocation editor preserves two accounts from
 
 // New quotations expose the same grid immediately and save details + lines once.
 headerRoot=new Node('div');for(const [name,value] of Object.entries({partner_id:'21',project_id:'31',kind:'standard',date_order:'2026-10-21T15:30:00',validity_date:'2026-11-01'})){const input=new Node('input');input.setAttribute('name',name);input.value=value;headerRoot.append(input);}
-body.append(headerRoot);root.dataset.boot=JSON.stringify({...boot,order_id:0,version:'',lines:[{...boot.lines[0],id:0}]});
+body.append(headerRoot);const topSave=new Node('button');topSave.setAttribute('data-sales-save','1');body.append(topSave);root.dataset.boot=JSON.stringify({...boot,order_id:0,version:'',lines:[{...boot.lines[0],id:0}]});
 vm.runInContext('this.newEditor=mountSalesLines(document.getElementById("aps-line-editor"));',ctx);
-assert(root.textContent.includes('Save Quotation'));await Promise.all([ctx.newEditor.save(),ctx.newEditor.save()]);
+assert.equal(topSave.textContent,'Save Quotation');assert(!root.contains(topSave));topSave.click();topSave.click();await settle();
 const creates=calls.filter(c=>c.url.endsWith('/new-api/create'));assert.equal(creates.length,1);
 assert.equal(creates[0].data.header.partner_id,'21');assert.equal(creates[0].data.header.project_id,'31');assert.equal(creates[0].data.header.date_order,'2026-10-21T15:30:00');assert.equal(creates[0].data.lines[0].id,0);
 assert.deepEqual(redirects,['/my/employee/sales/55']);
 console.log('PASS: new quotation starts with the same grid, sends details and lines with CSRF, blocks duplicate saves and opens its saved form (DOM fixtures).');
+// Save waits for the product onchange/defaults and uses its final unit, price and tax.
+root.dataset.boot=JSON.stringify({...boot,order_id:0,version:'',lines:[]});
+vm.runInContext('this.pendingEditor=mountSalesLines(document.getElementById("aps-line-editor"));',ctx);
+const pendingLine={id:0,name:'',product_id:0,quantity:1,price_unit:0,discount:0,taxes_id:[],taxes:[],analytic_distribution:{}};
+ctx.pendingEditor.state.lines.push(pendingLine);waitDefaults=true;
+const selecting=ctx.pendingEditor.selectProduct(pendingLine,{id:99,label:'Selected product'});await settle();
+const creatingBefore=calls.filter(c=>c.url.endsWith('/new-api/create')).length;
+const saving=ctx.pendingEditor.save();await settle();assert.equal(calls.filter(c=>c.url.endsWith('/new-api/create')).length,creatingBefore);
+resolveDefaults();await selecting;await saving;waitDefaults=false;
+const finalCreate=calls.findLast(c=>c.url.endsWith('/new-api/create'));
+assert.equal(finalCreate.data.lines[0].uom_id,1);assert.equal(finalCreate.data.lines[0].price_unit,33);assert.deepEqual([...finalCreate.data.lines[0].taxes_id],[15]);
+console.log('PASS: Save waits for pending native defaults and submits the final unit/price/tax without a second click.');
