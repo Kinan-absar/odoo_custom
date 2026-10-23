@@ -77,7 +77,8 @@ class Virtual:
         self.amount_untaxed, self.amount_tax, self.amount_total = 5000, 750, 5750
 preview = namespace['Service'](); preview._actor = lambda *a: None
 preview._company = lambda *a: NS(id=7)
-preview._header = lambda *a: {}
+header_options=[]
+preview._header = lambda *a, **kw: (header_options.append(kw) or {})
 class PreviewModel(ScopedModel):
     def new(self, values):
         record = Virtual()
@@ -90,6 +91,7 @@ preview._serialize_line = lambda row: row[2]
 preview._json = lambda run: run({'company_id': 7, 'lines': [{'price_unit': 5000, 'product_qty': 1}]})
 result = preview.preview()
 assert result['total'] == 5750 and calls[-1] == 'order_totals'
+assert header_options == [{'preview': True}]
 assert result['lines'][0]['price_unit'] == 5000
 
 # Product defaults from delegated pseudo-records must expose origin integers.

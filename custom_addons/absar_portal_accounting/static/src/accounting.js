@@ -322,7 +322,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
             backdrop.append(box); document.body.append(backdrop); comment.focus();
         }
         function actions() {
-            const box = el('div', {class: 'aca-actions'});
+            const box = el('div', {class: 'aca-actions absar-document-actions'});
             if (state.editable) {
                 box.append(button('Save Draft', () => run('save', {...state, submit: false, post:false}), true));
                 if (state.can_post && !isPlan()) box.append(button('Post',()=>{if(state.warnings || accountingNotice || overpaymentNotice) reviewDialog(); else run('save',{...state,submit:false,post:true});},true));
@@ -419,7 +419,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
             }
             return grid;
         }
-        function blankLine() {return {name:'',quantity:1,price_unit:0,discount:0,debit:0,credit:0,taxes_id:[],tax_names:[],analytic_distribution:{}};}
+        function blankLine() {const taxes=isBill()?(state.default_taxes||[]):[];return {name:'',quantity:1,price_unit:0,discount:0,debit:0,credit:0,taxes_id:taxes.map(t=>t.id),tax_names:taxes.map(t=>({...t})),_defaultTaxes:taxes.map(t=>t.id),analytic_distribution:{}};}
         function gridControl(row,column) {return root.querySelector(`[data-grid-row="${row}"] [data-grid-column="${column}"] [data-grid-entry]`);}
         function moveGrid(row,column,direction) {
             let cells=[...root.querySelectorAll('[data-grid-row] [data-grid-entry]')].filter(n=>!n.disabled);
@@ -475,7 +475,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
             row.product_id=selected.id;row.product_name=selected.name;
             row.account_id=selected.account_id;row.account_name=selected.account_name;
             if(!editing){row.name=selected.name;row.product_uom_id=selected.product_uom_id;row.uom_name=selected.uom_name;
-                row.taxes_id=(selected.tax_ids||[]).map(t=>t.id);row.tax_names=selected.tax_ids||[];}
+                const taxes=selected.tax_ids?.length?selected.tax_ids:(state.default_taxes||[]);row.taxes_id=taxes.map(t=>t.id);row.tax_names=taxes.map(t=>({...t}));}
             revision++;render();schedulePreview();
         }
         function lineTags(row, grids=false) {

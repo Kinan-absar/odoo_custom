@@ -59,32 +59,7 @@
 /* 1.6.5: compact editable purchase grid and viewport-contained dialogs. */
 #apw-root .apw-sheet{min-width:0;padding:22px 24px}
 #apw-root .apw-table-scroll{max-width:100%;overflow:auto;border-radius:3px}
-#apw-root .apw-lines{table-layout:fixed;min-width:1080px;width:100%;font-size:13px}
-#apw-root .apw-lines th:nth-child(1){width:29%}
-#apw-root .apw-lines th:nth-child(2){width:13%}
-#apw-root .apw-lines th:nth-child(3){width:7%}
-#apw-root .apw-lines th:nth-child(4){width:8%}
-#apw-root .apw-lines th:nth-child(5){width:8%}
-#apw-root .apw-lines th:nth-child(6){width:6%}
-#apw-root .apw-lines th:nth-child(7){width:12%}
-#apw-root .apw-lines th:nth-child(8){width:8%}
-#apw-root .apw-lines th:nth-child(9){width:9%}
-#apw-root .apw-lines td,#apw-root .apw-lines th{padding:5px 7px;min-width:0;vertical-align:middle;border-right:1px solid #e4ebed}
-#apw-root .apw-lines th{padding:9px 7px;font-size:12px;white-space:normal;position:sticky;top:0;z-index:1}
-#apw-root .apw-lines tr:focus-within{background:#eff8f6}
-#apw-root .apw-lines td:focus-within{box-shadow:inset 0 0 0 1px #168580}
-#apw-root .apw-lines .form-control{width:100%;min-height:29px;height:29px;margin:0;border:1px solid transparent;border-radius:0;padding:3px 5px;font-size:13px;line-height:21px;background:transparent;box-shadow:none}
-#apw-root .apw-lines .form-control:focus{border-color:#168580;background:#fff;outline:0}
-#apw-root .apw-lines input[type=number]{width:100%;text-align:right;font-variant-numeric:tabular-nums}
-#apw-root .apw-lines .apw-description{display:block;width:100%;min-height:22px;height:22px;max-height:100px;margin:0;padding:0 5px;line-height:20px;font-size:12px!important;color:#6a7f88;resize:vertical;overflow:auto}
-#apw-root .apw-lines .apw-lookup{min-width:0;display:flex;align-items:center;gap:2px}
-#apw-root .apw-lines .apw-lookup>input{min-width:0;flex:1}
-#apw-root .apw-lines .apw-analytic{font-size:12px;max-height:52px;overflow:auto;line-height:17px}
-#apw-root .apw-lines .apw-row-actions{flex-wrap:nowrap;gap:2px;justify-content:flex-end}
-#apw-root .apw-lines .apw-row-actions button{border:0;background:transparent;padding:2px 3px;min-height:24px;font-size:11px;color:#627b83}
-#apw-root .apw-lines .apw-row-actions button:last-child{font-size:0}
-#apw-root .apw-lines .apw-row-actions button:last-child::after{content:'×';font-size:18px}
-#apw-root .apw-lines .apw-chip{font-size:10px;padding:1px 3px;margin:1px;max-width:100%;white-space:normal}
+/* Line grid presentation is defined once in line_grid.css. */
 .apw-open-product{flex:none;border:0;background:transparent;color:#147d7c;font-size:17px;padding:1px 4px;cursor:pointer}
 .apw-product-link{padding:0!important;text-align:left;font-weight:600;text-decoration:none;color:#147d7c}
 .apw-options[popover]{box-sizing:border-box;position:fixed;inset:auto;margin:0!important;padding:0;min-width:0;max-width:calc(100vw - 16px);overflow:auto;border-radius:4px;overscroll-behavior:contain}

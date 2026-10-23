@@ -60,7 +60,7 @@ const pending=deferred.lookup('product',null,()=>{});root.append(pending);pendin
 const source=fs.readFileSync(path('purchase_workspace.js'),'utf8');
 const host=new Node('tbody'),gridTable=new Node('table');gridTable.append(host);root.append(gridTable);const state={lines:[{id:1,product_id:9,product_label:'Test',product_qty:2,price_unit:33,discount:0,product_uom:1,uom_label:'Unit',taxes:[],taxes_id:[],name:'Keep description',analytic_distribution:{}}]};
 const simpleLookup=()=>{const div=new Node('div');div.className='apw-lookup';div.append(new Node('input'));return div;};
-const ctx=vm.createContext({document,window,Event:class{constructor(type){this.type=type;}},state,readonly:false,
+const ctx=vm.createContext({document,window,Event:class{constructor(type){this.type=type;}},state,readonly:false,boot:{companies:[],default_taxes:[{id:15,label:'Purchase Tax 15%'}]},
  byId:()=>host,lookup:simpleLookup,productForm(){},money:v=>String(v),lineAmount:l=>l.product_qty*l.price_unit,
  text:(t,v,c='')=>{const n=new Node(t);n.textContent=v;n.className=c;return n;},changed(){},lineDetails(){},
  analyticDialog(){},defaultsFor(){},reprice(){},selectLineProduct(){},moveLine(){}});

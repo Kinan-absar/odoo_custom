@@ -26,7 +26,7 @@ export function mountSalesLines(root) {
     const control=(value,type,change)=>{const node=ui.input(value,type,v=>{change(v);changed();});node.disabled=!state.editable||busy;return node;};
     function amountKey(line){return JSON.stringify([line.quantity,line.price_unit,line.discount,line.taxes_id,line.uom_id]);}
     function lineAmount(line){return line && !line.display_type && Number.isFinite(Number(line.subtotal)) ? Number(line.subtotal) : null;}
-    function blank(){return {id:0,name:'',product_id:0,quantity:1,price_unit:0,discount:0,taxes_id:[],taxes:[],analytic_distribution:{}};}
+    function blank(){const taxes=state.default_taxes||[];return {id:0,name:'',product_id:0,quantity:1,price_unit:0,discount:0,taxes_id:taxes.map(t=>t.id),taxes:taxes.map(t=>({...t})),_defaultTaxes:taxes.map(t=>t.id),analytic_distribution:{}};}
     function changed(){const review=document.querySelector('[data-aps-submit-review]');if(review)review.disabled=true;dirty=true;revision++;error='';state.lines.forEach(l=>{l._pending=true;});drawTotals();clearTimeout(timer);timer=setTimeout(preview,250);}
     function feedback(message){error=message;const node=root.querySelector('[data-sales-status]');if(node)node.textContent=message;drawTotals();}
     async function preview(){

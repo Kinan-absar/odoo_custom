@@ -4,9 +4,11 @@ const widths = new Map();
 const gridListeners = new WeakMap();
 export function isEmptyDraftLine(row) {
     if(!row)return true;
+    const taxes=row.taxes_id||[];
+    const onlyDefaultTaxes=!row._manualTaxes && Array.isArray(row._defaultTaxes) && JSON.stringify([...taxes].sort())===JSON.stringify([...row._defaultTaxes].sort());
     return !row.id && !row.display_type && !row.product_id && !row.account_id && !String(row.name || '').trim()
         && !Number(row.price_unit || 0) && !Number(row.debit || 0) && !Number(row.credit || 0)
-        && !Number(row.discount || 0) && !(row.taxes_id || []).length && !(row.tax_tag_ids || []).length
+        && !Number(row.discount || 0) && (!taxes.length || onlyDefaultTaxes) && !(row.tax_tag_ids || []).length
         && !row.partner_id && !row.product_uom_id && !row.uom_id && !row.product_uom
         && !Number(row.amount_currency || 0) && !Object.keys(row.analytic_distribution || {}).length
         && [0, 1].includes(Number(row.quantity ?? row.product_qty ?? 1));

@@ -146,8 +146,10 @@ class PortalPurchasePrepare(http.Controller):
         return pytz.UTC.localize(fields.Datetime.to_datetime(value)).astimezone(
             pytz.timezone(request.env.user.tz or 'UTC')).strftime('%Y-%m-%dT%H:%M:%S')
 
-    def _header(self, data, company):
-        vendor = self._choice('vendor', data.get('partner_id'), company, True)
+    def _header(self, data, company, preview=False):
+        # A cache-only amount preview can precede vendor selection. Persisting
+        # or submitting an order still requires the normal vendor validation.
+        vendor = self._choice('vendor', data.get('partner_id'), company, not preview)
         currency = self._choice('currency', data.get('currency_id'), company, True)
         project = self._choice('project', data.get('project_id'), company)
         mr = self._choice('mr', data.get('material_request_id'), company)
@@ -409,7 +411,8 @@ class PortalPurchasePrepare(http.Controller):
                     review=po.absar_portal_review_state if po else 'draft',
                     version=str(po.write_date) if po else '',
                     note=po.absar_portal_review_note or '' if po else '',
-                    company_name=company.name, companies=[{'id': c.id, 'label': c.name, 'currency': choice(c.currency_id), 'picking_type': choice(self._scope('picking_type', c)[0].search(self._scope('picking_type', c)[1], limit=1))} for c in user.company_ids],
+                    default_taxes=[choice(t) for t in company.sudo().account_purchase_tax_id],
+                    company_name=company.name, companies=[{'id': c.id, 'label': c.name, 'currency': choice(c.currency_id), 'default_taxes': [choice(t) for t in c.sudo().account_purchase_tax_id], 'picking_type': choice(self._scope('picking_type', c)[0].search(self._scope('picking_type', c)[1], limit=1))} for c in user.company_ids],
                     timezone=user.tz or 'UTC',
                     can_create_product=user.has_group(PREFIX + 'group_portal_purchase_preparer') and not readonly,
                     can_review=bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_preparer_id and user not in (po.absar_portal_preparer_id,po.absar_portal_submitter_id) and
@@ -486,7 +489,7 @@ class PortalPurchasePrepare(http.Controller):
             self._actor('preparer')
             po = self._record(integer(data['id']), edit=True) if data.get('id') else False
             company = po.company_id if po else self._company(data.get('company_id'))
-            header = self._header(data, company)
+            header = self._header(data, company, preview=True)
             model = self._env(company)['purchase.order'].sudo().with_company(company)
             order = self._native_order(company, header)
             lines = data.get('lines') or []

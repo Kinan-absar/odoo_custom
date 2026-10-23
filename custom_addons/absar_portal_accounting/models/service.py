@@ -698,7 +698,9 @@ class PortalAccountingService(models.AbstractModel):
         user, roles = self._actor()
         model, title, subtype = self._kind(kind)
         record = self._record(company, kind, record_id) if record_id else False
+        default_tax = company.account_purchase_tax_id if kind in ('bills', 'refunds') else self.env['account.tax']
         data = {'id': record.id if record else 0, 'company_id': company.id, 'kind': kind,
+                'default_taxes': [{'id': tax.id, 'name': tax.name} for tax in default_tax],
                 'company_currency_name': company.currency_id.name, 'analytic_names': {}, 'analytic_labels': {},
                 'currency_id': company.currency_id.id, 'currency_name': company.currency_id.name,
                 'date': fields.Date.context_today(self).isoformat(), 'invoice_date': fields.Date.context_today(self).isoformat(),

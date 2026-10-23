@@ -10,7 +10,7 @@
    <p t-if="boot['note']" class="alert alert-info"><strong>Review note: </strong><t t-out="boot['note']"/></p>
    <div id="apw-error" class="alert alert-danger" role="alert" hidden="hidden"/>
    <div id="apw-status" role="status" aria-live="polite"/>
-   <div class="apw-actions">
+   <div class="apw-actions absar-document-actions">
     <a t-if="boot['id']" class="btn btn-outline-secondary" t-att-href="'/my/employee/purchase/%s/print' % boot['id']">Print PDF</a>
     <t t-if="not boot['readonly']"><button class="btn btn-primary" type="button" data-action="save">Save Draft</button><button t-if="boot['uses_review']" class="btn btn-outline-primary" type="button" data-action="submit">Submit for Approval</button></t>
     <t t-if="boot['can_review']"><button class="btn btn-primary" type="button" data-action="approve">Approve</button><button class="btn btn-outline-secondary" type="button" data-action="return">Return for Correction</button></t>

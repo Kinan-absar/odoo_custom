@@ -41,7 +41,7 @@ let headerRoot=null;const root=new Node('section');document={createElement:t=>ne
 const body=new Node('body');body.append(root);document.body=body;
 const windowHandlers={};const redirects=[];const window={location:{assign:path=>redirects.push(path)},innerWidth:1200,innerHeight:700,addEventListener:(name,fn)=>{windowHandlers[name]=fn;},removeEventListener:(name,fn)=>{if(windowHandlers[name]===fn)delete windowHandlers[name];}};
 Object.assign(globalThis,{document,window});
-const boot={order_id:5,company_id:7,version:'v1',editable:true,currency:'SAR',untaxed:20,tax:3,total:23,
+const boot={default_taxes:[{id:15,label:'VAT 15%'}],order_id:5,company_id:7,version:'v1',editable:true,currency:'SAR',untaxed:20,tax:3,total:23,
  analytic_labels:{10:{id:10,label:'PHC Building / Long Project Name',plan:'Projects',plan_id:100}},
  lines:[{id:1,product_id:2,product:{id:2,label:'Product A'},name:'Negotiated label',uom_id:1,uom:{id:1,label:'Unit'},quantity:2,price_unit:10,discount:0,taxes_id:[15],taxes:[{id:15,label:'VAT 15%'}],analytic_distribution:{10:100},subtotal:20}]};
 root.dataset={boot:JSON.stringify(boot),csrf:'csrf'};
@@ -101,7 +101,7 @@ assert(root.querySelector('.aps-sales-description'));
 assert(root.textContent.includes('Catalog'));
 assert(!root.textContent.includes('New Product')&&!root.textContent.includes('Recalculate')&&!root.textContent.includes('Save Quotation'));
 assert.equal(root.querySelectorAll('.aps-sales-tools button').length,1,'Only Remove is in the Sales row action cell.');
-editor.moveGrid(0,6,1);assert.equal(editor.state.lines.length,2);assert.equal(document.activeElement.closest('[data-sales-row]').dataset.salesRow,'1');
+editor.moveGrid(0,6,1);assert.equal(editor.state.lines.length,2);assert.deepEqual([...editor.state.lines[1].taxes_id],[15]);assert.equal(document.activeElement.closest('[data-sales-row]').dataset.salesRow,'1');
 const catalogButton=root.querySelectorAll('button').find(n=>n.textContent==='Catalog');catalogButton.click();await settle();const catalogDialog=body.querySelector('.apw-dialog');assert(catalogDialog);const countBefore=editor.state.lines.length;catalogDialog.querySelectorAll('button').find(n=>n.textContent==='Add').click();await settle();assert.equal(editor.state.lines.length,countBefore+1);assert(catalogDialog.parentElement===root&&catalogDialog.open,'Catalog stays open while its line is added.');catalogDialog.querySelectorAll('button').find(n=>n.textContent==='Close').click();
 // Native-style drag handle moves the row rather than swapping unrelated rows.
 const rowsBefore=[...editor.state.lines],transfer={types:['application/x-absar-line'],setData(type,value){this.value=value;},getData(){return this.value;}};

@@ -38,7 +38,7 @@ const root=new Node('section');document={createElement:t=>new Node(t),activeElem
 const body=new Node('body');body.append(root);document.body=body;
 const window={innerWidth:1200,innerHeight:700,addEventListener(){},removeEventListener(){}};
 Object.assign(globalThis,{document,window});
-const boot={company_id:1,company_currency_name:'SAR',analytic_names:{'5':'PHC Project'},kind:'bills',name:'New',state:'draft',editable:true,review_required:true,review:'draft',roles:{preparer:true},selections:{},
+const boot={default_taxes:[{id:15,name:'VAT 15%'}],company_id:1,company_currency_name:'SAR',analytic_names:{'5':'PHC Project'},kind:'bills',name:'New',state:'draft',editable:true,review_required:true,review:'draft',roles:{preparer:true},selections:{},
     currency_id:1,journal_id:2,partner_id:3,lines:[{product_id:9,product_name:'Cement',name:'Negotiated description',quantity:4,price_unit:23,discount:2,account_id:8,account_name:'Materials',product_uom_id:1,uom_name:'Unit',taxes_id:[15],tax_names:[{id:15,name:'VAT'}],analytic_distribution:{'5':100}}]};
 root.dataset={boot:JSON.stringify(boot),csrf:'test'};
 const calls=[];let resolveOptions;
@@ -67,11 +67,11 @@ let quantity=root.querySelector('[data-grid-column="3"] input');quantity.focus()
 root.test.render();quantity=root.querySelector('[data-grid-column="3"] input');assert.equal(document.activeElement,quantity);assert.equal(Number(quantity.value),12);
 await key(quantity,'Enter');assert.equal(document.activeElement.closest('td').dataset.gridColumn,'4');
 await key(document.activeElement,'Enter',true);assert.equal(document.activeElement.closest('td').dataset.gridColumn,'3');
-root.test.moveGrid(0,6,1);assert.equal(root.test.state.lines.length,2);assert.equal(document.activeElement.closest('[data-grid-row]').dataset.gridRow,'1');
+root.test.moveGrid(0,6,1);assert.equal(root.test.state.lines.length,2);assert.deepEqual([...root.test.state.lines[1].taxes_id],[15]);assert.equal(document.activeElement.closest('[data-grid-row]').dataset.gridRow,'1');
 // Enter waits for pending product search/selection, then advances into Account.
 deferOptions=true;const lookup=root.querySelector('[data-grid-row="0"] [data-grid-column="0"] input');lookup.focus();
 await settle();const pending=key(lookup,'Enter');assert.equal(root.test.state.lines[0].product_name,'Cement');
-resolveOptions();await pending;await settle();assert.equal(root.test.state.lines[0].product_name,'Selected Product');
+resolveOptions();await pending;await settle();assert.equal(root.test.state.lines[0].product_name,'Selected Product');assert.deepEqual([...root.test.state.lines[0].taxes_id],[15]);
 assert.equal(document.activeElement.closest('td').dataset.gridColumn,'1');
 deferOptions=false;
 // Opening an existing product exposes Expense Account and preserves negotiated line values.

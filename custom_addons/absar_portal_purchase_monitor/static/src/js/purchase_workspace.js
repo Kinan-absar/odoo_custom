@@ -111,7 +111,7 @@ function startPurchaseWorkspace() {
             state[name] = item?.id || 0; labels[name] = item;
             if(name==='partner_id')vendorSequence++;
             if (name === 'partner_id' && item) vendorDefaults().catch(showError);
-            else if (['currency_id', 'fiscal_position_id'].includes(name) && state.partner_id) repriceAll();
+            else if (['currency_id', 'fiscal_position_id'].includes(name)) repriceAll();
             if (name === 'project_id') {state.material_request_id = 0; labels.material_request_id = null; renderHeader();}
             if (name === 'material_request_id' && item) linkMaterial(item.id).catch(showError);
         }), host, hint);
@@ -188,7 +188,7 @@ function startPurchaseWorkspace() {
         } finally {pendingComputations--; if (!pendingComputations) changed();}
     }
     async function loadLinePrice(line, force=false) {
-        if (!line.product_id || !state.partner_id) return;
+        if (!line.product_id) return;
         const seq = (line._priceSequence || 0) + 1; line._priceSequence = seq;
         const vendorVersion=vendorSequence, productId=line.product_id, selection=line._sequence;
         pendingComputations++;
@@ -210,8 +210,9 @@ function startPurchaseWorkspace() {
         for (const line of state.lines) if (!line.display_type) reprice(line,true);
     }
     function blankLine(display = '') {
+        const taxes=display?[]:(boot.companies.find(c=>c.id===state.company_id)?.default_taxes||boot.default_taxes||[]);
         return {id: 0, display_type: display, product_id: 0, product_label: '', name: '',
-            product_qty: 1, product_uom: 0, price_unit: 0, discount: 0, taxes_id: [], taxes: [],
+            product_qty: 1, product_uom: 0, price_unit: 0, discount: 0, taxes_id: taxes.map(t=>t.id), taxes: taxes.map(t=>({...t})), _defaultTaxes: taxes.map(t=>t.id),
             analytic_distribution: {}, analytic_labels: {}, date_planned: state.date_planned || '',
             absar_expense_account_id: 0, account_label: '', default_account: ''};
     }
@@ -230,10 +231,6 @@ function startPurchaseWorkspace() {
     async function loadProductDefaults(line, product) {
         if (!product) {line.product_id = 0; line.product_label = ''; return;}
         line.absar_expense_account_id = 0; line.account_label = '';
-        if (!state.partner_id) {
-            line.product_id = product.id; line.product_label = product.label; line.product_uom = 0;
-            changed(); renderLines(); return;
-        }
         const sequence = (line._sequence || 0) + 1; line._sequence = sequence;
         const vendorVersion=vendorSequence;
         pendingComputations++;
@@ -373,7 +370,7 @@ function startPurchaseWorkspace() {
         const values = empty ? [0,0,0] : totals ? [totals.untaxed,totals.tax,totals.total] : [null,null,null];
         for (const [index, label] of ['Untaxed Amount', 'Taxes', 'Total'].entries()) {
             const row = text('p', label); row.append(text('strong', values[index] === null ?
-                (totals ? money(index === 1 ? totals.tax : totals.total) : 'Calculating…') : money(values[index]))); host.append(row);
+                (totalsPending ? 'Calculating…' : '—') : money(values[index]))); host.append(row);
         }
         host.setAttribute('aria-busy', String(totalsPending && !empty));
         host.append(text('small', totalsPending && !empty ? 'Updating…' :
@@ -383,7 +380,6 @@ function startPurchaseWorkspace() {
         if(pendingComputations)return;
         const data=payload(), lines=data.lines;
         const missing=[];
-        if(!state.partner_id)missing.push('vendor');
         if(!state.currency_id)missing.push('currency');
         if(!state.picking_type_id)missing.push('operation type');
         if(lines.some(line=>!line.display_type&&(!line.product_id||!line.product_uom||!(line.product_qty>0))))missing.push('product, unit and positive quantity');
@@ -393,7 +389,7 @@ function startPurchaseWorkspace() {
         try {
             const response = await post('/preview', data);
             if (seq !== previewSequence) return;
-            totals = response; totalsPending = false;status.textContent='';clearError();
+            totals = response; totalsPending = false;status.textContent=state.partner_id?'':'Select a vendor before saving or submitting this order.';clearError();
             response.lines.forEach((native, index) => {
                 const row=lines[index];if(row&&state.lines.includes(row)){row.price_subtotal=native.price_subtotal;row.price_total=native.price_total;row._amountKey=amountKey(row);}
             });

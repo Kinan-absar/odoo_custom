@@ -134,6 +134,7 @@ class SalesLinesMixin:
         labels={str(a.id):dict(id=a.id,label=a.display_name,plan=a.plan_id.root_id.display_name,plan_id=a.plan_id.root_id.id) for a in accounts}
         return dict(order_id=order.id or 0,company_id=order.company_id.id,editable=editable,version=self._line_version(order) if order.id else '',
             lines=[self._line_data(l) for l in order.order_line.sorted(lambda l:(l.sequence,l.id))],analytic_labels=labels,
+            default_taxes=[{'id': t.id, 'label': t.display_name} for t in order.company_id.account_sale_tax_id],
             currency=order.currency_id.name,untaxed=order.amount_untaxed,tax=order.amount_tax,total=order.amount_total)
 
     def _line_values(self, order, row):
@@ -229,7 +230,6 @@ class SalesLinesMixin:
                     self._editable(order)
                     product=self._line_choice(order,'product',data.get('product_id'))
                     qty=self._num(data.get('quantity') or 1,'Quantity')
-                    if not order.partner_id:raise ValidationError(_('Select a customer before choosing products.'))
                     pricing_order=self._line_env(order)['sale.order'].new(self._line_pricing_values(order,data)) if order.id and 'header' in data else order
                     values={'order_id':pricing_order.id or pricing_order,'product_id':product.id,'product_uom_qty':qty}
                     if data.get('uom_id'):
