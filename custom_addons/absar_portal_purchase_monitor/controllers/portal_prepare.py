@@ -571,7 +571,8 @@ class PortalPurchasePrepare(http.Controller):
                 po = model.create(header)
             if data.get('submit'):
                 po._portal_submit()
-            return {'url': BASE + '/%s' % po.id}
+            return {'url': BASE + '/%s' % po.id, 'id': po.id, 'version': str(po.write_date),
+                    'lines': [self._serialize_line(line) for line in po.order_line.sorted(lambda line: (line.sequence, line.id))]}
         return self._json(run)
 
     @http.route(BASE + '/<int:po_id>/decision', type='http', auth='user', methods=['POST'], csrf=True)

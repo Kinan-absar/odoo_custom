@@ -55,7 +55,7 @@ const ctx=vm.createContext({document,window,Event:class{constructor(type){this.t
   else if(url.endsWith('/preview'))result={untaxed:66,tax:9.9,total:75.9,line_amounts:data.lines.map(()=>66)};
   else throw new Error('Unexpected '+url);
   return {json:async()=>({ok:true,result})};}});
-const prefix=['line_grid.js','purchase_ui.js','analytic_editor.js','sales_lines.js'].map(n=>fs.readFileSync(new URL('../static/src/js/'+n,import.meta.url),'utf8').replace(/^import .*$/gm,'').replace(/^export /gm,'')).join('\n');
+const prefix=['draft_navigation.js','line_grid.js','purchase_ui.js','analytic_editor.js','sales_lines.js'].map(n=>fs.readFileSync(new URL('../static/src/js/'+n,import.meta.url),'utf8').replace(/^import .*$/gm,'').replace(/^export /gm,'')).join('\n');
 vm.runInContext(prefix+'\nthis.editor=mountSalesLines(document.getElementById("aps-line-editor"));',ctx);
 const editor=ctx.editor;
 const settle=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
@@ -132,7 +132,7 @@ console.log('PASS: shared Purchase allocation editor preserves two accounts from
 headerRoot=new Node('div');for(const [name,value] of Object.entries({partner_id:'21',project_id:'31',kind:'standard',date_order:'2026-10-21T15:30:00',validity_date:'2026-11-01'})){const input=new Node('input');input.setAttribute('name',name);input.value=value;headerRoot.append(input);}
 body.append(headerRoot);const topSave=new Node('button');topSave.setAttribute('data-sales-save','1');body.append(topSave);root.dataset.boot=JSON.stringify({...boot,order_id:0,version:'',lines:[{...boot.lines[0],id:0}]});
 vm.runInContext('this.newEditor=mountSalesLines(document.getElementById("aps-line-editor"));',ctx);
-assert.equal(topSave.textContent,'Save Quotation');assert(!root.contains(topSave));topSave.click();topSave.click();await settle();
+assert.equal(topSave.textContent,'Save Draft');assert(!root.contains(topSave));topSave.click();topSave.click();await settle();
 const creates=calls.filter(c=>c.url.endsWith('/new-api/create'));assert.equal(creates.length,1);
 assert.equal(creates[0].data.header.partner_id,'21');assert.equal(creates[0].data.header.project_id,'31');assert.equal(creates[0].data.header.date_order,'2026-10-21T15:30:00');assert.equal(creates[0].data.lines[0].id,0);
 assert.deepEqual(redirects,['/my/employee/sales/55']);
@@ -149,3 +149,10 @@ resolveDefaults();await selecting;await saving;waitDefaults=false;
 const finalCreate=calls.findLast(c=>c.url.endsWith('/new-api/create'));
 assert.equal(finalCreate.data.lines[0].uom_id,1);assert.equal(finalCreate.data.lines[0].price_unit,33);assert.deepEqual([...finalCreate.data.lines[0].taxes_id],[15]);
 console.log('PASS: Save waits for pending native defaults and submits the final unit/price/tax without a second click.');
+
+// Auto-saving a new quotation suppresses its normal create redirect.
+root.dataset.boot=JSON.stringify({...boot,order_id:0,version:'',lines:[{...boot.lines[0],id:0}]});
+vm.runInContext('this.leavingEditor=mountSalesLines(document.getElementById("aps-line-editor"));',ctx);
+const redirectsBefore=redirects.length;assert.equal(await ctx.leavingEditor.save({navigate:false}),true);
+assert.equal(ctx.leavingEditor.state.order_id,55);assert.equal(redirects.length,redirectsBefore);
+console.log('PASS: Sales save-on-leave creates a draft, retains its ID/version and suppresses the create-page redirect.');

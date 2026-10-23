@@ -27,7 +27,8 @@
  <template id="sales_new" name="New Portal Sales Quotation">
   <t t-call="employee_portal_suite.employee_portal_layout">
    <div class="container aps-wrap py-4"><t t-call="absar_portal_sales.sales_workspace_header"/><a href="/my/employee/sales">← Quotations</a>
-    <div class="aps-head mt-3"><div><h3>New Quotation</h3><span class="aps-status">Draft</span></div><button type="button" class="btn btn-primary" data-sales-save="1">Save Quotation</button></div>
+    <div class="aps-head mt-3"><div><h3>New Quotation</h3><span class="aps-status">Draft</span></div></div>
+    <div class="aps-sales-actions absar-document-actions mb-3"><button type="button" class="btn btn-primary" data-sales-save="1">Save Draft</button></div>
     <div t-if="error" class="alert alert-danger" t-out="error"/>
     <div class="aps-panel"><div id="aps-new-details" class="row g-3 mb-4">
      <div class="col-md-6"><label>Customer</label><select name="partner_id" class="form-select aps-customer-select" required="required"><option value="">Select customer</option><option t-foreach="partners" t-as="p" t-att-data-commercial-id="p.commercial_partner_id.id" t-att-value="p.id" t-out="p.name"/></select></div>

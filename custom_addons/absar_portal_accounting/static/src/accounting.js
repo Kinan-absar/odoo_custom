@@ -1,4 +1,5 @@
 /** @odoo-module **/
+import { installDraftNavigation } from "./draft_navigation";
 import { calculationRows, isEmptyDraftLine, decorateLineGrid } from "./line_grid";
 import { createPurchaseUI } from "./purchase_ui";
 import { openAnalyticDistribution } from "./analytic_editor";
@@ -275,23 +276,25 @@ import { openAnalyticDistribution } from "./analytic_editor";
                 for (const [title, value] of [['Untaxed Amount', state.untaxed], ['Taxes', state.tax], ['Total', state.total]]) node.append(el('div', {}, [el('span', {text: title}), el('strong', {text: money(value) + ' ' + (state.currency_name || state.currency || '')})]));
             }
         }
-        async function run(operation, payload) {
-            if (busy) return;
+        let operationJob=null;
+        function run(...args){if(operationJob)return operationJob;const job=runOperation(...args);operationJob=job;job.then(()=>{operationJob=null;},()=>{operationJob=null;});return job;}
+        async function runOperation(operation, payload) {
+            if (busy) return false;
             if(operation==='save'&&payload.submit&&isBill()&&!payload.invoice_date){say('Set the Bill Date before submitting for approval.',true);return;}
             if(operation==='save'&&isMove())payload={...payload,lines:calculationRows(payload.lines||[])};
             busy = true; clearTimeout(previewTimer); root.querySelectorAll('button').forEach(b => b.disabled = true); say('Working…');
             try {
                 const result = await api(operation, payload);
-                if (result.redirect) {window.location.assign(result.redirect); return;}
-                state = result; previewError=''; revision++;
+                if (result.redirect) {savedDraft=draftSignature();window.location.assign(result.redirect); return true;}
+                state = result; previewError=''; revision++;savedDraft=draftSignature();
                 for(const row of state.lines||[])if(row.subtotal!==undefined)row._amountKey=lineKey(row);
                 if (state.id) history.replaceState(null, '', BASE + '/' + state.kind + '/' + state.id + '?company_id=' + state.company_id);
-                busy = false; render(); say('Saved successfully.');
+                busy = false; render();savedDraft=draftSignature(); say('Saved successfully.');return true;
             } catch (error) {
                 busy = false;
                 if(error.message.startsWith('PO OVERPAYMENT:'))overpaymentNotice=error.message;
                 if(error.message.startsWith('ACCOUNTING WARNING:'))accountingNotice=error.message;
-                render(); say(error.message, true);
+                render(); say(error.message, true);return false;
             }
         }
         function action(name, extra = {}) {return run('action', {id: state.id, version: state.version, action: name, ...extra});}
@@ -648,7 +651,12 @@ import { openAnalyticDistribution } from "./analytic_editor";
         }
         state.payment_method ||= 'cash';state.receipt_method ||= 'cash';state.transaction_type ||= state.kind==='planned-receipts'?'customer':'supplier';state.priority ||= '1';state.funding_status ||= 'funded';
         for(const row of state.lines||[])if(row.subtotal!==undefined)row._amountKey=lineKey(row);
-        render();
+        const derived=new Set(['version','untaxed','tax','total','journal_items','analytic_names','analytic_labels','selections','history','attachments','warnings','comment','roles','subtotal','price_subtotal','price_total','product_name','account_name','partner_name','uom_name','tax_names','grid_names','default_taxes']);
+        function draftSignature(){return JSON.stringify(state,(key,value)=>key.startsWith('_')||derived.has(key)?undefined:value);}
+        let savedDraft=draftSignature();
+        render();savedDraft=draftSignature();
+        installDraftNavigation({isDirty:()=>state.editable&&draftSignature()!==savedDraft,
+            save:()=>run('save',{...state,submit:false,post:false}),onError:error=>{if(!status?.className?.includes('error'))say(error.message,true);}});
     }
     function start(){const root=document.getElementById('aca-editor');if(root&&!root.dataset.mounted){root.dataset.mounted='true';mount(root);}}
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();

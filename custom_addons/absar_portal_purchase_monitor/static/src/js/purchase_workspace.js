@@ -1,4 +1,5 @@
 /** @odoo-module **/
+import { installDraftNavigation } from "./draft_navigation";
 import { calculationRows, isEmptyDraftLine, decorateLineGrid } from "./line_grid";
 import { createPurchaseUI } from "./purchase_ui";
 import { openPurchaseProductDialog } from "./purchase_product_form";
@@ -557,6 +558,26 @@ function startPurchaseWorkspace() {
         const response = await post('/' + boot.id + '/decision', {action, note, version: boot.version});
         dirty = false; window.location.assign(response.url);
     }
+    let draftJob=null,draftNavigate=true;
+    function saveDraft(options={}){
+        if(draftJob){if(options.navigate===false)draftNavigate=false;return draftJob;}
+        draftNavigate=options.navigate!==false;const job=persistDraft(options);draftJob=job;job.then(()=>{draftJob=null;},()=>{draftJob=null;});return job;
+    }
+    async function persistDraft({submit=false,navigate=true}={}){
+        if(busy)return false;
+        busy=true;root.classList.add('apw-busy');status.textContent='Saving…';clearError();
+        try{
+            if(!state.partner_id)throw new Error('Choose a vendor from the search results before saving.');
+            if(!state.currency_id)throw new Error('Choose a currency before saving.');
+            while(defaultJobs.size)await Promise.all([...defaultJobs]);
+            const result=await post('/save',{...payload(),submit});dirty=false;
+            if(result.id){boot.id=result.id;boot.version=result.version;state.lines=result.lines;state.lines.forEach(line=>{line._manualPrice=true;line._manualTaxes=true;});}
+            if(draftNavigate)window.location.assign(result.url);
+            else{window.history?.replaceState(null,'',result.url);status.textContent='Draft saved.';renderLines();}
+            return true;
+        }catch(error){status.textContent='';showError(error);return false;}
+        finally{busy=false;root.classList.remove('apw-busy');}
+    }
     root.addEventListener('click', async event => {
         const tab = event.target.closest('[data-tab]');
         if (tab) {
@@ -574,14 +595,9 @@ function startPurchaseWorkspace() {
             }
             if (action === 'catalog') {catalogDialog(); return;}
             if (action === 'product') {await productDialog(); return;}
+            if(action==='save'||action==='submit'){await saveDraft({submit:action==='submit'});return;}
             busy = true; root.classList.add('apw-busy'); status.textContent = 'Working…';
-            if (action === 'save' || action === 'submit') {
-                if(!state.partner_id)throw new Error('Choose a vendor from the search results before saving.');
-                if(!state.currency_id)throw new Error('Choose a currency before saving.');
-                while(defaultJobs.size)await Promise.all([...defaultJobs]);
-                const result = await post('/save', {...payload(), submit: action === 'submit'});
-                dirty = false; window.location.assign(result.url);
-            } else if (action === 'receive') {
+            if (action === 'receive') {
                 const ui = createPurchaseUI({root, post, companyId: state.company_id});
                 await openPurchaseReceiptDialog({post, poId: boot.id, ui, onDone: result => window.location.assign(result.url)});
             } else if (action === 'create_bill') {
@@ -594,7 +610,7 @@ function startPurchaseWorkspace() {
     });
     byId('apw-notes').value = state.notes || '';
     byId('apw-notes').addEventListener('input', event => {state.notes = event.target.value; changed();});
-    window.addEventListener('beforeunload', event => {if (dirty) {event.preventDefault(); event.returnValue = '';}});
+    installDraftNavigation({isDirty:()=>!readonly&&dirty,save:()=>saveDraft({navigate:false}),onError:error=>{if(errorBox.hidden)showError(error);}});
     state.lines.forEach(line => {line._manualPrice = Boolean(line.id);line._manualTaxes=Boolean(line.id);});
     renderHeader(); renderLines(); renderTotals(); renderAttachments();
     if (!readonly && state.partner_id && state.lines.some(l => !l.display_type)) recalculate().catch(showError);

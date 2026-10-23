@@ -1,4 +1,5 @@
 /** @odoo-module **/
+import { installDraftNavigation } from './draft_navigation';
 import { calculationRows, isEmptyDraftLine, decorateLineGrid } from './line_grid';
 import { createPurchaseUI } from './purchase_ui';
 import { openAnalyticDistribution } from './analytic_editor';
@@ -122,10 +123,16 @@ export function mountSalesLines(root) {
             totals.setAttribute('aria-busy',String(pending&&!empty));totals.append(text('small',pending&&!empty?'Updating…':'','apw-help'));}
         root.querySelectorAll('[data-sales-amount]').forEach(node=>{const line=state.lines[Number(node.dataset.salesAmount)];if(line)node.textContent=lineAmount(line)===null?'—':money(lineAmount(line));});
     }
-    async function save(){
-        if(busy)return;busy=true;clearTimeout(timer);render();feedback('Saving…');
-        try{while(defaultJobs.size)await Promise.all([...defaultJobs]);state=await post(state.order_id?'/save':'/create',{version:state.version,lines:calculationRows(state.lines)});if(state.redirect){window.location.assign(state.redirect);return;}dirty=false;revision++;busy=false;state.lines.forEach(line=>{line._manualPrice=Boolean(line.id);line._manualTaxes=Boolean(line.id);line._amountKey=amountKey(line);});render();feedback('Draft saved.');}
-        catch(e){busy=false;render();feedback(e.message);}
+    let draftJob=null,draftNavigate=true;
+    function save(options={}){if(draftJob){if(options.navigate===false)draftNavigate=false;return draftJob;}draftNavigate=options.navigate!==false;const job=saveDraft(options);draftJob=job;job.then(()=>{draftJob=null;},()=>{draftJob=null;});return job;}
+    async function saveDraft({navigate=true}={}){
+        if(busy)return false;busy=true;clearTimeout(timer);render();feedback('Saving…');
+        try{while(defaultJobs.size)await Promise.all([...defaultJobs]);state=await post(state.order_id?'/save':'/create',{version:state.version,lines:calculationRows(state.lines)});
+            dirty=false;revision++;busy=false;
+            state.lines.forEach(line=>{line._manualPrice=Boolean(line.id);line._manualTaxes=Boolean(line.id);line._amountKey=amountKey(line);});
+            if(state.redirect){if(draftNavigate){window.location.assign(state.redirect);return true;}window.history?.replaceState(null,'',state.redirect);}
+            render();feedback('Draft saved.');return true;
+        }catch(e){busy=false;render();feedback(e.message);return false;}
     }
     function render(){
         const active=document.activeElement,cell=active?.closest?.('[data-sales-column]'),row=active?.closest?.('[data-sales-row]');
@@ -159,7 +166,7 @@ export function mountSalesLines(root) {
         if(state.editable){const actions=text('div','','aps-sales-line-actions absar-line-add');for(const [type,label] of [['','Add a product'],['line_section','Add a section'],['line_note','Add a note']]){
             const add=button(label,()=>{addLine(type);});add.disabled=busy;actions.append(add);}
             actions.append(button('Catalog',catalog));surface.append(actions);}
-        document.querySelectorAll('[data-sales-save]').forEach(node=>{node.hidden=!state.editable;node.disabled=busy;node.textContent=busy?'Saving…':state.order_id?'Save Draft':'Save Quotation';});
+        document.querySelectorAll('[data-sales-save]').forEach(node=>{node.hidden=!state.editable;node.disabled=busy;node.textContent=busy?'Saving…':'Save Draft';});
         const totals=text('div','','aps-sales-totals');totals.setAttribute('data-sales-totals','true');surface.append(totals);drawTotals();
         const review=document.querySelector('[data-aps-submit-review]');if(review)review.disabled=dirty||!state.lines.some(l=>!l.display_type);
         if(!state.editable)root.querySelectorAll('input,select').forEach(node=>{node.disabled=true;});
@@ -173,10 +180,11 @@ export function mountSalesLines(root) {
         moveGrid(Number(input.closest('[data-sales-row]').dataset.salesRow),Number(input.closest('[data-sales-column]').dataset.salesColumn),-1);
     },true);
     const headerRoot=document.getElementById('aps-new-details')||document.getElementById('aps-order-details');
+    headerRoot?.addEventListener('input',()=>{dirty=true;});
     headerRoot?.addEventListener('change',event=>{changed();if(['partner_id','date_order'].includes(event.target.name)){headerSequence++;for(const line of state.lines)if(!line.display_type)reprice(line,null,event.target.name==='partner_id');}});
     headerRoot?.addEventListener('submit',event=>{event.preventDefault();save();});
     document.querySelectorAll('[data-sales-save]').forEach(node=>node.addEventListener('click',save));
-    window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
+    installDraftNavigation({isDirty:()=>state.editable&&dirty,save:()=>save({navigate:false}),onError:e=>{if(!error)feedback(e.message);}});
     render();
     return {get state(){return state;},render,moveGrid,save,preview,selectProduct};
 }

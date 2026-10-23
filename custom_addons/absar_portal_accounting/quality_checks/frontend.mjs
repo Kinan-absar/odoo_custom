@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const source=fs.readFileSync(new URL('../static/src/accounting.js', import.meta.url),'utf8').replace(/^import .*$/gm,'');
+const navigation=fs.readFileSync(new URL('../static/src/draft_navigation.js',import.meta.url),'utf8').replace(/^export /gm,'');
 const shared=['line_grid.js','purchase_ui.js','analytic_editor.js'].map(name=>fs.readFileSync(new URL('../static/src/'+name,import.meta.url),'utf8').replace(/^export /gm,'')).join('\n');
 class Element {
     constructor(tag){this.tagName=tag;this.children=[];this.handlers={};this.dataset={};this.disabled=false;this.isConnected=true;this.value='';this.style={};this.classList={add(){}};}
@@ -27,18 +28,18 @@ const fixture={id:0,company_id:1,kind:'bills',name:'New',date:'2026-10-19',invoi
     lines:[{name:'Materials',account_id:8,quantity:1,price_unit:0,taxes_id:[15],tax_names:[{id:15,name:'VAT 15%'}]}],
     bill_ids:[],invoice_ids:[],purchase_order_ids:[],untaxed:0,tax:0,total:0};
 function mount(boot){
-    const root=new Element('div'),body=new Element('body'),calls=[];let timer;
+    const root=new Element('div'),body=new Element('body'),calls=[],docHandlers={},dest=[];let timer;
     root.dataset={boot:JSON.stringify(boot),csrf:'csrf-fixture'};body.append(root);
-    const document={readyState:'complete',body,createElement:tag=>new Element(tag),getElementById:()=>root};
-    const context=vm.createContext({document,URLSearchParams,console,history:{replaceState(){}},
-        setTimeout:fn=>{timer=fn;return 1;},clearTimeout(){timer=null;},window:{innerWidth:1200,innerHeight:800,addEventListener(){},confirm:()=>true,prompt:()=>null,location:{assign(){}}},
+    const document={readyState:'complete',body,createElement:tag=>new Element(tag),getElementById:()=>root,addEventListener:(name,fn)=>{docHandlers[name]=fn;}};
+    const context=vm.createContext({document,URL,URLSearchParams,console,history:{replaceState(){}},
+        setTimeout:fn=>{timer=fn;return 1;},clearTimeout(){timer=null;},window:{innerWidth:1200,innerHeight:800,addEventListener(){},confirm:()=>true,prompt:()=>null,location:{href:'https://example.test/my/employee/accounting/bills/new',assign:url=>dest.push(url)}},
         fetch:async(url,options)=>{const data=JSON.parse(options.body.get('payload'));calls.push({url,data});
             assert.equal(options.body.get('csrf_token'),'csrf-fixture');
             const result=url.endsWith('/options')?Array.from({length:Math.min(data.limit||30,65-(data.offset||0))},(_,i)=>({id:1000+(data.offset||0)+i,name:'Partner '+((data.offset||0)+i)})):url.endsWith('/defaults')?{journal_id:3,currency_id:1,currency_name:'SAR',invoice_payment_term_id:false,selections:{journal_id:{id:3,name:'Purchase'},currency_id:{id:1,name:'SAR'},invoice_payment_term_id:{id:false,name:''}}}:url.endsWith('/preview')?{untaxed:200,tax:30,total:230,currency:'SAR',line_amounts:[200]}:
                 {...boot,...data,id:42,version:'saved-version',editable:!data.submit,review:data.submit?'submitted':boot.review};
             return {json:async()=>({ok:true,result})};}});
-    vm.runInContext(shared+source,context);
-    return {root,body,calls,tick:async()=>{if(timer){const fn=timer;timer=null;await fn();}},settle:async()=>{for(let i=0;i<8;i++)await Promise.resolve();}};
+    vm.runInContext(navigation+shared+source,context);
+    return {root,body,calls,docHandlers,dest,tick:async()=>{if(timer){const fn=timer;timer=null;await fn();}},settle:async()=>{for(let i=0;i<8;i++)await Promise.resolve();}};
 }
 const f=mount(fixture);
 assert(find(f.root,'Save Draft'));assert(find(f.root,'Submit for Approval'));
@@ -108,3 +109,12 @@ assert.equal(undated.calls.length,0);
 assert(find(undated.root,'Set the Bill Date before submitting for approval.'));
 assert(find(undated.root,'Save Draft').disabled===false);
 console.log('PASS: portal Submit stops locally on missing Bill Date without sending a request or disabling the form.');
+
+// Leaving the actual Accounting editor must save draft flags, never submit/post.
+const auto=mount(fixture);const edited=walk(auto.root).find(n=>n['aria-label']==='price_unit');edited.value='123';edited.handlers.input();
+const link={href:'https://example.test/my/employee/accounting/bills',target:'',hasAttribute:()=>false};
+const exit={target:{closest:()=>link},button:0,preventDefault(){this.defaultPrevented=true;},stopImmediatePropagation(){}};
+auto.docHandlers.click(exit);assert(exit.defaultPrevented);await auto.settle();await auto.settle();
+const draftSave=auto.calls.find(c=>c.url.endsWith('/save'));assert(draftSave);assert.equal(draftSave.data.submit,false);assert.equal(draftSave.data.post,false);assert.equal(draftSave.data.lines[0].price_unit,123);assert.equal(auto.dest[0],link.href);
+const untouched=mount(fixture);const untouchedExit={...exit,defaultPrevented:false};untouched.docHandlers.click(untouchedExit);assert(!untouchedExit.defaultPrevented);assert.equal(untouched.calls.length,0);
+console.log('PASS: actual Accounting navigation saves edited forms as drafts with submit=false/post=false; untouched forms leave without a write.');

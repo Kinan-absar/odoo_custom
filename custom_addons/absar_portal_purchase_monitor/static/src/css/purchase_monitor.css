@@ -88,3 +88,6 @@
 .apw-dialog .apw-receipt-lines th{font-size:12px;white-space:normal}
 .apw-dialog .apw-receipt-lines input{width:110px;text-align:right;font-variant-numeric:tabular-nums}
 .apw-dialog .apw-receipt-lines td{vertical-align:middle}
+
+/* UoM uses the same top inset as adjacent Purchase numeric cells. */
+#apw-root .apw-lines td:nth-child(4){padding-top:9px!important;}
