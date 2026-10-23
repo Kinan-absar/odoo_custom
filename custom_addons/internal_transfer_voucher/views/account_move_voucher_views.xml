@@ -6,6 +6,16 @@
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
 
+            <!-- The second header reference is the journal-entry Reference. -->
+            <xpath expr="//*[@id='header_left_group']/field[@name='ref' and not(@nolabel)]" position="after">
+                <field name="source_payment_voucher_id" readonly="1"
+                       options="{'no_create': True, 'no_create_edit': True}"
+                       invisible="move_type != 'entry' or not source_payment_voucher_id"/>
+                <field name="source_receipt_voucher_id" readonly="1"
+                       options="{'no_create': True, 'no_create_edit': True}"
+                       invisible="move_type != 'entry' or not source_receipt_voucher_id"/>
+            </xpath>
+
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_view_payment_vouchers"
                         type="object"

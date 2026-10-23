@@ -1,0 +1,21 @@
+18.0.1.4.5 — 2026-10-21
+Quotation/order date on new and saved portal forms, validated in user timezone.
+Purchase-style lines: inline descriptions, add product/section/note, reorder,
+catalog/new product, quantity/unit native defaults, manual price preservation,
+immediate line amounts and native total recalculation. Save Draft saves details
+and lines together. Unified Sales-style card lists and whole-row opening.
+No automatic revisions. Studio revision and reports remain unchanged.
+
+18.0.1.4.4 — 2026-10-21
+Two independent stages: quotation approval, then approval to convert to a Sales Order.
+No preparer Confirm. Approve/Return appear at the top in native and portal forms.
+Sales table list and one-page new quotation details/lines replace the offer setup wizard.
+Preparer outcomes include issuer, submitter and requester; persistent portal review updates,
+explicit recipient messages, document links, native activities and optional push.
+New metadata is protected, submissions/decisions locked, native failures roll back,
+and edits require renewed approval. Native unmanaged orders retain their standard flow.
+EPS and role/group definitions are not modified. Upgrade absar_portal_sales.
+
+18.0.1.4.1
+Independent approval is mandatory for the own-document Issuer/Prepare and all-company User groups. The User role expands visibility, not confirmation authority. Save Draft sends no approval notification; Submit for Approval notifies eligible independent approvers.
+The original issuer retains ownership when a working user submits on their behalf; the actual submitter is recorded separately and cannot approve that submission. Changes invalidate approval. No internal user groups are implied. Employee Portal Suite and Accounting posting rules are unchanged.

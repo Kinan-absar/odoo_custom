@@ -7,6 +7,42 @@ class AccountMove(models.Model):
 
     payment_voucher_count = fields.Integer(compute='_compute_payment_voucher_count', string='Payment Vouchers')
 
+    # Reverse the vouchers' existing move_id relation. This also covers entries
+    # posted before this field was introduced, without matching reference text.
+    source_payment_voucher_ids = fields.One2many(
+        'account.payment.voucher', 'move_id', readonly=True, copy=False,
+    )
+    source_receipt_voucher_ids = fields.One2many(
+        'account.receipt.voucher', 'move_id', readonly=True, copy=False,
+    )
+    source_payment_voucher_id = fields.Many2one(
+        'account.payment.voucher', string='Payment Voucher',
+        compute='_compute_source_vouchers', compute_sudo=False,
+    )
+    source_receipt_voucher_id = fields.Many2one(
+        'account.receipt.voucher', string='Receipt Voucher',
+        compute='_compute_source_vouchers', compute_sudo=False,
+    )
+
+    @api.depends('move_type', 'source_payment_voucher_ids', 'source_receipt_voucher_ids')
+    @api.depends_context('uid')
+    def _compute_source_vouchers(self):
+        entries = self.filtered(lambda move: move.move_type == 'entry')
+        linked = {}
+        for model, field in (
+            ('account.payment.voucher', 'source_payment_voucher_id'),
+            ('account.receipt.voucher', 'source_receipt_voucher_id'),
+        ):
+            by_move = {}
+            Voucher = self.env[model]
+            if entries and Voucher.check_access_rights('read', raise_exception=False):
+                for voucher in Voucher.search([('move_id', 'in', entries.ids)], order='id'):
+                    by_move.setdefault(voucher.move_id.id, voucher)
+            linked[field] = by_move
+        for move in self:
+            move.source_payment_voucher_id = linked['source_payment_voucher_id'].get(move.id, False)
+            move.source_receipt_voucher_id = linked['source_receipt_voucher_id'].get(move.id, False)
+
     def _get_linked_payment_vouchers(self):
         """Return custom payment vouchers linked to this bill, including already-reconciled ones.
 

@@ -298,6 +298,89 @@ def check_runtime(env, service, payload):
         assert bool(document.xpath('//div[@class="attention-clear"]')) == (viewer == monitor)
     print('PASS: actual portal queue GET lists internal-issued RFQ and marks seen; inherited EPS home compiles/renders attention for Approver and all-clear for Monitor.')
 
+    # Load the actual dedicated portal templates and both directory controllers.
+    # The outer EPS layout remains a bridge; list/form QWeb below is unmodified.
+    import json
+    for filename in ('portal_purchase_templates.xml', 'portal_workspace_pages.xml',
+                     'portal_purchase_prepare.xml', 'portal_purchase_approval_list.xml'):
+        with (addon / 'views' / filename).open('rb') as source:
+            convert_xml_import(env, 'absar_portal_purchase_monitor', source, {}, mode='update')
+    prepare_globals = service._actor.__func__.__globals__
+    monitor_globals = {'__name__':'runtime_monitor', 'PortalPurchasePrepare':service.__class__,
+                       'integer':prepare_globals['integer']}
+    monitor_source = (addon / 'controllers/portal_purchase.py').read_text().replace(
+        'from .portal_prepare import PortalPurchasePrepare, integer', '')
+    exec(compile(monitor_source, 'actual_monitor_controller', 'exec'), monitor_globals)
+    monitor_globals['request'] = request
+    monitor_controller = monitor_globals['PortalPurchaseMonitor']()
+    directory_globals = {'__name__':'runtime_directory', 'PortalPurchasePrepare':service.__class__,
+                         'integer':prepare_globals['integer'], 'BASE':prepare_globals['BASE'],
+                         'PREFIX':prepare_globals['PREFIX'], 'PortalPurchaseMonitor':monitor_globals['PortalPurchaseMonitor']}
+    directory_source = (addon / 'controllers/portal_directory.py').read_text().replace(
+        'from .portal_prepare import PortalPurchasePrepare, BASE, PREFIX, integer', '').replace(
+        'from .portal_purchase import PortalPurchaseMonitor', '')
+    exec(compile(directory_source, 'actual_directory_controller', 'exec'), directory_globals)
+    directory_globals['request'] = request
+    directory = directory_globals['PortalPurchaseDirectory']()
+    request.redirect = lambda url: {'redirect':url}
+
+    def render_view(template, values, viewer, path):
+        view_request = SimpleNamespace(env=env(user=viewer.id, context=dict(issuer_env.context)),
+            httprequest=SimpleNamespace(path=path), csrf_token=lambda:'disposable-test-token')
+        html = env['ir.qweb'].with_context(minimal_qcontext=True)._render(
+            'absar_portal_purchase_monitor.' + template, dict(values, request=view_request))
+        return etree.HTML(str(html))
+
+    for viewer, path in [(portal_reviewer, '/my/employee/purchase/approvals'),
+                         (actor, '/my/employee/purchase')]:
+        request.env = env(user=viewer.id, context=dict(issuer_env.context))
+        request.httprequest.path = path
+        values = service.listing.__wrapped__(service)
+        document = render_view('purchase_prepare_list', values, viewer, path)
+        assert document.xpath('//table[@class="apm-table"]')
+        assert bool(document.xpath('//nav[@aria-label="Purchase workspace"]')) == (viewer == actor)
+        assert bool(document.xpath('//a[@href="/my/employee/purchase/new"]')) == (viewer == actor)
+        if viewer == portal_reviewer:
+            assert document.xpath('//h2[text()="Purchase Approvals"]')
+            assert not document.xpath('//a[@href="/my/employee/purchase/products"]')
+        selected_order = native_order if viewer == portal_reviewer else own_order
+        boot = service._boot(service._record(selected_order.id))
+        detail = render_view('purchase_prepare_detail',
+            {'boot':boot,'boot_json':json.dumps(boot),'po':service._record(selected_order.id)},
+            viewer, '/my/employee/purchase/%s' % selected_order.id)
+        assert detail.xpath('//*[@id="apw-root"]')
+        assert bool(detail.xpath('//button[@data-action="approve_confirm"]')) == (viewer == portal_reviewer)
+        assert not detail.xpath('//button[@data-action="save"]')
+        if viewer == portal_reviewer:
+            assert not detail.xpath('//nav[@aria-label="Purchase workspace"]')
+            try:
+                directory.products.__wrapped__(directory)
+            except Forbidden:
+                pass
+            else:
+                raise AssertionError('Approver must not open Products directory')
+            assert directory.orders.__wrapped__(directory) == {'redirect':'/my/employee/purchase/approvals'}
+    request.env = issuer_env
+    values = directory.orders.__wrapped__(directory)
+    document = render_view('purchase_monitor_list', values, actor, '/my/employee/purchase/orders')
+    assert document.xpath('//table[@class="apm-table"]')
+    assert {row['po'].absar_portal_preparer_id.id for row in values['rows']} == {actor.id}
+    request.env = env(user=monitor.id, context=dict(issuer_env.context))
+    values = monitor_controller.list_orders.__wrapped__(monitor_controller)
+    assert order.id in [row['po'].id for row in values['rows']]
+    assert render_view('purchase_monitor_list', values, monitor, '/my/employee/purchase-monitor').xpath('//table[@class="apm-table"]')
+    assert monitor_controller.order_detail.__wrapped__(monitor_controller, order.id) == {
+        'redirect':'/my/employee/purchase/%s?from_monitor=1' % order.id}
+    monitor_form = directory.editor.__wrapped__(directory, po_id=order.id, from_monitor='1')
+    assert monitor_form['boot']['readonly'] and not monitor_form['boot']['can_create_product']
+    detail = render_view('purchase_prepare_detail', monitor_form, monitor, '/my/employee/purchase/%s' % order.id)
+    assert detail.xpath('//*[@id="apw-root"]')
+    assert detail.xpath('//*[@data-purchase-financial-summary="1"]')
+    assert not detail.xpath('//a[contains(@href, "/purchase-monitor/")]')
+    assert not detail.xpath('//button[@data-action="save" or @data-action="approve_confirm" or @data-action="confirm"]')
+    request.env = issuer_env
+    print('PASS: actual Issuer/Approver/Monitor list and shared-form QWeb rendering, role-specific navigation/actions, product restriction, own-order scope and Monitor redirect/read-only form.')
+
     # Other-company and self-issued fixtures must never inflate the count.
     other_company = env['res.company'].create({'name': 'Disposable foreign purchase company'})
     env['stock.warehouse'].create({'name': 'Foreign purchase warehouse', 'code': 'FPO', 'company_id': other_company.id})
@@ -358,6 +441,32 @@ def check_runtime(env, service, payload):
     assert native_document.xpath("//button[@name='button_confirm'][@string='Submit for Approval']")
     print('PASS: internal native creation -> original Confirm RPC submits only -> shared portal queue -> return/correct/resubmit -> independent portal approval confirms; internal issuer bypass denied; issuer migration idempotent.')
 
+
+    # Distinguish Odoo's native threshold approval from a Studio button rule.
+    company = order.company_id
+    old_validation = company.po_double_validation
+    old_threshold = company.po_double_validation_amount
+    try:
+        company.write({'po_double_validation':'two_step', 'po_double_validation_amount':0})
+        extra = deepcopy(payload); extra['submit'] = True
+        saved = call('save', extra)
+        threshold_order = env['purchase.order'].browse(int(saved['url'].rsplit('/',1)[1]))
+        threshold_order.with_user(portal_reviewer).sudo().action_absar_portal_approve_confirm()
+        threshold_order.invalidate_recordset()
+        assert threshold_order.absar_portal_review_state == 'approved'
+        assert threshold_order.state == 'to approve' and not threshold_order.picking_ids
+        threshold_order.with_user(manager).button_approve()
+        threshold_order.invalidate_recordset()
+        assert threshold_order.state in ('purchase','done')
+        company.write({'po_double_validation':'one_step'})
+        saved = call('save', extra)
+        one_step_order = env['purchase.order'].browse(int(saved['url'].rsplit('/',1)[1]))
+        one_step_order.with_user(portal_reviewer).sudo().action_absar_portal_approve_confirm()
+        one_step_order.invalidate_recordset()
+        assert one_step_order.state in ('purchase','done')
+    finally:
+        company.write({'po_double_validation':old_validation, 'po_double_validation_amount':old_threshold})
+    print('PASS: native two-step threshold leaves portal approval To Approve until manager acts; native one-step confirms with portal Approver. No Studio rule is involved in this probe.')
 
     defaults = call('product_defaults', {'company_id': payload['company_id']})
     for key in ('categ_id', 'uom_id', 'uom_po_id'):

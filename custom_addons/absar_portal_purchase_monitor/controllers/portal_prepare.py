@@ -75,7 +75,8 @@ class PortalPurchasePrepare(http.Controller):
         owner = po.absar_portal_preparer_id == user and user.has_group(PREFIX + 'group_portal_purchase_preparer')
         reviewer = bool(po.absar_portal_preparer_id) and user.has_group(PREFIX + 'group_portal_purchase_approver')
         monitor = po.state in ('purchase', 'done') and user.has_group(PREFIX + 'group_portal_purchase_monitor')
-        if not (owner or reviewer or monitor):
+        operator=user.has_group(PREFIX+'group_portal_purchase_user')
+        if not (owner or reviewer or monitor or operator):
             raise NotFound()
         if edit and not po._portal_editable(user):
             raise AccessError(_('This RFQ is not an editable draft belonging to you.'))
@@ -145,8 +146,10 @@ class PortalPurchasePrepare(http.Controller):
         return pytz.UTC.localize(fields.Datetime.to_datetime(value)).astimezone(
             pytz.timezone(request.env.user.tz or 'UTC')).strftime('%Y-%m-%dT%H:%M:%S')
 
-    def _header(self, data, company):
-        vendor = self._choice('vendor', data.get('partner_id'), company, True)
+    def _header(self, data, company, preview=False):
+        # A cache-only amount preview can precede vendor selection. Persisting
+        # or submitting an order still requires the normal vendor validation.
+        vendor = self._choice('vendor', data.get('partner_id'), company, not preview)
         currency = self._choice('currency', data.get('currency_id'), company, True)
         project = self._choice('project', data.get('project_id'), company)
         mr = self._choice('mr', data.get('material_request_id'), company)
@@ -248,6 +251,8 @@ class PortalPurchasePrepare(http.Controller):
         for name in ('product_qty', 'product_uom'):
             for onchange in native._onchange_methods.get(name, ()):
                 onchange(native)
+        if defaults and not product.supplier_taxes_id.filtered(lambda tax: tax.company_id == company) and company.account_purchase_tax_id:
+            native.taxes_id = order.fiscal_position_id.map_tax(company.account_purchase_tax_id)
         # Computed native purchase fields select seller, lead time, UoM, taxes and price.
         vals = {'product_id': product.id, 'product_qty': qty, 'product_uom': uom.id,
                 'name': native.name, 'price_unit': native.price_unit,
@@ -309,6 +314,8 @@ class PortalPurchasePrepare(http.Controller):
             domain += [('absar_portal_preparer_id', '!=', False), ('state', 'in', ['draft', 'sent'])]
         elif approval:
             domain += [('absar_portal_preparer_id', '!=', False), ('absar_portal_preparer_id', '!=', user.id)]
+        elif user.has_group(PREFIX+'group_portal_purchase_user'):
+            domain += [('state','not in',['purchase','done'])]
         else:
             domain += [('absar_portal_preparer_id', '=', user.id), ('state', 'not in', ['purchase', 'done'])]
         q = str(kw.get('q') or '').strip()[:120]
@@ -351,7 +358,7 @@ class PortalPurchasePrepare(http.Controller):
         user = self._actor('preparer' if not po else None)
         company = po.company_id if po else company or user.company_id
         readonly = bool(po and not po._portal_editable(user))
-        approval_view = bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_preparer_id != user)
+        approval_view = bool(po and not user.has_group(PREFIX+'group_portal_purchase_user') and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_preparer_id != user)
         vals = dict(company_id=company.id, currency_id=company.currency_id.id,
                     date_order=self._local(fields.Datetime.now()), date_planned='', notes='', lines=[])
         def choice(record):
@@ -383,7 +390,18 @@ class PortalPurchasePrepare(http.Controller):
         attachments = request.env['ir.attachment'].sudo().search([
             ('res_model', '=', 'purchase.order'), ('res_id', '=', po.id), ('mimetype', '=', 'application/pdf'),
             '|', ('company_id', '=', False), ('company_id', '=', company.id)], order='id') if po else request.env['ir.attachment'].browse()
-        return dict(values=vals, selected=selected, readonly=readonly, approval_view=approval_view,
+        operator=user.has_group(PREFIX+'group_portal_purchase_user')
+        finance=any(user.has_group('absar_portal_accounting.group_'+role) for role in ('preparer','accountant')) if 'absar.portal.accounting.service' in request.env else False
+        bill_reason=''
+        if operator and po:
+            if po.state not in ('purchase','done'):
+                bill_reason=_('The purchase order must be approved before creating a vendor bill.')
+            elif not finance:
+                bill_reason=_('Vendor bill preparation requires Accounting User (Direct Posting) or Accounting Preparer in addition to Purchase User.')
+            elif po.invoice_status != 'to invoice':
+                bill_reason=_('No quantities are available to bill. Check existing draft/posted bills; products billed on received quantities must first be received.')
+        return dict(can_receive=bool(po and po.state in ('purchase','done') and user.has_group(PREFIX+'group_portal_purchase_preparer') and (operator or po.absar_portal_preparer_id == user)), show_bill=bool(operator and po and po.state!='cancel'), bill_reason=bill_reason, uses_review=True, can_work=operator, can_bill=bool(operator and finance and po and po.state in ('purchase','done') and po.invoice_status=='to invoice'),
+                    can_direct_confirm=False, values=vals, selected=selected, readonly=readonly, approval_view=approval_view,
                     attachments=[{'id': a.id, 'name': a.name} for a in attachments],
                     totals=dict(untaxed=po.amount_untaxed, tax=po.amount_tax, total=po.amount_total, currency=po.currency_id.name) if po else None,
                     back_url=BASE + '/approvals' if approval_view else BASE if user.has_group(PREFIX + 'group_portal_purchase_preparer') else BASE + '/approvals' if user.has_group(PREFIX + 'group_portal_purchase_approver') else '/my/employee/purchase-monitor',
@@ -393,14 +411,13 @@ class PortalPurchasePrepare(http.Controller):
                     review=po.absar_portal_review_state if po else 'draft',
                     version=str(po.write_date) if po else '',
                     note=po.absar_portal_review_note or '' if po else '',
-                    company_name=company.name, companies=[{'id': c.id, 'label': c.name, 'currency': choice(c.currency_id), 'picking_type': choice(self._scope('picking_type', c)[0].search(self._scope('picking_type', c)[1], limit=1))} for c in user.company_ids],
+                    default_taxes=[choice(t) for t in company.sudo().account_purchase_tax_id],
+                    company_name=company.name, companies=[{'id': c.id, 'label': c.name, 'currency': choice(c.currency_id), 'default_taxes': [choice(t) for t in c.sudo().account_purchase_tax_id], 'picking_type': choice(self._scope('picking_type', c)[0].search(self._scope('picking_type', c)[1], limit=1))} for c in user.company_ids],
                     timezone=user.tz or 'UTC',
                     can_create_product=user.has_group(PREFIX + 'group_portal_purchase_preparer') and not readonly,
-                    can_review=bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_preparer_id and po.absar_portal_preparer_id != user and
+                    can_review=bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_preparer_id and user not in (po.absar_portal_preparer_id,po.absar_portal_submitter_id) and
                         po.state in ('draft', 'sent') and po.absar_portal_review_state in ('submitted', 'approved')),
-                    can_confirm=bool(po and user.has_group(PREFIX + 'group_portal_purchase_approver') and po.absar_portal_approver_id and
-                        po.absar_portal_review_state == 'approved' and po.state in ('draft', 'sent') and
-                        po.absar_portal_preparer_id != user),
+                    can_confirm=False,
                     project_integration='project_id' in request.env['purchase.order']._fields)
 
     def _plain(self, value):
@@ -472,7 +489,7 @@ class PortalPurchasePrepare(http.Controller):
             self._actor('preparer')
             po = self._record(integer(data['id']), edit=True) if data.get('id') else False
             company = po.company_id if po else self._company(data.get('company_id'))
-            header = self._header(data, company)
+            header = self._header(data, company, preview=True)
             model = self._env(company)['purchase.order'].sudo().with_company(company)
             order = self._native_order(company, header)
             lines = data.get('lines') or []
@@ -540,16 +557,22 @@ class PortalPurchasePrepare(http.Controller):
                 # vendor/currency and line edits in one parent write can run the
                 # price/discount compute after the explicit line values were set.
                 # The user's validated line values must be applied last.
+                if user.has_group(PREFIX+'group_portal_purchase_user'):
+                    header['user_id']=po.user_id.id or user.id
+                    if not po.absar_portal_preparer_id:header['absar_portal_preparer_id']=user.id
+                    header['absar_portal_working_order']=False
                 line_commands = header.pop('order_line')
                 po.write(header)
                 po.order_line.flush_recordset()
                 po.write({'order_line': line_commands})
             else:
                 header['absar_portal_preparer_id'] = user.id
+                header['absar_portal_working_order'] = False
                 po = model.create(header)
             if data.get('submit'):
                 po._portal_submit()
-            return {'url': BASE + '/%s' % po.id}
+            return {'url': BASE + '/%s' % po.id, 'id': po.id, 'version': str(po.write_date),
+                    'lines': [self._serialize_line(line) for line in po.order_line.sorted(lambda line: (line.sequence, line.id))]}
         return self._json(run)
 
     @http.route(BASE + '/<int:po_id>/decision', type='http', auth='user', methods=['POST'], csrf=True)
@@ -557,6 +580,13 @@ class PortalPurchasePrepare(http.Controller):
         def run(data):
             po = self._record(po_id)
             action = data.get('action')
+            if action == 'work_confirm':
+                # Old cached clients may still send this action. It submits,
+                # never confirms, and uses the same independent-review path.
+                self._actor('user');po._portal_lock()
+                if str(po.write_date)!=data.get('version'):raise UserError(_('This RFQ changed. Reload before submitting.'))
+                po._portal_submit()
+                return {'url':BASE+'/%s'%po.id}
             if action not in ('approve', 'return', 'confirm', 'approve_confirm'):
                 raise ValidationError(_('Unknown decision.'))
             self._actor('approver')
@@ -568,12 +598,8 @@ class PortalPurchasePrepare(http.Controller):
                     raise ValidationError(_('A correction note is required.'))
                 po.write({'absar_portal_review_note': str(data['note'])[:2000]})
                 po.action_absar_portal_return()
-            elif action == 'approve':
-                po.action_absar_portal_approve()
             else:
-                result = po.action_absar_portal_approve_confirm() if action == 'approve_confirm' else po.action_absar_portal_confirm()
-                if isinstance(result, dict):
-                    raise UserError(_('Confirmation requires a backend wizard. Please complete it in Purchase; no changes were saved.'))
+                po.action_absar_portal_approve()
             return {'url': BASE + '/%s' % po.id}
         return self._json(run)
 
@@ -587,6 +613,8 @@ class PortalPurchasePrepare(http.Controller):
             choices = {}
             for name in ('currency_id', 'payment_term_id', 'fiscal_position_id'):
                 record = order[name]
+                if name == 'currency_id' and not record:
+                    record = company.currency_id
                 choices[name] = {'id': record._origin.id, 'label': record.display_name} if record and record._origin.id else None
             return {'selected': choices, 'notes': self._plain(order.notes)}
         return self._json(run)
@@ -599,6 +627,8 @@ class PortalPurchasePrepare(http.Controller):
             company = self._company(data.get('company_id'))
             Product = self._env(company)['product.product'].sudo().with_company(company)
             defaults = Product.default_get(['categ_id', 'uom_id', 'uom_po_id', 'purchase_method', 'supplier_taxes_id', 'type'])
+            if company.account_purchase_tax_id:
+                defaults['supplier_taxes_id'] = [(6, 0, company.account_purchase_tax_id.ids)]
             defaults.update(purchase_ok=True, sale_ok=False, company_id=company.id)
             product = Product.new(defaults)
             # Delegated product defaults may be pseudo-records with an origin.
@@ -610,45 +640,100 @@ class PortalPurchasePrepare(http.Controller):
                         supplier_taxes=[choice(t) for t in product.supplier_taxes_id if t._origin.id])
         return self._json(run)
 
+    def _product_values(self, data, company):
+        name = str(data.get('name') or '').strip()[:150]
+        if not name:
+            raise ValidationError(_('Product name is required.'))
+        kind = data.get('type', 'consu')
+        if kind not in ('consu', 'service'):
+            raise ValidationError(_('Choose Goods or Service.'))
+        category = self._choice('category', data.get('categ_id'), company, True)
+        uom = self._choice('uom', data.get('uom_id'), company, True)
+        purchase_uom = self._choice('uom', data.get('uom_po_id') or uom.id, company, True)
+        if uom.category_id != purchase_uom.category_id:
+            raise ValidationError(_('Purchase unit must have the same category as the product unit.'))
+        vals = dict(name=name, type=kind, purchase_ok=True, sale_ok=False,
+                    company_id=company.id, categ_id=category.id, uom_id=uom.id,
+                    uom_po_id=purchase_uom.id, default_code=str(data.get('default_code') or '')[:100])
+        model = self._env(company)['product.product'].sudo().with_company(company)
+        if 'is_storable' in model._fields:
+            vals['is_storable'] = kind == 'consu' and bool(data.get('is_storable'))
+        if 'property_account_expense_id' in data:
+            account = self._choice('account', data.get('property_account_expense_id'), company)
+            vals['property_account_expense_id'] = account.id or False
+        if data.get('purchase_method') in ('purchase', 'receive'):
+            vals['purchase_method'] = data['purchase_method']
+        taxes = data.get('supplier_taxes_id')
+        if taxes is not None:
+            if not isinstance(taxes, list) or len(taxes) > 50:
+                raise ValidationError(_('Invalid purchase taxes.'))
+            vals['supplier_taxes_id'] = [(6, 0, list(dict.fromkeys(self._choice('tax', t, company, True).id for t in taxes)))]
+        vals['barcode'] = str(data.get('barcode') or '')[:100] or False
+        vals['description_purchase'] = str(data.get('description_purchase') or '')[:4000]
+        if data.get('standard_price') not in (None, ''):
+            cost = number(data['standard_price'], _('Cost'))
+            if cost < 0:
+                raise ValidationError(_('Cost cannot be negative.'))
+            vals['standard_price'] = cost
+        return vals
+
+    def _product_version(self, product):
+        return '%s|%s' % (product.write_date, product.product_tmpl_id.write_date)
+
+    @http.route(BASE + '/product-read', type='http', auth='user', methods=['POST'], csrf=True)
+    def read_product(self, **kw):
+        def run(data):
+            user = self._actor()
+            company = self._company(data.get('company_id'))
+            product = self._choice('product', data.get('id'), company, True).with_company(company)
+            pick = lambda r: {'id': r.id, 'label': r.display_name} if r else None
+            account = product.property_account_expense_id
+            return dict(id=product.id, version=self._product_version(product), name=product.name,
+                label=product.display_name, can_edit=user.has_group(PREFIX+'group_portal_purchase_preparer'),
+                shared=not bool(product.company_id), type=product.type,
+                is_storable=bool(product.is_storable) if 'is_storable' in product._fields else False,
+                categ_id=pick(product.categ_id), uom_id=pick(product.uom_id), uom_po_id=pick(product.uom_po_id),
+                default_code=product.default_code or '', barcode=product.barcode or '', standard_price=product.standard_price,
+                description_purchase=product.description_purchase or '', purchase_method=product.purchase_method,
+                property_account_expense_id=pick(account),
+                category_expense_account=product.categ_id.property_account_expense_categ_id.display_name or '',
+                supplier_taxes=[pick(t) for t in product.supplier_taxes_id if t.company_id == company])
+        return self._json(run)
+
     @http.route(BASE + '/product-create', type='http', auth='user', methods=['POST'], csrf=True)
     def create_product(self, **kw):
         def run(data):
             self._actor('preparer')
+            company = self._company(data.get('company_id'))
+            vals = self._product_values(data, company)
+            product = self._env(company)['product.product'].sudo().with_company(company).create(vals)
+            return {'id': product.id, 'label': product.display_name}
+        return self._json(run)
+
+    @http.route(BASE + '/product-update', type='http', auth='user', methods=['POST'], csrf=True)
+    def update_product(self, **kw):
+        def run(data):
             self._actor('preparer')
             company = self._company(data.get('company_id'))
-            name = str(data.get('name') or '').strip()[:150]
-            if not name:
-                raise ValidationError(_('Product name is required.'))
-            kind = data.get('type', 'consu')
-            if kind not in ('consu', 'service'):
-                raise ValidationError(_('Choose Goods or Service.'))
-            category = self._choice('category', data.get('categ_id'), company, True)
-            uom = self._choice('uom', data.get('uom_id'), company, True)
-            purchase_uom = self._choice('uom', data.get('uom_po_id') or uom.id, company, True)
-            if uom.category_id != purchase_uom.category_id:
-                raise ValidationError(_('Purchase unit must have the same category as the product unit.'))
-            vals = dict(name=name, type=kind, purchase_ok=True, sale_ok=False,
-                        company_id=company.id, categ_id=category.id, uom_id=uom.id,
-                        uom_po_id=purchase_uom.id, default_code=str(data.get('default_code') or '')[:100])
-            model = self._env(company)['product.product'].sudo().with_company(company)
-            if 'is_storable' in model._fields:
-                vals['is_storable'] = kind == 'consu' and bool(data.get('is_storable'))
-            if data.get('property_account_expense_id'):
-                vals['property_account_expense_id'] = self._choice('account', data['property_account_expense_id'], company, True).id
-            if data.get('purchase_method') in ('purchase', 'receive'):
-                vals['purchase_method'] = data['purchase_method']
-            taxes = data.get('supplier_taxes_id')
-            if taxes is not None:
-                if not isinstance(taxes, list) or len(taxes) > 50:
-                    raise ValidationError(_('Invalid purchase taxes.'))
-                vals['supplier_taxes_id'] = [(6, 0, [self._choice('tax', t, company, True).id for t in taxes])]
-            vals['barcode'] = str(data.get('barcode') or '')[:100] or False
-            vals['description_purchase'] = str(data.get('description_purchase') or '')[:4000]
-            if data.get('standard_price') not in (None, ''):
-                cost = number(data['standard_price'], _('Cost'))
-                if cost < 0:
-                    raise ValidationError(_('Cost cannot be negative.'))
-                vals['standard_price'] = cost
-            product = model.create(vals)
-            return {'id': product.id, 'label': product.display_name}
+            product = self._choice('product', data.get('id'), company, True).with_company(company)
+            # Lock both rows: product variants share template properties.
+            request.env.cr.execute('SELECT id FROM product_template WHERE id=%s FOR UPDATE', [product.product_tmpl_id.id])
+            request.env.cr.execute('SELECT id FROM product_product WHERE id=%s FOR UPDATE', [product.id])
+            product.invalidate_recordset()
+            product.product_tmpl_id.invalidate_recordset()
+            if not data.get('version') or data['version'] != self._product_version(product):
+                raise UserError(_('This product changed since you opened it. Close and reopen the product form.'))
+            vals = self._product_values(data, company)
+            # Updating an existing product must not move companies, disable sales
+            # or change purchasing availability as a side effect of this form.
+            for key in ('company_id', 'sale_ok', 'purchase_ok'):
+                vals.pop(key, None)
+            if 'supplier_taxes_id' in vals:
+                # Shared products may carry tax defaults for several companies.
+                selected = vals['supplier_taxes_id'][0][2]
+                other = product.supplier_taxes_id.filtered(lambda t: t.company_id != company).ids
+                vals['supplier_taxes_id'] = [(6, 0, list(dict.fromkeys(selected + other)))]
+            product.write(vals)
+            return {'id': product.id, 'label': product.display_name, 'product_updated': True,
+                    'default_account': (product.property_account_expense_id or product.categ_id.property_account_expense_categ_id).display_name or ''}
         return self._json(run)

@@ -1,17 +1,17 @@
 {'name': 'Employee Portal Suite',
- 'version': '18.0.1.20.97',
+ 'version': '18.0.1.20.118',
  'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
  'description': '\n'
-                '    Comprehensive Employee Portal Suite providing a full service system for employees, managers, and '
-                'administrators.\n'
+                '    Comprehensive Employee Portal Suite providing a full service system for employees, '
+                'managers, and administrators.\n'
                 '\n'
                 '    Features Included:\n'
                 '\n'
                 '    ✔ Employee Portal (/my/employee)\n'
                 '    ✔ Clean custom portal layout and navigation \n'
                 '    ✔ Employee Requests workflow (Employee → Manager → HR → Finance → CEO)\n'
-                '    ✔ Material Requests workflow (Employee → Purchase Rep → Store Manager → Project Manager → '
-                'Director → CEO)\n'
+                '    ✔ Material Requests workflow (Employee → Purchase Rep → Store Manager → Project Manager '
+                '→ Director → CEO)\n'
                 '    ✔ Full approval timeline visible in backend + portal\n'
                 '    ✔ Manager Approvals Center with tabs (Employee / Material)\n'
                 '    ✔ Dynamic Request Submission Forms\n'
@@ -20,15 +20,15 @@
                 '    ✔ PDF reports for all request types\n'
                 '    ✔ GPS Attendance with geofencing (Check-In / Check-Out)\n'
                 '    ✔ Automatic checkout cron for missed attendance\n'
-                '    ✔ Web Push-first approval, stage-change, attendance, reminder, escalation, chat, and call '
-                'notifications\n'
+                '    ✔ Web Push-first approval, stage-change, attendance, reminder, escalation, chat, and '
+                'call notifications\n'
                 '    ✔ Multiple work locations per employee with project-specific GPS configuration\n'
                 '    ✔ Backend menus for Requests, Attendance, and Material Requests\n'
                 '    ✔ Secure access using custom portal user, manager, HR, finance, and approval groups\n'
                 '    ✔ Completely isolated portal permissions (employees only see their own records)\n'
                 '\n'
-                '    This module enables a complete self-service environment for employees and a unified approval '
-                'center for managers.\n'
+                '    This module enables a complete self-service environment for employees and a unified '
+                'approval center for managers.\n'
                 '    ',
  'license': 'LGPL-3',
  'author': 'Kinan',
@@ -68,6 +68,8 @@
           'views/employee_request_views.xml',
           'views/hr_leave_views.xml',
           'views/material_request_views.xml',
+          'views/material_clarification.xml',
+          'views/material_chatter.xml',
           'views/account_move_views.xml',
           'views/portal_announcement_views.xml',
           'views/menus.xml',
@@ -84,6 +86,7 @@
           'views/native_discuss_portal.xml',
           'views/discuss_channel_portal_views.xml',
           'views/employee_portal_layout.xml',
+          'views/portal_visual_dashboard.xml',
           'views/employee_dashboard_page.xml',
           'views/employee_profile_page.xml',
           'views/employee_requests_page.xml',
@@ -117,7 +120,9 @@
                                     'employee_portal_suite/static/src/js/portal_native_presence.js',
                                     'employee_portal_suite/static/src/css/native_discuss_portal.css',
                                     'employee_portal_suite/static/src/js/portal_native_call_alert.js',
-                                    'employee_portal_suite/static/src/scss/portal_native_call_alert.scss'],
+                                    'employee_portal_suite/static/src/scss/portal_native_call_alert.scss',
+                                    'employee_portal_suite/static/src/js/portal_compact_lists.js',
+                                    'employee_portal_suite/static/src/js/portal_mobile_menu.js'],
             'web.assets_backend': ['employee_portal_suite/static/src/js/material_request_dashboard.js',
                                    'employee_portal_suite/static/src/js/employee_request_dashboard.js',
                                    'employee_portal_suite/static/src/js/home_announcements.js',

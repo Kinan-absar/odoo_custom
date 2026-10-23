@@ -1,0 +1,70 @@
+<odoo>
+    <template id="navigation" inherit_id="employee_portal_suite.employee_portal_layout" priority="90">
+        <xpath expr="//nav[@id='ep-desktop-sidebar-nav']" position="inside">
+            <div class="ep-sidebar-section" t-if="request.env.user.share and not request.env.user.has_group('employee_portal_suite.group_attendance_only') and (request.env.user.has_group('absar_portal_accounting.group_accountant') or request.env.user.has_group('absar_portal_accounting.group_preparer') or request.env.user.has_group('absar_portal_accounting.group_approver') or request.env.user.has_group('absar_portal_accounting.group_monitor'))">
+                <div class="ep-sidebar-section-title">Accounting</div><div class="ep-sidebar-section-links">
+                    <a href="/my/employee/accounting" class="ep-sidebar-link"><i class="fa fa-book"/>Accounting Workspace</a>
+                </div>
+            </div>
+        </xpath>
+    </template>
+    <template id="header">
+        <header class="aca-workspace-header">
+            <div class="aca-workspace-brand"><span class="aca-workspace-icon"><i class="fa fa-book" aria-hidden="true"/></span><div><a t-att-href="'/my/employee/accounting?company_id=%s' % company.id">Accounting</a><span t-out="company.name"/></div></div>
+            <form class="aca-company-switch" method="get" t-if="len(companies) &gt; 1"><label>Company <select name="company_id" onchange="this.form.submit()">
+                <option t-foreach="companies" t-as="c" t-att-value="c.id" t-att-selected="c == company" t-out="c.name"/>
+            </select></label></form>
+            <nav class="aca-nav" aria-label="Accounting workspace">
+                <a t-att-href="'/my/employee/accounting?company_id=%s' % company.id" t-att-class="'is-active' if request.httprequest.path.rstrip('/') == '/my/employee/accounting' else ''">Overview</a>
+                <t t-foreach="kinds.items()" t-as="area"><a t-att-href="'/my/employee/accounting/%s?company_id=%s' % (area[0], company.id)" t-att-class="'is-active' if request.httprequest.path.startswith('/my/employee/accounting/' + area[0] + '/') or request.httprequest.path.rstrip('/') == '/my/employee/accounting/' + area[0] else ''" t-out="area[1][1]"/></t>
+            </nav>
+        </header>
+        <div class="aca-alert" t-if="not configured">An administrator must select the available journals under Accounting → Configuration → Settings → Employee Portal Accounting before this workspace can be used.</div>
+    </template>
+    <template id="home">
+        <t t-call="employee_portal_suite.employee_portal_layout"><section class="aca">
+            <t t-call="absar_portal_accounting.header"/>
+            <h2>Accounting Workspace</h2><p>Prepare, review and monitor your accounting documents.</p>
+            <div class="aca-cards"><a t-foreach="kinds.items()" t-as="area" class="aca-card" t-att-data-area="area[0]" t-att-style="'--card-order:%s' % area_index" t-att-href="'/my/employee/accounting/%s?company_id=%s' % (area[0], company.id)">
+                <div class="aca-card-top"><span class="aca-card-icon" aria-hidden="true"><i t-att-class="'fa ' + {'bills':'fa-file-text-o','refunds':'fa-undo','journals':'fa-book','payments':'fa-credit-card','receipts':'fa-sign-in','planned':'fa-calendar-check-o','planned-receipts':'fa-calendar-plus-o'}[area[0]]"/></span><span class="aca-card-arrow" aria-hidden="true">↗</span></div>
+                <span class="aca-card-name" t-out="area[1][1]"/><div class="aca-card-bottom"><div><strong t-out="counts[area[0]]"/><span class="aca-mini"> documents</span></div><span class="aca-card-open">Open workspace →</span></div>
+            </a></div>
+        </section></t>
+    </template>
+    <template id="listing">
+        <t t-call="employee_portal_suite.employee_portal_layout"><section class="aca">
+            <t t-call="absar_portal_accounting.header"/>
+            <div class="aca-title"><h2 t-out="title"/>
+                <a class="aca-primary" t-if="roles['preparer'] and configured" t-att-href="'/my/employee/accounting/%s/new?company_id=%s' % (kind, company.id)">New</a>
+            </div>
+            <div class="aca-alert" t-if="message" t-out="message"/>
+            <form class="aca-filters" method="get"><input type="hidden" name="company_id" t-att-value="company.id"/>
+                <input name="q" placeholder="Search number, reference or partner…" t-att-value="q" aria-label="Search accounting documents"/>
+                <select name="status" aria-label="Document status"><option value="">All statuses</option>
+                    <t t-if="kind not in ('planned','planned-receipts')"><option t-foreach="[('draft','Draft'),('submitted','Awaiting Approval'),('posted','Posted'),('cancel','Cancelled')]" t-as="s" t-att-value="s[0]" t-att-selected="status == s[0]" t-out="s[1]"/></t>
+                </select><button>Search</button>
+                <a t-att-href="'/my/employee/accounting/%s?company_id=%s' % (kind, company.id)">Clear</a>
+                <span class="aca-record-count"><t t-out="count"/> records</span>
+            </form>
+            <form method="post" t-att-action="'/my/employee/accounting/planned/submit-selected'">
+            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="company_id" t-att-value="company.id"/>
+            <div class="aca-bulk-bar" t-if="kind == 'planned' and roles['preparer']"><span>Select drafts to request approval</span><button class="primary">Submit Selected to CEO</button></div>
+            <div aria-label="Accounting documents" t-att-class="'absar-record-list absar-column-list absar-layout-accounting' + (' absar-with-selection' if kind == 'planned' and roles['preparer'] else '')">
+             <div class="absar-list-header" aria-hidden="true"><span t-if="kind == 'planned' and roles['preparer']">Select</span><span>Number</span><span>Partner / Reference</span><span>Date</span><span>Journal</span><span>Amount</span><span>Status</span><span>Review</span><span>Prepared By</span></div><article t-foreach="rows" t-as="row" class="absar-record-card" tabindex="0" role="link" t-att-data-record-href="'/my/employee/accounting/%s/%s?company_id=%s' % (kind,row['id'],company.id)" t-att-aria-label="'Open ' + row['name']"><div class="absar-list-cell" data-mobile-label="Select" t-if="kind == 'planned' and roles['preparer']"><div class="absar-list-checkbox"><label><input type="checkbox" name="record_id" t-att-value="row['id']" t-att-disabled="row['state'] != 'planned' or row['review'] != 'not_sent'" t-att-aria-label="'Select ' + row['name']"/><input type="hidden" t-att-name="'version_%s' % row['id']" t-att-value="row['version']"/></label></div></div><div class="absar-list-cell" data-mobile-label="Number" t-att-title="row['name']"><a class="absar-record-number" t-att-href="'/my/employee/accounting/%s/%s?company_id=%s' % (kind,row['id'],company.id)" t-out="row['name']"/></div><div class="absar-list-cell" data-mobile-label="Partner / Reference" t-att-title="row['partner'] or '—'"><div class="absar-record-party" t-out="row['partner'] or '—'"/></div><div class="absar-list-cell" data-mobile-label="Date" t-att-title="row['date']"><span t-out="row['date']"/></div><div class="absar-list-cell" data-mobile-label="Journal"><span><t t-out="row['journal'] or '—'"/></span></div><div class="absar-list-cell absar-list-money" data-mobile-label="Amount"><strong class="absar-record-value"><t t-out="'{:,.2f}'.format(row['amount'])"/> <t t-out="row['currency']"/></strong></div><div class="absar-list-cell" data-mobile-label="Status" t-att-title="row['state'].replace('_',' ').title()"><span class="absar-record-badge" t-out="row['state'].replace('_',' ').title()"/></div><div class="absar-list-cell" data-mobile-label="Review" t-att-title="row['review'].replace('_',' ').title()"><span class="absar-record-badge" t-out="row['review'].replace('_',' ').title()"/></div><div class="absar-list-cell" data-mobile-label="Prepared By"><span><t t-out="row['issuer'] or '—'"/></span></div></article><div t-if="not rows" class="absar-record-empty">No documents found.</div>
+            </div></form>
+            <div class="aca-pager">
+                <a t-if="page &gt; 1" t-att-href="'?company_id=%s&amp;page=%s&amp;q=%s&amp;status=%s' % (company.id,page-1,quote_plus(q),status)">Previous</a>
+                <span>Page <t t-out="page"/></span>
+                <a t-if="page * 40 &lt; count" t-att-href="'?company_id=%s&amp;page=%s&amp;q=%s&amp;status=%s' % (company.id,page+1,quote_plus(q),status)">Next</a>
+            </div>
+        </section></t>
+    </template>
+    <template id="detail">
+        <t t-call="employee_portal_suite.employee_portal_layout"><section class="aca">
+            <t t-call="absar_portal_accounting.header"/>
+            <a t-att-href="'/my/employee/accounting/%s?company_id=%s' % (kind, company.id)" t-out="title"/>
+            <div id="aca-editor" t-att-data-boot="boot_json" t-att-data-csrf="request.csrf_token()"/>
+            <noscript>Enable JavaScript to use the accounting form.</noscript>
+        </section></t>
+    </template>
+</odoo>

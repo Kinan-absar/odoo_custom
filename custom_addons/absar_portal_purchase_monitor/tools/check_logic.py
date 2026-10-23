@@ -66,36 +66,9 @@ rejects(lambda:service._utc('invalid'))
 rejects(lambda:service._utc('2026-10-17T19:00:00+02:00'))
 ok(service._utc('') is False)
 
-# Execute the actual approval method on a narrow fixture. Confirm is a trap:
-# if approval tries to confirm, this check fails immediately.
-Model=extract(ROOT/'models/purchase_order.py','PurchaseOrder',{'action_absar_portal_approve','action_absar_portal_confirm'},g)
-g['fields']=NS(Datetime=NS(now=lambda:'now'))
-reviewer=NS(id=2, name='Reviewer')
-class Order(Model):
-    def __init__(self, owner=1, review='submitted', state='draft'):
-        self.absar_portal_preparer_id=NS(id=owner)
-        self.absar_portal_review_state=review; self.state=state
-        self.absar_portal_approver_id=False; self.id=3
-    def __iter__(self): return iter([self])
-    def _portal_actor(self,role): return reviewer
-    def _portal_approver(self): return reviewer
-    def _portal_lock(self): pass
-    def _portal_check_company(self,u): pass
-    def sudo(self): return self
-    def write(self,vals):
-        for k,v in vals.items():setattr(self,k,v)
-    def _portal_close_activities(self): pass
-    def _portal_notify(self,*a): pass
-    def button_confirm(self):raise AssertionError('Approval must not confirm!')
-    def ensure_one(self): pass
-order=Order(); order.name='RFQ'; order.action_absar_portal_approve()
-ok(order.absar_portal_review_state=='approved' and order.state=='draft')
-for review,state in [('draft','draft'),('submitted','purchase'),('returned','draft')]:
-    rejects(lambda review=review,state=state:Order(review=review,state=state).action_absar_portal_approve())
-order=Order(); order.absar_portal_preparer_id=reviewer
-rejects(order.action_absar_portal_approve)
-order=Order(review='approved'); rejects(order.action_absar_portal_confirm)
-print(f'{checks} isolated validator/workflow checks passed. No Odoo ORM or browser integration tested.')
+# Single-step purchase approval and role composition are exercised separately by
+# check_purchase_policy.py, including the actual changed addon methods.
+print(f'{checks} isolated validator checks passed. No Odoo ORM or browser integration tested.')
 
 # Financial integration checks execute the actual monitoring calculation with
 # recordset-shaped fixtures; ORM searches/permissions remain staging-only tests.

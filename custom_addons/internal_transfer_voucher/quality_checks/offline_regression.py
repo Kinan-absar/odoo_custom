@@ -16,6 +16,7 @@ class Api:
     def model_create_multi(self,f): return f
     def depends(self,*a): return lambda f:f
     def onchange(self,*a): return lambda f:f
+    def constrains(self,*a): return lambda f:f
 class DateField:
     def __call__(self,*a,**kw): return None
     def context_today(self,*a): return date(2026,10,7)
@@ -185,9 +186,30 @@ class Tests(unittest.TestCase):
         line=self.plan();self.rec.plan_line_id=line;self.rec.source_type='existing_payable';self.rec.action='update';self.rec._apply_recommendation();self.assertEqual((line.forecast_amount,line.ceo_decision),(8,'not_sent'))
     def test_remove_duplicate(self):
         self.plan(amount=8);line=self.plan();self.rec.plan_line_id=line;self.rec.source_type='existing_payable';self.rec.action=self.rec.agent_action='remove';self.rec._apply_recommendation();self.assertEqual(line.state,'cancel')
-    def test_remove_positive_only_plan_rejected(self):
+    def test_user_selected_remove_is_not_overridden_by_agent_action(self):
         line=self.plan();self.rec.plan_line_id=line;self.rec.source_type='existing_payable';self.rec.action=self.rec.agent_action='remove'
-        with self.assertRaises(UserError):self.rec._apply_recommendation()
+        self.rec.agent_action='update';self.rec._apply_recommendation();self.assertEqual(line.state,'cancel');self.assertTrue(self.rec.applied)
+    def test_skip_resolves_candidate_without_creating_payment(self):
+        self.rec.action='skip';self.rec.source_type='new_payable'
+        self.assertTrue(self.rec._decision_is_safely_applicable());self.rec._apply_recommendation()
+        self.assertTrue(self.rec.applied);self.assertFalse(self.store.rows)
+    def test_keep_resolves_candidate_without_creating_payment(self):
+        self.rec.action='keep';self.rec.source_type='new_payable'
+        self.assertTrue(self.rec._decision_is_safely_applicable());self.rec._apply_recommendation()
+        self.assertTrue(self.rec.applied);self.assertFalse(self.store.rows)
+    def test_incompatible_candidate_remove_is_blocked_with_skip_guidance(self):
+        self.rec.action='remove';self.rec.source_type='new_payable'
+        self.assertFalse(self.rec._decision_is_safely_applicable())
+        with self.assertRaisesRegex(UserError,'new candidate cannot be removed'):
+            self.rec._apply_recommendation()
+    def test_candidate_remove_onchange_becomes_skip(self):
+        self.rec.action='remove';self.rec.source_type='new_payable'
+        result=module.CashPlanReviewLine._onchange_action_source_compatibility(ActionSet([self.rec]))
+        self.assertEqual(self.rec.action,'skip');self.assertIn('without creating a payment',result['warning']['message'])
+    def test_voucher_linked_planned_payment_is_locked(self):
+        line=self.plan();line.payment_voucher_id=Row(id=5)
+        self.rec.source_type='existing_payable';self.rec.plan_line_id=line;self.rec.action='remove'
+        self.assertFalse(self.rec._decision_is_safely_applicable())
     def test_approved_update_rejected(self):
         self.rec.plan_line_id=self.plan(decision='approved');self.rec.action='update';self.assertFalse(self.rec._decision_is_safely_applicable())
         with self.assertRaises(UserError):self.rec._apply_recommendation()
@@ -302,5 +324,28 @@ class Tests(unittest.TestCase):
         self.rec.review_id.line_ids=RS([self.rec]);self.rec.review_id.action_open_recommendations=lambda:{'domain':[('review_id','=',44)]}
         result=module.CashPlanReviewLine.action_apply_selected_from_list(ActionSet([self.rec]))
         self.assertTrue(self.rec.applied);self.assertEqual(result['params']['type'],'success');self.assertEqual(result['params']['next'],{'type':'ir.actions.act_window_close'})
+
+class ApprovalAmountTests(unittest.TestCase):
+    def approve(self, amount, forecast=100):
+        reviewer=Row(id=8)
+        line=Row(approved_amount=amount, forecast_amount=forecast, flow_type='out',
+                 run_id=Row(id=1), ceo_decision='pending', currency_id=Currency(),
+                 _check_group=lambda *args:None, _notify_weekly_plan_group=lambda *args:None)
+        selection=ActionSet([line]);selection.env=Row(user=reviewer)
+        line.action_ceo_decide=lambda decision, **kw: ceo_module.CashPlanLineCEO.action_ceo_decide(selection, decision, **kw)
+        ceo_module.CashPlanLineCEO.action_approve(selection)
+        ceo_module.CashPlanLineCEO._compute_execution_amount(selection)
+        return line
+    def test_lower_edited_amount_becomes_payment(self):
+        line=self.approve(65)
+        self.assertEqual((line.approved_amount,line.execution_amount,line.ceo_decision),(65,65,'adjusted'))
+    def test_higher_edited_amount_becomes_payment(self):
+        line=self.approve(150)
+        self.assertEqual((line.approved_amount,line.execution_amount,line.ceo_decision),(150,150,'adjusted'))
+    def test_untouched_amount_defaults_to_forecast(self):
+        line=self.approve(0)
+        self.assertEqual((line.approved_amount,line.execution_amount,line.ceo_decision),(100,100,'approved'))
+    def test_negative_amount_rejected(self):
+        with self.assertRaises(UserError):self.approve(-1)
 
 if __name__=='__main__':unittest.main(verbosity=2)

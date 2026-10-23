@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
 
     <template id="employee_portal_attendance" name="Employee Portal - Attendance">
@@ -28,7 +28,7 @@
             }
 
             .attendance-hero.checked-out {
-                background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+                background: linear-gradient(135deg, #159398 0%, #087f83 100%);
                 color: white;
             }
 
@@ -83,7 +83,7 @@
 
             .btn-checkin {
                 background: white;
-                color: #4F46E5;
+                color: #087f83;
                 box-shadow: 0 8px 20px rgba(0,0,0,0.15);
             }
 
@@ -153,7 +153,7 @@
             }
 
             .history-row:hover {
-                background: rgba(79,70,229,0.04);
+                background: rgba(8,127,131,0.04);
             }
 
             .history-icon {
@@ -194,7 +194,7 @@
             .history-hours {
                 font-size: 13px;
                 font-weight: 700;
-                color: #4F46E5;
+                color: #087f83;
             }
 
             /* Alert messages */
@@ -232,50 +232,50 @@
                 <!-- SUCCESS / ERROR MESSAGES -->
                 <t t-if="success_message == 'checked_in'">
                     <div class="portal-alert success">
-                        <i class="fa fa-check-circle"></i>
+                        <i class="fa fa-check-circle"/>
                         You have successfully checked in.
                     </div>
                 </t>
                 <t t-if="success_message == 'checked_out'">
                     <div class="portal-alert success">
-                        <i class="fa fa-check-circle"></i>
+                        <i class="fa fa-check-circle"/>
                         You have successfully checked out.
                     </div>
                 </t>
                 <t t-if="success_message == 'checked_out' and request.params.get('warn') == 'outside_location'">
                     <div class="portal-alert error">
-                        <i class="fa fa-map-marker"></i>
+                        <i class="fa fa-map-marker"/>
                         Note: Your check-out was recorded outside your designated work location and has been flagged for HR review.
                     </div>
                 </t>
                 <t t-if="error_message == 'already_checked_in'">
                     <div class="portal-alert error">
-                        <i class="fa fa-exclamation-circle"></i>
+                        <i class="fa fa-exclamation-circle"/>
                         You are already checked in. Please check out first.
                     </div>
                 </t>
                 <t t-if="error_message == 'not_checked_in'">
                     <div class="portal-alert error">
-                        <i class="fa fa-exclamation-circle"></i>
+                        <i class="fa fa-exclamation-circle"/>
                         You are not currently checked in.
                     </div>
                 </t>
                 <t t-if="error_message == 'check_in_failed' or error_message == 'check_out_failed'">
                     <div class="portal-alert error">
-                        <i class="fa fa-exclamation-circle"></i>
+                        <i class="fa fa-exclamation-circle"/>
                         An error occurred. Please try again or contact HR.
                     </div>
                 </t>
                 <t t-if="error_message == 'geo_required'">
                     <div class="portal-alert error">
-                        <i class="fa fa-map-marker"></i>
+                        <i class="fa fa-map-marker"/>
                         Location access is required to check in at your assigned work location.
                         Please allow location access in your browser and try again.
                     </div>
                 </t>
                 <t t-if="error_message == 'geo_out_of_range'">
                     <div class="portal-alert error">
-                        <i class="fa fa-map-marker"></i>
+                        <i class="fa fa-map-marker"/>
                         You are outside the allowed check-in zone for your work location.
                         Please move closer and try again.
                     </div>
@@ -285,7 +285,7 @@
                 <t t-if="is_checked_in">
                     <div class="attendance-hero checked-in">
                         <div class="status-icon">
-                            <i class="fa fa-clock-o"></i>
+                            <i class="fa fa-clock-o"/>
                         </div>
                         <div class="status-title">You're Clocked In</div>
                         <div class="status-sub">
@@ -298,9 +298,8 @@
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                             <input type="hidden" id="checkout_geo_lat" name="geo_lat" value=""/>
                             <input type="hidden" id="checkout_geo_lon" name="geo_lon" value=""/>
-                            <button type="button" id="checkout-btn" class="attendance-btn btn-checkout"
-                                    t-att-data-geo-enforce="'1' if geo_enforce else '0'">
-                                <i class="fa fa-sign-out"></i>
+                            <button type="button" id="checkout-btn" class="attendance-btn btn-checkout" t-att-data-geo-enforce="'1' if geo_enforce else '0'">
+                                <i class="fa fa-sign-out"/>
                                 Check Out
                             </button>
                         </form>
@@ -340,7 +339,7 @@
                 <t t-if="not is_checked_in">
                     <div class="attendance-hero checked-out">
                         <div class="status-icon" id="geo-status-icon">
-                            <i class="fa fa-user-o"></i>
+                            <i class="fa fa-user-o"/>
                         </div>
                         <div class="status-title">Not Checked In</div>
                         <div class="status-sub" id="geo-status-sub">Tap below to start your work session</div>
@@ -352,9 +351,8 @@
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                             <input type="hidden" id="geo_lat" name="geo_lat" value=""/>
                             <input type="hidden" id="geo_lon" name="geo_lon" value=""/>
-                            <button id="checkin-btn" type="button" class="attendance-btn btn-checkin"
-                                    t-att-data-geo-enforce="'1' if geo_enforce else '0'">
-                                <i class="fa fa-sign-in"></i>
+                            <button id="checkin-btn" type="button" class="attendance-btn btn-checkin" t-att-data-geo-enforce="'1' if geo_enforce else '0'">
+                                <i class="fa fa-sign-in"/>
                                 Check In
                             </button>
                         </form>
@@ -384,7 +382,7 @@
 
                                 btn.disabled = true;
                                 subText.textContent = 'Detecting your location…';
-                                iconEl.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+                                iconEl.innerHTML = '<i class="fa fa-spinner fa-spin"/>';
 
                                 navigator.geolocation.getCurrentPosition(
                                     function (position) {
@@ -395,7 +393,7 @@
                                     },
                                     function (err) {
                                         btn.disabled = false;
-                                        iconEl.innerHTML = '<i class="fa fa-user-o"></i>';
+                                        iconEl.innerHTML = '<i class="fa fa-user-o"/>';
                                         if (err.code === err.PERMISSION_DENIED) {
                                             subText.textContent = 'Location access denied. Please allow location and try again.';
                                         } else {
@@ -429,35 +427,30 @@
                 <!-- RECENT HISTORY -->
                 <div class="attendance-history">
                     <div class="section-title">
-                        <i class="fa fa-history me-1"></i> Recent Attendance
+                        <i class="fa fa-history me-1"/> Recent Attendance
                     </div>
 
                     <t t-if="recent_attendances">
                         <t t-foreach="recent_attendances" t-as="att">
-                            <div class="history-row">
+                            <div class="history-row eps-attendance-row">
 
                                 <div t-att-class="'history-icon ' + ('open' if not att.check_out else 'complete')">
-                                    <i t-att-class="'fa ' + ('fa-clock-o' if not att.check_out else 'fa-check')"></i>
+                                    <i t-att-class="'fa ' + ('fa-clock-o' if not att.check_out else 'fa-check')"/>
                                 </div>
 
-                                <div class="history-content">
-                                    <div class="history-date">
+                                <div class="history-date">
                                         <t t-out="fmt_dt(att.check_in, '%A, %d %b %Y')"/>
                                         <!-- Outside-location checkout flag -->
                                         <t t-if="att.checkout_outside_location">
-                                            <span style="
-                                                display:inline-flex;align-items:center;gap:4px;
-                                                background:rgba(239,68,68,0.12);color:#991B1B;
-                                                font-size:10px;font-weight:700;border-radius:6px;
-                                                padding:2px 7px;margin-left:6px;vertical-align:middle;">
-                                                <i class="fa fa-map-marker"></i> Outside Location
+                                            <span style="                                                 display:inline-flex;align-items:center;gap:4px;                                                 background:rgba(239,68,68,0.12);color:#991B1B;                                                 font-size:10px;font-weight:700;border-radius:6px;                                                 padding:2px 7px;margin-left:6px;vertical-align:middle;">
+                                                <i class="fa fa-map-marker"/> Outside Location
                                             </span>
                                         </t>
                                     </div>
                                     <div class="history-times">
                                         <t t-if="att.check_in_project_id">
-                                            <span style="font-weight:700;color:#4F46E5;">
-                                                <i class="fa fa-map-marker me-1"></i>
+                                            <span style="font-weight:700;color:#087f83;">
+                                                <i class="fa fa-map-marker me-1"/>
                                                 <t t-out="att.check_in_project_id.display_name"/>
                                             </span>
                                             &amp;nbsp;·&amp;nbsp;
@@ -470,8 +463,6 @@
                                             &amp;nbsp;·&amp;nbsp; <span style="color:#D97706;">Still active</span>
                                         </t>
                                     </div>
-                                </div>
-
                                 <div class="history-hours">
                                     <t t-if="att.check_out">
                                         <t t-out="'%dh %dm' % (int(att.worked_hours), int((att.worked_hours % 1) * 60))"/>

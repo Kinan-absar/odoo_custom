@@ -5,17 +5,18 @@ import assert from 'node:assert/strict';
 const source = fs.readFileSync(new URL('../static/src/js/purchase_workspace.js', import.meta.url), 'utf8');
 const state = {company_id: 1, currency_id: 2, lines: [{product_qty: 1, price_unit: 5000, discount: 0, taxes_id: [3], product_uom: 4, price_subtotal: 5000}]};
 const ctx = vm.createContext({state});
+vm.runInContext(fs.readFileSync(new URL('../static/src/js/line_grid.js',import.meta.url),'utf8').replace(/^export /gm,''),ctx);
 vm.runInContext(source.slice(source.indexOf('    const amountKey ='), source.indexOf('    const changed =')) + '\nthis.lineAmount=lineAmount; this.amountKey=amountKey;', ctx);
 const line = state.lines[0];
 assert.equal(ctx.lineAmount(line), 5000);
 line.product_qty = 2;
-assert.equal(ctx.lineAmount(line), 10000); // old cached 5000 must be ignored
+assert.equal(ctx.lineAmount(line), 5000); // preserve last native amount until the server resolves tax-inclusive prices
 line.discount = 10;
-assert.equal(ctx.lineAmount(line), 9000);
+assert.equal(ctx.lineAmount(line), 5000);
 line.price_subtotal = 7826.09; line._amountKey = ctx.amountKey(line);
 assert.equal(ctx.lineAmount(line), 7826.09); // preserve native included-tax result
 line.price_unit = 100;
-assert.equal(ctx.lineAmount(line), 180);
+assert.equal(ctx.lineAmount(line), 7826.09);
 
 class Element {
     constructor(tag) {this.tagName=tag; this.children=[]; this.handlers={}; this.dataset={};}
@@ -26,6 +27,15 @@ class Element {
     close() {this.closed=true;}
 }
 const text = (tag, value) => Object.assign(new Element(tag), {textContent:value});
+// Values must enter the save state while typing, before blur or a server rerender.
+let committed = '', changes = 0;
+const inputContext = vm.createContext({document:{createElement:tag=>new Element(tag)}, readonly:false,
+    changed:()=>changes++});
+vm.runInContext(source.slice(source.indexOf('    function input('), source.indexOf('    function button('))+'\nthis.input=input;', inputContext);
+const reference = inputContext.input('', 'text', value=>{committed=value;});
+reference.value = 'QA reference'; reference.handlers.input();
+assert.equal(committed, 'QA reference'); assert.equal(changes, 1);
+reference.handlers.change(); assert.equal(changes, 1); // blur must not recalculate twice
 const host = new Element('div');
 Object.assign(ctx, {byId:()=>host, text, totals:null, totalsPending:true, labels:{currency_id:{label:'SAR'}}, money:value=>Number(value).toFixed(2)});
 vm.runInContext(source.slice(source.indexOf('    function renderTotals()'), source.indexOf('    async function recalculate()'))+'\nthis.renderTotals=renderTotals;',ctx);
@@ -50,8 +60,8 @@ await openPurchaseProductDialog({
         assert.equal(path,'/product-create');payload=structuredClone(data);return {id:9,label:'Test'};
     },
     modal:()=>({dialog,body:new Element('div'),foot:new Element('div')}),
-    field:(label,node)=>{fields.set(label,node);},
-    input:(value,type,change)=>({value,change}),
+    field:(label,node)=>{fields.set(label,node);return node;},
+    input:(value,type,change)=>({value,change,focus(){}}),
     lookup:(kind,selected,select)=>{const result={kind,select};lookups.set(kind,result);return result;},
     button:(label,callback)=>{const node={callback};buttons.set(label,node);return node;},
     text, companyId:7, onCreate:async()=>{created++;}
@@ -67,3 +77,18 @@ assert.equal(payload.categ_id,1);assert.equal(payload.uom_id,2);assert.equal(pay
 assert.equal(payload.property_account_expense_id,6);assert.equal(payload.company_id,7);
 assert.equal(created,1);assert.equal(dialog.closed,true);
 console.log('PASS: changed amount cache, persistent totals panel/pending state, product validation/payload and tax deduplication (frontend fixtures).');
+// Edit form reuses the same expense account selector, retaining version/company.
+fields.clear();lookups.clear();buttons.clear();let editPayload;
+await openPurchaseProductDialog({
+ productId:9,companyId:7,post:async(path,data)=>{
+  if(path==='/product-read')return {name:'Existing',can_edit:true,version:'v1|t1',type:'consu',categ_id:{id:1,label:'All'},uom_id:{id:2,label:'Unit'},uom_po_id:{id:2,label:'Unit'},supplier_taxes:[],property_account_expense_id:{id:6,label:'Expense'},standard_price:18};
+  assert.equal(path,'/product-update');editPayload=structuredClone(data);return {id:9,label:'Existing',product_updated:true};
+ },modal:()=>({dialog,body:new Element('div'),foot:new Element('div')}),
+ field:(label,node)=>{fields.set(label,node);return node;},input:(value,type,change)=>({value,change,focus(){}}),
+ lookup:(kind,selected,select)=>{const result={kind,selected,select};lookups.set(kind,result);return result;},
+ button:(label,callback)=>{const node={callback};buttons.set(label,node);return node;},text,onCreate:async()=>{}
+});
+assert.equal(fields.get('Product Name *').value,'Existing');assert.equal(lookups.get('account').selected.id,6);
+lookups.get('account').select(null);await buttons.get('Save').callback();
+assert.equal(editPayload.property_account_expense_id,0);assert.equal(editPayload.version,'v1|t1');assert.equal(editPayload.id,9);assert.equal(editPayload.standard_price,18);
+console.log('PASS: full product edit prefill, explicit account clearing, company/version payload and dedicated update endpoint.');

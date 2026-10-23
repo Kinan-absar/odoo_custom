@@ -59,6 +59,7 @@
                             <field name="add_count"/>
                             <field name="update_count"/>
                             <field name="remove_count"/>
+                            <field name="skip_count"/>
                             <field name="review_count"/>
                             <field name="safe_count"/>
                         </group>
@@ -85,13 +86,14 @@
                 <filter name="safe" string="Safe Changes" domain="[('can_apply','=',True),('applied','=',False)]"/>
                 <filter name="review" string="Needs Review" domain="[('action','=','review')]"/>
                 <filter name="not_applied" string="Not Applied" domain="[('applied','=',False)]"/>
-                <filter name="applied" string="Applied" domain="[('applied','=',True)]"/>
+                <filter name="applied" string="Resolved" domain="[('applied','=',True)]"/>
                 <separator/>
                 <filter name="add" string="Add" domain="[('action','=','add')]"/>
                 <filter name="update" string="Update" domain="[('action','=','update')]"/>
                 <filter name="convert" string="Convert" domain="[('action','=','convert')]"/>
                 <filter name="remove" string="Remove" domain="[('action','=','remove')]"/>
                 <filter name="keep" string="Keep" domain="[('action','=','keep')]"/>
+                <filter name="skip" string="Skip" domain="[('action','=','skip')]"/>
                 <separator/>
                 <filter name="existing" string="Existing Plans" domain="[('source_type','in',('existing_po','existing_payable','existing_retention'))]"/>
                 <filter name="retention_plans" string="Retention" domain="[('source_type','in',('existing_retention','new_retention'))]"/>
@@ -123,7 +125,7 @@
                     <button name="action_apply_selected_from_list" type="object" string="Apply Selected" class="btn-primary" display="always"/>
                 </header>
                 <field name="agent_action" string="Agent" widget="badge" readonly="1" width="95"/>
-                <field name="action" string="Decision" width="125"/>
+                <field name="action" string="Decision" width="145" help="Your choice is applied when it is valid for this source. Keep and Skip make no payment change. Existing approved/executed or voucher-linked payments stay protected."/>
                 <field name="partner_id" string="Supplier" readonly="1" width="220"/>
                 <field name="source_type" string="Source" readonly="1" width="145" optional="show"/>
                 <field name="plan_line_id" string="Planned Payment" readonly="1" width="190" optional="show"/>
@@ -135,7 +137,7 @@
                 <field name="reason" string="Reason" readonly="1" class="o_payment_review_wrap o_payment_review_reason" width="420" optional="show"/>
                 <field name="aging_summary" string="Aging Summary" readonly="1" class="o_payment_review_wrap o_payment_review_aging" width="320" optional="show"/>
                 <field name="can_apply" string="Safe" widget="boolean_toggle" readonly="1" width="70" optional="show"/>
-                <field name="applied" string="Applied" widget="boolean_toggle" readonly="1" width="75" optional="show"/>
+                <field name="applied" string="Resolved" widget="boolean_toggle" readonly="1" width="75" optional="show"/>
                 <field name="review_id" column_invisible="True"/>
                 <field name="target_plan_line_id" column_invisible="True"/>
                 <field name="apply" column_invisible="True"/>

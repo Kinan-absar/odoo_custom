@@ -59,7 +59,7 @@ request.httprequest.path = BASE+'/confirmations'
 assert service.listing() == BASE+'/approvals'
 
 workspace = etree.parse(str(ROOT/'views/portal_workspace_pages.xml'))
-nav_condition = workspace.xpath('//template[@id="purchase_workspace_nav"]/nav/@t-if')[0]
+nav_condition = workspace.xpath('//template[@id="purchase_workspace_nav"]/header/@t-if')[0]
 request.env.user = User('approver')
 assert not eval(nav_condition, {'request':request})
 request.env.user = User('preparer')
@@ -67,7 +67,7 @@ assert eval(nav_condition, {'request':request})
 views = etree.parse(str(ROOT/'views/portal_purchase_prepare.xml'))
 shared = etree.parse(str(ROOT/'views/portal_purchase_approval_list.xml'))
 assert views.xpath('//template[@id="purchase_prepare_list"]/*[@t-call="absar_portal_purchase_monitor.purchase_approval_list"]')
-assert shared.xpath('//div[@class="apm-table-wrap"]/table[@class="apm-table"]')
+assert shared.xpath('//div[contains(@class,"absar-record-list")]//article[@class="absar-record-card"][@t-att-data-record-href]')
 for approval in (True, False):
     values = dict(approval=approval, confirmations=False, orders_only=False, request=request)
     nav = shared.xpath('//*[@t-call="absar_portal_purchase_monitor.purchase_workspace_nav"]')[0]
@@ -77,7 +77,7 @@ for approval in (True, False):
 heading = shared.xpath('//h2/@t-out')[0]
 assert eval(heading, dict(approval=True)) == 'Purchase Approvals'
 monitor = etree.parse(str(ROOT/'views/portal_purchase_templates.xml'))
-assert monitor.xpath('//template[@id="purchase_monitor_list"]//tr[@class="apm-clickrow"]/@t-att-data-href') == ["'%s/%d' % (detail_base_url, r['po'].id)"]
+assert monitor.xpath('//template[@id="purchase_monitor_list"]//article[@class="absar-record-card"]/@t-att-data-record-href') == ["'%s/%d' % (detail_base_url,r['po'].id)"]
 detail = views.xpath('//template[@id="purchase_prepare_detail"]//*[@t-call="absar_portal_purchase_monitor.purchase_workspace_nav"]')[0]
 assert not eval(detail.get('t-if'), {'boot': {'approval_view':True}})
 assert eval(detail.get('t-if'), {'boot': {'approval_view':False}})

@@ -30,3 +30,67 @@
 .apw-nav-count{margin-left:auto;padding:2px 8px;border-radius:12px;background:#d8f0ec;color:#12665c;font-size:11px;font-weight:700;line-height:1.5}
 
 .apm-filter{flex-wrap:wrap}.apm-table td a{color:inherit;text-decoration:none}.apm-filter+.apm-note{margin:0 0 12px}
+
+/* Boxed purchase-order header, shared visual language with Accounting. */
+#apw-header.apw-form-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:0 0 24px}
+#apw-header.apw-form-grid>div{display:block;min-width:0}
+#apw-header.apw-form-grid>div>label{display:block;font-size:12px;font-weight:500;color:#526c76;margin-bottom:6px}
+#apw-header .form-control,#apw-header .form-select{width:100%;min-height:40px;padding:8px 11px;border:1px solid #cddbdd;border-radius:8px;background:#fff;color:#20333c;transition:border-color .15s,box-shadow .15s}
+#apw-header .form-control:focus,#apw-header .form-select:focus{border-color:#087f83;box-shadow:0 0 0 3px #087f8314}
+#apw-header .form-control:disabled{background:#f7fafb;border-color:#dce6e8;color:#3b505a}
+#apw-header .apw-help{display:block;margin-top:5px;line-height:1.45;font-size:11px;color:#738890}
+#apw-header>.btn{align-self:end;justify-self:start;min-height:40px}
+@media(max-width:1150px){#apw-header.apw-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#apw-header.apw-form-grid{grid-template-columns:1fr}}
+
+/* Keep the app bar compact; the outer employee layout owns page spacing. */
+.apw-shell .apw-app-nav{gap:4px;min-height:54px;padding:7px 10px;border:1px solid #dce7e8;border-radius:10px;margin:0 0 18px;box-shadow:0 2px 8px #18384204;overflow-x:auto;flex-wrap:nowrap}
+.apw-shell .apw-app-title{font-size:19px;margin-right:16px;white-space:nowrap}
+.apw-shell .apw-app-nav a{font-size:12px;padding:9px 11px;border-radius:7px;white-space:nowrap}
+@media(max-width:600px){.apw-shell .apw-app-nav{padding:6px;min-height:48px}.apw-shell .apw-app-title{font-size:17px;margin-right:8px}}
+
+.apw-workspace-header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:#fff;border:1px solid #dce7e8;border-radius:12px;padding:16px 18px 0;margin:0 0 22px;box-shadow:0 2px 8px #18384204}
+.apw-workspace-brand{display:flex;align-items:center;gap:11px}.apw-workspace-brand>div{display:flex;flex-direction:column;gap:2px}.apw-workspace-brand strong{font-size:19px;color:#203e4b}.apw-workspace-brand small{font-size:11px;color:#728790}.apw-workspace-icon{display:grid;place-items:center;background:#e8f4f3;color:#087f83;width:38px;height:38px;border-radius:11px;font-size:19px}
+.apw-workspace-header .apw-app-nav{flex-basis:100%;display:flex;flex-wrap:nowrap;gap:3px;overflow-x:auto;border:0;border-top:1px solid #edf2f3;box-shadow:none;border-radius:0;margin:0;padding:9px 0;font-size:12px;min-height:0}.apw-workspace-header .apw-app-nav a{padding:8px 10px;white-space:nowrap;border-radius:7px;color:#607984;font-size:12px}.apw-workspace-header .apw-app-nav a.active{color:#087f83;background:#e8f4f3}
+@media(max-width:600px){.apw-workspace-header{padding:12px 12px 0}.apw-workspace-brand strong{font-size:17px}}
+
+.apw-search-results{max-height:45vh;overflow:auto;margin-top:14px}.apw-search-results>.apw-option{border-bottom:1px solid #edf2f3;border-radius:5px}.apw-workspace-header .apw-app-nav{align-items:center}
+
+/* 1.6.5: compact editable purchase grid and viewport-contained dialogs. */
+#apw-root .apw-sheet{min-width:0;padding:22px 24px}
+#apw-root .apw-table-scroll{max-width:100%;overflow:auto;border-radius:3px}
+/* Line grid presentation is defined once in line_grid.css. */
+.apw-open-product{flex:none;border:0;background:transparent;color:#147d7c;font-size:17px;padding:1px 4px;cursor:pointer}
+.apw-product-link{padding:0!important;text-align:left;font-weight:600;text-decoration:none;color:#147d7c}
+.apw-options[popover]{box-sizing:border-box;position:fixed;inset:auto;margin:0!important;padding:0;min-width:0;max-width:calc(100vw - 16px);overflow:auto;border-radius:4px;overscroll-behavior:contain}
+.apw-options .apw-option{font-size:13px!important;line-height:18px!important;padding:7px 10px!important;min-height:30px!important;white-space:normal;overflow-wrap:anywhere;text-align:left}
+.apw-options .apw-option:focus{background:#e6f3f0;outline:1px solid #168580;outline-offset:-1px}
+.apw-dialog{box-sizing:border-box;position:fixed;inset:0;margin:auto;width:min(900px,calc(100vw - 32px));height:fit-content;max-height:calc(100dvh - 32px);overflow:hidden;padding:20px;border-radius:7px}
+.apw-dialog[open]{display:flex;flex-direction:column;gap:0}
+.apw-dialog>.apw-heading{flex:none;margin:0 0 14px;min-height:32px;align-items:flex-start}
+.apw-dialog>.apw-heading h3{font-size:20px;line-height:26px;overflow-wrap:anywhere;margin:0}
+.apw-dialog>div:nth-child(2),.apw-dialog>.apw-dialog-body{min-height:0;max-height:none;flex:1;overflow:auto;overscroll-behavior:contain;padding:0 6px 6px 0}
+.apw-dialog>.apw-actions{flex:none;margin:14px 0 0;padding-top:12px;border-top:1px solid #e2eaed}
+.apw-dialog .apw-search-results{max-height:45dvh;margin-top:10px;overflow:auto;min-height:40px}
+.apw-dialog .apw-pager{margin:0;justify-content:flex-end;align-items:center;width:100%}
+.apw-dialog .apw-product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px}
+.apw-dialog .apw-product-grid>.apw-form-field{display:block;margin:0;min-width:0}
+.apw-dialog .apw-product-grid label{display:block;margin:0 0 5px;font-size:12px;font-weight:600}
+.apw-dialog .form-control,.apw-dialog .form-select{box-sizing:border-box;width:100%;min-width:0;font-size:13px;min-height:34px;border:1px solid #cddbdd;border-radius:4px;padding:5px 8px}
+.apw-dialog .apw-lookup{min-width:0}
+.apw-dialog .apw-help{display:block;font-size:11px;line-height:16px;margin-top:4px}
+.apw-dialog input[type=checkbox]{width:auto;min-height:0}
+#apw-root .apw-grid-help{font-size:11px;color:#70868e;margin:7px 0 0}
+@media(max-width:760px){#apw-root .apw-sheet{padding:14px 10px}.apw-dialog{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:14px}.apw-dialog .apw-product-grid{grid-template-columns:1fr}}
+
+/* Receipt entry stays usable while the confirmed PO itself is read-only. */
+.apw-dialog .apw-receipt-lines{min-width:620px;margin-top:12px}
+.apw-dialog .apw-receipt-lines th{font-size:12px;white-space:normal}
+.apw-dialog .apw-receipt-lines input{width:110px;text-align:right;font-variant-numeric:tabular-nums}
+.apw-dialog .apw-receipt-lines td{vertical-align:middle}
+
+/* Match Sales: inputs use normal cell spacing; only the read-only Amount is .num. */
+#apw-root .apw-lines .apw-description{margin-top:0;}
+#apw-root .apw-lines .apw-chip-remove{font-size:inherit;}
+/* Keep the tax picker on the same line even with long Purchase tax names. */
+#apw-root .apw-lines .apw-tax-cell .apw-chip{min-width:0;max-width:calc(100% - 27px);}

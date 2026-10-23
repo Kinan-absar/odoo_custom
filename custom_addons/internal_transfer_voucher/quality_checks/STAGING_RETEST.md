@@ -33,3 +33,20 @@ Retention Update #288: 44,000.19/Pending CEO Review -> 44,000.14/Not Sent. For a
 Remaining limitation: amount-only Update preserves an existing incorrect account (old #288 used 203001). New #340 uses 201019 correctly. Source: Update writes forecast/status but does not normalize account_id. Recommended future fix: explicitly validate and correct the retention account when updating a retention plan. This release does not change that logic.
 
 Test changes were left on staging: #338/#339/#340 created, #12 cancelled, #2 converted, #288 cancelled after the controlled test; #335 restored to 8.00. No production changes or payments executed.
+
+## Payment Review decision correction — 14 October 2026 (18.0.2.52.0)
+
+Environment: `kinan-absar-odoo-custom-staging-39570132.dev.odoo.com`. The installed staging module was not upgraded during this package check.
+
+| Check | Result | Notes |
+|---|---|---|
+| Reproduce candidate Remove error | REPRODUCED in installed version | Changed a New Payable Candidate from Add to Remove and applied it. Odoo rejected it with a generic safety message because the candidate has no planned payment. No payment-plan mutation occurred. |
+| Restore staging test row | PASS | Restored the test candidate's decision to Add. No payment was created or removed by this test. |
+| Candidate Remove correction | PASS offline | The new onchange maps Remove on a candidate to Skip with an explanation; Skip resolves the review row without creating a plan. Server validation also rejects incompatible source/action writes. |
+| User-selected existing-plan Remove | PASS offline | Removal follows the current Decision even if Agent Decision was Update; allowed only for a safe planned line. |
+| Protected plan states | PASS offline | Approved/executed, unplanned, and voucher/transfer-linked rows remain blocked. Pending/held/rejected planning rows remain editable; changes reset CEO decision as before. |
+| Whole-selection preflight | PASS offline | Reports actionable per-supplier blockers before applying selected changes; transaction remains atomic. |
+| Review completion state | PASS offline | Review stays partially resolved while any line remains unresolved; Keep/Skip count as resolved without payment changes. |
+| Regression suite | PASS | 43 lightweight offline regression tests; this harness is not an Odoo integration test. |
+
+The 18.0.2.52.0 package has not been installed on staging or production. Repeat the candidate Remove/Skip flow, update/remove on an existing pending plan, and approved/voucher-linked protection checks after installing the ZIP on a disposable staging copy.

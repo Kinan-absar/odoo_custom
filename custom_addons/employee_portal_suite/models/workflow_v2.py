@@ -782,6 +782,8 @@ class MaterialRequestWorkflowV2(models.Model):
 
     def action_workflow_approve(self):
         for rec in self:
+            if rec.needs_clarification:
+                raise UserError(_('Wait for the requester to reply before approving.'))
             if rec.state != 'workflow':
                 raise UserError(_('This Material Request is not in configurable workflow approval.'))
             line = rec.current_approval_line_id.sudo()

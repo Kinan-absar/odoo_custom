@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
 
     <template id="portal_employee_approvals_list" name="Employee Approvals Page">
@@ -6,7 +6,7 @@
 
             <div class="container mt-4">
 
-                <div class="card shadow-sm border-0">
+                <div class="card shadow-sm border-0 eps-list-page-card">
                     <div class="card-body">
 
                         <!-- HEADER -->
@@ -17,9 +17,7 @@
 
                                 <div class="d-flex align-items-center gap-2">
                                     <label class="mb-0 fw-semibold small text-muted">Show:</label>
-                                    <select id="approvalFilter"
-                                            class="form-select form-select-sm"
-                                            style="width:auto;">
+                                    <select id="approvalFilter" class="form-select form-select-sm" style="width:auto;">
                                         <option value="all" t-att-selected="current_filter == 'all'">All</option>
                                         <option value="pending" t-att-selected="current_filter == 'pending'">Pending</option>
                                         <option value="approved" t-att-selected="current_filter == 'approved'">Approved</option>
@@ -33,21 +31,15 @@
                                 <input type="hidden" name="filter" t-att-value="current_filter"/>
 
                                 <div class="position-relative">
-                                    <input type="text"
-                                        id="employeeApprovalSearchInput"
-                                        name="search"
-                                        t-att-value="search or ''"
-                                        placeholder="Search request #"
-                                        class="form-control mobile-search"/>
+                                    <input type="text" id="employeeApprovalSearchInput" name="search" t-att-value="search or ''" placeholder="Search request #" class="form-control mobile-search"/>
 
                                     <button type="submit" class="search-btn">
-                                        <i class="fa fa-search"></i>
+                                        <i class="fa fa-search"/>
                                     </button>
 
                                     <t t-if="search">
-                                        <a t-att-href="'/my/employee/approvals?filter=%s' % current_filter"
-                                        class="clear-search">
-                                            <i class="fa fa-times"></i>
+                                        <a t-att-href="'/my/employee/approvals?filter=%s' % current_filter" class="clear-search">
+                                            <i class="fa fa-times"/>
                                         </a>
                                     </t>
                                 </div>
@@ -57,28 +49,27 @@
 
 
                         <!-- DESKTOP TABLE -->
-                        <div class="table-responsive d-none d-md-block">
-                            <table class="table table-hover table-sm align-middle mb-0">
+                        <div class="table-responsive d-none d-md-block eps-list-scroll">
+                            <table class="table table-hover table-sm align-middle mb-0 eps-compact-list" style="--eps-list-width:790px">
 
-                                <thead class="table-light">
+                                <colgroup><col style="width:125px"/><col style="width:190px"/><col style="width:125px"/><col style="width:150px"/><col style="width:115px"/></colgroup><thead class="table-light">
                                     <tr>
                                         <th>Request #</th>
                                         <th>Employee</th>
                                         <th>Type</th>
                                         <th>Status</th>
                                         <th>Date</th>
-                                        <th></th>
-                                    </tr>
+                                        </tr>
                                 </thead>
 
                                 <tbody>
 
                                     <t t-if="shown_reqs">
                                         <t t-foreach="shown_reqs" t-as="req">
-                                            <tr>
-                                                <td class="fw-semibold">
+                                            <tr t-att-data-eps-record-href="'/my/employee/approvals/%s' % req.id" tabindex="0" role="link" class="eps-record-row">
+                                                <td class="fw-semibold"><a class="eps-record-reference" t-att-href="'/my/employee/approvals/%s' % req.id">
                                                     <t t-out="req.name"/>
-                                                </td>
+                                                </a></td>
 
                                                 <td><t t-out="req.employee_id.name"/></td>
                                                 <td><t t-out="req.get_request_type_display()"/></td>
@@ -91,19 +82,13 @@
                                                     </small>
                                                 </td>
 
-                                                <td class="text-end">
-                                                    <a t-att-href="'/my/employee/approvals/%s' % req.id"
-                                                    class="btn btn-outline-primary btn-sm">
-                                                        Review
-                                                    </a>
-                                                </td>
-                                            </tr>
+                                                </tr>
                                         </t>
                                     </t>
 
                                     <t t-if="not shown_reqs">
                                         <tr>
-                                            <td colspan="6" class="text-center text-muted py-4">
+                                            <td colspan="5" class="text-center text-muted py-4">
                                                 No Requests Found.
                                             </td>
                                         </tr>
@@ -121,8 +106,7 @@
                             <t t-if="shown_reqs">
                                 <t t-foreach="shown_reqs" t-as="req">
 
-                                    <a t-att-href="'/my/employee/approvals/%s' % req.id"
-                                    class="mobile-request-card">
+                                    <a t-att-href="'/my/employee/approvals/%s' % req.id" class="mobile-request-card">
 
                                         <div class="mobile-request-top">
 

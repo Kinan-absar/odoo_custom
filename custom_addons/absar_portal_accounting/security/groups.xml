@@ -1,0 +1,21 @@
+<odoo>
+    <record id="module_category_portal_accounting" model="ir.module.category">
+        <field name="name">Portal Accounting</field><field name="sequence">38</field>
+    </record>
+    <record id="group_accountant" model="res.groups">
+        <field name="name">Accounting User (Direct Posting)</field><field name="category_id" ref="module_category_portal_accounting"/>
+        <field name="comment">Employee portal accounting: prepare and post directly in configured journals. Resetting posted records requires an internal permission request. No internal accounting access is granted. Preparer membership takes precedence and requires review.</field>
+    </record>
+    <record id="group_preparer" model="res.groups">
+        <field name="name">Accounting Preparer</field><field name="category_id" ref="module_category_portal_accounting"/>
+        <field name="comment">Restricted preparation: submit bills, entries and vouchers for independent approval. Applies to portal and internal staff; internal staff use native forms. Does not grant internal accounting access.</field>
+    </record>
+    <record id="group_approver" model="res.groups">
+        <field name="name">Accounting Approver</field><field name="category_id" ref="module_category_portal_accounting"/>
+        <field name="comment">Approve restricted accounting submissions from portal and internal preparers. Internal approvers work in native forms. Self-approval is prohibited. CEO planning decisions retain the existing CEO role.</field>
+    </record>
+    <record id="group_monitor" model="res.groups">
+        <field name="name">Accounting Monitor</field><field name="category_id" ref="module_category_portal_accounting"/>
+        <field name="comment">Read the accounting workspace within configured company and journal boundaries.</field>
+    </record>
+</odoo>

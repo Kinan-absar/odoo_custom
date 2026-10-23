@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_accounting_post_confirm,Accounting posting warning confirmation,model_absar_accounting_post_confirm,absar_portal_accounting.group_approver,1,1,1,1

@@ -20,3 +20,7 @@ from . import portal_chat
 from . import portal_native_discuss
 
 from . import web_push
+
+from . import portal_dashboard_visual
+
+from . import portal_material_clarification

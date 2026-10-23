@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
     <!-- Measurements List -->
     <template id="portal_employee_measurements" name="Employee Portal - Measurements">
@@ -60,9 +60,9 @@
                         </form>
                     </div>
 
-                    <div class="table-responsive mt-3 construction-desktop-table">
-                        <table class="table table-hover">
-                            <thead class="thead-light">
+                    <div class="table-responsive mt-3 construction-desktop-table eps-list-scroll">
+                        <table class="table table-hover eps-compact-list" style="--eps-list-width:1140px">
+                            <colgroup><col style="width:125px"/><col style="width:190px"/><col style="width:190px"/><col style="width:190px"/><col style="width:115px"/><col style="width:180px"/><col style="width:150px"/></colgroup><thead class="thead-light">
                                 <tr>
                                     <th>Measurement #</th>
                                     <th>Contract</th>
@@ -75,7 +75,7 @@
                             </thead>
                             <tbody>
                                 <t t-foreach="measurements" t-as="measurement">
-                                    <tr>
+                                    <tr t-attf-data-eps-record-href="/my/employee/measurement/#{measurement.id}" tabindex="0" role="link" class="eps-record-row">
                                         <td>
                                             <a t-attf-href="/my/employee/measurement/#{measurement.id}">
                                                 <t t-esc="measurement.name"/>
@@ -373,7 +373,7 @@
                         </h3>
                     </div>
                     <div class="col-md-4 text-right">
-                        <t t-set="progress_pct" t-value="int((contract_certified / contract_revised * 100) if contract_revised and contract_revised > 0 else 0)"/>
+                        <t t-set="progress_pct" t-value="int((contract_certified / contract_revised * 100) if contract_revised and contract_revised &gt; 0 else 0)"/>
                         <div class="mb-2">
                             <span class="badge badge-info" style="font-size: 14px;">
                                 Contract Progress: <t t-esc="progress_pct"/>%
@@ -392,37 +392,37 @@
 
                 <t t-if="success == 'saved'">
                     <div class="alert alert-success measurement-alert" role="alert">
-                        <i class="fa fa-check-circle"></i> <strong>Success!</strong> Quantities saved successfully.
+                        <i class="fa fa-check-circle"/> <strong>Success!</strong> Quantities saved successfully.
                     </div>
                 </t>
 
                 <t t-if="success == 'submitted'">
                     <div class="alert alert-success measurement-alert" role="alert">
-                        <i class="fa fa-check-circle"></i> <strong>Submitted!</strong> Measurement submitted for approval.
+                        <i class="fa fa-check-circle"/> <strong>Submitted!</strong> Measurement submitted for approval.
                     </div>
                 </t>
 
                 <t t-if="error == 'validation'">
                     <div class="alert alert-warning measurement-alert" role="alert">
-                        <i class="fa fa-exclamation-triangle"></i> <strong>Validation Error!</strong> Some quantities exceed allowed amount. Check chatter below for details.
+                        <i class="fa fa-exclamation-triangle"/> <strong>Validation Error!</strong> Some quantities exceed allowed amount. Check chatter below for details.
                     </div>
                 </t>
 
                 <t t-if="error == 'system'">
                     <div class="alert alert-danger measurement-alert" role="alert">
-                        <i class="fa fa-times-circle"></i> <strong>Error!</strong> Could not save measurement. Please contact support.
+                        <i class="fa fa-times-circle"/> <strong>Error!</strong> Could not save measurement. Please contact support.
                     </div>
                 </t>
 
                 <t t-if="error == 'submit'">
                     <div class="alert alert-danger measurement-alert" role="alert">
-                        <i class="fa fa-times-circle"></i> <strong>Submit Failed!</strong> Could not submit measurement. Please contact support.
+                        <i class="fa fa-times-circle"/> <strong>Submit Failed!</strong> Could not submit measurement. Please contact support.
                     </div>
                 </t>
 
                 <t t-if="error == 'no_lines'">
                     <div class="alert alert-warning measurement-alert" role="alert">
-                        <i class="fa fa-exclamation-triangle"></i>
+                        <i class="fa fa-exclamation-triangle"/>
                         <strong>No quantities entered!</strong> Enter at least one quantity before submitting.
                     </div>
                 </t>
@@ -440,13 +440,7 @@
                                     </small>
                                 </div>
                                 <div class="progress" style="height: 20px;">
-                                    <div class="progress-bar"
-                                         t-att-class="'bg-success' if progress_pct >= 80 else 'bg-primary' if progress_pct >= 50 else 'bg-warning'"
-                                         role="progressbar"
-                                         t-att-style="'width: ' + str(progress_pct) + '%'"
-                                         t-att-aria-valuenow="progress_pct"
-                                         aria-valuemin="0"
-                                         aria-valuemax="100">
+                                    <div class="progress-bar" t-att-class="'bg-success' if progress_pct &gt;= 80 else 'bg-primary' if progress_pct &gt;= 50 else 'bg-warning'" role="progressbar" t-att-style="'width: ' + str(progress_pct) + '%'" t-att-aria-valuenow="progress_pct" aria-valuemin="0" aria-valuemax="100">
                                         <t t-esc="progress_pct"/>%
                                     </div>
                                 </div>
@@ -595,8 +589,7 @@
                     </div>
                 </td>
                 <td class="text-right">
-                    <span class="qty-badge"
-                          t-att-class="'qty-badge badge badge-' + ('success' if remaining_qty > 0 else 'secondary')">
+                    <span class="qty-badge" t-att-class="'qty-badge badge badge-' + ('success' if remaining_qty &gt; 0 else 'secondary')">
                         <t t-esc="'%.2f' % remaining_qty"/>
                     </span>
                     <div class="qty-percent mt-1">
@@ -607,31 +600,9 @@
                 <td class="text-right qty-cell">
                     <div class="entry-stack">
                         <div class="entry-row">
-                            <input type="number"
-                                   step="0.01"
-                                   min="0"
-                                   class="form-control form-control-sm text-right entry-input current-entry-input"
-                                   t-att-name="'current_entry_' + str(boq_line.id)"
-                                   t-att-id="'current_entry_' + str(boq_line.id)"
-                                   t-att-data-boq-id="boq_line.id"
-                                   t-att-data-remaining="remaining_qty"
-                                   t-att-data-allowed="allowed_qty"
-                                   t-att-data-previous="previous_qty"
-                                   t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"
-                                   oninput="syncCurrentEntry(this)"
-                                   onchange="syncCurrentEntry(this)"/>
-                            <input type="hidden"
-                                   t-att-name="'qty_' + str(boq_line.id)"
-                                   t-att-id="'qty_' + str(boq_line.id)"
-                                   t-att-data-boq-id="boq_line.id"
-                                   t-att-data-remaining="remaining_qty"
-                                   t-att-data-allowed="allowed_qty"
-                                   t-att-data-previous="previous_qty"
-                                   t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"/>
-                            <input type="hidden"
-                                   t-att-name="'qty_percent_' + str(boq_line.id)"
-                                   t-att-id="'qty_percent_' + str(boq_line.id)"
-                                   t-att-value="'%.2f' % (((existing_line.current_qty if existing_line else 0.0) / allowed_qty * 100) if allowed_qty else 0.0)"/>
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm text-right entry-input current-entry-input" t-att-name="'current_entry_' + str(boq_line.id)" t-att-id="'current_entry_' + str(boq_line.id)" t-att-data-boq-id="boq_line.id" t-att-data-remaining="remaining_qty" t-att-data-allowed="allowed_qty" t-att-data-previous="previous_qty" t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)" oninput="syncCurrentEntry(this)" onchange="syncCurrentEntry(this)"/>
+                            <input type="hidden" t-att-name="'qty_' + str(boq_line.id)" t-att-id="'qty_' + str(boq_line.id)" t-att-data-boq-id="boq_line.id" t-att-data-remaining="remaining_qty" t-att-data-allowed="allowed_qty" t-att-data-previous="previous_qty" t-att-value="'%.2f' % (existing_line.current_qty if existing_line else 0.0)"/>
+                            <input type="hidden" t-att-name="'qty_percent_' + str(boq_line.id)" t-att-id="'qty_percent_' + str(boq_line.id)" t-att-value="'%.2f' % (((existing_line.current_qty if existing_line else 0.0) / allowed_qty * 100) if allowed_qty else 0.0)"/>
                         </div>
                     </div>
                     <div class="qty-percent mt-1 current-percent-display">
@@ -652,14 +623,10 @@
                 </td>
                 <td><small><t t-esc="boq_line.uom_id.name"/></small></td>
                 <td class="text-right">
-                    <small class="money-text" t-field="boq_line.unit_rate" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/>
+                    <small class="money-text" t-field="boq_line.unit_rate" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: measurement.contract_id.currency_id}"/>
                 </td>
                 <td class="remarks-cell">
-                    <input type="text"
-                           class="form-control form-control-sm remarks-input"
-                           t-att-name="'remarks_' + str(boq_line.id)"
-                           t-att-value="existing_line.remarks if existing_line and existing_line.remarks else ''"
-                           placeholder="Optional notes"/>
+                    <input type="text" class="form-control form-control-sm remarks-input" t-att-name="'remarks_' + str(boq_line.id)" t-att-value="existing_line.remarks if existing_line and existing_line.remarks else ''" placeholder="Optional notes"/>
                 </td>
             </tr>
         </t>
@@ -688,13 +655,13 @@
                             </form>
 
                             <script type="text/javascript">
-                                <![CDATA[
+                                
                                 function validateQuantity(input) {
                                     var qty = parseFloat(input.value) || 0;
                                     var allowed = parseFloat(input.getAttribute('data-allowed')) || 0;
                                     var previous = parseFloat(input.getAttribute('data-previous')) || 0;
                                     var totalQty = previous + qty;
-                                    var overLimit = allowed && totalQty > allowed;
+                                    var overLimit = allowed &amp;&amp; totalQty &gt; allowed;
                                     var exceededBy = overLimit ? (totalQty - allowed) : 0;
                                     var row = input.closest('tr');
 
@@ -710,7 +677,7 @@
                                         var warning = document.createElement('div');
                                         warning.className = 'qty-warning';
                                         warning.style.cssText = 'color: #856404; font-size: 11px; margin-top: 2px;';
-                                        warning.innerHTML = '<i class="fa fa-exclamation-triangle"></i> Exceeds allowed by: ' + exceededBy.toFixed(2);
+                                        warning.innerHTML = '&lt;i class="fa fa-exclamation-triangle"&gt;&lt;/i&gt; Exceeds allowed by: ' + exceededBy.toFixed(2);
                                         input.parentNode.appendChild(warning);
                                     } else {
                                         input.style.borderColor = '';
@@ -796,7 +763,7 @@
                                         var contractQtyInput = document.querySelector('input[name="contract_qty_' + boqId + '"]');
                                         if (contractQtyInput) {
                                             var contractQty = parseFloat(contractQtyInput.value) || 0;
-                                            if (modeSelect && modeSelect.value === 'percent') {
+                                            if (modeSelect &amp;&amp; modeSelect.value === 'percent') {
                                                 input.value = percentage.toFixed(2);
                                             } else {
                                                 input.value = (contractQty * percentage / 100).toFixed(2);
@@ -830,7 +797,7 @@
                                         syncCurrentEntry(entryInput);
                                     });
                                 });
-                                ]]>
+                                
                             </script>
                         </div>
                     </div>
@@ -898,7 +865,7 @@
                     <td class="text-right">
                         <span t-esc="'{} {:,.2f}'.format(measurement.contract_id.currency_id.symbol or '', section_total or 0.0)"/>
                     </td>
-                    <td></td>
+                    <td/>
                 </tr>
             </t>
 
@@ -915,7 +882,7 @@
 
         <!-- NORMAL LINE -->
         <t t-else="">
-            <t t-if="line.current_qty and line.current_qty > 0">
+            <t t-if="line.current_qty and line.current_qty &gt; 0">
                 <t t-if="not section_has_visible_lines and current_section">
                     <tr class="meas-section">
                         <td colspan="10">
@@ -967,7 +934,7 @@
                     <td class="text-right"><t t-esc="'%.2f' % (line.remaining_qty or 0.0)"/></td>
                     <td><span t-field="line.boq_line_id.uom_id"/></td>
                     <td class="text-right">
-                        <span t-field="line.unit_rate" t-options='{"widget": "monetary", "display_currency": measurement.contract_id.currency_id}'/>
+                        <span t-field="line.unit_rate" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: measurement.contract_id.currency_id}"/>
                     </td>
                     <td><t t-esc="line.remarks or '-'"/></td>
                 </tr>
@@ -983,7 +950,7 @@
             <td class="text-right">
                 <span t-esc="'{} {:,.2f}'.format(measurement.contract_id.currency_id.symbol or '', section_total or 0.0)"/>
             </td>
-            <td></td>
+            <td/>
         </tr>
     </t>
 
@@ -992,7 +959,7 @@
         <td class="text-right">
             <span t-esc="'{} {:,.2f}'.format(measurement.contract_id.currency_id.symbol or '', grand_total or 0.0)"/>
         </td>
-        <td></td>
+        <td/>
     </tr>
 </tbody>
                 </table>
@@ -1047,7 +1014,7 @@
 
                 <t t-if="error_message or error == 'create_failed'">
                     <div class="portal-form-popup" role="alert">
-                        <i class="fa fa-exclamation-circle"></i>
+                        <i class="fa fa-exclamation-circle"/>
                         <strong>Could not create measurement.</strong>
                         <div class="mt-1">
                             <t t-esc="error_message or 'Please check the entered data and try again.'"/>
@@ -1125,7 +1092,7 @@
                             </a>
                         </div>
                     </form>
-                    <script type="text/javascript"><![CDATA[
+                    <script type="text/javascript">
                         document.addEventListener('DOMContentLoaded', function () {
                             var contractSelect = document.getElementById('contract_id');
                             var orderSelect = document.getElementById('contract_order_id');
@@ -1136,7 +1103,7 @@
                                 var contractId = contractSelect.value;
                                 var visible = [];
                                 allOptions.forEach(function (opt) {
-                                    var show = contractId && opt.getAttribute('data-contract-id') === contractId;
+                                    var show = contractId &amp;&amp; opt.getAttribute('data-contract-id') === contractId;
                                     opt.hidden = !show;
                                     opt.disabled = !show;
                                     if (show) visible.push(opt);
@@ -1159,7 +1126,7 @@
                             contractSelect.addEventListener('change', refreshOrders);
                             refreshOrders();
                         });
-                    ]]></script>
+                    </script>
                 </t>
                 <t t-else="">
                     <div class="mt-4">

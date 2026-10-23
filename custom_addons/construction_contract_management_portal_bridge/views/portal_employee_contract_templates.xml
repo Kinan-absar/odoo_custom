@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
     <!-- Contracts List -->
     <template id="portal_employee_contracts" name="Employee Portal - Contracts">
@@ -45,28 +45,28 @@
                         </form>
                     </div>
 
-                    <div class="table-responsive mt-3 construction-desktop-table">
-                        <table class="table table-hover">
-                            <thead class="thead-light">
+                    <div class="table-responsive mt-3 construction-desktop-table eps-list-scroll">
+                        <table class="table table-hover eps-compact-list" style="--eps-list-width:1075px">
+                            <colgroup><col style="width:190px"/><col style="width:190px"/><col style="width:125px"/><col style="width:115px"/><col style="width:115px"/><col style="width:190px"/><col style="width:150px"/></colgroup><thead class="thead-light">
                                 <tr>
                                     <th>Contract #</th>
                                     <th>Project</th>
                                     <th>Direction</th>
                                     <th>Start Date</th>
                                     <th>End Date</th>
-                                    <th class="text-right">Contract Value</th>
+                                    <th class="text-right eps-list-amount">Contract Value</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <t t-foreach="contracts" t-as="contract">
-                                    <tr>
+                                    <tr t-attf-data-eps-record-href="/my/employee/contract/#{contract.id}" tabindex="0" role="link" class="eps-record-row">
                                         <td><a t-attf-href="/my/employee/contract/#{contract.id}"><t t-esc="contract.name"/></a></td>
                                         <td><span t-field="contract.project_id"/></td>
                                         <td><span t-esc="'Client Contract' if contract.contract_direction == 'inbound' else 'Subcontract'"/></td>
                                         <td><span t-field="contract.date_start"/></td>
                                         <td><span t-field="contract.date_end"/></td>
-                                        <td class="text-right"><span t-field="contract.revised_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></td>
+                                        <td class="text-right"><span t-field="contract.revised_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: contract.currency_id}"/></td>
                                         <td>
                                             <span t-if="contract.state == 'draft'" class="badge badge-secondary">Draft</span>
                                             <span t-if="contract.state == 'under_review'" class="badge badge-info">Under Review</span>
@@ -104,7 +104,7 @@
                                     </div>
                                     <div>
                                         <span class="construction-mobile-card-label">Value</span>
-                                        <div class="construction-mobile-card-value"><span t-field="contract.revised_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                        <div class="construction-mobile-card-value"><span t-field="contract.revised_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: contract.currency_id}"/></div>
                                     </div>
                                     <div>
                                         <span class="construction-mobile-card-label">Status</span>
@@ -218,19 +218,19 @@
                             <div class="card-body">
                                 <div class="row mb-2">
                                     <div class="col-6"><strong>Original Amount:</strong></div>
-                                    <div class="col-6 text-right"><span t-field="contract.original_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                    <div class="col-6 text-right"><span t-field="contract.original_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: contract.currency_id}"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-6"><strong>Revised Amount:</strong></div>
-                                    <div class="col-6 text-right"><span t-field="contract.revised_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                    <div class="col-6 text-right"><span t-field="contract.revised_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: contract.currency_id}"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-6"><strong>Total Certified:</strong></div>
-                                    <div class="col-6 text-right"><span t-field="contract.total_certified_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                    <div class="col-6 text-right"><span t-field="contract.total_certified_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: contract.currency_id}"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-6"><strong>Total Measured:</strong></div>
-                                    <div class="col-6 text-right"><span t-field="contract.total_measured_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                    <div class="col-6 text-right"><span t-field="contract.total_measured_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: contract.currency_id}"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-6"><strong>Advance %:</strong></div>
@@ -238,15 +238,15 @@
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-6"><strong>Advance Amount:</strong></div>
-                                    <div class="col-6 text-right"><span t-field="contract.advance_amount" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                    <div class="col-6 text-right"><span t-field="contract.advance_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: contract.currency_id}"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-6"><strong>Advance Recovered:</strong></div>
-                                    <div class="col-6 text-right"><span t-field="contract.advance_recovered" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                    <div class="col-6 text-right"><span t-field="contract.advance_recovered" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: contract.currency_id}"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-6"><strong>Advance Balance:</strong></div>
-                                    <div class="col-6 text-right"><span t-field="contract.advance_balance" t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/></div>
+                                    <div class="col-6 text-right"><span t-field="contract.advance_balance" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: contract.currency_id}"/></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-6"><strong>Latest Advance Payment:</strong></div>
@@ -292,22 +292,22 @@
                 </div>
 
                 <t t-if="contract_orders">
-                    <div class="card mt-4">
+                    <div class="card mt-4 eps-list-page-card">
                         <div class="card-header"><h5>Contract Orders / Sales Order Scopes</h5></div>
                         <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="thead-light">
-                                        <tr><th>Contract Order</th><th>Source Sales Order</th><th>Scope / Package</th><th class="text-right">Order Amount</th><th class="text-right">BOQ Amount</th><th class="text-center">Measurements</th><th class="text-center">IPCs</th></tr>
+                            <div class="table-responsive eps-list-scroll">
+                                <table class="table table-hover mb-0 eps-compact-list" style="--eps-list-width:1035px">
+                                    <colgroup><col style="width:190px"/><col style="width:125px"/><col style="width:190px"/><col style="width:140px"/><col style="width:140px"/><col style="width:125px"/><col style="width:125px"/></colgroup><thead class="thead-light">
+                                        <tr><th>Contract Order</th><th>Source Sales Order</th><th>Scope / Package</th><th class="text-right eps-list-amount">Order Amount</th><th class="text-right eps-list-amount">BOQ Amount</th><th class="text-center">Measurements</th><th class="text-center">IPCs</th></tr>
                                     </thead>
                                     <tbody>
                                         <t t-foreach="contract_orders" t-as="order">
-                                            <tr>
+                                            <tr t-attf-data-eps-record-href="/my/employee/contract-order/#{order.id}" tabindex="0" role="link" class="eps-record-row">
                                                 <td><a t-attf-href="/my/employee/contract-order/#{order.id}"><t t-esc="order.name"/></a></td>
                                                 <td><t t-esc="order.sale_order_id.name"/></td>
                                                 <td><t t-esc="order.scope_name or '-'"/></td>
-                                                <td class="text-right"><span t-field="order.order_amount" t-options='{"widget": "monetary", "display_currency": order.currency_id}'/></td>
-                                                <td class="text-right"><span t-field="order.boq_amount" t-options='{"widget": "monetary", "display_currency": order.currency_id}'/></td>
+                                                <td class="text-right"><span t-field="order.order_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: order.currency_id}"/></td>
+                                                <td class="text-right"><span t-field="order.boq_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: order.currency_id}"/></td>
                                                 <td class="text-center"><t t-esc="order.measurement_count"/></td>
                                                 <td class="text-center"><t t-esc="order.ipc_count"/></td>
                                             </tr>
@@ -415,12 +415,10 @@
                                     </td>
                                     <td><span t-field="line.uom_id"/></td>
                                     <td class="text-right">
-                                        <span t-field="line.revised_unit_rate"
-                                              t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/>
+                                        <span t-field="line.revised_unit_rate" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: contract.currency_id}"/>
                                     </td>
                                     <td class="text-right">
-                                        <span t-field="line.revised_amount"
-                                              t-options='{"widget": "monetary", "display_currency": contract.currency_id}'/>
+                                        <span t-field="line.revised_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: contract.currency_id}"/>
                                     </td>
                                 </tr>
                             </t>
@@ -485,8 +483,8 @@
                     <div class="card-body">
                         <div class="row mb-2"><div class="col-md-3"><strong>Source Sales Order:</strong></div><div class="col-md-9"><t t-esc="contract_order.sale_order_id.name"/></div></div>
                         <div class="row mb-2"><div class="col-md-3"><strong>Scope / Package:</strong></div><div class="col-md-9"><t t-esc="contract_order.scope_name or '-'"/></div></div>
-                        <div class="row mb-2"><div class="col-md-3"><strong>Order Amount:</strong></div><div class="col-md-9"><span t-field="contract_order.order_amount" t-options='{"widget": "monetary", "display_currency": contract_order.currency_id}'/></div></div>
-                        <div class="row"><div class="col-md-3"><strong>BOQ Amount:</strong></div><div class="col-md-9"><span t-field="contract_order.boq_amount" t-options='{"widget": "monetary", "display_currency": contract_order.currency_id}'/></div></div>
+                        <div class="row mb-2"><div class="col-md-3"><strong>Order Amount:</strong></div><div class="col-md-9"><span t-field="contract_order.order_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: contract_order.currency_id}"/></div></div>
+                        <div class="row"><div class="col-md-3"><strong>BOQ Amount:</strong></div><div class="col-md-9"><span t-field="contract_order.boq_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: contract_order.currency_id}"/></div></div>
                     </div>
                 </div>
                 <div class="card" t-if="boq_lines">
@@ -500,7 +498,7 @@
                                         <tr t-if="line.display_type == 'line_section'" class="table-secondary"><td colspan="6"><strong><t t-esc="line.description"/></strong></td></tr>
                                         <tr t-elif="line.display_type == 'line_note'"><td colspan="6"><em><t t-esc="line.description"/></em></td></tr>
                                         <tr t-else="">
-                                            <td><t t-esc="line.item_code or ''"/></td><td><t t-esc="line.description or ''"/></td><td class="text-right"><t t-esc="line.revised_qty or line.contract_qty"/></td><td><t t-esc="line.uom_id.name or ''"/></td><td class="text-right"><span t-field="line.revised_unit_rate" t-options='{"widget":"monetary","display_currency":contract_order.currency_id}'/></td><td class="text-right"><span t-field="line.revised_amount" t-options='{"widget":"monetary","display_currency":contract_order.currency_id}'/></td>
+                                            <td><t t-esc="line.item_code or ''"/></td><td><t t-esc="line.description or ''"/></td><td class="text-right"><t t-esc="line.revised_qty or line.contract_qty"/></td><td><t t-esc="line.uom_id.name or ''"/></td><td class="text-right"><span t-field="line.revised_unit_rate" t-options="{&quot;widget&quot;:&quot;monetary&quot;,&quot;display_currency&quot;:contract_order.currency_id}"/></td><td class="text-right"><span t-field="line.revised_amount" t-options="{&quot;widget&quot;:&quot;monetary&quot;,&quot;display_currency&quot;:contract_order.currency_id}"/></td>
                                         </tr>
                                     </t>
                                 </tbody>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
 
     <template id="employee_portal_layout">
@@ -8,6 +8,7 @@
         </xpath>
 
         <t t-call="web.layout">
+            <t t-set="eps_portal_compact_desktop" t-value="True"/>
 
             <!-- Marker consumed by portal_call_widget.js: only mounts the call
                  widget when a real logged-in portal user is viewing this layout,
@@ -25,13 +26,13 @@
             <style>
                 /* ================================================================
                    EMPLOYEE PORTAL - PREMIUM REDESIGN
-                   Color: Deep Indigo x Warm Slate x Gold accent
+                   Color: Accounting teal green x Warm Slate x Gold accent
                    ================================================================ */
 
                 :root {
-                    --app-primary:        #4F46E5;
-                    --app-primary-light:  #6366F1;
-                    --app-primary-dark:   #3730A3;
+                    --app-primary:        #087f83;
+                    --app-primary-light:  #159398;
+                    --app-primary-dark:   #07686b;
                     --app-accent:         #F59E0B;
                     --app-accent-soft:    #FEF3C7;
                     --app-bg:             #F1F2F6;
@@ -45,7 +46,7 @@
                     --shadow-sm:   0 4px 12px rgba(26,27,46,0.08);
                     --shadow-md:   0 8px 24px rgba(26,27,46,0.10);
                     --shadow-lg:   0 16px 40px rgba(26,27,46,0.12);
-                    --shadow-fab:  0 10px 30px rgba(79,70,229,0.40), 0 3px 8px rgba(79,70,229,0.20);
+                    --shadow-fab:  0 10px 30px rgba(8,127,131,0.40), 0 3px 8px rgba(8,127,131,0.20);
                     --radius-sm:   8px;
                     --radius-md:   14px;
                     --radius-lg:   20px;
@@ -111,7 +112,7 @@
                     .ep-navbar { display:none !important; }
                     .ep-desktop-sidebar{display:flex;position:fixed;left:0;top:0;bottom:0;width:260px;background:#fff;border-right:1px solid var(--border-light);z-index:1500;flex-direction:column;padding:22px 14px;}
                     .ep-sidebar-brand{display:flex;align-items:center;gap:11px;padding:5px 10px 22px;font-weight:800;color:var(--text-primary);font-size:16px}.ep-sidebar-brand img{width:38px;height:38px;object-fit:contain;border-radius:10px}
-                    .ep-sidebar-nav{display:flex;flex-direction:column;gap:4px;overflow:auto}.ep-sidebar-section{margin-top:14px}.ep-sidebar-section:first-of-type{margin-top:8px}.ep-sidebar-section-title{padding:0 12px 6px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}.ep-sidebar-section-links{display:flex;flex-direction:column;gap:3px}.ep-sidebar-section.ep-empty{display:none!important}.ep-sidebar-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;color:var(--text-secondary);text-decoration:none!important;font-weight:600;font-size:13.5px}.ep-sidebar-link:hover,.ep-sidebar-link.active{background:rgba(79,70,229,.08);color:var(--app-primary)}.ep-sidebar-link i{width:20px;text-align:center;font-size:16px}
+                    .ep-sidebar-nav{display:flex;flex-direction:column;gap:4px;overflow:auto}.ep-sidebar-section{margin-top:14px}.ep-sidebar-section:first-of-type{margin-top:8px}.ep-sidebar-section-title{padding:0 12px 6px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}.ep-sidebar-section-links{display:flex;flex-direction:column;gap:3px}.ep-sidebar-section.ep-empty{display:none!important}.ep-sidebar-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;color:var(--text-secondary);text-decoration:none!important;font-weight:600;font-size:13.5px}.ep-sidebar-link:hover,.ep-sidebar-link.active{background:rgba(8,127,131,.08);color:var(--app-primary)}.ep-sidebar-link i{width:20px;text-align:center;font-size:16px}
                     .ep-sidebar-bottom{margin-top:auto;border-top:1px solid var(--border-light);padding-top:14px}.ep-sidebar-profile{position:relative}.ep-sidebar-profile-btn{width:100%;border:0;background:transparent;display:flex;align-items:center;gap:10px;padding:9px;border-radius:12px;text-align:left}.ep-sidebar-profile-btn:hover{background:var(--surface-2)}.ep-sidebar-profile-btn img{width:38px;height:38px;border-radius:12px;object-fit:cover}.ep-sidebar-profile-name{font-weight:700;font-size:13px;color:var(--text-primary)}.ep-sidebar-profile-role{font-size:11px;color:var(--text-muted)}.ep-profile-menu{display:none;position:absolute;left:0;right:0;bottom:58px;background:#fff;border:1px solid var(--border-light);border-radius:13px;padding:6px;box-shadow:var(--shadow-lg)}.ep-profile-menu.show{display:block}.ep-profile-menu a{display:flex;align-items:center;gap:9px;padding:10px;border-radius:9px;text-decoration:none!important;color:var(--text-primary);font-size:13px;font-weight:600}.ep-profile-menu a:hover{background:var(--surface-2);color:var(--app-primary)}
                     main,.portal-announcement-wrapper{margin-left:260px}.ep-desktop-top-actions{display:flex;position:fixed;right:28px;top:16px;z-index:1450;align-items:center;gap:8px} main{padding-top:88px!important}
                 }
@@ -157,7 +158,7 @@
                 }
 
                 .ep-link:hover, .ep-dropdown-toggle:hover {
-                    background: rgba(79,70,229,0.07);
+                    background: rgba(8,127,131,0.07);
                     color: var(--app-primary);
                 }
 
@@ -294,7 +295,7 @@
                     .fab-item i {
                         width: 34px;
                         height: 34px;
-                        background: rgba(79,70,229,0.08);
+                        background: rgba(8,127,131,0.08);
                         color: var(--app-primary);
                         border-radius: var(--radius-sm);
                         display: flex;
@@ -481,7 +482,7 @@
                 .mobile-search:focus {
                     outline: none;
                     border-color: var(--app-primary-light);
-                    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+                    box-shadow: 0 0 0 3px rgba(21,147,152,0.12);
                 }
 
                 .mobile-search::placeholder { color: var(--text-muted); }
@@ -513,7 +514,7 @@
                     border: 1px solid rgba(255,255,255,0.9);
                     border-radius: var(--radius-xl);
                     box-shadow:
-                        0 -2px 0 rgba(79,70,229,0.06),
+                        0 -2px 0 rgba(8,127,131,0.06),
                         var(--shadow-lg),
                         inset 0 1px 0 rgba(255,255,255,1);
                     z-index: 3000;
@@ -625,7 +626,7 @@
                 .ep-fab-center .fab-plus {
                     width: 56px;
                     height: 56px;
-                    background: linear-gradient(145deg, #6366F1 0%, #4F46E5 50%, #3730A3 100%);
+                    background: linear-gradient(145deg, #159398 0%, #087f83 50%, #07686b 100%);
                     border-radius: 18px;
                     display: flex;
                     align-items: center;
@@ -659,12 +660,12 @@
 
                 .ep-fab-center:hover .fab-plus {
                     transform: translateY(-4px);
-                    box-shadow: 0 16px 36px rgba(79,70,229,0.50), 0 4px 12px rgba(79,70,229,0.25);
+                    box-shadow: 0 16px 36px rgba(8,127,131,0.50), 0 4px 12px rgba(8,127,131,0.25);
                 }
 
                 .ep-fab-center:active .fab-plus {
                     transform: scale(0.90);
-                    box-shadow: 0 4px 14px rgba(79,70,229,0.35);
+                    box-shadow: 0 4px 14px rgba(8,127,131,0.35);
                 }
 
                 .ep-fab-center.fab-open .fab-plus i {
@@ -834,7 +835,7 @@
                     border-radius: 50%;
                     left: 1px;
                     top: 6px;
-                    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+                    box-shadow: 0 0 0 3px rgba(21,147,152,0.15);
                 }
 
                 .employee-req-detail .timeline-content { margin-left: 26px; }
@@ -860,7 +861,7 @@
                 .attachment-icon-btn i { font-size: 14px; line-height: 1; }
 
                 .attachment-icon-btn:hover {
-                    background: rgba(79,70,229,0.06);
+                    background: rgba(8,127,131,0.06);
                     border-color: var(--app-primary-light);
                     color: var(--app-primary);
                 }
@@ -901,13 +902,13 @@
                     font-weight: 600 !important;
                     font-family: 'DM Sans', sans-serif !important;
                     letter-spacing: -0.01em !important;
-                    box-shadow: 0 4px 14px rgba(79,70,229,0.30) !important;
+                    box-shadow: 0 4px 14px rgba(8,127,131,0.30) !important;
                     transition: transform var(--dur-fast), box-shadow var(--dur-fast) !important;
                 }
 
                 .btn-primary:hover {
                     transform: translateY(-1px) !important;
-                    box-shadow: 0 6px 20px rgba(79,70,229,0.40) !important;
+                    box-shadow: 0 6px 20px rgba(8,127,131,0.40) !important;
                 }
 
                 .btn-primary:active { transform: scale(0.97) !important; }
@@ -918,8 +919,8 @@
 
                 ::-webkit-scrollbar { width: 5px; height: 5px; }
                 ::-webkit-scrollbar-track { background: transparent; }
-                ::-webkit-scrollbar-thumb { background: rgba(79,70,229,0.2); border-radius: 10px; }
-                ::-webkit-scrollbar-thumb:hover { background: rgba(79,70,229,0.4); }
+                ::-webkit-scrollbar-thumb { background: rgba(8,127,131,0.2); border-radius: 10px; }
+                ::-webkit-scrollbar-thumb:hover { background: rgba(8,127,131,0.4); }
             /* ================================================================
             PORTAL ANNOUNCEMENT - PREMIUM RESPONSIVE
             ================================================================ */
@@ -1005,7 +1006,7 @@
                 gap: 8px;
                 padding: 8px 12px;
                 border-radius: 10px;
-                background: rgba(79, 70, 229, 0.06);
+                background: rgba(8,127,131, 0.06);
                 border: 1px solid var(--border-light);
                 font-size: 12.5px;
                 font-weight: 600;
@@ -1015,7 +1016,7 @@
 
             .portal-announcement-file:hover {
                 text-decoration: none;
-                background: rgba(79, 70, 229, 0.11);
+                background: rgba(8,127,131, 0.11);
             }
 
             .portal-announcement-download {
@@ -1148,7 +1149,7 @@
     inset: 0;
     background: linear-gradient(
         135deg,
-        rgba(79,70,229,0.08),
+        rgba(8,127,131,0.08),
         transparent 60%
     );
     opacity: 0;
@@ -1226,8 +1227,8 @@
 
 /* Optional color variants */
 .construction-card-primary .construction-card-icon {
-    background: rgba(79,70,229,0.10);
-    color: #4F46E5;
+    background: rgba(8,127,131,0.10);
+    color: #087f83;
 }
 
 .construction-card-success .construction-card-icon {
@@ -1393,16 +1394,122 @@
         word-break: break-word;
     }
 }
+
+                /* Desktop workspace: fluid beside the existing 260px sidebar.
+                   Keep all mobile rules and component-specific widths intact. */
+                @media (min-width: 769px) {
+                    .ep-portal-main {
+                        margin-left: 260px;
+                        min-width: 0;
+                        padding: 72px 28px 40px !important;
+                    }
+                    .ep-portal-main #wrap.container,
+                    .ep-portal-main #wrap .container {
+                        width: 100%;
+                        max-width: none;
+                        padding-left: 0;
+                        padding-right: 0;
+                    }
+                    .ep-portal-main #wrap.container {
+                        margin-top: 0 !important;
+                        margin-bottom: 0 !important;
+                    }
+                    .ep-portal-main #wrap &gt; .container {
+                        margin-top: 0 !important;
+                    }
+                    .portal-announcement-wrapper {
+                        width: calc(100% - 316px);
+                        max-width: none;
+                        margin: 72px 28px 0 288px;
+                        padding: 0;
+                    }
+                    .portal-announcement-wrapper .portal-announcement:last-child {
+                        margin-bottom: 0;
+                    }
+                    .portal-announcement-wrapper ~ .ep-portal-main {
+                        padding-top: 24px !important;
+                    }
+                    .ep-portal-main .ep-dashboard-grid {
+                        margin-top: 0 !important;
+                    }
+                    .ep-dashboard-grid &gt; .needs-attention {
+                        margin-top: 0;
+                    }
+                }
+                @media (min-width: 1200px) {
+                    .ep-dashboard-grid &gt; .ep-dashboard-tile {
+                        flex: 0 0 auto;
+                        width: 33.33333333%;
+                    }
+                }
+                @media (min-width: 1600px) {
+                    .ep-dashboard-grid &gt; .ep-dashboard-tile {
+                        width: 25%;
+                    }
+                }
+
+                /* The same sidebar becomes the phone navigation drawer. */
+                @media(max-width:768px){
+                    .ep-sidebar-brand{display:flex;align-items:center;gap:11px;padding:5px 10px 22px;font-weight:800;color:var(--text-primary);font-size:16px}.ep-sidebar-brand img{width:38px;height:38px;object-fit:contain;border-radius:10px}
+                    .ep-sidebar-nav{display:flex;flex-direction:column;gap:4px;overflow:auto}.ep-sidebar-section{margin-top:14px}.ep-sidebar-section:first-of-type{margin-top:8px}.ep-sidebar-section-title{padding:0 12px 6px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}.ep-sidebar-section-links{display:flex;flex-direction:column;gap:3px}.ep-sidebar-section.ep-empty{display:none!important}.ep-sidebar-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;color:var(--text-secondary);text-decoration:none!important;font-weight:600;font-size:13.5px}.ep-sidebar-link:hover,.ep-sidebar-link.active{background:rgba(8,127,131,.08);color:var(--app-primary)}.ep-sidebar-link i{width:20px;text-align:center;font-size:16px}
+                    .ep-sidebar-bottom{margin-top:auto;border-top:1px solid var(--border-light);padding-top:14px}.ep-sidebar-profile{position:relative}.ep-sidebar-profile-btn{width:100%;border:0;background:transparent;display:flex;align-items:center;gap:10px;padding:9px;border-radius:12px;text-align:left}.ep-sidebar-profile-btn:hover{background:var(--surface-2)}.ep-sidebar-profile-btn img{width:38px;height:38px;border-radius:12px;object-fit:cover}.ep-sidebar-profile-name{font-weight:700;font-size:13px;color:var(--text-primary)}.ep-sidebar-profile-role{font-size:11px;color:var(--text-muted)}.ep-profile-menu{display:none;position:absolute;left:0;right:0;bottom:58px;background:#fff;border:1px solid var(--border-light);border-radius:13px;padding:6px;box-shadow:var(--shadow-lg)}.ep-profile-menu.show{display:block}.ep-profile-menu a{display:flex;align-items:center;gap:9px;padding:10px;border-radius:9px;text-decoration:none!important;color:var(--text-primary);font-size:13px;font-weight:600}.ep-profile-menu a:hover{background:var(--surface-2);color:var(--app-primary)}
+
+                    .ep-desktop-sidebar.ep-mobile-menu-open{display:flex!important;position:fixed;inset:0 auto 0 0;width:min(88vw,340px);height:100dvh;background:var(--surface);border-right:1px solid var(--border-light);z-index:10002;flex-direction:column;padding:18px 14px calc(18px + env(safe-area-inset-bottom));box-sizing:border-box;box-shadow:var(--shadow-lg)}
+                    .ep-desktop-sidebar .ep-sidebar-nav{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+                    .ep-desktop-sidebar .ep-sidebar-brand{padding-right:36px}
+                    .ep-desktop-sidebar .ep-sidebar-bottom{flex-shrink:0}
+                    .ep-mobile-menu-toggle,.ep-mobile-menu-close{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border:1px solid var(--border-light);border-radius:12px;background:var(--surface);color:var(--app-primary);font-size:21px}
+                    .ep-mobile-menu-toggle{margin-right:auto}
+                    .ep-mobile-topbar{display:flex!important}
+
+                    /* Aligned phone toolbar; greeting gets its own readable row. */
+                    .mobile-app-header{display:grid!important;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:12px 12px;padding:12px 16px 16px;box-sizing:border-box;width:100%;min-width:0}
+                    .mobile-app-header > .ep-mobile-menu-toggle{grid-column:1;grid-row:1;margin:0}
+                    .mobile-app-header > .ep-mobile-header-actions{grid-column:2;grid-row:1;justify-self:end;align-items:center;min-width:0;gap:10px!important}
+                    .mobile-app-header > .ep-mobile-greeting{grid-column:1/-1;grid-row:2;min-width:0;overflow-wrap:anywhere;padding-top:0}
+                    .ep-mobile-header-actions > *{flex-shrink:0}
+                    :is(.mobile-app-header,.ep-mobile-topbar) :is(.ep-native-comm-btn,.ep-bell-btn,.ep-mobile-profile-link){display:flex!important;align-items:center;justify-content:center;width:44px!important;height:44px!important;min-width:44px;box-sizing:border-box;margin:0!important;border-radius:12px!important;box-shadow:none!important}
+                    :is(.mobile-app-header,.ep-mobile-topbar) .ep-native-comm-actions{display:flex;align-items:center;margin:0;gap:10px}
+                    .ep-mobile-profile-link img{width:40px!important;height:40px!important;border-radius:12px!important}
+                    .ep-mobile-topbar{padding:12px 16px;gap:10px;align-items:center;box-sizing:border-box;width:100%;min-width:0}
+                    /* Mobile drawer: fixed header/footer, compact scrollable groups. */
+                    .ep-desktop-sidebar.ep-mobile-menu-open{width:min(90vw,320px);height:100dvh;border-radius:0 20px 20px 0;padding:calc(14px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom))}
+                    .ep-desktop-sidebar .ep-sidebar-brand{min-height:44px;box-sizing:border-box;padding:0 48px 0 6px;margin-bottom:12px;gap:10px;font-size:15px;line-height:1.3;flex-shrink:0}
+                    .ep-desktop-sidebar .ep-sidebar-brand img{width:30px;height:30px;flex:0 0 30px;border-radius:8px}
+                    .ep-desktop-sidebar .ep-sidebar-nav{gap:4px;padding:0 3px 10px;scrollbar-width:thin;scroll-padding:12px}
+                    .ep-desktop-sidebar .ep-sidebar-section{margin-top:6px;border-top:1px solid var(--border-light);padding-top:4px}
+                    .ep-desktop-sidebar .ep-sidebar-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:8px 10px;box-sizing:border-box;font-size:10px;letter-spacing:.06em;color:var(--text-muted);cursor:pointer;border-radius:10px}
+                    .ep-desktop-sidebar .ep-sidebar-section-title[role="button"]::after{content:'›';font-size:21px;line-height:1;transform:rotate(90deg);transition:transform .15s}
+                    .ep-desktop-sidebar .ep-sidebar-section[data-ep-collapsed="true"] .ep-sidebar-section-title::after{transform:rotate(0deg)}
+                    .ep-desktop-sidebar .ep-sidebar-section[data-ep-collapsed="true"] .ep-sidebar-section-links{display:none}
+                    .ep-desktop-sidebar .ep-sidebar-section-title:focus-visible{outline:2px solid var(--app-primary);outline-offset:-2px}
+                    .ep-desktop-sidebar .ep-sidebar-section-links{gap:2px}
+                    .ep-desktop-sidebar .ep-sidebar-link{min-height:44px;box-sizing:border-box;padding:10px;gap:11px;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+                    .ep-desktop-sidebar .ep-sidebar-link i{width:20px;flex:0 0 20px;font-size:16px;text-align:center}
+                    .ep-desktop-sidebar .ep-sidebar-bottom{padding-top:8px;background:var(--surface)}
+                    .ep-desktop-sidebar .ep-sidebar-profile-btn{min-height:52px;padding:6px;gap:10px}
+                    .ep-desktop-sidebar .ep-sidebar-profile-btn > span{min-width:0;flex:1}
+                    .ep-desktop-sidebar .ep-sidebar-profile-name{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+                    .ep-desktop-sidebar .ep-sidebar-profile-role{font-size:10px}
+                    .ep-desktop-sidebar .ep-sidebar-profile-btn img{width:34px;height:34px;flex:0 0 34px;border-radius:10px}
+                    .ep-mobile-menu-close{position:absolute;right:12px;top:calc(14px + env(safe-area-inset-top));width:40px;height:40px;font-size:18px;background:var(--surface-2)}
+                    .ep-mobile-menu-backdrop:not([hidden]){display:block;position:fixed;inset:0;border:0;border-radius:0;background:rgba(15,35,45,.45);z-index:10001;width:100%;height:100%}
+                    .ep-mobile-menu-backdrop[hidden]{display:none!important}
+                    .ep-bottom-nav .ep-nav-left{display:none!important}
+                    .ep-bottom-nav .ep-nav-right{width:100%;justify-content:flex-end!important;flex:none}
+                    .ep-bottom-nav .ep-nav-right > :not(a[href="/web/session/logout"]){display:none!important}
+                    .ep-bottom-nav .ep-nav-right > a[href="/web/session/logout"]{flex:0 0 64px}
+                }
             </style>
 
-            <t t-set="ep_notif_summary"
-                t-value="request.env['portal.report.seen'].sudo()._get_notification_summary(request.env.user) if not request.env.user.has_group('employee_portal_suite.group_attendance_only') else {}"/>
-            <t t-set="ep_notif_unread_total"
-                t-value="sum(v.get('new', 0) for v in ep_notif_summary.values())"/>
+            <t t-set="ep_notif_summary" t-value="request.env['portal.report.seen'].sudo()._get_notification_summary(request.env.user) if not request.env.user.has_group('employee_portal_suite.group_attendance_only') else {}"/>
+            <t t-set="ep_notif_unread_total" t-value="sum(v.get('new', 0) for v in ep_notif_summary.values())"/>
             <t t-set="can_er_approval_nav" t-value="'er_approval' in ep_notif_summary"/>
             <t t-set="can_mr_approval_nav" t-value="'mr_approval' in ep_notif_summary"/>
 
-            <aside class="ep-desktop-sidebar">
+            <button type="button" class="ep-mobile-menu-backdrop mobile-only" data-ep-menu-close="1" aria-label="Close navigation" hidden="hidden"/>
+            <aside class="ep-desktop-sidebar" id="ep-shared-sidebar" aria-label="Employee navigation">
+                <button type="button" class="ep-mobile-menu-close mobile-only" data-ep-menu-close="1" aria-label="Close navigation"><i class="fa fa-times" aria-hidden="true"/></button>
                 <div class="ep-sidebar-brand"><img t-att-src="'/web/image/res.company/%s/logo' % request.env.company.id"/><span>Employee Portal</span></div>
                 <nav class="ep-sidebar-nav" id="ep-desktop-sidebar-nav">
                     <a href="/my/employee" class="ep-sidebar-link"><i class="fa fa-home"/>Home</a>
@@ -1425,11 +1532,11 @@
                         </div>
                         <div class="ep-sidebar-section ep-empty" id="ep-section-contracts-projects">
                             <div class="ep-sidebar-section-title">Contracts &amp; Projects</div>
-                            <div class="ep-sidebar-section-links"></div>
+                            <div class="ep-sidebar-section-links"/>
                         </div>
                         <div class="ep-sidebar-section ep-empty" id="ep-section-weekly-plan">
                             <div class="ep-sidebar-section-title">Weekly Plan</div>
-                            <div class="ep-sidebar-section-links"></div>
+                            <div class="ep-sidebar-section-links"/>
                         </div>
                         <div class="ep-sidebar-section" id="ep-section-reports">
                             <div class="ep-sidebar-section-title">Reports</div>
@@ -1485,7 +1592,7 @@
                         <a href="/my" class="ep-link">Dashboard</a>
 
                         <div class="ep-dropdown">
-                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests &#9662;</button>
+                            <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'req-d')">Requests ▾</button>
                             <div id="req-d" class="ep-dropdown-menu">
                                 <a href="/my/employee/requests" class="ep-sub-link">Employee Requests</a>
                                 <a href="/my/employee/requests/new" class="ep-sub-link text-primary">+ New Employee Request</a>
@@ -1497,7 +1604,7 @@
 
                         <t t-if="can_er_approval_nav or can_mr_approval_nav">
                             <div class="ep-dropdown">
-                                <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals &#9662;</button>
+                                <button class="ep-dropdown-toggle" onclick="toggleDropdown(event, 'app-d')">Approvals ▾</button>
                                 <div id="app-d" class="ep-dropdown-menu">
 
                                     <t t-if="can_er_approval_nav">
@@ -1536,8 +1643,8 @@
                  MOBILE APP HEADER (home page only)
                  ================================================================ -->
             <t t-if="request.httprequest.path == '/my/employee'">
-                <div class="mobile-app-header mobile-only">
-                    <div>
+                <div class="mobile-app-header mobile-only"><button type="button" class="ep-mobile-menu-toggle" aria-label="Open navigation" aria-controls="ep-shared-sidebar" aria-expanded="false"><i class="fa fa-bars" aria-hidden="true"/></button>
+                    <div class="ep-mobile-greeting">
                         <div style="font-size:12px; color:var(--text-muted); font-weight:500; margin-bottom:3px;">
                             Welcome back
                         </div>
@@ -1546,24 +1653,23 @@
                             <span style="color:var(--app-primary);">!</span>
                         </div>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2 ep-mobile-header-actions">
                         <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
                             <t t-call="employee_portal_suite.ep_native_communication_actions"/><t t-call="employee_portal_suite.ep_notification_bell"/>
                         </t>
-                        <a href="/my/employee/profile" title="Edit info"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" style="width:42px;height:42px;border-radius:14px;box-shadow:0 4px 12px rgba(79,70,229,0.30);object-fit:cover;"/></a>
+                        <a href="/my/employee/profile" title="Edit info" class="ep-mobile-profile-link"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" style="width:42px;height:42px;border-radius:14px;box-shadow:0 4px 12px rgba(8,127,131,0.30);object-fit:cover;"/></a>
                     </div>
                 </div>
             </t>
 
             <!-- Compact topbar (bell only) for every other mobile page -->
-            <t t-if="request.httprequest.path != '/my/employee' and not request.env.user.has_group('employee_portal_suite.group_attendance_only')">
-                <div class="ep-mobile-topbar mobile-only">
-                    <t t-call="employee_portal_suite.ep_native_communication_actions"/><t t-call="employee_portal_suite.ep_notification_bell"/>
+            <t t-if="request.httprequest.path != '/my/employee'">
+                <div class="ep-mobile-topbar mobile-only"><button type="button" class="ep-mobile-menu-toggle" aria-label="Open navigation" aria-controls="ep-shared-sidebar" aria-expanded="false"><i class="fa fa-bars" aria-hidden="true"/></button>
+                    <t t-if="not request.env.user.has_group('employee_portal_suite.group_attendance_only')"><t t-call="employee_portal_suite.ep_native_communication_actions"/><t t-call="employee_portal_suite.ep_notification_bell"/></t>
                 </div>
             </t>
 
-            <t t-set="portal_announcements"
-                t-value="request.env['portal.announcement']._get_visible_announcements_for_current_user(target='portal', limit=5)"/>
+            <t t-set="portal_announcements" t-value="request.env['portal.announcement']._get_visible_announcements_for_current_user(target='portal', limit=5)"/>
 
             <t t-if="portal_announcements">
                 <div class="portal-announcement-wrapper">
@@ -1599,7 +1705,7 @@
             <!-- ================================================================
                  MAIN CONTENT
                  ================================================================ -->
-            <main>
+            <main class="ep-portal-main">
                 <div id="wrap" class="container mt-3 mb-5">
                     <t t-out="0"/>
                 </div>
@@ -1608,26 +1714,23 @@
             <!-- ================================================================
                  MOBILE BOTTOM NAV
                  ================================================================ -->
-                 <t t-set="is_attendance_only"
-   t-value="request.env.user.has_group('employee_portal_suite.group_attendance_only')"/>
+                 <t t-set="is_attendance_only" t-value="request.env.user.has_group('employee_portal_suite.group_attendance_only')"/>
 
-                 <t t-set="has_extended_nav"
-   t-value="not is_attendance_only and (can_er_approval_nav or can_mr_approval_nav or request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user'))"/>
+                 <t t-set="has_extended_nav" t-value="not is_attendance_only and (can_er_approval_nav or can_mr_approval_nav or request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user'))"/>
 
             <!-- Attendance-only mobile nav: just Attendance + Logout -->
             <t t-if="is_attendance_only">
                 <nav class="ep-bottom-nav mobile-only basic-nav">
                     <div class="ep-nav-left">
-                        <a href="/my/employee/attendance"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/attendance') else 'nav-btn'">
-                            <i class="fa fa-clock-o"></i>
+                        <a href="/my/employee/attendance" t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/attendance') else 'nav-btn'">
+                            <i class="fa fa-clock-o"/>
                             <span>Attendance</span>
                         </a>
                     </div>
-                    <div class="ep-fab-center"></div>
+                    <div class="ep-fab-center"/>
                     <div class="ep-nav-right">
                         <a href="/web/session/logout" class="nav-btn">
-                            <i class="fa fa-sign-out"></i>
+                            <i class="fa fa-sign-out"/>
                             <span>Exit</span>
                         </a>
                     </div>
@@ -1638,50 +1741,44 @@
 
                 <div class="ep-nav-left">
 
-                    <a href="/my/employee"
-                        t-att-class="'nav-btn active' if request.httprequest.path == '/my/employee' else 'nav-btn'">
-                        <i class="fa fa-home"></i>
+                    <a href="/my/employee" t-att-class="'nav-btn active' if request.httprequest.path == '/my/employee' else 'nav-btn'">
+                        <i class="fa fa-home"/>
                         <span>Home</span>
                     </a>
 
-                    <a href="/my/employee/requests"
-                        t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/requests') else 'nav-btn'">
-                        <i class="fa fa-file-text-o"></i>
+                    <a href="/my/employee/requests" t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/requests') else 'nav-btn'">
+                        <i class="fa fa-file-text-o"/>
                         <span>Employee</span>
                     </a>
                     
                         <!-- ONLY if extended -->
                     <t t-if="has_extended_nav">
-                        <a href="/my/employee/material"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') and not request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
-                            <i class="fa fa-cubes"></i>
+                        <a href="/my/employee/material" t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') and not request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'">
+                            <i class="fa fa-cubes"/>
                             <span>Material</span>
                         </a>
                     </t>
 
                 </div>
 
-                <div class="ep-fab-center" id="fabCenterBtn" onclick="toggleFabMenu()">
+                <button type="button" class="ep-fab-center" id="fabCenterBtn" onclick="toggleFabMenu()" aria-label="Create new request">
                     <div class="fab-plus">
-                        <i class="fa fa-plus"></i>
+                        <i class="fa fa-plus"/>
                     </div>
-                </div>
+                </button>
 
                 <div class="ep-nav-right">
                     <!-- BASIC MODE: Material moves here -->
                     <t t-if="not has_extended_nav">
-                        <a href="/my/employee/material"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') else 'nav-btn'">
-                            <i class="fa fa-cubes"></i>
+                        <a href="/my/employee/material" t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/material') else 'nav-btn'">
+                            <i class="fa fa-cubes"/>
                             <span>Material</span>
                         </a>
                     </t>
                      <t t-if="has_extended_nav">
                     <t t-if="can_er_approval_nav or can_mr_approval_nav">
-                        <div id="approvalBtn"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'"
-                            onclick="toggleApprovalMenu()">
-                            <i class="fa fa-check-circle-o"></i>
+                        <div id="approvalBtn" t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/approvals') or request.httprequest.path.startswith('/my/employee/material/approvals') else 'nav-btn'" onclick="toggleApprovalMenu()">
+                            <i class="fa fa-check-circle-o"/>
                             <span>Approvals</span>
                         </div>
 
@@ -1689,14 +1786,14 @@
 
                             <t t-if="can_er_approval_nav">
                                 <a href="/my/employee/approvals" class="fab-item">
-                                    <i class="fa fa-user"></i>
+                                    <i class="fa fa-user"/>
                                     <span>Employee Approvals</span>
                                 </a>
                             </t>
 
                             <t t-if="can_mr_approval_nav">
                                 <a href="/my/employee/material/approvals" class="fab-item">
-                                    <i class="fa fa-cubes"></i>
+                                    <i class="fa fa-cubes"/>
                                     <span>Material Approvals</span>
                                 </a>
                             </t>
@@ -1705,9 +1802,8 @@
                     </t>
 
                     <t t-if="request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user')">
-                        <a href="/my/employee/petty-cash"
-                            t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/petty-cash') else 'nav-btn'">
-                            <i class="fa fa-money"></i>
+                        <a href="/my/employee/petty-cash" t-att-class="'nav-btn active' if request.httprequest.path.startswith('/my/employee/petty-cash') else 'nav-btn'">
+                            <i class="fa fa-money"/>
                             <span>Cash</span>
                         </a>
                     </t>
@@ -1715,7 +1811,7 @@
                     
 
                     <a href="/web/session/logout" class="nav-btn">
-                        <i class="fa fa-sign-out"></i>
+                        <i class="fa fa-sign-out"/>
                         <span>Exit</span>
                     </a>
 
@@ -1729,11 +1825,11 @@
                  ================================================================ -->
             <div id="fabMenu" class="fab-menu mobile-only">
                 <a href="/my/employee/requests/new" class="fab-item">
-                    <i class="fa fa-file-text-o"></i>
+                    <i class="fa fa-file-text-o"/>
                     <span>New Employee Request</span>
                 </a>
                 <a href="/my/employee/material/new" class="fab-item">
-                    <i class="fa fa-cubes"></i>
+                    <i class="fa fa-cubes"/>
                     <span>New Material Request</span>
                 </a>
             </div>
@@ -1803,8 +1899,9 @@
                 });
             </script>
 
-        </t>
-        <script src="/employee_portal_suite/static/src/js/employee_portal_pwa.js?v=2045"></script>
+        <script src="/employee_portal_suite/static/src/js/material_chatter.js?v=18.0.1.20.118" defer="defer"/>
+        <link rel="stylesheet" href="/employee_portal_suite/static/src/css/portal_compact_lists.css?v=18.0.1.20.118"/></t>
+        <script src="/employee_portal_suite/static/src/js/employee_portal_pwa.js?v=2045"/>
     </template>
 
     <!-- ================================================================
@@ -1817,26 +1914,24 @@
          relative to the clicked button instead.
          ================================================================ -->
     <template id="ep_notification_bell">
-        <div class="ep-bell-wrap">
-            <div t-att-class="'ep-bell-btn has-unread' if ep_notif_unread_total else 'ep-bell-btn'"
-                onclick="toggleEpBell(event)">
-                <i class="fa fa-bell-o"></i>
+        <div class="ep-bell-wrap" t-att-data-eps-other-unread="ep_notif_unread_total - ep_notif_summary.get('mr_message', {}).get('new', 0)">
+            <div t-att-class="'ep-bell-btn has-unread' if ep_notif_unread_total else 'ep-bell-btn'" onclick="toggleEpBell(event)">
+                <i class="fa fa-bell-o"/>
                 <t t-if="ep_notif_unread_total &gt; 0">
-                    <span class="ep-bell-dot"></span>
+                    <span class="ep-bell-dot"/>
                 </t>
             </div>
 
             <div class="ep-bell-panel">
                 <div class="ep-bell-panel-header">Notifications</div>
 
-                <t t-set="ep_unread_items"
-                    t-value="[(k, v) for k, v in ep_notif_summary.items() if v.get('new', 0) &gt; 0]"/>
+                <t t-set="ep_unread_items" t-value="[(k, v) for k, v in ep_notif_summary.items() if v.get('new', 0) &gt; 0]"/>
 
                 <t t-if="ep_unread_items">
                     <t t-foreach="ep_unread_items" t-as="ep_item">
-                        <a t-att-href="ep_item[1]['url']" class="ep-bell-item">
+                        <a t-att-href="ep_item[1]['url']" t-att-data-eps-notification-kind="ep_item[0]" class="ep-bell-item">
                             <div class="ep-bell-item-icon">
-                                <i class="fa fa-bell"></i>
+                                <i class="fa fa-bell"/>
                             </div>
                             <span class="ep-bell-item-label">
                                 <t t-out="ep_item[1]['label']"/>
@@ -1855,6 +1950,26 @@
     </template>
     <template id="employee_portal_pwa_web_head" inherit_id="web.layout" name="Employee Portal PWA Head">
         <xpath expr="//head" position="inside">
+            <!-- Inline before first paint; the flag is set only by the EPS shell. -->
+            <t t-if="eps_portal_compact_desktop">
+                <style data-eps-desktop-density="1">
+/* Default desktop portal density. Browser zoom remains under the user's control. */
+@media screen and (min-width:769px){
+    html{
+        zoom:.8;
+    }
+    /* Lookup scripts position these top-layer menus using viewport rectangles.
+       Cancel inherited zoom on the menus so their viewport coordinates stay valid. */
+    html :is(.apw-options[popover],.aca-options[popover]){
+        zoom:1.25;
+    }
+}
+@media print{
+    html{zoom:1}
+}
+
+                </style>
+            </t>
             <t t-if="request.httprequest.path.startswith('/my/employee')">
                 <link rel="manifest" href="/my/employee/manifest.webmanifest?v=45" crossorigin="use-credentials" data-employee-portal-pwa="1"/>
                 <meta name="theme-color" content="#0f766e" data-employee-portal-pwa="1"/>

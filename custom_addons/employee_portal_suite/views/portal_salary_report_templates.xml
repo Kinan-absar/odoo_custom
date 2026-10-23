@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
 
     <template id="portal_salary_report_list" name="Portal Salary Reports">
@@ -12,38 +12,34 @@
                     <a href="/my/employee" class="btn btn-light">Back</a>
                 </div>
 
-                <div class="card shadow-sm border-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0 align-middle">
-                            <thead class="table-light">
+                <div class="card shadow-sm border-0 eps-list-page-card">
+                    <div class="table-responsive eps-list-scroll">
+                        <table class="table table-hover mb-0 align-middle eps-compact-list" style="--eps-list-width:1075px">
+                            <colgroup><col style="width:190px"/><col style="width:180px"/><col style="width:190px"/><col style="width:140px"/><col style="width:140px"/><col style="width:150px"/></colgroup><thead class="table-light">
                                 <tr>
                                     <th>Report</th>
                                     <th>Period</th>
                                     <th class="text-end">Employees</th>
-                                    <th class="text-end">Gross</th>
-                                    <th class="text-end">Net</th>
+                                    <th class="text-end eps-list-amount">Gross</th>
+                                    <th class="text-end eps-list-amount">Net</th>
                                     <th>Status</th>
-                                    <th></th>
-                                </tr>
+                                    </tr>
                             </thead>
                             <tbody>
                                 <t t-if="not reports">
                                     <tr>
-                                        <td colspan="7" class="text-center text-muted py-4">No salary reports are available.</td>
+                                        <td colspan="6" class="text-center text-muted py-4">No salary reports are available.</td>
                                     </tr>
                                 </t>
                                 <t t-foreach="reports" t-as="report">
-                                    <tr>
-                                        <td><t t-out="report.name"/></td>
+                                    <tr t-att-data-eps-record-href="'/my/employee/salary-reports/%s' % report.id" tabindex="0" role="link" class="eps-record-row">
+                                        <td><a class="eps-record-reference" t-att-href="'/my/employee/salary-reports/%s' % report.id"><t t-out="report.name"/></a></td>
                                         <td><t t-out="report.date_from"/> to <t t-out="report.date_to"/></td>
                                         <td class="text-end"><t t-out="report.total_employees"/></td>
                                         <td class="text-end"><t t-out="'{:,.2f}'.format(report.total_gross_salary)"/></td>
                                         <td class="text-end fw-bold"><t t-out="'{:,.2f}'.format(report.total_net_salary)"/></td>
                                         <td><span class="badge bg-secondary"><t t-out="dict(report._fields['state'].selection).get(report.state)"/></span></td>
-                                        <td class="text-end">
-                                            <a t-att-href="'/my/employee/salary-reports/%s' % report.id" class="btn btn-sm btn-primary">View</a>
-                                        </td>
-                                    </tr>
+                                        </tr>
                                 </t>
                             </tbody>
                         </table>
@@ -80,13 +76,13 @@
                 <t t-if="request.params.get('updated')">
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         Salary line updated. The net salary and report totals were recalculated.
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
                     </div>
                 </t>
                 <t t-if="request.params.get('deleted')">
                     <div class="alert alert-warning alert-dismissible fade show" role="alert">
                         Salary line deleted from this report.
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
                     </div>
                 </t>
                 <t t-if="request.params.get('locked') or report.batch_created">
@@ -109,9 +105,9 @@
                             <strong>Work Location: <t t-out="group['name']"/></strong>
                             <span class="text-muted"><t t-out="group['employee_count']"/> Employees</span>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm mb-0 align-middle">
-                                <thead>
+                        <div class="table-responsive eps-list-scroll">
+                            <table class="table table-sm mb-0 align-middle eps-compact-list eps-record-lines" style="--eps-list-width:1210px">
+                                <colgroup><col style="width:100px"/><col style="width:210px"/><col style="width:150px"/><col style="width:150px"/><col style="width:150px"/><col style="width:150px"/><col style="width:150px"/><col style="width:150px"/></colgroup><thead>
                                     <tr>
                                         <th>#</th>
                                         <th>Employee</th>
@@ -164,7 +160,7 @@
                                         <td class="text-end"><t t-out="'{:,.2f}'.format(sum(group['lines'].mapped('other_deductions')))"/></td>
                                         <td class="text-end"><t t-out="'{:,.2f}'.format(group['reimbursements'])"/></td>
                                         <td class="text-end"><t t-out="'{:,.2f}'.format(group['net_salary'])"/></td>
-                                        <td></td>
+                                        <td/>
                                     </tr>
                                 </tfoot>
                             </table>
