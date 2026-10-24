@@ -90,7 +90,7 @@ def matches(rec,domain):
         name,op,wanted=token;v=get(rec,name)
         if op=='=':return v==wanted
         if op=='!=':return v!=wanted
-        if op=='in':return v in wanted
+        if op=='in':return any(item in wanted for item in v) if isinstance(v,list) else v in wanted
         if v is False:return False
         if op=='<':return v<wanted
         if op=='<=':return v<=wanted
@@ -133,6 +133,25 @@ class Tests(unittest.TestCase):
         self.slip._fields={'company_id':Field('many2one','res.company'),'employee_id':Field('many2one','hr.employee'),'state':Field('selection',selection=[('draft','Draft'),('verify','Waiting'),('done','Done')])}
         self.env['hr.payslip']=Model('hr.payslip',self.env,self.slip._fields,[self.slip])
         self.s=gateway.EmployeeAdminGateway();self.s.env=self.env;self.s._env=lambda company:self.env
+    def test_contract_fields_and_hr_responsible_scope(self):
+        allowed=Rec('res.users',31,name='HR Responsible',active=True,share=False,company_ids=[2,1])
+        foreign=Rec('res.users',32,name='Foreign',active=True,share=False,company_ids=[2])
+        portal=Rec('res.users',33,name='Portal',active=True,share=True,company_ids=[1])
+        inactive=Rec('res.users',34,name='Inactive',active=False,share=False,company_ids=[1])
+        self.env['res.users']=Model('res.users',self.env,{'company_ids':Field('many2many','res.company')},[allowed,foreign,portal,inactive])
+        self.env['hr.contract.type']=Model('hr.contract.type',self.env,rows=[Rec('hr.contract.type',9,name='Permanent')])
+        self.env['hr.payroll.structure.type']=Model('hr.payroll.structure.type',self.env,rows=[Rec('hr.payroll.structure.type',4,name='KSA Employee')])
+        self.env['hr.department']=Model('hr.department',self.env,rows=[])
+        self.env['hr.job']=Model('hr.job',self.env,rows=[])
+        fields_map={'contract_type_id':Field('many2one','hr.contract.type'),'wage_on_signature':Field('monetary'),
+                    'hr_responsible_id':Field('many2one','res.users'),'structure_type_id':Field('many2one','hr.payroll.structure.type'),
+                    'department_id':Field('many2one','hr.department'),'job_id':Field('many2one','hr.job')}
+        self.env['hr.contract']=Model('hr.contract',self.env,fields_map,[])
+        items={item['name']:item for group,rows in self.s._groups(self.c,'contracts') for item in rows}
+        self.assertEqual(set(items),set(fields_map));self.assertEqual(items['hr_responsible_id']['options'],[(31,'HR Responsible')])
+        self.assertEqual(self.s._value(self.c,fields_map['hr_responsible_id'],'31'),31)
+        for ident in ('32','33','34'):
+            with self.assertRaises(AccessError):self.s._value(self.c,fields_map['hr_responsible_id'],ident)
     def test_role_matrix(self):
         for groups,employee,payroll in [({ADMIN},False,False),({HR,PAY},False,False),({ADMIN,HR},True,False),({ADMIN,PAY},False,True),({SUPER,HR,PAY},True,True)]:
             self.u.groups=groups

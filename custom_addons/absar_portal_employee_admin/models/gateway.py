@@ -26,7 +26,7 @@ SCHEMA={
  ('Private Information',['private_email','private_phone','private_street','private_city','private_zip','private_country_id','country_id','identification_id','passport_id','birthday','gender','marital','visa_no','visa_expire','permit_no','work_permit_expiration_date']),
  ('Employee Information',['legal_name','registration_number','l10n_sa_employee_code'])],
  'attendance':[('Attendance',['employee_id','check_in','check_out','check_in_project_id'])],
- 'contracts':[('Contract',['name','employee_id','date_start','date_end','job_id','department_id','resource_calendar_id']),('Salary',['wage','l10n_sa_housing_allowance','l10n_sa_transportation_allowance','l10n_sa_other_allowances']),('Work Information',['structure_type_id','work_entry_source'])],
+ 'contracts':[('Contract',['name','employee_id','date_start','date_end','structure_type_id','department_id','job_id','contract_type_id','wage_on_signature','hr_responsible_id','resource_calendar_id']),('Salary',['wage','l10n_sa_housing_allowance','l10n_sa_transportation_allowance','l10n_sa_other_allowances']),('Work Information',['work_entry_source'])],
  'work-entries':[('Work Entry',['name','employee_id','contract_id','work_entry_type_id','date_start','date_stop'])],
  'payslips':[('Payslip',['name','employee_id','contract_id','struct_id','payslip_run_id','date_from','date_to']),('Other Information',['date','note'])],
  'batches':[('Payroll Batch',['name','date_start','date_end'])],
@@ -105,6 +105,8 @@ class EmployeeAdminGateway(models.AbstractModel):
 
     def _relation_domain(self,company,model):
         obj=self._env(company)[model];domain=[]
+        if model=='res.users':
+            return [('company_ids','in',[company.id]),('active','=',True),('share','=',False)]
         if 'company_id' in obj._fields:
             domain=[('company_id','=',company.id)] if model in ('hr.employee','hr.contract','hr.payslip.run') else ['|',('company_id','=',False),('company_id','=',company.id)]
         if model.startswith('hr.payroll.') and 'country_id' in obj._fields:
@@ -253,7 +255,7 @@ class EmployeeAdminGateway(models.AbstractModel):
             if contract.employee_id!=employee or contract.company_id!=company:raise ValidationError(_('Choose this employee’s contract.'))
             vals['contract_id']=contract.id
 
-        if kind=='contracts' and vals.get('wage',0)<0:raise ValidationError(_('Wage cannot be negative.'))
+        if kind=='contracts' and any(vals.get(name,0)<0 for name in ('wage','wage_on_signature')):raise ValidationError(_('Wage cannot be negative.'))
         if kind=='payslips' and not vals.get('struct_id'):
             structure=contract.struct_id if 'struct_id' in contract._fields else False
             if not structure and 'structure_type_id' in contract._fields and contract.structure_type_id:
