@@ -55,7 +55,9 @@ class EmployeePortalBackendFilterCard(models.Model):
             "Available variables: uid, company_id."
         ),
     )
-    stage_step_ids = fields.Many2many('employee.portal.workflow.step', string='Workflow Steps',
+    stage_step_ids = fields.Many2many(
+        'employee.portal.workflow.step', 'eps_card_workflow_step_rel', 'card_id', 'step_id',
+        string='Workflow Steps',
         domain="[('workflow_id.applies_to', '=', 'material_request')]",
         help='Choose current workflow steps; no custom domain is needed.')
     stage_name = fields.Char(string='Stage Name', help='Matches pending snapshot steps by their exact name, including historical steps.')
