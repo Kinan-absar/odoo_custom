@@ -272,3 +272,14 @@
     .o_form_view.asr_workspace_form .asr_type_control .o_horizontal_radio {gap: 12px !important;}
     .o_form_view.asr_workspace_form .asr_type_control label {font-size: 12px;}
 }
+
+/* Radio widgets can add an inner wrapper: space the labels themselves so
+   separation does not depend on which wrapper receives the flex gap. */
+.o_form_view.asr_workspace_form .asr_type_control label {
+    margin-inline-end: 28px !important;
+}
+.o_form_view.asr_workspace_form .asr_type_control .o_radio_field {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center;
+}
