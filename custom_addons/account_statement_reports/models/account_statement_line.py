@@ -11,6 +11,8 @@ class AccountStatementLine(models.Model):
     date = fields.Date()
     move = fields.Char(string="Journal Entry")
     move_id = fields.Many2one("account.move", string="Journal Entry", readonly=True)
+    account_id = fields.Many2one("account.account", string="Account", readonly=True)
+    description = fields.Char(string="Description", readonly=True)
     reference = fields.Char()
     due_date = fields.Date(string="Due Date")
     debit = fields.Monetary(currency_field="currency_id")

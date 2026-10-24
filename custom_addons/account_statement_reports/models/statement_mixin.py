@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields
+from odoo.exceptions import UserError
+
+
+EMPLOYEE_ACCOUNT_TYPES = (
+    "asset_receivable", "asset_current", "asset_non_current", "asset_prepayments",
+    "liability_payable", "liability_current", "liability_non_current",
+)
 from datetime import timedelta
 
 
@@ -10,11 +17,18 @@ class StatementMixin(models.AbstractModel):
     def _base_domain(self, partner, account_type, company, journal_ids=None, account_ids=None, move_state="posted"):
         domain = [
             ("partner_id", "=", partner.id),
-            ("account_id.account_type", "=", account_type),
             ("company_id", "=", company.id),
         ]
+        if account_type == "employee":
+            if not account_ids:
+                raise UserError("Select the employee balance-sheet accounts to include (salary payable, accrued benefits, advances or loans).")
+            domain.append(("account_id.account_type", "in", list(EMPLOYEE_ACCOUNT_TYPES)))
+        else:
+            domain.append(("account_id.account_type", "=", account_type))
         if move_state == "posted":
             domain.append(("parent_state", "=", "posted"))
+        if account_type == "employee" and move_state != "posted":
+            domain.append(("parent_state", "in", ["draft", "posted"]))
         if journal_ids:
             domain.append(("journal_id", "in", journal_ids))
         if account_ids:
@@ -49,7 +63,7 @@ class StatementMixin(models.AbstractModel):
             fake_date = fields.Date.to_date(date_from) - timedelta(days=1) if date_from else None
             results.append({
                 "date": fake_date, "move": "Opening Balance", "move_id": False,
-                "reference": "", "due_date": None,
+                "reference": "", "due_date": None, "account_id": False, "description": "",
                 "debit": opening_balance if opening_balance > 0 else 0.0,
                 "credit": -opening_balance if opening_balance < 0 else 0.0,
                 "balance": opening_balance,
@@ -67,6 +81,7 @@ class StatementMixin(models.AbstractModel):
             results.append({
                 "date": line.date, "move": move.name, "move_id": move.id,
                 "reference": reference, "due_date": line.date_maturity,
+                "account_id": line.account_id.id, "description": line.name or "",
                 "debit": debit, "credit": credit, "balance": running_balance,
             })
         return results

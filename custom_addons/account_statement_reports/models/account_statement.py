@@ -7,6 +7,7 @@ import xlsxwriter
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
+from .statement_mixin import EMPLOYEE_ACCOUNT_TYPES
 
 
 class AccountStatement(models.Model):
@@ -18,7 +19,7 @@ class AccountStatement(models.Model):
     name = fields.Char(default="Account Statements", required=True)
 
     statement_type = fields.Selection(
-        [("receivable", "Customer"), ("payable", "Vendor")],
+        [("receivable", "Customer"), ("payable", "Vendor"), ("employee", "Employee")],
         string="Statement Type",
         required=True,
         default="receivable",
@@ -104,13 +105,18 @@ class AccountStatement(models.Model):
 
     def _account_type(self):
         self.ensure_one()
-        return "asset_receivable" if self.statement_type == "receivable" else "liability_payable"
+        return {"receivable": "asset_receivable", "payable": "liability_payable", "employee": "employee"}[self.statement_type]
 
     def action_apply_filters(self):
         self.ensure_one()
         if not self.partner_id:
-            raise UserError("Select a customer or vendor before applying the statement filters.")
+            raise UserError("Select a customer, vendor or employee partner before applying the statement filters.")
 
+        if self.statement_type == "employee":
+            if not self.account_ids:
+                raise UserError("Select the employee accounts to include: salary payable, accrued benefits, advances or loans.")
+            if self.account_ids.filtered(lambda account: self.company_id not in account.company_ids or account.account_type not in EMPLOYEE_ACCOUNT_TYPES):
+                raise UserError("Employee accounts must belong to the selected company and be employee asset/liability accounts. Expense, income and bank/cash accounts are excluded.")
         account_type = self._account_type()
         mixin = self.env["statement.mixin"]
         self.opening_balance = mixin._get_opening_balance(
@@ -145,6 +151,8 @@ class AccountStatement(models.Model):
                 "date": line["date"],
                 "move": line["move"],
                 "move_id": line.get("move_id") or False,
+                "account_id": line.get("account_id") or False,
+                "description": line.get("description") or "",
                 "reference": line["reference"],
                 "due_date": line["due_date"],
                 "debit": line["debit"],
@@ -192,6 +200,8 @@ class AccountStatement(models.Model):
         self.ensure_one()
         if not self.partner_id:
             raise UserError("Select a partner and apply the filters before printing.")
+        if self.statement_type == "employee":
+            self.action_apply_filters()
         return self.env.ref("account_statement_reports.asr_account_statement_report").report_action(self)
 
     def action_export_excel(self):
@@ -199,8 +209,10 @@ class AccountStatement(models.Model):
         if not self.partner_id:
             raise UserError("Select a partner and apply the filters before exporting.")
 
+        if self.statement_type == "employee":
+            self.action_apply_filters()
         output = BytesIO()
-        workbook = xlsxwriter.Workbook(output, {"in_memory": True})
+        workbook = xlsxwriter.Workbook(output, {"in_memory": True, "strings_to_formulas": False, "strings_to_urls": False})
         sheet = workbook.add_worksheet("Account Statement")
 
         title = workbook.add_format({"bold": True, "font_size": 14})
@@ -210,7 +222,7 @@ class AccountStatement(models.Model):
         total_label = workbook.add_format({"bold": True, "bg_color": "#F3F4F6", "top": 1, "bottom": 1, "align": "right"})
         total_money = workbook.add_format({"bold": True, "bg_color": "#F3F4F6", "top": 1, "bottom": 1, "num_format": "#,##0.00"})
 
-        type_label = "Customer" if self.statement_type == "receivable" else "Vendor"
+        type_label = dict(self._fields["statement_type"].selection)[self.statement_type]
         sheet.write(0, 0, "Account Statement", title)
         sheet.write(2, 0, "Type:", bold); sheet.write(2, 1, type_label)
         sheet.write(3, 0, "Partner:", bold); sheet.write(3, 1, self.partner_id.display_name)
@@ -222,30 +234,38 @@ class AccountStatement(models.Model):
             sheet.write(7, 0, "Accounts:", bold); sheet.write(7, 1, ", ".join(self.account_ids.mapped("display_name")))
 
         headers = ["Date", "Journal Entry", "Reference", "Due Date", "Debit", "Credit", "Balance"]
+        employee = self.statement_type == "employee"
+        if employee:
+            headers = ["Date", "Journal Entry", "Account", "Description", "Reference", "Due Date", "Debit", "Credit", "Balance"]
+        amount_col = len(headers) - 3
         start_row = 9
         for col, label in enumerate(headers):
             sheet.write(start_row, col, label, header)
         row = start_row + 1
         for line in self.line_ids:
-            sheet.write(row, 0, str(line.date or ""))
-            sheet.write(row, 1, line.move or "")
-            sheet.write(row, 2, line.reference or "")
-            sheet.write(row, 3, str(line.due_date or ""))
-            sheet.write_number(row, 4, line.debit or 0.0, money)
-            sheet.write_number(row, 5, line.credit or 0.0, money)
-            sheet.write_number(row, 6, line.balance or 0.0, money)
+            cells = [str(line.date or ""), line.move or ""]
+            if employee:
+                cells += [line.account_id.display_name if line.account_id else "", line.description or ""]
+            cells += [line.reference or "", str(line.due_date or "")]
+            for col, text in enumerate(cells):
+                sheet.write(row, col, text)
+            sheet.write_number(row, amount_col, line.debit or 0.0, money)
+            sheet.write_number(row, amount_col + 1, line.credit or 0.0, money)
+            sheet.write_number(row, amount_col + 2, line.balance or 0.0, money)
             row += 1
 
         # Statement totals directly under the exported transaction rows.
         exported_total_debit = sum(self.line_ids.mapped("debit"))
         exported_total_credit = sum(self.line_ids.mapped("credit"))
-        sheet.merge_range(row, 0, row, 3, "Totals", total_label)
-        sheet.write_number(row, 4, exported_total_debit or 0.0, total_money)
-        sheet.write_number(row, 5, exported_total_credit or 0.0, total_money)
-        sheet.write_number(row, 6, self.final_balance or 0.0, total_money)
+        sheet.merge_range(row, 0, row, amount_col - 1, "Totals", total_label)
+        sheet.write_number(row, amount_col, exported_total_debit or 0.0, total_money)
+        sheet.write_number(row, amount_col + 1, exported_total_credit or 0.0, total_money)
+        sheet.write_number(row, amount_col + 2, self.final_balance or 0.0, total_money)
         sheet.set_column(0, 0, 12)
-        sheet.set_column(1, 3, 24)
-        sheet.set_column(4, 6, 15)
+        sheet.set_column(1, amount_col - 1, 24)
+        sheet.set_column(amount_col, amount_col + 2, 15)
+        if employee:
+            sheet.write(row + 2, 0, "Balance = debit - credit: positive means due from employee; negative means due to employee.")
         workbook.close()
         output.seek(0)
 
