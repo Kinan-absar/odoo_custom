@@ -270,4 +270,22 @@ class Tests(unittest.TestCase):
         self.assertEqual(result['total'],1);self.assertEqual(result['records'].ids,[1])
         with self.assertRaises(ValidationError):self.s._list(self.c,'attendance',date_from='2026-11-01',date_to='2026-10-01')
 
+class FormPermissionTests(unittest.TestCase):
+    def test_website_editor_cannot_disable_admin_forms(self):
+        from lxml import etree
+        tree=etree.parse(str(ROOT/'views/portal.xml'))
+        form=tree.xpath("//form[@data-aea-edit='1']")[0]
+        disabled=form.find('fieldset').get('t-att-disabled')
+        save=form.xpath(".//button[normalize-space(text())='Save']")[0].get('t-if')
+        for kind in gateway.KINDS:
+            ctx=dict(kind=kind,rec=False,admin_can_edit=True,editable=False)
+            self.assertFalse(bool(eval(disabled,{},ctx)),kind)
+            self.assertTrue(bool(eval(save,{},ctx)),kind)
+            ctx['admin_can_edit']=False
+            self.assertTrue(bool(eval(disabled,{},ctx)),kind)
+        self.assertNotIn('editable=',(ROOT/'controllers/portal.py').read_text())
+    def test_archive_not_exposed(self):
+        self.assertNotIn("operation in ('archive','restore')",(ROOT/'models/gateway.py').read_text())
+        self.assertNotIn("'archive'",(ROOT/'views/portal.xml').read_text())
+
 if __name__=='__main__':unittest.main(verbosity=2)

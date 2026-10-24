@@ -105,7 +105,7 @@ class EmployeeAdminPortal(http.Controller):
                     elif f.type=='many2one':v=v.display_name or '—'
                     elif f.type=='boolean':v=_('Yes') if v else _('No')
                     attendance_info.append((f.string,v or '—'))
-        return self._context(s,c,kind=kind,title=KINDS[kind][1],rec=r,groups=groups,editable=s._editable(kind,r),version=str(r.write_date) if r else '',notice=notice,
+        return self._context(s,c,kind=kind,title=KINDS[kind][1],rec=r,groups=groups,admin_can_edit=s._editable(kind,r),version=str(r.write_date) if r else '',notice=notice,
             tables=tables,totals=totals,adjustments=adjustments,slips=slips,audit=audit,input_types=types,attendance_info=attendance_info,
             form_url=self._url(kind,r.id if r else 'new')+'/save',record_url=self._url(kind,r.id) if r else '',back_url=self._url(kind,company_id=c.id))
 

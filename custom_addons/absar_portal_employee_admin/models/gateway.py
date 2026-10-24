@@ -332,9 +332,7 @@ class EmployeeAdminGateway(models.AbstractModel):
 
     def _act(self,company,kind,ident,operation,post):
         rec=self._record(company,kind,ident);self._lock(rec,post.get('version'))
-        if kind=='employees' and operation in ('archive','restore'):
-            rec.write({'active':operation=='restore'})
-        elif kind=='attendance' and operation=='resolve':rec.action_resolve_attendance_exception()
+        if kind=='attendance' and operation=='resolve':rec.action_resolve_attendance_exception()
         elif kind=='contracts' and operation in ('start','close'):
             if operation=='start' and rec.state!='draft':raise UserError(_('Only draft contracts can be started.'))
             if operation=='close' and rec.state!='open':raise UserError(_('Only running contracts can be closed.'))
