@@ -1,5 +1,5 @@
 {
- 'name':'ABSAR Employee Admin Portal', 'version':'18.0.1.0.4',
+ 'name':'ABSAR Employee Admin Portal', 'version':'18.0.1.0.5',
  'summary':'Company-scoped employee, attendance, contract and payroll administration in the employee portal',
  'author':'ABSAR', 'license':'LGPL-3', 'category':'Human Resources',
  'depends':['employee_portal_suite','hr_attendance','hr_payroll','hr_contract','hr_work_entry'],

@@ -181,13 +181,15 @@ class EmployeeAdminPortal(http.Controller):
     @http.route(BASE+'/<string:kind>/<int:ident>/print',type='http',auth='user',methods=['GET'])
     def print_record(self,kind,ident,company_id=None,**kw):
         s=self._service();c=s._company(company_id);r=s._record(c,kind,ident)
+        report_env=s._env(c)
         if kind=='salary-reports':
-            s._report_scope(c,r);report=request.env.ref('employee_portal_suite.action_report_salary_summary')
+            s._report_scope(c,r);report=report_env.ref('employee_portal_suite.action_report_salary_summary').sudo()
         elif kind=='payslips':
-            report=c.sudo().employee_admin_payslip_report_id or request.env.ref('hr_payroll.action_report_payslip',raise_if_not_found=False)
+            report=c.sudo().employee_admin_payslip_report_id or report_env.ref('hr_payroll.action_report_payslip',raise_if_not_found=False)
+            if report:report=report.sudo()
             if report and (report.model!='hr.payslip' or report.report_type!='qweb-pdf'):
                 raise UserError(_('Select a valid payslip PDF report on the company.'))
             if not report:raise UserError(_('The standard payslip PDF report is unavailable.'))
         else:raise NotFound()
-        pdf,_fmt=request.env['ir.actions.report'].sudo().with_company(c)._render_qweb_pdf(report.id,res_ids=[r.id])
+        pdf,_fmt=report_env['ir.actions.report']._render_qweb_pdf(report.id,res_ids=[r.id])
         return request.make_response(pdf,headers=[('Content-Type','application/pdf'),('Content-Disposition',content_disposition((r.name or 'Payslip')+'.pdf')),('Cache-Control','private, no-store')])
