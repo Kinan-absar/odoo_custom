@@ -1,0 +1,4 @@
+<odoo>
+ <record id="group_employee_admin" model="res.groups"><field name="name">Employee Admin: Employees &amp; Attendance</field><field name="category_id" ref="employee_portal_suite.module_category_employee_portal_suite"/><field name="comment">Portal employee and attendance administration in permitted companies. Also requires Employee Portal Administrator or Super Administrator. Does not grant backend HR access or payroll access.</field></record>
+ <record id="group_payroll_admin" model="res.groups"><field name="name">Employee Admin: Payroll</field><field name="category_id" ref="employee_portal_suite.module_category_employee_portal_suite"/><field name="comment">Portal contracts, work entries, payslips, batches and attendance salary reports. Also requires Employee Portal Administrator or Super Administrator. Does not grant backend payroll access. Assign separately from employee/attendance administration.</field></record>
+</odoo>

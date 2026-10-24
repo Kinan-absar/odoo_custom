@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_employee_admin_audit_system,Employee Admin Audit Read,model_absar_employee_admin_audit,base.group_system,1,0,0,0
