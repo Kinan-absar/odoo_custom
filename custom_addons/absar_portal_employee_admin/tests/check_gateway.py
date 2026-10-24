@@ -133,6 +133,32 @@ class Tests(unittest.TestCase):
         self.slip._fields={'company_id':Field('many2one','res.company'),'employee_id':Field('many2one','hr.employee'),'state':Field('selection',selection=[('draft','Draft'),('verify','Waiting'),('done','Done')])}
         self.env['hr.payslip']=Model('hr.payslip',self.env,self.slip._fields,[self.slip])
         self.s=gateway.EmployeeAdminGateway();self.s.env=self.env;self.s._env=lambda company:self.env
+    def test_employee_contract_and_open_batch_options(self):
+        colleague=Rec('hr.employee',5,company_id=self.c,name='Colleague')
+        self.env['hr.employee'].rows.append(colleague)
+        contracts=[Rec('hr.contract',41,company_id=self.c,employee_id=self.emp),
+                   Rec('hr.contract',42,company_id=self.c,employee_id=colleague),
+                   Rec('hr.contract',43,company_id=self.foreign,employee_id=self.emp)]
+        self.env['hr.contract']=Model('hr.contract',self.env,{'company_id':Field('many2one','res.company')},contracts)
+        self.assertEqual(self.s._contract_choices(self.c,'payslips',self.emp.id),[(41,contracts[0].display_name)])
+        self.assertEqual(self.s._contract_choices(self.c,'work-entries',colleague.id),[(42,contracts[1].display_name)])
+        self.assertEqual(self.s._contract_choices(self.c,'payslips',None),[])
+        with self.assertRaises(AccessError):self.s._contract_choices(self.c,'payslips',self.other.id)
+        with self.assertRaises(AccessError):self.s._contract_choices(self.c,'employees',self.emp.id)
+        self.u.groups.remove(PAY)
+        with self.assertRaises(AccessError):self.s._contract_choices(self.c,'payslips',self.emp.id)
+        self.u.groups.add(PAY)
+        batches=[Rec('hr.payslip.run',50+i,company_id=company,state=state) for i,(company,state) in enumerate([
+            (self.c,'draft'),(self.c,'verify'),(self.c,'close'),(self.c,'paid'),(self.foreign,'draft')])]
+        self.env['hr.payslip.run']=Model('hr.payslip.run',self.env,{'company_id':Field('many2one','res.company')},batches)
+        self.env['hr.payslip']._fields.update(contract_id=Field('many2one','hr.contract'),payslip_run_id=Field('many2one','hr.payslip.run'))
+        items={item['name']:item for group,rows in self.s._groups(self.c,'payslips') for item in rows}
+        self.assertEqual(items['contract_id']['options'],[])
+        self.assertEqual([opt[0] for opt in items['payslip_run_id']['options']],[50,51])
+        self.slip.contract_id=Records([contracts[0]])
+        items={item['name']:item for group,rows in self.s._groups(self.c,'payslips',self.slip) for item in rows}
+        self.assertEqual([opt[0] for opt in items['contract_id']['options']],[41])
+
     def test_contract_fields_and_hr_responsible_scope(self):
         allowed=Rec('res.users',31,name='HR Responsible',active=True,share=False,company_ids=[2,1])
         foreign=Rec('res.users',32,name='Foreign',active=True,share=False,company_ids=[2])

@@ -127,6 +127,15 @@ class EmployeeAdminGateway(models.AbstractModel):
             result.append(('Salary Report Settings',['eps_overtime_enabled','eps_target_hours']))
         return result
 
+    def _contract_choices(self,company,kind,employee_id):
+        self._kind(kind)
+        if kind not in ('payslips','work-entries'):raise AccessError(_('Invalid contract selector.'))
+        if not employee_id:return []
+        employee=self._relation(company,'hr.employee',employee_id)
+        contracts=self._env(company)['hr.contract'].with_context(active_test=False).search(
+            expression.AND([self._relation_domain(company,'hr.contract'),[('employee_id','=',employee.id)]]),order='id')
+        return [(r.id,r.display_name) for r in contracts]
+
     def _groups(self,company,kind,rec=None):
         model=self._env(company)[self._kind(kind)[0]]
         groups=[]
@@ -142,13 +151,20 @@ class EmployeeAdminGateway(models.AbstractModel):
                 value=rec[name] if rec else defaults.get(name,False)
                 options=[]
                 if f.type in ('many2one','many2many'):
-                    if f.comodel_name not in choices_cache:
+                    if name=='contract_id' and kind in ('payslips','work-entries'):
+                        employee_id=rec.employee_id.id if rec else defaults.get('employee_id')
+                        options=self._contract_choices(company,kind,employee_id)
+                    elif f.comodel_name not in choices_cache:
                         rel=self._env(company)[f.comodel_name].with_context(active_test=False)
-                        choices=rel.search(self._relation_domain(company,f.comodel_name),order='id',limit=1000)
+                        domain=self._relation_domain(company,f.comodel_name)
+                        if name=='payslip_run_id':domain=expression.AND([domain,[('state','in',['draft','verify'])]])
+                        choices=rel.search(domain,order='id',limit=1000)
                         choices_cache[f.comodel_name]=[(r.id,r.display_name) for r in choices]
-                    options=list(choices_cache[f.comodel_name])
+                    if name!='contract_id' or kind not in ('payslips','work-entries'):options=list(choices_cache[f.comodel_name])
                     value=(value.ids if f.type=='many2many' else value.id) if rec else (value if f.type=='many2many' else value or 0)
                     if not isinstance(value,list) and f.type=='many2many':value=[]
+                    if name=='payslip_run_id' and rec and value and not self._editable(kind,rec) and not any(opt[0]==value for opt in options):
+                        options.append((rec[name].id,rec[name].display_name))
                 elif f.type=='html':
                     from odoo.tools import html2plaintext
                     value=html2plaintext(value or '')

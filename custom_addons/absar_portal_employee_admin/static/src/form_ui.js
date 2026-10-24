@@ -15,10 +15,44 @@ function selectTab(notebook,index,focus=false){
 }
 function tabIndex(notebook,tab){return Array.from(notebook.querySelectorAll('[data-aea-tab]')).indexOf(tab);}
 function initializeForms(){
+    document.querySelectorAll('[data-aea-edit]').forEach(initializeContractSelector);
     document.querySelectorAll('[data-aea-notebook]').forEach(notebook=>{
         notebook.querySelector('[role="tablist"]').hidden=false;
         selectTab(notebook,0);
     });
+}
+function initializeContractSelector(form){
+    const employee=form.querySelector('[name="employee_id"]');
+    const contract=form.querySelector('[name="contract_id"]');
+    const company=form.querySelector('[name="company_id"]');
+    if(!employee||!contract||!company||!['payslips','work-entries'].includes(form.dataset?.aeaKind))return;
+    let sequence=0;
+    async function reload(clear=false){
+        const current=++sequence;
+        const selected=clear?'':contract.value;
+        contract.replaceChildren(new Option(employee.value?'Loading…':'Select employee first…',''));
+        contract.setCustomValidity('');
+        if(!employee.value)return;
+        contract.setCustomValidity('Wait for contracts to load.');
+        try{
+            const params=new URLSearchParams({company_id:company.value,kind:form.dataset.aeaKind,employee_id:employee.value});
+            const response=await fetch('/my/employee/admin/contract-options?'+params,{credentials:'same-origin'});
+            if(!response.ok)throw new Error('Contract lookup failed');
+            const data=await response.json();
+            if(current!==sequence)return;
+            contract.replaceChildren(new Option(data.options.length?'Select…':'No contracts for this employee',''));
+            data.options.forEach(([id,label])=>contract.add(new Option(label,String(id))));
+            contract.value=data.options.some(([id])=>String(id)===selected)?selected:'';
+            contract.setCustomValidity('');
+        }catch(error){
+            if(current!==sequence)return;
+            contract.replaceChildren(new Option('Unable to load contracts. Select employee again.',''));
+            contract.setCustomValidity('Unable to load contracts. Select employee again.');
+        }
+    }
+    employee.addEventListener('change',()=>reload(true));
+    // Also refresh restored browser values and values retained after a validation error.
+    reload();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initializeForms);
 else initializeForms();

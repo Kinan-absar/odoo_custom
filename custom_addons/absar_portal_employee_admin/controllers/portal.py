@@ -63,6 +63,13 @@ class EmployeeAdminPortal(http.Controller):
         cards=[dict(title=spec[1],count=s._env(c)[spec[0]].search_count(s._domain(c,k)),url=self._url(k,company_id=c.id)) for k,spec in KINDS.items() if roles[spec[2]]]
         return request.render(PREFIX+'home',self._context(s,c,cards=cards))
 
+    @http.route(BASE+'/contract-options',type='http',auth='user',methods=['GET'])
+    def contract_options(self,company_id=None,kind='payslips',employee_id=None,**kw):
+        s=self._service();c=s._company(company_id)
+        try:options=s._contract_choices(c,kind,employee_id)
+        except AccessError as exc:raise Forbidden(str(exc))
+        return request.make_json_response({'options':options},headers=[('Cache-Control','private, no-store')])
+
     @http.route(BASE+'/<string:kind>',type='http',auth='user',website=True,methods=['GET'])
     def listing(self,kind,company_id=None,q='',state='',employee_id=None,page=1,date_from='',date_to='',**kw):
         s=self._service();c=s._company(company_id)
