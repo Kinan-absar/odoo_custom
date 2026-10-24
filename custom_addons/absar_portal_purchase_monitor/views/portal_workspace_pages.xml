@@ -4,8 +4,8 @@
    <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')" href="/my/employee/purchase" t-att-class="'active' if request.httprequest.path in ['/my/employee/purchase', '/my/employee/purchase/new'] else ''">Draft Purchase Orders</a>
    <a t-att-class="'active' if request.httprequest.path.endswith('/orders') else ''" t-att-href="'/my/employee/purchase-monitor' if request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor') else '/my/employee/purchase/orders'">Purchase Orders</a>
    <a href="/my/employee/purchase/products" t-att-class="'active' if request.httprequest.path.endswith('/products') else ''">Products</a>
-   <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')" href="/my/employee/purchase/material-requests" t-att-class="'active' if request.httprequest.path.endswith('/material-requests') else ''">Material Requests</a>
    <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver')" href="/my/employee/purchase/approvals">Approvals</a>
+   <a t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_admin') or request.env.user.has_group('employee_portal_suite.group_employee_portal_superadmin')" href="/my/employee/purchase/request-control">ER &amp; MR Control</a>
    </nav>
  </header></template>
  <template id="purchase_product_directory" name="Portal Purchasing Products">
@@ -19,13 +19,7 @@
    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
   </section></t>
  </template>
- <template id="purchase_mr_directory" name="Approved Material Requests for Purchasing">
-  <t t-call="employee_portal_suite.employee_portal_layout"><section class="apw-shell">
-   <t t-call="absar_portal_purchase_monitor.purchase_workspace_nav"/>
-   <div class="apw-heading"><div><p class="apw-eyebrow">Purchase / Material Requests</p><h2>Material Requests</h2><p>Approved requests requiring a PO, in the selected company</p></div></div>
-   <form class="apw-toolbar" method="get"><input class="form-control apw-search" name="q" t-att-value="q" placeholder="Search MR or project" aria-label="Search Material Requests"/>
-    <select name="company_id" class="form-select" aria-label="Company"><t t-foreach="companies" t-as="c"><option t-att-value="c.id" t-att-selected="c == company" t-out="c.name"/></t></select><button class="btn btn-primary">Search</button><a href="/my/employee/purchase/material-requests" class="btn btn-light">Clear</a></form>
-   <div class="absar-record-list absar-column-list absar-layout-materials" aria-label="Material requests"><div class="absar-list-header" aria-hidden="true"><span>Material Request</span><span>Project</span><span>Requested By</span><span>Required Date</span><span>Existing POs</span><span>Materials</span></div><article t-foreach="records" t-as="mr" class="absar-record-card" role="link" tabindex="0" t-att-data-record-href="'/my/employee/purchase/new?mr_id=%s' % mr.id" t-att-aria-label="'Prepare Purchase Order from ' + mr.name"><div class="absar-list-cell" data-mobile-label="Material Request" t-att-title="mr.name"><strong class="absar-record-number" t-out="mr.name"/></div><div class="absar-list-cell" data-mobile-label="Project" t-att-title="mr.project_id.display_name"><div class="absar-record-party" t-out="mr.project_id.display_name"/></div><div class="absar-list-cell" data-mobile-label="Requested By"><span><t t-out="mr.employee_id.name"/></span></div><div class="absar-list-cell" data-mobile-label="Required Date"><span><t t-out="mr.delivery_date or '—'"/></span></div><div class="absar-list-cell" data-mobile-label="Existing POs"><span><t t-out="mr.po_name or '—'"/></span></div><div class="absar-list-cell" data-mobile-label="Materials"><details><summary t-out="'%s materials' % len(mr.line_ids)"/><ul class="apw-mr-materials"><li t-foreach="mr.line_ids" t-as="line"><span t-out="line.item_name"/> · <strong t-out="line.qty_required"/> <t t-out="line.uom_id.display_name or ''"/></li></ul></details></div></article><div t-if="not records" class="absar-record-empty">No approved Material Requests are available in this company.</div></div><t t-call="absar_portal_purchase_monitor.purchase_pager"/>
-  </section></t>
+ <template id="purchase_mr_directory" name="Material Requests Moved to Control">
+  <t t-call="employee_portal_suite.employee_portal_layout"><section class="apw-shell"><a href="/my/employee/purchase/request-control/mr">Open ER &amp; MR Control</a></section></t>
  </template>
 </odoo>

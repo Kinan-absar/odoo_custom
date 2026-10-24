@@ -80,15 +80,14 @@ class PortalPurchaseDirectory(PortalPurchasePrepare):
 
     @http.route(BASE + '/material-requests', type='http', auth='user', website=True)
     def materials(self, **kw):
-        user = self._actor('preparer')
-        company = self._company(kw.get('company_id'))
-        model, domain, order = self._scope('mr', company)
-        q = str(kw.get('q') or '').strip()[:120]
-        if q:
-            domain = expression.AND([domain, ['|', ('name','ilike',q), ('project_id.name','ilike',q)]])
-        values = self._page(model, domain, kw, BASE+'/material-requests', q=q, company_id=company.id)
-        values.update(q=q, company=company, companies=user.company_ids)
-        return request.render(PREFIX+'purchase_mr_directory', values)
+        # Legacy bookmarks use the consolidated control page. Non-admin issuers
+        # retain the MR selector in PO preparation, without HR control access.
+        user = request.env.user
+        if any(user.has_group('employee_portal_suite.group_employee_portal_' + role)
+               for role in ('admin', 'superadmin')):
+            return request.redirect(BASE + '/request-control/mr')
+        self._actor('preparer')
+        return request.redirect(BASE)
 
     def _mr_data(self, mr, company):
         """Propose lines without creating products or orders as a side effect."""

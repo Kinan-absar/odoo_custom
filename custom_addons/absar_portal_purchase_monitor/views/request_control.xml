@@ -1,0 +1,86 @@
+<odoo>
+ <template id="request_control_header" name="ER and MR Control Navigation">
+  <header class="apw-workspace-header"><div class="apw-workspace-brand"><span class="apw-workspace-icon"><i class="fa fa-tasks"/></span><div><strong>ER &amp; MR Control</strong><small t-out="company.name"/></div></div>
+   <nav class="apw-app-nav" aria-label="Request control">
+    <a t-att-href="base + '/er?company_id=%s' % company.id" t-att-class="'active' if kind == 'er' else ''">Employee Requests</a>
+    <a t-att-href="base + '/mr?company_id=%s' % company.id" t-att-class="'active' if kind == 'mr' else ''">Material Requests</a>
+    <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')" href="/my/employee/purchase">Purchase Workspace</a>
+   </nav>
+  </header>
+ </template>
+ <template id="request_control_list" name="ER and MR Control">
+  <t t-call="employee_portal_suite.employee_portal_layout"><section class="apw-shell arc-control">
+   <t t-call="absar_portal_purchase_monitor.request_control_header"/>
+   <div class="apw-heading"><div><h2 t-out="'Employee Requests' if kind == 'er' else 'Material Requests'"/><p>Follow requests from submission through approval and completion.</p></div></div>
+   <div class="arc-stats">
+    <a t-foreach="[('all','All Requests'),('pending','Pending Approval'),('approved','Approved'),('returned','Returned for Correction')]" t-as="stat" t-att-href="base + '/' + kind + '?company_id=%s&amp;status=%s' % (company.id, '' if stat[0] == 'all' else stat[0])"><strong t-out="counts[stat[0]]"/><span t-out="stat[1]"/></a>
+   </div>
+   <form class="apw-toolbar" method="get">
+    <input class="form-control apw-search" name="q" t-att-value="q" placeholder="Search request, employee, project or description" aria-label="Search requests"/>
+    <select class="form-select" name="company_id" aria-label="Company"><option t-foreach="companies" t-as="c" t-att-value="c.id" t-att-selected="c == company" t-out="c.name"/></select>
+    <select class="form-select" name="status" aria-label="Request status"><option value="">All statuses</option><option value="pending" t-att-selected="status == 'pending'">Pending approval</option><option t-foreach="states.items()" t-as="state" t-att-value="state[0]" t-att-selected="status == state[0]" t-out="state[1]"/></select>
+    <select t-if="kind == 'mr'" class="form-select" name="followup" aria-label="Follow-up"><option value="">All follow-up</option><option value="po" t-att-selected="followup == 'po'">Ready for PO</option><option value="bill" t-att-selected="followup == 'bill'">Ready for direct bill</option><option value="clarification" t-att-selected="followup == 'clarification'">Awaiting clarification</option><option value="accounting" t-att-selected="followup == 'accounting'">Accounting follow-up</option></select>
+    <button class="btn btn-primary">Apply</button><a class="btn btn-outline-secondary" t-att-href="base + '/' + kind + '?company_id=%s' % company.id">Clear</a>
+   </form>
+   <p class="apw-help"><t t-out="total"/> requests · Page <t t-out="page"/> of <t t-out="pages"/></p>
+   <div class="absar-record-list absar-column-list arc-list" aria-label="Requests">
+    <div class="absar-list-header" aria-hidden="true"><span>Request</span><span>Employee</span><span>Project</span><span>Date</span><span>Type</span><span>Status / Current Step</span><span t-out="'Accounting' if kind == 'mr' else 'Approval'"/></div>
+    <article t-foreach="rows" t-as="r" class="absar-record-card" role="link" tabindex="0" t-att-data-record-href="r['url']" t-att-aria-label="'Open ' + r['name']">
+     <div class="absar-list-cell" data-mobile-label="Request"><a class="absar-record-number" t-att-href="r['url']" t-out="r['name']"/></div>
+     <div class="absar-list-cell" data-mobile-label="Employee"><span t-out="r['employee']"/></div>
+     <div class="absar-list-cell" data-mobile-label="Project"><span t-out="r['project']"/></div>
+     <div class="absar-list-cell" data-mobile-label="Date"><span t-out="r['date'] or '—'"/></div>
+     <div class="absar-list-cell" data-mobile-label="Type"><span t-out="r['category']"/></div>
+     <div class="absar-list-cell" data-mobile-label="Status"><span class="absar-record-badge" t-out="r['pending']"/></div>
+     <div class="absar-list-cell" data-mobile-label="Follow-up"><span t-out="r['followup'] or r['status']"/></div>
+    </article><div t-if="not rows" class="absar-record-empty">No requests match these filters.</div>
+   </div>
+   <nav class="apw-pager" aria-label="Request pages"><a t-if="page &gt; 1" t-att-href="previous_url">← Previous</a><span>Page <t t-out="page"/> / <t t-out="pages"/></span><a t-if="page &lt; pages" t-att-href="next_url">Next →</a></nav>
+  </section></t>
+ </template>
+ <template id="request_control_form_tokens">
+  <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="company_id" t-att-value="company.id"/><input type="hidden" name="version" t-att-value="version"/>
+ </template>
+ <template id="request_control_detail" name="ER and MR Control Details">
+  <t t-call="employee_portal_suite.employee_portal_layout"><section class="apw-shell arc-control">
+   <t t-call="absar_portal_purchase_monitor.request_control_header"/>
+   <a t-att-href="back_url">← Back to Requests</a>
+   <div class="apw-heading"><div><h2 t-out="rec.name"/><p><t t-out="row['employee']"/> · <t t-out="row['project']"/></p></div><span class="apw-badge" t-out="row['pending']"/></div>
+   <p t-if="notice" class="alert alert-info" role="status" t-out="notice"/>
+   <div class="absar-document-actions mb-3">
+    <a class="btn btn-outline-secondary" t-att-href="base + '/' + kind + '/%s/print?company_id=%s' % (rec.id, company.id)">Print Request</a>
+    <a t-if="kind == 'mr' and rec.state == 'approved' and not rec.no_po_required and can_po" class="btn btn-primary" t-att-href="'/my/employee/purchase/new?mr_id=%s' % rec.id">Create Purchase Order</a>
+    <a t-if="kind == 'mr' and rec.state == 'approved' and rec.no_po_required and not rec.purchase_order_ids and can_bill" class="btn btn-primary" t-att-href="'/my/employee/accounting/bills/new?company_id=%s&amp;mr_id=%s' % (company.id, rec.id)">Create Vendor Bill</a>
+    <a t-if="not request.env.user.share" class="btn btn-outline-secondary" t-att-href="'/odoo/%s/%s' % (rec._name, rec.id)">Open in Backend</a>
+   </div>
+   <p t-if="kind == 'mr' and rec.state == 'approved' and not rec.no_po_required" class="apw-help">Use the linked PO to receive materials and create vendor bills. Creating a PO requires the Purchase Issuer role.</p>
+   <p t-if="kind == 'mr' and rec.state == 'approved' and rec.no_po_required" class="apw-help">Direct vendor bills require Accounting Preparer or Direct Posting access and configured company journals.</p>
+   <div class="arc-detail-layout">
+    <div class="arc-main">
+     <section class="apw-sheet"><h3>Request Details</h3><dl class="arc-fields"><div><dt>Employee</dt><dd t-out="row['employee']"/></div><div><dt>Project</dt><dd t-out="row['project']"/></div><div><dt>Request Date</dt><dd t-out="row['date'] or '—'"/></div><div><dt>Request Type</dt><dd t-out="row['category']"/></div><div t-foreach="details" t-as="item"><dt t-out="item[0]"/><dd t-out="item[1]"/></div></dl>
+      <t t-if="kind == 'mr'"><h4>Materials</h4><div class="apw-table-scroll"><table class="apw-table"><thead><tr><th>Material</th><th class="num">Required Quantity</th><th>Unit</th></tr></thead><tbody><tr t-foreach="rec.line_ids" t-as="line"><td t-out="line.item_name"/><td class="num" t-out="line.qty_required"/><td t-out="line.uom_id.display_name or '—'"/></tr></tbody></table></div></t>
+     </section>
+     <section t-if="can_approve" class="apw-sheet"><h3>Current Approval</h3><form method="post" t-att-action="base + '/' + kind + '/%s/action' % rec.id"><t t-call="absar_portal_purchase_monitor.request_control_form_tokens"/><label for="arc-review">Comment / Reason</label><textarea class="form-control" id="arc-review" name="comment" rows="2"/><div class="absar-document-actions mt-3"><button class="btn btn-primary" name="operation" value="approve">Approve</button><button t-if="rec.state == 'workflow'" class="btn btn-outline-secondary" name="operation" value="return">Return for Correction</button><button class="btn btn-outline-danger" name="operation" value="reject">Reject</button><button t-if="can_clarify" class="btn btn-outline-secondary" name="operation" value="clarify">Request Clarification</button></div></form></section>
+     <section t-if="kind == 'mr'" class="apw-sheet"><h3>Procurement &amp; Accounting Follow-up</h3>
+      <p t-if="rec.state != 'approved'" class="apw-help">Available after the request is fully approved.</p>
+      <form t-else="" method="post" t-att-action="base + '/mr/%s/action' % rec.id"><t t-call="absar_portal_purchase_monitor.request_control_form_tokens"/><input type="hidden" name="operation" value="followup"/>
+       <label class="arc-check"><input type="checkbox" name="no_po_required" value="1" t-att-checked="rec.no_po_required"/> No PO Required</label>
+       <label for="arc-account">Expense Account</label><select class="form-select mb-3" name="expense_account_id" id="arc-account"><option value="">Select expense account</option><option t-foreach="accounts" t-as="account" t-att-value="account.id" t-att-selected="account == rec.expense_account_id" t-out="account.display_name"/></select>
+       <label for="arc-docs">Invoice Submission Status</label><select class="form-select mb-3" name="accounting_docs_status" id="arc-docs"><option t-foreach="docs_states.items()" t-as="item" t-att-value="item[0]" t-att-selected="item[0] == rec.accounting_docs_status" t-out="item[1]"/></select>
+       <label for="arc-note">Note to Accounting</label><textarea class="form-control mb-3" name="accounting_docs_note" id="arc-note" rows="2" t-out="rec.accounting_docs_note or ''"/><button class="btn btn-primary">Save Follow-up</button>
+      </form>
+      <h4 class="mt-4">Linked Documents</h4><ul class="arc-linked"><li t-foreach="links" t-as="link"><span t-out="link['kind']"/> · <a t-if="link['url']" t-att-href="link['url']" t-out="link['name']"/><span t-else="" t-out="link['name']"/> <span class="apw-badge" t-out="link['status']"/></li></ul><p t-if="not links" class="apw-help">No purchase orders or vendor bills linked yet.</p>
+     </section>
+     <section class="apw-sheet"><h3>Approval History</h3>
+      <ol t-if="rec.workflow_id" class="arc-timeline"><li t-foreach="rec.approval_line_ids.sorted(lambda l: (l.sequence, l.id))" t-as="step"><strong t-out="step.name"/> · <span t-out="step.state"/><p t-if="step.approver_user_ids" t-out="', '.join(step.approver_user_ids.mapped('name'))"/><p t-if="step.comment" t-out="step.comment"/></li></ol>
+      <ol t-else="" class="arc-timeline"><li t-foreach="timeline" t-as="step"><strong t-out="step['stage']"/><p><t t-out="step.get('approved_by') or ''"/> · <t t-out="step.get('date') or ''"/></p><p t-if="step.get('comment')" t-out="step['comment']"/></li></ol><p t-if="not rec.workflow_id and not timeline" class="apw-help">No approval actions recorded yet.</p>
+     </section>
+     <section class="apw-sheet"><h3>Attachments</h3><ul class="arc-linked"><li t-foreach="attachments" t-as="attachment"><a t-att-href="base + '/' + kind + '/%s/attachment/%s?company_id=%s' % (rec.id, attachment.id, company.id)" t-out="attachment.name"/></li></ul><p t-if="not attachments" class="apw-help">No attachments.</p></section>
+    </div>
+    <aside class="apw-sheet arc-conversation"><h3>Discussion</h3><form method="post" t-att-action="base + '/' + kind + '/%s/action' % rec.id"><t t-call="absar_portal_purchase_monitor.request_control_form_tokens"/><input type="hidden" name="operation" value="comment"/><label for="arc-comment">Message</label><textarea class="form-control" id="arc-comment" name="comment" required="required" rows="3" maxlength="10000" placeholder="Follow up with the requester…"/><button class="btn btn-primary mt-2">Send Message</button></form>
+     <article t-foreach="messages" t-as="message" class="arc-message"><strong t-out="message.author_id.name or 'System'"/><time t-out="message.date"/><div t-out="message.body"/></article><p t-if="not messages" class="apw-help mt-3">No messages yet.</p><a t-if="older_url" t-att-href="older_url">Older messages →</a>
+    </aside>
+   </div>
+  </section></t>
+ </template>
+</odoo>

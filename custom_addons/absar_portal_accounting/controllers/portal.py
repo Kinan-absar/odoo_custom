@@ -74,6 +74,8 @@ class PortalAccounting(http.Controller):
             if not record_id:
                 service._actor('preparer')
             data = service._detail(company, kind, record_id)
+            if not record_id and kind == 'bills' and kw.get('mr_id'):
+                data = service._mr_bill_draft(company, kw['mr_id'], data)
             if not record_id and kind == 'payments' and kw.get('bill_id'):
                 bill = service._record(company, 'bills', kw['bill_id'])
                 if bill.state != 'posted' or bill.amount_residual <= 0:
