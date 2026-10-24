@@ -21,13 +21,14 @@ KINDS={
 # fields are omitted; no browser-supplied field/model/method is executed.
 SCHEMA={
  'employees':[
- ('Work',['name','job_title','work_email','work_phone','mobile_phone','department_id','job_id','parent_id','coach_id','category_ids','work_location_ids','resource_calendar_id']),
+ ('Employee',['name','job_title','work_email','work_phone','mobile_phone','category_ids']),
+ ('Work Information',['department_id','job_id','parent_id','coach_id','work_location_ids','resource_calendar_id']),
  ('Private Information',['private_email','private_phone','private_street','private_city','private_zip','private_country_id','country_id','identification_id','passport_id','birthday','gender','marital','visa_no','visa_expire','permit_no','work_permit_expiration_date']),
  ('Employee Information',['legal_name','registration_number','l10n_sa_employee_code'])],
  'attendance':[('Attendance',['employee_id','check_in','check_out','check_in_project_id'])],
- 'contracts':[('Contract',['name','employee_id','date_start','date_end','job_id','department_id','resource_calendar_id','structure_type_id','work_entry_source']),('Salary',['wage','l10n_sa_housing_allowance','l10n_sa_transportation_allowance','l10n_sa_other_allowances'])],
+ 'contracts':[('Contract',['name','employee_id','date_start','date_end','job_id','department_id','resource_calendar_id']),('Salary',['wage','l10n_sa_housing_allowance','l10n_sa_transportation_allowance','l10n_sa_other_allowances']),('Work Information',['structure_type_id','work_entry_source'])],
  'work-entries':[('Work Entry',['name','employee_id','contract_id','work_entry_type_id','date_start','date_stop'])],
- 'payslips':[('Payslip',['name','employee_id','contract_id','struct_id','payslip_run_id','date_from','date_to','date','note'])],
+ 'payslips':[('Payslip',['name','employee_id','contract_id','struct_id','payslip_run_id','date_from','date_to']),('Other Information',['date','note'])],
  'batches':[('Payroll Batch',['name','date_start','date_end'])],
  'salary-reports':[('Salary Report',['name','date_from','date_to','employee_ids','department_ids','work_location_ids','employee_tag_ids','include_inactive','struct_id'])],
 }

@@ -2,8 +2,8 @@
 // Native forms keep server validation and CSRF. Prevent repeated submissions;
 // discard links intentionally leave unsaved edits behind.
 let dirty=false,leaving=false;
-document.addEventListener('input',event=>{if(event.target.closest('.aea-edit-form'))dirty=true;});
-document.addEventListener('change',event=>{if(event.target.closest('.aea-edit-form'))dirty=true;});
+document.addEventListener('input',event=>{if(event.target.closest('.aea-edit-form')&&!event.target.classList?.contains('aea-picker-search'))dirty=true;});
+document.addEventListener('change',event=>{if(event.target.closest('.aea-edit-form')&&!event.target.classList?.contains('aea-picker-search'))dirty=true;});
 document.addEventListener('click',event=>{if(event.target.closest('[data-aea-discard]'))leaving=true;});
 document.addEventListener('submit',event=>{
     const form=event.target;if(!form.closest('.aea'))return;
