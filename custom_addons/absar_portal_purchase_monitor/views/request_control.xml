@@ -47,7 +47,7 @@
      <div class="absar-list-cell" data-mobile-label="Status" t-att-title="r['display_status']"><span class="absar-record-badge" t-out="r['display_status']"/></div>
      <div class="absar-list-cell" data-mobile-label="Open Document"><a t-if="r['document_label']" t-att-href="r['document_url']"><i class="fa fa-external-link"/> <t t-out="r['document_label']"/></a><span t-else="">—</span></div>
      <div class="absar-list-cell" data-mobile-label="Purchase Order" t-att-title="r['po_name']"><span t-out="r['po_name']"/></div>
-     <div class="absar-list-cell" data-mobile-label="PO Status"><span class="absar-record-badge" t-out="r['po_status']"/></div>
+     <div class="absar-list-cell" data-mobile-label="PO Status" t-att-title="r['po_status']"><span class="absar-record-badge" t-out="r['po_status']"/></div>
      <div class="absar-list-cell" data-mobile-label="No PO Required"><input type="checkbox" disabled="disabled" t-att-checked="r['no_po_required']" aria-label="No PO Required"/></div>
      <div class="absar-list-cell" data-mobile-label="Quotation Status" t-att-title="r['quotation_status']"><span class="absar-record-badge" t-out="r['quotation_status']"/></div>
      <div class="absar-list-cell" data-mobile-label="Invoice Status" t-att-title="r['followup']"><span class="absar-record-badge" t-out="r['followup'] or '—'"/></div>

@@ -2,6 +2,17 @@
 @media(max-width:1000px){.arc-detail-layout{grid-template-columns:minmax(0,1fr)}.arc-conversation{position:static;max-height:none}}
 @media(max-width:767.98px){.arc-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.arc-stats>a{padding:12px}.arc-fields{grid-template-columns:minmax(0,1fr)}.arc-list .absar-record-card{grid-template-columns:minmax(0,1fr)!important}.arc-control .apw-toolbar select{max-width:none;width:100%}.arc-control .apw-sheet{padding:16px}}
 
-/* Match the backend MR columns without stacking desktop row contents. */
-@media(min-width:768px){.arc-list-mr .absar-list-header,.arc-list-mr .absar-record-card{grid-template-columns:120px 175px 200px 110px 220px 110px 160px 110px 145px 130px 120px 165px 175px!important;min-width:2140px}.arc-list-mr .absar-list-header>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.arc-list-mr .absar-record-card{min-height:46px;padding-top:8px;padding-bottom:8px}}
+/* All MR columns fit the available desktop width without horizontal scrolling. */
+.ep-portal-main .apw-shell.arc-control{width:100%;min-width:0;max-width:100%!important;box-sizing:border-box}
+@media(min-width:768px){
+ .ep-portal-main .arc-list-mr{width:100%;min-width:0;max-width:100%;overflow-x:visible;box-sizing:border-box;--list-width:0px}
+ .ep-portal-main .arc-list-mr .absar-list-header,.ep-portal-main .arc-list-mr .absar-record-card{width:100%;min-width:0;max-width:100%;grid-template-columns:minmax(0,.85fr) minmax(0,1.25fr) minmax(0,1.4fr) minmax(0,.9fr) minmax(0,1.4fr) minmax(0,.9fr) minmax(0,1.15fr) minmax(0,.85fr) minmax(0,1fr) minmax(0,.95fr) minmax(0,.85fr) minmax(0,1.15fr) minmax(0,1.1fr)!important;column-gap:8px;padding-left:10px;padding-right:10px;box-sizing:border-box}
+ .ep-portal-main .arc-list-mr .absar-list-header{font-size:12px!important;line-height:1.25!important}
+ .arc-list-mr .absar-list-header>span{min-width:0;white-space:normal;overflow-wrap:anywhere}
+ .arc-list-mr .absar-record-card{min-height:44px;padding-top:8px;padding-bottom:8px}
+ .arc-list-mr .absar-list-cell{font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .arc-list-mr .absar-record-badge{max-width:100%;min-width:0;box-sizing:border-box;font-size:10px;padding:3px 5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .arc-list-mr .absar-list-cell:nth-child(8) a{font-size:11px;white-space:nowrap}
+ .arc-list-mr .absar-list-cell:nth-child(11){text-align:center}
+}
 .arc-list-mr input[type=checkbox]{width:15px;height:15px;margin:0;opacity:1;accent-color:#087f83;vertical-align:middle}
