@@ -88,6 +88,13 @@ class Statements(unittest.TestCase):
   s._onchange_statement_type()
   self.assertFalse(s.partner_id);self.assertEqual(s.line_ids,[(5,0,0)]);self.assertEqual(s.account_ids,[(5,0,0)]);self.assertEqual(s.journal_ids,[(5,0,0)])
   self.assertEqual(s.final_balance,0);self.assertEqual(s.move_state,'posted');self.assertEqual(s.date_to,date(2026,10,24))
+ def test_type_buttons_reset_only_when_changed(self):
+  s=self.statement();writes=[];resets=[]
+  s.write=lambda vals:(writes.append(vals),s.__dict__.update(vals))
+  s.action_reset_filters=lambda:(resets.append(True) or False)
+  s.action_type_payable();s.action_type_receivable();s.action_type_employee()
+  self.assertEqual([v['statement_type'] for v in writes],['payable','receivable','employee']);self.assertEqual(len(resets),3)
+  s.action_type_employee();self.assertEqual(len(resets),3)
  def test_excel_headers_and_totals(self):
   for typ,accounts,size,label in [('employee',[self.benefits,self.advance],8,'Employee'),('receivable',[self.ar],7,'Customer'),('payable',[self.ap],7,'Vendor')]:
    s=self.statement(typ,accounts);s.action_apply_filters();attachments=[]

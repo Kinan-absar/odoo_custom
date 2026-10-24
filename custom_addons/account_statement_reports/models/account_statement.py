@@ -77,6 +77,22 @@ class AccountStatement(models.Model):
             "views": [(self.env.ref("account_statement_reports.account_statement_workspace_form").id, "form")],
         }
 
+    def _switch_statement_type(self, statement_type):
+        self.ensure_one()
+        if self.statement_type != statement_type:
+            self.write({'statement_type': statement_type})
+            return self.action_reset_filters()
+        return False
+
+    def action_type_receivable(self):
+        return self._switch_statement_type('receivable')
+
+    def action_type_payable(self):
+        return self._switch_statement_type('payable')
+
+    def action_type_employee(self):
+        return self._switch_statement_type('employee')
+
     @api.onchange("statement_type")
     def _onchange_statement_type(self):
         date_from, date_to = self._default_period()
