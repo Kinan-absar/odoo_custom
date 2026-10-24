@@ -39,7 +39,11 @@ class Records(list):
     def exists(self):return self
     def sudo(self):return self
     def filtered(self,fn):return Records(r for r in self if fn(r))
-    def mapped(self,name):return [getattr(r,name) for r in self]
+    def mapped(self,name):
+        values=[getattr(r,name) for r in self]
+        if all(isinstance(value,(Rec,Records)) for value in values):
+            return Records(record for value in values for record in (value if isinstance(value,Records) else [value]))
+        return values
     def sorted(self,key):return Records(sorted(self,key=(lambda r:getattr(r,key)) if isinstance(key,str) else key))
     def __getattr__(self,key):return getattr(self[0],key) if len(self)==1 else False
     def __getitem__(self,key):
@@ -158,6 +162,67 @@ class Tests(unittest.TestCase):
         self.slip.contract_id=Records([contracts[0]])
         items={item['name']:item for group,rows in self.s._groups(self.c,'payslips',self.slip) for item in rows}
         self.assertEqual([opt[0] for opt in items['contract_id']['options']],[41])
+
+    def setup_generation(self):
+        self.env['hr.payslip'].rows=[]
+        self.typ=Rec('hr.payroll.structure.type',91)
+        self.structure=Rec('hr.payroll.structure',90,type_id=self.typ)
+        self.structure._fields={'type_id':Field('many2one','hr.payroll.structure.type')}
+        self.env['hr.payroll.structure']=Model('hr.payroll.structure',self.env,rows=[self.structure])
+        self.tag=Rec('hr.employee.category',80)
+        self.env['hr.employee.category']=Model('hr.employee.category',self.env,rows=[self.tag])
+        self.emp.category_ids=Records([self.tag])
+        self.second=Rec('hr.employee',5,company_id=self.c,name='Second',active=True,category_ids=Records())
+        self.env['hr.employee'].rows.append(self.second)
+        self.contracts=[Rec('hr.contract',60+i,company_id=self.c,employee_id=employee,state='open',
+            date_start=date(2026,10,10),date_end=False,structure_type_id=self.typ) for i,employee in enumerate([self.emp,self.second])]
+        for contract in self.contracts:contract._fields={'structure_type_id':Field('many2one','hr.payroll.structure.type')}
+        self.env['hr.contract']=Model('hr.contract',self.env,rows=self.contracts)
+        self.batch=Rec('hr.payslip.run',70,company_id=self.c,state='draft',date_start=date(2026,10,1),date_end=date(2026,10,31),slip_ids=Records())
+        self.batch.env=self.env
+        self.batch._fields={'company_id':Field('many2one','res.company'),'state':Field('selection',selection=[('draft','New'),('verify','Confirmed')])}
+        self.env['hr.payslip.run']=Model('hr.payslip.run',self.env,self.batch._fields,[self.batch])
+
+    def test_batch_generation_candidates(self):
+        self.setup_generation()
+        _,employees=self.s._batch_candidates(self.c,self.batch,self.structure.id,[])
+        self.assertEqual([employee.id for employee,contract in employees],[3,5])
+        _,employees=self.s._batch_candidates(self.c,self.batch,self.structure.id,[self.tag.id])
+        self.assertEqual([employee.id for employee,contract in employees],[3])
+        self.structure.type_id=Rec('hr.payroll.structure.type',92)
+        self.assertEqual(self.s._batch_candidates(self.c,self.batch,self.structure.id,[])[1],[])
+        self.structure.type_id=self.typ
+        self.env['hr.payslip'].rows=[self.slip]
+        self.assertEqual([employee.id for employee,contract in self.s._batch_candidates(self.c,self.batch)[1]],[5])
+        self.env['hr.contract'].rows.append(self.contracts[1])
+        self.assertEqual(self.s._batch_candidates(self.c,self.batch)[1],[])
+        self.batch.state='verify'
+        with self.assertRaises(UserError):self.s._batch_candidates(self.c,self.batch)
+
+    def test_generate_batch_validation_and_compute(self):
+        self.setup_generation();created=[];computed=[]
+        def save(company,kind,values):
+            self.assertEqual(kind,'payslips');created.append(values)
+            slip=Rec('hr.payslip',100+len(created),state='draft');computed.append(slip);return slip
+        self.s._save=save
+        count=self.s._generate_batch(self.c,self.batch.id,{'version':'v1','struct_id':90},['5','3','3'],[])
+        self.assertEqual(count,2)
+        self.assertTrue(all(slip.calls==['compute'] for slip in computed))
+        self.assertEqual([values['employee_id'] for values in created],[3,5])
+        self.assertEqual([values['contract_id'] for values in created],[60,61])
+        self.assertTrue(all(values['payslip_run_id']==70 and values['struct_id']==90 and values['date_from']=='2026-10-01' for values in created))
+        self.assertEqual(self.batch.state,'verify')
+        self.assertEqual(self.env['absar.employee.admin.audit'].rows[-1].operation,'generate-payslips')
+
+    def test_generate_batch_rejects_stale_foreign_and_filters(self):
+        self.setup_generation()
+        with self.assertRaises(UserError):self.s._generate_batch(self.c,70,{'version':'old'},['3'],[])
+        with self.assertRaises(AccessError):self.s._generate_batch(self.c,70,{'version':'v1'},['4'],[])
+        with self.assertRaises(ValidationError):self.s._generate_batch(self.c,70,{'version':'v1'},['5'],['80'])
+        with self.assertRaises(ValidationError):self.s._generate_batch(self.c,70,{'version':'v1'},[],[])
+        self.env['hr.payslip'].rows=[self.slip]
+        with self.assertRaises(ValidationError):self.s._generate_batch(self.c,70,{'version':'v1'},['3'],[])
+        self.assertEqual(self.env['absar.employee.admin.audit'].rows,[])
 
     def test_contract_fields_and_hr_responsible_scope(self):
         allowed=Rec('res.users',31,name='HR Responsible',active=True,share=False,company_ids=[2,1])

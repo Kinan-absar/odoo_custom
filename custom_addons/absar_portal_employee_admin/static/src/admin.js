@@ -29,9 +29,15 @@ function portalDialog(message,{title='Confirm Action',confirmLabel='Confirm',can
 }
 document.addEventListener('input',event=>{if(event.target.closest('.aea-edit-form')&&!event.target.classList?.contains('aea-picker-search'))dirty=true;});
 document.addEventListener('change',event=>{if(event.target.closest('.aea-edit-form')&&!event.target.classList?.contains('aea-picker-search'))dirty=true;});
-document.addEventListener('click',event=>{if(event.target.closest('[data-aea-discard]'))leaving=true;});
+document.addEventListener('click',event=>{
+    if(event.target.closest('[data-aea-discard]'))leaving=true;
+    if(dirty&&event.target.closest('[data-aea-generate-open]')){
+        event.preventDefault();
+        portalDialog('Save your form changes before generating payslips.',{title:'Save Changes First',confirmLabel:'OK',cancelLabel:null});
+    }
+});
 document.addEventListener('submit',async event=>{
-    const form=event.target;if(!form.closest('.aea'))return;
+    const form=event.target;if(event.defaultPrevented||!form.closest('.aea'))return;
     if(form.dataset.submitting==='true'||form.dataset.awaitingConfirmation==='true'){event.preventDefault();return;}
     if(dirty&&form.classList.contains('aea-operation')){
         event.preventDefault();

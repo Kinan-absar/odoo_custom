@@ -112,7 +112,12 @@ class EmployeeAdminPortal(http.Controller):
                     elif f.type=='many2one':v=v.display_name or '—'
                     elif f.type=='boolean':v=_('Yes') if v else _('No')
                     attendance_info.append((f.string,v or '—'))
+        batch_structures=[];batch_tags=[]
+        if kind=='batches' and r and r.state=='draft':
+            batch_structures=s._env(c)['hr.payroll.structure'].search(s._relation_domain(c,'hr.payroll.structure'),order='name,id')
+            batch_tags=s._env(c)['hr.employee.category'].search(s._relation_domain(c,'hr.employee.category'),order='name,id')
         return self._context(s,c,kind=kind,title=KINDS[kind][1],rec=r,groups=groups,admin_can_edit=s._editable(kind,r),version=str(r.write_date) if r else '',notice=notice,
+            batch_structures=batch_structures,batch_tags=batch_tags,
             tables=tables,totals=totals,adjustments=adjustments,slips=slips,audit=audit,input_types=types,attendance_info=attendance_info,
             form_url=self._url(kind,r.id if r else 'new')+'/save',record_url=self._url(kind,r.id) if r else '',back_url=self._url(kind,company_id=c.id))
 
@@ -171,6 +176,28 @@ class EmployeeAdminPortal(http.Controller):
             notice=_('Adjustment saved. Recompute the payslip after changing inputs.') if kind=='payslips' else _('Adjustment saved.')
         except (AccessError,UserError,ValidationError) as exc:notice=str(exc)
         return request.redirect(self._url(kind,ident,company_id=c.id,notice=notice))
+
+    @http.route(BASE+'/batches/<int:ident>/employees',type='http',auth='user',methods=['GET'])
+    def batch_employees(self,ident,company_id=None,struct_id=None,**kw):
+        s=self._service();c=s._company(company_id)
+        try:
+            batch=s._record(c,'batches',ident)
+            tags=request.httprequest.args.getlist('tag_ids')
+            structure,employees=s._batch_candidates(c,batch,struct_id,tags)
+            result={'employees':[dict(id=employee.id,name=employee.name,contract=contract.display_name) for employee,contract in employees]}
+        except (AccessError,UserError,ValidationError) as exc:
+            return request.make_json_response({'error':str(exc)},status=400,headers=[('Cache-Control','private, no-store')])
+        return request.make_json_response(result,headers=[('Cache-Control','private, no-store')])
+
+    @http.route(BASE+'/batches/<int:ident>/generate',type='http',auth='user',methods=['POST'],csrf=True)
+    def generate_batch(self,ident,**post):
+        s=self._service();c=s._company(post.get('company_id'))
+        try:
+            with request.env.cr.savepoint():
+                count=s._generate_batch(c,ident,post,request.httprequest.form.getlist('employee_ids'),request.httprequest.form.getlist('tag_ids'))
+            notice=_('Generated %s payslips. Review them before validation.') % count
+        except (AccessError,UserError,ValidationError) as exc:notice=str(exc)
+        return request.redirect(self._url('batches',ident,company_id=c.id,notice=notice))
 
     @http.route(BASE+'/salary-reports/<int:ident>/xlsx',type='http',auth='user',methods=['GET'])
     def report_xlsx(self,ident,company_id=None,**kw):

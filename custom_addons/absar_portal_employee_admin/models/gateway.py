@@ -332,6 +332,58 @@ class EmployeeAdminGateway(models.AbstractModel):
             raise AccessError(_('Payroll batch contains a payslip from another company.'))
         for slip in batch.slip_ids:self._payslip_scope(company,slip)
 
+    def _batch_candidates(self,company,batch,structure_id=None,tag_ids=None):
+        self._kind('batches');self._batch_scope(company,batch)
+        if batch.state!='draft':raise UserError(_('Generate payslips only in a new draft batch.'))
+        if not batch.date_start or not batch.date_end or batch.date_start>batch.date_end:
+            raise ValidationError(_('Save a valid batch period first.'))
+        structure=self._relation(company,'hr.payroll.structure',structure_id)
+        tags=[self._relation(company,'hr.employee.category',tag).id for tag in (tag_ids or [])]
+        domain=[('company_id','=',company.id),('active','=',True)]
+        if tags:domain.append(('category_ids','in',tags))
+        employees=self._env(company)['hr.employee'].search(domain,order='name,id')
+        contracts_domain=[('company_id','=',company.id),('employee_id','in',employees.ids),
+            ('state','in',['open','close']),('date_start','<=',batch.date_end),
+            '|',('date_end','=',False),('date_end','>=',batch.date_start)]
+        contracts=self._env(company)['hr.contract'].search(contracts_domain,order='id')
+        by_employee={}
+        for contract in contracts:by_employee.setdefault(contract.employee_id.id,[]).append(contract)
+        occupied=set(self._env(company)['hr.payslip'].search([
+            ('company_id','=',company.id),('employee_id','in',employees.ids),('state','!=','cancel'),
+            ('credit_note','=',False),('date_from','<=',batch.date_end),('date_to','>=',batch.date_start)]).mapped('employee_id').ids)
+        eligible=[]
+        for employee in employees:
+            matching=by_employee.get(employee.id,[])
+            if employee.id in occupied or len(matching)!=1:continue
+            contract=matching[0]
+            if structure and 'type_id' in structure._fields and structure.type_id and 'structure_type_id' in contract._fields:
+                if contract.structure_type_id!=structure.type_id:continue
+            eligible.append((employee,contract))
+        return structure,eligible
+
+    def _generate_batch(self,company,ident,post,employee_ids,tag_ids):
+        batch=self._record(company,'batches',ident);self._lock(batch,post.get('version'))
+        if not employee_ids or len(employee_ids)>500:raise ValidationError(_('Select between 1 and 500 employees.'))
+        ids=sorted({self._id(value) for value in employee_ids})
+        # Lock employee rows before checking overlaps again, including concurrent requests.
+        for ident in ids:
+            employee=self._relation(company,'hr.employee',ident)
+            self.env.cr.execute('SELECT id FROM hr_employee WHERE id=%s FOR UPDATE',[employee.id])
+        structure,candidates=self._batch_candidates(company,batch,post.get('struct_id'),tag_ids)
+        allowed={employee.id:contract for employee,contract in candidates}
+        if any(ident not in allowed for ident in ids):
+            raise ValidationError(_('The selection changed. Refresh employees: each needs one contract active during the period, matching filters, and no overlapping payslip.'))
+        for ident in ids:
+            data=dict(employee_id=ident,contract_id=allowed[ident].id,payslip_run_id=batch.id,
+                date_from=str(batch.date_start),date_to=str(batch.date_end))
+            if structure:data['struct_id']=structure.id
+            slip=self._save(company,'payslips',data)
+            self._native(slip,'compute_sheet')
+        if 'verify' in self._selection(batch,'state'):batch.write({'state':'verify'})
+        batch.write({'write_date':fields.Datetime.now()})
+        self._audit(company,'batches',batch,'generate-payslips','Employees: '+', '.join(map(str,ids)))
+        return len(ids)
+
     def _report_scope(self,company,report):
         for line in report.line_ids:
             if line.employee_id.company_id!=company or (line.company_id and line.company_id!=company):raise AccessError(_('Salary report contains an employee from another company.'))
