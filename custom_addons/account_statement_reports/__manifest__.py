@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Account Statement Reports",
-    "version": "18.0.20.1.1",
+    "version": "18.0.20.1.2",
     "category": "Accounting",
     "summary": "Full-screen receivable and payable account statements with editable filters, PDF and Excel",
     "description": """

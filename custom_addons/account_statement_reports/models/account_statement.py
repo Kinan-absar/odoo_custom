@@ -79,8 +79,15 @@ class AccountStatement(models.Model):
 
     @api.onchange("statement_type")
     def _onchange_statement_type(self):
+        date_from, date_to = self._default_period()
         self.partner_id = False
+        self.date_from = date_from
+        self.date_to = date_to
+        self.journal_ids = [(5, 0, 0)]
         self.account_ids = [(5, 0, 0)]
+        self.move_state = 'posted'
+        self.show_opening_balance = True
+        self.line_ids = [(5, 0, 0)]
         self._clear_results()
 
     @api.onchange("company_id")
@@ -236,7 +243,7 @@ class AccountStatement(models.Model):
         headers = ["Date", "Journal Entry", "Reference", "Due Date", "Debit", "Credit", "Balance"]
         employee = self.statement_type == "employee"
         if employee:
-            headers = ["Date", "Journal Entry", "Account", "Description", "Reference", "Due Date", "Debit", "Credit", "Balance"]
+            headers = ["Date", "Journal Entry", "Account", "Reference", "Due Date", "Debit", "Credit", "Balance"]
         amount_col = len(headers) - 3
         start_row = 9
         for col, label in enumerate(headers):
@@ -245,7 +252,7 @@ class AccountStatement(models.Model):
         for line in self.line_ids:
             cells = [str(line.date or ""), line.move or ""]
             if employee:
-                cells += [line.account_id.display_name if line.account_id else "", line.description or ""]
+                cells += [line.account_id.display_name if line.account_id else ""]
             cells += [line.reference or "", str(line.due_date or "")]
             for col, text in enumerate(cells):
                 sheet.write(row, col, text)

@@ -82,12 +82,18 @@ class Statements(unittest.TestCase):
   s=self.statement();s.action_apply_filters();self.assertEqual(s.line_count,3);self.assertEqual(s.final_balance,-3500);self.assertEqual(s.total_debit,2500);self.assertEqual(s.total_credit,6000)
   for accounts in [[],[self.expense],[rec(id=999,account_type='liability_current',company_ids=[rec(id=2)])]]:
    with self.assertRaises(UserError):self.statement(accounts=accounts).action_apply_filters()
+ def test_switch_type_starts_fresh(self):
+  s=self.statement();s.action_apply_filters();s._default_period=lambda:(date(2026,10,1),date(2026,10,24))
+  s._clear_results=lambda: [setattr(s,k,0) for k in ('opening_balance','final_balance','total_debit','total_credit','line_count')]
+  s._onchange_statement_type()
+  self.assertFalse(s.partner_id);self.assertEqual(s.line_ids,[(5,0,0)]);self.assertEqual(s.account_ids,[(5,0,0)]);self.assertEqual(s.journal_ids,[(5,0,0)])
+  self.assertEqual(s.final_balance,0);self.assertEqual(s.move_state,'posted');self.assertEqual(s.date_to,date(2026,10,24))
  def test_excel_headers_and_totals(self):
-  for typ,accounts,size,label in [('employee',[self.benefits,self.advance],9,'Employee'),('receivable',[self.ar],7,'Customer'),('payable',[self.ap],7,'Vendor')]:
+  for typ,accounts,size,label in [('employee',[self.benefits,self.advance],8,'Employee'),('receivable',[self.ar],7,'Customer'),('payable',[self.ap],7,'Vendor')]:
    s=self.statement(typ,accounts);s.action_apply_filters();attachments=[]
    s._fields={'statement_type':rec(selection=[('receivable','Customer'),('payable','Vendor'),('employee','Employee')])}
    s.env['ir.attachment']=rec(create=lambda vals:(attachments.append(vals) or rec(id=22)))
    s.action_export_excel();book=openpyxl.load_workbook(BytesIO(base64.b64decode(attachments[0]['datas'])));sheet=book.active
    self.assertEqual(sheet.cell(3,2).value,label);self.assertEqual(sheet.cell(10,size).value,'Balance');self.assertEqual(sheet.cell(11+len(s.line_ids),size).value,s.final_balance)
-   if typ=='employee':self.assertEqual(sheet.cell(10,3).value,'Account');self.assertEqual(sheet.cell(12,4).value,'Annual benefit')
+   if typ=='employee':self.assertEqual(sheet.cell(10,3).value,'Account');self.assertEqual(sheet.cell(12,4).value,'Ref')
 if __name__=='__main__':unittest.main(verbosity=2)

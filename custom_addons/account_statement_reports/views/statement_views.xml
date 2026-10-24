@@ -96,7 +96,6 @@
                                 <field name="move_id" string="Journal Entry" optional="show"/>
                                 <field name="move" string="Label" optional="hide"/>
                                 <field name="account_id" column_invisible="parent.statement_type != 'employee'"/>
-                                <field name="description" column_invisible="parent.statement_type != 'employee'"/>
                                 <field name="reference" optional="show"/>
                                 <field name="due_date" optional="show"/>
                                 <field name="debit" class="asr_col_debit"/>

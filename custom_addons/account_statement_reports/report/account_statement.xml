@@ -58,8 +58,7 @@
                 .employee-statement-table .col-date { width: 7%; }
                 .employee-statement-table .col-move { width: 12%; }
                 .employee-statement-table .col-account { width: 17%; }
-                .employee-statement-table .col-description { width: 18%; }
-                .employee-statement-table .col-ref { width: 11%; }
+                .employee-statement-table .col-ref { width: 29%; }
                 .employee-statement-table .col-due { width: 8%; }
                 .employee-statement-table .col-amt { width: 9%; }
                 .employee-statement-table td { overflow-wrap: anywhere; word-wrap: break-word; }
@@ -102,7 +101,6 @@
                                     <th class="col-date">Date</th>
                                     <th class="col-move">Move</th>
                                     <th t-if="doc.statement_type == 'employee'" class="col-account">Account</th>
-                                    <th t-if="doc.statement_type == 'employee'" class="col-description">Description</th>
                                     <th class="col-ref">Reference</th>
                                     <th class="col-due">Due Date</th>
                                     <th class="text-end col-amt">Debit</th>
@@ -117,7 +115,6 @@
                                         <td><t t-esc="l.date"/></td>
                                         <td><t t-esc="l.move or ''"/></td>
                                         <td t-if="doc.statement_type == 'employee'"><t t-esc="l.account_id.display_name if l.account_id else ''"/></td>
-                                        <td t-if="doc.statement_type == 'employee'"><t t-esc="l.description or ''"/></td>
                                         <td><t t-esc="l.reference or ''"/></td>
                                         <td><t t-esc="l.due_date or ''"/></td>
 
@@ -141,7 +138,7 @@
 
                             <tfoot>
                                 <tr style="font-weight:bold; background:#f2f2f2;">
-                                    <td t-att-colspan="6 if doc.statement_type == 'employee' else 4" class="text-end">Totals</td>
+                                    <td t-att-colspan="5 if doc.statement_type == 'employee' else 4" class="text-end">Totals</td>
                                     <td class="text-end">
                                         <span t-esc="sum(doc.line_ids.mapped('debit'))"
                                               t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>

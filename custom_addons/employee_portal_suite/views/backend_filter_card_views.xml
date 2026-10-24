@@ -5,6 +5,7 @@
         <field name="model">employee.portal.backend.filter.card</field>
         <field name="arch" type="xml">
             <list string="Backend Request Cards" default_order="request_kind,sequence,id">
+                <header><button name="action_refresh_material_stage_cards" type="object" string="Refresh MR Stage Cards" display="always"/></header>
                 <field name="sequence" widget="handle"/>
                 <field name="active" widget="boolean_toggle"/>
                 <field name="request_kind"/>
@@ -37,6 +38,8 @@
                             <field name="request_kind"/>
                             <field name="filter_type"/>
                             <field name="code" invisible="filter_type != 'predefined'" required="filter_type == 'predefined'"/>
+                            <field name="stage_step_ids" widget="many2many_tags" invisible="filter_type != 'stage'" options="{'no_create': True}"/>
+                            <field name="stage_name" invisible="filter_type != 'stage'"/>
                             <field name="custom_domain" invisible="filter_type != 'custom'" required="filter_type == 'custom'" placeholder="[('project_id.name', '=', 'TAAKAD')]"/>
                         </group>
                         <group>
