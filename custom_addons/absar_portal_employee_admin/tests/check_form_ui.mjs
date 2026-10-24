@@ -3,10 +3,10 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const source=fs.readFileSync(new URL('../static/src/form_ui.js',import.meta.url),'utf8');
 const handlers={};
-const panels=[{hidden:false},{hidden:false},{hidden:false}];
+const panels=[0,1,2].map(i=>({hidden:false,id:'aea-panel-'+i}));
 const tablist={hidden:true};
 const notebook={querySelector:()=>tablist,querySelectorAll:s=>s==='[data-aea-tab]'?tabs:panels};
-const tabs=panels.map((_,i)=>({dataset:{aeaTab:String(i)},attrs:{},setAttribute(k,v){this.attrs[k]=v;},focus(){this.focused=true;},closest:s=>s==='[data-aea-notebook]'?notebook:null}));
+const tabs=panels.map((_,i)=>({dataset:{aeaTab:'aea-panel-'+i},attrs:{'aria-controls':'aea-panel-'+i},getAttribute(k){return this.attrs[k];},setAttribute(k,v){this.attrs[k]=v;},focus(){this.focused=true;},closest:s=>s==='[data-aea-notebook]'?notebook:null}));
 for(const panel of panels)panel.closest=()=>notebook;
 const selection={textContent:'Office'},summary={focus(){this.focused=true;}};
 const options=['Office','Site A','Site B'].map(text=>({textContent:text,hidden:false}));
@@ -15,7 +15,13 @@ const picker={open:true,contains:t=>t.inside===true,querySelector:s=>s==='summar
 const document={readyState:'complete',addEventListener:(k,f)=>handlers[k]=f,querySelectorAll:s=>s==='[data-aea-notebook]'?[notebook]:picker.open?[picker]:[]};
 vm.runInNewContext(source,{document,queueMicrotask});
 assert.equal(tablist.hidden,false);assert.deepEqual(panels.map(p=>p.hidden),[false,true,true]);
-assert.equal(tabs[0].attrs['aria-selected'],'true');assert.equal(tabs[1].tabIndex,-1);
+assert.equal(tabs[0].attrs['aria-selected'],'true');
+// Reorder sections: matching is by target ID, never DOM index.
+panels.reverse();
+handlers.click({target:{closest:s=>s==='[data-aea-tab]'?tabs[0]:null}});
+assert.equal(panels.find(p=>p.id==='aea-panel-0').hidden,false);
+assert.equal(panels.find(p=>p.id==='aea-panel-2').hidden,true);
+panels.reverse();assert.equal(tabs[1].tabIndex,-1);
 handlers.click({target:{closest:s=>s==='[data-aea-tab]'?tabs[1]:null}});
 assert.deepEqual(panels.map(p=>p.hidden),[true,false,true]);assert.equal(picker.open,false);
 let prevented=false;

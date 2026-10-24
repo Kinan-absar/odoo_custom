@@ -284,6 +284,16 @@ class FormPermissionTests(unittest.TestCase):
             ctx['admin_can_edit']=False
             self.assertTrue(bool(eval(disabled,{},ctx)),kind)
         self.assertNotIn('editable=',(ROOT/'controllers/portal.py').read_text())
+    def test_first_tab_has_nonempty_target(self):
+        from lxml import etree
+        tree=etree.parse(str(ROOT/'views/portal.xml'))
+        tab=tree.xpath("//button[@role='tab']")[0]
+        for index in range(4):
+            ctx={'group_index':index}
+            marker=eval(tab.get('t-att-data-aea-tab'),{},ctx)
+            self.assertIsInstance(marker,str)
+            self.assertTrue(marker)
+            self.assertEqual(marker,eval(tab.get('t-att-aria-controls'),{},ctx))
     def test_archive_not_exposed(self):
         self.assertNotIn("operation in ('archive','restore')",(ROOT/'models/gateway.py').read_text())
         self.assertNotIn("'archive'",(ROOT/'views/portal.xml').read_text())
