@@ -72,13 +72,39 @@ class PortalRequestControl(http.Controller):
         pending = rec.current_approval_line_id.name if rec.state == 'workflow' else states.get(rec.state, rec.state)
         if kind == 'mr' and rec.needs_clarification:
             pending = rec.display_state or _('Clarification Requested')
-        return dict(id=rec.id, name=rec.name, employee=rec.employee_id.name,
+        row = dict(id=rec.id, name=rec.name, employee=rec.employee_id.name,
                     project=rec.project_id.display_name or '—', date=rec.request_date,
                     state=rec.state, status=states.get(rec.state, rec.state), pending=pending or '—',
                     url=self._url(kind, rec.id, company_id=company.id),
                     category=rec.get_request_type_display() if kind == 'er' else
                     (_('No PO Required') if rec.no_po_required else _('PO Required')),
                     followup=self._selections(rec, 'accounting_docs_status').get(rec.accounting_docs_status, '') if kind == 'mr' else '')
+        if kind == 'mr':
+            pos = rec.purchase_order_ids.filtered(lambda po: po.company_id == company)
+            bills = rec.vendor_bill_ids.filtered(lambda bill: bill.company_id == company and bill.move_type == 'in_invoice')
+            first_po = pos[:1]
+            po_labels = {'draft': _('RFQ'), 'sent': _('RFQ Sent'), 'to approve': _('Waiting Approval'),
+                         'purchase': _('Purchase Order'), 'done': _('Received'), 'cancel': _('Cancelled')}
+            document = _('Open Bill') if rec.no_po_required and bills else _('Open PO') if not rec.no_po_required and pos else ''
+            row.update(worksite=rec.worksite or '—', delivery_date=rec.delivery_date,
+                       display_status=rec.display_state or pending or '—',
+                       po_name=', '.join(pos.mapped('name')) or '—',
+                       po_status=po_labels.get(first_po.state, first_po.state) if first_po else '—',
+                       no_po_required=rec.no_po_required,
+                       quotation_status=self._selections(rec, 'quotation_status').get(rec.quotation_status, '—'),
+                       document_label=document,
+                       document_url=self._url(kind, rec.id, company_id=company.id).split('?')[0] + '/documents?' + urlencode({'company_id':company.id}) if document else '')
+        return row
+
+    @http.route(CONTROL + '/mr/<int:ident>/documents', type='http', auth='user', website=True, methods=['GET'])
+    def open_documents(self, ident, **kw):
+        company = self._company(kw.get('company_id'))
+        rec = self._record('mr', ident, company)
+        target = 'Vendor Bill' if rec.no_po_required else 'PO'
+        documents = [link for link in self._links(rec, company) if link['kind'] == target]
+        if len(documents) == 1 and documents[0]['url']:
+            return request.redirect(documents[0]['url'])
+        return request.redirect(self._url('mr', ident, company_id=company.id) + '#arc-linked-documents')
 
     @http.route([CONTROL, CONTROL + '/<string:kind>'], type='http', auth='user', website=True, methods=['GET'])
     def listing(self, kind='mr', **kw):

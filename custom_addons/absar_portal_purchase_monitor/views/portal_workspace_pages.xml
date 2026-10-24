@@ -5,7 +5,7 @@
    <a t-att-class="'active' if request.httprequest.path.endswith('/orders') else ''" t-att-href="'/my/employee/purchase-monitor' if request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor') else '/my/employee/purchase/orders'">Purchase Orders</a>
    <a href="/my/employee/purchase/products" t-att-class="'active' if request.httprequest.path.endswith('/products') else ''">Products</a>
    <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver')" href="/my/employee/purchase/approvals">Approvals</a>
-   <a t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_admin') or request.env.user.has_group('employee_portal_suite.group_employee_portal_superadmin')" href="/my/employee/purchase/request-control">ER &amp; MR Control</a>
+   <a t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_admin') or request.env.user.has_group('employee_portal_suite.group_employee_portal_superadmin')" href="/my/employee/purchase/request-control">ER &amp; MR Admin Control</a>
    </nav>
  </header></template>
  <template id="purchase_product_directory" name="Portal Purchasing Products">
@@ -20,6 +20,6 @@
   </section></t>
  </template>
  <template id="purchase_mr_directory" name="Material Requests Moved to Control">
-  <t t-call="employee_portal_suite.employee_portal_layout"><section class="apw-shell"><a href="/my/employee/purchase/request-control/mr">Open ER &amp; MR Control</a></section></t>
+  <t t-call="employee_portal_suite.employee_portal_layout"><section class="apw-shell"><a href="/my/employee/purchase/request-control/mr">Open ER &amp; MR Admin Control</a></section></t>
  </template>
 </odoo>

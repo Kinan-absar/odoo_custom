@@ -1,14 +1,14 @@
 <odoo>
- <template id="request_control_header" name="ER and MR Control Navigation">
-  <header class="apw-workspace-header"><div class="apw-workspace-brand"><span class="apw-workspace-icon"><i class="fa fa-tasks"/></span><div><strong>ER &amp; MR Control</strong><small t-out="company.name"/></div></div>
-   <nav class="apw-app-nav" aria-label="Request control">
+ <template id="request_control_header" name="ER and MR Admin Control Navigation">
+  <header class="apw-workspace-header"><div class="apw-workspace-brand"><span class="apw-workspace-icon"><i class="fa fa-tasks"/></span><div><strong>ER &amp; MR Admin Control</strong><small t-out="company.name"/></div></div>
+   <nav class="apw-app-nav" aria-label="Request admin control">
     <a t-att-href="base + '/er?company_id=%s' % company.id" t-att-class="'active' if kind == 'er' else ''">Employee Requests</a>
     <a t-att-href="base + '/mr?company_id=%s' % company.id" t-att-class="'active' if kind == 'mr' else ''">Material Requests</a>
     <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')" href="/my/employee/purchase">Purchase Workspace</a>
    </nav>
   </header>
  </template>
- <template id="request_control_list" name="ER and MR Control">
+ <template id="request_control_list" name="ER and MR Admin Control">
   <t t-call="employee_portal_suite.employee_portal_layout"><section class="apw-shell arc-control">
    <t t-call="absar_portal_purchase_monitor.request_control_header"/>
    <div class="apw-heading"><div><h2 t-out="'Employee Requests' if kind == 'er' else 'Material Requests'"/><p>Follow requests from submission through approval and completion.</p></div></div>
@@ -23,7 +23,7 @@
     <button class="btn btn-primary">Apply</button><a class="btn btn-outline-secondary" t-att-href="base + '/' + kind + '?company_id=%s' % company.id">Clear</a>
    </form>
    <p class="apw-help"><t t-out="total"/> requests · Page <t t-out="page"/> of <t t-out="pages"/></p>
-   <div class="absar-record-list absar-column-list arc-list" aria-label="Requests">
+   <div t-if="kind == 'er'" class="absar-record-list absar-column-list arc-list" aria-label="Requests">
     <div class="absar-list-header" aria-hidden="true"><span>Request</span><span>Employee</span><span>Project</span><span>Date</span><span>Type</span><span>Status / Current Step</span><span t-out="'Accounting' if kind == 'mr' else 'Approval'"/></div>
     <article t-foreach="rows" t-as="r" class="absar-record-card" role="link" tabindex="0" t-att-data-record-href="r['url']" t-att-aria-label="'Open ' + r['name']">
      <div class="absar-list-cell" data-mobile-label="Request"><a class="absar-record-number" t-att-href="r['url']" t-out="r['name']"/></div>
@@ -35,13 +35,31 @@
      <div class="absar-list-cell" data-mobile-label="Follow-up"><span t-out="r['followup'] or r['status']"/></div>
     </article><div t-if="not rows" class="absar-record-empty">No requests match these filters.</div>
    </div>
+   <div t-else="" class="absar-record-list absar-column-list arc-list arc-list-mr" aria-label="Material requests">
+    <div class="absar-list-header" aria-hidden="true"><span>MR Number</span><span>Employee</span><span>Project</span><span>Request Date</span><span>Worksite</span><span>Delivery Date</span><span>Status</span><span>Open Document</span><span>Purchase Order</span><span>PO Status</span><span>No PO Required</span><span>Quotation Status</span><span>Invoice Status</span></div>
+    <article t-foreach="rows" t-as="r" class="absar-record-card" role="link" tabindex="0" t-att-data-record-href="r['url']" t-att-aria-label="'Open ' + r['name']">
+     <div class="absar-list-cell" data-mobile-label="MR Number"><a class="absar-record-number" t-att-href="r['url']" t-out="r['name']"/></div>
+     <div class="absar-list-cell" data-mobile-label="Employee" t-att-title="r['employee']"><span t-out="r['employee']"/></div>
+     <div class="absar-list-cell" data-mobile-label="Project" t-att-title="r['project']"><span t-out="r['project']"/></div>
+     <div class="absar-list-cell" data-mobile-label="Request Date"><span t-out="r['date'] or '—'"/></div>
+     <div class="absar-list-cell" data-mobile-label="Worksite" t-att-title="r['worksite']"><span t-out="r['worksite']"/></div>
+     <div class="absar-list-cell" data-mobile-label="Delivery Date"><span t-out="r['delivery_date'] or '—'"/></div>
+     <div class="absar-list-cell" data-mobile-label="Status" t-att-title="r['display_status']"><span class="absar-record-badge" t-out="r['display_status']"/></div>
+     <div class="absar-list-cell" data-mobile-label="Open Document"><a t-if="r['document_label']" t-att-href="r['document_url']"><i class="fa fa-external-link"/> <t t-out="r['document_label']"/></a><span t-else="">—</span></div>
+     <div class="absar-list-cell" data-mobile-label="Purchase Order" t-att-title="r['po_name']"><span t-out="r['po_name']"/></div>
+     <div class="absar-list-cell" data-mobile-label="PO Status"><span class="absar-record-badge" t-out="r['po_status']"/></div>
+     <div class="absar-list-cell" data-mobile-label="No PO Required"><input type="checkbox" disabled="disabled" t-att-checked="r['no_po_required']" aria-label="No PO Required"/></div>
+     <div class="absar-list-cell" data-mobile-label="Quotation Status" t-att-title="r['quotation_status']"><span class="absar-record-badge" t-out="r['quotation_status']"/></div>
+     <div class="absar-list-cell" data-mobile-label="Invoice Status" t-att-title="r['followup']"><span class="absar-record-badge" t-out="r['followup'] or '—'"/></div>
+    </article><div t-if="not rows" class="absar-record-empty">No material requests match these filters.</div>
+   </div>
    <nav class="apw-pager" aria-label="Request pages"><a t-if="page &gt; 1" t-att-href="previous_url">← Previous</a><span>Page <t t-out="page"/> / <t t-out="pages"/></span><a t-if="page &lt; pages" t-att-href="next_url">Next →</a></nav>
   </section></t>
  </template>
  <template id="request_control_form_tokens">
   <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="company_id" t-att-value="company.id"/><input type="hidden" name="version" t-att-value="version"/>
  </template>
- <template id="request_control_detail" name="ER and MR Control Details">
+ <template id="request_control_detail" name="ER and MR Admin Control Details">
   <t t-call="employee_portal_suite.employee_portal_layout"><section class="apw-shell arc-control">
    <t t-call="absar_portal_purchase_monitor.request_control_header"/>
    <a t-att-href="back_url">← Back to Requests</a>
@@ -69,7 +87,7 @@
        <label for="arc-docs">Invoice Submission Status</label><select class="form-select mb-3" name="accounting_docs_status" id="arc-docs"><option t-foreach="docs_states.items()" t-as="item" t-att-value="item[0]" t-att-selected="item[0] == rec.accounting_docs_status" t-out="item[1]"/></select>
        <label for="arc-note">Note to Accounting</label><textarea class="form-control mb-3" name="accounting_docs_note" id="arc-note" rows="2" t-out="rec.accounting_docs_note or ''"/><button class="btn btn-primary">Save Follow-up</button>
       </form>
-      <h4 class="mt-4">Linked Documents</h4><ul class="arc-linked"><li t-foreach="links" t-as="link"><span t-out="link['kind']"/> · <a t-if="link['url']" t-att-href="link['url']" t-out="link['name']"/><span t-else="" t-out="link['name']"/> <span class="apw-badge" t-out="link['status']"/></li></ul><p t-if="not links" class="apw-help">No purchase orders or vendor bills linked yet.</p>
+      <h4 class="mt-4" id="arc-linked-documents">Linked Documents</h4><ul class="arc-linked"><li t-foreach="links" t-as="link"><span t-out="link['kind']"/> · <a t-if="link['url']" t-att-href="link['url']" t-out="link['name']"/><span t-else="" t-out="link['name']"/> <span class="apw-badge" t-out="link['status']"/></li></ul><p t-if="not links" class="apw-help">No purchase orders or vendor bills linked yet.</p>
      </section>
      <section class="apw-sheet"><h3>Approval History</h3>
       <ol t-if="rec.workflow_id" class="arc-timeline"><li t-foreach="rec.approval_line_ids.sorted(lambda l: (l.sequence, l.id))" t-as="step"><strong t-out="step.name"/> · <span t-out="step.state"/><p t-if="step.approver_user_ids" t-out="', '.join(step.approver_user_ids.mapped('name'))"/><p t-if="step.comment" t-out="step.comment"/></li></ol>
