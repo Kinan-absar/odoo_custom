@@ -70,7 +70,35 @@ class Statements(unittest.TestCase):
   lines=self.lines(opening=False);self.assertEqual(len(lines),3);self.assertEqual(lines[-1]['balance'],-3500)
  def test_customer_vendor_regression(self):
   for typ,ident,amount in [('asset_receivable',9,50),('liability_payable',10,-75)]:
-   lines=self.lines(kind=typ,accounts=[103,104]);self.assertEqual([x['move_id'] for x in lines],[False,ident]);self.assertEqual(lines[-1]['balance'],amount)
+   lines=self.mixin._get_statement_lines_with_balance(self.partner,typ,'2026-10-01','2026-10-31',self.company);self.assertEqual([x['move_id'] for x in lines],[False,ident]);self.assertEqual(lines[-1]['balance'],amount)
+ def test_retention_in_customer_and_vendor_statements(self):
+  for typ,accounts,expected,opening,closing in [
+   ('asset_receivable',[103,101],[False,4,9],0,2050),
+   ('liability_payable',[104,100],[False,2,5,10],-1000,-5575),
+  ]:
+   lines=self.lines(kind=typ,accounts=accounts)
+   self.assertEqual([line['move_id'] for line in lines],expected)
+   self.assertEqual(lines[0]['balance'],opening)
+   self.assertEqual(lines[-1]['balance'],closing)
+  # An explicit retention-only selection must not silently add ordinary AR/AP.
+  self.assertEqual([line['move_id'] for line in self.lines(kind='asset_receivable',accounts=[101])],[False,4])
+  # Even crafted selections cannot add expense counterparts to the balance.
+  self.assertEqual([line['move_id'] for line in self.lines(kind='asset_receivable',accounts=[101,102])],[False,4])
+ def test_retention_apply_and_validation(self):
+  for typ,accounts,total in [('receivable',[self.ar,self.advance],2050),('payable',[self.ap,self.benefits],-5575)]:
+   s=self.statement(typ,accounts);s.action_apply_filters();self.assertEqual(s.final_balance,total)
+   for bad in [[self.expense],[rec(id=999,account_type='asset_current',company_ids=[rec(id=2)])]]:
+    with self.assertRaises(UserError):self.statement(typ,bad).action_apply_filters()
+ def test_retention_account_picker_domains(self):
+  from lxml import etree
+  tree=etree.parse(str(ROOT/'views/statement_views.xml'))
+  field=tree.xpath('//field[@name="account_ids"]')[0]
+  domain=eval(field.get('domain'),{},dict(company_id=1))
+  self.assertIn(('account_type','in',list(mixin_module.EMPLOYEE_ACCOUNT_TYPES)),domain)
+  for kind in ('customer','vendor'):
+   text=(ROOT/'models'/(kind+'_statement_wizard.py')).read_text()
+   self.assertIn("('company_ids', 'in', [company_id])",text)
+   self.assertIn("'asset_current'",text);self.assertIn("'liability_current'",text)
  def test_employee_requires_explicit_accounts(self):
   with self.assertRaises(UserError):self.mixin._base_domain(self.partner,'employee',self.company)
  def statement(self,typ='employee',accounts=None):
@@ -96,7 +124,7 @@ class Statements(unittest.TestCase):
   self.assertEqual([v['statement_type'] for v in writes],['payable','receivable','employee']);self.assertEqual(len(resets),3)
   s.action_type_employee();self.assertEqual(len(resets),3)
  def test_excel_headers_and_totals(self):
-  for typ,accounts,size,label in [('employee',[self.benefits,self.advance],8,'Employee'),('receivable',[self.ar],7,'Customer'),('payable',[self.ap],7,'Vendor')]:
+  for typ,accounts,size,label in [('employee',[self.benefits,self.advance],8,'Employee'),('receivable',[self.ar],7,'Customer'),('payable',[self.ap],7,'Vendor'),('receivable',[self.ar,self.advance],7,'Customer'),('payable',[self.ap,self.benefits],7,'Vendor')]:
    s=self.statement(typ,accounts);s.action_apply_filters();attachments=[]
    s._fields={'statement_type':rec(selection=[('receivable','Customer'),('payable','Vendor'),('employee','Employee')])}
    s.env['ir.attachment']=rec(create=lambda vals:(attachments.append(vals) or rec(id=22)))

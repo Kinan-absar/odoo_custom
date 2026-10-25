@@ -23,6 +23,10 @@ class StatementMixin(models.AbstractModel):
             if not account_ids:
                 raise UserError("Select the employee balance-sheet accounts to include (salary payable, accrued benefits, advances or loans).")
             domain.append(("account_id.account_type", "in", list(EMPLOYEE_ACCOUNT_TYPES)))
+        elif account_ids:
+            # Explicit selections may include retention held in asset/liability
+            # accounts. With no selection keep the usual AR/AP-only statement.
+            domain.append(("account_id.account_type", "in", list(EMPLOYEE_ACCOUNT_TYPES)))
         else:
             domain.append(("account_id.account_type", "=", account_type))
         if move_state == "posted":

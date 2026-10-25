@@ -25,8 +25,8 @@ class VendorStatementWizard(models.TransientModel):
         "account.account",
         "vendor_statement_wizard_account_rel",
         "wizard_id", "account_id",
-        string="Payable Accounts",
-        domain="[('account_type', '=', 'liability_payable')]",
+        string="Accounts",
+        domain="[('company_ids', 'in', [company_id]), ('account_type', 'in', ['asset_receivable', 'asset_current', 'asset_non_current', 'asset_prepayments', 'liability_payable', 'liability_current', 'liability_non_current'])]",
     )
     move_state = fields.Selection(
         [("posted", "Posted Entries Only"), ("all", "Posted + Draft Entries")],

@@ -64,7 +64,7 @@
                             </div>
                             <div class="asr_filter_item">
                                 <label for="account_ids" class="asr_label"/>
-                                <field name="account_ids" nolabel="1" widget="many2many_tags" domain="[('company_ids', 'in', [company_id]), ('account_type', 'in', (['asset_receivable', 'asset_current', 'asset_non_current', 'asset_prepayments', 'liability_payable', 'liability_current', 'liability_non_current'] if statement_type == 'employee' else ['asset_receivable', 'liability_payable']))]" options="{'no_create': True}" placeholder="Select accounts (required for Employee)"/>
+                                <field name="account_ids" nolabel="1" widget="many2many_tags" domain="[('company_ids', 'in', [company_id]), ('account_type', 'in', ['asset_receivable', 'asset_current', 'asset_non_current', 'asset_prepayments', 'liability_payable', 'liability_current', 'liability_non_current'])]" options="{'no_create': True}" placeholder="Select accounts (required for Employee)"/>
                             </div>
                             <div class="asr_filter_item">
                                 <label for="move_state" class="asr_label"/>

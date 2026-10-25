@@ -138,8 +138,8 @@ class AccountStatement(models.Model):
         if self.statement_type == "employee":
             if not self.account_ids:
                 raise UserError("Select the employee accounts to include: salary payable, accrued benefits, advances or loans.")
-            if self.account_ids.filtered(lambda account: self.company_id not in account.company_ids or account.account_type not in EMPLOYEE_ACCOUNT_TYPES):
-                raise UserError("Employee accounts must belong to the selected company and be employee asset/liability accounts. Expense, income and bank/cash accounts are excluded.")
+        if self.account_ids.filtered(lambda account: self.company_id not in account.company_ids or account.account_type not in EMPLOYEE_ACCOUNT_TYPES):
+            raise UserError("Selected accounts must belong to the selected company and be receivable, payable or other asset/liability accounts. Expense, income and bank/cash accounts are excluded.")
         account_type = self._account_type()
         mixin = self.env["statement.mixin"]
         self.opening_balance = mixin._get_opening_balance(
