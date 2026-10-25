@@ -1229,6 +1229,8 @@ class MaterialRequest(models.Model):
         return data
 
     def get_readable_status(self):
+        if self.state == 'workflow':
+            return self.approval_stage or 'Pending Approval'
         mapping = {
             "workflow": "Workflow Approval",
             "purchase": "Pending Purchase",

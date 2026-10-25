@@ -1,149 +1,110 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <!-- Shared by the workspace and both legacy report actions. -->
+    <template id="asr_statement_document">
+        <style>
+            .asr-print {font-family:Arial,'DejaVu Sans',sans-serif;font-size:10px;line-height:1.4;color:#263c47;}
+            .asr-print .asr-title {font-size:23px;font-weight:600;line-height:1.25;color:#177b83;margin:8px 0 16px;}
+            .asr-print .asr-card {border:1px solid #63aeb2;border-radius:12px;padding:14px 16px;background:#fff;margin-bottom:16px;}
+            .asr-print .asr-partner {font-size:17px;font-weight:600;line-height:1.35;margin:3px 0 10px;color:#263c47;}
+            .asr-print .asr-label {font-size:9px;color:#647b85;}
+            .asr-print .asr-meta {width:100%;table-layout:fixed;border-collapse:collapse;}
+            .asr-print .asr-meta td {width:50%;padding:0;vertical-align:top;border:0!important;background:transparent!important;}
+            .asr-print .asr-filters {font-size:9px;color:#647b85;margin-top:9px;word-wrap:break-word;}
+            .asr-print .asr-table-frame {border:1px solid #63aeb2;border-radius:12px;padding:4px 10px;margin:0 0 16px;}
+            .asr-print .asr-lines {width:100%;table-layout:fixed;border-collapse:collapse;border:0!important;margin:0;}
+            .asr-print .asr-lines thead {display:table-header-group;}
+            .asr-print .asr-lines tr {page-break-inside:avoid;}
+            .asr-print .asr-lines th {font-size:9px;font-weight:700;color:#177b83;text-align:left;border:0!important;border-bottom:2px solid #177b83!important;padding:10px 4px;background:#fff!important;vertical-align:bottom;}
+            .asr-print .asr-lines td {font-size:9px;border:0!important;border-bottom:1px solid #e0e7eb!important;padding:8px 4px;vertical-align:top;background:#fff;word-wrap:break-word;overflow-wrap:break-word;}
+            .asr-print .asr-lines tbody tr:last-child td {border-bottom:0!important;}
+            .asr-print .asr-lines .asr-opening td {font-weight:600;background:#f1f8f8;}
+            .asr-print .asr-lines .asr-number {text-align:right!important;white-space:nowrap;word-wrap:normal;}
+            .asr-print .asr-col-date {width:10%;}.asr-print .asr-col-move {width:16%;}.asr-print .asr-col-ref {width:25%;}.asr-print .asr-col-due {width:10%;}.asr-print .asr-col-money {width:13%;}
+            .asr-print.asr-employee .asr-col-date {width:9%;}.asr-print.asr-employee .asr-col-move {width:13%;}.asr-print.asr-employee .asr-col-account {width:17%;}.asr-print.asr-employee .asr-col-ref {width:16%;}.asr-print.asr-employee .asr-col-due {width:9%;}.asr-print.asr-employee .asr-col-money {width:12%;}
+            .asr-print .asr-summary-wrap {width:100%;border-collapse:collapse;page-break-inside:avoid;}
+            .asr-print .asr-summary-wrap>tbody>tr>td {border:0!important;background:transparent!important;padding:0;vertical-align:top;}
+            .asr-print .asr-summary {margin:0 0 0 16px;border:1px solid #63aeb2;border-radius:12px;padding:9px 14px;}
+            .asr-print .asr-summary table {width:100%;border-collapse:collapse;}
+            .asr-print .asr-summary td {padding:7px 0;border:0!important;background:transparent!important;}
+            .asr-print .asr-summary td:last-child {text-align:right;white-space:nowrap;}
+            .asr-print .asr-summary .asr-closing td {border-top:2px solid #177b83!important;color:#177b83;font-weight:700;font-size:12px;padding-top:10px;}
+            .asr-print .asr-note {font-size:9px;color:#647b85;padding:6px 8px 0 0;}
+        </style>
+        <div t-att-class="'page asr-print asr-employee' if statement_kind == 'employee' else 'page asr-print'">
+            <h2 class="asr-title"><t t-out="statement_title"/></h2>
+            <div class="asr-card">
+                <div class="asr-label"><t t-out="partner_label"/></div>
+                <div class="asr-partner"><span t-field="doc.partner_id.name"/></div>
+                <table class="asr-meta"><tbody><tr>
+                    <td><span class="asr-label">Statement Period</span><br/>
+                        <span t-if="doc.date_from" t-field="doc.date_from"/><span t-else="">Beginning</span>
+                        <span> — </span><span t-if="doc.date_to" t-field="doc.date_to"/><span t-else="">Latest entry</span>
+                    </td>
+                    <td style="text-align:right;"><span class="asr-label">Currency · Entries</span><br/>
+                        <span t-field="doc.company_id.currency_id.name"/><span> · </span>
+                        <span t-out="'Posted Entries Only' if doc.move_state == 'posted' else 'Posted + Draft Entries'"/>
+                    </td>
+                </tr></tbody></table>
+                <div t-if="doc.account_ids" class="asr-filters"><strong>Accounts: </strong><span t-out="', '.join(doc.account_ids.mapped('display_name'))"/></div>
+                <div t-if="doc.journal_ids" class="asr-filters"><strong>Journals: </strong><span t-out="', '.join(doc.journal_ids.mapped('display_name'))"/></div>
+            </div>
+            <div class="asr-table-frame">
+                <table class="asr-lines">
+                    <thead><tr>
+                        <th class="asr-col-date">Date</th>
+                        <th class="asr-col-move">Move</th>
+                        <th t-if="statement_kind == 'employee'" class="asr-col-account">Account</th>
+                        <th class="asr-col-ref">Reference</th>
+                        <th class="asr-col-due">Due Date</th>
+                        <th class="asr-number asr-col-money">Debit</th>
+                        <th class="asr-number asr-col-money">Credit</th>
+                        <th class="asr-number asr-col-money">Balance</th>
+                    </tr></thead>
+                    <tbody>
+                        <t t-foreach="doc.line_ids" t-as="l">
+                            <tr t-att-class="'asr-opening' if not l.move_id else ''">
+                                <td><span t-if="l.date" t-field="l.date"/></td>
+                                <td><span t-out="l.move or ''"/></td>
+                                <td t-if="statement_kind == 'employee'"><span t-out="l.account_id.display_name if l.account_id else ''"/></td>
+                                <td><span t-out="l.reference or ''"/></td>
+                                <td><span t-if="l.due_date" t-field="l.due_date"/></td>
+                                <td class="asr-number"><span t-field="l.debit" t-options="{'widget':'float','precision':doc.company_id.currency_id.decimal_places}"/></td>
+                                <td class="asr-number"><span t-field="l.credit" t-options="{'widget':'float','precision':doc.company_id.currency_id.decimal_places}"/></td>
+                                <td class="asr-number"><span t-field="l.balance" t-options="{'widget':'float','precision':doc.company_id.currency_id.decimal_places}"/></td>
+                            </tr>
+                        </t>
+                        <tr t-if="not doc.line_ids"><td t-att-colspan="8 if statement_kind == 'employee' else 7">No entries for the applied filters.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <table class="asr-summary-wrap"><tbody><tr>
+                <td style="width:51%;">
+                    <div class="asr-note">All amounts in <span t-field="doc.company_id.currency_id.name"/>.</div>
+                    <div t-if="statement_kind == 'employee'" class="asr-note">Balance = Debit − Credit.<br/>Positive: due from employee.<br/>Negative: due to employee.</div>
+                </td>
+                <td style="width:49%;">
+                    <div class="asr-summary"><table><tbody>
+                        <tr><td>Opening Balance</td><td><span t-field="doc.opening_balance" t-options="{'widget':'float','precision':doc.company_id.currency_id.decimal_places}"/></td></tr>
+                        <tr><td>Total Debit</td><td><span t-out="sum(doc.line_ids.mapped('debit'))" t-options="{'widget':'float','precision':doc.company_id.currency_id.decimal_places}"/></td></tr>
+                        <tr><td>Total Credit</td><td><span t-out="sum(doc.line_ids.mapped('credit'))" t-options="{'widget':'float','precision':doc.company_id.currency_id.decimal_places}"/></td></tr>
+                        <tr class="asr-closing"><td>Closing Balance</td><td><span t-field="doc.final_balance" t-options="{'widget':'float','precision':doc.company_id.currency_id.decimal_places}"/></td></tr>
+                    </tbody></table></div>
+                </td>
+            </tr></tbody></table>
+        </div>
+    </template>
+
     <template id="asr_account_statement">
-        <t t-call="web.external_layout">
-            <style>
-                .page {
-                    font-size: 9px;
-                }
-
-                .header-block .header-line {
-                    font-size: 13px;
-                    margin-bottom: 3px;
-                }
-
-                table.statement-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 10px;
-                }
-
-                table.statement-table thead th {
-                    background: #f0f0f0;
-                    font-weight: 600;
-                    font-size: 9px;
-                    padding: 6px 5px;
-                    border: 1px solid #cfcfcf;
-                    white-space: nowrap;
-                }
-
-                table.statement-table tbody td {
-                    padding: 5px 5px;
-                    border: 1px solid #e0e0e0;
-                    vertical-align: middle;
-                }
-
-                table.statement-table tbody tr:nth-child(even) {
-                    background: #fafafa;
-                }
-
-                table.statement-table tfoot td {
-                    padding: 6px 5px;
-                    border: 1px solid #cfcfcf;
-                    font-weight: bold;
-                    background: #f5f5f5;
-                }
-
-                .text-end {
-                    text-align: right;
-                    white-space: nowrap;
-                }
-
-                .col-date { width: 10%; }
-                .col-move { width: 16%; }
-                .col-ref  { width: 20%; }
-                .col-due  { width: 10%; }
-                .col-amt  { width: 11%; }
-            </style>
-
+        <t t-call="web.html_container">
             <t t-foreach="docs" t-as="doc">
+                <t t-set="o" t-value="doc"/>
                 <t t-set="company" t-value="doc.company_id"/>
-
-                <main>
-                    <div class="page">
-
-                        <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                            <div class="header-block" style="margin-bottom:12px;">
-                                <h2>
-                                    <t t-if="doc.statement_type == 'receivable'">Customer Statement</t>
-                                    <t t-else="">Vendor Statement</t>
-                                </h2>
-
-                                <div class="header-line">
-                                    <strong>
-                                        <t t-if="doc.statement_type == 'receivable'">Customer:</t>
-                                        <t t-else="">Vendor:</t>
-                                    </strong>
-                                    <span t-esc="doc.partner_id.name"/>
-                                </div>
-
-                                <div class="header-line">
-                                    <strong>Period:</strong>
-                                    <span t-esc="doc.date_from"/> —
-                                    <span t-esc="doc.date_to"/>
-                                </div>
-                            </div>
-                        </div>
-
-                        <table class="statement-table">
-                            <thead>
-                                <tr>
-                                    <th class="col-date">Date</th>
-                                    <th class="col-move">Move</th>
-                                    <th class="col-ref">Reference</th>
-                                    <th class="col-due">Due Date</th>
-                                    <th class="text-end col-amt">Debit</th>
-                                    <th class="text-end col-amt">Credit</th>
-                                    <th class="text-end col-amt">Balance</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                <t t-foreach="doc.line_ids" t-as="l">
-                                    <tr>
-                                        <td><t t-esc="l.date"/></td>
-                                        <td><t t-esc="l.move or ''"/></td>
-                                        <td><t t-esc="l.reference or ''"/></td>
-                                        <td><t t-esc="l.due_date or ''"/></td>
-
-                                        <td class="text-end">
-                                            <span t-field="l.debit"
-                                                  t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
-                                        </td>
-
-                                        <td class="text-end">
-                                            <span t-field="l.credit"
-                                                  t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
-                                        </td>
-
-                                        <td class="text-end">
-                                            <span t-field="l.balance"
-                                                  t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
-                                        </td>
-                                    </tr>
-                                </t>
-                            </tbody>
-
-                            <tfoot>
-                                <tr style="font-weight:bold; background:#f2f2f2;">
-                                    <td colspan="4" class="text-end">Totals</td>
-                                    <td class="text-end">
-                                        <span t-esc="sum(doc.line_ids.mapped('debit'))"
-                                              t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
-                                    </td>
-                                    <td class="text-end">
-                                        <span t-esc="sum(doc.line_ids.mapped('credit'))"
-                                              t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
-                                    </td>
-                                    <td class="text-end">
-                                        <span t-field="doc.final_balance"
-                                              t-options="{'widget':'monetary','display_currency':doc.company_id.currency_id}"/>
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </main>
+                <t t-set="statement_kind" t-value="doc.statement_type"/>
+                <t t-set="statement_title" t-value="'Customer Statement' if statement_kind == 'receivable' else ('Vendor Statement' if statement_kind == 'payable' else 'Employee Statement')"/>
+                <t t-set="partner_label" t-value="'Customer' if statement_kind == 'receivable' else ('Vendor' if statement_kind == 'payable' else 'Employee')"/>
+                <t t-set="layout_document_title" t-value="False"/>
+                <t t-call="web.external_layout"><t t-call="account_statement_reports.asr_statement_document"/></t>
             </t>
         </t>
     </template>

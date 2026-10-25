@@ -1,6 +1,7 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError, UserError
 from odoo.tools.safe_eval import safe_eval
+from odoo.osv import expression
 
 
 class EmployeePortalBackendFilterCard(models.Model):
@@ -14,7 +15,7 @@ class EmployeePortalBackendFilterCard(models.Model):
         index=True,
     )
     filter_type = fields.Selection(
-        [("predefined", "Predefined"), ("custom", "Custom Domain")],
+        [("predefined", "Predefined"), ("stage", "Approval Stage"), ("custom", "Custom Domain")],
         required=True,
         default="predefined",
         index=True,
@@ -54,6 +55,14 @@ class EmployeePortalBackendFilterCard(models.Model):
             "Available variables: uid, company_id."
         ),
     )
+    stage_step_ids = fields.Many2many(
+        'employee.portal.workflow.step', 'eps_card_workflow_step_rel', 'card_id', 'step_id',
+        string='Workflow Steps',
+        domain="[('workflow_id.applies_to', '=', 'material_request')]",
+        help='Choose current workflow steps; no custom domain is needed.')
+    stage_name = fields.Char(string='Stage Name', help='Matches pending snapshot steps by their exact name, including historical steps.')
+    auto_stage_key = fields.Char(copy=False, index=True)
+
     my_requests_only = fields.Boolean(
         string="My Requests Only",
         help="Additionally limit this card to records created by the current logged-in user.",
@@ -86,7 +95,7 @@ class EmployeePortalBackendFilterCard(models.Model):
         )
     ]
 
-    @api.constrains("request_kind", "filter_type", "code", "custom_domain")
+    @api.constrains("request_kind", "filter_type", "code", "custom_domain", "stage_step_ids", "stage_name")
     def _check_filter_definition(self):
         er_only = {"manager", "hr", "finance", "leave", "advance", "other"}
         mr_only = {"purchase", "store", "project_manager", "director", "po_required", "no_po_required", "clarification"}
@@ -98,6 +107,9 @@ class EmployeePortalBackendFilterCard(models.Model):
                     raise ValidationError(_("This card is only available for Material Requests."))
                 if rec.request_kind == "material" and rec.code in er_only:
                     raise ValidationError(_("This card is only available for Employee Requests."))
+            elif rec.filter_type == 'stage':
+                if rec.request_kind != 'material' or not (rec.stage_step_ids or rec.stage_name):
+                    raise ValidationError(_('Select Material Requests and a workflow step or stage name.'))
             else:
                 if not (rec.custom_domain or "").strip():
                     raise ValidationError(_("Enter a domain for a custom filter card."))
@@ -110,7 +122,21 @@ class EmployeePortalBackendFilterCard(models.Model):
         return super().unlink()
 
     @api.model
+    def _material_stage_aliases(self):
+        return {
+            'purchase': ['Purchase Rep', 'Purchase Representative', 'Purchase'],
+            'store': ['Store Manager', 'Store'],
+            'project_manager': ['Project Manager', 'Project Manager Approval', 'PM'],
+            'director': ['Projects Director', 'Project Director', 'Director'],
+            'ceo': ['CEO', 'CEO Approval'],
+        }
+
+    @api.model
     def _domain_for_code(self, request_kind, code):
+        if request_kind == 'material' and code in self._material_stage_aliases():
+            names = self._material_stage_aliases()[code]
+            steps = expression.OR([[('approval_stage', '=ilike', name)] for name in names])
+            return expression.OR([[('state', '=', code)], expression.AND([[('state', '=', 'workflow')], steps])])
         if code == "all":
             return []
         if code == "my":
@@ -152,7 +178,13 @@ class EmployeePortalBackendFilterCard(models.Model):
 
     def _get_domain(self):
         self.ensure_one()
-        if self.filter_type == "custom":
+        if self.filter_type == 'stage':
+            choices = []
+            names = list(set(self.stage_step_ids.mapped('name') + ([self.stage_name] if self.stage_name else [])))
+            if names:
+                choices.append([('approval_stage', 'in', names)])
+            domain = expression.AND([[('state', '=', 'workflow')], expression.OR(choices or [[('id', '=', 0)]])])
+        elif self.filter_type == "custom":
             domain = self._evaluate_custom_domain()
         else:
             domain = self._domain_for_code(self.request_kind, self.code)
@@ -178,6 +210,42 @@ class EmployeePortalBackendFilterCard(models.Model):
                 "sticky": False,
             },
         }
+
+    @api.model
+    def action_refresh_material_stage_cards(self):
+        # Normal users may read cards, but cannot change the shared configuration.
+        self.check_access_rights('write')
+        aliases = self._material_stage_aliases()
+        labels = {'purchase': 'Purchase Rep', 'store': 'Store Manager', 'project_manager': 'Project Manager',
+                  'director': 'Projects Director', 'ceo': 'CEO Approval'}
+        styles = {'purchase': 'blue', 'store': 'teal', 'project_manager': 'orange', 'director': 'indigo', 'ceo': 'purple'}
+        for index, code in enumerate(aliases):
+            card = self.with_context(active_test=False).search([('request_kind', '=', 'material'), ('code', '=', code)], limit=1)
+            values = dict(request_kind='material', filter_type='predefined', code=code, active=True)
+            if card:
+                card.write(values)
+            else:
+                self.create(dict(values, label=labels[code], sequence=30+index*10, color_style=styles[code]))
+        steps = self.env['employee.portal.workflow.step'].search([
+            ('workflow_id.applies_to', '=', 'material_request'), ('workflow_id.active', '=', True),
+            ('workflow_id.is_template', '=', False),
+        ], order='sequence,id')
+        names = set(steps.mapped('name'))
+        # Keep cards for in-flight snapshots even when the original step was removed.
+        names.update(self.env['material.request'].search([('state', '=', 'workflow')]).mapped('current_approval_line_id.name'))
+        known = {name.strip().casefold() for values in aliases.values() for name in values}
+        for index, name in enumerate(sorted(n for n in names if n and n.strip().casefold() not in known)):
+            key = name.strip().casefold()
+            card = self.with_context(active_test=False).search([('request_kind', '=', 'material'), ('auto_stage_key', '=', key)], limit=1)
+            values = dict(request_kind='material', filter_type='stage', stage_name=name,
+                          stage_step_ids=[(6, 0, steps.filtered(lambda step: step.name == name).ids)], auto_stage_key=key)
+            if card:
+                card.write(values)
+            else:
+                self.create(dict(values, label=name, sequence=45+index, color_style='indigo'))
+        return {'type': 'ir.actions.client', 'tag': 'display_notification', 'params': {
+            'title': _('MR Stage Cards'), 'message': _('Stage cards are ready. Reopen Material Requests to use them.'),
+            'type': 'success', 'sticky': False}}
 
     @api.model
     def get_dashboard_cards(self, request_kind):

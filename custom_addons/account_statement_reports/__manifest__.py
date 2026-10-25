@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Account Statement Reports",
-    "version": "18.0.20.0.0",
+    "version": "18.0.20.1.6",
     "category": "Accounting",
     "summary": "Full-screen receivable and payable account statements with editable filters, PDF and Excel",
     "description": """
         Account statement workspace for Odoo 18:
         - One full-screen Account Statements workspace
-        - Customer and Vendor statements in the same screen
+        - Customer, Vendor and Employee statements in the same screen
         - No popup wizard: filters are edited directly on the report page
         - Searchable partner, date, company, journal, account and entry-state filters
         - Opening balance, debit, credit, transaction and final-balance summaries

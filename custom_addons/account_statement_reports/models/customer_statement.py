@@ -16,7 +16,8 @@ class CustomerStatement(models.Model):
     company_id = fields.Many2one("res.company", required=True, default=lambda self: self.env.company)
     currency_id = fields.Many2one(related="company_id.currency_id", readonly=True)
     journal_ids = fields.Many2many("account.journal", "customer_statement_journal_rel", "statement_id", "journal_id")
-    account_ids = fields.Many2many("account.account", "customer_statement_account_rel", "statement_id", "account_id")
+    account_ids = fields.Many2many("account.account", "customer_statement_account_rel", "statement_id", "account_id",
+        domain="[('company_ids', 'in', [company_id]), ('account_type', 'in', ['asset_receivable', 'asset_current', 'asset_non_current', 'asset_prepayments', 'liability_payable', 'liability_current', 'liability_non_current'])]")
     move_state = fields.Selection(
         [("posted", "Posted Entries Only"), ("all", "Posted + Draft Entries")],
         default="posted",
