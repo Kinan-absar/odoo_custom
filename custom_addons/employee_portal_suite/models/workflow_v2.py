@@ -770,14 +770,15 @@ class MaterialRequestWorkflowV2(models.Model):
     )
 
     @api.depends('state', 'current_approval_line_id', 'current_approval_line_id.name',
-                 'approval_line_ids', 'approval_line_ids.state', 'approval_line_ids.name')
+                 'approval_line_ids', 'approval_line_ids.state', 'approval_line_ids.name', 'approval_line_ids.sequence')
     def _compute_approval_stage(self):
         # Stored grouping labels must not vary with the approving user's language.
         english = self.with_context(lang='en_US')
         labels = dict(self._fields['state']._description_selection(english.env))
         for rec in self:
             if rec.state == 'workflow':
-                rec.approval_stage = rec.current_approval_line_id.name or 'Pending Approval'
+                pending = rec.approval_line_ids.filtered(lambda line: line.state == 'pending').sorted(lambda line: (line.sequence, line.id))[:1]
+                rec.approval_stage = pending.name or 'Pending Approval'
             else:
                 rec.approval_stage = labels.get(rec.state, rec.state or '')
 
