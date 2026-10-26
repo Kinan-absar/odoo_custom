@@ -5,3 +5,5 @@ from . import post_confirmation
 from . import product_service
 
 from . import request_source
+
+from . import invoice_sources

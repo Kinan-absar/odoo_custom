@@ -10,9 +10,9 @@ import { openAnalyticDistribution } from "./analytic_editor";
         root.classList?.add('absar-purchase-controls');
         let state = JSON.parse(root.dataset.boot), tab = 'lines', busy = false, revision = 0, previewTimer, overpaymentNotice = '', accountingNotice = '';
         const csrf = root.dataset.csrf;
-        const isMove = () => ['bills', 'refunds', 'journals'].includes(state.kind);
+        const isMove = () => ['bills', 'refunds', 'invoices', 'journals'].includes(state.kind);
         const isPlan = () => ['planned', 'planned-receipts'].includes(state.kind);
-        const isBill = () => ['bills', 'refunds'].includes(state.kind);
+        const isBill = () => ['bills', 'refunds', 'invoices'].includes(state.kind);
         const money = n => Number(n || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
         const lineKey = row => JSON.stringify([state.currency_id,state.partner_id,row.product_id,row.quantity,row.price_unit,row.discount,row.taxes_id,row.product_uom_id]);
         function drawLineAmounts() {
@@ -148,10 +148,10 @@ import { openAnalyticDistribution } from "./analytic_editor";
                     for (const row of rows.slice(0,30)) options.append(el('button', {type: 'button', role: 'option', text: row.name,
                         onmousedown: event => event.preventDefault(), onclick: () => commit(row)}));
                     options.append(button('Search More…',()=>{close();searchMore(resource,control.value,row=>commit(row));}));
-                    if(resource==='product'&&selected?.id)options.append(button('Open / Edit Product…',()=>{
+                    if(resource==='product'&&selected?.id)options.append(button(state.kind==='invoices'?'Open Product…':'Open / Edit Product…',()=>{
                         close();productForm(selected.id,'',row=>commit(row));
                     }));
-                    if(resource==='product'&&!disabled)options.append(button('Create and Edit…',()=>{
+                    if(resource==='product'&&!disabled&&state.kind!=='invoices')options.append(button('Create and Edit…',()=>{
                         const name=control.value;close();productForm(null,name,row=>commit(row));
                     }));
                 } catch (error) {say(error.message, true);}
@@ -246,7 +246,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
             if(!lines.length){previewPending=false;previewError='';state.untaxed=0;state.tax=0;state.total=0;state.journal_items=[];drawLineAmounts();drawTotals();return;}
             const missing=[];
             if(!state.journal_id)missing.push('journal');
-            if(isBill()&&!state.partner_id)missing.push('vendor');
+            if(isBill()&&!state.partner_id)missing.push(state.kind==='invoices'?'customer':'vendor');
             if(lines.some(row=>!['line_section','line_note'].includes(row.display_type)&&!row.account_id))missing.push('line account');
             if(missing.length){previewPending=false;previewError=missing.length?'Choose '+missing.join(', ')+' to calculate totals.':'Add a line to calculate totals.';drawLineAmounts();drawTotals();say(previewError);return;}
             previewError='';
@@ -280,7 +280,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
         function run(...args){if(operationJob)return operationJob;const job=runOperation(...args);operationJob=job;job.then(()=>{operationJob=null;},()=>{operationJob=null;});return job;}
         async function runOperation(operation, payload) {
             if (busy) return false;
-            if(operation==='save'&&payload.submit&&isBill()&&!payload.invoice_date){say('Set the Bill Date before submitting for approval.',true);return;}
+            if(operation==='save'&&payload.submit&&isBill()&&!payload.invoice_date){say('Set the invoice/bill date before submitting for approval.',true);return;}
             if(operation==='save'&&isMove())payload={...payload,lines:calculationRows(payload.lines||[])};
             busy = true; clearTimeout(previewTimer); root.querySelectorAll('button').forEach(b => b.disabled = true); say('Working…');
             try {
@@ -342,7 +342,12 @@ import { openAnalyticDistribution } from "./analytic_editor";
                     if (await ask('Remove only the reconciliations managed by this voucher?')) action('unreconcile');
                 }));
             }
-            if (state.id && ['bills', 'refunds', 'journals', 'payments', 'receipts'].includes(state.kind)) box.append(el('a', {text: 'Print PDF', class: 'aca-primary', target: '_blank', rel: 'noopener', href: BASE + '/' + state.kind + '/' + state.id + '/print?company_id=' + state.company_id}));
+            if (state.id && ['bills', 'refunds', 'invoices', 'journals', 'payments', 'receipts'].includes(state.kind)) box.append(el('a', {text: state.kind==='invoices'?'Print Tax Invoice':'Print PDF', class: 'aca-primary', target: '_blank', rel: 'noopener', href: BASE + '/' + state.kind + '/' + state.id + '/print?company_id=' + state.company_id}));
+            if(state.kind==='invoices' && state.id){
+                if(state.edi_state)box.append(el('span',{class:'aca-mini',text:'E-Invoicing: '+state.edi_state}));
+                if(state.edi_error)box.append(el('div',{class:'aca-alert',text:state.edi_error}));
+                if(state.can_process_edi)box.append(button('Process ZATCA',async()=>{if(await ask('Submit this posted invoice through the configured Saudi e-invoicing service?'))action('process-edi');}));
+            }
             if(state.id && (isMove() || (['payments','receipts'].includes(state.kind) && state.state==='posted'))) box.append(el('a',{text:'Print Journal Entry',class:'aca-print-link',target:'_blank',rel:'noopener',href:BASE+'/'+state.kind+'/'+state.id+'/print?company_id='+state.company_id+'&journal_entry=1'}));
             if (state.id && state.kind === 'bills' && state.state === 'posted' && state.roles.preparer && state.balance_due > 0) box.append(el('a', {text:'Create Payment Voucher',class:'aca-primary',href:BASE+'/payments/new?company_id='+state.company_id+'&bill_id='+state.id}));
             if (state.id && !isPlan() && (state.roles.preparer || state.roles.approver) && ['posted','cancel'].includes(state.state)) {
@@ -389,11 +394,11 @@ import { openAnalyticDistribution } from "./analytic_editor";
             if (state.kind === 'journals') {
                 grid.append(field('Accounting Date', 'date', 'date'), relation('Journal', 'journal_id', 'journal'), field('Reference', 'ref'), field('Payment Reference', 'payment_reference'), relation('Currency', 'currency_id', 'currency'));
             } else if (isBill()) {
-                grid.append(relation('Vendor', 'partner_id', 'partner'), field('Bill Reference', 'ref'), field('Bill Date', 'invoice_date', 'date'),
+                grid.append(relation(state.kind==='invoices'?'Customer':'Vendor', 'partner_id', 'partner'), field(state.kind==='invoices'?'Reference':'Bill Reference', 'ref'), field(state.kind==='invoices'?'Invoice Date':'Bill Date', 'invoice_date', 'date'),
                     field('Accounting Date', 'date', 'date'), relation('Journal', 'journal_id', 'journal'), relation('Currency', 'currency_id', 'currency'),
                     relation('Payment Terms', 'invoice_payment_term_id', 'term'), field('Due Date', 'invoice_date_due', 'date'),
                     field('Payment Reference', 'payment_reference'), relation('Recipient Bank', 'partner_bank_id', 'bank'));
-                if (state.editable) grid.append(label('Auto-complete from Purchase Order', picker('po', null, async row => {
+                if (state.editable && state.kind!=='invoices') grid.append(label('Auto-complete from Purchase Order', picker('po', null, async row => {
                     try {
                         const result = await api('po-lines', {po_id: row.id});
                         if (state.lines.length && !await ask('Replace the current bill lines with this PO’s billable lines?')) return;
@@ -444,9 +449,9 @@ import { openAnalyticDistribution } from "./analytic_editor";
                 const previous=document.activeElement,backdrop=el('div',{class:'aca-dialog-backdrop'}),dialog=el('div',{class:'aca aca-dialog',role:'dialog','aria-modal':'true','aria-label':productId?'Product form':'Create product'});
                 const close=()=>{backdrop.remove();previous?.isConnected&&previous.focus();};
                 dialog.append(el('h3',{text:productId?'Product: '+data.name:'Create Product'}));
-                if(data.shared)dialog.append(el('p',{class:'aca-mini',text:'General details apply across companies. The expense account is saved for the selected company.'}));
+                if(data.shared&&state.kind!=='invoices')dialog.append(el('p',{class:'aca-mini',text:'General details apply across companies. The expense account is saved for the selected company.'}));
                 const grid=el('div',{class:'aca-grid'}),message=el('p',{role:'status',class:'aca-status error'});
-                for(const [title,key,type] of [['Product Name','name','text'],['Internal Reference','default_code','text'],['Barcode','barcode','text'],['Cost','standard_price','number'],['Purchase Description','description_purchase','text']]){
+                for(const [title,key,type] of [['Product Name','name','text'],['Internal Reference','default_code','text'],['Barcode','barcode','text'],[state.kind==='invoices'?'Sales Price':'Cost','standard_price','number'],[state.kind==='invoices'?'Sales Description':'Purchase Description','description_purchase','text']]){
                     const control=input(key,type,values);control.disabled=readonly;grid.append(label(title,control));
                 }
                 for(const [title,key,choices] of [['Product Type','type',[['consu','Goods'],['service','Service']]],['Bill Control Policy','purchase_method',[['receive','On received quantities'],['purchase','On ordered quantities']]]]){
@@ -456,13 +461,13 @@ import { openAnalyticDistribution } from "./analytic_editor";
                 }
                 const tracked=el('input',{type:'checkbox',disabled:readonly,'aria-label':'Track Inventory'});tracked.checked=Boolean(values.is_storable);
                 tracked.addEventListener('change',()=>{values.is_storable=tracked.checked;});grid.append(label('Track Inventory (Goods)',tracked));
-                for(const [title,key,resource] of [['Category','categ_id','product-category'],['Unit of Measure','uom_id','uom'],['Purchase Unit','uom_po_id','uom'],['Expense Account','property_account_expense_id','account']])
+                for(const [title,key,resource] of [['Category','categ_id','product-category'],['Unit of Measure','uom_id','uom'],['Purchase Unit','uom_po_id','uom'],[state.kind==='invoices'?'Income Account':'Expense Account','property_account_expense_id','account']])
                     grid.append(label(title,picker(resource,data[key],row=>{values[key]=row.id;},readonly)));
-                grid.append(el('p',{class:'aca-mini',text:'An empty expense account uses the category account. '+(data.category_expense_account||'')}));
+                grid.append(el('p',{class:'aca-mini',text:(state.kind==='invoices'?'An empty income account uses the category account. ':'An empty expense account uses the category account. ')+(data.category_expense_account||'')}));
                 const taxes=new Map((data.supplier_taxes||[]).map(t=>[t.id,t])),taxBox=el('div'),chips=el('div',{class:'aca-pills'});
                 function drawTaxes(){chips.replaceChildren();for(const tax of taxes.values()){
                     const chip=el('span',{class:'aca-pill',text:tax.name});if(!readonly)chip.append(button('×',()=>{taxes.delete(tax.id);drawTaxes();}));chips.append(chip);}}
-                taxBox.append(picker('tax',null,row=>{taxes.set(row.id,row);drawTaxes();},readonly),chips);drawTaxes();grid.append(label('Purchase Taxes',taxBox));
+                taxBox.append(picker('tax',null,row=>{taxes.set(row.id,row);drawTaxes();},readonly),chips);drawTaxes();grid.append(label(state.kind==='invoices'?'Sales Taxes':'Purchase Taxes',taxBox));
                 const save=button(productId?'Save Product':'Create and Add',async()=>{
                     save.disabled=true;message.textContent='';
                     try{const selected=await api(productId?'product-update':'product-create',{...values,id:productId,supplier_taxes_id:[...taxes.keys()]});
@@ -478,7 +483,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
             const editing=selected.product_updated&&row.product_id===selected.id;
             row.product_id=selected.id;row.product_name=selected.name;
             row.account_id=selected.account_id;row.account_name=selected.account_name;
-            if(!editing){row.name=selected.name;row.product_uom_id=selected.product_uom_id;row.uom_name=selected.uom_name;
+            if(!editing){row.name=state.kind==='invoices'?(selected.description||selected.name):selected.name;if(state.kind==='invoices'&&selected.price_unit!==undefined)row.price_unit=selected.price_unit;row.product_uom_id=selected.product_uom_id;row.uom_name=selected.uom_name;
                 const taxes=selected.tax_ids?.length?selected.tax_ids:(state.default_taxes||[]);row.taxes_id=taxes.map(t=>t.id);row.tax_names=taxes.map(t=>({...t}));}
             revision++;render();schedulePreview();
         }

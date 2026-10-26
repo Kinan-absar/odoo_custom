@@ -18,4 +18,5 @@
         <field name="name">Accounting Monitor</field><field name="category_id" ref="module_category_portal_accounting"/>
         <field name="comment">Read the accounting workspace within configured company and journal boundaries.</field>
     </record>
+    <record id="group_customer_invoicing" model="res.groups"><field name="name">Customer Invoicing</field><field name="category_id" ref="module_category_portal_accounting"/><field name="comment">Customer invoice workspace in allowed company sales journals. May prepare and post invoices (Preparer membership still requires independent approval). Does not grant Sales quotation or native internal access.</field></record>
 </odoo>

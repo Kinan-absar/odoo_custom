@@ -24,8 +24,8 @@ class PortalAccounting(http.Controller):
         return service
 
     def _values(self, service, company, **values):
-        user, roles = service._actor()
-        return dict(company=company, companies=user.sudo().company_ids, roles=roles, kinds=KINDS,
+        user, roles = service._actor(kind=values.get('kind'))
+        return dict(company=company, companies=user.sudo().company_ids, roles=roles, kinds=service._kinds(),
                     configured=bool(company.portal_accounting_journal_ids), quote_plus=quote_plus, **values)
 
     @http.route(BASE, type='http', auth='user', website=True, methods=['GET'])
@@ -34,7 +34,7 @@ class PortalAccounting(http.Controller):
             return request.redirect('/odoo')
         service = self._service()
         company = service._company(company_id)
-        counts = {kind: service._env(company)[spec[0]].search_count(service._domain(company, kind)) for kind, spec in KINDS.items()}
+        counts = {kind: service._env(company)[spec[0]].search_count(service._domain(company, kind)) for kind, spec in service._kinds().items()}
         return request.render(PREFIX + 'home', self._values(service, company, counts=counts))
 
     @http.route(BASE + '/<string:kind>', type='http', auth='user', website=True, methods=['GET'])
@@ -72,7 +72,7 @@ class PortalAccounting(http.Controller):
         company = service._company(company_id)
         try:
             if not record_id:
-                service._actor('preparer')
+                service._actor('preparer', kind=kind)
             data = service._detail(company, kind, record_id)
             if not record_id and kind == 'bills' and kw.get('mr_id'):
                 data = service._mr_bill_draft(company, kw['mr_id'], data)
@@ -134,7 +134,7 @@ class PortalAccounting(http.Controller):
         service = self._service()
         company = service._company(company_id)
         try:
-            service._actor('preparer')
+            service._actor('preparer', kind=kind)
             with request.env.cr.savepoint():
                 record = service._record(company, kind, record_id)
                 record._portal_accounting_lock(version)
@@ -175,14 +175,14 @@ class PortalAccounting(http.Controller):
         company = service._company(company_id)
         record = service._record(company, kind, record_id)
         if journal_entry == '1':
-            if kind not in ('bills','refunds','journals','payments','receipts'):
+            if kind not in ('bills','refunds','invoices','journals','payments','receipts'):
                 raise NotFound()
             if record._name != 'account.move':
                 record = record.move_id
                 if not record:
                     raise UserError(_('Post the voucher before printing its journal entry.'))
             report = 'wm_journal_entry_report.account_journal'
-        elif kind in ('bills', 'refunds'):
+        elif kind in ('bills', 'refunds', 'invoices'):
             report = 'account.account_invoices'
         elif kind == 'journals':
             report = 'wm_journal_entry_report.account_journal'

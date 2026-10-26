@@ -6,19 +6,31 @@ from odoo.exceptions import AccessError, UserError, ValidationError
 class AccountingProducts(models.AbstractModel):
     _inherit = 'absar.portal.accounting.service'
 
-    def _product_selection(self, product, company):
-        account = product.product_tmpl_id.get_product_accounts().get('expense')
+    def _product_selection(self, product, company, kind=None):
+        account = product.product_tmpl_id.get_product_accounts().get('income' if kind=='invoices' else 'expense')
         return dict(id=product.id, name=product.display_name,
                     account_id=account.id if account else False,
                     account_name=account.display_name if account else '',
                     product_uom_id=product.uom_id.id, uom_name=product.uom_id.display_name,
-                    tax_ids=[{'id': t.id, 'name': t.name} for t in product.supplier_taxes_id if t.company_id == company])
+                    **({'price_unit': product.lst_price, 'description': product.description_sale or product.display_name} if kind=='invoices' else {}),
+                    tax_ids=[{'id': t.id, 'name': t.name} for t in (product.taxes_id if kind=='invoices' else product.supplier_taxes_id) if t.company_id == company])
 
     def _accounting_product_version(self, product):
         return '%s|%s' % (product.write_date, product.product_tmpl_id.write_date)
 
     def _product_operation(self, company, kind, operation, data):
-        user, roles = self._actor('preparer' if operation in ('product-create', 'product-update', 'product-defaults') else None)
+        user, roles = self._actor('preparer' if operation in ('product-create', 'product-update', 'product-defaults') else None, kind=kind)
+        self._kind(kind)
+        if kind=='invoices':
+            if operation!='product-read':raise AccessError(_('Use existing sales products; product master changes are made internally.'))
+            product=self._relation(company,'product.product',data.get('id'),['|',('company_id','=',False),('company_id','=',company.id),('sale_ok','=',True)],True)
+            pick=lambda item: {'id':item.id,'name':item.display_name} if item else None
+            account=product.product_tmpl_id.get_product_accounts().get('income')
+            return dict(id=product.id,name=product.name,type=product.type,can_edit=False,shared=not bool(product.company_id),
+                version=self._accounting_product_version(product),categ_id=pick(product.categ_id),uom_id=pick(product.uom_id),uom_po_id=pick(product.uom_id),
+                default_code=product.default_code or '',barcode=product.barcode or '',standard_price=product.lst_price,description_purchase=product.description_sale or '',
+                purchase_method=product.purchase_method,is_storable=bool(product.is_storable),property_account_expense_id=pick(account),
+                category_expense_account=product.categ_id.property_account_income_categ_id.display_name or '',supplier_taxes=[pick(tax) for tax in product.taxes_id if tax.company_id==company])
         if kind not in ('bills', 'refunds') or not company.portal_accounting_journal_ids:
             raise AccessError(_('Products are available in the configured vendor bill workspace.'))
         Product = self._env(company)['product.product']

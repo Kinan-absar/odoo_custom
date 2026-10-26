@@ -14,6 +14,7 @@ from .accounting import _REVIEW_TOKEN
 
 PREFIX = 'absar_portal_accounting.'
 KINDS = {
+    'invoices': ('account.move', 'Customer Invoices', 'out_invoice'),
     'bills': ('account.move', 'Vendor Bills', 'in_invoice'),
     'refunds': ('account.move', 'Vendor Credit Notes', 'in_refund'),
     'journals': ('account.move', 'Miscellaneous Entries', 'entry'),
@@ -28,12 +29,12 @@ class PortalAccountingService(models.AbstractModel):
     _name = 'absar.portal.accounting.service'
     _description = 'Employee portal accounting service'
 
-    def _actor(self, role=None):
+    def _actor(self, role=None, kind=None):
         user = self.env.user
-        roles = {r: user.has_group(PREFIX + 'group_' + r) for r in ('preparer', 'approver', 'monitor', 'accountant')}
+        roles = {r: user.has_group(PREFIX + 'group_' + r) for r in ('preparer', 'approver', 'monitor', 'accountant', 'customer_invoicing')}
         roles['restricted'] = roles['preparer']
-        roles['direct'] = roles['accountant'] and not roles['restricted']
-        roles['preparer'] = roles['preparer'] or roles['accountant']
+        roles['direct'] = (roles['accountant'] or (kind == 'invoices' and roles['customer_invoicing'])) and not roles['restricted']
+        roles['preparer'] = roles['preparer'] or roles['accountant'] or (kind == 'invoices' and roles['customer_invoicing'])
         if not user.active or user._is_public() or not any(roles.values()) or (role and not roles[role]):
             raise AccessError(_('You do not have access to this accounting operation.'))
         if user.has_group('employee_portal_suite.group_attendance_only'):
@@ -53,8 +54,12 @@ class PortalAccountingService(models.AbstractModel):
     def _env(self, company):
         return self.with_context(allowed_company_ids=[company.id]).with_company(company).sudo().env
 
+    def _kinds(self):
+        user,roles=self._actor()
+        return {key:value for key,value in KINDS.items() if (roles['customer_invoicing'] if key=='invoices' else any(user.has_group(PREFIX+'group_'+role) for role in ('preparer','approver','monitor','accountant')))}
+
     def _kind(self, kind):
-        if kind not in KINDS:
+        if kind not in KINDS or kind not in self._kinds():
             raise AccessError(_('Unsupported accounting area.'))
         return KINDS[kind]
 
@@ -173,7 +178,7 @@ class PortalAccountingService(models.AbstractModel):
         return record
 
     def _list(self, company, kind, query='', status='', page=1):
-        self._actor()
+        self._actor(kind=kind)
         model = self._kind(kind)[0]
         domain = self._domain(company, kind)
         if query:
@@ -202,15 +207,15 @@ class PortalAccountingService(models.AbstractModel):
                 'issuer': record.portal_accounting_issuer_id.name or record.create_uid.name}
 
     def _defaults(self, company, kind, partner_id=False):
-        self._actor('preparer')
+        self._actor('preparer', kind=kind)
         self._kind(kind)
-        journal_type = 'purchase' if kind in ('bills','refunds') else 'general' if kind == 'journals' else 'bank'
+        journal_type = 'sale' if kind == 'invoices' else 'purchase' if kind in ('bills','refunds') else 'general' if kind == 'journals' else 'bank'
         journals = self._env(company)['account.journal'].search([
             ('id','in',company.portal_accounting_journal_ids.ids),('company_id','=',company.id),('type','=',journal_type)], order='sequence,id', limit=1)
         partner = self._partner(company, partner_id) if partner_id else self._env(company)['res.partner'].browse()
         currency = partner.with_company(company).property_purchase_currency_id if partner and kind in ('bills','refunds') else self._env(company)['res.currency'].browse()
-        currency = currency or (journals.currency_id if kind in ('bills','refunds','journals') else self._env(company)['res.currency'].browse()) or company.currency_id
-        term = partner.with_company(company).property_supplier_payment_term_id if partner else self._env(company)['account.payment.term'].browse()
+        currency = currency or (journals.currency_id if kind in ('bills','refunds','invoices','journals') else self._env(company)['res.currency'].browse()) or company.currency_id
+        term = (partner.with_company(company).property_payment_term_id if kind == 'invoices' else partner.with_company(company).property_supplier_payment_term_id) if partner else self._env(company)['account.payment.term'].browse()
         result = {'currency_id':currency.id, 'currency_name':currency.name, 'journal_id':journals.id or False,
                   'invoice_payment_term_id':term.id or False, 'selections':{}}
         for key, record in [('journal_id',journals),('currency_id',currency),('invoice_payment_term_id',term)]:
@@ -218,17 +223,19 @@ class PortalAccountingService(models.AbstractModel):
         return result
 
     def _options(self, company, resource, query='', kind='bills', partner_id=False, offset=0, limit=30):
-        self._actor()
+        self._actor(kind=kind)
         self._kind(kind)
         if not company.portal_accounting_journal_ids:
             raise AccessError(_('Configure portal accounting journals before using selections.'))
         cdom = ['|', ('company_id', '=', False), ('company_id', '=', company.id)]
+        if kind=='invoices' and resource not in ('partner','account','product','product-category','tax','analytic','currency','term','uom','tax-grid','project','journal','bank'):
+            raise AccessError(_('This selection is not available for customer invoicing.'))
         spec = {
             'partner': ('res.partner', cdom, 'display_name'),
             'account': ('account.account', [('company_ids', 'in', company.id), ('deprecated', '=', False)], 'display_name'),
             'product-category': ('product.category', [], 'display_name'),
-            'product': ('product.product', cdom + [('purchase_ok', '=', True)], 'display_name'),
-            'tax': ('account.tax', [('company_id', '=', company.id), ('type_tax_use', 'in', ['purchase', 'sale', 'none'] if kind == 'journals' else ['purchase', 'none'])], 'name'),
+            'product': ('product.product', cdom + [('sale_ok' if kind == 'invoices' else 'purchase_ok', '=', True)], 'display_name'),
+            'tax': ('account.tax', [('company_id', '=', company.id), ('type_tax_use', 'in', ['purchase', 'sale', 'none'] if kind == 'journals' else ['sale', 'none'] if kind == 'invoices' else ['purchase', 'none'])], 'name'),
             'analytic': ('account.analytic.account', cdom, 'display_name'),
             'currency': ('res.currency', [('active', '=', True)], 'name'),
             'term': ('account.payment.term', cdom, 'name'),
@@ -249,7 +256,7 @@ class PortalAccountingService(models.AbstractModel):
                 ('move_type', '=', 'in_invoice' if resource == 'bill' else 'out_invoice'),
                 ('state', '=', 'posted'), ('amount_residual', '>', 0)], 'name')
         if resource == 'bank':
-            partner = self._partner(company, partner_id, True)
+            partner = company.partner_id if kind=='invoices' else self._partner(company, partner_id, True)
             spec[resource] = ('res.partner.bank', [('partner_id', '=', partner.id)] + cdom, 'display_name')
         if resource not in spec:
             raise AccessError(_('Unsupported selection.'))
@@ -258,7 +265,9 @@ class PortalAccountingService(models.AbstractModel):
             # Existing receivables can be matched without exposing their invoice forms.
             pass
         if resource == 'journal':
-            if kind in ('bills', 'refunds'):
+            if kind == 'invoices':
+                domain += [('type', '=', 'sale')]
+            elif kind in ('bills', 'refunds'):
                 domain += [('type', '=', 'purchase')]
             elif kind == 'journals':
                 domain += [('type', '=', 'general')]
@@ -279,7 +288,7 @@ class PortalAccountingService(models.AbstractModel):
             if resource == 'analytic':
                 data.update(plan=r.plan_id.root_id.display_name, plan_id=r.plan_id.root_id.id)
             if resource == 'product':
-                data.update(self._product_selection(r, company))
+                data.update(self._product_selection(r, company, kind))
             result.append(data)
         return result
 
@@ -308,7 +317,7 @@ class PortalAccountingService(models.AbstractModel):
 
     def _move_values(self, company, kind, data):
         subtype = self._kind(kind)[2]
-        journal = self._journal(company, data.get('journal_id'), ['general'] if subtype == 'entry' else ['purchase'])
+        journal = self._journal(company, data.get('journal_id'), ['general'] if subtype == 'entry' else ['sale'] if kind == 'invoices' else ['purchase'])
         partner = self._partner(company, data.get('partner_id'), subtype != 'entry')
         currency = self._relation(company, 'res.currency', data.get('currency_id') or company.currency_id.id,
                                   [('active', '=', True)], True)
@@ -351,11 +360,11 @@ class PortalAccountingService(models.AbstractModel):
                     line.update(currency_id=currency.id, amount_currency=self._number(row.get('amount_currency')))
             else:
                 if account.account_type in ('asset_receivable', 'liability_payable'):
-                    raise ValidationError(_('Use an expense or asset account on bill lines; Odoo creates the payable line.'))
+                    raise ValidationError(_('Use a suitable invoice-line account; Odoo creates receivable/payable lines.'))
                 product = self._relation(company, 'product.product', row.get('product_id'),
                                          ['|', ('company_id', '=', False), ('company_id', '=', company.id)])
                 taxes = self._m2m(company, 'account.tax', row.get('taxes_id', []),
-                    [('company_id', '=', company.id), ('type_tax_use', 'in', ['purchase', 'none'])])
+                    [('company_id', '=', company.id), ('type_tax_use', 'in', ['sale', 'none'] if kind == 'invoices' else ['purchase', 'none'])])
                 discount = self._number(row.get('discount'))
                 if not 0 <= discount <= 100:
                     raise ValidationError(_('Discount must be between 0 and 100.'))
@@ -366,6 +375,8 @@ class PortalAccountingService(models.AbstractModel):
                     uom = self._relation(company, 'uom.uom', row['product_uom_id'],
                         [('category_id', '=', product.uom_id.category_id.id)] if product else [], True)
                     line['product_uom_id'] = uom.id
+                if kind == 'invoices' and row.get('purchase_line_id'):
+                    raise ValidationError(_('Purchase lines cannot be linked to customer invoices.'))
                 po_line = self._relation(company, 'purchase.order.line', row.get('purchase_line_id'),
                     [('order_id.company_id', '=', company.id), ('order_id.partner_id', '=', partner.id),
                      ('order_id.state', 'in', ['purchase', 'done'])])
@@ -387,7 +398,7 @@ class PortalAccountingService(models.AbstractModel):
                         narration=str(data.get('narration') or '')[:10000],
                         payment_reference=str(data.get('payment_reference') or '')[:250],
                         partner_bank_id=self._relation(company, 'res.partner.bank', data.get('partner_bank_id'),
-                            [('partner_id', '=', partner.id), '|', ('company_id', '=', False), ('company_id', '=', company.id)]).id or False)
+                            [('partner_id', '=', company.partner_id.id if kind=='invoices' else partner.id), '|', ('company_id', '=', False), ('company_id', '=', company.id)]).id or False)
         return vals
 
     def _voucher_values(self, company, kind, data):
@@ -477,7 +488,7 @@ class PortalAccountingService(models.AbstractModel):
         return vals
 
     def _save(self, company, kind, data):
-        user, roles = self._actor('preparer')
+        user, roles = self._actor('preparer', kind=kind)
         model = self._kind(kind)[0]
         if not company.portal_accounting_journal_ids:
             raise AccessError(_('Configure the company portal accounting journals first.'))
@@ -497,7 +508,17 @@ class PortalAccountingService(models.AbstractModel):
                 raise AccessError(_('This restricted draft belongs to another preparer.'))
             if model == 'account.move':
                 line_key = 'line_ids' if kind == 'journals' else 'invoice_line_ids'
-                vals[line_key] = [Command.clear()] + vals[line_key]
+                if kind == 'invoices':
+                    existing = set(record.invoice_line_ids.ids);seen=set();commands=[]
+                    for row,command in zip(data.get('lines',[]),vals[line_key]):
+                        line_id=self._id(row['id']) if row.get('id') else False
+                        if line_id:
+                            if line_id not in existing or line_id in seen:raise AccessError(_('An invoice line is not available in this invoice.'))
+                            seen.add(line_id);commands.append(Command.update(line_id,command[2]))
+                        else:commands.append(command)
+                    vals[line_key]=commands+[Command.delete(line_id) for line_id in sorted(existing-seen)]
+                else:
+                    vals[line_key] = [Command.clear()] + vals[line_key]
             if kind == 'payments':
                 vals['line_ids'] = [Command.clear()] + vals['line_ids']
                 vals['po_allocation_ids'] = [Command.clear()] + vals['po_allocation_ids']
@@ -515,15 +536,26 @@ class PortalAccountingService(models.AbstractModel):
         return self._detail(company, kind, record.id)
 
     def _act(self, company, kind, record_id, action, data):
-        user, roles = self._actor()
+        user, roles = self._actor(kind=kind)
         record = self._record(company, kind, record_id)
         record._portal_accounting_lock(data.get('version'))
         planned = record._name == 'cash.plan.line'
         comment = str(data.get('comment') or '')[:2000]
         if planned:
             return self._plan_action(company, kind, record, action, data, user, roles)
+        if action == 'process-edi':
+            if kind!='invoices' or not (roles['direct'] or roles['approver']) or record.state!='posted':
+                raise AccessError(_('Posting permission and a posted customer invoice are required.'))
+            if company.country_id.code!='SA' or 'edi_document_ids' not in record._fields or not record.edi_document_ids:
+                raise UserError(_('No Saudi e-invoicing document is configured for this invoice.'))
+            if any(document.state=='to_cancel' for document in record.edi_document_ids):
+                raise UserError(_('An E-Invoicing cancellation is pending. Handle it internally before processing from this workspace.'))
+            method=getattr(record,'action_process_edi_web_services',None)
+            if not callable(method):raise UserError(_('This Odoo installation does not expose the native Process E-Invoicing action.'))
+            method(with_commit=False)
+            return self._detail(company,kind,record.id)
         if action == 'submit':
-            self._actor('preparer')
+            self._actor('preparer', kind=kind)
             if not record.portal_accounting_review_required or record.state != 'draft' or record.portal_accounting_review not in ('draft', 'returned'):
                 raise UserError(_('Only restricted editable drafts can be submitted.'))
             if record.portal_accounting_issuer_id != user:
@@ -531,7 +563,7 @@ class PortalAccountingService(models.AbstractModel):
             record.write({'portal_accounting_review': 'submitted', 'portal_accounting_comment': False})
         elif action in ('return', 'post'):
             if record.portal_accounting_review_required:
-                self._actor('approver')
+                self._actor('approver', kind=kind)
                 if record.state != 'draft' or record.portal_accounting_review != 'submitted':
                     raise UserError(_('Only submitted drafts can be reviewed.'))
                 if record.portal_accounting_issuer_id == user:
@@ -606,12 +638,12 @@ class PortalAccountingService(models.AbstractModel):
                     summary=_('Reset to Draft permission requested'), note=comment)
             action = 'Requested Reset to Draft (document remains posted/cancelled)'
         elif action == 'cancel':
-            self._actor('preparer')
+            self._actor('preparer', kind=kind)
             if record.state != 'draft' or record.portal_accounting_review not in ('draft', 'returned') or (record.portal_accounting_issuer_id != user and not (roles['direct'] and not record.portal_accounting_review_required)):
                 raise AccessError(_('Only an authorized preparer can cancel this draft.'))
             getattr(record, 'button_cancel' if record._name == 'account.move' else 'action_cancel')()
         elif action == 'find':
-            self._actor('preparer')
+            self._actor('preparer', kind=kind)
             if kind not in ('payments', 'receipts') or record.state != 'draft' or record.portal_accounting_review not in ('draft', 'returned'):
                 raise UserError(_('Find matching documents on an editable draft voucher.'))
             if record.portal_accounting_issuer_id != user and not (roles['direct'] and not record.portal_accounting_review_required):
@@ -635,12 +667,12 @@ class PortalAccountingService(models.AbstractModel):
 
     def _plan_action(self, company, kind, record, action, data, user, roles):
         if action == 'request-reset':
-            self._actor('preparer')
+            self._actor('preparer', kind=kind)
             if record.portal_accounting_issuer_id and record.portal_accounting_issuer_id != user:
                 raise AccessError(_('Only the preparer can request a reset.'))
             record.action_reset_to_draft()
         elif action == 'submit':
-            self._actor('preparer')
+            self._actor('preparer', kind=kind)
             if record.portal_accounting_issuer_id and record.portal_accounting_issuer_id != user:
                 raise AccessError(_('Only the preparer can submit this movement.'))
             record.action_submit_to_ceo()
@@ -658,7 +690,7 @@ class PortalAccountingService(models.AbstractModel):
                     approved_amount=self._number(data.get('approved_amount'), True) if action == 'approve' else None,
                     comment=str(data.get('comment') or '')[:2000], reviewer=user)
         elif action == 'create-voucher':
-            self._actor('preparer')
+            self._actor('preparer', kind=kind)
             if kind == 'planned':
                 result = record.action_create_payment_voucher()
                 target_kind, voucher = 'payments', record.payment_voucher_id
@@ -695,10 +727,10 @@ class PortalAccountingService(models.AbstractModel):
         return len(records)
 
     def _detail(self, company, kind, record_id=None):
-        user, roles = self._actor()
+        user, roles = self._actor(kind=kind)
         model, title, subtype = self._kind(kind)
         record = self._record(company, kind, record_id) if record_id else False
-        default_tax = company.account_purchase_tax_id if kind in ('bills', 'refunds') else self.env['account.tax']
+        default_tax = company.account_sale_tax_id if kind == 'invoices' else company.account_purchase_tax_id if kind in ('bills', 'refunds') else self.env['account.tax']
         data = {'id': record.id if record else 0, 'company_id': company.id, 'kind': kind,
                 'default_taxes': [{'id': tax.id, 'name': tax.name} for tax in default_tax],
                 'company_currency_name': company.currency_id.name, 'analytic_names': {}, 'analytic_labels': {},
@@ -738,6 +770,10 @@ class PortalAccountingService(models.AbstractModel):
                 value = record[name]
                 data[name] = value.id or False
                 data['selections'][name] = {'id': value.id, 'name': value.display_name or ''}
+        if kind=='invoices':
+            data['edi_state']=record.edi_state if 'edi_state' in record._fields else ''
+            data['edi_error']=html2plaintext(record.edi_error_message or '') if 'edi_error_message' in record._fields else ''
+            data['can_process_edi']=bool(record.state=='posted' and (roles['direct'] or roles['approver']) and company.country_id.code=='SA' and 'edi_document_ids' in record._fields and any(document.state=='to_send' for document in record.edi_document_ids) and not any(document.state=='to_cancel' for document in record.edi_document_ids) and callable(getattr(record,'action_process_edi_web_services',None)))
         data['currency_name'] = record.currency_id.name
         for name in ('bill_ids', 'invoice_ids', 'purchase_order_ids'):
             if name in record._fields:
@@ -750,7 +786,7 @@ class PortalAccountingService(models.AbstractModel):
             data['warnings'] = '\n'.join(filter(None, [record.abnormal_amount_warning, record.abnormal_date_warning]))
             lines = record.line_ids if kind == 'journals' else record.invoice_line_ids
             for line in lines:
-                row = {'name': line.name or '', 'account_id': line.account_id.id, 'account_name': line.account_id.display_name or '',
+                row = {'id':line.id, 'name': line.name or '', 'account_id': line.account_id.id, 'account_name': line.account_id.display_name or '',
                        'product_id': line.product_id.id, 'product_name': line.product_id.display_name or '',
                        'product_uom_id': line.product_uom_id.id, 'uom_name': line.product_uom_id.display_name or '',
                        'partner_id': line.partner_id.id, 'partner_name': line.partner_id.display_name or '',
@@ -804,6 +840,7 @@ class PortalAccountingService(models.AbstractModel):
 
     def _po_lines(self, company, po_id):
         self._actor('preparer')
+        self._kind('bills')
         po = self._relation(company, 'purchase.order', po_id,
             [('company_id', '=', company.id), ('state', 'in', ['purchase', 'done'])], True)
         data = {'analytic_labels': self._analytic_label_map(company, po.order_line.mapped('analytic_distribution')),
@@ -829,8 +866,8 @@ class PortalAccountingService(models.AbstractModel):
         return data
 
     def _preview(self, company, kind, data):
-        self._actor('preparer')
-        if kind not in ('bills', 'refunds', 'journals'):
+        self._actor('preparer', kind=kind)
+        if kind not in ('bills', 'refunds', 'invoices', 'journals'):
             raise AccessError(_('Preview is available for bills and journal entries.'))
         data = dict(data)
         defaults = self._defaults(company,kind,data.get('partner_id'))

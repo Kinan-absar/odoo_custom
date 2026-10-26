@@ -28,7 +28,8 @@ namespace=dict(AccessError=AccessError,UserError=UserError,ValidationError=Valid
 exec(compile(ast.fix_missing_locations(ast.Module(body=[cls],type_ignores=[])),str(source),'exec'),namespace)
 s=namespace['AccountingProducts']();s._env=lambda c:{'product.product':Products()}
 actor_roles=[]
-s._actor=lambda role=None:(actor_roles.append(role) or (NS(id=1),{'preparer':True}))
+s._actor=lambda role=None, kind=None:(actor_roles.append(role) or (NS(id=1),{'preparer':True}))
+s._kind=lambda kind: None if kind in ('bills','refunds','invoices') else (_ for _ in ()).throw(AccessError())
 choices=[]
 def relation(c,model,rid,domain,required=False):
     choices.append((model,rid,domain))
@@ -71,7 +72,7 @@ for kind,c in [('journals',company),('bills',NS(id=1,portal_accounting_journal_i
     else:raise AssertionError('Unexpected workspace access')
 s._product_operation(company,'bills','product-create',payload)
 assert product.written['company_id']==1 and product.written['purchase_ok'] and product.written['sale_ok'] is False
-s._actor=lambda role=None:(_ for _ in ()).throw(AccessError('no preparer role'))
+s._actor=lambda role=None, kind=None:(_ for _ in ()).throw(AccessError('no preparer role'))
 try:s._product_operation(company,'bills','product-update',payload)
 except AccessError:pass
 else:raise AssertionError('Unauthorized product edit')

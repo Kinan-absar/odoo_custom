@@ -44,7 +44,7 @@ class PortalReview(models.AbstractModel):
 
     def _portal_accounting_validate_submission(self, values=None):
         for record in self:
-            if record._name == 'account.move' and record.move_type in ('in_invoice', 'in_refund'):
+            if record._name == 'account.move' and record.move_type in ('in_invoice', 'in_refund', 'out_invoice'):
                 bill_date = (values or {}).get('invoice_date', record.invoice_date)
                 if not bill_date:
                     raise UserError(_('Set the Bill Date before submitting for approval.'))
@@ -66,7 +66,7 @@ class PortalReview(models.AbstractModel):
         self.ensure_one()
         kind = {'account.payment.voucher': 'payments', 'account.receipt.voucher': 'receipts'}.get(self._name)
         if self._name == 'account.move':
-            kind = {'in_invoice': 'bills', 'in_refund': 'refunds', 'entry': 'journals'}.get(self.move_type)
+            kind = {'out_invoice': 'invoices', 'in_invoice': 'bills', 'in_refund': 'refunds', 'entry': 'journals'}.get(self.move_type)
         if user.share:
             return '/my/employee/accounting/%s/%s?company_id=%s' % (kind, self.id, self.company_id.id)
         return '/web#id=%s&model=%s&view_type=form' % (self.id, self._name)
@@ -82,6 +82,8 @@ class PortalReview(models.AbstractModel):
             if user.has_group('employee_portal_suite.group_attendance_only'):
                 return False
             if user.share:
+                if self._name == 'account.move' and self.move_type == 'out_invoice' and not user.has_group('absar_portal_accounting.group_customer_invoicing'):
+                    return False
                 return bool(user.with_company(self.company_id).employee_id and
                             self.journal_id in self.company_id.portal_accounting_journal_ids)
             try:
@@ -154,7 +156,7 @@ class PortalReview(models.AbstractModel):
         company = service._company(self.company_id.id)
         kind = {'account.payment.voucher':'payments','account.receipt.voucher':'receipts'}.get(self._name)
         if self._name == 'account.move':
-            kind = {'in_invoice':'bills','in_refund':'refunds','entry':'journals'}.get(self.move_type)
+            kind = {'out_invoice':'invoices','in_invoice':'bills','in_refund':'refunds','entry':'journals'}.get(self.move_type)
         if action == 'post' and not self.portal_accounting_can_review:
             raise AccessError(_('An independent Accounting Approver is required.'))
         try:
