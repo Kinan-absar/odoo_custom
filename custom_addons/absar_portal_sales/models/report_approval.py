@@ -21,8 +21,6 @@ class SaleOrderPrintApproval(models.Model):
         required = self._absar_review_permissions(user)['requires_review']
         if not required:
             return True
-        if user.has_group('absar_portal_sales.group_portal_sales_creator') and self.absar_portal_review_state == 'submitted':
-            return True
         return bool(self.absar_portal_review_state == 'approved' and self.absar_portal_approver_id)
 
     @api.depends_context('uid', 'company')
@@ -34,7 +32,7 @@ class SaleOrderPrintApproval(models.Model):
     def _absar_assert_print_approved(self):
         for order in self:
             if not order.absar_can_print:
-                raise UserError(_('Issuers must submit the quotation before printing. Sales Approvers can print before submission.'))
+                raise UserError(_('Issuers must obtain quotation approval before printing. Sales Approvers can print before submission.'))
 
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
