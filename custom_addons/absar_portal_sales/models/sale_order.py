@@ -33,8 +33,16 @@ class SaleOrder(models.Model):
     absar_requires_review = fields.Boolean(compute='_compute_absar_review_buttons')
     absar_can_submit = fields.Boolean(compute='_compute_absar_review_buttons')
     absar_can_approve = fields.Boolean(compute='_compute_absar_review_buttons')
+    absar_can_return = fields.Boolean(compute='_compute_absar_review_buttons')
     absar_can_request_order = fields.Boolean(compute='_compute_absar_review_buttons')
     absar_can_approve_order = fields.Boolean(compute='_compute_absar_review_buttons')
+
+    def _absar_is_sales_approver(self, user):
+        self.ensure_one()
+        return bool(user.active and self.company_id in user.company_ids
+            and user.has_group(_PREFIX+'group_portal_sales_approver')
+            and not user.has_group('employee_portal_suite.group_attendance_only')
+            and (not user.share or user.sudo().with_company(user.company_id).employee_id))
 
     def _absar_review_permissions(self, user):
         self.ensure_one()
@@ -49,6 +57,7 @@ class SaleOrder(models.Model):
             requires_review=bool(self.absar_portal_creator_id or creator),
             can_submit=bool(draft and editable and self.absar_portal_review_state in ('draft','returned')),
             can_approve=bool(draft and reviewer and self.absar_portal_review_state == 'submitted'),
+            can_return=bool(draft and reviewer and self.absar_portal_review_state in ('submitted','approved')),
             can_request_order=bool(draft and editable and self.absar_portal_review_state == 'approved'
                 and self.absar_portal_approver_id and self.absar_order_review_state in ('none','returned')),
             can_approve_order=bool(draft and reviewer and self.absar_portal_review_state == 'approved'
@@ -277,6 +286,10 @@ class SaleOrder(models.Model):
         if self.env.context.get('_absar_sales_confirm_token') is _REVIEW_TOKEN:
             return
         for order in self.sorted('id'):
+            # An approver edits as part of review. Only the explicit Return
+            # action sends the quotation back; never infer a return from a save.
+            if order._absar_is_sales_approver(self.env.user.sudo(False)):
+                continue
             if order.absar_portal_creator_id and order.state in ('draft','sent') and order.absar_portal_review_state in ('submitted','approved'):
                 order._absar_portal_lock()
                 order._absar_review_write({'absar_portal_review_state':'returned','absar_portal_approver_id':False,

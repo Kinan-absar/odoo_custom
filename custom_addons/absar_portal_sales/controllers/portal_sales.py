@@ -46,6 +46,8 @@ class PortalSales(SalesLinesMixin, http.Controller):
         if not order.id:
             self._allowed()
             return
+        if order.state in ('draft','sent') and order._absar_is_sales_approver(request.env.user):
+            return
         if self._operator() and order.state in ('draft','sent') and (not order.absar_portal_creator_id or order.absar_portal_review_state in ('draft','returned')):
             return
         if order.absar_portal_creator_id.id != request.env.user.id or order.absar_portal_review_state not in ('draft','returned') or order.state not in ('draft','sent'):
@@ -106,6 +108,7 @@ class PortalSales(SalesLinesMixin, http.Controller):
         if template == 'absar_portal_sales.sales_detail' and kw.get('order'):
             kw['date_order_local']=self._sales_date_local(kw['order'].date_order)
             kw['line_boot_json'] = json.dumps(self._line_boot(kw['order']))
+            kw['can_print'] = kw['order']._absar_can_print_for(request.env.user)
             kw.update(kw['order']._absar_review_permissions(request.env.user))
         return request.render(template, kw)
 
@@ -468,7 +471,7 @@ class PortalSales(SalesLinesMixin, http.Controller):
     @http.route(BASE + '/<int:order_id>/pdf', type='http', auth='user', website=True)
     def pdf(self,order_id,**kw):
         order=self._order(order_id)
-        if order.state in ('draft','sent') and (order.absar_portal_review_state!='approved' or not order.absar_portal_approver_id): raise Forbidden()
+        if not order._absar_can_print_for(request.env.user): raise Forbidden()
         report='absar_technical_proposal.report_technical_proposal' if order.absar_proposal_type=='technical' else 'sale.report_saleorder'
         content,_=request.env['ir.actions.report'].sudo()._render_qweb_pdf(report,[order.id])
         return request.make_response(content,headers=[('Content-Type','application/pdf'),('Content-Disposition','inline; filename="%s.pdf"' % order.name.replace('/','-'))])

@@ -1,4 +1,4 @@
-"""Enforce quotation approval for backend, portal and direct report requests."""
+"""Role-aware print policy shared by backend, portal and direct reports."""
 from copy import deepcopy
 from lxml import etree
 from odoo import api, fields, models, _
@@ -10,18 +10,29 @@ class SaleOrderPrintApproval(models.Model):
 
     absar_can_print = fields.Boolean(compute='_compute_absar_can_print')
 
-    @api.depends_context('uid')
-    @api.depends('absar_portal_creator_id', 'absar_portal_review_state', 'absar_portal_approver_id')
+    def _absar_can_print_for(self, user):
+        self.ensure_one()
+        if (not user.active or self.company_id not in user.company_ids
+                or user.has_group('employee_portal_suite.group_attendance_only')
+                or (user.share and not user.sudo().with_company(user.company_id).employee_id)):
+            return False
+        if self._absar_is_sales_approver(user):
+            return True
+        required = self._absar_review_permissions(user)['requires_review']
+        if not required:
+            return True
+        return bool(self.absar_portal_review_state == 'approved' and self.absar_portal_approver_id)
+
+    @api.depends_context('uid', 'company')
+    @api.depends('company_id', 'absar_portal_creator_id', 'absar_portal_review_state', 'absar_portal_approver_id')
     def _compute_absar_can_print(self):
         for order in self:
-            required = order._absar_review_permissions(self.env.user.sudo(False))['requires_review']
-            order.absar_can_print = not required or bool(
-                order.absar_portal_review_state == 'approved' and order.absar_portal_approver_id)
+            order.absar_can_print = order._absar_can_print_for(self.env.user.sudo(False))
 
     def _absar_assert_print_approved(self):
         for order in self:
             if not order.absar_can_print:
-                raise UserError(_('Submit the quotation for approval and obtain approval before printing the quotation or pro-forma invoice.'))
+                raise UserError(_('Issuers must obtain quotation approval before printing. Sales Approvers can print before submission.'))
 
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
