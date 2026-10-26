@@ -16,7 +16,7 @@ class InvoiceSources(http.Controller):
         if q:domain+=[('name','ilike',str(q)[:120])]
         page=max(1,min(int(page),100000));records=service._env(company)[model].search(domain,order='id desc',offset=(page-1)*40,limit=40)
         total=service._env(company)[model].search_count(domain)
-        return request.render('absar_portal_accounting.invoice_sources',dict(company=company,companies=request.env.user.sudo().company_ids,configured=bool(company.portal_accounting_journal_ids),kinds=service._kinds(),kind=kind,records=records,page=page,total=total,q=q,message=str(message)[:1000],roles=service._actor(kind='invoices')[1],urlencode=urlencode))
+        return request.render('absar_portal_accounting.invoice_sources',dict(company=company,companies=request.env.user.sudo().company_ids,configured=service._workspace_configured(company, 'invoices'),kinds=service._kinds(),kind=kind,records=records,page=page,total=total,q=q,message=str(message)[:1000],roles=service._actor(kind='invoices')[1],urlencode=urlencode))
 
     @http.route(BASE+'/invoice-sources/<string:kind>/<int:ident>/create',type='http',auth='user',methods=['POST'],csrf=True)
     def create_invoice(self,kind,ident,company_id=None,version=None,**kw):

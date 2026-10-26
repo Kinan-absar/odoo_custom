@@ -94,8 +94,25 @@ class PortalAccountingService(models.AbstractModel):
             raise AccessError(_('A selected record is not available in this company.'))
         return record
 
-    def _journal(self, company, value, types=None, required=True):
-        domain = [('company_id', '=', company.id), ('id', 'in', company.portal_accounting_journal_ids.ids)]
+    def _journal_ids(self, company, kind=None):
+        if kind == 'invoices':
+            self._kind('invoices')
+            # Customer Invoicing grants access to sales journals in this company.
+            # Include archived journals for historical invoice visibility only;
+            # normal selection/default searches still use active_test=True.
+            return self._env(company)['account.journal'].with_context(active_test=False).search([
+                ('company_id', '=', company.id), ('type', '=', 'sale')]).ids
+        return company.portal_accounting_journal_ids.ids
+
+    def _workspace_configured(self, company, kind=None):
+        if kind == 'invoices':
+            return bool(self._journal_ids(company, kind))
+        if kind is None and self._actor()[1]['customer_invoicing']:
+            return bool(company.portal_accounting_journal_ids or self._journal_ids(company, 'invoices'))
+        return bool(company.portal_accounting_journal_ids)
+
+    def _journal(self, company, value, types=None, required=True, kind=None):
+        domain = [('company_id', '=', company.id), ('id', 'in', self._journal_ids(company, kind))]
         if types:
             domain += [('type', 'in', types)]
         return self._relation(company, 'account.journal', value, domain, required)
@@ -148,15 +165,15 @@ class PortalAccountingService(models.AbstractModel):
         model, title, subtype = self._kind(kind)
         domain = [('company_id', '=', company.id)]
         if model == 'account.move':
-            domain += [('move_type', '=', subtype), ('journal_id', 'in', company.portal_accounting_journal_ids.ids)]
+            domain += [('move_type', '=', subtype), ('journal_id', 'in', self._journal_ids(company, kind))]
         elif model == 'cash.plan.line':
             domain += [('flow_type', '=', subtype), '|', ('journal_id', '=', False),
-                       ('journal_id', 'in', company.portal_accounting_journal_ids.ids)]
+                       ('journal_id', 'in', self._journal_ids(company, kind))]
             # Empty configuration must never expose planning records either.
             if not company.portal_accounting_journal_ids:
                 domain += [('id', '=', 0)]
         else:
-            domain += [('journal_id', 'in', company.portal_accounting_journal_ids.ids)]
+            domain += [('journal_id', 'in', self._journal_ids(company, kind))]
         return domain
 
     def _record(self, company, kind, record_id):
@@ -211,7 +228,7 @@ class PortalAccountingService(models.AbstractModel):
         self._kind(kind)
         journal_type = 'sale' if kind == 'invoices' else 'purchase' if kind in ('bills','refunds') else 'general' if kind == 'journals' else 'bank'
         journals = self._env(company)['account.journal'].search([
-            ('id','in',company.portal_accounting_journal_ids.ids),('company_id','=',company.id),('type','=',journal_type)], order='sequence,id', limit=1)
+            ('id','in',self._journal_ids(company, kind)),('company_id','=',company.id),('type','=',journal_type)], order='sequence,id', limit=1)
         partner = self._partner(company, partner_id) if partner_id else self._env(company)['res.partner'].browse()
         currency = partner.with_company(company).property_purchase_currency_id if partner and kind in ('bills','refunds') else self._env(company)['res.currency'].browse()
         currency = currency or (journals.currency_id if kind in ('bills','refunds','invoices','journals') else self._env(company)['res.currency'].browse()) or company.currency_id
@@ -225,7 +242,7 @@ class PortalAccountingService(models.AbstractModel):
     def _options(self, company, resource, query='', kind='bills', partner_id=False, offset=0, limit=30):
         self._actor(kind=kind)
         self._kind(kind)
-        if not company.portal_accounting_journal_ids:
+        if kind != 'invoices' and not company.portal_accounting_journal_ids:
             raise AccessError(_('Configure portal accounting journals before using selections.'))
         cdom = ['|', ('company_id', '=', False), ('company_id', '=', company.id)]
         if kind=='invoices' and resource not in ('partner','account','product','product-category','tax','analytic','currency','term','uom','tax-grid','project','journal','bank'):
@@ -245,7 +262,7 @@ class PortalAccountingService(models.AbstractModel):
             'project': ('project.project', cdom, 'display_name'),
             'category': ('cash.plan.category', cdom + [('flow_type', '=', 'in' if kind == 'planned-receipts' else 'out')], 'name'),
             'run': ('cash.plan.run', [('company_id', '=', company.id), ('state', 'not in', ['done', 'cancel'])], 'name'),
-            'journal': ('account.journal', [('company_id', '=', company.id), ('id', 'in', company.portal_accounting_journal_ids.ids)], 'display_name'),
+            'journal': ('account.journal', [('company_id', '=', company.id), ('id', 'in', self._journal_ids(company, kind))], 'display_name'),
             'po': ('purchase.order', [('company_id', '=', company.id), ('state', 'in', ['purchase', 'done'])], 'name'),
         }
         if resource in ('bill', 'invoice'):
@@ -317,7 +334,7 @@ class PortalAccountingService(models.AbstractModel):
 
     def _move_values(self, company, kind, data):
         subtype = self._kind(kind)[2]
-        journal = self._journal(company, data.get('journal_id'), ['general'] if subtype == 'entry' else ['sale'] if kind == 'invoices' else ['purchase'])
+        journal = self._journal(company, data.get('journal_id'), ['general'] if subtype == 'entry' else ['sale'] if kind == 'invoices' else ['purchase'], kind=kind)
         partner = self._partner(company, data.get('partner_id'), subtype != 'entry')
         currency = self._relation(company, 'res.currency', data.get('currency_id') or company.currency_id.id,
                                   [('active', '=', True)], True)
@@ -490,7 +507,7 @@ class PortalAccountingService(models.AbstractModel):
     def _save(self, company, kind, data):
         user, roles = self._actor('preparer', kind=kind)
         model = self._kind(kind)[0]
-        if not company.portal_accounting_journal_ids:
+        if kind != 'invoices' and not company.portal_accounting_journal_ids:
             raise AccessError(_('Configure the company portal accounting journals first.'))
         vals = self._move_values(company, kind, data) if model == 'account.move' else (
             self._plan_values(company, kind, data) if model == 'cash.plan.line' else self._voucher_values(company, kind, data))

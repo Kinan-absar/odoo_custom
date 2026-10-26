@@ -19,7 +19,7 @@
                 <t t-foreach="kinds.items()" t-as="area"><a t-att-href="'/my/employee/accounting/%s?company_id=%s' % (area[0], company.id)" t-att-class="'is-active' if request.httprequest.path.startswith('/my/employee/accounting/' + area[0] + '/') or request.httprequest.path.rstrip('/') == '/my/employee/accounting/' + area[0] else ''" t-out="area[1][1]"/></t>
             </nav>
         </header>
-        <div class="aca-alert" t-if="not configured">An administrator must select the available journals under Accounting → Configuration → Settings → Employee Portal Accounting before this workspace can be used.</div>
+        <div class="aca-alert" t-if="not configured"><t t-if="kind in ('invoices', 'sales-orders', 'ipcs')">An administrator must configure an active Sales journal for this company.</t><t t-else="">An administrator must select the available journals under Accounting → Configuration → Settings → Employee Portal Accounting before this workspace can be used.</t></div>
     </template>
     <template id="home">
         <t t-call="employee_portal_suite.employee_portal_layout"><section class="aca">

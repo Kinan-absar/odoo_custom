@@ -1,12 +1,12 @@
 <odoo>
  <template id="purchase_workspace_nav" name="Purchase Portal Navigation">
-  <header class="apw-workspace-header" t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')"><div class="apw-workspace-brand"><span class="apw-workspace-icon"><i class="fa fa-shopping-cart" aria-hidden="true"/></span><div><strong>Purchase</strong><small t-out="request.env.company.name"/></div></div><nav class="apw-app-nav" aria-label="Purchase workspace">
+  <header class="apw-workspace-header" t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer') or request.env.user.has_group('customer_vendor_portal.group_vendor_invoice_reviewer')"><div class="apw-workspace-brand"><span class="apw-workspace-icon"><i class="fa fa-shopping-cart" aria-hidden="true"/></span><div><strong>Purchase</strong><small t-out="request.env.company.name"/></div></div><nav class="apw-app-nav" aria-label="Purchase workspace">
    <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')" href="/my/employee/purchase" t-att-class="'active' if request.httprequest.path in ['/my/employee/purchase', '/my/employee/purchase/new'] else ''">Draft Purchase Orders</a>
-   <a t-att-class="'active' if request.httprequest.path.endswith('/orders') else ''" t-att-href="'/my/employee/purchase-monitor' if request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor') else '/my/employee/purchase/orders'">Purchase Orders</a>
-   <a href="/my/employee/purchase/products" t-att-class="'active' if request.httprequest.path.endswith('/products') else ''">Products</a>
+   <a t-att-class="'active' if request.httprequest.path.endswith('/orders') else ''" t-att-href="'/my/employee/purchase-monitor' if request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_monitor') else '/my/employee/purchase/orders'" t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')">Purchase Orders</a>
+   <a href="/my/employee/purchase/products" t-att-class="'active' if request.httprequest.path.endswith('/products') else ''" t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_preparer')">Products</a>
    <a t-if="request.env.user.has_group('absar_portal_purchase_monitor.group_portal_purchase_approver')" href="/my/employee/purchase/approvals">Approvals</a>
    <a t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_admin') or request.env.user.has_group('employee_portal_suite.group_employee_portal_superadmin')" href="/my/employee/purchase/request-control">ER &amp; MR Admin Control</a>
-   </nav>
+   <a href="/my/employee/purchase/vendor-invoices" t-if="request.env.user.has_group('customer_vendor_portal.group_vendor_invoice_reviewer')" t-att-class="'active' if request.httprequest.path.startswith('/my/employee/purchase/vendor-invoices') else ''">Vendor Invoice Review</a></nav>
  </header></template>
  <template id="purchase_product_directory" name="Portal Purchasing Products">
   <t t-call="employee_portal_suite.employee_portal_layout"><section class="apw-shell" id="apw-products" t-att-data-company-id="company.id">

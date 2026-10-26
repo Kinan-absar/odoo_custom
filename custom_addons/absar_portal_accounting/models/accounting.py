@@ -85,7 +85,7 @@ class PortalReview(models.AbstractModel):
                 if self._name == 'account.move' and self.move_type == 'out_invoice' and not user.has_group('absar_portal_accounting.group_customer_invoicing'):
                     return False
                 return bool(user.with_company(self.company_id).employee_id and
-                            self.journal_id in self.company_id.portal_accounting_journal_ids)
+                            (self.journal_id.type == 'sale' if self._name == 'account.move' and self.move_type == 'out_invoice' else self.journal_id in self.company_id.portal_accounting_journal_ids))
             try:
                 self.with_user(user).check_access('write')
                 return True

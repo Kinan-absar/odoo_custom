@@ -18,7 +18,7 @@ class CustomerInvoiceSources(models.AbstractModel):
         source.invalidate_recordset()
         if not version or version!=str(source.write_date):raise UserError(_('This source changed. Reopen it before invoicing.'))
         if source.company_id!=company or source.state not in (['sale','done'] if kind=='sales-orders' else ['approved','done']):raise UserError(_('The source is no longer eligible for invoicing.'))
-        defaults=self._defaults(company,'invoices');journal=self._journal(company,defaults['journal_id'],['sale'])
+        defaults=self._defaults(company,'invoices');journal=self._journal(company,defaults['journal_id'],['sale'],kind='invoices')
         if kind=='sales-orders':
             # Native sale_line_ids and invoiceable/delivered quantities are retained.
             moves=source.with_context(default_journal_id=journal.id)._create_invoices()
@@ -27,13 +27,13 @@ class CustomerInvoiceSources(models.AbstractModel):
         else:
             if source.contract_direction!='inbound':raise AccessError(_('Only customer IPCs can be invoiced here.'))
             contract=source.contract_id
-            self._journal(company,contract.journal_id.id,['sale'])
+            self._journal(company,contract.journal_id.id,['sale'],kind='invoices')
             if contract.company_id!=company or (contract.partner_id.company_id and contract.partner_id.company_id!=company):raise AccessError(_('Contract company mismatch.'))
             for account in (contract.work_account_id|contract.advance_account_id|contract.retention_account_id):self._account(company,account.id)
             if contract.tax_id.company_id!=company or contract.tax_id.type_tax_use not in ('sale','none'):raise UserError(_('Configure a sales tax in this company on the contract.'))
             source.action_create_move();move=source.move_id
         if not move or move.company_id!=company or move.move_type!='out_invoice' or move.state!='draft':raise UserError(_('The native source did not create a draft customer invoice in this company.'))
-        self._journal(company,move.journal_id.id,['sale'])
+        self._journal(company,move.journal_id.id,['sale'],kind='invoices')
         move.write(dict(portal_accounting_issuer_id=user.id,portal_accounting_review_required=roles['restricted']))
         self._audit(move,'Created customer invoice from '+kind,source.display_name)
         return move

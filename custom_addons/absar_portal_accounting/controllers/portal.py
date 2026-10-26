@@ -26,7 +26,7 @@ class PortalAccounting(http.Controller):
     def _values(self, service, company, **values):
         user, roles = service._actor(kind=values.get('kind'))
         return dict(company=company, companies=user.sudo().company_ids, roles=roles, kinds=service._kinds(),
-                    configured=bool(company.portal_accounting_journal_ids), quote_plus=quote_plus, **values)
+                    configured=service._workspace_configured(company, values.get('kind')), quote_plus=quote_plus, **values)
 
     @http.route(BASE, type='http', auth='user', website=True, methods=['GET'])
     def home(self, company_id=None, **kw):
