@@ -1,5 +1,5 @@
 {
- 'name':'ABSAR Portal Sales', 'version':'18.0.1.4.12',
+ 'name':'ABSAR Portal Sales', 'version':'18.0.1.4.13',
  'summary':'Employee Portal quotation and technical proposal preparation with review workflow',
  'author':'ABSAR Al Omran Construction Company','license':'LGPL-3',
  'category':'Sales/Sales','depends':['employee_portal_suite','sale_management','absar_technical_proposal','mail'],
