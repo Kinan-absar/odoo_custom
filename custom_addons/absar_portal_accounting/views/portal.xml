@@ -27,7 +27,7 @@
             <h2>Accounting Workspace</h2><p>Prepare, review and monitor your accounting documents.</p>
             <div class="aca-cards"><a t-foreach="kinds.items()" t-as="area" class="aca-card" t-att-data-area="area[0]" t-att-style="'--card-order:%s' % area_index" t-att-href="'/my/employee/accounting/%s?company_id=%s' % (area[0], company.id)">
                 <div class="aca-card-top"><span class="aca-card-icon" aria-hidden="true"><i t-att-class="'fa ' + {'invoices':'fa-file-text-o','bills':'fa-file-text-o','refunds':'fa-undo','journals':'fa-book','payments':'fa-credit-card','receipts':'fa-sign-in','planned':'fa-calendar-check-o','planned-receipts':'fa-calendar-plus-o'}[area[0]]"/></span><span class="aca-card-arrow" aria-hidden="true">↗</span></div>
-                <span class="aca-card-name" t-out="area[1][1]"/><div class="aca-card-bottom"><div><strong t-out="counts[area[0]]"/><span class="aca-mini"> documents</span></div><span class="aca-card-open">Open workspace →</span></div>
+                <span class="aca-card-name" t-out="area[1][1]"/><div class="aca-card-bottom"><span class="aca-card-open">Open workspace <span aria-hidden="true">→</span></span></div>
             </a></div>
         </section></t>
     </template>
