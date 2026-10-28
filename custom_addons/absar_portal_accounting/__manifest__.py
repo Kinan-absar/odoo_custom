@@ -1,6 +1,6 @@
 {
     'name': 'ABSAR Employee Portal Accounting',
-    'version': '18.0.1.3.8',
+    'version': '18.0.1.3.9',
     'summary': 'Customer invoices, vendor bills, journal entries, vouchers and cash planning in the employee portal',
     'author': 'Kinan',
     'license': 'LGPL-3',
