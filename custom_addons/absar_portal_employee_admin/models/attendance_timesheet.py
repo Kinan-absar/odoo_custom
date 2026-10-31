@@ -94,10 +94,26 @@ class AttendanceTimesheetWizard(models.TransientModel):
     employee_id = fields.Many2one('hr.employee', required=True)
     date_from = fields.Date(required=True, default=lambda self: fields.Date.context_today(self).replace(day=1))
     date_to = fields.Date(required=True, default=fields.Date.context_today)
+    preview_html = fields.Html(string='Timesheet Preview', readonly=True)
 
     @api.onchange('company_id')
     def _onchange_company(self):
         self.employee_id = False
+
+    @api.onchange('company_id', 'employee_id', 'date_from', 'date_to')
+    def _onchange_preview_filters(self):
+        self.preview_html = False
+
+    def action_preview(self):
+        self.ensure_one()
+        values = self.env['absar.attendance.timesheet.service']._data(
+            self.company_id.id, self.employee_id.id, self.date_from, self.date_to)
+        self.preview_html = self.env['ir.ui.view'].sudo()._render_template(
+            'absar_portal_employee_admin.attendance_timesheet_body', values)
+        return {
+            'type': 'ir.actions.act_window', 'name': _('Attendance Timesheet'),
+            'res_model': self._name, 'res_id': self.id, 'view_mode': 'form', 'target': 'new',
+        }
 
     def action_print(self):
         self.ensure_one()
