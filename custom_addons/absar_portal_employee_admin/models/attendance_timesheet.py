@@ -94,7 +94,11 @@ class AttendanceTimesheetWizard(models.TransientModel):
     employee_id = fields.Many2one('hr.employee', required=True)
     date_from = fields.Date(required=True, default=lambda self: fields.Date.context_today(self).replace(day=1))
     date_to = fields.Date(required=True, default=fields.Date.context_today)
-    preview_html = fields.Html(string='Timesheet Preview', readonly=True)
+    has_preview = fields.Boolean(readonly=True)
+    preview_line_ids = fields.One2many('absar.attendance.timesheet.preview.line', 'wizard_id', readonly=True)
+    preview_timezone = fields.Char(string='Timezone', readonly=True)
+    preview_total_hours = fields.Float(string='Total Worked Hours', digits=(16, 2), readonly=True)
+    preview_attendance_days = fields.Integer(string='Days with Attendance', readonly=True)
 
     @api.onchange('company_id')
     def _onchange_company(self):
@@ -102,14 +106,29 @@ class AttendanceTimesheetWizard(models.TransientModel):
 
     @api.onchange('company_id', 'employee_id', 'date_from', 'date_to')
     def _onchange_preview_filters(self):
-        self.preview_html = False
+        self.has_preview = False
+        self.preview_line_ids = [(5, 0, 0)]
+        self.preview_timezone = False
+        self.preview_total_hours = 0.0
+        self.preview_attendance_days = 0
 
     def action_preview(self):
         self.ensure_one()
         values = self.env['absar.attendance.timesheet.service']._data(
             self.company_id.id, self.employee_id.id, self.date_from, self.date_to)
-        self.preview_html = self.env['ir.ui.view'].sudo()._render_template(
-            'absar_portal_employee_admin.attendance_timesheet_body', values)
+        self.write({
+            'has_preview': True,
+            'preview_timezone': values['timezone'],
+            'preview_total_hours': float(values['total_hours']),
+            'preview_attendance_days': values['attendance_days'],
+            'preview_line_ids': [(5, 0, 0)] + [(0, 0, {
+                'sequence': sequence,
+                'attendance_date': datetime.strptime(row['date'], '%d/%m/%Y').date(),
+                'weekday': row['day'], 'check_in_display': row['check_in'],
+                'check_out_display': row['check_out'], 'hours_display': row['hours'],
+                'note': row['note'],
+            }) for sequence, row in enumerate(values['rows'])],
+        })
         return {
             'type': 'ir.actions.act_window', 'name': _('Attendance Timesheet'),
             'res_model': self._name, 'res_id': self.id, 'view_mode': 'form', 'target': 'new',
@@ -122,6 +141,21 @@ class AttendanceTimesheetWizard(models.TransientModel):
         return self.env.ref('absar_portal_employee_admin.action_attendance_timesheet_pdf').report_action(
             self.employee_id, data={'company_id': self.company_id.id, 'employee_id': self.employee_id.id,
                                    'date_from': str(self.date_from), 'date_to': str(self.date_to)})
+
+
+class AttendanceTimesheetPreviewLine(models.TransientModel):
+    _name = 'absar.attendance.timesheet.preview.line'
+    _description = 'Attendance Timesheet Preview Row'
+    _order = 'sequence, id'
+
+    wizard_id = fields.Many2one('absar.attendance.timesheet.wizard', required=True, ondelete='cascade')
+    sequence = fields.Integer()
+    attendance_date = fields.Date(string='Date', readonly=True)
+    weekday = fields.Char(string='Day', readonly=True)
+    check_in_display = fields.Char(string='Check In', readonly=True)
+    check_out_display = fields.Char(string='Check Out', readonly=True)
+    hours_display = fields.Char(string='Worked Hours', readonly=True)
+    note = fields.Char(string='Notes', readonly=True)
 
 
 class AttendanceTimesheetReport(models.AbstractModel):

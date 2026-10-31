@@ -11,7 +11,19 @@
           <field name="date_from"/><field name="date_to"/>
         </group>
         <p class="text-muted">Select an employee and date range, then preview the timesheet before printing.</p>
-        <field name="preview_html" class="aea-timesheet-preview" widget="html" readonly="1" nolabel="1" invisible="not preview_html"/>
+        <field name="has_preview" invisible="1"/>
+        <group string="Summary" invisible="not has_preview">
+          <group><field name="preview_total_hours"/><field name="preview_attendance_days"/></group>
+          <group><field name="preview_timezone"/></group>
+        </group>
+        <field name="preview_line_ids" readonly="1" nolabel="1" invisible="not has_preview">
+          <list create="0" edit="0" delete="0" default_order="sequence" limit="366" open_form_view="0">
+            <field name="sequence" column_invisible="True"/>
+            <field name="attendance_date"/><field name="weekday"/>
+            <field name="check_in_display"/><field name="check_out_display"/>
+            <field name="hours_display"/><field name="note"/>
+          </list>
+        </field>
         <footer><button name="action_preview" type="object" string="Preview" class="btn-primary"/><button name="action_print" type="object" string="Print PDF" class="btn-secondary"/><button special="cancel" string="Close" class="btn-secondary"/></footer>
       </form>
     </field>

@@ -12,6 +12,9 @@ from check_gateway import AccessError, ValidationError, Rec, Records, User, Env,
 
 fixtures.odoo.models.TransientModel = object
 fixtures.odoo.fields.Html = lambda *a, **kw: None
+fixtures.odoo.fields.Boolean = lambda *a, **kw: None
+fixtures.odoo.fields.Float = lambda *a, **kw: None
+fixtures.odoo.fields.One2many = lambda *a, **kw: None
 fixtures.odoo.api = types.SimpleNamespace(onchange=lambda *args: lambda fn: fn, model=lambda fn: fn)
 class DateField:
     to_date = staticmethod(fixtures.Dates.to_date)
@@ -121,34 +124,40 @@ class Tests(unittest.TestCase):
         baseline=ast.literal_eval((root/'__manifest__.py').read_text())
         self.assertIn('views/attendance_timesheet.xml',baseline['data'])
 
-    def test_backend_menu_nested_and_preview_shares_pdf_body(self):
+    def test_backend_menu_and_native_preview_table(self):
         from lxml import etree
         tree=etree.parse(str(fixtures.ROOT/'views/attendance_timesheet.xml'))
         menu=tree.xpath('//menuitem[@id="menu_attendance_timesheet_root"]')[0]
         self.assertEqual(menu.get('parent'),'hr_attendance.menu_hr_attendance_root')
         self.assertTrue(tree.xpath('//button[@name="action_preview"]'))
+        self.assertTrue(tree.xpath('//field[@name="preview_line_ids"]/list'))
+        self.assertFalse(tree.xpath('//field[@name="preview_html"]'))
         self.assertTrue(tree.xpath('//template[@id="attendance_timesheet_pdf"]//t[@t-call="absar_portal_employee_admin.attendance_timesheet_body"]'))
 
     def test_backend_preview_and_clear_on_filter_change(self):
-        rendered=[]
-        class View:
-            def sudo(self):return self
-            def _render_template(self,name,values):
-                rendered.append((name,values));return '<p>Preview</p>'
         self.env['absar.attendance.timesheet.service']=self.service
-        self.env['ir.ui.view']=View()
         wizard=module.AttendanceTimesheetWizard();wizard.env=self.env
         wizard.ensure_one=lambda:None;wizard.id=8
         wizard.company_id=self.company;wizard.employee_id=self.employee
         wizard.date_from=date(2026,10,1);wizard.date_to=date(2026,10,2)
+        writes=[]
+        def write(values):
+            writes.append(values)
+            for key,value in values.items():setattr(wizard,key,value)
+        wizard.write=write
+        self.row(1,'2026-10-01 04:00:00','2026-10-01 12:00:00',7.5)
         action=wizard.action_preview()
         self.assertEqual(action['res_id'],8)
-        self.assertEqual(wizard.preview_html,'<p>Preview</p>')
-        self.assertEqual(rendered[0][0],'absar_portal_employee_admin.attendance_timesheet_body')
+        self.assertTrue(wizard.has_preview)
+        self.assertEqual(wizard.preview_total_hours,7.5)
+        self.assertEqual(wizard.preview_line_ids[1][2]['attendance_date'],date(2026,10,1))
+        self.assertEqual(wizard.preview_line_ids[1][2]['hours_display'],'7.50')
+        self.assertEqual(wizard.preview_line_ids[2][2]['note'],'No attendance recorded')
         wizard._onchange_preview_filters()
-        self.assertFalse(wizard.preview_html)
+        self.assertFalse(wizard.has_preview)
+        self.assertEqual(wizard.preview_line_ids,[(5,0,0)])
         self.user.groups=set()
         with self.assertRaises(AccessError):wizard.action_preview()
-        self.assertEqual(len(rendered),1)
+        self.assertEqual(len(writes),1)
 
 if __name__=='__main__': unittest.main(verbosity=2)
