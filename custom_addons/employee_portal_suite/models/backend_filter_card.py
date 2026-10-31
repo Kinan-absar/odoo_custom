@@ -176,16 +176,38 @@ class EmployeePortalBackendFilterCard(models.Model):
             raise ValidationError(_("The filter domain must evaluate to a list or tuple."))
         return list(domain)
 
+    def _expand_material_stage_domain(self, domain):
+        """Keep existing simple state cards useful with configurable workflows.
+
+        Replace only known MR approval-state leaves; preserve all other filters
+        and boolean operators (project, creator, company, etc.).
+        """
+        aliases = self._material_stage_aliases()
+        result = []
+        for token in domain:
+            if isinstance(token, (tuple, list)) and len(token) == 3 and token[0] == 'state':
+                field, operator, value = token
+                if operator == '=' and isinstance(value, str) and value in aliases:
+                    result.extend(self._domain_for_code('material', value))
+                    continue
+                if operator == 'in' and isinstance(value, (tuple, list)) and any(code in aliases for code in value):
+                    result.extend(expression.OR([self._domain_for_code('material', code) if code in aliases else [('state', '=', code)] for code in value]))
+                    continue
+            result.append(token)
+        return result
+
     def _get_domain(self):
         self.ensure_one()
         if self.filter_type == 'stage':
             choices = []
             names = list(set(self.stage_step_ids.mapped('name') + ([self.stage_name] if self.stage_name else [])))
             if names:
-                choices.append([('approval_stage', 'in', names)])
+                choices.extend([[('approval_stage', '=ilike', name)] for name in names])
             domain = expression.AND([[('state', '=', 'workflow')], expression.OR(choices or [[('id', '=', 0)]])])
         elif self.filter_type == "custom":
             domain = self._evaluate_custom_domain()
+            if self.request_kind == 'material':
+                domain = self._expand_material_stage_domain(domain)
         else:
             domain = self._domain_for_code(self.request_kind, self.code)
         if self.my_requests_only and not (self.filter_type == "predefined" and self.code == "my"):
@@ -212,9 +234,15 @@ class EmployeePortalBackendFilterCard(models.Model):
         }
 
     @api.model
-    def action_refresh_material_stage_cards(self):
+    def action_refresh_material_stage_cards(self, record_ids=None):
+        # List-header object buttons pass an ID list to @api.model methods.
+        # Upgrade XML calls pass none; this action refreshes shared cards in either case.
         # Normal users may read cards, but cannot change the shared configuration.
         self.check_access_rights('write')
+        # Repair labels stored by older revisions from the actual pending snapshot.
+        # This changes display/search metadata only, never approvers or workflow states.
+        workflow_requests = self.env['material.request'].search([('state', '=', 'workflow')])
+        workflow_requests._compute_approval_stage()
         aliases = self._material_stage_aliases()
         labels = {'purchase': 'Purchase Rep', 'store': 'Store Manager', 'project_manager': 'Project Manager',
                   'director': 'Projects Director', 'ceo': 'CEO Approval'}
@@ -232,7 +260,7 @@ class EmployeePortalBackendFilterCard(models.Model):
         ], order='sequence,id')
         names = set(steps.mapped('name'))
         # Keep cards for in-flight snapshots even when the original step was removed.
-        names.update(self.env['material.request'].search([('state', '=', 'workflow')]).mapped('current_approval_line_id.name'))
+        names.update(workflow_requests.mapped('approval_stage'))
         known = {name.strip().casefold() for values in aliases.values() for name in values}
         for index, name in enumerate(sorted(n for n in names if n and n.strip().casefold() not in known)):
             key = name.strip().casefold()
