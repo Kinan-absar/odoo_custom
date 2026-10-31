@@ -1,0 +1,89 @@
+/* Backend-only styling: report HTML is sanitized by the readonly HTML field.
+   Keep presentation in the backend bundle rather than an embedded style tag. */
+.aea-timesheet-wizard .aea-timesheet-preview {
+    display: block;
+    width: 100% !important;
+    max-width: none !important;
+    margin-top: 16px;
+    padding: 20px;
+    border: 1px solid #d5e4e5;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 3px 12px rgba(24, 56, 66, .04);
+    max-height: 54vh;
+    overflow: auto;
+}
+.aea-timesheet-wizard .aea-timesheet-preview .absar-attendance-timesheet {
+    width: 100%;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    color: #243e4d;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.aea-timesheet-wizard .aea-timesheet-preview h2 {
+    margin: 0 0 18px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #087f83;
+    color: #245459;
+    font-size: 20px;
+    font-weight: 650;
+}
+.aea-timesheet-wizard .aea-timesheet-preview table {
+    width: 100% !important;
+    border-collapse: collapse;
+    table-layout: fixed;
+    margin: 16px 0;
+    border: 1px solid #ccdfe0;
+}
+.aea-timesheet-wizard .aea-timesheet-preview th,
+.aea-timesheet-wizard .aea-timesheet-preview td {
+    padding: 10px 12px !important;
+    border: 1px solid #d8e5e6 !important;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+}
+.aea-timesheet-wizard .aea-timesheet-preview th {
+    background: #e8f3f1;
+    color: #245459;
+    font-weight: 650;
+    text-align: left;
+}
+.aea-timesheet-wizard .aea-timesheet-preview table:first-of-type th {width: 16%;}
+.aea-timesheet-wizard .aea-timesheet-preview table:first-of-type td {width: 34%;}
+.aea-timesheet-wizard .aea-timesheet-preview table:nth-of-type(2) th:nth-child(1) {width: 16%;}
+.aea-timesheet-wizard .aea-timesheet-preview table:nth-of-type(2) th:nth-child(2) {width: 14%;}
+.aea-timesheet-wizard .aea-timesheet-preview table:nth-of-type(2) th:nth-child(3) {width: 11%;}
+.aea-timesheet-wizard .aea-timesheet-preview table:nth-of-type(2) th:nth-child(4) {width: 18%;}
+.aea-timesheet-wizard .aea-timesheet-preview table:nth-of-type(2) th:nth-child(5) {width: 14%;}
+.aea-timesheet-wizard .aea-timesheet-preview table:nth-of-type(2) th:nth-child(6) {width: 27%;}
+.aea-timesheet-wizard .aea-timesheet-preview thead th {
+    position: sticky;
+    top: -20px;
+    z-index: 1;
+    box-shadow: 0 1px 0 #bed6d7;
+}
+.aea-timesheet-wizard .aea-timesheet-preview table:nth-of-type(2) tbody tr:nth-child(even) {
+    background: #f5f9f9;
+}
+.aea-timesheet-wizard .aea-timesheet-preview .text-end {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.aea-timesheet-wizard .aea-timesheet-preview .total td {
+    background: #e8f3f1;
+    color: #245459;
+    font-size: 15px;
+    font-weight: 700;
+}
+.aea-timesheet-wizard .aea-timesheet-preview .note {
+    color: #6a7d86;
+    font-size: 11px;
+}
+@media (max-width: 767.98px) {
+    .aea-timesheet-wizard .aea-timesheet-preview {padding: 12px;}
+    .aea-timesheet-wizard .aea-timesheet-preview table:nth-of-type(2) {min-width: 650px;}
+    .aea-timesheet-wizard .aea-timesheet-preview th,
+    .aea-timesheet-wizard .aea-timesheet-preview td {padding: 8px !important;}
+}
