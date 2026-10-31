@@ -1,0 +1,86 @@
+<odoo>
+  <record id="attendance_timesheet_wizard_form" model="ir.ui.view">
+    <field name="name">absar.attendance.timesheet.wizard.form</field>
+    <field name="model">absar.attendance.timesheet.wizard</field>
+    <field name="arch" type="xml">
+      <form string="Print Attendance Timesheet">
+        <group>
+          <field name="company_id" options="{'no_create': True}" groups="base.group_multi_company"/>
+          <field name="company_id" invisible="1" groups="!base.group_multi_company"/>
+          <field name="employee_id" domain="[('company_id', '=', company_id)]" context="{'active_test': False}" options="{'no_create': True, 'no_open': True}"/>
+          <field name="date_from"/><field name="date_to"/>
+        </group>
+        <p>Attendance is selected by check-in date in your timezone. Overnight shifts are included in full. Hours match Odoo worked hours.</p>
+        <footer><button name="action_print" type="object" string="Print PDF" class="btn-primary"/><button special="cancel" string="Cancel" class="btn-secondary"/></footer>
+      </form>
+    </field>
+  </record>
+  <record id="action_attendance_timesheet_wizard" model="ir.actions.act_window">
+    <field name="name">Print Attendance Timesheet</field><field name="res_model">absar.attendance.timesheet.wizard</field>
+    <field name="view_mode">form</field><field name="target">new</field>
+  </record>
+  <menuitem id="menu_attendance_timesheet_root" name="Attendance Reports" sequence="90" groups="hr_attendance.group_hr_attendance_manager"/>
+  <menuitem id="menu_attendance_timesheet" name="Print Attendance Timesheet" parent="menu_attendance_timesheet_root" action="action_attendance_timesheet_wizard" groups="hr_attendance.group_hr_attendance_manager"/>
+
+  <template id="attendance_timesheet_list_button" inherit_id="absar_portal_employee_admin.listing">
+    <xpath expr="//div[@class='aea-heading']" position="inside">
+      <a t-if="kind == 'attendance' and roles['employee']" class="btn btn-outline-primary" t-att-href="base + '/attendance-timesheet?company_id=%s' % company.id">Print Timesheet</a>
+    </xpath>
+  </template>
+  <template id="attendance_timesheet_form" name="Print Attendance Timesheet">
+    <t t-call="employee_portal_suite.employee_portal_layout"><section class="aea">
+      <t t-call="absar_portal_employee_admin.header"/>
+      <div class="aea-heading"><h2>Print Attendance Timesheet</h2></div>
+      <div t-if="error" class="alert alert-danger" role="alert" t-out="error"/>
+      <form method="get" class="aea-filters">
+        <label>Company<select name="company_id" class="form-select"><option t-foreach="companies" t-as="c" t-att-value="c.id" t-att-selected="c == company" t-out="c.name"/></select></label>
+        <button class="btn btn-outline-secondary">Switch Company</button>
+      </form>
+      <form method="post" class="aea-sheet" data-aea-download="true">
+        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+        <input type="hidden" name="company_id" t-att-value="company.id"/>
+        <div class="aea-fields">
+          <div><label for="timesheet-employee">Employee</label><select id="timesheet-employee" name="employee_id" class="form-select" required="required"><option value="">Select employee…</option><option t-foreach="employees" t-as="employee" t-att-value="employee.id" t-att-selected="str(employee.id) == selected_employee"><t t-out="employee.name"/><t t-if="not employee.active"> (Archived)</t></option></select></div>
+          <div><label for="timesheet-from">From Date</label><input id="timesheet-from" name="date_from" type="date" class="form-control" required="required" t-att-value="date_from"/></div>
+          <div><label for="timesheet-to">To Date</label><input id="timesheet-to" name="date_to" type="date" class="form-control" required="required" t-att-value="date_to"/></div>
+        </div>
+        <p class="aea-help mt-3">Attendance is selected by check-in date in your timezone. Overnight shifts are included in full. Hours match Odoo worked hours.</p>
+        <div class="aea-actions"><button class="btn btn-primary">Download PDF</button><a class="btn btn-outline-secondary" t-att-href="base + '/attendance?company_id=%s' % company.id">Cancel</a></div>
+      </form>
+    </section></t>
+  </template>
+
+  <record id="action_attendance_timesheet_pdf" model="ir.actions.report">
+    <field name="name">Attendance Timesheet</field><field name="model">hr.employee</field><field name="report_type">qweb-pdf</field>
+    <field name="report_name">absar_portal_employee_admin.attendance_timesheet_pdf</field>
+    <field name="report_file">absar_portal_employee_admin.attendance_timesheet_pdf</field>
+    <field name="groups_id" eval="[(4, ref('hr_attendance.group_hr_attendance_manager')), (4, ref('absar_portal_employee_admin.group_employee_admin'))]"/>
+  </record>
+  <template id="attendance_timesheet_pdf">
+    <t t-call="web.html_container"><t t-set="o" t-value="employee"/><t t-call="web.external_layout">
+      <div class="page absar-attendance-timesheet">
+        <style>
+          .absar-attendance-timesheet {font-size:12px;color:#243e4d;}
+          .absar-attendance-timesheet h2 {font-size:21px;color:#087f83;margin:12px 0 18px;}
+          .absar-attendance-timesheet table {width:100%;border-collapse:collapse;margin:14px 0;}
+          .absar-attendance-timesheet th,.absar-attendance-timesheet td {border:1px solid #b8cdce;padding:7px 8px;vertical-align:middle;}
+          .absar-attendance-timesheet th {background:#e8f3f1;color:#245459;}
+          .absar-attendance-timesheet thead {display:table-header-group;}
+          .absar-attendance-timesheet tr {page-break-inside:avoid;}
+          .absar-attendance-timesheet .total {background:#e8f3f1;font-weight:bold;}
+          .absar-attendance-timesheet .note {font-size:10px;color:#657780;}
+        </style>
+        <h2>Attendance Timesheet</h2>
+        <table><tbody>
+          <tr><th>Employee</th><td t-out="employee.name"/><th>Department</th><td t-out="employee.department_id.name or '—'"/></tr>
+          <tr><th>From / To</th><td><t t-out="date_from"/> – <t t-out="date_to"/></td><th>Timezone</th><td t-out="timezone"/></tr>
+        </tbody></table>
+        <table><thead><tr><th>Date</th><th>Day</th><th>Check In</th><th>Check Out</th><th class="text-end">Worked Hours</th><th>Notes</th></tr></thead>
+          <tbody><tr t-foreach="rows" t-as="row"><td t-out="row['date']"/><td t-out="row['day']"/><td t-out="row['check_in']"/><td t-out="row['check_out']"/><td class="text-end" t-out="row['hours']"/><td class="note" t-out="row['note']"/></tr></tbody>
+        </table>
+        <table><tbody><tr class="total"><td>Total Worked Hours</td><td class="text-end" t-out="total_hours"/></tr></tbody></table>
+        <p class="note">Hours are decimal hours from Odoo attendance. Entries are selected by check-in date; overnight shifts are shown in full. Open check-ins are excluded from totals. A day without records does not establish absence.</p>
+      </div>
+    </t></t>
+  </template>
+</odoo>

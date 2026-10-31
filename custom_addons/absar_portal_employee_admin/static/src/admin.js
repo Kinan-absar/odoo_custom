@@ -38,6 +38,8 @@ document.addEventListener('click',event=>{
 });
 document.addEventListener('submit',async event=>{
     const form=event.target;if(event.defaultPrevented||!form.closest('.aea'))return;
+    // A file download leaves the form on screen; allow another date range.
+    if(form.dataset.aeaDownload==='true')return;
     if(form.dataset.submitting==='true'||form.dataset.awaitingConfirmation==='true'){event.preventDefault();return;}
     if(dirty&&form.classList.contains('aea-operation')){
         event.preventDefault();
