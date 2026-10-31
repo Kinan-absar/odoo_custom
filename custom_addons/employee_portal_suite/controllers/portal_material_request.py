@@ -341,7 +341,9 @@ class EmployeePortalMaterialRequests(http.Controller):
         ]
         approved_list = Material.search(approved_domain, order="id desc")
         dynamic_approved = Material.search([('approval_line_ids.approved_by', '=', user.id)], order='id desc')
-        approved_list = Material.browse(list(dict.fromkeys(approved_list.ids + dynamic_approved.ids)))
+        # Sort the combined history, not each workflow source separately.
+        # Otherwise recent configurable approvals follow every legacy approval.
+        approved_list = Material.browse(sorted(set(approved_list.ids + dynamic_approved.ids), reverse=True))
 
         # ---------------------------------------------------------
         # 3) REJECTED LIST — ONLY if user rejected
