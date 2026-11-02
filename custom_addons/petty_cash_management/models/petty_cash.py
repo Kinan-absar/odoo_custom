@@ -295,7 +295,7 @@ class PettyCash(models.Model):
                     'res_model': 'account.move',
                     'res_id': move.id,
                 })
-            rec.message_post(body=f"Draft Journal Entry <b>{move.name}</b> created.")
+            rec.message_post(body=_("Draft Journal Entry created: %s") % (move.name or move.ref or rec.name))
 
             return {
                 'type': 'ir.actions.act_window',

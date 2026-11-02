@@ -32,7 +32,7 @@
    <div class="box"><table><tbody>
     <tr><th style="width:16%">Submitted By</th><td style="width:34%" t-out="o.user_id.name"/><th style="width:16%">Date</th><td style="width:34%"><span t-field="o.date"/></td></tr>
     <tr><th>Petty Cash Account</th><td t-out="o.petty_cash_account_id.display_name"/><th>Journal</th><td t-out="o.journal_id.name"/></tr>
-    <tr><th>Status</th><td t-out="dict(o._fields['state']._description_selection(o.env)).get(o.state,o.state)"/><th>Voucher</th><td t-out="o.journal_entry_id.name or 'Not created'"/></tr>
+    <tr><th>Status</th><td t-out="dict(o._fields['state']._description_selection(o.env)).get(o.state,o.state)"/><th>Voucher</th><td t-out="(o.journal_entry_id.name or ('Draft Entry (%s)' % o.name)) if o.journal_entry_id else 'Not created'"/></tr>
    </tbody></table></div>
    <div class="section">Expense Details · <span t-out="o.currency_id.name"/></div>
    <div class="box"><table class="expenses"><thead><tr>

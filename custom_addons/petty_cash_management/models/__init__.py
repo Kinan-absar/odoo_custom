@@ -5,3 +5,4 @@ from . import petty_cash_user_config
 
 
 from . import review_workflow
+from . import account_move

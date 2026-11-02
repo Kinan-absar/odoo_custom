@@ -1,6 +1,6 @@
 {
     'name': 'Petty Cash Management',
-    'version': '18.0.1.3.1',
+    'version': '18.0.1.3.3',
     'author': 'Kinan',
     'website': 'absar-alomran.com',
     'category': 'Accounting',
@@ -50,6 +50,7 @@
         'views/petty_cash_line_views.xml',
         'views/petty_cash_views.xml', 'views/review_return.xml',     # <-- action defined here (must load first)
         'views/res_config_settings_views.xml',
+        'views/account_move_views.xml',
         'views/menus.xml',                # <-- menu referencing action (must load last)
         'wizard/petty_cash_import_wizard_views.xml',
     ],
