@@ -1,23 +1,13 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
     <!-- Main App Menu (Root Application) -->
-    <menuitem id="petty_cash_main_app"
-              name="Petty Cash"
-              sequence="10"
-              web_icon="petty_cash_management,static/description/icon.png"/>
+    <menuitem id="petty_cash_main_app" name="Petty Cash" sequence="10" web_icon="petty_cash_management,static/description/icon.png"/>
 
     <!-- Petty Cash Reports Menu -->
-    <menuitem id="menu_petty_cash_reports"
-              name="Petty Cash Reports"
-              parent="petty_cash_main_app"
-              action="action_petty_cash"/>
+    <menuitem id="menu_petty_cash_reports" name="Petty Cash Reports" parent="petty_cash_main_app" action="action_petty_cash" groups="petty_cash_management.group_petty_cash_user,petty_cash_management.group_petty_cash_accountant,petty_cash_management.group_petty_cash_reviewer_1,petty_cash_management.group_petty_cash_reviewer_2,petty_cash_management.group_petty_cash_manager"/>
 
     <!-- Categories Menu -->
-    <menuitem id="menu_petty_cash_categories"
-              name="Categories"
-              parent="petty_cash_main_app"
-              action="action_petty_cash_category"/>
+    <menuitem id="menu_petty_cash_categories" name="Categories" parent="petty_cash_main_app" action="action_petty_cash_category"/>
 
     <record id="action_petty_cash_settings" model="ir.actions.act_window">
         <field name="name">Petty Cash Settings</field>
@@ -26,11 +16,7 @@
         <field name="target">inline</field>
     </record>
 
-   <menuitem id="menu_petty_cash_config"
-          name="Configuration"
-          parent="petty_cash_main_app"
-          action="action_petty_cash_user_config"
-          groups="petty_cash_management.group_petty_cash_accountant"/>
+   <menuitem id="menu_petty_cash_config" name="Configuration" parent="petty_cash_main_app" action="action_petty_cash_user_config" groups="petty_cash_management.group_petty_cash_accountant"/>
 
 
 </odoo>

@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
     <record id="view_petty_cash_form" model="ir.ui.view">
@@ -9,78 +8,41 @@
 
             <header>
             <!-- IMPORT EXCEL (Users only, Draft only) -->
-            <button name="action_open_import_wizard"
-                    type="object"
-                    string="Import Excel"
-                    class="btn-primary"
-                    groups="petty_cash_management.group_petty_cash_user"
-                    invisible="state != 'draft'"/>
+            <button name="action_open_import_wizard" type="object" string="Import Excel" class="btn-primary" groups="petty_cash_management.group_petty_cash_user" invisible="state != 'draft'"/>
 
             <!-- SUBMIT (Users only, Draft only) -->
-            <button name="action_submit"
-                    type="object"
-                    string="Submit"
-                    class="btn-primary"
-                    groups="petty_cash_management.group_petty_cash_user"
-                    invisible="state != 'draft'"/>
+            <button name="action_submit" type="object" string="Submit" class="btn-primary" groups="petty_cash_management.group_petty_cash_user" invisible="state != 'draft'"/>
 
             <!-- Print -->
-            <button name="%(petty_cash_report_action)d"
-                    string="Print"
-                    type="action"
-                    class="btn-primary"/>
+            <button name="%(petty_cash_report_action)d" string="Print" type="action" class="btn-primary"/>
 
             <!-- APPROVE (Accountants only, Submitted only) -->
-            <button name="action_approve"
-                    type="object"
-                    string="Approve"
-                    class="btn-success"
-                    groups="petty_cash_management.group_petty_cash_accountant"
-                    invisible="state != 'submitted'"/>
-
-            <!-- REJECT (Accountants only, Submitted only) -->
-            <button name="action_refuse"
-                    type="object"
-                    string="Reject"
-                    class="btn-secondary"
-                    groups="petty_cash_management.group_petty_cash_accountant"
-                    invisible="state != 'submitted'"/>
+            <button name="action_approve" type="object" string="Complete Review 1" invisible="not can_review_stage or state != 'submitted'" class="btn-success"/><button name="action_approve" type="object" string="Complete Review 2" invisible="not can_review_stage or state != 'review_2'" class="btn-success"/><button name="action_approve" type="object" string="Approve" invisible="not can_review_stage or state != 'manager_approval'" class="btn-success"/><!-- REJECT (Accountants only, Submitted only) -->
+            <button name="action_refuse" type="object" string="Return for Correction" class="btn-secondary" invisible="not can_review_stage"/>
 
             <!-- RESET TO DRAFT (Accountants only, Approved or Refused) -->
-            <button name="action_reset_to_draft"
-                    type="object"
-                    string="Reset to Draft"
-                    class="btn-secondary"
-                    groups="petty_cash_management.group_petty_cash_accountant"
-                    invisible="not(state in ['approved','refused'])"/>
+            <button name="action_reset_to_draft" type="object" string="Reset to Draft" class="btn-secondary" invisible="state not in ['approved','refused'] or journal_entry_id" groups="petty_cash_management.group_petty_cash_manager"/>
 
             <!-- CREATE JOURNAL ENTRY (Accountants only, Approved only, not already created) -->
-            <button name="action_create_journal_entry"
-                    type="object"
-                    string="Create Journal Entry"
-                    class="btn-primary"
-                    groups="petty_cash_management.group_petty_cash_accountant"
-                    invisible="state != 'approved' or journal_entry_id"/>
+            <button name="action_create_journal_entry" type="object" string="Create Voucher" class="btn-primary" invisible="not can_create_voucher"/>
                         <field name="state" widget="statusbar"/>
-            </header>
+            <button name="action_open_voucher" type="object" string="Open Voucher" invisible="not can_open_voucher"/><field name="can_review_stage" invisible="1"/><field name="can_create_voucher" invisible="1"/><field name="can_open_voucher" invisible="1"/></header>
                 <sheet>
                     <group>
                         <field name="name"/>
-                        <field name="user_id"/>
-                        <field name="date"/>
-                        <field name="petty_cash_account_id"/>
-                        <field name="input_vat_account_id"/>
-                        <field name="journal_id"/>
-                        <field name="journal_entry_id" 
-                               readonly="1"
-                               groups="petty_cash_management.group_petty_cash_accountant"/>
+                        <field name="user_id" readonly="state != 'draft'"/>
+                        <field name="date" readonly="state != 'draft'"/>
+                        <field name="petty_cash_account_id" readonly="state != 'draft'"/>
+                        <field name="input_vat_account_id" readonly="state != 'draft'"/>
+                        <field name="journal_id" readonly="state != 'draft'"/>
+                        <field name="journal_entry_id" readonly="1" groups="petty_cash_management.group_petty_cash_accountant"/>
                     </group>
 
                     <notebook>
                         <page string="Expense Lines">
-                           <field name="line_ids" context="{'default_petty_cash_id': id}" mode="list,form"/>
+                           <field name="line_ids" context="{'default_petty_cash_id': id}" mode="list,form" readonly="state != 'draft'"/>
                            </page>
-                    </notebook>
+                    <page string="Review History"><group><field name="review_1_by"/><field name="review_1_date"/><field name="review_2_by"/><field name="review_2_date"/><field name="manager_approved_by"/><field name="manager_approved_date"/><field name="correction_reason"/><field name="returned_by"/><field name="returned_date"/></group></page></notebook>
                 </sheet>
                 <chatter/>
             </form>
@@ -96,12 +58,7 @@
                 <field name="user_id"/>
                 <field name="date"/>
                 <field name="amount_total"/>
-                <field name="state" 
-                    widget="badge"
-                    decoration-success="state == 'approved'"
-                    decoration-warning="state == 'submitted'"
-                    decoration-danger="state == 'refused'"
-                    decoration-muted="state == 'draft'"/>
+                <field name="state" widget="badge" decoration-success="state == 'approved'" decoration-warning="state in ['submitted','review_2','manager_approval']" decoration-danger="state == 'refused'" decoration-muted="state == 'draft'"/>
             </list>
         </field>
     </record>

@@ -1,7 +1,8 @@
 from odoo import http, fields
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import NotFound, Forbidden
+from odoo.exceptions import UserError, AccessError
 import base64
 from markupsafe import Markup
 
@@ -11,8 +12,9 @@ def _petty_status_badge(rec):
         return Markup('<span class="badge bg-success">Approved</span>')
     if rec.state == "refused":
         return Markup('<span class="badge bg-danger">Rejected</span>')
-    if rec.state == "submitted":
-        return Markup('<span class="badge bg-warning text-dark">Submitted</span>')
+    if rec.state in ('submitted','review_2','manager_approval'):
+        label={'submitted':'Review 1','review_2':'Review 2','manager_approval':'Manager Approval'}[rec.state]
+        return Markup('<span class="badge bg-warning text-dark">%s</span>') % label
     if rec.state == "draft":
         return Markup('<span class="badge bg-light text-dark border">Draft</span>')
     return Markup('<span class="badge bg-secondary">Unknown</span>')
@@ -21,9 +23,7 @@ def _petty_status_badge(rec):
 class PortalPettyCash(CustomerPortal):
 
     def _is_portal_approver(self):
-        return request.env.user.has_group(
-            'petty_cash_management.group_portal_petty_cash_approver'
-        )
+        return request.env['petty.cash']._is_review_user()
 
     def _get_report_attachments(self, report):
         """Return report-level attachments visible in backend chatter/portal.
@@ -57,7 +57,7 @@ class PortalPettyCash(CustomerPortal):
 
     def _get_report_for_view(self, report_id, allow_owner=True, allow_approver=True):
         report = request.env['petty.cash'].sudo().browse(report_id).exists()
-        if not report:
+        if not report or report.company_id not in request.env.user.company_ids:
             return False
 
         is_owner = report.user_id.id == request.env.user.id
@@ -65,7 +65,7 @@ class PortalPettyCash(CustomerPortal):
 
         if allow_owner and is_owner:
             return report
-        if allow_approver and is_approver and report.state != 'draft':
+        if allow_approver and is_approver and (report.state != 'draft' or request.env.user in (report.review_1_by | report.review_2_by | report.manager_approved_by | report.returned_by)):
             return report
         return False
 
@@ -74,8 +74,10 @@ class PortalPettyCash(CustomerPortal):
     # -------------------------------
     @http.route(['/my/employee/petty-cash'], type='http', auth="user", website=True)
     def portal_my_petty_cash(self, **kwargs):
+        request.env['portal.report.seen'].sudo()._mark_seen(request.env.user.id,'petty_result')
         reports = request.env['petty.cash'].sudo().search([
-            ('user_id', '=', request.env.user.id)
+            ('user_id', '=', request.env.user.id),
+            ('company_id','in',request.env.user.company_ids.ids)
         ])
 
         return request.render(
@@ -95,17 +97,20 @@ class PortalPettyCash(CustomerPortal):
         if not self._is_portal_approver():
             return request.redirect('/my')
 
-        allowed_statuses = {'submitted', 'approved', 'refused', 'all'}
+        allowed_statuses = {'submitted','review_2','manager_approval','approved','refused','all'}
         if status not in allowed_statuses:
             status = 'submitted'
 
-        domain = [('state', '!=', 'draft')]
+        domain = [('state', '!=', 'draft'),('company_id','in',request.env.user.company_ids.ids)]
         if status != 'all':
-            domain.append(('state', '=', status))
+            domain.append(('state','in',['submitted','review_2','manager_approval']) if status=='submitted' else ('state','=',status))
 
         reports = request.env['petty.cash'].sudo().search(domain, order='id desc')
         attachment_counts = {report.id: len(self._get_report_attachments(report)) for report in reports}
-        pending_count = request.env['petty.cash'].sudo().search_count([('state', '=', 'submitted')])
+        pending_count = request.env['petty.cash'].sudo().search_count([('state','in',['submitted','review_2','manager_approval']),('company_id','in',request.env.user.company_ids.ids)])
+        request.env['portal.report.seen'].sudo()._mark_seen(request.env.user.id,'petty_review')
+        if status in ('approved','refused','all'):
+            request.env['portal.report.seen'].sudo()._mark_seen(request.env.user.id,'petty_result')
 
         return request.render(
             'petty_cash_management_portal_bridge.portal_petty_cash_approvals',
@@ -143,7 +148,11 @@ class PortalPettyCash(CustomerPortal):
                 'status_badge': _petty_status_badge,
                 'is_owner': is_owner,
                 'is_approver_view': is_approver_view,
-                'can_approve': self._is_portal_approver() and report.state == 'submitted',
+                'can_approve': report._can_review(request.env.user),
+                'review_label': {'submitted':'Complete Review 1','review_2':'Complete Review 2','manager_approval':'Approve'}.get(report.state,'Review'),
+                'can_create_voucher': self._is_portal_approver() and report.state=='approved' and not report.journal_entry_id,
+                'can_open_voucher': self._is_portal_approver() and bool(report.journal_entry_id),
+                'error': str(kwargs.get('error') or '')[:1000],
                 'back_url': '/my/employee/petty-cash' if is_owner else '/my/employee/petty-cash/approvals',
             }
         )
@@ -303,10 +312,15 @@ class PortalPettyCash(CustomerPortal):
             return request.redirect('/my')
 
         report = self._get_report_for_view(report_id, allow_owner=False, allow_approver=True)
-        if not report or report.state != 'submitted':
+        if not report or not report._can_review(request.env.user):
             return request.redirect('/my/employee/petty-cash/approvals')
 
-        request.env['petty.cash'].browse(report.id).action_portal_approve()
+        try:
+            with request.env.cr.savepoint():
+                request.env['petty.cash'].with_context(allowed_company_ids=request.env.user.company_ids.ids).browse(report.id).action_portal_approve()
+        except (AccessError,UserError) as exc:
+            from urllib.parse import urlencode
+            return request.redirect('/my/employee/petty-cash/%s?' % report.id + urlencode({'error':str(exc)}))
         return request.redirect(f'/my/employee/petty-cash/{report.id}?decision=approved')
 
     @http.route('/my/employee/petty-cash/<int:report_id>/reject', type='http', auth='user', website=True, methods=['POST'])
@@ -315,8 +329,44 @@ class PortalPettyCash(CustomerPortal):
             return request.redirect('/my')
 
         report = self._get_report_for_view(report_id, allow_owner=False, allow_approver=True)
-        if not report or report.state != 'submitted':
+        if not report or not report._can_review(request.env.user):
             return request.redirect('/my/employee/petty-cash/approvals')
 
-        request.env['petty.cash'].browse(report.id).action_portal_refuse()
+        try:
+            with request.env.cr.savepoint():
+                request.env['petty.cash'].with_context(allowed_company_ids=request.env.user.company_ids.ids).browse(report.id).action_portal_refuse(post.get('reason'))
+        except (AccessError,UserError) as exc:
+            from urllib.parse import urlencode
+            return request.redirect('/my/employee/petty-cash/%s?' % report.id + urlencode({'error':str(exc)}))
         return request.redirect(f'/my/employee/petty-cash/{report.id}?decision=rejected')
+
+    @http.route('/my/employee/petty-cash/<int:report_id>/return', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def portal_return_report(self, report_id, **post):
+        report=self._get_report_for_view(report_id,allow_owner=False)
+        if not report:raise Forbidden()
+        try:
+            request.env['petty.cash'].with_context(allowed_company_ids=request.env.user.company_ids.ids).browse(report.id)._return_or_refuse(post.get('reason'))
+        except (AccessError,UserError) as exc:
+            from urllib.parse import urlencode
+            return request.redirect('/my/employee/petty-cash/%s?' % report.id + urlencode({'error':str(exc)}))
+        return request.redirect('/my/employee/petty-cash/approvals')
+
+    @http.route('/my/employee/petty-cash/<int:report_id>/create-voucher', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def portal_create_voucher(self, report_id, **post):
+        report=self._get_report_for_view(report_id,allow_owner=False)
+        if not report:raise Forbidden()
+        try:
+            with request.env.cr.savepoint():
+                request.env['petty.cash'].with_context(allowed_company_ids=request.env.user.company_ids.ids).browse(report.id).action_create_journal_entry()
+        except (AccessError,UserError) as exc:
+            from urllib.parse import urlencode
+            return request.redirect('/my/employee/petty-cash/%s?' % report.id + urlencode({'error':str(exc)}))
+        return request.redirect('/my/employee/petty-cash/%s/voucher' % report.id)
+
+    @http.route('/my/employee/petty-cash/<int:report_id>/voucher', type='http', auth='user', website=True, methods=['GET'])
+    def portal_view_voucher(self, report_id, **kw):
+        report=self._get_report_for_view(report_id,allow_owner=False)
+        if not report or not self._is_portal_approver() or not report.journal_entry_id:raise Forbidden()
+        move=report.journal_entry_id
+        if move.company_id!=report.company_id:raise Forbidden()
+        return request.render('petty_cash_management_portal_bridge.portal_petty_cash_voucher',{'report':report,'move':move})

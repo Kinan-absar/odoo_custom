@@ -1,113 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-
-    <template id="petty_cash_report_pdf_template">
-        <t t-call="web.external_layout">
-
-            <t t-foreach="docs" t-as="o">
-
-                <main class="mt32 mb32">
-                    <div class="page">
-
-                        <h2 class="text-center">
-                            <strong>Petty Cash Report</strong>
-                        </h2>
-                        <h4 class="text-center" t-esc="o.name"/>
-
-                        <!-- BASIC INFO -->
-                        <table class="table table-sm mt-3">
-                            <tr>
-                                <th>Date:</th>
-                                <td><t t-esc="o.date"/></td>
-                            </tr>
-                            <tr>
-                                <th>Submitted By:</th>
-                                <td><t t-esc="o.user_id.name"/></td>
-                            </tr>
-                            <tr>
-                                <th>Petty Cash Account:</th>
-                                <td>
-                                    <t t-esc="o.petty_cash_account_id.code"/> -
-                                    <t t-esc="o.petty_cash_account_id.name"/>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>Journal:</th>
-                                <td><t t-esc="o.journal_id.name"/></td>
-                            </tr>
-                        </table>
-
-
-                        <!-- EXPENSE LINES -->
-                        <h4 class="mt-4">Expense Lines</h4>
-
-                        <table class="table table-bordered table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Invoice</th>
-                                    <th>PO</th>
-                                    <th>MR</th>
-                                    <th>Zone</th>
-                                    <th>Category</th>
-                                    <th class="text-right">Before VAT</th>
-                                    <th class="text-right">VAT</th>
-                                    <th class="text-right">Total</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                <t t-foreach="o.line_ids" t-as="line">
-                                    <tr>
-                                        <td><t t-esc="line.date"/></td>
-                                        <td><t t-esc="line.description"/></td>
-                                        <td><t t-esc="line.invoice_number"/></td>
-                                        <td><t t-esc="line.po_number"/></td>
-                                        <td><t t-esc="line.mr_number"/></td>
-                                        <td><t t-esc="line.zone"/></td>
-                                        <td><t t-esc="line.category_id.name"/></td>
-
-                                        <td class="text-right">
-                                           <t t-esc="o.currency_id.symbol + ' ' + ('%.2f' % line.amount_before_vat)"/>
-                                        </td>
-
-                                        <td class="text-right">
-                                            <t t-esc="o.currency_id.symbol + ' ' + ('%.2f' % line.vat_amount)"/>
-                                        </td>
-
-                                        <td class="text-right">
-                                            <t t-esc="o.currency_id.symbol + ' ' + ('%.2f' % line.amount_total)"/>
-                                        </td>
-                                    </tr>
-                                </t>
-                            </tbody>
-                        </table>
-
-
-                        <!-- TOTALS -->
-                        <h4 class="mt-4">Totals</h4>
-                        <table class="table table-sm">
-                            <tr>
-                                <th>Untaxed:</th>
-                                <td><t t-esc="o.currency_id.symbol + ' ' + ('%.2f' % o.amount_untaxed)"/></td>
-                            </tr>
-                            <tr>
-                                <th>VAT:</th>
-                                <td><t t-esc="o.currency_id.symbol + ' ' + ('%.2f' % o.amount_vat)"/></td>
-                            </tr>
-                            <tr>
-                                <th>Total:</th>
-                                <td><t t-esc="o.currency_id.symbol + ' ' + ('%.2f' % o.amount_total)"/></td>
-                            </tr>
-                        </table>
-
-                    </div>
-                </main>
-
-            </t>
-
-        </t>
-    </template>
-
+ <template id="petty_cash_report_pdf_template">
+  <t t-call="web.html_container"><t t-foreach="docs" t-as="o">
+   <t t-set="company" t-value="o.company_id.sudo()"/><t t-set="layout_document_title" t-value="False"/>
+   <t t-if="env.ref('absar_report_suite.business_layout', raise_if_not_found=False)">
+    <t t-call="absar_report_suite.business_layout"><t t-call="petty_cash_management.petty_cash_report_body"/></t>
+   </t>
+   <t t-else=""><t t-call="web.external_layout"><t t-call="petty_cash_management.petty_cash_report_body"/></t></t>
+  </t></t>
+ </template>
+ <template id="petty_cash_report_body">
+  <div class="page absar-petty-report">
+   <style>
+    .absar-petty-report{font-family:Arial,'Tajawal','Cairo',sans-serif;font-size:11px;line-height:1.4;color:#243e4d;}
+    .absar-petty-report h2{text-align:center;color:#087f83;font-size:21px;margin:10px 0 4px;}
+    .absar-petty-report .ref{text-align:center;font-size:14px;font-weight:bold;margin-bottom:18px;}
+    .absar-petty-report .box{border:1px solid #a9cccc;border-radius:9px;overflow:hidden;margin:12px 0;}
+    .absar-petty-report table{border-collapse:collapse;width:100%;table-layout:fixed;margin:0;}
+    .absar-petty-report th,.absar-petty-report td{padding:7px 6px;vertical-align:top;border:1px solid #d4e3e3;word-wrap:break-word;box-sizing:border-box;}
+    .absar-petty-report th{background:#e8f3f1;color:#245459;font-weight:bold;}
+    .absar-petty-report thead{display:table-header-group;}
+    .absar-petty-report tr{page-break-inside:avoid;}
+    .absar-petty-report .num{text-align:right;font-variant-numeric:tabular-nums;}
+    .absar-petty-report .expenses{font-size:9px;}
+    .absar-petty-report .expenses th,.absar-petty-report .expenses td{padding:6px 3px;}
+    .absar-petty-report .totals{width:44%;margin:16px 0 18px auto;page-break-inside:avoid;}
+    .absar-petty-report .grand td{background:#e8f3f1;color:#087f83;font-weight:bold;font-size:13px;}
+    .absar-petty-report .section{font-size:12px;color:#087f83;font-weight:bold;margin-top:14px;}
+   </style>
+   <h2>Petty Cash Report</h2><div class="ref" t-out="o.name"/>
+   <div class="box"><table><tbody>
+    <tr><th style="width:16%">Submitted By</th><td style="width:34%" t-out="o.user_id.name"/><th style="width:16%">Date</th><td style="width:34%"><span t-field="o.date"/></td></tr>
+    <tr><th>Petty Cash Account</th><td t-out="o.petty_cash_account_id.display_name"/><th>Journal</th><td t-out="o.journal_id.name"/></tr>
+    <tr><th>Status</th><td t-out="dict(o._fields['state']._description_selection(o.env)).get(o.state,o.state)"/><th>Voucher</th><td t-out="o.journal_entry_id.name or 'Not created'"/></tr>
+   </tbody></table></div>
+   <div class="section">Expense Details · <span t-out="o.currency_id.name"/></div>
+   <div class="box"><table class="expenses"><thead><tr>
+    <th style="width:9%">Date</th><th style="width:23%">Description / Supplier</th><th style="width:9%">Invoice</th><th style="width:8%">PO</th><th style="width:8%">MR</th><th style="width:7%">Zone</th><th style="width:12%">Category</th><th class="num" style="width:8%">Before VAT</th><th class="num" style="width:7%">VAT</th><th class="num" style="width:9%">Total</th>
+   </tr></thead><tbody><tr t-foreach="o.line_ids" t-as="line">
+    <td><span t-field="line.date"/></td><td><span t-out="line.description or line.label or '—'"/><div t-if="line.supplier" t-out="line.supplier"/></td><td t-out="line.invoice_number or '—'"/><td t-out="line.po_number or '—'"/><td t-out="line.mr_number or '—'"/><td t-out="line.zone or '—'"/><td t-out="line.category_id.name"/>
+    <td class="num" t-out="'{:,.2f}'.format(line.amount_before_vat)"/><td class="num" t-out="'{:,.2f}'.format(line.vat_amount)"/><td class="num" t-out="'{:,.2f}'.format(line.amount_total)"/>
+   </tr></tbody></table></div>
+   <div class="box totals"><table><tbody><tr><th>Untaxed Amount</th><td class="num" t-out="'{:,.2f}'.format(o.amount_untaxed)"/></tr><tr><th>VAT</th><td class="num" t-out="'{:,.2f}'.format(o.amount_vat)"/></tr><tr class="grand"><td>Total · <span t-out="o.currency_id.name"/></td><td class="num" t-out="'{:,.2f}'.format(o.amount_total)"/></tr></tbody></table></div>
+   <div class="section">Review &amp; Approval</div>
+   <div class="box"><table><thead><tr><th>Review 1</th><th>Review 2</th><th>Manager Approval</th></tr></thead><tbody><tr>
+    <td><span t-out="o.review_1_by.name or '—'"/><div t-if="o.review_1_date"><span t-field="o.review_1_date"/></div></td>
+    <td><span t-out="o.review_2_by.name or '—'"/><div t-if="o.review_2_date"><span t-field="o.review_2_date"/></div></td>
+    <td><span t-out="o.manager_approved_by.name or '—'"/><div t-if="o.manager_approved_date"><span t-field="o.manager_approved_date"/></div></td>
+   </tr></tbody></table></div>
+  </div>
+ </template>
 </odoo>

@@ -182,7 +182,7 @@
 
                 <t t-if="request.params.get('decision') == 'approved'">
                     <div class="alert alert-success mt-3 rounded-3">
-                        Petty cash report approved successfully.
+                        Review completed successfully.
                     </div>
                 </t>
 
@@ -390,10 +390,22 @@
                     </form>
                 </t>
 
+                <div t-if="error" class="alert alert-danger" role="alert" t-out="error"/>
+                <div t-if="report.correction_reason" class="alert alert-warning"><strong>Correction / Rejection: </strong><span t-out="report.correction_reason"/></div>
+                <div t-if="can_create_voucher or can_open_voucher" class="card rounded-4 mb-4"><div class="card-body">
+                  <form t-if="can_create_voucher" t-att-action="'/my/employee/petty-cash/%s/create-voucher' % report.id" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-primary rounded-pill">Create Voucher</button></form>
+                  <a t-if="can_open_voucher" class="btn btn-outline-primary rounded-pill" t-att-href="'/my/employee/petty-cash/%s/voucher' % report.id">Open Voucher</a>
+                </div></div>
                 <t t-if="can_approve">
                     <div class="card shadow-sm border-0 rounded-4 mb-4">
                         <div class="card-body d-flex justify-content-end gap-2 flex-wrap">
+                            <form t-att-action="'/my/employee/petty-cash/%s/return' % report.id" method="post" class="m-0">
+                                <textarea name="reason" class="form-control mb-2" placeholder="Explain what needs correction…" required="required"/>
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button class="btn btn-outline-warning rounded-pill">Return for Correction</button>
+                            </form>
                             <form t-att-action="'/my/employee/petty-cash/%s/reject' % report.id" method="post" class="m-0">
+                                <textarea name="reason" class="form-control mb-2" placeholder="Rejection reason…" required="required"/>
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <button type="submit" class="btn btn-outline-danger rounded-pill px-4">
                                     Reject Report
@@ -402,7 +414,7 @@
                             <form t-att-action="'/my/employee/petty-cash/%s/approve' % report.id" method="post" class="m-0">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <button type="submit" class="btn btn-success rounded-pill px-4">
-                                    Approve Report
+                                    <t t-out="review_label"/>
                                 </button>
                             </form>
                         </div>
@@ -541,4 +553,4 @@
         </t>
     </template>
 
-</odoo>
+<template id="portal_petty_cash_voucher" name="Petty Cash Voucher"><t t-call="employee_portal_suite.employee_portal_layout"><div class="container-fluid py-4"><a t-att-href="'/my/employee/petty-cash/%s' % report.id">Back to Petty Cash</a><h3>Journal Voucher · <span t-out="report.name"/></h3><p><strong t-out="move.name"/> · <span t-out="move.date"/> · <span t-out="move.journal_id.name"/> · <span t-out="move.state"/></p><div class="table-responsive"><table class="table table-bordered"><thead><tr><th>Account</th><th>Label</th><th class="text-end">Debit</th><th class="text-end">Credit</th></tr></thead><tbody><tr t-foreach="move.line_ids" t-as="line"><td t-out="line.account_id.display_name"/><td t-out="line.name"/><td class="text-end" t-out="'{:,.2f}'.format(line.debit)"/><td class="text-end" t-out="'{:,.2f}'.format(line.credit)"/></tr></tbody></table></div><p>Currency: <span t-out="move.company_id.currency_id.name"/>. Posting is handled through the existing Accounting workflow.</p></div></t></template></odoo>
