@@ -1,54 +1,17 @@
 /** @odoo-module **/
-
-import { registry } from "@web/core/registry";
-import { listView } from "@web/views/list/list_view";
-import { ListController } from "@web/views/list/list_controller";
-import { useService } from "@web/core/utils/hooks";
-import { Component, onWillStart, useState } from "@odoo/owl";
-import { Domain } from "@web/core/domain";
-
-class EmployeeRequestDashboard extends Component {
-    static template = "employee_portal_suite.EmployeeRequestDashboard";
-    static props = { onFilter: Function };
-
-    setup() {
-        this.orm = useService("orm");
-        this.cards = useState([]);
-        onWillStart(async () => {
-            const result = await this.orm.call(
-                "employee.portal.backend.filter.card",
-                "get_dashboard_cards",
-                ["employee"]
-            );
-            this.cards.splice(0, this.cards.length, ...result);
-        });
-    }
-
-    filter(domain) {
-        this.props.onFilter(domain || []);
-    }
+import { registry } from '@web/core/registry';
+import { listView } from '@web/views/list/list_view';
+import { ListController } from '@web/views/list/list_controller';
+import { user } from '@web/core/user';
+import { BackendListFilters } from './backend_list_filters';
+class EmployeeRequestDashboard extends BackendListFilters {
+ static template = 'employee_portal_suite.EmployeeRequestDashboard';
+ static filterConfig = {"model": "employee.request","requestKind": "employee", "inputs": [{"key": "employee", "label": "Employee", "field": "employee_id.name"}, {"key": "submitter", "label": "Submitted By", "field": "create_uid.name"}, {"key": "project", "label": "Project", "field": "project_id.name"}, {"key": "from", "label": "Date From", "field": "request_date", "type": "date", "operator": ">="}, {"key": "to", "label": "Date To", "field": "request_date", "type": "date", "operator": "<="}]};
+ static getCards(context) { return []; }
 }
-
 class EmployeeRequestListController extends ListController {
-    static template = "employee_portal_suite.EmployeeRequestListView";
-    static components = { ...ListController.components, EmployeeRequestDashboard };
-
-    setup() {
-        super.setup();
-        this.dashboardState = useState({ domain: [] });
-    }
-
-    onDashboardFilter(domain) {
-        this.dashboardState.domain = domain;
-        const baseDomain = this.props.domain || [];
-        const fullDomain = Domain.and([baseDomain, domain]).toList();
-        this.model.load({ domain: fullDomain });
-    }
+ static template = 'employee_portal_suite.EmployeeRequestListView';
+ get cardRevision() { return JSON.stringify(this.model.root.records.map(record => [record.resId, record.data.state, record.data.ceo_decision])); }
+ static components = {...ListController.components, EmployeeRequestDashboard};
 }
-
-export const employeeRequestDashboardListView = {
-    ...listView,
-    Controller: EmployeeRequestListController,
-};
-
-registry.category("views").add("employee_request_dashboard_list", employeeRequestDashboardListView);
+registry.category('views').add('employee_request_dashboard_list', {...listView, Controller: EmployeeRequestListController});

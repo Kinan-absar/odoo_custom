@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
 class PettyCash(models.Model):
@@ -112,68 +112,12 @@ class PettyCash(models.Model):
             ):
                 raise UserError("You do not have permission to submit petty cash reports.")
 
-    def action_approve(self):
-        if not (
-            self.env.user.has_group('petty_cash_management.group_petty_cash_accountant')
-            or self.env.user.has_group('petty_cash_management.group_portal_petty_cash_approver')
-        ):
-            raise UserError("Only petty cash accountants or portal petty cash approvers can approve reports.")
-
-        for rec in self:
-            if rec.state != 'submitted':
-                raise UserError("Only submitted reports can be approved.")
-            rec.state = 'approved'
-            rec.message_post(body="Petty Cash Report approved.")
-
-    def action_refuse(self):
-        if not (
-            self.env.user.has_group('petty_cash_management.group_petty_cash_accountant')
-            or self.env.user.has_group('petty_cash_management.group_portal_petty_cash_approver')
-        ):
-            raise UserError("Only petty cash accountants or portal petty cash approvers can reject reports.")
-
-        for rec in self:
-            if rec.state != 'submitted':
-                raise UserError("Only submitted reports can be refused.")
-            rec.state = 'refused'
-            rec.message_post(body="Petty Cash Report was refused.")
 
 
-    def action_portal_approve(self):
-        """Approve from the employee portal without granting portal users generic write access."""
-        if not self.env.user.has_group('petty_cash_management.group_portal_petty_cash_approver'):
-            raise UserError("You do not have permission to approve petty cash reports.")
-
-        reports = self.sudo()
-        for rec in reports:
-            if rec.state != 'submitted':
-                raise UserError("Only submitted reports can be approved.")
-            rec.state = 'approved'
-            rec.message_post(body="Petty Cash Report approved from the employee portal.")
-        return True
-
-    def action_portal_refuse(self):
-        """Reject from the employee portal without granting portal users generic write access."""
-        if not self.env.user.has_group('petty_cash_management.group_portal_petty_cash_approver'):
-            raise UserError("You do not have permission to reject petty cash reports.")
-
-        reports = self.sudo()
-        for rec in reports:
-            if rec.state != 'submitted':
-                raise UserError("Only submitted reports can be refused.")
-            rec.state = 'refused'
-            rec.message_post(body="Petty Cash Report rejected from the employee portal.")
-        return True
 
 
-    def action_reset_to_draft(self):
-        for rec in self:
-            if rec.state not in ['refused', 'approved']:
-                raise UserError("Only refused or approved reports can be reset to draft.")
-            rec.state = 'draft'
-            rec.message_post(body="Petty Cash Report moved back to draft.")
-            if not self.env.user.has_group('petty_cash_management.group_petty_cash_accountant'):
-                raise UserError("Only accountants can reset reports to draft.")
+
+
 
 
     def write(self, vals):
@@ -295,7 +239,7 @@ class PettyCash(models.Model):
                     'res_model': 'account.move',
                     'res_id': move.id,
                 })
-            rec.message_post(body=f"Draft Journal Entry <b>{move.name}</b> created.")
+            rec.message_post(body=_("Draft Journal Entry created: %s") % (move.name or move.ref or rec.name))
 
             return {
                 'type': 'ir.actions.act_window',
