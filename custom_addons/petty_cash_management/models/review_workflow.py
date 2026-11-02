@@ -17,7 +17,14 @@ class PettyCashReview(models.Model):
         ('manager_approval','Manager Approval'),('approved',)],
         ondelete={'review_2':'set default','manager_approval':'set default'}, copy=False)
     journal_entry_id = fields.Many2one(copy=False)
-    company_id = fields.Many2one('res.company', related='journal_id.company_id', store=True, readonly=True, index=True)
+    company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company,
+                                readonly=True, index=True)
+
+    @api.constrains('company_id', 'journal_id')
+    def _check_report_journal_company(self):
+        for rec in self:
+            if rec.journal_id and rec.journal_id.company_id != rec.company_id:
+                raise UserError(_('The journal must belong to the petty cash report company.'))
     review_1_by = fields.Many2one('res.users', string='Accounting Reviewer', readonly=True, copy=False, tracking=True)
     review_1_date = fields.Datetime(string='Accounting Review Date', readonly=True, copy=False)
     review_2_by = fields.Many2one('res.users', string='Accounting Supervisor', readonly=True, copy=False, tracking=True)
@@ -69,13 +76,16 @@ class PettyCashReview(models.Model):
         if PROTECTED.intersection(values) and self.env.context.get('_petty_review_token') is not _TOKEN:
             raise AccessError(_('Use the petty cash workflow buttons to change approval or voucher information.'))
         for rec in self:
-            if rec.state!='draft' and set(values).intersection({'user_id','date','currency_id','journal_id','petty_cash_account_id','input_vat_account_id','line_ids'}):
+            if rec.state!='draft' and set(values).intersection({'company_id','user_id','date','currency_id','journal_id','petty_cash_account_id','input_vat_account_id','line_ids'}):
                 raise UserError(_('Return the report for correction before changing its expenses or accounting setup.'))
         return super().write(values)
 
     @api.model_create_multi
     def create(self, values_list):
         for values in values_list:
+            if values.get('journal_id') and not values.get('company_id'):
+                journal = self.env['account.journal'].browse(values['journal_id'])
+                values['company_id'] = journal.company_id.id
             if values.get('state','draft')!='draft' or (PROTECTED-{'state'}).intersection(values):
                 raise AccessError(_('New petty cash reports must start in Draft.'))
         return super().create(values_list)
