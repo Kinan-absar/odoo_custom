@@ -53,7 +53,7 @@
         <field name="name">petty.cash.tree</field>
         <field name="model">petty.cash</field>
         <field name="arch" type="xml">
-            <list>
+            <list js_class="petty_cash_filter_list">
                 <field name="name"/>
                 <field name="user_id"/>
                 <field name="date"/>
@@ -63,10 +63,39 @@
         </field>
     </record>
 
+    <record id="view_petty_cash_search" model="ir.ui.view">
+        <field name="name">petty.cash.search</field>
+        <field name="model">petty.cash</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Reference"/>
+                <field name="user_id" string="Submitted By"/>
+                <field name="name" string="Project / Zone" filter_domain="['|', ('line_ids.zone', 'ilike', self), ('line_ids.category_id.analytic_account_id.name', 'ilike', self)]"/>
+                <field name="petty_cash_account_id"/>
+                <field name="name" string="Category" filter_domain="[('line_ids.category_id.name', 'ilike', self)]"/>
+                <field name="name" string="Supplier" filter_domain="[('line_ids.supplier', 'ilike', self)]"/>
+                <field name="name" string="Invoice / Receipt No" filter_domain="[('line_ids.invoice_number', 'ilike', self)]"/>
+                <separator/>
+                <filter name="my_reports" string="My Reports" domain="[('user_id', '=', uid)]"/>
+                <filter name="returned" string="Returned for Correction" domain="[('state', '=', 'draft'), ('correction_reason', '!=', False)]"/>
+                <separator/>
+                <filter name="report_date" string="Report Date" date="date"/>
+                <group expand="0" string="Group By">
+                    <filter name="by_step" string="Workflow Step" context="{'group_by': 'state'}"/>
+                    <filter name="by_submitter" string="Submitted By" context="{'group_by': 'user_id'}"/>
+                    <filter name="by_account" string="Petty Cash Account" context="{'group_by': 'petty_cash_account_id'}"/>
+                    <filter name="by_month" string="Month" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_petty_cash" model="ir.actions.act_window">
         <field name="name">Petty Cash Reports</field>
         <field name="res_model">petty.cash</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_petty_cash_search"/>
+        <field name="context">{}</field>
     </record>
 
 </odoo>

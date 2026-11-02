@@ -114,8 +114,12 @@ class PettyCashReview(models.Model):
         user=self.env.user
         for rec in self:
             rec._review_company(user);rec._review_lock()
-            if rec.user_id!=user or not (user.has_group(GROUP+'group_petty_cash_user') or user.has_group(GROUP+'group_portal_petty_cash_user')):
-                raise AccessError(_('Only the submitting petty cash user can submit this report.'))
+            backend_preparer = (not user.share and user.has_group('base.group_user')
+                                and user.has_group(GROUP+'group_petty_cash_user'))
+            own_preparer = rec.user_id == user and (
+                user.has_group(GROUP+'group_petty_cash_user') or user.has_group(GROUP+'group_portal_petty_cash_user'))
+            if not (backend_preparer or own_preparer):
+                raise AccessError(_('Only the report owner or an internal Petty Cash User can submit this report.'))
             if rec.state!='draft' or not rec.line_ids:raise UserError(_('Submit a draft report with expense lines.'))
             rec._flow_write({'state':'submitted','review_1_by':False,'review_1_date':False,'review_2_by':False,
                 'review_2_date':False,'manager_approved_by':False,'manager_approved_date':False,'correction_reason':False,'returned_by':False,'returned_date':False})

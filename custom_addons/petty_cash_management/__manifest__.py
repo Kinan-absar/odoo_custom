@@ -1,6 +1,6 @@
 {
     'name': 'Petty Cash Management',
-    'version': '18.0.1.3.7',
+    'version': '18.0.1.3.8',
     'author': 'Kinan',
     'website': 'absar-alomran.com',
     'category': 'Accounting',
@@ -54,6 +54,7 @@
         'views/menus.xml',                # <-- menu referencing action (must load last)
         'wizard/petty_cash_import_wizard_views.xml',
     ],
+    'assets': {'web.assets_backend': ['petty_cash_management/static/src/filter_list.js', 'petty_cash_management/static/src/filter_list.xml', 'petty_cash_management/static/src/filter_list.scss']},
     'images': ['images/main_screenshot.png'],
     'license': 'OPL-1',
     'price': 24.99,

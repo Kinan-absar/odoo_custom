@@ -48,20 +48,32 @@
     <record id="petty_cash_reviewer_1_review_rule" model="ir.rule">
         <field name="name">Petty cash review visibility</field>
         <field name="model_id" ref="model_petty_cash"/>
-        <field name="domain_force">['|', '|', '|', '|', '|', ('state', '!=', 'draft'), ('user_id', '=', user.id), ('review_1_by', '=', user.id), ('review_2_by', '=', user.id), ('manager_approved_by', '=', user.id), ('returned_by', '=', user.id)]</field>
+        <field name="domain_force">['|', '|', '|', '|', '|', '|', ('state', '!=', 'draft'), ('user_id', '=', user.id), ('review_1_by', '=', user.id), ('review_2_by', '=', user.id), ('manager_approved_by', '=', user.id), ('returned_by', '=', user.id), ('create_uid', '=', user.id)]</field>
         <field name="groups" eval="[(4, ref('group_petty_cash_reviewer_1'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
     </record>
     <record id="petty_cash_reviewer_2_review_rule" model="ir.rule">
         <field name="name">Petty cash review visibility</field>
         <field name="model_id" ref="model_petty_cash"/>
-        <field name="domain_force">['|', '|', '|', '|', '|', ('state', '!=', 'draft'), ('user_id', '=', user.id), ('review_1_by', '=', user.id), ('review_2_by', '=', user.id), ('manager_approved_by', '=', user.id), ('returned_by', '=', user.id)]</field>
+        <field name="domain_force">['|', '|', '|', '|', '|', '|', ('state', '!=', 'draft'), ('user_id', '=', user.id), ('review_1_by', '=', user.id), ('review_2_by', '=', user.id), ('manager_approved_by', '=', user.id), ('returned_by', '=', user.id), ('create_uid', '=', user.id)]</field>
         <field name="groups" eval="[(4, ref('group_petty_cash_reviewer_2'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
     </record>
     <record id="petty_cash_manager_review_rule" model="ir.rule">
         <field name="name">Petty cash review visibility</field>
         <field name="model_id" ref="model_petty_cash"/>
-        <field name="domain_force">['|', '|', '|', '|', '|', ('state', '!=', 'draft'), ('user_id', '=', user.id), ('review_1_by', '=', user.id), ('review_2_by', '=', user.id), ('manager_approved_by', '=', user.id), ('returned_by', '=', user.id)]</field>
+        <field name="domain_force">['|', '|', '|', '|', '|', '|', ('state', '!=', 'draft'), ('user_id', '=', user.id), ('review_1_by', '=', user.id), ('review_2_by', '=', user.id), ('manager_approved_by', '=', user.id), ('returned_by', '=', user.id), ('create_uid', '=', user.id)]</field>
         <field name="groups" eval="[(4, ref('group_petty_cash_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
     </record>
     <record id="petty_cash_line_review_company_rule" model="ir.rule">
         <field name="name">Petty cash permitted companies</field>
@@ -71,19 +83,31 @@
     <record id="petty_cash_line_reviewer_1_review_rule" model="ir.rule">
         <field name="name">Petty cash review visibility</field>
         <field name="model_id" ref="model_petty_cash_line"/>
-        <field name="domain_force">['|', '|', '|', '|', '|', ('petty_cash_id.state', '!=', 'draft'), ('petty_cash_id.user_id', '=', user.id), ('petty_cash_id.review_1_by', '=', user.id), ('petty_cash_id.review_2_by', '=', user.id), ('petty_cash_id.manager_approved_by', '=', user.id), ('petty_cash_id.returned_by', '=', user.id)]</field>
+        <field name="domain_force">['|', '|', '|', '|', '|', '|', ('petty_cash_id.state', '!=', 'draft'), ('petty_cash_id.user_id', '=', user.id), ('petty_cash_id.review_1_by', '=', user.id), ('petty_cash_id.review_2_by', '=', user.id), ('petty_cash_id.manager_approved_by', '=', user.id), ('petty_cash_id.returned_by', '=', user.id), ('petty_cash_id.create_uid', '=', user.id)]</field>
         <field name="groups" eval="[(4, ref('group_petty_cash_reviewer_1'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
     </record>
     <record id="petty_cash_line_reviewer_2_review_rule" model="ir.rule">
         <field name="name">Petty cash review visibility</field>
         <field name="model_id" ref="model_petty_cash_line"/>
-        <field name="domain_force">['|', '|', '|', '|', '|', ('petty_cash_id.state', '!=', 'draft'), ('petty_cash_id.user_id', '=', user.id), ('petty_cash_id.review_1_by', '=', user.id), ('petty_cash_id.review_2_by', '=', user.id), ('petty_cash_id.manager_approved_by', '=', user.id), ('petty_cash_id.returned_by', '=', user.id)]</field>
+        <field name="domain_force">['|', '|', '|', '|', '|', '|', ('petty_cash_id.state', '!=', 'draft'), ('petty_cash_id.user_id', '=', user.id), ('petty_cash_id.review_1_by', '=', user.id), ('petty_cash_id.review_2_by', '=', user.id), ('petty_cash_id.manager_approved_by', '=', user.id), ('petty_cash_id.returned_by', '=', user.id), ('petty_cash_id.create_uid', '=', user.id)]</field>
         <field name="groups" eval="[(4, ref('group_petty_cash_reviewer_2'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
     </record>
     <record id="petty_cash_line_manager_review_rule" model="ir.rule">
         <field name="name">Petty cash review visibility</field>
         <field name="model_id" ref="model_petty_cash_line"/>
-        <field name="domain_force">['|', '|', '|', '|', '|', ('petty_cash_id.state', '!=', 'draft'), ('petty_cash_id.user_id', '=', user.id), ('petty_cash_id.review_1_by', '=', user.id), ('petty_cash_id.review_2_by', '=', user.id), ('petty_cash_id.manager_approved_by', '=', user.id), ('petty_cash_id.returned_by', '=', user.id)]</field>
+        <field name="domain_force">['|', '|', '|', '|', '|', '|', ('petty_cash_id.state', '!=', 'draft'), ('petty_cash_id.user_id', '=', user.id), ('petty_cash_id.review_1_by', '=', user.id), ('petty_cash_id.review_2_by', '=', user.id), ('petty_cash_id.manager_approved_by', '=', user.id), ('petty_cash_id.returned_by', '=', user.id), ('petty_cash_id.create_uid', '=', user.id)]</field>
         <field name="groups" eval="[(4, ref('group_petty_cash_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
     </record>
 </odoo>
