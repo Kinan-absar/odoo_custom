@@ -34,8 +34,7 @@ class PettyCashReview(models.Model):
     def _is_review_user(self, user=None):
         user = user or self.env.user
         return user.active and not user._is_public() and any(user.has_group(GROUP+name) for name in
-                   ('group_petty_cash_reviewer_1','group_petty_cash_reviewer_2','group_petty_cash_manager',
-                    'group_petty_cash_accountant','group_portal_petty_cash_approver'))
+                   ('group_petty_cash_reviewer_1','group_petty_cash_reviewer_2','group_petty_cash_manager'))
 
     def _review_company(self, user=None):
         self.ensure_one();user=user or self.env.user
@@ -46,9 +45,6 @@ class PettyCashReview(models.Model):
         self.ensure_one();user=user or self.env.user
         if not user.active or user._is_public() or self.company_id not in user.company_ids or self.state not in STAGES:
             return False
-        if self.state == 'manager_approval':
-            return any(user.has_group(GROUP+name) for name in
-                       ('group_petty_cash_manager','group_petty_cash_accountant','group_portal_petty_cash_approver'))
         return user.has_group(GROUP+STAGES[self.state][0])
 
     @api.depends_context('uid')
@@ -96,11 +92,6 @@ class PettyCashReview(models.Model):
     def _notify_next_review(self):
         self.ensure_one()
         users=self.env.ref(GROUP+STAGES[self.state][0]).sudo().users
-        if self.state == 'manager_approval':
-            # Recognize existing approver memberships even before implied-group
-            # propagation has been refreshed on an upgraded database.
-            for name in ('group_petty_cash_accountant','group_portal_petty_cash_approver'):
-                users |= self.env.ref(GROUP+name).sudo().users
         users=users.filtered(lambda u:self._can_review(u))
         if not users:
             raise UserError(_('Assign an active, eligible %s user in this company before continuing.') % STAGES[self.state][1])
