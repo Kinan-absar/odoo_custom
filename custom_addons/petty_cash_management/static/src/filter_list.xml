@@ -4,10 +4,10 @@
         <section class="pc-filter-bar" aria-label="Petty cash workflow filters">
             <div class="pc-filter-cards">
                 <button t-foreach="cards" t-as="card" t-key="card.key" type="button"
-                        t-att-class="'pc-filter-card ' + (activeCard === card.key ? 'is-active' : '')"
+                        t-att-class="'pc-filter-card pc-color-' + card.style + ' ' + (activeCard === card.key ? 'is-active' : '')"
                         t-att-aria-pressed="activeCard === card.key ? 'true' : 'false'"
                         t-on-click="() => this.selectCard(card)">
-                    <span t-esc="card.label"/>
+                    <span t-esc="card.label"/><span class="pc-filter-count" t-out="counts[card.key] == null ? '…' : counts[card.key]"/>
                 </button>
             </div>
             <div class="pc-filter-inputs">

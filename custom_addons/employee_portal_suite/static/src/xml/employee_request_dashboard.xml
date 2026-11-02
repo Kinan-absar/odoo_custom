@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
  <t t-name="employee_portal_suite.EmployeeRequestListView" t-inherit="web.ListView" t-inherit-mode="primary">
-  <xpath expr="//Layout/t[@t-component]" position="before"><EmployeeRequestDashboard context="props.context"/></xpath>
+  <xpath expr="//Layout/t[@t-component]" position="before"><EmployeeRequestDashboard context="props.context" baseDomain="props.domain" revision="cardRevision"/></xpath>
  </t>
  <t t-name="employee_portal_suite.EmployeeRequestDashboard"><section class="absar-backend-filter-bar" aria-label="List filters">
   <div class="absar-filter-cards">
     <button t-foreach="data.cards" t-as="card" t-key="card.key" type="button"
-      t-att-class="'absar-filter-card ' + (isActive(card) ? 'is-active' : '')"
-      t-att-aria-pressed="isActive(card) ? 'true' : 'false'" t-on-click="() => this.selectCard(card)"><span t-out="card.label"/></button>
+      t-att-class="'absar-filter-card absar-color-' + (card.style || 'neutral') + ' ' + (isActive(card) ? 'is-active' : '')"
+      t-att-aria-pressed="isActive(card) ? 'true' : 'false'" t-on-click="() => this.selectCard(card)"><span t-out="card.label"/><span class="absar-filter-count" t-out="card.count === null ? '…' : card.count"/></button>
   </div>
   <div class="absar-filter-inputs">
     <label t-foreach="inputs" t-as="input" t-key="input.key"><t t-out="input.label"/>
