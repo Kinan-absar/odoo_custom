@@ -16,8 +16,8 @@ class PettyCashNotificationSummary(models.Model):
             last=self._get_last_seen(user.id,'petty_review')
             summary['petty_review']={'count':len(pending),'new':len(pending.filtered(lambda r:not last or r.write_date>last)),
                 'url':'/my/employee/petty-cash/approvals','label':'Petty Cash Reviews'}
-        own=Report.search(companies+[('user_id','=',user.id),'|',('state','in',['approved','refused']),('correction_reason','!=',False)])
-        if Report._is_review_user(user):
+        own=Report.search(companies+[('user_id','=',user.id),'|',('state','=','refused'),('correction_reason','!=',False)])
+        if user.has_group('petty_cash_management.group_petty_cash_reviewer_1'):
             own |= Report.search(companies+[('state','=','approved'),('journal_entry_id','=',False)])
         if own:
             last=self._get_last_seen(user.id,'petty_result')

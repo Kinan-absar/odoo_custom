@@ -90,12 +90,15 @@ class PettyCashReview(models.Model):
                 raise AccessError(_('New petty cash reports must start in Draft.'))
         return super().create(values_list)
 
-    def _review_notify(self, users, title):
+    def _review_notify(self, users, title, targeted=False):
         """Native inbox notification plus an activity for internal reviewers."""
         self.ensure_one()
         users=users.filtered(lambda u:u.active and self.company_id in u.company_ids)
         if users:
-            self.sudo().message_post(body=title,partner_ids=users.partner_id.ids,subtype_xmlid='mail.mt_comment')
+            if targeted:
+                self.sudo().message_notify(body=title, subject=title, partner_ids=users.partner_id.ids)
+            else:
+                self.sudo().message_post(body=title,partner_ids=users.partner_id.ids,subtype_xmlid='mail.mt_comment')
             for user in users.filtered(lambda u:not u.share):
                 self.sudo().activity_schedule('mail.mail_activity_data_todo', user_id=user.id, summary=title)
 
@@ -133,8 +136,8 @@ class PettyCashReview(models.Model):
             rec.sudo().activity_ids.filtered(lambda a:a.user_id==user).action_done()
             rec.sudo().message_post(body=_('%s completed by %s.') % (STAGES[old_state][1],user.name))
             if next_state=='approved':
-                reviewers=(rec.review_1_by|rec.review_2_by|rec.manager_approved_by|rec.user_id)
-                rec._review_notify(reviewers,_('%s approved. Reviewers and manager can now create the voucher.') % rec.name)
+                reviewers=self.env.ref(GROUP+'group_petty_cash_reviewer_1').sudo().users
+                rec._review_notify(reviewers,_('%s approved. Ready to create the voucher.') % rec.name, targeted=True)
             else:rec._notify_next_review()
         return True
 
