@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-  <t t-name="internal_transfer_voucher.CashPlanLineListView" t-inherit="web.ListView" t-inherit-mode="primary">
-    <xpath expr="//Layout/t[@t-component]" position="before"><CashPlanLineDashboard onFilter.bind="onDashboardFilter" records="model.root.records" revision="dashboardRevision"/></xpath>
-  </t>
-  <t t-name="internal_transfer_voucher.CashPlanLineDashboard">
-    <div class="o_cash_plan_dashboard px-3 py-3 border-bottom bg-view"><button class="btn btn-link btn-sm float-end" t-on-click="refresh" title="Refresh payment totals">Refresh totals</button><div class="d-flex flex-wrap gap-2">
-      <div class="cp_card cp_neutral" t-on-click="() => this.filter([])"><div class="cp_value"><t t-esc="data.all_count || 0"/></div><div class="cp_label">All</div></div>
-      <div class="cp_card cp_muted" t-on-click="() => this.filter([['ceo_decision','=','not_sent']])"><div class="cp_value"><t t-esc="data.not_sent_count || 0"/></div><div class="cp_label">Not Submitted</div></div>
-      <div class="cp_card cp_orange" t-on-click="() => this.filter([['ceo_decision','=','pending']])"><div class="cp_value"><t t-esc="data.pending_count || 0"/></div><div class="cp_label">Pending CEO</div></div>
-      <div class="cp_card cp_green" t-on-click="() => this.filter([['ceo_decision','in',['approved','adjusted']]])"><div class="cp_value"><t t-esc="data.approved_count || 0"/></div><div class="cp_label">Approved</div></div>
-      <div class="cp_card cp_warning" t-on-click="() => this.filter([['ceo_decision','=','held']])"><div class="cp_value"><t t-esc="data.held_count || 0"/></div><div class="cp_label">On Hold</div></div>
-      <div class="cp_card cp_red" t-on-click="() => this.filter([['ceo_decision','=','rejected']])"><div class="cp_value"><t t-esc="data.rejected_count || 0"/></div><div class="cp_label">Rejected</div></div>
-      <div class="cp_card cp_blue" t-on-click="() => this.filter([['run_id','!=',false]])"><div class="cp_value"><t t-esc="data.added_to_plan_count || 0"/></div><div class="cp_label">Added to Plan</div></div>
-      <div class="cp_card cp_purple" t-on-click="() => this.filter([['run_id','=',false]])"><div class="cp_value"><t t-esc="data.not_added_to_plan_count || 0"/></div><div class="cp_label">Not Added</div></div>
-      <div class="cp_card cp_teal" t-on-click="() => this.filter([['state','=','executed']])"><div class="cp_value"><t t-esc="data.paid_count || 0"/></div><div class="cp_label">Paid</div></div>
-    </div></div>
-  </t>
+ <t t-name="internal_transfer_voucher.CashPlanLineListView" t-inherit="web.ListView" t-inherit-mode="primary">
+  <xpath expr="//Layout/t[@t-component]" position="before"><CashPlanLineDashboard context="props.context"/></xpath>
+ </t>
+ <t t-name="internal_transfer_voucher.CashPlanLineDashboard"><section class="absar-backend-filter-bar" aria-label="List filters">
+  <div class="absar-filter-cards">
+    <button t-foreach="data.cards" t-as="card" t-key="card.key" type="button"
+      t-att-class="'absar-filter-card ' + (isActive(card) ? 'is-active' : '')"
+      t-att-aria-pressed="isActive(card) ? 'true' : 'false'" t-on-click="() => this.selectCard(card)"><span t-out="card.label"/></button>
+  </div>
+  <div class="absar-filter-inputs">
+    <label t-foreach="inputs" t-as="input" t-key="input.key"><t t-out="input.label"/>
+      <input class="form-control" t-att-type="input.type || 'search'" t-att-placeholder="input.placeholder || input.label"
+        t-att-value="inputValue(input.key)" t-on-change="ev => this.applyInput(input, ev.target.value)"/>
+    </label>
+  </div>
+</section></t>
 </templates>

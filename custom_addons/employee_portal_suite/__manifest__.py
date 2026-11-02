@@ -1,5 +1,5 @@
 {'name': 'Employee Portal Suite',
- 'version': '18.0.1.20.123',
+ 'version': '18.0.1.20.124',
  'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
  'description': '\n'
                 '    Comprehensive Employee Portal Suite providing a full service system for employees, '
@@ -124,7 +124,8 @@
                                     'employee_portal_suite/static/src/scss/portal_native_call_alert.scss',
                                     'employee_portal_suite/static/src/js/portal_compact_lists.js',
                                     'employee_portal_suite/static/src/js/portal_mobile_menu.js'],
-            'web.assets_backend': ['employee_portal_suite/static/src/js/material_request_dashboard.js',
+            'web.assets_backend': ['employee_portal_suite/static/src/js/backend_list_filters.js',
+        'employee_portal_suite/static/src/js/material_request_dashboard.js',
                                    'employee_portal_suite/static/src/js/employee_request_dashboard.js',
                                    'employee_portal_suite/static/src/js/home_announcements.js',
                                    'employee_portal_suite/static/src/js/native_discuss_user_menu.js',
@@ -138,7 +139,8 @@
                                    'employee_portal_suite/static/src/xml/workflow_report_dashboard.xml',
                                    'employee_portal_suite/static/src/scss/workflow_backend_ui.scss',
                                    'employee_portal_suite/static/src/js/stage_status_badge.js',
-                                   'employee_portal_suite/static/src/scss/stage_status_badge.scss'],
+                                   'employee_portal_suite/static/src/scss/stage_status_badge.scss',
+        'employee_portal_suite/static/src/scss/backend_list_filters.scss'],
             'mail.assets_public': ['employee_portal_suite/static/src/js/native_discuss_public_patch.js',
                                    'employee_portal_suite/static/src/js/employee_portal_pwa.js',
                                    'employee_portal_suite/static/src/js/native_discuss_pwa.js',

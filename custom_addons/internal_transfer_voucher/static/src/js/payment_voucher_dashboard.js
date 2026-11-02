@@ -1,118 +1,16 @@
 /** @odoo-module **/
-
-import { registry } from "@web/core/registry";
-import { listView } from "@web/views/list/list_view";
-import { ListController } from "@web/views/list/list_controller";
-import { useService } from "@web/core/utils/hooks";
-import { user } from "@web/core/user";
-import { Component, onWillStart, useState } from "@odoo/owl";
-import { _t } from "@web/core/l10n/translation";
-
-// ─── Dashboard Component ────────────────────────────────────────────────────
-
-class PaymentVoucherDashboard extends Component {
-    static template = "internal_transfer_voucher.PaymentVoucherDashboard";
-    static props = {
-        onFilter: Function,
-    };
-
-    setup() {
-        this.orm = useService("orm");
-        this.data = useState({
-            all_count: 0,
-            draft_count: 0,
-            posted_count: 0,
-            cancel_count: 0,
-            cash_count: 0,
-            cheque_count: 0,
-            bank_count: 0,
-            transfer_count: 0,
-            my_count: 0,
-            fully_allocated_count: 0,
-            not_allocated_count: 0,
-            partial_allocated_count: 0,
-            ready_to_allocate_count: 0,
-            total_posted_amount: 0,
-            currency_symbol: "",
-        });
-
-        onWillStart(async () => {
-            const result = await this.orm.call(
-                "account.payment.voucher",
-                "retrieve_dashboard",
-                []
-            );
-            Object.assign(this.data, result);
-        });
-    }
-
-    filter(domain) {
-        this.props.onFilter(domain);
-    }
-
-    get myDomain() {
-        return [["create_uid", "=", user.userId]];
-    }
-
-    formatAmount(amount) {
-        return Number(amount || 0).toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        });
-    }
+import { registry } from '@web/core/registry';
+import { listView } from '@web/views/list/list_view';
+import { ListController } from '@web/views/list/list_controller';
+import { user } from '@web/core/user';
+import { BackendListFilters } from './backend_list_filters';
+class PaymentVoucherDashboard extends BackendListFilters {
+ static template = 'internal_transfer_voucher.PaymentVoucherDashboard';
+ static filterConfig = {"requestKind": null, "inputs": [{"key":"project","label":"Project (Linked Plan)","field":"cash_plan_line_id.project_id.name"}, {"key": "partner", "label": "Partner", "field": "partner_id.name"}, {"key": "submitter", "label": "Created By", "field": "create_uid.name"}, {"key": "journal", "label": "Journal", "field": "journal_id.name"}, {"key": "from", "label": "Date From", "field": "date", "type": "date", "operator": ">="}, {"key": "to", "label": "Date To", "field": "date", "type": "date", "operator": "<="}]};
+ static getCards(context) { return [{"label": "All", "domain": []}, {"label": "Draft", "domain": [["state", "=", "draft"]]}, {"label": "Posted", "domain": [["state", "=", "posted"]]}, {"label": "Cancelled", "domain": [["state", "=", "cancel"]]}, {"label": "Cash", "domain": [["payment_method", "=", "cash"]]}, {"label": "Cheque", "domain": [["payment_method", "=", "cheque"]]}, {"label": "Bank Transfer", "domain": [["payment_method", "=", "bank_transfer"]]}, {"label": "Journal Transfer", "domain": [["payment_method", "=", "journal_transfer"]]}, {"label": "Fully Allocated", "domain": [["bill_reconciliation_state", "=", "reconciled"]]}, {"label": "Partially Allocated", "domain": [["bill_reconciliation_state", "=", "partial"]]}, {"label": "Not Allocated", "domain": [["bill_reconciliation_state", "=", "no_bills"]]}, {"label": "Ready to Allocate", "domain": [["bill_reconciliation_state", "=", "ready"]]}, {"label": "My Vouchers", "domain": [["create_uid", "=", user.userId]]}]; }
 }
-
-// ─── Controller ────────────────────────────────────────────────────────────
-
 class PaymentVoucherListController extends ListController {
-    static template = "internal_transfer_voucher.PaymentVoucherListView";
-    static components = {
-        ...ListController.components,
-        PaymentVoucherDashboard,
-    };
-
-    setup() {
-        super.setup();
-        this.dashboardState = useState({ domain: [] });
-    }
-
-    onDashboardFilter(domain) {
-        this.dashboardState.domain = domain;
-
-        // Remove any previous dashboard-originated filter so clicking a new
-        // card replaces the old one instead of stacking on top of it.
-        const previous = this.env.searchModel.getSearchItems(
-            (searchItem) => searchItem.isFromPaymentVoucherDashboard
-        );
-        for (const item of previous) {
-            if (item.isActive) {
-                this.env.searchModel.toggleSearchItem(item.id);
-            }
-        }
-
-        // Add the dashboard domain as a real search-model filter. This keeps
-        // it merged with whatever is in the search bar (text search, other
-        // filters, group-by, favorites) instead of overwriting it.
-        if (domain && domain.length) {
-            this.env.searchModel.createNewFilters([
-                {
-                    description: _t("Dashboard filter"),
-                    domain,
-                    isFromPaymentVoucherDashboard: true,
-                },
-            ]);
-        }
-    }
+ static template = 'internal_transfer_voucher.PaymentVoucherListView';
+ static components = {...ListController.components, PaymentVoucherDashboard};
 }
-
-// ─── View Registration ─────────────────────────────────────────────────────
-
-export const paymentVoucherDashboardListView = {
-    ...listView,
-    Controller: PaymentVoucherListController,
-};
-
-registry.category("views").add(
-    "payment_voucher_dashboard_list",
-    paymentVoucherDashboardListView
-);
+registry.category('views').add('payment_voucher_dashboard_list', {...listView, Controller: PaymentVoucherListController});

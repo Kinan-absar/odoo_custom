@@ -1,0 +1,12 @@
+.absar-backend-filter-bar {
+    padding: 14px 16px 10px;
+    background: #f7f9fa;
+    border-bottom: 1px solid #dce6e7;
+    .absar-filter-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 9px; margin-bottom: 8px; }
+    .absar-filter-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 12px; }
+    .absar-filter-inputs label { font-size: 12px; font-weight: 600; color: #526971; }
+    .absar-filter-inputs input { margin-top: 5px; border-radius: 7px; background: #fff; }
+    .absar-filter-card { border: 1px solid #d8e5e6; border-bottom: 3px solid #b4d9da; border-radius: 10px; background: #fff; color: #264653; padding: 13px 9px; font-weight: 600; transition: background .15s, border-color .15s; }
+    .absar-filter-card:hover, .absar-filter-card.is-active { background: #e8f5f4; border-color: #00858a; color: #006e73; }
+    .absar-filter-card:focus-visible { outline: 2px solid #00858a; outline-offset: 2px; }
+}
