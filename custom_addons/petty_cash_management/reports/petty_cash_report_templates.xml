@@ -43,7 +43,7 @@
    </tr></tbody></table></div>
    <div class="box totals"><table><tbody><tr><th>Untaxed Amount</th><td class="num" t-out="'{:,.2f}'.format(o.amount_untaxed)"/></tr><tr><th>VAT</th><td class="num" t-out="'{:,.2f}'.format(o.amount_vat)"/></tr><tr class="grand"><td>Total · <span t-out="o.currency_id.name"/></td><td class="num" t-out="'{:,.2f}'.format(o.amount_total)"/></tr></tbody></table></div>
    <div class="section">Review &amp; Approval</div>
-   <div class="box"><table><thead><tr><th>Review 1</th><th>Review 2</th><th>Manager Approval</th></tr></thead><tbody><tr>
+   <div class="box"><table><thead><tr><th>Accounting Review</th><th>Supervisor Review</th><th>Manager Approval</th></tr></thead><tbody><tr>
     <td><span t-out="o.review_1_by.name or '—'"/><div t-if="o.review_1_date"><span t-field="o.review_1_date"/></div></td>
     <td><span t-out="o.review_2_by.name or '—'"/><div t-if="o.review_2_date"><span t-field="o.review_2_date"/></div></td>
     <td><span t-out="o.manager_approved_by.name or '—'"/><div t-if="o.manager_approved_date"><span t-field="o.manager_approved_date"/></div></td>

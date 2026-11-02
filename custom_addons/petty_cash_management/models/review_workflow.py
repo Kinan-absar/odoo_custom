@@ -4,8 +4,8 @@ from odoo.exceptions import AccessError, UserError
 
 _TOKEN = object()
 GROUP = 'petty_cash_management.'
-STAGES = {'submitted': ('group_petty_cash_reviewer_1', 'Review 1'),
-          'review_2': ('group_petty_cash_reviewer_2', 'Review 2'),
+STAGES = {'submitted': ('group_petty_cash_reviewer_1', 'Accounting Review'),
+          'review_2': ('group_petty_cash_reviewer_2', 'Supervisor Review'),
           'manager_approval': ('group_petty_cash_manager', 'Manager Approval')}
 PROTECTED = {'state','review_1_by','review_1_date','review_2_by','review_2_date',
              'manager_approved_by','manager_approved_date','returned_by','returned_date','correction_reason','journal_entry_id'}
@@ -13,16 +13,16 @@ PROTECTED = {'state','review_1_by','review_1_date','review_2_by','review_2_date'
 class PettyCashReview(models.Model):
     _inherit = 'petty.cash'
 
-    state = fields.Selection(selection_add=[('submitted','Review 1'),('review_2','Review 2'),
+    state = fields.Selection(selection_add=[('submitted','Accounting Review'),('review_2','Supervisor Review'),
         ('manager_approval','Manager Approval'),('approved',)],
         ondelete={'review_2':'set default','manager_approval':'set default'}, copy=False)
     journal_entry_id = fields.Many2one(copy=False)
     company_id = fields.Many2one('res.company', related='journal_id.company_id', store=True, readonly=True, index=True)
-    review_1_by = fields.Many2one('res.users', readonly=True, copy=False, tracking=True)
-    review_1_date = fields.Datetime(readonly=True, copy=False)
-    review_2_by = fields.Many2one('res.users', readonly=True, copy=False, tracking=True)
-    review_2_date = fields.Datetime(readonly=True, copy=False)
-    manager_approved_by = fields.Many2one('res.users', readonly=True, copy=False, tracking=True)
+    review_1_by = fields.Many2one('res.users', string='Accounting Reviewer', readonly=True, copy=False, tracking=True)
+    review_1_date = fields.Datetime(string='Accounting Review Date', readonly=True, copy=False)
+    review_2_by = fields.Many2one('res.users', string='Accounting Supervisor', readonly=True, copy=False, tracking=True)
+    review_2_date = fields.Datetime(string='Supervisor Review Date', readonly=True, copy=False)
+    manager_approved_by = fields.Many2one('res.users', string='Final Approver', readonly=True, copy=False, tracking=True)
     manager_approved_date = fields.Datetime(readonly=True, copy=False)
     correction_reason = fields.Text(readonly=True, copy=False, tracking=True)
     returned_by = fields.Many2one('res.users', readonly=True, copy=False)
@@ -34,7 +34,8 @@ class PettyCashReview(models.Model):
     def _is_review_user(self, user=None):
         user = user or self.env.user
         return user.active and not user._is_public() and any(user.has_group(GROUP+name) for name in
-                   ('group_petty_cash_reviewer_1','group_petty_cash_reviewer_2','group_petty_cash_manager'))
+                   ('group_petty_cash_reviewer_1','group_petty_cash_reviewer_2','group_petty_cash_manager',
+                    'group_petty_cash_accountant','group_portal_petty_cash_approver'))
 
     def _review_company(self, user=None):
         self.ensure_one();user=user or self.env.user
@@ -45,10 +46,10 @@ class PettyCashReview(models.Model):
         self.ensure_one();user=user or self.env.user
         if not user.active or user._is_public() or self.company_id not in user.company_ids or self.state not in STAGES:
             return False
-        if not user.has_group(GROUP+STAGES[self.state][0]):return False
-        if self.state=='review_2' and self.review_1_by==user:return False
-        if self.state=='manager_approval' and user in (self.review_1_by | self.review_2_by):return False
-        return True
+        if self.state == 'manager_approval':
+            return any(user.has_group(GROUP+name) for name in
+                       ('group_petty_cash_manager','group_petty_cash_accountant','group_portal_petty_cash_approver'))
+        return user.has_group(GROUP+STAGES[self.state][0])
 
     @api.depends_context('uid')
     @api.depends('state','journal_entry_id','review_1_by','review_2_by','company_id')
@@ -94,7 +95,13 @@ class PettyCashReview(models.Model):
 
     def _notify_next_review(self):
         self.ensure_one()
-        users=self.env.ref(GROUP+STAGES[self.state][0]).sudo().users.filtered(lambda u:self._can_review(u))
+        users=self.env.ref(GROUP+STAGES[self.state][0]).sudo().users
+        if self.state == 'manager_approval':
+            # Recognize existing approver memberships even before implied-group
+            # propagation has been refreshed on an upgraded database.
+            for name in ('group_petty_cash_accountant','group_portal_petty_cash_approver'):
+                users |= self.env.ref(GROUP+name).sudo().users
+        users=users.filtered(lambda u:self._can_review(u))
         if not users:
             raise UserError(_('Assign an active, eligible %s user in this company before continuing.') % STAGES[self.state][1])
         self._review_notify(users, _('%s: %s required') % (self.name,STAGES[self.state][1]))
@@ -115,7 +122,7 @@ class PettyCashReview(models.Model):
         user=self.env.user
         for rec in self:
             rec._review_company(user);rec._review_lock()
-            if not rec._can_review(user):raise AccessError(_('You are not the eligible reviewer for this stage. Each stage requires a different reviewer.'))
+            if not rec._can_review(user):raise AccessError(_('You are not assigned to the role required for this stage.'))
             old_state=rec.state
             actor_field,date_field,next_state={
                 'submitted':('review_1_by','review_1_date','review_2'),

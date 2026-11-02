@@ -17,7 +17,7 @@
             <button name="%(petty_cash_report_action)d" string="Print" type="action" class="btn-primary"/>
 
             <!-- APPROVE (Accountants only, Submitted only) -->
-            <button name="action_approve" type="object" string="Complete Review 1" invisible="not can_review_stage or state != 'submitted'" class="btn-success"/><button name="action_approve" type="object" string="Complete Review 2" invisible="not can_review_stage or state != 'review_2'" class="btn-success"/><button name="action_approve" type="object" string="Approve" invisible="not can_review_stage or state != 'manager_approval'" class="btn-success"/><!-- REJECT (Accountants only, Submitted only) -->
+            <button name="action_approve" type="object" string="Complete Accounting Review" invisible="not can_review_stage or state != 'submitted'" class="btn-success"/><button name="action_approve" type="object" string="Complete Supervisor Review" invisible="not can_review_stage or state != 'review_2'" class="btn-success"/><button name="action_approve" type="object" string="Approve" invisible="not can_review_stage or state != 'manager_approval'" class="btn-success"/><!-- REJECT (Accountants only, Submitted only) -->
             <button name="action_refuse" type="object" string="Return for Correction" class="btn-secondary" invisible="not can_review_stage"/>
 
             <!-- RESET TO DRAFT (Accountants only, Approved or Refused) -->

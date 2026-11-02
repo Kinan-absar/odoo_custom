@@ -13,7 +13,7 @@ def _petty_status_badge(rec):
     if rec.state == "refused":
         return Markup('<span class="badge bg-danger">Rejected</span>')
     if rec.state in ('submitted','review_2','manager_approval'):
-        label={'submitted':'Review 1','review_2':'Review 2','manager_approval':'Manager Approval'}[rec.state]
+        label={'submitted':'Accounting Review','review_2':'Supervisor Review','manager_approval':'Manager Approval'}[rec.state]
         return Markup('<span class="badge bg-warning text-dark">%s</span>') % label
     if rec.state == "draft":
         return Markup('<span class="badge bg-light text-dark border">Draft</span>')
@@ -149,7 +149,7 @@ class PortalPettyCash(CustomerPortal):
                 'is_owner': is_owner,
                 'is_approver_view': is_approver_view,
                 'can_approve': report._can_review(request.env.user),
-                'review_label': {'submitted':'Complete Review 1','review_2':'Complete Review 2','manager_approval':'Approve'}.get(report.state,'Review'),
+                'review_label': {'submitted':'Complete Accounting Review','review_2':'Complete Supervisor Review','manager_approval':'Approve'}.get(report.state,'Review'),
                 'can_create_voucher': self._is_portal_approver() and report.state=='approved' and not report.journal_entry_id,
                 'can_open_voucher': self._is_portal_approver() and bool(report.journal_entry_id),
                 'error': str(kwargs.get('error') or '')[:1000],

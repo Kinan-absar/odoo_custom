@@ -1,6 +1,6 @@
 {
     'name': 'Petty Cash Management',
-    'version': '18.0.1.3.0',
+    'version': '18.0.1.3.1',
     'author': 'Kinan',
     'website': 'absar-alomran.com',
     'category': 'Accounting',
@@ -24,13 +24,13 @@
         - Excel Import Wizard for bulk petty cash entry creation (with template download)
         - Attachment support for each petty cash line and full movement of attachments to journal entries
         - Approval workflow:
-            • Draft → Review 1 → Review 2 → Manager Approval
+            • Draft → Accounting Review → Supervisor Review → Manager Approval
             • Each stage: approve or return for correction
             • Approved → Create Draft Voucher (either reviewer or manager)
         - Draft Journal Entry generation with correct debit/credit logic
         - PDF Printout formatted like existing company request forms
         - Chatter integration for comments and tracking
-        - Separate Reviewer 1, Reviewer 2 and Manager Approver roles
+        - Separate Accounting Reviewer, Accounting Supervisor and Final Approver roles
         - Footer totals for untaxed amount, VAT, and total amount
 
         This module is fully standalone (backend only). If you also use Employee
