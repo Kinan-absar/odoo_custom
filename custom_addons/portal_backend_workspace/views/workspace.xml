@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <template id="workspace_layout" name="Portal Backend Workspace Layout">
+    <t t-call="website.layout">
+      <t t-set="no_header" t-value="True"/>
+      <t t-set="no_footer" t-value="True"/>
+      <div class="pbw-shell">
+        <aside class="pbw-sidebar">
+          <a href="/my/workspace" class="pbw-logo"><span class="pbw-mark">W</span><span>Portal Backend<br/>Workspace</span></a>
+          <div class="pbw-caption">WORKSPACES</div>
+          <nav class="pbw-menu">
+            <a href="/my/workspace" t-att-class="'pbw-link active' if active_section == 'home' else 'pbw-link'"><i class="fa fa-home"/> Overview</a>
+            <t t-foreach="sections" t-as="item">
+              <a t-att-href="'/my/workspace/' + item['key']" t-att-class="'pbw-link active' if active_section == item['key'] else 'pbw-link'">
+                <i t-att-class="'fa ' + item['icon']"/><t t-out="item['title']"/>
+              </a>
+            </t>
+          </nav>
+          <div class="pbw-bottom"><a href="/my" class="pbw-link"><i class="fa fa-arrow-left"/> Standard Portal</a><div class="pbw-profile"><i class="fa fa-user-circle"/> <t t-out="request.env.user.name"/></div></div>
+        </aside>
+        <main class="pbw-main">
+          <header class="pbw-top"><div class="pbw-top-company" t-out="company_name"/><div class="pbw-top-right"><span class="pbw-pill">Portal access</span><a href="/web/session/logout?redirect=/web/login" title="Log out"><i class="fa fa-sign-out"/></a></div></header>
+          <div class="pbw-mobile-nav"><label for="pbw-nav">Workspace</label><select id="pbw-nav" onchange="if(this.value)window.location.href=this.value"><option value="/my/workspace">Overview</option><t t-foreach="sections" t-as="item"><option t-att-value="'/my/workspace/' + item['key']" t-att-selected="active_section == item['key'] and 'selected' or None" t-out="item['title']"/></t></select></div>
+          <div class="pbw-content"><t t-out="0"/></div>
+        </main>
+      </div>
+    </t>
+  </template>
+  <template id="workspace_dashboard" name="Workspace Dashboard">
+    <t t-call="portal_backend_workspace.workspace_layout">
+      <div class="pbw-eyebrow">OPERATIONS</div>
+      <h1>My Workspace</h1><p class="pbw-lead">Your authorized workspaces in one place.</p>
+      <div class="pbw-grid"><t t-foreach="sections" t-as="item">
+        <a t-att-href="'/my/workspace/' + item['key']" class="pbw-card">
+          <div class="pbw-card-icon"><i t-att-class="'fa ' + item['icon']"/></div>
+          <h2 t-out="item['title']"/><p t-out="item['description']"/><span>Open workspace <i class="fa fa-arrow-right"/></span>
+        </a>
+      </t></div>
+      <div class="pbw-note" t-if="not sections">No workspaces are assigned to your account. Please contact an administrator.</div>
+    </t>
+  </template>
+  <template id="workspace_section" name="Workspace Section Prototype">
+    <t t-call="portal_backend_workspace.workspace_layout">
+      <div class="pbw-eyebrow">WORKSPACE</div><h1 t-out="section['title']"/><p class="pbw-lead" t-out="section['description']"/>
+      <div class="pbw-note"><strong>Foundation prototype.</strong> The workspace shell and access groups are active, but the original transactional controllers, models, approval logic, and forms have not been migrated into this independent module yet. No transactions can be performed from this page.</div>
+      <a class="pbw-back" href="/my/workspace"><i class="fa fa-arrow-left"/> Back to workspaces</a>
+    </t>
+  </template>
+</odoo>
