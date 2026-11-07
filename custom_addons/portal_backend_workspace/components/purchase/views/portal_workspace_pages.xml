@@ -1,12 +1,12 @@
 <odoo>
  <template id="purchase__purchase_workspace_nav" name="Purchase Portal Navigation">
-  <header class="apw-workspace-header" t-if="request.env.user.has_group('portal_backend_workspace.purchase__group_portal_purchase_preparer') or request.env.user.has_group('customer_vendor_portal.group_vendor_invoice_reviewer')"><div class="apw-workspace-brand"><span class="apw-workspace-icon"><i class="fa fa-shopping-cart" aria-hidden="true"/></span><div><strong>Purchase</strong><small t-out="request.env.company.name"/></div></div><nav class="apw-app-nav" aria-label="Purchase workspace">
+  <header class="apw-workspace-header" t-if="request.env.user.has_group('portal_backend_workspace.purchase__group_portal_purchase_preparer')"><div class="apw-workspace-brand"><span class="apw-workspace-icon"><i class="fa fa-shopping-cart" aria-hidden="true"/></span><div><strong>Purchase</strong><small t-out="request.env.company.name"/></div></div><nav class="apw-app-nav" aria-label="Purchase workspace">
    <a t-if="request.env.user.has_group('portal_backend_workspace.purchase__group_portal_purchase_preparer')" href="/my/workspace/purchase" t-att-class="'active' if request.httprequest.path in ['/my/workspace/purchase', '/my/workspace/purchase/new'] else ''">Draft Purchase Orders</a>
    <a t-att-class="'active' if request.httprequest.path.endswith('/orders') else ''" t-att-href="'/my/workspace/purchase-monitor' if request.env.user.has_group('portal_backend_workspace.purchase__group_portal_purchase_monitor') else '/my/workspace/purchase/orders'" t-if="request.env.user.has_group('portal_backend_workspace.purchase__group_portal_purchase_preparer')">Purchase Orders</a>
    <a href="/my/workspace/purchase/products" t-att-class="'active' if request.httprequest.path.endswith('/products') else ''" t-if="request.env.user.has_group('portal_backend_workspace.purchase__group_portal_purchase_preparer')">Products</a>
    <a t-if="request.env.user.has_group('portal_backend_workspace.purchase__group_portal_purchase_approver')" href="/my/workspace/purchase/approvals">Approvals</a>
    <a t-if="request.env.user.has_group('portal_backend_workspace.foundation__group_employee_portal_admin') or request.env.user.has_group('portal_backend_workspace.foundation__group_employee_portal_superadmin')" href="/my/workspace/purchase/request-control">ER &amp; MR Admin Control</a>
-   <a href="/my/workspace/purchase/vendor-invoices" t-if="request.env.user.has_group('customer_vendor_portal.group_vendor_invoice_reviewer')" t-att-class="'active' if request.httprequest.path.startswith('/my/workspace/purchase/vendor-invoices') else ''">Vendor Invoice Review</a></nav>
+   </nav>
  </header></template>
  <template id="purchase__purchase_product_directory" name="Portal Purchasing Products">
   <t t-call="portal_backend_workspace.foundation__employee_portal_layout"><section class="apw-shell" id="apw-products" t-att-data-company-id="company.id">

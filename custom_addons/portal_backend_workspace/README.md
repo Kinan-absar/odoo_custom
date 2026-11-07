@@ -24,3 +24,6 @@ Original source remains grouped in `components/` with assets under `static/src/`
 3. Move business workspaces under `/my/workspace` without competing redirects.
 4. Remove residual external custom dependencies by isolating related functionality or merging its engine.
 5. Test every screen/action/approval, company rules, portal access and notifications.
+
+## 0.7.2 correction
+Removed the Customer/Vendor Portal dependency and its orphan Purchase vendor-submission review code. This does not remove standard Odoo vendor bills. Other external custom dependencies remain, so this is not yet a standalone finished addon.
