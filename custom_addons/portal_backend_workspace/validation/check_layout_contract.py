@@ -30,7 +30,9 @@ class LayoutContractTests(unittest.TestCase):
  def test_direct_shell_assets_have_release_token(self):
   root=etree.parse(str(ROOT/'views/workspace_layout.xml'))
   for src in root.xpath('//script/@src | //link/@href'):
-   if '/static/src/core/' in src:self.assertIn('?v=18.0.0.9.2',src)
+   if '/static/src/core/' in src:
+    expected = '18.0.0.9.4' if 'workspace_shell.js' in src else '18.0.0.9.2'
+    self.assertIn('?v='+expected,src)
  def test_all_local_js_imports_resolve(self):
   for file in (ROOT/'static/src').rglob('*.js'):
    for path in re.findall(r'from\s*[\'"](\.[^\'"]+)[\'"]',file.read_text()):

@@ -3,6 +3,7 @@ from odoo.http import request
 from odoo.addons.web.controllers.home import Home
 from odoo.addons.portal.controllers.portal import CustomerPortal
 from werkzeug.exceptions import Forbidden, NotFound
+from odoo.exceptions import AccessError
 
 class WorkspaceLogin(Home):
     def _login_redirect(self, uid, redirect=None):
@@ -47,19 +48,63 @@ class Workspace(http.Controller):
         user=self._actor();service=request.env['pbw.workspace.notification'].sudo()
         try:page=max(1,min(int(page),10000))
         except (ValueError,TypeError):raise NotFound()
-        domain=service._visible_domain(user)
-        rows=service.search(domain,offset=(page-1)*40,limit=40)
-        return request.render('portal_backend_workspace.notification_list',{'notification_rows':rows,'page':page,'has_next':service.search_count(domain)>page*40})
+        all_rows=service._visible_records(user)
+        rows=all_rows[(page-1)*40:page*40]
+        return request.render('portal_backend_workspace.notification_list',{'notification_rows':rows,'page':page,'has_next':len(all_rows)>page*40, 'notification_watermark':max(all_rows.ids, default=0)})
 
     @http.route('/my/workspace/notifications/read',type='http',auth='user',website=True,methods=['POST'],csrf=True)
-    def mark_read(self, ident=None, **kw):
+    def mark_read(self, ident=None, upto_id=None, **kw):
         user=self._actor()
-        try:ident=int(ident) if ident else None
-        except (ValueError,TypeError):raise NotFound()
-        request.env['pbw.workspace.notification']._mark_read(user,ident)
+        try:
+            request.env['pbw.workspace.notification']._mark_read(user, ident=ident, upto_id=upto_id)
+        except AccessError as exc:
+            raise Forbidden(str(exc))
         return request.redirect('/my/workspace/notifications')
 
     @http.route('/my/workspace/notifications/summary',type='http',auth='user',website=True,methods=['GET'])
     def summary(self, **kw):
         user=self._actor()
         return request.make_json_response(request.env['pbw.notification.seen']._get_notification_summary(user))
+
+
+    @staticmethod
+    def _notification_json(data, status=200):
+        return request.make_json_response(data, status=status, headers=[
+            ('Cache-Control', 'no-store, private, max-age=0'),
+            ('Pragma', 'no-cache'), ('Vary', 'Cookie'),
+        ])
+
+    @http.route('/my/workspace/notifications/bell', type='http', auth='user', website=True, methods=['GET'])
+    def notification_bell(self, **kw):
+        # The optional bridge permits EPS-only users without granting PBW roles.
+        try:
+            data = request.env['pbw.notification.seen']._get_bell_data(request.env.user)
+        except AccessError:
+            return self._notification_json({'error': _('Notification access is not available.')}, status=403)
+        return self._notification_json(data)
+
+    @http.route('/my/workspace/notifications/read-json', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def notification_read_json(self, ident=None, upto_id=None, **kw):
+        user = self._actor()
+        try:
+            service = request.env['pbw.workspace.notification']
+            if ident is not None:
+                service._mark_read(user, ident=ident)
+            elif upto_id is not None:
+                service._mark_read(user, upto_id=upto_id)
+            else:
+                raise AccessError(_('Select a notification or the displayed workspace updates.'))
+            data = request.env['pbw.notification.seen']._get_bell_data(user)
+        except AccessError:
+            return self._notification_json({'error': _('This notification is no longer available.')}, status=403)
+        return self._notification_json(data)
+
+    @http.route('/my/workspace/notifications/<int:ident>/open', type='http', auth='user', website=True, methods=['GET'])
+    def notification_open(self, ident, **kw):
+        user = self._actor()
+        try:
+            notice, target = request.env['pbw.workspace.notification']._get_notice(user, ident)
+        except AccessError as exc:
+            raise Forbidden(str(exc))
+        # Read acknowledgements are CSRF-protected POSTs, never mutations by GET.
+        return request.redirect(target)

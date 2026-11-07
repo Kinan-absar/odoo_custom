@@ -1,3 +1,0 @@
-18.0.1.20.100
-Shared compact list presentation and Accounting primary #087f83.
-See the bundle RELEASE_NOTES.txt and TEST_RESULTS.txt.

@@ -1,0 +1,48 @@
+{
+  "portal_backend_workspace": {
+    "version": "18.0.0.9.4",
+    "depends": [
+      "base",
+      "web",
+      "portal",
+      "mail",
+      "sale_management",
+      "sale_stock",
+      "purchase_stock",
+      "project_purchase",
+      "account",
+      "analytic",
+      "hr",
+      "hr_attendance",
+      "hr_contract",
+      "hr_work_entry",
+      "hr_payroll"
+    ]
+  },
+  "portal_backend_workspace_eps_bridge": {
+    "version": "18.0.0.9.4",
+    "depends": [
+      "portal_backend_workspace",
+      "employee_portal_suite"
+    ]
+  },
+  "checks": {
+    "python": 53,
+    "xml": 30,
+    "javascript": 29,
+    "declared_files": 73,
+    "browser_assertions": 84,
+    "offline_notification_tests": 41,
+    "layout_tests": 10,
+    "parity_tests": 21,
+    "live_odoo_executed": false
+  },
+  "preserved": {
+    "sales_purchase_accounting_business_files": true,
+    "hr_views_assets": true,
+    "global_layout_css": true,
+    "settings_menu_removal": true,
+    "existing_base_standard_dependencies": true,
+    "eps_source_not_modified": true
+  }
+}

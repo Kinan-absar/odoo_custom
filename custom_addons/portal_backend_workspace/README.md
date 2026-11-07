@@ -1,30 +1,34 @@
-# Portal Backend Workspace - 18.0.0.9.2
+# Portal Backend Workspace - 18.0.0.9.4
 
-Independent Odoo 18 addon containing the migrated Sales, Purchase,
-Accounting and HR Administration workspaces. This release replaces the simplified
-v0.8 pages; it is not an installer for the original four addons.
+Standalone Odoo 18 Sales, Purchase, Accounting and HR workspaces.
 
-## This update - original layout contract restored
+## This release: working notification components
 
-This updates the existing consolidated addon; it does not replace the four
-original workspace editors with generic Odoo tables or forms.
+The workspace now has its own desktop/mobile notification bell. Sales, Purchase and
+Accounting review/outcome events use the existing persistent inbox. HR operations
+and contract/payroll status changes notify other authorized HR/payroll administrators.
+A visible page refreshes the feed every 20 seconds and on bell open/window focus.
 
-- Restore the original EPS `#wrap.container.mt-3.mb-5` shell. The former
-  `container-fluid px-3 px-md-4 py-3` wrapper prevented original full-width
-  selectors from matching and introduced a second set of gutters.
-- Restore the original 80% desktop density starting at 769px, applied in the
-  page head before paint; mobile remains unscaled and print uses 100%.
-- Restore the original DM Sans weight/italic font request.
-- Load the exported compact-list helper as an ES module instead of a classic
-  script, fixing its browser syntax error. Version all direct shell assets.
-- Restore the visible standard Document Type field on New Quotation; no
-  technical-proposal addon or nonfunctional technical option is introduced.
-- Retain the migrated Sales/Purchase/Accounting/HR forms, grids, tabs, filters,
-  role checks and workflow logic from 0.9.1. No new custom dependency or routing
-  change. The existing EPS navigation bridge does not need changing.
+Unread items can be opened or marked read individually; Workspace history retains
+older available records. Mark workspace updates read affects only the displayed
+workspace snapshot, not EPS notifications or pending approval tasks. Read state is
+per recipient and shared across portal interfaces/tabs. Company, role, document and
+journal restrictions still apply. Users do not receive their own action as an alert.
 
-Read `LAYOUT_VALIDATION.md` and `TEST_REPORT.md` for exact executed checks,
-source comparisons and limits. Live Odoo execution has not been verified here.
+When EPS is installed, upgrade the companion **portal_backend_workspace_eps_bridge**
+to 18.0.0.9.4 for one combined bell in either portal. The base has no EPS dependency.
+EPS retains its own read markers and business workflows; the bridge only reads its
+notification summary. EPS Calls/Messages and MR composer behavior are preserved.
+
+Replace the base addon folder, upgrade the same addon, then upgrade the bridge if
+installed and hard-refresh open tabs. Do not uninstall. v0.9.3's redundant Settings
+menu removal and v0.9.2's original-layout fixes are retained. No Sales/Purchase/
+Accounting forms, fields, workflows or global table widths were changed in this patch.
+
+These are in-app notifications, not a new browser/OS push or email service. Existing
+saved notification events remain; the upgrade does not fabricate historical events.
+See TEST_REPORT.md for the 156 local checks and their exact limits. A live Odoo
+installation and real-user delivery have not been verified in this environment.
 
 ## Source baseline
 

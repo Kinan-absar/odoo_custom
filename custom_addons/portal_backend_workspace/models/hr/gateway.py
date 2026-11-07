@@ -6,6 +6,7 @@ from html import escape
 from odoo import models, fields, _, Command
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.osv import expression
+from ..notifications import _PBW_HR_GATEWAY_TOKEN, _PBW_HR_BATCH_TOKEN
 PREFIX = 'portal_backend_workspace.hr__'
 KINDS = {'employees': ('hr.employee', 'Employees', 'employee'), 'attendance': ('hr.attendance', 'Attendance', 'employee'), 'contracts': ('hr.contract', 'Contracts', 'payroll'), 'work-entries': ('hr.work.entry', 'Work Entries', 'payroll'), 'payslips': ('hr.payslip', 'Payslips', 'payroll'), 'batches': ('hr.payslip.run', 'Payroll Batches', 'payroll')}
 SCHEMA = {'employees': [('Employee', ['name', 'job_title', 'work_email', 'work_phone', 'mobile_phone', 'category_ids']), ('Work Information', ['department_id', 'job_id', 'parent_id', 'coach_id', 'work_location_id', 'resource_calendar_id']), ('Private Information', ['private_email', 'private_phone', 'private_street', 'private_city', 'private_zip', 'private_country_id', 'country_id', 'identification_id', 'passport_id', 'birthday', 'gender', 'marital', 'visa_no', 'visa_expire', 'permit_no', 'work_permit_expiration_date']), ('Employee Information', ['legal_name', 'registration_number', 'l10n_sa_employee_code'])], 'attendance': [('Attendance', ['employee_id', 'check_in', 'check_out', 'in_mode'])], 'contracts': [('Contract', ['name', 'employee_id', 'date_start', 'date_end', 'structure_type_id', 'department_id', 'job_id', 'contract_type_id', 'wage_on_signature', 'hr_responsible_id', 'resource_calendar_id']), ('Salary', ['wage', 'l10n_sa_housing_allowance', 'l10n_sa_transportation_allowance', 'l10n_sa_other_allowances']), ('Work Information', ['work_entry_source'])], 'work-entries': [('Work Entry', ['name', 'employee_id', 'contract_id', 'work_entry_type_id', 'date_start', 'date_stop'])], 'payslips': [('Payslip', ['name', 'employee_id', 'contract_id', 'struct_id', 'payslip_run_id', 'date_from', 'date_to']), ('Other Information', ['date', 'note'])], 'batches': [('Payroll Batch', ['name', 'date_start', 'date_end'])]}
@@ -42,7 +43,7 @@ class EmployeeAdminGateway(models.AbstractModel):
         return company
 
     def _env(self, company):
-        return self.with_context(allowed_company_ids=[company.id], force_company=company.id).with_company(company).sudo().env
+        return self.with_context(allowed_company_ids=[company.id], force_company=company.id, pbw_hr_notification_origin=_PBW_HR_GATEWAY_TOKEN).with_company(company).sudo().env
 
     def _kind(self, kind):
         if kind not in KINDS:
@@ -75,7 +76,9 @@ class EmployeeAdminGateway(models.AbstractModel):
 
     def _audit(self, company, kind, rec, operation, detail=''):
         user, roles = self._actor(KINDS[kind][2])
-        self._env(company)['pbw.employee.admin.audit'].create(dict(actor_id=user.id, company_id=company.id, resource=kind, resource_id=rec.id, operation=operation, detail=str(detail)[:2000]))
+        audit = self._env(company)['pbw.employee.admin.audit'].create(dict(actor_id=user.id, company_id=company.id, resource=kind, resource_id=rec.id, operation=operation, detail=str(detail)[:2000]))
+        if self.env.context.get('pbw_hr_batch_notification') is not _PBW_HR_BATCH_TOKEN:
+            self.env['pbw.workspace.notification']._notify_hr_event(rec, operation, event_token='hr-audit:%s' % audit.id)
 
     def _selection(self, rec, name):
         return dict(rec._fields[name]._description_selection(rec.env))
@@ -411,7 +414,7 @@ class EmployeeAdminGateway(models.AbstractModel):
             data = dict(employee_id=ident, contract_id=allowed[ident].id, payslip_run_id=batch.id, date_from=str(batch.date_start), date_to=str(batch.date_end))
             if structure:
                 data['struct_id'] = structure.id
-            slip = self._save(company, 'payslips', data)
+            slip = self.with_context(pbw_hr_batch_notification=_PBW_HR_BATCH_TOKEN)._save(company, 'payslips', data)
             self._native(slip, 'compute_sheet')
         if 'verify' in self._selection(batch, 'state'):
             batch.write({'state': 'verify'})

@@ -1,5 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_pbw_notification,Own workspace notifications,model_pbw_workspace_notification,group_workspace_access,1,0,0,0
+access_pbw_notification,Own workspace notifications,model_pbw_workspace_notification,group_workspace_access,0,0,0,0
 access_pbw_seen,Own workspace read markers,model_pbw_notification_seen,group_workspace_access,1,0,0,0
 access_pbw_notification_system,Workspace notification administration,model_pbw_workspace_notification,base.group_system,1,1,1,1
 access_pbw_seen_system,Workspace read marker administration,model_pbw_notification_seen,base.group_system,1,1,1,1

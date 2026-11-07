@@ -3,4 +3,12 @@
 <record id="action_workspace_users" model="ir.actions.act_window"><field name="name">Workspace Users</field><field name="res_model">res.users</field><field name="view_mode">list,form</field><field name="domain" eval="[('groups_id','in',[ref('group_workspace_access')])]"/><field name="context">{'active_test':False}</field></record>
 <menuitem id="menu_workspace_config" name="Portal Backend Workspace" parent="base.menu_administration" sequence="80" groups="base.group_system"/>
 <menuitem id="menu_workspace_users" name="Workspace Users" parent="menu_workspace_config" action="action_workspace_users" sequence="10" groups="base.group_system"/>
+
+<!-- Retire the redundant Settings menu. Preserve IDs for existing installations. -->
+<record id="menu_workspace_users" model="ir.ui.menu">
+    <field name="active" eval="False"/>
+</record>
+<record id="menu_workspace_config" model="ir.ui.menu">
+    <field name="active" eval="False"/>
+</record>
 </odoo>

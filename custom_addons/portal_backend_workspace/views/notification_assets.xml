@@ -1,0 +1,6 @@
+<odoo>
+    <template id="notification_assets" name="Scoped notification bell assets">
+        <link rel="stylesheet" href="/portal_backend_workspace/static/src/core/notification_bell.css?v=18.0.0.9.4"/>
+        <script src="/portal_backend_workspace/static/src/core/notification_bell.js?v=18.0.0.9.4" defer="defer"/>
+    </template>
+</odoo>

@@ -1,32 +1,73 @@
-# Executed validation - 18.0.0.9.2
+# Portal Backend Workspace 18.0.0.9.4 - notification release
 
-- 21 retained parity regression checks: PASS.
-- 10 new shell/asset/layout contract checks: PASS.
-- 180 source-based Chromium screen renders: PASS for no JS errors, no visible
-  error alerts and no whole-page horizontal overflow.
-- 48 tab/dialog interactions: PASS for click/JavaScript execution.
-- 16 of 28 adapted original scripts passed. 12 failed or remain incompatible;
-  they are NOT counted as passes. Full raw results and the unmodified originals'
-  own results are in `validation/`. Some failures are shared with the originals;
-  others concern removed custom integrations, renamed/stubbed models, or EPS
-  parent-role policies. No live functional conclusion is drawn from them.
-- Python/XML parsing, frontend JS syntax and declared local paths are checked
-  again during packaging. No live Odoo installation/upgrade was performed.
+## Scope
+Changes apply to the standalone base addon and the optional EPS bridge. The base
+starts from v0.9.3 including its menu removal and original-layout fixes. The bridge
+starts from v0.9. The four business workspaces are not replaced or redesigned.
 
-See LAYOUT_VALIDATION.md for the browser methodology and exclusions. Historical
-reports in `validation/` and V09_TEST_REPORT.md are explicitly historical.
+## Implemented
+- A persistent, permission-filtered workspace notification bell, desktop and mobile.
+- Existing Sales, Purchase and Accounting approval/outcome emitters feed the bell.
+- HR gateway actions and native contract/payslip/payroll-batch status changes notify
+  other authorized HR/payroll administrators. No new HR approval workflow is added.
+  Bulk payroll generation emits one batch update instead of a notice per child save.
+- Optional bridge reads the original EPS summary and replaces its existing bell with
+  the same component. It does not copy EPS events or maintain a second EPS inbox.
+- Per-user read state, individual read controls, workspace history and mark-workspace-
+  updates-read. Reading a notification neither approves a document nor clears pending
+  approval counters. EPS notifications retain the original EPS read/visit behavior.
+- Automatic refresh every 20 seconds while the page is visible, plus refresh on focus
+  or opening the bell. Tabs share only refresh signals, not notification contents.
+- Current company, role, ownership, journal and target-record access are checked before
+  displaying or opening notices. CSRF-protected acknowledgements apply only to the
+  signed-in user's eligible records. No generic portal ORM read grant is introduced.
+- One persisted row per recipient/event; bell totals do not add the same workspace
+  approval queue to its individual event count. A read watermark preserves events
+  arriving after the displayed snapshot.
+- EPS's existing Calls/Messages mounting and MR message submit guard are preserved by
+  the bridge without changing the EPS addon or restoring its competing bell poller.
 
-Run local static regression suites from this addon directory:
+## Executed checks
+| Check | Result | What it establishes |
+| --- | --- | --- |
+| Offline Python notification/security tests | 41 passed | Actual shipped methods with controlled ORM fixtures; scope, recipients, event deduplication, foreign read denial, revocation, HR events, EPS integration, install guard |
+| Browser fixture assertions | 84 passed | Shipped bell markup/CSS/JavaScript in Chromium; standalone/integrated/EPS-only at 1440/390px, one visible bell, read controls, counts, automatic refresh, cross-portal refresh, safe content, EPS compatibility |
+| Retained layout contract checks | 10 passed | Previously repaired shell layout contract remains |
+| Retained targeted parity checks | 21 passed | Previously repaired narrow features remain |
+| Python/XML/JavaScript/manifest/bridge inheritance checks | Passed | Source parses, declared files exist and inherited template targets match supplied source |
+| Business source preservation | Passed | Sales/Purchase/Accounting business models/controllers/views/assets unchanged; HR views/assets unchanged; existing global layout CSS and Settings-menu removal unchanged |
 
-```sh
-python validation/check_parity_repairs.py .
-python validation/check_layout_contract.py
-```
+The browser checks use local HTML and mocked HTTP endpoints, not the user's website.
+The opaque about:blank fixture has a test-only URL-origin adapter; shipped URL checks
+are unchanged. The browser suite checks real 20-second refresh timing. Mocked checks
+are not a substitute for Odoo registry, database, permission-rule or network tests.
 
-## Remaining live acceptance
+## Not executed / not claimed
+A live Odoo installation/upgrade and delivery between real Odoo user sessions were
+not executed in this environment. Seven optional real-registry tests are supplied
+under tests/ with tag pbw_notifications, but were not run. The complete historical
+workflow suite and feature parity with every original addon were not revalidated;
+prior limitations remain documented in PARITY_AUDIT.md and historical test reports.
+This release adds in-app notifications; it does not implement browser/OS push or
+email delivery when the portal is closed. Existing EPS push behavior is untouched.
+Historical business actions with no saved PBW event are not reconstructed. Existing
+persisted events remain available only if the user still has document access.
 
-The actual Dev asset compiler/QWeb renderer, real company/role combinations,
-approval transitions, tax/analytic calculations, receipts/backorders, payroll,
-PDF printing, notifications and combined EPS installation must be exercised in
-Odoo before treating this as a validated commercial release. Browser fixtures
-cannot establish those server-side outcomes.
+## Upgrade
+Replace the complete base addon folder and upgrade portal_backend_workspace first.
+For EPS integration, replace and upgrade portal_backend_workspace_eps_bridge next.
+Do not uninstall either product. Refresh open browser tabs after upgrading. Existing
+user groups and company/journal restrictions remain; the actor is not notified about
+its own action. Use a second correctly authorized user for a delivery test.
+
+## Recommended live acceptance checks
+1. In PBW alone, submit a quotation/PO/bill from one preparer and open a different,
+   company-authorized approver's bell. Approve or return and check the preparer's bell.
+2. With the bridge, compare unread contents on /my/employee and /my/workspace for a
+   dual-access user. Mark a PBW notice read in one and verify the other refreshes.
+3. Verify EPS-only users see only EPS notifications; PBW-only users have no unauthorized
+   document data. Revoke a workspace/journal permission and repeat the feed request.
+4. Make an HR/payroll operation with one administrator and check another permitted
+   administrator. Employee-only HR access must not expose payroll notifications.
+5. Confirm that reading an alert does not approve its document and that Calls/Messages
+   and MR message submission still behave normally within EPS.

@@ -12,7 +12,9 @@
 <link rel="stylesheet" href="/portal_backend_workspace/static/src/core/portal_compact_lists.css?v=18.0.0.9.2"/>
 <t t-set="pbw_areas" t-value="request.env.user._pbw_workspace_areas()"/>
 <t t-set="pbw_extra_links" t-value="request.env.user._pbw_extra_navigation()"/>
-<t t-set="ep_notif_summary" t-value="request.env['pbw.notification.seen']._get_notification_summary(request.env.user)"/>
+<t t-set="pbw_bell_data" t-value="request.env['pbw.notification.seen']._get_bell_data(request.env.user)"/>
+<t t-set="ep_notif_summary" t-value="pbw_bell_data['workspace_summary']"/>
+<t t-call="portal_backend_workspace.notification_assets"/>
 <t t-set="ep_notif_unread_total" t-value="sum(v.get('new',0) for v in ep_notif_summary.values())"/>
 <button type="button" class="pbwep-mobile-menu-backdrop mobile-only" data-pbwep-menu-close="1" aria-label="Close navigation" hidden="hidden"/>
 <aside class="pbwep-desktop-sidebar" id="pbwep-shared-sidebar" aria-label="Workspace navigation">
@@ -43,44 +45,43 @@
 <a t-if="request.env.user.has_group('portal_backend_workspace.hr__group_employee_admin')" href="/my/workspace/hr/employees/new" class="fab-item"><i class="fa fa-user-plus"/><span>New Employee</span></a>
 <a href="/my/workspace/accounting/invoices/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_customer_invoicing')"><i class="fa fa-file-text-o"/><span>New Customer Invoice</span></a><a href="/my/workspace/accounting/refunds/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_preparer') or request.env.user.has_group('portal_backend_workspace.accounting__group_accountant')"><i class="fa fa-undo"/><span>New Vendor Credit Note</span></a><a href="/my/workspace/accounting/journals/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_preparer') or request.env.user.has_group('portal_backend_workspace.accounting__group_accountant')"><i class="fa fa-book"/><span>New Journal Entry</span></a><a href="/my/workspace/hr/attendance/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_employee_admin')"><i class="fa fa-clock-o"/><span>New Attendance</span></a><a href="/my/workspace/hr/contracts/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-file-text-o"/><span>New Contract</span></a><a href="/my/workspace/hr/payslips/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-money"/><span>New Payslip</span></a><a href="/my/workspace/hr/batches/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-folder-o"/><span>New Payroll Batch</span></a></div><script src="/portal_backend_workspace/static/src/core/portal_mobile_menu.js?v=18.0.0.9.2"/>
 <script type="module" src="/portal_backend_workspace/static/src/core/portal_compact_lists.js?v=18.0.0.9.2"/>
-<script src="/portal_backend_workspace/static/src/core/workspace_shell.js?v=18.0.0.9.2"/>
+<script src="/portal_backend_workspace/static/src/core/workspace_shell.js?v=18.0.0.9.4"/>
 </t></template>
-<template id="notification_bell">
-        <div class="pbwep-bell-wrap" t-att-data-pbw-other-unread="ep_notif_unread_total">
-            <div t-att-class="'pbwep-bell-btn has-unread' if ep_notif_unread_total else 'pbwep-bell-btn'" onclick="togglePbwBell(event)">
-                <i class="fa fa-bell-o"/>
-                <t t-if="ep_notif_unread_total &gt; 0">
-                    <span class="pbwep-bell-dot"/>
-                </t>
+<template id="notification_bell" name="Workspace and integrated notification bell">
+    <div t-if="pbw_bell_data" class="pbw-notification-bell" data-pbw-bell="1"
+         t-att-data-csrf="request.csrf_token()"
+         t-att-data-workspace-watermark="pbw_bell_data['workspace_watermark']"
+         t-att-data-workspace-unread="pbw_bell_data['workspace_unread_count']">
+        <button type="button" class="pbw-notification-trigger" aria-expanded="false"
+                t-att-aria-label="'Notifications: %s unread' % pbw_bell_data['unread_count']">
+            <svg class="pbw-notification-glyph" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+            <span class="pbw-notification-badge" t-att-hidden="not pbw_bell_data['unread_count']"
+                  t-out="pbw_bell_data['unread_count'] if pbw_bell_data['unread_count'] &lt; 100 else '99+'"/>
+        </button>
+        <section class="pbw-notification-panel" role="region" aria-label="Notifications" hidden="hidden">
+            <div class="pbw-notification-heading"><strong>Notifications</strong><span data-pbw-bell-total="1"><t t-out="pbw_bell_data['unread_count']"/> unread</span></div>
+            <div class="pbw-notification-items">
+                <article t-foreach="pbw_bell_data['items']" t-as="item" class="pbw-notification-row" t-att-data-notification-key="item['key']">
+                    <a class="pbw-notification-link" t-att-href="item['url']" t-att-data-notice-id="item.get('id')" t-att-data-source="item['source']">
+                        <span class="pbw-notification-source"><t t-out="'Employee Portal' if item['source'] == 'eps' else {'sales':'Sales','purchase':'Purchase','accounting':'Accounting','hr':'HR'}.get(item['category'], 'Workspace')"/></span>
+                        <strong class="pbw-notification-title" t-out="item['title']"/>
+                        <span t-if="item.get('body')" class="pbw-notification-body" t-out="item['body']"/>
+                        <span t-if="item['source'] == 'eps'" class="pbw-notification-count"><t t-out="item['count']"/> new</span>
+                        <time t-if="item.get('date')" class="pbw-notification-time" t-out="item['date']"/>
+                    </a>
+                    <button t-if="item.get('id')" type="button" class="pbw-notification-read" t-att-data-pbw-read="item['id']" title="Mark as read" aria-label="Mark this notification as read"><span aria-hidden="true">&#10003;</span></button>
+                </article>
+                <p t-if="not pbw_bell_data['items']" class="pbw-notification-empty">You're all caught up.</p>
             </div>
-
-            <div class="pbwep-bell-panel">
-                <div class="pbwep-bell-panel-header">Notifications</div>
-
-                <t t-set="ep_unread_items" t-value="[(k, v) for k, v in ep_notif_summary.items() if v.get('new', 0) &gt; 0]"/>
-
-                <t t-if="ep_unread_items">
-                    <t t-foreach="ep_unread_items" t-as="ep_item">
-                        <a t-att-href="ep_item[1]['url']" t-att-data-pbw-notification-kind="ep_item[0]" class="pbwep-bell-item">
-                            <div class="pbwep-bell-item-icon">
-                                <i class="fa fa-bell"/>
-                            </div>
-                            <span class="pbwep-bell-item-label">
-                                <t t-out="ep_item[1]['label']"/>
-                            </span>
-                            <span class="pbwep-bell-item-count">
-                                <t t-out="ep_item[1]['new']"/> new
-                            </span>
-                        </a>
-                    </t>
-                </t>
-                <t t-if="not ep_unread_items">
-                    <div class="pbwep-bell-empty">You're all caught up.</div>
-                </t>
+            <p class="pbw-notification-status" role="status" aria-live="polite"/>
+            <div class="pbw-notification-footer">
+                <a t-if="pbw_bell_data['history_url']" t-att-href="pbw_bell_data['history_url']" data-pbw-history="1">Workspace history</a>
+                <button t-if="pbw_bell_data['history_url']" type="button" class="pbw-notification-mark-all" data-pbw-mark-all="1" t-att-disabled="not pbw_bell_data['workspace_unread_count']">Mark workspace updates read</button>
             </div>
-        </div>
-    </template>
-    
+        </section>
+    </div>
+</template>
+
 <template id="workspace_home" name="Workspace Home"><t t-call="portal_backend_workspace.workspace_layout">
 <div class="py-3"><h1 class="pbwep-workspace-title">My Workspace</h1><p class="text-muted">Sales, Purchase, Accounting and HR Administration</p>
 <t t-if="request.env.user.share and not request.env.user.sudo().with_company(request.env.user.company_id).employee_id"><div class="pbwep-shell-note">Ask your administrator to link this portal account to an employee under Employees / Settings / Related User before opening operational workspaces.</div></t>
@@ -89,5 +90,5 @@
 <div class="pbw-attention-grid"><a t-foreach="workspace_attention" t-as="item" t-att-href="item['url']" class="pbw-attention-item"><span class="pbw-attention-icon warning"><i t-att-class="'fa '+item['icon']"/></span><span><strong><t t-out="item['count']"/> <t t-out="item['label']"/></strong><small t-out="item['hint']"/></span><i class="fa fa-angle-right ms-auto"/></a><div t-if="not workspace_attention" class="pbw-attention-clear"><i class="fa fa-check-circle"/><div><strong>You're all caught up</strong><small>No pending approvals or new review decisions.</small></div></div></div>
 </section><div class="pbwep-workspace-grid"><t t-foreach="workspace_areas" t-as="area"><div class="pbwep-workspace-tile"><i t-att-class="'fa '+area['icon']"/><h3 t-out="area['name']"/><t t-foreach="area['links']" t-as="link"><a t-att-href="link[1]" t-out="link[0]"/></t></div></t></div><div t-if="not workspace_areas" class="pbwep-shell-note">Workspace access is enabled, but no operational roles have been assigned. Ask your administrator to assign the appropriate Sales, Purchase, Accounting or HR roles.</div></div>
 </t></template>
-<template id="notification_list" name="Workspace Notifications"><t t-call="portal_backend_workspace.workspace_layout"><h2>Notifications</h2><form action="/my/workspace/notifications/read" method="post" class="mb-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-outline-primary">Mark all as read</button></form><t t-foreach="notification_rows" t-as="notice"><article t-att-class="'pbwep-alert-card'+(' unread' if not notice.read_at else '')"><h5 t-out="notice.title"/><p class="text-muted" t-out="notice.body"/><small t-field="notice.create_date"/><div class="mt-2"><a class="btn btn-sm btn-primary" t-att-href="notice.url">Open document</a><form t-if="not notice.read_at" action="/my/workspace/notifications/read" method="post" class="d-inline ms-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="ident" t-att-value="notice.id"/><button class="btn btn-sm btn-light">Mark read</button></form></div></article></t><p t-if="not notification_rows" class="text-muted">No workspace notifications.</p><a t-if="page &gt; 1" t-att-href="'/my/workspace/notifications?page=%s' % (page-1)" class="btn btn-light">Previous</a><a t-if="has_next" t-att-href="'/my/workspace/notifications?page=%s' % (page+1)" class="btn btn-light ms-2">Next</a></t></template>
+<template id="notification_list" name="Workspace Notifications"><t t-call="portal_backend_workspace.workspace_layout"><h2>Notifications</h2><form action="/my/workspace/notifications/read" method="post" class="mb-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input t-if="notification_watermark" type="hidden" name="upto_id" t-att-value="notification_watermark"/><button class="btn btn-outline-primary" t-att-disabled="not notification_rows">Mark workspace updates read</button></form><t t-foreach="notification_rows" t-as="notice"><article t-att-class="'pbwep-alert-card'+(' unread' if not notice.read_at else '')"><h5 t-out="notice.title"/><p class="text-muted" t-out="notice.body"/><small t-field="notice.create_date"/><div class="mt-2"><a class="btn btn-sm btn-primary" t-att-href="'/my/workspace/notifications/%s/open' % notice.id">Open document</a><form t-if="not notice.read_at" action="/my/workspace/notifications/read" method="post" class="d-inline ms-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="ident" t-att-value="notice.id"/><button class="btn btn-sm btn-light">Mark read</button></form></div></article></t><p t-if="not notification_rows" class="text-muted">No workspace notifications.</p><a t-if="page &gt; 1" t-att-href="'/my/workspace/notifications?page=%s' % (page-1)" class="btn btn-light">Previous</a><a t-if="has_next" t-att-href="'/my/workspace/notifications?page=%s' % (page+1)" class="btn btn-light ms-2">Next</a></t></template>
 </odoo>
