@@ -1,0 +1,28 @@
+ABSAR PURCHASE PORTAL 18.0.1.6.6 - 2026-10-20
+
+RECEIVE PRODUCTS
+Confirmed/locked POs now have Receive Products in the portal for eligible purchase preparers. Own-document issuers can receive their own POs; all-document purchase users can receive accessible company POs. Monitor/approver-only accounts do not receive new stock-writing rights.
+The dialog lists pending native incoming supplier receipts, quantities remaining on each receipt, quantities previously received on the PO, and Receive Now inputs.
+Enter quantities delivered now, or use Set Remaining Quantities, then Validate Receipt. The native Odoo receipt is validated. Partial receipts preserve the remainder through the native backorder flow. The PO reloads so received/billable quantities and Create Vendor Bill availability are recalculated.
+A receipt is never silently completed just to unlock billing. Quantity inputs start at zero.
+
+GUARDS AND LIMITS
+Company, PO ownership/scope, receipt membership, exact move IDs, non-negative finite quantities, remaining demand, current state and optimistic receipt/move/lot versions are checked.
+PO/receipt/move locks serialize duplicate submissions. All active receipt moves receive an explicit quantity, including zero for items not delivered.
+Receipts containing unrelated/other-PO stock moves require internal Inventory. Returns/internal transfers are excluded.
+Lot/serial assignments must be prepared in Inventory. Native validation/installed stock hooks remain active. Unsupported additional Inventory wizard steps roll the request back rather than recording a false success.
+Operation types configured never to create backorders must have backorders enabled before receiving partially through the portal, preventing accidental cancellation of the remainder.
+This dialog handles native supplier stock receipts. Services/manual receipt quantities remain handled in internal Purchase. Native downstream warehouse steps remain unchanged.
+
+INSTALL
+Replace absar_portal_purchase_monitor only, restart/rebuild staging, upgrade ABSAR Portal Purchase Workspace, then hard-refresh the browser. Do not uninstall. Includes all 1.6.5 product/grid changes and 1.6.4 single-step PO approvals. Existing group definitions remain unchanged. Employee Portal Suite, Sales and Accounting are not modified or included.
+
+USAGE
+Approved PO -> Receive Products -> enter delivered quantities (or Set Remaining Quantities) -> Validate Receipt -> refreshed PO -> Create Vendor Bill.
+A separate draft/posted vendor bill may already consume billable quantities; receiving does not bypass duplicate-billing controls.
+
+VERIFICATION
+Python/XML and JavaScript syntax checked; ZIP integrity verified.
+Actual model helpers executed with isolated recordset fixtures for full receipt, partial receipt/native backorder wizard invocation, explicitly unreceived rows, duplicate completion, invalid/negative/non-finite/over quantities, stale versions, foreign/mixed/company receipts, role/owner/state and lot/serial guards. Unsupported validation actions are rejected.
+Actual receipt JavaScript executed with DOM fixtures for positive-quantity requirement, exact partial quantities, receipt/version payload, and PO refresh only after successful validation. Existing grid/navigation and single-step PO approval fixture checks passed.
+No live Odoo ORM/stock valuation/warehouse integration or staging upgrade was performed for 18.0.1.6.6. This release still requires staging testing.

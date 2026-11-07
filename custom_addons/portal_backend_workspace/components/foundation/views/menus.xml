@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <menuitem id="foundation__menu_employee_portal_root"
+              name="Employee Portal"
+              sequence="10"
+              web_icon="employee_portal_suite,static/description/icon.png"/>
+
+    <!-- Business menus are role-driven; Administrator has operational overview access. -->
+    <menuitem id="foundation__menu_employee_request_items"
+              name="Employee Requests"
+              parent="foundation__menu_employee_portal_root"
+              action="foundation__action_employee_request"
+              sequence="10"
+              groups="portal_backend_workspace.foundation__group_employee_portal_manager,portal_backend_workspace.foundation__group_employee_portal_hr,portal_backend_workspace.foundation__group_employee_portal_finance,portal_backend_workspace.foundation__group_employee_portal_ceo,portal_backend_workspace.foundation__group_employee_portal_admin,portal_backend_workspace.foundation__group_employee_portal_superadmin"/>
+
+    <menuitem id="foundation__menu_material_request_items"
+              name="Material Requests"
+              parent="foundation__menu_employee_portal_root"
+              action="foundation__action_material_request"
+              sequence="20"
+              groups="portal_backend_workspace.foundation__group_mr_purchase_rep,portal_backend_workspace.foundation__group_mr_store_manager,portal_backend_workspace.foundation__group_mr_project_manager,portal_backend_workspace.foundation__group_mr_projects_director,portal_backend_workspace.foundation__group_employee_portal_ceo,portal_backend_workspace.foundation__group_employee_portal_admin,portal_backend_workspace.foundation__group_employee_portal_superadmin"/>
+
+    <record id="foundation__action_portal_announcement" model="ir.actions.act_window">
+        <field name="name">Announcements</field>
+        <field name="res_model">portal.announcement</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="foundation__menu_portal_announcements"
+              name="Announcements"
+              parent="foundation__menu_employee_portal_root"
+              action="foundation__action_portal_announcement"
+              sequence="30"
+              groups="portal_backend_workspace.foundation__group_employee_portal_announcement_manager"/>
+
+    <!-- Force exact menu security on upgrade. menuitem groups can otherwise leave
+         stale group links from older module versions in ir_ui_menu_group_rel. -->
+    <record id="foundation__menu_portal_announcements" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('portal_backend_workspace.foundation__group_employee_portal_announcement_manager')])]"/>
+    </record>
+</odoo>

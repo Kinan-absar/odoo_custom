@@ -1,0 +1,69 @@
+/* One editable-list presentation for all three portal workspaces. */
+table.absar-document-lines{width:100%;min-width:1080px;table-layout:fixed;border-collapse:collapse;font-size:15px!important;color:#26313d;line-height:1.4;}
+table.absar-document-lines th{position:relative;padding:12px 10px!important;background:#fff!important;color:#26313d;font-weight:600;font-size:14px!important;text-align:left;white-space:nowrap;border:0!important;border-bottom:2px solid #087f83!important;}
+table.absar-document-lines td{position:relative;padding:4px 8px!important;vertical-align:top!important;border:0!important;border-bottom:1px solid #e0e5e8!important;min-width:0!important;max-width:none!important;overflow-wrap:anywhere;}
+table.absar-document-lines th:first-child{width:29%;}table.absar-document-lines td:first-child{padding-left:22px!important;}
+table.absar-document-lines th:nth-child(2){width:17%;}table.absar-document-lines th:last-child{width:64px;}
+table.absar-document-lines[data-line-editor=sales] th:last-child{width:34px;}
+table.absar-document-lines th:nth-child(3){width:9%;}table.absar-document-lines th:nth-child(4){width:7%;}
+table.absar-document-lines th:nth-child(5){width:10%;}table.absar-document-lines th:nth-child(6){width:9%;}
+table.absar-document-lines th:nth-child(7){width:7%;}table.absar-document-lines th:nth-child(8){width:11%;}
+table.absar-document-lines[data-line-editor=invoice]{min-width:1220px;}
+table.absar-document-lines[data-line-editor=invoice] th:first-child{width:24%;}
+table.absar-document-lines[data-line-editor=invoice] th:nth-child(2){width:15%;}
+table.absar-document-lines[data-line-editor=invoice] th:nth-child(3){width:13%;}
+table.absar-document-lines[data-line-editor=invoice] th:nth-child(4){width:7%;}
+table.absar-document-lines[data-line-editor=invoice] th:nth-child(5){width:9%;}
+table.absar-document-lines[data-line-editor=invoice] th:nth-child(6){width:6%;}
+table.absar-document-lines[data-line-editor=invoice] th:nth-child(7){width:8%;}
+table.absar-document-lines[data-line-editor=invoice] th:nth-child(8){width:10%;}
+table.absar-document-lines[data-line-editor=invoice] th:nth-child(9){width:8%;white-space:normal;}
+table.absar-document-lines[data-line-editor^=journal] th:first-child{width:20%;}
+table.absar-document-lines[data-line-editor^=journal] th:nth-child(2){width:14%;}
+table.absar-document-lines[data-line-editor^=journal] th:nth-child(3){width:18%;}
+table.absar-document-lines[data-line-editor^=journal] th:nth-child(4){width:16%;white-space:normal;}
+table.absar-document-lines[data-line-editor^=journal] th:nth-child(5),table.absar-document-lines[data-line-editor^=journal] th:nth-child(6),table.absar-document-lines[data-line-editor^=journal] th:nth-child(7),table.absar-document-lines[data-line-editor^=journal] th:nth-child(8){width:8%;}
+table.absar-document-lines input,table.absar-document-lines select,table.absar-document-lines textarea{box-sizing:border-box;width:100%!important;max-width:none!important;min-width:0!important;min-height:32px!important;height:32px;padding:5px 4px!important;font:inherit!important;color:inherit!important;border:0!important;border-bottom:1px solid transparent!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;opacity:1!important;}
+table.absar-document-lines input[type=number]{text-align:right;font-variant-numeric:tabular-nums;-moz-appearance:textfield;}
+table.absar-document-lines input::-webkit-inner-spin-button,table.absar-document-lines input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+table.absar-document-lines textarea{height:auto;min-height:28px!important;line-height:1.4!important;resize:vertical;}
+table.absar-document-lines tbody tr{background:#fff!important;height:42px;}
+table.absar-document-lines tr:focus-within{background:#f0f1f2!important;}
+table.absar-document-lines input:focus,table.absar-document-lines textarea:focus{border-bottom-color:#087f83!important;outline:0!important;}
+table.absar-document-lines .absar-line-description[data-duplicate=true]{display:none;}
+table.absar-document-lines td:first-child:focus-within .absar-line-description[data-duplicate=true]{display:block;color:#667580!important;font-size:13px!important;}
+table.absar-document-lines .desc>div,table.absar-document-lines .aca-product-description{display:block!important;gap:0!important;}
+table.absar-document-lines .apw-lookup,table.absar-document-lines .aca-picker{position:relative;min-width:0!important;max-width:100%;}
+table.absar-document-lines .apw-lookup>input{padding-right:24px!important;}
+table.absar-document-lines .apw-open-product{position:absolute;right:0;top:2px;border:0;background:transparent;color:#087f83;padding:2px 3px;min-height:28px;opacity:0;}
+table.absar-document-lines .aca-product-cell{position:relative!important;display:block!important;}
+table.absar-document-lines .aca-product-cell>button{position:absolute;right:0;top:2px;opacity:0;}
+table.absar-document-lines td:hover .apw-open-product,table.absar-document-lines td:focus-within .apw-open-product,table.absar-document-lines td:hover .aca-product-cell>button,table.absar-document-lines td:focus-within .aca-product-cell>button{opacity:1;}
+table.absar-document-lines .aps-sales-analytic,table.absar-document-lines .aca-analytic-control,table.absar-document-lines .apw-analytic{background:transparent!important;color:#26313d!important;border:0!important;border-radius:0!important;padding:5px 4px!important;font:inherit!important;min-height:32px;max-width:100%;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+table.absar-document-lines .apw-tax-cell>div,table.absar-document-lines .aps-sales-taxes,table.absar-document-lines .aca-line-tags{display:flex;flex-wrap:wrap;align-items:center;gap:3px;min-height:32px;}
+table.absar-document-lines .apw-tax-cell .apw-lookup,table.absar-document-lines .aps-tax-add,table.absar-document-lines .aca-tag-add{width:24px!important;min-width:24px!important;flex:0 0 24px;order:2;opacity:0;}
+table.absar-document-lines td:focus-within .apw-lookup,table.absar-document-lines td:hover .apw-lookup,table.absar-document-lines td:focus-within .aca-tag-add,table.absar-document-lines td:hover .aca-tag-add{opacity:1;}
+table.absar-document-lines .apw-tax-cell .apw-lookup input,table.absar-document-lines .aps-tax-add input{padding:2px!important;}
+table.absar-document-lines .apw-chip,table.absar-document-lines .aca-pill{display:inline-flex;align-items:center;font-size:12px!important;min-height:23px;padding:1px 5px!important;margin:0!important;background:#e8edf0!important;border:0!important;border-radius:3px!important;color:#344553;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+table.absar-document-lines .apw-chip-remove,table.absar-document-lines .aca-pill button{border:0;background:transparent;min-height:20px!important;padding:0 2px!important;opacity:.55;}
+table.absar-document-lines .apw-row-actions,table.absar-document-lines .aps-sales-tools,table.absar-document-lines .aca-row-actions{display:flex;align-items:center;justify-content:flex-end;gap:1px;flex-wrap:nowrap;opacity:.4;}
+table.absar-document-lines tr:hover .apw-row-actions,table.absar-document-lines tr:focus-within .apw-row-actions,table.absar-document-lines tr:hover .aps-sales-tools,table.absar-document-lines tr:focus-within .aps-sales-tools,table.absar-document-lines tr:hover .aca-row-actions,table.absar-document-lines tr:focus-within .aca-row-actions{opacity:1;}
+table.absar-document-lines .apw-row-actions button,table.absar-document-lines .aps-sales-tools button,table.absar-document-lines .aca-row-actions button{border:0;background:transparent;padding:2px 4px!important;min-height:32px!important;font-size:17px!important;color:#64717c;}
+.absar-row-grip{position:absolute;left:1px;top:7px;opacity:.4;cursor:grab;color:#83919a;padding:2px;user-select:none;font-size:18px;}
+.absar-column-resize{position:absolute;top:0;right:0;width:7px;height:100%;cursor:col-resize;touch-action:none;}.absar-column-resize:hover{background:#087f8340;}
+table.absar-document-lines .line_section,table.absar-document-lines .apw-section,table.absar-document-lines .aca-section{background:#eff3f4!important;font-weight:600;}table.absar-document-lines .line_note,table.absar-document-lines .apw-note{font-style:italic;}
+table.absar-document-lines .num,table.absar-document-lines .aca-money{padding-top:9px!important;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.absar-line-add{display:flex!important;align-items:center;gap:22px!important;flex-wrap:wrap;padding:12px 8px!important;margin:0!important;border-bottom:1px solid #e0e5e8;}
+.absar-line-add>button{border:0!important;border-radius:0!important;background:transparent!important;color:#087f83!important;padding:2px 0!important;font-size:15px!important;min-height:28px!important;font-weight:400!important;box-shadow:none!important;}
+.absar-line-add>button:hover{text-decoration:underline;}
+.aps-sales-scroll,.apw-table-scroll:has(.absar-document-lines){border:0!important;border-radius:0!important;}
+.aps-sales-status:empty{display:none;}
+.aps-sales-totals{background:transparent!important;font-size:15px;}
+@media(max-width:767.98px){.absar-line-add{gap:16px!important;}table.absar-document-lines{font-size:14px!important;}table.absar-document-lines th{font-size:13px!important;}}
+
+/* Document action buttons must match whether wrapped in a form or direct. */
+.absar-document-actions{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:wrap;}
+.absar-document-actions>form{display:flex;align-items:center;gap:8px;margin:0!important;padding:0!important;}
+.absar-document-actions .btn{display:inline-flex!important;align-items:center;justify-content:center;box-sizing:border-box;height:40px!important;min-height:40px!important;margin:0!important;padding:8px 16px!important;line-height:1.2!important;border-radius:8px!important;white-space:nowrap;}
+table.absar-document-lines .absar-line-description[data-duplicate=true]{display:none!important;}
+table.absar-document-lines td:first-child:focus-within .absar-line-description[data-duplicate=true]{display:block!important;}

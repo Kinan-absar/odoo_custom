@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Hide the legacy Telegram menu on upgrades. Telegram delivery/UI is retired. -->
+    <record id="foundation__menu_employee_portal_telegram_config" model="ir.ui.menu">
+        <field name="name">Telegram Notifications (Retired)</field>
+        <field name="parent_id" ref="portal_backend_workspace.foundation__menu_employee_portal_root"/>
+        <field name="active" eval="False"/>
+    </record>
+</odoo>

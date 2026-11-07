@@ -1,0 +1,36 @@
+/* Employee Portal Suite mobile cards; desktop presentation remains unchanged. */
+@media (max-width:767.98px) {
+.ep-portal-main :is(.aps-wrap,.apw-shell,.apm-shell,.aca){min-width:0;width:100%;max-width:100%!important;box-sizing:border-box;padding-left:0!important;padding-right:0!important}
+.ep-portal-main .absar-column-list{display:flex;gap:10px;overflow:visible;min-width:0;width:100%;padding:0;--list-width:0px}
+.ep-portal-main .absar-column-list .absar-list-header{display:none}
+.ep-portal-main .absar-column-list .absar-record-card{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;min-width:0;width:100%;max-width:100%;min-height:0;padding:18px 18px 18px 22px;border:1px solid var(--border-light,#d8e8e9);border-radius:var(--radius-lg,16px);background:var(--surface,#fff);box-shadow:var(--shadow-sm,0 2px 8px #1838420a);overflow:hidden}
+.ep-portal-main .absar-column-list .absar-record-card::before{content:'';position:absolute;left:0;top:16px;bottom:16px;width:3px;border-radius:0 3px 3px 0;background:linear-gradient(180deg,#159398,#07686b)}
+.ep-portal-main .absar-record-card .absar-list-cell{min-width:0;max-width:100%;overflow:visible;white-space:normal;text-align:left;font-size:13.5px;overflow-wrap:anywhere}
+.ep-portal-main .absar-record-card .absar-list-cell>div,.ep-portal-main .absar-record-card .absar-list-cell>span{white-space:normal;overflow:visible;overflow-wrap:anywhere}
+.ep-portal-main .absar-list-cell::before{content:attr(data-mobile-label);display:block;font-size:10px;line-height:1.4;color:var(--text-muted,#71858d);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.ep-portal-main .absar-record-card .absar-list-cell:first-child{grid-column:1/-1}
+.ep-portal-main .absar-record-number{font-size:14.5px;font-weight:700;color:var(--text-primary,#203b4a)}
+.ep-portal-main .absar-record-party{font-size:13.5px}
+.ep-portal-main .absar-record-value{white-space:normal;font-size:14px}
+.ep-portal-main .absar-record-badge{white-space:normal;overflow-wrap:anywhere;line-height:1.4}
+.ep-portal-main :is(.aps-panel,.apw-sheet,.aca-surface,.apm-editor-card,.apm-info){min-width:0;max-width:100%;box-sizing:border-box;background:var(--surface,#fff);border:1px solid var(--border-light,#d8e8e9);border-radius:var(--radius-lg,16px);padding:18px 14px!important;margin:12px 0;box-shadow:var(--shadow-sm,0 2px 8px #1838420a)}
+.ep-portal-main :is(.aps-form,.apw-form-grid,.apm-form-grid,.apm-header-grid,.aca-grid,.apw-footer-grid){width:100%;max-width:100%;min-width:0;grid-template-columns:minmax(0,1fr);gap:14px}
+.ep-portal-main :is(.apw-form-grid,.apm-form-grid,.aca-grid)>*{min-width:0;max-width:100%}
+.ep-portal-main .apw-form-grid>div,.ep-portal-main .apw-form-grid>label{display:block}
+.ep-portal-main :is(.aps-panel,.apw-sheet,.aca-surface) :is(input,select,textarea){max-width:100%;box-sizing:border-box;font-size:16px}
+.ep-portal-main :is(.aps-head,.apw-heading,.apm-title,.aca-title){align-items:flex-start;gap:12px;flex-wrap:wrap}
+.ep-portal-main :is(.aps-head,.apw-heading,.apm-title,.aca-title) :is(h2,h3){font-size:22px;overflow-wrap:anywhere;min-width:0}
+.ep-portal-main :is(.aps-sales-actions,.apw-actions,.aca-actions){position:static;display:flex;flex-wrap:wrap;gap:8px;padding:10px 0;max-width:100%}
+.ep-portal-main .aps-sales-actions>form{flex:1 1 100%;min-width:0;flex-wrap:wrap}
+.ep-portal-main .aps-sales-actions>form>.btn{min-height:44px;flex:1}
+.ep-portal-main :is(.apw-actions,.aca-actions) :is(button,.btn,.aca-primary){min-height:44px;max-width:100%;white-space:normal}
+.ep-portal-main :is(.aps-app-nav,.apw-app-nav,.aca-nav,.apw-tabs,.aca-tabs){display:flex;flex-wrap:nowrap;overflow-x:auto;max-width:100%;min-width:0;-webkit-overflow-scrolling:touch}
+.ep-portal-main :is(.aps-app-nav,.apw-app-nav,.aca-nav,.apw-tabs,.aca-tabs)>*{flex-shrink:0;white-space:nowrap}
+.ep-portal-main :is(.aps-monitor-filters,.apm-filter,.apw-toolbar,.aca-filters){display:flex;flex-wrap:wrap;gap:8px;max-width:100%}
+.ep-portal-main :is(.aps-monitor-filters,.apm-filter,.apw-toolbar,.aca-filters) :is(input,select){flex:1 1 100%;width:100%;min-width:0;max-width:100%;font-size:16px;min-height:44px}
+.ep-portal-main :is(.aps-sales-scroll,.apw-table-scroll,.aca-table-wrap,.apm-table-wrap){min-width:0;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ep-portal-main :is(.apw-totals,.aca-totals){max-width:100%;min-width:0;padding-left:0}
+.ep-portal-main .apm-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ep-portal-main .apm-cards>div{min-width:0;padding:14px;border-radius:var(--radius-lg,16px)}
+.ep-portal-main .aps-workspace-header,.ep-portal-main .aca-workspace-header{min-width:0;max-width:100%;padding:14px 12px 0;gap:12px}
+}

@@ -1,0 +1,13 @@
+<odoo>
+ <record id="sales__group_portal_sales_creator" model="res.groups">
+  <field name="name">Employee Portal: Sales &amp; Proposals - Prepare</field>
+ </record>
+ <record id="sales__group_portal_sales_approver" model="res.groups">
+  <field name="name">Employee Portal: Sales &amp; Proposals - Approve</field>
+  <field name="implied_ids" eval="[(4, ref('portal_backend_workspace.sales__group_portal_sales_creator'))]"/>
+ </record>
+ <record id="sales__group_portal_sales_monitor" model="res.groups">
+  <field name="name">Employee Portal: Sales &amp; Proposals - Monitor (Read Only)</field>
+ </record>
+ <record id="sales__group_portal_sales_user" model="res.groups"><field name="name">Sales User (All Company Documents)</field><field name="implied_ids" eval="[(4, ref('group_portal_sales_creator'))]"/><field name="comment">Work on all company-compatible quotations and sales orders. Every quotation requires independent approval; this role expands document visibility only. Grants no internal accounting or sales model ACLs.</field></record>
+</odoo>
