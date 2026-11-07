@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="discuss_channel_employee_portal_form" model="ir.ui.view">
+        <field name="name">discuss.channel.employee.portal.form</field>
+        <field name="model">discuss.channel</field>
+        <field name="inherit_id" ref="mail.discuss_channel_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook/page[@name='privacy']" position="after">
+                <page string="Employee Portal" name="employee_portal" invisible="channel_type != 'channel'">
+                    <group>
+                        <group string="Portal Access">
+                            <field name="employee_portal_access"/>
+                            <field name="employee_portal_all_employees" invisible="employee_portal_access == 'disabled'"/>
+                        </group>
+                        <group string="Portal Audience" invisible="employee_portal_access == 'disabled' or employee_portal_all_employees">
+                            <field name="employee_portal_department_ids" widget="many2many_tags"/>
+                            <field name="employee_portal_employee_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert" invisible="employee_portal_access == 'disabled'">
+                        Portal members are synchronized automatically from the audience above.
+                        <b>Read Only</b> allows viewing only: no messages, reactions, attachments, voice notes, member changes, audio calls, or video calls.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

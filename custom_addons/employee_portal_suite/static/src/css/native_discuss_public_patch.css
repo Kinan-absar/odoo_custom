@@ -1,0 +1,665 @@
+.ep-native-discuss-public {
+  overflow: hidden;
+  height: var(--ep-discuss-height, 100vh);
+  max-height: var(--ep-discuss-height, 100vh);
+}
+
+.ep-native-discuss-public .o-mail-Discuss {
+  min-height: 0 !important;
+  height: var(--ep-discuss-height, 100vh) !important;
+  max-height: var(--ep-discuss-height, 100vh) !important;
+  overflow: hidden !important;
+}
+
+.ep-native-discuss-toolbar {
+  min-height: 52px;
+  background: #fff;
+  position: relative;
+  z-index: 20;
+  flex: 0 0 auto;
+}
+
+.ep-native-discuss-toolbar .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+}
+
+.ep-native-discuss-public .o-mail-Discuss-content,
+.ep-native-discuss-public .o-mail-Discuss-main,
+.ep-native-discuss-public .o-mail-Discuss-core,
+.ep-native-discuss-public .o-mail-Discuss-threadContainer {
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.ep-native-discuss-public .o-mail-Discuss-threadContainer {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.ep-native-discuss-public .o-mail-Thread {
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ep-native-discuss-public .o-mail-Composer {
+  flex: 0 0 auto !important;
+  position: relative;
+  z-index: 5;
+  background: #fff;
+}
+
+@media (max-width: 767.98px) {
+  .ep-native-discuss-public .o-mail-Discuss {
+    position: fixed !important;
+    top: var(--ep-discuss-top, 0px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+  }
+
+  .ep-native-discuss-public .o-mail-Discuss-header {
+    min-height: 54px;
+  }
+
+  .ep-native-discuss-public .o-mail-Composer {
+    padding-bottom: 8px !important;
+  }
+
+  .ep-native-discuss-public.ep-native-discuss-keyboard .o-mail-Composer,
+  .ep-native-discuss-public .ep-native-discuss-keyboard .o-mail-Composer {
+    padding-bottom: 4px !important;
+  }
+}
+
+/* v20 - app-like native Discuss shell. The message/composer/call/voice-note UI
+   stays 100% native Odoo; these rules only style the surrounding shell. */
+.ep-native-discuss-public {
+  background: #fff !important;
+  color-scheme: light;
+}
+
+.ep-native-discuss-toolbar {
+  min-height: 50px;
+  background: rgba(255, 255, 255, .96);
+  border-color: rgba(15, 23, 42, .08) !important;
+  backdrop-filter: blur(14px);
+}
+
+.ep-native-discuss-toolbar .btn {
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #f8fafc !important;
+  color: #334155 !important;
+  box-shadow: none !important;
+}
+
+.ep-native-discuss-toolbar .btn:hover {
+  background: #eef2f7 !important;
+}
+
+.ep-native-discuss-app-title {
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.ep-native-discuss-public .o-mail-Composer {
+  background: #fff !important;
+  border-top-color: rgba(15, 23, 42, .08) !important;
+}
+
+@media (display-mode: standalone) {
+  .ep-native-discuss-toolbar {
+    padding-top: max(8px, env(safe-area-inset-top)) !important;
+  }
+  .ep-native-discuss-public .o-mail-Composer {
+    padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+.ep-native-discuss-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+}
+
+/* v20.6 - Native Discuss sidebar is the Chats home. We keep Odoo's own DM rows
+   and simply promote that section, with install and new-chat actions. */
+.ep-native-discuss-public .ep-native-discuss-toolbar {
+  display: none !important;
+}
+
+.ep-native-chats-section-head {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 38px;
+  gap: 8px;
+}
+
+.ep-native-chats-section-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ep-native-sidebar-action {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.ep-native-sidebar-action:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.ep-native-new-chat-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.ep-native-new-chat-modal.show { display: flex; }
+
+.ep-native-new-chat-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, .38);
+  backdrop-filter: blur(3px);
+}
+
+.ep-native-new-chat-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(440px, calc(100vw - 24px));
+  max-height: min(680px, calc(100vh - 36px));
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, .08);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, .22);
+  overflow: hidden;
+}
+
+.ep-native-new-chat-head {
+  padding: 16px 18px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.ep-native-new-chat-head strong { display: block; font-size: 17px; color: #0f172a; }
+.ep-native-new-chat-head small { display: block; color: #64748b; margin-top: 2px; }
+.ep-native-icon-btn { border: 0; background: transparent; font-size: 26px; line-height: 1; color: #64748b; }
+
+.ep-native-new-chat-search-wrap {
+  margin: 12px 14px 8px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+.ep-native-new-chat-search-wrap input { width: 100%; border: 0; outline: 0; background: transparent; }
+.ep-native-new-chat-search-wrap i { color: #94a3b8; }
+
+.ep-native-new-chat-people {
+  overflow-y: auto;
+  min-height: 120px;
+  padding: 4px 8px 10px;
+}
+
+.ep-native-person-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 10px;
+  border-radius: 11px;
+  cursor: pointer;
+}
+.ep-native-person-row:hover { background: #f8fafc; }
+.ep-native-person-row > img,
+.ep-native-person-avatar-fallback {
+  width: 38px; height: 38px; border-radius: 50%; object-fit: cover;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #eef2f7; color: #64748b; flex: 0 0 auto;
+}
+.ep-native-person-row > input { order: 3; margin-left: auto; width: 17px; height: 17px; }
+.ep-native-person-text { min-width: 0; display: flex; flex-direction: column; }
+.ep-native-person-text strong { color: #1e293b; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ep-native-person-presence { display: inline-flex; align-items: center; gap: 5px; color: #94a3b8; font-size: 11px; }
+.ep-native-person-presence > span { width: 7px; height: 7px; border-radius: 50%; background: #cbd5e1; }
+.ep-native-person-presence.online > span { background: #22c55e; }
+.ep-native-person-presence.away > span { background: #f59e0b; }
+
+.ep-native-new-chat-loading { padding: 24px 14px; text-align: center; color: #64748b; }
+.ep-native-new-chat-footer {
+  padding: 12px 14px 14px;
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid #eef2f7;
+  background: #fff;
+}
+.ep-native-new-chat-footer .ep-native-group-name { display: none; flex: 1 1 auto; }
+.ep-native-new-chat-footer .btn { flex: 0 0 auto; }
+
+@media (max-width: 767.98px) {
+  .ep-native-new-chat-modal { padding: 0; align-items: flex-end; }
+  .ep-native-new-chat-dialog {
+    width: 100%;
+    max-height: 82vh;
+    border-radius: 18px 18px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .ep-native-sidebar-action { width: 34px; height: 34px; }
+}
+
+/* v20.8 - The Chats heading is also the canonical home shortcut. */
+.ep-native-chats-home-link {
+  cursor: pointer !important;
+  user-select: none;
+}
+
+.ep-native-chats-home-link:hover {
+  color: #0f172a !important;
+}
+
+.ep-native-chats-home-link:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* v20.9 - Mobile Discuss navigation.
+   Do not hide Odoo's native MessagingMenu on small screens. The previous QWeb
+   override removed the only native mobile entry point to the channel/DM list,
+   which produced an apparently blank screen on phones. The template override is
+   no longer loaded; these rules only make the restored native control easier to use. */
+@media (max-width: 767.98px) {
+  .ep-native-discuss-public .o-mail-Discuss {
+    background: #fff !important;
+  }
+
+  /* Keep native mobile navigation controls above the message surface. */
+  .ep-native-discuss-public .o-mail-Discuss-header,
+  .ep-native-discuss-public .o-mail-MessagingMenu,
+  .ep-native-discuss-public [class*="MessagingMenu"] {
+    position: relative;
+    z-index: 40;
+  }
+
+  /* The Chats actions in the native sidebar must remain touch-friendly. */
+  .ep-native-chats-section-head {
+    min-height: 46px;
+  }
+  .ep-native-sidebar-action {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  .ep-native-new-chat-dialog {
+    max-height: min(88dvh, 760px);
+  }
+}
+
+/* v20.10 - Mobile Chats home uses Odoo's native MessagingMenu in chat-only mode.
+   The JS patch removes the Channel tab from the component itself.  These rules
+   keep the native chat list full-height and prevent stale channel controls from
+   occupying mobile space. */
+@media (max-width: 767.98px) {
+  .ep-native-discuss-home .o-mail-MessagingMenu {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    background: #fff !important;
+  }
+
+  .ep-native-discuss-home .o-mail-MessagingMenu-list {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  }
+
+  /* One native tab remains: Chat. Stretch it across the footer so there is no
+     empty Channel half and the user can always return to the chat list. */
+  .ep-native-discuss-public .o-mail-MessagingMenu-navbar .o-mail-MessagingMenu-tab {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    border-right: 0 !important;
+  }
+
+  .ep-native-discuss-public .o-mail-MessagingMenu-navbar {
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+}
+
+
+/* v20.11 - Chats-only employee Discuss and stable mobile home. */
+.ep-native-discuss-public .ep-native-hidden-channels-section {
+  display: none !important;
+}
+
+@media (max-width: 767.98px) {
+  /* The canonical home is the native chat list. Never leave thread chrome floating
+     above it when no thread is selected. */
+  .ep-native-discuss-home .o-mail-Discuss-threadContainer:empty,
+  .ep-native-discuss-home .o-mail-Discuss-main:empty {
+    display: none !important;
+  }
+
+  .ep-native-discuss-home .o-mail-MessagingMenu {
+    position: fixed !important;
+    inset: var(--ep-discuss-top, 0px) 0 0 0 !important;
+    height: var(--ep-discuss-height, 100dvh) !important;
+    max-height: var(--ep-discuss-height, 100dvh) !important;
+    z-index: 60 !important;
+  }
+}
+
+/* v20.13 - Native mobile Chats landing. Keep Odoo MessagingMenu intact and
+   hide only its second (Channel) choice. The first Chat control remains visible. */
+@media (max-width: 767.98px) {
+  .ep-native-discuss-public .o-mail-MessagingMenu-navbar > :nth-child(2),
+  .ep-native-discuss-public .o-mail-MessagingMenu-navbar [role="tab"]:nth-of-type(2) {
+    display: none !important;
+  }
+  .ep-native-discuss-public .o-mail-MessagingMenu-navbar > :first-child,
+  .ep-native-discuss-public .o-mail-MessagingMenu-navbar [role="tab"]:first-of-type {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* v20.14 - Explicit mobile back navigation and native video call action. */
+.ep-native-mobile-chat-back,
+.ep-native-video-call {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+
+.ep-native-video-call {
+  width: 38px;
+  height: 38px;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  font-size: 17px;
+}
+
+.ep-native-video-call:hover {
+  background: rgba(15, 23, 42, 0.06) !important;
+}
+
+@media (max-width: 767.98px) {
+  .ep-native-mobile-chat-back {
+    flex: 0 0 auto;
+    gap: 5px;
+    min-height: 42px;
+    padding: 0 8px 0 2px !important;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2563eb !important;
+  }
+  .ep-native-mobile-chat-back i {
+    font-size: 16px;
+  }
+  .ep-native-video-call {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* v20.15 - Stable Discuss home without mutating Odoo's remembered thread. */
+@media (min-width: 768px) {
+  .ep-native-discuss-public .ep-native-home-covered {
+    position: relative !important;
+  }
+  .ep-native-discuss-home-cover {
+    position: absolute;
+    inset: 0;
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    text-align: center;
+    color: #64748b;
+  }
+  .ep-native-discuss-home-cover > div {
+    max-width: 360px;
+    padding: 24px;
+  }
+  .ep-native-discuss-home-cover i {
+    font-size: 42px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+  }
+  .ep-native-discuss-home-cover h4 {
+    margin: 0 0 6px;
+    color: #334155;
+    font-weight: 700;
+  }
+  .ep-native-discuss-home-cover p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+/* The QWeb-rendered back/video actions must survive every Owl re-render. */
+.ep-native-mobile-chat-back,
+.ep-native-video-call {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+@media (max-width: 767.98px) {
+  .ep-native-discuss-home .o-mail-MessagingMenu {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    background: #fff !important;
+  }
+  .ep-native-discuss-home .o-mail-MessagingMenu-list {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* v20.19 - embedded native Discuss header: back beside name, video beside native phone. */
+.ep-native-inline-back{border:0!important;background:transparent!important;color:#475569!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;width:38px!important;height:38px!important;border-radius:50%!important;padding:0!important;box-shadow:none!important}
+.ep-native-inline-back:hover{background:#f1f5f9!important;color:#0f172a!important}
+.ep-native-inline-back svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+body.ep-native-discuss-embedded .ep-native-video-call-btn{display:none!important}
+@media(max-width:767.98px){.ep-native-inline-back{width:40px!important;height:40px!important}.ep-native-discuss-public .o-mail-Discuss-header{padding-left:max(4px,env(safe-area-inset-left))!important;padding-right:max(4px,env(safe-area-inset-right))!important}}
+
+
+/* v20.24 - Embedded conversation cleanup. */
+body.ep-native-discuss-embedded .o-mail-DiscussSidebar,
+body.ep-native-discuss-embedded .o-mail-Discuss-sidebar,
+body.ep-native-discuss-embedded [class*="o-mail-DiscussSidebar"],
+body.ep-native-discuss-embedded .o-mail-MessagingMenu,
+body.ep-native-discuss-embedded .o-mail-MessagingMenu-navbar,
+body.ep-native-discuss-embedded [class*="o-mail-MessagingMenu"]{display:none!important}
+body.ep-native-discuss-embedded .o-mail-Discuss{grid-template-columns:minmax(0,1fr)!important;width:100%!important}
+body.ep-native-discuss-embedded .o-mail-Discuss-content,
+body.ep-native-discuss-embedded .o-mail-Discuss-main,
+body.ep-native-discuss-embedded .o-mail-Discuss-core,
+body.ep-native-discuss-embedded .o-mail-Discuss-threadContainer{width:100%!important;max-width:none!important}
+body.ep-native-discuss-embedded .ep-native-video-call,
+body.ep-native-discuss-embedded .ep-native-video-call-btn{display:none!important}
+
+
+/* v20.25 - Embedded conversation should feel like a real full-screen chat. */
+body.ep-native-discuss-embedded,
+body.ep-native-discuss-embedded #wrapwrap,
+body.ep-native-discuss-embedded main {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.ep-native-discuss-embedded .o-mail-Discuss,
+body.ep-native-discuss-embedded .o-mail-Discuss-content,
+body.ep-native-discuss-embedded .o-mail-Discuss-main,
+body.ep-native-discuss-embedded .o-mail-Discuss-core,
+body.ep-native-discuss-embedded .o-mail-Discuss-threadContainer,
+body.ep-native-discuss-embedded .o-mail-ThreadView,
+body.ep-native-discuss-embedded .o-mail-Thread,
+body.ep-native-discuss-embedded .o-mail-Composer {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+body.ep-native-discuss-embedded .o-mail-Discuss {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+body.ep-native-discuss-embedded .o-mail-Discuss-content,
+body.ep-native-discuss-embedded .o-mail-Discuss-main,
+body.ep-native-discuss-embedded .o-mail-Discuss-core {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+body.ep-native-discuss-embedded .o-mail-Discuss-header {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+@media (max-width: 767.98px) {
+  /* Keep the native add-participant (+) action visible beside the call controls. */
+  body.ep-native-discuss-embedded .o-mail-Discuss-header button[title*="Add" i],
+  body.ep-native-discuss-embedded .o-mail-Discuss-header button[aria-label*="Add" i],
+  body.ep-native-discuss-embedded .o-mail-Discuss-header button[title*="Invite" i],
+  body.ep-native-discuss-embedded .o-mail-Discuss-header button[aria-label*="Invite" i] {
+    display: inline-flex !important;
+  }
+}
+
+/* v20.31 - Mobile channel cleanup after restoring native Safari back-swipe.
+   Conversation pages keep only Back + Add participant + native Phone/Video.
+   The bottom Chat tab belongs to the Chats home, not an open conversation. */
+@media (max-width: 767.98px) {
+  body.ep-native-discuss-public .o-mail-MessagingMenu-navbar,
+  body.ep-native-discuss-public [class*="o-mail-MessagingMenu-navbar"] {
+    display: none !important;
+  }
+
+  /* JS marks allowed actions after Owl renders. Hide every action explicitly
+     rejected by the mobile header policy, even after subsequent re-renders. */
+  .ep-native-discuss-public .o-mail-Discuss-header [data-ep-mobile-hidden-action="1"] {
+    display: none !important;
+  }
+
+  .ep-native-discuss-public .o-mail-Discuss-header [data-ep-mobile-allowed-action="1"],
+  .ep-native-discuss-public .o-mail-Discuss-header [data-ep-chats-back="1"] {
+    display: inline-flex !important;
+  }
+}
+
+
+/* v20.32 - Mobile conversation chrome. Conversation pages are top-level pages on
+   mobile so the policy must not depend on embedded iframe mode. Keep only the
+   native call/video/add-participant controls plus our Back to Chats button, and
+   remove Odoo's bottom Chat navigation while a conversation is open. */
+@media (max-width: 767.98px) {
+  body.ep-native-discuss-channel .o-mail-MessagingMenu,
+  body.ep-native-discuss-channel .o-mail-MessagingMenu-navbar,
+  body.ep-native-discuss-channel [class*="o-mail-MessagingMenu"] {
+    display: none !important;
+  }
+
+  body.ep-native-discuss-channel .o-mail-Discuss-header [data-ep-mobile-hidden-action="1"] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body.ep-native-discuss-channel .o-mail-Discuss-header [data-ep-mobile-allowed-action="1"],
+  body.ep-native-discuss-channel .o-mail-Discuss-header [data-ep-chats-back="1"] {
+    display: inline-flex !important;
+    visibility: visible !important;
+  }
+}
+
+
+/* v20.44 - Employee Portal Channels: true read-only mode.
+   Read-only means view-only, not merely a disabled text input. */
+body.ep-native-discuss-readonly .o-mail-Composer,
+body.ep-native-discuss-readonly [class*="o-mail-Composer"],
+body.ep-native-discuss-readonly .o-mail-Message-actions,
+body.ep-native-discuss-readonly [class*="o-mail-MessageAction"],
+body.ep-native-discuss-readonly [class*="o-mail-Message-actions"],
+body.ep-native-discuss-readonly [class*="o-mail-Message-menu"],
+body.ep-native-discuss-readonly [class*="o-mail-MessageMenu"],
+body.ep-native-discuss-readonly [data-action*="reaction"],
+body.ep-native-discuss-readonly [title*="React"],
+body.ep-native-discuss-readonly [aria-label*="React"],
+body.ep-native-discuss-readonly [title*="Reply"],
+body.ep-native-discuss-readonly [aria-label*="Reply"],
+body.ep-native-discuss-readonly [title*="Pin"],
+body.ep-native-discuss-readonly [aria-label*="Pin"] {
+    display: none !important;
+}
+body.ep-native-discuss-readonly .o-mail-Discuss-header button:not([data-ep-chats-back]),
+body.ep-native-discuss-readonly .o-mail-Discuss-header a:not([data-ep-chats-back]) {
+    display: none !important;
+}
+body.ep-native-discuss-readonly .o-mail-Thread {
+    padding-bottom: 14px !important;
+}
+
+/* v20.24 - Hide Odoo's native ChatHub (floating minimized-chat avatar bubbles
+   fixed at the bottom-right of the viewport) on mobile portal view. It
+   overlaps the embedded conversation's message composer and duplicates the
+   Employee Portal's own Chats UI on small screens. */
+@media (max-width: 767.98px) {
+  .o-mail-ChatHub {
+    display: none !important;
+  }
+}
