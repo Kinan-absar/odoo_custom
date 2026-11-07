@@ -1,14 +1,30 @@
-# Portal Backend Workspace - 18.0.0.9.1
+# Portal Backend Workspace - 18.0.0.9.2
 
 Independent Odoo 18 addon containing the migrated Sales, Purchase,
 Accounting and HR Administration workspaces. This release replaces the simplified
 v0.8 pages; it is not an installer for the original four addons.
 
-## This update
+## This update - original layout contract restored
 
-Restores confirmed design, navigation, pending-count, Accounting dialog/posting
-and HR detail regressions. It does not replace the original editors or change
-the optional bridge. Read PARITY_AUDIT.md for exact changes and remaining gaps.
+This updates the existing consolidated addon; it does not replace the four
+original workspace editors with generic Odoo tables or forms.
+
+- Restore the original EPS `#wrap.container.mt-3.mb-5` shell. The former
+  `container-fluid px-3 px-md-4 py-3` wrapper prevented original full-width
+  selectors from matching and introduced a second set of gutters.
+- Restore the original 80% desktop density starting at 769px, applied in the
+  page head before paint; mobile remains unscaled and print uses 100%.
+- Restore the original DM Sans weight/italic font request.
+- Load the exported compact-list helper as an ES module instead of a classic
+  script, fixing its browser syntax error. Version all direct shell assets.
+- Restore the visible standard Document Type field on New Quotation; no
+  technical-proposal addon or nonfunctional technical option is introduced.
+- Retain the migrated Sales/Purchase/Accounting/HR forms, grids, tabs, filters,
+  role checks and workflow logic from 0.9.1. No new custom dependency or routing
+  change. The existing EPS navigation bridge does not need changing.
+
+Read `LAYOUT_VALIDATION.md` and `TEST_REPORT.md` for exact executed checks,
+source comparisons and limits. Live Odoo execution has not been verified here.
 
 ## Source baseline
 

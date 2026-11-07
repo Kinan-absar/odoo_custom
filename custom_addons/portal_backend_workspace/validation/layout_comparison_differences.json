@@ -1,0 +1,58 @@
+[
+  {
+    "screen": "purchase_list",
+    "width": 1440,
+    "diff": {
+      ".pbw-list-header": {
+        "columns": [
+          "85px 207.695px 180.02px 100px 138.457px 90px 135px 140px 100px 150px",
+          "85px 246.914px 214.004px 164.629px 90px 135px 140px 100px 164.609px"
+        ]
+      },
+      ".pbw-record-card": {
+        "columns": [
+          "85px 207.305px 179.668px 100px 138.203px 90px 135px 140px 100px 150px",
+          "85px 246.602px 213.75px 164.414px 90px 135px 140px 100px 164.395px"
+        ]
+      }
+    }
+  },
+  {
+    "screen": "purchase_list",
+    "width": 820,
+    "diff": {
+      ".pbw-list-header": {
+        "w": [
+          1160,
+          1080
+        ],
+        "columns": [
+          "85px 191.328px 165.82px 100px 135px 90px 135px 140px 100px 150px",
+          "85px 198.828px 172.305px 135px 90px 135px 140px 100px 150px"
+        ]
+      },
+      ".pbw-record-card": {
+        "w": [
+          1160,
+          1080
+        ],
+        "columns": [
+          "85px 190.801px 165.352px 100px 135px 90px 135px 140px 100px 150px",
+          "85px 198.281px 171.855px 135px 90px 135px 140px 100px 150px"
+        ]
+      }
+    }
+  },
+  {
+    "screen": "purchase_list",
+    "width": 390,
+    "diff": {
+      ".pbw-list-header": {
+        "columns": [
+          "85px minmax(170px, 1.5fr) minmax(150px, 1.3fr) 100px minmax(135px, 1fr) 90px 135px 140px 100px minmax(150px, 1fr)",
+          "85px minmax(170px, 1.5fr) minmax(150px, 1.3fr) minmax(135px, 1fr) 90px 135px 140px 100px minmax(150px, 1fr)"
+        ]
+      }
+    }
+  }
+]

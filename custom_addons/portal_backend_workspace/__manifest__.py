@@ -1,5 +1,5 @@
 {'name': 'Portal Backend Workspace',
- 'version': '18.0.0.9.1',
+ 'version': '18.0.0.9.2',
  'summary': 'Original Sales, Purchase, Accounting and HR workspaces for authorized portal accounts',
  'category': 'Productivity',
  'author': 'Portal Backend Workspace',

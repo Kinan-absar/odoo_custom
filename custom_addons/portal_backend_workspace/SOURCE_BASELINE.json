@@ -1,5 +1,5 @@
 {
-  "version": "18.0.0.9.1",
+  "version": "18.0.0.9.2",
   "sources": [
     {
       "component": "sales",
@@ -46,10 +46,12 @@
     "hr_payroll"
   ],
   "test_summary": {
-    "targeted_regression_tests_passed": 21,
+    "targeted_regression_tests_passed": 31,
     "original_fixture_scripts_passed": 16,
     "original_fixture_scripts_failed_or_incompatible": 12,
-    "live_odoo_installation_verified": false
+    "live_odoo_installation_verified": false,
+    "source_based_browser_renders": 180,
+    "source_based_browser_interactions": 48
   },
   "source_archives": {
     "ABSAR_Main_Updated_2026-11-05.zip": "b27a0dcd86aa172205fab325e7f5cfac891a7c8150e7c951937419edfeb02b71",

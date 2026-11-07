@@ -2,10 +2,14 @@
 <template id="workspace_layout" name="Portal Backend Workspace">
 <t t-call="web.layout">
 <t t-set="title">Portal Backend Workspace</t>
-<t t-call-assets="web.assets_frontend"/><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;display=swap"/>
-<link rel="stylesheet" href="/portal_backend_workspace/static/src/core/workspace_layout.css"/>
+<t t-set="pbw_portal_compact_desktop" t-value="True"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;display=swap" rel="stylesheet"/>
+<t t-call-assets="web.assets_frontend"/>
+<link rel="stylesheet" href="/portal_backend_workspace/static/src/core/workspace_layout.css?v=18.0.0.9.2"/>
 <style>body{--pbw-company-watermark:url('/web/image/res.company/<t t-out="request.env.company.id"/>/logo');}</style>
-<link rel="stylesheet" href="/portal_backend_workspace/static/src/core/portal_compact_lists.css"/>
+<link rel="stylesheet" href="/portal_backend_workspace/static/src/core/portal_compact_lists.css?v=18.0.0.9.2"/>
 <t t-set="pbw_areas" t-value="request.env.user._pbw_workspace_areas()"/>
 <t t-set="pbw_extra_links" t-value="request.env.user._pbw_extra_navigation()"/>
 <t t-set="ep_notif_summary" t-value="request.env['pbw.notification.seen']._get_notification_summary(request.env.user)"/>
@@ -27,7 +31,9 @@
 <div class="pbwep-desktop-top-actions"><t t-call="portal_backend_workspace.notification_bell"/></div>
 <nav class="pbwep-navbar"><div class="pbwep-nav-links"><a href="/my/workspace">Workspace</a><t t-foreach="pbw_areas" t-as="area"><a t-att-href="area['url']" t-out="area['name']"/></t></div><div class="pbwep-nav-right"><t t-call="portal_backend_workspace.notification_bell"/><a href="/web/session/logout?redirect=/web/login"><i class="fa fa-sign-out"/></a></div></nav>
 <div class="pbwep-mobile-topbar mobile-only"><button class="pbwep-mobile-menu-toggle" type="button" data-pbwep-menu-toggle="1" aria-controls="pbwep-shared-sidebar" aria-expanded="false"><i class="fa fa-bars"/></button><div class="pbwep-top-company" t-out="request.env.company.name"/><t t-call="portal_backend_workspace.notification_bell"/></div>
-<main class="pbwep-portal-main"><div class="container-fluid px-3 px-md-4 py-3"><t t-out="0"/></div></main>
+<!-- Preserve the EPS shell DOM contract: the original four workspaces
+     target #wrap for full-width layout. Do not add another padded container. -->
+<main class="pbwep-portal-main"><div id="wrap" class="container mt-3 mb-5"><t t-out="0"/></div></main>
 <nav class="pbwep-bottom-nav mobile-only basic-nav"><div class="pbwep-nav-left"/>
 <button type="button" class="pbwep-fab-center" id="pbwFabCenterBtn" aria-label="Create a document" aria-expanded="false" aria-controls="pbwFabMenu"><div class="fab-plus"><i class="fa fa-plus"/></div></button>
 <div class="pbwep-nav-right"><a href="/web/session/logout?redirect=/web/login" class="nav-btn"><i class="fa fa-sign-out"/><span>Exit</span></a></div></nav><div id="pbwFabMenu" class="fab-menu mobile-only">
@@ -35,9 +41,9 @@
 <a t-if="request.env.user.has_group('portal_backend_workspace.purchase__group_portal_purchase_preparer')" href="/my/workspace/purchase/new" class="fab-item"><i class="fa fa-shopping-cart"/><span>New Purchase Order</span></a>
 <a t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_preparer') or request.env.user.has_group('portal_backend_workspace.accounting__group_accountant')" href="/my/workspace/accounting/bills/new" class="fab-item"><i class="fa fa-file-text-o"/><span>New Vendor Bill</span></a>
 <a t-if="request.env.user.has_group('portal_backend_workspace.hr__group_employee_admin')" href="/my/workspace/hr/employees/new" class="fab-item"><i class="fa fa-user-plus"/><span>New Employee</span></a>
-<a href="/my/workspace/accounting/invoices/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_customer_invoicing')"><i class="fa fa-file-text-o"/><span>New Customer Invoice</span></a><a href="/my/workspace/accounting/refunds/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_preparer') or request.env.user.has_group('portal_backend_workspace.accounting__group_accountant')"><i class="fa fa-undo"/><span>New Vendor Credit Note</span></a><a href="/my/workspace/accounting/journals/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_preparer') or request.env.user.has_group('portal_backend_workspace.accounting__group_accountant')"><i class="fa fa-book"/><span>New Journal Entry</span></a><a href="/my/workspace/hr/attendance/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_employee_admin')"><i class="fa fa-clock-o"/><span>New Attendance</span></a><a href="/my/workspace/hr/contracts/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-file-text-o"/><span>New Contract</span></a><a href="/my/workspace/hr/payslips/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-money"/><span>New Payslip</span></a><a href="/my/workspace/hr/batches/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-folder-o"/><span>New Payroll Batch</span></a></div><script src="/portal_backend_workspace/static/src/core/portal_mobile_menu.js"/>
-<script src="/portal_backend_workspace/static/src/core/portal_compact_lists.js"/>
-<script src="/portal_backend_workspace/static/src/core/workspace_shell.js"/>
+<a href="/my/workspace/accounting/invoices/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_customer_invoicing')"><i class="fa fa-file-text-o"/><span>New Customer Invoice</span></a><a href="/my/workspace/accounting/refunds/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_preparer') or request.env.user.has_group('portal_backend_workspace.accounting__group_accountant')"><i class="fa fa-undo"/><span>New Vendor Credit Note</span></a><a href="/my/workspace/accounting/journals/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_preparer') or request.env.user.has_group('portal_backend_workspace.accounting__group_accountant')"><i class="fa fa-book"/><span>New Journal Entry</span></a><a href="/my/workspace/hr/attendance/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_employee_admin')"><i class="fa fa-clock-o"/><span>New Attendance</span></a><a href="/my/workspace/hr/contracts/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-file-text-o"/><span>New Contract</span></a><a href="/my/workspace/hr/payslips/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-money"/><span>New Payslip</span></a><a href="/my/workspace/hr/batches/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-folder-o"/><span>New Payroll Batch</span></a></div><script src="/portal_backend_workspace/static/src/core/portal_mobile_menu.js?v=18.0.0.9.2"/>
+<script type="module" src="/portal_backend_workspace/static/src/core/portal_compact_lists.js?v=18.0.0.9.2"/>
+<script src="/portal_backend_workspace/static/src/core/workspace_shell.js?v=18.0.0.9.2"/>
 </t></template>
 <template id="notification_bell">
         <div class="pbwep-bell-wrap" t-att-data-pbw-other-unread="ep_notif_unread_total">

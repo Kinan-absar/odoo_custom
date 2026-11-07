@@ -1,3 +1,10 @@
+# 18.0.0.9.2
+
+Restore the original shared shell DOM contract, full-width selectors, desktop
+scale threshold, print scaling, typography, and compact-list script execution.
+Restore the standard quotation Document Type control. No native workspace
+workflow, permissions, model field, external ID or bridge hook was removed.
+
 # 18.0.0.9.1
 
 - Repair six Accounting modal root classes to restore original styles.
